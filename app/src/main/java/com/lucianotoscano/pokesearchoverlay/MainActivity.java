@@ -111,6 +111,34 @@ public class MainActivity extends Activity {
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
+    // LT152: visual-only Home; the original profile/auth views remain functional.
+    private HomeIllustrated152.State homeIllustratedState;
+    private FrameLayout homeAuthHost;
+    private View homeAuthView;
+    private void showHomeAccountDialog(){
+        if(homeAuthHost==null||homeAuthView==null)return;
+        View account=homeAuthView;
+        if(account.getParent() instanceof android.view.ViewGroup)
+            ((android.view.ViewGroup)account.getParent()).removeView(account);
+        account.setVisibility(View.VISIBLE);
+        AlertDialog dialog=new AlertDialog.Builder(this)
+            .setTitle("Minha conta")
+            .setView(account)
+            .setNeutralButton("Premium",(d,w)->{
+                if(PremiumAccess.controlled())showPremiumAccountOptions();
+                else Toast.makeText(this,"Premium indisponível nesta versão",
+                    Toast.LENGTH_SHORT).show();
+            })
+            .setPositiveButton("Fechar",null)
+            .create();
+        dialog.setOnDismissListener(d->{
+            if(account.getParent() instanceof android.view.ViewGroup)
+                ((android.view.ViewGroup)account.getParent()).removeView(account);
+            if(homeAuthHost!=null)homeAuthHost.addView(account,
+                new FrameLayout.LayoutParams(-1,-2));
+        });
+        dialog.show();
+    }
     private TextView sessionHint;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
@@ -154,6 +182,9 @@ public class MainActivity extends Activity {
             ()->tributeOverlay=null);
     }
     private void scrollToCommunity(){
+        if(homeIllustratedState!=null){
+            CommunityScrapbookStage1.openFull(this);return;
+        }
         if(communityHomePanel==null||communityHomeScroll==null)return;
         CommunityScrapbookOnline.expandFromMenu(communityHomePanel);
         communityHomePanel.post(()->communityHomeScroll.smoothScrollTo(0,
@@ -307,17 +338,18 @@ public class MainActivity extends Activity {
         homeSurfaces.clear();
         // Owner-supplied backgrounds share the same 941×1672 portrait geometry.
         // CENTER_CROP (one gravity for both) avoids distortion when switching.
-        frame.setBackgroundColor(homeLightMode?Color.rgb(239,245,249):Color.rgb(10,14,23));
+        frame.setBackgroundColor(Color.rgb(28,79,100));
         ImageView pageBackground=new ImageView(this);
         // Wallpaper remains an independent, full-opacity decorative image.
-        pageBackground.setImageResource(homeLightMode?
-            R.drawable.ps_home_background_light:R.drawable.ps_home_background_dark);
+        // LT152 owner reference: luminous landscape, even when glass mode is dark.
+        // Use the bundled official scenic image offline; no remote wallpaper fetch.
+        pageBackground.setImageResource(R.drawable.ps_home_background_light);
         pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP);
         pageBackground.setContentDescription(homeLightMode?"Fundo PokeSearch claro":"Fundo PokeSearch escuro");
         pageBackground.setAlpha(1f); // Slider affects surfaces only.
         frame.addView(pageBackground,new FrameLayout.LayoutParams(-1,-1));
         View dim=new View(this);
-        dim.setBackgroundColor(homeLightMode?Color.argb(8,255,255,255):Color.argb(16,6,12,24));
+        dim.setBackgroundColor(Color.argb(30,5,35,52));
         frame.addView(dim,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout screen=new LinearLayout(this);
@@ -717,8 +749,7 @@ public class MainActivity extends Activity {
             screen.addView(communityHomePanel,scrapbookLp);
         }
 
-        // Keep the center open for the user's Pokémon GO wallpaper.
-        screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
+        // LT152 creates its own illustrated hierarchy below; no empty filler.
         // LT73: show the installed APK's real version; no manual version strings.
         TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
@@ -728,6 +759,22 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
+        // Preserve connected auth/trainer/login controls in an offscreen host.
+        // The new profile tile opens the exact existing view in a native dialog.
+        homeAuthHost=new FrameLayout(this);
+        homeAuthView=auth;
+        homeAuthHost.setVisibility(View.GONE);
+        frame.addView(homeAuthHost,new FrameLayout.LayoutParams(0,0));
+        homeAuthHost.addView(auth,new FrameLayout.LayoutParams(-1,-2));
+        homeIllustratedState=HomeIllustrated152.assemble(this,frame,screen,
+            header,dualOverlayRow,accountAvatar,auth,homeUpdateHolder,stats,
+            shareActions,communityHomePanel,footer,homeSurfacesTransparency(),
+            this::showHomeAccountDialog,this::toggleHomeOverlay,
+            this::toggleSecondaryOverlay,this::openPicker,
+            ()->ReleaseNotes.showHistory(this),
+            ()->CommunityScrapbookStage1.openFull(this),
+            this::showHomeMenu);
+        homeIllustratedState.refresh(this);
         // Mission icon floats above the footer, without stealing space from
         // header controls, update alerts, counters or trainer details.
         homeMissionBadge=new ImageView(this);
@@ -737,7 +784,7 @@ public class MainActivity extends Activity {
         FrameLayout.LayoutParams missionLp=new FrameLayout.LayoutParams(
             d(52),d(52),Gravity.RIGHT|Gravity.BOTTOM);
         missionLp.rightMargin=d(16);
-        missionLp.bottomMargin=d(49);
+        missionLp.bottomMargin=d(89);
         frame.addView(homeMissionBadge,missionLp);
         syncMissionBadge();
         return frame;
@@ -1295,18 +1342,19 @@ public class MainActivity extends Activity {
     private void refreshHomeOverlay(){
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
-        overlayControl.setImageResource(on?R.drawable.personalizado:R.drawable.sem_filtro);
+        overlayControl.setImageResource(R.drawable.sem_filtro);
         overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
         overlayControl.setBackground(homeSurface(on?Color.rgb(18,94,82):
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         if(secondaryOverlayControl!=null){
             boolean secondaryOn=OverlayService.isSecondaryRunning();
-            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.personalizado:R.drawable.sem_filtro);
+            secondaryOverlayControl.setImageResource(R.drawable.personalizado);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar segunda Pokébola":"Ativar segunda Pokébola");
-            secondaryOverlayControl.setBackground(homeSurface(secondaryOn?Color.rgb(18,94,82):
-                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+            secondaryOverlayControl.setBackgroundColor(Color.TRANSPARENT);
         }
+        overlayControl.setBackgroundColor(Color.TRANSPARENT);
+        if(homeIllustratedState!=null)homeIllustratedState.refresh(this);
     }
     private void openProviderLogin(String provider){
         preferredLoginProvider=provider;
@@ -1631,6 +1679,7 @@ public class MainActivity extends Activity {
         if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
             "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
+        if(homeIllustratedState!=null)homeIllustratedState.refresh(this);
     }
     private void askLogout(){
         new AlertDialog.Builder(this)
