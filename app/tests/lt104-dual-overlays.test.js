@@ -41,14 +41,14 @@ check("new Home control enables each instance separately",()=>{
  assert.match(main,/OverlayService.isSecondaryRunning\(\)/);
  assert.match(main,/stopService\(new Intent\(this,SecondaryOverlayService.class\)\)/);
 });
-check("login remains shared and logout stops both before clearing cookies",()=>{
+check("each login/logout only affects its assigned WebView profile",()=>{
  assert.match(main,/sendActionToRunningOverlay\(OverlayService.class,action,authConfirmed\)/);
  assert.match(main,/sendActionToRunningOverlay\(SecondaryOverlayService.class,action,authConfirmed\)/);
  const logout=main.split("private void logoutLocalSession(){")[1].split("private void ",1)[0];
- assert.match(logout,/stopService\(new Intent\(this,OverlayService.class\)\)/);
- assert.match(logout,/stopService\(new Intent\(this,SecondaryOverlayService.class\)\)/);
- assert.match(logout,/removeAllCookies/);
- assert.match(service,/CookieManager.getInstance\(\)\.setAcceptCookie\(true\)/);
+ assert.match(logout,/PogoAccountSlots\.signOut\(this,1/);
+ assert.match(logout,/PogoAccountSlots\.assigned\(this,false\)==1/);
+ assert.match(logout,/PogoAccountSlots\.assigned\(this,true\)==1/);
+ assert.match(service,/PogoAccountSlots\.cookies\(accountSlot\(\)\)\.setAcceptCookie\(true\)/);
 });
 check("two positions, two result lists, no forced colored labels",()=>{
  assert.match(service,/isSecondaryOverlay\(\)\?12:oldDefaultX/);
