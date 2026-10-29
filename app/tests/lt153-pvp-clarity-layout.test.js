@@ -64,6 +64,8 @@ assert.ok(!html.includes('class="evoHint"'),"no introductory explanation paragra
 assert.ok(html.includes("Análise PvP · "), "expansion has informative title");
 assert.ok(html.includes("#major .ivTile .ivPercent{top:2px}"),"IV percent exactly 1px lower");
 assert.ok(html.includes("#coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}"),
- "coordinate button symmetric without shrinking content");
+ "action text has equal left/right padding");
+assert.ok(html.includes("#coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}"),
+ "reveal text uses symmetric inset and stays centered with independent right counter");
 assert.ok(html.includes("fetch.textContent=coordsPending?"),"native coordinate text updates preserved");
 console.log("LT153 PvP legibility, rank attribution, complete fields, escape and alignments PASS");
