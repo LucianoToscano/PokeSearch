@@ -1,4 +1,4 @@
-name: LT180 — Animação real do ícone ↻ de Doce Raro (QA)
+name: LT180 — Doce Raro ↻, menus Pokébola e 3m padrão (QA)
 on:
   push:
     branches: [fix/lt180-candy-refresh-spin-20261029]
@@ -82,6 +82,7 @@ jobs:
           node app/tests/lt175-rare-candy-overlay.test.js
           node app/tests/lt179-candy-refresh-gestures.test.js
           node app/tests/lt180-candy-refresh-animation.test.js
+          node app/tests/lt180-candy-cadence-location.test.js
           python3 scripts/test_ota_builder.py
           mkdir -p "$RUNNER_TEMP/qa"
           javac --release 17 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java app/tests/OtaLocalBridgePolicyTest.java
