@@ -28,3 +28,13 @@ Na mesma conversa em que autorizou publicar a LT180 para todos, pediu que **na p
 
 ## Autorização para lançamento público LT181
 O proprietário confirmou: **"Certo aplica para versão pública então."** Foi criado o workflow protegido `.github/workflows/lt181-menu-parity-official-release.yml`, versão `0.01.81 / 54386`, para publicar uma nova release estável no GitHub após merge da PR #137. A Action exige tag anterior `v0.01.80-54385`, testes Node/Android e OTA, certificado Android v2 permanente, assets, SHA-256/tamanho e `draft=false`, `prerelease=false`. A última QA assinada validada foi [#40952601562 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40952601562), artefato #12932805578. A instalação pelo atualizador ainda requer confirmação do Android. O Drive legado não faz parte dessa publicação. **O resultado da Action oficial será registrado somente depois de confirmado.**
+
+## Publicação oficial LT181 — comprovada (29/10/2026)
+
+- PR #137 mesclada por squash em `1b18c6b0cd2ac663b6c29e6a177e28b40bea63bd`.
+- Workflow oficial `lt181-menu-parity-official-release.yml`: [Actions #40955101902 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40955101902). Inclui regressões, compilação R8, assinatura Android v2 e verificação dos bytes do asset.
+- Release pública `v0.01.81-54386`: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.81-54386 (`draft=false`, `prerelease=false`, `releases/latest`).
+- APK oficial: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.81-54386/PokeSearch-v0.01.81-LT.apk — **49.546.158 bytes**, SHA-256 `03567e9cfaa16ad597039cc41ee22ca4ae59f808f51143fc000a33acdb35c98f`. A Action comparou o tamanho e digest remoto com o arquivo original.
+- Certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, pacote `com.lucianotoscano.pokesearch`, versionCode `54386`.
+- Usuários com versão anterior elegível podem ver a atualização na próxima consulta GitHub no app e instalar mediante confirmação do Android. Não há atualização forçada e a ponte Drive não foi modificada.
+- Testes reais no Samsung/Moto ainda necessários para confirmar visualmente posição do aviso, aparência dos menus e exibição dos dez resultados na resolução do dispositivo.
