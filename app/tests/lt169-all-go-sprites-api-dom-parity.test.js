@@ -20,14 +20,22 @@ for(const [name,number,form,fragment] of [
  ["Florges","#671","WHITE","pm671.fWHITE.icon.png"],
  ["Flabebe","#669","RED","pm669.fRED.icon.png"],
  ["Flabebe","#669","ORANGE","pm669.fORANGE.icon.png"],
- ["Flabebe","#669","BLUE","pm669.fBLUE.icon.png"],
- ["Vulpix","#37","ALOLA","pm37.fALOLA.icon.png"],
- ["Meowth","#52","GALARIAN","pm52.fGALARIAN.icon.png"]
+ ["Flabebe","#669","BLUE","pm669.fBLUE.icon.png"]
 ]){
  const card={name,number,form,shiny:false};
  assert.ok(go(card).includes(fragment),name+" "+form+" should load the exact GO art");
  assert.equal(result(card).goExact,true,"GO provenance");
  assert.ok(result(card).original.includes("cdn.jsdelivr.net"),"same immutable GO asset mirror");
+}
+// Existing exact PokeAPI bundled artwork must not regress into a fragile
+// network dependency merely because the same named GO form is indexed.
+for(const card of [
+ {name:"Vulpix",number:"#37",form:"ALOLA"},
+ {name:"Meowth",number:"#52",form:"GALARIAN"},
+ {name:"Furfrou",number:"#676",form:"Natural"}
+]){
+ assert.match(result(card).src,/^file:\/\/\/android_asset\/pokemon-sprites\//,
+   "preserve available exact offline form: "+card.name);
 }
 assert.ok(go({name:"Flabebe",number:"#669",form:"YELLOW",shiny:true})
   .includes("pm669.fYELLOW.s.icon.png"),"Shiny colour identity remains exact");
