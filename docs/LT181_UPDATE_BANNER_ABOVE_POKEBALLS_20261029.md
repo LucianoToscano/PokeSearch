@@ -38,3 +38,8 @@ O proprietário confirmou: **"Certo aplica para versão pública então."** Foi 
 - Certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, pacote `com.lucianotoscano.pokesearch`, versionCode `54386`.
 - Usuários com versão anterior elegível podem ver a atualização na próxima consulta GitHub no app e instalar mediante confirmação do Android. Não há atualização forçada e a ponte Drive não foi modificada.
 - Testes reais no Samsung/Moto ainda necessários para confirmar visualmente posição do aviso, aparência dos menus e exibição dos dez resultados na resolução do dispositivo.
+
+## Espelho Drive LT181 para compartilhamento
+- APK oficial extraído de artefato Actions `#12933676273`, verificado SHA-256 `03567e9cfaa16ad597039cc41ee22ca4ae59f808f51143fc000a33acdb35c98f` e 49.546.158 bytes.
+- [Link compartilhável direto no Drive](https://drive.google.com/file/d/1sOV61y9De_OkPk1Kxqd2jbj2l70AwJGt/view?usp=drivesdk), arquivo ID `1sOV61y9De_OkPk1Kxqd2jbj2l70AwJGt`, na [pasta PokeSearch_App](https://drive.google.com/drive/folders/1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR). Metadados readback confirmaram o MIME APK, tamanho e `anyone/commenter`.
+- Ponte legada `atualizacao.json` não alterada; atualização in-app continua consultando GitHub Releases/latest. Upload feito apenas para compartilhamento manual do instalador.
