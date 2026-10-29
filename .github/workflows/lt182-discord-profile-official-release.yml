@@ -1,4 +1,4 @@
-name: LT182 — publicação oficial: Discord OAuth e perfil do treinador
+name: 'LT182 — publicação oficial: Discord OAuth e perfil do treinador'
 on:
   push:
     branches: [main]
@@ -67,7 +67,6 @@ jobs:
           test -s app/src/main/assets/rare_candy_probe.js
           test -s app/tests/lt180-candy-refresh-animation.test.js
           test -s app/tests/lt182-discord-profile-auth-recovery.test.js
-          test -s app/tests/lt182-discord-profile-auth-recovery.test.js
           test -s app/tests/lt180-candy-cadence-location.test.js
           grep -Fq 'lastAllCopiedRefreshGeneration' app/src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java
           grep -Fq 'activeCount*rowHeight+4' app/src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java
@@ -112,7 +111,6 @@ jobs:
           node app/tests/lt179-candy-refresh-gestures.test.js
           node app/tests/lt180-candy-refresh-animation.test.js
           node app/tests/lt180-candy-cadence-location.test.js
-          node app/tests/lt182-discord-profile-auth-recovery.test.js
           node app/tests/lt182-discord-profile-auth-recovery.test.js
           node app/tests/lt170-more-tile-unified-transparent.test.js
           python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py
