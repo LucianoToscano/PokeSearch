@@ -63,6 +63,8 @@ public class MainActivity extends Activity {
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
     private String loginPurpose="login"; // login | manage
+    private boolean trainerLinkRequested=false,trainerLinkStarted=false;
+    private long trainerLinkObserveDeadline=0L;
     private int activeLoginSlot=1;
     private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
     private TextView secondAccountUnavailable,secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
@@ -1283,6 +1285,9 @@ public class MainActivity extends Activity {
         }
         if(loginDialog!=null&&loginDialog.isShowing())return;
         activeLoginSlot=slot;
+        trainerLinkRequested="manage".equals(purpose)&&
+            !PogoAccountSlots.prefs(this,slot).getString("profileTrainerCode","")
+                .matches("[0-9]{12}");
         openLoginDialog(false,purpose);
     }
     private void logoutSecondAccount(){
@@ -1299,6 +1304,7 @@ public class MainActivity extends Activity {
         activeLoginSlot=1;
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
         if(!code.matches("[0-9]{12}")){
+            trainerLinkRequested=true;
             openLoginDialog(false,"manage");
             return;
         }
@@ -2556,10 +2562,70 @@ public class MainActivity extends Activity {
                 view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                 return;
             }
+            // Only the provider's post-confirmation linked profile is proof.
+            if("manage".equals(loginPurpose)&&trainerLinkStarted){
+                boolean linkedNow="linked".equals(PogoAccountSlots.prefs(this,activeLoginSlot)
+                    .getString("profileTrainerState","unknown"));
+                if(linkedNow){
+                    trainerLinkStarted=false;
+                    trainerLinkRequested=false;
+                    trainerLinkObserveDeadline=0L;
+                    profileCaptureInProgress=false;
+                    refreshSessionSummary();
+                    PogoAccountSlots.cookieManager(activeLoginSlot).flush();
+                    notifyOverlaySessionReady();
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    // Return to the PoGoCoordinates home/search, not PokeSearch.
+                    view.loadUrl("https://pogocoordinates.com/search");
+                    return;
+                }
+                // Read-only polling while the person completes the official
+                // flow: never submit or repeat a provider look-up.
+                if(android.os.SystemClock.uptimeMillis()<trainerLinkObserveDeadline){
+                    view.postDelayed(()->captureOfficialProfile(view,generation),1300L);
+                    return;
+                }
+                trainerLinkStarted=false;
+                trainerLinkRequested=false;
+            }
             profileCaptureInProgress=false;
             refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
                loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+        });
+    }
+    private void openOfficialTrainerLink(WebView view,int generation,int remaining){
+        if(remaining<=0||view!=website||generation!=loginPageGeneration||
+            loginDialog==null||!loginDialog.isShowing()||
+            !"manage".equals(loginPurpose)||!trainerLinkRequested||trainerLinkStarted){
+            if(remaining<=0&&loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+            return;
+        }
+        Uri address=Uri.parse(view.getUrl()==null?"":view.getUrl());
+        if(!"https".equalsIgnoreCase(address.getScheme())||
+            !"pogocoordinates.com".equalsIgnoreCase(address.getHost())||
+            !"/profile".equals(address.getPath()))return;
+        view.evaluateJavascript(readAsset("trainer_link_entry.js"),raw->{
+            if(view!=website||generation!=loginPageGeneration||
+                loginDialog==null||!loginDialog.isShowing()||
+                !trainerLinkRequested||trainerLinkStarted)return;
+            String state="";
+            try{
+                String value=new JSONArray("["+raw+"]").getString(0);
+                state=new JSONObject(value).optString("status","");
+            }catch(Exception ignored){}
+            if("clicked".equals(state)||"form-open".equals(state)){
+                trainerLinkStarted=true;
+                trainerLinkObserveDeadline=android.os.SystemClock.uptimeMillis()+600_000L;
+                profileCaptureInProgress=true;
+                view.postDelayed(()->captureOfficialProfile(view,generation),1200L);
+            }else if("pending".equals(state)&&remaining>1){
+                view.postDelayed(()->openOfficialTrainerLink(view,generation,remaining-1),650L);
+            }else if(loginCover!=null){
+                // Provider layout changed or already linked: show site, do
+                // not guess or click another OAuth/confirmation button.
+                loginCover.setVisibility(View.GONE);
+            }
         });
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
@@ -2604,6 +2670,9 @@ public class MainActivity extends Activity {
     private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginPurpose="manage".equals(purpose)?"manage":"login";
+        if(!"manage".equals(loginPurpose))trainerLinkRequested=false;
+        trainerLinkStarted=false;
+        trainerLinkObserveDeadline=0L;
         loginStartedForShiny=shinyRequest;
         profileCaptureInProgress="manage".equals(loginPurpose);
         profileDiscoveryAttempted=false;
@@ -2658,11 +2727,14 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if("manage".equals(loginPurpose)){
-                    // A pre-existing signed-in session can refresh all linked
-                    // trainers without forcing the user to log out and back in.
+                    // Signed-in profile; only open the official Link my account
+                    // form for an unlinked trainer, without auto-confirming.
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    if("/profile".equals(Uri.parse(url).getPath()))
+                    if("/profile".equals(Uri.parse(url).getPath())){
+                        if(trainerLinkRequested&&!trainerLinkStarted)
+                            view.postDelayed(()->openOfficialTrainerLink(view,generation,8),450L);
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
+                    }
                     return;
                 }
                 checkLoginSession(view,14,generation);
@@ -2749,6 +2821,9 @@ public class MainActivity extends Activity {
             ++loginPageGeneration; // Invalidate pending WebView session probes.
             loginCover=null;
             profileCaptureInProgress=false;
+            trainerLinkRequested=false;
+            trainerLinkStarted=false;
+            trainerLinkObserveDeadline=0L;
             loginWaitLabel=null;
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
@@ -3044,7 +3119,8 @@ public class MainActivity extends Activity {
         Intent i=new Intent(this,OverlayService.class);
         i.setAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
         if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);
-        moveTaskToBack(true);
+        // P1 matches P2: only start the floating overlay, without
+        // minimizing the current screen or sending Home to the background.
     }
 
     // Launched only after user interaction with the Notifications menu.
