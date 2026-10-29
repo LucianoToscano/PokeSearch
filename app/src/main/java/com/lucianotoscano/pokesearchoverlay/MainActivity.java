@@ -708,7 +708,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams actionRow=new LinearLayout.LayoutParams(-1,d(35));
         actionRow.topMargin=d(4);
         secondAccount.addView(actionsTwo,actionRow);
-        secondAccountLogin=homeAuthButton("Entrar Conta 2",Color.rgb(37,72,92),Color.WHITE);
+        secondAccountLogin=homeAuthButton("G  Google",Color.rgb(37,72,92),Color.WHITE);
         secondAccountManage=homeAuthButton("Gerenciar",Color.rgb(37,72,92),Color.WHITE);
         secondAccountLogout=homeAuthButton("Sair",Color.rgb(53,35,47),Color.rgb(255,167,180));
         actionsTwo.addView(secondAccountLogin,new LinearLayout.LayoutParams(0,-1,1));
@@ -716,8 +716,17 @@ public class MainActivity extends Activity {
         manageLp.leftMargin=d(5);actionsTwo.addView(secondAccountManage,manageLp);
         LinearLayout.LayoutParams logoutLp2=new LinearLayout.LayoutParams(d(57),-1);
         logoutLp2.leftMargin=d(5);actionsTwo.addView(secondAccountLogout,logoutLp2);
-        secondAccountLogin.setOnClickListener(v->openLoginDialogForSlot(2,"login"));
-        secondAccountManage.setOnClickListener(v->openLoginDialogForSlot(2,"manage"));
+        secondAccountLogin.setOnClickListener(v->{
+            preferredLoginProvider="google";openLoginDialogForSlot(2,"login");
+        });
+        secondAccountManage.setOnClickListener(v->{
+            if(PogoAccountSlots.loggedIn(this,2))
+                openLoginDialogForSlot(2,"manage");
+            else{
+                preferredLoginProvider="discord";
+                openLoginDialogForSlot(2,"login");
+            }
+        });
         secondAccountLogout.setOnClickListener(v->new AlertDialog.Builder(this)
             .setTitle("Desconectar somente a Conta 2?")
             .setMessage("A Conta 1 permanecerá conectada.")
@@ -958,8 +967,10 @@ public class MainActivity extends Activity {
             secondAccountLogin.setVisibility(connected?View.GONE:View.VISIBLE);
             secondAccountLogin.setEnabled(available);
         }
-        if(secondAccountManage!=null)
-            secondAccountManage.setVisibility(connected?View.VISIBLE:View.GONE);
+        if(secondAccountManage!=null){
+            secondAccountManage.setVisibility(available?View.VISIBLE:View.GONE);
+            secondAccountManage.setText(connected?"Gerenciar":"◉  Discord");
+        }
         if(secondAccountLogout!=null)
             secondAccountLogout.setVisibility(connected?View.VISIBLE:View.GONE);
         for(boolean secondary:new boolean[]{false,true}){
