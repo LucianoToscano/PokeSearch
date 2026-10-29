@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT181 QA — Aviso de atualização acima das Pokébolas (29/10/2026)
+
+**Solicitação posterior à autorização da LT180:** preparar **para a próxima versão** o aviso de atualização GitHub/Drive na parte de cima da Home, imediatamente abaixo do cabeçalho e **acima das duas Pokébolas**. Implementado em branch `feature/lt181-update-banner-above-pokeballs-20261029`: `screen.addView(homeUpdateHolder,1,updateLp)`, sem duplicar card e sem espaço vazio quando não houver versão. Ações baixar/verificação, Depois/Ignorar, Drive legado e GitHub continuam preservadas. Teste `lt181-top-update-banner.test.js`, notas `minVersionCode=54386` preparadas. **Não mesclar nem publicar a LT181 com o lançamento LT180**; aguardar QA e autorização de nova versão. [Detalhes LT181](LT181_UPDATE_BANNER_ABOVE_POKEBALLS_20261029.md).
+
+---
+
 ## LT180 QA — ícone ↻ de Doce Raro animado (29/10/2026)
 
 **Distribuição LT180 autorizada:** proprietário pediu novamente enviar para todos. CI assinado da revisão funcional **SUCCESS** [#40947947148](https://github.com/LucianoToscano/PokeSearch/actions/runs/40947947148), artefato QA [#12929519250](https://github.com/LucianoToscano/PokeSearch/actions/runs/40947947148/artifacts/12929519250). Workflow oficial protegido `lt180-candy-menus-official-release.yml` será executado após merge #136, verificando GitHub `latest=v0.01.79-54384` e assinatura v2; ainda não afirmar distribuição até confirmação real. Próxima versão (LT181): mover **aviso de atualização** para acima das Pokébolas no topo, sem alterar LT180. Referência detalhada [LT180](LT180_CANDY_REFRESH_SPIN_QA_20261029.md).
