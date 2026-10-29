@@ -24,7 +24,7 @@ assert.match(check,/observedLoginProvider.isEmpty\(\)&&\s*!loginDiscoveryStarted
 assert.match(check,/if\("manage".equals\(loginPurpose\)\)\{/);
 assert.match(check,/profileCaptureInProgress=true/);
 assert.match(check,/captureOfficialProfile\(view,pageGeneration\)/);
-assert.match(onFinish,/if\(!loginSessionNotified\)checkLoginSession\(view,14,generation\)/);
+assert.match(onFinish,/if\(!loginSessionNotified\)checkLoginSession\(view,24,generation\)/);
 assert.match(main,/onReceivedHttpError\(WebView view,/);
 assert.match(main,/request.isForMainFrame\(\)/);
 assert.match(main,/BugReport.log\(MainActivity.this,"AUTH"/);
