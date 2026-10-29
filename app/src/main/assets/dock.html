@@ -4293,12 +4293,23 @@ body.popup-window.controls-window #choices.morePanel>.quickMoreAction{
  min-width:0!important;max-width:100%!important;
  height:30px!important;min-height:30px!important;max-height:30px!important;
  padding:0!important;margin:0!important;
- background:var(--visual-menu-readable-bg,var(--visual-menu-button-bg,#28292cce))!important;
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
  color:var(--visual-menu-fg,#f2f7fc)!important;
  border:1px solid var(--visual-menu-border,#ffffff48)!important;
  border-radius:7px!important;
  box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0006)!important;
  background-clip:padding-box!important;
+}
+/* LT181: the ••• Reportar / Doar / Fechar tiles MUST take the same
+   live Editor Visual opacity as the main Pokébola menu actions. Earlier
+   readable-bg raised alpha independently and ignored the user's slider. */
+body.controls-window #choices.morePanel>.quickMoreAction,
+body.popup-window.controls-window #choices.morePanel>.quickMoreAction{
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+ border-color:var(--visual-menu-border,rgba(227,233,241,.22))!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0004)!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
 }
 </style></head><body>
 <div id="shell">
