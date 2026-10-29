@@ -75,6 +75,7 @@ public class MainActivity extends Activity {
     private Button secondAccountLogin,secondAccountManage,secondAccountLogout,secondTrainerAction;
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
+    private int profileCaptureRetryCount=0; // bounded React/profile hydration after OAuth
     private boolean profileDiscoveryAttempted=false;
     private android.app.Dialog loginDialog;
     private boolean loginSessionNotified=false;
@@ -1152,7 +1153,11 @@ public class MainActivity extends Activity {
         if(secondTrainerDetails!=null){
             secondTrainerDetails.setText(linked?(details.isEmpty()?
                 (team.isEmpty()?"Sem equipe":team):"★ "+details):
-                "Gerencie seu vínculo no PoGoCoordinates");
+                "unlinked".equals(two.getString("profileTrainerState","unknown"))?
+                    "Discord".equals(two.getString("profileProvider",""))?
+                        "Discord autorizado · vincule seu treinador no site":
+                        "Conta autorizada · vincule seu treinador no site":
+                    "Confira seu vínculo no PoGoCoordinates");
             secondTrainerDetails.setTextColor("Mystic".equals(team)?Color.rgb(104,183,255):
                 "Valor".equals(team)?Color.rgb(255,130,134):
                 "Instinct".equals(team)?Color.rgb(255,211,99):Color.rgb(165,185,214));
@@ -1166,7 +1171,8 @@ public class MainActivity extends Activity {
         if(secondTrainerCode!=null)secondTrainerCode.setText(linked?
             (showCode?code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8):
                 "XXXX XXXX XXXX"):"");
-        if(secondTrainerAction!=null)secondTrainerAction.setText(linked?"Remover":"Gerenciar");
+        if(secondTrainerAction!=null)secondTrainerAction.setText(linked?"Remover":
+            "unlinked".equals(two.getString("profileTrainerState","unknown"))?"Vincular":"Gerenciar");
         if(secondTrainerCodeGroup!=null)
             secondTrainerCodeGroup.setVisibility(connected?View.VISIBLE:View.GONE);
         // Each Pokébola may independently use either account and a VIP trainer.
@@ -2291,7 +2297,9 @@ public class MainActivity extends Activity {
         if(trainerDetails!=null){
             trainerDetails.setText(linked?(details.isEmpty()?
                 (team.isEmpty()?"Sem equipe":team):"★ "+details):
-                "Gerencie seu vínculo no PoGoCoordinates");
+                "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?
+                    "Conta autorizada · vincule seu treinador no site":
+                    "Confira seu vínculo no PoGoCoordinates");
             trainerDetails.setTextColor("Mystic".equals(team)?Color.rgb(104,183,255):
                 "Valor".equals(team)?Color.rgb(255,130,134):
                 "Instinct".equals(team)?Color.rgb(255,211,99):
@@ -2308,7 +2316,8 @@ public class MainActivity extends Activity {
             trainerCode.setText(prefs.getBoolean("homeShowTrainerCode",true)?
                 code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8):
                 "XXXX XXXX XXXX");
-        if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
+        if(trainerAction!=null)trainerAction.setText(linked?"Remover":
+            "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?"Vincular":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
             "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
     }
@@ -2460,6 +2469,7 @@ public class MainActivity extends Activity {
                 // metadata is at /profile, not the search view.
                 profileCaptureInProgress=true;
                 avatarReadRetryCount=0;
+                profileCaptureRetryCount=0;
                 if("/profile".equals(current.getPath())){
                     captureOfficialProfile(view,pageGeneration);
                 }else{
@@ -2467,11 +2477,15 @@ public class MainActivity extends Activity {
                     if(loginCover!=null)loginCover.setVisibility(View.VISIBLE);
                     view.loadUrl("https://pogocoordinates.com/profile");
                 }
-                // Site-origin failures must never trap the user in a page.
+                // A completed OAuth response is not proof that /profile hydrated.
+                // Never silently close and report an unverified trainer as absent.
+                // If the official React profile is slow, reveal the genuine site.
                 view.postDelayed(()->{
-                    if(view==website&&loginAutoReturnQueued&&
-                       loginDialog!=null&&loginDialog.isShowing())
-                        loginDialog.dismiss();
+                    if(view==website&&loginAutoReturnQueued&&profileCaptureInProgress&&
+                       loginDialog!=null&&loginDialog.isShowing()){
+                        if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                        if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    }
                 },6500L);
             }else{
                 // Search does not expose a Shiny badge for unlinked trainers.
@@ -2604,7 +2618,30 @@ public class MainActivity extends Activity {
             }
             if(!parsed){
                 // A returned 200 is not proof that React rendered the cards.
-                view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                // Retry React hydration, but never spin forever on site errors.
+                if(++profileCaptureRetryCount<=16){
+                    view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                }else{
+                    profileCaptureInProgress=false;
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    Toast.makeText(this,"Login reconhecido. Não foi possível verificar o perfil; confira no site oficial.",
+                        Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+            // Unknown is not proof of an unlinked trainer. Give React time
+            // to render the account cards before finalizing the local profile.
+            if("unknown".equals(PogoAccountSlots.prefs(this,activeLoginSlot)
+                    .getString("profileTrainerState","unknown"))&&
+                    !"manage".equals(loginPurpose)){
+                if(++profileCaptureRetryCount<=16){
+                    view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                }else{
+                    profileCaptureInProgress=false;
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    Toast.makeText(this,"Discord/Google autorizado. Vínculo do treinador ainda não confirmado; confira no site.",
+                        Toast.LENGTH_LONG).show();
+                }
                 return;
             }
             if(avatarAwaitingHydration&&avatarReadRetryCount<2){
@@ -2643,7 +2680,13 @@ public class MainActivity extends Activity {
             profileCaptureInProgress=false;
             refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
-               loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+               loginDialog!=null&&loginDialog.isShowing()){
+                if("unlinked".equals(PogoAccountSlots.prefs(this,activeLoginSlot)
+                        .getString("profileTrainerState","unknown")))
+                    Toast.makeText(this,"Login autorizado. Para usar Shiny, toque em Vincular e associe seu treinador no PoGoCoordinates.",
+                        Toast.LENGTH_LONG).show();
+                loginDialog.dismiss();
+            }
         });
     }
     private void openOfficialTrainerLink(WebView view,int generation,int remaining){
