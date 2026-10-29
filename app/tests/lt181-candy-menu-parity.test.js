@@ -17,8 +17,8 @@ assert(candy.includes("height:24px!important"),"Candy location slider row is P1 
 assert(candy.includes("height:29px!important"),"Candy radius/action row is P1 29px");
 assert(candy.includes("height:30px!important"),"Candy interval buttons use P1 tiles");
 assert(candy.includes("grid-template-columns:repeat(2,minmax(0,1fr))"),"Information menu is 2-column compact grid");
-assert(candy.includes("requestHeight(141,false)"),"Candy location native popup is compact");
-assert(candy.includes("requestHeight(116,false)"),"Candy information popup is compact");
+assert(candy.includes("requestHeight(172,false)"),"Candy location native popup is compact");
+assert(candy.includes("requestHeight(142,false)"),"Candy information popup is compact");
 assert(candy.includes("requestHeight(34+6*30+5*3+6,false)"),"Candy interval menu is six compact tiles");
 assert(android.includes('menuParams.width=dp(h>34?("period".equals(panel)?142:158):142)'),
  "Android window fits compact 148px card, not old 240dp card");
@@ -73,7 +73,7 @@ assert.equal(styles["--visual-menu-blur"],"8px");
 assert.equal(document.body.classList.contains("visual-light-menu"),true);
 ctx.window.syncCandy(JSON.stringify({name:false,location:false,despawn:true,distance:false,period:3}));
 vm.runInContext('openPanel("infos")',ctx);
-assert.equal(calls.height.at(-1)[0],116);
+assert.equal(calls.height.at(-1)[0],142);
 const infoHtml=elements.get("choices").innerHTML;
 for(const label of ["Nome","Local","Despawn","Dist."]){
  assert(infoHtml.includes(label),label+" exists");
@@ -87,7 +87,7 @@ assert.equal(calls.info[0][1],true);
 assert(elements.get("choices").innerHTML.includes('infoTile chosen'),
  "Native-confirmed display state is rendered as chosen");
 vm.runInContext('openPanel("location")',ctx);
-assert.equal(calls.height.at(-1)[0],141);
+assert.equal(calls.height.at(-1)[0],172);
 vm.runInContext('openPanel("period")',ctx);
 assert.equal(calls.height.at(-1)[0],235);
 console.log("LT181: P1 location+period+info pixel geometry, full theme slider and ••• actions PASS");
