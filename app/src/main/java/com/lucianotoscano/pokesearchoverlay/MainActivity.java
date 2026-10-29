@@ -122,6 +122,7 @@ public class MainActivity extends Activity {
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
+    private ImageButton rareCandyControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
@@ -209,6 +210,7 @@ public class MainActivity extends Activity {
         if(!state.allowed){
             stopService(new Intent(this,OverlayService.class));
             stopService(new Intent(this,SecondaryOverlayService.class));
+            stopService(new Intent(this,RareCandyOverlayService.class));
             refreshHomeOverlay();
             if(availabilityDialog==null||!availabilityDialog.isShowing()){
                 availabilityDialog=new AlertDialog.Builder(this)
@@ -452,7 +454,7 @@ public class MainActivity extends Activity {
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
         // Reserve the four native 34dp action targets (plus 5dp margins).
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(28)-d(38)-d(6)-(d(34)*3+d(5)*2)-d(3);
+            -d(28)-d(38)-d(6)-(d(34)*4+d(5)*3)-d(3);
         int wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
@@ -476,6 +478,19 @@ public class MainActivity extends Activity {
             homeLightMode?Color.argb(110,67,98,128):Color.argb(90,180,221,255)));
         controls.addView(homeThemeButton,new LinearLayout.LayoutParams(d(34),d(34)));
         homeThemeButton.setOnClickListener(v->toggleHomeTheme());
+
+        // LT175: a launcher for a THIRD, independent floating bubble.
+        rareCandyControl=new ImageButton(this);
+        rareCandyControl.setImageBitmap(RareCandyOverlayService.loadIcon(this));
+        rareCandyControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        rareCandyControl.setPadding(d(3),d(3),d(3),d(3));
+        rareCandyControl.setContentDescription("Ativar overlay Doce Raro");
+        rareCandyControl.setBackground(homeSurface(
+            homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+        LinearLayout.LayoutParams candyLp=new LinearLayout.LayoutParams(d(34),d(34));
+        candyLp.leftMargin=d(5);
+        controls.addView(rareCandyControl,candyLp);
+        rareCandyControl.setOnClickListener(v->toggleRareCandyOverlay());
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
@@ -1592,6 +1607,25 @@ public class MainActivity extends Activity {
             .putBoolean("alerts",false).putString("alertsMode","off")
             .putBoolean("secondaryInitializedV1",true).apply();
     }
+    private void toggleRareCandyOverlay(){
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
+        if(RareCandyOverlayService.isRunning()){
+            stopService(new Intent(this,RareCandyOverlayService.class));
+            Toast.makeText(this,"Doce Raro desativado",Toast.LENGTH_SHORT).show();
+        }else{
+            if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
+                startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:"+getPackageName())),101);
+                return;
+            }
+            Intent i=new Intent(this,RareCandyOverlayService.class);
+            if(Build.VERSION.SDK_INT>=26)startForegroundService(i);else startService(i);
+            Toast.makeText(this,"Doce Raro flutuante ativado",Toast.LENGTH_SHORT).show();
+        }
+        if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,600);
+    }
     private void toggleSecondaryOverlay(){
         if(!AppAvailability.isAllowed(this)){
             applyAppAvailability(AppAvailability.cached(this));return;
@@ -1827,6 +1861,15 @@ public class MainActivity extends Activity {
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
     }
     private void refreshHomeOverlay(){
+        if(rareCandyControl!=null){
+            boolean active=RareCandyOverlayService.isRunning();
+            rareCandyControl.setBackground(homeSurface(
+                active?Color.rgb(18,94,82):
+                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),
+                10,0));
+            rareCandyControl.setContentDescription(active?
+                "Desativar overlay Doce Raro":"Ativar overlay Doce Raro");
+        }
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
         overlayControl.setImageResource(on?R.drawable.personalizado:R.drawable.sem_filtro);
@@ -2276,6 +2319,8 @@ public class MainActivity extends Activity {
         // Never remove Account 2 cookies or stop its independent Pokébola.
         if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==1)
             stopService(new Intent(this,OverlayService.class));
+        if(RareCandyOverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==1)
+            stopService(new Intent(this,RareCandyOverlayService.class));
         if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==1)
             stopService(new Intent(this,SecondaryOverlayService.class));
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
