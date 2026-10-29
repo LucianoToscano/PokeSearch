@@ -22,6 +22,6 @@ assert.ok(html.includes("#major{display:grid;width:100%;max-width:100%;"),"resto
 assert.ok(html.includes("grid-template-columns:minmax(88px,1fr) 42px 38px;"),"IV PC Nv not crushed again");
 assert.ok(html.includes("#major .statTile{height:23px;min-height:23px;max-height:23px;"),"requested stat height unchanged");
 assert.ok(java.includes("DETAIL_DP=200"),"card width not cut further");
-assert.ok(html.includes('Math.ceil(document.getElementById("panel").scrollHeight)+3'),"native card still auto-sizes vertically");
+assert.ok(html.includes('const height=Math.ceil(panel.scrollHeight)+3'),"native card still auto-sizes vertically");
 assert.ok(html.includes('#artColumn.gengarSprite.gengarHalloween #img'),"Halloween sprite correction retained");
 console.log("LT145 QA20: metadata directly under Pokémon name; no blank header row; stats and sprite adjustments intact PASS");
