@@ -104,8 +104,20 @@ final class OtaAssets {
                 path.endsWith(".png")?"image/png":
                 path.endsWith(".svg")?"image/svg+xml":
                 path.endsWith(".webp")?"image/webp":"application/octet-stream";
+            InputStream content=open(c,path);
+            // Preserve signed source bytes and legacy test contracts. In the
+            // protected HTTPS origin only, translate packaged Android asset
+            // URLs to this very same local asset loader. Without this, Chromium
+            // blocks file:// sprites requested by an https:// page.
+            if(path.endsWith(".html")||path.endsWith(".js")){
+                byte[] original=read(content,MAX_FILE);
+                String translated=new String(original,StandardCharsets.UTF_8)
+                    .replace("file:///android_asset/",PREFIX);
+                return new WebResourceResponse(mime,"UTF-8",
+                    new ByteArrayInputStream(translated.getBytes(StandardCharsets.UTF_8)));
+            }
             return new WebResourceResponse(mime,
-                mime.startsWith("image/")?null:"UTF-8",open(c,path));
+                mime.startsWith("image/")?null:"UTF-8",content);
         }catch(Exception ignored){return null;}
     }
     static InputStream open(Context c,String name)throws java.io.IOException{
