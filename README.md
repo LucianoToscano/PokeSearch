@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT171 · 0.01.71 · 54376
+## Versão oficial atual — LT172 · 0.01.72 · 54377
+
+[GitHub Release LT172](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.72-54377) · [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.72-54377/PokeSearch-v0.01.72-LT.apk) · [CI oficial SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40909102893).
+
+**APK** `PokeSearch-v0.01.72-LT.apk` (49.514.561 bytes), SHA-256 `5b407116707beacb1c41400c05eceb8d91199496bfb2b7d9ad29b0ebfbd63a2f`; SOURCE_COMMIT `40e94bafe86dfb778be719e0cf1310a7f3085457`. Certificado Android v2 permanente, R8 e ZIP verificados.
+
+**Novidades:** cards completos para Conta 1/Conta 2 e escolha de Treinador 1/2 VIP por Pokébola preservados; aviso oficial **Taxa Limitada PoGoCoordinates ⓘ** com explicação e tempo apenas se oferecido pelo site; contador circular de coordenadas; menu Mais sem fundo preto comum; Pokébola 1 sem minimizar; atalho oficial ao vínculo de treinador com confirmação manual. Instalação pelo atualizador do app depende da aceitação no Android. **QA físico Samsung pendente**.
+
+[Registro canônico](docs/ESTADO_CANONICO_LT172_20261029.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
+
+---
+
+## Histórico — versão oficial anterior LT171 · 0.01.71 · 54376
 
 **Atualização pública confirmada:** [GitHub Release LT171](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.71-54376) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.71-54376/PokeSearch-v0.01.71-LT.apk) · [CI oficial SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40906715606).
 
