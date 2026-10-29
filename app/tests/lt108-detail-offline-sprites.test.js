@@ -25,10 +25,14 @@ check("Furfrou Natural is precisely the normal coat with usable sprite URL",()=>
   assert.equal(r.cards[0].image,base+"676.png",form);
  }
 });
-check("Furfrou trims and regional costumes are NEVER replaced by base",()=>{
+check("Furfrou trims have their verified GO form art, never the ordinary base",()=>{
  for(const form of ["Dandy","Debutante","Heart","Diamond","Matron","Pharaoh","Kabuki","La Reine"]){
-  assert.equal(api(form).cards[0].image,"",form);
-  assert.equal(helper.resolve(card({form,image:""})).src,"",form);
+  assert.equal(api(form).cards[0].image,"",form); // Search API does not provide art URLs.
+  const art=helper.resolve(card({form,image:""}));
+  assert.ok(art.src.includes("pm676.f"+form.toUpperCase().replace(/ /g,"_")+".icon.png"),
+    form+" must resolve its verified same-form GO sprite");
+  assert.equal(art.goExact,true);
+  assert.ok(!art.src.includes("/base/676.png"),"Never substitute Natural for a trim");
  }
  assert.equal(api("Natural",{costume_id:32}).cards[0].image,"");
 });
@@ -54,8 +58,9 @@ check("results and details use same strictly verified local asset path",()=>{
 });
 check("provider-only forms and data images retain their own exact URLs",()=>{
  const provider="https://trusted.example.org/unknown-special-form.png";
- assert.deepEqual(helper.resolve({name:"Furfrou",number:"#676",form:"Dandy",image:provider}),
-  {src:provider,original:provider,offline:false});
+ const fromSite=helper.resolve({name:"Furfrou",number:"#676",form:"Dandy",
+  image:provider,imageFromSite:true});
+ assert.equal(fromSite.src,provider,"Original provider image takes priority when verified");
  assert.equal(helper.resolve({image:"data:image/png;base64,aGVsbG8="}).src,"data:image/png;base64,aGVsbG8=");
  assert.equal(helper.resolve({image:base+"1026.png"}).offline,false);
 });
