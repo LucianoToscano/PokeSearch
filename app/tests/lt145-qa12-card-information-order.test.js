@@ -14,7 +14,7 @@ assert.ok(script.includes('[h(c.number),gender].filter(Boolean)'));
 assert.ok(script.includes('[c.size,c.form].filter(Boolean)'));
 assert.ok(script.includes('statTile("PC",c.cp)+statTile("Nv.",c.level)'));
 assert.ok(script.includes('class="ivPercent"'),"percent inside IV card");
-assert.ok(script.includes('h(showRaw?raw:"—")'),"raw IV still uses original data");
+assert.ok(script.includes('h(showRaw?ivDisplay.raw:"—")'),"raw IV still uses original data");
 assert.ok(script.includes('rankLine.textContent=rankText;'),"rank preserved");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red button preserved");
 assert.ok(script.includes('item("Distância",c.distance)'));
