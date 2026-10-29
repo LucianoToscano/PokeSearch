@@ -65,7 +65,10 @@ public final class RareCandyOverlayService extends Service {
     private WindowManager wm;
     private FrameLayout bubbleWindow;
     private LinearLayout resultsShell,resultsList;
-    private WindowManager.LayoutParams bubbleParams,resultsParams;
+    private FrameLayout candyMenuRoot;
+    private WebView candyMenuPanel;
+    private boolean candyMenuVisible=false,candyMenuLoaded=false;
+    private WindowManager.LayoutParams bubbleParams,resultsParams,menuParams;
     private WebView site;
     private Bitmap icon;
     private TextView status;
@@ -166,6 +169,7 @@ public final class RareCandyOverlayService extends Service {
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         createBubble();
         createResults();
+        createCandyMenu();
         attachSource();
         main.post(tick);
     }
@@ -207,8 +211,7 @@ public final class RareCandyOverlayService extends Service {
             final Runnable longPress=()->{
                 if(destroyed||moved)return;
                 held=true;
-                OverlayQuickMenus.showCandy(RareCandyOverlayService.this,
-                    bubbleParams.y+dp(BUBBLE_DP),actions);
+                toggleCandyMenu();
             };
             @Override public boolean onTouch(View view,MotionEvent event){
                 switch(event.getActionMasked()){
@@ -231,6 +234,7 @@ public final class RareCandyOverlayService extends Service {
                             try{wm.updateViewLayout(bubbleWindow,bubbleParams);}
                             catch(Exception ignored){}
                             placeResults();
+                            placeCandyMenu();
                         }
                         return true;
                     case MotionEvent.ACTION_CANCEL:
@@ -343,9 +347,172 @@ public final class RareCandyOverlayService extends Service {
     private void toggleResults(){
         visible=!visible;
         if(resultsShell!=null)resultsShell.setVisibility(visible?View.VISIBLE:View.GONE);
+        if(candyMenuVisible&&!visible)closeCandyMenu();
         if(visible){
             placeResults();render();
             if(!ready||cards.isEmpty())refresh(true);
+        }
+    }
+
+    /** Candy toolbar reuses the exact 30dp icon tiles, colors, popup fields and
+     * 2dp spacing from the Pokébola dock, not unrelated native Dialog buttons. */
+    private void createCandyMenu(){
+        candyMenuRoot=new FrameLayout(this);
+        candyMenuRoot.setBackgroundColor(Color.TRANSPARENT);
+        candyMenuPanel=new WebView(this);
+        candyMenuPanel.setBackgroundColor(Color.TRANSPARENT);
+        candyMenuPanel.getSettings().setJavaScriptEnabled(true);
+        candyMenuPanel.getSettings().setAllowContentAccess(false);
+        candyMenuPanel.getSettings().setAllowFileAccessFromFileURLs(false);
+        candyMenuPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
+        candyMenuPanel.getSettings().setUseWideViewPort(true);
+        candyMenuPanel.getSettings().setLoadWithOverviewMode(false);
+        candyMenuPanel.addJavascriptInterface(new CandyMenuBridge(),"Native");
+        candyMenuRoot.addView(candyMenuPanel,new FrameLayout.LayoutParams(-1,-1));
+        candyMenuPanel.setWebViewClient(new WebViewClient(){
+            @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
+                return !allowedMenuUrl(url);
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view,
+                    android.webkit.WebResourceRequest request){
+                return !allowedMenuUrl(request.getUrl().toString());
+            }
+            @Override public void onPageFinished(WebView view,String url){
+                if(allowedMenuUrl(url)){candyMenuLoaded=true;syncCandyMenu();}
+            }
+        });
+        menuParams=new WindowManager.LayoutParams(dp(142),dp(34),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            android.graphics.PixelFormat.TRANSLUCENT);
+        menuParams.gravity=Gravity.TOP|Gravity.LEFT;
+        placeCandyMenu();
+        candyMenuRoot.setVisibility(View.GONE);
+        wm.addView(candyMenuRoot,menuParams);
+        candyMenuPanel.loadUrl("file:///android_asset/rare_candy_controls.html");
+    }
+    private static boolean allowedMenuUrl(String url){
+        return "file:///android_asset/rare_candy_controls.html".equals(url);
+    }
+    private void syncCandyMenu(){
+        if(!candyMenuLoaded||candyMenuPanel==null)return;
+        JSONObject state=new JSONObject();
+        try{
+            state.put("coords",coords).put("radius",radius).put("period",period)
+                .put("location",showLocation).put("despawn",showDespawn)
+                .put("distance",showDistance);
+            candyMenuPanel.evaluateJavascript("window.syncCandy("+
+                JSONObject.quote(state.toString())+")",null);
+        }catch(org.json.JSONException ignored){}
+    }
+    private void placeCandyMenu(){
+        if(menuParams==null||bubbleParams==null||wm==null)return;
+        int width=getResources().getDisplayMetrics().widthPixels;
+        int height=getResources().getDisplayMetrics().heightPixels;
+        int right=bubbleParams.x+dp(BUBBLE_DP)+dp(2);
+        int left=bubbleParams.x-menuParams.width-dp(2);
+        menuParams.x=right+menuParams.width<=width?right:
+            left>=0?left:Math.max(0,width-menuParams.width);
+        int y=bubbleParams.y;
+        menuParams.y=Math.max(0,Math.min(
+            Math.max(0,height-menuParams.height),y));
+        if(candyMenuRoot!=null&&candyMenuRoot.isAttachedToWindow()){
+            try{wm.updateViewLayout(candyMenuRoot,menuParams);}catch(Exception ignored){}
+        }
+    }
+    private void toggleCandyMenu(){
+        if(candyMenuVisible){closeCandyMenu();return;}
+        candyMenuVisible=true;
+        menuParams.height=dp(34);
+        candyMenuRoot.setVisibility(View.VISIBLE);
+        placeCandyMenu();
+        syncCandyMenu();
+    }
+    private void closeCandyMenu(){
+        candyMenuVisible=false;
+        if(candyMenuRoot!=null)candyMenuRoot.setVisibility(View.GONE);
+        if(menuParams!=null){
+            menuParams.height=dp(34);
+            menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        }
+    }
+    private final class CandyMenuBridge {
+        private boolean permitted(){return candyMenuLoaded&&
+            candyMenuPanel!=null&&allowedMenuUrl(candyMenuPanel.getUrl())&&!destroyed;}
+        @android.webkit.JavascriptInterface public void closeCandyMenu(){
+            main.post(()->{if(permitted())RareCandyOverlayService.this.closeCandyMenu();});
+        }
+        @android.webkit.JavascriptInterface public void refreshCandy(){
+            main.post(()->{if(permitted())refresh(true);});
+        }
+        @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus){
+            main.post(()->{
+                if(!permitted()||menuParams==null||!candyMenuVisible)return;
+                int h=Math.max(34,Math.min(240,height));
+                menuParams.height=dp(h);
+                menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
+                    (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+                placeCandyMenu();
+            });
+        }
+        @android.webkit.JavascriptInterface public void candyMenuFocus(boolean focus){
+            main.post(()->{
+                if(!permitted()||menuParams==null||!candyMenuVisible)return;
+                menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
+                    (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+                placeCandyMenu();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setCandyPeriod(int selected){
+            if(selected!=1&&selected!=3&&selected!=5)return;
+            main.post(()->{
+                if(!permitted())return;
+                period=selected;prefs.edit().putInt("period",selected).apply();
+                syncCandyMenu();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setCandyInfo(String field,boolean enabled){
+            main.post(()->{
+                if(!permitted())return;
+                SharedPreferences.Editor editor=prefs.edit();
+                if("location".equals(field)){
+                    showLocation=enabled;editor.putBoolean("candyShowLocation",enabled);
+                }else if("despawn".equals(field)){
+                    showDespawn=enabled;editor.putBoolean("candyShowDespawn",enabled);
+                }else if("distance".equals(field)){
+                    showDistance=enabled;editor.putBoolean("candyShowDistance",enabled);
+                }else return;
+                editor.apply();render();syncCandyMenu();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setCandyLocation(String center,int meters){
+            main.post(()->{
+                if(!permitted()||meters<1||meters>1000000||
+                   (!center.isEmpty()&&!validCoords(center)))return;
+                coords=center.trim();radius=meters;cards.clear();
+                prefs.edit().putString("coords",coords).putInt("radius",meters).apply();
+                render();syncCandyMenu();refresh(true);
+            });
+        }
+        @android.webkit.JavascriptInterface public void pasteCandyLocation(){
+            main.post(()->{
+                if(!permitted())return;
+                ClipboardManager clip=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                if(clip==null||!clip.hasPrimaryClip())return;
+                CharSequence val=clip.getPrimaryClip().getItemAt(0).coerceToText(
+                    RareCandyOverlayService.this);
+                String point=val==null?"":val.toString().trim();
+                if(validCoords(point))candyMenuPanel.evaluateJavascript(
+                    "window.setPastedCoords("+JSONObject.quote(point)+")",null);
+                else Toast.makeText(RareCandyOverlayService.this,
+                    "Área de transferência sem coordenadas",Toast.LENGTH_SHORT).show();
+            });
         }
     }
     private boolean isOfficialSearch(){
@@ -674,9 +841,11 @@ public final class RareCandyOverlayService extends Service {
             site.destroy();site=null;
         }
         if(wm!=null){
+            if(candyMenuRoot!=null){try{wm.removeView(candyMenuRoot);}catch(Exception ignored){}}
             if(resultsShell!=null){try{wm.removeView(resultsShell);}catch(Exception ignored){}}
             if(bubbleWindow!=null){try{wm.removeView(bubbleWindow);}catch(Exception ignored){}}
         }
+        if(candyMenuPanel!=null){candyMenuPanel.destroy();candyMenuPanel=null;}
         if(icon!=null&&!icon.isRecycled())icon.recycle();
         super.onDestroy();
     }
