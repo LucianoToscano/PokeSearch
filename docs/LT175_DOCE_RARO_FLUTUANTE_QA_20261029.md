@@ -107,3 +107,16 @@ Relato do usuário após instalar LT177 no Samsung: o nome Doce Raro não tinha 
 - Workflow novo de release **apenas depois de merge na main**: `.github/workflows/lt178-official-release.yml`. Recusa publicar se `latest` não for `v0.01.73-54378` ou tag já existir; executa regressões, recompila com assinatura permanente e publica `v0.01.78-54383` no GitHub Releases/latest. O atualizador do app detecta o APK novo ao consultar a release oficial; não força instalação.
 - A ponte Drive tem de ser tratada separadamente, pois o workflow de GitHub não atualiza arquivos no Drive. **Não afirmar sincronização Drive sem confirmação de ID e upload.**
 - Registrar SHA-256, tamanho, sucesso do workflow oficial e URL real da release após a publicação. Testes físicos dos dados da API ainda merecem validação final.
+
+
+### LT178 PUBLICADA OFICIALMENTE — 29/10/2026
+
+- Merge confirmado: PR #134 → `main`, commit `7344f6039f4ba388cfbc42fa492e1327ac6fdf58`.
+- [GitHub Actions — publicação oficial concluída SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40939407855).
+- Tag `v0.01.78-54383`, versão Android `0.01.78`, versionCode `54383`.
+- [GitHub Release/latest LT178](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.78-54383).
+- [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.78-54383/PokeSearch-v0.01.78-LT.apk), **49.541.890 bytes**.
+- SHA-256 do APK: `45571c188dcc7ecb1290963674d0a81d67ea450e66a32e0774072167b3e1df4e` (digest publicado pela API do GitHub e verificado no workflow).
+- `Releases/latest` confirmado como LT178 (draft=false, prerelease=false); atualização poderá ser vista pelo atualizador existente na próxima consulta, conforme preferências e permissões do Android. A instalação exige confirmação do usuário, sem instalação forçada.
+- **Google Drive não atualizado nesta etapa:** o registro de Drive anteriormente usado não foi encontrado no escopo da conta Drive conectada; link antigo não foi alterado nem declarado atualizado. Distribuição pública verificada via GitHub.
+- Após publicação, testes funcionais de uso real no Samsung/Moto devem validar menus, sessão autenticada, chamada API/429, contagem e cópia. O sucesso automático não equivale à homologação física.
