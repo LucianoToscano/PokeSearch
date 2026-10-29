@@ -326,6 +326,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #major .statValue.red{color:#ff9bb0}
 #major .ivTile .ivPercent{position:absolute;top:5px;right:4px;font-size:8px;line-height:12px;font-weight:800;color:#ff9bb0;pointer-events:none}
 #rankLine{margin-top:3px;font-size:9px;color:#c9d9eb;font-weight:600}
+.rankLineSafe{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box}
 #rankLine[hidden]{display:none!important}
 /* QA14 — restore near-original compact dimensions; same hierarchy, no oversized glass tiles.
    This final override beats historical QA9-QA13 rules without altering timer/coords logic. */
@@ -526,6 +527,33 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* Keep IV percentages and raw A/D/S in one verified, identical color band.
    The 100% hundo color uses the existing PokeSearch coral palette. */
 #major .ivTile .statValue.red,#major .ivTile .ivPercent{color:var(--ps-iv-color,#bac6d4)}
+
+/* LT153: compact PvP reading hierarchy. No values discarded or inferred. */
+#evoBody{padding:3px 6px 5px}
+.evoEmpty{font-size:9px;line-height:1.35;color:#c0cbd7;padding:5px 2px 4px}
+.evoLeague{margin-top:4px;padding:3px 1px 3px;font-size:10px;letter-spacing:.07px}
+.evoLine{padding:5px 2px 5px;margin:0;border-bottom:1px solid #ffffff19;line-height:1.32}
+.evoLine.isCurrent{border-left:2px solid #8ba6c4;padding-left:5px;background:#ffffff08;border-radius:3px}
+.evoLine .evoSummary{display:flex;align-items:baseline;gap:5px;min-width:0;white-space:nowrap}
+.evoLine .evoWho{min-width:0;flex:1 1 auto;font-size:10px;overflow:hidden;text-overflow:ellipsis;color:#f5f8fc}
+.evoLine .evoWho b{font-weight:800}
+.evoLine .evoWho .evoMark{font-size:9px;color:#adc6db;font-weight:600}
+.evoLine .evoCp,.evoLine .evoLevel{flex:0 0 auto;font-size:9px;color:#c4d0dd;font-weight:600;white-space:nowrap}
+.evoLine .evoPct{flex:0 0 auto;font-size:10px;color:var(--ps-rank-percent-color,#c4d0dd);font-weight:800;white-space:nowrap}
+.evoLine .evoStatsRow{display:flex;gap:12px;justify-content:flex-start;align-items:baseline;padding:2px 4px 0;min-width:0}
+.evoLine .evoMeta{display:flex;align-items:baseline;flex-wrap:wrap;margin-top:3px;color:#c4d0dd;font-size:9px;line-height:1.3}
+.evoLine .evoRankRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:4px;row-gap:2px;padding-inline:4px;text-align:center;justify-items:center}
+.evoLine .evoClass{color:#e0e8f3;font-weight:700;white-space:nowrap}
+.evoLine.best .evoClass{color:#83e7bb}
+.evoLine .evoOverall{color:#dce7f1;font-weight:700;white-space:nowrap}
+.evoLine .evoState{font-size:9px;margin-top:2px}
+#major .ivTile .ivPercent{top:2px}
+/* Symmetric insets keep the label truly centered while reserving the
+   right-hand count its own space, without changing the accessible button. */
+#coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}
+/* When reveal changes the label into coordinates, reserve equal space on
+   both sides of the text; the independent quota remains pinned right. */
+#coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -545,7 +573,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
    <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span class="despawnLabel">Despawn</span><span id="timeRemaining"></span></span>
   </div>
  </div>
- <div id="major"></div><div id="rankLine" hidden></div><div id="info"></div>
+ <div id="major"></div><div id="rankLine" class="rankLineSafe" hidden></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -819,7 +847,7 @@ window.coordsResult=function(coords,message){
  resizeEvolutionPanel();
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let detailIdentity="",evolutionExpanded=false;
+let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
@@ -851,27 +879,91 @@ function toggleEvolutionDetails(){
 function evolutionRow(x,first){
  if(!x||typeof x!=="object")return "";
  const rank=Number(x.rank),overall=Number(x.overallRank);
- if(!Number.isInteger(rank)||rank<1||rank>4096)return "";
+ const hasClass=Number.isInteger(rank)&&rank>=1&&rank<=4096;
+ const hasOverall=Number.isInteger(overall)&&overall>=1;
+ if(!hasClass&&!hasOverall)return "";
  const name=String(x.name||"").slice(0,90);
  const pct=/^(?:\d{1,3}),\d{2}$/.test(String(x.statProductPct||""))?
   String(x.statProductPct):"";
  const cp=Number(x.cp),level=Number(x.level);
- const data=[];
- if(Number.isFinite(cp)&&cp>=10&&cp<=10000)data.push("PC "+Math.floor(cp));
- if(Number.isFinite(level)&&level>=1&&level<=55)data.push("Nv "+level.toFixed(1).replace(".",","));
- if(Number.isInteger(overall)&&overall>0)data.push("RG#"+overall);
+ const stats=[];
+ if(hasClass&&Number.isFinite(cp)&&cp>=10&&cp<=10000)
+  stats.push('<span class="evoCp">PC '+Math.floor(cp)+'</span>');
+ if(hasClass&&Number.isFinite(level)&&level>=1&&level<=55)
+  stats.push('<span class="evoLevel">Nv. '+level.toFixed(1).replace(".",",")+'</span>');
+ const ranks=['<span class="evoClass" title="Posição da combinação de IVs nesta espécie e liga">Rank Classe: '+
+  (hasClass?'#'+rank:'—')+'</span>'];
+ if(hasOverall)ranks.push('<span class="evoOverall">Rank Geral: #'+overall+'</span>');
  let state="";
- if(x.eligible===false)state="Não elegível no nível atual";
- else if(x.eligible===null)state="Elegibilidade não verificada";
- const label=(first?"Atual: ":"↳ ")+name;
- return '<div class="evoLine'+(rank===1&&x.eligible===true?' best':'')+'"><b>'+
-  h(label)+'</b> · IV#'+rank+(pct?' · '+h(pct)+'%':"")+
-  (data.length?'<div class="evoStats">'+h(data.join(" · "))+'</div>':"")+
+ if(x.eligible===false&&hasClass)state="Não elegível no nível atual";
+ else if(x.eligible===null&&hasClass)state="Elegibilidade não verificada";
+ return '<div class="evoLine'+(first?' isCurrent':'')+
+  (hasClass&&rank===1&&x.eligible===true?' best':'')+'"><div class="evoSummary">'+
+  '<span class="evoWho"><span class="evoMark">'+(first?'Atual':'↳')+'</span> <b>'+h(name)+'</b></span>'+
+  (hasClass&&pct?'<span class="evoPct" title="Eficiência relativa de IVs"'+
+   (window.PokeSearchIVDisplay?.colorForEfficiency?.(pct)?
+    ' style="--ps-rank-percent-color:'+window.PokeSearchIVDisplay.colorForEfficiency(pct)+'"':"")+
+   '>'+h(pct)+'%</span>':"")+'</div>'+
+  (stats.length?'<div class="evoStatsRow">'+stats.join("")+'</div>':"")+
+  '<div class="evoMeta evoRankRow">'+ranks.join("")+'</div>'+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
+}
+// Compact rank shown OUTSIDE the collapsed analysis in the search league.
+// The toolbar #1 is only a search threshold; use verified species IV ranks.
+function updateVisiblePvPRank(payload){
+ if(activeRankLeague!=="gl"&&activeRankLeague!=="ul")return false;
+ const league=payload.leagues.find(x=>x?.league===activeRankLeague);
+ if(!league)return false;
+ const rankLine=document.getElementById("rankLine");
+ const limit=payload.searchLeague===activeRankLeague&&
+  Number.isInteger(Number(payload.searchRankLimit))&&
+  Number(payload.searchRankLimit)>=1&&Number(payload.searchRankLimit)<=50?
+  Number(payload.searchRankLimit):null;
+ const candidates=[];
+ const add=(x,name,kind)=>{
+  const rank=Number(x?.rank);
+  if(!Number.isInteger(rank)||rank<1||rank>4096||x?.eligible===false)return;
+  candidates.push({rank,name:String(name||"").slice(0,90),kind});
+ };
+ if(league.own)add(league.own,payload.name,"current");
+ if(payload.includePreviousEvolutions!==false){
+  for(const e of Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[])
+   add(e,e.name,"evolution");
+  for(const e of Array.isArray(league.comparisons)?league.comparisons.slice(0,24):[])
+   if(e?.referenceOnly===true)add(e,e.name,"reference");
+ }
+ if(!candidates.length)return false;
+ candidates.sort((a,b)=>a.rank-b.rank||
+  (a.kind==="current"?-1:b.kind==="current"?1:0));
+ const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
+ const best=inSearch[0],label=activeRankLeague.toUpperCase();
+ if(!best){
+  // A Top-N search is NOT evidence that the base species itself is Top-N.
+  const own=candidates.find(x=>x.kind==="current");
+  rankLine.textContent=label+" · Filtro Top #"+limit+
+   (own?" · "+payload.name+" atual #"+own.rank:" · posição não identificada");
+  rankLine.title="A busca pode considerar evoluções ou uma classificação da fonte. "+
+   "Nenhuma combinação correspondente ao Top #"+limit+" foi confirmada no cálculo local.";
+  rankLine.hidden=false;
+  return false;
+ }
+ const scope=best.kind==="evolution"?" · ↳ "+best.name:
+  best.kind==="reference"?" · Ref. "+best.name:"";
+ rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
+ const own=candidates.find(x=>x.kind==="current");
+ rankLine.title="Rank dos IVs de "+best.name+" na "+
+  (activeRankLeague==="gl"?"Grande Liga":"Ultra Liga")+
+  (best.kind==="reference"?
+   ". Referência matemática: não confirma que a fantasia possa evoluir.":"")+
+  (own&&own.name!==best.name?" · "+payload.name+" atual: #"+own.rank:"")+
+  (limit!==null?" · Filtro de pesquisa: Top #"+limit:"");
+ rankLine.hidden=false;
+ return true;
 }
 window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
+ updateVisiblePvPRank(payload);
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
  const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
@@ -885,15 +977,28 @@ window.showEvolutionDetails=payload=>{
   count+=rows.length;
   if(own)ownCount++;
  }
- if(!count&&!ownCount){outer.hidden=true;return false;}
+ if(!count&&!ownCount){
+  // A missing/unverified analysis must not occupy vertical card space.
+  // A costume with no catalog mapping does NOT prove this species has no rank.
+  evolutionExpanded=false;
+  body.innerHTML="";
+  body.hidden=true;
+  outer.hidden=true;
+  document.getElementById("evoLabel").textContent="Análise PvP";
+  document.getElementById("evoChevron").textContent="▾";
+  document.getElementById("evoToggle").setAttribute("aria-expanded","false");
+  resizeEvolutionPanel();
+  return false;
+ }
  // LT66: WebView may rerender after each native status tick. Never reset
  // the reader to the top of a long PvP analysis when its content is unchanged.
  const panel=document.getElementById("panel");
  const keepScroll=panel.scrollTop;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
- document.getElementById("evoLabel").textContent=count?
-  "Evoluções PvP · "+count+" análises":
+ document.getElementById("evoLabel").textContent=payload.ivUnavailable?
+  "Análise PvP · Ranks gerais":
+  count?"Análise PvP · "+count+" avaliações":
   "Análise IV PvP · "+ownCount+" ligas";
  body.hidden=!evolutionExpanded;
  document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
@@ -915,6 +1020,7 @@ window.showDetails=(c,mode,watched)=>{
  const keepScroll=panel.scrollTop;
  const nextIdentity=evoIdentity(c);
  const changed=detailIdentity!==nextIdentity;
+ activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
@@ -1022,13 +1128,20 @@ window.showDetails=(c,mode,watched)=>{
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const ivDisplay=window.PokeSearchIVDisplay?.fromCard?.(c);
  const showRaw=ivDisplay?.valid===true;
- const showPct=showRaw;
- // Both A/D/S and % use the same approved category. When the API omits
- // ivPercent, derive it only from the explicitly returned valid raw triple.
- const ivStyle=showRaw?' style="--ps-iv-color:'+ivDisplay.color+'"':"";
+ const ivSourcePercent=showRaw?null:window.PokeSearchIVDisplay?.percentOnly?.(c);
+ const ivVisual=showRaw?ivDisplay:ivSourcePercent;
+ // Keep the section hidden until verified rows are delivered by PvPoke.
+ // The reset above already clears any old card's analysis on identity changes.
+ const showPct=ivVisual?.valid===true;
+ // A/D/S requires three verified attributes. If the source exposes only a
+ // legitimate IV percentage, show ONLY that percentage, never invented IVs.
+ const ivStyle=showPct?' style="--ps-iv-color:'+ivVisual.color+'"':"";
  const statTile=(label,value)=>'<div class="statTile"><div class="statHeading">'+h(label)+'</div><div class="statValue">'+h(value===null||value===undefined||value===""?"—":value)+'</div></div>';
  document.getElementById("major").innerHTML='<div class="statTile ivTile"'+ivStyle+'><div class="statHeading">IV</div>'+
-  (showPct?'<span class="ivPercent" title="'+(ivDisplay.derived?'Percentual calculado a partir do IV A/D/S':'Percentual de IV confirmado')+'">'+h(ivDisplay.percent)+'%</span>':"")+
+  (showPct?'<span class="ivPercent" title="'+(ivSourcePercent?.valid?
+   'IV% informado pela fonte; A/D/S não disponíveis':
+   ivDisplay.derived?'Percentual calculado a partir do IV A/D/S':'Percentual de IV confirmado')+
+   '">'+h(ivVisual.percent)+'%</span>':"")+
   '<span class="ivTypes" aria-label="Tipos do Pokémon">'+document.getElementById("types").innerHTML+'</span>'+
   '<div class="statValue red">'+h(showRaw?ivDisplay.raw:"—")+'</div></div>'+
   statTile("PC",c.cp)+statTile("Nv.",c.level);
@@ -1041,7 +1154,7 @@ window.showDetails=(c,mode,watched)=>{
   Number.isInteger(ivValue)&&ivValue>=1&&ivValue<=4096;
  // c.rank is unlabeled provider metadata; never show it as a verified IV/PvP rank.
  // Render only an explicitly identified species IV rank for a known PvP league.
- const rankText=verifiedIvRank?league.toUpperCase()+" · IV #"+ivValue:"";
+ const rankText=verifiedIvRank?league.toUpperCase()+" · Rank Classe: #"+ivValue:"";
  rankLine.textContent=rankText;
  rankLine.hidden=!verifiedIvRank;
  rankLine.title=verifiedIvRank?

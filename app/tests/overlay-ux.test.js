@@ -2625,13 +2625,20 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
    !body.innerHTML.includes("Ultra Liga")||!body.innerHTML.includes("Liga Master")||
    !body.innerHTML.includes("Não elegível no nível atual")||
    !body.innerHTML.includes("&lt;img")||body.innerHTML.includes("<img src=x")||
-   !body.innerHTML.includes("PC 1497")||!body.innerHTML.includes("Nv 29,0"))return false;
+   !body.innerHTML.includes("PC 1497")||!body.innerHTML.includes("Nv. 29,0"))return false;
  ctx.toggleEvolutionDetails();
  if(body.hidden||node("evoToggle")["aria-expanded"]!=="true")return false;
  ctx.toggleEvolutionDetails();
  if(!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
+ // For the SAME Pokémon, no verified ranks must remove the entire tab,
+ // not leave a "Sem dados" header or an empty expanded panel.
+ const empty={...detail,leagues:["gl","ul","ml"].map(league=>
+  ({league,own:null,evolutions:[]}))};
+ if(window.showEvolutionDetails(empty)!==false||!section.hidden||
+   body.innerHTML!==""||!body.hidden)return false;
  window.showDetails({...card,name:"Rookidee",sourceIndex:7},"gl",false);
- return section.hidden&&window.showEvolutionDetails(detail)===false&&
+ return section.hidden&&node("evoBody").innerHTML===""&&
+  window.showEvolutionDetails(detail)===false&&
   html.includes('Native.toggleWatch(watchName)')&&html.includes("Native.coords(currentIndex)")&&
   html.includes("window.pauseDetailTimer=()=>")&&heights.length>=4;
 });
@@ -2649,7 +2656,8 @@ test("RANK-EVO-DETAIL-03 native async bridge rejects old or mismatched results",
   !service.includes("setAllowUniversalAccessFromFileURLs(true)")&&
   !dock.includes('name:"Rookidee"')&&
   dock.includes('window.pvpEvolutionDetails=function(index)')&&
-  dock.includes("const descendants=evolutionCandidates(card,league).slice(0,24)");
+  dock.includes("const descendants=missingIv?rankedOverallOnlyEvolutions(card,league):")&&
+  dock.includes("evolutionCandidates(card,league).slice(0,24)");
 });
 
 

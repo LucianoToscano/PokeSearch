@@ -482,6 +482,33 @@
           "Validar visualmente no Samsung e na segunda Pokébola; instalação de atualizações requer ação do usuário."
         ]
       }
+    },
+    {
+      "id": "lt164-pvp-gl-top5-form-sprites-general-20261029",
+      "minVersionCode": 54369,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT164 — Rank PvP correto e card aprimorado",
+      "sections": {
+        "novidades": [
+          "Rank Classe da liga pesquisada aparece no card sem abrir toda a análise PvP.",
+          "Em buscas por pré-evoluções, identifica o Pokémon que realmente atende ao filtro. Exemplo: Noibat 0/14/12 (Rank #1600) → Noivern (Rank #5) na Grande Liga."
+        ],
+        "melhorias": [
+          "Análise PvP compacta em três linhas: Pokémon e eficiência IV, PC/Nv., Rank Classe/Rank Geral em duas áreas iguais.",
+          "Porcentagem da eficiência IV segue a paleta de cores dos IVs e os rótulos foram simplificados.",
+          "Coordenadas reveladas ficam centralizadas no botão; contador de uso permanece à direita."
+        ],
+        "correcoes": [
+          "O limite Top #5 da Pokébola não é confundido com o Rank Classe do Pokémon atual.",
+          "Aba de análise PvP fica oculta quando nenhuma avaliação verificável está disponível.",
+          "Leitura de IVs com porcentagens decimais validada; não cria atributos A/D/S ausentes.",
+          "Sprites: recuperação da imagem exata do PoGoCoordinates, com fallback de mesma forma, incluindo Shellos/Gastrodon West Sea e diferenças de Shiny.",
+          "Formas cosméticas equivalentes podem usar atributos PvP da espécie-base; Alola, Galar, Mega e outras formas de atributos diferentes permanecem separadas."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual final em Samsung e outras marcas após distribuição; poderão existir sprites sem fonte exata disponível."
+        ]
+      }
     }
   ]
 }

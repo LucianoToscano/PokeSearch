@@ -1041,10 +1041,10 @@ function nextLabelValue(root,label){
 }
 function parseCard(box,sourceIndex){
  const body=text(box),lines=body.split(/\n+/).map(clean).filter(Boolean);
- const ivMatch=body.match(/(\d{1,3})\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
+ const ivMatch=body.match(/(\d{1,3}(?:[.,]\d{1,2})?)\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
  const raw=ivMatch?[ivMatch[2],ivMatch[3],ivMatch[4]].join("/"):
     ((body.match(/(?:^|[^\d])(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})(?:[^\d]|$)/)||[])[1]||"").replace(/\s/g,"");
- const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3})\s*%/i)||[])[1]||"";
+ const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*%/i)||[])[1]||"";
  const percent=ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):labeledPct);
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
      m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
@@ -1079,7 +1079,7 @@ function parseCard(box,sourceIndex){
  const speciesKey=compact(encounterSpecies);
  // The provider may render <img>, <picture> or background-image. Read only
  // nodes inside the actual bounded encounter card (never global site images).
- const candidateNodes=Array.from(box.querySelectorAll("img,source,[style*='background']"))
+ const candidateNodes=Array.from(box.querySelectorAll("img,source,[style*='background'],[data-src],[data-original],[data-background],[class*='sprite'],[class*='pokemon-image']"))
   .slice(0,64);
  const candidateImageUrl=e=>{
   // Explicitly prefer lazy-provider attributes, then the browser's real
@@ -1092,7 +1092,13 @@ function parseCard(box,sourceIndex){
   ].filter(Boolean);
   if(e.currentSrc)values.unshift(e.currentSrc);
   if(e.src)values.push(e.src);
-  const style=String(e.style?.backgroundImage||"");
+  // Images on the authorized page may be CSS backgrounds or lazy assets.
+  // Consider candidates only inside THIS result and keep exact-form checks.
+  let style=String(e.style?.backgroundImage||"");
+  if(!style||style==="none"){
+   try{style=typeof getComputedStyle==="function"?
+      String(getComputedStyle(e)?.backgroundImage||""):"";}catch(_){}
+  }
   const match=style.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
   if(match)values.unshift(match[1]);
   for(const rawValue of values){
@@ -1181,10 +1187,16 @@ function verifiedCardIv(card){
   computed=Math.round(raw.split("/").map(Number).reduce((sum,n)=>sum+n,0)*100/45);
  }
  if(pct){
-  if(!/^(?:0|[1-9][0-9]?|100)$/.test(pct))return null;
-  const observed=Number(pct);
-  if(!POSSIBLE_IV_PERCENT.has(observed)||(computed!==null&&computed!==observed))return null;
-  computed=observed;
+  if(!/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?$/.test(pct))return null;
+  const observed=Number(pct.replace(",","."));
+  if(!Number.isFinite(observed)||observed<0||observed>100)return null;
+  const matched=Array.from({length:46},(_,sum)=>sum).find(sum=>{
+   const exact=sum*100/45;
+   return observed===Math.round(exact)||observed===Number(exact.toFixed(1))||
+    observed===Number(exact.toFixed(2));
+  });
+  if(matched===undefined||(raw&&computed!==Math.round(matched*100/45)))return null;
+  computed=Math.round(matched*100/45);
  }
  return {raw,percent:computed};
 }

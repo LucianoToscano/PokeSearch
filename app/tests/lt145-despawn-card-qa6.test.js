@@ -56,7 +56,7 @@ assert.ok(html.includes('id="timeRemaining"'),"clock value anchored to a fixed-w
 assert.ok(html.includes('id="dexGender" class="metaPair"'));
 assert.ok(html.includes('id="sizeForm" class="metaPair"'));
 assert.ok(script.includes('statTile("PC",c.cp)+statTile("Nv.",c.level)'));
-assert.ok(script.includes('h(showRaw?raw:"—")'));
+assert.ok(script.includes('h(showRaw?ivDisplay.raw:"—")'));
 assert.ok(script.includes('rankLine.textContent=rankText;'));
 // Copy feedback must follow successful native clipboard confirmation.
 assert.ok(script.includes('const didCopy=message.startsWith("✓")'));

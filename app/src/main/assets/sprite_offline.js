@@ -83,6 +83,12 @@
   const m=/^#?([0-9]{1,4})$/.exec(String(card?.number||"").trim());
   return m?Number(m[1]):0;
  }
+ // Independent Dex + species identity proof; intentionally does NOT
+ // assert that an artwork or PvP form matches a default form.
+ function verifiedSpeciesIdentity(card){
+  const dex=dexOf(card);
+  return dex>=1&&dex<=1025&&nameKey(card?.name)===BASE_SPECIES[dex];
+ }
  function verifiedBase(card){
   if(!card||typeof card!=="object")return false;
   const dex=dexOf(card),species=nameKey(card.name),form=nameKey(card.form);
@@ -394,10 +400,31 @@
   return {src:LOCAL+"forms/"+filename,original:"",offline:true,
    officialForm:true,exactForm:true};
  }
+ // PokeAPI species/form catalogue: West Sea is the *default* form for
+ // Shellos #422 and Gastrodon #423. Their packaged Dex PNGs are exact West
+ // artwork, not placeholders for East Sea. Never borrow West for East.
+ function exactWestSeaForm(card){
+  const dex=dexOf(card);
+  if(dex!==422&&dex!==423)return null;
+  if(nameKey(card?.name)!==(dex===422?"SHELLOS":"GASTRODON"))return null;
+  const form=nameKey(card?.form);
+  const species=dex===422?"SHELLOS":"GASTRODON";
+  if(!["WEST","WESTSEA",species+"WEST",species+"WESTSEA",
+     "WESTSEAFORM"].includes(form))return null;
+  const costume=nameKey(card?.costume);
+  if((costume&&!["NORMAL","DEFAULT","NONE"].includes(costume))||
+     (card?.costume_id!=null&&Number(card.costume_id)!==0)||
+     card?.isCostume===true)return null;
+  const shiny=card?.shiny===true;
+  return {src:LOCAL+(shiny?"shiny/":"base/")+dex+".png",
+   original:RAW+(shiny?"shiny/":"")+dex+".png",
+   offline:true,officialForm:true,exactForm:true};
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
   const seasonalArt=exactSeasonalForm(card);
+  const westSeaArt=exactWestSeaForm(card);
   // The validated official search card may already show the exact costume,
   // regional form or normal sprite. Prefer it in DOM mode, preserving a
   // verified local asset of the SAME variant as the only fallback.
@@ -407,12 +434,14 @@
    const dex=dexOf(card);
    const backup=costumeArt?.src&&costumeArt.src!==image?costumeArt.src:
      seasonalArt?.src&&seasonalArt.src!==image?seasonalArt.src:
+     westSeaArt?.src&&westSeaArt.src!==image?westSeaArt.src:
      verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
   }
   if(costumeArt)return costumeArt;
   if(seasonalArt)return seasonalArt;
+  if(westSeaArt)return westSeaArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
@@ -472,6 +501,6 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase,verifiedBundledData,exactBundledData,
-  verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm});
+ return Object.freeze({resolve,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,
+  verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm,exactWestSeaForm});
 });

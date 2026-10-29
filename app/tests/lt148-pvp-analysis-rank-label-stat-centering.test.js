@@ -8,15 +8,17 @@ assert.ok(!css.includes('#rankLine.isSite'),"unverified site rank has no badge s
 assert.ok(css.includes('#major .statHeading,#major .statValue{position:relative;top:1px}'),"1px lower text, not whole cards");
 assert.ok(html.includes('#major .statTile{height:23px;min-height:23px;max-height:23px;'),"height unchanged");
 assert.ok(script.includes('c.ivRankSource==="explicit-species-iv"&&showRaw'),"verified species IV only");
-assert.ok(script.includes('league.toUpperCase()+" · IV #"+ivValue'),"IV rank includes league and scope");
+assert.ok(script.includes('league.toUpperCase()+" · Rank Classe: #"+ivValue'),"IV rank includes league and scope");
 assert.ok(!script.includes('Rank do site #'),"ambiguous site rank must not be visible");
 assert.ok(script.includes('never show it as a verified IV/PvP rank'),"unlabeled provider rank is ignored");
 assert.ok(!script.includes('rankLine.textContent=c.rank?"Rank "+String(c.rank):""'),"unlabeled rank gone");
 assert.ok(script.includes('if(!rows.length&&!own)continue;'),"own analysis allowed without evolution");
-assert.ok(script.includes('if(!count&&!ownCount){outer.hidden=true;return false;}'),"no fabricated analysis");
+assert.ok(script.includes('if(!count&&!ownCount){'),"no fabricated analysis");
+assert.ok(script.includes('outer.hidden=true;'),"empty analysis must remain hidden instead of showing a blank tab");
 assert.ok(script.includes('"Análise IV PvP · "+ownCount+" ligas"'),"own-only analyses accurately named");
 assert.ok(html.includes('Math.ceil(panel.scrollHeight)+3'),"no phantom-scroll regression");
-const start=script.indexOf(' const rankLine=document.getElementById("rankLine");');
+const start=script.indexOf(' const rankLine=document.getElementById("rankLine");',
+ script.indexOf('window.showDetails=(c,mode,watched)=>{'));
 const end=script.indexOf(' const movesHtml=presenter?',start);
 assert.ok(start>0&&end>start);
 const rankJs=script.slice(start,end);
@@ -27,8 +29,8 @@ function rank(c,showRaw){
  return {text:ctx.rankOut,title:span.title,hidden:span.hidden};
 }
 const tests=[
- [{ivRank:1,ivRankLeague:"gl",ivRankSource:"explicit-species-iv",rank:"14"},true,"GL · IV #1"],
- [{ivRank:2,ivRankLeague:"ul",ivRankSource:"explicit-species-iv",rank:"1"},true,"UL · IV #2"],
+ [{ivRank:1,ivRankLeague:"gl",ivRankSource:"explicit-species-iv",rank:"14"},true,"GL · Rank Classe: #1"],
+ [{ivRank:2,ivRankLeague:"ul",ivRankSource:"explicit-species-iv",rank:"1"},true,"UL · Rank Classe: #2"],
  [{rank:"1"},false,""],
  [{ivRank:1,ivRankLeague:"gl",ivRankSource:"other",rank:"7"},true,""],
  [{ivRank:1,ivRankLeague:"gl",ivRankSource:"explicit-species-iv",rank:"1"},false,""],
