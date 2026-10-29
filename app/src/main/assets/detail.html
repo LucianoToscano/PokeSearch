@@ -297,23 +297,56 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  min-width:0;white-space:normal;overflow-wrap:anywhere;color:#cbd4e0}
 #subRow #dexGender{white-space:nowrap;flex:0 0 auto}
 #major{margin-top:4px;align-items:center;gap:3px}
+
+/* QA13: types under artwork; number below name; Despawn centered beneath star */
+#header{display:grid;grid-template-columns:42px minmax(0,1fr) 100px;grid-template-rows:auto;column-gap:5px;align-items:start;min-width:0}
+#artColumn{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+#artColumn #img,#artColumn #imageFallback{grid-column:auto;grid-row:auto;width:40px;height:40px;object-fit:contain;flex:0 0 40px}
+#artColumn #types{display:inline-flex;gap:2px;justify-content:center;align-items:center;min-height:12px;max-width:42px}
+#artColumn #types .pkTypeImg{width:12px;height:12px;object-fit:contain}
+#names{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:4px;min-width:0;padding-top:2px}
+#nameLine{display:flex;flex-wrap:nowrap;align-items:flex-start;min-width:0}
+#nameLine b{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:12px}
+#subRow{display:flex;flex-wrap:wrap;gap:2px 4px;align-items:baseline;min-width:0;margin:0;line-height:1.2}
+#subRow .metaPair{font-size:9px;line-height:1.2;font-weight:500;color:#cbd4e0;white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
+#subRow #dexGender{white-space:nowrap}
+#subRow .metaPair:empty{display:none}
+#headerActions{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:5px;width:100px}
+#headerButtons{display:flex;align-items:center;justify-content:center;width:100px;gap:4px}
+#headerActions #timer{display:inline-flex;align-items:center;justify-content:center;align-self:center;width:100px;max-width:100px;gap:3px;margin:0;padding:0;min-height:13px;max-height:none;background:transparent;border:0;box-shadow:none;white-space:nowrap;line-height:13px;font-size:9px;font-weight:800}
+#headerActions #timer[hidden]{display:none!important}
+#headerActions #timer .timerClock{display:block;width:10px;height:10px;flex:0 0 10px;stroke:currentColor;stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+#headerActions #timer.pulse{animation:none}
+#headerActions #timer.pulse .timerClock{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#headerActions #timer.pulse .timerClock{animation:none}}
+#major{display:grid;grid-template-columns:minmax(106px,1.6fr) minmax(53px,.8fr) minmax(53px,.8fr);gap:5px;align-items:stretch;margin-top:6px}
+#major .statTile{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:3px;min-width:0;background:#ffffff16;border:1px solid #ffffff2b;border-radius:7px;padding:5px 4px 6px}
+#major .statHeading{text-align:center;font-size:9px;line-height:12px;color:#bac6d4;font-weight:600}
+#major .statValue{text-align:center;font-size:11px;line-height:13px;font-weight:850;white-space:nowrap}
+#major .statValue.red{color:#ff9bb0}
+#major .ivTile .ivPercent{position:absolute;top:5px;right:4px;font-size:8px;line-height:12px;font-weight:800;color:#ff9bb0;pointer-events:none}
+#rankLine{margin-top:3px;font-size:9px;color:#c9d9eb;font-weight:600}
+#rankLine[hidden]{display:none!important}
 </style></head><body><div id="panel">
  <div id="header">
-  <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
+  <div id="artColumn">
+   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
+   <span id="types" aria-label="Tipos do Pokémon"></span>
+  </div>
   <div id="names">
    <div id="nameLine"><b id="name">Pokémon</b></div>
-   <div id="statusRow"><span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span id="timeRemaining"></span></span><span id="types"></span><span id="ivPercentTop" class="ivPercentTop" hidden></span></div>
    <div id="subRow"><span id="dexGender" class="metaPair"></span><span id="sizeForm" class="metaPair"></span></div>
   </div>
   <div id="headerActions">
-    <div id="headerButtons">
+   <div id="headerButtons">
       <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Capturei Pokémon — compartilhar no chat" aria-label="Capturei Pokémon — compartilhar no chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
       <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 2.93 6.1 6.73.98-4.83 4.7 1.14 6.64L12 17.78l-5.97 3.14 1.14-6.64-4.83-4.7 6.73-.98L12 2.5Z"/></svg></button>
       <button id="x" onclick="Native.hideDetail()" aria-label="Fechar card">×</button>
     </div>
+   <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span class="despawnLabel">Despawn</span><span id="timeRemaining"></span></span>
   </div>
  </div>
- <div id="major"></div><div id="info"></div>
+ <div id="major"></div><div id="rankLine" hidden></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -761,12 +794,14 @@ window.showDetails=(c,mode,watched)=>{
   .reduce((sum,n)=>sum+n,0)*100/45):null;
  const showPct=validPct&&(rawPct===null||rawPct===Number(percent));
  const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
- const percentEl=document.getElementById("ivPercentTop");
- percentEl.textContent=showPct?percent+"%":"";
- percentEl.hidden=!showPct;
- document.getElementById("major").innerHTML=
-  stat("IV",showRaw?raw:"","red")+
-  stat("PC",c.cp)+stat("Nv.",c.level)+stat("Rank",c.rank);
+ const statTile=(label,value)=>'<div class="statTile"><div class="statHeading">'+h(label)+'</div><div class="statValue">'+h(value===null||value===undefined||value===""?"—":value)+'</div></div>';
+ document.getElementById("major").innerHTML='<div class="statTile ivTile"><div class="statHeading">IV</div>'+
+  (showPct?'<span class="ivPercent">'+h(percent)+'%</span>':"")+
+  '<div class="statValue red">'+h(showRaw?raw:"—")+'</div></div>'+
+  statTile("PC",c.cp)+statTile("Nv.",c.level);
+ const rankLine=document.getElementById("rankLine");
+ rankLine.textContent=c.rank?"Rank "+String(c.rank):"";
+ rankLine.hidden=!c.rank;
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
