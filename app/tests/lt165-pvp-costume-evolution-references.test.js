@@ -142,8 +142,10 @@ assert.equal(prevented,3);
 assert.equal(stopped,3);
 console.log("LT166 inline reference info tap, toggle and outside-dismiss PASS");
 const css=detail.slice(0,detail.indexOf("</style>"));
-assert.match(css,/#coordRow #coords\.hasCoords\{[^}]*white-space:nowrap;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;/s,
- "revealed coordinates must remain on one line");
+assert.match(css,/#coordRow #coords\.hasCoords\{[^}]*white-space:normal;[^}]*overflow:visible;[^}]*text-overflow:clip;/s,
+ "revealed coordinates may wrap but must never be truncated");
+assert.doesNotMatch(css,/#coordRow #coords\.hasCoords\{[^}]*text-overflow:ellipsis;/s,
+ "old ellipsis must not hide any GPS digits");
 assert.match(css,/#evoToggle #evoLabel\{[^}]*text-align:center;white-space:nowrap;/s,
  "analysis evaluation count stays centered on button");
 assert.match(css,/#evoToggle #evoChevron\{[^}]*position:absolute;/s,
