@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT178 — NOVA CANDIDATA OFICIAL DOCE RARO (29/10/2026)
+
+**Correções sobre a LT177:** controle de Nome Doce Raro ocultável, distância inserida dentro da célula da sprite (sem coluna lateral), barra e popups refinados, visibilidade inicial `Nome OFF · Localização OFF · Despawn ON · Distância OFF` e sprite de Doce Raro original com transparência em resolução 96×96. Botão ↻: toque curto chama consulta na soltura, pressão longa abre somente opções 1/3/5min, com uma busca pendente durante consulta anterior sem disparos simultâneos. Versão destinada ao APK completo assinado **0.01.78 / versionCode 54383**; novo `release_notes.json` registra novidades para usuários. Ações preservam as duas Pokébolas e contas independentes.
+
+Registro da etapa: [LT175–LT178 QA e lançamento](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md). PR #134 deve passar pela QA e ser integrada na main; workflow específico `lt178-official-release.yml` publicará GitHub Releases/latest somente se a base atual for LT173 e se assinatura, R8 e regressões passarem. Drive requer upload/validação específicos; não é automaticamente atualizado pelo GitHub.
+
+---
+
 ## LT177 EM QA — API DIRETA DOCE RARO E MENUS VISUAIS DA POKÉBOLA (29/10/2026)
 
 **Build de QA confirmado:** [GitHub Actions #40936145937 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40936145937), [ZIP QA #12923894267](https://github.com/LucianoToscano/PokeSearch/actions/runs/40936145937/artifacts/12923894267), APK `PokeSearch-v0.01.77-LT-QA.apk` com 49.539.430 bytes e assinatura v2 verificada. A origem de código é `366503ce3501465d761b9555c847477e3835bfb0`. **Testes reais do usuário no Samsung ainda pendentes**, sem atualização geral.
