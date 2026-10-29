@@ -1,0 +1,106 @@
+name: PokeSearch LT145 official approved public release
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt145-official-approved-release.yml']
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pokesearch-approved-public-release
+  cancel-in-progress: false
+jobs:
+  publish-approved-lt145:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.actor == 'LucianoToscano'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN: '40807041234'
+      QA_ARTIFACT: 'PokeSearch-v0.01.45-LT145-CoordsQuota-QA-Assinado'
+      QA_SOURCE: '87bd4988b056186d3c8254d021f7df2cb22994b1'
+      QA_APK: 'PokeSearch-v0.01.45-LT-QA.apk'
+      OFFICIAL_APK: 'PokeSearch-v0.01.45-LT.apk'
+      EXPECT_SHA256: '72be16d527bfeb977840ef7fef73ff5a38e60be52bbae9ed9f8a577ad75d90dd'
+      EXPECT_CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      TAG: 'v0.01.45-54350'
+    steps:
+      - name: Checkout official merged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Assert QA22 source is merged into main and release has not been published
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$QA_SOURCE" HEAD || { echo "::error::QA22 source not in main"; exit 1; }
+          test "$(gh run view "$QA_RUN" -R "$GITHUB_REPOSITORY" --json conclusion,headSha --jq '.conclusion+" "+.headSha')" = "success $QA_SOURCE"
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::Official release already exists; do not overwrite an immutable signed APK"; exit 1
+          fi
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)" != "$TAG"
+      - name: Download exact previously signed QA22 artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lt145"
+          gh run download "$QA_RUN" -R "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir "$RUNNER_TEMP/lt145"
+          cd "$RUNNER_TEMP/lt145"
+          test -s "$QA_APK"
+          test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$QA_SOURCE"
+          sha256sum --check SHA256SUMS.txt
+          test "$(sha256sum "$QA_APK" | cut -d' ' -f1)" = "$EXPECT_SHA256"
+          unzip -t "$QA_APK" >/dev/null
+          cp "$QA_APK" "$OFFICIAL_APK"
+          test "$(sha256sum "$OFFICIAL_APK" | cut -d' ' -f1)" = "$EXPECT_SHA256"
+      - name: Verify Android package version and permanent signer independently
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'build-tools;36.0.0'
+          APK="$RUNNER_TEMP/lt145/$OFFICIAL_APK"
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          "$BT/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='54350'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionName='0.01.45'" "$RUNNER_TEMP/badging.txt"
+          ! grep -q '^application-debuggable' "$RUNNER_TEMP/badging.txt"
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/signing.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/signing.txt"
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$EXPECT_CERT"
+      - name: Publish official latest release to every PokeSearch GitHub updater
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/lt145"
+          cat > RELEASE-NOTES.txt <<'NOTES'
+          PokeSearch 0.01.45 — LT145, atualização oficial
+
+          - Card de vidro compacto: menos espaço vazio abaixo do nome e rolagem apenas quando necessária.
+          - IV, PC e Nv. alinhados, legíveis e sem compressão indevida; tipos originais preservados.
+          - Rank PvP destacado em selo discreto, com informações separadas de sexo, tamanho e forma.
+          - Normalização de sprites e ajuste da fantasia de Halloween do Gengar, sem trocar formas.
+          - Despawn abaixo da estrela e botão Pegar Coordenadas preservados.
+          - Duas Pokébolas, Premium, favoritos, localização, alertas e outras funções preservadas.
+          - APK protegido, assinado com certificado permanente, verificado por SHA-256.
+          - A instalação depende da autorização de cada pessoa no Android.
+          NOTES
+          gh release create "$TAG" "$OFFICIAL_APK" \
+            --repo "$GITHUB_REPOSITORY" --target "$QA_SOURCE" \
+            --title "PokeSearch 0.01.45 LT145 — Atualização oficial" \
+            --notes-file RELEASE-NOTES.txt --latest
+      - name: Verify official latest update feed and immutable APK digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > "$RUNNER_TEMP/latest.json"
+          jq -e --arg tag "$TAG" --arg name "$OFFICIAL_APK" --arg digest "sha256:$EXPECT_SHA256" '
+            .tag_name == $tag and .prerelease == false and .draft == false and
+            ([.assets[] | select(.name==$name and .state=="uploaded" and .digest==$digest and .size>30000000)] | length)==1
+          ' "$RUNNER_TEMP/latest.json" >/dev/null
+          echo "OFFICIAL LT145 GLOBAL UPDATE ENABLED: $TAG"
