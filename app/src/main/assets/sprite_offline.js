@@ -431,6 +431,9 @@
  const GO_ASSET_ROOT="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
    "c2a686eb08ace6e890d8fe3d2134c76988db87b5/"+
    "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ const GO_ASSET_MIRROR="https://cdn.jsdelivr.net/gh/PokeMiners/pogo_assets@"+
+   "c2a686eb08ace6e890d8fe3d2134c76988db87b5/"+
+   "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
  const GO_FILE_LIST=[
   "pm1.cJAN_2020_NOEVOLVE.icon.png",
   "pm1.cJAN_2020_NOEVOLVE.s.icon.png",
@@ -2134,7 +2137,7 @@
   // show an unrelated form, even if the species happens to match.
   if((card.costume_id!=null&&Number(card.costume_id)!==0)&&!specialCostume)return null;
   const type=specialCostume?"c":"f";
-  const name=(specialCostume?costume:form).replace(/^(?:F|C)(?=[A-Z])(?:(?:ORM|OSTUME))?/,"");
+  const name=(specialCostume?costume:form);
   const key=(GO_REGION_KEYS[name]||name);
   if(!key)return null;
   const gender=/^(?:♀|female)$/i.test(String(card.gender||""))?"female":"any";
@@ -2144,7 +2147,7 @@
    GO_FILE_BY_ID[root+"any:"+shiny];
   if(!file)return null;
   // Immutable upstream commit; URL built from audited explicit file names.
-  return {src:GO_ASSET_ROOT+file,original:"",offline:false,
+  return {src:GO_ASSET_ROOT+file,original:GO_ASSET_MIRROR+file,offline:false,
     officialForm:!specialCostume,officialCostume:!!specialCostume,
     exactForm:true,goExact:true};
  }
