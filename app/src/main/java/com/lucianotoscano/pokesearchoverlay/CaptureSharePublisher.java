@@ -43,6 +43,19 @@ final class CaptureSharePublisher {
         try{
             FirebaseApp app=FirebaseStats.ensureApp(context);
             FirebaseAuth auth=FirebaseAuth.getInstance(app);
+            // Use the same authenticated identity as the Home chat. Admin chat
+            // runs in its own named FirebaseApp, separate from stats/presence.
+            try {
+                FirebaseApp adminApp=FirebaseStats.ensureChatAdminApp(context);
+                FirebaseAuth adminAuth=FirebaseAuth.getInstance(adminApp);
+                FirebaseUser adminUser=adminAuth.getCurrentUser();
+                if(CommunityScrapbookOnline.Controller.verifiedAdmin(adminUser)){
+                    post(context,adminApp,adminUser,message,callback);
+                    return;
+                }
+            }catch(RuntimeException ignored){
+                // Admin not available: use the usual anonymous chat identity.
+            }
             FirebaseUser user=auth.getCurrentUser();
             if(user!=null){post(context,app,user,message,callback);return;}
             auth.signInAnonymously().addOnSuccessListener(result->{
