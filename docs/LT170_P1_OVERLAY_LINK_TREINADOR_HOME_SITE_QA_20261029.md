@@ -17,5 +17,13 @@ Base: LT169 oficial (`0.01.69 / 54374`), branch separada para evitar conflitos c
 
 ## Testes
 - `app/tests/lt170-p1-overlay-trainer-link-return.test.js`: P1 e P2 não minimizam; seletor DOM autorizado apenas em perfil exato; conta já vinculada, domínios não oficiais, botão ambíguo ou confirmação aberta não ocasionam clicks involuntários; apenas sucesso confirmado pode disparar navegação para `/search`; sem envio automático de lookup/vínculo.
-- Aguardando CI Node e Java e QA físico no Samsung: toque na Pokébola 1, sobreposição sem redução da Home; vínculo 0/1 com consulta e confirmação do site; 1/1 sem atalho; sessão não autenticada; WebView volta a buscas após vínculo; cancelamento e reabertura; P2 não alterada.
+- CI Node e Java/Android aprovados; aguardando QA físico no Samsung: toque na Pokébola 1, sobreposição sem redução da Home; vínculo 0/1 com consulta e confirmação do site; 1/1 sem atalho; sessão não autenticada; WebView volta a buscas após vínculo; cancelamento e reabertura; P2 não alterada.
 - **Não houve merge nem distribuição pública desta correção.** O APK LT169 assinado permanece oficial enquanto a revisão não for aprovada.
+
+## Execuções de QA da revisão c44e1eed4a7968175eed9cc42e37a43b691b908c
+
+- [Node completo — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40886668497)
+- [Node QA padrão — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40886668480)
+- [Java/Android compile sem APK — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40886668398)
+
+Todos passaram com o teste específico LT170 sobre P1, autenticação de formulário e confirmação manual. O teste inicial encontrou um problema somente no mock (o cenário 1/1 ainda continha componente filho 0/1); corrigido, a suíte completa passou. Não houve lookup nem vínculo automático. PR #122 continua draft, não mesclada e sem distribuição; LT169 permanece oficial.
