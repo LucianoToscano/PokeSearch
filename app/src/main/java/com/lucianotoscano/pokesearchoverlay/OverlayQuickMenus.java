@@ -293,4 +293,112 @@ final class OverlayQuickMenus {
         });
         return d;
     }
+    /** LT175: shares the Pokébola native quick-menu colors, opacity and blur. */
+    interface CandyActions {
+        String coordinates();
+        int radius();
+        int period();
+        boolean infos();
+        void saveLocation(String coords,int radius);
+        void refresh();
+        void updatePeriod(int minutes);
+        void updateInfos(boolean visible);
+    }
+    static Dialog showCandy(Context context,int anchorY,CandyActions actions){
+        LinearLayout content=root(context);
+        TextView title=text(context,"🍬  Doce Raro",14);
+        title.setTypeface(null,android.graphics.Typeface.BOLD);
+        content.addView(title,new LinearLayout.LayoutParams(-1,dp(context,32)));
+        Button loc=button(context,"⌖   Localização");
+        content.addView(loc,new LinearLayout.LayoutParams(-1,dp(context,36)));
+        Button refresh=button(context,"↻   Atualizar agora");
+        LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,dp(context,36));
+        rlp.topMargin=dp(context,5);
+        content.addView(refresh,rlp);
+        TextView hint=text(context,"Atualização automática",11);
+        LinearLayout.LayoutParams hlp=new LinearLayout.LayoutParams(-1,dp(context,28));
+        hlp.topMargin=dp(context,4);
+        content.addView(hint,hlp);
+        LinearLayout buttons=new LinearLayout(context);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        for(int value:new int[]{1,3,5}){
+            Button b=button(context,value+"m"+(value==actions.period()?" ✓":""));
+            LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(context,34),1);
+            if(value!=1)bp.leftMargin=dp(context,4);
+            buttons.addView(b,bp);
+        }
+        content.addView(buttons);
+        Button infos=button(context,actions.infos()?"◉   Infos: Mostrar":"◎   Infos: Ocultar");
+        LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(-1,dp(context,38));
+        ilp.topMargin=dp(context,7);content.addView(infos,ilp);
+        TextView explanation=text(context,"Localização · Despawn · Distância",10);
+        content.addView(explanation,new LinearLayout.LayoutParams(-1,dp(context,24)));
+        Dialog dialog=show(context,content,anchorY,245);
+        loc.setOnClickListener(v->{
+            dialog.dismiss();
+            showCandyLocation(context,anchorY,actions);
+        });
+        refresh.setOnClickListener(v->{actions.refresh();dialog.dismiss();});
+        for(int i=0;i<buttons.getChildCount();i++){
+            final int value=new int[]{1,3,5}[i];
+            buttons.getChildAt(i).setOnClickListener(v->{
+                actions.updatePeriod(value);
+                dialog.dismiss();
+            });
+        }
+        infos.setOnClickListener(v->{actions.updateInfos(!actions.infos());dialog.dismiss();});
+        return dialog;
+    }
+    private static Dialog showCandyLocation(Context context,int anchorY,CandyActions actions){
+        LinearLayout body=root(context);
+        body.addView(text(context,"⌖  Localização · Doce Raro",14),
+            new LinearLayout.LayoutParams(-1,dp(context,35)));
+        android.widget.EditText coords=new android.widget.EditText(context);
+        coords.setSingleLine(true);
+        coords.setTextSize(12);
+        coords.setTextColor(foreground(context));
+        coords.setHintTextColor(0xFF9AABC3);
+        coords.setHint("Latitude,Longitude");
+        coords.setText(actions.coordinates());
+        coords.setSelectAllOnFocus(true);
+        body.addView(coords,new LinearLayout.LayoutParams(-1,dp(context,42)));
+        android.widget.EditText radius=new android.widget.EditText(context);
+        radius.setTextSize(12);radius.setTextColor(foreground(context));
+        radius.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        radius.setHint("Raio (0–1000 km)");radius.setHintTextColor(0xFF9AABC3);
+        radius.setText(String.valueOf(actions.radius()));
+        body.addView(radius,new LinearLayout.LayoutParams(-1,dp(context,42)));
+        LinearLayout buttons=new LinearLayout(context);
+        Button apply=button(context,"✓ Aplicar");
+        Button clear=button(context,"✕ Limpar");
+        buttons.addView(clear,new LinearLayout.LayoutParams(0,dp(context,36),1));
+        buttons.addView(apply,new LinearLayout.LayoutParams(0,dp(context,36),1));
+        body.addView(buttons);
+        Dialog dialog=show(context,body,anchorY,265);
+        apply.setOnClickListener(v->{
+            String center=coords.getText().toString().trim();
+            int distance;
+            try{distance=Integer.parseInt(radius.getText().toString().trim());}
+            catch(NumberFormatException error){Toast.makeText(context,"Raio inválido",Toast.LENGTH_SHORT).show();return;}
+            if(distance<0||distance>1000||(!center.isEmpty()&&!center.matches(
+                "-?[0-9]{1,2}(?:\\.[0-9]+)?\\s*,\\s*-?[0-9]{1,3}(?:\\.[0-9]+)?"))){
+                Toast.makeText(context,"Informe coordenadas e raio válidos",Toast.LENGTH_LONG).show();return;
+            }
+            if(!center.isEmpty()){
+                String[] ll=center.split(",");
+                try{
+                    double lat=Double.parseDouble(ll[0].trim());
+                    double lng=Double.parseDouble(ll[1].trim());
+                    if(Math.abs(lat)>90||Math.abs(lng)>180)throw new NumberFormatException();
+                    center=ll[0].trim()+","+ll[1].trim();
+                }catch(NumberFormatException error){
+                    Toast.makeText(context,"Latitude ou longitude inválida",Toast.LENGTH_LONG).show();return;
+                }
+            }
+            actions.saveLocation(center,distance);dialog.dismiss();
+        });
+        clear.setOnClickListener(v->{actions.saveLocation("",1000);dialog.dismiss();});
+        return dialog;
+    }
+
 }
