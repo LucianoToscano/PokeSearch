@@ -16,7 +16,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #controls button#close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
 #choices{display:none;position:absolute;top:34px;left:0;z-index:12;width:166px;padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
-#choices.locationPanel{width:176px}
+#choices.locationPanel{width:234px}
 #choices .choiceHeader{padding:3px 5px 6px;color:#9faabd;font-weight:bold;font-size:10px}
 #choices .locField{box-sizing:border-box;width:100%;min-height:32px;background:#111722;border:1px solid #536174;border-radius:7px;padding:6px;color:#fff;font-size:11px;margin:3px 0}
 #choices .locLine{display:flex;align-items:center;justify-content:space-between;gap:4px;margin:4px 0}
@@ -48,7 +48,7 @@ function syncCandy(json) {
  if(currentPanel)renderPanel();
 }
 function requestHeight(height,focus) {
- Native.candyMenuHeight(Math.max(34,Math.min(240,height)),!!focus);
+ Native.candyMenuHeight(Math.max(34,Math.min(290,height)),!!focus);
 }
 function closePanel(){
  currentPanel="";$("choices").innerHTML="";$("choices").className="";
@@ -74,15 +74,15 @@ function renderPanel(){
   requestHeight(159,false);
  }else if(currentPanel==="location"){
   el.innerHTML='<div class="choiceHeader">Localização · Doce Raro</div>'+
-   '<input id="candyCoords" class="locField" placeholder="Latitude,Longitude" autocomplete="off" spellcheck="false">'+
-   '<input id="candyRadius" class="locField" type="number" min="1" max="1000000" step="1" placeholder="Raio (metros)">'+
+   '<input id="candyCoords" onfocus="Native.candyMenuFocus(true)" class="locField" placeholder="Latitude,Longitude" autocomplete="off" spellcheck="false">'+
+   '<input id="candyRadius" onfocus="Native.candyMenuFocus(true)" class="locField" type="number" min="1" max="1000000" step="1" placeholder="Raio (metros)">'+
    '<div class="extraNote">Mesmo raio do site · metros</div>'+
    '<div class="locLine"><button onclick="pasteCoords()">Colar</button><button onclick="setRadius1000()">1000m</button></div>'+
    '<div class="locLine"><button class="locSave" onclick="applyLocation()">✓ Aplicar</button><button onclick="clearLocation()">✕ Limpar</button></div>'+
    '<div id="locError" class="extraNote"></div>';
   $("candyCoords").value=settings.coords||"";
   $("candyRadius").value=settings.radius||1000;
-  requestHeight(232,false);
+  requestHeight(265,false);
  }
 }
 function choosePeriod(value){settings.period=value;Native.setCandyPeriod(value);closePanel()}
