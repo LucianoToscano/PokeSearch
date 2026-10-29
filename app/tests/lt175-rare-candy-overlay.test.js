@@ -80,7 +80,7 @@ assert(source.includes("Math.round(kilometers*1000)+\" m\""));
 assert(source.includes("setColorFilter(new ColorMatrixColorFilter(m))"));
 assert(source.includes("new JSONArray(copied)"));
 assert(source.includes("blockedUntil"));
-assert(source.includes("setStatus(\"Limite de buscas"));
+assert(source.includes("setStatus(\"Aguardando liberação do PoGoCoordinates\""),"No local countdown, official 429 wait remains");
 assert(source.includes("new LinearLayout.LayoutParams(0,-2,1)"));
 assert(source.includes("row.setBackgroundColor(Color.TRANSPARENT)"));
 assert(source.includes("resultsParams.y="));
