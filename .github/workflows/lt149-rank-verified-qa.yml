@@ -1,4 +1,4 @@
-# Retry LT148 after migrating obsolete rank-text assertions to sourced rank labels.
+# LT149 QA retry — migrate the LT145 legacy badge assertion to verified PvP rank semantics.
 name: PokeSearch LT149 Rank correto — APK QA assinado
 on:
   push:
