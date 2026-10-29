@@ -41,3 +41,14 @@ Feed do aviso: https://api.github.com/repos/LucianoToscano/PokeSearch/releases/l
 6. O aplicativo pode oferecer a atualização pelo seu mecanismo existente de GitHub Releases, sem reinstalação obrigatória ou troca de assinatura; instalar exige ação do usuário.
 
 Não alterar nem substituir um release existente. Não publicar o QA como "latest" enquanto o release oficial não estiver auditado.
+
+## Confirmação de distribuição concluída — 29/10/2026
+
+- PR #107 **mesclada** com sucesso em `main`: commit `9dfa37299ff6751e4f93b6ee13e8cbf594aa9c1d`.
+- Correção no verificador de filename interno da QA, sem mudar os bytes do APK: commit `49825181343f0ea38e3d73a491c2312d530e079d`.
+- Workflow oficial: https://github.com/LucianoToscano/PokeSearch/actions/runs/40854846606 — **success** (9 passos concluídos).
+- Release oficial público: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.64-54369
+- Arquivo publicado para todos: `PokeSearch-v0.01.64-LT.apk` — **49.413.281 bytes**.
+- SHA-256 publicado: `496a5771b1380a16ace5595f41966134bf391eb997a0c90143039f3acc2733cf` (idêntico ao APK QA, não recompilado).
+- GitHub `releases/latest` verificado, `prerelease=false`, arquivo `uploaded`, digest e tamanho correspondem exatamente ao esperado.
+- O mecanismo do aplicativo `GitHubUpdateCenter` consulta esse endpoint oficial, compara `versionCode` e oferece a instalação mediante confirmação do usuário. Não se força atualização automática.
