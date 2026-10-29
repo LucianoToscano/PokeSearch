@@ -508,7 +508,7 @@ check("LT62 unified Pokébola: results start directly below icon, not at old sav
   "resultParams.y=desiredY;",
   "wm.updateViewLayout(resultRoot,resultParams);",
  ])assert.ok(anchor.includes(contract),contract);
- assert.ok(native.includes('resultPanel.loadUrl("file:///android_asset/dock.html?results=1");\n        positionResultsUnderPokeball(true);'));
+ assert.ok(native.includes('resultPanel.loadUrl(OtaAssets.webUrl("dock.html?results=1"));\n        positionResultsUnderPokeball(true);'));
  assert.ok(native.includes("positionResultsUnderPokeball(true); // Editor offsets now relative to the unified icon."));
  assert.ok(native.includes("positionResultsUnderPokeball(false);"));
  assert.ok(native.includes("resultParams.height=pixels;\n        positionResultsUnderPokeball(false);"));
