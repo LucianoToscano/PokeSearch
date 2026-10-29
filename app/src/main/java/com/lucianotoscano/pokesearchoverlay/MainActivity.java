@@ -107,7 +107,8 @@ public class MainActivity extends Activity {
     private View trainerCopyButton;
     private View guestHeading;
     private ImageView teamBadge, accountAvatar, accountAvatarFrame;
-    private Button trainerAction,trainerSelectButton;
+    private Button trainerAction;
+    private ImageButton trainerSelectButton;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
@@ -583,9 +584,22 @@ public class MainActivity extends Activity {
         sectionLp.bottomMargin=d(7);
         LinearLayout trainerHeader=new LinearLayout(this);
         trainerHeader.setGravity(Gravity.CENTER_VERTICAL);
-        trainerHeader.addView(trainerSectionTitle,new LinearLayout.LayoutParams(0,-2,1));
-        trainerSelectButton=homeAuthButton("Escolher",Color.rgb(33,61,93),Color.WHITE);
-        LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(96),d(33));
+        // O ícone fica imediatamente ao lado do título, sem caixa ou texto extra.
+        trainerHeader.addView(trainerSectionTitle,new LinearLayout.LayoutParams(-2,-2));
+        trainerSelectButton=new ImageButton(this);
+        trainerSelectButton.setImageResource(R.drawable.ps_trainer_switch);
+        trainerSelectButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        trainerSelectButton.setColorFilter(homeLightMode?
+            Color.rgb(57,92,128):Color.rgb(174,208,242));
+        trainerSelectButton.setPadding(d(7),d(7),d(7),d(7));
+        android.util.TypedValue tapStyle=new android.util.TypedValue();
+        if(getTheme().resolveAttribute(android.R.attr.selectableItemBackgroundBorderless,tapStyle,true)
+                &&tapStyle.resourceId!=0)
+            trainerSelectButton.setBackgroundResource(tapStyle.resourceId);
+        else trainerSelectButton.setBackgroundColor(Color.TRANSPARENT);
+        trainerSelectButton.setContentDescription("Trocar treinador vinculado");
+        LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(36),d(36));
+        chooseLp.leftMargin=d(3);
         trainerHeader.addView(trainerSelectButton,chooseLp);
         trainerSelectButton.setVisibility(View.GONE);
         trainerSelectButton.setOnClickListener(v->{
@@ -1738,7 +1752,8 @@ public class MainActivity extends Activity {
             int profiles=selectableTrainerCount(prefs);
             // GONE remove o botão e seu espaço quando há zero ou um treinador.
             trainerSelectButton.setVisibility(linked&&profiles>1?View.VISIBLE:View.GONE);
-            trainerSelectButton.setText("Escolher ("+profiles+")");
+            trainerSelectButton.setContentDescription(
+                "Trocar treinador vinculado ("+profiles+" opções)");
         }
         if(linked&&trainerCode!=null)
             trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
