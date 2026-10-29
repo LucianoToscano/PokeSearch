@@ -408,6 +408,29 @@
           "Homologação visual no Samsung e na segunda Pokébola obrigatória antes da publicação global."
         ]
       }
+    },
+    {
+      "id": "lt146-release-notification-bump-20261029",
+      "minVersionCode": 54351,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT146 — atualização disponível para todos",
+      "sections": {
+        "novidades": [
+          "Nova versão oficial 0.01.46 para quem já tinha as versões QA e LT145 0.01.45."
+        ],
+        "melhorias": [
+          "O aviso da Home passa a detectar 54351 como uma versão superior a 54350.",
+          "Mantidos os cards compactos da QA22, Rank PvP destacado, sexo e tamanho distintos, e atualização GitHub assinada."
+        ],
+        "correcoes": [
+          "Resolvida a colisão entre o mesmo versionCode usado nos APKs QA e no pacote oficial LT145.",
+          "O download oficial mantém verificação de SHA-256 e assinatura permanente antes da instalação."
+        ],
+        "emDesenvolvimento": [
+          "A instalação é iniciada pelo usuário e depende das permissões Android; não há atualização silenciosa.",
+          "Validação visual final no Samsung permanece necessária."
+        ]
+      }
     }
   ]
 }

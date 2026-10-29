@@ -1,0 +1,15 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const root=path.join(__dirname,"../src/main");
+const notes=JSON.parse(fs.readFileSync(path.join(root,"assets/release_notes.json"),"utf8"));
+const cfg=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/GitHubUpdateCenter.java"),"utf8");
+const origin=notes.releases.filter(x=>x.minVersionCode===54350),next=notes.releases.filter(x=>x.minVersionCode===54351);
+assert.equal(origin.length,1,"QA22 LT145 notes retained");
+assert.equal(next.length,1,"LT146 54351 notes exist");
+assert.ok(next[0].sections.correcoes.some(s=>s.includes("versionCode")),"updater diagnosis");
+assert.ok(notes.releases.every((r,i,a)=>i===0||r.minVersionCode>=a[i-1].minVersionCode),"release notes sorted");
+assert.ok(cfg.includes("r.versionCode<=BuildConfig.VERSION_CODE"),"updates require higher Android versionCode");
+assert.ok(cfg.includes("https://api.github.com/repos/LucianoToscano/PokeSearch/releases/latest"),"stable update feed");
+const card=fs.readFileSync(path.join(root,"assets/detail.html"),"utf8");
+for(const selector of ["#rankLine::before","needsScroll","gengarHalloween","ivTypes"])assert.ok(card.includes(selector),"QA22 card preserved "+selector);
+console.log("LT146: 54351 > 54350, notes and stable update discovery PASS");
