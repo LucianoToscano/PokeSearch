@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT145 QA22 — acabamento do card, Rank e rolagem (29/10/2026)
+
+- **Branch preservada:** `feature/lt145-coords-quota-account-20261028`. Base QA21 — sem recomeçar e sem descartar Premium, alertas, API, localização, cooldown e duas Pokébolas.
+- **Card:** mantém largura externa de **200 dp**, cabeçalho com número/sexo/tamanho/forma imediatamente sob nome, botões de 23 px e Despawn abaixo da estrela. Espaços verticais aparados. Caixas IV/PC/Nv. com **23 px de altura**, larguras responsivas e conteúdo não sobreposto; tipos originais à esquerda no IV e porcentagem verificada à direita.
+- **Rank:** selo de vidro dourado compacto (★ Rank 1), alinhado à esquerda imediatamente sob IV/PC/Nv.; invisível quando rank não existe.
+- **Rolagem:** card fechado passa a ocultar rolagem desnecessária; classe `needsScroll` habilita rolagem quando altura real ultrapassa o painel após o redimensionamento nativo. Evoluções PvP continuam expansíveis e roláveis quando necessário.
+- **Sprites:** mantém resolução exata online/offline, ajuste de Gengar Halloween e padronização por alfa quando imagem permite; fallback neutro ◉ quando a imagem exata falhar, sem substituir por forma errada. A falta de arte exata permanece pendência de acervo.
+- **Atualizações:** notas QA22 incluídas na Home em `app/src/main/assets/release_notes.json`; documento de QA em `docs/POKESEARCH_LT145_QA22_CARD_DISTRIBUICAO_20261029.md`.
+- **Regra de entrega:** testes e APK assinados verificados antes de divulgar; **não habilitar Firebase/globalEnabled nem publicar atualização universal sem homologação Samsung P1/P2**. Status da distribuição deve constar no documento específico.
+
+
 
 ### LT134 — Premium Google sobre base LT133, sem regressão (27/10/2026)
 

@@ -486,6 +486,35 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #subRow .sizeChip{border-color:#ffffff40;background:#ffffff0c}
 #subRow .formChip{max-width:100%;white-space:normal;overflow-wrap:anywhere;
  font-size:8px;line-height:11px}
+/* QA22: practical compact card, no empty rows, without compressing important data.
+   A closed card scrolls ONLY if the Android window genuinely cannot contain it. */
+#panel{padding:3px 3px 2px;height:auto;min-height:0;scrollbar-width:none}
+#panel::-webkit-scrollbar{display:none}
+#panel:not(.needsScroll){overflow-y:hidden;touch-action:manipulation}
+#panel.needsScroll{overflow-y:auto;touch-action:pan-y}
+#header{row-gap:0;align-content:start}
+#names{gap:0;justify-content:flex-start}
+#nameLine{padding:0;margin:0;min-height:0}
+#subRow{margin:0;padding:0;row-gap:1px;align-content:flex-start}
+#major{margin-top:2px;justify-content:stretch;justify-items:stretch;
+ grid-template-columns:minmax(87px,1fr) 42px 38px}
+#major .statTile{height:23px;min-height:23px;max-height:23px;
+ padding:0 2px 1px;overflow:hidden}
+#major .statValue{white-space:nowrap;overflow:hidden;text-overflow:clip}
+#rankLine{display:inline-flex;align-items:center;gap:3px;width:max-content;
+ max-width:100%;min-height:15px;margin-top:2px;margin-bottom:0;
+ padding:1px 5px 1px 4px;border:1px solid #eccb8063;border-radius:5px;
+ background:linear-gradient(95deg,#e7bf451d,#ffffff0c);
+ color:#f6d994;font:800 9px/12px Roboto,Arial,sans-serif;
+ letter-spacing:.1px;text-shadow:none}
+#rankLine::before{content:"★";font-size:10px;color:#ffd16e}
+#rankLine[hidden]{display:none!important}
+#info{margin-top:2px;row-gap:1px;overflow-wrap:anywhere}
+#evolutions{margin-top:3px}
+#coordRow{margin-top:3px}
+#imageFallback{font-size:0!important;position:relative}
+#imageFallback::after{content:"◉";display:block;font-size:19px;
+ line-height:23px;color:#b7c7dc;opacity:.85}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -783,8 +812,18 @@ let detailIdentity="",evolutionExpanded=false;
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
- requestAnimationFrame(()=>Native.resizeDetail(
-  Math.ceil(document.getElementById("panel").scrollHeight)+3));
+ requestAnimationFrame(()=>{
+  const panel=document.getElementById("panel");
+  const height=Math.ceil(panel.scrollHeight)+3;
+  Native.resizeDetail(height);
+  // The native window resizes on its UI thread. Only enable inner scrolling
+  // when expanded evolution data or the physical display forces clipping.
+  const recheck=()=>{
+   if(!panel?.classList?.toggle)return;
+   panel.classList.toggle("needsScroll",panel.scrollHeight>panel.clientHeight+3);
+  };
+  if(typeof setTimeout==="function")setTimeout(recheck,90);
+ });
 }
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");
