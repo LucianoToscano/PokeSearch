@@ -11,8 +11,12 @@ assert.ok(!html.includes("Ranking indisponível para esta forma."),"Never show e
 assert.ok(!html.includes("IV não informado · Rank Classe indisponível."),"Never show IV placeholder tab");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}'),
  "Get Coordinates stays centered");
-assert.ok(html.includes('#coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}'),
- "revealed coordinates have symmetric content insets");
+assert.ok(html.includes('box-sizing:border-box;padding-left:7px;padding-right:33px;'),
+ "revealed coordinates have left padding and reserve quota space");
+assert.ok(html.includes('text-align:left;white-space:normal;overflow:visible;text-overflow:clip;'),
+ "revealed coordinates never truncate using ellipses");
+assert.ok(!html.includes('white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'),
+ "coordinate digits must not be ellipsized");
 assert.ok(html.includes("right:9px;"),"quota remains separately pinned to right edge");
 assert.ok(js.includes('String(currentCoords).trim().replace(";",", ")'),"full copied coords retained");
 assert.ok(js.includes("Native.copyCoords(currentCoords);return;"),"tap to recopy stays functional");
