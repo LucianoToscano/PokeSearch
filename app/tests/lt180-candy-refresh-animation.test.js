@@ -13,7 +13,7 @@ assert.match(html,/#refresh\.refreshing svg\{animation:candyRefreshSpin/,"Only s
 assert(!html.includes(".autoTime{animation:"),"Do not rotate the interval text");
 assert.match(native,/window\.setCandyRefreshState\(\{busy:/,"Native passes real request state");
 assert.match(native,/private void setCandyBusy\(boolean value\)/);
-assert.match(native,/setCandyBusy\(true\);expirePending/);
+assert.match(native,/setCandyBusy\(true\);lastRefresh=now/);
 assert.match(native,/setCandyBusy\(false\);/);
 assert.match(native,/syncCandyMenu\(\);\s*\}\s*private void closeCandyMenu/,"Reopening menu syncs state");
 assert.match(native,/if\(now<blockedUntil\)/,"Provider rate-limit preserved");
