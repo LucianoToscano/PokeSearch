@@ -640,7 +640,7 @@ public final class RareCandyOverlayService extends Service {
             // Keep the last explicit tap/all-copied request until the provider
             // permits another call; never bypass 429 Retry-After.
             if(manual)pendingManualRefresh=true;
-            setStatus("Limite do site · repetir em "+((blockedUntil-now+999)/1000)+" s");
+            setStatus("Aguardando liberação do PoGoCoordinates");
             return;
         }
         // No extra local throttle for manual or all-copied searches.
@@ -694,7 +694,7 @@ public final class RareCandyOverlayService extends Service {
                     if(code==429){
                         int retry=Math.max(1,Math.min(3600,response.optInt("retry_after",60)));
                         blockedUntil=SystemClock.elapsedRealtime()+retry*1000L;
-                        setStatus("Limite de buscas · "+retry+" s");
+                        setStatus("Aguardando liberação do PoGoCoordinates");
                     }else if(code==401){
                         setStatus("Sessão expirada · entre no PoGoCoordinates");
                     }else setStatus("Busca indisponível · tente novamente");
