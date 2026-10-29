@@ -446,7 +446,7 @@ public class MainActivity extends Activity {
             });
             return true;
         });
-        TextView brandSubtitle=homeText("POKÉMON GO",9,
+        TextView brandSubtitle=homeText("v"+BuildConfig.VERSION_NAME,10,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
         // Reserve the four native 34dp action targets (plus 5dp margins).
@@ -466,15 +466,14 @@ public class MainActivity extends Activity {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         header.addView(controls,new LinearLayout.LayoutParams(-2,d(46)));
 
-        homeThemeButton=homeMiniButton(homeLightMode?"☾":"☀",
-            homeLightMode?"Ativar modo escuro":"Ativar modo claro");
+        homeThemeButton=homeMiniButton("🔔","Abrir novidades do PokeSearch");
         homeThemeButton.setTextSize(21);
         homeThemeButton.setTextColor(homeLightMode?Color.rgb(22,45,61):Color.rgb(255,230,155));
         homeThemeButton.setBackground(homeSurface(
             homeLightMode?Color.argb(225,244,249,253):Color.argb(150,9,25,49),10,
             homeLightMode?Color.argb(110,67,98,128):Color.argb(90,180,221,255)));
         controls.addView(homeThemeButton,new LinearLayout.LayoutParams(d(34),d(34)));
-        homeThemeButton.setOnClickListener(v->toggleHomeTheme());
+        homeThemeButton.setOnClickListener(v->ReleaseNotes.showHistory(this));
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
@@ -482,9 +481,11 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(34),d(34));
         heartLp.leftMargin=d(5);
         controls.addView(heart,heartLp);
+        // The reference has two top controls. Support remains in the drawer.
+        heart.setVisibility(View.GONE);
         heart.setOnClickListener(v->PixSupport.show(this));
 
-        TextView menu=homeMiniButton("☰","Abrir menu lateral");
+        TextView menu=homeMiniButton("⚙","Abrir configurações");
         menu.setTextSize(18);
         menu.setBackground(homeSurface(homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(34),d(34));
@@ -986,6 +987,8 @@ public class MainActivity extends Activity {
         drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
         addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
         addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
+        addHomeDrawerItem(drawer,"☼","Alternar tema",this::toggleHomeTheme);
+        addHomeDrawerItem(drawer,"♡","Apoiar PokeSearch",()->PixSupport.show(this));
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
