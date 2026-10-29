@@ -1,0 +1,102 @@
+name: PokeSearch LT138 OFFICIAL main verified publisher
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt138-official-publish-main.yml']
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: pokesearch-lt138-approved-stable-publisher
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_RUN: '40589158000'
+      QA_ARTIFACT: 'PokeSearch-v0.01.38-LT138-Premium-Netlify-Novo-Assinado-protected-release'
+      QA_SOURCE: '8d73781eb54682726e3cbf53e805698579c9971c'
+      QA_APK: 'PokeSearch-v0.01.38-LT138-Cupom100-Teste-Google-Zubat.apk'
+      OFFICIAL_APK: 'PokeSearch-v0.01.38-LT.apk'
+      VERSION: '0.01.38'
+      VERSION_CODE: '54343'
+      TAG: 'v0.01.38-54343'
+      CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+    steps:
+      - name: Checkout exact approved application source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify app source unchanged since signed QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e "$QA_SOURCE^{commit}"
+          git show "$QA_SOURCE:app/build.gradle.kts" | grep -Fq 'pokesearch-premium-luc.netlify.app'
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$QA_RUN/jobs?per_page=100" > "$RUNNER_TEMP/qa-jobs.json"
+          jq -e '.jobs[].steps[] | select(.name == "Compile protected and signed LT138 APK" and .conclusion == "success")' "$RUNNER_TEMP/qa-jobs.json" >/dev/null
+          jq -e '.jobs[].steps[] | select(.name == "Audit APK certificate, R8, build version and offline manifest" and .conclusion == "success")' "$RUNNER_TEMP/qa-jobs.json" >/dev/null
+          jq -e '.jobs[].steps[] | select(.name == "Verify that the exact signed APK will be included in the artifact" and .conclusion == "success")' "$RUNNER_TEMP/qa-jobs.json" >/dev/null
+      - name: Retrieve signed build artifact from approved run
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lt138"
+          gh run download "$QA_RUN" -R "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir "$RUNNER_TEMP/lt138"
+          cd "$RUNNER_TEMP/lt138"
+          test -s "$QA_APK"
+          test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$QA_SOURCE"
+          sha256sum --check SHA256SUMS.txt
+          unzip -t "$QA_APK" >/dev/null
+          cp "$QA_APK" "$OFFICIAL_APK"
+          test "$(sha256sum "$QA_APK" | cut -d' ' -f1)" = "$(sha256sum "$OFFICIAL_APK" | cut -d' ' -f1)"
+      - name: Verify certificate v2 and canonical Android version
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'build-tools;36.0.0'
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          APK="$RUNNER_TEMP/lt138/$OFFICIAL_APK"
+          "$BT/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "name='com.lucianotoscano.pokesearch'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionCode='54343'" "$RUNNER_TEMP/badging.txt"
+          grep -Fq "versionName='0.01.38'" "$RUNNER_TEMP/badging.txt"
+          ! grep -q '^application-debuggable' "$RUNNER_TEMP/badging.txt"
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/signing.txt"
+          grep -Eq '^Verified using v2 scheme.*: true$' "$RUNNER_TEMP/signing.txt"
+          FINGERPRINT="$(grep 'Signer #1 certificate SHA-256 digest:' "$RUNNER_TEMP/signing.txt" | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$FINGERPRINT" = "$CERT"
+      - name: Publish signed official release and validate automatic update feed
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/lt138"
+          cat > RELEASE-NOTES.txt <<'NOTES'
+          PokeSearch 0.01.38 — LT138
+          - Cupom 100% com limite de resgates, resgate na conta Google sem cobrança Pix.
+          - Teste Premium automático para novos cadastros Google, com prazo de 1 a 30 dias ajustável pelo administrador. Inicialmente desligado até a escolha do prazo.
+          - Zubat Halloween 2026 com cartola: sprite normal exata verificada; shiny sem substituição fictícia.
+          - Preservados filtros, duas Pokébolas, notificações, chat, sprites anteriores e configurações.
+          - APK assinado permanentemente, Android v2, R8 e SHA-256 verificados. Atualização mediante consentimento do usuário.
+          NOTES
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            if ! gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" --jq '.assets[].name' | grep -Fxq "$OFFICIAL_APK"; then
+              gh release upload "$TAG" "$OFFICIAL_APK" --repo "$GITHUB_REPOSITORY"
+            fi
+          else
+            gh release create "$TAG" "$OFFICIAL_APK" --repo "$GITHUB_REPOSITORY" --target "$QA_SOURCE" --title "PokeSearch 0.01.38 LT138 — Atualização oficial" --notes-file RELEASE-NOTES.txt --latest
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > LATEST.json
+          test "$(jq -r .tag_name LATEST.json)" = "$TAG"
+          test "$(jq -r .draft LATEST.json)" = false
+          test "$(jq -r .prerelease LATEST.json)" = false
+          CHECKSUM="$(sha256sum "$OFFICIAL_APK" | cut -d' ' -f1)"
+          jq -e --arg name "$OFFICIAL_APK" --arg digest "sha256:$CHECKSUM" '.assets[] | select(.name == $name and .state == "uploaded" and .digest == $digest and .size > 30000000)' LATEST.json >/dev/null
+          echo "✅ Official LT138 visible to all GitHubReleaseUpdateCenter clients."

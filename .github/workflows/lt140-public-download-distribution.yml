@@ -1,0 +1,93 @@
+name: PokeSearch LT140 — verified public APK fallback distribution
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt140-public-download-distribution.yml']
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: pokesearch-lt140-public-apk
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '40598315675'
+      SOURCE_SHA: '69ecb7a48c7f861f9031755dbb69b083119ab209'
+      ARTIFACT: 'PokeSearch-v0.01.40-LT140-Premium-Netlify-Novo-Assinado-protected-release'
+      APK: 'PokeSearch-v0.01.40-LT.apk'
+      EXPECTED_CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+    steps:
+      - name: Validate signed protected APK source
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" > "$RUNNER_TEMP/run.json"
+          jq -e --arg sha "$SOURCE_SHA" '.status == "completed" and .conclusion == "success" and .head_sha == $sha' "$RUNNER_TEMP/run.json" >/dev/null
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/jobs?per_page=100" > "$RUNNER_TEMP/jobs.json"
+          jq -e '.jobs[].steps[] | select(.name == "Audit APK certificate, R8, build version and offline manifest" and .conclusion == "success")' "$RUNNER_TEMP/jobs.json" >/dev/null
+          jq -e '.jobs[].steps[] | select(.name == "Verify that the exact signed APK will be included in the artifact" and .conclusion == "success")' "$RUNNER_TEMP/jobs.json" >/dev/null
+      - name: Retrieve unchanged APK and verify integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/delivery"
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir "$RUNNER_TEMP/delivery"
+          cd "$RUNNER_TEMP/delivery"
+          test -s "$APK"
+          test "$(tr -d '\r\n' < SOURCE_COMMIT.txt)" = "$SOURCE_SHA"
+          sha256sum --check SHA256SUMS.txt
+          unzip -t "$APK" >/dev/null
+          test "$(stat -c%s "$APK")" -gt 30000000
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          test -x "$SDKMANAGER"
+          "$SDKMANAGER" --install 'build-tools;36.0.0' >/dev/null
+          BT="$ANDROID_HOME/build-tools/36.0.0"
+          "$BT/aapt" dump badging "$APK" > metadata.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" metadata.txt
+          grep -Fq "versionCode='54345'" metadata.txt
+          grep -Fq "versionName='0.01.40'" metadata.txt
+          "$BT/apksigner" verify --verbose --print-certs "$APK" > sign.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' sign.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' sign.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$EXPECTED_CERT"
+      - name: Distribute public APK without ChatGPT Library or Release API
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/public"
+          cp "$RUNNER_TEMP/delivery/$APK" "$RUNNER_TEMP/public/$APK"
+          cd "$RUNNER_TEMP/public"
+          sha256sum "$APK" > SHA256SUMS.txt
+          cat > README.txt <<'INFO'
+          PokeSearch v0.01.40 — LT140
+          Assinatura permanente Android v2, SHA-256 e versionCode 54345 validados.
+          Conta Premium: mostra dias restantes, data de vencimento ou vitalicio. Logout permanece corrigido.
+          Preserva a Pokebola 1, filtros, conta PoGoCoordinates, sprites e beneficios Premium.
+          Instalacao Android requer autorizacao do usuario. Link publico alternativo
+          enquanto GitHub Releases API retorna HTTP 403.
+          INFO
+          git init -b distribution
+          git config user.name 'PokeSearch Release Bot'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$APK" SHA256SUMS.txt README.txt
+          git commit -m 'release: LT140 signed public Android APK'
+          git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+          gh auth setup-git
+          if git ls-remote --exit-code --heads origin refs/heads/downloads/lt140 >/dev/null 2>&1; then
+            echo "Existing LT140 distribution detected; verify exact SHA and refuse differing bytes."
+          else
+            git push origin HEAD:refs/heads/downloads/lt140
+          fi
+          git ls-remote --exit-code --heads origin refs/heads/downloads/lt140
+          EXPECTED="$(sha256sum "$APK" | cut -d' ' -f1)"
+          gh api "repos/$GITHUB_REPOSITORY/contents/SHA256SUMS.txt?ref=downloads%2Flt140" \
+            --jq .content | tr -d '\n' | base64 -d > "$RUNNER_TEMP/github-published-sha.txt"
+          grep -Fqx "$EXPECTED  $APK" "$RUNNER_TEMP/github-published-sha.txt"
+          echo "PASS: public LT140 GitHub distribution SHA verified by authenticated repository API."
+          echo "Note: public raw CDN can cache a 404 briefly after a new branch push."
+          echo "Public APK delivered without GitHub sign-in and without Netlify/ChatGPT Library."
