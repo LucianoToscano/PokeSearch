@@ -104,6 +104,29 @@ body:not(.expanded) #choices{display:none}
 const $=id=>document.getElementById(id);
 let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false};
 let currentPanel="";
+// Same colors, opacity formula and blur as visual_editor.js for P1/P2.
+function applyCandyMenuTheme(mode,transparency,blur){
+ const light=mode==="light";
+ const t=Math.max(0,Math.min(100,Number(transparency)||0));
+ const b=Math.max(0,Math.min(16,Number(blur)||0));
+ const base=light?"255,255,255":"15,19,26";
+ const rgba=a=>"rgba("+base+","+a.toFixed(2)+")";
+ const readable=a=>"rgba("+base+","+(1-Math.pow(a/100,2.8)).toFixed(3)+")";
+ const root=document.documentElement;
+ const set=(key,value)=>root.style.setProperty("--visual-menu-"+key,value);
+ set("bg",rgba(1-t/100));
+ set("button-bg",rgba(1-t/100));
+ set("readable-bg",readable(t));
+ set("readable-button-bg",readable(Math.min(100,t+12)));
+ set("border","rgba("+(light?"49,69,91":"227,233,241")+","+
+     ((1-t/100)*.45).toFixed(2)+")");
+ set("tile-shadow",t===100?"none":
+     "0 1px 3px rgba(0,0,0,"+((1-t/100)*.36).toFixed(2)+")");
+ set("fg",light?"#152231":"#f2f7fc");
+ set("blur",b+"px");
+ document.body.classList.toggle("visual-light-menu",light);
+}
+window.applyCandyMenuTheme=applyCandyMenuTheme;
 function setCandyRefreshState(state) {
  const refreshing=!!(state&&state.busy);
  const waiting=!!(state&&!refreshing&&(state.pending||state.blocked));
