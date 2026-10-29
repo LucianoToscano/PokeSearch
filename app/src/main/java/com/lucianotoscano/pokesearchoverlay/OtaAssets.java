@@ -51,6 +51,7 @@ final class OtaAssets {
     private static final int MAX_FILE=3*1024*1024;
     private static final int MAX_PACK=8*1024*1024;
     private static final Set<String> PATCHABLE;
+    private static final int MAX_FILES=64;
     static {
         Set<String> paths=new HashSet<>();
         Collections.addAll(paths,
@@ -66,6 +67,15 @@ final class OtaAssets {
     private OtaAssets() {}
 
     static String webUrl(String asset){ return PREFIX+asset; }
+    private static boolean patchable(String name){
+        return PATCHABLE.contains(name)||name.matches(
+            "(?:pokemon-sprites/(?:base|shiny|forms|costumes)|result-icons/(?:base|modes)|weather-icons(?:/v2)?)/[A-Za-z0-9_.-]{1,150}\\.png");
+    }
+    private static String releaseAsset(String name){
+        return name.indexOf('/')<0?name:
+            Base64.getUrlEncoder().withoutPadding().encodeToString(
+                name.getBytes(StandardCharsets.UTF_8))+".asset";
+    }
 
     /** Do not start OTA during an unsigned local debug build or older LT172. */
     private static boolean enabled(){
@@ -176,7 +186,7 @@ final class OtaAssets {
             o.optInt("maxAppVersionCode",Integer.MAX_VALUE)<BuildConfig.VERSION_CODE)
             return null;
         JSONArray a=o.getJSONArray("files");
-        if(a.length()<1||a.length()>PATCHABLE.size())return null;
+        if(a.length()<1||a.length()>MAX_FILES)return null;
         Set<String> names=new HashSet<>();
         int sum=0;
         Map<String,File> result=new HashMap<>();
@@ -185,7 +195,7 @@ final class OtaAssets {
             String name=f.getString("path");
             int size=f.getInt("size");
             String hash=f.getString("sha256");
-            if(!PATCHABLE.contains(name)||!names.add(name)||size<1||size>MAX_FILE||
+            if(!patchable(name)||!names.add(name)||size<1||size>MAX_FILE||
                 !hash.matches("[a-f0-9]{64}"))return null;
             sum+=size;if(sum>MAX_PACK)return null;
             result.put(name,null);
@@ -250,7 +260,7 @@ final class OtaAssets {
                 File old=active.get(name);
                 if(old!=null&&old.length()==size&&sha256(old).equals(hash))
                     bytes=readFile(old,MAX_FILE);
-                if(bytes==null)bytes=download(remote+name,MAX_FILE);
+                if(bytes==null)bytes=download(remote+releaseAsset(name),MAX_FILE);
                 if(bytes.length!=size||
                     !hex(MessageDigest.getInstance("SHA-256").digest(bytes)).equals(hash))
                     throw new SecurityException("Asset hash mismatch");
@@ -273,6 +283,9 @@ final class OtaAssets {
         f.delete();
     }
     private static void write(File f,byte[] bytes)throws Exception{
+        File parent=f.getParentFile();
+        if(parent!=null&&!parent.isDirectory()&&!parent.mkdirs())
+            throw new java.io.IOException("Could not create resource directory");
         try(FileOutputStream out=new FileOutputStream(f)){
             out.write(bytes);out.getFD().sync();
         }
