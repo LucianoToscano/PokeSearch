@@ -2697,7 +2697,7 @@ public class MainActivity extends Activity {
         if(!AppAvailability.isAllowed(this)){
             applyAppAvailability(AppAvailability.cached(this));return;
         }
-        CookieManager.getInstance().flush();
+        PogoAccountSlots.cookieManager(PogoAccountSlots.assigned(this,false)).flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                   Uri.parse("package:"+getPackageName())),101);
