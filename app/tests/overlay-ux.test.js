@@ -52,7 +52,7 @@ test("LT62 split popup preserves toolbar, content-sized hitbox and page lifecycl
   dock.includes('const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);')&&
   dock.includes('Math.min(148,Math.max(1,Math.floor(window.innerWidth||148)))')&&
   dock.includes("Native.resizePopup(exactWidth,")&&
-  dock.includes("window.showNativePopup=kind=>")&&
+  dock.includes("window.showNativePopup=(kind,measuredTileWidth=0)=>")&&
   dock.includes("Native.openPopup(kind,Math.round(");
 });
 test("LT62 popup receives picker/filter events, focus and P/M/G state updates",()=>{

@@ -328,7 +328,7 @@ public class OverlayService extends Service {
     private long outsideClosedPopupUptimeMs=0L;
     // One in-flight Get coords request may own the detail/clipboard at a time.
     private long coordinateRequestToken=0L;
-    private int popupTriggerDp,popupTriggerYDp,popupTriggerHeightDp,popupWidthDp,popupHeightDp;
+    private int popupTriggerDp,popupTriggerYDp,popupTriggerHeightDp,popupTriggerWidthDp,popupWidthDp,popupHeightDp;
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
@@ -1109,6 +1109,9 @@ public class OverlayService extends Service {
         openIndependentPopup(kind,x,y,0);
     }
     private void openIndependentPopup(String kind,int x,int y,int triggerHeight){
+        openIndependentPopup(kind,x,y,triggerHeight,0);
+    }
+    private void openIndependentPopup(String kind,int x,int y,int triggerHeight,int triggerWidth){
         if(!validIndependentPopup(kind)||!menuExpanded||loginPaused||stopped||pickerOpen)return;
         long elapsed=android.os.SystemClock.uptimeMillis()-outsideClosedPopupUptimeMs;
         boolean wasSameOutsideTap=kind.equals(outsideClosedPopupKind)&&
@@ -1125,6 +1128,9 @@ public class OverlayService extends Service {
         popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
         popupTriggerYDp=Math.max(0,Math.min(visualMenuBaseDp(),y));
         popupTriggerHeightDp=Math.max(0,Math.min(visualMenuBaseDp(),triggerHeight));
+        // The independent popup WebView cannot measure the toolbar's ⋯ tile.
+        popupTriggerWidthDp="more".equals(kind)?
+            Math.max(0,Math.min(80,triggerWidth)):0;
         popupWidthDp=popupHeightDp=0;
         lastPopupX=Integer.MIN_VALUE;lastPopupY=Integer.MIN_VALUE;
         // A GONE WebView may suspend requestAnimationFrame on Samsung, so
@@ -1148,7 +1154,8 @@ public class OverlayService extends Service {
             }catch(Exception ex){recordFailure("medir popup inicial",ex);return;}
         }
         if(popupLoaded)js(popupPanel,true,
-            "window.showNativePopup&&window.showNativePopup("+JSONObject.quote(kind)+")");
+            "window.showNativePopup&&window.showNativePopup("+
+                JSONObject.quote(kind)+","+popupTriggerWidthDp+")");
     }
     private static boolean validIndependentPopup(String kind){
         if(kind==null)return false;
@@ -1777,7 +1784,7 @@ public class OverlayService extends Service {
                     popupLoaded=true;update();
                     if(menuExpanded&&!popupKind.isEmpty())
                         js(popupPanel,true,"window.showNativePopup&&window.showNativePopup("+
-                            JSONObject.quote(popupKind)+")");
+                            JSONObject.quote(popupKind)+","+popupTriggerWidthDp+")");
                 }
             }
         });
@@ -4697,6 +4704,11 @@ public class OverlayService extends Service {
         @JavascriptInterface public void openPopupMeasured(String kind,int triggerDp,
                                                             int triggerYDp,int triggerHeightDp){
             handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp,triggerHeightDp));
+        }
+        @JavascriptInterface public void openPopupMeasuredWidth(String kind,int triggerDp,
+                                    int triggerYDp,int triggerHeightDp,int triggerWidthDp){
+            handler.post(()->openIndependentPopup(kind,triggerDp,triggerYDp,
+                triggerHeightDp,triggerWidthDp));
         }
         @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
         @JavascriptInterface public void resizePopup(int width,int height){
