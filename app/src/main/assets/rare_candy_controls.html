@@ -12,7 +12,10 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #controls button.locOn{background:#1e6150e8;color:#b2ffe0;border-color:#5de7b1a6}
 #controls button .autoTime{font-size:9px;position:absolute;margin-top:20px}
 #controls button#refresh{flex-direction:column;gap:0}
-#controls button#refresh svg{width:19px;height:19px;margin-top:-2px}
+#controls button#refresh svg{width:19px;height:19px;margin-top:-2px;transform-origin:center;transform-box:view-box}
+@keyframes candyRefreshSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+#controls button#refresh.refreshing svg{animation:candyRefreshSpin .8s linear infinite}
+#controls button#refresh.waiting svg{opacity:.65}
 #controls button#close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
 #choices{display:none;position:absolute;top:34px;left:0;z-index:12;width:232px;max-width:calc(100vw - 8px);padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
@@ -48,6 +51,17 @@ body:not(.expanded) #choices{display:none}
 const $=id=>document.getElementById(id);
 let settings={coords:"",radius:1000,period:1,name:false,location:false,despawn:true,distance:false};
 let currentPanel="";
+function setCandyRefreshState(state) {
+ const refreshing=!!(state&&state.busy);
+ const waiting=!!(state&&!refreshing&&(state.pending||state.blocked));
+ const button=$("refresh");
+ button.classList.toggle("refreshing",refreshing);
+ button.classList.toggle("waiting",waiting);
+ button.setAttribute("aria-busy",refreshing?"true":"false");
+ button.setAttribute("aria-label",refreshing?"Atualizando Doce Raro":
+   waiting?"Aguardando atualização do Doce Raro":
+   "Toque: atualizar; segure: intervalo");
+}
 function syncCandy(json) {
  try{settings=Object.assign(settings,JSON.parse(json||"{}"));}catch(e){}
  $("period").textContent=String(settings.period||1)+"m";
@@ -132,6 +146,8 @@ function requestRefreshNow(){
   const now=Date.now();
   if(now-lastRefreshRequestAt<400)return;
   lastRefreshRequestAt=now;
+  // Start rotating instantly, then trust the native search state for the end.
+  setCandyRefreshState({busy:true});
   Native.refreshCandy();
 }
 refresh.addEventListener("pointerdown",event=>{
@@ -175,4 +191,5 @@ refresh.addEventListener("click",event=>{
   requestRefreshNow();
 });
 window.syncCandy=syncCandy;window.setPastedCoords=setPastedCoords;
+window.setCandyRefreshState=setCandyRefreshState;
 </script></body></html>
