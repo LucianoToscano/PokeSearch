@@ -8,8 +8,26 @@ const code=fs.readFileSync(path.join(__dirname,
 // O controle da Home precisa ficar GONE (sem reservar largura) com zero/um treinador.
 const refresh=code.slice(code.indexOf("private void refreshSessionSummary()"),
   code.indexOf("private void askLogout()"));
+const header=code.slice(code.indexOf('trainerSectionTitle=homeText("Treinador vinculado"'),
+  code.indexOf("trainerPanel.addView(trainerHeader,sectionLp);"));
+assert.match(code,/private ImageButton trainerSelectButton;/);
+assert.match(header,/trainerHeader\.addView\(trainerSectionTitle,new LinearLayout\.LayoutParams\(-2,-2\)\)/);
+assert.match(header,/trainerSelectButton=new ImageButton\(this\);/);
+assert.match(header,/trainerSelectButton\.setImageResource\(R\.drawable\.ps_trainer_switch\)/);
+assert.match(header,/new LinearLayout\.LayoutParams\(d\(36\),d\(36\)\)/);
+assert.match(header,/chooseLp\.leftMargin=d\(3\)/);
+assert.doesNotMatch(header,/homeAuthButton\("Escolher"/);
+assert.doesNotMatch(header,/d\(96\),d\(33\)/);
+const vector=fs.readFileSync(path.join(__dirname,
+  "../src/main/res/drawable/ps_trainer_switch.xml"),"utf8");
+assert.match(vector,/android:viewportWidth="32"/);
+assert.match(vector,/android:strokeWidth="1\.75"/);
+assert.match(vector,/android:pathData="[\s\S]*M23,4/);
+
 assert.match(refresh,/int profiles=selectableTrainerCount\(prefs\);/);
 assert.match(refresh,/trainerSelectButton\.setVisibility\(linked&&profiles>1\?View\.VISIBLE:View\.GONE\)/);
+assert.match(refresh,/trainerSelectButton\.setContentDescription\(/);
+assert.doesNotMatch(refresh,/trainerSelectButton\.setText\(/);
 assert.doesNotMatch(refresh,/trainerSelectButton\.setVisibility\(logged\?View\.VISIBLE:View\.GONE\)/);
 
 // A checagem deve usar os perfis vinculados lidos do PoGoCoordinates, nao o numero bruto.
