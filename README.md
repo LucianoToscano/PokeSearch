@@ -1,6 +1,16 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT168 · 0.01.68 · 54373
+## Versão oficial atual — LT169 · 0.01.69 · 54374
+
+**Atualização pública confirmada:** [GitHub Release LT169](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.69-54374) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.69-54374/PokeSearch-v0.01.69-LT.apk) · [CI oficial SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40875761778). SOURCE_COMMIT do APK `81503cc6e2ce7e974532503759e2d690af7aedbd`; **49.493.674 bytes**; SHA-256 `58acf4bd0b663149e803daf411d7d0a118b7a0112da87240abda4acdb7e3f4f6`. Certificado permanente Android v2 e R8 preservados.
+
+**Novidades:** sprites verificadas de formas e trajes no modo API/DOM, incluindo Flabébé de cinco cores; cache compartilhado das duas Pokébolas e identificação textual no lugar de círculos vazios; ícone compacto de troca entre 2+ treinadores; três preferências independentes de privacidade na Home; coordenadas completas sem reticências e com cópia intacta. Login, Premium, chat, GL/UL e filtros preservados. **QA físico Samsung ainda pendente.**
+
+[Registro canônico oficial LT169](docs/ESTADO_CANONICO_LT169_OFICIAL_20261029.md) · [Guia Mestre](docs/GUIA_MESTRE.md). O histórico anterior abaixo não define a versão atual.
+
+---
+
+## Histórico — versão oficial anterior LT168 · 0.01.68 · 54373
 
 **Atualização pública confirmada:** [GitHub Release LT168](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.68-54373) · [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.68-54373/PokeSearch-v0.01.68-LT.apk) · [CI SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40864077543). Merge [PR #112](https://github.com/LucianoToscano/PokeSearch/pull/112), commit do APK `b21bb0aed5f6f919a0a1d0f1d64677f908c2859f`; 49.416.673 bytes; SHA-256 `a331a28b853a23b2bbd0fc02e51d2f483646eac4d21aca717ef7e29faa3ab70f`.
 
