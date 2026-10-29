@@ -68,6 +68,19 @@ final class CommunityScrapbookOnline {
     }
     static int dp(Context c,int value){return CommunityScrapbookStage1.dp(c,value);}
 
+    /** Use the SAME authenticated Firebase principal as the live Home chat.
+     * If the verified Google admin session is active, capture posts must not
+     * silently fall back to the installation's anonymous stats identity.
+     * Never trust nickname text to establish authorship. */
+    static FirebaseApp capturePublisherApp(Context context){
+        FirebaseApp basic=FirebaseStats.ensureApp(context);
+        try{
+            FirebaseApp admin=FirebaseStats.ensureChatAdminApp(context);
+            FirebaseUser verified=FirebaseAuth.getInstance(admin).getCurrentUser();
+            if(Controller.verifiedAdmin(verified))return admin;
+        }catch(RuntimeException ignored){}
+        return basic;
+    }
     static final class Controller {
         private final Activity activity;
         private final boolean light;
@@ -83,6 +96,9 @@ final class CommunityScrapbookOnline {
         private DataSnapshot lastMessages;
         private final Map<String,Bitmap> avatars=new LinkedHashMap<>();
         private final Map<String,Bitmap> captureIcons=new LinkedHashMap<>();
+        // Two independent, concurrently signed-in sessions can belong to the
+        // same person on this device. Do not infer identity from display names.
+        private final java.util.Set<String> localOwnedUids=new java.util.HashSet<>();
         private final java.util.Set<String> expandedCaptureDetails=new java.util.HashSet<>();
         private ImageView avatarButton;
         private boolean isAdmin=false;
@@ -304,6 +320,18 @@ final class CommunityScrapbookOnline {
         private void start(FirebaseUser user){
             if(destroyed)return;
             currentUid=user.getUid();
+            localOwnedUids.clear();
+            localOwnedUids.add(currentUid);
+            // Legacy capture announcements used the installation's anonymous
+            // Firebase UID even while Home chat was signed in as Google admin.
+            // Preserve their server authorship; display them as ours only
+            // while that ORIGINAL anonymous Firebase session still exists.
+            try{
+                FirebaseUser anonymous=FirebaseAuth.getInstance(
+                    FirebaseStats.ensureApp(activity)).getCurrentUser();
+                if(anonymous!=null && anonymous.isAnonymous())
+                    localOwnedUids.add(anonymous.getUid());
+            }catch(RuntimeException ignored){}
             authenticated=true;refreshNickname();
             chatReadable=false;
             setStatus("Conectando ao chat…");
@@ -417,7 +445,7 @@ final class CommunityScrapbookOnline {
                 if(id==null||!id.matches("[A-Za-z0-9_-]{12,180}")||
                     author.length()<2||message.isEmpty()||uid==null||created==null)
                     continue;
-                boolean mine=uid.equals(currentUid);
+                boolean mine=localOwnedUids.contains(uid);
                 addBubble(id,mine,uid,author,message,created);
                 shown++;
             }
@@ -447,7 +475,7 @@ final class CommunityScrapbookOnline {
             bp.width=Math.max(dp(activity,125),
                 Math.min(dp(activity,260),activity.getResources().getDisplayMetrics().widthPixels-dp(activity,85)));
             ImageView authorPhoto=new ImageView(activity);
-            Bitmap authorBitmap=avatars.get(authorUid);
+            Bitmap authorBitmap=ownedAvatar(authorUid);
             if(authorBitmap!=null){
                 authorPhoto.setImageBitmap(authorBitmap);
                 authorPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -566,8 +594,12 @@ final class CommunityScrapbookOnline {
             LinearLayout chip=new LinearLayout(activity);
             chip.setGravity(Gravity.CENTER_VERTICAL);
             chip.setPadding(dp(activity,3),dp(activity,2),dp(activity,3),dp(activity,2));
-            chip.setBackground(bg(light?0xFFF0F3F4:0xFF304047,12,
-                                  light?0xFFD5DDE1:0xFF47565E));
+            // Mode PNGs already carry their own shape. A second dark rounded
+            // background/stroke created a visible black square around them.
+            // Keep text-only badges discreetly framed; icon badges float cleanly.
+            if(path==null)
+                chip.setBackground(bg(light?0xFFF0F3F4:0xFF304047,12,
+                                      light?0xFFD5DDE1:0xFF47565E));
             if(path!=null){
                 Bitmap icon=modeIcon(path);
                 if(icon!=null){
@@ -685,9 +717,23 @@ final class CommunityScrapbookOnline {
                 })
                 .setNegativeButton("Cancelar",null).show();
         }
+        /** Show the owner's already opted-in chat photo for locally owned
+         * legacy UID aliases, without changing Firebase data or exposing
+         * another participant's photo/name. */
+        private Bitmap ownedAvatar(String uid){
+            Bitmap exact=avatars.get(uid);
+            if(exact!=null||!localOwnedUids.contains(uid))return exact;
+            Bitmap current=avatars.get(currentUid);
+            if(current!=null)return current;
+            for(String owned:localOwnedUids){
+                Bitmap candidate=avatars.get(owned);
+                if(candidate!=null)return candidate;
+            }
+            return null;
+        }
         private void refreshOwnAvatar(){
             if(avatarButton==null)return;
-            Bitmap image=avatars.get(currentUid);
+            Bitmap image=ownedAvatar(currentUid);
             if(image!=null){
                 avatarButton.setImageBitmap(image);
                 avatarButton.setScaleType(ImageView.ScaleType.CENTER_CROP);
