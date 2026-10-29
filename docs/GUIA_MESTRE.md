@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT152 0.01.52 — Home ilustrada baseada nas imagens de referência (29/10/2026)
+
+- **Em QA, NÃO OFICIAL:** branch `feature/lt152-illustrated-home-reference-20261029`; PR [#104](https://github.com/LucianoToscano/PokeSearch/pull/104) DRAFT sobre main LT148. Nenhum merge/publicação/atualização global.
+- **Interface:** nova composição da Home com marca e versão, avatar/perfil real, dois controles Pokébola/IV independentes, FirebaseStats real, novidades e Pikachu offline, comunidade com sprites Pokémon verificados e barra inferior; login/serviços/filtros/permissões originais preservados. Tema e suporte acessíveis pelo menu.
+- **Fundo:** padrão continua sendo a paisagem clara oficial empacotada. Opção nova `Imagem de fundo` permite escolher PNG/JPG da galeria, mantém permissão URI e restaura o original. Ilustração nova da conversa é arquivo externo, **não embutido no APK**.
+- **QA assinado:** [Actions SUCCESS #40831648949](https://github.com/LucianoToscano/PokeSearch/actions/runs/40831648949), [Artifact #12878952913](https://github.com/LucianoToscano/PokeSearch/actions/runs/40831648949/artifacts/12878952913), `SOURCE_COMMIT=83d977cdf40de1e4ab59bb3ad57da4e3320db6ef`; APK 49.423.491 bytes SHA-256 `4f77cfbadd97b39a80a42ca6686e757c8f3daba3c10ffac50d90da03954f8ed0`, versão 54357, assinatura v2 permanente confirmada.
+- **Limite:** ainda sem validação física Samsung; telas secundárias continuam apoiadas nos fluxos atuais. A versão QA pode depender de autorização remota. Ver [detalhes LT152](POKESEARCH_LT152_HOME_ILUSTRADA_QA_20261029.md).
+
+
 ## LT145 0.01.45 — atualização oficial global via GitHub (29/10/2026)
 
 - **Publicação oficial CONFIRMADA:** https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.45-54350 — estável, não pré-lançamento, disponível em `releases/latest`.
