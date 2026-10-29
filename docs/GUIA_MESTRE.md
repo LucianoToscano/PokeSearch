@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT179 — DISTRIBUIÇÃO GERAL AUTORIZADA (29/10/2026)
+
+O proprietário solicitou explicitamente: **"Envie para atualizar o app de todo mundo"**. Assim, autorizou merge da PR #135, lançamento estável e exposição no atualizador existente do aplicativo. O fluxo da LT179 usa a mesma chave permanente e cria **`v0.01.79-54384`**, sem sobrescrever a LT178. O workflow protegido `.github/workflows/lt179-candy-official-release.yml` só publica após detectar `latest=v0.01.78-54383`, assinar o APK, passar os testes/Android e conferir SHA-256 e tamanho do asset. O canal é GitHub Releases/latest; o Android pede consentimento para instalar. **Google Drive não é sincronizado pelo workflow**, não afirmar upload ao Drive sem evidência.
+
+Escopo: ↻ Doce Raro com toque simples e segurar distintos, refresh automático quando toda lista válida ficar cinza após cópia, proteção contra busca duplicada/429 e registro da LT179 em `release_notes.json`. Código e PR: [#135](https://github.com/LucianoToscano/PokeSearch/pull/135); escopo de QA [LT179](LT179_DOCE_RARO_REFRESH_APOS_COPIA_20261029.md). A conclusão do merge, do workflow e os hashes exigem comprovação posterior, **não antecipar sucesso**.
+
+---
+
 ## LT178 — NOVA CANDIDATA OFICIAL DOCE RARO (29/10/2026)
 
 **Correções sobre a LT177:** controle de Nome Doce Raro ocultável, distância inserida dentro da célula da sprite (sem coluna lateral), barra e popups refinados, visibilidade inicial `Nome OFF · Localização OFF · Despawn ON · Distância OFF` e sprite de Doce Raro original com transparência em resolução 96×96. Botão ↻: toque curto chama consulta na soltura, pressão longa abre somente opções 1/3/5min, com uma busca pendente durante consulta anterior sem disparos simultâneos. Versão destinada ao APK completo assinado **0.01.78 / versionCode 54383**; novo `release_notes.json` registra novidades para usuários. Ações preservam as duas Pokébolas e contas independentes.
@@ -707,3 +715,12 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - `Releases/latest` confirmado como LT178 (draft=false, prerelease=false); atualização poderá ser vista pelo atualizador existente na próxima consulta, conforme preferências e permissões do Android. A instalação exige confirmação do usuário, sem instalação forçada.
 - **Google Drive não atualizado nesta etapa:** o registro de Drive anteriormente usado não foi encontrado no escopo da conta Drive conectada; link antigo não foi alterado nem declarado atualizado. Distribuição pública verificada via GitHub.
 - Após publicação, testes funcionais de uso real no Samsung/Moto devem validar menus, sessão autenticada, chamada API/429, contagem e cópia. O sucesso automático não equivale à homologação física.
+
+
+### LT179 QA — ↻ Doce Raro e atualizar quando todos copiados (29/10/2026)
+- Base da branch: LT178 oficial `0.01.78 / 54383`; não alterar/invalidar a distribuição atual.
+- Branch: `fix/lt179-candy-refresh-after-copy-20261029`; detalhes e checklist em [LT179](LT179_DOCE_RARO_REFRESH_APOS_COPIA_20261029.md).
+- Toque curto ↻: `pointerup` + fallback `click` deduplicado 400ms na WebView local; segurar por 550ms abre somente 1/3/5 min. Bridge Android confirma recebimento com Toast.
+- Ao copiar a última coordenada ainda ativa e colorida, marca cinza e solicita a próxima busca uma vez por geração; toques em coordenadas já cinzas não fazem nova consulta. Continua respeitando `Retry-After` e guardando atualização pendente até o fim do bloqueio.
+- Proteção contra loop e cap oficial de 10 preservadas; duas Pokébolas sem alterações. Teste `lt179-candy-refresh-gestures.test.js` e regressão LT175.
+- Workflow QA isolado `lt179-candy-refresh-signed-qa.yml` tenta gerar versão `0.01.79 / 54384` assinada; validar execução/arquivo/hash antes de anunciar artefato. Não houve autorização nesta solicitação para merge, Release, Drive ou atualização pública.
