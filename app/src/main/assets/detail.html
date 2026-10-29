@@ -515,6 +515,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #imageFallback{font-size:0!important;position:relative}
 #imageFallback::after{content:"◉";display:block;font-size:19px;
  line-height:23px;color:#b7c7dc;opacity:.85}
+/* LT148: native card and the CSS panel have identical available height.
+   Previous max-height:calc(100vh - 6px) caused a scroll of 3-6 pixels. */
+#panel{max-height:100vh;max-width:100%;margin:0}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -814,13 +817,16 @@ const evoIdentity=c=>JSON.stringify([
 function resizeEvolutionPanel(){
  requestAnimationFrame(()=>{
   const panel=document.getElementById("panel");
+  // Full scrollHeight plus the 2px border and rounding; not a clipped
+  // max-height minus six pixels as on previous builds.
   const height=Math.ceil(panel.scrollHeight)+3;
   Native.resizeDetail(height);
-  // The native window resizes on its UI thread. Only enable inner scrolling
-  // when expanded evolution data or the physical display forces clipping.
+  // Native WindowManager layout is asynchronous; check afterward.
   const recheck=()=>{
    if(!panel?.classList?.toggle)return;
-   panel.classList.toggle("needsScroll",panel.scrollHeight>panel.clientHeight+3);
+   const clipped=panel.scrollHeight>panel.clientHeight+3;
+   panel.classList.toggle("needsScroll",clipped);
+   if(!clipped)panel.scrollTop=0;
   };
   if(typeof setTimeout==="function")setTimeout(recheck,90);
  });

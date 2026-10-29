@@ -8,7 +8,7 @@ const code=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(code);new v
 const css=html.slice(html.indexOf("/* QA22: practical compact card"));
 assert.ok(css.includes('#panel:not(.needsScroll){overflow-y:hidden;'),"normal card avoids unneeded scroll");
 assert.ok(css.includes('#panel.needsScroll{overflow-y:auto;'),"tall content can scroll");
-assert.ok(code.includes('panel.classList.toggle("needsScroll",panel.scrollHeight>panel.clientHeight+3)'),"scroll based on actual overflow");
+assert.ok(code.includes('panel.classList.toggle("needsScroll",clipped)'),"scroll based on actual overflow");
 assert.ok(code.includes('Native.resizeDetail(height)'),"native height adapts to panel");
 assert.ok(css.includes('max-width:100%;min-height:15px;margin-top:2px;'),"Rank compact");
 assert.ok(css.includes('#rankLine::before{content:"★";'),"Rank badge has star icon");
