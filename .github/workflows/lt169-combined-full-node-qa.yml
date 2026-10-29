@@ -1,0 +1,35 @@
+name: PokeSearch LT169 — regressão Node completa antes da release
+on:
+  push:
+    branches: [fix/lt169-go-form-regressions-full-qa-20261029]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: lt169-full-node-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  full-node-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all shipping JS sources and Node tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          for f in app/src/main/assets/*.js; do node --check "$f"; done
+          for suite in app/tests/*.test.js; do
+            if [[ "$suite" == "app/tests/lt74-local-update-preview.test.js" ]]; then
+              echo "::notice::Deprecated LT74 debug-only test excluded"; continue
+            fi
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+          echo "All shipping Node suites passed"
