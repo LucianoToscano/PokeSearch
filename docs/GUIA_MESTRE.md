@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT175 EM QA — DOCE RARO COMO TERCEIRO OVERLAY (29/10/2026)
+
+**LT173 segue sendo a única versão pública estável.** Em branch separada, LT175 integra na Home um ícone Doce Raro ao lado de Clima e acrescenta `RareCandyOverlayService`: bolha independente de 45dp, toque para abrir cards, segurar para menus no estilo das Pokébolas, localização/raio, atualização 1/3/5m, mostrar/ocultar infos, cópia por sprite com estado cinza, despawn e remoção automática com busca controlada. Fonte é a aba Rare Candy do PoGoCoordinates em WebView, usando sessão e acesso oficiais; nenhuma coordenada inventada, máximo 10. **Alterações de Java e Manifest exigem novo APK**, não recurso OTA na LT173. QA CI e físico Samsung/Moto ainda não comprovado; não houve merge nem distribuição. [Registro LT175](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md). PR LT174 (#133) de segurança OTA segue isolada.
+
+---
+
 ## LT173 OFICIAL — ATUALIZAÇÕES INTELIGENTES ASSINADAS (29/10/2026)
 
 **VERSÃO ESTÁVEL ATUAL: LT173 `0.01.73 / versionCode 54378`, disponível para todos via GitHub Releases/latest.** A PR [#132](https://github.com/LucianoToscano/PokeSearch/pull/132) foi mesclada. SOURCE_COMMIT oficial `7d3f7497539af826de491cc6daac2e16e4411758`. APK `PokeSearch-v0.01.73-LT.apk` **49.514.961 bytes**, SHA-256 `5d330bafeabe3a24fdfb5ef8864c7ae463743ae4cda362d014fc9c08ef34ade9`, R8, certificado Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [Release oficial LT173](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.73-54378) · [Actions #40921988685 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40921988685) · [Registro canônico LT173](ESTADO_CANONICO_LT173_OFICIAL_20261029.md).
