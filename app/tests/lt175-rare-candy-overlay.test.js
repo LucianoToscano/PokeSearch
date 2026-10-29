@@ -29,13 +29,28 @@ assert(menu.includes("grid-auto-rows:30px"));
 assert(menu.includes("gap:2px"));
 assert(menu.includes("background:#151b26e6"));
 assert(menu.includes("border-radius:5px"));
-assert(menu.includes("requestHeight(265,true)"));
+assert(menu.includes("requestHeight(265,false)"));
 assert(menu.includes("new int[]{1,3,5}")===false);
 for(const part of ["choosePeriod(1)","choosePeriod(3)","choosePeriod(5)"]){
  // Buttons are generated dynamically, not hard-coded; guarded by [1,3,5].
  assert(menu.includes("[1,3,5]"));
 }
 assert(menu.includes('setCandyInfo(key,checked)'));
+assert(menu.includes('["name","Nome Doce Raro"]'),"Name visibility checkbox must exist");
+assert(menu.includes('name:false,location:false,despawn:true,distance:false'),"Only despawn on by default in menu");
+assert(source.includes('showName=false,showLocation=false,showDespawn=true,showDistance=false'),"Only despawn on by default in Android");
+assert(source.includes('prefs.getBoolean("candyShowName",false)'),"Name checkbox must persist");
+assert(source.includes('prefs.getBoolean("candyShowDespawn",true)'),"Despawn must default ON");
+assert(source.includes('prefs.getBoolean("candyShowLocation",false)'),"Location must default OFF");
+assert(source.includes('prefs.getBoolean("candyShowDistance",false)'),"Distance must default OFF");
+assert(source.includes('"name".equals(field)'),"Name field must be handled by bridge");
+assert(source.includes("FrameLayout spriteCell=new FrameLayout(this)"),"Distance must share sprite cell");
+assert(source.includes("spriteCell.addView(distance,distLp)"),"Distance must overlay sprite");
+assert(!source.includes('row.addView(distance,space(51,40,0))'),"No distant right-side distance column");
+assert(source.includes('if(showName||showLocation)'),"Name and location should not reserve width when hidden");
+assert(source.includes('int contentDp=(showName||showLocation)?228:48'),"Default results must be sprite-column width");
+assert(menu.includes('class="periodChoices"'),"Compact 1/3/5 period row");
+
 assert(menu.includes("Native.candyMenuFocus(true)"));
 assert(source.includes("expires_at")&&source.includes("java.time.Instant.parse(expiry)"));
 assert(source.includes("Math.round(kilometers*1000)+\" m\""));
@@ -48,8 +63,7 @@ assert(source.includes("row.setBackgroundColor(Color.TRANSPARENT)"));
 assert(source.includes("resultsParams.y="));
 assert(!source.includes("JSONObject.quote(token)"),"JWT must never be passed to Java");
 assert(!source.includes("addJavascriptInterface(new Bridge()"));
-assert(workflow.includes("PokeSearch-v0.01.76-LT-QA.apk")||
-       workflow.includes("PokeSearch-v0.01.77-LT-QA.apk"));
+assert(workflow.includes("PokeSearch-v0.01.78-LT-QA.apk"));
 
 const png=Buffer.from(read("assets/rare_candy_icon.b64").trim(),"base64");
 assert(png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
