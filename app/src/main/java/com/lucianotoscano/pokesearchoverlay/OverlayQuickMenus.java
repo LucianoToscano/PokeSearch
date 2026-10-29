@@ -315,19 +315,9 @@ final class OverlayQuickMenus {
         LinearLayout.LayoutParams rlp=new LinearLayout.LayoutParams(-1,dp(context,36));
         rlp.topMargin=dp(context,5);
         content.addView(refresh,rlp);
-        TextView hint=text(context,"Atualização automática",11);
-        LinearLayout.LayoutParams hlp=new LinearLayout.LayoutParams(-1,dp(context,28));
-        hlp.topMargin=dp(context,4);
+        TextView hint=text(context,"Segure Atualizar para escolher 1, 3 ou 5 min",10);
+        LinearLayout.LayoutParams hlp=new LinearLayout.LayoutParams(-1,dp(context,25));
         content.addView(hint,hlp);
-        LinearLayout buttons=new LinearLayout(context);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        for(int value:new int[]{1,3,5}){
-            Button b=button(context,value+"m"+(value==actions.period()?" ✓":""));
-            LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(context,34),1);
-            if(value!=1)bp.leftMargin=dp(context,4);
-            buttons.addView(b,bp);
-        }
-        content.addView(buttons);
         Button infos=button(context,actions.infos()?"◉   Infos: Mostrar":"◎   Infos: Ocultar");
         LinearLayout.LayoutParams ilp=new LinearLayout.LayoutParams(-1,dp(context,38));
         ilp.topMargin=dp(context,7);content.addView(infos,ilp);
@@ -339,14 +329,33 @@ final class OverlayQuickMenus {
             showCandyLocation(context,anchorY,actions);
         });
         refresh.setOnClickListener(v->{actions.refresh();dialog.dismiss();});
-        for(int i=0;i<buttons.getChildCount();i++){
-            final int value=new int[]{1,3,5}[i];
-            buttons.getChildAt(i).setOnClickListener(v->{
-                actions.updatePeriod(value);
-                dialog.dismiss();
+        refresh.setOnLongClickListener(v->{
+            dialog.dismiss();showCandyPeriod(context,anchorY,actions);
+            return true;
+        });
+        infos.setOnClickListener(v->{actions.updateInfos(!actions.infos());dialog.dismiss();});
+        return dialog;
+    }
+    static Dialog showCandyPeriod(Context context,int anchorY,CandyActions actions){
+        LinearLayout content=root(context);
+        content.addView(text(context,"↻  Atualização automática",13),
+            new LinearLayout.LayoutParams(-1,dp(context,32)));
+        LinearLayout row=new LinearLayout(context);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        for(int value:new int[]{1,3,5}){
+            Button choice=button(context,value+"m"+(value==actions.period()?" ✓":""));
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(context,40),1);
+            if(value!=1)p.leftMargin=dp(context,4);
+            row.addView(choice,p);
+        }
+        content.addView(row);
+        Dialog dialog=show(context,content,anchorY,210);
+        for(int i=0;i<row.getChildCount();i++){
+            final int selected=new int[]{1,3,5}[i];
+            row.getChildAt(i).setOnClickListener(v->{
+                actions.updatePeriod(selected);dialog.dismiss();
             });
         }
-        infos.setOnClickListener(v->{actions.updateInfos(!actions.infos());dialog.dismiss();});
         return dialog;
     }
     private static Dialog showCandyLocation(Context context,int anchorY,CandyActions actions){
