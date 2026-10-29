@@ -319,8 +319,12 @@ public final class RareCandyOverlayService extends Service {
         cookies.setAcceptThirdPartyCookies(site,true);
         site.setAlpha(0f);site.setClickable(false);
         site.setFocusable(false);
+        site.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         site.setOnTouchListener((v,e)->true);
-        bubbleWindow.addView(site,0,new FrameLayout.LayoutParams(dp(1),dp(1)));
+        // Keep a realistic mobile viewport for site's React/lazy-loaded cards.
+        // The native overlay hitbox is still only the 45dp icon; the hidden
+        // WebView is clipped by bubbleWindow and cannot intercept outside taps.
+        bubbleWindow.addView(site,0,new FrameLayout.LayoutParams(dp(360),dp(640)));
         try(InputStream in=getAssets().open("rare_candy_probe.js")){
             byte[] raw=new byte[in.available()];
             int total=0;
