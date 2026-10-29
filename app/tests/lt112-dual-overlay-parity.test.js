@@ -25,7 +25,7 @@ check("same Java results/search/assets implementation is inherited by BOTH servi
  assert.match(service,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
  assert.match(service,/private void applyCollectedResults\(JSONObject r\)/);
  assert.match(service,/private void recordNewResults\(JSONArray cards,boolean leagueConfirmed\)/);
- assert.ok((service.match(/VerifiedSpriteCache\.fromDisk\(OverlayService\.this,request\.getUrl\(\)\)/g)||[]).length>=4);
+ assert.ok((service.match(/OtaAssets\.intercept\(OverlayService\.this,otaWebLoader,request\.getUrl\(\)\)/g)||[]).length>=4);
 });
 check("favourite list/sounds shared but general-alert preferences isolated",()=>{
  assert.match(watched,/getSharedPreferences\("prefs",0\)/);
