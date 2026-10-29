@@ -1,0 +1,288 @@
+name: PokeSearch LT150 — Home Premium vidro translucido e regressao completa — APK QA assinado
+on:
+  push:
+    branches: [feature/lt150-home-premium-glass-20261029]
+    paths:
+      - '.github/workflows/lt150-home-premium-glass-signed-qa.yml'
+      - 'app/scripts/build_sprite_bundle.py'
+      - 'app/scripts/sprite-sha256.lock.json'
+      - 'firebase-realtime.rules.json'
+      - 'functions/**'
+      - 'app/build.gradle.kts'
+      - 'app/chat-google-oauth-public.json'
+      - 'app/tests/**'
+      - 'app/src/main/java/**'
+      - 'app/src/main/assets/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'docs/POKESEARCH_LT112_HIDE_SECOND_POKEBALL_HOME_20261025.md'
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-lt150-home-premium-glass-signed
+  cancel-in-progress: false
+jobs:
+  signed-dual-parity:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      POKE_TEST_VERSION_CODE: '54355'
+      POKE_TEST_VERSION_LABEL: '51155'
+      POKE_TEST_PUBLIC_VERSION: '0.01.50'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      # Firebase LT Web OAuth ID supplied through GitHub Actions repository variables.
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      # Premium access remains server-controlled; new-user trials default OFF until owner chooses days.
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      # Identical existing LT104 opt-in QA visibility, not new scrapbook actions.
+      POKE_SCRAPBOOK_STAGE1_QA: 'true'
+      POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
+      POKE_SCRAPBOOK_ONLINE_QA: 'true'
+      POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
+      GH_TOKEN: ${{ github.token }}
+      # PUBLIC OAuth Web client ID from the user's refreshed Firebase Android configuration.
+      # This is NOT a private key, Firebase Admin SDK, or service-account credential.
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      QA_APK: PokeSearch-v0.01.50-LT-QA.apk
+      QA_TAG: v0.01.50-54355
+    steps:
+      - name: Checkout exact feature commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore permanent keystore
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Missing protected signing secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pokesearch-lt112-signing.p12"
+          chmod 600 "$RUNNER_TEMP/pokesearch-lt112-signing.p12"
+          keytool -list -keystore "$RUNNER_TEMP/pokesearch-lt112-signing.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" >/dev/null
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pokesearch-lt112-signing.p12" >> "$GITHUB_ENV"
+      - name: Validate OAuth Web client and permanent Firebase Android SHA-1
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$POKE_GOOGLE_WEB_CLIENT_ID" =~ ^[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$ ]] ||
+            { echo "::error::Invalid Google Web OAuth client ID"; exit 1; }
+          CERT_SHA1="$(keytool -exportcert -rfc -keystore "$POKE_RELEASE_KEYSTORE" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha1 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT_SHA1" = "dd7bf665e1d47a257fc557b51cb5a57dfd13cb96" ||
+            { echo "::error::Signing SHA-1 differs from Firebase Android OAuth registration"; exit 1; }
+          echo "Permanent APK signing matches Firebase LT; OAuth configured."
+      - name: Validate all code and QA tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile app/scripts/build_sprite_bundle.py app/scripts/fetch_form_sprites.py app/scripts/fetch_all_verified_varieties.py app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/build_pokemon_card_metadata.py
+          node - <<'NODE'
+          const fs=require('fs'),vm=require('vm'),src=fs.readFileSync('app/src/main/assets/pokemon_type_icons.js','utf8');
+          const ctx={};vm.runInNewContext(src,ctx);const icons=ctx.PokeSearchTypeIcons;
+          if(Object.keys(icons).length!==18||Object.values(icons).some(src=>!src.startsWith('data:image/png;base64,iVBORw0KGgo')))
+           throw Error('Drive Pokémon type icons not packaged');
+          NODE
+          node --check functions/index.js
+          node --check functions/scripts/reconcile-once.js
+          node -e "const c=require('./firebase.json');if(c.database[0].target!=='live')throw Error('RTDB target missing')"
+          for js in probe.js sprite_offline.js coords_quota.js pokemon_type_icons.js pokemon_card_metadata.js pokemon_card_presentation.js api_result_contract.js api_browser_transport.js api_android_session.js api_catalog_cache.js api_integration_router.js; do
+            node --check "app/src/main/assets/$js"
+          done
+          for suite in app/tests/*.test.js; do
+            if [ "$suite" = "app/tests/lt74-local-update-preview.test.js" ]; then
+              echo "::notice::Deprecated LT74 debug preview intentionally excluded, same as LT104"
+              continue
+            fi
+            echo "::group::$suite"
+            node "$suite"
+            echo "::endgroup::"
+          done
+          mkdir -p "$RUNNER_TEMP/qa"
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/EncounterAlertText.java \
+            app/tests/EncounterAlertTextTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.EncounterAlertTextTest
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/SupportMissionPolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/UpdatePolicy.java app/src/main/java/com/lucianotoscano/pokesearchoverlay/PopupTouchGeometry.java app/tests/SupportMissionPolicyTest.java app/tests/UpdatePolicyTest.java app/tests/PopupTouchGeometryTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.SupportMissionPolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.UpdatePolicyTest
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" app/src/main/java/com/lucianotoscano/pokesearchoverlay/VersionNames.java app/tests/VersionNamesTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.VersionNamesTest
+          javac -encoding UTF-8 -d "$RUNNER_TEMP/qa" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PresenceWindowState.java \
+            app/tests/LocalBridgePagePolicyTest.java
+          java -cp "$RUNNER_TEMP/qa" com.lucianotoscano.pokesearchoverlay.LocalBridgePagePolicyTest
+      - name: Build immutable GO form and costume metadata for offline use
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile app/scripts/update_wwm_catalog.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('app/src/main/assets/wwm_catalog_provenance.json')
+          d=json.loads(p.read_text())
+          assert d['pokemon']==1025 and d['forms']>=1400 and d['costumes']>=80
+          assert d['revision']=='42b315f317ca8cee8e178249328eab5173e5ca70'
+          assert Path('app/src/main/assets/wwm_catalog.js').stat().st_size>100000
+          PY
+      - name: Package verified offline normal and shiny sprites into Android assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('app/src/main/assets/pokemon-sprites')
+          report=json.loads((root / 'manifest.json').read_text())
+          assert report['dexCount']==1025
+          assert report['baseCount']>=950
+          assert report['shinyCount']>=500
+          assert len(report['sha256'])==report['baseCount']+report['shinyCount']
+          expected={'forms/zigzagoon-galar.png','forms/zigzagoon-galar-shiny.png'}
+          assert expected.issubset(set(report['forms']))
+          assert len(report['forms'])==720  # 716 retained + 4 exact Autumn GO forms
+          assert len([x for x in report['forms'] if x.startswith('forms/variety-')])==634
+          assert 'forms/variety-10262-shiny.png' in report['forms']
+          assert 'forms/144-galar.png' in report['forms']
+          assert 'forms/555-galar-zen-shiny.png' in report['forms']
+          assert 'forms/585-spring.png' in report['forms']
+          for dex in (585,586):
+              for variant in ('','-shiny'):
+                  name=f'forms/{dex}-autumn{variant}.png'
+                  assert name in report['forms'],name
+                  import hashlib
+                  assert hashlib.sha256((root/name).read_bytes()).hexdigest()==report['forms'][name]
+          assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
+          assert len(report['costumes'])==106  # 102 legacy + 4 SHA256-verified Zubat 2026 / Gengar 2023
+          for file in ("pm37.cFALL_2022.icon.png",
+                       "pm37.cFALL_2022.s.icon.png",
+                       "pm714.cHALLOWEEN_2025.icon.png",
+                       "pm714.cHALLOWEEN_2025.s.icon.png",
+                       "pm710.fAVERAGE.cFALL_2022.icon.png"):
+              assert "costumes/"+file in report['costumes'], file
+          for dex in (25,393,426):
+              for suffix in ('','-shiny'):
+                  key=f'costumes/{dex}-halloween-2021{suffix}.png'
+                  assert key in report['costumes'],key
+          assert report['costumeSourceCommit']=='c2a686eb08ace6e890d8fe3d2134c76988db87b5'
+          assert all((root / key).is_file() for key in report['costumes'])
+          print('Exact GO costume PNGs:', sorted(report['costumes']))
+          print('Bundled offline sprite coverage:',report['baseCount'],'base,',report['shinyCount'],'shiny', 'regional:', sorted(expected))
+          PY
+      - name: Compile protected and signed LT150 QA APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Audit APK certificate, R8, build version and offline manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK='app/build/outputs/apk/release/app-release.apk'
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/base/25.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/base/94.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/shiny/94.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10038.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.fCOSTUME_2020.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm41.fHALLOWEEN_2026_01.s.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm94.cFALL_2023_NOEVOLVE.s.icon.png'
+
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/shiny/25.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/manifest.json'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/zigzagoon-galar.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/zigzagoon-galar-shiny.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/144-galar.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/555-galar-zen-shiny.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/585-spring.png'
+          for dex in 585 586; do
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/forms/${dex}-autumn.png"
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/forms/${dex}-autumn-shiny.png"
+          done
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/forms/variety-10262-shiny.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm37.cFALL_2022.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/pm714.cHALLOWEEN_2025.s.icon.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/4-goggles-2026-shiny.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/3-copy-2019.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/6-copy-2019.png'
+          unzip -Z1 "$APK" | grep -Fq 'assets/pokemon-sprites/costumes/9-copy-2019.png'
+          for dex in 25 393 426; do
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/costumes/${dex}-halloween-2021.png"
+            unzip -Z1 "$APK" | grep -Fq "assets/pokemon-sprites/costumes/${dex}-halloween-2021-shiny.png"
+          done
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54355'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.50'" PACKAGE-VERSION.txt
+          ! grep -q '^application-debuggable' PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$QA_APK"
+          sha256sum "$QA_APK" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          cp app/src/main/assets/pokemon-sprites/manifest.json SPRITE-MANIFEST.json
+      - name: Verify that the exact signed APK will be included in the artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$QA_APK"
+          apk_size="$(stat -c%s "$QA_APK")"
+          if [ "$apk_size" -lt 30000000 ]; then
+            echo "::error::APK missing or unexpectedly small: $apk_size bytes"
+            exit 1
+          fi
+          sha256sum --check SHA256SUMS.txt
+          unzip -t "$QA_APK" >/dev/null
+          test -f SOURCE_COMMIT.txt
+          test -f SIGNING-REPORT.txt
+          echo "Delivery QA APK ready: $QA_APK ($apk_size bytes)"
+      - name: Upload protected APK artifact and coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-v0.01.50-LT150-HomePremiumGlass-QA-Assinado
+          path: |
+            ${{ env.QA_APK }}
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            SPRITE-MANIFEST.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Cleanup signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pokesearch-lt112-signing.p12"
