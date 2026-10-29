@@ -943,10 +943,12 @@ function togglePvpReferenceInfo(event,button){
  pvpRefPopover.style.left=Math.round(left)+"px";
  pvpRefPopover.style.top=Math.round(top)+"px";
 }
-document.addEventListener("pointerdown",event=>{
- if(pvpRefAnchor&&!pvpRefAnchor.contains(event.target)&&
-    !pvpRefPopover?.contains(event.target))closePvpReferenceInfo();
-});
+if(typeof document!=="undefined"&&typeof document.addEventListener==="function"){
+ document.addEventListener("pointerdown",event=>{
+  if(pvpRefAnchor&&!pvpRefAnchor.contains(event.target)&&
+     !pvpRefPopover?.contains(event.target))closePvpReferenceInfo();
+ });
+}
 function evolutionRow(x,first){
  if(!x||typeof x!=="object")return "";
  const rank=Number(x.rank),overall=Number(x.overallRank);
