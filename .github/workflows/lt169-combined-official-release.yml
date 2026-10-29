@@ -10,7 +10,7 @@ concurrency:
   group: pokesearch-lt169-official-once
   cancel-in-progress: false
 jobs:
-  signed-chat-backup-official-lt168:
+  signed-sprites-home-coords-official-lt169:
     if: github.repository == 'LucianoToscano/PokeSearch'
     runs-on: ubuntu-24.04
     environment:
@@ -376,6 +376,7 @@ jobs:
           - Sprites API ON: catálogo de 1.679 imagens Pokémon GO verificadas por forma/traje, incluindo Flabébé Yellow/Red/Blue/Orange/White; o modo DOM mantém a URL original quando disponível.
           - Nome, forma, Shiny e traje são verificados antes de carregar imagem, evitando trocar uma variante por outra; cache Android validado por hash e reutilizado em ambas Pokébolas.
           - Quando uma sprite realmente não está disponível, exibimos identificação textual discreta no lugar de círculos vazios. A API não fornece a URL do site e algumas artes exigem rede no primeiro carregamento.
+          - Coordenadas no card aparecem completas, sem reticências. O número fica mais à esquerda e, quando necessário, ocupa duas linhas; o toque continua copiando normalmente.
           - Home → Menu → Preferências → Privacidade na Home: mostrar/ocultar nome da conta PoGoCoordinates, nome do treinador e código separadamente. Ocultos aparecem Anônimo ou XXXX XXXX XXXX; login e códigos reais não são alterados.
           - Troca de treinador agora usa um pequeno ícone ao lado do título Treinador vinculado, somente com dois ou mais treinadores vinculados distintos.
           - Mantém autenticação, recursos Premium, chat, GL/UL, Shiny, alertas, coordenadas, filtros e duas Pokébolas.
