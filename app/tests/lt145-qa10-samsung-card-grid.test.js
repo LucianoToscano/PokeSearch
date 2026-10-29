@@ -25,7 +25,7 @@ assert.ok(script.includes('fetch.className=coordsPending?"isPending":valid?"hasC
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"CTA must be red at rest");
 assert.ok(html.includes('#coordRow #coords.isPending{'),"CTA red while fetching");
 assert.ok(html.includes('#coordRow #coords.hasCoords{'),"verified coordinates green");
-assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+10'),"window adapts to full content");
+assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+3'),"window adapts to full content");
 const native=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
 assert.ok(native.includes('DETAIL_DP=200'),"slightly wider card");
 assert.ok(native.includes('detailHeight=125'),"slightly larger initial window");
