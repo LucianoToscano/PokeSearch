@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
     private String loginPurpose="login"; // login | manage
+    private int loginAccountSlot=1; // 1 is legacy Default, 2 is isolated WebView
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
     private boolean profileDiscoveryAttempted=false;
@@ -111,6 +112,10 @@ public class MainActivity extends Activity {
     private ImageButton trainerSelectButton;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
+    private TextView secondAccountStatus;
+    private Spinner firstAccountChoice,secondAccountChoice;
+    private Spinner firstTrainerChoice,secondTrainerChoice;
+    private boolean accountChoiceRefreshing=false;
     private ImageView overlayControl,secondaryOverlayControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
@@ -665,6 +670,7 @@ public class MainActivity extends Activity {
         actionLp.leftMargin=d(7);
         trainerCodeGroup.addView(trainerAction,actionLp);
         trainerAction.setOnClickListener(v->openTrainerManagement());
+        addDualPogoAccountControls(screen);
 
         // LT72: a zero-height, GONE placeholder unless Drive announces a
         // valid, enabled and newer version. Never reserve blank Home space.
@@ -1824,6 +1830,7 @@ public class MainActivity extends Activity {
         });
         refreshWatchCount();
         refreshSessionSummary();
+        refreshDualPogoControls();
         refreshHomeOverlay();
         UpdateCenter.check(this); // Preserve existing Google Drive fallback.
         GitHubUpdateCenter.schedule(this); // 30 min, Doze-aware; no extra service.
@@ -1857,8 +1864,14 @@ public class MainActivity extends Activity {
         sendActionToRunningOverlay(SecondaryOverlayService.class,action,authConfirmed);
     }
     private void notifyOverlaySessionReady(){
-        CookieManager.getInstance().flush();
-        serviceAction("com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN");
+        PogoAccountSlots.flush(loginAccountSlot);
+        // Notify only overlays actively using the authenticated account.
+        if(PogoAccountSlots.assigned(this,false)==loginAccountSlot)
+            sendActionToRunningOverlay(OverlayService.class,
+                "com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN",true);
+        if(PogoAccountSlots.assigned(this,true)==loginAccountSlot)
+            sendActionToRunningOverlay(SecondaryOverlayService.class,
+                "com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN",true);
     }
     // Checking only Logout fails on mobile where it sits inside the hamburger.
     // Use the same sanitized session probe as the collector. Never read/log the
@@ -1890,7 +1903,7 @@ public class MainActivity extends Activity {
                 loginSessionNotified=true;
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
-                getSharedPreferences("prefs",0).edit()
+                PogoAccountSlots.prefs(this,loginAccountSlot).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
                     .remove("profileAvatarUrl")
@@ -1898,7 +1911,7 @@ public class MainActivity extends Activity {
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
-                CookieManager.getInstance().flush();
+                PogoAccountSlots.flush(loginAccountSlot);
                 if("manage".equals(loginPurpose)){
                     // Management must stay open until the user explicitly leaves.
                     refreshSessionSummary();
@@ -1968,7 +1981,7 @@ public class MainActivity extends Activity {
                 JSONObject profile=new JSONObject(payload);
                 if(profile.optBoolean("ok",false)&&
                    "profile".equals(profile.optString("page"))){
-                    SharedPreferences.Editor edit=getSharedPreferences("prefs",0).edit();
+                    SharedPreferences.Editor edit=PogoAccountSlots.prefs(this,loginAccountSlot).edit();
                     String name=profile.optString("displayName","").trim();
                     String provider=profile.optString("provider","");
                     // Linked Google/Discord provider is NOT proof of the
@@ -1994,7 +2007,7 @@ public class MainActivity extends Activity {
                     JSONArray accountList=profile.optJSONArray("trainers");
                     JSONArray verified=new JSONArray();
                     JSONObject chosen=null;
-                    String selection=getSharedPreferences("prefs",0)
+                    String selection=PogoAccountSlots.prefs(this,loginAccountSlot)
                         .getString("profileSelectedTrainerCode","");
                     if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
                         JSONObject item=accountList.optJSONObject(i);
@@ -2110,7 +2123,16 @@ public class MainActivity extends Activity {
     private void openLoginDialog(){openLoginDialog(true,"login");}
     private void openLoginDialog(boolean shinyRequest){openLoginDialog(shinyRequest,"login");}
     private void openLoginDialog(boolean shinyRequest,String purpose){
+        openLoginDialog(shinyRequest,purpose,1);
+    }
+    private void openLoginDialog(boolean shinyRequest,String purpose,int slot){
         if(loginDialog!=null&&loginDialog.isShowing())return;
+        if(!PogoAccountSlots.available(slot)){
+            Toast.makeText(this,"Dois logins não suportados neste Android WebView",
+                Toast.LENGTH_LONG).show();
+            return;
+        }
+        loginAccountSlot=slot;
         loginPurpose="manage".equals(purpose)?"manage":"login";
         loginStartedForShiny=shinyRequest;
         profileCaptureInProgress="manage".equals(loginPurpose);
@@ -2122,6 +2144,7 @@ public class MainActivity extends Activity {
         loginLinkAttempted=false;
         loginDiscoveryStarted=false;
         website=new WebView(this);
+        PogoAccountSlots.bind(website,loginAccountSlot);
         website.setBackgroundColor(Color.rgb(11,13,18));
         website.getSettings().setJavaScriptEnabled(true);
         website.getSettings().setDomStorageEnabled(true);
@@ -2132,8 +2155,8 @@ public class MainActivity extends Activity {
         website.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
         website.getSettings().setAllowFileAccess(false);
         website.getSettings().setAllowContentAccess(false);
-        CookieManager.getInstance().setAcceptCookie(true);
-        CookieManager.getInstance().setAcceptThirdPartyCookies(website,true);
+        PogoAccountSlots.cookies(loginAccountSlot).setAcceptCookie(true);
+        PogoAccountSlots.cookies(loginAccountSlot).setAcceptThirdPartyCookies(website,true);
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
@@ -2185,7 +2208,8 @@ public class MainActivity extends Activity {
         toolbar.setPadding(d(12),0,d(12),0);
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
-        loginName.setText("manage".equals(loginPurpose)?"PoGoCoordinates · Perfil":"PoGoCoordinates · Login");
+        loginName.setText("PoGoCoordinates "+loginAccountSlot+" · "+
+            ("manage".equals(loginPurpose)?"Perfil":"Login"));
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
@@ -2262,6 +2286,7 @@ public class MainActivity extends Activity {
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
+            refreshDualPogoControls();
             if(authenticatedNow&&fromOverlay&&OverlayService.isRunning()){
                 // Return to Pokémon GO with the PokeSearch overlay visible.
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
