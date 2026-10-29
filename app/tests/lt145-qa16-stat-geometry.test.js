@@ -2,7 +2,7 @@
 const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
 const js=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(js);new vm.Script(js);
-const style=html.slice(html.indexOf("/* QA15-16"));
+const style=html.slice(html.indexOf("/* QA15 —"));
 assert.ok(style.includes("#major{grid-template-columns:65px 30px 24px;justify-content:center;gap:3px;"),"strict 40% row reduction");
 const oldWidth=112+48+42+2*3;
 const nextWidth=65+30+24+2*3;
