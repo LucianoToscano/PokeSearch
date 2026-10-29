@@ -1,8 +1,20 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT171 OFICIAL — DOIS CARDS COMPLETOS + TREINADORES VIP POR POKÉBOLA (29/10/2026)
+## LT172 OFICIAL — COORDENADAS, MENU MAIS E VINCULAÇÃO (29/10/2026)
 
-**VERSÃO ESTÁVEL MAIS RECENTE: LT171 `0.01.71 / 54376`, publicada para todos via GitHub Releases.** PR #128 mesclada, SOURCE_COMMIT do APK `e7570bd169fca569ff4fd2d5f6fd2fce82164080`. [Release/latest v0.01.71-54376](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.71-54376), APK `PokeSearch-v0.01.71-LT.apk` **49.510.871 bytes**, SHA-256 `1a00dde87c54f6119b6153cf9be4b7bf7c055233d7923aa5b7a287907e486ede`. [GitHub Actions #40906715606](https://github.com/LucianoToscano/PokeSearch/actions/runs/40906715606) **SUCCESS**; assinatura Android v2 permanente, R8, conteúdo ZIP e release latest validados.
+**VERSÃO ESTÁVEL ATUAL: LT172 `0.01.72 / versionCode 54377`, publicada para todos via GitHub Releases.** PR #130 mesclada; SOURCE_COMMIT imutável do APK `40e94bafe86dfb778be719e0cf1310a7f3085457`; [Release/latest LT172](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.72-54377); APK `PokeSearch-v0.01.72-LT.apk` **49.514.561 bytes**, SHA-256 `5b407116707beacb1c41400c05eceb8d91199496bfb2b7d9ad29b0ebfbd63a2f`. [GitHub Actions #40909102893 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40909102893), R8 e certificado permanente Android v2 verificados.
+
+- **Contas e treinadores:** preservados ambos os cards completos Conta 1/Conta 2, logins WebView isolados e seleção independente P1/P2 de Conta 1 ou 2 e Treinador 1/Treinador 2 em contas VIP que realmente possuam dois vínculos verificados. Os controles de privacidade também valem para Conta 2.
+- **Get coords:** mensagem **Taxa Limitada PoGoCoordinates ⓘ** somente com limite efetivamente sinalizado pelo site/API. Ao tocar, abre balão explicativo; se houver prazo explícito do provedor, mostra contagem de segundos, sem inventar tempo. Contador de usos em círculo, não apresentado como saldo oficial quando local.
+- **Menu Mais (⋯):** tiles individuais do tamanho da barra, sem coluna preta contínua. **Pokébola 1:** ativa overlay mantendo Home visível. **Gerenciar:** abre o formulário de vínculo oficial sem autorizar `Look up` ou `Yes, link it` automaticamente; após vínculo confirmado, navega às buscas oficiais do site. Fluxos por conta mantidos.
+- **Entregas e QA:** integração na [PR #130](https://github.com/LucianoToscano/PokeSearch/pull/130), workflow oficial `lt172-coords-menu-trainer-official-release.yml`, [registro canônico da LT172](ESTADO_CANONICO_LT172_20261029.md). Testes Node/Java/Gradle e integridade do APK aprovados. QA físico no Samsung com duas sessões, VIP, taxa real e popup continua pendente; não confundir CI com testes ao vivo.
+- **Distribuição:** GitHub Releases latest anuncia a nova versão pelo mecanismo já existente; o usuário precisa aceitar a instalação no Android. LT171 e anteriores preservadas.
+
+---
+
+## HISTÓRICO — LT171 OFICIAL ANTERIOR (29/10/2026)
+
+**VERSÃO ESTÁVEL ANTERIOR: LT171 `0.01.71 / 54376`, publicada para todos via GitHub Releases.** PR #128 mesclada, SOURCE_COMMIT do APK `e7570bd169fca569ff4fd2d5f6fd2fce82164080`. [Release/latest v0.01.71-54376](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.71-54376), APK `PokeSearch-v0.01.71-LT.apk` **49.510.871 bytes**, SHA-256 `1a00dde87c54f6119b6153cf9be4b7bf7c055233d7923aa5b7a287907e486ede`. [GitHub Actions #40906715606](https://github.com/LucianoToscano/PokeSearch/actions/runs/40906715606) **SUCCESS**; assinatura Android v2 permanente, R8, conteúdo ZIP e release latest validados.
 
 - **Dois cards completos:** tanto Conta 1 quanto Conta 2 mostram nome/avatar, login/provedor, equipe/nível, treinador vinculado, código, copiar, Gerenciar/Remover e saída individual, no estilo existente da Home. Conta 2 não usa dados da Conta 1 nem compartilha cookies.
 - **Treinadores VIP:** se Conta 1 tem 2 treinadores oficiais vinculados, ambos ficam disponíveis como Treinador 1 e Treinador 2; uma Conta 2 comum com 1 treinador mostra só o seu. P1/P2 podem escolher independentemente conta e treinador válidos, inclusive P1=A/T1 e P2=A/T2, ou A/T1+B/T1. Sem treinador confirmado, Shiny permanece indisponível naquela Pokébola.
