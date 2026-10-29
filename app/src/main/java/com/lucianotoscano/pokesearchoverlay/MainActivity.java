@@ -765,6 +765,8 @@ public class MainActivity extends Activity {
         homeAuthView=auth;
         homeAuthHost.setVisibility(View.GONE);
         frame.addView(homeAuthHost,new FrameLayout.LayoutParams(0,0));
+        if(auth.getParent() instanceof android.view.ViewGroup)
+            ((android.view.ViewGroup)auth.getParent()).removeView(auth);
         homeAuthHost.addView(auth,new FrameLayout.LayoutParams(-1,-2));
         homeIllustratedState=HomeIllustrated152.assemble(this,frame,screen,
             header,dualOverlayRow,accountAvatar,auth,homeUpdateHolder,stats,
