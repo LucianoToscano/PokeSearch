@@ -1326,7 +1326,7 @@ function coordsRevealLimit(card){
   }
   if(/\brate[ -]?limit(?:ed)?\b/i.test(t)&&
      ((t===own&&!!own)||/coord|reveal/i.test(t)||
-      (own&&/\brate[ -]?limit(?:ed)?\b/i.test(own)&&/retry/i.test(t)))){
+      (own&&/\brate[ -]?limit(?:ed)?\b/i.test(own)&&/(?:retry|try again)/i.test(t)))){
    kind="rate";evidence=t;
   }
  }
