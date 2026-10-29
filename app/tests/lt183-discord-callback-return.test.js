@@ -25,9 +25,9 @@ assert.match(check,/if\("manage".equals\(loginPurpose\)\)\{/);
 assert.match(check,/profileCaptureInProgress=true/);
 assert.match(check,/captureOfficialProfile\(view,pageGeneration\)/);
 assert.match(onFinish,/if\(!loginSessionNotified\)checkLoginSession\(view,14,generation\)/);
-assert.match(onFinish,/onReceivedHttpError\(WebView view,/);
-assert.match(onFinish,/request.isForMainFrame\(\)/);
-assert.match(onFinish,/BugReport.log\(MainActivity.this,"AUTH"/);
+assert.match(main,/onReceivedHttpError\(WebView view,/);
+assert.match(main,/request.isForMainFrame\(\)/);
+assert.match(main,/BugReport.log\(MainActivity.this,"AUTH"/);
 assert.doesNotMatch(onFinish,/getUrl\(\).*BugReport\.log/);
 // Retain independent account cookie selection and official destination.
 assert.match(main,/PogoAccountSlots.attach\(website,activeLoginSlot\)/);
