@@ -5869,14 +5869,43 @@ if(PVPOKE_OVERALL){
   }
  }
 }
+// Separate appearance from battle form: costumes can reuse the base
+// species' PvP base stats; regional/stat-changing forms NEVER do.
+// Require independently verified species number/name, not fuzzy names alone.
+function cosmeticPvpIdentity(card){
+ const engine=window.PokeSearchOfflineSprite;
+ if(!card||engine?.verifiedSpeciesIdentity?.(card)!==true)return false;
+ const key=speciesKey(card.name),form=speciesKey(card.form).replace(/[^a-z0-9]/g,"");
+ const variant=speciesKey(card.variant),region=speciesKey(card.region);
+ const costume=speciesKey(card.costume);
+ const evidence=[form,variant,region,costume].join(" ").replace(/[^a-z0-9 ]/g,"");
+ const blocked=/(alola|galar|hisui|paldea|mega|primal|dynamax|gigantamax|gmax|shadow|purified|origin|therian|incarnate|altered|attackform|defenseform|speedform|zen|blade|shield|fused|fusion|dusk|dawn|blackkyurem|whitekyurem)/;
+ if(blocked.test(evidence))return false;
+ const dex=Number(String(card.number||"").replace("#",""));
+ // Independently verified appearance-only pairs from PokéAPI/GO.
+ const seasons=(dex===585||dex===586)&&/^(spring|summer|autumn|winter)$/.test(form);
+ const seas=(dex===422||dex===423)&&/^(west|westsea|east|eastsea)$/.test(form);
+ const appearance=(dex===676)&&/^(natural|heart|star|diamond|debutante|matron|dandy|lareine|kabuki|pharaoh)$/.test(form);
+ if(seasons||seas||appearance)return true;
+ const costumeTag=/(halloween|costume|holiday|christmas|santa|hat|tophat|cartola|goggles|flowercrown|partyhat|fashionweek|pikachuhat|copy2019|fall2023|outfit)/;
+ if(costumeTag.test(evidence))return true;
+ const costumeId=Number(card.costume_id??card.costumeId??0);
+ // An explicit GO costume ID with no contradictory unknown form is safe.
+ const neutral=!form||form==="normal"||form==="default"||form===key.replace(/[^a-z0-9]/g,"");
+ return (card.isCostume===true||Number.isInteger(costumeId)&&costumeId>0)&&neutral;
+}
 function safePvpSpeciesKey(card){
  if(!card||!card.name)return null;
  const key=speciesKey(String(card.name).replace(/✨/g,""));
  const form=speciesKey(card.form);
- // The site may expose form separately: never give a generic form the
- // regular species' rank when there is an unrepresented regional/Shadow form.
- if(form&&!key.includes(form))return null;
- return key||null;
+ const flags=[card.region,card.variant,card.isShadow===true?"shadow":"",
+  card.isPurified===true?"purified":""].map(speciesKey).join(" ");
+ const dangerous=/(alola|galar|hisui|paldea|mega|primal|shadow|purified|origin|therian|gmax|gigantamax)/.test(flags);
+ // A correctly represented named variant (e.g. Vulpix (Alolan))
+ // resolves through its OWN gamemaster entry, never Vulpix base.
+ if(dangerous&&!/( \((?:alolan|galarian|hisuian|paldean|shadow|purified|mega|primal)\))/.test(key))return null;
+ if(!form||key.includes(form))return key;
+ return cosmeticPvpIdentity(card)?key:null;
 }
 function verifiedOverallRank(card,league){
  if(!card||!["gl","ul","ml"].includes(league))return null;
@@ -6003,6 +6032,7 @@ function pvpIvClassPercent(rank,card,league){
 // Unknown regional forms, event costumes and transformations fail closed.
 function evolutionCandidates(card,league){
  if(!card||!["gl","ul","ml"].includes(league)||verifiedSpawnIvPercent(card)===null)return [];
+ if(cosmeticPvpIdentity(card))return []; // Costume evolutions are not automatically legal.
  const full=safePvpSpeciesKey(card);
  if(!full||!ivSpeciesByName.has(full))return [];
  const match=full.match(/ \(([^()]+)\)$/),variant=match?match[1]:"";
@@ -6045,6 +6075,7 @@ function bestEvolutionRank(card,league){
 // For an encounter lacking A/D/S, species-level overall ranks may still be
 // verified from the pinned PvPoke catalogue. Never infer an IV class/percent.
 function rankedOverallOnlyEvolutions(card,league){
+ if(cosmeticPvpIdentity(card))return []; // No implied evolution of an event costume.
  const root=safePvpSpeciesKey(card);
  if(!root||root.includes("(")||!ivSpeciesByName.has(root))return [];
  const queue=[root],seen=new Set([root]),matches=[];
