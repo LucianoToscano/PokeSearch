@@ -52,7 +52,7 @@ assert.equal(badge.textContent,"GL · Rank Classe: #5 · ↳ Noivern");
 assert.ok(badge.title.includes("Noibat atual: #1600"));
 badge.hidden=true;
 assert.equal(display()(costume),true);
-assert.equal(badge.textContent,"GL · Rank Classe: #5 · Ref. Noivern");
+assert.equal(badge.textContent,"GL · Rank Classe: #5 · ↳ Noivern");
 assert.ok(badge.title.includes("não confirma"));
 badge.hidden=true;
 const notInLimit=build(noibat,"gl",4);
