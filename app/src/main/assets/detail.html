@@ -592,6 +592,32 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  box-sizing:border-box;border:1px solid #d0e0fc70;border-radius:8px;padding:8px 10px;
  background:#202c3af0;color:#f0f6ff;font:500 11px/1.38 Roboto,Arial,sans-serif;
  box-shadow:0 4px 15px #0009;backdrop-filter:blur(10px);pointer-events:auto}
+
+/* LT170: count inside a circle; local uses never become an invented quota. */
+#coordRow #coordsQuota,#coordRow #coordsQuota.official{
+ display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+ position:absolute;top:4px;right:6px;z-index:3;width:22px;height:22px;
+ min-width:22px;max-width:22px;min-height:22px;max-height:22px;
+ padding:0;border-radius:50%;border:1px solid #d9e5f080;
+ background:#263947e8;color:#f5f8ff;
+ font:800 10px/1 Roboto,Arial,sans-serif;
+ text-align:center;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px #0005
+}
+#coordRow #coordsQuota.official{border-color:#8ce5ba;background:#20583d;color:#ecfff1}
+#coordsRateNotice[hidden],#coordsRatePopover[hidden],#coordsRateTimer[hidden]{display:none!important}
+#coordsRateNotice{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+ gap:4px;min-height:22px;margin-top:3px;color:#f4c978;
+ font:650 10px/1.25 Roboto,Arial,sans-serif;text-align:center}
+#coordsRateNotice .coordsRateText{min-width:0}
+#coordsRateTimer{font-size:9px;color:#f5d798;white-space:nowrap}
+#coordsRateInfo{width:22px;height:22px;min-width:22px;padding:0;
+ border:0;border-radius:50%;background:transparent;color:#f6d28a;
+ font:700 16px/22px Roboto,Arial,sans-serif;cursor:pointer}
+#coordsRateInfo:focus-visible{outline:2px solid #f1d083;outline-offset:1px}
+#coordsRatePopover{margin:3px 0 1px;padding:8px 9px;
+ border:1px solid #f4cb7866;border-radius:8px;background:#182b38f2;
+ color:#e9f0f5;font:500 10px/1.45 Roboto,Arial,sans-serif;
+ text-align:left;box-shadow:0 3px 10px #0006}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -624,6 +650,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
     <span id="coordsQuota" role="status" aria-live="polite" title="Usos observados no PokeSearch, não o saldo total">?</span>
     <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
   </div>
+  <div id="coordsRateNotice" role="status" hidden>
+    <span class="coordsRateText">Taxa Limitada PoGoCoordinates</span>
+    <span id="coordsRateTimer" hidden></span>
+    <button type="button" id="coordsRateInfo" aria-label="Por que o PoGoCoordinates limitou as coordenadas?" aria-expanded="false" aria-controls="coordsRatePopover" onclick="toggleCoordsRateInfo()">ⓘ</button>
+  </div>
+  <div id="coordsRatePopover" role="note" hidden></div>
   <div id="cooldownControls" hidden>
     <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
     <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
