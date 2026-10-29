@@ -60,7 +60,7 @@ final class AuthorizedApiCollector {
         if(bundle!=null)return bundle;
         StringBuilder content=new StringBuilder();
         String[] files={"api_result_contract.js","api_reveal_contract.js",
-            "api_browser_transport.js","api_catalog_cache.js","api_android_session.js"};
+            "coords_quota.js","api_browser_transport.js","api_catalog_cache.js","api_android_session.js"};
         try {
             for(String name:files){
                 try(InputStream in=assets.open(name)){
@@ -132,6 +132,20 @@ final class AuthorizedApiCollector {
                 filters.toString()+"));})()",started->{
                 if(!started.optBoolean("ok",false)){cb.onResult(started);return;}
                 poll(request,0,65,cb);
+            });
+        });
+    }
+    // Provider session check on the same authenticated WebView only.
+    // Never transfer an email address, account ID, JWT or raw profile to Java.
+    void accountStatus(Callback cb){
+        if(!official()){cb.onResult(failure("invalid-origin"));return;}
+        bootstrap(ready->{
+            if(!ready.optBoolean("ok",false)){cb.onResult(ready);return;}
+            int request=++ticket;
+            js("(function(){return JSON.stringify("+
+                "window.PokeSearchAndroidApi.startAccountStatus("+request+"));})()",started->{
+                if(!started.optBoolean("ok",false)){cb.onResult(started);return;}
+                poll(request,0,26,cb);
             });
         });
     }

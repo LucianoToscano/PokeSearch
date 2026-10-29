@@ -143,6 +143,14 @@
    }).then(r=>push(ticket,r)).catch(()=>push(ticket,fail("api-unavailable")));
    return {ok:true,pending:true};
   }
+  function startAccountStatus(ticket){
+   if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
+    return fail("invalid-request");
+   maxTicket=ticket;push(ticket,{pending:true});
+   Promise.resolve().then(()=>d.transport.accountStatus()).then(r=>push(ticket,r))
+    .catch(()=>push(ticket,fail("account-unavailable")));
+   return {ok:true,pending:true};
+  }
   function startReveal(ticket,selection){
    if(!Number.isSafeInteger(ticket)||ticket<=maxTicket||!originOk()||destroyed)
     return fail("invalid-request");
@@ -153,7 +161,7 @@
    Promise.resolve().then(()=>d.transport.reveal(selection))
     .then(r=>push(ticket,r.ok?{
      ok:true,coords:r.coords,latitude:r.latitude,longitude:r.longitude,
-     source:"authorized-api-qa"
+     ...(r.quota?{quota:r.quota}:{}),source:"authorized-api-qa"
     }:fail(r.reason))).catch(()=>push(ticket,fail("api-unavailable")));
    return {ok:true,pending:true};
   }
@@ -162,7 +170,7 @@
    activeSearchTicket=0;activeSearchId=-1;
    d.transport.dispose();d.catalog.dispose();
   }
-  return Object.freeze({startSearch,startSuggestions,startForms,startReveal,take,dispose});
+  return Object.freeze({startSearch,startSuggestions,startForms,startAccountStatus,startReveal,take,dispose});
  }
  function createBrowserSession(){
   if(typeof window==="undefined"||window.location.origin!==ORIGIN||

@@ -39,6 +39,7 @@ test("WebView result image retries the same observed URL or verified equivalent"
  assert.match(html,/const useMirror=\(\)=>/);
  assert.match(html,/primary\.onerror=useMirror/);
  assert.match(html,/if\(primary\.naturalWidth>=8&&primary\.naturalHeight>=8\)finish\(asset\.src\)/);
-  assert.match(html,/PokeSearchOfflineSprite\.resolve\(\{image:url\}\)/);
+  assert.match(html,/PokeSearchOfflineSprite\.resolve\(exactCard\)/);
+ assert.match(html,/verifiedBundledData\?\.\(exactCard\)/);
  assert.match(html,/pooledBaseSprite\(item\.image\)/);
 });

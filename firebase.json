@@ -1,0 +1,14 @@
+{
+  "database": [
+    {
+      "target": "live",
+      "rules": "firebase-realtime.rules.json"
+    }
+  ],
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "pokesearch-aggregates"
+    }
+  ]
+}

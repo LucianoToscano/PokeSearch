@@ -18,6 +18,8 @@ final class FirebaseStats {
     private static String uid="";
     private static boolean initialized,homeVisible,primaryOverlayVisible,secondaryOverlayVisible,connected,presenceScheduled;
     private static long onlineCount=-1,installCount=-1;
+    private static long legacyOnlineCount=-1,legacyInstallCount=-1;
+    private static boolean publicOnlineAvailable=false,publicInstallAvailable=false;
     private static WeakReference<TextView> onlineLabel=new WeakReference<>(null);
     private static WeakReference<TextView> installLabel=new WeakReference<>(null);
     private FirebaseStats(){}
@@ -38,20 +40,38 @@ final class FirebaseStats {
         return PresenceWindowState.isActive(
             homeVisible,primaryOverlayVisible,secondaryOverlayVisible);
     }
-    private static synchronized void init(Context context){
-        if(initialized)return;
-        initialized=true;
-        try {
+    /** Shared bootstrap: the Home chat may mount BEFORE statistics binds.
+     * FirebaseApp.getInstance(name) by itself throws on that fresh install. */
+    static synchronized FirebaseApp ensureApp(Context context){
+        try{return FirebaseApp.getInstance("PokeSearchStats");}
+        catch(IllegalStateException notInitialized){
             FirebaseOptions options=new FirebaseOptions.Builder()
                 .setApplicationId("1:1007816617051:android:bc055b81b3bdfaceaa637e")
                 .setApiKey("AIzaSyDxCp0f4c_xrrlJ6EGGg9HKPQPIiutCQkM")
                 .setProjectId("pokesearch-lt").setDatabaseUrl(DB_URL).build();
-            FirebaseApp app;
-            try{app=FirebaseApp.getInstance("PokeSearchStats");}
-            catch(IllegalStateException notInitialized){
-                app=FirebaseApp.initializeApp(context.getApplicationContext(),options,"PokeSearchStats");
-            }
+            FirebaseApp app=FirebaseApp.initializeApp(
+                context.getApplicationContext(),options,"PokeSearchStats");
             if(app==null)throw new IllegalStateException("Firebase Stats unavailable");
+            return app;
+        }
+    }
+    /** Separate Google-authenticated chat admin session.
+     * Never alter the anonymous FirebaseStats UID or installation counters. */
+    static synchronized FirebaseApp ensureChatAdminApp(Context context){
+        try{return FirebaseApp.getInstance("PokeSearchChatAdmin");}
+        catch(IllegalStateException notInitialized){
+            FirebaseApp stats=ensureApp(context);
+            FirebaseApp chat=FirebaseApp.initializeApp(
+                context.getApplicationContext(),stats.getOptions(),"PokeSearchChatAdmin");
+            if(chat==null)throw new IllegalStateException("Chat admin Firebase unavailable");
+            return chat;
+        }
+    }
+    private static synchronized void init(Context context){
+        if(initialized)return;
+        initialized=true;
+        try {
+            FirebaseApp app=ensureApp(context);
             auth=FirebaseAuth.getInstance(app);
             db=FirebaseDatabase.getInstance(app,DB_URL);
             if(auth.getCurrentUser()!=null)attach(auth.getCurrentUser().getUid());
@@ -79,6 +99,13 @@ final class FirebaseStats {
         // Individual UIDs/presence are protected by Firebase rules.
         root.child("public").child("installCount").addValueEventListener(counter(false));
         root.child("public").child("onlineCount").addValueEventListener(counter(true));
+        // LT125 migration bridge: before LT117 these totals came from the two
+        // live RTDB collections. If server aggregates are not deployed yet,
+        // reuse the legacy counts ONLY while existing rules explicitly allow
+        // reads. No child IDs are retained, logged, or displayed. Once private
+        // RTDB rules are deployed, denied collection reads are quietly ignored.
+        root.child("installations").addValueEventListener(legacyCounter(false));
+        root.child("online").addValueEventListener(legacyCounter(true));
         online=root.child("online").child(uid);
         connection=db.getReference(".info/connected");
         connection.addValueEventListener(new ValueEventListener(){
@@ -98,16 +125,38 @@ final class FirebaseStats {
                 synchronized(FirebaseStats.class){
                     Long count=snapshot.getValue(Long.class);
                     long checked=count!=null&&count>=0?count:-1;
-                    if(isOnline)onlineCount=checked;
-                    else installCount=checked;
+                    if(isOnline){
+                        publicOnlineAvailable=checked>=0;
+                        onlineCount=publicOnlineAvailable?checked:legacyOnlineCount;
+                    }else{
+                        publicInstallAvailable=checked>=0;
+                        installCount=publicInstallAvailable?checked:legacyInstallCount;
+                    }
                     render();
                 }
             }
             @Override public void onCancelled(DatabaseError error){
                 synchronized(FirebaseStats.class){
-                    if(isOnline)onlineCount=-1;else installCount=-1;
+                    if(isOnline){publicOnlineAvailable=false;onlineCount=legacyOnlineCount;}
+                    else{publicInstallAvailable=false;installCount=legacyInstallCount;}
                     render();
                 }
+            }
+        };
+    }
+    private static ValueEventListener legacyCounter(boolean isOnline){
+        return new ValueEventListener(){
+            @Override public void onDataChange(DataSnapshot snapshot){
+                synchronized(FirebaseStats.class){
+                    long total=snapshot.getChildrenCount();
+                    // Public server aggregates take priority when available.
+                    if(isOnline){legacyOnlineCount=total;if(!publicOnlineAvailable)onlineCount=total;}
+                    else{legacyInstallCount=total;if(!publicInstallAvailable)installCount=total;}
+                    render();
+                }
+            }
+            @Override public void onCancelled(DatabaseError error){
+                // New privacy rules deny the legacy read by design; no fake zero.
             }
         };
     }

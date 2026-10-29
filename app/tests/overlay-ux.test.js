@@ -114,7 +114,7 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -144,7 +144,7 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -186,7 +186,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -1446,7 +1446,7 @@ test("IV palette follows 46 attainable percentages including both extremes",(()=
 test("Shiny and ordinary IV badges use a single evidence-driven function",
  dock.includes('const verifiedPercent=verifiedSpawnIvPercent(c);')&&
  dock.includes("ivPaletteClass(verifiedPercent)")&&
- dock.includes("'+icon+ivBadge+badge+info+'</button>'")&&
+ dock.includes("'+icon+ivBadge+badge+cooldownMarkup+info+'</button>'")&&
  !dock.includes("shiny?ivPaletteClass")&&
  dock.includes('verifiedPercent===null?"IV não comprovado"'));
 test("Verified IV includes 0%, 100% and raw-derived values but never assumes a missing value",(()=>{
@@ -1667,7 +1667,7 @@ test("PL-02 watchdog can release stalled generation without false success",()=>{
 });
 test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",()=>{
  const probe=read("assets/probe.js");
- return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,10):0;')&&
+ return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,100):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
   probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
@@ -1745,7 +1745,7 @@ test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or b
 })());
 test("UX-SPRITE-01 handles cached, delayed, broken, tiny and absent image sources",(()=>{
  const source=dock.split("function attachSpriteFeedback(){")[1]?.split("function attachLongPress(){")[0]||"";
- if(!source.includes("if(img.complete&&good())loaded()")||
+ if(!source.includes("if(img.complete){if(good())loaded();else failed();}")||
     !source.includes("retries>=1")||!source.includes('data-original-src'))return false;
  function makeStage(image){
   const classes=new Set(),listeners={};
@@ -1787,7 +1787,7 @@ test("HOME-03 authenticates using official profile only after session proof",(()
   login.includes('profileDiscoveryAttempted=true')&&
   profile.includes("danger zone")&&
   profile.includes("Member since")&&
-  profile.includes('trainerState=parsed?"linked":explicitZero?"unlinked":"unknown"')&&
+  profile.includes('trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown"')&&
   !profile.includes("document.cookie");
 })());
 test("HOME-03 opens the Home drawer on right and uses original transparent PNG",(()=>{
@@ -2025,7 +2025,7 @@ test("UX-NOTIFY-02 favorite and general alerts reflect real permission and stay 
  service.includes('","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","')&&
   dock.includes('favoriteAlertMode=["on","silent","off"].includes(favoriteMode)')&&
  service.includes('if(!WatchAlerts.permissionGranted(this))return false;')&&
- service.includes('if(sendGeneralNotification("Novo Pokémon: "+firstNew,')&&
+ service.includes('encounterAlertTitle(firstNewCard),encounterAlertDetails(firstNewCard,false)')&&
  service.includes('lastAlertAt=now;')&&
  watch.includes('manager.areNotificationsEnabled()')&&
  !watch.includes('com IV100 ou ranking #1')&&
@@ -2076,11 +2076,11 @@ test("UX-NOTIFY-07 Home favorites toggle migrates safely to tri-state preference
   dock.includes('individualToneCount=Math.max(0,Number(individualTones)||0)');
 });
 test("UX-NOTIFY-08 personalized matching favorites use separate notifications and distinct IDs",()=>{
- return service.includes('java.util.LinkedHashMap<String,String[]> individualFavorites')&&
-  service.includes('if(WatchAlerts.speciesToneCount(this)>0)')&&
+ return service.includes('queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert')&&
+  service.includes('if(delivered>=FAVORITE_ALERT_BATCH_SIZE)break')&&
   service.includes('drainFavoriteAlertQueue()')&&
   service.includes('FAVORITE_ALERT_BATCH_SIZE=5')&&
-  service.includes('WatchAlerts.match(this,representative.name,representative.details)')&&
+  service.includes('WatchAlerts.match(this,pending.name,pending.title,pending.details,')&&
   watch.includes('java.util.concurrent.atomic.AtomicInteger NEXT_ALERT_ID')&&
   watch.includes('NEXT_ALERT_ID.updateAndGet');
 });
@@ -2249,7 +2249,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");
@@ -2325,7 +2325,7 @@ test("SITE-POKEMON-04 site filter uses selected chips and exact official options
 test("SITE-POKEMON-05 12-icon toolbar & no personal GPS remain intact",()=>
  dock.includes('grid-template-columns:34fr 22fr 41fr 20fr 20fr 22fr 22fr 22fr 38fr 22fr 22fr 22fr')&&
  !probe.includes('navigator.geolocation')&&
- dock.includes('items.slice(0,10)')&&
+ dock.includes('items.map')&&
  service.includes('"locationCoords"'));
 test("NOTIFY-02 compact grouped speaker icons still drive two distinct native modes",()=>{
  const panel=dock.split("function renderAlertsChoices(){")[1]?.split("// Site -> App")[0]||"";
@@ -2398,7 +2398,7 @@ test("UX-NOTIFY-11 only verified favorites notify if general alerts are OFF",()=
  const fav=watch.slice(watch.indexOf("private static boolean send("),watch.indexOf("public static boolean test("));
  return begin>0&&finish>begin&&src.includes('if(WatchAlerts.enabled(this) &&')&&
   src.includes('WatchAlerts.matches(c.optString("name",""),wanted)')&&
-  src.includes('WatchAlerts.match(this,firstWatched,watchDetails)')&&
+  service.includes('WatchAlerts.match(this,pending.name,pending.title,pending.details,')&&
   src.includes('if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()')&&
   fav.includes('String soundMode=mode(context);')&&
   fav.includes('if("off".equals(soundMode)){')&&

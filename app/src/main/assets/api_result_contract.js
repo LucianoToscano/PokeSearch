@@ -9,7 +9,7 @@
   if (root) root.PokeSearchApiContract=contract;
 })(typeof globalThis !== "undefined" ? globalThis : this, function() {
   "use strict";
-  var MAX_RESULTS=10;
+  var MAX_RESULTS=100;
   var MAX_SOURCE_RESULTS=2000;
   var SIZES=new Set(["XXS","XS","S","M","L","XL","XXL"]);
   var rawPattern=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/;
@@ -272,8 +272,8 @@
       !Number.isInteger(options.pvpMaxRank)||options.pvpMaxRank<1||
       options.pvpMaxRank>50))
       return {ok:false,reason:"Invalid PvP filters"};
-    var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:MAX_RESULTS;
-    var cap=Math.min(MAX_RESULTS,serverCap); // UX still shows ten cards; plan cap is separate.
+    var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:response.results.length;
+    var cap=Math.min(MAX_RESULTS,serverCap); // Never exceed what the source returned or authorized.
     if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
@@ -293,6 +293,10 @@
       var costumeId=x.costume_id===undefined||x.costume_id===null?null:
         optionalNumberSafe(x.costume_id,0,100000,true);
       if(x.costume_id!=null&&costumeId===null){rejected++;continue;}
+      // Optional GO form ID is encounter metadata, NEVER a synthesized image.
+      var sourceFormId=x.form_id===undefined||x.form_id===null?null:
+        optionalNumberSafe(x.form_id,0,100000,true);
+      if(x.form_id!=null&&sourceFormId===null){rejected++;continue;}
       var end=typeof x.despawn_at==="string"?Date.parse(x.despawn_at):NaN;
       if(!Number.isFinite(end)) {rejected++;continue;}
       if(end<=now) {expired++;continue;}
@@ -316,6 +320,7 @@
         form:clean(x.form,70),costume:clean(x.costume,70),
         costume_id:costumeId
       };
+      if(sourceFormId!==null)entry.form_id=sourceFormId;
       if(Number.isFinite(end)) entry.expiresAtMs=end;
       cards.push(entry);
       if(cards.length>=cap) break;

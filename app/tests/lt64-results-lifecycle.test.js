@@ -7,7 +7,7 @@ const probe=read("assets/probe.js"),dock=read("assets/dock.html"),detail=read("a
 let ok=0,failed=0;
 function check(name,fn){try{fn();ok++;console.log("PASS LT64 "+name)}catch(e){failed++;console.error("FAIL LT64 "+name+" "+e.message)}}
 check("1 parse site lazy sprite src/data-src/srcset",()=>{for(const q of ['candidateImageUrl=e=>','e.getAttribute("data-src")','e.getAttribute("data-original")','e.currentSrc','e.getAttribute("srcset")','naturalWidth>=8'])assert.ok(probe.includes(q),q)});
-check("2 do not replace original Pokemon with generic URL",()=>{assert.ok(probe.includes('image:image?candidateImageUrl(image):""'));assert.ok(!probe.includes('raw.githubusercontent.com/PokeAPI/sprites'))});
+check("2 do not replace original Pokemon with generic URL",()=>{assert.ok(probe.includes('image:siteImageUrl'));assert.ok(!probe.includes('raw.githubusercontent.com/PokeAPI/sprites'))});
 check("3 retry failed result sprites bounded and without search",()=>{let block=dock.split('function attachSpriteFeedback(){')[1]?.split('function attachLongPress()',1)[0]||"";for(const q of ['retries>=1','data-original-src','addEventListener("load"','addEventListener("error"','img.isConnected','mirrorAttempted'])assert.ok(block.includes(q),q);assert.ok(!block.includes("Native.refresh("))});
 check("4 never re-render spawns on every timer tick",()=>{let block=dock.split('function updateTimers(){')[1]?.split('function syncTimerTicker()',1)[0]||"";assert.ok(block.includes('Native.expiredResults'));assert.ok(!block.includes("innerHTML"))});
 check("5 sourceIndex is not trusted when site reordered",()=>{let block=probe.split('function matchingCoordsCard(query){')[1]?.split('if(action.startsWith("coords:"))',1)[0]||"";for(const q of ['parseCard(card.node,card.sourceIndex)','matches.length!==1','parsed.name','parsed.cp'])assert.ok(block.includes(q),q)});
@@ -28,5 +28,5 @@ check("14 native expiry watchdog sweeps exact expired timestamps even when handl
  assert.ok(runner.includes('if(searchInProgress)queuedManualRefresh=true;'));
 });
 check("15 existing identities and security remain intact",()=>{let gradle=fs.readFileSync(path.join(base,"../../build.gradle.kts"),"utf8");assert.ok(gradle.includes('applicationId = "com.lucianotoscano.pokesearch"'));assert.ok(gradle.includes('namespace = "com.lucianotoscano.pokesearchoverlay"'));assert.ok(service.includes('IntegrityGuard.verify(this)'))});
-check("16 inline scripts parse and original detail controls remain",()=>{for(const html of [dock,detail]){for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);}assert.ok(detail.includes('id="copy" onclick="copyCoords()"'))});
+check("16 inline scripts parse and original detail controls remain",()=>{for(const html of [dock,detail]){for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);}assert.ok(detail.includes('id="coords" onclick="requestCoordsUi()"')&&detail.includes('id="copy" hidden')&&detail.includes('Native.copyCoords(currentCoords)'))});
 console.log("LT64: "+ok+" PASS / "+failed+" FAIL");if(failed)process.exitCode=1;

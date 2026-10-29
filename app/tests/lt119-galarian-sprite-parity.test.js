@@ -41,7 +41,8 @@ test("unknown regional Pokémon, unverified forms, and costumes do not borrow ar
   const x={name:"Zigzagoon",number:"#263",form,image:"",shiny:true};
   assert.equal(sprites.resolve(x).src,"",form);
  }
- assert.match(sprites.resolve({name:"Linoone",number:"#264",form:"Galarian",image:""}).src,/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/);
+ assert.equal(sprites.resolve({name:"Linoone",number:"#264",form:"Galarian",image:""}).src,
+  "file:///android_asset/pokemon-sprites/forms/264-galar.png");
  assert.equal(sprites.resolve({name:"Zigzagoon",number:"#263",form:"Normal",shiny:false,image:""}).src,
   "file:///android_asset/pokemon-sprites/base/263.png");
  assert.equal(sprites.resolve({name:"Zigzagoon",number:"#263",form:"Galarian",costume_id:2,image:""}).src,"");

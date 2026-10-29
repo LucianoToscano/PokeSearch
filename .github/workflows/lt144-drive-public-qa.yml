@@ -1,0 +1,57 @@
+name: LT144 Gengar Zubat public distribution verification
+on:
+  push:
+    branches: [feature/lt144-native-sprite-fallback-20261027]
+    paths: ['.github/workflows/lt144-drive-public-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  anonymous:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Verify public Home update manifest with no login
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 --max-time 100 \
+            --user-agent 'Mozilla/5.0' \
+            'https://drive.google.com/uc?export=download&id=15IrWg9FpiNteZcsmUSBtyfd4v2Hmcbrf' \
+            -o update.json
+          python3 - <<'PY'
+          import json
+          m=json.load(open('update.json'))
+          assert m['schema']=='pokesearch-update-v1' and m['enabled'] is True
+          assert m['versionName']=='0.01.44' and m['versionCode']==54349
+          assert m['apkName']=='PokeSearch-v0.01.44-LT.apk'
+          assert m['apkFileId']=='1Rgp7IeBU4lZ7pCz1fEQDl4x1nIP7Edlx'
+          assert m['apkSha256']=='93ba1c98f9aeaf1d267d3a5bfb558e3272c36173964d929c3ebc5b887bdb6fbf'
+          assert m['forceUpdate'] is False
+          print('PUBLIC MANIFEST VERIFIED',m['versionName'],m['versionCode'])
+          PY
+      - name: Verify anonymous public APK and four exact costume PNGs
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --retry 2 --max-time 240 \
+            --user-agent 'Mozilla/5.0' \
+            'https://drive.usercontent.google.com/download?id=1Rgp7IeBU4lZ7pCz1fEQDl4x1nIP7Edlx&export=download&confirm=t&v=54349' \
+            -o public.apk
+          python3 - <<'PY'
+          import json,hashlib,zipfile
+          m=json.load(open('update.json'))
+          raw=open('public.apk','rb').read()
+          assert len(raw)==48993001,len(raw)
+          digest=hashlib.sha256(raw).hexdigest()
+          assert digest==m['apkSha256'],(digest,m['apkSha256'])
+          with zipfile.ZipFile('public.apk') as z:
+            assert z.testzip() is None
+            for f in ('pm41.fHALLOWEEN_2026_01.icon.png',
+                      'pm41.fHALLOWEEN_2026_01.s.icon.png',
+                      'pm94.cFALL_2023_NOEVOLVE.icon.png',
+                      'pm94.cFALL_2023_NOEVOLVE.s.icon.png'):
+              path='assets/pokemon-sprites/costumes/'+f
+              assert z.read(path).startswith(bytes.fromhex('89504e470d0a1a0a')),path
+          print('PUBLIC NO-LOGIN APK VERIFIED',len(raw),'sha256',digest)
+          PY

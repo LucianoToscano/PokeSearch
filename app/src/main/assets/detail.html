@@ -3,28 +3,26 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:transparent;color:#fff;font:11px Roboto,Arial,sans-serif;overflow:hidden}
 button{font:inherit;color:inherit;border:0;cursor:pointer}
-#panel{max-height:calc(100vh - 2px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:9px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+#panel{max-height:calc(100vh - 2px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;border:1px solid #ffffff50;border-radius:13px;background:rgba(9,13,20,.73);box-shadow:0 5px 18px #0007;padding:7px;backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
 #header{display:flex;align-items:center;gap:5px;min-width:0}
 #img{width:35px;height:35px;object-fit:contain}
 #imageFallback{display:flex;align-items:center;justify-content:center;
  width:35px;height:35px;font-size:23px;color:#d5e3ef;opacity:.75}
 #names{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-#names b{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:12px}
+#names b{white-space:normal;text-overflow:clip;overflow:visible;font-size:12px;line-height:1.22;overflow-wrap:anywhere;word-break:normal}
 #names small{color:#bfc8d4;font-size:9px}
-#x{border-radius:6px;background:#ffffff22;font-size:13px;width:23px;height:23px}
-#major{font-weight:bold;color:#fff;line-height:1.5;margin-top:5px;display:flex;flex-wrap:wrap;gap:4px}
-#major span{border-radius:5px;background:#ffffff1b;padding:2px 5px;font-size:10px}
+#x{border-radius:6px;background:#ffffff22;font-size:14px;width:23px;height:23px;flex:0 0 23px}
+#major{font-weight:bold;color:#fff;line-height:1.25;margin-top:4px;display:flex;flex-wrap:wrap;gap:3px}
+#major span{border-radius:5px;background:#ffffff1b;padding:2px 4px;font-size:10px}
 #major .red{color:#ff9bb0}
-#info{color:#d8e0ea;line-height:1.38;margin-top:5px;font-size:10px;overflow-wrap:anywhere}
-#info div{margin:2px 0}
+#info{color:#d8e0ea;line-height:1.28;margin-top:4px;font-size:10px;overflow-wrap:anywhere}
+#info div{margin:1px 0}
 #info em{color:#afb9c8;font-style:normal}
-#watch{margin-top:6px;width:100%;border:1px solid #edc95778;background:#e8bf3d24;border-radius:7px;padding:6px;font-weight:bold;color:#ffecba;display:flex;align-items:center;justify-content:center;gap:5px}
-#watch svg{width:14px;height:14px;flex-shrink:0}
 /* RANK-EVO-DETAIL-02: folded section; details always scroll inside the same 226dp card. */
 #evolutions[hidden],#evoBody[hidden]{display:none}
-#evolutions{margin-top:6px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
+#evolutions{margin-top:4px;border:1px solid #ffffff28;border-radius:7px;overflow:hidden}
 #evoToggle{width:100%;text-align:left;background:#24425699;color:#d5ecff;
- padding:6px 7px;font-size:10px;font-weight:800;display:flex;justify-content:space-between;gap:4px}
+ padding:4px 6px;font-size:10px;font-weight:800;display:flex;justify-content:space-between;gap:4px}
 #evoBody{max-height:none;overflow:visible;touch-action:auto;padding:3px 6px}
 #panel{height:auto;max-height:calc(100vh - 2px);overflow-y:auto;overflow-x:hidden;
  overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;}
@@ -33,40 +31,670 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
-#copy{margin-top:5px;width:100%;border:1px solid #ffffff35;background:#ffffff22;border-radius:7px;padding:7px;font-weight:bold}#coords{margin-top:7px;width:100%;border-radius:7px;padding:7px;background:#eb2850ce;font-weight:bold}
-#coords,#copy{min-height:36px;touch-action:manipulation;position:relative;z-index:1}
+/* LT145 compact card: controls remain readable and accessible, without extra rows. */
+#coordRow{display:grid;grid-template-columns:minmax(0,1fr) 31px;gap:4px;margin-top:4px}
+#coords,#copy{min-height:30px;touch-action:manipulation;position:relative;z-index:1;border-radius:6px;font-weight:700}
+#coords{width:100%;background:#eb2850ce;padding:4px 5px}
+#copy{width:31px;border:1px solid #ffffff40;background:#ffffff1b;padding:3px;font-size:17px}
 #coords:disabled,#copy:disabled{opacity:.65;cursor:default}
-#coords:focus-visible,#copy:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
+#coords:focus-visible,#copy:focus-visible,#coordsQuota:focus-visible,#cooldownControls button:focus-visible{outline:2px solid #8be1cb;outline-offset:1px}
+#coordsQuota{display:block;max-width:100%;width:100%;margin:1px 0 0;padding:1px 3px;border:0;border-radius:4px;background:transparent;color:#b5c4cf;min-height:18px;font:500 9px/1.2 Roboto,Arial,sans-serif;text-align:center;overflow-wrap:normal;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;touch-action:manipulation}
+#coordsQuota.official{color:#a9f0cf}
+#cooldownControls{display:flex;flex-wrap:nowrap;align-items:center;gap:3px;margin-top:3px;min-height:26px}
+#cooldownControls button{border:1px solid #ffffff36;background:#ffffff14;color:#dbe1e9;border-radius:5px;padding:3px 4px;height:26px;min-height:26px;font-size:9px;font-weight:600;white-space:nowrap;touch-action:manipulation}
+#cooldownControls button[hidden],#cooldownNote[hidden]{display:none!important}
+#cooldownToggle{flex:0 0 69px}
+#cooldownConfirm{flex:1 1 auto;min-width:0}
+#cooldownControls #cooldownUndo,#cooldownControls #cooldownReset{flex:0 0 25px;width:25px;font-size:13px;padding:2px}
+#cooldownControls button.primary{background:#429b7936;border-color:#a7e3ba60}
+#cooldownControls button:disabled{opacity:.48}
+#cooldownNote{font:9px/1.25 Roboto,Arial,sans-serif;color:#b9c7d7;margin:2px 1px 0}
+#captureShare[hidden],#captureConfirm[hidden]{display:none!important}
+#captureShare{margin-top:5px;display:block;width:100%;padding:5px;border-radius:7px;
+ border:1px solid #e3c96955;background:#d4b65b18;color:#f5dda4;font-size:10px}
+#captureConfirm{margin-top:4px;display:flex;align-items:center;gap:4px;font-size:10px}
+#captureConfirm>span{flex:1}
+#captureConfirm>button{background:#ffffff26;border-radius:5px;padding:5px 8px}
+#captureStatus[hidden]{display:none}#captureStatus{display:block;margin-top:3px;color:#a7eac7;font-size:10px}
+/* Card LT145: single interaction zone, type badges, critical despawn. */
+#nameLine{display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-width:0}
+#nameLine b{flex:0 1 auto;min-width:0;max-width:100%}
+#types{display:inline-flex;gap:2px;flex:none;align-items:center}
+.pkType{display:inline-flex;align-items:center;justify-content:center;
+ width:15px;height:15px;border-radius:50%;color:#fff;font-size:10px;font-weight:900;
+ box-shadow:inset 0 -1px 0 #0003}
+.pkType-normal{background:#989ca5}.pkType-fire{background:#ed7a31}
+.pkType-water{background:#5796df}.pkType-electric{background:#e2b938}
+.pkType-grass{background:#66aa59}.pkType-ice{background:#75c8cf}
+.pkType-fighting{background:#ba5b4b}.pkType-poison{background:#9854b7}
+.pkType-ground{background:#b89a5d}.pkType-flying{background:#8ba6d3}
+.pkType-psychic{background:#dd689b}.pkType-bug{background:#91ac38}
+.pkType-rock{background:#b4a079}.pkType-ghost{background:#7d6db7}
+.pkType-dragon{background:#6565c6}.pkType-dark{background:#65626e}
+.pkType-steel{background:#819cac}.pkType-fairy{background:#d68caf}
+.pkGender{font-size:11px;font-weight:900}
+.pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
+.pkGender.genderless{color:#fff}
+.pkTypeImg{display:block;width:11px;height:11px;object-fit:contain;flex:none}
+.pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
+.moveSlash{opacity:.65}
+#timer{flex:0 0 auto;font-weight:900;font-size:11px;padding:4px 5px;
+ border-radius:7px;white-space:nowrap;border:1px solid #fff4}
+#timer.good{background:#2a785048;color:#a1edb7;border-color:#61c59269}
+#timer.warning{background:#97601c3a;color:#ffcf7c;border-color:#e9ab507a}
+#timer.critical{background:#b72e3e40;color:#ff8f9d;border-color:#ed556975}
+#timer.unknown{color:#c8d1da}#timer[hidden]{display:none!important}
+#watch{flex:0 0 23px;width:23px;height:23px;border-radius:6px;
+ border:1px solid #ffffff34;background:#ffffff13;color:#d6dde7;font-size:19px;
+ display:flex;align-items:center;justify-content:center;padding:0;margin:0}
+#watch.isFav{color:#ffd563;border-color:#f8d76e8c;background:#f0be321b}
+#watch:focus-visible,#x:focus-visible,#shareIcon:focus-visible{outline:2px solid #91ddb8;outline-offset:1px}
+#shareIcon{width:23px;height:23px;flex:0 0 23px;border-radius:6px;
+ background:#ffffff13;border:1px solid #ffffff34;display:flex;align-items:center;
+ justify-content:center;padding:0;margin:0;color:#e0e8f3}
+#shareIcon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+ stroke-linecap:round;stroke-linejoin:round}
+#shareIcon:disabled{opacity:.43;cursor:default}
+#subRow{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-width:0}
+#subRow small{min-width:0;overflow-wrap:anywhere;white-space:normal;flex:1 1 65px}
+#subRow #timer{margin:0}
+#coordsNumbers[hidden]{display:none!important}
+#coordsNumbers{display:block;margin-top:3px;padding:2px 4px;line-height:1.3;
+ border-radius:5px;color:#d4e9f0;background:#ffffff0d;
+ font:600 10px/1.35 ui-monospace,SFMono-Regular,Consolas,monospace;
+ text-align:center;overflow-wrap:anywhere;user-select:text;-webkit-user-select:text}
+#coordRow{position:relative}
+#coords{padding-right:25px}
+#coordsQuota{position:absolute;top:-7px;right:-3px;z-index:3;
+ min-width:20px;max-width:65px;width:auto;height:17px;min-height:17px;
+ border:1px solid #ffffff52;border-radius:9px;padding:0 4px;background:#353d4c;
+ color:#f5f7ff;font-size:9px;line-height:15px;font-weight:900;
+ text-align:center;box-shadow:0 2px 4px #0006}
+#coordsQuota.official{background:#276748;color:#e2ffe8}
+#cooldownControls{display:none!important}
+#cooldownNote{display:none!important}
+#captureShare{display:none!important}
+#captureConfirm:not([hidden]){font-size:9px}
+#captureConfirm>span{font-size:9px}
+#coordRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px;margin-top:5px}
+#coords{width:100%;min-height:30px}
+#copy[hidden]{display:none!important}
+#coordsQuota{display:block;max-width:110px;width:auto;margin:0;padding:3px 5px;
+ border:1px solid #ffffff30;border-radius:6px;background:#ffffff13;
+ min-height:30px;font:600 9px/1.2 Roboto,Arial,sans-serif;text-align:center;
+ white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+#cooldownControls[hidden]{display:none!important}
+#cooldownControls{min-height:26px}
+/* LT145 QA4: one action column, uncolored glass surfaces and inline coords. */
+#header{align-items:flex-start;gap:4px}
+#names{padding-top:2px;min-width:0;flex:1 1 auto}
+#headerActions{width:77px;flex:0 0 77px;display:flex;flex-direction:column;align-items:stretch;gap:2px}
+#headerButtons{display:flex;align-items:center;justify-content:flex-end;gap:4px}
+#headerButtons button{box-sizing:border-box;width:23px;height:23px;min-width:23px;max-width:23px;
+ min-height:23px;max-height:23px;flex:0 0 23px;border-radius:6px;margin:0;padding:0;
+ display:flex;align-items:center;justify-content:center;background:#ffffff12;border:1px solid #ffffff30}
+#headerButtons svg{display:block;width:15px;height:15px;stroke:currentColor;
+ stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;fill:none}
+#watch{color:#dfe7f0;font-size:unset}
+#watch.isFav{color:#ffd563;border-color:#ffffff30;background:#ffffff12}
+#watch.isFav svg{fill:#ffd563}
+#x{font-size:16px;color:#e9ecf1}
+#shareIcon:disabled{opacity:.45}
+#subRow #timer{display:block;align-self:flex-end;max-width:77px;
+ padding:0;margin:1px 0 0;font-size:10px;line-height:1.35;
+ font-weight:800;white-space:nowrap;text-align:right;background:transparent;
+ border:0;border-radius:0;box-shadow:none}
+#subRow #timer[hidden]{display:none!important}
+#timer.good,#timer.warning,#timer.critical,#timer.unknown{background:transparent;border:0;box-shadow:none}
+#timer.good{color:#96e5b1}
+#timer.warning{color:#f4c675}
+#timer.critical{color:#f49baa}
+#coordRow{display:block;position:relative;margin-top:6px}
+#coordRow #coords{display:block;width:100%;min-height:30px;padding:4px 36px 4px 13px;
+ border:1px solid #ffffff38;border-radius:7px;background:#ffffff14;color:#f6f7fa;
+ font-size:11px;line-height:1.32;text-align:center;font-weight:700;
+ box-shadow:none;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+#coordRow #coords.hasCoords{font-size:10.5px;font-weight:600;letter-spacing:0;
+ font-family:ui-monospace,SFMono-Regular,Consolas,monospace;user-select:text;-webkit-user-select:text}
+#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:inline;position:absolute;
+ top:7px;right:9px;width:auto;height:auto;min-width:0;max-width:50px;min-height:0;
+ padding:0;margin:0;border:0;border-radius:0;background:transparent;
+ box-shadow:none;color:#f3f3f4;font-size:9px;line-height:14px;font-weight:800;
+ white-space:nowrap;pointer-events:none}
+#coordRow #coordsQuota.official{color:#a6e5bb}
+#coordsNumbers{display:none!important}
+
+/* LT145 QA6 — single hierarchy, compact glass and accessible Despawn states.
+   Only the clock changes color or pulses; icons/cards remain motion-free. */
+#panel{height:auto;min-height:0;max-height:calc(100vh - 6px);
+ padding:6px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+#header{gap:4px}
+#names{flex:1 1 auto;min-width:0}
+#nameLine{gap:3px;flex-wrap:wrap}
+#nameLine b{white-space:normal;overflow:visible;word-break:normal;overflow-wrap:anywhere}
+#types{flex:none;gap:2px}
+.pkTypeImg{width:11px;height:11px}
+#headerButtons button{width:23px;height:23px;min-width:23px;max-width:23px;
+ min-height:23px;max-height:23px}
+#headerButtons svg{width:15px;height:15px}
+#major{margin-top:3px;gap:3px;line-height:1.2}
+#major span{background:#ffffff12}
+#info{margin-top:3px;line-height:1.27}
+#info div{margin:1px 0}
+#evolutions{margin-top:3px}
+#evoToggle{background:#ffffff14;border-color:#ffffff25;color:#dce8f0}
+#coordRow{margin-top:4px}
+#coordRow #coords{min-height:29px;background:#ffffff14;border:1px solid #ffffff36}
+#subRow #timer{margin:1px 0 0;box-shadow:none;border:0;
+ border-radius:0;background:transparent;transform-origin:right center}
+#timer.good{color:#9ce5b9}
+#timer.warning{color:#f3c276}
+#timer.pink{color:#ffa4cb}
+#timer.critical{color:#ff6575}
+@keyframes psDespawnGentlePulse{
+  0%,100%{opacity:1}
+  50%{opacity:.54}
+}
+#subRow #timer.pulse{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){
+ #subRow #timer.pulse{animation:none;text-decoration:underline;text-underline-offset:2px}
+}
+/* LT145 QA7: Tamanho is a tiny top-line tag again (not a full detail row).
+   Keep Despawn compact immediately by the header action icons. */
+#subRow{gap:2px;margin:0;line-height:1.1}
+#subRow small{font-size:9px;font-weight:500;line-height:1.1;flex:1 1 0;min-width:0}
+#headerActions{gap:0}
+#subRow #timer{display:inline-flex;align-self:center;flex:0 0 auto;max-width:none;
+ font-size:9px;line-height:10px;margin:0;padding:0;min-height:10px;max-height:10px;
+ white-space:nowrap;text-align:left;background:transparent;border:0;box-shadow:none}
+#headerButtons{gap:4px}
+#header{gap:4px}
+#major{margin-top:2px}
+#info{margin-top:2px}
+#info div{margin:1px 0}
+#coordRow{margin-top:3px}
+/* QA9: one coordinates button, with compact glass -> red while fetching -> green when ready. */
+#coordRow #coords:active:not(:disabled),#coordRow #coords.isPending{
+ background:rgba(196,35,57,.85);border-color:#ff8497;color:#fff}
+#coordRow #coords.hasCoords{
+ background:rgba(42,126,90,.34);border-color:rgba(113,216,157,.65);color:#e4ffed}
+
+/* QA10 Samsung: deliberate two-row header; metadata spans the icon column. */
+#header{display:grid;grid-template-columns:35px minmax(0,1fr) 77px;
+ grid-template-rows:minmax(23px,auto) auto;gap:2px 4px;align-items:start;min-width:0}
+#img,#imageFallback{grid-column:1;grid-row:1 / span 2;align-self:start}
+#names{display:contents}
+#nameLine{grid-column:2;grid-row:1;display:flex;flex-wrap:nowrap;
+ align-items:center;gap:3px;min-width:0}
+#nameLine b{flex:0 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;
+ white-space:normal;line-height:1.18}
+#types{flex:0 0 auto;display:inline-flex;gap:2px;align-items:center}
+#headerActions{grid-column:3;grid-row:1;width:77px;justify-self:end;
+ align-self:start;display:block}
+#headerButtons{width:77px;display:flex;justify-content:flex-end;gap:4px}
+#subRow{grid-column:2 / 4;grid-row:2;display:flex;align-items:center;
+ flex-wrap:wrap;column-gap:5px;row-gap:2px;min-width:0;line-height:1.15;margin:0}
+#subRow .metaPair{flex:0 0 auto;display:inline-flex;align-items:center;
+ white-space:nowrap;font-size:9px;font-weight:500;color:#cbd4e0;line-height:12px}
+#subRow .metaPair:empty{display:none}
+#subRow #timer{flex:0 0 auto;display:inline-flex;align-items:center;
+ gap:3px;font-size:9px;line-height:12px;min-height:12px;max-height:none;
+ margin:0;padding:0;white-space:nowrap;vertical-align:middle}
+#subRow #timer[hidden]{display:none!important}
+#subRow #timer .timerClock{display:block;width:10px;height:10px;
+ flex:0 0 10px;stroke:currentColor;stroke-width:2;fill:none;
+ stroke-linecap:round;stroke-linejoin:round}
+#subRow #timer.pulse{animation:none}
+#subRow #timer.pulse .timerClock{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#subRow #timer.pulse .timerClock{animation:none}}
+#major{margin-top:3px;gap:3px;align-items:center}
+#info{display:grid;grid-template-columns:max-content minmax(0,1fr);
+ gap:2px 4px;margin-top:3px;line-height:1.22;align-items:start}
+#info .infoLabel{color:#afb9c8;white-space:nowrap;font-weight:400}
+#info .infoValue{min-width:0;overflow-wrap:anywhere;white-space:normal}
+#info #coordsStatus{grid-column:1/-1}
+/* QA11 Samsung: standout red CTA at rest; pink-red while loading; green only on verified reveal. */
+#coordRow #coords:not(.hasCoords):not(.isPending){
+ background:linear-gradient(180deg,rgba(231,49,79,.98),rgba(178,26,52,.97));
+ border:1px solid rgba(255,155,173,.72);color:#fff;
+ box-shadow:0 2px 7px rgba(129,12,38,.3)}
+#coordRow #coords.isPending{
+ background:linear-gradient(180deg,#ec4968,#c52345);border-color:#ffb1bd;
+ color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.09)}
+#coordRow #coords.hasCoords{
+ background:rgba(42,126,90,.34);border-color:rgba(113,216,157,.65);
+ color:#e4ffed;box-shadow:none}
+#coordRow #coords{transition:background-color .18s ease,border-color .18s ease,color .18s ease}
+#panel{padding:7px 7px 9px}
+/* QA12 explicit information rows: name/shiny, despawn/types/percent, dex/sex/size/form. */
+#header{grid-template-rows:minmax(23px,auto) auto auto;align-content:start;row-gap:2px}
+#img,#imageFallback{grid-row:1 / span 3}
+#nameLine{grid-column:2;grid-row:1;min-width:0;display:flex;flex-wrap:nowrap}
+#nameLine b{white-space:normal;overflow-wrap:anywhere;word-break:normal;
+ line-height:1.17;font-size:12px;min-width:0}
+#statusRow{grid-column:2 / 4;grid-row:2;display:flex;align-items:center;
+ justify-content:flex-start;flex-wrap:wrap;column-gap:7px;row-gap:2px;
+ min-width:0;min-height:12px;line-height:12px}
+#statusRow #timer{display:inline-flex;align-items:center;align-self:center;
+ flex:0 0 auto;gap:3px;padding:0;margin:0;min-height:12px;max-height:none;
+ font-weight:800;font-size:9px;line-height:12px;border:0;background:transparent;
+ box-shadow:none;white-space:nowrap}
+#statusRow #timer[hidden]{display:none!important}
+#statusRow #timer .timerClock{width:10px;height:10px;flex:0 0 10px;
+ fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#statusRow #timer.pulse{animation:none}
+#statusRow #timer.pulse .timerClock{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#statusRow #timer.pulse .timerClock{animation:none}}
+#statusRow #types{display:inline-flex;align-items:center;gap:3px;flex:0 0 auto}
+#statusRow .pkTypeImg{width:11px;height:11px;object-fit:contain}
+#ivPercentTop{font-size:10px;line-height:12px;font-weight:800;color:#ff9fb5;
+ letter-spacing:0;white-space:nowrap;flex:0 0 auto}
+#ivPercentTop[hidden]{display:none!important}
+#subRow{grid-column:2 / 4;grid-row:3;display:flex;align-items:baseline;
+ justify-content:flex-start;flex-wrap:wrap;column-gap:6px;row-gap:1px;
+ margin:0;min-width:0;min-height:12px}
+#subRow .metaPair{font-size:9px;line-height:12px;flex:0 1 auto;max-width:100%;
+ min-width:0;white-space:normal;overflow-wrap:anywhere;color:#cbd4e0}
+#subRow #dexGender{white-space:nowrap;flex:0 0 auto}
+#major{margin-top:4px;align-items:center;gap:3px}
+
+/* QA13: types under artwork; number below name; Despawn centered beneath star */
+#header{display:grid;grid-template-columns:42px minmax(0,1fr) 100px;grid-template-rows:auto;column-gap:5px;align-items:start;min-width:0}
+#artColumn{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+#artColumn #img,#artColumn #imageFallback{grid-column:auto;grid-row:auto;width:40px;height:40px;object-fit:contain;flex:0 0 40px}
+#artColumn #types{display:inline-flex;gap:2px;justify-content:center;align-items:center;min-height:12px;max-width:42px}
+#artColumn #types .pkTypeImg{width:12px;height:12px;object-fit:contain}
+#names{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:4px;min-width:0;padding-top:2px}
+#nameLine{display:flex;flex-wrap:nowrap;align-items:flex-start;min-width:0}
+#nameLine b{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:12px}
+#subRow{display:flex;flex-wrap:wrap;gap:2px 4px;align-items:baseline;min-width:0;margin:0;line-height:1.2}
+#subRow .metaPair{font-size:9px;line-height:1.2;font-weight:500;color:#cbd4e0;white-space:normal;overflow-wrap:anywhere;min-width:0;max-width:100%}
+#subRow #dexGender{white-space:nowrap}
+#subRow .metaPair:empty{display:none}
+#headerActions{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:5px;width:100px}
+#headerButtons{display:flex;align-items:center;justify-content:center;width:100px;gap:4px}
+#headerActions #timer{display:inline-flex;align-items:center;justify-content:center;align-self:center;width:100px;max-width:100px;gap:3px;margin:0;padding:0;min-height:13px;max-height:none;background:transparent;border:0;box-shadow:none;white-space:nowrap;line-height:13px;font-size:9px;font-weight:800}
+#headerActions #timer[hidden]{display:none!important}
+#headerActions #timer .timerClock{display:block;width:10px;height:10px;flex:0 0 10px;stroke:currentColor;stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round}
+#headerActions #timer.pulse{animation:none}
+#headerActions #timer.pulse .timerClock{animation:psDespawnGentlePulse 1.6s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){#headerActions #timer.pulse .timerClock{animation:none}}
+#major{display:grid;grid-template-columns:minmax(106px,1.6fr) minmax(53px,.8fr) minmax(53px,.8fr);gap:5px;align-items:stretch;margin-top:6px}
+#major .statTile{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:3px;min-width:0;background:#ffffff16;border:1px solid #ffffff2b;border-radius:7px;padding:5px 4px 6px}
+#major .statHeading{text-align:center;font-size:9px;line-height:12px;color:#bac6d4;font-weight:600}
+#major .statValue{text-align:center;font-size:11px;line-height:13px;font-weight:850;white-space:nowrap}
+#major .statValue.red{color:#ff9bb0}
+#major .ivTile .ivPercent{position:absolute;top:5px;right:4px;font-size:8px;line-height:12px;font-weight:800;color:#ff9bb0;pointer-events:none}
+#rankLine{margin-top:3px;font-size:9px;color:#c9d9eb;font-weight:600}
+#rankLine[hidden]{display:none!important}
+/* QA14 — restore near-original compact dimensions; same hierarchy, no oversized glass tiles.
+   This final override beats historical QA9-QA13 rules without altering timer/coords logic. */
+#panel{padding:5px 5px 6px}
+#header{grid-template-columns:34px minmax(0,1fr) 89px;column-gap:4px}
+#artColumn{gap:1px}
+#artColumn #img,#artColumn #imageFallback{width:33px;height:33px;flex-basis:33px}
+#artColumn #types{gap:1px;min-height:11px;max-width:34px}
+#artColumn #types .pkTypeImg{width:11px;height:11px}
+#names{gap:2px;padding-top:1px}
+#nameLine b{font-size:11px;line-height:1.15}
+#subRow{gap:1px 3px;line-height:1.15}
+#subRow .metaPair{font-size:8.5px;line-height:1.15}
+#headerActions{width:89px;gap:2px}
+#headerButtons{width:89px;gap:3px}
+#headerActions #timer{width:89px;max-width:89px;gap:2px;min-height:12px;line-height:12px;font-size:8px}
+#headerActions #timer .timerClock{width:9px;height:9px;flex-basis:9px}
+#major{grid-template-columns:minmax(99px,1.6fr) minmax(43px,.8fr) minmax(43px,.8fr);gap:3px;margin-top:3px}
+#major .statTile{gap:1px;background:#ffffff13;border-color:#ffffff24;border-radius:5px;padding:3px 3px 4px}
+#major .statHeading{font-size:8px;line-height:10px}
+#major .statValue{font-size:10px;line-height:12px}
+#major .ivTile .ivPercent{top:2px;right:3px;font-size:7px;line-height:10px;padding:0;background:transparent;border-radius:0}
+#rankLine{margin-top:2px;font-size:8px}
+#info{margin-top:2px;gap:1px 4px;font-size:9.5px;line-height:1.2}
+#evolutions{margin-top:3px}
+#evoToggle{padding:3px 5px}
+#coordRow{margin-top:3px}
+#coordRow #coords{min-height:28px;padding-top:3px;padding-bottom:3px}
+
+/* QA15 — narrow stat cells (QA16: 125px total instead of 208px;
+   19px high instead of ~32px). Types share top-left of IV with 100% top-right. */
+#artColumn #types{display:none!important}
+#major{grid-template-columns:65px 30px 24px;justify-content:center;gap:3px;margin-top:2px;align-items:center}
+#major .statTile{height:21px;min-height:21px;max-height:21px;padding:0 1px 1px;gap:0;justify-content:center;border-radius:4px}
+#major .statHeading{font-size:7.5px;line-height:8px;font-weight:600}
+#major .statValue{font-size:9px;line-height:10px;font-weight:800}
+#major .ivTile .ivPercent{top:1px;right:3px;font-size:7px;line-height:8px}
+#major .ivTile .ivTypes{display:inline-flex;align-items:center;gap:1px;position:absolute;
+ top:1px;left:3px;min-height:8px;max-width:28px;pointer-events:none;
+ padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:inherit;line-height:9px}
+#major .ivTile .ivTypes .pkTypeImg{width:9px;height:9px;object-fit:contain}
+#major .ivTile .ivTypes:empty{display:none}
+#artColumn.gengarSprite #img{transform:scale(.78);transform-origin:center}
+
+/* QA16: protect variable PC and level values from overflow in 30px/24px tiles. */
+#major .statTile:nth-child(2) .statValue{font-size:8px;letter-spacing:-.15px}
+#major .statTile:nth-child(3) .statValue{font-size:7.5px;letter-spacing:-.2px}
+#major .ivTile .ivTypes{left:1px}
+#major .ivTile .ivPercent{right:1px}
+
+/* QA17 — 30% less initial card-window footprint (248x205 -> 216x165 dp).
+   Preserve adaptive content height and legible controls; remove unused spacing only.
+   Height of IV/PC/Nv. bars: 21 -> 23px (+9.52%). */
+#panel{padding:4px 4px 5px;border-radius:11px}
+#header{grid-template-columns:32px minmax(0,1fr) 77px;column-gap:3px}
+#artColumn #img,#artColumn #imageFallback{width:31px;height:31px;flex-basis:31px}
+#names{gap:1px;padding-top:0}
+#subRow{gap:1px 2px}
+#headerActions{width:77px;gap:1px}
+#headerButtons{width:77px;gap:4px}
+#headerActions #timer{width:77px;max-width:77px;gap:2px}
+#major{margin-top:2px;gap:3px}
+#major .statTile{height:23px;min-height:23px;max-height:23px;
+ padding:0 1px 1px;gap:0}
+#major .statHeading{line-height:9px}
+#major .statValue{line-height:11px}
+#info{margin-top:1px;line-height:1.16}
+#info div{margin:0}
+#evolutions{margin-top:2px}
+#evoToggle{padding:2px 4px}
+#coordRow{margin-top:2px}
+#coordRow #coords{min-height:28px}
+/* QA18: 200dp card, left-aligned stat cells, separate sex and size chips.
+   #subRow uses a second grid row to avoid a narrow name column wrapping every chip. */
+#header{grid-template-rows:auto auto;row-gap:1px}
+#names{display:contents}
+#nameLine{grid-column:2;grid-row:1;min-width:0;align-self:start}
+#subRow{grid-column:2 / 4;grid-row:2;display:flex;align-items:center;flex-wrap:wrap;
+ gap:2px 4px;min-width:0;margin:0}
+#subRow .metaPair{display:inline-flex;align-items:center;flex-wrap:wrap;gap:3px;
+ flex:0 1 auto;min-width:0;white-space:normal}
+#subRow .dexMeta{font-size:8px;color:#cbd4e0;white-space:nowrap}
+#subRow .sexChip,#subRow .sizeChip{display:inline-flex;align-items:center;
+ justify-content:center;gap:2px;min-height:13px;padding:1px 3px;
+ background:#ffffff12;border:1px solid #ffffff28;border-radius:3px;
+ white-space:nowrap;font-size:8px;line-height:10px}
+#subRow .sexChip .pkGender{font-size:10px;line-height:10px}
+#subRow .sizeChip{border-color:#ffffff34}
+#subRow .metaLabel{font-weight:650;font-size:7.5px;color:#bfcbd8}
+#subRow .formChip{font-size:8px;color:#b9c9d7;white-space:nowrap}
+#major{justify-content:flex-start;justify-items:start}
+#artColumn.gengarSprite.gengarHalloween #img{transform:scale(.56);transform-origin:center}
+/* QA19: pack the OUTER card, not its information cells.
+   Preserve 200dp shell and responsive text/buttons, reclaim unused margins. */
+#panel{padding:3px;border-radius:10px;min-height:0;height:auto}
+#header{grid-template-columns:31px minmax(0,1fr) 77px;row-gap:0;column-gap:3px}
+#artColumn #img,#artColumn #imageFallback{width:30px;height:30px;flex-basis:30px}
+#nameLine{padding:0;margin:0}
+#nameLine b{font-size:11px;line-height:1.18;white-space:normal;overflow-wrap:anywhere}
+#subRow{margin:0;padding:0;gap:1px 3px}
+#subRow .metaPair{gap:2px}
+#subRow .sexChip,#subRow .sizeChip{padding:0 2px;min-height:12px}
+#headerActions{gap:1px}
+#major{display:grid;width:100%;max-width:100%;
+ grid-template-columns:minmax(88px,1fr) 42px 38px;
+ justify-content:stretch;justify-items:stretch;align-items:stretch;gap:3px;margin-top:2px}
+#major .statTile{height:23px;min-height:23px;max-height:23px;padding:0 2px 1px;gap:0;min-width:0;overflow:hidden}
+#major .statHeading{font-size:8px;line-height:9px;text-align:center}
+#major .statValue{font-size:10px;line-height:11px;text-align:center}
+#major .statTile:nth-child(2) .statValue{font-size:9px;letter-spacing:-.1px}
+#major .statTile:nth-child(3) .statValue{font-size:8px;letter-spacing:-.1px}
+#major .ivTile .ivTypes{left:2px}
+#major .ivTile .ivPercent{right:2px}
+#rankLine{margin-top:1px}
+#info{margin-top:1px;gap:1px 3px;line-height:1.16;min-width:0}
+#info .infoLabel,#info .infoValue{margin:0;padding:0}
+#evolutions{margin-top:2px}
+#evoToggle{padding:2px 4px}
+#coordRow{margin-top:2px}
+#captureShare{margin-top:2px}
+#captureConfirm{margin-top:2px}
+#captureStatus{margin-top:1px}
+#coordsNumbers{margin-top:1px}
+#artColumn.gengarSprite #img{transform:scale(calc(.78 * var(--ps-alpha-scale,1)));transform-origin:center}
+#artColumn.gengarSprite.gengarHalloween #img{transform:scale(calc(.49 * var(--ps-alpha-scale,1)))}
+#artColumn:not(.gengarSprite) #img{transform:scale(var(--ps-alpha-scale,1))}
+
+/* QA20: number, sex, size and form belong IMMEDIATELY below Pokémon name.
+   QA18's grid-row:2 spanned the action column and created a blank stripe below title.
+   The name and metadata now flow in one shared column, no forced empty row. */
+#header{grid-template-rows:auto;row-gap:0;align-items:start}
+#names{grid-column:2;grid-row:1;display:flex;flex-direction:column;
+ min-width:0;align-self:start;justify-content:flex-start;gap:1px;padding:0}
+#nameLine{grid-column:auto;grid-row:auto;align-self:auto;min-width:0;line-height:1.15}
+#subRow{grid-column:auto;grid-row:auto;align-self:flex-start;
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;
+ width:100%;min-width:0;margin:0;padding:0;gap:1px}
+#subRow .metaPair{display:flex;flex-wrap:wrap;align-items:center;
+ justify-content:flex-start;min-width:0;max-width:100%;
+ flex:0 1 auto;gap:2px;line-height:1.1;white-space:normal}
+#subRow #dexGender{white-space:normal;flex-wrap:wrap}
+#subRow #sizeForm{white-space:normal;flex-wrap:wrap}
+#subRow .sexChip,#subRow .sizeChip{min-height:12px;line-height:10px}
+/* QA21: no visible Sexo/Tam. words; leave distinct compact, accessible icons.
+   Both metadata wrappers become transparent to layout so number / gender / size /
+   form pack in ONE flex row immediately under the name; wrap only when necessary.
+   Never push metadata into the share/favorite/close tap targets. */
+#names{gap:1px}
+#subRow{grid-column:auto;grid-row:auto;display:flex;flex-flow:row wrap;
+ align-items:center;justify-content:flex-start;align-content:flex-start;
+ gap:2px 3px;width:100%;max-width:100%;min-height:0;line-height:1;margin:0;padding:0}
+#subRow .metaPair{display:contents}
+#subRow .dexMeta{font-size:8px;line-height:11px}
+#subRow .sexChip,#subRow .sizeChip{display:inline-flex;align-items:center;
+ justify-content:center;white-space:nowrap;height:13px;min-height:13px;
+ margin:0;padding:0 3px;line-height:11px;border-radius:4px}
+#subRow .sexChip{border-color:#ff8bbc52;background:#ff8bbc0c}
+#subRow .sizeChip{border-color:#ffffff40;background:#ffffff0c}
+#subRow .formChip{max-width:100%;white-space:normal;overflow-wrap:anywhere;
+ font-size:8px;line-height:11px}
+/* QA22: practical compact card, no empty rows, without compressing important data.
+   A closed card scrolls ONLY if the Android window genuinely cannot contain it. */
+#panel{padding:3px 3px 2px;height:auto;min-height:0;scrollbar-width:none}
+#panel::-webkit-scrollbar{display:none}
+#panel:not(.needsScroll){overflow-y:hidden;touch-action:manipulation}
+#panel.needsScroll{overflow-y:auto;touch-action:pan-y}
+#header{row-gap:0;align-content:start}
+#names{gap:0;justify-content:flex-start}
+#nameLine{padding:0;margin:0;min-height:0}
+#subRow{margin:0;padding:0;row-gap:1px;align-content:flex-start}
+#major{margin-top:2px;justify-content:stretch;justify-items:stretch;
+ grid-template-columns:minmax(87px,1fr) 42px 38px}
+#major .statTile{height:23px;min-height:23px;max-height:23px;
+ padding:0 2px 1px;overflow:hidden}
+#major .statValue{white-space:nowrap;overflow:hidden;text-overflow:clip}
+#rankLine{display:inline-flex;align-items:center;gap:3px;width:max-content;
+ max-width:100%;min-height:15px;margin-top:2px;margin-bottom:0;
+ padding:1px 5px 1px 4px;border:1px solid #eccb8063;border-radius:5px;
+ background:linear-gradient(95deg,#e7bf451d,#ffffff0c);
+ color:#f6d994;font:800 9px/12px Roboto,Arial,sans-serif;
+ letter-spacing:.1px;text-shadow:none}
+#rankLine::before{content:"★";font-size:10px;color:#ffd16e}
+#rankLine[hidden]{display:none!important}
+#info{margin-top:2px;row-gap:1px;overflow-wrap:anywhere}
+#evolutions{margin-top:3px}
+#coordRow{margin-top:3px}
+#imageFallback{font-size:0!important;position:relative}
+#imageFallback::after{content:"◉";display:block;font-size:19px;
+ line-height:23px;color:#b7c7dc;opacity:.85}
 </style></head><body><div id="panel">
  <div id="header">
-  <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
-  <div id="names"><b id="name">Pokémon</b><small id="sub"></small></div>
-  <button id="x" onclick="Native.hideDetail()">×</button>
+  <div id="artColumn">
+   <img id="img" alt="" style="display:none"><span id="imageFallback" aria-label="Imagem indisponível">◇</span>
+   <span id="types" aria-label="Tipos do Pokémon"></span>
+  </div>
+  <div id="names">
+   <div id="nameLine"><b id="name">Pokémon</b></div>
+   <div id="subRow"><span id="dexGender" class="metaPair"></span><span id="sizeForm" class="metaPair"></span></div>
+  </div>
+  <div id="headerActions">
+   <div id="headerButtons">
+      <button id="shareIcon" type="button" onclick="captureShareAsk()" title="Capturei Pokémon — compartilhar no chat" aria-label="Capturei Pokémon — compartilhar no chat"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.4 11l7.2-4.5M8.4 13l7.2 4.5"/></svg></button>
+      <button id="watch" onclick="Native.toggleWatch(watchName)" title="Adicionar aos favoritos" aria-label="Adicionar aos favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 2.93 6.1 6.73.98-4.83 4.7 1.14 6.64L12 17.78l-5.97 3.14 1.14-6.64-4.83-4.7 6.73-.98L12 2.5Z"/></svg></button>
+      <button id="x" onclick="Native.hideDetail()" aria-label="Fechar card">×</button>
+    </div>
+   <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span class="despawnLabel">Despawn</span><span id="timeRemaining"></span></span>
+  </div>
  </div>
- <div id="major"></div><div id="info"></div>
+ <div id="major"></div><div id="rankLine" hidden></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
   </button>
   <div id="evoBody" hidden></div>
  </section>
- <button id="watch" onclick="Native.toggleWatch(watchName)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3.1 6.4 7.1 1-5.1 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7L1.8 9.4l7.1-1L12 2Z"/></svg> <span id="watchLabel">Adicionar aos favoritos</span></button>
- <button id="coords" onclick="requestCoordsUi()">⌖ Get coords</button><button id="copy" onclick="copyCoords()">⧉ Copiar coordenadas</button>
+
+ <div id="coordRow">
+    <button id="coords" onclick="requestCoordsUi()" title="Pegar e copiar coordenadas">⌖ Pegar Coordenadas</button>
+    <span id="coordsQuota" role="status" aria-live="polite" title="Usos observados no PokeSearch, não o saldo total">?</span>
+    <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
+  </div>
+  <div id="cooldownControls" hidden>
+    <button id="cooldownConfirm" class="primary" onclick="confirmCooldownUi()" title="Registrar captura sem publicar no chat" hidden disabled>✓ Capturei</button>
+    <button id="cooldownUndo" onclick="Native.undoCooldown()" title="Desfazer última captura registrada" aria-label="Desfazer última captura" hidden>↶</button>
+    <button id="cooldownReset" onclick="resetCooldownUi()" title="Limpar referência de cooldown" aria-label="Limpar referência de cooldown" hidden>×</button>
+  </div>
+  <div id="cooldownNote" role="status" hidden></div>
+ <button id="captureShare" hidden onclick="captureShareAsk()">🎉 Capturou? Compartilhar no chat</button>
+ <div id="captureConfirm" hidden><span>Capturou mesmo?</span>
+ <button onclick="captureShareCancel()">Não</button>
+ <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
+ <small id="captureStatus" hidden></small>
 </div>
-<script src="sprite_offline.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
+let shareReady=false,shareSent=false,sharePending=false,shareAwaitingOffer=false;
+let cooldownLinked=false,cooldownActive=false,cooldownReference=null;
+function refreshCooldownButtons(){
+ const container=document.getElementById("cooldownControls");
+ const confirm=document.getElementById("cooldownConfirm");
+ const undo=document.getElementById("cooldownUndo");
+ const reset=document.getElementById("cooldownReset");
+ if(!container||!confirm||!undo||!reset)return;
+ // ON/OFF now lives in Personalização > Info Pokémon.
+ container.hidden=true; // temporary: experimental capture buttons are intentionally hidden
+ const canConfirm=cooldownLinked&&cooldownActive&&!!window.PokeSearchCooldown?.coords(currentCoords)&&currentIndex>=0;
+ confirm.hidden=!canConfirm;
+ confirm.disabled=!canConfirm;
+ undo.hidden=!cooldownLinked||!cooldownActive||!cooldownReference;
+ undo.disabled=undo.hidden;
+ reset.hidden=!cooldownLinked||!cooldownActive||!cooldownReference;
+ reset.disabled=reset.hidden;
+}
+window.cooldownChanged=function(data){
+ cooldownLinked=data?.linked===true;
+ cooldownActive=data?.enabled===true;
+ cooldownReference=data?.reference||null;
+ refreshCooldownButtons();
+ resizeEvolutionPanel();
+};
+window.cooldownFeedback=function(message){
+ const note=document.getElementById("cooldownNote");
+ note.textContent=String(message||"");
+ note.hidden=true; // retain feedback internally while experimental controls are hidden
+ resizeEvolutionPanel();
+};
+function confirmCooldownUi(){
+ if(!cooldownLinked||!window.PokeSearchCooldown?.coords(currentCoords)||currentIndex<0)return;
+ Native.confirmCooldownCapture(currentIndex);
+}
+function resetCooldownUi(){
+ if(!cooldownLinked||!cooldownReference)return;
+ Native.resetCooldown();
+}
+function shareUi(){
+ const icon=document.getElementById("shareIcon");
+ if(icon){
+  // A capture report is a manual action; revealing coordinates first is not required.
+  const available=Number.isInteger(currentIndex)&&currentIndex>=0&&!shareSent&&!sharePending;
+  icon.disabled=!available;
+  icon.title=shareSent?"Captura já compartilhada":
+   sharePending?"Enviando captura ao chat":
+   shareAwaitingOffer?"Preparando confirmação da captura":
+   "Capturei Pokémon — compartilhar no chat";
+  icon.setAttribute("aria-label",icon.title);
+ }
+ document.getElementById("captureShare").hidden=!shareReady||shareSent||sharePending;
+ if(!shareReady||shareSent)document.getElementById("captureConfirm").hidden=true;
+}
+window.offerCaptureShare=sourceIndex=>{
+ // Ignore callbacks queued for a different card or an old result.
+ if(sourceIndex!==currentIndex||shareSent)return;
+ shareReady=true;sharePending=false;
+ const requested=shareAwaitingOffer;
+ shareAwaitingOffer=false;
+ shareUi();
+ if(requested)showCaptureConfirmation();
+ resizeEvolutionPanel();
+};
+window.captureShareAvailability=(ok,message)=>{
+ if(ok)return;
+ shareAwaitingOffer=false;
+ shareUi();
+ const status=document.getElementById("captureStatus");
+ status.textContent=String(message||"Esta captura não está disponível no momento.");
+ status.hidden=false;
+ resizeEvolutionPanel();
+};
+function showCaptureConfirmation(){
+ if(!shareReady||shareSent||sharePending||currentIndex<0)return;
+ const confirmation=document.getElementById("captureConfirm");
+ confirmation.querySelector("span").textContent="Você capturou "+watchName+"?";
+ confirmation.hidden=false;
+ resizeEvolutionPanel();
+}
+function captureShareAsk(){
+ if(shareSent||sharePending||shareAwaitingOffer||currentIndex<0)return;
+ if(shareReady){showCaptureConfirmation();return;}
+ shareAwaitingOffer=true;
+ shareUi();
+ if(typeof Native.prepareCaptureShare==="function"){
+  Native.prepareCaptureShare(currentIndex);
+ }else{
+  window.captureShareAvailability(false,"Atualize o aplicativo para compartilhar capturas.");
+ }
+}
+function captureShareCancel(){
+ shareAwaitingOffer=false;
+ document.getElementById("captureConfirm").hidden=true;
+ shareUi();resizeEvolutionPanel();
+}
+function captureShareConfirm(){
+ if(!shareReady||shareSent||sharePending||currentIndex<0)return;
+ sharePending=true;
+ document.getElementById("captureConfirm").hidden=true;
+ shareUi();
+ Native.confirmCaptureShare(currentIndex);
+}
+window.captureShareFeedback=(ok,message)=>{
+ sharePending=false;if(ok){shareSent=true;shareReady=false;}
+ else shareReady=true;
+ shareUi();
+ const status=document.getElementById("captureStatus");
+ status.textContent=String(message||"");
+ status.hidden=!status.textContent;
+ resizeEvolutionPanel();
+};
 function coordButtons(){
  const fetch=document.getElementById("coords"),copy=document.getElementById("copy");
  if(!fetch||!copy)return;
  fetch.disabled=coordsPending;
- fetch.textContent=coordsPending?"⌛ Obtendo coordenadas...":"⌖ Get coords";
- copy.disabled=coordsPending&&!currentCoords;
- copy.textContent=currentCoords?"⧉ Copiar coordenadas":
-  coordsPending?"⌛ Aguardando coordenadas":"⧉ Obter e copiar";
+ const valid=window.PokeSearchCooldown?.coords?.(currentCoords);
+ fetch.className=coordsPending?"isPending":valid?"hasCoords":"";
+ // Exact numeric coordinates replace Get coords in the same button.
+ // Tapping the numbers copies again without a new reveal.
+ fetch.textContent=coordsPending?"⌛ Pegando coordenadas...":valid?
+  String(currentCoords).trim().replace(";",", ")+(window.copyVisualUntil>Date.now()?"  ✓":""):
+  "⌖ Pegar Coordenadas";
+ fetch.title=valid?"Toque nas coordenadas para copiar novamente":
+  "Pegar e copiar coordenadas";
+ fetch.setAttribute("aria-label",fetch.title);
+ copy.hidden=true;
 }
 function requestCoordsUi(){
+ if(window.PokeSearchCooldown?.coords?.(currentCoords)){
+  Native.copyCoords(currentCoords);return;
+ }
  if(coordsPending||!Number.isInteger(currentIndex)||currentIndex<0)return;
  coordsPending=true;coordsNote="Consultando coordenadas do Pokémon no site...";
  const seq=++coordsRequestSeq;
@@ -76,50 +704,126 @@ function requestCoordsUi(){
   coordsNote="O site não respondeu à solicitação. Toque em Get coords para tentar novamente.";
   const label=document.getElementById("coordsValue");
   if(label)label.textContent=coordsNote;
+  const status=document.getElementById("coordsStatus");
+  if(status)status.hidden=false;
   coordButtons();
  },9000);
  coordButtons();
  const label=document.getElementById("coordsValue");
  if(label)label.textContent=coordsNote;
+ const status=document.getElementById("coordsStatus");
+ if(status)status.hidden=false;
  Native.coords(currentIndex);
 }
 function copyCoords(){
  if(currentCoords)Native.copyCoords(currentCoords);
  else requestCoordsUi();
 }
+function showCopySuccess(){
+ window.copyVisualUntil=Date.now()+1100;
+ const copyIdentity=String(currentCoords||"");
+ const seq=window.copyVisualGeneration=(Number(window.copyVisualGeneration)||0)+1;
+ coordButtons();
+ setTimeout(()=>{
+  if(window.copyVisualGeneration!==seq||String(currentCoords||"")!==copyIdentity)return;
+  window.copyVisualUntil=0;
+  coordButtons();
+ },1150);
+}
 window.copyFeedback=msg=>{
- coordsNote=String(msg||"");
+ const message=String(msg||"");
+ const didCopy=message.startsWith("✓")&&
+  !!window.PokeSearchCooldown?.coords?.(currentCoords);
+ coordsNote=didCopy?"":message;
+ if(didCopy)showCopySuccess();
  const label=document.getElementById("coordsValue");
  if(label&&coordsNote)label.textContent=coordsNote;
+ const status=document.getElementById("coordsStatus");
+ if(status)status.hidden=!coordsNote;
  coordButtons();
 };
 function fmt(sec){sec=Math.max(0,Math.floor(sec));return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");}
 function updateCountdown(){
- const e=document.getElementById("timer");
- if(!e||!expiresAt)return;
- const remaining=(expiresAt-Date.now())/1000;
- e.textContent=remaining>0?fmt(remaining):"Expirado";
+ const e=document.getElementById("timer");if(!e)return;
+ if(!expiresAt){e.hidden=true;e.className="unknown";return;}
+ const remaining=Math.max(0,Math.ceil((expiresAt-Date.now())/1000));
+ const state=window.PokeSearchDespawnVisual?.state(remaining)||
+  {tone:remaining>900?"good":remaining>300?"warning":
+   remaining>120?"pink":"critical",pulse:remaining>0&&remaining<=60};
+ e.hidden=false;
+ document.getElementById("timeRemaining").textContent=remaining?fmt(remaining):"Expirado";
+ e.className=state.tone+(state.pulse?" pulse":"");
+ e.title="Despawn: "+(remaining?fmt(remaining):"expirado")+" · "+
+  (state.tone==="good"?"Mais de 15 min":state.tone==="warning"?"5–15 min":
+   state.tone==="pink"?"2–5 min":"Menos de 2 min");
  if(remaining<=0){
   window.pauseDetailTimer();
   if(Native.expiredResults)Native.expiredResults();
  }
 }
+let coordsAccountState="unknown",coordsLastQuota={observedOnDevice:0,official:false};
+window.coordsAccountUpdated=function(data){
+ const next=String(data?.auth||"unknown");
+ const allowed=["authenticated","login-required","checking","limited","unknown"];
+ const before=coordsAccountState;
+ coordsAccountState=allowed.includes(next)?next:"unknown";
+ // Never attribute a stale server number to another authenticated account.
+ if(before!==coordsAccountState)coordsLastQuota={...coordsLastQuota,official:false};
+ window.coordsQuotaUpdated(coordsLastQuota);
+};
+window.coordsQuotaUpdated=function(data){
+ coordsLastQuota=data&&typeof data==="object"?data:{observedOnDevice:0,official:false};
+ const el=document.getElementById("coordsQuota");
+ if(!el)return;
+ const observed=Number.isInteger(data?.observedOnDevice)&&data.observedOnDevice>=0?data.observedOnDevice:0;
+ const authoritative=coordsAccountState==="authenticated"&&data?.official===true&&
+  Number.isInteger(data.limit)&&data.limit>0&&Number.isInteger(data.remaining)&&
+  data.remaining>=0&&data.remaining<=data.limit;
+
+ el.className=authoritative?"official":"";
+ // Badge never confuses observed local requests with the full account quota.
+ el.textContent=authoritative?String(data.remaining):String(observed);
+ el.dataset.scope=authoritative?"official":"local";
+ el.setAttribute("aria-label",authoritative?
+  "PoGoCoordinates: "+data.remaining+" revelações restantes na última resposta oficial":
+  "PoGoCoordinates: "+observed+" revelações observadas neste aparelho; saldo total desconhecido");
+ el.title=authoritative?
+  "Saldo oficial na última revelação autenticada; pode ter mudado":
+  "Usos observados no PokeSearch; não representa o saldo total da conta.";
+};
 window.coordsResult=function(coords,message){
  coordsRequestSeq++;
  coordsPending=false;
- if(coords){currentCoords=coords;coordsNote="";}
- else coordsNote=String(message||"Coordenadas indisponíveis");
+ if(coords){
+  currentCoords=coords;coordsNote="";
+  if(/copiad/i.test(String(message||""))&&window.PokeSearchCooldown?.coords?.(coords))
+   showCopySuccess();
+ }else coordsNote=String(message||"Coordenadas indisponíveis");
  coordButtons();
+ refreshCooldownButtons();
  const label=document.getElementById("coordsValue");
- if(label)label.textContent=currentCoords||coordsNote||"Toque em Get coords";
+ if(label)label.textContent=coordsNote||"";
+ const status=document.getElementById("coordsStatus");
+ if(status)status.hidden=!coordsNote;
+ resizeEvolutionPanel();
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false;
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
- requestAnimationFrame(()=>Native.resizeDetail(
-  Math.ceil(document.getElementById("panel").scrollHeight)+2));
+ requestAnimationFrame(()=>{
+  const panel=document.getElementById("panel");
+  const height=Math.ceil(panel.scrollHeight)+3;
+  Native.resizeDetail(height);
+  // The native window resizes on its UI thread. Only enable inner scrolling
+  // when expanded evolution data or the physical display forces clipping.
+  const recheck=()=>{
+   if(!panel?.classList?.toggle)return;
+   panel.classList.toggle("needsScroll",panel.scrollHeight>panel.clientHeight+3);
+  };
+  if(typeof setTimeout==="function")setTimeout(recheck,90);
+ });
 }
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");
@@ -181,9 +885,12 @@ window.showEvolutionDetails=payload=>{
  requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,Math.max(0,panel.scrollHeight-panel.clientHeight));});
  return true;
 };
-const item=(k,v)=>v?'<div><em>'+h(k)+':</em> '+h(v)+'</div>':"";
+const item=(k,v)=>v?'<span class="infoLabel">'+h(k)+':</span><span class="infoValue">'+h(v)+'</span>':"";
 window.watchFeedback=watched=>{
- document.getElementById("watchLabel").textContent=watched?"★ Favorito · remover":"☆ Adicionar aos favoritos";
+ const star=document.getElementById("watch");
+ star.className=watched?"isFav":"";
+ star.title=watched?"Remover dos favoritos":"Adicionar aos favoritos";
+ star.setAttribute("aria-label",star.title);
 };
 window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
 window.showDetails=(c,mode,watched)=>{
@@ -195,14 +902,20 @@ window.showDetails=(c,mode,watched)=>{
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
+  window.copyVisualUntil=0;window.copyVisualGeneration=(Number(window.copyVisualGeneration)||0)+1;
+  shareReady=false;shareSent=false;sharePending=false;shareAwaitingOffer=false;shareUi();
+  const cdNote=document.getElementById("cooldownNote");cdNote.hidden=true;cdNote.textContent="";
+  document.getElementById("captureStatus").hidden=true;
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
   document.getElementById("evoBody").innerHTML="";
  }
  watchName=String(c.name||"");window.watchFeedback(!!watched);
  currentIndex=Number(c.sourceIndex);
+ shareUi();
  if(!currentCoords&&c.coords)currentCoords=String(c.coords);
  coordButtons();
+ refreshCooldownButtons();
  const parts=String(c.despawn||"").split(":").map(Number);
  const secs=parts.length===2&&parts.every(Number.isFinite)?parts[0]*60+parts[1]:0;
  // The authorized API supplies an absolute expiry, NOT a legacy MM:SS.
@@ -213,7 +926,21 @@ window.showDetails=(c,mode,watched)=>{
  window.pauseDetailTimer();
  if(expiresAt)ticking=setInterval(updateCountdown,1000);
  document.getElementById("name").textContent=String(c.name||"Pokémon")+(c.shiny?" ✨":"");
- document.getElementById("sub").textContent=[c.number,c.gender,c.size,c.form].filter(Boolean).join(" · ");
+ const presenter=window.PokeSearchCardPresentation,metadata=window.PokeSearchCardMetaData;
+ document.getElementById("types").innerHTML=presenter?.types(c,metadata)||"";
+ const gender=presenter?.gender(c.gender)||"";
+ document.getElementById("dexGender").innerHTML=
+  [h(c.number),gender].filter(Boolean).join(" · ");
+ document.getElementById("sizeForm").textContent=
+  [c.size,c.form].filter(Boolean).join(" · ");
+ // Accessible discrete indicators: never visually group a sex icon with XXL.
+ document.getElementById("dexGender").innerHTML=
+  (c.number?'<span class="dexMeta">'+h(c.number)+'</span>':"")+
+  (gender?'<span class="sexChip" title="Sexo" aria-label="Sexo do Pokémon">'+gender+'</span>':"");
+ document.getElementById("sizeForm").innerHTML=
+  (c.size?'<span class="sizeChip" title="Tamanho" aria-label="Tamanho '+h(c.size)+'">'+h(c.size)+'</span>':"")+
+  (c.form?'<span class="formChip">'+h(c.form)+'</span>':"");
+
  const img=document.getElementById("img"),fallback=document.getElementById("imageFallback");
  // The result list and this separately owned detail WebView MUST resolve
  // identical offline bytes from the APK, without relying on HTTP or a warm
@@ -221,26 +948,60 @@ window.showDetails=(c,mode,watched)=>{
  const art=window.PokeSearchOfflineSprite?
    window.PokeSearchOfflineSprite.resolve(c):
    {src:String(c.image||""),original:String(c.image||""),offline:false};
+ // Gengar #94 needs an extra reduction for Halloween/costume assets.
+ const gd=Number(String(c.number||c.dex||c.pokemon_id||"").replace("#",""));
+ const isGengar=gd===94||(/\bgengar\b/i.test(String(c.name||""))&&(gd===0||!Number.isFinite(gd)));
+ const fields=[c.costume,c.costume_name,c.costumeName,c.costume_id,c.form,c.form_id,
+   c.variant,c.event,c.name,c.image,art.original,art.src].map(x=>String(x??"").slice(0,220)).join(" ");
+ const halloweenGengar=isGengar&&(c.isCostume===true||
+   /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(fields)||
+   (c.costume_id!=null&&Number(c.costume_id)>0));
+ document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite",isGengar);
+ document.getElementById("artColumn")?.classList?.toggle?.("gengarHalloween",halloweenGengar);
  img.onload=null;img.onerror=null;
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
- let artAttempt=0;
+ let artAttempt=0,displayed=false,verifiedNativeTried=false,loadGeneration=0;
+ const nativeFallback=()=>{
+  if(verifiedNativeTried)return "";
+  verifiedNativeTried=true;
+  const engine=window.PokeSearchOfflineSprite;
+  return engine?.verifiedBundledData?.(c)||engine?.exactBundledData?.(art)||"";
+ };
  const useArt=src=>{
+  const generation=++loadGeneration;
   if(!src||!(/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/)/i.test(src)))return;
   img.onload=()=>{
+   if(generation!==loadGeneration)return;
    if(img.naturalWidth>=8&&img.naturalHeight>=8){
-    img.style.display="block";fallback.style.display="none";
+    displayed=true;img.style.display="block";fallback.style.display="none";
+    if(typeof window!=="undefined")window.PokeSearchSpriteScale?.apply?.(img);
    }
   };
   img.onerror=()=>{
-   // Only retry the verified EXACT original image, never a different form.
-   if(art.offline&&artAttempt++===0&&art.original&&art.original!==src)
-    useArt(art.original);
-   else{img.style.display="none";fallback.style.display="flex";}
+   if(generation!==loadGeneration)return;
+   // First recover the precise sprite from the APK through the native bridge;
+   // do not substitute a normal variant for an unverified costume/Shiny.
+   const direct=nativeFallback();
+   if(direct&&direct!==src){useArt(direct);return;}
+   if(art.offline&&artAttempt++===0&&art.original&&art.original!==src){
+    useArt(art.original);return;
+   }
+   displayed=false;img.style.display="none";fallback.style.display="flex";
   };
   img.src=src;
   if(img.complete&&img.naturalWidth>=8&&img.naturalHeight>=8)img.onload();
  };
  useArt(art.src);
+ // Android WebView can leave a file/remote image pending forever with no
+ // error; a strict verified base image can still be restored from our APK.
+ const expectedSourceIndex=currentIndex,expectedName=watchName;
+ setTimeout(()=>{
+  if(!displayed&&img.isConnected&&currentIndex===expectedSourceIndex&&
+     watchName===expectedName&&img.naturalWidth<8){
+   const direct=nativeFallback();
+   if(direct&&img.getAttribute("src")!==direct)useArt(direct);
+  }
+ },1800);
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const raw=String(c.iv??"").trim();
  const validRaw=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw);
@@ -250,16 +1011,23 @@ window.showDetails=(c,mode,watched)=>{
   .reduce((sum,n)=>sum+n,0)*100/45):null;
  const showPct=validPct&&(rawPct===null||rawPct===Number(percent));
  const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
- document.getElementById("major").innerHTML=
-  stat("PC",c.cp)+stat("Nv.",c.level)+
-  stat("IV%",showPct?percent+"%":"","red")+
-  stat("A/D/S",showRaw?raw:"","red")+stat("Rank",c.rank);
+ const statTile=(label,value)=>'<div class="statTile"><div class="statHeading">'+h(label)+'</div><div class="statValue">'+h(value===null||value===undefined||value===""?"—":value)+'</div></div>';
+ document.getElementById("major").innerHTML='<div class="statTile ivTile"><div class="statHeading">IV</div>'+
+  (showPct?'<span class="ivPercent">'+h(percent)+'%</span>':"")+
+  '<span class="ivTypes" aria-label="Tipos do Pokémon">'+document.getElementById("types").innerHTML+'</span>'+
+  '<div class="statValue red">'+h(showRaw?raw:"—")+'</div></div>'+
+  statTile("PC",c.cp)+statTile("Nv.",c.level);
+ const rankLine=document.getElementById("rankLine");
+ rankLine.textContent=c.rank?"Rank "+String(c.rank):"";
+ rankLine.hidden=!c.rank;
+ const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
+ const locationFlag=presenter?.locationCountryFlag(c.location)||"";
+ const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
-  item("Golpes",c.moves)+item("Local",c.location)+item("Distância",c.distance)+
-  (expiresAt?'<div><span id="timer" aria-label="Tempo até desaparecer"></span></div>':
-    (c.despawn?'<div>'+h(c.despawn)+'</div>':""))+
-  '<div><em>Coordenadas:</em> <span id="coordsValue">'+
-  h(currentCoords||coordsNote||"Toque em Get coords")+'</span></div>';
+  (c.moves?'<span class="infoLabel">Golpes:</span><span class="infoValue">'+movesHtml+'</span>':"")+
+  item("Distância",c.distance)+
+  (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
+  '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
  resizeEvolutionPanel();
  if(changed)panel.scrollTop=0;

@@ -29,10 +29,56 @@
   "931:YELLOW":"931:SQUAWKABILLYYELLOWPLUMAGE",
   "931:SQUAWKABILLYYELLOW":"931:SQUAWKABILLYYELLOWPLUMAGE"
  });
+ // User-supplied LT116 archive: 80 normal/shiny regional sprites verified by Git blob.
+ const EXACT_FORM_FILES=Object.freeze({
+  "10101":"27-alola",
+  "10102":"28-alola",
+  "10103":"37-alola",
+  "10104":"38-alola",
+  "10105":"50-alola",
+  "10106":"51-alola",
+  "10107":"52-alola",
+  "10161":"52-galar",
+  "10108":"53-alola",
+  "10229":"58-hisui",
+  "10230":"59-hisui",
+  "10162":"77-galar",
+  "10163":"78-galar",
+  "10164":"79-galar",
+  "10165":"80-galar",
+  "10166":"83-galar",
+  "10231":"100-hisui",
+  "10232":"101-hisui",
+  "10114":"103-alola",
+  "10115":"105-alola",
+  "10167":"110-galar",
+  "10168":"122-galar",
+  "10169":"144-galar",
+  "10170":"145-galar",
+  "10171":"146-galar",
+  "10172":"199-galar",
+  "10234":"211-hisui",
+  "10235":"215-hisui",
+  "10173":"222-galar",
+  "10174":"263-galar",
+  "10175":"264-galar",
+  "10176":"554-galar",
+  "10177":"555-galar",
+  "10178":"555-galar-zen",
+  "10179":"562-galar",
+  "10180":"618-galar",
+  "10238":"570-hisui",
+  "10239":"571-hisui",
+  "585":"585-spring",
+  "586":"586-spring"
+ });
  const PINNED="https://raw.githubusercontent.com/PokeAPI/sprites/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/sprites/pokemon/";
  const rawRegex=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/(shiny\/)?([0-9]{1,4})\.png$/;
  const mirrorRegex=/^https:\/\/cdn\.jsdelivr\.net\/gh\/PokeAPI\/sprites@master\/sprites\/pokemon\/(shiny\/)?([0-9]{1,4})\.png$/;
  const nameKey=value=>String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+ // Local catalogue matches Dex to species before assigning an unlabelled DOM form.
+ // Special regional names and costumes cannot borrow an unrelated base sprite.
+ const BASE_SPECIES=Object.freeze({"1":"BULBASAUR","2":"IVYSAUR","3":"VENUSAUR","4":"CHARMANDER","5":"CHARMELEON","6":"CHARIZARD","7":"SQUIRTLE","8":"WARTORTLE","9":"BLASTOISE","10":"CATERPIE","11":"METAPOD","12":"BUTTERFREE","13":"WEEDLE","14":"KAKUNA","15":"BEEDRILL","16":"PIDGEY","17":"PIDGEOTTO","18":"PIDGEOT","19":"RATTATA","20":"RATICATE","21":"SPEAROW","22":"FEAROW","23":"EKANS","24":"ARBOK","25":"PIKACHU","26":"RAICHU","27":"SANDSHREW","28":"SANDSLASH","29":"NIDORAN","30":"NIDORINA","31":"NIDOQUEEN","32":"NIDORAN","33":"NIDORINO","34":"NIDOKING","35":"CLEFAIRY","36":"CLEFABLE","37":"VULPIX","38":"NINETALES","39":"JIGGLYPUFF","40":"WIGGLYTUFF","41":"ZUBAT","42":"GOLBAT","43":"ODDISH","44":"GLOOM","45":"VILEPLUME","46":"PARAS","47":"PARASECT","48":"VENONAT","49":"VENOMOTH","50":"DIGLETT","51":"DUGTRIO","52":"MEOWTH","53":"PERSIAN","54":"PSYDUCK","55":"GOLDUCK","56":"MANKEY","57":"PRIMEAPE","58":"GROWLITHE","59":"ARCANINE","60":"POLIWAG","61":"POLIWHIRL","62":"POLIWRATH","63":"ABRA","64":"KADABRA","65":"ALAKAZAM","66":"MACHOP","67":"MACHOKE","68":"MACHAMP","69":"BELLSPROUT","70":"WEEPINBELL","71":"VICTREEBEL","72":"TENTACOOL","73":"TENTACRUEL","74":"GEODUDE","75":"GRAVELER","76":"GOLEM","77":"PONYTA","78":"RAPIDASH","79":"SLOWPOKE","80":"SLOWBRO","81":"MAGNEMITE","82":"MAGNETON","83":"FARFETCHD","84":"DODUO","85":"DODRIO","86":"SEEL","87":"DEWGONG","88":"GRIMER","89":"MUK","90":"SHELLDER","91":"CLOYSTER","92":"GASTLY","93":"HAUNTER","94":"GENGAR","95":"ONIX","96":"DROWZEE","97":"HYPNO","98":"KRABBY","99":"KINGLER","100":"VOLTORB","101":"ELECTRODE","102":"EXEGGCUTE","103":"EXEGGUTOR","104":"CUBONE","105":"MAROWAK","106":"HITMONLEE","107":"HITMONCHAN","108":"LICKITUNG","109":"KOFFING","110":"WEEZING","111":"RHYHORN","112":"RHYDON","113":"CHANSEY","114":"TANGELA","115":"KANGASKHAN","116":"HORSEA","117":"SEADRA","118":"GOLDEEN","119":"SEAKING","120":"STARYU","121":"STARMIE","122":"MRMIME","123":"SCYTHER","124":"JYNX","125":"ELECTABUZZ","126":"MAGMAR","127":"PINSIR","128":"TAUROS","129":"MAGIKARP","130":"GYARADOS","131":"LAPRAS","132":"DITTO","133":"EEVEE","134":"VAPOREON","135":"JOLTEON","136":"FLAREON","137":"PORYGON","138":"OMANYTE","139":"OMASTAR","140":"KABUTO","141":"KABUTOPS","142":"AERODACTYL","143":"SNORLAX","144":"ARTICUNO","145":"ZAPDOS","146":"MOLTRES","147":"DRATINI","148":"DRAGONAIR","149":"DRAGONITE","150":"MEWTWO","151":"MEW","152":"CHIKORITA","153":"BAYLEEF","154":"MEGANIUM","155":"CYNDAQUIL","156":"QUILAVA","157":"TYPHLOSION","158":"TOTODILE","159":"CROCONAW","160":"FERALIGATR","161":"SENTRET","162":"FURRET","163":"HOOTHOOT","164":"NOCTOWL","165":"LEDYBA","166":"LEDIAN","167":"SPINARAK","168":"ARIADOS","169":"CROBAT","170":"CHINCHOU","171":"LANTURN","172":"PICHU","173":"CLEFFA","174":"IGGLYBUFF","175":"TOGEPI","176":"TOGETIC","177":"NATU","178":"XATU","179":"MAREEP","180":"FLAAFFY","181":"AMPHAROS","182":"BELLOSSOM","183":"MARILL","184":"AZUMARILL","185":"SUDOWOODO","186":"POLITOED","187":"HOPPIP","188":"SKIPLOOM","189":"JUMPLUFF","190":"AIPOM","191":"SUNKERN","192":"SUNFLORA","193":"YANMA","194":"WOOPER","195":"QUAGSIRE","196":"ESPEON","197":"UMBREON","198":"MURKROW","199":"SLOWKING","200":"MISDREAVUS","201":"UNOWN","202":"WOBBUFFET","203":"GIRAFARIG","204":"PINECO","205":"FORRETRESS","206":"DUNSPARCE","207":"GLIGAR","208":"STEELIX","209":"SNUBBULL","210":"GRANBULL","211":"QWILFISH","212":"SCIZOR","213":"SHUCKLE","214":"HERACROSS","215":"SNEASEL","216":"TEDDIURSA","217":"URSARING","218":"SLUGMA","219":"MAGCARGO","220":"SWINUB","221":"PILOSWINE","222":"CORSOLA","223":"REMORAID","224":"OCTILLERY","225":"DELIBIRD","226":"MANTINE","227":"SKARMORY","228":"HOUNDOUR","229":"HOUNDOOM","230":"KINGDRA","231":"PHANPY","232":"DONPHAN","233":"PORYGON2","234":"STANTLER","235":"SMEARGLE","236":"TYROGUE","237":"HITMONTOP","238":"SMOOCHUM","239":"ELEKID","240":"MAGBY","241":"MILTANK","242":"BLISSEY","243":"RAIKOU","244":"ENTEI","245":"SUICUNE","246":"LARVITAR","247":"PUPITAR","248":"TYRANITAR","249":"LUGIA","250":"HOOH","251":"CELEBI","252":"TREECKO","253":"GROVYLE","254":"SCEPTILE","255":"TORCHIC","256":"COMBUSKEN","257":"BLAZIKEN","258":"MUDKIP","259":"MARSHTOMP","260":"SWAMPERT","261":"POOCHYENA","262":"MIGHTYENA","263":"ZIGZAGOON","264":"LINOONE","265":"WURMPLE","266":"SILCOON","267":"BEAUTIFLY","268":"CASCOON","269":"DUSTOX","270":"LOTAD","271":"LOMBRE","272":"LUDICOLO","273":"SEEDOT","274":"NUZLEAF","275":"SHIFTRY","276":"TAILLOW","277":"SWELLOW","278":"WINGULL","279":"PELIPPER","280":"RALTS","281":"KIRLIA","282":"GARDEVOIR","283":"SURSKIT","284":"MASQUERAIN","285":"SHROOMISH","286":"BRELOOM","287":"SLAKOTH","288":"VIGOROTH","289":"SLAKING","290":"NINCADA","291":"NINJASK","292":"SHEDINJA","293":"WHISMUR","294":"LOUDRED","295":"EXPLOUD","296":"MAKUHITA","297":"HARIYAMA","298":"AZURILL","299":"NOSEPASS","300":"SKITTY","301":"DELCATTY","302":"SABLEYE","303":"MAWILE","304":"ARON","305":"LAIRON","306":"AGGRON","307":"MEDITITE","308":"MEDICHAM","309":"ELECTRIKE","310":"MANECTRIC","311":"PLUSLE","312":"MINUN","313":"VOLBEAT","314":"ILLUMISE","315":"ROSELIA","316":"GULPIN","317":"SWALOT","318":"CARVANHA","319":"SHARPEDO","320":"WAILMER","321":"WAILORD","322":"NUMEL","323":"CAMERUPT","324":"TORKOAL","325":"SPOINK","326":"GRUMPIG","327":"SPINDA","328":"TRAPINCH","329":"VIBRAVA","330":"FLYGON","331":"CACNEA","332":"CACTURNE","333":"SWABLU","334":"ALTARIA","335":"ZANGOOSE","336":"SEVIPER","337":"LUNATONE","338":"SOLROCK","339":"BARBOACH","340":"WHISCASH","341":"CORPHISH","342":"CRAWDAUNT","343":"BALTOY","344":"CLAYDOL","345":"LILEEP","346":"CRADILY","347":"ANORITH","348":"ARMALDO","349":"FEEBAS","350":"MILOTIC","351":"CASTFORM","352":"KECLEON","353":"SHUPPET","354":"BANETTE","355":"DUSKULL","356":"DUSCLOPS","357":"TROPIUS","358":"CHIMECHO","359":"ABSOL","360":"WYNAUT","361":"SNORUNT","362":"GLALIE","363":"SPHEAL","364":"SEALEO","365":"WALREIN","366":"CLAMPERL","367":"HUNTAIL","368":"GOREBYSS","369":"RELICANTH","370":"LUVDISC","371":"BAGON","372":"SHELGON","373":"SALAMENCE","374":"BELDUM","375":"METANG","376":"METAGROSS","377":"REGIROCK","378":"REGICE","379":"REGISTEEL","380":"LATIAS","381":"LATIOS","382":"KYOGRE","383":"GROUDON","384":"RAYQUAZA","385":"JIRACHI","386":"DEOXYS","387":"TURTWIG","388":"GROTLE","389":"TORTERRA","390":"CHIMCHAR","391":"MONFERNO","392":"INFERNAPE","393":"PIPLUP","394":"PRINPLUP","395":"EMPOLEON","396":"STARLY","397":"STARAVIA","398":"STARAPTOR","399":"BIDOOF","400":"BIBAREL","401":"KRICKETOT","402":"KRICKETUNE","403":"SHINX","404":"LUXIO","405":"LUXRAY","406":"BUDEW","407":"ROSERADE","408":"CRANIDOS","409":"RAMPARDOS","410":"SHIELDON","411":"BASTIODON","412":"BURMY","413":"WORMADAM","414":"MOTHIM","415":"COMBEE","416":"VESPIQUEN","417":"PACHIRISU","418":"BUIZEL","419":"FLOATZEL","420":"CHERUBI","421":"CHERRIM","422":"SHELLOS","423":"GASTRODON","424":"AMBIPOM","425":"DRIFLOON","426":"DRIFBLIM","427":"BUNEARY","428":"LOPUNNY","429":"MISMAGIUS","430":"HONCHKROW","431":"GLAMEOW","432":"PURUGLY","433":"CHINGLING","434":"STUNKY","435":"SKUNTANK","436":"BRONZOR","437":"BRONZONG","438":"BONSLY","439":"MIMEJR","440":"HAPPINY","441":"CHATOT","442":"SPIRITOMB","443":"GIBLE","444":"GABITE","445":"GARCHOMP","446":"MUNCHLAX","447":"RIOLU","448":"LUCARIO","449":"HIPPOPOTAS","450":"HIPPOWDON","451":"SKORUPI","452":"DRAPION","453":"CROAGUNK","454":"TOXICROAK","455":"CARNIVINE","456":"FINNEON","457":"LUMINEON","458":"MANTYKE","459":"SNOVER","460":"ABOMASNOW","461":"WEAVILE","462":"MAGNEZONE","463":"LICKILICKY","464":"RHYPERIOR","465":"TANGROWTH","466":"ELECTIVIRE","467":"MAGMORTAR","468":"TOGEKISS","469":"YANMEGA","470":"LEAFEON","471":"GLACEON","472":"GLISCOR","473":"MAMOSWINE","474":"PORYGONZ","475":"GALLADE","476":"PROBOPASS","477":"DUSKNOIR","478":"FROSLASS","479":"ROTOM","480":"UXIE","481":"MESPRIT","482":"AZELF","483":"DIALGA","484":"PALKIA","485":"HEATRAN","486":"REGIGIGAS","487":"GIRATINA","488":"CRESSELIA","489":"PHIONE","490":"MANAPHY","491":"DARKRAI","492":"SHAYMIN","493":"ARCEUS","494":"VICTINI","495":"SNIVY","496":"SERVINE","497":"SERPERIOR","498":"TEPIG","499":"PIGNITE","500":"EMBOAR","501":"OSHAWOTT","502":"DEWOTT","503":"SAMUROTT","504":"PATRAT","505":"WATCHOG","506":"LILLIPUP","507":"HERDIER","508":"STOUTLAND","509":"PURRLOIN","510":"LIEPARD","511":"PANSAGE","512":"SIMISAGE","513":"PANSEAR","514":"SIMISEAR","515":"PANPOUR","516":"SIMIPOUR","517":"MUNNA","518":"MUSHARNA","519":"PIDOVE","520":"TRANQUILL","521":"UNFEZANT","522":"BLITZLE","523":"ZEBSTRIKA","524":"ROGGENROLA","525":"BOLDORE","526":"GIGALITH","527":"WOOBAT","528":"SWOOBAT","529":"DRILBUR","530":"EXCADRILL","531":"AUDINO","532":"TIMBURR","533":"GURDURR","534":"CONKELDURR","535":"TYMPOLE","536":"PALPITOAD","537":"SEISMITOAD","538":"THROH","539":"SAWK","540":"SEWADDLE","541":"SWADLOON","542":"LEAVANNY","543":"VENIPEDE","544":"WHIRLIPEDE","545":"SCOLIPEDE","546":"COTTONEE","547":"WHIMSICOTT","548":"PETILIL","549":"LILLIGANT","550":"BASCULIN","551":"SANDILE","552":"KROKOROK","553":"KROOKODILE","554":"DARUMAKA","555":"DARMANITAN","556":"MARACTUS","557":"DWEBBLE","558":"CRUSTLE","559":"SCRAGGY","560":"SCRAFTY","561":"SIGILYPH","562":"YAMASK","563":"COFAGRIGUS","564":"TIRTOUGA","565":"CARRACOSTA","566":"ARCHEN","567":"ARCHEOPS","568":"TRUBBISH","569":"GARBODOR","570":"ZORUA","571":"ZOROARK","572":"MINCCINO","573":"CINCCINO","574":"GOTHITA","575":"GOTHORITA","576":"GOTHITELLE","577":"SOLOSIS","578":"DUOSION","579":"REUNICLUS","580":"DUCKLETT","581":"SWANNA","582":"VANILLITE","583":"VANILLISH","584":"VANILLUXE","585":"DEERLING","586":"SAWSBUCK","587":"EMOLGA","588":"KARRABLAST","589":"ESCAVALIER","590":"FOONGUS","591":"AMOONGUSS","592":"FRILLISH","593":"JELLICENT","594":"ALOMOMOLA","595":"JOLTIK","596":"GALVANTULA","597":"FERROSEED","598":"FERROTHORN","599":"KLINK","600":"KLANG","601":"KLINKLANG","602":"TYNAMO","603":"EELEKTRIK","604":"EELEKTROSS","605":"ELGYEM","606":"BEHEEYEM","607":"LITWICK","608":"LAMPENT","609":"CHANDELURE","610":"AXEW","611":"FRAXURE","612":"HAXORUS","613":"CUBCHOO","614":"BEARTIC","615":"CRYOGONAL","616":"SHELMET","617":"ACCELGOR","618":"STUNFISK","619":"MIENFOO","620":"MIENSHAO","621":"DRUDDIGON","622":"GOLETT","623":"GOLURK","624":"PAWNIARD","625":"BISHARP","626":"BOUFFALANT","627":"RUFFLET","628":"BRAVIARY","629":"VULLABY","630":"MANDIBUZZ","631":"HEATMOR","632":"DURANT","633":"DEINO","634":"ZWEILOUS","635":"HYDREIGON","636":"LARVESTA","637":"VOLCARONA","638":"COBALION","639":"TERRAKION","640":"VIRIZION","641":"TORNADUS","642":"THUNDURUS","643":"RESHIRAM","644":"ZEKROM","645":"LANDORUS","646":"KYUREM","647":"KELDEO","648":"MELOETTA","649":"GENESECT","650":"CHESPIN","651":"QUILLADIN","652":"CHESNAUGHT","653":"FENNEKIN","654":"BRAIXEN","655":"DELPHOX","656":"FROAKIE","657":"FROGADIER","658":"GRENINJA","659":"BUNNELBY","660":"DIGGERSBY","661":"FLETCHLING","662":"FLETCHINDER","663":"TALONFLAME","664":"SCATTERBUG","665":"SPEWPA","666":"VIVILLON","667":"LITLEO","668":"PYROAR","669":"FLABB","670":"FLOETTE","671":"FLORGES","672":"SKIDDO","673":"GOGOAT","674":"PANCHAM","675":"PANGORO","676":"FURFROU","677":"ESPURR","678":"MEOWSTIC","679":"HONEDGE","680":"DOUBLADE","681":"AEGISLASH","682":"SPRITZEE","683":"AROMATISSE","684":"SWIRLIX","685":"SLURPUFF","686":"INKAY","687":"MALAMAR","688":"BINACLE","689":"BARBARACLE","690":"SKRELP","691":"DRAGALGE","692":"CLAUNCHER","693":"CLAWITZER","694":"HELIOPTILE","695":"HELIOLISK","696":"TYRUNT","697":"TYRANTRUM","698":"AMAURA","699":"AURORUS","700":"SYLVEON","701":"HAWLUCHA","702":"DEDENNE","703":"CARBINK","704":"GOOMY","705":"SLIGGOO","706":"GOODRA","707":"KLEFKI","708":"PHANTUMP","709":"TREVENANT","710":"PUMPKABOO","711":"GOURGEIST","712":"BERGMITE","713":"AVALUGG","714":"NOIBAT","715":"NOIVERN","716":"XERNEAS","717":"YVELTAL","718":"ZYGARDE","719":"DIANCIE","720":"HOOPA","721":"VOLCANION","722":"ROWLET","723":"DARTRIX","724":"DECIDUEYE","725":"LITTEN","726":"TORRACAT","727":"INCINEROAR","728":"POPPLIO","729":"BRIONNE","730":"PRIMARINA","731":"PIKIPEK","732":"TRUMBEAK","733":"TOUCANNON","734":"YUNGOOS","735":"GUMSHOOS","736":"GRUBBIN","737":"CHARJABUG","738":"VIKAVOLT","739":"CRABRAWLER","740":"CRABOMINABLE","741":"ORICORIO","742":"CUTIEFLY","743":"RIBOMBEE","744":"ROCKRUFF","745":"LYCANROC","746":"WISHIWASHI","747":"MAREANIE","748":"TOXAPEX","749":"MUDBRAY","750":"MUDSDALE","751":"DEWPIDER","752":"ARAQUANID","753":"FOMANTIS","754":"LURANTIS","755":"MORELULL","756":"SHIINOTIC","757":"SALANDIT","758":"SALAZZLE","759":"STUFFUL","760":"BEWEAR","761":"BOUNSWEET","762":"STEENEE","763":"TSAREENA","764":"COMFEY","765":"ORANGURU","766":"PASSIMIAN","767":"WIMPOD","768":"GOLISOPOD","769":"SANDYGAST","770":"PALOSSAND","771":"PYUKUMUKU","772":"TYPENULL","773":"SILVALLY","774":"MINIOR","775":"KOMALA","776":"TURTONATOR","777":"TOGEDEMARU","778":"MIMIKYU","779":"BRUXISH","780":"DRAMPA","781":"DHELMISE","782":"JANGMOO","783":"HAKAMOO","784":"KOMMOO","785":"TAPUKOKO","786":"TAPULELE","787":"TAPUBULU","788":"TAPUFINI","789":"COSMOG","790":"COSMOEM","791":"SOLGALEO","792":"LUNALA","793":"NIHILEGO","794":"BUZZWOLE","795":"PHEROMOSA","796":"XURKITREE","797":"CELESTEELA","798":"KARTANA","799":"GUZZLORD","800":"NECROZMA","801":"MAGEARNA","802":"MARSHADOW","803":"POIPOLE","804":"NAGANADEL","805":"STAKATAKA","806":"BLACEPHALON","807":"ZERAORA","808":"MELTAN","809":"MELMETAL","810":"GROOKEY","811":"THWACKEY","812":"RILLABOOM","813":"SCORBUNNY","814":"RABOOT","815":"CINDERACE","816":"SOBBLE","817":"DRIZZILE","818":"INTELEON","819":"SKWOVET","820":"GREEDENT","821":"ROOKIDEE","822":"CORVISQUIRE","823":"CORVIKNIGHT","824":"BLIPBUG","825":"DOTTLER","826":"ORBEETLE","827":"NICKIT","828":"THIEVUL","829":"GOSSIFLEUR","830":"ELDEGOSS","831":"WOOLOO","832":"DUBWOOL","833":"CHEWTLE","834":"DREDNAW","835":"YAMPER","836":"BOLTUND","837":"ROLYCOLY","838":"CARKOL","839":"COALOSSAL","840":"APPLIN","841":"FLAPPLE","842":"APPLETUN","843":"SILICOBRA","844":"SANDACONDA","845":"CRAMORANT","846":"ARROKUDA","847":"BARRASKEWDA","848":"TOXEL","849":"TOXTRICITY","850":"SIZZLIPEDE","851":"CENTISKORCH","852":"CLOBBOPUS","853":"GRAPPLOCT","854":"SINISTEA","855":"POLTEAGEIST","856":"HATENNA","857":"HATTREM","858":"HATTERENE","859":"IMPIDIMP","860":"MORGREM","861":"GRIMMSNARL","862":"OBSTAGOON","863":"PERRSERKER","864":"CURSOLA","865":"SIRFETCHD","866":"MRRIME","867":"RUNERIGUS","868":"MILCERY","869":"ALCREMIE","870":"FALINKS","871":"PINCURCHIN","872":"SNOM","873":"FROSMOTH","874":"STONJOURNER","875":"EISCUE","876":"INDEEDEE","877":"MORPEKO","878":"CUFANT","879":"COPPERAJAH","880":"DRACOZOLT","881":"ARCTOZOLT","882":"DRACOVISH","883":"ARCTOVISH","884":"DURALUDON","885":"DREEPY","886":"DRAKLOAK","887":"DRAGAPULT","888":"ZACIAN","889":"ZAMAZENTA","890":"ETERNATUS","891":"KUBFU","892":"URSHIFU","893":"ZARUDE","894":"REGIELEKI","895":"REGIDRAGO","896":"GLASTRIER","897":"SPECTRIER","898":"CALYREX","899":"WYRDEER","900":"KLEAVOR","901":"URSALUNA","902":"BASCULEGION","903":"SNEASLER","904":"OVERQWIL","905":"ENAMORUS","906":"SPRIGATITO","907":"FLORAGATO","908":"MEOWSCARADA","909":"FUECOCO","910":"CROCALOR","911":"SKELEDIRGE","912":"QUAXLY","913":"QUAXWELL","914":"QUAQUAVAL","915":"LECHONK","916":"OINKOLOGNE","917":"TAROUNTULA","918":"SPIDOPS","919":"NYMBLE","920":"LOKIX","921":"PAWMI","922":"PAWMO","923":"PAWMOT","924":"TANDEMAUS","925":"MAUSHOLD","926":"FIDOUGH","927":"DACHSBUN","928":"SMOLIV","929":"DOLLIV","930":"ARBOLIVA","931":"SQUAWKABILLY","932":"NACLI","933":"NACLSTACK","934":"GARGANACL","935":"CHARCADET","936":"ARMAROUGE","937":"CERULEDGE","938":"TADBULB","939":"BELLIBOLT","940":"WATTREL","941":"KILOWATTREL","942":"MASCHIFF","943":"MABOSSTIFF","944":"SHROODLE","945":"GRAFAIAI","946":"BRAMBLIN","947":"BRAMBLEGHAST","948":"TOEDSCOOL","949":"TOEDSCRUEL","950":"KLAWF","951":"CAPSAKID","952":"SCOVILLAIN","953":"RELLOR","954":"RABSCA","955":"FLITTLE","956":"ESPATHRA","957":"TINKATINK","958":"TINKATUFF","959":"TINKATON","960":"WIGLETT","961":"WUGTRIO","962":"BOMBIRDIER","963":"FINIZEN","964":"PALAFIN","965":"VAROOM","966":"REVAVROOM","967":"CYCLIZAR","968":"ORTHWORM","969":"GLIMMET","970":"GLIMMORA","971":"GREAVARD","972":"HOUNDSTONE","973":"FLAMIGO","974":"CETODDLE","975":"CETITAN","976":"VELUZA","977":"DONDOZO","978":"TATSUGIRI","979":"ANNIHILAPE","980":"CLODSIRE","981":"FARIGIRAF","982":"DUDUNSPARCE","983":"KINGAMBIT","984":"GREATTUSK","985":"SCREAMTAIL","986":"BRUTEBONNET","987":"FLUTTERMANE","988":"SLITHERWING","989":"SANDYSHOCKS","990":"IRONTREADS","991":"IRONBUNDLE","992":"IRONHANDS","993":"IRONJUGULIS","994":"IRONMOTH","995":"IRONTHORNS","996":"FRIGIBAX","997":"ARCTIBAX","998":"BAXCALIBUR","999":"GIMMIGHOUL","1000":"GHOLDENGO","1001":"WOCHIEN","1002":"CHIENPAO","1003":"TINGLU","1004":"CHIYU","1005":"ROARINGMOON","1006":"IRONVALIANT","1007":"KORAIDON","1008":"MIRAIDON","1009":"WALKINGWAKE","1010":"IRONLEAVES","1011":"DIPPLIN","1012":"POLTCHAGEIST","1013":"SINISTCHA","1014":"OKIDOGI","1015":"MUNKIDORI","1016":"FEZANDIPITI","1017":"OGERPON","1018":"ARCHALUDON","1019":"HYDRAPPLE","1020":"GOUGINGFIRE","1021":"RAGINGBOLT","1022":"IRONBOULDER","1023":"IRONCROWN","1024":"TERAPAGOS","1025":"PECHARUNT"});
  function dexOf(card){
   const m=/^#?([0-9]{1,4})$/.exec(String(card?.number||"").trim());
   return m?Number(m[1]):0;
@@ -41,14 +87,39 @@
   if(!card||typeof card!=="object")return false;
   const dex=dexOf(card),species=nameKey(card.name),form=nameKey(card.form);
   const costume=nameKey(card.costume);
-  if(dex<1||dex>1025||!species)return false;
+  if(dex<1||dex>1025||!species||species!==BASE_SPECIES[dex])return false;
   if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
+  // LT126: independent GO catalog is bundled at build time and may prove
+  // the *default* form ID. An unknown/nondefault numeric form never uses base.
+  const wwm=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
+  const metadata=wwm&&wwm.species&&wwm.species[dex];
+  // These two defaults were independently checked against PokeAPI #710/#711
+  // and the pinned WatWowMap defaultFormId 2641/2645, even without the
+  // optional catalog bundle in older WebViews.
+  const auditedAverageId=dex===710?2641:dex===711?2645:
+    dex===94?1044:dex===41?157:0;
+  const defaultId=metadata&&nameKey(metadata[0])===species?
+    Number(metadata[1]):auditedAverageId;
+  const formId=card.form_id!=null?Number(card.form_id):card.formId!=null?Number(card.formId):0;
+  if(!Number.isInteger(formId)||formId<0)return false;
+  if(formId!==0&&(!defaultId||formId!==defaultId))return false;
+  if(card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return false;
+  // DOM results often omit Form for ordinary Pokémon (Noibat #714).
+  // A BLANK form is safe only when Dex + catalogue species agree exactly.
+  if(!form)return true;
   // Provider/DOM paths can omit image even when an explicit default form
   // is confirmed. Recover its exact 1..1025 packaged Dex sprite locally in
   // BOTH results and detail WebViews. Never guess a regional/costume form.
   if(form==="NORMAL"||form==="DEFAULT"||
      form===species||form===species+"NORMAL"||form===species+"DEFAULT")return true;
+  // Exact default Average varieties: WatWowMap GO forms 2641 / 2645
+  // and PokeAPI base #710/#711 refer to the same named Average variety.
+  // This repairs Pumpkaboo's explicit "Average" from DOM/API without
+  // borrowing any Small/Large/Super artwork.
+  if((dex===710||dex===711)&&
+     (form==="AVERAGE"||form===species+"AVERAGE")&&
+     (formId===0||formId===(dex===710?2641:2645)))return true;
   // Furfrou Natural (#676) is its official base coat. Not the other trims.
   if(dex===676&&species==="FURFROU"&&
      (form==="NATURAL"||form==="FURFROUNATURAL"))return true;
@@ -66,8 +137,282 @@
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
   return true;
  }
+ // Exact source retries for the same verified costume after a missing
+ // local asset. These are NOT substitutes: each filename comes from the pinned
+ // asset-manifest SHA1 contract used in the signed build.
+ const GO_COSTUME_ROOT="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+   "c2a686eb08ace6e890d8fe3d2134c76988db87b5/"+
+   "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ const GO_COSTUME_SOURCES=Object.freeze({
+   "3-copy-2019.png":"pm3.fCOPY_2019.icon.png",
+   "3-copy-2019-female.png":"pm3.fCOPY_2019.g2.icon.png",
+   "6-copy-2019.png":"pm6.fCOPY_2019.icon.png",
+   "9-copy-2019.png":"pm9.fCOPY_2019.icon.png",
+   "4-goggles-2026.png":"pm4.fGOGGLES_2026.icon.png",
+   "4-goggles-2026-shiny.png":"pm4.fGOGGLES_2026.s.icon.png",
+   "5-goggles-2026.png":"pm5.fGOGGLES_2026.icon.png",
+   "5-goggles-2026-shiny.png":"pm5.fGOGGLES_2026.s.icon.png",
+   "6-goggles-2026.png":"pm6.fGOGGLES_2026.icon.png",
+   "6-goggles-2026-shiny.png":"pm6.fGOGGLES_2026.s.icon.png",
+   "25-halloween-2021.png":"pm25.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+   "25-halloween-2021-shiny.png":"pm25.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+   "393-halloween-2021.png":"pm393.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+   "393-halloween-2021-shiny.png":"pm393.cHALLOWEEN_2021_NOEVOLVE.s.icon.png",
+   "426-halloween-2021.png":"pm426.cHALLOWEEN_2021_NOEVOLVE.icon.png",
+   "426-halloween-2021-shiny.png":"pm426.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"
+ });
+ const exactCostumeOrigin=file=>GO_COSTUME_ROOT+
+   (GO_COSTUME_SOURCES[file]||(/^pm[0-9]+\./.test(file)?file:""));
+ // Explicitly verified Pokémon GO costume sprites, pinned inside the APK.
+ // The copy/clone 2019 costumes have NO proven shiny image in this source.
+ const COSTUME_FILES=Object.freeze({
+  "3:COPY2019":"3-copy-2019.png",
+  "4:GOGGLES2026":"4-goggles-2026.png",
+  "5:GOGGLES2026":"5-goggles-2026.png",
+  "6:GOGGLES2026":"6-goggles-2026.png",
+  "6:COPY2019":"6-copy-2019.png",
+  "9:COPY2019":"9-copy-2019.png",
+  "25:HALLOWEEN2021":"25-halloween-2021.png",
+  "393:HALLOWEEN2021":"393-halloween-2021.png",
+  "426:HALLOWEEN2021":"426-halloween-2021.png"
+ });
+
+ // All archived Halloween costumes are exact pinned Pokémon GO assets.
+ // Do not infer a generic base sprite for a mismatching year, gender or size.
+ const EXTENDED_COSTUMES=Object.freeze([
+  [131,"COSTUME2020","",0,0,"pm131.fCOSTUME_2020.icon.png"],
+  [131,"COSTUME2020","",0,1,"pm131.fCOSTUME_2020.s.icon.png"],
+  [172,"HALLOWEEN2017","",0,0,"pm172.cHALLOWEEN_2017.icon.png"],
+  [172,"HALLOWEEN2017","",0,1,"pm172.cHALLOWEEN_2017.s.icon.png"],
+  [216,"HALLOWEEN2025","",0,0,"pm216.cHALLOWEEN_2025.icon.png"],
+  [216,"HALLOWEEN2025","",0,1,"pm216.cHALLOWEEN_2025.s.icon.png"],
+  [217,"HALLOWEEN2025","",1,0,"pm217.cHALLOWEEN_2025.g2.icon.png"],
+  [217,"HALLOWEEN2025","",1,1,"pm217.cHALLOWEEN_2025.g2.s.icon.png"],
+  [217,"HALLOWEEN2025","",0,0,"pm217.cHALLOWEEN_2025.icon.png"],
+  [217,"HALLOWEEN2025","",0,1,"pm217.cHALLOWEEN_2025.s.icon.png"],
+  [25,"HALLOWEEN2017","",1,0,"pm25.cHALLOWEEN_2017.g2.icon.png"],
+  [25,"HALLOWEEN2017","",1,1,"pm25.cHALLOWEEN_2017.g2.s.icon.png"],
+  [25,"HALLOWEEN2017","",0,0,"pm25.cHALLOWEEN_2017.icon.png"],
+  [25,"HALLOWEEN2017","",0,1,"pm25.cHALLOWEEN_2017.s.icon.png"],
+  [25,"HALLOWEEN2021","",1,0,"pm25.cHALLOWEEN_2021_NOEVOLVE.g2.icon.png"],
+  [25,"HALLOWEEN2021","",1,1,"pm25.cHALLOWEEN_2021_NOEVOLVE.g2.s.icon.png"],
+  [25,"HALLOWEEN2021","",0,0,"pm25.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
+  [25,"HALLOWEEN2021","",0,1,"pm25.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
+  [25,"COSTUME2020","",1,0,"pm25.fCOSTUME_2020.g2.icon.png"],
+  [25,"COSTUME2020","",1,1,"pm25.fCOSTUME_2020.g2.s.icon.png"],
+  [25,"COSTUME2020","",0,0,"pm25.fCOSTUME_2020.icon.png"],
+  [25,"COSTUME2020","",0,1,"pm25.fCOSTUME_2020.s.icon.png"],
+  [25,"HALLOWEEN2026","",1,0,"pm25.fHALLOWEEN_2026.g2.icon.png"],
+  [25,"HALLOWEEN2026","",1,1,"pm25.fHALLOWEEN_2026.g2.s.icon.png"],
+  [25,"HALLOWEEN2026","",0,0,"pm25.fHALLOWEEN_2026.icon.png"],
+  [25,"HALLOWEEN2026","",0,1,"pm25.fHALLOWEEN_2026.s.icon.png"],
+  [26,"HALLOWEEN2017","",1,0,"pm26.cHALLOWEEN_2017.g2.icon.png"],
+  [26,"HALLOWEEN2017","",1,1,"pm26.cHALLOWEEN_2017.g2.s.icon.png"],
+  [26,"HALLOWEEN2017","",0,0,"pm26.cHALLOWEEN_2017.icon.png"],
+  [26,"HALLOWEEN2017","",0,1,"pm26.cHALLOWEEN_2017.s.icon.png"],
+  [302,"COSTUME2020","",0,0,"pm302.fCOSTUME_2020.icon.png"],
+  [302,"COSTUME2020","",0,1,"pm302.fCOSTUME_2020.s.icon.png"],
+  [355,"FALL2022","",0,0,"pm355.cFALL_2022_NOEVOLVE.icon.png"],
+  [355,"FALL2022","",0,1,"pm355.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [356,"FALL2022","",0,0,"pm356.cFALL_2022_NOEVOLVE.icon.png"],
+  [356,"FALL2022","",0,1,"pm356.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [359,"FALL2022","",0,0,"pm359.cFALL_2022_NOEVOLVE.icon.png"],
+  [359,"FALL2022","",0,1,"pm359.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [37,"FALL2022","",0,0,"pm37.cFALL_2022.icon.png"],
+  [37,"FALL2022","",0,1,"pm37.cFALL_2022.s.icon.png"],
+  [38,"FALL2022","",0,0,"pm38.cFALL_2022.icon.png"],
+  [38,"FALL2022","",0,1,"pm38.cFALL_2022.s.icon.png"],
+  [393,"HALLOWEEN2021","",0,0,"pm393.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
+  [393,"HALLOWEEN2021","",0,1,"pm393.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
+  [426,"HALLOWEEN2021","",0,0,"pm426.cHALLOWEEN_2021_NOEVOLVE.icon.png"],
+  [426,"HALLOWEEN2021","",0,1,"pm426.cHALLOWEEN_2021_NOEVOLVE.s.icon.png"],
+  [477,"FALL2022","",0,0,"pm477.cFALL_2022_NOEVOLVE.icon.png"],
+  [477,"FALL2022","",0,1,"pm477.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [50,"FALL2022","",0,0,"pm50.cFALL_2022.icon.png"],
+  [50,"FALL2022","",0,1,"pm50.cFALL_2022.s.icon.png"],
+  [51,"FALL2022","",0,0,"pm51.cFALL_2022.icon.png"],
+  [51,"FALL2022","",0,1,"pm51.cFALL_2022.s.icon.png"],
+  [710,"FALL2022","AVERAGE",0,0,"pm710.fAVERAGE.cFALL_2022.icon.png"],
+  [710,"FALL2022","AVERAGE",0,1,"pm710.fAVERAGE.cFALL_2022.s.icon.png"],
+  [710,"FALL2022","LARGE",0,0,"pm710.fLARGE.cFALL_2022.icon.png"],
+  [710,"FALL2022","LARGE",0,1,"pm710.fLARGE.cFALL_2022.s.icon.png"],
+  [710,"FALL2022","SMALL",0,0,"pm710.fSMALL.cFALL_2022.icon.png"],
+  [710,"FALL2022","SMALL",0,1,"pm710.fSMALL.cFALL_2022.s.icon.png"],
+  [710,"FALL2022","SUPER",0,0,"pm710.fSUPER.cFALL_2022.icon.png"],
+  [710,"FALL2022","SUPER",0,1,"pm710.fSUPER.cFALL_2022.s.icon.png"],
+  [711,"FALL2022","AVERAGE",0,0,"pm711.fAVERAGE.cFALL_2022.icon.png"],
+  [711,"FALL2022","AVERAGE",0,1,"pm711.fAVERAGE.cFALL_2022.s.icon.png"],
+  [711,"FALL2022","LARGE",0,0,"pm711.fLARGE.cFALL_2022.icon.png"],
+  [711,"FALL2022","LARGE",0,1,"pm711.fLARGE.cFALL_2022.s.icon.png"],
+  [711,"FALL2022","SMALL",0,0,"pm711.fSMALL.cFALL_2022.icon.png"],
+  [711,"FALL2022","SMALL",0,1,"pm711.fSMALL.cFALL_2022.s.icon.png"],
+  [711,"FALL2022","SUPER",0,0,"pm711.fSUPER.cFALL_2022.icon.png"],
+  [711,"FALL2022","SUPER",0,1,"pm711.fSUPER.cFALL_2022.s.icon.png"],
+  [714,"HALLOWEEN2025","",0,0,"pm714.cHALLOWEEN_2025.icon.png"],
+  [714,"HALLOWEEN2025","",0,1,"pm714.cHALLOWEEN_2025.s.icon.png"],
+  [715,"HALLOWEEN2025","",0,0,"pm715.cHALLOWEEN_2025.icon.png"],
+  [715,"HALLOWEEN2025","",0,1,"pm715.cHALLOWEEN_2025.s.icon.png"],
+  [854,"AHALLOWEEN202601","",0,0,"pm854.fA_HALLOWEEN_2026_01.icon.png"],
+  [854,"AHALLOWEEN202601","",0,1,"pm854.fA_HALLOWEEN_2026_01.s.icon.png"],
+  [854,"PHALLOWEEN202601","",0,0,"pm854.fP_HALLOWEEN_2026_01.icon.png"],
+  [854,"PHALLOWEEN202601","",0,1,"pm854.fP_HALLOWEEN_2026_01.s.icon.png"],
+  [855,"AHALLOWEEN202601","",0,0,"pm855.fA_HALLOWEEN_2026_01.icon.png"],
+  [855,"AHALLOWEEN202601","",0,1,"pm855.fA_HALLOWEEN_2026_01.s.icon.png"],
+  [855,"PHALLOWEEN202601","",0,0,"pm855.fP_HALLOWEEN_2026_01.icon.png"],
+  [855,"PHALLOWEEN202601","",0,1,"pm855.fP_HALLOWEEN_2026_01.s.icon.png"],
+  [901,"HALLOWEEN2025","",0,0,"pm901.cHALLOWEEN_2025.icon.png"],
+  [901,"HALLOWEEN2025","",0,1,"pm901.cHALLOWEEN_2025.s.icon.png"],
+  [94,"FALL2022","",0,0,"pm94.cFALL_2022_NOEVOLVE.icon.png"],
+  [94,"FALL2022","",0,1,"pm94.cFALL_2022_NOEVOLVE.s.icon.png"],
+  [94,"COSTUME2020","",0,0,"pm94.fCOSTUME_2020.icon.png"],
+  [94,"COSTUME2020","",0,1,"pm94.fCOSTUME_2020.s.icon.png"],
+ ]);
+ function archivedCostume(card){
+  if(!card||typeof card!=="object")return null;
+  const dex=dexOf(card);
+  const known=EXTENDED_COSTUMES.filter(x=>x[0]===dex);
+  if(!known.length)return null;
+  const fm=nameKey(card.form),co=nameKey(card.costume),
+        n=nameKey(card.name),gender=nameKey(card.gender||card.sex);
+  const labels=[fm,co,n];
+  const matches=known.filter(x=>labels.some(s=>s.includes(x[1]))&&x[4]===(card.shiny===true?1:0));
+  if(!matches.length)return null;
+  const formCandidates=matches.filter(x=>!x[2]||fm.includes(x[2])||n.includes(x[2]));
+  // A size/form-specific costume cannot be chosen without exact evidence.
+  if(!formCandidates.length)return null;
+  const possible=formCandidates.filter(x=>x[3]===((gender==="FEMALE"||gender==="F"||gender==="2"||
+    String(card.gender)==="♀"||String(card.sex)==="♀")?1:0));
+  const selected=possible.length?possible[0]:
+    formCandidates.find(x=>x[3]===0);
+  if(!selected)return null;
+  return {src:LOCAL+"costumes/"+selected[5],original:exactCostumeOrigin(selected[5]),offline:true,
+    officialForm:true,officialCostume:true,exactCostume:true};
+ }
+ function exactCostume(card){
+  if(!card||typeof card!=="object")return null;
+  // LT144: real PNGs fetched and SHA256-pinned in the APK. The names are
+  // confirmed by the official GO form catalog, not inferred from Dex alone.
+  const dexNum=dexOf(card),form=nameKey(card.form),costumeEvidence=nameKey(card.costume);
+  const formId=Number(card.form_id??card.formId??0);
+  const evidence=[form,costumeEvidence,nameKey(card.variant),nameKey(card.name)].join(" ");
+  const exactEvent=file=>({src:LOCAL+"costumes/"+file,
+    original:"https://cdn.leekduck.com/assets/img/pokemon_icons_crop/"+file,
+    offline:true,officialCostume:true,exactCostume:true});
+  if(dexNum===41&&(formId===3362||
+     /HALLOWEEN202601|HALLOWEEN2026|TOPHAT|CARTOLA/.test(evidence))){
+    return exactEvent("pm41.fHALLOWEEN_2026_01."+
+       (card.shiny===true?"s.":"")+"icon.png");
+  }
+  if(dexNum===94&&(Number(card.costume_id)===71||
+     /(?:FALL2023|HALLOWEEN2023|TRICKSTREATS)/.test(evidence))){
+    // This Halloween 2023 costume is DIFFERENT from 2020 and 2022.
+    // Fall 2023 site label maps to official FALL_2023_NOEVOLVE.
+    return exactEvent("pm94.cFALL_2023_NOEVOLVE."+
+      (card.shiny===true?"s.":"")+"icon.png");
+  }
+  const archived=archivedCostume(card);
+  const genderCode=nameKey(card.gender||card.sex);
+  if(archived&&(genderCode==="FEMALE"||genderCode==="F"||
+    genderCode==="2"||String(card.gender)==="♀")&&
+    archived.src.includes(".g2."))return archived;
+  const dex=dexOf(card),spec=nameKey(card.name)||({3:"VENUSAUR",4:"CHARMANDER",5:"CHARMELEON",6:"CHARIZARD",9:"BLASTOISE"}[dex]||"");
+  // Form may be a composite provider label, or costume can be distinct.
+  const f=nameKey(card.form),costume=nameKey(card.costume);
+  // Provider string "Halloween 2021 Costume" maps ONLY to the pinned 2021 art.
+  // Unknown/other-year costumes still must never fall back to base species.
+  function alias(key){
+   if(["HALLOWEEN2021COSTUME","HALLOWEEN2021",
+       "HALLOWEENMISCHIEF2021","HALLOWEEN2021"].includes(key))
+     return "HALLOWEEN2021";
+   return key;
+  }
+  for(const tag of ["COPY2019","GOGGLES2026","HALLOWEEN2021"]){
+   const stored=COSTUME_FILES[dex+":"+tag];
+   if(!stored)continue;
+   const validNames=[tag,spec+tag];
+   if(!validNames.includes(alias(f))&&!validNames.includes(alias(costume)))continue;
+   // A conflicting named costume must not be silently ignored.
+   if(costume&&!["NONE","NORMAL","DEFAULT"].includes(costume)&&
+      !validNames.includes(alias(costume)))continue;
+   const shiny=card.shiny===true;
+   if(shiny&&tag==="COPY2019")return {src:"",original:"",offline:false,missingExact:true};
+   let file=stored;
+   const gender=nameKey(card.gender||card.sex);
+   if(dex===3&&tag==="COPY2019"&&(gender==="FEMALE"||gender==="F"||
+      gender==="2"||String(card.gender)==="♀"))file="3-copy-2019-female.png";
+   if(shiny)file=file.replace(".png","-shiny.png");
+   return {src:LOCAL+"costumes/"+file,original:exactCostumeOrigin(file),offline:true,officialForm:true,officialCostume:true};
+  }
+  return archived||null;
+ }
+ const trustedBaseData=Object.create(null);
+ function verifiedBundledData(card){
+  if(!verifiedBase(card))return "";
+  const dex=dexOf(card),shiny=card.shiny===true,key=dex+":"+(shiny?"s":"n");
+  if(Object.prototype.hasOwnProperty.call(trustedBaseData,key))return trustedBaseData[key];
+  let result="";
+  try{
+   if(typeof window!=="undefined"&&window.Native&&
+      typeof window.Native.bundledBaseSprite==="function"){
+    result=String(window.Native.bundledBaseSprite(dex,shiny)||"");
+   }
+  }catch(_){}
+  // Only the private Java bridge can return an exact PNG; do not accept web URLs.
+  if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{36,175000}$/.test(result))result="";
+  if(result)trustedBaseData[key]=result;
+  return result;
+ }
+ const trustedExactData=Object.create(null);
+ function exactBundledData(art){
+  const src=String(art?.src||"");
+  const prefix=LOCAL,rel=src.startsWith(prefix)?src.slice(prefix.length):"";
+  if(!/^(?:costumes|forms)\/[A-Za-z0-9._-]{4,140}\.png$/.test(rel)||
+     rel.includes(".."))return "";
+  if(Object.prototype.hasOwnProperty.call(trustedExactData,rel))return trustedExactData[rel];
+  let result="";
+  try{
+   if(typeof window!=="undefined"&&window.Native&&
+      typeof window.Native.bundledExactSprite==="function")
+    result=String(window.Native.bundledExactSprite(rel)||"");
+  }catch(_){}
+  if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{36,175000}$/.test(result))result="";
+  if(result)trustedExactData[rel]=result;
+  return result;
+ }
+ function exactSeasonalForm(card){
+  const dex=dexOf(card);
+  if(dex!==585&&dex!==586)return null;
+  const species=dex===585?"DEERLING":"SAWSBUCK";
+  if(nameKey(card?.name)!==species)return null;
+  const form=nameKey(card?.form);
+  if(form!=="AUTUMN"&&form!==species+"AUTUMN"&&form!=="FAUTUMN"&&
+     form!=="AUTUMNFORM")return null;
+  const costume=nameKey(card?.costume);
+  if((costume&&!["NORMAL","DEFAULT","NONE"].includes(costume))||
+     (card?.costume_id!=null&&Number(card.costume_id)!==0))return null;
+  const shiny=card?.shiny===true,filename=dex+"-autumn"+(shiny?"-shiny":"")+".png";
+  return {src:LOCAL+"forms/"+filename,original:"",offline:true,
+   officialForm:true,exactForm:true};
+ }
  function resolve(card){
   const image=String(card?.image||"");
+  const costumeArt=exactCostume(card);
+  const seasonalArt=exactSeasonalForm(card);
+  // The validated official search card may already show the exact costume,
+  // regional form or normal sprite. Prefer it in DOM mode, preserving a
+  // verified local asset of the SAME variant as the only fallback.
+  const sourceExact=card?.imageFromSite===true&&/^https:\/\//i.test(image)&&
+    !/\s/.test(image)&&image.length<=1600;
+  if(sourceExact){
+   const dex=dexOf(card);
+   const backup=costumeArt?.src&&costumeArt.src!==image?costumeArt.src:
+     seasonalArt?.src&&seasonalArt.src!==image?seasonalArt.src:
+     verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
+   return {src:image,original:backup,offline:!!backup,
+     providerExact:true,officialCostume:!!costumeArt?.officialCostume};
+  }
+  if(costumeArt)return costumeArt;
+  if(seasonalArt)return seasonalArt;
   // Prefer explicit source-provided artwork if one exists, otherwise use the
   // exact, offline bundled regional variant (normal OR shiny).
   if(!image&&verifiedGalarianZigzagoon(card)){
@@ -87,26 +432,46 @@
       const shiny=card.shiny===true,exists=shiny?entry[2]===1:entry[1]===1;
       if(exists){
         const source=PINNED+(shiny?"shiny/":"")+entry[0]+".png";
-        return {src:source,original:source,offline:false,officialForm:true};
+        const bundled=EXACT_FORM_FILES[entry[0]];
+        if(bundled){
+          return {src:LOCAL+"forms/"+bundled+(shiny?"-shiny":"")+".png",
+            original:source,offline:true,officialForm:true,exactForm:true};
+        }
+        return {src:LOCAL+"forms/variety-"+entry[0]+(shiny?"-shiny":"")+".png",
+          original:source,offline:true,officialForm:true,exactForm:true};
       }
     }
   }
+  // Deerling/Sawsbuck spring are the genuine default spring variety sprites.
+  if(safeCostume&&(dex===585||dex===586)&&form==="SPRING"){
+    const shiny=card.shiny===true;
+    const source=PINNED+(shiny?"shiny/":"")+dex+".png";
+    return {src:LOCAL+"forms/"+dex+"-spring"+(shiny?"-shiny":"")+".png",
+      original:source,offline:true,officialForm:true,exactForm:true};
+  }
   const candidate=rawRegex.exec(image)||mirrorRegex.exec(image);
+  // The local base PNG is preferable to a missing or lazy remote DOM image,
+  // but ONLY for Dex+name+form+costume verified as an ordinary species.
+  if(verifiedBase(card)){
+   const path=(card.shiny===true?"shiny/":"base/")+dex+".png";
+   const origin=RAW+(card.shiny===true?"shiny/":"")+dex+".png";
+   return {src:LOCAL+path,original:origin,offline:true};
+  }
   if(candidate&&safeCostume&&(verifiedBase(card)||!card?.form)){
    const dex=Number(candidate[2]);
+   // Respect explicit Dex and shiny evidence; never cross species/variant.
+   if(dexOf(card)>0&&dexOf(card)!==dex)return {src:image,original:image,offline:false};
+   if(card?.shiny!==undefined&&card.shiny!==(candidate[1]==="shiny/"))
+    return {src:image,original:image,offline:false};
    // The PokeAPI URL itself already proves exact base-species sprite.
    if(dex>=1&&dex<=1025){
     const path=(candidate[1]?"shiny/":"base/")+dex+".png";
     return {src:LOCAL+path,original:image,offline:true};
    }
   }
-  if(!image&&verifiedBase(card)){
-   const path=(card.shiny===true?"shiny/":"base/")+dexOf(card)+".png";
-   const origin=RAW+(card.shiny===true?"shiny/":"")+dexOf(card)+".png";
-   return {src:LOCAL+path,original:origin,offline:true};
-  }
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,verifiedBase,verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES});
+ return Object.freeze({resolve,verifiedBase,verifiedBundledData,exactBundledData,
+  verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm});
 });

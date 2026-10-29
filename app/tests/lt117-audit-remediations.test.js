@@ -26,17 +26,20 @@ test("ten valid favorites are queued in bounded batches",()=>{
  assert.match(service,/FAVORITE_ALERT_BATCH_INTERVAL_MS=12_000L/);
  assert.match(service,/queuedFavoriteAlerts\.entrySet\(\)\.removeIf/);
  assert.match(service,/if\(!queuedFavoriteAlerts\.isEmpty\(\)\)/);
- assert.match(service,/recentFavoriteAlertExpiries\.put\(success\.key,success\.expiry\)/);
+ assert.match(service,/recentFavoriteAlertExpiries\.put\(pending\.key,pending\.expiry\)/);
  assert.doesNotMatch(service,/if\(count\+\+>=5\)break/);
 });
-test("Firebase statistics never download other users' IDs",()=>{
+test("Firebase private rules protect IDs, with temporary LT125 legacy counting compatibility",()=>{
  for(const name of ["installations","online"]){
    assert.equal(rules.stats[name][".read"],false);
    assert.match(rules.stats[name]["$uid"][".read"],/auth\.uid === \$uid/);
  }
  assert.equal(rules.stats.public[".read"],"auth != null");
  assert.equal(rules.stats.public[".write"],false);
- assert.doesNotMatch(stats,/getChildrenCount\(\)/);
+ assert.match(stats,/root\.child\("installations"\)\.addValueEventListener\(legacyCounter\(false\)\)/);
+ assert.match(stats,/root\.child\("online"\)\.addValueEventListener\(legacyCounter\(true\)\)/);
+ assert.match(stats,/if\(!publicInstallAvailable\)installCount=total/);
+ assert.match(stats,/if\(!publicOnlineAvailable\)onlineCount=total/);
  assert.match(stats,/child\("public"\)\.child\("installCount"\)/);
  assert.match(stats,/child\("public"\)\.child\("onlineCount"\)/);
 });

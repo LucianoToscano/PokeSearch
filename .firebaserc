@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "pokesearch-lt"
+  },
+  "targets": {
+    "pokesearch-lt": {
+      "database": {
+        "live": [
+          "pokesearch-lt-default-rtdb"
+        ]
+      }
+    }
+  }
+}

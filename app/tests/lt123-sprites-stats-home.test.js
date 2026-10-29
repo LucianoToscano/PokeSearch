@@ -23,8 +23,8 @@ test("regional sprite is precise and pinned",()=>{
  assert.equal(zig.src,"file:///android_asset/pokemon-sprites/forms/zigzagoon-galar-shiny.png");
  for(const [id,num,name,form] of [[10001,386,"Deoxys","Attack"],[10008,479,"Rotom","Heat"],[10017,555,"Darmanitan","Zen"]]){
   const x=resolver.resolve({name,number:"#"+num,form,shiny:false,image:""});
-  assert.ok(x.src.endsWith("/"+id+".png"),name+form);
-  assert.match(x.src,/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/);
+  assert.equal(x.src,"file:///android_asset/pokemon-sprites/forms/variety-"+id+".png",name+form);
+  assert.match(x.original,/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/);
  }
 });
 test("unverified costumes are never silently mapped to base artwork",()=>{

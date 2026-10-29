@@ -1,0 +1,54 @@
+name: LT145 QA9 — signed APK direct test download
+on:
+  push:
+    branches: [feature/lt145-coords-quota-account-20261028]
+    paths: ['.github/workflows/lt145-qa9-direct-apk.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish-private-track-qa-prerelease:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '40787565130'
+      SOURCE_COMMIT: 'fc0d21659d318d18c12838cfe7871708dc6224bb'
+      ARTIFACT: 'PokeSearch-v0.01.45-LT145-CoordsQuota-QA-Assinado'
+      PACKAGE_APK: 'PokeSearch-v0.01.45-LT-QA.apk'
+      QA_APK: 'PokeSearch-LT145-QA9-COMPACTO.apk'
+      QA_TAG: 'v0.01.45-54350-compact-qa9'
+      RELEASE_CERT: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+    steps:
+      - name: Wait for successful signed QA9 artifact from exact source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run watch "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --exit-status
+          mkdir -p qa
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name "$ARTIFACT" --dir qa
+          test "$(cat qa/SOURCE_COMMIT.txt)" = "$SOURCE_COMMIT"
+          test -s "qa/$PACKAGE_APK"
+          (cd qa && sha256sum --check SHA256SUMS.txt)
+          test "$(stat -c%s "qa/$PACKAGE_APK")" -gt 30000000
+          unzip -t "qa/$PACKAGE_APK" >/dev/null
+          grep -Fq "Verified using v2 scheme" qa/SIGNING-REPORT.txt
+          grep -Fq "$RELEASE_CERT" qa/SIGNING-REPORT.txt
+          grep -Fq "versionCode='54350'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.45'" qa/PACKAGE-VERSION.txt
+          sha256sum "qa/$PACKAGE_APK"
+          mv "qa/$PACKAGE_APK" "qa/$QA_APK"
+          (cd qa && sha256sum "$QA_APK" > QA9-SHA256SUMS.txt)
+      - name: Publish standalone QA9 prerelease, never touch public manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$QA_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::QA9 prerelease already exists; refusing overwrite"
+            exit 1
+          fi
+          APK_SHA256="$(sha256sum "qa/$QA_APK" | cut -d ' ' -f1)"
+          gh release create "$QA_TAG"             "qa/$QA_APK" "qa/QA9-SHA256SUMS.txt" "qa/SIGNING-REPORT.txt"             --repo "$GITHUB_REPOSITORY" --target "$SOURCE_COMMIT"             --title "PokeSearch LT145 QA9 compacto - teste apenas"             --notes "Apenas homologação: QA7 compacta preservada, Despawn antes do número da Pokédex, botão Pegar Coordenadas vermelho durante consulta e verde quando disponível, e * apenas em golpes comprovadamente legados. Não atualiza Home, Firebase ou o manifesto de distribuição da LT144. Commit do APK: $SOURCE_COMMIT. APK SHA-256: $APK_SHA256."             --prerelease --latest=false
+          gh release view "$QA_TAG" --repo "$GITHUB_REPOSITORY" --json url,assets,isPrerelease             --jq '{url: .url, prerelease: .isPrerelease, assets: [.assets[].name]}'

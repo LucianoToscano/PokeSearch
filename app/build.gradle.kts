@@ -6,10 +6,27 @@ plugins { id("com.android.application") }
 dependencies {
     implementation("androidx.work:work-runtime:2.10.2")
     implementation("androidx.core:core:1.15.0")
+    // Offline QR generation from Mercado Pago Pix payload; no third-party service.
+    implementation("com.google.zxing:core:3.5.3")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("androidx.credentials:credentials:1.6.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.6.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     implementation("com.google.firebase:firebase-database")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 }
+
+// OAuth web client ID is public but must originate from the Firebase project configuration.
+// Empty disables admin sign-in safely; never derive identity from PoGoCoordinates WebView text.
+// Firebase OAuth PUBLIC Web client, verified from the Android app's refreshed
+// google-services.json (project pokesearch-lt, Android cert SHA-1
+// dd7bf665e1d47a257fc557b51cb5a57dfd13cb96). Not a service-account key.
+// CI can override only for a deliberately reconfigured Firebase project.
+val chatGoogleClientId = System.getenv("POKE_CHAT_GOOGLE_WEB_CLIENT_ID")?.trim()?.takeIf { it.isNotEmpty() }
+    ?: "1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com"
+if (chatGoogleClientId.isNotEmpty() && !Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com").matches(chatGoogleClientId))
+    throw org.gradle.api.GradleException("Invalid Firebase chat Google web OAuth client ID")
 
 // Stable internal-test signing is optional for local development, but mandatory
 // for the CI distribution workflow. Never store the keystore or passwords in Git.
@@ -54,6 +71,14 @@ val testKeyPassword = System.getenv("POKE_TEST_KEY_PASSWORD")
 val testSigningFields = listOf(testKeyFile, testStorePassword, testKeyAlias, testKeyPassword)
 val testSigningComplete = testSigningFields.all { !it.isNullOrBlank() }
 val testSigningRequired = System.getenv("POKE_TEST_SIGNING_REQUIRED") == "true"
+val controlledDistribution = System.getenv("POKE_CONTROLLED_DISTRIBUTION") == "true"
+val premiumGoogleWebClientId = System.getenv("POKE_GOOGLE_WEB_CLIENT_ID")?.trim()
+    ?.takeIf { it.isNotEmpty() } ?: chatGoogleClientId
+if (!Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com").matches(premiumGoogleWebClientId))
+    throw org.gradle.api.GradleException("Invalid Premium Google OAuth Web Client ID")
+if (controlledDistribution && (System.getenv("POKE_RELEASE_KEYSTORE").isNullOrBlank() ||
+        releaseCertificateSha256 != officialTestCertificateSha256))
+    throw org.gradle.api.GradleException("Controlled QA requires the verified permanent PokeSearch signer")
 // A local, read-only scrapbook demo may be visible in the explicitly signed QA
 // candidate only. Ordinary Release builds default to false, regardless of prefs.
 // Moderated online QA is a distinct opt-in; no ordinary release receives these writes.
@@ -88,6 +113,10 @@ android {
         buildConfigField("String", "EXPECTED_ASSET_SHA256", "\"$assetChecksums\"")
         buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA", "false")
         buildConfigField("boolean", "SCRAPBOOK_ONLINE_QA", "false")
+        buildConfigField("String", "CHAT_GOOGLE_WEB_CLIENT_ID", "\"$chatGoogleClientId\"")
+        buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
+        buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-luc.netlify.app/api/premium\"")
+        buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
@@ -126,6 +155,8 @@ android {
             }
         }
         getByName("release") {
+            // Off by default, even for official releases; only isolated signed QA can opt in.
+            buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "$controlledDistribution")
             // True ONLY in this isolated signed QA workflow. Never on public Releases.
             buildConfigField("boolean", "SCRAPBOOK_STAGE1_QA",
                 if (scrapbookStage1Qa) "true" else "false")

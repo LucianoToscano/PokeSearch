@@ -47,12 +47,12 @@ test("diagnosis disambiguates permission, OFF, silent, system channel and muted 
 test("favorites send real confirmed spawn alerts without bypassing verification",()=>{
  assert.match(service,/WatchAlerts\.matches\(c\.optString\("name",""\),wanted\)/);
  assert.match(service,/verifiedTargetCriteria\(c\)/);
- assert.match(service,/WatchAlerts\.match\(this,firstWatched,watchDetails\)/);
+ assert.match(service,/WatchAlerts\.match\(this,pending\.name,pending\.title,pending\.details/);
  assert.match(service,/expiresAtMs/);
 });
 test("secondary foreground ID 74 no longer collides with general notification ID",()=>{
  assert.match(service,/startForeground\(isSecondaryOverlay\(\)\?74:73,note\)/);
- assert.ok(service.includes('isSecondaryOverlay()?12075:12074'));
+ assert.match(service,/NEXT_GENERAL_ALERT_ID\.updateAndGet/);
  assert.match(service,/sent\?"Teste de Favoritos enviado · "\+diagnostic:diagnostic/);
 });
 console.log("LT106 Favorites audio "+checks+"/"+checks+" PASS");

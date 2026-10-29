@@ -78,10 +78,11 @@ public class MainActivity extends Activity {
     private String alertToneSpecies="";
     private android.media.MediaPlayer bundledTonePreview;
     private android.media.Ringtone systemTonePreview;
-    // Shared Google Drive file ID stays stable across explicitly approved APK updates.
-    // No GitHub/release/token link is exposed by the Android share chooser.
-    private static final String SHARE_APK_DRIVE_URL=
-        "https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view";
+    // Keep the proven public Google Drive file ID stable: update its contents on every release.
+    // The Download endpoint avoids WhatsApp's cached /file/d/.../view old-APK preview.
+    // Version in the URL is a cache-busting public number, NEVER a credential.
+    private static final String SHARE_APK_FILE_ID="1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P";
+    // Only an offline fallback: Home's verified manifest owns newer versions.
     private FrameLayout homeRoot;
     private boolean homeLightMode=false;
     // LT72: Home-only update card; does not own or recreate the overlay/WebView.
@@ -106,7 +107,7 @@ public class MainActivity extends Activity {
     private View trainerCopyButton;
     private View guestHeading;
     private ImageView teamBadge, accountAvatar, accountAvatarFrame;
-    private Button trainerAction;
+    private Button trainerAction,trainerSelectButton;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
@@ -182,6 +183,36 @@ public class MainActivity extends Activity {
     private String pendingExportText="";
     private String preferredLoginProvider="";
     private String observedLoginProvider="";
+    private final android.os.Handler availabilityHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private android.app.AlertDialog availabilityDialog;
+    private final Runnable availabilityTick=new Runnable(){
+        @Override public void run(){
+            if(activityClosing)return;
+            AppAvailability.refresh(MainActivity.this,MainActivity.this::applyAppAvailability);
+            availabilityHandler.postDelayed(this,90000L);
+        }
+    };
+    private void applyAppAvailability(AppAvailability.State state){
+        if(activityClosing||isFinishing())return;
+        if(!state.allowed){
+            stopService(new Intent(this,OverlayService.class));
+            stopService(new Intent(this,SecondaryOverlayService.class));
+            refreshHomeOverlay();
+            if(availabilityDialog==null||!availabilityDialog.isShowing()){
+                availabilityDialog=new AlertDialog.Builder(this)
+                    .setTitle(state.maintenance?"PokeSearch em manutenção":"Versão desativada")
+                    .setMessage(state.reason())
+                    .setCancelable(false)
+                    .setPositiveButton("Fechar",(dialog,which)->finish())
+                    .create();
+                availabilityDialog.show();
+            }
+        }else if(availabilityDialog!=null&&availabilityDialog.isShowing()){
+            availabilityDialog.dismiss();
+            availabilityDialog=null;
+        }
+    }
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
         if (!IntegrityGuard.verify(this)) {
@@ -317,7 +348,8 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
         dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
         overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
-        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 2");
+        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,
+            PremiumAccess.controlled()?"Pokébola 2 Premium - requer licença":"Ativar Pokébola 2");
         ImageView[] paired={overlayControl,secondaryOverlayControl};
         for(int i=0;i<paired.length;i++){
             final int which=i;
@@ -345,6 +377,20 @@ public class MainActivity extends Activity {
         dualOverlayRow.setVisibility(View.VISIBLE);
         // Insert after header, preserving top toolbar space.
         screen.addView(dualOverlayRow,dualLp);
+        if(PremiumAccess.controlled()){
+            TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
+                homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
+            accountPremium.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+            accountPremium.setContentDescription(
+                "Gerenciar ou sair da conta Google Premium");
+            accountPremium.setMinHeight(d(30));
+            accountPremium.setPadding(d(6),0,d(8),d(3));
+            accountPremium.setOnClickListener(v->showPremiumAccountOptions());
+            LinearLayout.LayoutParams accountLp=new LinearLayout.LayoutParams(-1,d(30));
+            accountLp.leftMargin=d(4);accountLp.rightMargin=d(4);
+            accountLp.bottomMargin=d(4);
+            screen.addView(accountPremium,accountLp);
+        }
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
@@ -359,6 +405,15 @@ public class MainActivity extends Activity {
         brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
         brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brandTitle.setContentDescription("PokeSearch");
+        // Protected builds only; server validates the admin claim, not the display name.
+        if(PremiumAccess.controlled())brandTitle.setOnLongClickListener(v->{
+            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
+            else PremiumGoogleLogin.signIn(this,(ok,message)->{
+                if(ok)PremiumAdminDialog.show(this);
+                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+            });
+            return true;
+        });
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
@@ -505,7 +560,7 @@ public class MainActivity extends Activity {
         accountProvider.setEllipsize(android.text.TextUtils.TruncateAt.END);
         identity.addView(accountDisplay);
         identity.addView(accountProvider);
-        Button logout=homeAuthButton("⇥  Logout",Color.rgb(28,37,54),Color.WHITE);
+        Button logout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
         logout.setBackground(homeSurface(Color.rgb(27,36,52),13,Color.rgb(51,67,92)));
         LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(88),d(37));
         logoutLp.leftMargin=d(7);
@@ -526,7 +581,22 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(72,92,111):Color.rgb(171,188,215),false);
         LinearLayout.LayoutParams sectionLp=new LinearLayout.LayoutParams(-1,-2);
         sectionLp.bottomMargin=d(7);
-        trainerPanel.addView(trainerSectionTitle,sectionLp);
+        LinearLayout trainerHeader=new LinearLayout(this);
+        trainerHeader.setGravity(Gravity.CENTER_VERTICAL);
+        trainerHeader.addView(trainerSectionTitle,new LinearLayout.LayoutParams(0,-2,1));
+        trainerSelectButton=homeAuthButton("Escolher",Color.rgb(33,61,93),Color.WHITE);
+        LinearLayout.LayoutParams chooseLp=new LinearLayout.LayoutParams(d(96),d(33));
+        trainerHeader.addView(trainerSelectButton,chooseLp);
+        trainerSelectButton.setVisibility(View.GONE);
+        trainerSelectButton.setOnClickListener(v->{
+            int count=0;
+            try{count=new JSONArray(getSharedPreferences("prefs",0)
+                .getString("profileTrainerList","[]")).length();}
+            catch(Exception ignored){}
+            if(count>1)showTrainerSelector();
+            else openLoginDialog(false,"manage");
+        });
+        trainerPanel.addView(trainerHeader,sectionLp);
 
         LinearLayout trainerRow=new LinearLayout(this);
         trainerRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -883,15 +953,26 @@ public class MainActivity extends Activity {
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
     }
-    /** Text-only Android Sharesheet: forwards a verified Drive APK address, never
-     * grants URI access to private app storage or exposes a GitHub API endpoint.
-     * The Drive file is updated in place only after an approved verified build. */
+    /** Text-only Android Sharesheet: prefer the verified public update manifest,
+     * so each future release automatically changes both the shared URL and label.
+     * Never expose credentials or accept unverified download hosts/IDs. */
     private void sharePokeSearch(){
+        UpdateCenter.Manifest announced=currentDriveUpdate;
+        boolean current=announced!=null && announced.enabled &&
+            announced.versionCode>=BuildConfig.VERSION_CODE &&
+            UpdatePolicy.safeDownloadLink(announced.apkFileId,announced.apkUrl);
+        String fileId=current?announced.apkFileId:SHARE_APK_FILE_ID;
+        int versionCode=current?announced.versionCode:BuildConfig.VERSION_CODE;
+        String versionName=current?announced.versionName:BuildConfig.VERSION_NAME;
+        String shareUrl="https://drive.usercontent.google.com/download?id="+fileId+
+            "&export=download&confirm=t&v="+versionCode;
         Intent send=new Intent(Intent.ACTION_SEND);
         send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_SUBJECT,"PokeSearch para Android");
+        send.putExtra(Intent.EXTRA_SUBJECT,"PokeSearch "+versionName+" — Android");
         send.putExtra(Intent.EXTRA_TEXT,
-            "PokeSearch para Android — baixe o APK pelo Google Drive:\n"+SHARE_APK_DRIVE_URL);
+            "PokeSearch "+versionName+" — Android (APK oficial)\n"+
+            "Download direto no Google Drive:\n"+shareUrl+
+            "\nInstale por cima da versão atual, sem desinstalar.");
         try {
             startActivity(Intent.createChooser(send,"Compartilhar PokeSearch"));
         }catch(android.content.ActivityNotFoundException e){
@@ -978,12 +1059,228 @@ public class MainActivity extends Activity {
             .putBoolean("secondaryInitializedV1",true).apply();
     }
     private void toggleSecondaryOverlay(){
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         if(OverlayService.isSecondaryRunning()){
             stopService(new Intent(this,SecondaryOverlayService.class));
             Toast.makeText(this,"Segunda Pokébola desativada",Toast.LENGTH_SHORT).show();
             refreshHomeOverlay();
             return;
         }
+        if(PremiumAccess.controlled()){
+            if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
+                PremiumPurchaseDialog.show(this,()->{
+                    if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
+                });
+                return;
+            }
+            PremiumAccess.verify(this,(allowed,premium)->{
+                if(!allowed){
+                    Toast.makeText(this,"Esta versão de testes ainda não foi liberada ou está offline.",
+                        Toast.LENGTH_LONG).show();
+                }else if(!premium){
+                    if(PremiumAccess.deviceConflict()){
+                        promptPremiumDeviceTransfer(this::startSecondaryOverlayAuthorized);
+                    }else PremiumPurchaseDialog.show(this,()->{
+                        if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
+                    });
+                }else startSecondaryOverlayAuthorized();
+            });
+            return;
+        }
+        startSecondaryOverlayAuthorized();
+    }
+    private void logoutPremiumAccount(boolean switchAccount){
+        // Sign-out must NEVER depend indefinitely on a network response.
+        // Keep P1, saved filters, chat and PoGoCoordinates session untouched.
+        stopService(new Intent(this,SecondaryOverlayService.class));
+        PremiumAccess.invalidateLease();
+        final java.util.concurrent.atomic.AtomicBoolean finished=
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+        final android.os.Handler main=new android.os.Handler(android.os.Looper.getMainLooper());
+        final boolean[] remoteReleased={false};
+        Runnable localLogout=()->{
+            if(!finished.compareAndSet(false,true))return;
+            PremiumGoogleLogin.signOut(this,()->{
+                if(isFinishing()||isDestroyed())return;
+                refreshHomeOverlay();
+                if(switchAccount){
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        if(isFinishing()||isDestroyed())return;
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
+                    });
+                }else Toast.makeText(this,remoteReleased[0]?
+                    "Conta Google desconectada. Sua licença continua válida.":
+                    "Conta Google desconectada. Liberação remota pendente.",
+                    Toast.LENGTH_LONG).show();
+            });
+        };
+        // Start the server release while the Google token still exists.
+        // A slow or offline connection cannot keep the user signed in.
+        main.postDelayed(localLogout,1500L);
+        PremiumAccess.releaseDevice(this,(result,error)->{
+            remoteReleased[0]=error==null;
+            main.post(localLogout);
+        });
+        refreshHomeOverlay();
+    }
+    /** Account detail uses server-confirmed expiry, not the device purchase timestamp. */
+    private static String premiumValidityDetails(java.util.Map<String,Object> state){
+        if(state==null)return "\nValidade: consulta indisponível";
+        String source=String.valueOf(state.getOrDefault("licenseSource",""));
+        String kind=String.valueOf(state.getOrDefault("licenseKind",""));
+        String type="Licença Premium";
+        if("welcomeTrial".equals(source)||"trial".equals(kind))type="Teste grátis";
+        else if("coupon100".equals(source))type="Cupom 100%";
+        else if("paid".equals(kind))type="Premium pago";
+        else if("manual".equals(kind))type="Licença manual";
+        if(Boolean.TRUE.equals(state.get("lifetime")))
+            return "\nPlano: "+type+" · vitalício\nValidade: sem vencimento";
+        Object expiryValue=state.get("expiresAt");
+        long expires=expiryValue instanceof Number?((Number)expiryValue).longValue():0L;
+        if(expires<=0L)return "\nPlano: "+type+"\nValidade: ainda não definida";
+        Object nowValue=state.get("serverNow");
+        long now=nowValue instanceof Number?((Number)nowValue).longValue():
+            System.currentTimeMillis();
+        String date=new java.text.SimpleDateFormat("dd/MM/yyyy 'às' HH:mm",
+            new java.util.Locale("pt","BR")).format(new java.util.Date(expires));
+        if(!Boolean.TRUE.equals(state.get("licenseActive"))||expires<=now)
+            return "\nPlano: "+type+"\nSituação: vencida em "+date;
+        long hours=(expires-now+3599999L)/3600000L;
+        long days=hours/24L,extraHours=hours%24L;
+        String timeLeft=days>0L?
+            days+" "+(days==1?"dia":"dias")+
+                (extraHours>0L?" e "+extraHours+" h":""):
+            hours>0L?hours+" "+(hours==1?"hora":"horas"):"menos de 1 hora";
+        return "\nPlano: "+type+"\nTempo restante: "+timeLeft+
+            "\nVálida até: "+date;
+    }
+    private void showPremiumAccountOptions(){
+        if(!PremiumAccess.controlled())return;
+        if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
+            new AlertDialog.Builder(this)
+                .setTitle("Conta Premium")
+                .setMessage("Entre com Google para gerenciar a Pokébola 2. "+
+                    "A Pokébola 1 continua gratuita.")
+                .setPositiveButton("Entrar com Google",(dialog,which)->
+                    PremiumGoogleLogin.signIn(this,(success,message)->{
+                        Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                        refreshHomeOverlay();
+                    }))
+                .setNegativeButton("Cancelar",null).show();
+            return;
+        }
+        final String mail=PremiumGoogleLogin.email(this);
+        PremiumAccess.sessionInfo(this,(state,error)->{
+            if(isFinishing()||isDestroyed())return;
+            String license=error!=null?"Não foi possível consultar":
+                Boolean.TRUE.equals(state.get("licenseActive"))?"Ativa":"Inativa ou vencida";
+            String device=error!=null?"Verificação indisponível":
+                String.valueOf(state.getOrDefault("deviceName",""));
+            if(device.trim().isEmpty())device="Nenhum dispositivo autorizado";
+            String status=error!=null?"Offline":
+                Boolean.TRUE.equals(state.get("authorizedHere"))?
+                    "Este aparelho autorizado":"Outro aparelho autorizado";
+            String validity=error!=null?
+                "\nValidade: consulta indisponível":premiumValidityDetails(state);
+            String details="Google: "+mail+"\nLicença: "+license+validity+
+                "\nAparelho: "+device+"\nSessão: "+status+
+                "\n\nSua licença não é cancelada ao sair ou trocar de aparelho. "+
+                "A Pokébola 1 e suas configurações permanecem gratuitas.";
+            // Android AlertDialog setMessage() and setItems() both use the
+            // content region: the message hides the action list on Android.
+            // Render explicit visible buttons in a scrollable, accessible view.
+            LinearLayout body=new LinearLayout(this);
+            body.setOrientation(LinearLayout.VERTICAL);
+            body.setPadding(d(18),d(8),d(18),d(8));
+            TextView summary=new TextView(this);
+            summary.setText(details);
+            summary.setTextSize(14);
+            summary.setTextColor(Color.rgb(223,232,246));
+            summary.setPadding(0,0,0,d(10));
+            body.addView(summary,new LinearLayout.LayoutParams(-1,-2));
+            ScrollView scroll=new ScrollView(this);
+            scroll.setFillViewport(false);
+            scroll.addView(body);
+            AlertDialog dialog=new AlertDialog.Builder(this)
+                .setTitle("Conta Premium · Gerenciar")
+                .setView(scroll)
+                .setNegativeButton("Fechar",null)
+                .create();
+            Button signOut=homeAuthButton("Sair da conta Google",
+                Color.rgb(157,47,68),Color.WHITE);
+            signOut.setContentDescription("Sair do Premium neste aparelho");
+            body.addView(signOut,new LinearLayout.LayoutParams(-1,d(48)));
+            signOut.setOnClickListener(v->{
+                dialog.dismiss();
+                logoutPremiumAccount(false);
+            });
+            Button change=homeAuthButton("Trocar conta Google",
+                Color.rgb(39,64,96),Color.WHITE);
+            LinearLayout.LayoutParams changeLp=new LinearLayout.LayoutParams(-1,d(44));
+            changeLp.topMargin=d(7);
+            body.addView(change,changeLp);
+            change.setOnClickListener(v->{
+                dialog.dismiss();
+                logoutPremiumAccount(true);
+            });
+            Button transfer=homeAuthButton("Transferir Premium para outro aparelho",
+                Color.rgb(36,51,72),Color.WHITE);
+            LinearLayout.LayoutParams transferLp=new LinearLayout.LayoutParams(-1,d(44));
+            transferLp.topMargin=d(7);
+            body.addView(transfer,transferLp);
+            transfer.setOnClickListener(v->{
+                dialog.dismiss();
+                new AlertDialog.Builder(this)
+                    .setTitle("Transferir Premium")
+                    .setMessage("No novo celular, entre com a mesma conta Google "+
+                        "e toque em 'Usar neste aparelho' quando solicitado. "+
+                        "A Pokébola 2 anterior será encerrada na próxima validação.")
+                    .setPositiveButton("Entendi",null)
+                    .setNegativeButton("Sair deste aparelho",(d,w)->
+                        logoutPremiumAccount(false))
+                    .show();
+            });
+            dialog.show();
+        });
+    }
+    /**
+     * Only the owner of the verified Google session can replace an existing P2
+     * installation. The server decides; client text cannot grant Premium.
+     */
+    void promptPremiumDeviceTransfer(Runnable onActivated){
+        if(!PremiumGoogleLogin.isGoogleSignedIn(this))return;
+        String current=PremiumAccess.activeDeviceName();
+        String message="Sua licença está ativa em "+current+".\\n\\n"+
+            "Deseja usar a Pokébola 2 neste aparelho? O anterior perderá acesso "+
+            "quando renovar sua autorização (normalmente em até 1 minuto). "+
+            "Sua licença e a Pokébola 1 não serão alteradas.";
+        new AlertDialog.Builder(this)
+            .setTitle("Trocar aparelho Premium")
+            .setMessage(message)
+            .setNegativeButton("Cancelar",null)
+            .setPositiveButton("Usar neste aparelho",(dialog,which)->
+                PremiumAccess.transferDevice(this,(result,error)->{
+                    if(error!=null){
+                        Toast.makeText(this,error,Toast.LENGTH_LONG).show();return;
+                    }
+                    PremiumAccess.invalidateLease();
+                    PremiumAccess.verify(this,(allowed,premium)->{
+                        if(premium){
+                            Toast.makeText(this,"Este aparelho agora está autorizado.",
+                                Toast.LENGTH_LONG).show();
+                            if(onActivated!=null)onActivated.run();
+                        }else Toast.makeText(this,
+                            "Não foi possível confirmar a troca. Verifique sua conexão.",
+                            Toast.LENGTH_LONG).show();
+                    });
+                }))
+            .show();
+    }
+    private void startSecondaryOverlayAuthorized(){
+        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:"+getPackageName())),101);
@@ -1014,6 +1311,60 @@ public class MainActivity extends Activity {
     private void openProviderLogin(String provider){
         preferredLoginProvider=provider;
         openLoginDialog(false);
+    }
+    private void showTrainerSelector(){
+        SharedPreferences prefs=getSharedPreferences("prefs",0);
+        JSONArray profiles;
+        try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]"));}
+        catch(org.json.JSONException e){return;}
+        if(profiles.length()<2)return;
+        final java.util.ArrayList<JSONObject> valid=new java.util.ArrayList<>();
+        final java.util.ArrayList<String> labels=new java.util.ArrayList<>();
+        String selected=prefs.getString("profileTrainerCode","");
+        int selectedIndex=-1;
+        for(int i=0;i<profiles.length();i++){
+            JSONObject item=profiles.optJSONObject(i);
+            if(item==null)continue;
+            String code=item.optString("code","");
+            String name=item.optString("name","");
+            String team=item.optString("team","");
+            if(!code.matches("[0-9]{12}")||
+                !name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}"))continue;
+            if(code.equals(selected))selectedIndex=valid.size();
+            valid.add(item);
+            labels.add(name+" · "+team+" · ••••"+code.substring(8));
+        }
+        if(valid.size()<2)return;
+        new AlertDialog.Builder(this)
+            .setTitle("Escolher treinador PoGoCoordinates")
+            .setSingleChoiceItems(labels.toArray(new String[0]),selectedIndex,
+                (dialog,which)->{
+                    if(which<0||which>=valid.size())return;
+                    JSONObject item=valid.get(which);
+                    String name=item.optString("name","");
+                    String code=item.optString("code","");
+                    String team=item.optString("team","");
+                    String level=item.optString("level","");
+                    String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
+                        (team.matches("Mystic|Valor|Instinct")?
+                          (level.isEmpty()?"":" · ")+team:"");
+                    prefs.edit().putString("profileTrainerCode",code)
+                        .putString("profileSelectedTrainerCode",code)
+                        .putString("profileTrainerName",name)
+                        .putString("profileTrainerTeam",team)
+                        .putString("profileTrainerLevel",level)
+                        .putString("profileTrainerDetails",details)
+                        .putString("profileTrainerState","linked").apply();
+                    refreshSessionSummary();
+                    dialog.dismiss();
+                    Toast.makeText(this,"Treinador selecionado: "+name,Toast.LENGTH_SHORT).show();
+                    // The search owner stays the original signed-in site account.
+                    // Shiny selections are reverified against the official site.
+                    sendBroadcast(new Intent("com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED")
+                        .setPackage(getPackageName()));
+                })
+            .setNegativeButton("Cancelar",null)
+            .show();
     }
     private void copyTrainerCode(){
         String code=getSharedPreferences("prefs",0).getString("profileTrainerCode","");
@@ -1268,6 +1619,13 @@ public class MainActivity extends Activity {
                 "Instinct".equals(team)?Color.rgb(255,211,99):
                 Color.rgb(165,185,214));
         }
+        if(trainerSelectButton!=null){
+            int profiles=0;
+            try{profiles=new JSONArray(prefs.getString("profileTrainerList","[]")).length();}
+            catch(org.json.JSONException ignored){}
+            trainerSelectButton.setVisibility(logged?View.VISIBLE:View.GONE);
+            trainerSelectButton.setText(profiles>1?"Escolher ("+profiles+")":"Perfis");
+        }
         if(linked&&trainerCode!=null)
             trainerCode.setText(code.substring(0,4)+" "+code.substring(4,8)+" "+code.substring(8));
         if(trainerAction!=null)trainerAction.setText(linked?"Remover":"Gerenciar");
@@ -1292,6 +1650,7 @@ public class MainActivity extends Activity {
             .remove("profileDisplayName").remove("profileProvider").remove("profileAvatarUrl")
             .remove("profileTrainerName").remove("profileTrainerCode")
             .remove("profileTrainerDetails").remove("profileTrainerState")
+            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
             .remove("profileTrainerTeam").remove("profileTrainerLevel")
             .putBoolean("shiny",false)
             .putString("lastStatus","Sessão local desconectada")
@@ -1320,6 +1679,16 @@ public class MainActivity extends Activity {
         missionResumed=true;
         syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
+        applyAppAvailability(AppAvailability.cached(this));
+        availabilityHandler.removeCallbacks(availabilityTick);
+        availabilityHandler.post(availabilityTick);
+        if(PremiumAccess.controlled())PremiumAccess.verify(this,(allowed,premium)->{
+            if(!allowed){
+                stopService(new Intent(this,OverlayService.class));
+                stopService(new Intent(this,SecondaryOverlayService.class));
+            }else if(!premium)stopService(new Intent(this,SecondaryOverlayService.class));
+            refreshHomeOverlay();
+        });
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
@@ -1330,6 +1699,7 @@ public class MainActivity extends Activity {
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        availabilityHandler.removeCallbacks(availabilityTick);
         missionResumed=false;
         syncMissionClock(false);
         FirebaseStats.setHomeVisible(this,false);
@@ -1393,6 +1763,7 @@ public class MainActivity extends Activity {
                     .remove("profileAvatarUrl")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                    .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
                 CookieManager.getInstance().flush();
                 if("manage".equals(loginPurpose)){
@@ -1445,7 +1816,8 @@ public class MainActivity extends Activity {
     }
     private void captureOfficialProfile(WebView view,int generation){
         if(view!=website||loginDialog==null||!loginDialog.isShowing()||
-           !loginAutoReturnQueued||!profileCaptureInProgress)return;
+           !("manage".equals(loginPurpose)||loginAutoReturnQueued)||
+           !profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
         String host=current.getHost();
         if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
@@ -1486,14 +1858,45 @@ public class MainActivity extends Activity {
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
                     String code=profile.optString("trainerCode","");
+                    JSONArray accountList=profile.optJSONArray("trainers");
+                    JSONArray verified=new JSONArray();
+                    JSONObject chosen=null;
+                    String selection=getSharedPreferences("prefs",0)
+                        .getString("profileSelectedTrainerCode","");
+                    if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
+                        JSONObject item=accountList.optJSONObject(i);
+                        if(item==null)continue;
+                        String c=item.optString("code","");
+                        String n=item.optString("name","");
+                        String t=item.optString("team","");
+                        String lv=item.optString("level","");
+                        if(!c.matches("[0-9]{12}")||
+                           !n.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")||
+                           !t.matches("Mystic|Valor|Instinct")||
+                           !lv.matches("[0-9]{1,2}"))continue;
+                        verified.put(item);
+                        if(chosen==null||c.equals(selection))chosen=item;
+                    }
+                    // Never allow a code from the previous login to remain
+                    // selected if this newly authenticated account lacks it.
+                    if(chosen!=null){
+                        trainer=chosen.optString("name","");
+                        code=chosen.optString("code","");
+                        edit.putString("profileTrainerList",verified.toString());
+                    }else edit.remove("profileTrainerList")
+                        .remove("profileSelectedTrainerCode");
+
                     if("linked".equals(state)&&trainer.length()>0&&
                        trainer.length()<=40&&code.matches("[0-9]{12}")){
-                        String level=profile.optString("level","");
-                        String team=profile.optString("team","");
+                        String level=chosen!=null?chosen.optString("level",""):
+                            profile.optString("level","");
+                        String team=chosen!=null?chosen.optString("team",""):
+                            profile.optString("team","");
                         String details=(level.matches("[0-9]{1,2}")?"Nível "+level:"")+
                             (team.matches("Mystic|Valor|Instinct")?
                              (level.isEmpty()?"":" · ")+team:"");
                         edit.putString("profileTrainerState","linked")
+                            .putString("profileSelectedTrainerCode",code)
                             .putString("profileTrainerName",trainer)
                             .putString("profileTrainerCode",code)
                             .putString("profileTrainerDetails",details)
@@ -1506,7 +1909,8 @@ public class MainActivity extends Activity {
                                 "unlinked".equals(state)?"unlinked":"unknown")
                             .remove("profileTrainerName").remove("profileTrainerCode")
                             .remove("profileTrainerDetails")
-                            .remove("profileTrainerTeam").remove("profileTrainerLevel");
+                            .remove("profileTrainerTeam").remove("profileTrainerLevel")
+                            .remove("profileTrainerList").remove("profileSelectedTrainerCode");
                     }
                     edit.apply();
                     parsed=true;
@@ -1529,7 +1933,8 @@ public class MainActivity extends Activity {
             }
             profileCaptureInProgress=false;
             refreshSessionSummary();
-            if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+            if(!"manage".equals(loginPurpose)&&
+               loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         });
     }
     // Site controls may hydrate after onPageFinished. Retry briefly instead
@@ -1575,7 +1980,7 @@ public class MainActivity extends Activity {
         if(loginDialog!=null&&loginDialog.isShowing())return;
         loginPurpose="manage".equals(purpose)?"manage":"login";
         loginStartedForShiny=shinyRequest;
-        profileCaptureInProgress=false;
+        profileCaptureInProgress="manage".equals(loginPurpose);
         profileDiscoveryAttempted=false;
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
@@ -1626,8 +2031,11 @@ public class MainActivity extends Activity {
                     return;
                 }
                 if("manage".equals(loginPurpose)){
-                    // Profile management is an intentional official-site view.
+                    // A pre-existing signed-in session can refresh all linked
+                    // trainers without forcing the user to log out and back in.
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if("/profile".equals(Uri.parse(url).getPath()))
+                        view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
                 checkLoginSession(view,14,generation);
@@ -1949,6 +2357,10 @@ public class MainActivity extends Activity {
         }
     }
     private void startOverlay(){
+        // P1 is always free when this APK is enabled and not in maintenance.
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         CookieManager.getInstance().flush();
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -2188,6 +2600,9 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
+        if((req==CommunityScrapbookOnline.REQUEST_PHOTO ||
+            req==CommunityScrapbookOnline.REQUEST_GOOGLE_ADMIN) &&
+            CommunityScrapbookOnline.onActivityResult(communityHomePanel,req,result,data))return;
         if(req==305||req==306){
             if(result==RESULT_OK)saveChosenAlertTone(data,req==306);
             else{alertToneTarget="";alertToneSpecies="";}
@@ -2257,6 +2672,10 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        availabilityHandler.removeCallbacks(availabilityTick);
+        if(availabilityDialog!=null){
+            availabilityDialog.dismiss();availabilityDialog=null;
+        }
         missionResumed=false;
         missionHandler.removeCallbacks(missionHeartbeat);
         SupportMissionState.homeVisibility(this,false);

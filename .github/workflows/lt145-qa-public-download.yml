@@ -1,0 +1,60 @@
+name: LT145 Compact QA2 - direct public APK download (no auto update)
+on:
+  push:
+    branches: [feature/lt145-coords-quota-account-20261028]
+    paths: ['.github/workflows/lt145-qa-public-download.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  release-signed-qa:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '40637720265'
+      SOURCE_COMMIT: '03043e107c2978ea072fc6d1b9c6708335e84e9b'
+      QA_ARTIFACT: 'PokeSearch-v0.01.45-LT145-CoordsQuota-QA-Assinado'
+      QA_TAG: 'v0.01.45-54350-compact-qa2'
+      APK: 'PokeSearch-v0.01.45-LT-QA.apk'
+      PUBLIC_APK: 'PokeSearch-v0.01.45-LT145-COMPACT-QA2.apk'
+    steps:
+      - name: Recover exact, previously verified signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa
+          gh run watch "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --exit-status
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" \
+            --name "$QA_ARTIFACT" --dir qa
+          test -s "qa/$APK"
+          test "$(cat qa/SOURCE_COMMIT.txt)" = "$SOURCE_COMMIT"
+          (cd qa && sha256sum --check SHA256SUMS.txt)
+          ACTUAL="$(sha256sum "qa/$APK" | awk '{print $1}')"
+          echo "APK_SHA256=$ACTUAL" >> "$GITHUB_ENV"
+          unzip -t "qa/$APK" >/dev/null
+          grep -Fq "Verified using v2 scheme" qa/SIGNING-REPORT.txt
+          grep -Fq "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e" qa/SIGNING-REPORT.txt
+          grep -Fq "versionCode='54350'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.45'" qa/PACKAGE-VERSION.txt
+          mv "qa/$APK" "qa/$PUBLIC_APK"
+          printf '%s  %s\n' "$ACTUAL" "$PUBLIC_APK" > qa/SHA256SUMS.txt
+      - name: Publish a QA prerelease only - DO NOT modify Drive manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$QA_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "QA release already exists: refusing to overwrite existing APK"
+            exit 1
+          fi
+          gh release create "$QA_TAG" \
+            "qa/$PUBLIC_APK" "qa/SHA256SUMS.txt" "qa/SIGNING-REPORT.txt" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$SOURCE_COMMIT" \
+            --title "PokeSearch LT145 COMPACTO - QA2 0.01.45 (teste)" \
+            --notes "Versão compacta do card: Get coords + copiar na mesma linha, saldo pequeno, cooldown recolhido quando inativo. Mantém a contagem de coordenadas, cooldown experimental e sprites Autumn/Halloween. APK SHA-256: $APK_SHA256. Apenas para teste; a LT144 continua pública no Google Drive." \
+            --prerelease --latest=false
+          gh release view "$QA_TAG" --repo "$GITHUB_REPOSITORY" --json url,assets,isPrerelease \
+            --jq '{url: .url, prerelease: .isPrerelease, assets: [.assets[].name]}'

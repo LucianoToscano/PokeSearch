@@ -12,7 +12,8 @@ run("detail card shows authoritative API absolute despawn even with empty legacy
  const html=detail.split("window.showDetails=(c,mode,watched)=>")[1]||"";
  assert.match(html,/const absolute=Number\(c\.expiresAtMs\)/);
  assert.match(html,/expiresAt=Number\.isFinite\(absolute\)&&absolute>0\?absolute:/);
- assert.match(detail,/e\.textContent=remaining>0\?fmt\(remaining\):"Expirado"/);
+ assert.match(detail,/document\.getElementById\("timeRemaining"\)\.textContent=remaining\?fmt\(remaining\):"Expirado"/);
+ assert.match(detail,/e\.className=state\.tone\+\(state\.pulse\?" pulse":""\)/);
  assert.match(detail,/if\(Native\.expiredResults\)Native\.expiredResults\(\)/);
 });
 run("API skips expired cards, including before first view or hidden timers",()=>{
@@ -46,12 +47,12 @@ run("result sprites retry only verified base art, preserving forms and costumes"
 });
 run("opened detail has independent transparent drag handle, excludes close and keeps geometry",()=>{
  const detailGrip=svc.split("View detailDragGrip=new View(this);")[1]?.split("detailPanel.setWebViewClient",1)[0]||"";
- assert.ok(detailGrip.includes("dp(DETAIL_DP-39),dp(49)"));
+ assert.ok(detailGrip.includes("dp(DETAIL_DP-100),dp(49)"));
  assert.ok(detailGrip.includes("detailManuallyPositioned=true"));
  assert.ok(detailGrip.includes("detailParams.x=Math.max(0,Math.min("));
  assert.ok(detailGrip.includes("detailParams.y=Math.max(0,Math.min("));
  assert.ok(detailGrip.includes("wm.updateViewLayout(detailRoot,detailParams)"));
  const position=svc.split("private void moveDetail()")[1]?.split("private String locationPayload",1)[0]||"";
  assert.ok(position.includes("if(detailManuallyPositioned)"));
- assert.match(detail,/<button id="x" onclick="Native\.hideDetail\(\)">×<\/button>/);
+ assert.match(detail,/<button id="x" onclick="Native\.hideDetail\(\)" aria-label="Fechar card">×<\/button>/);
 });

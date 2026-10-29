@@ -45,13 +45,13 @@ check("a previously seen spawn can alert when it becomes favourite, exactly once
  assert.match(body,/if\(newSpawn\)recentSpawnExpiries\.put\(key,expireAt\)/);
  assert.match(body,/recentFavoriteAlertExpiries\.getOrDefault\(key,0L\)<=now/);
  assert.ok(body.includes('pendingFavoriteKeys.put(key,expireAt)'));
- assert.ok(body.includes('recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys)'));
- assert.ok(body.includes('if(WatchAlerts.match(this,firstWatched,watchDetails))'));
+ assert.ok(service.includes('recentFavoriteAlertExpiries.put(pending.key,pending.expiry)'));
+ assert.ok(service.includes('if(WatchAlerts.match(this,pending.name,pending.title,pending.details,'));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")>body.indexOf("if(newSpawn)recentSpawnExpiries.put"));
  assert.ok(body.indexOf("recentFavoriteAlertExpiries.getOrDefault")<body.indexOf("if(!newSpawn)continue"));
  assert.match(body,/if\(expiry<=now\)continue/);
  assert.match(body,/WatchAlerts\.matches\(c\.optString\("name",""\),wanted\)/);
- assert.match(body,/WatchAlerts\.match\(this,firstWatched,watchDetails\)/);
+ assert.match(service,/WatchAlerts\.match\(this,pending\.name,pending\.title,pending\.details/);
  assert.match(body,/if\(!newSpawn\)continue; \/\/ history is only for truly new encounters/);
 });
 check("API alerts use identical verified HTTP results for both instances",()=>{
@@ -97,13 +97,13 @@ check("explicit normal/default form recovers missing image; special forms do NOT
   const resolved=jsSprite.resolve({...starter,form}).src;
   const key="25:"+String(form).toUpperCase().replace(/[^A-Z0-9]/g,"");
   const verified=jsSprite.FORM_VARIANTS[key];
-  if(verified)assert.match(resolved,/d8c2fb78563e28ad7b3abe938cf6e79998d04e90/,form);
+  if(verified)assert.equal(resolved,"file:///android_asset/pokemon-sprites/forms/variety-"+verified[0]+".png",form);
   else assert.equal(resolved,"",form);
  }
  assert.equal(jsSprite.resolve({...starter,form:"Normal",costume_id:3}).src,"");
 });
 check("general notification IDs never overwrite the other active service",()=>{
- assert.ok(service.includes('isSecondaryOverlay()?12075:12074'));
+ assert.match(service,/NEXT_GENERAL_ALERT_ID\.updateAndGet/);
  assert.ok(service.includes('isSecondaryOverlay()?12077:12076'));
  assert.match(watched,/NEXT_ALERT_ID/);
 });

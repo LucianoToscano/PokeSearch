@@ -177,6 +177,14 @@ body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRo
 .spawn .ivPct.excellent{color:#c084fc}
 .spawn .ivPct.perfect{color:#f04b70}
 .spawn.expired{opacity:.38}
+/* Cooldown is independent of the despawn ticker. */
+.spawn .cooldownEta{position:absolute;right:0;top:0;z-index:4;max-width:60px;
+ padding:1px 2px;border:1px solid #ffffff45;border-radius:5px;
+ background:#242527c9;color:#d7e3dc;font:600 7.5px/10px Roboto,Arial,sans-serif;
+ white-space:nowrap;text-shadow:0 1px 2px #0008;pointer-events:none}
+.spawn .cooldownEta.estimated{color:#f7d5a1}
+.spawn .cooldownEta.unknown{color:#c2c2c6}
+.spawn .cooldownEta.finished{color:#a9edc5}
 .sprite{display:block;width:var(--sprite);height:var(--sprite);object-fit:contain;flex-shrink:0;pointer-events:none;filter:drop-shadow(0 1px 1px #0006)}
 /* UX-SPRITE-01: same centered, transparent square in every fixed-height row. */
 .spriteStage{position:relative;display:flex;align-items:center;justify-content:center;width:var(--sprite);height:var(--sprite);flex:0 0 var(--sprite);pointer-events:none}
@@ -268,6 +276,16 @@ body.result-window #spawns{
  width:var(--dock);padding:0!important;gap:0!important;
  overflow-y:visible!important;overflow-x:visible!important;
  scrollbar-width:none!important;touch-action:manipulation!important
+}
+/* Free tier keeps the original 10 compact rows. VIP tier uses the SAME
+   full-size sprites with a scrollable 10-row viewport for 25/50/75/100 rows.
+   No compression of 25 into ten tiny overlapping hit targets. */
+body.result-window.vip-results-scroll #spawns{
+ max-height:var(--result-viewport-height,430px)!important;
+ height:var(--result-viewport-height,430px)!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior:contain!important;touch-action:pan-y!important;
+ -webkit-overflow-scrolling:touch;
 }
 /* Preserve the final sprite's overhang without adding gaps between entries. */
 body.result-window #spawns:not(:empty){padding-bottom:0!important}
@@ -732,7 +750,17 @@ body.result-window .ivInfo.excellent{color:#c084fc}
 body.result-window .ivInfo.perfect{color:#f04b70}
 body.result-window .spawnInfoLine{display:block;white-space:nowrap;overflow:hidden;
  text-overflow:ellipsis;max-width:100%;min-height:calc(11px * var(--result-info-scale,1))}
-body.result-window .spawnInfoLine.wrap{white-space:normal;overflow:visible;overflow-wrap:anywhere;word-break:break-word;}
+body.result-window .spawnInfoLine.wrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal;word-break:normal;}
+/* LT142: keep every stat on a fixed baseline beside its own sprite. */
+body.result-window .spawnInfo{
+ font-variant-numeric:tabular-nums;align-items:stretch;
+ line-height:calc(11px * var(--result-info-scale,1));
+}
+body.result-window .spawnInfoLine{
+ display:block;flex:0 0 auto;width:100%;min-height:calc(11px * var(--result-info-scale,1));
+ line-height:calc(11px * var(--result-info-scale,1));text-align:left;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 body.result-window .spawnInfo .timer{
  position:static;display:inline;padding:0;margin:0;min-width:0;
  font:700 9px/11px Roboto,Arial,sans-serif;text-align:left;
@@ -748,6 +776,11 @@ body.result-window #spawns:not(:empty){
  margin-top:var(--visual-top-gap,0px)!important; /* Explicit Editor Visual override only. */
 }
 body.result-window .spriteStage .sprite{transform:scale(var(--visual-sprite-scale,1));transform-origin:center}
+/* QA19: compose per-sprite alpha correction with Editor Visual scale. */
+body.result-window .spriteStage .sprite{
+ transform:scale(calc(var(--visual-sprite-scale,1) * var(--ps-alpha-scale,1)));
+ transform-origin:center
+}
 body.result-window.visual-results-horizontal #spawns{
  display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
  align-items:flex-start!important;justify-content:flex-start!important;
@@ -4268,7 +4301,7 @@ if(window.location.search.indexOf("results=1")!==-1){
  document.write('<script src="file:///android_asset/pvpoke-iv-gamemaster.js"><\/script>');
 }
 </script>
-<script src="sprite_offline.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const popupWindow=window.location.search.indexOf("popup=1")!==-1;
@@ -5712,14 +5745,32 @@ function attachSpriteFeedback(){
  document.querySelectorAll(".spawn .spriteStage").forEach(stage=>{
   const img=stage.querySelector("img.sprite");
   if(!img){stage.classList.add("failed");return;}
-  let retries=0,done=false,mirrorAttempted=false;
+  let retries=0,done=false,mirrorAttempted=false,nativeTried=false;
+  const spawnNode=stage.closest?.(".spawn")||stage.parentElement;
+  const currentIndex=Number(spawnNode?.getAttribute?.("data-index")??-1);
+  const sourceCard=Number.isInteger(currentIndex)&&currentIndex>=0?cards[currentIndex]:null;
+  const tryExactBundled=()=>{
+   if(nativeTried)return false;
+   nativeTried=true;
+   const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
+   const exact=engine?.verifiedBundledData?.(sourceCard)||
+      (sourceCard?engine?.exactBundledData?.(engine.resolve(sourceCard)):"")||"";
+   if(exact&&img.src!==exact){img.src=exact;return true;}
+   return false;
+  };
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
   const loaded=()=>{
-   if(good()){done=true;stage.classList.remove("failed");stage.classList.add("loaded");}
+   if(good()){
+    done=true;stage.classList.remove("failed");stage.classList.add("loaded");
+    if(typeof window!=="undefined")window.PokeSearchSpriteScale?.apply?.(img);
+   }
    else failed();
   };
   const failed=()=>{
    if(done||!img.isConnected)return;
+   // Deterministic identity-checked bytes from the bundled APK beat fragile
+   // Samsung WebView file and remote image retries for ordinary species.
+   if(tryExactBundled())return;
    const original=img.getAttribute("data-original-src")||"";
    // Exact, verified PokeAPI base sprite path only. Never guess a different
    // sprite for forms, shadows, costumes or a provider-supplied image URL.
@@ -5737,12 +5788,17 @@ function attachSpriteFeedback(){
   };
   img.addEventListener("load",loaded);
   img.addEventListener("error",failed);
-  if(img.complete&&good())loaded();
+  // A completed but zero-dimension file:// image may have failed before
+  // listeners were attached. Retry its verified original immediately.
+  if(img.complete){if(good())loaded();else failed();}
   // Some Samsung WebViews leave an Image in "loading" state for seconds,
   // without firing error. Switch only the verified static PokeAPI base URL
   // to its equivalent CDN mirror after a bounded grace period.
   const original=img.getAttribute("data-original-src")||"";
   const known=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/((?:shiny\/)?[0-9]{1,4}\.png)$/.exec(original);
+  setTimeout(()=>{
+   if(!done&&img.isConnected&&!good())tryExactBundled();
+  },1700);
   if(known)setTimeout(()=>{
    if(!done&&img.isConnected&&!mirrorAttempted&&!good()){
     mirrorAttempted=true;
@@ -6167,14 +6223,15 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  const v=window.visualPrefs||{};
  const pitch=size+additionalResultGapPx(v.resultGapBetween);
  const horizontal=v.resultsOrientation==="horizontal";
- const natural=items.slice(0,10).map((card,index)=>{
+ const natural=items.map((card,index)=>{
    const lines=preparedLines?preparedLines[index]:(opts?resultLines(card,opts,league):[]);
   // UX-SPRITE-GAP-02: metadata is independently scrollable inside the side strip.
   // Never stretch the Pokemon's vertical slot to fit all enabled rank lines.
   if(horizontal)return size; // horizontal rows do not reserve invisible 3px each
   return Math.max(size,pitch); // No sprite-overlap or artificial top padding at zero gap.
  });
- const desired=natural.reduce((a,b)=>a+b,0);
+ const maxVisible=items.length>10?10:items.length;
+ const desired=natural.slice(0,maxVisible).reduce((a,b)=>a+b,0);
  const headerArea=(Number(v.headerIconY)||0)+(Number(v.headerTouchHeight)||30)+
   (Number(v.headerAfterGap)||0);
  const room=Math.max(120,(Number(displayHeight)||700)-headerArea-24);
@@ -6183,10 +6240,22 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  // A very short display can reduce a row to 12px: never draw a
  // larger sprite inside it, even when ten results must remain visible.
  const sprite=Math.max(10,Math.floor(size*factor));
- return {rows,sprite,total:rows.reduce((a,b)=>a+b,0),visibleCount:rows.length,
+ return {rows,sprite,total:rows.slice(0,maxVisible).reduce((a,b)=>a+b,0),
+  visibleCount:maxVisible,scrollable:items.length>10,
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
 let lastListKey="",metadataCacheKey="",metadataCache=[];
+let cooldownState={enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
+window.onCooldownState=function(payload){
+ cooldownState=payload&&typeof payload==="object"?
+  {enabled:payload.enabled===true,linked:payload.linked===true,
+   reference:payload.reference||null,apiVerified:payload.apiVerified===true,
+   fresh:payload.fresh===true,searchCenter:String(payload.searchCenter||"")}:
+  {enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
+ if(resultWindow){lastListKey="";draw();}
+ if(typeof choiceOpen!=="undefined"&&choiceOpen==="info"&&
+    typeof renderInfoChoices==="function")renderInfoChoices();
+};
 function preparedResultLines(){
  if(!resultWindow)return [];
  const key=JSON.stringify([cards,resultDisplayOptions,shownMode]);
@@ -6202,11 +6271,14 @@ function draw(){
   computeResultLayout(cards,spriteSize,resultDisplayHeightDp,showTimers,showResultText,
    resultDisplayOptions,shownMode,preparedLines):null;
  if(resultWindow){
+  document.body.classList.toggle("vip-results-scroll",cards.length>10);
   const vp=window.visualPrefs||{};
   document.documentElement.style.setProperty("--visual-row-pitch",(resultLayout?.rows?.[0]||spriteSize+1)+"px");
   document.documentElement.style.setProperty("--visual-result-spacing",
    additionalResultGapPx(vp.resultGapBetween)+"px");
  }
+ document.documentElement.style.setProperty("--result-viewport-height",
+  String(Math.max(40,resultLayout?.total||0))+"px");
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
@@ -6285,7 +6357,7 @@ function draw(){
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
-  shownMode,resultDisplayOptions]);
+  shownMode,resultDisplayOptions,cooldownState]);
  if(listKey!==lastListKey){lastListKey=listKey;
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
@@ -6299,12 +6371,38 @@ function draw(){
   const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
   // Fixed-size art box for everyone; extra reduction only for Minior's
   // unusually full artwork. Never alter its species identity or image URL.
-  const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:0.86;
+  const dexNumber=Number(String(c.number||c.dex||"").replace("#",""));
+  const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:
+   dexNumber===94?0.67:0.86; // Gengar needs reduced visual fill; keep original sprite file.
+  // Halloween Gengar costume often fills the entire image unlike regular #94.
+  const gengarName=/\bgengar\b/i.test(String(c.name||""));
+  const gengarSpecies=dexNumber===94||(gengarName&&(dexNumber===0||!Number.isFinite(dexNumber)));
+  const costumeHint=[c.costume,c.costume_name,c.costumeName,c.costume_id,c.form,
+   c.form_id,c.variant,c.event,c.name,c.image,art.original,art.src]
+   .map(x=>String(x??"").slice(0,220)).join(" ");
+  const halloweenGengar=gengarSpecies&&(c.isCostume===true||
+   /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(costumeHint)||
+   (c.costume_id!=null&&Number(c.costume_id)>0));
+  const effectiveArtFit=halloweenGengar?0.42:artFit;
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">◉</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
+  let cooldownMarkup="";
+  if(cooldownState.enabled&&cooldownState.linked&&cooldownState.reference&&window.PokeSearchCooldown){
+   const engine=window.PokeSearchCooldown;
+   const eta=engine.estimate(cooldownState.reference,c,cooldownState);
+   const known=eta.kind==="exact"||eta.kind==="estimated";
+   const left=known?engine.remaining(eta,Date.now()):null;
+   const label=known?(left===0?"✓ 00:00":"⏳ "+engine.format(left)):"⏳ —";
+   const tip=eta.kind==="exact"?"Cooldown estimado entre coordenadas conhecidas; não garante segurança":
+    eta.kind==="estimated"?"Estimativa conservadora da distância da busca; não garante segurança":
+    "Distância entre capturas não comprovada";
+   cooldownMarkup='<span class="cooldownEta '+esc(eta.kind==="estimated"?"estimated":known?"exact":"unknown")+
+    '"'+(known?' data-until="'+Number(eta.until)+'"':"")+
+    ' title="'+esc(tip)+'" aria-label="'+esc(tip)+'">'+esc(label)+'</span>';
+  }
   const inlineTimer=resultDisplayOptions.despawn&&deadline?
    '<span class="timer" data-deadline="'+deadline+'"></span>':"";
   const info=infoLines.length?'<span class="spawnInfo" aria-label="Dados opcionais do Pokémon">'+infoLines.map(text=>
@@ -6316,7 +6414,7 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+artFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+info+'</button>';
+  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){attachLongPress();attachSpriteFeedback();syncTimerTicker();}
@@ -6411,6 +6509,14 @@ function updateTimers(){
   e.closest(".spawn")?.classList.toggle("expired",seconds===0);
   if(seconds===0&&!e.dataset.expiryReported){e.dataset.expiryReported="1";newlyExpired=true;}
  });
+ document.querySelectorAll(".cooldownEta[data-until]").forEach(el=>{
+  const until=Number(el.dataset.until);
+  if(!Number.isFinite(until))return;
+  const seconds=Math.max(0,Math.ceil((until-Date.now())/1000));
+  const engine=window.PokeSearchCooldown;
+  el.textContent=seconds===0?"✓ 00:00":"⏳ "+(engine?engine.format(seconds):"--:--");
+  el.classList.toggle("finished",seconds===0);
+ });
  if(newlyExpired&&Native.expiredResults)Native.expiredResults();
 }
 let timerTicker=null;
@@ -6418,7 +6524,7 @@ function syncTimerTicker(){
  if(!resultWindow)return;
  const shown=!document.body.classList.contains("results-collapsed")&&
   !document.body.classList.contains("results-paused");
- const hasTimers=!!document.querySelector(".timer");
+ const hasTimers=!!document.querySelector(".timer,.cooldownEta[data-until]");
  if(shown&&hasTimers){
   if(timerTicker===null){updateTimers();timerTicker=setInterval(updateTimers,1000);}
  }else if(timerTicker!==null){
@@ -6434,7 +6540,7 @@ window.addEventListener("pagehide",releaseUiTimers);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
- cards=Array.isArray(a)?a.slice(0,10):[];
+ cards=Array.isArray(a)?a.slice(0,100):[];
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
@@ -6740,8 +6846,12 @@ const SPRITE_FAILURE_RETRY_MS=30000;
 function pooledBaseSprite(url){
  const valid=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/([0-9]{1,4}\.png)$/.exec(String(url||""));
  if(!valid)return Promise.resolve("");
- const asset=window.PokeSearchOfflineSprite?
-  window.PokeSearchOfflineSprite.resolve({image:url}):{src:url};
+ const dex=Number(valid[1].replace(".png",""));
+ const spec=window.PokeSearchWWMCatalog?.species?.[dex];
+ const exactCard=spec&&spec[0]?{number:"#"+dex,name:spec[0],
+   form:"NORMAL",image:url,shiny:false}:null;
+ const asset=exactCard&&window.PokeSearchOfflineSprite?
+  window.PokeSearchOfflineSprite.resolve(exactCard):{src:url};
  const now=Date.now(),previous=spriteRequestCache.get(url);
  if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))
   return previous.promise;
@@ -6763,6 +6873,9 @@ function pooledBaseSprite(url){
   const alternative="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/"+valid[1];
   const useMirror=()=>{
    if(settled||mirrorStarted)return;
+   // Browser blocked file://? Only load exact Dex-verified PNG from the APK.
+   const direct=exactCard&&window.PokeSearchOfflineSprite?.verifiedBundledData?.(exactCard)||"";
+   if(direct){finish(direct);return;}
    mirrorStarted=true;clearTimeout(primaryWatch);
    mirror.onload=()=>finish(mirror.naturalWidth>=8&&mirror.naturalHeight>=8?alternative:"");
    mirror.onerror=()=>finish("");
@@ -6790,10 +6903,10 @@ function exactSuggestionSprite(item){
  const engine=window.PokeSearchOfflineSprite;
  if(!engine||!Number.isInteger(dex)||dex<1||!label)return "";
  const art=engine.resolve({number:"#"+dex,form:label,name:"",image:"",shiny:false});
- return art.officialForm||art.offline&&/\/forms\//.test(art.src)?art.src:"";
+ return art.officialForm||art.officialCostume||art.offline&&/\/(?:forms|costumes)\//.test(art.src)?art.src:"";
 }
 function pooledExactSprite(url){
- const valid=/^(?:file:\/\/\/android_asset\/pokemon-sprites\/forms\/[a-z0-9-]+\.png|https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[a-f0-9]{40}\/sprites\/pokemon\/(?:shiny\/)?10[0-9]{3}\.png)$/.test(url);
+ const valid=/^(?:file:\/\/\/android_asset\/pokemon-sprites\/(?:forms|costumes)\/[a-z0-9-]+\.png|https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/[a-f0-9]{40}\/sprites\/pokemon\/(?:shiny\/)?10[0-9]{3}\.png)$/.test(url);
  if(!valid)return Promise.resolve("");
  const previous=spriteRequestCache.get(url),now=Date.now();
  if(previous&&(!previous.failedAt||now-previous.failedAt<SPRITE_FAILURE_RETRY_MS))return previous.promise;
@@ -7428,6 +7541,19 @@ function renderInfoChoices(){
   button.setAttribute("aria-label",(selected?"Ocultar ":"Mostrar ")+full);
   button.setAttribute("aria-pressed",String(selected));
  }
+ // This control belongs to Pokémon information, never in the capture card.
+ const cdLabel=cooldownState.enabled?"⏳ CD ON":"⏳ CD OFF";
+ const cooldownButton=uxOption(grid,cdLabel,cooldownState.enabled?"✓":"–",()=>{
+  if(Native.toggleCooldown)Native.toggleCooldown();
+ });
+ cooldownButton.parentElement.classList.toggle("chosen",cooldownState.enabled);
+ cooldownButton.parentElement.setAttribute("aria-label","Cooldown estimado "+
+  (cooldownState.enabled?"ligado":"desligado"));
+ cooldownButton.setAttribute("aria-pressed",String(cooldownState.enabled));
+ cooldownButton.disabled=!cooldownState.linked;
+ cooldownButton.title=cooldownState.linked?
+  "Mostrar ou ocultar estimativa de cooldown nos resultados":
+  "Vincule um treinador para ativar cooldown";
  const visibilityKeys=options.map(entry=>entry[0]);
  const allVisible=visibilityKeys.every(key=>resultDisplayOptions[key]===true);
  const allButton=document.createElement("button");allButton.type="button";

@@ -41,6 +41,119 @@ public class OverlayService extends Service {
             }
         };
     private boolean missionScreenOffRegistered = false;
+    private static final String ACTION_TRAINER_CHANGED =
+        "com.lucianotoscano.pokesearchoverlay.TRAINER_CHANGED";
+    private final android.content.BroadcastReceiver trainerChangedReceiver =
+        new android.content.BroadcastReceiver(){
+            @Override public void onReceive(android.content.Context ctx, Intent intent){
+                if(intent==null||!ACTION_TRAINER_CHANGED.equals(intent.getAction())||stopped)return;
+                // The selected trainer must be reflected in BOTH independent
+                // Pokeball searches. Revalidate the official login and Shiny
+                // before emitting new cards/alerts; never mix cached results.
+                ++requestGeneration;
+                searchInProgress=false;
+                queuedManualRefresh=false;
+                results="[]";resultsStale=false;
+                displayedApiResults=false;displayedApiSearchId=-1;
+                selected=-1;shinyVerified=false;
+                status("Treinador alterado · sincronizando resultados...");
+                update();
+                refresh(true);
+            }
+        };
+    private boolean trainerChangedReceiverRegistered=false;
+    private static final String ACTION_COOLDOWN_CHANGED =
+        "com.lucianotoscano.pokesearchoverlay.COOLDOWN_CHANGED";
+    private boolean cooldownChangedReceiverRegistered=false;
+    private final android.content.BroadcastReceiver cooldownChangedReceiver =
+        new android.content.BroadcastReceiver(){
+            @Override public void onReceive(android.content.Context c,Intent intent){
+                if(stopped||intent==null||!ACTION_COOLDOWN_CHANGED.equals(intent.getAction()))return;
+                pushCooldownState();
+            }
+        };
+    private void notifyCooldownChanged(){
+        sendBroadcast(new Intent(ACTION_COOLDOWN_CHANGED).setPackage(getPackageName()));
+    }
+    private String cooldownTrainerScope(){
+        // The active trainer is selected in the shared main profile, not the
+        // secondary overlay's independent filter preferences.
+        return CooldownCaptureStore.trainerScope(getSharedPreferences("prefs",MODE_PRIVATE));
+    }
+    private boolean cooldownEnabled(String scope){
+        return !scope.isEmpty()&&getSharedPreferences("prefs",MODE_PRIVATE)
+            .getBoolean("cooldownEnabled_"+scope,false);
+    }
+    private void pushCooldownState(){
+        String scope=cooldownTrainerScope();
+        JSONObject data=CooldownCaptureStore.ui(this,scope,cooldownEnabled(scope));
+        try{
+            data.put("searchCenter",displayedApiResults&&locationEnabled&&locationVerified?
+                locationCoords:"");
+            data.put("apiVerified",displayedApiResults&&locationVerified&&
+                !resultsStale&&!searchInProgress);
+            data.put("fresh",!resultsStale&&!searchInProgress);
+        }catch(Exception ignored){}
+        String jsPayload="window.onCooldownState("+data.toString()+")";
+        js(resultPanel,resultLoaded,jsPayload);
+        js(menuPanel,menuLoaded,jsPayload);
+        js(popupPanel,popupLoaded,jsPayload);
+        js(detailPanel,detailLoaded,"window.cooldownChanged("+data.toString()+")");
+    }
+    private void cooldownFeedback(String message){
+        js(detailPanel,detailLoaded,"window.cooldownFeedback("+JSONObject.quote(message)+")");
+    }
+    private void confirmCooldownCapture(int index){
+        if(stopped||loginPaused||index<0||selected<0||detailRoot==null||
+            detailRoot.getVisibility()!=View.VISIBLE)return;
+        String scope=cooldownTrainerScope();
+        if(scope.isEmpty()){cooldownFeedback("Vincule um treinador para registrar a captura.");return;}
+        try{
+            JSONArray arr=new JSONArray(results);
+            // JS passes sourceIndex from the provider, while selected is the
+            // displayed array index. Never confuse them after sorting/filtering.
+            if(selected>=arr.length()){cooldownFeedback("Resultado alterado.");return;}
+            JSONObject item=arr.getJSONObject(selected);
+            if(item.optInt("sourceIndex",-1)!=index||!currentCoordinateTarget(item)){
+                cooldownFeedback("Identidade do Pokémon alterada.");return;
+            }
+            String coords=extractCoordinates(item.optString("coords",""));
+            if(coords.isEmpty()){cooldownFeedback("Use Get coords antes de confirmar.");return;}
+            String fingerprint=coords+"|"+item.optString("number")+"|"+
+                item.optString("cp")+"|"+item.optString("iv")+"|"+
+                item.optString("expiresAtMs",item.optString("despawn",""));
+            boolean saved=CooldownCaptureStore.record(this,scope,coords,fingerprint,
+                System.currentTimeMillis());
+            if(!saved){cooldownFeedback("Captura já registrada. Use Desfazer para corrigir.");return;}
+            getSharedPreferences("prefs",MODE_PRIVATE).edit()
+                .putBoolean("cooldownEnabled_"+scope,true).apply();
+            pushCooldownState();notifyCooldownChanged();
+            cooldownFeedback("✓ Captura registrada localmente, sem publicar no chat.");
+        }catch(Exception ignored){cooldownFeedback("Não foi possível validar esta captura.");}
+    }
+    private void toggleCooldown(){
+        String scope=cooldownTrainerScope();
+        if(scope.isEmpty()){cooldownFeedback("Selecione um treinador vinculado.");return;}
+        boolean now=!cooldownEnabled(scope);
+        getSharedPreferences("prefs",MODE_PRIVATE).edit()
+            .putBoolean("cooldownEnabled_"+scope,now).apply();
+        pushCooldownState();notifyCooldownChanged();
+        cooldownFeedback(now?"Cooldown estimado ativado.":"Cooldown oculto.");
+    }
+    private void undoCooldown(){
+        String scope=cooldownTrainerScope();
+        if(CooldownCaptureStore.undo(this,scope)){
+            pushCooldownState();notifyCooldownChanged();
+            cooldownFeedback("Última confirmação desfeita.");
+        }else cooldownFeedback("Nenhuma confirmação recente para desfazer.");
+    }
+    private void resetCooldown(){
+        String scope=cooldownTrainerScope();
+        if(scope.isEmpty())return;
+        CooldownCaptureStore.reset(this,scope);
+        pushCooldownState();notifyCooldownChanged();
+        cooldownFeedback("Referência de cooldown removida.");
+    }
     private static volatile boolean running=false;
     private static volatile boolean secondaryRunning=false;
     public static boolean isRunning(){return running;}
@@ -51,7 +164,7 @@ public class OverlayService extends Service {
     private android.content.SharedPreferences overlayPrefs(){
         return getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0);
     }
-    private static final int BUBBLE_DP=45, DETAIL_DP=226, TOOLBAR_DP=34, MENU_BASE_DP=34;
+    private static final int BUBBLE_DP=45, DETAIL_DP=200, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private static final int RESULTS_HEADER_DP=30;
     private int spriteSize=45;
     private String visualPrefsJson="{}";
@@ -219,7 +332,7 @@ public class OverlayService extends Service {
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=32,detailHeight=225,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
@@ -251,6 +364,24 @@ public class OverlayService extends Service {
             JSONObject config=new JSONObject(filterConfigJson());
             config.put("mode",mode);
             config.put("shiny",shiny);
+            // Only a trainer previously verified from this site's own profile
+            // may be selected for account-specific Shiny results.
+            if(shiny){
+                android.content.SharedPreferences prefs=getSharedPreferences("prefs",MODE_PRIVATE);
+                String selected=prefs.getString("profileTrainerCode","");
+                boolean valid=false;
+                try{
+                    JSONArray list=new JSONArray(prefs.getString("profileTrainerList","[]"));
+                    for(int i=0;i<list.length();i++){
+                        JSONObject account=list.optJSONObject(i);
+                        if(account!=null&&selected.equals(account.optString("code"))){
+                            valid=true;break;
+                        }
+                    }
+                }catch(Exception ignored){}
+                if(valid&&selected.matches("[0-9]{12}"))
+                    config.put("shinyAccount",selected);
+            }
             config.put("locationEnabled",locationEnabled);
             config.put("locationCoords",locationEnabled?locationCoords:"");
             if(locationEnabled)config.put("locationRadius",locationRadius);
@@ -279,7 +410,7 @@ public class OverlayService extends Service {
                 JSONArray cards=response.optJSONArray("cards");
                 if(!"authorized-api-qa".equals(response.optString("source"))||
                     !response.optBoolean("criteriaConfirmed",false)||
-                    cards==null||cards.length()>10||
+                    cards==null||cards.length()>100||
                     response.optInt("searchId",-1)<0||
                     (response.optBoolean("requestedShiny",false)!=shiny)||
                      (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
@@ -357,8 +488,10 @@ public class OverlayService extends Service {
                     deliverCoords("","Erro ao guardar coordenadas.");return;
                 }
                 if(autoCopy)copyCoordinatesInternal(coords);
+                CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"✓ Coordenadas API copiadas":
                     "Coordenadas API disponíveis");
+                pushCoordsQuota(response.optJSONObject("quota"));
             });
         }catch(Exception ignored){
             deliverCoords("","Get coords API: identidade inválida.");
@@ -481,11 +614,16 @@ public class OverlayService extends Service {
     private static final long FAVORITE_ALERT_BATCH_INTERVAL_MS=12_000L;
     private static final long FAVORITE_ALERT_RETRY_DELAY_MS=60_000L;
     private static final int MAX_QUEUED_FAVORITES=100;
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_GENERAL_ALERT_ID=
+        new java.util.concurrent.atomic.AtomicInteger(33000);
     private static final class QueuedFavoriteAlert{
-        final String key,name,details;
+        final String key,name,title,details;
+        final JSONObject encounter;
         final long expiry;
-        QueuedFavoriteAlert(String key,String name,String details,long expiry){
-            this.key=key;this.name=name;this.details=details;this.expiry=expiry;
+        QueuedFavoriteAlert(String key,String name,String title,String details,
+                            long expiry,JSONObject encounter){
+            this.key=key;this.name=name;this.title=title;this.details=details;
+            this.expiry=expiry;this.encounter=encounter;
         }
     }
     private final java.util.LinkedHashMap<String,QueuedFavoriteAlert> queuedFavoriteAlerts=
@@ -509,34 +647,28 @@ public class OverlayService extends Service {
             scheduleFavoriteAlertDrain(FAVORITE_ALERT_RETRY_DELAY_MS);return;
         }
         java.util.Set<String> wanted=WatchAlerts.watched(this);
-        java.util.LinkedHashMap<String,java.util.ArrayList<QueuedFavoriteAlert>> bySpecies=
-            new java.util.LinkedHashMap<>();
-        for(QueuedFavoriteAlert pending:new java.util.ArrayList<>(queuedFavoriteAlerts.values())){
+        int delivered=0;
+        for(QueuedFavoriteAlert pending:
+            new java.util.ArrayList<>(queuedFavoriteAlerts.values())){
+            if(delivered>=FAVORITE_ALERT_BATCH_SIZE)break;
             if(!WatchAlerts.matches(pending.name,wanted)){
                 queuedFavoriteAlerts.remove(pending.key);continue;
             }
-            String species=WatchAlerts.normalized(pending.name);
-            if(!bySpecies.containsKey(species)&&bySpecies.size()>=FAVORITE_ALERT_BATCH_SIZE)
-                continue; // backpressure, not loss: leave remaining in queue
-            bySpecies.computeIfAbsent(species,k->new java.util.ArrayList<>()).add(pending);
-        }
-        int delivered=0;
-        for(java.util.ArrayList<QueuedFavoriteAlert> group:bySpecies.values()){
-            QueuedFavoriteAlert representative=group.get(0);
-            if(WatchAlerts.match(this,representative.name,representative.details)){
+            // Each encounter gets its own title: never hide a Shundo behind a
+            // different Pokémon of the same species, or dismiss unreported hits.
+            if(WatchAlerts.match(this,pending.name,pending.title,pending.details,
+                                notificationArtwork(pending.encounter))){
                 delivered++;
-                for(QueuedFavoriteAlert success:group){
-                    recentFavoriteAlertExpiries.put(success.key,success.expiry);
-                    queuedFavoriteAlerts.remove(success.key);
-                }
+                recentFavoriteAlertExpiries.put(pending.key,pending.expiry);
+                queuedFavoriteAlerts.remove(pending.key);
             }
         }
         if(!queuedFavoriteAlerts.isEmpty())
             scheduleFavoriteAlertDrain(delivered==0?FAVORITE_ALERT_RETRY_DELAY_MS:
                 FAVORITE_ALERT_BATCH_INTERVAL_MS);
         BugReport.log(this,"FAVORITE_ALERT_BATCH",
-            (isSecondaryOverlay()?"P2":"P1")+" grupos="+bySpecies.size()+
-            " entregues="+delivered+" pendentes="+queuedFavoriteAlerts.size());
+            (isSecondaryOverlay()?"P2":"P1")+" avisos="+delivered+
+            " pendentes="+queuedFavoriteAlerts.size());
     }
     private long armedDespawnMillis=0L;
     private final Runnable expiryRefresh=new Runnable(){
@@ -752,6 +884,7 @@ public class OverlayService extends Service {
         js(popupPanel,popupLoaded,data);
         js(resultPanel,resultLoaded,data);
         broadcastVisualPrefs();
+        pushCooldownState();
         if(selected>=0)showDetails(selected);
     }
     private void status(String s){
@@ -1178,6 +1311,13 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        // Independent app-wide maintenance and per-version stop for both overlays.
+        if(!AppAvailability.isAllowed(this)){stopSelf();return;}
+        // Only P2 needs a Premium lease. P1 remains free and works offline.
+        if(isSecondaryOverlay()&&PremiumAccess.controlled()&&!PremiumAccess.permitted(true)){
+            stopSelf();
+            return;
+        }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -1191,6 +1331,24 @@ public class OverlayService extends Service {
         } catch (RuntimeException e) {
             recordFailure("escuta de tela apagada",e);
         }
+        try{
+            android.content.IntentFilter trainerFilter=
+                new android.content.IntentFilter(ACTION_TRAINER_CHANGED);
+            if(android.os.Build.VERSION.SDK_INT>=33)
+                registerReceiver(trainerChangedReceiver,trainerFilter,
+                    android.content.Context.RECEIVER_NOT_EXPORTED);
+            else registerReceiver(trainerChangedReceiver,trainerFilter);
+            trainerChangedReceiverRegistered=true;
+        }catch(RuntimeException error){
+            recordFailure("sincronizar treinador",error);
+        }
+        try{
+            android.content.IntentFilter filter=new android.content.IntentFilter(ACTION_COOLDOWN_CHANGED);
+            if(android.os.Build.VERSION.SDK_INT>=33)
+                registerReceiver(cooldownChangedReceiver,filter,android.content.Context.RECEIVER_NOT_EXPORTED);
+            else registerReceiver(cooldownChangedReceiver,filter);
+            cooldownChangedReceiverRegistered=true;
+        }catch(RuntimeException error){recordFailure("sincronizar cooldown",error);}
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel("pokesearch","PokeSearch",
                 NotificationManager.IMPORTANCE_LOW));
@@ -1203,6 +1361,35 @@ public class OverlayService extends Service {
                 .setContentIntent(pi).setOngoing(true).build();
         startForeground(isSecondaryOverlay()?74:73,note);
         FirebaseStats.setOverlayVisible(this,true,isSecondaryOverlay());
+        final Runnable availabilityGuard=new Runnable(){
+            @Override public void run(){
+                if(stopped)return;
+                AppAvailability.refresh(OverlayService.this,state->{
+                    if(!state.allowed&&!stopped)stopSelf();
+                });
+                if(!stopped)handler.postDelayed(this,90000L);
+            }
+        };
+        handler.post(availabilityGuard);
+        if(isSecondaryOverlay()&&PremiumAccess.controlled()){
+            // A revoked or expired P2 lease stops only the secondary overlay.
+            handler.postDelayed(new Runnable(){
+                @Override public void run(){
+                    if(stopped)return;
+                    if(!PremiumAccess.permitted(isSecondaryOverlay())){stopSelf();return;}
+                    handler.postDelayed(this,5000L);
+                }
+            },5000L);
+            handler.postDelayed(new Runnable(){
+                @Override public void run(){
+                    if(stopped)return;
+                    PremiumAccess.verify(OverlayService.this,(allowed,premium)->{
+                        if(!allowed||(isSecondaryOverlay()&&!premium))stopSelf();
+                    });
+                    if(!stopped)handler.postDelayed(this,45000L);
+                }
+            },45000L);
+        }
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             overlayPrefs().getString("visualPrefsJson","{}")).toString();}
@@ -1472,12 +1659,12 @@ public class OverlayService extends Service {
         detailRoot.addView(detailPanel,new FrameLayout.LayoutParams(-1,-1));
         // A narrow transparent header grip lets the *detail card* move
         // independently of the Pokémon and the Pokébola. It deliberately
-        // excludes the 23dp × close control at the upper right.
+        // excludes Share, Favorites and Close buttons (3 × 23dp) plus gaps.
         View detailDragGrip=new View(this);
         detailDragGrip.setBackgroundColor(Color.TRANSPARENT);
         detailDragGrip.setContentDescription("Arrastar cartão de informações");
         FrameLayout.LayoutParams detailGripParams=new FrameLayout.LayoutParams(
-            dp(DETAIL_DP-39),dp(49),Gravity.TOP|Gravity.LEFT);
+            dp(DETAIL_DP-100),dp(49),Gravity.TOP|Gravity.LEFT);
         detailRoot.addView(detailDragGrip,detailGripParams);
         final float[] detailStartTouch=new float[2];
         final int[] detailStartPosition=new int[2];
@@ -2516,6 +2703,21 @@ public class OverlayService extends Service {
                         prior.has(field)&&!prior.isNull(field)&&
                         !prior.optString(field,"").trim().isEmpty())
                         card.put(field,prior.get(field));
+                // Lazy site images may disappear on refresh while their exact
+                // encounter stays visible. Keep the original URL ONLY when
+                // form, costume, Shiny and identity all still match.
+                boolean sameArtIdentity=card.optString("form","").equals(prior.optString("form",""))&&
+                    card.optString("costume","").equals(prior.optString("costume",""))&&
+                    card.optBoolean("shiny",false)==prior.optBoolean("shiny",false)&&
+                    card.optString("gender","").equals(prior.optString("gender",""));
+                if(sameArtIdentity&&card.optString("image","").isEmpty()&&
+                    prior.optBoolean("imageFromSite",false)&&
+                    prior.optString("image","").startsWith("https://")&&
+                    prior.optString("image","").length()<=1600&&
+                    !prior.optString("image","").contains(" ")){
+                    card.put("image",prior.getString("image"));
+                    card.put("imageFromSite",true);
+                }
             }catch(org.json.JSONException ignored){}
         }
         return incoming;
@@ -2533,7 +2735,7 @@ public class OverlayService extends Service {
         if(source!=null)for(int i=0;i<source.length();i++){
             JSONObject c=source.optJSONObject(i);if(c!=null)a.add(c);
         }
-        // The site sorts before we read the first ten cards. Preserve that order.
+        // The site sorts before our first verified cards. Preserve that order.
         if("site".equals(sort)){
             JSONArray inSiteOrder=new JSONArray();
             for(JSONObject card:a)inSiteOrder.put(card);
@@ -2594,7 +2796,52 @@ public class OverlayService extends Service {
         }
         return false;
     }
+    private String encounterAlertTitle(JSONObject card){
+        return EncounterAlertText.title(card.optString("name","Pokémon"),
+            card.optString("number",""),card.optString("iv",""),
+            card.optString("ivPercent",""),card.optBoolean("shiny",false),
+            mode,card.optString("rank",""));
+    }
+    private String encounterAlertDetails(JSONObject card,boolean favorite){
+        return EncounterAlertText.details(favorite,isSecondaryOverlay(),
+            card.optString("cp",""),card.optString("iv",""),
+            card.optString("ivPercent",""),card.optString("form",""),
+            card.optString("costume",""),card.optString("size",""),
+            card.optString("gender",card.optString("sex","")),
+            card.optString("location",""));
+    }
+    /** Display only the packed, species-exact base picture for ordinary forms.
+     * A missing or unverified costume must NOT borrow a misleading base sprite.
+     */
+    private android.graphics.Bitmap notificationArtwork(JSONObject card){
+        if(card==null||card.optBoolean("isCostume",false)||
+            card.optInt("costume_id",0)!=0)return null;
+        String costume=card.optString("costume","").trim();
+        String form=card.optString("form","").trim();
+        String region=card.optString("region","").trim();
+        String variant=card.optString("variant","").trim();
+        if((!costume.isEmpty()&&!"normal".equalsIgnoreCase(costume)&&
+            !"none".equalsIgnoreCase(costume))||
+            (!form.isEmpty()&&!"normal".equalsIgnoreCase(form)&&
+             !"default".equalsIgnoreCase(form))||
+            !region.isEmpty()||!variant.isEmpty())return null;
+        String id=card.optString("number","").replace("#","").trim();
+        if(!id.matches("[0-9]{1,4}"))return null;
+        int dex=Integer.parseInt(id);
+        if(dex<1||dex>1025)return null;
+        String file="pokemon-sprites/"+
+            (card.optBoolean("shiny",false)?"shiny/":"base/")+dex+".png";
+        try(java.io.InputStream input=getAssets().open(file)){
+            android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input);
+            if(bitmap==null)return null;
+            return android.graphics.Bitmap.createScaledBitmap(bitmap,96,96,true);
+        }catch(java.io.IOException|RuntimeException ignored){return null;}
+    }
     private boolean sendGeneralNotification(String title,String info,int id){
+        return sendGeneralNotification(title,info,id,null);
+    }
+    private boolean sendGeneralNotification(String title,String info,int id,
+                                            android.graphics.Bitmap artwork){
         // This is a confirmed-result notice or an explicit manual test.
         if(!WatchAlerts.permissionGranted(this))return false;
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -2618,11 +2865,14 @@ public class OverlayService extends Service {
         Intent open=new Intent(this,MainActivity.class);
         PendingIntent pending=PendingIntent.getActivity(this,74,open,
             PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification note=new Notification.Builder(this,channelId)
+        Notification.Builder builder=new Notification.Builder(this,channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title).setContentText(info).setAutoCancel(true)
+            .setSubText("PokeSearch · Novos Pokémon")
             .setContentIntent(pending)
-            .setStyle(new Notification.BigTextStyle().bigText(info)).build();
+            .setStyle(new Notification.BigTextStyle().bigText(info));
+        if(artwork!=null)builder.setLargeIcon(artwork);
+        Notification note=builder.build();
         try{nm.notify(id,note);return true;}
         catch(Exception e){recordFailure("notificação geral",e);return false;}
     }
@@ -2633,12 +2883,10 @@ public class OverlayService extends Service {
         catch(Exception e){recordFailure("ler histórico",e);history=new JSONArray();}
         java.util.Set<String> current=new java.util.HashSet<>();
         String firstNew="";
+        JSONObject firstNewCard=null;
         String firstGeneralKey="";
         long firstGeneralExpiry=0L;
-        String firstWatched="";
-        String watchDetails="";
         int watchedCount=0;
-        java.util.LinkedHashMap<String,String[]> individualFavorites=new java.util.LinkedHashMap<>();
         // Commit Favorite TTL ONLY after Android accepts the actual notice.
         // Missing permission, OFF, blocked channels and retries cannot silently
         // consume an encounter without a delivered alert.
@@ -2670,6 +2918,7 @@ public class OverlayService extends Service {
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c)){
                 firstNew=c.optString("name","Pokémon");
+                firstNewCard=c;
                 firstGeneralKey=key;
                 firstGeneralExpiry=expireAt;
             }
@@ -2681,29 +2930,18 @@ public class OverlayService extends Service {
                 pendingFavoriteKeys.put(key,expireAt);
                 pendingFavoriteSpecies.put(key,WatchAlerts.normalized(c.optString("name","")));
                 watchedCount++;
-                if(firstWatched.isEmpty()){
-                    firstWatched=c.optString("name","Pokémon");
-                    watchDetails="Busca "+mode.toUpperCase(java.util.Locale.ROOT)+
-                        " · PC "+c.optString("cp","?")+
-                        (c.optString("location","").isEmpty()?"":" · "+c.optString("location",""));
+                // Queue every verified encounter, not just the first species.
+                // Each published alert carries its own exact IV/rank/form/PC.
+                if(!queuedFavoriteAlerts.containsKey(key)){
+                    if(queuedFavoriteAlerts.size()>=MAX_QUEUED_FAVORITES)
+                        queuedFavoriteAlerts.entrySet().removeIf(
+                            entry->entry.getValue().expiry<=now);
+                    if(queuedFavoriteAlerts.size()<MAX_QUEUED_FAVORITES)
+                        queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert(key,
+                            c.optString("name","Pokémon"),
+                            encounterAlertTitle(c),encounterAlertDetails(c,true),
+                            expireAt,c));
                 }
-                String favoriteName=c.optString("name","Pokémon");
-                if(!individualFavorites.containsKey(WatchAlerts.normalized(favoriteName)))
-                    individualFavorites.put(WatchAlerts.normalized(favoriteName),
-                        new String[]{favoriteName,"PC "+c.optString("cp","?")});
-            }
-            if(pendingFavoriteKeys.containsKey(key)&&WatchAlerts.speciesToneCount(this)>0 &&
-                !queuedFavoriteAlerts.containsKey(key)){
-                if(queuedFavoriteAlerts.size()>=MAX_QUEUED_FAVORITES){
-                    // Prefer expiry over insertion order; never silently evict
-                    // an unexpired candidate just to store another one.
-                    queuedFavoriteAlerts.entrySet().removeIf(entry->entry.getValue().expiry<=now);
-                }
-                if(queuedFavoriteAlerts.size()<MAX_QUEUED_FAVORITES)
-                    queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert(key,
-                        c.optString("name","Pokémon"),
-                        "Busca "+mode.toUpperCase(java.util.Locale.ROOT)+" · PC "+c.optString("cp","?"),
-                        expireAt));
             }
             if(!newSpawn)continue; // history is only for truly new encounters
             JSONObject entry=new JSONObject();
@@ -2720,22 +2958,10 @@ public class OverlayService extends Service {
         JSONArray limited=new JSONArray();
         for(int i=Math.max(0,history.length()-40);i<history.length();i++)limited.put(history.opt(i));
         preferences.edit().putString("history",limited.toString()).apply();
-        if(watchedCount>0&&!firstWatched.isEmpty()){
-            int delivered=0;
-            if(WatchAlerts.speciesToneCount(this)>0){
-                // LT117: max five species per 12-second batch, then drain
-                // remaining verified encounter identities. No species after
-                // #5 disappears merely because the search returned 10 cards.
-                int before=queuedFavoriteAlerts.size();
-                drainFavoriteAlertQueue();
-                delivered=before-queuedFavoriteAlerts.size();
-            }else{
-                if(watchedCount>1)watchDetails+=" · +"+(watchedCount-1)+" Pokémon da lista";
-                if(WatchAlerts.match(this,firstWatched,watchDetails)){
-                    delivered++;
-                    recentFavoriteAlertExpiries.putAll(pendingFavoriteKeys);
-                }
-            }
+        if(watchedCount>0){
+            int before=queuedFavoriteAlerts.size();
+            drainFavoriteAlertQueue();
+            int delivered=Math.max(0,before-queuedFavoriteAlerts.size());
             BugReport.log(this,"FAVORITE_ALERT_PARITY",
                 (isSecondaryOverlay()?"P2":"P1")+" candidatos="+watchedCount+
                 " avisos="+delivered+" perfil="+
@@ -2746,9 +2972,10 @@ public class OverlayService extends Service {
                     "Permissão de notificações não concedida").apply();
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
-            if(sendGeneralNotification("Novo Pokémon: "+firstNew,
-                "Encontrado nos filtros confirmados · "+mode.toUpperCase(java.util.Locale.ROOT),
-                isSecondaryOverlay()?12075:12074))
+            if(firstNewCard!=null&&sendGeneralNotification(
+                encounterAlertTitle(firstNewCard),encounterAlertDetails(firstNewCard,false),
+                NEXT_GENERAL_ALERT_ID.updateAndGet(old->old>=43999?33000:old+1),
+                notificationArtwork(firstNewCard)))
                 {
                     lastAlertAt=now;
                     successfullyNotifiedGeneralSpawns.put(firstGeneralKey,firstGeneralExpiry);
@@ -2965,6 +3192,8 @@ public class OverlayService extends Service {
             JSONObject obj=a.getJSONObject(index);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
+            pushCoordsQuota();
+            checkCoordsAccount(false);
             moveDetail();
             js(resultPanel,resultLoaded,"window.highlight("+index+")");
             // RANK-EVO-DETAIL-03: request derived PvP projections only on tap.
@@ -3010,6 +3239,7 @@ public class OverlayService extends Service {
         detailManuallyPositioned=false;
         coordinateRequestToken++; // Invalidates pending site callbacks after dismiss.
         selected=-1;
+        offeredCapture=null;offeredGeneration=-1;
         // UX-DETAIL-TIMER-01: pause JS countdown while detail WebView is hidden.
         js(detailPanel,detailLoaded,"window.pauseDetailTimer()");
         if(detailRoot!=null)detailRoot.setVisibility(View.GONE);
@@ -3018,8 +3248,10 @@ public class OverlayService extends Service {
     private void resizeDetail(int heightDp){
         // LT66: 310dp clipped expanded PvP leagues on Samsung. Keep a
         // screen-bounded native window and let #panel scroll all content.
-        int available=Math.max(90,screenHeightDp()-68);
-        detailHeight=Math.max(90,Math.min(Math.min(440,available),heightDp));
+        // Show the complete compact card whenever the device has room; use
+        // inner scrolling only for genuinely tall content/evolution details.
+        int available=Math.max(96,screenHeightDp()-40);
+        detailHeight=Math.max(96,Math.min(Math.min(520,available),heightDp));
         if(detailParams!=null&&detailRoot!=null){
             detailParams.height=dp(detailHeight);moveDetail();
         }
@@ -3075,6 +3307,7 @@ public class OverlayService extends Service {
                     results=existing.toString();
                 }catch(Exception e){recordFailure("armazenar coordenadas",e);}
                 if(autoCopy)copyCoordinatesInternal(coords);
+                CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
             }
             if(result.optBoolean("pending",false)&&attempt<9){
@@ -3095,10 +3328,89 @@ public class OverlayService extends Service {
             }
         });
     }
+    // LT129: one optional, nonblocking inline action in the currently open
+    // detail card. Silent long-press copies NEVER open a modal or steal game focus.
+    private JSONObject offeredCapture;
+    private int offeredGeneration=-1;
+    private final java.util.Set<String> sharedCaptureKeys=new java.util.HashSet<>();
+    private String captureKey(JSONObject item){
+        return requestGeneration+"|"+item.optString("sourceIndex","")+"|"+
+            item.optString("number","")+"|"+item.optString("name","")+"|"+
+            item.optString("cp","")+"|"+item.optString("iv","");
+    }
+    private void offerCaptureAfterCopy(){
+        // Copying still enables the capture-share affordance, but never posts.
+        prepareCaptureShare(-1);
+    }
+    private void prepareCaptureShare(int sourceIndex){
+        // An explicit tap on Capturei can prepare the currently selected card
+        // without revealing coordinates or making additional API requests.
+        if(stopped||loginPaused||selected<0||detailRoot==null||
+           detailRoot.getVisibility()!=View.VISIBLE||!detailLoaded)return;
+        try{
+            JSONArray array=new JSONArray(results);
+            if(selected>=array.length())return;
+            JSONObject card=array.getJSONObject(selected);
+            if(sourceIndex>=0&&card.optInt("sourceIndex",-1)!=sourceIndex){
+                js(detailPanel,true,"window.captureShareAvailability(false,"+
+                    JSONObject.quote("Resultado alterado; selecione o Pokémon novamente.")+")");
+                return;
+            }
+            if(card.optString("name","").isEmpty()||!currentCoordinateTarget(card)||
+               sharedCaptureKeys.contains(captureKey(card))){
+                js(detailPanel,true,"window.captureShareAvailability(false,"+
+                    JSONObject.quote("Esta captura não está disponível para compartilhar.")+")");
+                return;
+            }
+            offeredCapture=new JSONObject(card.toString());
+            offeredGeneration=requestGeneration;
+            js(detailPanel,true,"window.offerCaptureShare("+card.optInt("sourceIndex",-1)+")");
+        }catch(Exception e){
+            recordFailure("preparar confirmação de captura",e);
+            js(detailPanel,true,"window.captureShareAvailability(false,"+
+               JSONObject.quote("Não foi possível preparar a captura.")+")");
+        }
+    }
+    private void confirmCaptureShare(int sourceIndex){
+        JSONObject offer=offeredCapture;
+        if(offer==null||offeredGeneration!=requestGeneration||stopped||loginPaused||
+           !currentCoordinateTarget(offer)||selected<0||
+           detailRoot==null||detailRoot.getVisibility()!=View.VISIBLE||
+           offer.optInt("sourceIndex",-99)!=sourceIndex)return;
+        // No coordinates, location, Trainer ID or encounter data is posted.\n        // Only an existing trusted raw 0..15 IV tuple is included in visible text.
+        String key=captureKey(offer);
+        if(sharedCaptureKeys.contains(key))return;
+        try{
+            JSONArray now=new JSONArray(results);
+            if(selected>=now.length()||
+               now.getJSONObject(selected).optInt("sourceIndex",-1)!=sourceIndex){
+                js(detailPanel,true,"window.captureShareFeedback(false,"+
+                   JSONObject.quote("Resultado mudou. Abra o Pokémon novamente.")+")");
+                return;
+            }
+        }catch(Exception ignored){return;}
+        offeredCapture=null; // one in-flight submission per confirmed tap
+        // Produce a public allowlisted text summary from the exact verified card.
+        // The service retains the coordinates locally; publisher never uploads them.
+        CaptureSharePublisher.publish(this,offer,
+            (success,message)->handler.post(()->{
+            if(stopped)return;
+            if(success)sharedCaptureKeys.add(key);
+            else if(selected>=0&&requestGeneration==offeredGeneration)
+                offeredCapture=offer;
+            if(selected>=0&&detailRoot!=null&&detailRoot.getVisibility()==View.VISIBLE
+               &&requestGeneration==offeredGeneration)
+                js(detailPanel,detailLoaded,"window.captureShareFeedback("+success+","+
+                   JSONObject.quote(message)+")");
+        }));
+    }
     private void copyCoordinatesInternal(String value){
         String coords=extractCoordinates(value);
         ClipboardManager cb=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-        if(cb!=null&&!coords.isEmpty())cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
+        if(cb!=null&&!coords.isEmpty()){
+            cb.setPrimaryClip(ClipData.newPlainText("Pokémon coordinates",coords));
+            offerCaptureAfterCopy();
+        }
     }
     private String extractCoordinates(String input){
         java.util.regex.Matcher m=java.util.regex.Pattern.compile("^\\s*([-+]?\\d{1,2}(?:\\.\\d+)?)\\s*[,;]\\s*([-+]?\\d{1,3}(?:\\.\\d+)?)\\s*$").matcher(input==null?"":input);
@@ -3130,8 +3442,33 @@ public class OverlayService extends Service {
         }
         return found;
     }
+    private long coordsAccountCheckedAt=0L;
+    private void checkCoordsAccount(boolean force){
+        if(stopped||loginPaused||detailPanel==null||!detailLoaded)return;
+        long now=System.currentTimeMillis();
+        if(!force&&now-coordsAccountCheckedAt<45_000L)return;
+        coordsAccountCheckedAt=now;
+        js(detailPanel,true,"window.coordsAccountUpdated({auth:'checking'})");
+        if(authorizedApiCollector==null){
+            authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
+        }
+        authorizedApiCollector.accountStatus(response->{
+            if(stopped||loginPaused||!detailLoaded)return;
+            String auth="unknown";
+            if(response.optBoolean("ok",false)){
+                String value=response.optString("auth","");
+                if("authenticated".equals(value)||"login-required".equals(value))auth=value;
+            }else if("rate-limited".equals(response.optString("reason")))auth="limited";
+            js(detailPanel,true,"window.coordsAccountUpdated({auth:"+JSONObject.quote(auth)+"})");
+        });
+    }
+    private void pushCoordsQuota(){pushCoordsQuota(null);}
+    private void pushCoordsQuota(JSONObject liveQuota){
+        js(detailPanel,detailLoaded,"window.coordsQuotaUpdated("+CoordsQuotaStore.snapshot(this,liveQuota).toString()+")");
+    }
     private void deliverCoords(String coordinates,String message){
         js(detailPanel,detailLoaded,"window.coordsResult("+JSONObject.quote(coordinates)+","+JSONObject.quote(message)+")");
+        pushCoordsQuota();
         status(message);
     }
     // The regular Favorites picker is not a #choices popup. Give it the same
@@ -3162,6 +3499,38 @@ public class OverlayService extends Service {
         }
     }
     public class Bridge{
+        // The result list and detail card run in separate Android WebViews. On
+        // some devices their file:// image load fails even though the bundled
+        // sprite exists. Only an exact Dex-verified base (normal or shiny) may
+        // call this read-only bridge. No network, storage path or credentials.
+        @JavascriptInterface public String bundledBaseSprite(int dex,boolean shiny){
+            if(dex<1||dex>1025)return "";
+            return readBundledPng("pokemon-sprites/"+
+                (shiny?"shiny/":"base/")+dex+".png");
+        }
+        @JavascriptInterface public String bundledExactSprite(String relative){
+            // A known exact costume/form image, never a supplied remote URL or
+            // general file path. Both overlay services share the same assets.
+            if(relative==null||relative.contains("..")||
+               !relative.matches("(?:forms|costumes)/[A-Za-z0-9_.-]{4,140}\\.png"))
+                return "";
+            return readBundledPng("pokemon-sprites/"+relative);
+        }
+        private String readBundledPng(String file){
+            try(InputStream stream=getAssets().open(file);
+                ByteArrayOutputStream buffer=new ByteArrayOutputStream()){
+                byte[] chunk=new byte[4096];int count;
+                while((count=stream.read(chunk))!=-1){
+                    if(buffer.size()+count>128*1024)return "";
+                    buffer.write(chunk,0,count);
+                }
+                byte[] png=buffer.toByteArray();
+                if(png.length<30||png[0]!=(byte)0x89||png[1]!=0x50||
+                   png[2]!=0x4e||png[3]!=0x47)return "";
+                return "data:image/png;base64,"+
+                    android.util.Base64.encodeToString(png,android.util.Base64.NO_WRAP);
+            }catch(Exception ignored){return "";}
+        }
         @JavascriptInterface public void previewVisualArea(String area){
             handler.post(()->OverlayService.this.setVisualEditorPreview(area));
         }
@@ -3191,9 +3560,19 @@ public class OverlayService extends Service {
             String valid=extractCoordinates(coords);
             if(valid.isEmpty()){js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("Coordenadas inválidas")+")");return;}
             ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-            if(clipboard!=null){clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas Pokémon",valid));js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("✓ Copiado!")+ ")");}
+            if(clipboard!=null){
+                clipboard.setPrimaryClip(ClipData.newPlainText("Coordenadas Pokémon",valid));
+                js(detailPanel,detailLoaded,"window.copyFeedback("+JSONObject.quote("✓ Copiado!")+ ")");
+                offerCaptureAfterCopy();
+            }
         });}
 
+        @JavascriptInterface public void prepareCaptureShare(int sourceIndex){
+            handler.post(()->OverlayService.this.prepareCaptureShare(sourceIndex));
+        }
+        @JavascriptInterface public void confirmCaptureShare(int sourceIndex){
+            handler.post(()->OverlayService.this.confirmCaptureShare(sourceIndex));
+        }
         @JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){handler.post(()->{
             // Validate BEFORE mutating even the confirmed-state flag. An invalid
             // clipboard or hand-typed coordinate must not discard a proven filter.
@@ -4343,6 +4722,11 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
+        @JavascriptInterface public void confirmCooldownCapture(int sourceIndex){handler.post(()->OverlayService.this.confirmCooldownCapture(sourceIndex));}
+        @JavascriptInterface public void toggleCooldown(){handler.post(OverlayService.this::toggleCooldown);}
+        @JavascriptInterface public void undoCooldown(){handler.post(OverlayService.this::undoCooldown);}
+        @JavascriptInterface public void resetCooldown(){handler.post(OverlayService.this::resetCooldown);}
+        @JavascriptInterface public void refreshCoordsAccount(){handler.post(()->checkCoordsAccount(true));}
     }
     private void requestCoordinates(int sourceIndex,boolean autoCopy){
         final long requestToken=++coordinateRequestToken;
@@ -4652,7 +5036,16 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        if(cooldownChangedReceiverRegistered){
+            try{unregisterReceiver(cooldownChangedReceiver);}catch(IllegalArgumentException ignored){}
+            cooldownChangedReceiverRegistered=false;
+        }
         if(!running&&!secondaryRunning)SupportMissionState.overlayStopped();
+        if(trainerChangedReceiverRegistered){
+            try{unregisterReceiver(trainerChangedReceiver);}
+            catch(IllegalArgumentException ignored){}
+            trainerChangedReceiverRegistered=false;
+        }
         if (missionScreenOffRegistered) {
             try { unregisterReceiver(missionScreenOffReceiver); }
             catch (IllegalArgumentException ignored) {}
