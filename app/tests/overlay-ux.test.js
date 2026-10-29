@@ -1807,7 +1807,7 @@ test("HOME-04 keeps transparent brand left, controls right and plain outside bac
   home.includes('brandTitle.setContentDescription("PokeSearch")')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
-  home.includes("auth.setBackground(homeSurface(");
+  home.includes("auth.setBackground(homeGlassPanel(18))");
 })());
 test("BELL-THEME-02 floating bell uses black in light mode and white in dark mode",()=>{
  const light='body.controls-window.visual-light-menu #quickMenuList button[data-key="bell"]:not(.bell-sound-new):not(.bell-sound-both) .quickGlyph{';
@@ -2471,7 +2471,7 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
   home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
-  home.includes("auth.setBackground(homeSurface(")&&
+  home.includes("auth.setBackground(homeGlassPanel(18))")&&
   main.includes("refreshSessionSummary();")&&
   main.includes("refreshHomeOverlay();")&&
   main.includes("View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR");
