@@ -707,3 +707,12 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - `Releases/latest` confirmado como LT178 (draft=false, prerelease=false); atualização poderá ser vista pelo atualizador existente na próxima consulta, conforme preferências e permissões do Android. A instalação exige confirmação do usuário, sem instalação forçada.
 - **Google Drive não atualizado nesta etapa:** o registro de Drive anteriormente usado não foi encontrado no escopo da conta Drive conectada; link antigo não foi alterado nem declarado atualizado. Distribuição pública verificada via GitHub.
 - Após publicação, testes funcionais de uso real no Samsung/Moto devem validar menus, sessão autenticada, chamada API/429, contagem e cópia. O sucesso automático não equivale à homologação física.
+
+
+### LT179 QA — ↻ Doce Raro e atualizar quando todos copiados (29/10/2026)
+- Base da branch: LT178 oficial `0.01.78 / 54383`; não alterar/invalidar a distribuição atual.
+- Branch: `fix/lt179-candy-refresh-after-copy-20261029`; detalhes e checklist em [LT179](LT179_DOCE_RARO_REFRESH_APOS_COPIA_20261029.md).
+- Toque curto ↻: `pointerup` + fallback `click` deduplicado 400ms na WebView local; segurar por 550ms abre somente 1/3/5 min. Bridge Android confirma recebimento com Toast.
+- Ao copiar a última coordenada ainda ativa e colorida, marca cinza e solicita a próxima busca uma vez por geração; toques em coordenadas já cinzas não fazem nova consulta. Continua respeitando `Retry-After` e guardando atualização pendente até o fim do bloqueio.
+- Proteção contra loop e cap oficial de 10 preservadas; duas Pokébolas sem alterações. Teste `lt179-candy-refresh-gestures.test.js` e regressão LT175.
+- Workflow QA isolado `lt179-candy-refresh-signed-qa.yml` tenta gerar versão `0.01.79 / 54384` assinada; validar execução/arquivo/hash antes de anunciar artefato. Não houve autorização nesta solicitação para merge, Release, Drive ou atualização pública.
