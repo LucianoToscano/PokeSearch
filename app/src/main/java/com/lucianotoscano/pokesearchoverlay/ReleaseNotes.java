@@ -50,7 +50,7 @@ public final class ReleaseNotes {
     }
 
     private static JSONArray entries(Activity a) {
-        try (InputStream in=a.getAssets().open(ASSET);
+        try (InputStream in=OtaAssets.open(a,ASSET);
              ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] buffer=new byte[4096];
             int size;
