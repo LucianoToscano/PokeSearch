@@ -2,29 +2,6 @@
   "schema": "pokesearch-release-notes-v1",
   "releases": [
     {
-      "id": "lt145-qa22-card-final-20261029",
-      "minVersionCode": 54350,
-      "date": "29/10/2026",
-      "title": "PokeSearch LT145 QA22 — Card compacto e Rank destacado",
-      "sections": {
-        "novidades": [
-          "Rank PvP agora destacado em selo discreto junto aos atributos, sem ficar solto no card."
-        ],
-        "melhorias": [
-          "Nome, Pokédex, sexo, tamanho e forma agrupados sem faixa vazia.",
-          "Card de vidro mais compacto sem esmagar as caixas de IV, PC e nível.",
-          "Rolagem interna apenas quando a altura útil da tela ou evoluções expandidas realmente exigirem."
-        ],
-        "correcoes": [
-          "Fallback visual neutro para sprites indisponíveis, sem trocar a espécie ou fantasia.",
-          "Mantidos sprites offline e normalização proporcional do Gengar de Halloween; cabeçalho e Despawn preservados."
-        ],
-        "emDesenvolvimento": [
-          "Homologação visual no Samsung e na segunda Pokébola obrigatória antes da publicação global."
-        ]
-      }
-    },
-    {
       "id": "release-notes-ui-20261022",
       "minVersionCode": 54250,
       "date": "22/10/2026",
@@ -406,6 +383,29 @@
         "emDesenvolvimento": [
           "Os APKs históricos publicados com etiqueta 0.00.100+ mantêm os próprios hashes e nomes originais como registros imutáveis; este novo APK é um build corrigido.",
           "Homologação visual e sonora no Samsung continua necessária; CI aprovado não substitui o teste no aparelho."
+        ]
+      }
+    },
+    {
+      "id": "lt145-qa22-card-final-20261029",
+      "minVersionCode": 54350,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT145 QA22 — Card compacto e Rank destacado",
+      "sections": {
+        "novidades": [
+          "Rank PvP agora destacado em selo discreto junto aos atributos, sem ficar solto no card."
+        ],
+        "melhorias": [
+          "Nome, Pokédex, sexo, tamanho e forma agrupados sem faixa vazia.",
+          "Card de vidro mais compacto sem esmagar as caixas de IV, PC e nível.",
+          "Rolagem interna apenas quando a altura útil da tela ou evoluções expandidas realmente exigirem."
+        ],
+        "correcoes": [
+          "Fallback visual neutro para sprites indisponíveis, sem trocar a espécie ou fantasia.",
+          "Mantidos sprites offline e normalização proporcional do Gengar de Halloween; cabeçalho e Despawn preservados."
+        ],
+        "emDesenvolvimento": [
+          "Homologação visual no Samsung e na segunda Pokébola obrigatória antes da publicação global."
         ]
       }
     }
