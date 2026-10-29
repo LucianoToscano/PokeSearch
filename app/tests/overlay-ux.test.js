@@ -1908,9 +1908,11 @@ test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
   !exportCode.includes('prefs.getAll().toString()')&&
   !exportCode.includes('"locationCoords"');
 })());
-test("HOME-01 keeps centered body empty and PoGoCoordinates panel compact",(()=>{
+test("HOME-LT152 rehouses PoGoCoordinates account while rebuilding owner reference Home",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1))")&&
+ return home.includes("HomeIllustrated152.assemble(")&&
+  home.includes("homeAuthHost.addView(auth")&&
+  !home.includes("screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1))")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
   home.includes('homeText("PoGoCoordinates"')&&
   home.includes("guestPanel=new LinearLayout(this)")&&
