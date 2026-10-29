@@ -61,6 +61,36 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #choices.periodPanel .periodTile{box-sizing:border-box;width:36px;min-width:36px;height:34px;min-height:34px;flex:0 0 34px;padding:0;background:#151b26e6;border:1px solid #ffffff37;border-radius:6px;color:#e3e8f0;font-size:11px;font-weight:700;text-align:center}
 #choices.periodPanel .periodTile.chosen{border-color:#70d6b1;color:#c3ffe7;background:#265a46ed}
 body:not(.expanded) #choices{display:none}
+
+/* LT181: exact compact Pokébola menu geometry and theme tokens */
+:root{--visual-menu-bg:rgba(15,19,26,.5);--visual-menu-button-bg:rgba(15,19,26,.5);
+--visual-menu-readable-bg:rgba(15,19,26,.86);--visual-menu-readable-button-bg:rgba(15,19,26,.7);
+--visual-menu-border:rgba(227,233,241,.22);--visual-menu-fg:#f2f7fc;
+--visual-menu-blur:4px;--visual-menu-tile-shadow:0 1px 3px #0004}
+#controls button,#controls button#close{background:var(--visual-menu-button-bg)!important;border:1px solid var(--visual-menu-border)!important;box-shadow:var(--visual-menu-tile-shadow)!important;color:var(--visual-menu-fg);backdrop-filter:blur(var(--visual-menu-blur))}
+#controls button#close{color:#ff596c}#controls button.locOn{color:#a8efd4}
+#choices.locationPanel,#choices.infoPanel{left:0!important;width:148px!important;min-width:148px!important;max-width:148px!important;max-height:145px!important;height:max-content!important;padding:4px 5px 5px!important;overflow:visible!important;background:var(--visual-menu-readable-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;border-radius:8px!important;box-shadow:var(--visual-menu-tile-shadow)!important;backdrop-filter:blur(var(--visual-menu-blur))}
+#choices.locationPanel>.choiceHeader,#choices.infoPanel>.choiceHeader{box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:3px!important;width:100%!important;height:26px!important;min-height:26px!important;margin:0 0 4px!important;padding:0!important;font:700 11.5px/1.12 Roboto,Arial,sans-serif!important;white-space:nowrap}
+#choices.locationPanel .locClipboardTools{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;gap:3px!important;flex:0 0 auto!important;height:25px!important}
+#choices.locationPanel .locClipboardTools button{flex:0 0 25px!important;width:25px!important;height:25px!important;min-width:25px!important;min-height:25px!important;padding:3px!important;margin:0!important;background:var(--visual-menu-readable-button-bg)!important;border:1px solid var(--visual-menu-border)!important;color:var(--visual-menu-fg)!important}
+#choices.locationPanel>.locCoordsRow{display:flex!important;align-items:center!important;width:100%!important;height:32px!important;margin:0 0 3px!important;padding:0!important}
+#choices.locationPanel>.locCoordsRow>input.locField{flex:1 1 auto!important;min-width:0!important;width:100%!important;height:32px!important;min-height:32px!important;margin:0!important;padding:3px 4px!important;font:500 8px/1.15 monospace!important;letter-spacing:-.2px!important;background:var(--visual-menu-readable-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important}
+#choices.locationPanel>.locSliderRow{height:24px!important;margin:0 0 3px!important;padding:0!important}
+#choices.locationPanel>.locSliderRow>input{width:100%!important;height:22px!important;margin:0!important}
+#choices.locationPanel>.locRadiusRow{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:29px!important;min-height:29px!important;gap:4px!important;margin:0!important;padding:0!important}
+#choices.locationPanel>.locRadiusRow>.locRadiusInputWrap{display:inline-flex!important;align-items:center!important;gap:1px!important;flex:0 0 65px!important;width:65px!important;height:29px!important}
+#choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>input.locRadiusNumber{flex:0 0 46px!important;width:46px!important;height:29px!important;min-height:29px!important;padding:2px!important;margin:0!important;font:500 12px/1.1 monospace!important;text-align:center!important;background:var(--visual-menu-readable-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important}
+#choices.locationPanel>.locRadiusRow>.locRadiusInputWrap>.locRadiusUnit{font-size:10px!important}
+#choices.locationPanel>.locRadiusRow>.compactLocationActions{display:inline-flex!important;align-items:center!important;gap:3px!important;flex:0 0 auto!important;height:29px!important;min-height:29px!important}
+#choices.locationPanel>.locRadiusRow>.compactLocationActions>button{box-sizing:border-box!important;flex:0 0 29px!important;width:29px!important;height:29px!important;min-height:29px!important;max-height:29px!important;padding:4px!important;margin:0!important;border-radius:6px!important;background:var(--visual-menu-readable-button-bg)!important;border:1px solid var(--visual-menu-border)!important;box-shadow:var(--visual-menu-tile-shadow)!important}
+#choices.periodPanel{left:32px!important;width:30px!important;min-width:30px!important;max-width:30px!important;display:flex!important;flex-direction:column!important;gap:3px!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+#choices.periodPanel>.periodTile{box-sizing:border-box!important;flex:0 0 30px!important;width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;max-height:30px!important;padding:0!important;border-radius:6px!important;background:var(--visual-menu-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;box-shadow:var(--visual-menu-tile-shadow)!important}
+#choices.periodPanel>.periodTile.chosen{border-color:#a8efd4!important;color:#a8efd4!important}
+#choices.infoPanel>.infoGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important}
+#choices.infoPanel .infoTile{box-sizing:border-box!important;min-width:0!important;width:100%!important;height:30px!important;min-height:30px!important;padding:2px 3px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:2px!important;font-size:9px!important;text-align:left!important;background:var(--visual-menu-readable-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;border-radius:6px!important}
+#choices.infoPanel .infoTile.chosen{border-color:#a8efd4!important}
+#choices.infoPanel .infoTile b{font-size:11px!important;color:#a8efd4!important}
+
 </style></head><body>
 <div id="controls" role="toolbar" aria-label="Controles Doce Raro">
 <button id="location" aria-label="Localização e raio" onclick="openPanel('location')" title="Localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
