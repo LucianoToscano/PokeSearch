@@ -10,7 +10,9 @@ let checks=0;const test=(label,fn)=>{fn();checks++;console.log("PASS LT123 "+lab
 test("P1 and P2 top controls have correct icons and independent callbacks",()=>{
  assert.match(home,/overlayControl=makeIcon\(R.drawable.sem_filtro/);
  assert.match(home,/secondaryOverlayControl=makeIcon\(R.drawable.sem_filtro/);
- assert.match(home,/R.drawable.personalizado:R.drawable.sem_filtro/);
+ assert.match(home,/secondaryOverlayControl.setImageResource\(R.drawable.personalizado\)/);
+ assert.match(home,/overlayControl.setImageResource\(R.drawable.sem_filtro\)/);
+ assert.match(home,/HomeIllustrated152.assemble\(/);
  assert.match(home,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(home,/dualOverlayRow.setVisibility\(View.VISIBLE\)/);
 });
