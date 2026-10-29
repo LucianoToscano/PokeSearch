@@ -29,3 +29,16 @@ O resultado de CI não confirma renderização real no Samsung. Testar, após in
 - GitHub Actions [#40873019165](https://github.com/LucianoToscano/PokeSearch/actions/runs/40873019165) abortou **antes do build e da publicação**: o teste histórico `lt153-pvp-clarity-layout.test.js` ainda exigia margens simétricas com coordenadas centradas, incompatíveis com a correção explícita de reticências pedida pelo usuário.
 - Também localizada verificação antiga em `lt165-pvp-costume-evolution-references.test.js` exigindo `text-overflow:ellipsis`; ambas foram atualizadas para testar que a coordenada completa pode quebrar linha, sem perder dígitos ou mudar o valor da cópia.
 - Workflow oficial alterado para testar explicitamente os dois contratos revisados e gerar nova execução na main após merge autorizado. **Nenhum APK da tentativa inicial foi publicado** e a tag LT168 anterior foi preservada.
+
+## Regressão completa GO após integração (29/10/2026)
+
+A segunda tentativa oficial [#40873357875](https://github.com/LucianoToscano/PokeSearch/actions/runs/40873357875) parou antes do APK porque `lt161-shellos-gastrodon-west-sea-sprites.test.js` exigia ausência de arte em East Sea, agora coberta pelo índice GO exato. Para impedir uma sequência de falhas em testes históricos antigos, foi introduzida a execução **de todos os testes Node de produção**, não apenas da seleção reduzida de QA.
+
+Essa validação encontrou e corrigiu três expectativas obsoletas, **sem modificar o comportamento novo do aplicativo**:
+- LT108: Furfrou Dandy/Debutante/Heart/Diamond/Matron/Pharaoh/Kabuki/La Reine agora têm sprite GO exata; a espécie Natural não deve substituir esses trajes.
+- LT161: Shellos/Gastrodon East Sea agora possuem `pm422/423.fEAST_SEA` normal/Shiny com hash verificado; West Sea continua offline.
+- LT145: o fallback `◉` foi substituído por iniciais discretas, preservando a ausência de sprites incorretas.
+
+**Suíte Node completa aprovada:** [GitHub Actions #40873960256](https://github.com/LucianoToscano/PokeSearch/actions/runs/40873960256) — SUCCESS, sem exclusões além do teste obsoleto LT74 DEBUG já excluído nos workflows oficiais. O pipeline oficial LT169 foi atualizado para exigir explicitamente essas regressões antes de promover o APK.
+
+A versão pública só será considerada LT169 após build assinado e verificação da release real. O QA físico Samsung continua pendente.
