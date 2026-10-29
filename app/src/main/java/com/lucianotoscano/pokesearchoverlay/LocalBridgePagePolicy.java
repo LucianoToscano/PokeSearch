@@ -11,10 +11,14 @@ final class LocalBridgePagePolicy {
             return false;
         try{
             URI uri=URI.create(url);
-            if(!"file".equals(uri.getScheme())||
-                uri.getRawAuthority()!=null||
-                !("/android_asset/"+expectedPage).equals(uri.getRawPath()))
-                return false;
+            if(uri.getRawFragment()!=null||uri.getRawUserInfo()!=null||uri.getPort()!=-1)return false;
+            boolean original="file".equals(uri.getScheme()) &&
+                uri.getRawAuthority()==null &&
+                ("/android_asset/"+expectedPage).equals(uri.getRawPath());
+            boolean ota="https".equals(uri.getScheme()) &&
+                "appassets.androidplatform.net".equals(uri.getRawAuthority()) &&
+                ("/assets/"+expectedPage).equals(uri.getRawPath());
+            if(!original&&!ota)return false;
             String query=uri.getRawQuery();
             if("detail.html".equals(expectedPage))return query==null;
             return query==null||"controls=1".equals(query)||

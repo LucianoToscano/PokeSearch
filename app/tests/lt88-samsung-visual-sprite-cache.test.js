@@ -35,7 +35,7 @@ test("native favorites cache is private, bounded, and shared read-only with WebV
  assert.match(cache,/verified-base-sprites-v1/);
  assert.match(cache,/Pattern RAW=Pattern\.compile/);
  assert.match(cache,/new WebResourceResponse\("image\/png"/);
- assert.match(native,/VerifiedSpriteCache\.fromDisk\(OverlayService\.this,request\.getUrl\(\)\)/);
+ assert.match(native,/OtaAssets\.intercept\(OverlayService\.this,otaWebLoader,request\.getUrl\(\)\)/);
 });
 test("menu sprites deduplicate verified base requests and never invent costumes",()=>{
  assert.match(html,/const spriteRequestCache=new Map/);

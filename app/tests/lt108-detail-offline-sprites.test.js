@@ -65,10 +65,8 @@ check("provider-only forms and data images retain their own exact URLs",()=>{
  assert.equal(helper.resolve({image:base+"1026.png"}).offline,false);
 });
 check("each detail WebView is created for each overlay service, both share assets",()=>{
- assert.match(service,/detailPanel=new WebView\(this\)/);
- assert.match(service,/resultPanel=new WebView\(this\)/);
- assert.match(service,/detailPanel\.loadUrl\("file:\/\/\/android_asset\/detail.html"\)/);
- assert.match(service,/resultPanel\.loadUrl\("file:\/\/\/android_asset\/dock.html\?results=1"\)/);
+ assert.match(service,/detailPanel\.loadUrl\(OtaAssets\.webUrl\("detail\.html"\)\)/);
+ assert.match(service,/resultPanel\.loadUrl\(OtaAssets\.webUrl\("dock\.html\?results=1"\)\)/);
  assert.match(service,/isSecondaryOverlay\(\)/);
  assert.match(detail,/img\.onload=/);
  assert.match(detail,/img\.onerror=/);

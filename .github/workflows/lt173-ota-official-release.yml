@@ -1,0 +1,218 @@
+name: LT173 — OTA inteligente — release oficial assinada
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lt173-ota-official-release.yml'
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-lt173-official-once
+  cancel-in-progress: false
+jobs:
+  official-lt173:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 70
+    env:
+      POKE_TEST_VERSION_CODE: '54378'
+      POKE_TEST_VERSION_LABEL: '51178'
+      POKE_TEST_PUBLIC_VERSION: '0.01.73'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'true'
+      POKE_SCRAPBOOK_QA_ACK: 'stage1-readonly'
+      POKE_SCRAPBOOK_ONLINE_QA: 'true'
+      POKE_SCRAPBOOK_ONLINE_ACK: 'read-only-moderation-pending'
+      OFFICIAL_APK: 'PokeSearch-v0.01.73-LT.apk'
+      OFFICIAL_TAG: 'v0.01.73-54378'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout exact approved main commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Enforce LT172 baseline and one-time official stable release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 40e94bafe86dfb778be719e0cf1310a7f3085457 HEAD
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.72-54377'
+          if gh release view "$OFFICIAL_TAG" >/dev/null 2>&1; then
+            echo "::error::Official LT173 exists; refusing overwrite"; exit 1
+          fi
+          test "$(python3 -c 'import json; print(json.load(open("ota/channel.json"))["packVersion"])')" = 0
+          test -s app/src/main/java/com/lucianotoscano/pokesearchoverlay/OtaAssets.java
+          node - <<'NODE'
+          const r=require('./app/src/main/assets/release_notes.json');
+          if(r.releases.filter(x=>x.minVersionCode===54378&&x.title.includes('LT173')).length!==1)
+            throw Error('Missing unique LT173 user-facing release note');
+          NODE
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore and verify permanent PokeSearch signer
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Missing protected signing secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lt173-official.p12"
+          chmod 600 "$RUNNER_TEMP/lt173-official.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt173-official.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt173-official.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" |
+            openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256" || { echo "::error::Signer differs from LT172"; exit 1; }
+      - name: Run full regression, dual-account, dual-Pokeball and OTA policy tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in app/tests/*.test.js; do
+            [ "$test" = "app/tests/lt74-local-update-preview.test.js" ] && continue
+            echo "::group::$test"
+            node "$test"
+            echo "::endgroup::"
+          done
+          python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py
+          python3 scripts/test_ota_builder.py
+          mkdir -p "$RUNNER_TEMP/bridge-qa"
+          javac --release 17 -d "$RUNNER_TEMP/bridge-qa" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java \
+            app/tests/LocalBridgePagePolicyTest.java \
+            app/tests/OtaLocalBridgePolicyTest.java
+          java -cp "$RUNNER_TEMP/bridge-qa" com.lucianotoscano.pokesearchoverlay.LocalBridgePagePolicyTest
+          java -cp "$RUNNER_TEMP/bridge-qa" com.lucianotoscano.pokesearchoverlay.OtaLocalBridgePolicyTest
+      - name: Rebuild verified offline sprites and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('app/src/main/assets/pokemon-sprites')
+          manifest=json.loads((root/'manifest.json').read_text())
+          assert manifest['dexCount']==1025
+          assert manifest['baseCount']>=950
+          assert manifest['shinyCount']>=500
+          for path in ('base/25.png','shiny/94.png','forms/585-autumn.png',
+                       'forms/zigzagoon-galar.png',
+                       'costumes/pm41.fHALLOWEEN_2026_01.icon.png'):
+            assert (root/path).is_file(), path
+          PY
+      - name: Build signed and R8-protected LT173 official APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify immutable APK version, permanent certificate, ZIP integrity and files
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" > APK-ENTRIES.txt
+          for asset in assets/dock.html assets/detail.html assets/probe.js \
+            assets/pokemon-sprites/manifest.json assets/pokemon-sprites/base/25.png \
+            assets/pokemon-sprites/shiny/94.png; do
+            grep -Fxq "$asset" APK-ENTRIES.txt
+          done
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54378'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.73'" PACKAGE-VERSION.txt
+          ! grep -Fq 'application-debuggable' PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          SIGNER="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
+          test "$SIGNER" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$OFFICIAL_APK"
+          test "$(stat -c%s "$OFFICIAL_APK")" -gt 30000000
+          sha256sum "$OFFICIAL_APK" > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          test "$(cat SOURCE_COMMIT.txt)" = "$GITHUB_SHA"
+          sha256sum --check SHA256SUMS.txt
+          printf 'VERIFIED APK: '; stat -c '%n %s bytes' "$OFFICIAL_APK"
+          cat SHA256SUMS.txt
+      - name: Upload signed APK and proof before official publication
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT173-54378-Oficial-Assinado
+          path: |
+            ${{ env.OFFICIAL_APK }}
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            SOURCE_COMMIT.txt
+            PACKAGE-VERSION.txt
+            APK-ENTRIES.txt
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish approved LT173 as stable release for existing in-app updater
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.72-54377'
+          if gh release view "$OFFICIAL_TAG" >/dev/null 2>&1; then
+            echo "::error::Release tag already exists; refusing overwrite"; exit 1
+          fi
+          gh release create "$OFFICIAL_TAG" "$OFFICIAL_APK" \
+            --target "$GITHUB_SHA" --latest \
+            --title 'PokeSearch LT173 — 0.01.73 | Atualização inteligente OTA' \
+            --notes 'Atualizações inteligentes de recursos assinados (menus, cards, sprites e dados), verificação SHA-256, fallback e rollback. Preservadas as duas Pokébolas e as duas contas PoGoCoordinates com seleção de treinadores VIP independentes. O canal de pacotes OTA começa desligado até que haja pacote de recursos validado; este primeiro update exige instalação normal do APK e confirmação pelo Android. Testes automatizados e assinatura permanente verificados. QA físico Samsung/Moto ainda pendente. A LT172 permanece disponível como release anterior.'
+      - name: Verify published latest and exact APK digest from GitHub API
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = "$OFFICIAL_TAG"
+          test "$(gh release view "$OFFICIAL_TAG" --json isDraft,isPrerelease --jq '[.isDraft,.isPrerelease]|join(",")')" = 'false,false'
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > RELEASE-VERIFIED.json
+          python3 - <<'PY'
+          import json,hashlib,pathlib,os
+          rel=json.load(open('RELEASE-VERIFIED.json'))
+          assert rel['tag_name']==os.environ['OFFICIAL_TAG']
+          assert rel['draft'] is False and rel['prerelease'] is False
+          expected=pathlib.Path(os.environ['OFFICIAL_APK']).read_bytes()
+          digest=hashlib.sha256(expected).hexdigest()
+          assets=[a for a in rel['assets'] if a['name']==os.environ['OFFICIAL_APK']]
+          assert len(assets)==1 and assets[0]['state']=='uploaded'
+          assert assets[0]['size']==len(expected)
+          assert assets[0].get('digest')=='sha256:'+digest
+          assert assets[0]['browser_download_url'].endswith('/'+os.environ['OFFICIAL_APK'])
+          print('Official latest verified, bytes:',len(expected),'sha256:',digest)
+          PY
+          test "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$OFFICIAL_TAG" --jq '.object.sha')" = "$GITHUB_SHA"
+      - name: Erase temporary signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt173-official.p12"

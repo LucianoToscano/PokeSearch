@@ -2725,7 +2725,7 @@ test("RELEASE-NOTES-07 interface is scrollable and adapts to Home theme",
  releaseNotesJava.includes('window.setLayout(width,height)'));
 test("RELEASE-NOTES-08 metadata is integrity checked within the APK",
  releaseNotesGradle.includes('"shiny_login.js", "release_notes.json"')&&
- releaseNotesJava.includes('getAssets().open(ASSET)'));
+ releaseNotesJava.includes('OtaAssets.open(a,ASSET)'));
 test("RELEASE-NOTES-09 the reader fails closed on missing or corrupt notes",
  releaseNotesJava.includes('return new JSONArray(); // Release notes must never prevent the Home from opening.')&&
  releaseNotesJava.includes('out.size()+size>96000'));

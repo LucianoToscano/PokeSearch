@@ -699,6 +699,30 @@
           "Testes em aparelho Samsung e autenticação real Google/Discord com duas contas continuam necessários após a atualização."
         ]
       }
+    },
+    {
+      "id": "lt173-ota-resource-updates-20261029",
+      "minVersionCode": 54378,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT173 — Atualizações inteligentes OTA",
+      "sections": {
+        "novidades": [
+          "Preparado o atualizador OTA de recursos para baixar somente os arquivos modificados de menus, cards, dados e sprites, quando houver pacote assinado compatível.",
+          "O sistema de atualização de APK completo permanece para mudanças Android; não haverá instalação silenciosa."
+        ],
+        "melhorias": [
+          "Os recursos da Pokébola 1 e da Pokébola 2 usam a mesma validação de assinatura, SHA-256 e armazenamento offline protegido.",
+          "Os arquivos da interface são servidos localmente em origem WebView HTTPS reservada, com bloqueio de navegação não autorizada."
+        ],
+        "correcoes": [
+          "Em caso de atualização inválida ou download interrompido, o aplicativo mantém os recursos internos e pode recuperar o pacote anterior.",
+          "A escolha de duas contas e treinadores VIP independentes das duas Pokébolas permanece preservada."
+        ],
+        "emDesenvolvimento": [
+          "Canal OTA de recursos começa desativado até homologação; os testes reais Samsung e Moto com API ON/OFF, Shiny e duas sessões continuam necessários.",
+          "Uma atualização OTA só entra em vigor na próxima inicialização completa do aplicativo; não altera a busca ou a tela enquanto estiver em uso."
+        ]
+      }
     }
   ]
 }

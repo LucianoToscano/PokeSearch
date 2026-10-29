@@ -1,0 +1,78 @@
+name: LT173 — OTA assinado, origem WebView e compilação Android
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/src/main/java/**'
+      - 'app/src/main/assets/**'
+      - 'app/tests/lt173-*'
+      - 'app/tests/OtaLocalBridgePolicyTest.java'
+      - 'scripts/OtaSigner.java'
+      - 'scripts/build_ota_pack.py'
+      - 'ota/**'
+      - '.github/workflows/lt173-signed-ota-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  signed-ota-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Validar a paridade das duas Pokébolas e scripts
+        run: |
+          set -euo pipefail
+          node app/tests/lt173-ota-signed-assets.test.js
+          node --check app/src/main/assets/probe.js
+          node --check app/src/main/assets/sprite_offline.js
+          python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py
+          python3 scripts/test_ota_builder.py
+          mkdir -p "$RUNNER_TEMP/ota-policy"
+          javac --release 17 -d "$RUNNER_TEMP/ota-policy" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java \
+            app/tests/OtaLocalBridgePolicyTest.java
+          java -cp "$RUNNER_TEMP/ota-policy" \
+            com.lucianotoscano.pokesearchoverlay.OtaLocalBridgePolicyTest
+      - name: Assinatura real e rejeição de manifesto modificado (chave efêmera de teste)
+        shell: bash
+        run: |
+          set -euo pipefail
+          keytool -genkeypair -alias temporary -keyalg RSA -keysize 2048 \
+            -validity 1 -dname 'CN=PokeSearch OTA CI TEST ONLY' \
+            -keystore "$RUNNER_TEMP/test.p12" -storetype PKCS12 \
+            -storepass testpass123 -keypass testpass123 -noprompt
+          printf '%s' '{"schema":"pokesearch-signed-assets-v1","packVersion":1}' > "$RUNNER_TEMP/manifest.json"
+          java scripts/OtaSigner.java "$RUNNER_TEMP/test.p12" testpass123 temporary testpass123 \
+            "$RUNNER_TEMP/manifest.json" "$RUNNER_TEMP/manifest.sig"
+          base64 -d "$RUNNER_TEMP/manifest.sig" > "$RUNNER_TEMP/raw.sig"
+          keytool -exportcert -rfc -keystore "$RUNNER_TEMP/test.p12" \
+            -storetype PKCS12 -storepass testpass123 -alias temporary \
+            | openssl x509 -pubkey -noout > "$RUNNER_TEMP/pub.pem"
+          openssl dgst -sha256 -verify "$RUNNER_TEMP/pub.pem" \
+            -signature "$RUNNER_TEMP/raw.sig" "$RUNNER_TEMP/manifest.json"
+          printf 'malicious' >> "$RUNNER_TEMP/manifest.json"
+          if openssl dgst -sha256 -verify "$RUNNER_TEMP/pub.pem" \
+             -signature "$RUNNER_TEMP/raw.sig" "$RUNNER_TEMP/manifest.json"; then
+             echo "::error::Tampered manifest verified"; exit 1
+          fi
+      - name: Compilar Android/Java sem produzir APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+          gradle :app:compileDebugJavaWithJavac --no-daemon --stacktrace

@@ -79,7 +79,7 @@ test("all Android bridge paths use JSON validation and persistence",()=>{
  assert.ok(java.includes("raw.length()>5000"));
 });
 test("rendered results remain an independent WebView and retain old filters",()=>{
- assert.ok(java.includes('resultPanel.loadUrl("file:///android_asset/dock.html?results=1")'));
+ assert.ok(java.includes('resultPanel.loadUrl(OtaAssets.webUrl("dock.html?results=1"))'));
  assert.ok(dock.includes("window.onNativeData="));
  assert.ok(dock.includes("Native.setSearchConfig"));
  assert.ok(dock.includes("Native.resizeResultsMetadata"));

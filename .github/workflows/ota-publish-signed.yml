@@ -1,0 +1,114 @@
+name: OTA — publicar pacote de recursos assinado (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      pack_version:
+        description: 'Versão inteira, estritamente maior que o último OTA'
+        required: true
+        type: string
+      min_app_code:
+        description: 'APK mínimo compatível (LT173 = 54378)'
+        required: true
+        default: '54378'
+        type: string
+      max_app_code:
+        description: 'APK máximo compatível'
+        required: true
+        default: '54378'
+        type: string
+      confirmation:
+        description: 'Digite PUBLICAR_OTA_ASSINADO após aprovação e QA físico'
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-ota-publication
+  cancel-in-progress: false
+jobs:
+  release-ota:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main' && inputs.confirmation == 'PUBLICAR_OTA_ASSINADO'
+    runs-on: ubuntu-24.04
+    environment:
+      name: official-updates
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OTA_VERSION: ${{ inputs.pack_version }}
+      OTA_MIN: ${{ inputs.min_app_code }}
+      OTA_MAX: ${{ inputs.max_app_code }}
+      STOREPASS: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      KEYPASS: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verificar baseline LT173 e nova versão OTA
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$OTA_VERSION" =~ ^[1-9][0-9]{0,8}$ ]] || exit 1
+          [[ "$OTA_MIN" =~ ^[0-9]+$ && "$OTA_MAX" =~ ^[0-9]+$ ]] || exit 1
+          test -n "$STOREPASS" && test -n "$KEY_ALIAS" && test -n "$KEYPASS"
+          git rev-parse --verify 'v0.01.73-54378^{commit}' >/dev/null
+          gh release view 'v0.01.73-54378' >/dev/null
+          if gh release view "ota-$OTA_VERSION" >/dev/null 2>&1; then
+            echo "::error::OTA tag already published"; exit 1
+          fi
+          EXISTING="$(python3 -c 'import json; print(json.load(open("ota/channel.json"))["packVersion"])')"
+          test "$OTA_VERSION" -gt "$EXISTING" || { echo "::error::OTA downgrade"; exit 1; }
+      - name: Construir apenas arquivos alterados desde LT173
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/build_ota_pack.py --baseline v0.01.73-54378 \
+            --version "$OTA_VERSION" --min-app "$OTA_MIN" --max-app "$OTA_MAX" \
+            --output "$RUNNER_TEMP/ota"
+      - name: Restaurar assinatura permanente somente em runner protegido
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$POKE_TEST_KEYSTORE_B64"
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/release.p12" \
+              -storetype PKCS12 -storepass "$STOREPASS" -alias "$KEY_ALIAS" |
+              openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':' | tr 'A-F' 'a-f')"
+          test "$CERT" = '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+          java scripts/OtaSigner.java "$RUNNER_TEMP/release.p12" "$STOREPASS" \
+            "$KEY_ALIAS" "$KEYPASS" \
+            "$RUNNER_TEMP/ota/manifest.json" "$RUNNER_TEMP/ota/manifest.sig"
+          base64 -d "$RUNNER_TEMP/ota/manifest.sig" > "$RUNNER_TEMP/ota.sig.raw"
+          keytool -exportcert -rfc -keystore "$RUNNER_TEMP/release.p12" \
+            -storetype PKCS12 -storepass "$STOREPASS" -alias "$KEY_ALIAS" \
+            | openssl x509 -noout -pubkey > "$RUNNER_TEMP/ota-public.pem"
+          openssl dgst -sha256 -verify "$RUNNER_TEMP/ota-public.pem" \
+            -signature "$RUNNER_TEMP/ota.sig.raw" "$RUNNER_TEMP/ota/manifest.json"
+      - name: Publicar release PRE-RELEASE (sem substituir releases/latest APK)
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "ota-$OTA_VERSION" "$RUNNER_TEMP/ota/"* \
+            --prerelease --title "PokeSearch OTA $OTA_VERSION" \
+            --notes "Recursos assinados para APKs $OTA_MIN a $OTA_MAX. Não é APK. Não instalar manualmente."
+      - name: Ativar canal após assets e assinatura publicados
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '{"packVersion":%s}\n' "$OTA_VERSION" > ota/channel.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ota/channel.json
+          git commit -m "OTA: apontar canal para pacote assinado $OTA_VERSION"
+          git push origin HEAD:main
+      - name: Limpar material temporário
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.p12" "$RUNNER_TEMP/ota.sig.raw"

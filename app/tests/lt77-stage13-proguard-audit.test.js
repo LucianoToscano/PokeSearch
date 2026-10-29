@@ -23,8 +23,8 @@ check("application identity unchanged",()=>{
 check("DOM assets remain intact",()=>{
  for(const name of ["dock.html","detail.html","overlay.html","probe.js"])
   assert.ok(files.includes(name),name);
- assert.ok(service.includes('file:///android_asset/dock.html'));
- assert.ok(service.includes('file:///android_asset/detail.html'));
+ assert.ok(service.includes('OtaAssets.webUrl("dock.html'));
+ assert.ok(service.includes('OtaAssets.webUrl("detail.html'));
 });
 check("experimental API scripts are quarantined and not executed by release",()=>{
  for(const name of ["api_browser_transport.js","api_result_contract.js",
