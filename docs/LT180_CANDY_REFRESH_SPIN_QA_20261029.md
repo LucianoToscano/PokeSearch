@@ -46,3 +46,14 @@ Na LT179 pública (0.01.79 / 54384), o botão de atualizar enviava o pedido mas 
 - APK QA dentro do [artefato #12929519250](https://github.com/LucianoToscano/PokeSearch/actions/runs/40947947148/artifacts/12929519250), ZIP de 46.600.970 bytes; testes de animação, 3m, 10 doces, localização e regressão P1/P2 e assinatura permanente aprovados.
 - Workflow **oficial** preparado em `.github/workflows/lt180-candy-menus-official-release.yml` e será acionado na main após merge da PR #136. **Publicação e hash final só podem ser afirmados após confirmação real da Action e de GitHub Releases/latest.**
 - Pedido seguinte do proprietário: na **próxima versão, após LT180**, o aviso de nova atualização deve ficar **acima das Pokébolas, no topo da interface**. Não incluir essa alteração de layout na versão LT180 já homologada, para preservar integridade da distribuição. Novo escopo será LT181 QA.
+
+## Resultado oficial do lançamento LT180 (29/10/2026)
+
+- Merge autorizado: PR #136, SOURCE_COMMIT `80d3949405880aca4f55ade560fe283a3cbb7667`.
+- Ação oficial: https://github.com/LucianoToscano/PokeSearch/actions/runs/40948554564 — **SUCCESS**.
+- GitHub Releases/latest: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.80-54385 — versão estável, `draft=false`, `prerelease=false`.
+- Download oficial: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.80-54385/PokeSearch-v0.01.80-LT.apk
+- Verificação do asset: `49.544.214 bytes`, digest SHA-256 `438b9444bb9a3323653a7d308ae5e163cd37822a3c86bb7b9ab6f2f949ab354d` (verificado no workflow).
+- Assinatura Android v2 permanente e Android R8 aprovados, versão `0.01.80 / 54385`, pacote `com.lucianotoscano.pokesearch`.
+- App atualizado identifica a versão por `GitHubUpdateCenter`; o Android exige aceitação do usuário, sem instalação silenciosa. Google Drive legado não foi atualizado. Teste físico de layout permanece recomendável.
+- Próxima versão: mover o aviso de nova atualização acima das Pokébolas, PR #137 LT181 em QA, sem publicação simultânea.
