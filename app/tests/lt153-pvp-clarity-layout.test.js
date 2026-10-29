@@ -23,13 +23,19 @@ for(const token of ["Empoleon","Rank Classe: #1927","Eficiência IV:","96,10%","
  assert.ok(empoleon.includes(token),"missing evolution info "+token);
 assert.ok(!empoleon.includes("RG#"),"opaque RG abbreviation removed");
 assert.ok(!empoleon.includes("best"),"ineligible candidate not highlighted");
+const overallOnly=render({name:"Ninetales",rank:null,overallRank:24},false);
+assert.ok(overallOnly.includes("Rank Classe: —"),"class rank unavailable without raw IV");
+assert.ok(overallOnly.includes("Rank Geral: #24"),"verified overall rank still visible");
+assert.ok(!overallOnly.includes("Eficiência IV:"),"never guess a stat product");
+assert.ok(!overallOnly.includes("Nv "),"never invent a projected level");
+
 const noRank=render({name:"Unknown",rank:null},false);
 assert.equal(noRank,"","no invented rank");
 const malicious=render({name:'<script>alert(1)</script>',rank:7},false);
 assert.ok(malicious.includes("&lt;script&gt;")&&!malicious.includes("<script>"),"HTML escaped");
-assert.ok(html.includes("Rank Classe = classificação dos IVs da espécie na liga"),"IV rank explained");
-assert.ok(html.includes("Eficiência IV = comparação com o melhor IV"),"efficiency meaning clear");
-assert.ok(html.includes("Rank Geral = posição da espécie na liga"),"overall rank explained");
+assert.ok(!html.includes('class="evoHint"'),"no introductory explanation paragraph");
+
+
 assert.ok(html.includes("Análise PvP · "), "expansion has informative title");
 assert.ok(html.includes("#major .ivTile .ivPercent{top:2px}"),"IV percent exactly 1px lower");
 assert.ok(html.includes("#coordRow #coords:not(.hasCoords){padding-left:25px;padding-right:25px;text-align:center}"),
