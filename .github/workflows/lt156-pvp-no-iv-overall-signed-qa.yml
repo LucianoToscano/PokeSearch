@@ -1,4 +1,4 @@
-# LT156 retry: legacy IV assertions now target verified IV display; permanent signing unchanged.
+# LT156 QA rerun: updated legacy empty-analysis check; permanent signature and version unchanged.
 name: PokeSearch LT156 — análise PvP legível — APK QA assinado
 on:
   push:
