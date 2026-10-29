@@ -23,3 +23,21 @@ Implementação em branch QA, **não distribuída**. Base `main` LT173 pública 
 
 ## Continuidade
 A próxima versão candidata é LT175 somente após validação. O pacote OTA LT174 segue em PR #133 independente. Mudanças Java/Manifest requerem APK assinado; não usar pacote OTA de HTML para distribuir este serviço.
+
+---
+
+## LT176 — correção após teste físico no Samsung (29/10/2026)
+
+O proprietário testou o artefato LT175 e comprovou pelo screenshot que o ícone de Doce Raro estava grande demais, com fundo escuro, não respondia a clique e estava travado para arrastar. A consulta real da aba Rare Candy foi conferida separadamente no site, mas **a leitura pelo WebView do aplicativo não foi comprovada** nesse teste.
+
+### Causa e correções aplicadas
+- Causa do toque/arraste: WebView de 360×640dp estava inserido dentro da bolha (45dp) e tinha `setOnTouchListener((v,e)->true)`, consumindo o evento antes do listener do FrameLayout. O projeto das Pokébolas tem um `grip` transparente nativo sobre o WebView; a LT176 adota o mesmo princípio: `candyGrip` é inserido por último, captura toque/hold/drag e dispara `performClick()` após toque curto; WebView fica atrás.
+- `bubbleWindow` agora é totalmente transparente, sem `GradientDrawable` ou borda. Imagem de Doce Raro reduzida para **27dp dentro de hitbox 45dp**, sem perda de área de toque.
+- Ao abrir resultados, a janela flutuante evita cobrir a bolha: tenta direita, esquerda, abaixo ou acima. Isso permite continuar movendo e tocando no doce enquanto os cards estão abertos, inclusive em largura típica de Samsung.
+- A leitura continua exclusivamente na aba Rare Candy do PoGoCoordinates, com resultados verificados (não permite fabricar posições). Menus mantêm os mesmos recursos visuais das Pokébolas; P1/P2 e contas permanecem independentes.
+- Novo QA separado **LT176 0.01.76 / versionCode 54381**; mantém o certificado Android permanente. O SHA, tamanho e link final só devem ser anunciados após a Action assinada passar.
+
+### Aceite
+- Teste automatizado `lt175-rare-candy-overlay.test.js` acrescenta guardas sobre grip transparente, ausência de fundo, ordem de WebView e prevenção de sobreposição dos resultados.
+- Testes reais pendentes: toque/segurar/arrastar Samsung, consulta real Rare Candy pela sessão **do aplicativo** (Chrome pode usar outra sessão), cópia da coordenada, cartão cinza, expiração/refresh, tamanho comparado aos resultados da Pokébola.
+- **Não houve merge/Release/latest/Drive/OTA público**; a LT173 continua oficial. O build LT176 é QA e **exige APK completo** devido a alterações Java.
