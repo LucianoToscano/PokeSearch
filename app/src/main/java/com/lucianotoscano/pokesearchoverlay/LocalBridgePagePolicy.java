@@ -11,6 +11,7 @@ final class LocalBridgePagePolicy {
             return false;
         try{
             URI uri=URI.create(url);
+            if(uri.getRawFragment()!=null||uri.getRawUserInfo()!=null||uri.getPort()!=-1)return false;
             boolean original="file".equals(uri.getScheme()) &&
                 uri.getRawAuthority()==null &&
                 ("/android_asset/"+expectedPage).equals(uri.getRawPath());
