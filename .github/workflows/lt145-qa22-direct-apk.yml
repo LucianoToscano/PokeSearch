@@ -1,0 +1,54 @@
+name: LT145 QA22 - signed card APK prerelease (manual/test only)
+on:
+  push:
+    branches: [feature/lt145-coords-quota-account-20261028]
+    paths: ['.github/workflows/lt145-qa22-direct-apk.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: write
+jobs:
+  release-verified-qa22:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '40807041234'
+      SOURCE_COMMIT: '87bd4988b056186d3c8254d021f7df2cb22994b1'
+      QA_ARTIFACT: 'PokeSearch-v0.01.45-LT145-CoordsQuota-QA-Assinado'
+      PACKAGE_APK: 'PokeSearch-v0.01.45-LT-QA.apk'
+      PUBLIC_APK: 'PokeSearch-LT145-QA22-CARD-COMPACTO.apk'
+      QA_TAG: 'v0.01.45-54350-qa22-card'
+    steps:
+      - name: Recover successfully signed QA22 build at exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run watch "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --exit-status
+          mkdir -p qa
+          gh run download "$SOURCE_RUN" --repo "$GITHUB_REPOSITORY" --name "$QA_ARTIFACT" --dir qa
+          test -s "qa/$PACKAGE_APK"
+          test "$(cat qa/SOURCE_COMMIT.txt)" = "$SOURCE_COMMIT"
+          (cd qa && sha256sum --check SHA256SUMS.txt)
+          unzip -t "qa/$PACKAGE_APK" >/dev/null
+          grep -Fq "Verified using v2 scheme" qa/SIGNING-REPORT.txt
+          grep -Fq "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e" qa/SIGNING-REPORT.txt
+          grep -Fq "versionCode='54350'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.45'" qa/PACKAGE-VERSION.txt
+          mv "qa/$PACKAGE_APK" "qa/$PUBLIC_APK"
+          (cd qa && sha256sum "$PUBLIC_APK" > QA22-SHA256.txt)
+      - name: Publish QA-only prerelease - never update production manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$QA_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "QA22 prerelease already exists: do not overwrite signed APK"; exit 1
+          fi
+          gh release create "$QA_TAG" "qa/$PUBLIC_APK" "qa/QA22-SHA256.txt" "qa/SIGNING-REPORT.txt" \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_COMMIT" \
+            --title "PokeSearch LT145 QA22 — Card sem espaço vazio, Rank e sprites (teste)" \
+            --notes "QA22 de homologação: compactação do card completo, Rank em selo, rolamento apenas para conteúdo alto, fallback visual neutro de sprite sem troca de forma. Preservadas duas Pokébolas, Premium e coordenadas. Testar no Samsung antes de merge e distribuição global." \
+            --prerelease --latest=false
+          gh release view "$QA_TAG" --repo "$GITHUB_REPOSITORY" --json url,isPrerelease,assets \
+            --jq '{url: .url, prerelease: .isPrerelease, assets: [.assets[].name]}'
