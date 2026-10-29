@@ -39,7 +39,8 @@ jobs:
           node app/tests/lt173-ota-signed-assets.test.js
           node --check app/src/main/assets/probe.js
           node --check app/src/main/assets/sprite_offline.js
-          python3 -m py_compile scripts/build_ota_pack.py
+          python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py
+          python3 scripts/test_ota_builder.py
           mkdir -p "$RUNNER_TEMP/ota-policy"
           javac --release 17 -d "$RUNNER_TEMP/ota-policy" \
             app/src/main/java/com/lucianotoscano/pokesearchoverlay/LocalBridgePagePolicy.java \
