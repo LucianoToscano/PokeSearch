@@ -17,7 +17,7 @@ assert.ok(compact.includes("#major .ivTile .ivPercent{top:2px;right:3px;font-siz
 assert.ok(html.includes("#major .statValue.red{color:#ff9bb0}"),"original IV tone");
 assert.ok(html.includes("<span class=\"despawnLabel\">Despawn</span>"));
 assert.ok(html.includes("#coordRow #coords:not(.hasCoords):not(.isPending){"),"red coordinates CTA");
-assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+3'),"adaptive window height retained");
+assert.ok(script.includes('const height=Math.ceil(panel.scrollHeight)+3'),"adaptive window height retained");
 assert.ok(script.includes('Native.copyCoords(currentCoords);return;'),"second tap copy");
 assert.ok(script.includes('Native.prepareCaptureShare(currentIndex)'),"share confirmation retained");
 console.log("LT145 QA14: all card dimensions compact again; IV percent not styled as inflated pill PASS");

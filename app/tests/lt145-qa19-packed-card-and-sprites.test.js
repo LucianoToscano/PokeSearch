@@ -6,7 +6,7 @@ const script=d.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);new 
 assert.ok(j.includes("DETAIL_DP=200"),"do not crush shell");
 assert.ok(j.includes("detailHeight=125"),"smaller first frame");
 assert.ok(j.includes("Math.min(520,available)"),"dynamic long-card growth remains");
-assert.ok(d.includes('Math.ceil(document.getElementById("panel").scrollHeight)+3'),"remove 7px blank bottom");
+assert.ok(d.includes('const height=Math.ceil(panel.scrollHeight)+3'),"remove 7px blank bottom");
 const css=d.slice(d.indexOf("/* QA19: pack the OUTER"));
 assert.ok(css.includes("#panel{padding:3px;"),"glass outer margins reduced");
 assert.ok(css.includes("grid-template-columns:minmax(88px,1fr) 42px 38px;"),"restore useful IV, CP, level widths");

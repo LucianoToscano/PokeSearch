@@ -24,6 +24,6 @@ assert.ok(html.includes("#major .statValue.red{color:#ff9bb0}"),"original raw IV
 assert.ok(html.includes("#artColumn.gengarSprite #img{transform:scale(.78);"),"Gengar-only sprite correction retained");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red Get Coordinates retained");
 assert.ok(html.includes('id="evolutions" hidden'),"PvP section retained");
-assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+3'),"long content can still expand card");
+assert.ok(script.includes('const height=Math.ceil(panel.scrollHeight)+3'),"long content can still expand card");
 assert.ok(native.includes('Math.min(520,available)'),"adaptive height remains bounded by screen");
 console.log("LT145 QA17: stat tile +10%, overall initial area -30%, preserved 23px controls and dynamic height PASS");
