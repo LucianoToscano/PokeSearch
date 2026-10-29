@@ -2856,7 +2856,7 @@ public class OverlayService extends Service {
         if(dex<1||dex>1025)return null;
         String file="pokemon-sprites/"+
             (card.optBoolean("shiny",false)?"shiny/":"base/")+dex+".png";
-        try(java.io.InputStream input=getAssets().open(file)){
+        try(java.io.InputStream input=OtaAssets.open(this,file)){
             android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input);
             if(bitmap==null)return null;
             return android.graphics.Bitmap.createScaledBitmap(bitmap,96,96,true);
@@ -3563,7 +3563,7 @@ public class OverlayService extends Service {
             return readBundledPng("pokemon-sprites/"+relative);
         }
         private String readBundledPng(String file){
-            try(InputStream stream=getAssets().open(file);
+            try(InputStream stream=OtaAssets.open(this,file);
                 ByteArrayOutputStream buffer=new ByteArrayOutputStream()){
                 byte[] chunk=new byte[4096];int count;
                 while((count=stream.read(chunk))!=-1){
