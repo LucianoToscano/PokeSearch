@@ -17,3 +17,17 @@
 - Adicionar `app/tests/lt169-trainer-profiles-visibility.test.js` verificando condicional de visibilidade, contagem distinta, ausência de fallback indevido e preservação do seletor.
 - CI Android/Node e teste real no Samsung ainda precisam ser observados. Verificar com contas de 0, 1, 2 e 3 treinadores; alternar treinador e abrir a Home novamente.
 - **Status:** alteração de código + ícone vetorial em branch de QA/PR #113; nenhum merge, Release ou atualização pública autorizados nesta etapa.
+
+## Privacidade na Home (ampliação LT169, 29/10/2026)
+
+A pedido do proprietário, acrescentadas três opções independentes em **Home → menu ☰ → Preferências → Privacidade na Home**:
+
+- `homeShowPogoAccountName` (padrão `true`): quando desmarcada, somente o nome exibido da conta PoGoCoordinates/Google na Home vira **Anônimo**.
+- `homeShowTrainerName` (padrão `true`): quando desmarcada, somente o nome do treinador vinculado na Home vira **Anônimo**.
+- `homeShowTrainerCode` (padrão `true`): quando desmarcada, o código na Home vira **XXXX XXXX XXXX**.
+
+Checkboxes atualizam a Home imediatamente e persistem por instalação em `SharedPreferences("prefs")`. Ausência de vínculo mantém os textos de nenhum treinador/não confirmado. A alteração é **apenas de apresentação**: não modifica identificadores reais, sessão, autorização, troca de treinador, PoGoCoordinates, consultas, Shiny, duas Pokébolas ou chat. O botão de copiar código continua copiando o código real mesmo quando mascarado; não exibir o valor em toast.
+
+Por privacidade e para não transferir estado de ocultação entre dispositivos, as três preferências de apresentação **não são incluídas no backup exportado/importado da Home**, que usa whitelist explícita. O armazenamento da sessão já existente permanece protegido pelo fluxo atual, sem escrever contas em Firebase. A foto/ícone da conta permanece como antes (não foi solicitada sua ocultação).
+
+Teste novo: `app/tests/lt169-home-identity-privacy.test.js` (3 flags e independência, máscaras, valores originais, fluxo de cópia, proteção da importação/exportação e contraste claro/escuro). Homologação Samsung e CI do HEAD final pendentes de validação antes de publicar.
