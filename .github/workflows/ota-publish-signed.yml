@@ -63,6 +63,12 @@ jobs:
           fi
           EXISTING="$(python3 -c 'import json; print(json.load(open("ota/channel.json"))["packVersion"])')"
           test "$OTA_VERSION" -gt "$EXISTING" || { echo "::error::OTA downgrade"; exit 1; }
+      - name: LT174 — executar regressão do gerador e conferir compatibilidade
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py
+          python3 scripts/test_ota_builder.py
       - name: Construir apenas arquivos alterados desde LT173
         shell: bash
         run: |
