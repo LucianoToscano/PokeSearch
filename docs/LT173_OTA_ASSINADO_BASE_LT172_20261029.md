@@ -32,3 +32,16 @@
 - Testes reais em Moto G15/WebView Android 15, offline, rede oscilante, download interrompido e restaurar a versão anterior.
 - Verificar que overlays que já estão abertos não sofrem hot-swap, e que ao reabrir o aplicativo ambos consumam o mesmo pacote validado.
 - Conferir `GitHubUpdateCenter` ainda aponta só para o último APK estável.
+
+## Evidência de APK QA assinado — 29/10/2026
+- **GitHub Actions SUCCESS:** https://github.com/LucianoToscano/PokeSearch/actions/runs/40920012278
+- **Artefato QA primário:** https://github.com/LucianoToscano/PokeSearch/actions/runs/40920012278/artifacts/12916174946
+- **Arquivo interno:** `PokeSearch-v0.01.73-LT-QA.apk`, **49.514.961 bytes**.
+- **SHA-256 do APK:** `dc8d688137a2b3b2955c98df2cb7828d22b04dc516d05d2194563f5fb0dcceae`.
+- **SHA-256 do ZIP de artefato:** `6d979edcfc5efbc22b25b09f44179e8821a443d46dfc1cc7e01b22fc8093c8db`, **46.575.423 bytes**.
+- **SOURCE_COMMIT do APK:** `edbe6e14462b60a9b1ea4b99154b879b744a8eec`.
+- **Identidade Android:** `com.lucianotoscano.pokesearch`, `versionName 0.01.73`, `versionCode 54378`.
+- **Certificado v2 SHA-256 permanente:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, verificado por apksigner; sem debuggable.
+- **Outras verificações:** R8 presente, APK ZIP íntegro, Sprite Bundle no APK, `sha256sum --check` OK, regressões Node, compilação Android Java e QA de assinatura dos manifestos aprovados.
+- **Escopo do resultado:** distribuição **somente como artifact QA**. Nenhum Release GitHub oficial, merge na main, push Firebase, alteração de Google Drive ou ativação do canal OTA. `ota/channel.json` continua `packVersion: 0`.
+- **Bloqueio de publicação oficial:** testes físicos reais Samsung/Moto G15, Pokébola 1/2, duas contas/treinadores VIP, sprites Shiny/formas, API ON/OFF e rollback não foram realizados neste ambiente. Não confundir APK assinado/CI com homologação Android.
