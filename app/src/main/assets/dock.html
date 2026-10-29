@@ -6055,7 +6055,7 @@ window.pvpEvolutionDetails=function(index){
  const card=cards[index];
  if(!card)return null;
  const raw=String(card.iv??"").trim();
- const hasRaw=verifiedSpawnRawIv(card)!==null;
+ const hasRaw=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw)&&verifiedSpawnIvPercent(card)!==null;
  // Empty IV is a missing source field, not a 0/0/0. Invalid/conflicting
  // nonempty source IV fails closed and is not replaced by a guessed rank.
  const missingIv=!raw||raw==="—";
