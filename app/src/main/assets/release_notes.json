@@ -794,6 +794,27 @@
           "As consultas dependem da disponibilidade e dos limites oficiais do PoGoCoordinates. A instalação de um APK exige aceitação no Android."
         ]
       }
+    },
+    {
+      "id": "lt181-update-banner-top-pokeballs-20261029",
+      "minVersionCode": 54386,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT181 — Aviso de atualização no topo",
+      "sections": {
+        "novidades": [
+          "Avisos de novas versões agora aparecem no início da Home, acima das Pokébolas 1 e 2."
+        ],
+        "melhorias": [
+          "Cartão compacto de atualização aparece somente quando há uma versão mais recente e elegível, sem espaço vazio quando não há atualização.",
+          "Mantidos os botões Baixar atualização, Depois e Ignorar, o verificador de assinatura permanente e o download oficial pelo GitHub."
+        ],
+        "correcoes": [
+          "Eliminada a necessidade de rolar a Home para encontrar o aviso de atualização."
+        ],
+        "emDesenvolvimento": [
+          "O Android continua exigindo confirmação para instalar o APK. Os avisos dependem de conexão e verificação de atualização."
+        ]
+      }
     }
   ]
 }
