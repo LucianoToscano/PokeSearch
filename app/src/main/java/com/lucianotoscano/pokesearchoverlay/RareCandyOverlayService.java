@@ -58,6 +58,7 @@ public final class RareCandyOverlayService extends Service {
     private static final int BUBBLE_DP=45;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final Map<String,Candy> cards=new LinkedHashMap<>();
+    private final Map<String,TextView> countdownLabels=new LinkedHashMap<>();
     private final Set<String> copied=new HashSet<>();
     private SharedPreferences prefs;
     private WindowManager wm;
@@ -455,6 +456,7 @@ public final class RareCandyOverlayService extends Service {
     private void render(){
         if(resultsList==null||!visible)return;
         resultsList.removeAllViews();
+        countdownLabels.clear();
         long now=SystemClock.elapsedRealtime();
         for(Candy card:new ArrayList<>(cards.values())){
             if(card.deadline>0&&card.deadline<=now)continue;
@@ -476,6 +478,7 @@ public final class RareCandyOverlayService extends Service {
                 TextView countdown=label(value,10,color,true);
                 countdown.setGravity(Gravity.CENTER);
                 left.addView(countdown,space(-1,18,0));
+                countdownLabels.put(card.coords,countdown);
             }
             row.addView(left,space(49,-2,0));
             LinearLayout mainText=new LinearLayout(this);
@@ -517,14 +520,22 @@ public final class RareCandyOverlayService extends Service {
             if(removed){
                 render();expirePending=true;
             }
+            for(Map.Entry<String,TextView> entry:countdownLabels.entrySet()){
+                Candy current=cards.get(entry.getKey());
+                if(current==null||current.deadline<=0)continue;
+                long seconds=Math.max(0,(current.deadline-now+999)/1000);
+                TextView label=entry.getValue();
+                label.setText((seconds/60)+":"+String.format(
+                    java.util.Locale.US,"%02d",seconds%60));
+                label.setTextColor(seconds<=60?0xFFFF666D:
+                    seconds<=300?0xFFFFC35A:0xFFC0D9EE);
+            }
             // Immediately request a new batch after expiry, but obey a small
             // local throttle so simultaneous expirations cannot spam the site.
             if(expirePending&&!busy&&now-lastRefresh>=15000){
                 expirePending=false;refresh(false);
             }else if(!busy&&ready&&now-lastRefresh>=period*60000L){
                 refresh(false);
-            }else if(visible&&!cards.isEmpty()){
-                render();
             }
             main.postDelayed(this,1000L);
         }
