@@ -1,11 +1,5 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT181 QA — Aviso de atualização acima das Pokébolas (29/10/2026)
-
-**Solicitação posterior à autorização da LT180:** preparar **para a próxima versão** o aviso de atualização GitHub/Drive na parte de cima da Home, imediatamente abaixo do cabeçalho e **acima das duas Pokébolas**. Implementado em branch `feature/lt181-update-banner-above-pokeballs-20261029`: `screen.addView(homeUpdateHolder,1,updateLp)`, sem duplicar card e sem espaço vazio quando não houver versão. Ações baixar/verificação, Depois/Ignorar, Drive legado e GitHub continuam preservadas. Teste `lt181-top-update-banner.test.js`, notas `minVersionCode=54386` preparadas. **Não mesclar nem publicar a LT181 com o lançamento LT180**; aguardar QA e autorização de nova versão. [Detalhes LT181](LT181_UPDATE_BANNER_ABOVE_POKEBALLS_20261029.md).
-
----
-
 ## LT180 OFICIAL — Distribuição geral confirmada (29/10/2026)
 
 - Autorização expressa do proprietário para publicar a LT180 para todos. PR [#136](https://github.com/LucianoToscano/PokeSearch/pull/136) mesclada na `main`; SOURCE_COMMIT: `80d3949405880aca4f55ade560fe283a3cbb7667`.
