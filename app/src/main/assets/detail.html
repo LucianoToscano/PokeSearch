@@ -554,6 +554,22 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* When reveal changes the label into coordinates, reserve equal space on
    both sides of the text; the independent quota remains pinned right. */
 #coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}
+/* LT166: coordinates stay one centered line without altering button behavior.
+   The quota is an independent right-aligned overlay and never shifts the number. */
+#coordRow #coords.hasCoords{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  overflow-wrap:normal;word-break:normal;
+  font-size:9.5px;font-variant-numeric:tabular-nums;
+}
+/* Symmetric label insets keep the heading centered even with the chevron. */
+#evoToggle{position:relative;display:block;text-align:center}
+#evoToggle #evoLabel{display:block;min-width:0;max-width:100%;box-sizing:border-box;
+  padding-inline:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#evoToggle #evoChevron{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  pointer-events:none}
+/* Rank #1 highlights the best 0..4095 IV combination in this SPECIES/LEAGUE;
+   it is NOT a claim of #1 strength in the overall metagame. */
+.evoLine.best .evoWho b,.evoLine.best .evoClass{color:#83e7bb}
 /* LT166: inline explanation only for projected costume references; no extra card row. */
 .evoLine.isReference .evoMark{color:#d3c0ff;font-weight:900}
 .evoLine.isReference .evoWho{display:flex;align-items:center;gap:2px}
@@ -956,7 +972,7 @@ function evolutionRow(x,first){
  else if(!isReference&&x.eligible===null&&hasClass)state="Elegibilidade não verificada";
  return '<div class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+
-  (hasClass&&rank===1&&x.eligible===true?' best':'')+
+  (hasClass&&rank===1&&x.eligible!==false?' best':'')+
   '"><div class="evoSummary">'+
   '<span class="evoWho"><span class="evoMark">'+(first?'Atual':'↳')+'</span> <b>'+h(name)+'</b>'+
   (isReference?'<button type="button" class="evoInfoBtn" aria-label="Informações sobre rank de evolução projetado" aria-expanded="false" onclick="togglePvpReferenceInfo(event,this)">ⓘ</button>':'')+'</span>'+
