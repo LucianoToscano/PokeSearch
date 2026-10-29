@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT180 OFICIAL — Distribuição geral confirmada (29/10/2026)
+
+- Autorização expressa do proprietário para publicar a LT180 para todos. PR [#136](https://github.com/LucianoToscano/PokeSearch/pull/136) mesclada na `main`; SOURCE_COMMIT: `80d3949405880aca4f55ade560fe283a3cbb7667`.
+- [GitHub Actions oficial #40948554564 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40948554564), testes, R8, APK, certificado Android v2 e SHA verificados.
+- [GitHub Releases/latest v0.01.80-54385](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.80-54385): publicado em 29/10/2026, `draft=false`, `prerelease=false`.
+- [APK PokeSearch-v0.01.80-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.80-54385/PokeSearch-v0.01.80-LT.apk), `versionCode=54385`, **49.544.214 bytes**, SHA-256 `438b9444bb9a3323653a7d308ae5e163cd37822a3c86bb7b9ab6f2f949ab354d`, proveniente do digest oficial e conferido na Action. Assinatura v2 permanente SHA-256 de certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- Novidades: ↻ Doce Raro gira durante busca; 3 minutos por padrão e OFF/3/5/10/15/20; novo refresh quando os 10 doces ativos são copiados e ficam cinza; menu de localização compacto como Pokébola (copiar/colar, slider e km), sem cooldown artificial local. `HTTP 429 Retry-After` e prazo de despawn são do provedor e continuam sendo respeitados.
+- Distribuição pelo atualizador `GitHubUpdateCenter` ao consultar `releases/latest`; download/instalação requer rede e confirmação Android. Não houve alteração da ponte antiga Google Drive.
+- Pedido separado da próxima versão: [PR #137 — LT181 QA](https://github.com/LucianoToscano/PokeSearch/pull/137) adiciona aviso de atualização **acima das Pokébolas** no topo da Home; não mesclar/publicar LT181 sem próxima validação/autorização.
+
+---
+
 ## LT180 QA — ícone ↻ de Doce Raro animado (29/10/2026)
 
 **Distribuição LT180 autorizada:** proprietário pediu novamente enviar para todos. CI assinado da revisão funcional **SUCCESS** [#40947947148](https://github.com/LucianoToscano/PokeSearch/actions/runs/40947947148), artefato QA [#12929519250](https://github.com/LucianoToscano/PokeSearch/actions/runs/40947947148/artifacts/12929519250). Workflow oficial protegido `lt180-candy-menus-official-release.yml` será executado após merge #136, verificando GitHub `latest=v0.01.79-54384` e assinatura v2; ainda não afirmar distribuição até confirmação real. Próxima versão (LT181): mover **aviso de atualização** para acima das Pokébolas no topo, sem alterar LT180. Referência detalhada [LT180](LT180_CANDY_REFRESH_SPIN_QA_20261029.md).
