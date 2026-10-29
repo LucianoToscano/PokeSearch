@@ -15,7 +15,7 @@ const to=dock.indexOf('let lastListKey=""',from);
 assert.ok(from>=0&&to>from,"production PvP calculator block");
 function verifiedIv(card){
  const raw=String(card?.iv||"");
- if(!/^(?:[0-9]|1[0-5])\\/(?:[0-9]|1[0-5])\\/(?:[0-9]|1[0-5])$/.test(raw))return null;
+ if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))return null;
  const pct=Math.round(raw.split("/").map(Number).reduce((sum,value)=>sum+value,0)*100/45);
  return Number(card.ivPercent)===pct?pct:null;
 }
@@ -44,7 +44,7 @@ for(const [card,evolved] of examples){
   assert.equal(ref.referenceOnly,true);
   assert.equal(ref.eligible,null);
   assert.ok(Number.isInteger(ref.rank)&&ref.rank>=1&&ref.rank<=4096);
-  assert.match(ref.statProductPct,/^\\d{1,3},\\d{2}$/);
+  assert.match(ref.statProductPct,/^\d{1,3},\d{2}$/);
   assert.ok(Number.isInteger(ref.cp)&&ref.cp>0);
   assert.ok(Number.isFinite(ref.level)&&ref.level>=1);
  }
@@ -61,7 +61,7 @@ for(const league of projected(regional).leagues){
  assert.equal(league.comparisons.length,0);
  assert.equal(league.evolutions.length,0);
 }
-const script=detail.match(/<script>([\\s\\S]*?)<\\/script>/)?.[1];
+const script=detail.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script,"detail script");
 const start=script.indexOf("function evolutionRow(");
 const end=script.indexOf("const item=(k,v)",start);
@@ -85,7 +85,7 @@ for(const [card,evolved] of examples){
  const markup=node("evoBody").innerHTML;
  assert.equal((markup.match(/class="evoLeague /g)||[]).length,3);
  assert.equal((markup.match(/class="evoLine isReference"/g)||[]).length,3);
- assert.equal((markup.match(/Ref.<\\/span> <b>/g)||[]).length,3);
+ assert.equal((markup.match(/Ref.<\/span> <b>/g)||[]).length,3);
  assert.ok(markup.includes("<b>"+evolved+"</b>"));
  assert.ok(markup.includes("Rank Classe: #"));
  assert.ok(markup.includes("PC "));
