@@ -25,5 +25,5 @@
 ## Homologação e ressalvas
 - Testes automatizados Node/Java, paridade, geração do bundle de sprites, assinatura de manifestos e compilação Android/R8: aprovados.
 - **QA real Samsung/Moto G15 com duas contas e treinadores VIP, API ON/OFF, sprites e rollback segue pendente**. O pedido do proprietário autorizou explicitamente a publicação pública apesar dessa limitação; não chamar CI de homologação física.
-- Canal GitHub Releases/latest atualizado; **ponte legada de APK do Google Drive não foi confirmada como sincronizada com este lançamento**. Não afirmar que Drive já aponta para LT173.
+- Canal GitHub Releases/latest atualizado. **Ponte legada Google Drive sincronizada**, preservando o mesmo ID `1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P` e link `https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view`. Nome atual `PokeSearch-v0.01.73-LT.apk`, 49.514.961 bytes; novo download do Drive comparado por SHA-256 com o APK oficial `5d330bafeabe3a24fdfb5ef8864c7ae463743ae4cda362d014fc9c08ef34ade9`. Permissão pública do arquivo preservada. Arquivo temporário de transferência removido.
 - Não sobrescrever histórico, backup mestre, certificados, contas, tokens, Firebase nem releases antigos.
