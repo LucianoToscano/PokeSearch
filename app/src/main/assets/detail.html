@@ -452,6 +452,23 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #artColumn.gengarSprite #img{transform:scale(calc(.78 * var(--ps-alpha-scale,1)));transform-origin:center}
 #artColumn.gengarSprite.gengarHalloween #img{transform:scale(calc(.49 * var(--ps-alpha-scale,1)))}
 #artColumn:not(.gengarSprite) #img{transform:scale(var(--ps-alpha-scale,1))}
+
+/* QA20: number, sex, size and form belong IMMEDIATELY below Pokémon name.
+   QA18's grid-row:2 spanned the action column and created a blank stripe below title.
+   The name and metadata now flow in one shared column, no forced empty row. */
+#header{grid-template-rows:auto;row-gap:0;align-items:start}
+#names{grid-column:2;grid-row:1;display:flex;flex-direction:column;
+ min-width:0;align-self:start;justify-content:flex-start;gap:1px;padding:0}
+#nameLine{grid-column:auto;grid-row:auto;align-self:auto;min-width:0;line-height:1.15}
+#subRow{grid-column:auto;grid-row:auto;align-self:flex-start;
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;
+ width:100%;min-width:0;margin:0;padding:0;gap:1px}
+#subRow .metaPair{display:flex;flex-wrap:wrap;align-items:center;
+ justify-content:flex-start;min-width:0;max-width:100%;
+ flex:0 1 auto;gap:2px;line-height:1.1;white-space:normal}
+#subRow #dexGender{white-space:normal;flex-wrap:wrap}
+#subRow #sizeForm{white-space:normal;flex-wrap:wrap}
+#subRow .sexChip,#subRow .sizeChip{min-height:12px;line-height:10px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
