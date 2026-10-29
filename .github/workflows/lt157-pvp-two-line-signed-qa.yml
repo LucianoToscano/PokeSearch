@@ -1,4 +1,4 @@
-# LT157 QA retry: preserve LT156 provenance test filename and updated two-line layout checks.
+# LT157 QA retry — updated overlay test for visible compact unavailable state.
 name: PokeSearch LT157 — análise PvP legível — APK QA assinado
 on:
   push:
