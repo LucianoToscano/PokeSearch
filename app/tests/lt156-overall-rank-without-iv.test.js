@@ -38,7 +38,8 @@ assert.equal(details([{...card,iv:"16/15/15"}]),null,"invalid raw IV rejected");
 assert.equal(details([{...card,name:"NotExisting",form:"Mystery"}]),null,"unknown forms are not promoted");
 assert.equal(details([{...card,form:"Alolan"}]),null,"Alolan form cannot inherit regular Vulpix ranks");
 // Missing analyses now have a compact, honest state in the same card.
-assert.ok(detail.includes("IV não informado · Rank Classe indisponível."));
+assert.ok(!detail.includes("IV não informado · Rank Classe indisponível."),"do not show placeholder without verified analysis");
+assert.ok(detail.includes("outer.hidden=true;"),"hide empty PvP tab");
 assert.ok(!detail.includes("evoHint"),"remove the initial explanatory paragraph entirely");
 assert.ok(detail.includes("Análise PvP · Ranks gerais"));
 assert.ok(detail.includes("Rank Geral: #"));
