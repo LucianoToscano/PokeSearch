@@ -4,6 +4,8 @@ The manifest is signed separately using scripts/OtaSigner.java and the
 existing protected APK signing key in the manually approved CI environment.
 """
 import argparse
+import base64
+import re
 import hashlib
 import json
 import pathlib
@@ -17,6 +19,19 @@ ALLOWED = {
     "release_notes.json", "pokemon_catalog.json",
 }
 ASSET_PREFIX = "app/src/main/assets/"
+ICON = re.compile(
+    r"^(?:pokemon-sprites/(?:base|shiny|forms|costumes)|"
+    r"result-icons/(?:base|modes)|weather-icons(?:/v2)?)/"
+    r"[A-Za-z0-9_.-]{1,150}\\.png$"
+)
+def allowed(name):
+    return name in ALLOWED or ICON.fullmatch(name) is not None
+
+def release_name(name):
+    if "/" not in name:
+        return name
+    return base64.urlsafe_b64encode(name.encode("utf-8")).decode("ascii").rstrip("=") + ".asset"
+
 
 def main():
     p = argparse.ArgumentParser()
@@ -36,9 +51,11 @@ def main():
          args.baseline, "HEAD"], text=True).splitlines()
     files = sorted(set(path.removeprefix(ASSET_PREFIX) for path in changed
                        if path.startswith(ASSET_PREFIX) and
-                          path.removeprefix(ASSET_PREFIX) in ALLOWED))
+                          allowed(path.removeprefix(ASSET_PREFIX))))
     if not files:
         raise SystemExit("No eligible changed assets since baseline")
+    if len(files) > 64:
+        raise SystemExit("Too many changed assets for one safe OTA pack")
     if args.output.exists():
         raise SystemExit("Refusing to overwrite existing output")
     args.output.mkdir(parents=True)
@@ -52,7 +69,7 @@ def main():
         total += len(data)
         if total > 8 * 1024 * 1024:
             raise SystemExit("OTA pack too large")
-        (args.output / name).write_bytes(data)
+        (args.output / release_name(name)).write_bytes(data)
         rows.append({"path": name, "size": len(data),
                      "sha256": hashlib.sha256(data).hexdigest()})
     manifest = {"schema": "pokesearch-signed-assets-v1",
