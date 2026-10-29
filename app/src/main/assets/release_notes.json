@@ -843,6 +843,31 @@
                 "A autenticação real em aparelhos Samsung e Moto ainda requer confirmação prática."
             ]
         }
+    },
+    {
+        "id": "lt183-discord-callback-20261029",
+        "minVersionCode": 54388,
+        "date": "29/10/2026",
+        "title": "PokeSearch LT183 — Autorização do Discord e retorno ao aplicativo",
+        "sections": {
+            "novidades": [
+                "Retorno da autorização Google/Discord exibe corretamente a página oficial do PoGoCoordinates."
+            ],
+            "melhorias": [
+                "O aplicativo deixa de cobrir a página oficial durante a confirmação de autorização.",
+                "Mais tempo para o retorno da sessão e carregamento das informações de perfil.",
+                "Gerenciar e Vincular treinador agora verificam novamente a sessão de autenticação."
+            ],
+            "correcoes": [
+                "Corrigida navegação prematura que poderia interromper o retorno do Discord ao PoGoCoordinates.",
+                "Evita tentar reabrir o login durante o processamento do retorno OAuth.",
+                "Erros de rede e respostas da página oficial deixam de ficar ocultos pelo carregamento nativo."
+            ],
+            "emDesenvolvimento": [
+                "A autorização e o vínculo de treinador ainda dependem da resposta oficial do PoGoCoordinates; se o provedor rejeitar o OAuth, o PokeSearch mostrará a página em vez de simular sucesso.",
+                "Validação presencial de login Discord no Samsung permanece necessária."
+            ]
+        }
     }
   ]
 }
