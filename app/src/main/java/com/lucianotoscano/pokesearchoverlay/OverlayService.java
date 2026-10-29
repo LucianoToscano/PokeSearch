@@ -319,6 +319,7 @@ public class OverlayService extends Service {
     private FrameLayout root,detailRoot,menuRoot,resultRoot,popupRoot;
     private View grip;
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
+    private androidx.webkit.WebViewAssetLoader otaWebLoader;
     private boolean popupLoaded=false;
     private String popupKind="";
     // ACTION_OUTSIDE can arrive BEFORE the toolbar click for the same physical
@@ -1318,6 +1319,8 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        otaWebLoader=OtaAssets.loader(this);
+        OtaAssets.checkAsync(this);
         // No second account may accidentally use the default cookie profile.
         final int selectedAccount=PogoAccountSlots.assigned(this,isSecondaryOverlay());
         if(selectedAccount==2&&(!PogoAccountSlots.supportsSecond()||
@@ -1433,6 +1436,10 @@ public class OverlayService extends Service {
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
                 return !LocalBridgePagePolicy.allows(url,"dock.html");
+            }
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
+                    WebView view,android.webkit.WebResourceRequest request){
+                return OtaAssets.intercept(OverlayService.this,otaWebLoader,request.getUrl());
             }
             @Override public void onPageFinished(WebView v,String url){
                 if(LocalBridgePagePolicy.allows(url,"dock.html")){
@@ -1626,7 +1633,7 @@ public class OverlayService extends Service {
             }
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
-                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+                return OtaAssets.intercept(OverlayService.this,otaWebLoader,request.getUrl());
             }
             @Override public void onPageFinished(WebView view,String url){
                 if(LocalBridgePagePolicy.allows(url,"dock.html")){
@@ -1647,7 +1654,7 @@ public class OverlayService extends Service {
         menuParams.x=0;menuParams.y=params.y;
         menuRoot.setVisibility(View.GONE);
         try{wm.addView(menuRoot,menuParams);}catch(Exception e){recordFailure("abrir controles",e);menuRoot=null;menuPanel=null;}
-        if(menuPanel!=null)menuPanel.loadUrl("file:///android_asset/dock.html?controls=1");
+        if(menuPanel!=null)menuPanel.loadUrl(OtaAssets.webUrl("dock.html?controls=1"));
         // The Pokémon list is always its OWN Android overlay. The gear remains
         // a small independent control even if there is only one active search.
         createResultsWindow();
@@ -1735,7 +1742,7 @@ public class OverlayService extends Service {
             // Two separate setWebViewClient calls would cancel one another.
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
-                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+                return OtaAssets.intercept(OverlayService.this,otaWebLoader,request.getUrl());
             }
             @Override public void onPageFinished(WebView v,String url){
                 if(LocalBridgePagePolicy.allows(url,"detail.html")){
@@ -1786,7 +1793,7 @@ public class OverlayService extends Service {
             }
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
-                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+                return OtaAssets.intercept(OverlayService.this,otaWebLoader,request.getUrl());
             }
             @Override public void onPageFinished(WebView web,String url){
                 if(LocalBridgePagePolicy.allows(url,"dock.html")){
@@ -1808,10 +1815,10 @@ public class OverlayService extends Service {
         try{wm.addView(popupRoot,popupParams);}
         catch(Exception ex){recordFailure("criar popup independente",ex);
             popupRoot=null;popupPanel=null;popupParams=null;}
-        if(popupPanel!=null)popupPanel.loadUrl("file:///android_asset/dock.html?controls=1&popup=1");
+        if(popupPanel!=null)popupPanel.loadUrl(OtaAssets.webUrl("dock.html?controls=1&popup=1"));
 
-        panel.loadUrl("file:///android_asset/dock.html");
-        if(detailRoot!=null)detailPanel.loadUrl("file:///android_asset/detail.html");
+        panel.loadUrl(OtaAssets.webUrl("dock.html"));
+        if(detailRoot!=null)detailPanel.loadUrl(OtaAssets.webUrl("detail.html"));
         // Initial navigation is scheduled after cookie flush in onStartCommand.
         if(isSecondaryOverlay())secondaryRunning=true;
         else running=true;
@@ -1931,7 +1938,7 @@ public class OverlayService extends Service {
             }
             @Override public android.webkit.WebResourceResponse shouldInterceptRequest(
                     WebView view,android.webkit.WebResourceRequest request){
-                return VerifiedSpriteCache.fromDisk(OverlayService.this,request.getUrl());
+                return OtaAssets.intercept(OverlayService.this,otaWebLoader,request.getUrl());
             }
             @Override public void onPageFinished(WebView web,String url){
                 if(LocalBridgePagePolicy.allows(url,"dock.html")){
@@ -1941,7 +1948,7 @@ public class OverlayService extends Service {
                 }
             }
         });
-        resultPanel.loadUrl("file:///android_asset/dock.html?results=1");
+        resultPanel.loadUrl(OtaAssets.webUrl("dock.html?results=1"));
         positionResultsUnderPokeball(true); // Migrate legacy independently saved list coordinates.
         if(resultCollapsed)resultRoot.setVisibility(View.GONE);
     }
@@ -2015,7 +2022,7 @@ public class OverlayService extends Service {
     }
     private String script(){
         if(probeScriptCache!=null)return probeScriptCache;
-        try(InputStream in=getAssets().open("probe.js")){
+        try(InputStream in=OtaAssets.open(this,"probe.js")){
             ByteArrayOutputStream out=new ByteArrayOutputStream();
             byte[] buf=new byte[4096];int n;
             while((n=in.read(buf))!=-1)out.write(buf,0,n);
