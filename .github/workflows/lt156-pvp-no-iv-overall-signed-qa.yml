@@ -1,4 +1,4 @@
-# LT156 QA rerun: updated legacy empty-analysis check; permanent signature and version unchanged.
+# LT156 QA rerun: exact runtime label renders # via concatenation; no extra intro text.
 name: PokeSearch LT156 — análise PvP legível — APK QA assinado
 on:
   push:
@@ -85,7 +85,7 @@ jobs:
           node - <<'NODE'
           const fs=require('fs'),html=fs.readFileSync('app/src/main/assets/detail.html','utf8');
           if(!html.includes('<b>Eficiência IV:</b>')||html.includes('<b>Produto:</b>')||
-             !html.includes('Rank Classe: #')||html.includes('>IV #'))
+             !html.includes('Rank Classe: ')||html.includes('>IV #')||html.includes('evoHint'))
             throw Error('Correct user-visible PvP label is required');
           NODE
           node - <<'NODE'
