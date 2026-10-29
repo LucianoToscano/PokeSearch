@@ -99,6 +99,9 @@ final class CommunityScrapbookOnline {
         // Two independent, concurrently signed-in sessions can belong to the
         // same person on this device. Do not infer identity from display names.
         private final java.util.Set<String> localOwnedUids=new java.util.HashSet<>();
+        // Purely local visual aliases for historic author UIDs. Never used for
+        // Firebase writes, message deletion or authorization decisions.
+        private final java.util.Set<String> linkedLegacyUids=new java.util.HashSet<>();
         private final java.util.Set<String> expandedCaptureDetails=new java.util.HashSet<>();
         private ImageView avatarButton;
         private boolean isAdmin=false;
@@ -331,6 +334,18 @@ final class CommunityScrapbookOnline {
                     FirebaseStats.ensureApp(activity)).getCurrentUser();
                 if(anonymous!=null && anonymous.isAnonymous())
                     localOwnedUids.add(anonymous.getUid());
+            }catch(RuntimeException ignored){}
+            linkedLegacyUids.clear();
+            try{
+                java.util.Set<String> saved=activity.getSharedPreferences("prefs",0)
+                    .getStringSet("chatVisualAliases_"+currentUid,
+                                  java.util.Collections.emptySet());
+                for(String old:saved){
+                    if(old!=null&&old.matches("[A-Za-z0-9_-]{12,180}")&&!old.equals(currentUid)){
+                        linkedLegacyUids.add(old);
+                        localOwnedUids.add(old);
+                    }
+                }
             }catch(RuntimeException ignored){}
             authenticated=true;refreshNickname();
             chatReadable=false;
@@ -585,10 +600,67 @@ final class CommunityScrapbookOnline {
             if(captureIcons.containsKey(path))return captureIcons.get(path);
             Bitmap bmp=null;
             try(java.io.InputStream in=activity.getAssets().open(path)){
-                bmp=android.graphics.BitmapFactory.decodeStream(in);
+                Bitmap original=android.graphics.BitmapFactory.decodeStream(in);
+                bmp=removeOpaqueIconMatte(original);
+                if(bmp!=original&&original!=null&&!original.isRecycled())original.recycle();
             }catch(java.io.IOException ignored){}
             captureIcons.put(path,bmp);
             return bmp;
+        }
+        /** These mode images sometimes include opaque near-black corner pixels
+         * in the PNG itself. A transparent chip alone cannot hide those squares.
+         * Remove ONLY dark, edge-connected matte, never enclosed dark details
+         * of the original icon. Runs once per small icon and is cached. */
+        private static Bitmap removeOpaqueIconMatte(Bitmap bitmap){
+            if(bitmap==null||bitmap.getWidth()<4||bitmap.getHeight()<4)return bitmap;
+            final int w=bitmap.getWidth(),h=bitmap.getHeight(),count=w*h;
+            if((long)count>1048576L)return bitmap;
+            int[] pixels=new int[count];
+            bitmap.getPixels(pixels,0,w,0,0,w,h);
+            int corners=0;
+            for(int p:new int[]{pixels[0],pixels[w-1],pixels[(h-1)*w],pixels[count-1]})
+                if(isDarkMattePixel(p))corners++;
+            if(corners<3)return bitmap;
+            boolean[] reached=new boolean[count];
+            int[] queue=new int[count];
+            int tail=0,head=0,removed=0;
+            for(int x=0;x<w;x++){
+                int t=x,b=(h-1)*w+x;
+                if(!reached[t]&&isDarkMattePixel(pixels[t])){reached[t]=true;queue[tail++]=t;}
+                if(!reached[b]&&isDarkMattePixel(pixels[b])){reached[b]=true;queue[tail++]=b;}
+            }
+            for(int y=1;y<h-1;y++){
+                int l=y*w,r=l+w-1;
+                if(!reached[l]&&isDarkMattePixel(pixels[l])){reached[l]=true;queue[tail++]=l;}
+                if(!reached[r]&&isDarkMattePixel(pixels[r])){reached[r]=true;queue[tail++]=r;}
+            }
+            while(head<tail){
+                int i=queue[head++];
+                pixels[i]=0;removed++;
+                int x=i%w,y=i/w;
+                if(x>0&&!reached[i-1]&&isDarkMattePixel(pixels[i-1])){
+                    reached[i-1]=true;queue[tail++]=i-1;
+                }
+                if(x+1<w&&!reached[i+1]&&isDarkMattePixel(pixels[i+1])){
+                    reached[i+1]=true;queue[tail++]=i+1;
+                }
+                if(y>0&&!reached[i-w]&&isDarkMattePixel(pixels[i-w])){
+                    reached[i-w]=true;queue[tail++]=i-w;
+                }
+                if(y+1<h&&!reached[i+w]&&isDarkMattePixel(pixels[i+w])){
+                    reached[i+w]=true;queue[tail++]=i+w;
+                }
+            }
+            if(removed==0)return bitmap;
+            Bitmap cleaned=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);
+            cleaned.setPixels(pixels,0,w,0,0,w,h);
+            return cleaned;
+        }
+        private static boolean isDarkMattePixel(int pixel){
+            return android.graphics.Color.alpha(pixel)>75&&
+                android.graphics.Color.red(pixel)<72&&
+                android.graphics.Color.green(pixel)<72&&
+                android.graphics.Color.blue(pixel)<72;
         }
         private void addBadge(LinearLayout bar,String path,String label,int tone){
             LinearLayout chip=new LinearLayout(activity);
@@ -692,8 +764,10 @@ final class CommunityScrapbookOnline {
         }
         private void openChatMenu(){
             String[] choices=isAdmin?
-                new String[]{"Excluir todas as mensagens","Trocar conta de administrador","Remover minha foto","Cancelar"}:
-                new String[]{"Verificar administrador com Google","Remover minha foto","Cancelar"};
+                new String[]{"Excluir todas as mensagens","Trocar conta de administrador",
+                             "Remover minha foto","Mensagens antigas","Cancelar"}:
+                new String[]{"Verificar administrador com Google","Remover minha foto",
+                             "Mensagens antigas","Cancelar"};
             new AlertDialog.Builder(activity).setTitle("Chat PokeSearch")
                 .setItems(choices,(dialog,position)->{
                     String selected=choices[position];
@@ -701,7 +775,84 @@ final class CommunityScrapbookOnline {
                     else if(selected.startsWith("Verificar")||selected.startsWith("Trocar"))
                         googleAdminLogin();
                     else if(selected.startsWith("Remover"))removeOwnAvatar();
+                    else if("Mensagens antigas".equals(selected))openLegacyMessageLinker();
                 }).show();
+        }
+        /** Legacy UIDs cannot be recovered from the display nickname or photo.
+         * The user must explicitly identify the old author on THIS device.
+         * This affects only bubble direction and locally visible photo, not
+         * ownership or authorUid in Firebase, moderation or access permissions. */
+        private void openLegacyMessageLinker(){
+            if(currentUid.isEmpty()||lastMessages==null){
+                toast("Abra o chat conectado para identificar suas mensagens antigas.");
+                return;
+            }
+            Map<String,String> names=new LinkedHashMap<>();
+            Map<String,Integer> counts=new LinkedHashMap<>();
+            for(DataSnapshot message:lastMessages.getChildren()){
+                String uid=message.child("authorUid").getValue(String.class);
+                String author=clean(message.child("nickname").getValue(String.class),24);
+                if(uid==null||!uid.matches("[A-Za-z0-9_-]{12,180}")||
+                    uid.equals(currentUid)||localOwnedUids.contains(uid)||author.isEmpty())continue;
+                names.put(uid,author);
+                counts.put(uid,counts.containsKey(uid)?counts.get(uid)+1:1);
+            }
+            java.util.List<String> ids=new java.util.ArrayList<>(names.keySet());
+            String[] labels=new String[ids.size()];
+            for(int i=0;i<ids.size();i++){
+                String uid=ids.get(i);
+                labels[i]=names.get(uid)+" · "+counts.get(uid)+" mensagens";
+            }
+            AlertDialog.Builder picker=new AlertDialog.Builder(activity)
+                .setTitle("Minhas mensagens antigas")
+                .setMessage("Selecione o autor das suas mensagens antigas. " +
+                    "A associação vale apenas neste aparelho: não altera o autor " +
+                    "no Firebase e não concede permissão de excluir ou editar.")
+                .setNegativeButton("Cancelar",null);
+            if(!ids.isEmpty())picker.setItems(labels,(dialog,which)->
+                confirmLegacyMessageLink(ids.get(which),names.get(ids.get(which))));
+            if(!linkedLegacyUids.isEmpty())
+                picker.setNeutralButton("Desfazer vínculos",(dialog,which)->{
+                    linkedLegacyUids.clear();
+                    persistLegacyLinks();
+                    renderMessages(lastMessages,false);
+                });
+            if(ids.isEmpty()&&linkedLegacyUids.isEmpty()){
+                toast("Não há autores antigos para associar neste histórico.");
+                return;
+            }
+            picker.show();
+        }
+        private void confirmLegacyMessageLink(String uid,String label){
+            if(uid==null||uid.equals(currentUid)||!uid.matches("[A-Za-z0-9_-]{12,180}"))return;
+            new AlertDialog.Builder(activity).setTitle("Estas mensagens são suas?")
+                .setMessage("Associar as mensagens antigas de "+label+" ao seu chat? " +
+                            "Elas passarão para o lado direito e usarão sua foto do chat. " +
+                            "A alteração é visual e pode ser desfeita no menu.")
+                .setNegativeButton("Cancelar",null)
+                .setPositiveButton("Sim, são minhas",(dialog,which)->{
+                    linkedLegacyUids.add(uid);
+                    persistLegacyLinks();
+                    if(lastMessages!=null)renderMessages(lastMessages,false);
+                }).show();
+        }
+        private void persistLegacyLinks(){
+            if(currentUid.isEmpty())return;
+            java.util.Set<String> previous=new java.util.HashSet<>(localOwnedUids);
+            previous.removeAll(linkedLegacyUids);
+            localOwnedUids.clear();
+            localOwnedUids.add(currentUid);
+            // Preserve any still authenticated anonymous principal.
+            try{
+                FirebaseUser anonymous=FirebaseAuth.getInstance(
+                    FirebaseStats.ensureApp(activity)).getCurrentUser();
+                if(anonymous!=null&&anonymous.isAnonymous())
+                    localOwnedUids.add(anonymous.getUid());
+            }catch(RuntimeException ignored){}
+            localOwnedUids.addAll(linkedLegacyUids);
+            activity.getSharedPreferences("prefs",0).edit()
+                .putStringSet("chatVisualAliases_"+currentUid,
+                              new java.util.HashSet<>(linkedLegacyUids)).apply();
         }
         private void choosePhoto(){
             new AlertDialog.Builder(activity)
