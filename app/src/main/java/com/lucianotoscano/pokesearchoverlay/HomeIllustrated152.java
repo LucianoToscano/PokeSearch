@@ -40,6 +40,17 @@ final class HomeIllustrated152 {
         bg.setAlpha(Math.round((100-Math.max(0,Math.min(85,opacity)))*255f/100f));
         return bg;
     }
+    private static ImageView sprite(MainActivity a,String path){
+        ImageView image=new ImageView(a);
+        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        try(java.io.InputStream input=a.getAssets().open(path)){
+            android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(input);
+            if(bitmap!=null)image.setImageBitmap(bitmap);
+        }catch(java.io.IOException ignored){
+            // Verified offline bundle may be absent only during developer preview.
+        }
+        return image;
+    }
     private static GradientDrawable green(MainActivity a,boolean enabled){
         GradientDrawable d=new GradientDrawable();
         d.setColor(enabled?Color.rgb(36,219,121):Color.argb(173,169,185,190));
@@ -189,12 +200,19 @@ final class HomeIllustrated152 {
         top.addView(heading(a,"Última atualização"),new LinearLayout.LayoutParams(0,-2,1));
         TextView all=text(a,"Ver todas  ›",11,false);
         top.addView(all);
+        LinearLayout preview=horizontal(a);
+        outer.addView(preview,margin(a,4,0));
+        LinearLayout summary=new LinearLayout(a);
+        summary.setOrientation(LinearLayout.VERTICAL);
+        preview.addView(summary,new LinearLayout.LayoutParams(0,-2,1));
         TextView version=text(a,"v"+BuildConfig.VERSION_NAME,17,true);
-        LinearLayout.LayoutParams vlp=margin(a,7,1);
-        outer.addView(version,vlp);
+        summary.addView(version);
         TextView subtitle=text(a,"Novidades e melhorias do PokeSearch",11,false);
-        subtitle.setMaxLines(1);subtitle.setEllipsize(TextUtils.TruncateAt.END);
-        outer.addView(subtitle);
+        subtitle.setMaxLines(2);subtitle.setEllipsize(TextUtils.TruncateAt.END);
+        summary.addView(subtitle);
+        ImageView pikachu=sprite(a,"pokemon-sprites/base/25.png");
+        pikachu.setContentDescription("Pikachu");
+        preview.addView(pikachu,new LinearLayout.LayoutParams(dp(a,69),dp(a,69)));
         outer.setOnClickListener(v->showNotes.run());
         return outer;
     }
@@ -211,7 +229,13 @@ final class HomeIllustrated152 {
         LinearLayout.LayoutParams clp=margin(a,10,0);
         panel.addView(categories,clp);
         String[] labels={"Shiny","Eventos","Raids","Dicas","PvP"};
-        String[] symbols={"✧","✦","◈","♜","★"};
+        String[] sprites={
+            "pokemon-sprites/shiny/133.png",
+            "pokemon-sprites/base/150.png",
+            "pokemon-sprites/base/250.png",
+            "pokemon-sprites/base/448.png",
+            "pokemon-sprites/base/445.png"
+        };
         int[] colors={0xAA316D6B,0xAA51559C,0xAA8D6040,0xAA476D97,0xAA315D72};
         for(int i=0;i<labels.length;i++){
             LinearLayout tile=new LinearLayout(a);
@@ -224,9 +248,10 @@ final class HomeIllustrated152 {
             bg.setCornerRadius(dp(a,13));
             bg.setStroke(dp(a,1),Color.argb(120,255,255,255));
             tile.setBackground(bg);
-            TextView symbol=text(a,symbols[i],27,true);
-            symbol.setGravity(Gravity.CENTER);
-            tile.addView(symbol,new LinearLayout.LayoutParams(-1,0,1));
+            ImageView picture=sprite(a,sprites[i]);
+            picture.setContentDescription(labels[i]);
+            picture.setPadding(dp(a,3),dp(a,4),dp(a,3),dp(a,1));
+            tile.addView(picture,new LinearLayout.LayoutParams(-1,0,1));
             TextView label=text(a,labels[i],10,true);label.setGravity(Gravity.CENTER);
             tile.addView(label);
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(a,85),1);
