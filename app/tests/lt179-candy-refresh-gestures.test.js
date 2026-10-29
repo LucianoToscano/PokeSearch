@@ -12,6 +12,8 @@ const classList={add(){},remove(){},toggle(){}};
 for(const name of ["refresh","period","location","infos","choices"]){
   elements.set(name,{
     listeners:{},classList,textContent:"",value:"",innerHTML:"",className:"",
+    attributes:{},
+    setAttribute(name,value){this.attributes[name]=value;},
     addEventListener(type,cb){this.listeners[type]=cb;}
   });
 }
@@ -44,6 +46,7 @@ function fireHold(){
 // Pointerup should search immediately, without a duplicate synthesized click.
 fire("pointerdown");advance(40);fire("pointerup");fire("click");
 assert.equal(Native.count,1,"One request for one short tap");
+assert.equal(elements.get("refresh").attributes["aria-busy"],"true","Refresh begins rotating before bridge callback");
 // In WebViews that lose pointerup, a normal click must still work.
 advance(500);fire("click");assert.equal(Native.count,2,"Click fallback searches");
 // Long press opens interval settings and never submits a search.
