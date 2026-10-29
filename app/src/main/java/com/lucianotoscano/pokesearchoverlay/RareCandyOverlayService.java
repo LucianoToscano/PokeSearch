@@ -443,12 +443,12 @@ public final class RareCandyOverlayService extends Service {
                 refresh(true);
             });
         }
-        @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus){
+        @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus,String panel){
             main.post(()->{
                 if(!permitted()||menuParams==null||!candyMenuVisible)return;
                 int h=Math.max(34,Math.min(290,height));
                 menuParams.height=dp(h);
-                menuParams.width=dp(h>34?240:142);
+                menuParams.width=dp(h>34?("period".equals(panel)?142:240):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
