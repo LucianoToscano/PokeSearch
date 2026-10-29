@@ -1,98 +1,73 @@
-/* LT175: read the official PoGoCoordinates Rare Candy search UI only.
- * No external API, no token extraction, no bypass of logged-in result caps.
- * Invoked only on https://pogocoordinates.com/search.
+/* LT177: PoGoCoordinates API Rare Candy collector.
+ * Runs only inside the official https://pogocoordinates.com/search WebView.
+ * JWT never crosses the JS/Android bridge: return only non-sensitive candy data.
+ * The API returns exact coords and UTC expiry; no /reveal and no HTML scraping.
  */
-(function () {
+(function() {
   "use strict";
-  const coordRe = /^(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)$/;
-  function buttons() {
-    return [...document.querySelectorAll("button,[role=button]")];
-  }
-  function exactButton(label) {
-    return buttons().find(b =>
-      (b.textContent || "").replace(/\s+/g, " ").trim().toLowerCase() === label);
-  }
-  function runSearch(coords, radius) {
-    if (!location.hostname.endsWith("pogocoordinates.com") ||
-        !location.pathname.startsWith("/search")) return "wrong-origin";
-    const tab = exactButton("rare candy");
-    const active = tab && (tab.getAttribute("aria-selected") === "true" ||
-      tab.getAttribute("data-state") === "active" ||
-      tab.classList.contains("active"));
-    if (tab && !active && !window.__pokesearchCandyTabOpened) {
-      window.__pokesearchCandyTabOpened = true;
-      tab.click();
-      return "tab-switched";
+  const API = "https://coordinates-api.pokemongopro.com/rare-candy/search";
+  const isOfficial = () => location.protocol === "https:" &&
+    (location.hostname === "pogocoordinates.com" ||
+      location.hostname === "www.pogocoordinates.com") &&
+    location.pathname === "/search";
+  const validCoordinates = value => {
+    if (typeof value !== "string") return false;
+    const parts=value.split(",");
+    if(parts.length!==2) return false;
+    const lat=Number(parts[0].trim()),lng=Number(parts[1].trim());
+    return parts[0].trim()!==""&&parts[1].trim()!=="" &&
+      Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
+  };
+  const sanitize = item => {
+    if(!item || !validCoordinates(item.coords)) return null;
+    const expiry=Date.parse(item.expires_at);
+    if(!Number.isFinite(expiry)||expiry<=Date.now())return null;
+    return {
+      coords:item.coords.trim(),
+      location:String(item.location||"").slice(0,110),
+      expires_at:new Date(expiry).toISOString(),
+      distance_km:typeof item.distance_km==="number" &&
+        Number.isFinite(item.distance_km) && item.distance_km>=0?
+        item.distance_km:null
+    };
+  };
+  async function search(coords,radiusMeters) {
+    if(!isOfficial())return JSON.stringify({ok:false,status:403,error:"wrong-origin"});
+    const payload={};
+    if(coords && validCoordinates(coords)){
+      const [lat,lng]=coords.split(",").map(Number);
+      if(!Number.isFinite(radiusMeters) || radiusMeters<=0 ||
+          radiusMeters>1000000) return JSON.stringify({ok:false,status:400,error:"invalid-radius"});
+      payload.center_lat=lat;
+      payload.center_lng=lng;
+      // Site UI uses METERS; endpoint requires KM.
+      payload.radius_km=radiusMeters/1000;
     }
-    const scope = [...document.querySelectorAll("section,form,div")].find(el => {
-      const t = (el.innerText || "").slice(0, 450);
-      return t.includes("Location") && /Search/.test(t) &&
-          el.querySelectorAll("input").length >= 2 &&
-          el.querySelectorAll("input").length <= 4;
-    });
-    const inputs = (scope || document).querySelectorAll("input");
-    const loc = [...inputs].find(el =>
-      (el.placeholder || "").toLowerCase().includes("coord") ||
-      (el.value || "").trim().match(coordRe)) || inputs[0];
-    const km = [...inputs].find(el =>
-      el !== loc && (el.placeholder || "").toLowerCase().includes("radius")) ||
-      [...inputs].find(el => el !== loc && /^(?:1000|[1-9]\d{0,3})$/.test(el.value || ""));
-    function input(el, value) {
-      if (!el) return;
-      const proto = el instanceof HTMLTextAreaElement ?
-        HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
-      Object.getOwnPropertyDescriptor(proto, "value").set.call(el, value);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-    // Clear the provider form too when user clears the location menu.
-    if (loc) input(loc, coords && coordRe.test(coords) ? coords : "");
-    if (km) input(km, String(radius));
-    const search = exactButton("search");
-    if (search && !search.disabled) { search.click(); return "submitted"; }
-    return "not-ready";
-  }
-  function read() {
-    if (!location.hostname.endsWith("pogocoordinates.com") ||
-        !location.pathname.startsWith("/search")) return JSON.stringify({ok:false, reason:"wrong-origin"});
-    const entries = [];
-    const seen = new Set();
-    const nodes = [...document.querySelectorAll("button, a, p, span, div")];
-    for (const node of nodes) {
-      const text = (node.innerText || node.textContent || "").trim();
-      if (text.length > 85) continue;
-      const match = text.match(coordRe);
-      if (!match) continue;
-      const lat = Number(match[1]), lng = Number(match[2]);
-      if (!(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180)) continue;
-      const point = lat.toFixed(6) + "," + lng.toFixed(6);
-      if (seen.has(point)) continue;
-      let card = node;
-      for (let step = 0; step < 9 && card.parentElement; step++) {
-        const value = card.innerText || "";
-        if (/rare candy/i.test(value) && /despawn/i.test(value) &&
-            value.length < 1000) break;
-        card = card.parentElement;
+    const headers={"Content-Type":"application/json"};
+    // Auth stays in the website's own origin. No JWT in native callbacks/logs.
+    const token=localStorage.getItem("jwt");
+    if(token && token.trim())headers.Authorization="Bearer "+token.trim();
+    try {
+      const response=await fetch(API,{method:"POST",mode:"cors",credentials:"omit",
+        cache:"no-store",headers,body:JSON.stringify(payload)});
+      if(!response.ok){
+        let retry=Number(response.headers.get("Retry-After")||0);
+        if(!Number.isFinite(retry)||retry<0)retry=0;
+        if(response.status===429)retry=Math.max(retry,60);
+        return JSON.stringify({ok:false,status:response.status,
+          error:response.status===429?"rate-limited":"request-failed",
+          retry_after:Math.min(3600,retry)});
       }
-      const info = (card.innerText || "").replace(/\r/g, "");
-      if (!/rare candy/i.test(info) || !/despawn/i.test(info) ||
-          info.length > 1200) continue;
-      const time = info.match(/despawns?\s*in\s*:?\s*(\d{1,2}):(\d{2})/i);
-      const loc = info.match(/location\s*:?\s*\n\s*([^\n]+)/i);
-      const distance = info.match(/(\d+(?:[.,]\d+)?)\s*(km|m)\s*away/i);
-      const seconds = time ? Math.min(3600, Number(time[1])*60+Number(time[2])) : -1;
-      seen.add(point);
-      entries.push({
-        coords: match[1] + "," + match[2],
-        location: loc ? loc[1].trim().slice(0, 110) : "",
-        seconds: seconds,
-        distance: distance ? distance[1].replace(",",".")+" "+distance[2] : ""
-      });
-      if (entries.length >= 10) break;
+      const json=await response.json();
+      const cap=Number(json.cap)||5;
+      // Keep provider's actual cap (including VIP), never request >cap.
+      const items=Array.isArray(json.results)?
+        json.results.slice(0,Math.min(100,Math.max(1,cap))).map(sanitize).filter(Boolean):[];
+      return JSON.stringify({ok:true,status:200,items,
+        tier:String(json.tier||"non_logged_in").slice(0,32),cap});
+    }catch(e) {
+      return JSON.stringify({ok:false,status:0,error:"network"});
     }
-    const text = document.body ? (document.body.innerText || "") : "";
-    return JSON.stringify({ok:true, ready:/rare candy search/i.test(text),
-      count: entries.length, items:entries});
   }
-  window.PokeSearchCandy = { runSearch, read };
+  window.PokeSearchCandy={search,validCoordinates};
 })();
