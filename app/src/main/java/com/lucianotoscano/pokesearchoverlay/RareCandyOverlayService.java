@@ -376,6 +376,20 @@ public final class RareCandyOverlayService extends Service {
             candyMenuPanel.evaluateJavascript("window.syncCandy("+
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
+        syncCandyRefreshState();
+    }
+    // Only report the native request lifecycle to the trusted local controls
+    // WebView; never send account cookies, JWT or remote search data to it.
+    private void syncCandyRefreshState(){
+        if(destroyed||!candyMenuLoaded||candyMenuPanel==null||
+                !allowedMenuUrl(candyMenuPanel.getUrl()))return;
+        boolean limited=SystemClock.elapsedRealtime()<blockedUntil;
+        candyMenuPanel.evaluateJavascript("window.setCandyRefreshState({busy:"+
+            busy+",pending:"+pendingManualRefresh+",blocked:"+limited+"})",null);
+    }
+    private void setCandyBusy(boolean value){
+        busy=value;
+        syncCandyRefreshState();
     }
     private void placeCandyMenu(){
         if(menuParams==null||bubbleParams==null||wm==null)return;
@@ -564,7 +578,7 @@ public final class RareCandyOverlayService extends Service {
                     android.webkit.WebResourceRequest request,
                     android.webkit.WebResourceError error){
                 if(request.isForMainFrame()&&!destroyed){
-                    ready=false;busy=false;
+                    ready=false;setCandyBusy(false);
                     setStatus("Site indisponível · atualize quando houver rede");
                 }
             }
@@ -587,6 +601,7 @@ public final class RareCandyOverlayService extends Service {
             status.setText(message);
             status.setVisibility(cards.isEmpty()?View.VISIBLE:View.GONE);
         }
+        syncCandyRefreshState();
     }
     private void refresh(boolean manual){
         if(destroyed||site==null)return;
@@ -615,7 +630,7 @@ public final class RareCandyOverlayService extends Service {
             return;
         }
         if(!manual&&now-lastRefresh<15000)return;
-        busy=true;expirePending=false;lastRefresh=now;
+        setCandyBusy(true);expirePending=false;lastRefresh=now;
         final int gen=++generation;
         setStatus("Consultando Doce Raro…");
         // No DOM scraping, fake time-to-live or /reveal. The source contract
@@ -638,6 +653,7 @@ public final class RareCandyOverlayService extends Service {
     private void finishPendingManualRefresh(){
         if(destroyed||!pendingManualRefresh)return;
         pendingManualRefresh=false;
+        syncCandyRefreshState();
         main.post(()->refresh(true));
     }
     private void readResults(int gen,int attempt){
@@ -651,7 +667,7 @@ public final class RareCandyOverlayService extends Service {
                     if(attempt<24){
                         main.postDelayed(()->readResults(gen,attempt+1),600L);
                     }else{
-                        busy=false;setStatus("Sem resposta do site · tente atualizar");
+                        setCandyBusy(false);setStatus("Sem resposta do site · tente atualizar");
                         finishPendingManualRefresh();
                     }
                     return;
@@ -659,7 +675,7 @@ public final class RareCandyOverlayService extends Service {
                 JSONObject response=state.optJSONObject("response");
                 if(response==null)throw new org.json.JSONException("missing response");
                 if(!response.optBoolean("ok",false)){
-                    busy=false;
+                    setCandyBusy(false);
                     int code=response.optInt("status",0);
                     if(code==429){
                         int retry=Math.max(60,Math.min(3600,response.optInt("retry_after",60)));
@@ -702,13 +718,13 @@ public final class RareCandyOverlayService extends Service {
                     accepted.put(point,new Candy(point,city,distance,elapsed+ttl));
                 }
                 cards.clear();cards.putAll(accepted);
-                busy=false;
+                setCandyBusy(false);
                 setStatus(cards.isEmpty()?"Nenhum Doce Raro no momento":
                     cards.size()+" Doce Raro · PoGoCoordinates");
                 render();
                 finishPendingManualRefresh();
             }catch(Exception ex){
-                busy=false;
+                setCandyBusy(false);
                 setStatus("Falha ao ler dados do Doce Raro");
                 finishPendingManualRefresh();
             }
