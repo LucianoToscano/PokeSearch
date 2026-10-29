@@ -245,6 +245,11 @@ public final class RareCandyOverlayService extends Service {
         refresh.setGravity(Gravity.CENTER);
         title.addView(refresh,space(35,30,0));
         refresh.setOnClickListener(v->refresh(true));
+        refresh.setOnLongClickListener(v->{
+            OverlayQuickMenus.showCandyPeriod(this,
+                resultsParams==null?bubbleParams.y:resultsParams.y+dp(32),actions);
+            return true;
+        });
         TextView close=label("×",25,0xFFEEAABB,false);
         close.setGravity(Gravity.CENTER);
         title.addView(close,space(30,30,0));
