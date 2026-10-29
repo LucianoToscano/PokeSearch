@@ -1061,6 +1061,8 @@ window.showDetails=(c,mode,watched)=>{
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const ivDisplay=window.PokeSearchIVDisplay?.fromCard?.(c);
  const showRaw=ivDisplay?.valid===true;
+ const ivSourcePercent=showRaw?null:window.PokeSearchIVDisplay?.percentOnly?.(c);
+ const ivVisual=showRaw?ivDisplay:ivSourcePercent;
  if(changed){
   const section=document.getElementById("evolutions");
   const analysis=document.getElementById("evoBody");
@@ -1074,13 +1076,16 @@ window.showDetails=(c,mode,watched)=>{
   document.getElementById("evoChevron").textContent="▾";
   document.getElementById("evoToggle").setAttribute("aria-expanded","false");
  }
- const showPct=showRaw;
- // Both A/D/S and % use the same approved category. When the API omits
- // ivPercent, derive it only from the explicitly returned valid raw triple.
- const ivStyle=showRaw?' style="--ps-iv-color:'+ivDisplay.color+'"':"";
+ const showPct=ivVisual?.valid===true;
+ // A/D/S requires three verified attributes. If the source exposes only a
+ // legitimate IV percentage, show ONLY that percentage, never invented IVs.
+ const ivStyle=showPct?' style="--ps-iv-color:'+ivVisual.color+'"':"";
  const statTile=(label,value)=>'<div class="statTile"><div class="statHeading">'+h(label)+'</div><div class="statValue">'+h(value===null||value===undefined||value===""?"—":value)+'</div></div>';
  document.getElementById("major").innerHTML='<div class="statTile ivTile"'+ivStyle+'><div class="statHeading">IV</div>'+
-  (showPct?'<span class="ivPercent" title="'+(ivDisplay.derived?'Percentual calculado a partir do IV A/D/S':'Percentual de IV confirmado')+'">'+h(ivDisplay.percent)+'%</span>':"")+
+  (showPct?'<span class="ivPercent" title="'+(ivSourcePercent?.valid?
+   'IV% informado pela fonte; A/D/S não disponíveis':
+   ivDisplay.derived?'Percentual calculado a partir do IV A/D/S':'Percentual de IV confirmado')+
+   '">'+h(ivVisual.percent)+'%</span>':"")+
   '<span class="ivTypes" aria-label="Tipos do Pokémon">'+document.getElementById("types").innerHTML+'</span>'+
   '<div class="statValue red">'+h(showRaw?ivDisplay.raw:"—")+'</div></div>'+
   statTile("PC",c.cp)+statTile("Nv.",c.level);
