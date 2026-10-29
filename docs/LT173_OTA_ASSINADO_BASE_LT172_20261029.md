@@ -16,7 +16,7 @@
 6. Não há OTA nativa ou reinstalação silenciosa. Alterações Java, Manifest, permissões, SDK e assinatura continuam exigindo APK completo; patches binários de APK são uma etapa separada, não implementada aqui.
 
 ## Recursos inicialmente permitidos
-`dock.html`, `detail.html`, `sprite_offline.js`, `sprite_visual_scale.js`, `visual_editor.js`, `pokemon_card_presentation.js`, `pvpoke-overall-ranks.js`, `pvpoke-iv-gamemaster.js`, `probe.js`, `release_notes.json`, `pokemon_catalog.json`. Nenhum arquivo de autenticação, Firebase, certificados, serviços Android nem credenciais.
+`dock.html`, `detail.html`, `sprite_offline.js`, `sprite_visual_scale.js`, `visual_editor.js`, `pokemon_card_presentation.js`, `pvpoke-overall-ranks.js`, `pvpoke-iv-gamemaster.js`, `probe.js`, `release_notes.json`, `pokemon_catalog.json`. Também são permitidos PNGs individuais em caminhos controlados de `pokemon-sprites/{base,shiny,forms,costumes}`, `result-icons/{base,modes}` e `weather-icons{/v2}`, com nomes restritos, até 64 arquivos por pacote e 8 MB somados. Cada PNG é verificado por tamanho e SHA-256. Nenhum arquivo de autenticação, Firebase, certificados, serviços Android nem credenciais.
 
 ## Publicação controlada (somente depois de homologação)
 - Publicar primeiro uma **LT173 oficial** com APK assinado e versão monotônica `0.01.73 / 54378`, somente após aprovação e QA em Samsung/Moto; não assumir que foi publicada.
