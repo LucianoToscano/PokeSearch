@@ -1,0 +1,159 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:transparent!important;color:#fff;font:10px Roboto,Arial,sans-serif;overflow:hidden}
+button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#controls{display:grid;grid-template-columns:repeat(4,34px);grid-auto-rows:30px;gap:2px;padding:0;margin:0;align-items:center}
+#controls button{height:30px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+#controls button.active{background:#db2d4bdb}
+#controls button svg{width:16px;height:16px;display:block;pointer-events:none}
+#controls button.locOn{background:#1e6150e8;color:#b2ffe0;border-color:#5de7b1a6}
+#controls button .autoTime{font-size:9px;position:absolute;margin-top:20px}
+#controls button#refresh{flex-direction:column;gap:0}
+#controls button#refresh svg{width:19px;height:19px;margin-top:-2px}
+#controls button#close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
+#choices{display:none;position:absolute;top:34px;left:0;z-index:12;width:232px;max-width:calc(100vw - 8px);padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
+#choices.visible{display:block}
+#choices.locationPanel{width:232px}
+#choices .choiceHeader{padding:5px 7px 7px;color:#b9c7d9;font-weight:700;font-size:11px;letter-spacing:.1px}
+#choices .locField{box-sizing:border-box;width:100%;height:34px;min-height:34px;background:#111722;border:1px solid #536174;border-radius:7px;padding:6px 8px;color:#fff;font-size:11px;margin:3px 0;outline:none}
+#choices .locField:focus{border-color:#77c9b2;box-shadow:0 0 0 1px #77c9b244}
+#choices .locLine{display:flex;align-items:center;justify-content:space-between;gap:5px;margin:5px 0}
+#choices .locLine button,#choices button.choice{flex:1;width:auto;padding:7px;background:#223147;border:1px solid #51647b;border-radius:7px;color:#e7edf9;font-size:11px;min-height:30px}
+#choices button.choice{display:block;width:100%;text-align:left;background:transparent;border:0;padding:8px 9px;margin:1px 0}
+#choices button.choice.chosen{background:#263f39;color:#a2efd3;font-weight:700}
+#choices button.locSave{color:#a8efd4}
+#choices .extraNote{margin:3px 2px 5px;font-size:9px;color:#b7c3d1;line-height:1.3}
+#choices label.checkbox{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px;padding:5px 8px;font-size:11px;color:#e2e9f2;border-radius:6px}
+#choices label.checkbox:active{background:#263444}
+#choices .periodChoices{display:flex;gap:5px;margin:5px 3px 7px}
+#choices .periodChoices button{flex:1;min-height:32px;border:1px solid #536174;background:#223147;border-radius:7px;font-size:11px}
+#choices .periodChoices button.chosen{border-color:#68d7ad;background:#214d41;color:#c6ffe7}
+#choices .infoDivider{height:1px;background:#ffffff22;margin:4px 2px}
+#choices .hint{font-size:9px;line-height:1.3;color:#aab9ca;padding:5px 7px 2px}
+#choices input[type=checkbox]{accent-color:#5bba96;width:16px;height:16px}
+body:not(.expanded) #choices{display:none}
+</style></head><body>
+<div id="controls" role="toolbar" aria-label="Controles Doce Raro">
+<button id="location" aria-label="Localização e raio" onclick="openPanel('location')" title="Localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
+<button id="refresh" aria-label="Toque: atualizar; segure: intervalo" title="Atualizar · segurar para 1, 3, 5 minutos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 4M4 13l2 4a7 7 0 0 0 12.5-2"/></svg><span id="period" class="autoTime">1m</span></button>
+<button id="infos" aria-label="Mostrar ou ocultar informações" onclick="openPanel('infos')" title="Informações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6a9 9 0 0 1 9 6 9 9 0 0 1-18 0 9 9 0 0 1 9-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+<button id="close" title="Fechar menu" aria-label="Recolher opções" onclick="Native.closeCandyMenu()">×</button>
+</div>
+<div id="choices" role="group"></div>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let settings={coords:"",radius:1000,period:1,name:false,location:false,despawn:true,distance:false};
+let currentPanel="",refreshHold=null,refreshHeld=false;
+function syncCandy(json) {
+ try{settings=Object.assign(settings,JSON.parse(json||"{}"));}catch(e){}
+ $("period").textContent=String(settings.period||1)+"m";
+ $("location").classList.toggle("locOn",!!settings.coords);
+ $("infos").classList.toggle("active",!!(settings.name||settings.location||settings.distance));
+ if(currentPanel==="infos"||currentPanel==="period")renderPanel();
+ // Do not rebuild the location editor while a user is typing.
+}
+function requestHeight(height,focus) {
+ Native.candyMenuHeight(Math.max(34,Math.min(290,height)),!!focus);
+}
+function closePanel(){
+ currentPanel="";$("choices").innerHTML="";$("choices").className="";
+ document.body.classList.remove("expanded");requestHeight(34,false);
+}
+function openPanel(name){
+ if(currentPanel===name){closePanel();return}
+ currentPanel=name;renderPanel();
+}
+function renderPanel(){
+ const el=$("choices");document.body.classList.add("expanded");
+ el.className="visible"+(currentPanel==="location"?" locationPanel":"");
+ if(currentPanel==="period"){
+  el.innerHTML='<div class="choiceHeader">Atualização automática</div>'+
+   '<div class="periodChoices">'+
+   [1,3,5].map(n=>'<button class="'+(settings.period===n?'chosen':'')+
+   '" onclick="choosePeriod('+n+')">'+n+'m</button>').join("")+'</div>'+
+   '<div class="hint">Toque em ↻ para atualizar agora</div>';
+  requestHeight(119,false);
+ }else if(currentPanel==="infos"){
+  el.innerHTML='<div class="choiceHeader">Informações dos doces</div>'+
+   [["name","Nome Doce Raro"],["location","Localização"],["despawn","Despawn"],["distance","Distância"]]
+   .map(([id,label])=>'<label class="checkbox"><span>'+label+'</span><input type="checkbox" id="v-'+id+'"'+
+   (settings[id]?' checked':'')+' onchange="changeInfo(\''+id+'\',this.checked)"></label>').join("")+
+   '<div class="infoDivider"></div><div class="hint">Padrão: somente Despawn</div>';
+  requestHeight(235,false);
+ }else if(currentPanel==="location"){
+  el.innerHTML='<div class="choiceHeader">Localização · Doce Raro</div>'+
+   '<input id="candyCoords" onfocus="Native.candyMenuFocus(true)" class="locField" placeholder="Latitude,Longitude" autocomplete="off" spellcheck="false">'+
+   '<input id="candyRadius" onfocus="Native.candyMenuFocus(true)" class="locField" type="number" min="1" max="1000000" step="1" placeholder="Raio (metros)">'+
+   '<div class="extraNote">Mesmo raio do site · metros</div>'+
+   '<div class="locLine"><button onclick="pasteCoords()">Colar</button><button onclick="setRadius1000()">1000m</button></div>'+
+   '<div class="locLine"><button class="locSave" onclick="applyLocation()">✓ Aplicar</button><button onclick="clearLocation()">✕ Limpar</button></div>'+
+   '<div id="locError" class="extraNote"></div>';
+  $("candyCoords").value=settings.coords||"";
+  $("candyRadius").value=settings.radius||1000;
+  requestHeight(265,false);
+ }
+}
+function choosePeriod(value){settings.period=value;Native.setCandyPeriod(value);closePanel()}
+function changeInfo(key,checked){
+ if(!["name","location","despawn","distance"].includes(key))return;
+ settings[key]=checked;Native.setCandyInfo(key,checked);
+}
+function applyLocation(){
+ const center=$("candyCoords").value.trim(),meters=Number($("candyRadius").value);
+ if(!Number.isInteger(meters)||meters<1||meters>1000000||
+   (center&&!/^-?\d{1,2}(?:\.\d+)?\s*,\s*-?\d{1,3}(?:\.\d+)?$/.test(center))){
+   $("locError").textContent="Informe coordenadas e raio válidos";return;
+ }
+ if(center){const [a,b]=center.split(",").map(Number);
+   if(Math.abs(a)>90||Math.abs(b)>180){
+    $("locError").textContent="Latitude/longitude fora da faixa";return;
+   }
+ }
+ Native.setCandyLocation(center,meters);settings.coords=center;settings.radius=meters;closePanel();
+}
+function clearLocation(){settings.coords="";settings.radius=1000;Native.setCandyLocation("",1000);closePanel()}
+function setRadius1000(){$("candyRadius").value="1000"}
+function pasteCoords(){Native.pasteCandyLocation()}
+function setPastedCoords(value){
+ if(currentPanel==="location"&&$("candyCoords"))$("candyCoords").value=value||"";
+}
+// Native WebView pointer events: dispatch on release, never depend on a
+// synthesized click after touch. Long press opens periods only, no refresh.
+const refresh=$("refresh");
+let pointerActive=false;
+function cancelRefreshHold(){clearTimeout(refreshHold);refreshHold=null}
+refresh.addEventListener("pointerdown",event=>{
+ if(event.isPrimary===false)return;
+ pointerActive=true;refreshHeld=false;
+ cancelRefreshHold();
+ refreshHold=setTimeout(()=>{
+   if(!pointerActive)return;
+   refreshHeld=true;
+   openPanel("period");
+ },550);
+});
+refresh.addEventListener("pointerup",event=>{
+ if(!pointerActive)return;
+ pointerActive=false;cancelRefreshHold();
+ if(!refreshHeld){Native.refreshCandy();}
+ refreshHeld=false;
+ event.preventDefault();
+});
+refresh.addEventListener("pointercancel",()=>{
+ pointerActive=false;refreshHeld=false;cancelRefreshHold();
+});
+refresh.addEventListener("pointerleave",()=>{
+ // Dragging off the icon must not be interpreted as a short tap.
+ pointerActive=false;cancelRefreshHold();
+});
+refresh.addEventListener("click",event=>{
+ // Desktop/keyboard accessibility fallback; pointerup already sent the call.
+ if(event.detail===0)Native.refreshCandy();
+ event.preventDefault();
+});
+window.syncCandy=syncCandy;window.setPastedCoords=setPastedCoords;
+</script></body></html>

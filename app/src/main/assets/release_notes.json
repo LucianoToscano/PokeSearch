@@ -723,6 +723,30 @@
           "Uma atualização OTA só entra em vigor na próxima inicialização completa do aplicativo; não altera a busca ou a tela enquanto estiver em uso."
         ]
       }
+    },
+    {
+      "id": "lt178-candy-first-public-cards-menus-20261029",
+      "minVersionCode": 54383,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT178 — Doce Raro e menus compactos",
+      "sections": {
+        "novidades": [
+          "Doce Raro ganhou bolha independente ao lado do Clima, com resultados pela pesquisa oficial do PoGoCoordinates."
+        ],
+        "melhorias": [
+          "Menus compactos no estilo das Pokébolas: localização, intervalo de atualização de 1/3/5 min e visibilidade independente de Nome, Localização, Despawn e Distância.",
+          "Por padrão apenas Despawn fica visível. A distância opcional aparece sobre a área da sprite e o nome Doce Raro pode ser ocultado.",
+          "Ícone de Doce Raro preservado, agora com imagem de resolução mais alta e fundo transparente."
+        ],
+        "correcoes": [
+          "Toque curto no botão ↻ solicita a busca imediatamente; segurar abre os intervalos sem iniciar outra pesquisa.",
+          "Toques durante carregamento ou outra busca são tratados sem duplicar consultas simultâneas.",
+          "A bolha permanece arrastável e independente das duas Pokébolas; toque no doce copia coordenadas e deixa a sprite acinzentada."
+        ],
+        "emDesenvolvimento": [
+          "A atualização depende da confirmação de instalação pelo Android; resultados e autenticação estão sujeitos à disponibilidade e aos limites do PoGoCoordinates."
+        ]
+      }
     }
   ]
 }

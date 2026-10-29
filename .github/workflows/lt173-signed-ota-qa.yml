@@ -6,6 +6,7 @@ on:
       - 'app/src/main/java/**'
       - 'app/src/main/assets/**'
       - 'app/tests/lt173-*'
+      - 'app/tests/lt175-*'
       - 'app/tests/OtaLocalBridgePolicyTest.java'
       - 'scripts/OtaSigner.java'
       - 'scripts/build_ota_pack.py'
@@ -37,6 +38,8 @@ jobs:
         run: |
           set -euo pipefail
           node app/tests/lt173-ota-signed-assets.test.js
+          node app/tests/lt175-rare-candy-overlay.test.js
+          node --check app/src/main/assets/rare_candy_probe.js
           node --check app/src/main/assets/probe.js
           node --check app/src/main/assets/sprite_offline.js
           python3 -m py_compile scripts/build_ota_pack.py scripts/test_ota_builder.py

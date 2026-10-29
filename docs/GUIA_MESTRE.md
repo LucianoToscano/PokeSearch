@@ -1,5 +1,37 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT178 — NOVA CANDIDATA OFICIAL DOCE RARO (29/10/2026)
+
+**Correções sobre a LT177:** controle de Nome Doce Raro ocultável, distância inserida dentro da célula da sprite (sem coluna lateral), barra e popups refinados, visibilidade inicial `Nome OFF · Localização OFF · Despawn ON · Distância OFF` e sprite de Doce Raro original com transparência em resolução 96×96. Botão ↻: toque curto chama consulta na soltura, pressão longa abre somente opções 1/3/5min, com uma busca pendente durante consulta anterior sem disparos simultâneos. Versão destinada ao APK completo assinado **0.01.78 / versionCode 54383**; novo `release_notes.json` registra novidades para usuários. Ações preservam as duas Pokébolas e contas independentes.
+
+Registro da etapa: [LT175–LT178 QA e lançamento](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md). PR #134 deve passar pela QA e ser integrada na main; workflow específico `lt178-official-release.yml` publicará GitHub Releases/latest somente se a base atual for LT173 e se assinatura, R8 e regressões passarem. Drive requer upload/validação específicos; não é automaticamente atualizado pelo GitHub.
+
+---
+
+## LT177 EM QA — API DIRETA DOCE RARO E MENUS VISUAIS DA POKÉBOLA (29/10/2026)
+
+**Build de QA confirmado:** [GitHub Actions #40936145937 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40936145937), [ZIP QA #12923894267](https://github.com/LucianoToscano/PokeSearch/actions/runs/40936145937/artifacts/12923894267), APK `PokeSearch-v0.01.77-LT-QA.apk` com 49.539.430 bytes e assinatura v2 verificada. A origem de código é `366503ce3501465d761b9555c847477e3835bfb0`. **Testes reais do usuário no Samsung ainda pendentes**, sem atualização geral.
+
+Após comparação de prints físicos no Samsung, corrigida a escala da sprite (20dp) e substituído o menu anterior por **toolbar nativa em WebView local** com o mesmo CSS de tiles 30×34dp, espaçamento 2dp e popups do dock das Pokébolas. Os resultados agora são coluna transparente compacta em vez de cards largos. A coleta passou da extração DOM do site para **POST oficial `/rare-candy/search`** executado dentro da origem PoGoCoordinates: `coords` diretas, `expires_at` UTC, `distance_km`, sem `/reveal`, sem transferência de JWT para Android, rate-limit 429 e raio em **metros** na UI (1000m→1km API). Nova candidata privada **0.01.77 / 54382**, assinada somente para QA, sem nova release pública, sem merge e sem OTA. [Especificação e registro de teste LT177](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md).
+
+---
+
+## LT176 EM QA — CORREÇÃO DA BOLHA DO DOCE RARO (29/10/2026)
+
+**QA assinada concluída:** [Actions #40932888221 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221), [artifact privado #12924075960](https://github.com/LucianoToscano/PokeSearch/actions/runs/40932888221/artifacts/12924075960), APK `0.01.76 / 54381` de 49.536.381 bytes, assinatura Android v2 permanente verificada. Publicação pública e testes funcionais Samsung continuam pendentes. 
+
+
+
+Após o primeiro teste físico LT175 no Samsung, o proprietário confirmou ícone de Doce Raro grande, com quadrado atrás e sem resposta a toque/arraste. A causa foi a WebView oculta consumir touch antes do listener da janela da bolha. **Corrigido na branch da PR #134:** grip transparente nativo de 45dp acima da WebView, candy visual de 27dp sem fundo, clique/long press/arraste independentes, e reposicionamento dos cards para não cobrir o próprio ícone. Nova versão QA LT176 `0.01.76 / 54381`, APK completo assinado para teste, sem release pública. A LT173 continua estável; testes reais de coleta Rare Candy no WebView e ciclo de despawn permanecem necessários. [Evidências LT176 no registro de QA](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md).
+
+---
+
+## LT175 EM QA — DOCE RARO COMO TERCEIRO OVERLAY (29/10/2026)
+
+**LT173 segue sendo a única versão pública estável.** Em branch separada, LT175 integra na Home um ícone Doce Raro ao lado de Clima e acrescenta `RareCandyOverlayService`: bolha independente de 45dp, toque para abrir cards, segurar para menus no estilo das Pokébolas, localização/raio, atualização 1/3/5m, mostrar/ocultar infos, cópia por sprite com estado cinza, despawn e remoção automática com busca controlada. Fonte é a aba Rare Candy do PoGoCoordinates em WebView, usando sessão e acesso oficiais; nenhuma coordenada inventada, máximo 10. **Alterações de Java e Manifest exigem novo APK**, não recurso OTA na LT173. QA CI e físico Samsung/Moto ainda não comprovado; não houve merge nem distribuição. [Registro LT175](LT175_DOCE_RARO_FLUTUANTE_QA_20261029.md). PR LT174 (#133) de segurança OTA segue isolada.
+
+---
+
 ## LT173 OFICIAL — ATUALIZAÇÕES INTELIGENTES ASSINADAS (29/10/2026)
 
 **VERSÃO ESTÁVEL ATUAL: LT173 `0.01.73 / versionCode 54378`, disponível para todos via GitHub Releases/latest.** A PR [#132](https://github.com/LucianoToscano/PokeSearch/pull/132) foi mesclada. SOURCE_COMMIT oficial `7d3f7497539af826de491cc6daac2e16e4411758`. APK `PokeSearch-v0.01.73-LT.apk` **49.514.961 bytes**, SHA-256 `5d330bafeabe3a24fdfb5ef8864c7ae463743ae4cda362d014fc9c08ef34ade9`, R8, certificado Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [Release oficial LT173](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.73-54378) · [Actions #40921988685 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40921988685) · [Registro canônico LT173](ESTADO_CANONICO_LT173_OFICIAL_20261029.md).
