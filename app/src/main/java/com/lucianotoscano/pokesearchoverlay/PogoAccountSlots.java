@@ -59,9 +59,15 @@ final class PogoAccountSlots {
     static String trainer(Context context,boolean secondary){
         int slot=assigned(context,secondary);
         SharedPreferences account=prefs(context,slot);
-        String selected=context.getSharedPreferences("prefs",Context.MODE_PRIVATE)
-            .getString(trainerSetting(secondary),"");
-        if(hasTrainer(context,slot,selected))return selected;
+        SharedPreferences binding=context.getSharedPreferences("prefs",Context.MODE_PRIVATE);
+        String key=trainerSetting(secondary);
+        // Explicit "Sem treinador" must remain OFF for Shiny, even when
+        // the current provider account has a valid linked trainer.
+        if(binding.contains(key)){
+            String selected=binding.getString(key,"");
+            return hasTrainer(context,slot,selected)?selected:"";
+        }
+        // Preserve pre-LT170 selections only for never-configured overlays.
         String fallback=account.getString("profileTrainerCode","");
         return hasTrainer(context,slot,fallback)?fallback:"";
     }
