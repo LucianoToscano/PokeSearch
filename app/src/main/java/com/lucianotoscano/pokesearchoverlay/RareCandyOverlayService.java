@@ -292,13 +292,45 @@ public final class RareCandyOverlayService extends Service {
         if(resultsParams==null||bubbleParams==null)return;
         int w=getResources().getDisplayMetrics().widthPixels;
         int h=getResources().getDisplayMetrics().heightPixels;
-        resultsParams.width=Math.min(dp(292),w-dp(12));
-        resultsParams.height=Math.min(dp(330),h-dp(24));
-        int nextX=bubbleParams.x+dp(BUBBLE_DP)+dp(5);
-        if(nextX+resultsParams.width>w)nextX=bubbleParams.x-resultsParams.width-dp(5);
-        resultsParams.x=Math.max(dp(3),Math.min(w-resultsParams.width,nextX));
-        int nextY=bubbleParams.y;
-        resultsParams.y=Math.max(dp(3),Math.min(h-resultsParams.height,nextY));
+        int gap=dp(6),margin=dp(4);
+        int desiredW=Math.min(dp(292),Math.max(dp(150),w-margin*2));
+        int desiredH=Math.min(dp(330),Math.max(dp(130),h-margin*2));
+        int bubbleX=bubbleParams.x,bubbleY=bubbleParams.y;
+        int diameter=dp(BUBBLE_DP);
+        int rightX=bubbleX+diameter+gap;
+        int leftX=bubbleX-gap-desiredW;
+        resultsParams.width=desiredW;
+        resultsParams.height=desiredH;
+        // Put the native results window BESIDE the bubble when there is room.
+        // Otherwise put it fully BELOW/ABOVE. It must never cover its own
+        // grip, including on 360dp Android devices or after a drag.
+        if(rightX+desiredW<=w-margin){
+            resultsParams.x=rightX;
+            resultsParams.y=Math.max(margin,Math.min(h-desiredH-margin,bubbleY));
+        }else if(leftX>=margin){
+            resultsParams.x=leftX;
+            resultsParams.y=Math.max(margin,Math.min(h-desiredH-margin,bubbleY));
+        }else{
+            resultsParams.x=Math.max(margin,Math.min(
+                w-desiredW-margin,bubbleX+diameter/2-desiredW/2));
+            int belowY=bubbleY+diameter+gap;
+            int aboveY=bubbleY-gap-desiredH;
+            if(belowY+desiredH<=h-margin){
+                resultsParams.y=belowY;
+            }else if(aboveY>=margin){
+                resultsParams.y=aboveY;
+            }else{
+                int aboveSpace=Math.max(0,bubbleY-gap-margin);
+                int belowSpace=Math.max(0,h-margin-belowY);
+                if(belowSpace>=aboveSpace){
+                    resultsParams.y=belowY;
+                    resultsParams.height=Math.max(1,Math.min(desiredH,belowSpace));
+                }else{
+                    resultsParams.height=Math.max(1,Math.min(desiredH,aboveSpace));
+                    resultsParams.y=Math.max(margin,bubbleY-gap-resultsParams.height);
+                }
+            }
+        }
         if(resultsShell!=null&&resultsShell.isAttachedToWindow()){
             try{wm.updateViewLayout(resultsShell,resultsParams);}
             catch(Exception ignored){}
