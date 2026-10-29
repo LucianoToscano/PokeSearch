@@ -16,9 +16,9 @@ assert.equal((java.match(/OtaAssets\.intercept\(OverlayService\.this,otaWebLoade
 assert(java.includes('OtaAssets.open(this,"probe.js")'));
 assert(main.includes('OtaAssets.open(this,path)'));
 assert(notes.includes('OtaAssets.open(a,ASSET)'));
-assert(dock.includes('https://appassets.androidplatform.net/assets/'));
-assert(!dock.includes('file:///android_asset/'));
-assert(!sprite.includes('file:///android_asset/'));
+assert(dock.includes('file:///android_asset/'));
+assert(store.includes('.replace("file:///android_asset/",PREFIX)'));
+assert(sprite.includes('file:///android_asset/'));
 assert(store.includes('verifySignature(c,manifest,sig)'));
 assert(store.includes('MessageDigest.getInstance("SHA-256")'));
 assert(store.includes('pack-'+''), 'pack paths must exist');
