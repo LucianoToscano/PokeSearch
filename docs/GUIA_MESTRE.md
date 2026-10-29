@@ -1,8 +1,20 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## VERSÃO OFICIAL ATUAL — LT168 (0.01.68 / versionCode 54373) — 29/10/2026
+## VERSÃO OFICIAL ATUAL — LT169 (0.01.69 / versionCode 54374) — 29/10/2026
 
-**LT168 É A BASE CANÔNICA ATUAL.** PR [#112](https://github.com/LucianoToscano/PokeSearch/pull/112) mesclada em `main`, commit `b21bb0aed5f6f919a0a1d0f1d64677f908c2859f`. Release estável oficial `latest` [v0.01.68-54373](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.68-54373) publicado e validado pelo [workflow #40864077543](https://github.com/LucianoToscano/PokeSearch/actions/runs/40864077543) (SUCCESS). APK `PokeSearch-v0.01.68-LT.apk`, 49.416.673 bytes, SHA-256 `a331a28b853a23b2bbd0fc02e51d2f483646eac4d21aca717ef7e29faa3ab70f`. Preserva a assinatura permanente Android v2. O atualizador consulta `releases/latest`; instalação depende de aceite no Android.
+**LT169 É A BASE CANÔNICA ATUAL.** PRs #113–#119 mescladas na main. APK oficial SOURCE_COMMIT `81503cc6e2ce7e974532503759e2d690af7aedbd`; [Release estável latest v0.01.69-54374](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.69-54374) confirmada por [Actions #40875761778 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40875761778). APK `PokeSearch-v0.01.69-LT.apk` com **49.493.674 bytes**, SHA-256 `58acf4bd0b663149e803daf411d7d0a118b7a0112da87240abda4acdb7e3f4f6`; assinatura Android v2 permanente e R8 verificados.
+
+- **Sprites:** índice GO exato de 1.679 formas/trajes por variante e Shiny, cache SHA-1 Git, API ON / DOM OFF, Flabébé cinco cores, Floette, Florges, Furfrou trims e Shellos/Gastrodon East Sea. DOM prioriza sua própria URL; API usa a arte GO da mesma forma quando verificada. Falta real vira identificação textual, não círculo.
+- **Home:** ícone discreto de alternância somente com 2+ treinadores válidos; três opções independentes de privacidade em Menu → Preferências para ocultar nome PoGoCoordinates, nome do treinador e código (Anônimo / Anônimo / XXXX XXXX XXXX), apenas na apresentação.
+- **Coordenadas:** botão de card mostra valor completo sem reticências, alinhado à esquerda e quebrando linha se necessário; continua copiando o valor exato.
+- **Estado dos testes:** Node completo, Android, R8, assinatura, pacote ZIP e atualização GitHub latest aprovados pelo CI; **teste visual real Samsung, API ON/OFF e P1/P2 ainda pendente**. O atualizador oferece instalação voluntária, nunca silenciosa. A LT168 anterior e Google Drive legado permanecem intocados.
+- **Fonte oficial de continuidade:** [ESTADO_CANONICO_LT169_OFICIAL_20261029.md](ESTADO_CANONICO_LT169_OFICIAL_20261029.md). Não recomeçar da LT168, nem sobrescrever tags/APKs antigos; verificar main HEAD e releases/latest para toda próxima LT.
+
+---
+
+## HISTÓRICO — LT168 (0.01.68 / versionCode 54373) — versão anterior
+
+**LT168 FOI A BASE CANÔNICA ANTERIOR.** PR [#112](https://github.com/LucianoToscano/PokeSearch/pull/112) mesclada em `main`, commit `b21bb0aed5f6f919a0a1d0f1d64677f908c2859f`. Release estável oficial `latest` [v0.01.68-54373](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.68-54373) publicado e validado pelo [workflow #40864077543](https://github.com/LucianoToscano/PokeSearch/actions/runs/40864077543) (SUCCESS). APK `PokeSearch-v0.01.68-LT.apk`, 49.416.673 bytes, SHA-256 `a331a28b853a23b2bbd0fc02e51d2f483646eac4d21aca717ef7e29faa3ab70f`. Preserva a assinatura permanente Android v2. O atualizador consulta `releases/latest`; instalação depende de aceite no Android.
 
 - Corrige chat com **vinculação visual local e reversível** do UID de mensagens antigas pelo menu `⋮ → Mensagens antigas`, com foto existente e alinhamento à direita quando confirmada pelo usuário. Não inferir propriedade por nickname nem alterar autoria/regras do Firebase.
 - Remove matte escuro de bordas dos próprios PNGs de modo em compartilhamentos; mantém fallback seguro e cache.
@@ -12,13 +24,13 @@
 
 ---
 
-### LT169 — Perfis de treinador visíveis somente com 2+ (QA, não publicada)
+### LT169 — Perfis e privacidade (histórico do desenvolvimento, incluído na release oficial)
 
 - Branch `fix/lt169-trainer-profiles-visibility-20261029` derivada de LT168. Na Home, o ícone fino `ps_trainer_switch` com duas pessoas e setas fica `GONE` quando há 0 ou 1 treinador confirmado (sem largura vazia), e aparece imediatamente à direita de `Treinador vinculado` apenas para dois ou mais treinadores distintos. Substitui o antigo botão largo `Perfis/Escolher (N)`; seletor e broadcast preservados.
 - Contagem usa códigos/nome válidos e elimina duplicatas, alinhada ao seletor; entrada normal de gerenciamento do vínculo permanece no card.
-- Testes: `app/tests/lt169-trainer-profiles-visibility.test.js` + atualização da regressão LT141. Validação Samsung 0/1/2+ e CI pendentes no momento deste registro.
+- Testes: `app/tests/lt169-trainer-profiles-visibility.test.js` + atualização da regressão LT141. CI LT169 completo aprovado; validação visual Samsung 0/1/2+ permanece pendente.
 - **Privacidade na Home:** 3 checkboxes independentes em `☰ → Preferências`, todos ON por padrão. Ocultar nome PoGoCoordinates ou treinador exibe **Anônimo**; ocultar código exibe **XXXX XXXX XXXX**. Atualiza imediatamente, não altera login/identificadores/sessão/P1/P2; código real continua copiável. Persistência local, sem incluir essas flags no JSON de exportação. Teste `lt169-home-identity-privacy.test.js`; validação física pendente.
-- Registro [LT169 visibilidade de Perfis](POKESEARCH_LT169_PERFIS_TREINADORES_VISIBILIDADE_QA_20261029.md). **Não mesclado/publicado; LT168 permanece a versão oficial**.
+- Registro [LT169 visibilidade de Perfis](POKESEARCH_LT169_PERFIS_TREINADORES_VISIBILIDADE_QA_20261029.md). **Mesclado na LT169 oficial; este parágrafo documenta o estado de QA anterior à publicação**.
 
 
 ## LT145 0.01.45 — atualização oficial global via GitHub (29/10/2026)
