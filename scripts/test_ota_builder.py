@@ -69,7 +69,7 @@ with tempfile.TemporaryDirectory() as tmp:
     # A valid editable page cannot be shipped if bundled with a newer
     # authentication script missing from the LT173 installed APK.
     (assets / "api_android_session.js").write_text("restricted", encoding="utf-8")
-    git(root, "add", ".")
+    git(root, "add", "app/src/main/assets/api_android_session.js")
     git(root, "commit", "-m", "unpatchable asset")
     must_require_apk("unpatchable")
     git(root, "reset", "--hard", "HEAD~1")
@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory() as tmp:
     native = root / "app/src/main/java/example/Native.java"
     native.parent.mkdir(parents=True)
     native.write_text("class Native {}\\n", encoding="utf-8")
-    git(root, "add", ".")
+    git(root, "add", "app/src/main/java/example/Native.java")
     git(root, "commit", "-m", "native incompatibility")
     must_require_apk("native")
     git(root, "reset", "--hard", "HEAD~1")
@@ -86,7 +86,7 @@ with tempfile.TemporaryDirectory() as tmp:
     # Removing a previously installed asset is not representable by the
     # cumulative v1 OTA manifest and must also fail closed.
     (assets / "dock.html").unlink()
-    git(root, "add", "-A")
+    git(root, "add", "-u", "app/src/main/assets/dock.html")
     git(root, "commit", "-m", "deleted bundled page")
     must_require_apk("deleted")
 print("LT174 OTA builder compatibility and changed-only fixture PASS")
