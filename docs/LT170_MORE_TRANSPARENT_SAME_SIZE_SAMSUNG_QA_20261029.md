@@ -19,3 +19,11 @@ A captura do menu flutuante de PokeSearch apresenta as três ações verticais *
 - Implementação em branch isolada `fix/lt170-more-cascade-transparent-equal-tiles-20261029`, para não colidir com PRs LT170 #121 e #122.
 - Não alterar assinatura, APK publicado, Firebase, API ou limites de PoGoCoordinates.
 - CI Node e Java e teste real no Samsung precisam ser verificados antes de merge/publicação. Nenhuma versão foi distribuída nesta etapa.
+
+## Resultado da revisão final
+
+- [Suíte completa de regressões Node #40890107259](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107259): **SUCCESS**, incluindo o teste novo LT170 e regressões históricas LT69 e overlay UX.
+- [Node QA padrão #40890107373](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107373): **SUCCESS**.
+- [Compilação Java Android #40890107239](https://github.com/LucianoToscano/PokeSearch/actions/runs/40890107239): conferir status final antes de promover.
+- Testes de contrato LT69 e overlay UX foram atualizados para a nova assinatura opcional (tipo/largura). Os callbacks originais de abrir/fechar continuam presentes.
+- QA de renderização real Samsung **ainda pendente**; não houve publicação nem substituição de APK oficial.
