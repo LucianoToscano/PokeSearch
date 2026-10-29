@@ -105,7 +105,8 @@ jobs:
           node - <<'NODE'
           const fs=require('fs'),html=fs.readFileSync('app/src/main/assets/detail.html','utf8');
           if(html.includes('Análise PvP · Sem dados')||html.includes('Ranking indisponível para esta forma.')||
-             !html.includes('#coordRow #coords.hasCoords{padding-left:36px;padding-right:36px;box-sizing:border-box;text-align:center}')||
+             !html.includes('box-sizing:border-box;padding-left:7px;padding-right:33px;')||
+             html.includes('white-space:nowrap;overflow:hidden;text-overflow:ellipsis;')||
              html.includes('<b>Eficiência IV:</b>')||html.includes('<b>Produto:</b>')||
              !html.includes('evoStatsRow')||!html.includes('var(--ps-rank-percent-color')||
              !html.includes('class="evoPct"')||!html.includes('evoRankRow')||
