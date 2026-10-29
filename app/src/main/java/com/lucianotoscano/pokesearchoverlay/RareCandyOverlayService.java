@@ -54,9 +54,9 @@ import java.util.Set;
 public final class RareCandyOverlayService extends Service {
     private static volatile boolean running=false;
     static boolean isRunning(){return running;}
-    private static final String SOURCE="https://pogocoordinates.com/search";
+    private static final String SOURCE="https://pogocoordinates.com/search?tab=rarecandy";
     // Same compact touch box as the Pokébola dock; candy artwork is smaller.
-    private static final int BUBBLE_DP=45, CANDY_ART_DP=27;
+    private static final int BUBBLE_DP=45, CANDY_ART_DP=20;
     private final Handler main=new Handler(Looper.getMainLooper());
     private final Map<String,Candy> cards=new LinkedHashMap<>();
     private final Map<String,TextView> countdownLabels=new LinkedHashMap<>();
@@ -71,9 +71,10 @@ public final class RareCandyOverlayService extends Service {
     private TextView status;
     private String probe="";
     private boolean visible=false,ready=false,destroyed=false,busy=false,showInfos=true;
+    private boolean showLocation=true,showDespawn=true,showDistance=true;
     private String coords="";
     private int radius=1000,period=1,generation=0;
-    private long lastRefresh=0;
+    private long lastRefresh=0,blockedUntil=0;
     private boolean expirePending=false;
 
     private static final class Candy {
@@ -138,6 +139,9 @@ public final class RareCandyOverlayService extends Service {
         int saved=prefs.getInt("period",1);
         period=saved==3||saved==5?saved:1;
         showInfos=prefs.getBoolean("infos",true);
+        showLocation=prefs.getBoolean("candyShowLocation",showInfos);
+        showDespawn=prefs.getBoolean("candyShowDespawn",showInfos);
+        showDistance=prefs.getBoolean("candyShowDistance",showInfos);
         try{
             JSONArray state=new JSONArray(prefs.getString("copied","[]"));
             for(int i=0;i<state.length()&&i<100;i++){
@@ -361,6 +365,8 @@ public final class RareCandyOverlayService extends Service {
         int account=PogoAccountSlots.assigned(this,false);
         PogoAccountSlots.attach(site,account);
         site.getSettings().setJavaScriptEnabled(true);
+        site.getSettings().setUseWideViewPort(true);
+        site.getSettings().setLoadWithOverviewMode(false);
         site.getSettings().setDomStorageEnabled(true);
         site.getSettings().setAllowFileAccess(false);
         site.getSettings().setAllowContentAccess(false);
@@ -388,7 +394,7 @@ public final class RareCandyOverlayService extends Service {
         }catch(Exception ignored){probe="";}
         site.setWebViewClient(new WebViewClient(){
             @Override public boolean shouldOverrideUrlLoading(WebView view,String url){
-                return url==null||!url.startsWith("https://pogocoordinates.com/search");
+                return !isAllowedUrl(url);
             }
             @Override public boolean shouldOverrideUrlLoading(
                 WebView view,android.webkit.WebResourceRequest request){
@@ -427,75 +433,101 @@ public final class RareCandyOverlayService extends Service {
     }
     private void refresh(boolean manual){
         if(destroyed||site==null||!ready||busy||!isOfficialSearch())return;
-        if(!manual&&SystemClock.elapsedRealtime()-lastRefresh<15000)return;
-        busy=true;expirePending=false;
-        lastRefresh=SystemClock.elapsedRealtime();
+        long now=SystemClock.elapsedRealtime();
+        if(now<blockedUntil){
+            setStatus("Limite do site · repetir em "+((blockedUntil-now+999)/1000)+" s");
+            return;
+        }
+        if(!manual&&now-lastRefresh<15000)return;
+        busy=true;expirePending=false;lastRefresh=now;
         final int gen=++generation;
         setStatus("Consultando Doce Raro…");
-        final String script=probe+"\nwindow.PokeSearchCandy.runSearch("+
-            JSONObject.quote(coords)+","+radius+");";
-        site.evaluateJavascript(script,response->{
-            if(destroyed||gen!=generation)return;
-            String value="";
-            try{value=new JSONArray("["+response+"]").optString(0,"");}
-            catch(Exception ignored){}
-            if("tab-switched".equals(value)){
-                main.postDelayed(()->{
-                    if(destroyed||gen!=generation||!isOfficialSearch())return;
-                    site.evaluateJavascript("window.PokeSearchCandy.runSearch("+
-                        JSONObject.quote(coords)+","+radius+");",ignored->{
-                        if(!destroyed&&gen==generation)
-                            main.postDelayed(()->readResults(gen,0),1800L);
-                    });
-                },1000L);
-            }else main.postDelayed(()->readResults(gen,0),1600L);
+        // No DOM scraping, fake time-to-live or /reveal. The source contract
+        // is POST /rare-candy/search and expires_at in UTC. The logged-in
+        // website origin sends its own JWT without exposing it to Android.
+        // Async Promise results are polled via evaluateJavascript: no native
+        // bridge is ever exposed to a remote origin.
+        final String script=probe+"\n(function(){"+
+            "window.__pokesearchCandyState={generation:"+gen+",done:false};"+
+            "window.PokeSearchCandy.search("+JSONObject.quote(coords)+","+radius+")"+
+            ".then(function(s){window.__pokesearchCandyState={generation:"+gen+
+            ",done:true,response:JSON.parse(s)};})"+
+            ".catch(function(){window.__pokesearchCandyState={generation:"+gen+
+            ",done:true,response:{ok:false,status:0,error:'network'}};});"+
+            "})();";
+        site.evaluateJavascript(script,unused->{
+            if(!destroyed&&gen==generation)main.postDelayed(()->readResults(gen,0),600L);
         });
     }
     private void readResults(int gen,int attempt){
-        if(destroyed||gen!=generation||!isOfficialSearch())return;
-        site.evaluateJavascript("window.PokeSearchCandy&&window.PokeSearchCandy.read()",
-            payload->{
-                if(destroyed||gen!=generation)return;
-                try{
-                    // evaluateJavascript returns a quoted JSON string, not
-                    // a JSONObject. Decode once without trusting raw HTML.
-                    String raw=new JSONArray("["+payload+"]").optString(0,"");
-                    JSONObject response=new JSONObject(raw);
-                    if(!response.optBoolean("ok",false))throw new IllegalStateException("origin");
-                    JSONArray items=response.optJSONArray("items");
-                    if(items==null)throw new IllegalStateException("missing items");
-                    if(items.length()==0&&attempt<2){
-                        main.postDelayed(()->readResults(gen,attempt+1),2200L);return;
+        if(destroyed||gen!=generation||site==null||!isOfficialSearch())return;
+        site.evaluateJavascript("JSON.stringify(window.__pokesearchCandyState||{})",raw->{
+            if(destroyed||gen!=generation)return;
+            try{
+                String json=new JSONArray("["+raw+"]").optString(0,"{}");
+                JSONObject state=new JSONObject(json);
+                if(state.optInt("generation",-1)!=gen||!state.optBoolean("done",false)){
+                    if(attempt<24){
+                        main.postDelayed(()->readResults(gen,attempt+1),600L);
+                    }else{
+                        busy=false;setStatus("Sem resposta do site · tente atualizar");
                     }
-                    Map<String,Candy> accepted=new LinkedHashMap<>();
-                    long now=SystemClock.elapsedRealtime();
-                    for(int i=0;i<items.length()&&accepted.size()<10;i++){
-                        JSONObject row=items.optJSONObject(i);
-                        if(row==null)continue;
-                        String point=row.optString("coords","");
-                        if(!validCoords(point))continue;
-                        int seconds=row.optInt("seconds",-1);
-                        if(seconds==0)continue;
-                        String place=row.optString("location","").trim();
-                        String distance=row.optString("distance","").trim();
-                        if(place.length()>110)place=place.substring(0,110);
-                        if(distance.length()>32)distance="";
-                        // -1 means provider did not publish a verified TTL.
-                        long expires=seconds>=0?now+seconds*1000L:0L;
-                        accepted.put(point,new Candy(point,place,distance,expires));
-                    }
-                    cards.clear();cards.putAll(accepted);
-                    busy=false;
-                    setStatus(cards.isEmpty()?"Nenhum Doce Raro confirmado no site":
-                        cards.size()+" Doce Raro · PoGoCoordinates");
-                    render();
-                }catch(Exception error){
-                    busy=false;
-                    setStatus("Não foi possível ler resultados · abrir site e conferir sessão");
-                    // Never fabricate coordinates, time or permissions.
-                    if(visible)render();
+                    return;
                 }
-            });
+                JSONObject response=state.optJSONObject("response");
+                if(response==null)throw new org.json.JSONException("missing response");
+                if(!response.optBoolean("ok",false)){
+                    busy=false;
+                    int code=response.optInt("status",0);
+                    if(code==429){
+                        int retry=Math.max(60,Math.min(3600,response.optInt("retry_after",60)));
+                        blockedUntil=SystemClock.elapsedRealtime()+retry*1000L;
+                        setStatus("Limite de buscas · "+retry+" s");
+                    }else if(code==401){
+                        setStatus("Sessão expirada · entre no PoGoCoordinates");
+                    }else setStatus("Busca indisponível · tente novamente");
+                    return;
+                }
+                JSONArray items=response.optJSONArray("items");
+                if(items==null)throw new org.json.JSONException("missing items");
+                long clock=System.currentTimeMillis();
+                long elapsed=SystemClock.elapsedRealtime();
+                Map<String,Candy> accepted=new LinkedHashMap<>();
+                for(int i=0;i<items.length()&&i<100;i++){
+                    JSONObject row=items.optJSONObject(i);
+                    if(row==null)continue;
+                    String point=row.optString("coords","").trim();
+                    if(!validCoords(point))continue;
+                    String expiry=row.optString("expires_at","");
+                    long utcMillis;
+                    try{utcMillis=java.time.Instant.parse(expiry).toEpochMilli();}
+                    catch(Exception ignored){continue;}
+                    long ttl=utcMillis-clock;
+                    if(ttl<=0)continue;
+                    String city=row.optString("location","").trim();
+                    if(city.length()>110)city=city.substring(0,110);
+                    String distance="";
+                    if(!row.isNull("distance_km")&&row.has("distance_km")){
+                        double kilometers=row.optDouble("distance_km",Double.NaN);
+                        if(!Double.isNaN(kilometers)&&kilometers>=0&&
+                           !Double.isInfinite(kilometers)){
+                            distance=kilometers<1?
+                                Math.round(kilometers*1000)+" m":
+                                String.format(java.util.Locale.US,"%.1f km",kilometers);
+                        }
+                    }
+                    accepted.put(point,new Candy(point,city,distance,elapsed+ttl));
+                }
+                cards.clear();cards.putAll(accepted);
+                busy=false;
+                setStatus(cards.isEmpty()?"Nenhum Doce Raro no momento":
+                    cards.size()+" Doce Raro · PoGoCoordinates");
+                render();
+            }catch(Exception ex){
+                busy=false;
+                setStatus("Falha ao ler dados do Doce Raro");
+            }
+        });
     }
     private static boolean validCoords(String point){
         if(point==null||!point.matches(
