@@ -2631,7 +2631,7 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
  ctx.toggleEvolutionDetails();
  if(!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
  window.showDetails({...card,name:"Rookidee",sourceIndex:7},"gl",false);
- return !section.hidden&&node("evoBody").innerHTML.includes("IV não informado")&&
+ return section.hidden&&node("evoBody").innerHTML===""&&
   window.showEvolutionDetails(detail)===false&&
   html.includes('Native.toggleWatch(watchName)')&&html.includes("Native.coords(currentIndex)")&&
   html.includes("window.pauseDetailTimer=()=>")&&heights.length>=4;
