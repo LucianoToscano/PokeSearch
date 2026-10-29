@@ -117,7 +117,9 @@
   if(card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return false;
   // DOM results often omit Form for ordinary Pokémon (Noibat #714).
   // A BLANK form is safe only when Dex + catalogue species agree exactly.
-  if(!form)return true;
+  // A species label that includes (Yellow), (Red), (Galar) etc is NOT
+  // an unqualified base appearance even when the API omitted "form".
+  if(!form)return !/\([^)]*\)\s*$/.test(String(card.name||""));
   // Provider/DOM paths can omit image even when an explicit default form
   // is confirmed. Recover its exact 1..1025 packaged Dex sprite locally in
   // BOTH results and detail WebViews. Never guess a regional/costume form.
