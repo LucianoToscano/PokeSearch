@@ -523,6 +523,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #rankLine{gap:3px;border-color:#8fbfd755;background:linear-gradient(95deg,#74b8d31b,#ffffff09);
  color:#c2e6f4;text-shadow:none}
 #rankLine::before{content:"▥";font-size:11px;line-height:11px;color:#80cce9}
+/* Keep IV percentages and raw A/D/S in one verified, identical color band.
+   The 100% hundo color uses the existing PokeSearch coral palette. */
+#major .ivTile .statValue.red,#major .ivTile .ivPercent{color:var(--ps-iv-color,#bac6d4)}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -567,7 +570,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
@@ -1017,19 +1020,17 @@ window.showDetails=(c,mode,watched)=>{
   }
  },1800);
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
- const raw=String(c.iv??"").trim();
- const validRaw=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw);
- const percent=String(c.ivPercent??"").trim();
- const validPct=/^(?:0|[1-9][0-9]?|100)$/.test(percent);
- const rawPct=validRaw?Math.round(raw.split("/").map(Number)
-  .reduce((sum,n)=>sum+n,0)*100/45):null;
- const showPct=validPct&&(rawPct===null||rawPct===Number(percent));
- const showRaw=validRaw&&(!validPct||rawPct===Number(percent));
+ const ivDisplay=window.PokeSearchIVDisplay?.fromCard?.(c);
+ const showRaw=ivDisplay?.valid===true;
+ const showPct=showRaw;
+ // Both A/D/S and % use the same approved category. When the API omits
+ // ivPercent, derive it only from the explicitly returned valid raw triple.
+ const ivStyle=showRaw?' style="--ps-iv-color:'+ivDisplay.color+'"':"";
  const statTile=(label,value)=>'<div class="statTile"><div class="statHeading">'+h(label)+'</div><div class="statValue">'+h(value===null||value===undefined||value===""?"—":value)+'</div></div>';
- document.getElementById("major").innerHTML='<div class="statTile ivTile"><div class="statHeading">IV</div>'+
-  (showPct?'<span class="ivPercent">'+h(percent)+'%</span>':"")+
+ document.getElementById("major").innerHTML='<div class="statTile ivTile"'+ivStyle+'><div class="statHeading">IV</div>'+
+  (showPct?'<span class="ivPercent" title="'+(ivDisplay.derived?'Percentual calculado a partir do IV A/D/S':'Percentual de IV confirmado')+'">'+h(ivDisplay.percent)+'%</span>':"")+
   '<span class="ivTypes" aria-label="Tipos do Pokémon">'+document.getElementById("types").innerHTML+'</span>'+
-  '<div class="statValue red">'+h(showRaw?raw:"—")+'</div></div>'+
+  '<div class="statValue red">'+h(showRaw?ivDisplay.raw:"—")+'</div></div>'+
   statTile("PC",c.cp)+statTile("Nv.",c.level);
  const rankLine=document.getElementById("rankLine");
  // Never promote a generic site Rank into a species IV or cross-species PvP rank.
