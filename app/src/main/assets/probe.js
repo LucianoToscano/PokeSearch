@@ -1079,7 +1079,7 @@ function parseCard(box,sourceIndex){
  const speciesKey=compact(encounterSpecies);
  // The provider may render <img>, <picture> or background-image. Read only
  // nodes inside the actual bounded encounter card (never global site images).
- const candidateNodes=Array.from(box.querySelectorAll("img,source,[style*='background']"))
+ const candidateNodes=Array.from(box.querySelectorAll("img,source,[style*='background'],[data-src],[data-original],[data-background],[class*='sprite'],[class*='pokemon-image']"))
   .slice(0,64);
  const candidateImageUrl=e=>{
   // Explicitly prefer lazy-provider attributes, then the browser's real
@@ -1092,7 +1092,13 @@ function parseCard(box,sourceIndex){
   ].filter(Boolean);
   if(e.currentSrc)values.unshift(e.currentSrc);
   if(e.src)values.push(e.src);
-  const style=String(e.style?.backgroundImage||"");
+  // Images on the authorized page may be CSS backgrounds or lazy assets.
+  // Consider candidates only inside THIS result and keep exact-form checks.
+  let style=String(e.style?.backgroundImage||"");
+  if(!style||style==="none"){
+   try{style=typeof getComputedStyle==="function"?
+      String(getComputedStyle(e)?.backgroundImage||""):"";}catch(_){}
+  }
   const match=style.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
   if(match)values.unshift(match[1]);
   for(const rawValue of values){
