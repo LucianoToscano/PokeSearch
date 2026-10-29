@@ -57,6 +57,7 @@ check("Disabled Get coords cannot click, user can retry after site unlocks",()=>
  const clickable={disabled:true,getAttribute:()=>null,closest:()=>null,click(){throw Error("clicked disabled button")}};
  const out=vm.runInNewContext('(function(){const action="coords:{}";'+part+'})()',{
   matchingCoordsCard:()=>({node:{}}),cardCoordsControls:()=>[clickable],
+  coordsRevealLimit:()=>null, // simulated card has no provider limit
   text:()=> "Get coords",JSON
  });
  assert.equal(JSON.parse(out).cooldown,true);
