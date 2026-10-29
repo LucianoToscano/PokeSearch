@@ -27,7 +27,7 @@ assert.ok(html.includes('#coordRow #coords.isPending{'),"CTA red while fetching"
 assert.ok(html.includes('#coordRow #coords.hasCoords{'),"verified coordinates green");
 assert.ok(script.includes('Math.ceil(document.getElementById("panel").scrollHeight)+10'),"window adapts to full content");
 const native=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
-assert.ok(native.includes('DETAIL_DP=292'),"slightly wider card");
-assert.ok(native.includes('detailHeight=250'),"slightly larger initial window");
+assert.ok(native.includes('DETAIL_DP=248'),"slightly wider card");
+assert.ok(native.includes('detailHeight=205'),"slightly larger initial window");
 assert.ok(native.includes('Math.min(520,available)'),"screen-bounded expanded height");
 console.log("LT145 QA11: aligned header, red default coords, responsive larger card and bounded scroll PASS");
