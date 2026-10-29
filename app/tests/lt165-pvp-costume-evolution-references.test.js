@@ -85,7 +85,10 @@ for(const [card,evolved] of examples){
  const markup=node("evoBody").innerHTML;
  assert.equal((markup.match(/class="evoLeague /g)||[]).length,3);
  assert.equal((markup.match(/class="evoLine isReference"/g)||[]).length,3);
- assert.equal((markup.match(/Ref.<\/span> <b>/g)||[]).length,3);
+ assert.equal((markup.match(/↳<\\/span> <b>/g)||[]).length,3);
+ assert.equal((markup.match(/class="evoInfoBtn"/g)||[]).length,3);
+ assert.equal((markup.match(/onclick="togglePvpReferenceInfo\\(event,this\\)"/g)||[]).length,3);
+ assert.ok(!markup.includes("Ref."),"abbreviation removed from visible rows");
  assert.ok(markup.includes("<b>"+evolved+"</b>"));
  assert.ok(markup.includes("Rank Classe: #"));
  assert.ok(markup.includes("PC "));
@@ -98,3 +101,43 @@ for(const [card,evolved] of examples){
  assert.equal((node("evoBody").innerHTML.match(/isReference/g)||[]).length,0);
 }
 console.log("LT165 costume reference evolution analysis across GL/UL/ML PASS");
+
+const popupStart=script.indexOf("let pvpRefAnchor=");
+const popupEnd=script.indexOf("function evolutionRow(",popupStart);
+assert.ok(popupStart>0&&popupEnd>popupStart,"tap-only reference info is defined");
+const handlers={};
+let popup;
+const doc={
+ createElement(){return popup={
+  id:"",hidden:true,offsetWidth:228,offsetHeight:66,style:{},textContent:"",
+  setAttribute(){},contains(t){return t===this;}
+ };},
+ body:{appendChild(){}},
+ addEventListener(name,fn){handlers[name]=fn;}
+};
+const trigger={
+ state:"false",
+ setAttribute(name,value){if(name==="aria-expanded")this.state=value;},
+ getBoundingClientRect(){return {left:90,right:110,top:110,bottom:132};},
+ contains(t){return t===this;}
+};
+const behavior=new Function("document","window",script.slice(popupStart,popupEnd)+
+ "return {togglePvpReferenceInfo,closePvpReferenceInfo};")(doc,{innerWidth:360,innerHeight:460});
+let prevented=0,stopped=0;
+const event={preventDefault(){prevented++},stopPropagation(){stopped++}};
+behavior.togglePvpReferenceInfo(event,trigger);
+assert.equal(trigger.state,"true");
+assert.equal(popup.hidden,false);
+assert.match(popup.textContent,/Não confirma que esta fantasia possa evoluir/);
+assert.ok(Number.parseInt(popup.style.top,10)>=8);
+assert.ok(Number.parseInt(popup.style.left,10)>=8);
+behavior.togglePvpReferenceInfo(event,trigger);
+assert.equal(trigger.state,"false");
+assert.equal(popup.hidden,true);
+behavior.togglePvpReferenceInfo(event,trigger);
+handlers.pointerdown({target:{}});
+assert.equal(popup.hidden,true);
+assert.equal(trigger.state,"false");
+assert.equal(prevented,3);
+assert.equal(stopped,3);
+console.log("LT166 inline reference info tap, toggle and outside-dismiss PASS");
