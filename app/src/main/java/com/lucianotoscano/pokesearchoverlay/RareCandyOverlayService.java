@@ -571,7 +571,7 @@ public final class RareCandyOverlayService extends Service {
                 if(!value.isEmpty()&&!validCoords(value))return;
                 coords=value;radius=km;cards.clear();
                 prefs.edit().putString("coords",value).putInt("radius",km).apply();
-                render();refresh(true);
+                render();RareCandyOverlayService.this.refresh(true);
             }
             @Override public void refresh(){RareCandyOverlayService.this.refresh(true);}
             @Override public void updatePeriod(int value){
