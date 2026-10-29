@@ -1041,10 +1041,10 @@ function nextLabelValue(root,label){
 }
 function parseCard(box,sourceIndex){
  const body=text(box),lines=body.split(/\n+/).map(clean).filter(Boolean);
- const ivMatch=body.match(/(\d{1,3})\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
+ const ivMatch=body.match(/(\d{1,3}(?:[.,]\d{1,2})?)\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
  const raw=ivMatch?[ivMatch[2],ivMatch[3],ivMatch[4]].join("/"):
     ((body.match(/(?:^|[^\d])(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})(?:[^\d]|$)/)||[])[1]||"").replace(/\s/g,"");
- const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3})\s*%/i)||[])[1]||"";
+ const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*%/i)||[])[1]||"";
  const percent=ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):labeledPct);
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
      m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
@@ -1181,10 +1181,16 @@ function verifiedCardIv(card){
   computed=Math.round(raw.split("/").map(Number).reduce((sum,n)=>sum+n,0)*100/45);
  }
  if(pct){
-  if(!/^(?:0|[1-9][0-9]?|100)$/.test(pct))return null;
-  const observed=Number(pct);
-  if(!POSSIBLE_IV_PERCENT.has(observed)||(computed!==null&&computed!==observed))return null;
-  computed=observed;
+  if(!/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?$/.test(pct))return null;
+  const observed=Number(pct.replace(",","."));
+  if(!Number.isFinite(observed)||observed<0||observed>100)return null;
+  const matched=Array.from({length:46},(_,sum)=>sum).find(sum=>{
+   const exact=sum*100/45;
+   return observed===Math.round(exact)||observed===Number(exact.toFixed(1))||
+    observed===Number(exact.toFixed(2));
+  });
+  if(matched===undefined||(raw&&computed!==Math.round(matched*100/45)))return null;
+  computed=Math.round(matched*100/45);
  }
  return {raw,percent:computed};
 }
