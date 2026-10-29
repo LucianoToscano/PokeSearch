@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT182 — Discord OAuth e confirmação do treinador (29/10/2026)
+
+- **Correção integrada na main:** PR [#138](https://github.com/LucianoToscano/PokeSearch/pull/138) mesclada, commit squash `c1a8849c6e349854e02e3e8598b897246b84d9be`. O vídeo recebido demonstra a autorização Discord reconhecida pela Conta 2, porém sem treinador confirmado; isso não prova bloqueio pelo Discord.
+- `MainActivity.java` deixou de fechar automaticamente o login 6,5 s após OAuth enquanto `/profile` ainda está hidratando. Leitura limitada a 16 tentativas, com perfil oficial liberado para inspeção quando inconclusivo. Estado `unknown` nunca vira `unlinked` por suposição.
+- Se o site confirma `Pokemon GO accounts 0/N`, a Home mostra **Vincular** e informa que autenticar Google/Discord não vincula automaticamente o treinador Pokémon GO. Vínculo continua manual no site; não copiar código da Conta 1 nem atravessar os cookies dos perfis.
+- **CI:** Node QA SUCCESS, LT169 regressão Node SUCCESS, LT62 Android Java compile SUCCESS e LT173 OTA/compilação SUCCESS. O workflow `Secure beta APK (private test)` falhou em `:app:preReleaseBuild` por ausência da configuração `Release signing and POKE_RELEASE_CERT_SHA256`, não por erro de Java/JS; **sem APK assinado LT182 ou distribuição pública nesta etapa**. QA real Discord no Samsung ainda pendente.
+- Documento de diagnóstico, limites e teste: [LT182_DISCORD_OAUTH_PROFILE_RECOVERY_QA_20261029.md](LT182_DISCORD_OAUTH_PROFILE_RECOVERY_QA_20261029.md). LT181 continua último APK estável até nova release oficial.
+
+---
+
 ## LT181 — Publicação geral solicitada (29/10/2026)
 
 O proprietário solicitou explicitamente **"Certo aplica para versão pública então."** Referência: [PR #137](https://github.com/LucianoToscano/PokeSearch/pull/137). Código da LT181 reúne aviso de atualização no topo acima das Pokébolas, paridade compacta dos três menus Doce Raro, atualização/cadência oficial, transparência dos botões Reportar/Doar/Fechar no •••, e correção do recorte dos dez doces (removido teto fixo 460dp, área rolável quando necessário). [QA assinado SUCCESS #40952601562](https://github.com/LucianoToscano/PokeSearch/actions/runs/40952601562), versão `0.01.81/54386`; o workflow `lt181-menu-parity-official-release.yml` exige assinatura permanente, integridade SHA-256 e base `Releases/latest=v0.01.80-54385` antes de tornar pública a LT181. **Distribuição CONCLUÍDA E CONFIRMADA:** [Action oficial #40955101902 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40955101902), [Release/latest v0.01.81-54386](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.81-54386), `draft=false`, `prerelease=false`, APK assinado `PokeSearch-v0.01.81-LT.apk` 49.546.158 bytes, SHA-256 `03567e9cfaa16ad597039cc41ee22ca4ae59f808f51143fc000a33acdb35c98f`, SOURCE_COMMIT `1b18c6b0cd2ac663b6c29e6a177e28b40bea63bd`. Lançamento disponível ao atualizador baseado no GitHub, sujeito à consulta/aceite Android. Google Drive legado não atualizado; QA físico Samsung pendente.
