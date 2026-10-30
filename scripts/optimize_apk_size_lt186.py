@@ -69,11 +69,11 @@ def convert_image(name, apply):
         old = im.convert("RGBA")
     choices = []
     # Art with letters and outlines uses very high quality; photo gradients can use 94-97.
-    quality_levels = (98, 96, 94) if any(x in name for x in ("brand", "wordmark")) else (97,95,93)
+    quality_levels = (97,) if any(x in name for x in ("brand", "wordmark")) else (95,)
     for q in quality_levels:
         import io
         buf = io.BytesIO()
-        old.save(buf, format="WEBP", method=6, quality=q, exact=True)
+        old.save(buf, format="WEBP", method=4, quality=q, exact=True)
         data = buf.getvalue()
         with Image.open(io.BytesIO(data)) as image:
             new = image.convert("RGBA")
