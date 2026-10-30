@@ -4604,7 +4604,7 @@ public class OverlayService extends Service {
             requestAlertTonePicker(target);
         });}
         @JavascriptInterface public void testNotification(){handler.post(()->{
-            boolean sent=WatchAlerts.test(OverlayService.this);
+            boolean sent=WatchAlerts.test(OverlayService.this,isSecondaryOverlay());
             String diagnostic=WatchAlerts.soundDiagnostic(OverlayService.this);
             android.widget.Toast.makeText(OverlayService.this,
                 sent?"Teste de Favoritos enviado · "+diagnostic:diagnostic,
