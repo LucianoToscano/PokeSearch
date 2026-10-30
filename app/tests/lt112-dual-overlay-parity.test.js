@@ -134,7 +134,8 @@ check("LT184: favorite recheck accepts only current confirmed results, no genera
   "verifiedFavoriteResultsGeneration!=requestGeneration",
   "searchInProgress","resultsStale","loginPaused",
   "!shownMode.equals(mode)","!shownConfigJson.equals(filterConfigJson())",
-  "shownShiny!=(shiny&&shinyVerified)","if(expiry<=now",
+  "shownShiny!=(shiny&&shinyVerified)","sampledAt>now",
+  "now-sampledAt>15L*60_000L","if(expiry<=now",
   "!verifiedTargetCriteria(card)","WatchAlerts.matches",
   "recentFavoriteAlertExpiries.getOrDefault","queuedFavoriteAlerts.containsKey",
   "drainFavoriteAlertQueue()"
