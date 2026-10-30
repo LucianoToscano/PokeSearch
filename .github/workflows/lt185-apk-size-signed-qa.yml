@@ -53,9 +53,9 @@ jobs:
           python3 - <<'PY'
           import json
           r=json.load(open("LT185-SIZE-REPORT.json"))
-          assert r["saved_bytes"] >= 1048576, "Economia de recursos inferior a 1 MiB"
-          assert r["optimized"] >= 5
-          print("Arquivos reduzidos:",r["optimized"],"Bytes economizados:",r["saved_bytes"])
+          assert r["baseline_saved_bytes"] >= 1048576, "Economia de recursos inferior a 1 MiB"
+          assert r["baseline_optimized_files"] >= 5
+          print("Arquivos reduzidos vs LT184:",r["baseline_optimized_files"],"Bytes economizados:",r["baseline_saved_bytes"])
           PY
       - name: Registrar os binarios reduzidos somente na branch QA
         shell: bash

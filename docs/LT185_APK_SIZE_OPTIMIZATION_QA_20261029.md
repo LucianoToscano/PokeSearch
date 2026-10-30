@@ -5,10 +5,10 @@
 
 ## Escopo implantado
 - Otimização dos PNGs da Home, equipes, fundos e recursos Android mantendo caminhos, dimensões e transparência.
-- Otimização de ícones de resultado (sete ícones de modos preservados nos nomes; exibição visual compacta já usa 17px) e clima V2.
+- Otimização de ícones de resultado (sete ícones de modos preservados nos nomes; exibição visual compacta já usa 17px). Os ícones oficiais de clima V2 permanecem intactos por contrato de integridade.
 - PNGQuant com qualidade mínima 92/100 e comparação visual do RGB composto em preto/branco; alterações só quando há economia maior que 3%.
 - Geração de relatório por arquivo, quantidade economizada e SHA-256; alteração de binários gerada no runner QA e enviada para esta mesma branch antes dos testes.
-- Preservados: PNG fonte do launcher (RoundIcon.java), nove imagens oficiais de clima com hashes imutáveis, todos os nomes dos assets, os áudios, sprites, JWT/login/API/DOM, duas Pokébolas, Doce Raro, alertas favoritos P1/P2, assinatura oficial.
+- Preservados: PNG fonte do launcher (RoundIcon.java), nove imagens legadas e dezoito imagens de clima V2 com hashes imutáveis, todos os nomes dos assets, os áudios, sprites, JWT/login/API/DOM, duas Pokébolas, Doce Raro, alertas favoritos P1/P2, assinatura oficial.
 - Não alterar arquivos Java, HTML, CSS, layout, AndroidManifest, filtros, limites ou comportamento do atualizador. Android R8 e shrinkResources permanecem ativados.
 
 ## Verificação / bloqueios
