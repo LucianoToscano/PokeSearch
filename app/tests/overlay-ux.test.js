@@ -882,11 +882,13 @@ test("Cascade rows highlight the open submenu and preserve the 0/100 header badg
  dock.includes('button.classList.toggle("chosen",cascadeMode===id)')&&
  dock.includes('button.setAttribute("aria-expanded",String(cascadeMode===id))')&&
  dock.includes('cy.textContent=label')&&dock.includes('specialIVLabel(mode,searchSettings)'));
-test("Filter switching shows matching cached results, else keeps older results clearly identified",
- service.includes('boolean preview=restoreFilterPreview();')&&
- service.includes('if(!preview)resultsStale=count()>0;')&&
- service.includes('shownMode=mode;shownConfigJson=filterConfigJson();')&&
- service.includes('shownShiny=shiny&&shinyVerified;resultsStale=false;')&&
+test("Filter switching restores only matching cached rows, otherwise clears old-mode badges/results",
+ service.includes('private boolean restoreMatchingFilterPreview(){')&&
+ service.includes('if(restoreFilterPreview())return true;')&&
+ service.includes('results="[]";')&&
+ service.includes('boolean preview=restoreMatchingFilterPreview();')&&
+ service.includes('shownMode=mode;')&&
+ service.includes('shownShiny=shiny&&shinyVerified;')&&
  dock.includes('const selectedIcon=getResultIcon(iconMode,iconShiny,iconSettings)')&&
  dock.includes('document.body.classList.toggle("results-stale",hasHistory&&resultsStale)'));
 test("Filter failures retain previous cards with a compact status and full diagnostics",
@@ -2833,7 +2835,7 @@ test("FILTERS-POGO-06 badge counts only extra filter criteria with neutral level
   count({...base,sortBy:"CP (highest)",weather:"Rainy",sizeSelections:["XXL","XS"],
    cpMin:"600",cpMax:"900",levelMin:"6",levelMax:"32",genderSelections:["Female"]},"raw")===6&&
   count({...base,minPvpCp:"100",includePreviousEvolutions:false},"gl")===2&&
-  count({...base,cpMin:"50",levelMin:"12",minPvpCp:"100"},"gl")===1&&
+  count({...base,cpMin:"50",levelMin:"12",minPvpCp:"100"},"gl")===3&&
   !ctx.keys.includes("pokemon")&&!ctx.keys.includes("pokemonSelections")&&
   !ctx.keys.includes("attack")&&!ctx.keys.includes("locationCoords");
 });
