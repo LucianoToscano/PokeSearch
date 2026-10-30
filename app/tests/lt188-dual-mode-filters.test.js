@@ -46,14 +46,15 @@ check("authorized API composes GL or UL with CP/Level AND independent PC PvP",()
  }
 });
 check("personalized IV 0/13/13 no longer carries UL ranking in API payload",()=>{
- const x=payload({mode:"raw",attack:0,defense:13,stamina:13});
+ const x=payload({mode:"raw",attack:0,defense:13,stamina:13,minPvpCp:"100"});
  assert.equal(x.pvp_mode,false);
  assert.equal(x.pvp_top_rank,null);
+ assert.equal(x.pvp_min_cp,null,"saved PvP minimum must not affect a Raw IV search");
  assert.equal(x.raw_iv_atk,0);assert.equal(x.raw_iv_def,13);assert.equal(x.raw_iv_sta,13);
 });
 check("IV percent no longer carries UL ranking in API payload",()=>{
- const x=payload({mode:"percent",percentMin:75,percentMax:95});
- assert.equal(x.pvp_mode,false);assert.equal(x.pvp_top_rank,null);
+ const x=payload({mode:"percent",percentMin:75,percentMax:95,minPvpCp:"100"});
+ assert.equal(x.pvp_mode,false);assert.equal(x.pvp_top_rank,null);assert.equal(x.pvp_min_cp,null);
  assert.equal(x.iv_mode,"percent");assert.equal(x.iv_percent_min,75);assert.equal(x.iv_percent_max,95);
 });
 check("new core mode clears unverified previous mode results and icon",()=>{
