@@ -2952,6 +2952,18 @@ public class OverlayService extends Service {
         try{return Integer.parseInt(card.optString("rank","999999"));}
         catch(NumberFormatException ignored){return 999999;}
     }
+    // Match only canonical 0..45 IV percentages (integer, one/two
+    // decimals, or unrounded precision). Do not silently accept arbitrary
+    // nearby percentages; a known A/D/S must agree with the same IV sum.
+    private static boolean matchesVerifiedIvPercent(double observed,int sum){
+        if(!Double.isFinite(observed)||observed<0||observed>100||sum<0||sum>45)
+            return false;
+        double exact=sum*100d/45d;
+        return Math.abs(observed-Math.round(exact))<0.0000001d||
+            Math.abs(observed-Math.round(exact*10d)/10d)<0.0000001d||
+            Math.abs(observed-Math.round(exact*100d)/100d)<0.0000001d||
+            Math.abs(observed-exact)<=0.0001d;
+    }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
         // A configured site filter never proves the IV of an individual spawn.
@@ -2960,19 +2972,35 @@ public class OverlayService extends Service {
             String raw=card.optString("iv","").trim();
             String pct=card.optString("ivPercent","").trim();
             boolean hasRaw=!raw.isEmpty();
-            int computed=-1;
+            int computed=-1,sum=-1;
             if(hasRaw){
                 if(!raw.matches("(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])"))
                     return false;
                 String[] stats=raw.split("/");
-                int sum=Integer.parseInt(stats[0])+Integer.parseInt(stats[1])+Integer.parseInt(stats[2]);
+                sum=Integer.parseInt(stats[0])+Integer.parseInt(stats[1])+Integer.parseInt(stats[2]);
                 computed=ivPercentageForSum(sum);
             }
             int actual=computed;
             if(!pct.isEmpty()){
-                if(!pct.matches("(?:0|[1-9][0-9]?|100)"))return false;
-                actual=Integer.parseInt(pct);
-                if(!isAllowedIvPercent(actual)||(computed>=0&&actual!=computed))return false;
+                if(!pct.matches("(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?"))
+                    return false;
+                double observed;
+                try{observed=Double.parseDouble(pct.replace(',','.'));}
+                catch(NumberFormatException ignored){return false;}
+                if(sum>=0){
+                    if(!matchesVerifiedIvPercent(observed,sum))return false;
+                    actual=computed;
+                }else{
+                    // Percent-only source may confirm percent-mode only,
+                    // never a guessed 0/15/15 spread.
+                    actual=-1;
+                    for(int candidate=0;candidate<=45;candidate++){
+                        if(matchesVerifiedIvPercent(observed,candidate)){
+                            actual=ivPercentageForSum(candidate);break;
+                        }
+                    }
+                }
+                if(!isAllowedIvPercent(actual))return false;
             }
             if("iv".equals(mode))return actual==100;
             if("raw".equals(mode))
@@ -3211,11 +3239,15 @@ public class OverlayService extends Service {
                             String[] parts=raw.split("/");
                             int sum=Integer.parseInt(parts[0])+Integer.parseInt(parts[1])+
                                 Integer.parseInt(parts[2]);
-                            int expected=ivPercentageForSum(sum);
                             String pct=card.optString("ivPercent","").trim();
-                            if(pct.isEmpty()||(pct.matches("[0-9]{1,3}")&&
-                                Integer.parseInt(pct)==expected))
-                                differentVerifiedIv++;
+                            if(pct.isEmpty())differentVerifiedIv++;
+                            else if(pct.matches("(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?")){
+                                try{
+                                    double observed=Double.parseDouble(pct.replace(',','.'));
+                                    if(matchesVerifiedIvPercent(observed,sum))
+                                        differentVerifiedIv++;
+                                }catch(NumberFormatException ignored){}
+                            }
                         }
                     }
                 }

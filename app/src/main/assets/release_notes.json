@@ -1031,6 +1031,29 @@
           "Erros reais de IV ausente ainda exigem confirmação; a atualização não fabrica valores de IV."
         ]
       }
+    },
+    {
+      "id": "lt193-api-raw-iv-decimal-percent-native-20261030",
+      "minVersionCode": 54398,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT193 — Correção de IV real com porcentagem decimal",
+      "sections": {
+        "novidades": [
+          "Resultados da API com IV real, como 0/15/15 (66,67%), agora mantêm a porcentagem compatível entre o site e o Android."
+        ],
+        "melhorias": [
+          "A checagem de IV passa a aceitar representações comprovadas em porcentagem inteira ou decimal, sem aceitar combinações incompatíveis.",
+          "A mesma regra se aplica às duas Pokébolas, sem alterar seus filtros ou preferências independentes."
+        ],
+        "correcoes": [
+          "Corrigida a causa de descarte de resultados Raw IV: o parser recebia 66,67% mas a validação Android exigia 67%.",
+          "Preservada a exigência de IV realmente confirmado antes de mostrar cards ou enviar alertas."
+        ],
+        "emDesenvolvimento": [
+          "A correção tem testes automatizados com a resposta decimal da API; a validação com PoGoCoordinates autenticado no Samsung ainda deve ser feita.",
+          "A ausência real de resultados para um IV continua possível e não pode ser transformada em um Pokémon inventado."
+        ]
+      }
     }
   ]
 }
