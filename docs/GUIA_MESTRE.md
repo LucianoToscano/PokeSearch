@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT187 OFICIAL — APK otimizado publicado, app atualizado e Drive no mesmo link (30/10/2026)
+
+- **Distribuição geral concluída:** [GitHub Releases/latest v0.01.87-54392](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.87-54392), APK **29.013.825 bytes** (antes LT184 49.547.006; **redução 20.533.181 bytes, 41,44%**), SHA-256 `e462b213343253de0b1f84d318ec9ea5a1e29bb7adeb239c76a8878212a7285e`, Android v2 certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Merge na main concluído em ordem:** [#143 LT185](https://github.com/LucianoToscano/PokeSearch/pull/143) `49c5ea264e8d4f0d68a49c1ae300a81a2800d1c6`; [#144 LT186](https://github.com/LucianoToscano/PokeSearch/pull/144) `8c9d982be70e7380daf14f58fa7ebd99ab4d9aa7`; [#145 LT187](https://github.com/LucianoToscano/PokeSearch/pull/145) `4d7920d49359ebec446a4d38af6463a122bb94a9`.
+- **Publicação oficial validada:** [GitHub Actions #40994712359 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40994712359), SOURCE_COMMIT `82b9f67cd43a61663627f368563ba366f50bfba6`, artefato `PokeSearch-LT187-54392-Oficial-Assinado` ID `12950698551`. Node/Gradle/R8, P1/P2, Doce Raro, OTA, sprites offline, assinatura, hash e latest conferidos. Notas LT187 presentes na Home (`minVersionCode=54392`).
+- **Google Drive atualizado preservando ID e URL públicos:** [APK LT187 oficial](https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view), arquivo substituído no mesmo ID, **29.013.825 bytes**, renomeado `PokeSearch-v0.01.87-LT.apk`, permissão `anyone/commenter` preservada. **Download posterior e `cmp` byte a byte** com GitHub oficial, SHA idêntico; staging temporário excluído. Pasta PokeSearch_App preservada.
+- **Atualização no aplicativo:** `GitHubUpdateCenter` já consulta `Releases/latest` LT187; será oferecida quando o app verificar por nova versão, com aceite do Android. Não houve instalação silenciosa/push imediato em aparelhos. Manifesto legado `atualizacao.json` permaneceu sem alterações.
+- **Testes:** upgrade LT184→LT187 via `adb install -r` no Android 16 aprovado ([Action #40993150452](https://github.com/LucianoToscano/PokeSearch/actions/runs/40993150452)); **QA físico Samsung de login, sons reais, imagens/overlays e alertas P1/P2 ainda recomendado**. [Registro técnico completo](ESTADO_CANONICO_LT187_OFICIAL_20261030.md).
+
+---
+
 ## LT187 — Upgrade in-place Android 16 validado no emulador (29/10/2026)
 
 - **[GitHub Actions #40993150452 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40993150452)**. Testado em emulador **Android 16 / API 36**, usando os APKs reais LT184 pública (SHA confirmado) e LT187 QA (SHA confirmado), com mesmo certificado Android v2. `adb install -r` instalou a LT187 sem desinstalar LT184; **UID 10216** e `firstInstallTime` preservados, versionCode **54389 -> 54392**, Home inicializou nas duas versões e o processo continuou ativo sem falha fatal detectada. Artefato de screenshots/logs [12950247083](https://github.com/LucianoToscano/PokeSearch/actions/runs/40993150452/artifacts/12950247083).
