@@ -63,7 +63,8 @@ jobs:
           test -s app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeSoundLibrary.java
           test -s scripts/audit_apk_lt187.py
           test -s app/tests/lt189-get-coords-badge-hidden.test.js
-          test -s app/tests/lt189-dual-mode-filters.test.js
+          # Maintain existing LT188 dual-league test while validating LT189 UI/API.
+          test -s app/tests/lt188-dual-mode-filters.test.js
           test -s app/tests/lt189-api-default-schema.test.js
           node - <<'NODE'
           const notes=require('./app/src/main/assets/release_notes.json');
