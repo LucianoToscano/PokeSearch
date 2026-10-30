@@ -28,9 +28,9 @@ assert.ok(js.includes('Native.confirmCaptureShare(currentIndex)'),"header share 
 assert.ok(html.includes('#headerActions #timer{display:inline-flex;align-items:center;'));
 assert.ok(html.includes('#timer.good,#timer.warning,#timer.critical,#timer.unknown{background:transparent;border:0;box-shadow:none}'));
 assert.ok(html.includes('id="coords" onclick="requestCoordsUi()"'));
-assert.ok(html.includes('<span id="coordsQuota" role="status"'),"PoGo counter is NOT an action");
+assert.ok(html.includes('<span id="coordsQuota" role="status" hidden aria-hidden="true"'),"counter is retained for internal updates but not displayed");
 assert.ok(!html.includes('<button id="coordsQuota"'),"PoGo counter is not a button");
-assert.ok(html.includes('#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:inline;position:absolute'));
+assert.ok(html.includes('#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:none!important}'),"user-requested badge remains hidden despite legacy styles");
 assert.ok(html.includes('top:7px;right:9px;'),"PoGo number is inside Get coords, not above border");
 assert.ok(html.includes('#coordRow #coords{display:block;width:100%;min-height:30px;padding:4px 36px 4px 13px;'));
 assert.ok(html.includes('pointer-events:none'),"counter cannot steal coordinate tap");
@@ -61,4 +61,4 @@ assert.equal(ui.coords.className,"");
 make(document,{PokeSearchCooldown:api},"",true)();
 assert.equal(ui.coords.textContent,"⌛ Pegando coordenadas...");
 assert.equal(ui.coords.className,"isPending");
-console.log("LT145 QA5: identical action buttons, pre-copy Capturei flow, PoGo counter inside Get PASS");
+console.log("LT145 QA5 + LT189: Get coords functional, usage counter hidden, capture intact PASS");
