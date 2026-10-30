@@ -75,11 +75,11 @@ jobs:
             console.log(file+': '+count+' blocos JS validados');
           }
           NODE
-      - name: Executar vinte suítes Node, incluindo regressões LT188/LT189 nas duas Pokébolas
+      - name: Executar vinte e uma suítes Node, incluindo regressões LT188/LT189 nas duas Pokébolas
         shell: bash
         run: |
           set -euo pipefail
-          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js             app/tests/firebase-stats.test.js             app/tests/lt62-menu-visual-states.test.js             app/tests/lt104-dual-overlays.test.js             app/tests/lt112-dual-overlay-parity.test.js             app/tests/lt113-get-coords-canonical-dual.test.js             app/tests/lt165-pvp-costume-evolution-references.test.js             app/tests/lt167-chat-capture-uid-avatar-icons.test.js             app/tests/lt168-legacy-chat-identity-icon-matte.test.js             app/tests/lt168-home-data-import.test.js             app/tests/lt169-all-go-sprites-api-dom-parity.test.js             app/tests/lt188-dual-mode-filters.test.js             app/tests/lt189-api-default-schema.test.js             app/tests/lt190-provider-429-backoff-dual.test.js; do
+          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js             app/tests/firebase-stats.test.js             app/tests/lt62-menu-visual-states.test.js             app/tests/lt104-dual-overlays.test.js             app/tests/lt112-dual-overlay-parity.test.js             app/tests/lt113-get-coords-canonical-dual.test.js             app/tests/lt165-pvp-costume-evolution-references.test.js             app/tests/lt167-chat-capture-uid-avatar-icons.test.js             app/tests/lt168-legacy-chat-identity-icon-matte.test.js             app/tests/lt168-home-data-import.test.js             app/tests/lt169-all-go-sprites-api-dom-parity.test.js             app/tests/lt188-dual-mode-filters.test.js             app/tests/lt189-api-default-schema.test.js             app/tests/lt190-provider-429-backoff-dual.test.js             app/tests/lt191-provider-backoff-24h.test.js; do
             echo "::group::$suite"
             node "$suite"
             echo "::endgroup::"
