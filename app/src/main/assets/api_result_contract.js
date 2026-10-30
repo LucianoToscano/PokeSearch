@@ -200,7 +200,7 @@
       var payload={
         shiny_only:c.shiny===true,shiny_account:shinyAccount,background_only:c.backgroundOnly===true,
         pvp_mode:pvp,pvp_league:pvp?(mode==="ul"?"ultra":"great"):null,
-        pvp_top_rank:rank,pvp_include_pre_evolutions:c.includePreviousEvolutions!==false,
+        pvp_top_rank:rank,pvp_include_pre_evolutions:pvp?(c.includePreviousEvolutions!==false):null,
         // A saved PvP-only CP limit must not leak into Raw IV / IV% searches.
         pvp_min_cp:pvp?optionalNumber(c.minPvpCp,0,100000,true):null,
         pokemon_ids:pokemonIds,species_forms:allForms,forms:rawForms,location:textLocation,
