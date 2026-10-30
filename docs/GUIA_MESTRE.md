@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT191 — Retry-After de até 24 horas (30/10/2026)
+
+- **Base pública confirmada:** LT190, `0.01.90 / 54395`. LT191 (`0.01.91 / 54396`) em revisão e publicação condicionada ao CI; não considerar oficial antes de conferir Releases/latest.
+- **Correção prioritária:** transporte/sessão API/serviço Android aceitam 1–86400 segundos de `Retry-After`; HTTP 429 de 7200 s não vira 60 s. Busca P1/P2 respeita intervalo compartilhado, preservando filtros e resultados.
+- Fluxos Doce Raro e Get coords também revistos. Mensagens 400/422, 401/403 e timeout diferenciadas com segurança; nenhuma resposta bruta/JWT exposta.
+- **Testes:** `app/tests/lt191-provider-backoff-24h.test.js`, suítes LT190/189/188, Node, OTA e compilação Android. QA Samsung com API real continua pendente.
+- **Documentação:** [relatório e checklist LT191](LT191_AUDITORIA_CORRECOES_20261030.md), [prompt para outras IAs](LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS_LT191.md); README e AGENTS atualizados para LT190 como base pública.
+- O módulo monolítico `dock.html` e workflows históricos demandam migração controlada, sem remoção em massa nesta correção de API. O Drive legado de APK deve ser atualizado apenas com binário bruto verificado.
+
+---
+
 ## LT190 — Aguardar HTTP 429 do servidor nas duas Pokébolas (30/10/2026)
 
 - **Correção em QA / publicação solicitada:** LT190 `0.01.90 / 54395`; [relatório e matriz](LT190_RATE_LIMIT_429_DUAS_POKEBOLAS_20261030.md). Não confundir a LT189 já pública com a falha `API: rate-limited` (HTTP 429) mostrada na Home. Rate-limit pertence ao PoGoCoordinates, não pode ser removido pelo PokeSearch.
