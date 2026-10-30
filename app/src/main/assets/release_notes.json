@@ -821,53 +821,53 @@
       }
     },
     {
-        "id": "lt182-discord-oauth-profile-20261029",
-        "minVersionCode": 54387,
-        "date": "29/10/2026",
-        "title": "PokeSearch LT182 — Login Discord e perfil sincronizado",
-        "sections": {
-            "novidades": [
-                "Conferência mais confiável da conta após autorizar o Discord ou Google no PoGoCoordinates."
-            ],
-            "melhorias": [
-                "Aguarda a página oficial carregar os dados de treinador sem encerrar o login automaticamente.",
-                "Quando o PoGoCoordinates confirma que ainda não existe treinador vinculado, a Home mostra Vincular com orientação clara."
-            ],
-            "correcoes": [
-                "Corrigido o fechamento prematuro da janela de login antes da confirmação do perfil e do treinador.",
-                "Estado temporariamente não confirmado não é mais confundido com ausência definitiva de treinador.",
-                "Contas 1 e 2, treinadores VIP e Pokébolas permanecem independentes."
-            ],
-            "emDesenvolvimento": [
-                "O vínculo de um treinador à conta Discord/Google é realizado pelo usuário no perfil oficial do PoGoCoordinates.",
-                "A autenticação real em aparelhos Samsung e Moto ainda requer confirmação prática."
-            ]
-        }
+      "id": "lt182-discord-oauth-profile-20261029",
+      "minVersionCode": 54387,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT182 — Login Discord e perfil sincronizado",
+      "sections": {
+        "novidades": [
+          "Conferência mais confiável da conta após autorizar o Discord ou Google no PoGoCoordinates."
+        ],
+        "melhorias": [
+          "Aguarda a página oficial carregar os dados de treinador sem encerrar o login automaticamente.",
+          "Quando o PoGoCoordinates confirma que ainda não existe treinador vinculado, a Home mostra Vincular com orientação clara."
+        ],
+        "correcoes": [
+          "Corrigido o fechamento prematuro da janela de login antes da confirmação do perfil e do treinador.",
+          "Estado temporariamente não confirmado não é mais confundido com ausência definitiva de treinador.",
+          "Contas 1 e 2, treinadores VIP e Pokébolas permanecem independentes."
+        ],
+        "emDesenvolvimento": [
+          "O vínculo de um treinador à conta Discord/Google é realizado pelo usuário no perfil oficial do PoGoCoordinates.",
+          "A autenticação real em aparelhos Samsung e Moto ainda requer confirmação prática."
+        ]
+      }
     },
     {
-        "id": "lt183-discord-callback-20261029",
-        "minVersionCode": 54388,
-        "date": "29/10/2026",
-        "title": "PokeSearch LT183 — Autorização do Discord e retorno ao aplicativo",
-        "sections": {
-            "novidades": [
-                "Retorno da autorização Google/Discord exibe corretamente a página oficial do PoGoCoordinates."
-            ],
-            "melhorias": [
-                "O aplicativo deixa de cobrir a página oficial durante a confirmação de autorização.",
-                "Mais tempo para o retorno da sessão e carregamento das informações de perfil.",
-                "Gerenciar e Vincular treinador agora verificam novamente a sessão de autenticação."
-            ],
-            "correcoes": [
-                "Corrigida navegação prematura que poderia interromper o retorno do Discord ao PoGoCoordinates.",
-                "Evita tentar reabrir o login durante o processamento do retorno OAuth.",
-                "Erros de rede e respostas da página oficial deixam de ficar ocultos pelo carregamento nativo."
-            ],
-            "emDesenvolvimento": [
-                "A autorização e o vínculo de treinador ainda dependem da resposta oficial do PoGoCoordinates; se o provedor rejeitar o OAuth, o PokeSearch mostrará a página em vez de simular sucesso.",
-                "Validação presencial de login Discord no Samsung permanece necessária."
-            ]
-        }
+      "id": "lt183-discord-callback-20261029",
+      "minVersionCode": 54388,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT183 — Autorização do Discord e retorno ao aplicativo",
+      "sections": {
+        "novidades": [
+          "Retorno da autorização Google/Discord exibe corretamente a página oficial do PoGoCoordinates."
+        ],
+        "melhorias": [
+          "O aplicativo deixa de cobrir a página oficial durante a confirmação de autorização.",
+          "Mais tempo para o retorno da sessão e carregamento das informações de perfil.",
+          "Gerenciar e Vincular treinador agora verificam novamente a sessão de autenticação."
+        ],
+        "correcoes": [
+          "Corrigida navegação prematura que poderia interromper o retorno do Discord ao PoGoCoordinates.",
+          "Evita tentar reabrir o login durante o processamento do retorno OAuth.",
+          "Erros de rede e respostas da página oficial deixam de ficar ocultos pelo carregamento nativo."
+        ],
+        "emDesenvolvimento": [
+          "A autorização e o vínculo de treinador ainda dependem da resposta oficial do PoGoCoordinates; se o provedor rejeitar o OAuth, o PokeSearch mostrará a página em vez de simular sucesso.",
+          "Validação presencial de login Discord no Samsung permanece necessária."
+        ]
+      }
     },
     {
       "id": "lt184-favorite-alert-p1-p2-sync-20261029",
@@ -888,6 +888,27 @@
         ],
         "emDesenvolvimento": [
           "Validação física de recebimento de notificação P1 100% e P2 0% em Samsung, incluindo API e DOM."
+        ]
+      }
+    },
+    {
+      "id": "lt187-apk-size-optimization-20261030",
+      "minVersionCode": 54392,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT187 — Aplicativo muito mais leve",
+      "sections": {
+        "novidades": [
+          "APK reduzido de aproximadamente 49,55 MB para 29 MB, preservando as funcionalidades já existentes."
+        ],
+        "melhorias": [
+          "Imagens e fundos otimizados para carregar com menos armazenamento.",
+          "Sons compactados preservando as 36 opções de notificação.",
+          "Continuidade das duas Pokébolas, favoritos, Doce Raro, sprites offline e atualizador.",
+          "Instalação por cima da versão anterior validada em emulador Android 16, sem apagar dados."
+        ],
+        "correcoes": [],
+        "emDesenvolvimento": [
+          "Teste físico de som, sobreposições e notificações no Samsung permanece recomendado."
         ]
       }
     }
