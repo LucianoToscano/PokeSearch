@@ -1591,10 +1591,11 @@ test("UX-FIX-01 brighter capture pulse uses confirmed searching status",()=>{
  pulse.includes("background:#f5ffff")&&dock.includes("searchActive=!!isSearching;")&&
  dock.includes("@keyframes psCapturePulse")&&dock.includes("prefers-reduced-motion:reduce");
 });
-test("Test-Android: orange stale-results dot is hidden but source provenance survives",()=>{
+test("Test-Android: stale status is explicit only for matching previews; other-mode badges are cleared",()=>{
  return !dock.includes("body.result-window.results-stale #resultHeader::after")&&
   dock.includes('document.body.classList.toggle("results-stale",hasHistory&&resultsStale)')&&
-  service.includes('if(!preview)resultsStale=count()>0;')&&
+  service.includes('if(restoreFilterPreview())return true;')&&
+  service.includes('results="[]";')&&
   dock.includes("⚠ Resultados anteriores");
 });
 test("Test-Android: small IV/rank badges use dark high-contrast letters and no background",()=>{
