@@ -352,9 +352,10 @@ public class OverlayService extends Service {
     private static final String API_RATE_BACKOFF_PREF="pogoApiSearchBackoffUntilMs";
     private static final long API_RATE_BACKOFF_DEFAULT_MS=60_000L;
     private static final long API_RATE_BACKOFF_MAX_MS=3_600_000L;
-    private final Runnable providerRateLimitResume=()->{
+    private final Runnable providerRateLimitResume=this::resumeProviderRateLimitedSearch;
+    private void resumeProviderRateLimitedSearch(){
         if(!stopped&&!loginPaused&&authorizedApiQaSelected())refresh(false);
-    };
+    }
     private long apiProviderBackoffUntil(){
         long now=System.currentTimeMillis();
         long until=getSharedPreferences("prefs",MODE_PRIVATE).getLong(API_RATE_BACKOFF_PREF,0L);
