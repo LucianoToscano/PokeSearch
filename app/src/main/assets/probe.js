@@ -1337,7 +1337,7 @@ function coordsRevealLimit(card){
  if(!kind)return null;
  const match=evidence.match(/\b(?:try again|retry)\s+in\s+(?:(\d{1,3})\s*m(?:in(?:ute)?s?)?\s*)?(?:(\d{1,4})\s*s(?:ec(?:ond)?s?)?)\b/i);
  const secs=match?(Number(match[1]||0)*60+Number(match[2]||0)):0;
- return {limitType:kind,retrySeconds:kind==="rate"&&secs>=1&&secs<=3600?secs:0};
+ return {limitType:kind,retrySeconds:kind==="rate"&&secs>=1&&secs<=86400?secs:0};
 }
 if(action.startsWith("coords:")){
  const raw=action.slice(7);
