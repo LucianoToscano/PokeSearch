@@ -18,4 +18,13 @@
 - Não fazer merge/Release, atualizar o Drive público ou oferecer a atualização dentro do aplicativo sem QA Samsung e aprovação da versão.
 
 ## Estado
-Em processo de QA GitHub Actions: a medição do APK e aprovação dos testes será registrada abaixo quando comprovada.
+**Resultado comprovado na QA (SUCCESS):**
+- [Workflow LT186 — execução #40989269637](https://github.com/LucianoToscano/PokeSearch/actions/runs/40989269637), assinatura Android v2 permanente, versionName `0.01.86`, versionCode `54391`, R8 e regressões concluídos.
+- **APK LT186 QA:** `PokeSearch-v0.01.86-LT186-Size-QA.apk`, **31.094.541 bytes**.
+- **LT185 QA:** 43.770.614 bytes, diferença **12.676.073 bytes (28,96%)**.
+- **LT184 pública:** 49.547.006 bytes, diferença **18.452.465 bytes (37,24%)**. A meta de 35 MB foi superada.
+- WebP de seis recursos principais: **7.822.595 bytes** de economia de arquivos; quatro artes-mestre de branding movidas fora dos assets empacotados: **5.240.352 bytes**, preservadas no Git. Economia de arquivos na árvore do app **13.062.947 bytes**.
+- SOURCE_COMMIT do APK testado: `f277b6ae6d457ecc2b1655f8dc2fa1182c7c1885`.
+- Artefato GitHub Actions `PokeSearch-LT186-54391-Size-QA-Assinado`, ID **12948133735**, ZIP **28.613.500 bytes**. Contém APK, `SOURCE_COMMIT.txt`, `SHA256SUMS.txt`, relatórios e verificação de assinatura. O CI validou SHA-256; não inventar digest do APK não lido diretamente.
+- Passaram testes de paridade P1/P2, Doce Raro, sprites offline, Android Java, R8, integridade de recursos, ausência dos assets duplicados, assinatura oficial e atualização OTA. **Teste visual e funcional físico no Samsung pendente.**
+- **NENHUM merge, Release pública, OTA em aparelhos ou substituição do APK no Google Drive** ocorreu. LT184 é a versão pública, LT185 e LT186 são QA.
