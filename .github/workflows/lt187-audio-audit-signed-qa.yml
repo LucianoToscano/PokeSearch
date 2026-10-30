@@ -45,6 +45,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
           command -v ffmpeg
           command -v ffprobe
           git merge-base --is-ancestor f277b6ae6d457ecc2b1655f8dc2fa1182c7c1885 HEAD
