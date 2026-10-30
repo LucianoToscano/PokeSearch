@@ -113,4 +113,41 @@ check("secondary activation is visible without wiping its settings or killing it
  assert.match(main,/putInt\("rawAttack",0\)/);
  assert.match(service,/startForeground\(isSecondaryOverlay\(\)\?74:73,note\)/);
 });
+check("LT184: updates to one global Favorites list wake BOTH independent alert queues",()=>{
+ assert.match(service,/registerOnSharedPreferenceChangeListener\(sharedFavoritesListener\)/);
+ assert.match(service,/unregisterOnSharedPreferenceChangeListener\(sharedFavoritesListener\)/);
+ const listener=service.split("sharedFavoritesListener=(preferences,key)->{")[1]
+   .split("private void recheckConfirmedFavoriteResults()",1)[0];
+ assert.match(listener,/WatchAlerts\.PREF_LIST\.equals\(key\)/);
+ assert.match(listener,/WatchAlerts\.PREF_MODE\.equals\(key\)/);
+ assert.match(listener,/queuedFavoriteAlerts\.clear\(\)/);
+ assert.match(listener,/if\(WatchAlerts\.enabled\(this\)\)recheckConfirmedFavoriteResults\(\)/);
+ // Listener lives in the shared superclass, not only SecondaryOverlayService.
+ assert.match(secondary,/extends OverlayService/);
+});
+check("LT184: favorite recheck accepts only current confirmed results, no general notices",()=>{
+ const start=service.indexOf("private void recheckConfirmedFavoriteResults(){");
+ const end=service.indexOf("private void scheduleFavoriteAlertDrain(",start);
+ assert.ok(start>0&&end>start);
+ const recheck=service.slice(start,end);
+ for(const required of [
+  "verifiedFavoriteResultsGeneration!=requestGeneration",
+  "searchInProgress","resultsStale","loginPaused",
+  "!shownMode.equals(mode)","!shownConfigJson.equals(filterConfigJson())",
+  "shownShiny!=(shiny&&shinyVerified)","sampledAt>now",
+  "now-sampledAt>15L*60_000L","if(expiry<=now",
+  "!verifiedTargetCriteria(card)","WatchAlerts.matches",
+  "recentFavoriteAlertExpiries.getOrDefault","queuedFavoriteAlerts.containsKey",
+  "drainFavoriteAlertQueue()"
+ ])assert.ok(recheck.includes(required),required);
+ assert.doesNotMatch(recheck,/sendGeneralNotification|recordNewResults\(/);
+ assert.match(service,/verifiedFavoriteResultsGeneration=requestGeneration;/);
+ assert.match(service,/if\(!authorizedApiQa\|\|apiConfirmed\)\{/);
+});
+check("LT184: Android favorite test identifies P1 and P2 without overwriting IDs",()=>{
+ assert.match(watched,/public static boolean test\(Context context,boolean secondary\)/);
+ assert.match(watched,/String ball=secondary\?"P2":"P1"/);
+ assert.match(watched,/secondary\?11998:11997/);
+ assert.match(service,/WatchAlerts\.test\(OverlayService\.this,isSecondaryOverlay\(\)\)/);
+});
 console.log("LT112 DUAL POKEBALL PARITY "+successes+"/"+successes+" PASS");

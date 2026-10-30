@@ -32,6 +32,11 @@ public final class WatchAlerts {
     public static final String PREF_FAVORITE_TONE="favoriteSoundUri";
     public static final String PREF_SPECIES_TONES="favoritePokemonSoundUris";
     private WatchAlerts(){}
+    // One explicit owner for the app-global list, modes and sounds. Overlay
+    // search preferences must continue to use each instance's own storage.
+    static SharedPreferences sharedPreferences(Context context){
+        return context.getSharedPreferences("prefs",0);
+    }
     public static String normalized(String text){
         if(text==null)return "";
         String s=Normalizer.normalize(text,Normalizer.Form.NFD).replaceAll("\\p{M}+","").toLowerCase(Locale.ROOT);
@@ -276,6 +281,14 @@ public final class WatchAlerts {
     public static boolean test(Context context){
         return send(context,"🔔 Teste: Pokémon procurado",
             "Teste do canal Favoritos. Alertas reais exigem favorito cadastrado e resultado confirmado nos filtros.",11999,null);
+    }
+    // Diagnostics use distinct Android notification IDs and explicit P1/P2
+    // titles; an Android-only test must not be mistaken for a verified spawn.
+    public static boolean test(Context context,boolean secondary){
+        String ball=secondary?"P2":"P1";
+        return send(context,"🔔 Teste "+ball+": Pokémon favorito",
+            ball+" · Teste do canal Favoritos. Avisos reais exigem resultado confirmado e Pokémon selecionado.",
+            secondary?11998:11997,null);
     }
     /** Exact encounter title supplied by native verified-result formatting.
      * Never merge Hundo, Shundo, league ranks or different CP encounters.

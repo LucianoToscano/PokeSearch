@@ -868,6 +868,28 @@
                 "Validação presencial de login Discord no Samsung permanece necessária."
             ]
         }
+    },
+    {
+      "id": "lt184-favorite-alert-p1-p2-sync-20261029",
+      "minVersionCode": 54389,
+      "date": "29/10/2026",
+      "title": "PokeSearch LT184 — Favoritos alertando nas duas Pokébolas",
+      "sections": {
+        "novidades": [
+          "Teste de notificações distingue Pokébola 1 (P1) e Pokébola 2 (P2)."
+        ],
+        "melhorias": [
+          "A lista de favoritos selecionados é sincronizada nas duas Pokébolas em uso.",
+          "Cada Pokébola preserva seus próprios filtros, resultados e notificações."
+        ],
+        "correcoes": [
+          "Ao alterar a lista ou o modo de alertas, ambas as Pokébolas reavaliam seus resultados já confirmados, sem esperar uma nova busca.",
+          "Proteção contra alertas de resultados expirados, desatualizados ou já avisados."
+        ],
+        "emDesenvolvimento": [
+          "Validação física de recebimento de notificação P1 100% e P2 0% em Samsung, incluindo API e DOM."
+        ]
+      }
     }
   ]
 }
