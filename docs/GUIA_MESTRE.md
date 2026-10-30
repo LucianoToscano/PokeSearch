@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT189 OFICIAL — Contador Get coords oculto e correção de contrato API (30/10/2026)
+
+- **Distribuída:** [Release/latest `v0.01.89-54394`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.89-54394), APK **29.014.789 bytes** SHA-256 `2d39132b58ae205774ad7ba2068bf14d9b95972cabe5a9e2f750da1c349fb07c`, assinatura v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- PR [#147](https://github.com/LucianoToscano/PokeSearch/pull/147) integrada (`d25d55b2ba4c3cc9b281ec34f8bb9851bf3668b0`); PR [#148](https://github.com/LucianoToscano/PokeSearch/pull/148) corrigiu pré-condição do workflow; **SOURCE_COMMIT do APK `6c529940761e3c2e748d8a43c4208674864c0856`**. [Actions #41011591267 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41011591267) Node, OTA, Android/R8, assinatura e APK.
+- **Interface em P1/P2:** `#coordsQuota` oculto no botão **Pegar Coordenadas**; mantém contagem interna, rate limit/cooldown e cópia. `detail.html` comum aos dois overlays; ajustes de padding sem cortar coordenadas.
+- **API em P1/P2:** `pvp_league` e `pvp_include_pre_evolutions` voltaram a tipos esperados com `pvp_mode=false`, preservando filtros específicos do PvP. Regressão provável de `invalid-request` da LT188; aceitação HTTP real no Samsung ainda pendente.
+- **Google Drive:** [NOVO ZIP LT189 com APK e relatórios](https://drive.google.com/file/d/1yfASG2L4aZgOLPZIMf0oMlUY-rD4zGU2/view) **26.731.088 bytes**. Link legado **`1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P` CONTINUA LT187**, pois o conector não aceitou substituir o binário cru pelo arquivo local. Não anunciar link antigo como LT189; APK direto disponível na Release.
+- Relatório detalhado [ESTADO_CANONICO_LT189_OFICIAL_20261030.md](ESTADO_CANONICO_LT189_OFICIAL_20261030.md); **QA físico Samsung e provedor autenticado pendentes**.
+
+---
+
 ## LT189 — Get Coords sem contador visível e correção da API (30/10/2026)
 
 - **Atualização autorizada, publicação em validação:** LT189 `0.01.89 / 54394`. Código em PR [#147](https://github.com/LucianoToscano/PokeSearch/pull/147), saída oficial condicionada ao CI de assinatura permanente e checagem Release/latest. Não confundir suíte Node aprovada com aceitação da API autenticada no Samsung.
