@@ -22,4 +22,4 @@ Na tela com P1 100% e P2 0%, a lista compartilhada de Favoritos exibiu 13/50, ma
 - Testar P1 100% e P2 0% separadamente: P1 só deve alertar sobre IV 100% verificado; ausência de correspondências 100% **não é falha**. Verificar explicitamente as duas fontes, API autenticada e DOM, com TTL/despawn.
 - Validar que sem resultados, com pesquisa pendente, login, cartões expirados ou após troca de filtros não existe aviso antigo. Confirmar Android real Samsung; testes estáticos/CI não provam entrega física.
 
-**Estado:** PR de QA; sem merge, sem novo APK assinado, sem alteração da release pública, OTA, Firebase ou Google Drive até autorização expressa.
+**Estado atualizado:** autorizado pelo proprietário, PR #142 mesclada na `main` (commit `b3dd24839322029c4d6c4ce2e030ddb987625f0b`), LT184 0.01.84/54389 publicada oficialmente no GitHub Releases/latest e APK assinado enviado ao mesmo arquivo público do Drive, SHA idêntico. Consulte [registro oficial](ESTADO_CANONICO_LT184_OFICIAL_20261029.md). **Pendente apenas a homologação física dos alertas no Samsung.**
