@@ -2,10 +2,10 @@
 
 ## LT192 — Correção IV% → Raw IV (30/10/2026)
 
-- **Base pública confirmada LT191 `0.01.91 / 54396`.** Correção incremental LT192 `0.01.92 / 54397` em revisão e publicação autorizada, condicionada à verificação da nova Release. [Relatório técnico](LT192_IV_92_RAW_MODE_SAMSUNG_20261030.md).
+- **LT192 OFICIAL `0.01.92 / 54397` distribuída.** [Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.92-54397), APK 29.016.253 bytes, SHA-256 `7e44dc13ef79410467cd4521c296c965e68e61435def5d7622a7449f63db9194`, SOURCE_COMMIT `aca295f65a988bf1c572c13fe1bec3a8b7691ea0`, [Actions #41022787967 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41022787967). [Relatório técnico](LT192_IV_92_RAW_MODE_SAMSUNG_20261030.md).
 - As capturas mostram Noibat **7/15/5 (60%)** no IV% **0–92** e a alteração para Raw **0/15/15**. O código tratava um IV válido, porém diferente do solicitado, como `IV não comprovado`. Isso não é prova de IV ausente nem de erro da fórmula. A mudança corrige o diagnóstico e impede que cartões de outros IVs acionem alertas.
 - `probe.js` separa `verifiedNonmatchingIv` e `unverifiedIv`; `OverlayService.java` distingue falta de dados IV, divergência e ausência de correspondências verificadas. Busca não homologada não fabrica uma confirmação de vazio do servidor. P1/P2 usam o mesmo código com prefs independentes.
-- Regressão `app/tests/lt192-iv-evidence-mode-transition.test.js`; manter suites LT191/LT190/LT189/LT188, Node/Android/OTA. Teste físico Samsung e API autenticada **não executados** por CI.
+- Regressão `app/tests/lt192-iv-evidence-mode-transition.test.js`; manter suites LT191/LT190/LT189/LT188, Node/Android/OTA. Teste físico Samsung e API autenticada **não executados** por CI. [Drive LT192 com APK e relatórios](https://drive.google.com/file/d/1d-nWvh_uycbBARm6frfdepEDthNMsGlD/view) (26.719.608 bytes); link legado Drive APK ainda LT187. [Registro oficial](ESTADO_CANONICO_LT192_OFICIAL_20261030.md).
 - Não alterar a geometria independente dos overlays sem teste do arraste e popup. Conservar assinaturas, login, sprites, contador Get coords oculto, limites da API, Doce Raro e máximo de 10 resultados.
 
 ---
