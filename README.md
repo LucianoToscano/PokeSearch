@@ -1,14 +1,14 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT191 · 0.01.91 · 54396
+## Versão pública atual — LT192 · 0.01.92 · 54397
 
-[GitHub Release LT191](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.91-54396) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.91-54396/PokeSearch-v0.01.91-LT.apk) · [Actions #41019720898 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41019720898).
+[Release LT192](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.92-54397) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.92-54397/PokeSearch-v0.01.92-LT.apk) · [CI SUCCESS #41022787967](https://github.com/LucianoToscano/PokeSearch/actions/runs/41022787967).
 
-**APK:** 29.015.817 bytes · SHA-256 `bc8d44627d67907a7a61647bf13e637addd85e7c2850ec4de47fda0c730f62dd` · SOURCE_COMMIT `c73c5ca0f15728c8896e3da4fcc6d2cce23f556f` · assinatura v2 permanente.
+**APK:** 29.016.253 bytes · SHA-256 `7e44dc13ef79410467cd4521c296c965e68e61435def5d7622a7449f63db9194` · SOURCE_COMMIT `aca295f65a988bf1c572c13fe1bec3a8b7691ea0`.
 
-**Melhorias:** espera de até 24 horas respeitando HTTP `Retry-After` em P1/P2 e Doce Raro, feedback de erro melhorado, filtros antigos e Get coords preservados. **QA físico Samsung/autenticação real ainda não atestado**.
+**Corrigido:** na transição IV% 0–92 → Raw IV 0/15/15, o IV comprovado de outro Pokémon não é considerado um IV não comprovado. P1/P2, filtros, alertas, coordenadas e segurança do servidor permanecem protegidos. QA físico Samsung ainda pendente.
 
-[Google Drive LT191: APK com relatórios (ZIP)](https://drive.google.com/file/d/1skCB1VGUcCwaV3xBIdxCc22SPe0fA0FA/view) · [Registro oficial](docs/ESTADO_CANONICO_LT191_OFICIAL_20261030.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
+[Google Drive LT192 — APK e relatórios em ZIP](https://drive.google.com/file/d/1d-nWvh_uycbBARm6frfdepEDthNMsGlD/view) · [Estado canônico](docs/ESTADO_CANONICO_LT192_OFICIAL_20261030.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
 
 ## Histórico — versão oficial anterior LT171 · 0.01.71 · 54376
 
