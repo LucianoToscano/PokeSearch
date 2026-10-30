@@ -346,6 +346,40 @@ public class OverlayService extends Service {
     private AuthorizedApiCollector authorizedApiCollector;
     private boolean displayedApiResults=false;
     private int displayedApiSearchId=-1;
+    // Provider 429 is an upstream limit, never a permission to switch accounts,
+    // force DOM searches, or retry until accepted. Both Pokeballs share this
+    // conservative search gate so concurrent overlays do not cause a burst.
+    private static final String API_RATE_BACKOFF_PREF="pogoApiSearchBackoffUntilMs";
+    private static final long API_RATE_BACKOFF_DEFAULT_MS=60_000L;
+    private static final long API_RATE_BACKOFF_MAX_MS=3_600_000L;
+    private final Runnable providerRateLimitResume=this::resumeProviderRateLimitedSearch;
+    private void resumeProviderRateLimitedSearch(){
+        if(!stopped&&!loginPaused&&authorizedApiQaSelected())refresh(false);
+    }
+    private long apiProviderBackoffUntil(){
+        long now=System.currentTimeMillis();
+        long until=getSharedPreferences("prefs",MODE_PRIVATE).getLong(API_RATE_BACKOFF_PREF,0L);
+        return until>now&&until-now<=API_RATE_BACKOFF_MAX_MS?until:0L;
+    }
+    private void scheduleProviderRateLimitResume(){
+        handler.removeCallbacks(providerRateLimitResume);
+        long until=apiProviderBackoffUntil();
+        if(until==0L||stopped||loginPaused||!authorizedApiQaSelected())return;
+        nextScheduledSearchAtMs=until;
+        // One device with two overlays should not dispatch simultaneously.
+        long stagger=isSecondaryOverlay()?3_000L:0L;
+        handler.postDelayed(providerRateLimitResume,until-System.currentTimeMillis()+stagger);
+    }
+    private void noteProviderRateLimit(int suggestedSeconds){
+        long wait=API_RATE_BACKOFF_DEFAULT_MS;
+        if(suggestedSeconds>=1&&suggestedSeconds<=3600)
+            wait=Math.max(wait,(long)suggestedSeconds*1000L);
+        long now=System.currentTimeMillis();
+        long old=apiProviderBackoffUntil();
+        getSharedPreferences("prefs",MODE_PRIVATE).edit()
+            .putLong(API_RATE_BACKOFF_PREF,Math.max(old,now+wait)).apply();
+        scheduleProviderRateLimitResume();
+    }
     private boolean authorizedApiQaSelected(){
         return overlayPrefs().getBoolean("authorizedApiQaOptIn",true);
     }
@@ -394,8 +428,16 @@ public class OverlayService extends Service {
                         return;
                     }
                     searchInProgress=false;
-                    searchFailure("⚠ API: "+reason,
-                        "Consulta API não validada ("+reason+"). Resultados anteriores preservados.");
+                    if("rate-limited".equals(reason)){
+                        // Respect Retry-After when present. No retry or DOM bypass
+                        // before the provider window expires; keep previous cards.
+                        noteProviderRateLimit(response.optInt("retryAfterSeconds",60));
+                        searchFailure("⚠ API: limite temporário",
+                            "HTTP 429 do provedor; próxima tentativa somente após intervalo de segurança.");
+                    }else{
+                        searchFailure("⚠ API: "+reason,
+                            "Consulta API não validada ("+reason+"). Resultados anteriores preservados.");
+                    }
                     return;
                 }
                 JSONArray cards=response.optJSONArray("cards");
@@ -541,6 +583,7 @@ public class OverlayService extends Service {
     private void cancelSessionCallbacks(){
         handler.removeCallbacks(queuedRefresh);
         handler.removeCallbacks(filterChangeRefresh);
+        handler.removeCallbacks(providerRateLimitResume);
         handler.removeCallbacks(searchWatchdog);
         handler.removeCallbacks(periodic);
         handler.removeCallbacks(expiryRefresh);
@@ -2164,6 +2207,11 @@ public class OverlayService extends Service {
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
         if(stopped||loginPaused)return;
+        if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L){
+            scheduleProviderRateLimitResume();
+            status("⚠ API: limite do provedor; aguardando para pesquisar novamente.");
+            return;
+        }
         if(searchInProgress){
             if(manual){
                 queuedManualRefresh=true;

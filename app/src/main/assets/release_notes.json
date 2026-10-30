@@ -956,6 +956,30 @@
           "A aceitação de todas as combinações pela API PoGoCoordinates em Samsung real depende de teste com sessão autenticada."
         ]
       }
+    },
+    {
+      "id": "lt190-rate-limit-backoff-dual-20261030",
+      "minVersionCode": 54395,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT190 — Limite da API respeitado nas duas Pokébolas",
+      "sections": {
+        "novidades": [
+          "As duas Pokébolas aguardam juntas quando a API sinaliza limite de consultas (HTTP 429)."
+        ],
+        "melhorias": [
+          "O intervalo Retry-After informado pelo servidor é respeitado nas próximas pesquisas.",
+          "Os resultados anteriores são preservados durante o bloqueio, sem repetição excessiva de buscas.",
+          "A volta das consultas após a espera é escalonada para evitar duas solicitações simultâneas."
+        ],
+        "correcoes": [
+          "Reduzidas as consultas repetidas ao selecionar filtros ou atualizar durante bloqueio temporário da API.",
+          "Ajustada a coordenação entre a espera do navegador e o agendador Android."
+        ],
+        "emDesenvolvimento": [
+          "O bloqueio HTTP 429 depende do limite real do PoGoCoordinates e não pode ser removido pelo aplicativo.",
+          "A confirmação de treinador da Conta 2 deve ser feita no PoGoCoordinates; teste físico Samsung ainda necessário."
+        ]
+      }
     }
   ]
 }

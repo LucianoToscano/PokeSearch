@@ -46,6 +46,12 @@
   const pendingReveals=new Set();
   const retryUntil={search:0,reveal:0,account:0};
   const dateNow=()=>d.now();
+  // Read-only duration, never a token or a bypass of the provider's Retry-After.
+  // Android may delay both overlays consistently before another search is issued.
+  function backoffSeconds(kind){
+   if(!Object.prototype.hasOwnProperty.call(retryUntil,kind))return 0;
+   return Math.max(0,Math.min(3600,Math.ceil((retryUntil[kind]-dateNow())/1000)));
+  }
   function originValid(){
    try{
     const u=new URL(d.siteOrigin());
@@ -268,7 +274,7 @@
    if(revealController)revealController.abort();
    if(accountController)accountController.abort();
   }
-  return Object.freeze({search,reveal,accountStatus,dispose});
+  return Object.freeze({search,reveal,accountStatus,backoffSeconds,dispose});
  }
  function createBrowserClient(){
   // For future injection into official site WebView only.

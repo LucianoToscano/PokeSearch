@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT190 — Aguardar HTTP 429 do servidor nas duas Pokébolas (30/10/2026)
+
+- **Correção em QA / publicação solicitada:** LT190 `0.01.90 / 54395`; [relatório e matriz](LT190_RATE_LIMIT_429_DUAS_POKEBOLAS_20261030.md). Não confundir a LT189 já pública com a falha `API: rate-limited` (HTTP 429) mostrada na Home. Rate-limit pertence ao PoGoCoordinates, não pode ser removido pelo PokeSearch.
+- **Tratamento de 429:** `api_browser_transport.js` disponibiliza espera segura baseada em Retry-After, `api_android_session.js` comunica apenas segundos sanitizados, `OverlayService.java` mantém intervalo de segurança compartilhado pelas duas Pokébolas e retoma buscas de forma escalonada. Sem contornar o limite via DOM, outras contas ou repetição acelerada.
+- **Testes:** `app/tests/lt190-provider-429-backoff-dual.test.js`; suites históricas GL/UL, 100%/0%, Raw/IV%, coordenadas, alertas, OTA e Android; QA autenticado Samsung pendente. O perfil da Conta 2 aparece como **Treinador não confirmado**, o que requer conferência de vínculo com o provedor, independentemente do HTTP 429.
+- **Distribuição:** fluxo de release assinado `.github/workflows/lt190-provider-backoff-official-release.yml`; somente anunciar publicação quando o workflow concluir, a tag/latest e os hashes forem confirmados. APK no Drive antigo permanece LT187 até substituição de bytes validada.
+
+---
+
 ## LT189 OFICIAL — Contador Get coords oculto e correção de contrato API (30/10/2026)
 
 - **Distribuída:** [Release/latest `v0.01.89-54394`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.89-54394), APK **29.014.789 bytes** SHA-256 `2d39132b58ae205774ad7ba2068bf14d9b95972cabe5a9e2f750da1c349fb07c`, assinatura v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.

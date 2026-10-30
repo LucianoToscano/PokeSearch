@@ -121,7 +121,15 @@
     if(destroyed||activeSearchTicket!==ticket)return fail("superseded-search");
     const r=await d.transport.search(filters);
     if(destroyed||activeSearchTicket!==ticket)return fail("superseded-search");
-    if(!r.ok)return fail(r.reason);
+    if(!r.ok){
+     if(r.reason==="rate-limited"&&typeof d.transport.backoffSeconds==="function"){
+      // Report only the bounded provider wait, never JWT, headers or server body.
+      const wait=d.transport.backoffSeconds("search");
+      if(Number.isSafeInteger(wait)&&wait>=1&&wait<=3600)
+       return {ok:false,reason:"rate-limited",retryAfterSeconds:wait};
+     }
+     return fail(r.reason);
+    }
     const pvp=filters.mode==="gl"||filters.mode==="ul";
     if(pvp&&!r.pvpVerified)return fail("pvp-unverified");
     activeSearchId=r.searchId;
