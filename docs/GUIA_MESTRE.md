@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT189 — Get Coords sem contador visível e correção da API (30/10/2026)
+
+- **Atualização autorizada, publicação em validação:** LT189 `0.01.89 / 54394`. Código em PR [#147](https://github.com/LucianoToscano/PokeSearch/pull/147), saída oficial condicionada ao CI de assinatura permanente e checagem Release/latest. Não confundir suíte Node aprovada com aceitação da API autenticada no Samsung.
+- **UI P1/P2:** contador numérico/círculo `coordsQuota` do botão Pegar Coordenadas fica `hidden`, com CSS final `display:none!important`; botão centralizado e coordenadas completas. **Proteções de cota, cooldown, reveal, cópia e aviso de bloqueio continuam intactas.**
+- **API P1/P2:** retorno de `pvp_league` e `pvp_include_pre_evolutions` para tipos do contrato LT187, com `pvp_mode=false` e `pvp_min_cp=null` nos modos não PvP. Corrige regressão provável do `API: invalid-request` da LT188, cuja causa HTTP real ainda depende de teste no aparelho.
+- **Evidências:** `app/tests/lt189-get-coords-badge-hidden.test.js`, `app/tests/lt189-api-default-schema.test.js`, matriz detalhada em [LT189_COORDS_CONTADOR_OCULTO_API_RELEASE_20261030.md](LT189_COORDS_CONTADOR_OCULTO_API_RELEASE_20261030.md). **Sem modificar a segunda Pokébola independentemente:** os serviços compartilham o mesmo HTML.
+- **Drive:** conservar o link original do APK `1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P` ao substituir binário bruto, caso a operação seja confirmada. Não trocar APK por ZIP. Evidências de distribuição serão registradas após leitura de volta.
+
+---
+
 ## LT188 OFICIAL — Auditoria geral, GL/UL, IV e fonte para outras IAs (30/10/2026)
 
 - **Release/latest pública:** [v0.01.88-54393](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.88-54393), `PokeSearch-v0.01.88-LT.apk` **29.014.309 bytes**, SHA-256 `b30c0cc389cd8a4b5de065ab637485e1d5dab3bcd955428198d5880e49992f34`; assinatura v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.

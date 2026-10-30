@@ -934,6 +934,28 @@
           "Testes físicos Samsung da P1/P2, ligação real com o site e notificações ainda dependem de verificação no aparelho."
         ]
       }
+    },
+    {
+      "id": "lt189-coords-badge-api-compat-20261030",
+      "minVersionCode": 54394,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT189 — Coordenadas mais limpas e buscas corrigidas",
+      "sections": {
+        "novidades": [
+          "O contador visual no botão Pegar Coordenadas foi ocultado nas duas Pokébolas."
+        ],
+        "melhorias": [
+          "Botão Pegar Coordenadas com espaço centralizado e coordenadas completas após revelar.",
+          "A contagem de uso, a proteção contra excesso de consultas e avisos de limite continuam funcionando internamente."
+        ],
+        "correcoes": [
+          "Restaurada compatibilidade do formato enviado à API nas buscas 100%, 0%, IV e IV%, sem perder os filtros PvP das ligas.",
+          "Revisão das duas Pokébolas e testes de transição de modos, filtros e cópia de coordenadas."
+        ],
+        "emDesenvolvimento": [
+          "A aceitação de todas as combinações pela API PoGoCoordinates em Samsung real depende de teste com sessão autenticada."
+        ]
+      }
     }
   ]
 }

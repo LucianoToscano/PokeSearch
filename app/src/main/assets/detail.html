@@ -618,6 +618,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  border:1px solid #f4cb7866;border-radius:8px;background:#182b38f2;
  color:#e9f0f5;font:500 10px/1.45 Roboto,Arial,sans-serif;
  text-align:left;box-shadow:0 3px 10px #0006}
+/* LT189: ocultar somente o contador visual do botão Get coords nas duas
+   Pokébolas. Preservar CoordsQuotaStore, rate limit, reveal, cooldown e cópia. */
+#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:none!important}
+#coordRow #coords:not(.hasCoords){padding-left:13px;padding-right:13px;text-align:center}
+#coordRow #coords.hasCoords{padding-right:7px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -647,7 +652,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
  <div id="coordRow">
     <button id="coords" onclick="requestCoordsUi()" title="Pegar e copiar coordenadas">⌖ Pegar Coordenadas</button>
-    <span id="coordsQuota" role="status" aria-live="polite" title="Usos observados no PokeSearch, não o saldo total">?</span>
+    <span id="coordsQuota" role="status" hidden aria-hidden="true" title="Contagem interna de revelações; não exibir no botão">?</span>
     <button id="copy" hidden onclick="copyCoords()" aria-label="Copiar coordenadas">⧉</button>
   </div>
   <div id="coordsRateNotice" role="status" hidden>

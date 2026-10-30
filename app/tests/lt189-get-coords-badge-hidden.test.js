@@ -1,0 +1,24 @@
+"use strict";
+// User request: hide the visual Get coords usage badge, not the provider limit.
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
+const java=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+const secondary=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
+const css=html.slice(0,html.indexOf("</style>"));
+const endRule=css.lastIndexOf("#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:none!important}");
+assert.ok(endRule>=0,"Quota badge must be hidden with CSS priority");
+assert.ok(endRule>css.lastIndexOf("/* LT170: count inside a circle"),"Hide rule must override the historical badge style");
+assert.match(html,/<span id="coordsQuota" role="status" hidden aria-hidden="true"/,"Quota badge must also be hidden in DOM");
+assert.match(css.slice(endRule),/#coordRow #coords:not\(\.hasCoords\)\{padding-left:13px;padding-right:13px;text-align:center\}/);
+assert.match(css.slice(endRule),/#coordRow #coords\.hasCoords\{padding-right:7px\}/);
+assert.match(html,/function requestCoordsUi\(\)/);
+assert.match(html,/Native\.coords\(currentIndex\)/);
+assert.match(html,/function copyCoords\(\)/);
+assert.match(html,/window\.coordsQuotaUpdated=function\(data\)/,"Keep internal counters updated");
+assert.match(html,/function renderCoordsRate\(data\)/,"Keep provider rate-limit info");
+assert.match(html,/id="coordsRateNotice"/,"Do not hide provider rate-limit warning");
+assert.match(java,/CoordsQuotaStore/,"Keep native safe quota logic");
+assert.match(secondary,/extends OverlayService/,"Shared P1/P2 behavior");
+console.log("PASS LT189 Get coords badge hidden on P1 and P2; reveals, quota and rate limits retained");
