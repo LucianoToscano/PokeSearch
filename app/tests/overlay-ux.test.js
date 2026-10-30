@@ -1432,7 +1432,8 @@ test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
  const nativeGate=service.indexOf("if(card!=null&&verifiedTargetCriteria(card))verified.put(card)",apply);
  const newResults=service.indexOf("recordNewResults(sorted,",apply);
  return verify>=0&&nativeGate>apply&&newResults>nativeGate&&
-  service.includes("if(!isAllowedIvPercent(actual)||(computed>=0&&actual!=computed))return false;")&&
+  service.includes("if(!matchesVerifiedIvPercent(observed,sum))return false;")&&
+  service.includes("if(!isAllowedIvPercent(actual))return false;")&&
   !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
   service.includes('differentVerifiedIv>0?"⚠ Resultados divergentes"')&&
   service.includes('"⚠ IV não comprovado"');
