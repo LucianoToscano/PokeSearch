@@ -2,7 +2,7 @@ name: 'LT188 — filtros completos, publicacao APK e ZIP fonte para outras IAs'
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/lt188-size-official-release.yml']
+    paths: ['.github/workflows/lt188-full-audit-official-release.yml']
 permissions:
   contents: write
 concurrency:
@@ -49,7 +49,7 @@ jobs:
           set -euo pipefail
           test "$GITHUB_REF" = 'refs/heads/main'
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.84-54389'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.87-54392'
           if gh release view "$OFFICIAL_TAG" >/dev/null 2>&1; then
             echo "::error::LT188 already released; do not overwrite"; exit 1
           fi
@@ -114,7 +114,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 scripts/build_ai_audit_bundle_lt188.py --output dist
-          sha256sum -c dist/ZIP_SHA256.txt --ignore-missing || (cd dist && sha256sum -c ZIP_SHA256.txt)
+          (cd dist && sha256sum -c ZIP_SHA256.txt)
           test -s dist/bundle/PokeSearch-Auditoria-Completa-Fonte/LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md
           test -s dist/bundle/PokeSearch-Auditoria-Completa-Fonte/AUDITORIA/ORIGEM_E_INVENTARIO.json
           test "$(stat -c %s dist/PokeSearch-Auditoria-Completa-Fonte-LT188.zip)" -lt 199000000
@@ -191,7 +191,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.84-54389'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.87-54392'
           if gh release view "$OFFICIAL_TAG" >/dev/null 2>&1; then
             echo "::error::Refusing to overwrite existing release"; exit 1
           fi
