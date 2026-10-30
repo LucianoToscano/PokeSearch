@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT193 — IV da API com percentual decimal (30/10/2026)
+
+- **Base oficial de trabalho LT192, 0.01.92 / 54397.** Candidato incremental LT193, 0.01.93 / 54398 em QA. A captura Samsung da LT192 ainda mostra `IV não comprovado` para Raw 0/15/15; não declarar homologação física.
+- **Causa técnica real reproduzível:** `api_result_contract.js` recebia `0/15/15 + 66.67%` e repassava `ivPercent="66.67"`, embora o `OverlayService.java` exigisse inteiro; o cartão correto era rejeitado antes do display/alertas. [Auditoria LT193](LT193_API_IV_DECIMAL_SAMSUNG_20261030.md).
+- Agora o parser verifica o percentual original contra o IV real e entrega o inteiro canônico (67% para 0/15/15); Android aceita também decimais matematicamente verificados, mantendo rigor para IV errado. Corrigida a mesma distinção na análise de rejeições. Mesma lógica P1/P2, prefs isoladas e limites intactos.
+- Novo teste de integração `app/tests/lt193-api-decimal-iv-native.test.js`, mais suites antigas LT192/LT191/OTA/Android. **API autenticada e testes no Samsung ainda não executados.**
+- Um modo sem spawns comprovados pode legitimamente não exibir resultado: nunca converter 7/15/5 em 0/15/15 e nunca afirmar que a API retornou dados não observados.
+
+---
+
 ## LT192 — Correção IV% → Raw IV (30/10/2026)
 
 - **LT192 OFICIAL `0.01.92 / 54397` distribuída.** [Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.92-54397), APK 29.016.253 bytes, SHA-256 `7e44dc13ef79410467cd4521c296c965e68e61435def5d7622a7449f63db9194`, SOURCE_COMMIT `aca295f65a988bf1c572c13fe1bec3a8b7691ea0`, [Actions #41022787967 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41022787967). [Relatório técnico](LT192_IV_92_RAW_MODE_SAMSUNG_20261030.md).
