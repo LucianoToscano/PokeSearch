@@ -58,7 +58,7 @@
         if(response.status===429&&retry===0)retry=60;
         return JSON.stringify({ok:false,status:response.status,
           error:response.status===429?"rate-limited":"request-failed",
-          retry_after:Math.min(3600,retry)});
+          retry_after:Math.min(86400,Math.ceil(retry))});
       }
       const json=await response.json();
       const cap=Number(json.cap)||5;

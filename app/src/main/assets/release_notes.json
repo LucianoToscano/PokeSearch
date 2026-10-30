@@ -980,6 +980,33 @@
           "A confirmação de treinador da Conta 2 deve ser feita no PoGoCoordinates; teste físico Samsung ainda necessário."
         ]
       }
+    },
+    {
+      "id": "lt191-retry-after-24h-and-network-clarity-20261030",
+      "minVersionCode": 54396,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT191 — Espera da API até 24 horas",
+      "sections": {
+        "novidades": [
+          "A espera após limite do PoGoCoordinates agora respeita até 24 horas, inclusive quando o servidor informa 2 horas ou mais.",
+          "Feedback de espera mais legível nos resultados, com indicação aproximada em minutos ou horas."
+        ],
+        "melhorias": [
+          "As duas Pokébolas continuam respeitando o mesmo bloqueio HTTP 429, sem consultas antecipadas.",
+          "Tratamento de HTTP 429 também revisto para Pegar Coordenadas e Doce Raro.",
+          "Mensagens de erro para busca recusada, sessão, acesso e timeout ficaram mais claras sem revelar detalhes privados."
+        ],
+        "correcoes": [
+          "Corrigida a regressão que tratava Retry-After superior a 3600 segundos como espera de somente um minuto.",
+          "Sincronizados os limites da camada WebView, da sessão de API e do agendador Android.",
+          "Preservados o contador oculto de coordenadas, a proteção de quotas e os filtros independentes P1/P2."
+        ],
+        "emDesenvolvimento": [
+          "A vinculação do treinador da Conta 2 depende de confirmação no PoGoCoordinates.",
+          "A aceitação real das requisições pelo servidor e a compatibilidade Samsung necessitam de teste no aparelho.",
+          "Refatoração ampla de dock.html e limpeza histórica de workflows ficam sujeitas a migração controlada para evitar regressões."
+        ]
+      }
     }
   ]
 }

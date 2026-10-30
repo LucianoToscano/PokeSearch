@@ -50,7 +50,7 @@
   // Android may delay both overlays consistently before another search is issued.
   function backoffSeconds(kind){
    if(!Object.prototype.hasOwnProperty.call(retryUntil,kind))return 0;
-   return Math.max(0,Math.min(3600,Math.ceil((retryUntil[kind]-dateNow())/1000)));
+   return Math.max(0,Math.min(86400,Math.ceil((retryUntil[kind]-dateNow())/1000)));
   }
   function originValid(){
    try{
@@ -131,7 +131,9 @@
      const parsedDate=typeof raw==="string"?Date.parse(raw):NaN;
      const byDate=Number.isFinite(parsedDate)?Math.ceil((parsedDate-dateNow())/1000):NaN;
      const requestedDelay=Number.isFinite(seconds)?seconds:byDate;
-     const delay=Number.isFinite(requestedDelay)&&requestedDelay>=1&&requestedDelay<=3600?requestedDelay:60;
+     // Treat excessively long, valid waits as a full day, never as 60s.
+      const delay=Number.isFinite(requestedDelay)&&requestedDelay>=1?
+       Math.min(86400,Math.ceil(requestedDelay)):60;
      retryUntil[kind]=Math.max(retryUntil[kind],dateNow()+delay*1000);
     }
     if(response.status===401){

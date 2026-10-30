@@ -351,7 +351,7 @@ public class OverlayService extends Service {
     // conservative search gate so concurrent overlays do not cause a burst.
     private static final String API_RATE_BACKOFF_PREF="pogoApiSearchBackoffUntilMs";
     private static final long API_RATE_BACKOFF_DEFAULT_MS=60_000L;
-    private static final long API_RATE_BACKOFF_MAX_MS=3_600_000L;
+    private static final long API_RATE_BACKOFF_MAX_MS=86_400_000L;
     private final Runnable providerRateLimitResume=this::resumeProviderRateLimitedSearch;
     private void resumeProviderRateLimitedSearch(){
         if(!stopped&&!loginPaused&&authorizedApiQaSelected())refresh(false);
@@ -372,7 +372,7 @@ public class OverlayService extends Service {
     }
     private void noteProviderRateLimit(int suggestedSeconds){
         long wait=API_RATE_BACKOFF_DEFAULT_MS;
-        if(suggestedSeconds>=1&&suggestedSeconds<=3600)
+        if(suggestedSeconds>=1&&suggestedSeconds<=86400)
             wait=Math.max(wait,(long)suggestedSeconds*1000L);
         long now=System.currentTimeMillis();
         long old=apiProviderBackoffUntil();
@@ -435,8 +435,14 @@ public class OverlayService extends Service {
                         searchFailure("⚠ API: limite temporário",
                             "HTTP 429 do provedor; próxima tentativa somente após intervalo de segurança.");
                     }else{
+                        String hint="invalid-request".equals(reason)?
+                            "Busca recusada (HTTP 400/422). Confira filtros e vínculo do treinador.":
+                            "login-required".equals(reason)?"Sessão expirada. Entre novamente no PoGoCoordinates.":
+                            "access-denied".equals(reason)?"Acesso negado (HTTP 403). Confira permissões e vínculo.":
+                            "timeout".equals(reason)?"Tempo esgotado. Verifique a conexão.":
+                            "Consulta API não validada ("+reason+").";
                         searchFailure("⚠ API: "+reason,
-                            "Consulta API não validada ("+reason+"). Resultados anteriores preservados.");
+                            hint+" Resultados anteriores preservados.");
                     }
                     return;
                 }
@@ -2209,7 +2215,10 @@ public class OverlayService extends Service {
         if(stopped||loginPaused)return;
         if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L){
             scheduleProviderRateLimitResume();
-            status("⚠ API: limite do provedor; aguardando para pesquisar novamente.");
+            long remaining=(apiProviderBackoffUntil()-System.currentTimeMillis()+999L)/1000L;
+            String waitText=remaining>=3600L?(remaining+3599L)/3600L+"h":
+                remaining>=60L?(remaining+59L)/60L+"min":Math.max(1L,remaining)+"s";
+            status("⚠ API: limite temporário; nova tentativa em cerca de "+waitText+".");
             return;
         }
         if(searchInProgress){
@@ -3638,7 +3647,7 @@ public class OverlayService extends Service {
         JSONObject evidence=new JSONObject();
         try{
             evidence.put("type",kind);
-            evidence.put("retrySeconds",reportedSeconds>=1&&reportedSeconds<=3600?
+            evidence.put("retrySeconds",reportedSeconds>=1&&reportedSeconds<=86400?
                 reportedSeconds:0);
         }catch(org.json.JSONException ignored){}
         String message="Taxa Limitada PoGoCoordinates";

@@ -125,7 +125,7 @@
      if(r.reason==="rate-limited"&&typeof d.transport.backoffSeconds==="function"){
       // Report only the bounded provider wait, never JWT, headers or server body.
       const wait=d.transport.backoffSeconds("search");
-      if(Number.isSafeInteger(wait)&&wait>=1&&wait<=3600)
+      if(Number.isSafeInteger(wait)&&wait>=1&&wait<=86400)
        return {ok:false,reason:"rate-limited",retryAfterSeconds:wait};
      }
      return fail(r.reason);

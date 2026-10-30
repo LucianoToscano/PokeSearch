@@ -734,7 +734,7 @@ public final class RareCandyOverlayService extends Service {
                     setCandyBusy(false);
                     int code=response.optInt("status",0);
                     if(code==429){
-                        int retry=Math.max(1,Math.min(3600,response.optInt("retry_after",60)));
+                        int retry=Math.max(1,Math.min(86400,response.optInt("retry_after",60)));
                         blockedUntil=SystemClock.elapsedRealtime()+retry*1000L;
                         setStatus("Aguardando liberação do PoGoCoordinates");
                     }else if(code==401){

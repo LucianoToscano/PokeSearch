@@ -1,16 +1,12 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT172 · 0.01.72 · 54377
+## Versão oficial verificada: LT190 · 0.01.90 · 54395
 
-[GitHub Release LT172](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.72-54377) · [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.72-54377/PokeSearch-v0.01.72-LT.apk) · [CI oficial SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40909102893).
+A versão pública confirmada em 30/10/2026 é [LT190](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.90-54395). APK `PokeSearch-v0.01.90-LT.apk`, 29.015.349 bytes, SHA-256 `654715aa590be7f2e1e98a6427d40980beffc899b64933b1a7f7d57a2422a2e8`, SOURCE_COMMIT `f03ee07703c88e47b808a9278e1b6a4e1d38af30`, [CI oficial aprovado](https://github.com/LucianoToscano/PokeSearch/actions/runs/41015061446).
 
-**APK** `PokeSearch-v0.01.72-LT.apk` (49.514.561 bytes), SHA-256 `5b407116707beacb1c41400c05eceb8d91199496bfb2b7d9ad29b0ebfbd63a2f`; SOURCE_COMMIT `40e94bafe86dfb778be719e0cf1310a7f3085457`. Certificado Android v2 permanente, R8 e ZIP verificados.
+**LT191 em revisão:** correção de `Retry-After` acima de uma hora, espera compartilhada P1/P2, mensagens mais claras e Doce Raro. Consulte `docs/LT191_AUDITORIA_CORRECOES_20261030.md`; não considere publicada nem homologada até verificação de Release e QA no Samsung.
 
-**Novidades:** cards completos para Conta 1/Conta 2 e escolha de Treinador 1/2 VIP por Pokébola preservados; aviso oficial **Taxa Limitada PoGoCoordinates ⓘ** com explicação e tempo apenas se oferecido pelo site; contador circular de coordenadas; menu Mais sem fundo preto comum; Pokébola 1 sem minimizar; atalho oficial ao vínculo de treinador com confirmação manual. Instalação pelo atualizador do app depende da aceitação no Android. **QA físico Samsung pendente**.
-
-[Registro canônico](docs/ESTADO_CANONICO_LT172_20261029.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
-
----
+**Histórico anterior:** os documentos e referências LT172/LT188/LT189 permanecem no repositório para rastreabilidade, não como estado atual. Antes de mudar o app leia `AGENTS.md` e `docs/GUIA_MESTRE.md`.
 
 ## Histórico — versão oficial anterior LT171 · 0.01.71 · 54376
 
