@@ -1,0 +1,86 @@
+name: 'LT187 — instalar LT184 e atualizar em emulador Android 16 (QA)'
+on:
+  push:
+    branches: ['optimize/lt187-audio-audit-20261029']
+    paths:
+      - 'scripts/lt187_emulator_upgrade_smoke.sh'
+      - '.github/workflows/lt187-upgrade-emulator-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: lt187-emulator-upgrade-smoke
+  cancel-in-progress: true
+jobs:
+  android-upgrade-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact QA branch, without git write permissions
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download unchanged published LT184 and verified LT187 signed artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p lt184-public lt187-artifact
+          gh release download 'v0.01.84-54389' -R LucianoToscano/PokeSearch \
+            -p 'PokeSearch-v0.01.84-LT.apk' -D lt184-public
+          test "$(stat -c %s lt184-public/PokeSearch-v0.01.84-LT.apk)" -eq 49547006
+          printf '%s  %s\n' \
+            e7679eafd1b43ca4f770a0939195603846e0cd6ed07881a217c078a2f09ac183 \
+            lt184-public/PokeSearch-v0.01.84-LT.apk | sha256sum --check -
+          gh run download 40990477785 -R LucianoToscano/PokeSearch \
+            -n PokeSearch-LT187-54392-Size-QA-Assinado -D lt187-artifact
+          (cd lt187-artifact && sha256sum --check SHA256SUMS.txt)
+          test "$(stat -c %s lt187-artifact/PokeSearch-v0.01.87-LT187-Size-QA.apk)" -eq 29013661
+          test "$(cat lt187-artifact/SOURCE_COMMIT.txt | tr -d '\r\n')" = "9a9b301666c1f24ee747a9966684690e7fc31152"
+          echo "LT184 published and LT187 QA artifacts verified by size/SHA/source."
+      - name: Check original and optimized Android signing certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'build-tools;36.0.0' >/dev/null
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          for apk in lt184-public/PokeSearch-v0.01.84-LT.apk lt187-artifact/PokeSearch-v0.01.87-LT187-Size-QA.apk; do
+            "$APKSIGNER" verify --verbose --print-certs "$apk" > "$apk.signature.txt"
+            grep -Eq '^Verified using v2 scheme.*: true$' "$apk.signature.txt"
+            signer="$(grep 'Signer #1 certificate SHA-256 digest:' "$apk.signature.txt" | awk '{print $NF}' | tr 'A-F' 'a-f')"
+            test "$signer" = "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+            echo "Correct permanent certificate on $apk"
+          done
+      - name: Enable Linux KVM for emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' |
+            sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Android 16 — preserve app install while upgrading to LT187
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7_pro
+          ram-size: 3072M
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: bash scripts/lt187_emulator_upgrade_smoke.sh
+      - name: Save emulator installation and UI smoke evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT187-Android16-Upgrade-Smoke-QA
+          path: |
+            LT187-EMULATOR-REPORT/
+            lt184-public/*.signature.txt
+            lt187-artifact/*.signature.txt
+          if-no-files-found: warn
+          retention-days: 30
