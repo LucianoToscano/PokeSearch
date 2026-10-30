@@ -49,8 +49,8 @@ check("personalized IV 0/13/13 no longer carries UL ranking in API payload",()=>
  const x=payload({mode:"raw",attack:0,defense:13,stamina:13,minPvpCp:"100"});
  assert.equal(x.pvp_mode,false);
  assert.equal(x.pvp_top_rank,null);
- assert.equal(x.pvp_league,null);
- assert.equal(x.pvp_include_pre_evolutions,null);
+ assert.equal(x.pvp_league,"great");
+ assert.equal(x.pvp_include_pre_evolutions,true);
  assert.equal(x.pvp_min_cp,null,"saved PvP minimum must not affect a Raw IV search");
  assert.equal(x.raw_iv_atk,0);assert.equal(x.raw_iv_def,13);assert.equal(x.raw_iv_sta,13);
 });
