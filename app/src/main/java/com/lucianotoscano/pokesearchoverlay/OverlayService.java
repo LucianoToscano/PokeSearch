@@ -578,6 +578,9 @@ public class OverlayService extends Service {
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
+    // Only a freshly accepted API/DOM result generation may be rechecked when
+    // the global Favorites list changes. Persisted/stale cards never notify.
+    private int verifiedFavoriteResultsGeneration=-1;
     // Recent identity TTL protects against duplicate notices when a briefly
     // missing encounter reappears. It is never persisted or used for API retry.
     // Discovery history is distinct from actual notification delivery.
@@ -625,6 +628,60 @@ public class OverlayService extends Service {
     private final java.util.LinkedHashMap<String,QueuedFavoriteAlert> queuedFavoriteAlerts=
         new java.util.LinkedHashMap<>();
     private final Runnable drainFavoriteAlerts=()->drainFavoriteAlertQueue();
+    // Favorites are shared across P1 and P2, while their actual results and
+    // alert dedup maps are private per service instance. Observe the common
+    // preference store so a change in either picker reaches BOTH Pokeballs.
+    private final android.content.SharedPreferences.OnSharedPreferenceChangeListener
+        sharedFavoritesListener=(preferences,key)->{
+            if(!WatchAlerts.PREF_LIST.equals(key)&&
+               !WatchAlerts.PREF_MODE.equals(key)&&
+               !WatchAlerts.PREF_ENABLED.equals(key))return;
+            handler.post(()->{
+                if(stopped)return;
+                if(WatchAlerts.PREF_LIST.equals(key)||!WatchAlerts.enabled(this)){
+                    queuedFavoriteAlerts.clear();
+                    handler.removeCallbacks(drainFavoriteAlerts);
+                }
+                if(WatchAlerts.enabled(this))recheckConfirmedFavoriteResults();
+                update();
+            });
+        };
+    private void recheckConfirmedFavoriteResults(){
+        // No remote search, no general alert, no cached/stale notification.
+        // Per-Pokeball criteria and exact verified encounters stay authoritative.
+        if(stopped||loginPaused||searchInProgress||resultsStale||
+           verifiedFavoriteResultsGeneration!=requestGeneration||
+           !shownMode.equals(mode)||!shownConfigJson.equals(filterConfigJson())||
+           shownShiny!=(shiny&&shinyVerified)||
+           !("updated".equals(searchPhase)||"empty".equals(searchPhase)))return;
+        java.util.Set<String> wanted=WatchAlerts.watched(this);
+        if(wanted.isEmpty())return;
+        JSONArray accepted;
+        try{accepted=new JSONArray(results);}
+        catch(org.json.JSONException ignored){return;}
+        long now=System.currentTimeMillis();
+        int eligible=0;
+        for(int i=0;i<accepted.length();i++){
+            JSONObject card=accepted.optJSONObject(i);
+            if(card==null)continue;
+            long expiry=card.optLong("expiresAtMs",Long.MAX_VALUE);
+            if(expiry<=now||!verifiedTargetCriteria(card)||
+               !WatchAlerts.matches(card.optString("name",""),wanted))continue;
+            String key=spawnKey(card);
+            if(recentFavoriteAlertExpiries.getOrDefault(key,0L)>now||
+               queuedFavoriteAlerts.containsKey(key))continue;
+            if(queuedFavoriteAlerts.size()>=MAX_QUEUED_FAVORITES)break;
+            long deadline=expiry==Long.MAX_VALUE?now+15L*60_000L:expiry;
+            queuedFavoriteAlerts.put(key,new QueuedFavoriteAlert(key,
+                card.optString("name","Pokémon"),encounterAlertTitle(card),
+                encounterAlertDetails(card,true),deadline,card));
+            eligible++;
+        }
+        if(eligible>0)drainFavoriteAlertQueue();
+        BugReport.log(this,"FAVORITE_ALERT_SYNC",
+            (isSecondaryOverlay()?"P2":"P1")+" rechecagem="+eligible+
+            " selecionados="+wanted.size()+" geração="+requestGeneration);
+    }
     private void scheduleFavoriteAlertDrain(long delay){
         handler.removeCallbacks(drainFavoriteAlerts);
         if(!stopped&&!queuedFavoriteAlerts.isEmpty())
@@ -1822,6 +1879,8 @@ public class OverlayService extends Service {
         // Initial navigation is scheduled after cookie flush in onStartCommand.
         if(isSecondaryOverlay())secondaryRunning=true;
         else running=true;
+        getSharedPreferences("prefs",0)
+            .registerOnSharedPreferenceChangeListener(sharedFavoritesListener);
     }
     private void createResultsWindow(){
         android.content.SharedPreferences prefs=overlayPrefs();
@@ -3081,8 +3140,10 @@ public class OverlayService extends Service {
             "api-http-200".equals(r.optString("confirmationSource",""))&&
             (!("gl".equals(mode)||"ul".equals(mode))||
                 r.optBoolean("leagueConfirmed",false));
-        if(!authorizedApiQa||apiConfirmed)
+        if(!authorizedApiQa||apiConfirmed){
             recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
+            verifiedFavoriteResultsGeneration=requestGeneration;
+        }
         else BugReport.log(this,"ALERT_AUDIT","API não confirmada, alertas bloqueados");
         if(!authorizedApiQa||apiConfirmed){
             BugReport.log(this,"ALERT_AUDIT",
@@ -5093,6 +5154,8 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        getSharedPreferences("prefs",0)
+            .unregisterOnSharedPreferenceChangeListener(sharedFavoritesListener);
         if(cooldownChangedReceiverRegistered){
             try{unregisterReceiver(cooldownChangedReceiver);}catch(IllegalArgumentException ignored){}
             cooldownChangedReceiverRegistered=false;
