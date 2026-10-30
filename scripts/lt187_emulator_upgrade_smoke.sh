@@ -19,6 +19,11 @@ adb shell wm dismiss-keyguard || true
 read_value() {
   adb shell dumpsys package "$PKG" | tr -d '\r' | grep -m1 "$1" || true
 }
+read_uid() {
+  # Android 16 omits the old 'userId=' line in some package dumps.
+  # cmd package is stable for matching the installed package's assigned UID.
+  adb shell cmd package list packages -U "$PKG" | tr -d '\r' | grep -F "package:$PKG uid:" | head -1 || true
+}
 start_activity() {
   local stage="$1"
   echo "Starting $COMPONENT at $stage"
@@ -39,7 +44,7 @@ start_activity() {
 # Fresh emulator: an uninstall is safe only here and never on user's phone.
 adb uninstall "$PKG" >/dev/null 2>&1 || true
 adb install "$OLD" | tee "$OUT/install-LT184.txt"
-FIRST_UID="$(read_value 'userId=')"
+FIRST_UID="$(read_uid)"
 FIRST_TIME="$(read_value 'firstInstallTime=')"
 echo "LT184 $FIRST_UID | $FIRST_TIME" | tee -a "$OUT/device.txt"
 echo "$(read_value 'versionCode=')" | tee "$OUT/version-LT184.txt"
@@ -50,7 +55,7 @@ start_activity "LT184"
 
 # Upgrading the existing installation is essential: never uninstall here.
 adb install -r "$NEW" | tee "$OUT/upgrade-LT187.txt"
-SECOND_UID="$(read_value 'userId=')"
+SECOND_UID="$(read_uid)"
 SECOND_TIME="$(read_value 'firstInstallTime=')"
 echo "LT187 $SECOND_UID | $SECOND_TIME" | tee -a "$OUT/device.txt"
 echo "$(read_value 'versionCode=')" | tee "$OUT/version-LT187.txt"
@@ -63,7 +68,8 @@ test -n "$FIRST_TIME" && test "$FIRST_TIME" = "$SECOND_TIME" || {
 }
 adb logcat -c
 start_activity "LT187"
-if grep -Eq 'FATAL EXCEPTION|Process: com\.lucianotoscano\.pokesearch' "$OUT/LT187-logcat.txt"; then
+if grep -q 'FATAL EXCEPTION' "$OUT/LT187-logcat.txt" &&
+   grep -Fq "Process: $PKG" "$OUT/LT187-logcat.txt"; then
   echo "::error::Investigate Android fatal exception after upgrade" >&2
   exit 1
 fi
