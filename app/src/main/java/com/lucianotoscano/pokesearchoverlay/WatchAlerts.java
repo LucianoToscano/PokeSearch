@@ -32,6 +32,11 @@ public final class WatchAlerts {
     public static final String PREF_FAVORITE_TONE="favoriteSoundUri";
     public static final String PREF_SPECIES_TONES="favoritePokemonSoundUris";
     private WatchAlerts(){}
+    // One explicit owner for the app-global list, modes and sounds. Overlay
+    // search preferences must continue to use each instance's own storage.
+    static SharedPreferences sharedPreferences(Context context){
+        return context.getSharedPreferences("prefs",0);
+    }
     public static String normalized(String text){
         if(text==null)return "";
         String s=Normalizer.normalize(text,Normalizer.Form.NFD).replaceAll("\\p{M}+","").toLowerCase(Locale.ROOT);
