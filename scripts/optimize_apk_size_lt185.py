@@ -34,7 +34,7 @@ def candidates():
     paths = list(DRAWABLE.glob("*.png"))
     paths += list((ASSETS / "branding").rglob("*.png"))
     paths += list((ASSETS / "result-icons").rglob("*.png"))
-    paths += list((ASSETS / "weather-icons" / "v2").rglob("*.png"))
+    # Weather V2 has strict provenance SHA tests; preserve all 18 originals.
     return sorted(set(p for p in paths if p.is_file()
         and str(p.relative_to(ROOT)) not in SKIP | IMMUTABLE_WEATHER))
 
