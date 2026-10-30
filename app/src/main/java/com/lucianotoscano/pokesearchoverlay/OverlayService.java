@@ -2768,9 +2768,38 @@ public class OverlayService extends Service {
                 if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
                 searchInProgress=false;
                 boolean pvp="gl".equals(mode)||"ul".equals(mode);
-                searchFailure(pvp?"⚠ Ranking não confirmado":"⚠ IV não comprovado",
-                    "Site retornou "+found+" Pokémon, mas nenhum cartão comprovou os IVs/ranking solicitados."+
-                    (pvp?"":" IVs ausentes ou divergentes: "+r.optInt("unverifiedIv",0))+".");
+                int missingEvidence=r.optInt("unverifiedIv",found);
+                int differentIv=r.optInt("verifiedNonmatchingIv",0);
+                // A valid encounter with a DIFFERENT IV is not missing proof.
+                // Example: after IV% 0–92, 7/15/5 must not trigger
+                // "IV não comprovado" when the requested raw IV is 0/15/15.
+                // Never promote mismatched cards to results, alerts or cache.
+                if(!pvp&&found>0&&missingEvidence==0&&differentIv==found&&
+                    r.optBoolean("resultChanged",false)){
+                    if(count()==0){
+                        // Mode switches already cleared other filters' sprites.
+                        // No verified match exists for this requested IV;
+                        // do not claim a provider-confirmed zero result.
+                        results="[]";selected=-1;
+                        shownMode=mode;shownConfigJson=filterConfigJson();
+                        shownShiny=shiny&&shinyVerified;
+                        resultsStale=false;searchPhase="empty";
+                        overlayPrefs().edit().putString("lastError","Nenhum").apply();
+                        armNextDespawn(new JSONArray());
+                        hideDetails();
+                        status("Nenhum Pokémon com o IV selecionado foi confirmado.");
+                    }else{
+                        // Same-filter previously verified cards stay visible.
+                        searchFailure("⚠ Resultados divergentes",
+                            "O site mostrou IVs diferentes do filtro atual; resultados confirmados preservados.");
+                    }
+                    return;
+                }
+                searchFailure(pvp?"⚠ Ranking não confirmado":
+                        (missingEvidence>0?"⚠ IV não comprovado":"⚠ Resultados divergentes"),
+                    "Nenhum cartão atendeu ao filtro solicitado após a leitura do site. "+
+                    (pvp?"Rank não confirmado.":"IVs sem comprovação: "+missingEvidence+
+                     "; IVs comprovados de outros filtros: "+differentIv)+".");
                 return;
             }
             // A site with ten visible spawns can temporarily yield fewer parsed
