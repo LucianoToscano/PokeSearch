@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT187 — Upgrade in-place Android 16 validado no emulador (29/10/2026)
+
+- **[GitHub Actions #40993150452 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40993150452)**. Testado em emulador **Android 16 / API 36**, usando os APKs reais LT184 pública (SHA confirmado) e LT187 QA (SHA confirmado), com mesmo certificado Android v2. `adb install -r` instalou a LT187 sem desinstalar LT184; **UID 10216** e `firstInstallTime` preservados, versionCode **54389 -> 54392**, Home inicializou nas duas versões e o processo continuou ativo sem falha fatal detectada. Artefato de screenshots/logs [12950247083](https://github.com/LucianoToscano/PokeSearch/actions/runs/40993150452/artifacts/12950247083).
+- **QA físico Samsung permanece pendente**: emulador não comprova persistência da conta/treinador, funcionamento dos dois overlays simultâneos, áudio perceptual, notificações reais, menu/cliques ou OAuth Discord/Google. PRs #143/#144/#145 continuam draft, sem merge. A LT184 pública e o link público do Drive não foram modificados. [Registro específico](LT187_ANDROID16_UPGRADE_PREPUBLICACAO_QA_20261029.md).
+
+---
+
 ## LT187 QA — Compactação de áudios e auditoria interna (29/10/2026)
 
 - **APK 0.01.87 / 54392:** **29.013.661 bytes**, [Action LT187 #40990477785 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40990477785). Redução de 2.080.880 bytes ante LT186 QA (31.094.541) e 20.533.345 bytes (41,44%) ante a LT184 pública (49.547.006).
