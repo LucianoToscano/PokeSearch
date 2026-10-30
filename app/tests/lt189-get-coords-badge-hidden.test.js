@@ -10,7 +10,7 @@ const css=html.slice(0,html.indexOf("</style>"));
 const endRule=css.lastIndexOf("#coordRow #coordsQuota,#coordRow #coordsQuota.official{display:none!important}");
 assert.ok(endRule>=0,"Quota badge must be hidden with CSS priority");
 assert.ok(endRule>css.lastIndexOf("/* LT170: count inside a circle"),"Hide rule must override the historical badge style");
-assert.match(html,/<span id="coordsQuota" hidden aria-hidden="true"/,"Quota badge must also be hidden in DOM");
+assert.match(html,/<span id="coordsQuota" role="status" hidden aria-hidden="true"/,"Quota badge must also be hidden in DOM");
 assert.match(css.slice(endRule),/#coordRow #coords:not\(\.hasCoords\)\{padding-left:13px;padding-right:13px;text-align:center\}/);
 assert.match(css.slice(endRule),/#coordRow #coords\.hasCoords\{padding-right:7px\}/);
 assert.match(html,/function requestCoordsUi\(\)/);
