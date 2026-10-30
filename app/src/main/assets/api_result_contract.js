@@ -227,6 +227,11 @@
   function parseIV(raw,percent) {
     if(typeof raw!=="string"||!rawPattern.test(raw)) return null;
     var parts=raw.split("/").map(Number),calculated=Math.round((parts[0]+parts[1]+parts[2])*100/45);
+    // A verified A/D/S spread already determines its IV%. The provider
+    // may omit the redundant iv_percent field in a raw-IV search; that is
+    // not missing IV evidence. Explicitly contradictory values still fail.
+    if(percent===undefined||percent===null||percent==="")
+      return {raw:raw,percent:calculated};
     var observed=Number(percent);
     if(!Number.isFinite(observed)||observed<0||observed>100) return null;
     // Example: a real 0/15/15 spawn may carry iv_percent=66.67.
