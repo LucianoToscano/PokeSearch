@@ -3199,18 +3199,39 @@ public class OverlayService extends Service {
         // Filter BEFORE cache, display, history and any general/watch alert.
         if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
             JSONArray verified=new JSONArray();
-            int rejected=0;
+            int rejected=0,differentVerifiedIv=0;
             for(int i=0;i<items.length();i++){
                 JSONObject card=items.optJSONObject(i);
                 if(card!=null&&verifiedTargetCriteria(card))verified.put(card);
-                else rejected++;
+                else {
+                    rejected++;
+                    if(card!=null){
+                        String raw=card.optString("iv","").trim();
+                        if(raw.matches("(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])")){
+                            String[] parts=raw.split("/");
+                            int sum=Integer.parseInt(parts[0])+Integer.parseInt(parts[1])+
+                                Integer.parseInt(parts[2]);
+                            int expected=ivPercentageForSum(sum);
+                            String pct=card.optString("ivPercent","").trim();
+                            if(pct.isEmpty()||(pct.matches("[0-9]{1,3}")&&
+                                Integer.parseInt(pct)==expected))
+                                differentVerifiedIv++;
+                        }
+                    }
+                }
             }
             if(rejected>0){
-                BugReport.log(this,"IV_EVIDENCE","Cartões não comprovados="+rejected+" modo="+mode);
+                BugReport.log(this,"IV_EVIDENCE",
+                    "Rejeitados="+rejected+" • IV identificado de outro filtro="+
+                    differentVerifiedIv+" modo="+mode);
                 if(verified.length()==0){
                     searchInProgress=false;
-                    searchFailure("⚠ IV não comprovado",
-                        "Todos os "+rejected+" cartões foram rejeitados pela verificação nativa; resultados anteriores preservados.");
+                    searchFailure(differentVerifiedIv>0?"⚠ Resultados divergentes":
+                            "⚠ IV não comprovado",
+                        "Nenhum cartão passou na conferência do filtro nativo. "+
+                        "IVs comprovados mas diferentes="+differentVerifiedIv+
+                        "; outros rejeitados="+(rejected-differentVerifiedIv)+
+                        ". Nenhum resultado indevido foi exibido ou notificado.");
                     return;
                 }
             }
