@@ -2,12 +2,12 @@
 
 ## LT191 — Retry-After de até 24 horas (30/10/2026)
 
-- **Base pública confirmada:** LT190, `0.01.90 / 54395`. LT191 (`0.01.91 / 54396`) em revisão e publicação condicionada ao CI; não considerar oficial antes de conferir Releases/latest.
+- **LT191 OFICIAL:** `0.01.91 / 54396`, [GitHub Release/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.91-54396); APK 29.015.817 bytes, SHA-256 `bc8d44627d67907a7a61647bf13e637addd85e7c2850ec4de47fda0c730f62dd`, SOURCE_COMMIT `c73c5ca0f15728c8896e3da4fcc6d2cce23f556f`, [Actions #41019720898 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41019720898).
 - **Correção prioritária:** transporte/sessão API/serviço Android aceitam 1–86400 segundos de `Retry-After`; HTTP 429 de 7200 s não vira 60 s. Busca P1/P2 respeita intervalo compartilhado, preservando filtros e resultados.
 - Fluxos Doce Raro e Get coords também revistos. Mensagens 400/422, 401/403 e timeout diferenciadas com segurança; nenhuma resposta bruta/JWT exposta.
 - **Testes:** `app/tests/lt191-provider-backoff-24h.test.js`, suítes LT190/189/188, Node, OTA e compilação Android. QA Samsung com API real continua pendente.
 - **Documentação:** [relatório e checklist LT191](LT191_AUDITORIA_CORRECOES_20261030.md), [prompt para outras IAs](LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS_LT191.md); README e AGENTS atualizados para LT190 como base pública.
-- O módulo monolítico `dock.html` e workflows históricos demandam migração controlada, sem remoção em massa nesta correção de API. O Drive legado de APK deve ser atualizado apenas com binário bruto verificado.
+- O módulo monolítico `dock.html` e workflows históricos demandam migração controlada, sem remoção em massa nesta correção de API. **Drive:** [novo ZIP LT191 com APK e relatórios](https://drive.google.com/file/d/1skCB1VGUcCwaV3xBIdxCc22SPe0fA0FA/view); link legado de APK direto ainda LT187. [Registro oficial LT191](ESTADO_CANONICO_LT191_OFICIAL_20261030.md).
 
 ---
 

@@ -1,12 +1,14 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial verificada: LT190 · 0.01.90 · 54395
+## Versão oficial atual — LT191 · 0.01.91 · 54396
 
-A versão pública confirmada em 30/10/2026 é [LT190](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.90-54395). APK `PokeSearch-v0.01.90-LT.apk`, 29.015.349 bytes, SHA-256 `654715aa590be7f2e1e98a6427d40980beffc899b64933b1a7f7d57a2422a2e8`, SOURCE_COMMIT `f03ee07703c88e47b808a9278e1b6a4e1d38af30`, [CI oficial aprovado](https://github.com/LucianoToscano/PokeSearch/actions/runs/41015061446).
+[GitHub Release LT191](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.91-54396) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.91-54396/PokeSearch-v0.01.91-LT.apk) · [Actions #41019720898 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41019720898).
 
-**LT191 em revisão:** correção de `Retry-After` acima de uma hora, espera compartilhada P1/P2, mensagens mais claras e Doce Raro. Consulte `docs/LT191_AUDITORIA_CORRECOES_20261030.md`; não considere publicada nem homologada até verificação de Release e QA no Samsung.
+**APK:** 29.015.817 bytes · SHA-256 `bc8d44627d67907a7a61647bf13e637addd85e7c2850ec4de47fda0c730f62dd` · SOURCE_COMMIT `c73c5ca0f15728c8896e3da4fcc6d2cce23f556f` · assinatura v2 permanente.
 
-**Histórico anterior:** os documentos e referências LT172/LT188/LT189 permanecem no repositório para rastreabilidade, não como estado atual. Antes de mudar o app leia `AGENTS.md` e `docs/GUIA_MESTRE.md`.
+**Melhorias:** espera de até 24 horas respeitando HTTP `Retry-After` em P1/P2 e Doce Raro, feedback de erro melhorado, filtros antigos e Get coords preservados. **QA físico Samsung/autenticação real ainda não atestado**.
+
+[Google Drive LT191: APK com relatórios (ZIP)](https://drive.google.com/file/d/1skCB1VGUcCwaV3xBIdxCc22SPe0fA0FA/view) · [Registro oficial](docs/ESTADO_CANONICO_LT191_OFICIAL_20261030.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
 
 ## Histórico — versão oficial anterior LT171 · 0.01.71 · 54376
 
