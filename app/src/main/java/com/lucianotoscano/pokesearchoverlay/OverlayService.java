@@ -1885,7 +1885,7 @@ public class OverlayService extends Service {
         // Initial navigation is scheduled after cookie flush in onStartCommand.
         if(isSecondaryOverlay())secondaryRunning=true;
         else running=true;
-        getSharedPreferences("prefs",0)
+        WatchAlerts.sharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(sharedFavoritesListener);
     }
     private void createResultsWindow(){
@@ -5160,7 +5160,7 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
-        getSharedPreferences("prefs",0)
+        WatchAlerts.sharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(sharedFavoritesListener);
         if(cooldownChangedReceiverRegistered){
             try{unregisterReceiver(cooldownChangedReceiver);}catch(IllegalArgumentException ignored){}
