@@ -665,6 +665,12 @@ public class OverlayService extends Service {
             JSONObject card=accepted.optJSONObject(i);
             if(card==null)continue;
             long expiry=card.optLong("expiresAtMs",Long.MAX_VALUE);
+            // If the provider omitted despawn, a previously confirmed card
+            // becomes too old for rechecks after fifteen minutes.
+            long sampledAt=card.optLong("sampledAt",0L);
+            if(expiry==Long.MAX_VALUE&&
+               (sampledAt<=0||sampledAt>now||now-sampledAt>15L*60_000L))
+                continue;
             if(expiry<=now||!verifiedTargetCriteria(card)||
                !WatchAlerts.matches(card.optString("name",""),wanted))continue;
             String key=spawnKey(card);
