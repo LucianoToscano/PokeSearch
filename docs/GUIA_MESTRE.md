@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT185 QA — APK menor, sem publicação (29/10/2026)
+
+- **Aplicado em branch QA:** [PR #143](https://github.com/LucianoToscano/PokeSearch/pull/143) — otimização de 50 PNGs com nomes, caminhos e transparência preservados. Recursos de hash oficial mantidos íntegros; sprites Pokémon e áudios preservados. Fonte assinada `9f5206be1852b54fe65463b17eccb1b86bb652c7`.
+- **Resultado comprovado:** [GitHub Actions #40986743734 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40986743734), ZIP QA `PokeSearch-LT185-54390-Size-QA-Assinado`, artifact ID `12947133511`. APK `0.01.85 / 54390` **43.770.614 bytes** vs LT184 **49.547.006 bytes**: queda de **5.776.392 bytes (11,66%)**. Economia fonte PNG **7.123.660 bytes**. Verificadas regressões Node/duas Pokébolas/Doce Raro/OTA, R8, assinatura v2 e SHA pelo CI.
+- **Governança:** PR draft sem merge, sem atualização pública/Drive/OTA. LT184 permanece pública. Necessário QA visual no Samsung; 35 MB continua apenas como meta. [Registro LT185](LT185_APK_SIZE_OPTIMIZATION_QA_20261029.md).
+
+---
+
+
 ## LT184 OFICIAL — Favoritos sincronizados nas Pokébolas, APK público e Drive (29/10/2026)
 
 - **PUBLICAÇÃO CONCLUÍDA:** [GitHub Releases/latest LT184 v0.01.84-54389](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.84-54389), APK `PokeSearch-v0.01.84-LT.apk`, **49.547.006 bytes**, SHA-256 `e7679eafd1b43ca4f770a0939195603846e0cd6ed07881a217c078a2f09ac183`; Android v2 e certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` conferidos.

@@ -1884,7 +1884,8 @@ test("HOME-04 shows genuine trainer data and the four transparent team assets",(
  const pngs=icons.every(name=>{
   const png=fs.readFileSync(path.join(root,"res/drawable-nodpi/ps_team_"+name+".png"));
   return png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
-   png.readUInt32BE(16)===1254&&png.readUInt32BE(20)===1254&&png[25]===6;
+   png.readUInt32BE(16)===1254&&png.readUInt32BE(20)===1254&&
+   (png[25]===6||(png[25]===3&&png.includes(Buffer.from("tRNS"))));
  });
  return pngs&&home.includes("teamBadge.setBackgroundColor(Color.TRANSPARENT)")&&
   home.includes('teamBadge.setImageResource(R.drawable.ps_team_neutral)')&&
