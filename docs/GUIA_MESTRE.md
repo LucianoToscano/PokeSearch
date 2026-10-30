@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT186 QA — Meta de tamanho superada, sem publicação (29/10/2026)
+
+- **APK 0.01.86 / 54391 de 31.094.541 bytes**, redução de 18.452.465 bytes (37,24%) ante a LT184 pública de 49.547.006 bytes e 12.676.073 bytes ante a LT185 QA. [GitHub Actions #40989269637 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40989269637), artefato QA assinado `PokeSearch-LT186-54391-Size-QA-Assinado` (ID 12948133735), código fonte `f277b6ae6d457ecc2b1655f8dc2fa1182c7c1885`.
+- **Mudanças:** WebP de qualidade controlada em seis imagens usadas pela Home/recursos Android, quatro PNG mestres da marca preservados fora do diretório empacotado, testes Node/Android/Doce Raro/P1-P2/OTA, sprites offline, R8, Android v2 permanente e SHA-256 conferidos. [PR #144](https://github.com/LucianoToscano/PokeSearch/pull/144) construída sobre [PR #143 LT185](https://github.com/LucianoToscano/PokeSearch/pull/143).
+- **Sem release pública nem substituição do Drive/OTA:** LT184 permanece latest. Teste visual e de notificações reais no Samsung ainda pendente. [Registro técnico LT186](LT186_WEBP_BRAND_ASSETS_QA_20261029.md).
+
+---
+
 ## LT185 QA — APK menor, sem publicação (29/10/2026)
 
 - **Aplicado em branch QA:** [PR #143](https://github.com/LucianoToscano/PokeSearch/pull/143) — otimização de 50 PNGs com nomes, caminhos e transparência preservados. Recursos de hash oficial mantidos íntegros; sprites Pokémon e áudios preservados. Fonte assinada `9f5206be1852b54fe65463b17eccb1b86bb652c7`.

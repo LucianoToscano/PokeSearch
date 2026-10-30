@@ -1220,14 +1220,14 @@ test("Thin bar Modos icon redraws on filter/rank change and does not add buttons
 
 
 test("VIS team artworks are mapped to existing verified Home assets",()=>{
- const items=["ps_team_mystic.png","ps_team_valor.png","ps_team_instinct.png","ps_team_neutral.png",
-   "ps_home_background_dark.png"];
- return items.every(n=>fs.existsSync(path.join(root,"res/drawable-nodpi",n)))&&
+ const items=["ps_team_mystic","ps_team_valor","ps_team_instinct","ps_team_neutral",
+   "ps_home_background_dark"];
+ return items.every(n=>[".png",".webp"].some(ext=>fs.existsSync(path.join(root,"res/drawable-nodpi",n+ext))))&&
   main.includes('teamBadge.setImageResource(homeTeamIcon(linked?team:""))')&&
   main.includes('return R.drawable.ps_team_neutral;')&&
   main.includes('pageBackground.setScaleType(ImageView.ScaleType.CENTER_CROP)')&&
   main.includes('R.drawable.ps_home_background_light')&&
-  fs.existsSync(path.join(root,"res/drawable-nodpi/ps_home_background_light.png"))&&
+  [".webp",".png"].some(ext=>fs.existsSync(path.join(root,"res/drawable-nodpi/ps_home_background_light"+ext)))&&
   main.includes('dim.setBackgroundColor(homeLightMode?');
 });
 test("VIS tiny white Pokemon and pencil-gear are independent SVG toolbar icons",()=>{
@@ -1860,20 +1860,22 @@ test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()
   home.includes("wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth))")&&
   home.includes("new LinearLayout.LayoutParams(-1,d(70))");
 })());
-test("BRAND-01 official PNG assets and full-frame launcher artwork are preserved",()=>{
+test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
  const pngs=[
   ["res/drawable-nodpi/ic_launcher.png",1254,1254],
-  ["res/drawable-nodpi/ps_home_brand_transparent.png",1254,1254],
-  ["res/drawable-nodpi/ps_home_official_wordmark.png",2172,724],
-  ["assets/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
-  ["assets/branding/PokeSearchLogoShiny.png",1254,1254],
-  ["assets/branding/PokeSearchName.png",2172,724]
+  ["../../artwork-originals/branding/PokeSearchLogoShinyBlueEffectAll.png",1254,1254],
+  ["../../artwork-originals/branding/PokeSearchLogoShiny.png",1254,1254],
+  ["../../artwork-originals/branding/PokeSearchName.png",2172,724]
  ];
  return pngs.every(([p,w,h])=>{
-  const img=fs.readFileSync(path.join(root,p));
+  const abs=path.join(root,p);
+  const legacy=path.join(root,p.replace("../../artwork-originals/branding/","assets/branding/"));
+  const img=fs.readFileSync(fs.existsSync(abs)?abs:legacy);
   return img.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
    img.readUInt32BE(16)===w&&img.readUInt32BE(20)===h;
- })&&iconGenerator.includes("int artworkSize = 288")&&
+ })&&["ps_home_brand_transparent","ps_home_official_wordmark"].every(name=>
+   [".webp",".png"].some(ext=>fs.existsSync(path.join(root,"res/drawable-nodpi",name+ext))))&&
+ iconGenerator.includes("int artworkSize = 288")&&
  iconGenerator.includes("int padding = 8")&&
  iconGenerator.includes("return new int[] {0, 0, image.getWidth(), image.getHeight()}");
 });
@@ -1882,7 +1884,12 @@ test("HOME-04 shows genuine trainer data and the four transparent team assets",(
  const state=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
  const icons=["mystic","valor","instinct","neutral"];
  const pngs=icons.every(name=>{
-  const png=fs.readFileSync(path.join(root,"res/drawable-nodpi/ps_team_"+name+".png"));
+  const stem=path.join(root,"res/drawable-nodpi/ps_team_"+name);
+  if(fs.existsSync(stem+".webp")){
+   const webp=fs.readFileSync(stem+".webp");
+   return webp.toString("ascii",0,4)==="RIFF"&&webp.toString("ascii",8,12)==="WEBP";
+  }
+  const png=fs.readFileSync(stem+".png");
   return png.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
    png.readUInt32BE(16)===1254&&png.readUInt32BE(20)===1254&&
    (png[25]===6||(png[25]===3&&png.includes(Buffer.from("tRNS"))));
