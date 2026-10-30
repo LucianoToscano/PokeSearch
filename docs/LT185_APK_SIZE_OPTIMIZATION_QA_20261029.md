@@ -16,5 +16,14 @@ O workflow QA exige: testes Node (incluindo paridade P1/P2, LT184, Doce Raro e O
 **Não integrar ou distribuir** se houver regressão, queda visual evidente na Home, problemas de sprites ou alertas no Samsung. O APK QA precisa ser testado fisicamente; assinatura e testes automatizados não substituem o teste visual.
 **Nenhum merge, Release pública, OTA para usuários ou substituição do Google Drive** está autorizado apenas por esta preparação de QA.
 
-## Pendência do resultado
-Os bytes finais serão determinados pelo workflow GitHub Actions. Não prometer 35 MB ou 25 MB sem medição. Uma segunda etapa de WebP e remoção de binários duplicados poderá ser proposta após verificação visual e dos testes de compatibilidade.
+## Resultado QA confirmado (sem distribuição)
+- Branch fonte QA: `9f5206be1852b54fe65463b17eccb1b86bb652c7`.
+- [Action #40986743734 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40986743734).
+- APK oficial LT184: **49.547.006 bytes**. APK LT185 de QA **43.770.614 bytes** — **5.776.392 bytes a menos (11,66%)**.
+- PNG no Git: **50 arquivos otimizados; economia cumulativa 7.123.660 bytes**.
+- APK de teste `PokeSearch-v0.01.85-LT185-Size-QA.apk`, versionCode **54390**, v2 permanente e R8 verificados; ZIP `PokeSearch-LT185-54390-Size-QA-Assinado` do GitHub Actions: artefato ID **12947133511**, 41.275.319 bytes.
+- A Action checou `SHA256SUMS.txt`, sem imprimir o SHA completo nos logs; o valor encontra-se dentro do artefato verificado. Não inventar digest.
+- Node, compilação Java, testes completos P1/P2, Doce Raro, OTA e reconstrução dos sprites offline aprovados.
+- Não foram feitos merge, Release pública, distribuição OTA ou substituição do APK no Drive. A LT184 permanece a versão pública.
+- A homologação visual e de notificação real no Samsung ainda é necessária; meta de 35 MB ainda não atingida. WebP/duplicatas/áudio podem ser segunda etapa segura.
+
