@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT187 QA — Compactação de áudios e auditoria interna (29/10/2026)
+
+- **APK 0.01.87 / 54392:** **29.013.661 bytes**, [Action LT187 #40990477785 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40990477785). Redução de 2.080.880 bytes ante LT186 QA (31.094.541) e 20.533.345 bytes (41,44%) ante a LT184 pública (49.547.006).
+- **Áudios:** 9 dos 37 MP3 otimizados com validação de duração, canais e decodificação; 36/36 sons do seletor preservados, economia fonte 2.080.888 bytes. **Auditoria do APK:** 3.468 entradas; nenhum grupo de arquivos grandes exatamente duplicados encontrado (limite 50 KB), sem exclusão de libs/recursos essenciais. R8, shrinkResources, SHA, certificado permanente, sprites, P1/P2, Doce Raro e OTA aprovados.
+- **PR draft [#145](https://github.com/LucianoToscano/PokeSearch/pull/145)** baseada em [#144 LT186](https://github.com/LucianoToscano/PokeSearch/pull/144), por sua vez em [#143 LT185](https://github.com/LucianoToscano/PokeSearch/pull/143). Artefato `PokeSearch-LT187-54392-Size-QA-Assinado` ID `12949211220`; SOURCE_COMMIT `9a9b301666c1f24ee747a9966684690e7fc31152`.
+- **Sem merge, sem publicação para todos, sem Drive e sem OTA pública:** continua LT184 em Releases/latest. Precisa instalar e validar som, qualidade visual, login, duas Pokébolas, Doce Raro, notificações e atualização no Samsung antes da release. [Registro LT187](LT187_AUDIO_APK_AUDIT_QA_20261029.md).
+
+---
+
 ## LT186 QA — Meta de tamanho superada, sem publicação (29/10/2026)
 
 - **APK 0.01.86 / 54391 de 31.094.541 bytes**, redução de 18.452.465 bytes (37,24%) ante a LT184 pública de 49.547.006 bytes e 12.676.073 bytes ante a LT185 QA. [GitHub Actions #40989269637 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40989269637), artefato QA assinado `PokeSearch-LT186-54391-Size-QA-Assinado` (ID 12948133735), código fonte `f277b6ae6d457ecc2b1655f8dc2fa1182c7c1885`.
