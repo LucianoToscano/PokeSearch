@@ -21,6 +21,10 @@ SKIP = {
     "app/src/main/res/drawable-nodpi/ic_launcher.png",
     "app/src/main/res/drawable-nodpi/pokesearch_round.png",
     "app/src/main/res/drawable-nodpi/pokesearch_adaptive_foreground.png",
+    # LT57: arte oficial com hash SHA256 fixado em testes e no menu.
+    "app/src/main/assets/result-icons/modes/StarGL.png",
+    "app/src/main/assets/result-icons/modes/StarUL.png",
+    "app/src/main/assets/result-icons/modes/StarIVRaw.png",
 }
 # Os 9 arquivos oficiais deste diretório têm SHA imutável no teste LT57.
 IMMUTABLE_WEATHER = {f"app/src/main/assets/weather-icons/{n}.png" for n in (
