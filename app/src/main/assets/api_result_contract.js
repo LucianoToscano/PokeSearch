@@ -201,7 +201,8 @@
         shiny_only:c.shiny===true,shiny_account:shinyAccount,background_only:c.backgroundOnly===true,
         pvp_mode:pvp,pvp_league:mode==="ul"?"ultra":"great",
         pvp_top_rank:rank,pvp_include_pre_evolutions:c.includePreviousEvolutions!==false,
-        pvp_min_cp:optionalNumber(c.minPvpCp,0,100000,true),
+        // A saved PvP-only CP limit must not leak into Raw IV / IV% searches.
+        pvp_min_cp:pvp?optionalNumber(c.minPvpCp,0,100000,true):null,
         pokemon_ids:pokemonIds,species_forms:allForms,forms:rawForms,location:textLocation,
         cp_min:cp[0],cp_max:cp[1],level_min:level[0],level_max:level[1],
         iv_mode:mode==="percent"?"percent":"raw",
