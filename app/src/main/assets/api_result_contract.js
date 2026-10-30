@@ -228,8 +228,18 @@
     if(typeof raw!=="string"||!rawPattern.test(raw)) return null;
     var parts=raw.split("/").map(Number),calculated=Math.round((parts[0]+parts[1]+parts[2])*100/45);
     var observed=Number(percent);
-    if(!Number.isFinite(observed)||observed<0||observed>100||Math.abs(observed-calculated)>0.55) return null;
-    return {raw:raw,percent:observed};
+    if(!Number.isFinite(observed)||observed<0||observed>100) return null;
+    // Example: a real 0/15/15 spawn may carry iv_percent=66.67.
+    // Keep source precision for validation, but output the canonical
+    // integer percent derived from the verified 0..45 IV sum. Android
+    // expects one of the 46 attainable percentage badges and previously
+    // discarded the correct spawn when receiving "66.67" as ivPercent.
+    var exact=(parts[0]+parts[1]+parts[2])*100/45;
+    var accepted=[Math.round(exact),Number(exact.toFixed(1)),
+      Number(exact.toFixed(2))].some(value=>Math.abs(observed-value)<1e-7)||
+      Math.abs(observed-exact)<=0.0001;
+    if(!accepted)return null;
+    return {raw:raw,percent:calculated};
   }
   function spriteData(item) {
     // The documented API omits sprite URLs. Reuse the existing PokeAPI
