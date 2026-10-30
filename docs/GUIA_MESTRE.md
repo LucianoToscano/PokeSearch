@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT184 OFICIAL — Favoritos sincronizados nas Pokébolas, APK público e Drive (29/10/2026)
+
+- **PUBLICAÇÃO CONCLUÍDA:** [GitHub Releases/latest LT184 v0.01.84-54389](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.84-54389), APK `PokeSearch-v0.01.84-LT.apk`, **49.547.006 bytes**, SHA-256 `e7679eafd1b43ca4f770a0939195603846e0cd6ed07881a217c078a2f09ac183`; Android v2 e certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` conferidos.
+- **Google Drive — mesmo link e mesmo ID:** [PokeSearch LT184 público](https://drive.google.com/file/d/1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P/view), tamanho 49.547.006 bytes, `anyone/commenter` preservado. Novo APK verificado por download posterior, SHA-256 e comparação byte a byte com artefato CI; staging apagado.
+- **Merge:** [PR #142](https://github.com/LucianoToscano/PokeSearch/pull/142) integrada à `main` por squash `b3dd24839322029c4d6c4ce2e030ddb987625f0b`, mesmo SOURCE_COMMIT do APK. [Action oficial #40984409972 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/40984409972), artefato assinado ID `12947025068`, regressões/Gradle/R8/versionCode 54389/verificação do asset/latest aprovados.
+- **Correções:** lista global e modo dos Favoritos sincronizados nas duas Pokébolas, rechecagem apenas de resultados próprios da geração confirmada com filtro válido/TTL, fila antiga descartada e deduplicação independente. Testes de aviso diferenciam P1 e P2. P1 100% e P2 0% continuam com critérios independentes; notas LT184 no app.
+- **Distribuição:** o atualizador consulta `GitHub Releases/latest` e oferece a versão 0.01.84 a usuários elegíveis quando verificarem atualizações, com aceite Android; sem instalar silenciosamente. Manifesto `atualizacao.json` legado não alterado. **QA físico de alertas no Samsung ainda pendente** (não confundir publicação com prova de entrega em encontros reais).
+- **Registro canônico detalhado:** [ESTADO_CANONICO_LT184_OFICIAL_20261029.md](ESTADO_CANONICO_LT184_OFICIAL_20261029.md). LT183 e releases anteriores preservadas.
+
+---
+
 ## LT183 OFICIAL — Discord OAuth, release pública e Drive (29/10/2026)
 
 - **PUBLICAÇÃO CONCLUÍDA:** [GitHub Releases/latest v0.01.83-54388](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.83-54388). APK `PokeSearch-v0.01.83-LT.apk` 49.546.774 bytes, SHA-256 `2d336d6b7a3da61fb0c0553bb9762cce009189b324c3508fe9d735d4401ce5c4`. Assinatura Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
@@ -795,5 +806,5 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 ## LT184 QA — Sincronização de notificações de Favoritos P1/P2 (29/10/2026)
 - Relato: lista compartilhada de 13/50 selecionados; P2 alerta, mas P1 100% aparentemente não. Diagnóstico: a mudança de `watchList` ou modo global não avisava a outra instância até a próxima pesquisa.
 - `OverlayService` agora escuta as preferências globais em ambas as instâncias e reavalia somente resultados verificados, atuais, não expirados, que correspondam aos filtros próprios da Pokébola; filas e deduplicação seguem independentes. Testes nativos identificam P1/P2.
-- Regressões adicionadas à suíte LT112 de ambas as Pokébolas. **Pendente:** GitHub Actions, QA físico Samsung P1/P2 e confirmação de encontro 100% correspondente. Sem merge, APK ou publicação pública nesta etapa.
+- Regressões adicionadas à suíte LT112 de ambas as Pokébolas. **Publicação oficial efetuada:** PR #142 mesclada, GitHub Actions assinado e APK LT184 publicado e espelhado no mesmo ID do Drive; restam QA físico Samsung P1/P2 e confirmação de encontro real IV 100%.
 - Detalhes e roteiro: [LT184 QA](LT184_FAVORITOS_ALERTAS_P1_P2_QA_20261029.md).
