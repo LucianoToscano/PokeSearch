@@ -10,7 +10,7 @@ concurrency:
   group: pokesearch-lt184-favorite-alert-official-once
   cancel-in-progress: false
 jobs:
-  official-lt184-discord:
+  official-lt184-favorites:
     if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     environment:
@@ -179,7 +179,7 @@ jobs:
           gh release create "$OFFICIAL_TAG" "$OFFICIAL_APK" \
             --target "$GITHUB_SHA" --latest \
             --title "PokeSearch LT184 — Alertas dos favoritos em ambas as Pokébolas" \
-            --notes "Corrigido o retorno do favoritos nas Pokébolas 1 e 2: os 13/50 selecionados e o modo Som/Sem som sincronizam com ambas; rechecagem somente de resultados confirmados e atuais, evitando alertas antigos. Cada Pokébola mantém seus filtros 100%/0% e seu próprio histórico. Testes de canal mostram P1 ou P2. APK assinado; instalação exige confirmação do Android."
+            --notes "Corrigidos os alertas dos favoritos nas Pokébolas 1 e 2: os 13/50 selecionados e o modo Som/Sem som sincronizam com ambas; rechecagem somente de resultados confirmados e atuais, evitando alertas antigos. Cada Pokébola mantém seus filtros 100%/0% e seu próprio histórico. Testes de canal mostram P1 ou P2. APK assinado; instalação exige confirmação do Android."
       - name: Verify latest asset bytes and digest
         shell: bash
         run: |
