@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT192 — Correção IV% → Raw IV (30/10/2026)
+
+- **Base pública confirmada LT191 `0.01.91 / 54396`.** Correção incremental LT192 `0.01.92 / 54397` em revisão e publicação autorizada, condicionada à verificação da nova Release. [Relatório técnico](LT192_IV_92_RAW_MODE_SAMSUNG_20261030.md).
+- As capturas mostram Noibat **7/15/5 (60%)** no IV% **0–92** e a alteração para Raw **0/15/15**. O código tratava um IV válido, porém diferente do solicitado, como `IV não comprovado`. Isso não é prova de IV ausente nem de erro da fórmula. A mudança corrige o diagnóstico e impede que cartões de outros IVs acionem alertas.
+- `probe.js` separa `verifiedNonmatchingIv` e `unverifiedIv`; `OverlayService.java` distingue falta de dados IV, divergência e ausência de correspondências verificadas. Busca não homologada não fabrica uma confirmação de vazio do servidor. P1/P2 usam o mesmo código com prefs independentes.
+- Regressão `app/tests/lt192-iv-evidence-mode-transition.test.js`; manter suites LT191/LT190/LT189/LT188, Node/Android/OTA. Teste físico Samsung e API autenticada **não executados** por CI.
+- Não alterar a geometria independente dos overlays sem teste do arraste e popup. Conservar assinaturas, login, sprites, contador Get coords oculto, limites da API, Doce Raro e máximo de 10 resultados.
+
+---
+
 ## LT191 — Retry-After de até 24 horas (30/10/2026)
 
 - **LT191 OFICIAL:** `0.01.91 / 54396`, [GitHub Release/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.91-54396); APK 29.015.817 bytes, SHA-256 `bc8d44627d67907a7a61647bf13e637addd85e7c2850ec4de47fda0c730f62dd`, SOURCE_COMMIT `c73c5ca0f15728c8896e3da4fcc6d2cce23f556f`, [Actions #41019720898 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41019720898).
