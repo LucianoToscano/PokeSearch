@@ -5,7 +5,7 @@
 
 ## Escopo implantado
 - Otimização dos PNGs da Home, equipes, fundos e recursos Android mantendo caminhos, dimensões e transparência.
-- Otimização dos ícones sem contrato de hash fixo. Ícones StarGL, StarUL e StarIVRaw originais intactos por contrato LT57; o menu continua exibindo-os em 17px. Os ícones oficiais de clima V2 permanecem intactos por contrato de integridade.
+- Otimização dos ícones sem contrato de hash fixo. Ícones StarGL, StarUL e StarIVRaw originais intactos por contrato LT57; quatro imagens SupportV2 também preservadas byte a byte; o menu continua exibindo-os em 17px. Os ícones oficiais de clima V2 permanecem intactos por contrato de integridade.
 - PNGQuant com qualidade mínima 92/100 e comparação visual do RGB composto em preto/branco; alterações só quando há economia maior que 3%.
 - Geração de relatório por arquivo, quantidade economizada e SHA-256; alteração de binários gerada no runner QA e enviada para esta mesma branch antes dos testes.
 - Preservados: PNG fonte do launcher (RoundIcon.java), nove imagens legadas, dezoito imagens de clima V2 e StarGL/StarUL/StarIVRaw com hashes imutáveis, todos os nomes dos assets, os áudios, sprites, JWT/login/API/DOM, duas Pokébolas, Doce Raro, alertas favoritos P1/P2, assinatura oficial.

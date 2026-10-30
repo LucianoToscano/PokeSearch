@@ -21,6 +21,11 @@ SKIP = {
     "app/src/main/res/drawable-nodpi/ic_launcher.png",
     "app/src/main/res/drawable-nodpi/pokesearch_round.png",
     "app/src/main/res/drawable-nodpi/pokesearch_adaptive_foreground.png",
+    # SupportV2: quatro PNG com hash SHA-256 oficial e visual imutavel.
+    "app/src/main/res/drawable-nodpi/support_home_new.png",
+    "app/src/main/res/drawable-nodpi/support_home_seen.png",
+    "app/src/main/res/drawable-nodpi/support_flee_button.png",
+    "app/src/main/res/drawable-nodpi/support_donate_button.png",
     # LT57: arte oficial com hash SHA256 fixado em testes e no menu.
     "app/src/main/assets/result-icons/modes/StarGL.png",
     "app/src/main/assets/result-icons/modes/StarUL.png",
