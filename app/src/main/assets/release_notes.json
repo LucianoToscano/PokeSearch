@@ -1007,6 +1007,30 @@
           "Refatoração ampla de dock.html e limpeza histórica de workflows ficam sujeitas a migração controlada para evitar regressões."
         ]
       }
+    },
+    {
+      "id": "lt192-iv-switch-samsung-no-false-unverified-20261030",
+      "minVersionCode": 54397,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT192 — Modos IV e IV% mais confiáveis",
+      "sections": {
+        "novidades": [
+          "Trocar IV% para IV personalizado agora diferencia IV comprovado de IV diferente do filtro.",
+          "Quando nenhum IV selecionado for confirmado, o aplicativo informa sem mostrar resultados incorretos."
+        ],
+        "melhorias": [
+          "Resultados e indicadores das duas Pokébolas ficam consistentes com o modo selecionado.",
+          "A validação Android e a leitura do site distinguem ausência de IV e discordância de filtros."
+        ],
+        "correcoes": [
+          "Corrigido aviso indevido 'IV não comprovado' ao selecionar 0/15/15 depois de uma busca IV% que mostrava 7/15/5.",
+          "Nenhum card com IV não correspondente é exibido, salvo no cache ou usado em alertas."
+        ],
+        "emDesenvolvimento": [
+          "Os testes no Samsung e a resposta real do PoGoCoordinates continuam exigindo validação no dispositivo.",
+          "Erros reais de IV ausente ainda exigem confirmação; a atualização não fabrica valores de IV."
+        ]
+      }
     }
   ]
 }

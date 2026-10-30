@@ -2768,9 +2768,38 @@ public class OverlayService extends Service {
                 if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
                 searchInProgress=false;
                 boolean pvp="gl".equals(mode)||"ul".equals(mode);
-                searchFailure(pvp?"⚠ Ranking não confirmado":"⚠ IV não comprovado",
-                    "Site retornou "+found+" Pokémon, mas nenhum cartão comprovou os IVs/ranking solicitados."+
-                    (pvp?"":" IVs ausentes ou divergentes: "+r.optInt("unverifiedIv",0))+".");
+                int missingEvidence=r.optInt("unverifiedIv",found);
+                int differentIv=r.optInt("verifiedNonmatchingIv",0);
+                // A valid encounter with a DIFFERENT IV is not missing proof.
+                // Example: after IV% 0–92, 7/15/5 must not trigger
+                // "IV não comprovado" when the requested raw IV is 0/15/15.
+                // Never promote mismatched cards to results, alerts or cache.
+                if(!pvp&&found>0&&missingEvidence==0&&differentIv==found&&
+                    r.optBoolean("resultChanged",false)){
+                    if(count()==0){
+                        // Mode switches already cleared other filters' sprites.
+                        // No verified match exists for this requested IV;
+                        // do not claim a provider-confirmed zero result.
+                        results="[]";selected=-1;
+                        shownMode=mode;shownConfigJson=filterConfigJson();
+                        shownShiny=shiny&&shinyVerified;
+                        resultsStale=false;searchPhase="empty";
+                        overlayPrefs().edit().putString("lastError","Nenhum").apply();
+                        armNextDespawn(new JSONArray());
+                        hideDetails();
+                        status("Nenhum Pokémon com o IV selecionado foi confirmado.");
+                    }else{
+                        // Same-filter previously verified cards stay visible.
+                        searchFailure("⚠ Resultados divergentes",
+                            "O site mostrou IVs diferentes do filtro atual; resultados confirmados preservados.");
+                    }
+                    return;
+                }
+                searchFailure(pvp?"⚠ Ranking não confirmado":
+                        (missingEvidence>0?"⚠ IV não comprovado":"⚠ Resultados divergentes"),
+                    "Nenhum cartão atendeu ao filtro solicitado após a leitura do site. "+
+                    (pvp?"Rank não confirmado.":"IVs sem comprovação: "+missingEvidence+
+                     "; IVs comprovados de outros filtros: "+differentIv)+".");
                 return;
             }
             // A site with ten visible spawns can temporarily yield fewer parsed
@@ -3170,18 +3199,39 @@ public class OverlayService extends Service {
         // Filter BEFORE cache, display, history and any general/watch alert.
         if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
             JSONArray verified=new JSONArray();
-            int rejected=0;
+            int rejected=0,differentVerifiedIv=0;
             for(int i=0;i<items.length();i++){
                 JSONObject card=items.optJSONObject(i);
                 if(card!=null&&verifiedTargetCriteria(card))verified.put(card);
-                else rejected++;
+                else {
+                    rejected++;
+                    if(card!=null){
+                        String raw=card.optString("iv","").trim();
+                        if(raw.matches("(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])")){
+                            String[] parts=raw.split("/");
+                            int sum=Integer.parseInt(parts[0])+Integer.parseInt(parts[1])+
+                                Integer.parseInt(parts[2]);
+                            int expected=ivPercentageForSum(sum);
+                            String pct=card.optString("ivPercent","").trim();
+                            if(pct.isEmpty()||(pct.matches("[0-9]{1,3}")&&
+                                Integer.parseInt(pct)==expected))
+                                differentVerifiedIv++;
+                        }
+                    }
+                }
             }
             if(rejected>0){
-                BugReport.log(this,"IV_EVIDENCE","Cartões não comprovados="+rejected+" modo="+mode);
+                BugReport.log(this,"IV_EVIDENCE",
+                    "Rejeitados="+rejected+" • IV identificado de outro filtro="+
+                    differentVerifiedIv+" modo="+mode);
                 if(verified.length()==0){
                     searchInProgress=false;
-                    searchFailure("⚠ IV não comprovado",
-                        "Todos os "+rejected+" cartões foram rejeitados pela verificação nativa; resultados anteriores preservados.");
+                    searchFailure(differentVerifiedIv>0?"⚠ Resultados divergentes":
+                            "⚠ IV não comprovado",
+                        "Nenhum cartão passou na conferência do filtro nativo. "+
+                        "IVs comprovados mas diferentes="+differentVerifiedIv+
+                        "; outros rejeitados="+(rejected-differentVerifiedIv)+
+                        ". Nenhum resultado indevido foi exibido ou notificado.");
                     return;
                 }
             }

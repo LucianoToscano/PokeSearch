@@ -1239,6 +1239,13 @@ function collect(){
  }):[];
  const uncertain=!siteCriteria||found.some(x=>!matches(x));
  const unverifiedIv=isLeague?0:found.filter(x=>{const evidence=verifiedCardIv(x);return !evidence||evidence.percent===null;}).length;
+ // A real IV that does not equal the requested IV is NOT unverified. In
+ // particular, a previous IV% result (e.g. 7/15/5) must not be called
+ // "IV não comprovado" after switching to raw 0/15/15.
+ const verifiedNonmatchingIv=isLeague?0:found.filter(x=>{
+  const evidence=verifiedCardIv(x);
+  return evidence&&evidence.percent!==null&&!matches(x);
+ }).length;
  const t=text(document.body);
  const loading=!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
    !!oneButton("Searching")||!!oneButton("Loading");
@@ -1272,7 +1279,7 @@ function collect(){
  const expectedVisible=siteCount>0?Math.min(siteCount,100):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
+ return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,resultFreshnessPending,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }

@@ -1434,7 +1434,8 @@ test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
  return verify>=0&&nativeGate>apply&&newResults>nativeGate&&
   service.includes("if(!isAllowedIvPercent(actual)||(computed>=0&&actual!=computed))return false;")&&
   !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
-  service.includes('searchFailure("⚠ IV não comprovado"');
+  service.includes('differentVerifiedIv>0?"⚠ Resultados divergentes"')&&
+  service.includes('"⚠ IV não comprovado"');
 });
 
 
