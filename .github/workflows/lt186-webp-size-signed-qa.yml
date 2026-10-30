@@ -10,7 +10,7 @@ permissions:
   contents: write
 concurrency:
   group: pokesearch-lt186-slim
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   optimize-and-qa:
     if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/optimize/lt186-webp-dedup-20261029'
