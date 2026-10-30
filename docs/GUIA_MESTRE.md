@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT188 OFICIAL — Auditoria geral, GL/UL, IV e fonte para outras IAs (30/10/2026)
+
+- **Release/latest pública:** [v0.01.88-54393](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.88-54393), `PokeSearch-v0.01.88-LT.apk` **29.014.309 bytes**, SHA-256 `b30c0cc389cd8a4b5de065ab637485e1d5dab3bcd955428198d5880e49992f34`; assinatura v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **PR [#146](https://github.com/LucianoToscano/PokeSearch/pull/146) integrada**, SOURCE_COMMIT `cd86684c032b4966a84f7013c29243d164b2ae9d`. [Workflow oficial #41006064367 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41006064367); Node/Android/R8/OTA, P1/P2 e checksums passaram. **QA físico Samsung ainda não realizado**.
+- **Correções:** GL/UL têm PC normal e Nível como todos os modos, além de PC PvP específico; aplicação DOM não omite esses campos. Ao sair de UL/GL para IV `0/13/13`/IV%, a pesquisa não herda dados PvP e não exibe a Pokébola/resultados antigos como se fossem novos. Os serviços P1/P2 preservam estado independente.
+- **Pacote completo editável de outras IAs:** [fonte na Release](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.88-54393/PokeSearch-Auditoria-Completa-Fonte-LT188.zip) **28.652.739 bytes**, abaixo de 199 MB, SHA `b9a6ec97cac36f83bbac674dbefcd4f17923285aa9cdcee73485f60c212f0347`; [cópia no Drive](https://drive.google.com/file/d/1kDTfYTSd96LNM8aU0JbUZ0N0Q7z8YYKR/view) **28.714.148 bytes**, e [prompt separado](https://drive.google.com/file/d/1r41ZR8eAE-f8hLe9VeRkrHqdFKRXfYVS/view).
+- **Drive de instalação:** [novo ZIP oficial LT188](https://drive.google.com/file/d/1NsX1XtIvtEpt1WKHZMS3mZzH5Ca_Hu3Q/view) contém APK assinado e evidências; **o link compartilhado antigo** `1XXKGy3AjtDx4uMnt2N4Wd3FVNV0Qn_5P` **continua LT187**, pois não foi possível substituir os bytes do APK cru por meio do conector (e não é seguro substituir por ZIP). Para APK direto e OTA usar Release/latest.
+- **Registro detalhado** [LT188 OFICIAL](ESTADO_CANONICO_LT188_OFICIAL_20261030.md). Não sobrescrever `GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md`.
+
+---
+
 ## LT188 QA — GL/UL PC e Nível + troca de IV/IV% sem badge antigo (30/10/2026)
 
 - **Em branch de QA, ainda NÃO publicado:** correção em `dock.html` mantém filtros gerais **Ordenar → PC → Nível → Clima → Tamanho → Sexo → Forma** também em GL/UL; extras **PC mínimo PvP** e **Evoluções** permanecem apenas nas ligas. `probe.js` não ignora mais CP/Nível no PvP; a API já suporta campos simultâneos.
