@@ -911,6 +911,29 @@
           "Teste físico de som, sobreposições e notificações no Samsung permanece recomendado."
         ]
       }
+    },
+    {
+      "id": "lt188-dual-filters-mode-switch-audit-20261030",
+      "minVersionCode": 54393,
+      "date": "30/10/2026",
+      "title": "PokeSearch LT188 — Filtros completos e modos corrigidos",
+      "sections": {
+        "novidades": [
+          "Filtros PC e Nível agora também aparecem na Grande Liga e Ultra Liga, com a mesma ordem dos demais modos."
+        ],
+        "melhorias": [
+          "As duas Pokébolas usam o mesmo fluxo de filtros gerais sem compartilhar suas preferências de busca.",
+          "Revisão adicional do contrato da API e do retorno aos modos IV personalizado e IV%."
+        ],
+        "correcoes": [
+          "PC e Nível deixam de ser omitidos na GL/UL nas buscas e na confirmação dos filtros.",
+          "Um filtro PvP antigo não é reutilizado em uma nova pesquisa por IV ou IV%.",
+          "Ao mudar de liga para IV 0/13/13 ou IV%, sprites e ícones de resultados de outro filtro não são apresentados como se fossem da nova busca."
+        ],
+        "emDesenvolvimento": [
+          "Testes físicos Samsung da P1/P2, ligação real com o site e notificações ainda dependem de verificação no aparelho."
+        ]
+      }
     }
   ]
 }

@@ -5370,12 +5370,10 @@ function renderExtraFilters(panel,make){
  divider();option("sortBy","Ordenar");
  // Direct filter entries, like Modos. No "Filtros gerais" accordion.
   const pvp=["gl","ul"].includes(modeDraft.mode);
-  if(!pvp){
-   numberPair("PC","cpMin","cpMax");
-   numberPair("Nível","levelMin","levelMax",true);
-  }else{
-   // Stats filters stay in the draft when PvP is selected.
-  }
+  // PC and Nível are ordinary encounter filters in EVERY search mode.
+  // PC mínimo PvP is an additional PvP-only threshold, never a substitute.
+  numberPair("PC","cpMin","cpMax");
+  numberPair("Nível","levelMin","levelMax",true);
   option("weather","Clima");
   chips("size","Tamanho");
   chips("gender","Sexo");
@@ -6865,12 +6863,11 @@ function activeExtraFilterCount(config=searchSettings,selectedMode=mode){
   (active("sortBy")?1:0)+
   (active("size")||hasMulti("size")?1:0)+
   (active("gender")||hasMulti("gender")?1:0);
+ if(active("cpMin")||active("cpMax"))total++;
+ if(active("levelMin")||active("levelMax"))total++;
  if(pvp){
   if(active("minPvpCp"))total++;
   if(config?.includePreviousEvolutions===false)total++;
- }else{
-  if(active("cpMin")||active("cpMax"))total++;
-  if(active("levelMin")||active("levelMax"))total++;
  }
  return total;
 }
@@ -7624,12 +7621,11 @@ function renderFiltersChoices(){
     invalidNumber(key,focus,"Digite um número de "+min+" a "+max);return;
    }
   }
-  if(!["gl","ul"].includes(modeDraft.mode)){
-   for(const [lowKey,highKey] of [["cpMin","cpMax"],["levelMin","levelMax"]]){
-    const low=String(modeDraft[lowKey]??""),high=String(modeDraft[highKey]??"");
-    if(low!==""&&high!==""&&Number(low)>Number(high)){
-     invalidNumber(lowKey,lowKey.startsWith("cp")?"PC":"Nível","Min não pode ultrapassar Max");return;
-    }
+  // The same min/max range checks apply to GL, UL, Raw IV and IV%.
+  for(const [lowKey,highKey] of [["cpMin","cpMax"],["levelMin","levelMax"]]){
+   const low=String(modeDraft[lowKey]??""),high=String(modeDraft[highKey]??"");
+   if(low!==""&&high!==""&&Number(low)>Number(high)){
+    invalidNumber(lowKey,lowKey.startsWith("cp")?"PC":"Nível","Min não pode ultrapassar Max");return;
    }
   }
   const delta={};

@@ -838,6 +838,21 @@ public class OverlayService extends Service {
             recentFilterPreviews.remove(filterPreviewKey());return false;
         }
     }
+    // A newly requested IV/IV%/GL/UL search must not keep a different mode's
+    // sprites and badge visible when the site/API has not confirmed results.
+    // A matching, previously verified cached filter may still show its own
+    // (explicitly stale) preview, but never rows from another filter.
+    private boolean restoreMatchingFilterPreview(){
+        if(restoreFilterPreview())return true;
+        results="[]";
+        selected=-1;
+        shownMode=mode;
+        shownConfigJson=filterConfigJson();
+        shownShiny=shiny&&shinyVerified;
+        resultsStale=false;
+        armNextDespawn(new JSONArray());
+        return false;
+    }
     // Independent parameters remain intact when switching between search modes.
     private int rawAttack=15,rawDefense=15,rawStamina=15,glRank=1,ulRank=1,ivPercentMin=0,ivPercentMax=100;
     // Additional optional search criteria belong to the active site session, not to the toolbar.
@@ -4409,8 +4424,7 @@ public class OverlayService extends Service {
                 // Preserve authenticated Shiny preference; reverify it after location when searching.
                 // Keep site-confirmed cards with their original mode/icon
                 // until the new search passes all checks and returns valid cards.
-                boolean preview=restoreFilterPreview();
-                if(!preview)resultsStale=count()>0;
+                boolean preview=restoreMatchingFilterPreview();
                 hideDetails();
                 status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
                 scheduleFilterChangeRefresh();
@@ -4433,8 +4447,7 @@ public class OverlayService extends Service {
                 "Filtro selecionado: "+(s.equals("iv")?"Raw IV 15/15/15":s.equals("raw")?"Raw IV":s.equals("percent")?"% IV":s.equals("gl")?"Grande Liga":"Ultra Liga"),
                 android.widget.Toast.LENGTH_SHORT).show();
             replaceActiveFilterSearch();shinyVerified=false;
-            boolean preview=restoreFilterPreview();
-            if(!preview)resultsStale=count()>0;
+            boolean preview=restoreMatchingFilterPreview();
             hideDetails();
             status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
             scheduleFilterChangeRefresh();
@@ -4444,8 +4457,7 @@ public class OverlayService extends Service {
             mode=mode.equals("raw")?"percent":mode.equals("percent")?"gl":mode.equals("gl")?"ul":"raw";
             overlayPrefs().edit().putString("mode",mode).apply();
             replaceActiveFilterSearch();shinyVerified=false;
-            boolean preview=restoreFilterPreview();
-            if(!preview)resultsStale=count()>0;
+            boolean preview=restoreMatchingFilterPreview();
             hideDetails();
             status(preview?"Prévia anterior do filtro · aguardando nova consulta":"Filtro selecionado · aguardando consulta");
             scheduleFilterChangeRefresh();

@@ -856,7 +856,11 @@ function extraNumberField(key){
  return pair.length===2?pair[key.endsWith("Min")?0:1]:null;
 }
 function extraNumberKeys(){
- return ["gl","ul"].includes(mode)?["minPvpCp"]:["cpMin","cpMax","levelMin","levelMax"];
+ // GL/UL can combine their PvP minimum with normal encounter CP/Level.
+ // Never silently skip previously selected CP/Level while on the PvP tab.
+ return ["gl","ul"].includes(mode)?
+  ["cpMin","cpMax","levelMin","levelMax","minPvpCp"]:
+  ["cpMin","cpMax","levelMin","levelMax"];
 }
 // Only EXPLICITLY REQUESTED optional criteria may block a search. A site
 // title, generic Pokemon picker or decorated "Any" must not become mandatory.

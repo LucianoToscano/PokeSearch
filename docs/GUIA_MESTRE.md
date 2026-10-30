@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT188 QA — GL/UL PC e Nível + troca de IV/IV% sem badge antigo (30/10/2026)
+
+- **Em branch de QA, ainda NÃO publicado:** correção em `dock.html` mantém filtros gerais **Ordenar → PC → Nível → Clima → Tamanho → Sexo → Forma** também em GL/UL; extras **PC mínimo PvP** e **Evoluções** permanecem apenas nas ligas. `probe.js` não ignora mais CP/Nível no PvP; a API já suporta campos simultâneos.
+- **Transição de modos:** `OverlayService` mantém prévia somente quando o filtro completo coincide; sem ela descarta linhas de outra seleção e o ícone antigo UL/GL em vez de apresentar rank anterior como se fosse Raw `0/13/13` ou IV%. P1 e P2 herdam a mesma correção com preferências isoladas.
+- **QA em PR:** nova suíte `lt188-dual-mode-filters.test.js`, regressão de `overlay-ux.test.js` e CI Node/Android em validação. A mensagem **Network Error** nas capturas não comprova a causa; exigir teste de rede/site/API e Samsung físico antes de publicar. **LT187 segue oficial**, sem alterar Release/latest/Drive. [Auditoria/matriz](LT188_AUDITORIA_P1_P2_FILTROS_MODOS_QA_20261030.md).
+
+---
+
 ## LT187 OFICIAL — APK otimizado publicado, app atualizado e Drive no mesmo link (30/10/2026)
 
 - **Distribuição geral concluída:** [GitHub Releases/latest v0.01.87-54392](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.87-54392), APK **29.013.825 bytes** (antes LT184 49.547.006; **redução 20.533.181 bytes, 41,44%**), SHA-256 `e462b213343253de0b1f84d318ec9ea5a1e29bb7adeb239c76a8878212a7285e`, Android v2 certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.

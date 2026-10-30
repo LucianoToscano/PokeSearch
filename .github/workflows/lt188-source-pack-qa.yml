@@ -1,0 +1,63 @@
+name: LT188 — validação do pacote-fonte completo para outras IAs
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/build_ai_audit_bundle_lt188.py'
+      - 'docs/PROMPT_OUTRAS_IAS_AUDITORIA_EDICAO_COMPLETA_LT188.md'
+      - '.github/workflows/lt188-full-audit-official-release.yml'
+      - '.github/workflows/lt188-source-pack-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-package-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Build complete editable source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/build_ai_audit_bundle_lt188.py
+          python3 scripts/build_ai_audit_bundle_lt188.py --output dist
+          (cd dist && sha256sum --check ZIP_SHA256.txt)
+          python3 - <<'PY'
+          import json,zipfile,pathlib
+          out=pathlib.Path('dist')
+          z=out/'PokeSearch-Auditoria-Completa-Fonte-LT188.zip'
+          assert 0 < z.stat().st_size < 199_000_000
+          with zipfile.ZipFile(z) as a:
+              assert a.testzip() is None
+              entries=a.namelist()
+              root='PokeSearch-Auditoria-Completa-Fonte/'
+              must=['AGENTS.md','docs/GUIA_MESTRE.md',
+                    'docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md',
+                    'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java',
+                    'app/src/main/java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java',
+                    'app/src/main/assets/dock.html','app/src/main/assets/probe.js',
+                    'app/tests/lt188-dual-mode-filters.test.js','LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md',
+                    'AUDITORIA/ORIGEM_E_INVENTARIO.json']
+              for file in must: assert root+file in entries, file
+              metadata=json.loads(a.read(root+'AUDITORIA/ORIGEM_E_INVENTARIO.json'))
+              assert metadata['source_file_count']>780
+          print('PokeSearch IA ZIP: bytes=',z.stat().st_size,'entries=',len(entries))
+          PY
+      - name: Review guarded release workflow (no publication during PR QA)
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "branches: [main]" .github/workflows/lt188-full-audit-official-release.yml
+          grep -Fq "environment: official-updates" .github/workflows/lt188-full-audit-official-release.yml
+          grep -Fq "POKE_TEST_VERSION_CODE: '54393'" .github/workflows/lt188-full-audit-official-release.yml
+          grep -Fq "POKE_TEST_PUBLIC_VERSION: '0.01.88'" .github/workflows/lt188-full-audit-official-release.yml
+          grep -Fq "v0.01.87-54392" .github/workflows/lt188-full-audit-official-release.yml
+          grep -Fq "sha256sum -c ZIP_SHA256.txt" .github/workflows/lt188-full-audit-official-release.yml
+          git status --porcelain | grep -q '^?? dist/' || true
