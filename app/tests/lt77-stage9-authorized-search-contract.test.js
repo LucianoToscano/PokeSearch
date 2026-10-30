@@ -74,12 +74,12 @@ check("min TTL, trainer account and all blacklist fields",()=>{
  assert.equal(api.buildPayload({...raw,shinyAccount:"1"}).ok,false);
  assert.equal(api.buildPayload({...raw,minTtl:61}).ok,false);
 });
-check("IV percent with one decimal retained; invalid mismatch rejected",()=>{
+check("IV percent one decimal verified, normalized to canonical integer; mismatch rejected",()=>{
  const sample={encounter_id:"1",pokemon_id:25,pokemon_name:"Pikachu",raw_iv:"14/15/15",
   iv_percent:97.8,cp:911,level:32.5,size:"M",gender:"Genderless",
   despawn_at:"2099-10-24T00:00:00Z",reveal_code:"REDACTED_1234567890"};
  const r=api.normalizeResponse({results:[sample],cap:10},{nowMs:0});
- assert.equal(r.ok,true);assert.equal(r.cards[0].ivPercent,"97.8");
+ assert.equal(r.ok,true);assert.equal(r.cards[0].ivPercent,"98");
  assert.equal(r.cards[0].gender,"⚲");
  assert.ok(!JSON.stringify(r).includes("REDACTED_1234567890"));
 });
