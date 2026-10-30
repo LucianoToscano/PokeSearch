@@ -277,6 +277,14 @@ public final class WatchAlerts {
         return send(context,"🔔 Teste: Pokémon procurado",
             "Teste do canal Favoritos. Alertas reais exigem favorito cadastrado e resultado confirmado nos filtros.",11999,null);
     }
+    // Diagnostics use distinct Android notification IDs and explicit P1/P2
+    // titles; an Android-only test must not be mistaken for a verified spawn.
+    public static boolean test(Context context,boolean secondary){
+        String ball=secondary?"P2":"P1";
+        return send(context,"🔔 Teste "+ball+": Pokémon favorito",
+            ball+" · Teste do canal Favoritos. Avisos reais exigem resultado confirmado e Pokémon selecionado.",
+            secondary?11998:11997,null);
+    }
     /** Exact encounter title supplied by native verified-result formatting.
      * Never merge Hundo, Shundo, league ranks or different CP encounters.
      */
