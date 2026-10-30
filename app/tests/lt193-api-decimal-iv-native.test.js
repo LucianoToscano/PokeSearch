@@ -26,6 +26,14 @@ assert.equal(normalized.cards[0].iv,"0/15/15");
 assert.equal(normalized.cards[0].ivPercent,"67",
  "verified 66.67% must arrive at Android as canonical 67%");
 assert.equal(api.parseIV("0/15/15",66.67).percent,67);
+assert.equal(api.parseIV("0/15/15",undefined).percent,67);
+assert.equal(api.parseIV("0/15/15",null).percent,67);
+assert.equal(api.parseIV("0/15/15","").percent,67);
+const rawOnly=api.normalizeResponse({results:[
+ {...snapshot,iv_percent:undefined,encounter_id:"raw-only"}],cap:10},{nowMs:0});
+assert.equal(rawOnly.ok,true);
+assert.equal(rawOnly.cards.length,1);
+assert.equal(rawOnly.cards[0].ivPercent,"67");
 assert.equal(api.parseIV("0/15/15",66.6666667).percent,67);
 assert.equal(api.parseIV("14/15/15",97.78).percent,98);
 assert.equal(api.parseIV("7/15/5",60).percent,60);
