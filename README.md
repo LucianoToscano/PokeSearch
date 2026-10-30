@@ -1,14 +1,14 @@
 # PokeSearch — Android Overlay
 
-## Versão pública atual — LT192 · 0.01.92 · 54397
+## Versão oficial atual — LT193 · 0.01.93 · 54398
 
-[Release LT192](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.92-54397) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.92-54397/PokeSearch-v0.01.92-LT.apk) · [CI SUCCESS #41022787967](https://github.com/LucianoToscano/PokeSearch/actions/runs/41022787967).
+[GitHub Release LT193](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.93-54398) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.93-54398/PokeSearch-v0.01.93-LT.apk) · [Actions SUCCESS #41025717103](https://github.com/LucianoToscano/PokeSearch/actions/runs/41025717103).
 
-**APK:** 29.016.253 bytes · SHA-256 `7e44dc13ef79410467cd4521c296c965e68e61435def5d7622a7449f63db9194` · SOURCE_COMMIT `aca295f65a988bf1c572c13fe1bec3a8b7691ea0`.
+**APK:** 29.016.937 bytes · SHA-256 `bd52034270913ae7c48a14bfe82d64e1ab5cef7ad8588f7e3d56e4c615928546` · SOURCE_COMMIT `6995cd7b80633994d010f6d987f10b018ab4dc68` · assinatura v2 permanente.
 
-**Corrigido:** na transição IV% 0–92 → Raw IV 0/15/15, o IV comprovado de outro Pokémon não é considerado um IV não comprovado. P1/P2, filtros, alertas, coordenadas e segurança do servidor permanecem protegidos. QA físico Samsung ainda pendente.
+**Defeito corrigido no código:** IV Raw `0/15/15` com percentual `66.67` da API era rejeitado pela camada Android, que exigia inteiro. Os percentuais agora são validados matematicamente e normalizados para os 46 valores canônicos. A/D/S completos também bastam quando o campo percentual separado estiver ausente. P1/P2 preservadas; sem aceitar IVs contraditórios. **QA real Samsung com API autenticada continua pendente.**
 
-[Google Drive LT192 — APK e relatórios em ZIP](https://drive.google.com/file/d/1d-nWvh_uycbBARm6frfdepEDthNMsGlD/view) · [Estado canônico](docs/ESTADO_CANONICO_LT192_OFICIAL_20261030.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
+[Google Drive LT193 — ZIP com APK e relatórios](https://drive.google.com/file/d/1nZeta54r5fDR7KFnPi40P5ZB-E-Bs73Z/view) · [Estado canônico LT193](docs/ESTADO_CANONICO_LT193_OFICIAL_20261030.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
 
 ## Histórico — versão oficial anterior LT171 · 0.01.71 · 54376
 
