@@ -4,7 +4,7 @@ on:
     branches: ['optimize/lt186-webp-dedup-20261029']
     paths:
       - 'scripts/optimize_apk_size_lt186.py'
-      - '.github/workflows/lt186-apk-size-signed-qa.yml'
+      - '.github/workflows/lt186-webp-size-signed-qa.yml'
   workflow_dispatch:
 permissions:
   contents: write
