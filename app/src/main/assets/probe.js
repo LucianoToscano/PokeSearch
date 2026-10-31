@@ -1473,7 +1473,6 @@ function locationModeControl(label){
 }
 function coordsModeSelected(){
  const coordButton=locationModeControl("Coords"),areaButton=locationModeControl("Area");
- if(!coordButton&&!areaButton)return null;
  const active=e=>e&&(e.checked===true||
   e.getAttribute("aria-checked")==="true"||e.getAttribute("aria-pressed")==="true"||
   e.getAttribute("aria-selected")==="true"||
@@ -1495,10 +1494,16 @@ function coordsModeSelected(){
  const coordPattern=/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/;
  const providerCoords=pair.filter(e=>coordPattern.test(e.getAttribute("placeholder")||""));
  const providerRadius=pair.filter(e=>/^\s*radius\s*\(\s*km\b/i.test(e.getAttribute("placeholder")||""));
- if(coordButton&&!active(areaButton)&&fields.coords&&fields.radius&&
-    providerCoords.length===1&&providerRadius.length===1&&
-    fields.coords===providerCoords[0]&&fields.radius===providerRadius[0])
-   return true;
+ // Mobile provider builds can omit the Coords/Area tab buttons entirely
+ // while retaining their unique, editable official Coords + Radius pair.
+ // Accept only the exact provider placeholders and only if no visible Area
+ // control is active. Unrelated generic Distance filters cannot pass.
+ const uniqueOfficialPair=fields.coords&&fields.radius&&
+   !fields.coords.disabled&&!fields.radius.disabled&&
+   providerCoords.length===1&&providerRadius.length===1&&
+   fields.coords===providerCoords[0]&&fields.radius===providerRadius[0];
+ if(uniqueOfficialPair&&!active(areaButton)&&
+   (coordButton||(!coordButton&&!areaButton)))return true;
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
@@ -1554,8 +1559,11 @@ function configureLocation(req){
     Math.abs(Number(req.coords.split(",")[0]))>90||Math.abs(Number(req.coords.split(",")[1]))>180)
     return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
  const coords=locationModeControl("Coords");
- if(!coords)return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
  const selected=coordsModeSelected();
+ // A site version with only the unique official Coords/Radius fields does
+ // not need a tab click; every actual field is still validated after input.
+ if(selected!==true&&!coords)
+  return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
  if(selected!==true){
   if(!coords.disabled&&selected===false)coords.click();
   else if(!coords.disabled&&selected===null){

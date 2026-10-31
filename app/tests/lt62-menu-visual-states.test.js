@@ -170,7 +170,8 @@ check("LT62 Localização: no instructional paragraphs, concise state and no OFF
  const body=dock.split("function renderLocationChoices(){")[1]?.split("function manualRefreshTap(){")[0]||"";
  const feedback=dock.split("function locationPanelFeedback(){")[1]?.split("window.onLocationPaste=",1)[0]||"";
  assert.ok(body.includes('const title=make("div","choiceHeader")'));
- assert.ok(body.includes('title.appendChild(make("span","","Localização"))'));
+ assert.ok(body.includes('titleAction=make("button","locTitleHelp","Localização")')&&
+  body.includes('titleAction.onclick=renderLocationCooldownTable'));
  assert.ok(!body.includes('close.onclick=closeChoices;title.appendChild(close)'));
  assert.ok(!body.includes('Coords e raio 0–1000 km. Aplicar pesquisa sem limpar outros filtros.'));
  assert.ok(!body.includes('const hide=make("button","locHide","Fechar")'));
@@ -178,7 +179,8 @@ check("LT62 Localização: no instructional paragraphs, concise state and no OFF
  assert.ok(body.includes('message.setAttribute("role","status")'));
  assert.ok(body.includes('message.hidden=true'));
  assert.ok(feedback.includes('hint.hidden=state==="OFF"'));
- assert.ok(feedback.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada"'));
+ assert.ok(feedback.includes('state==="NOT_APPLIED"?')&&
+  feedback.includes('state==="SEARCH_ERROR"?"⚠ Busca falhou'));
  assert.ok(!feedback.includes('OFF · busca geral'));
 });
 check("LT62 Localização: SVG de colar centralizado, km limitado e busca independente",()=>{
