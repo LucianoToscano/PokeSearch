@@ -2177,10 +2177,11 @@ test("UX-LOCATION-RETRY-01 same coordinates apply repeats safely without resetti
  const block=service.split('@JavascriptInterface public void setLocation(boolean enabled,String coords,int radius)')[1]
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
  const same=block.split('if(locationEnabled==enabled&&')[1]?.split('locationVerified=false;')[0]||"";
- return same.includes('!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+ return same.includes('if(!searchInProgress){')&&
    same.includes('OverlayService.this.refresh(true);')&&
-   same.includes('Pesquisando com coordenadas e filtros ativos')&&
-   same.includes('Aguarde a busca atual ou o intervalo do site')&&
+   same.includes('Revalidando coordenadas e raio')&&
+   same.includes('queuedManualRefresh=true;')&&
+   !same.includes('nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
    !same.includes('locationVerified=false;')&&
    block.indexOf('locationVerified=false;')>block.indexOf('if(locationEnabled==enabled&&')&&
    block.includes('String valid=enabled?extractCoordinates(')&&
