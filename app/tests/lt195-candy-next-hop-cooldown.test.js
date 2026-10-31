@@ -10,7 +10,7 @@ const policy=java("CandyCooldownPolicy.java");
 const html=fs.readFileSync(path.join(root,"assets/rare_candy_controls.html"),"utf8");
 const primary=java("OverlayService.java");
 const secondary=java("SecondaryOverlayService.java");
-assert.match(policy,/static double distanceMeters\(String from,String to\)/);
+assert.ok(policy.includes("distanceMeters(origin,next)"));
 assert.match(policy,/Math\.cos\(lat1\)\*Math\.cos\(lat2\)/);
 assert.match(policy,/return 7200;/);
 assert.match(policy,/static int remainingSeconds/);
