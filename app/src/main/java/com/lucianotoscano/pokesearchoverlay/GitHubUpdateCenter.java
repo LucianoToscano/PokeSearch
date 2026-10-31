@@ -3,6 +3,8 @@ package com.lucianotoscano.pokesearchoverlay;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -17,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.widget.LinearLayout;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.core.content.FileProvider;
@@ -55,6 +58,9 @@ public final class GitHubUpdateCenter {
     private static final String CERT="34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e";
     private static final String CHANNEL="pokesearch-updates";
     private static final String PREFS="prefs";
+    static final int INSTALL_REQUEST=54403;
+    private static volatile long lastInstallerLaunch=0L;
+    private static volatile String lastInstallerUrl="";
     private static final int MAX_META=256*1024;
     private static final long MAX_APK=150_000_000L;
     private static final long MIN_INTERVAL_MS=5*60*1000L;
@@ -315,23 +321,97 @@ public final class GitHubUpdateCenter {
             return CERT.equals(hex(sha.digest(signers[0].toByteArray())));
         }catch(Exception ignored){return false;}
     }
-    public static void install(Activity activity,File apk){
-        if(apk==null||!apk.isFile())return;
+    // This is a USER-confirmed installer handoff. It cannot override Samsung
+    // Auto Blocker, Play Protect, unknown-source policy or the system UI.
+    private static void installationHelp(Activity activity,String url,String reason){
+        if(activity.isFinishing()||activity.isDestroyed())return;
+        new AlertDialog.Builder(activity)
+            .setTitle("Instalação não iniciada")
+            .setMessage(reason+"\\n\\nSe o instalador do Samsung fechar, baixe o APK oficial pelo navegador e abra em Meus Arquivos → Downloads. Não desinstale a versão atual.")
+            .setPositiveButton("Abrir APK no navegador",(d,w)->openOfficialDownload(activity,url))
+            .setNegativeButton("Fechar",null).show();
+    }
+    static void openOfficialDownload(Activity activity,String url){
+        if(activity.isFinishing()||activity.isDestroyed()||url==null||
+           !url.startsWith(ASSET_PREFIX)||!url.matches(
+            "https://github\\.com/LucianoToscano/PokeSearch/releases/download/v0\\.\\d{2}\\.\\d{2,}-\\d{5,10}/PokeSearch-v0\\.\\d{2}\\.\\d{2,}-LT\\.apk"))return;
         try{
-            if(Build.VERSION.SDK_INT>=26&&!activity.getPackageManager().canRequestPackageInstalls()){
-                Intent manage=new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:"+activity.getPackageName()));
-                activity.startActivity(manage);return;
-            }
+            Intent browser=new Intent(Intent.ACTION_VIEW,Uri.parse(url));
+            browser.addCategory(Intent.CATEGORY_BROWSABLE);
+            activity.startActivity(browser);
+        }catch(RuntimeException exception){
+            android.widget.Toast.makeText(activity,
+                "Abra GitHub Releases pelo navegador para baixar o APK",android.widget.Toast.LENGTH_LONG).show();
+        }
+    }
+    private static Intent installerIntent(Uri content,boolean primary){
+        // ACTION_INSTALL_PACKAGE is the official package-installer action.
+        // Some OEM implementations accept only ACTION_VIEW + APK MIME.
+        Intent installer=new Intent(primary?Intent.ACTION_INSTALL_PACKAGE:Intent.ACTION_VIEW);
+        if(primary)installer.setData(content);
+        else installer.setDataAndType(content,"application/vnd.android.package-archive");
+        // Use ClipData as well as data for Samsung's package-installer process
+        // and allow its downstream components to read our cache FileProvider.
+        installer.setClipData(ClipData.newRawUri("PokeSearch APK",content));
+        installer.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if(primary)installer.putExtra(Intent.EXTRA_RETURN_RESULT,true);
+        return installer;
+    }
+    public static void install(Activity activity,File apk,Release release){
+        if(activity.isFinishing()||activity.isDestroyed())return;
+        if(apk==null||release==null||!apk.isFile()||
+           !validPackage(activity,apk,release)){
+            installationHelp(activity,release==null?"":release.url,
+                "O APK precisa ser validado novamente antes da instalação.");
+            return;
+        }
+        if(Build.VERSION.SDK_INT>=26&&!activity.getPackageManager().canRequestPackageInstalls()){
+            new AlertDialog.Builder(activity)
+                .setTitle("Permissão necessária")
+                .setMessage("O Android ainda não permite instalar atualizações a partir do PokeSearch. Autorize somente este aplicativo em Instalar apps desconhecidos. O Bloqueador Automático da Samsung também pode impedir a instalação.")
+                .setPositiveButton("Abrir configurações",(dialog,w)->{
+                    try{
+                        activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                            Uri.parse("package:"+activity.getPackageName())));
+                    }catch(RuntimeException e){
+                        installationHelp(activity,release.url,"Não foi possível abrir as permissões.");
+                    }
+                })
+                .setNeutralButton("Baixar pelo navegador",(dialog,w)->openOfficialDownload(activity,release.url))
+                .setNegativeButton("Cancelar",null).show();
+            return;
+        }
+        try{
+            File folder=new File(activity.getCacheDir(),"updates");
+            if(!apk.getCanonicalFile().getParentFile().equals(folder.getCanonicalFile()))
+                throw new SecurityException("Update file outside cache");
             Uri content=FileProvider.getUriForFile(activity,
                 activity.getPackageName()+".updates",apk);
-            Intent install=new Intent(Intent.ACTION_VIEW);
-            install.setDataAndType(content,"application/vnd.android.package-archive");
-            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            activity.startActivity(install);
-        }catch(Exception ignored){
-            android.widget.Toast.makeText(activity,"Instalação não disponível neste aparelho",android.widget.Toast.LENGTH_LONG).show();
+            lastInstallerLaunch=android.os.SystemClock.elapsedRealtime();
+            lastInstallerUrl=release.url;
+            try {
+                activity.startActivityForResult(installerIntent(content,true),INSTALL_REQUEST);
+            }catch(ActivityNotFoundException|SecurityException error){
+                // Only fallback for a launch failure: NEVER attempt a second
+                // silent install when the primary UI merely returns cancelled.
+                activity.startActivityForResult(installerIntent(content,false),INSTALL_REQUEST);
+            }
+        }catch(Exception error){
+            installationHelp(activity,release.url,
+                "O Android não conseguiu abrir o instalador deste aparelho.");
         }
+    }
+    static boolean onInstallerResult(Activity activity,int request,int result,Intent data){
+        if(request!=INSTALL_REQUEST)return false;
+        if(result==Activity.RESULT_OK)return true;
+        long elapsed=android.os.SystemClock.elapsedRealtime()-lastInstallerLaunch;
+        // A deliberate later cancellation doesn't need a follow-up warning.
+        // An instant close without a system dialog does.
+        if(elapsed>=0&&elapsed<4000){
+            installationHelp(activity,lastInstallerUrl,
+                "O instalador do Android fechou antes de solicitar a atualização. Verifique as permissões de instalação e a proteção do Samsung.");
+        }
+        return true;
     }
     public static void showDialog(MainActivity activity,Release release){
         if(!eligible(activity,release))return;
@@ -344,6 +424,14 @@ public final class GitHubUpdateCenter {
         final ProgressBar bar=new ProgressBar(activity,null,android.R.attr.progressBarStyleHorizontal);
         bar.setMax(100);bar.setProgress(0);bar.setVisibility(android.view.View.GONE);
         layout.addView(info);layout.addView(bar);
+        // Always provide an alternative installation route when Samsung's
+        // in-app package handler closes immediately after a verified download.
+        final Button browserFallback=new Button(activity);
+        browserFallback.setAllCaps(false);
+        browserFallback.setText("Instalar pelo navegador");
+        browserFallback.setVisibility(android.view.View.GONE);
+        browserFallback.setOnClickListener(v->openOfficialDownload(activity,release.url));
+        layout.addView(browserFallback);
         AlertDialog dialog=new AlertDialog.Builder(activity)
             .setTitle("PokeSearch — atualização")
             .setView(layout).setNegativeButton("Depois",(d,w)->later(activity,release.versionCode))
@@ -359,7 +447,8 @@ public final class GitHubUpdateCenter {
                 if(percent>=0)bar.setProgress(percent);
                 if(apk!=null){
                     button.setText("Instalar atualização");button.setEnabled(true);
-                    button.setOnClickListener(v2->install(activity,apk));
+                    browserFallback.setVisibility(android.view.View.VISIBLE);
+                    button.setOnClickListener(v2->install(activity,apk,release));
                 }else if(percent<0){button.setText("Tentar novamente");button.setEnabled(true);
                     button.setOnClickListener(v3->{
                         // Restart through a fresh dialog to avoid reusing a canceled task.
