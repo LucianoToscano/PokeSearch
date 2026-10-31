@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT196 · 0.01.96 · 54401
+## Versão oficial atual — LT197 · 0.01.97 · 54404
+
+[Release LT197](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.97-54404) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.97-54404/PokeSearch-v0.01.97-LT.apk) · [Actions SUCCESS #41184612797](https://github.com/LucianoToscano/PokeSearch/actions/runs/41184612797) · [PR #161 integrada](https://github.com/LucianoToscano/PokeSearch/pull/161).
+
+**APK:** 29.255.359 bytes · SHA-256 `fdaeb01a2ecc9c18b1b9c36cbc1ad9f9ca862175b80ba7d0dcb2b24cb448c064` · SOURCE_COMMIT `57cdf047676be960260603a2d91899a7cca6c8c7`, assinado v2 com certificado permanente.
+
+**Novidade experimental opcional:** no overlay dos Doces Raros, botão **A** permite autorizar a captura de tela do Android e detectar a mensagem `Item encontrado!` com sprite arco-íris por duas leituras, iniciando cooldown estimado e ocultando o doce após confirmação. Detector desligado por padrão, com notificação de parada, status local e alternativa manual **✓ Peguei**. Nenhuma imagem é salva/enviada. O reconhecimento ao vivo na nova LT197 ainda precisa ser validado no Samsung; testes automatizados não garantem funcionamento na tela real.
+
+[Google Drive oficial LT197 — APK e relatórios ZIP](https://drive.google.com/file/d/1vfZVQqwNFqF5LM56ZsdEBCZRZsFEPq0h/view) · [Registro LT197](docs/LT197_AUTO_DETECCAO_DOCE_RARO_QA_20261031.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
+
+---
+
+## Histórico — versão oficial anterior LT196 · 0.01.96 · 54401
 
 [Release LT196](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.96-54401) · [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.96-54401/PokeSearch-v0.01.96-LT.apk) · [Actions SUCCESS #41178326181](https://github.com/LucianoToscano/PokeSearch/actions/runs/41178326181) · [PR #160 integrada](https://github.com/LucianoToscano/PokeSearch/pull/160).
 
