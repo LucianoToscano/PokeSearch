@@ -200,8 +200,9 @@ async function suite(){
  await check("expired code never goes to API",async()=>{
   const t=makeClient({now:Date.UTC(2100,0,1)});
   const s=await t.client.search(filter);
-  assert.equal(s.ok,true);
-  assert.equal(s.cards.length,0);
+  assert.equal(s.ok,false);
+  assert.equal(s.reason,"unverified-results");
+  assert.equal(s.expired,1);
   assert.equal((await t.client.reveal({sourceIndex:0,searchId:s.searchId,pokemonId:821,cp:438})).reason,"stale-or-ambiguous-selection");
   assert.equal(t.calls.length,1);
  });
