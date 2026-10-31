@@ -179,7 +179,8 @@ check("LT62 Localização: no instructional paragraphs, concise state and no OFF
  assert.ok(body.includes('message.setAttribute("role","status")'));
  assert.ok(body.includes('message.hidden=true'));
  assert.ok(feedback.includes('hint.hidden=state==="OFF"'));
- assert.ok(feedback.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada"'));
+ assert.ok(feedback.includes('state==="NOT_APPLIED"?')&&
+  feedback.includes('state==="SEARCH_ERROR"?"⚠ Busca falhou'));
  assert.ok(!feedback.includes('OFF · busca geral'));
 });
 check("LT62 Localização: SVG de colar centralizado, km limitado e busca independente",()=>{
