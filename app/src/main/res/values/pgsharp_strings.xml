@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pgsharp_accessibility_description">Teste opcional: tenta identificar somente coordenadas atuais do jogador que o PGSharp disponibilizar como texto acessível. Não lê o GPS do Android; não captura tela, mensagens privadas ou logins. Pode não funcionar dependendo da interface do PGSharp.</string>
+</resources>

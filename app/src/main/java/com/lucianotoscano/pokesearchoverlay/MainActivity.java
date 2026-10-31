@@ -1398,6 +1398,7 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
         addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
+        addHomeDrawerItem(drawer,"📍","PGSharp · localização (teste)",this::showPgsharpAutoLocationDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
@@ -1417,6 +1418,52 @@ public class MainActivity extends Activity {
     /** Text-only Android Sharesheet: prefer the verified public update manifest,
      * so each future release automatically changes both the shared URL and label.
      * Never expose credentials or accept unverified download hosts/IDs. */
+    /** One-time Android opt-in; never silently enable Accessibility. */
+    private void showPgsharpAutoLocationDialog(){
+        boolean requested=getSharedPreferences("prefs",0)
+            .getBoolean("pgsharpAutoQaEnabled",false);
+        SharedPreferences diag=getSharedPreferences("pgsharp_qa_diagnostics",0);
+        long now=System.currentTimeMillis();
+        long lastEvent=diag.getLong("lastEventAt",0L);
+        long lastValid=diag.getLong("lastValidAt",0L);
+        String eventAge=lastEvent>0L?
+            Math.max(0,(now-lastEvent)/1000)+" s atrás":"nenhum evento";
+        String validAge=lastValid>0L?
+            Math.max(0,(now-lastValid)/1000)+" s atrás":"nenhuma";
+        String message="Diagnóstico LT198 (somente dados locais):\n"+
+            "Teste solicitado: "+(requested?"SIM":"NÃO")+"\n"+
+            "Serviço do Android: "+(diag.getBoolean("connected",false)?"CONECTADO":"NÃO CONECTADO")+"\n"+
+            "Eventos Pokémon GO: "+diag.getInt("events",0)+"\n"+
+            "Último evento: "+eventAge+"\n"+
+            "Origem da árvore: "+diag.getString("source","nenhuma")+"\n"+
+            "Nós visíveis: "+diag.getInt("nodes",0)+"\n"+
+            "Nós com texto: "+diag.getInt("texts",0)+"\n"+
+            "Coordenada atual reconhecida: "+validAge+"\n"+
+            "Diagnóstico: "+diag.getString("status","sem leitura ainda")+"\n\n"+
+            "Abra o PGSharp, faça um teleporte e mova o joystick; volte aqui para conferir. "+
+            "O GPS do Android NÃO é utilizado. Se eventos chegarem sem coordenadas, "+
+            "o PGSharp pode não expor a posição via Acessibilidade. "+
+            "Nenhum texto de outras telas é gravado neste relatório.";
+        new AlertDialog.Builder(this)
+            .setTitle("📍 PGSharp · diagnóstico experimental")
+            .setMessage(message)
+            .setNegativeButton("Fechar",null)
+            .setNeutralButton("Desativar",(d,w)->{
+                getSharedPreferences("prefs",0).edit()
+                    .putBoolean("pgsharpAutoQaEnabled",false).apply();
+                Toast.makeText(this,"Teste PGSharp desativado",Toast.LENGTH_SHORT).show();
+            })
+            .setPositiveButton(requested?"Abrir Acessibilidade":"Ativar teste",(d,w)->{
+                getSharedPreferences("prefs",0).edit()
+                    .putBoolean("pgsharpAutoQaEnabled",true).apply();
+                try{startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));}
+                catch(Exception ignored){
+                    Toast.makeText(this,"Abra Ajustes > Acessibilidade > apps instalados > PokeSearch",
+                        Toast.LENGTH_LONG).show();
+                }
+            }).show();
+    }
+
     private void sharePokeSearch(){
         UpdateCenter.Manifest announced=currentDriveUpdate;
         boolean current=announced!=null && announced.enabled &&

@@ -15,6 +15,17 @@
         <service android:name=".OverlayService" android:exported="false" />
         <service android:name=".SecondaryOverlayService" android:exported="false" />
         <service android:name=".RareCandyOverlayService" android:exported="false" />
+        <!-- Opt-in QA: OS-enforced accessibility binding. Only Pokémon GO package events. -->
+        <service android:name=".PgsharpLocationAccessibilityService"
+            android:label="PokeSearch · PGSharp (teste)"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice"
+                android:resource="@xml/pgsharp_accessibility_config" />
+        </service>
         <provider android:name="androidx.core.content.FileProvider"
             android:authorities="com.lucianotoscano.pokesearch.updates"
             android:exported="false" android:grantUriPermissions="true">
