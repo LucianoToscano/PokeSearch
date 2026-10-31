@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT193 · 0.01.93 · 54398
+## Versão oficial atual — LT195 · 0.01.95 · 54400
+
+[Release LT195](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.95-54400) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.95-54400/PokeSearch-v0.01.95-LT.apk) · [Actions SUCCESS #41175591798](https://github.com/LucianoToscano/PokeSearch/actions/runs/41175591798) · [PR #159 integrada](https://github.com/LucianoToscano/PokeSearch/pull/159).
+
+**APK:** 29.018.177 bytes · SHA-256 `1d4c78ef06cfc6bab3fa5ceadfa628c6f908d1532f168ec7ab2668b7bd06c942` · SOURCE_COMMIT `c023c3c2ab9747db13a0a975226747517379e71c` · certificado v2 original.
+
+**Novidade:** contador informativo por distância entre Doces Raros copiados (vermelho/rosa/verde), reabertura persistente, reset no menu. Integra correções LT194 da validação de IV/zero da API, cap de 10 resultados por Pokébola. **Cópia de coordenadas não confirma cooldown real do jogo**. QA autenticado Samsung ainda pendente.
+
+[Google Drive LT195 — ZIP com APK oficial e relatórios](https://drive.google.com/file/d/1HV7MzU7VhSqPlJtk_R9roR7IiazsX2x9/view) · [Registro LT195](docs/LT195_CANDY_COOLDOWN_E_DISTRIBUICAO_20261031.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
+
+---
+
+## Histórico — versão oficial anterior LT193 · 0.01.93 · 54398
 
 [GitHub Release LT193](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.93-54398) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.93-54398/PokeSearch-v0.01.93-LT.apk) · [Actions SUCCESS #41025717103](https://github.com/LucianoToscano/PokeSearch/actions/runs/41025717103).
 
