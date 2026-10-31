@@ -1304,6 +1304,7 @@ public final class RareCandyOverlayService extends Service {
             candyConfirmationDialog.dismiss();
             candyConfirmationDialog=null;
         }
+        if(prefs!=null)prefs.edit().putBoolean("candyAutoPickupOptIn",false).apply();
         stopService(new Intent(this,CandyScreenCaptureService.class));
         destroyed=true;running=false;
         ++generation;main.removeCallbacksAndMessages(null);
