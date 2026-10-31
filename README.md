@@ -1,6 +1,20 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT204 · 0.02.04 · 54411
+## Versão oficial atual — LT206 · 0.02.06 · 54413
+
+[Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.06-54413/PokeSearch-v0.02.06-LT.apk) · [Release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.06-54413) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1s8Tyvvnl_9Ppt-q5ixvZJiAEks7_kluu/view?usp=drivesdk) · [Workflow oficial SUCCESS #41239515825](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239515825) · [PR #174](https://github.com/LucianoToscano/PokeSearch/pull/174).
+
+**LT206:** temporizador do limite de Pegar Coordenadas agora mostra até 24h em ambas Pokébolas; Doce Raro reconhece Retry-After numérico ou data HTTP sem antecipar consultas. Mantidas contas independentes, login opcional, Shiny temporariamente desativado, limite de 10 resultados, assinatura original e proteções 429. LT190/191 são históricas e suas correções permanecem integradas.
+
+**APK:** 29.264.103 bytes · SHA-256 `15513c98364fa6a4ca3f1909e170edb6978a918de8cabdbd52863ebf0aa8b75a` · certificado Android v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` · SOURCE_COMMIT `7eb57cf3e327c89b99d3e986c4607bf062f832a5`.
+
+**Drive:** ZIP 26.925.022 bytes · SHA-256 `b573f1bcfb28c1c9148a27c238914f0ee28d02747b39e7ee294a5f385af725cc`, com APK e relatórios verificados. Instalação depende do Android; busca real autenticada e homologação física Samsung ainda pendentes.
+
+[Guia Mestre](docs/GUIA_MESTRE.md) · [Auditoria LT206](docs/LT206_AUDITORIA_CONTINUIDADE_20261031.md).
+
+---
+
+## Histórico — LT204 · 0.02.04 · 54411
 
 [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.04-54411/PokeSearch-v0.02.04-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.04-54411) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1pxeWIcjyJLpMonkg2u8hFzhwEt-f0Nuy/view?usp=drivesdk) · [Workflow oficial #41231635596](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231635596) · [PR #172](https://github.com/LucianoToscano/PokeSearch/pull/172).
 
