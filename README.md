@@ -1,6 +1,22 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT201 · 0.02.01 · 54408
+## Versão oficial atual — LT202 · 0.02.02 · 54409
+
+[APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.02-54409/PokeSearch-v0.02.02-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.02-54409) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1XWrMubOZlFN9ax5LZ1kC7Z0jvgTSvn30/view?usp=drivesdk) · [Actions SUCCESS #41228184179](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228184179) · [PR #169 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/169).
+
+**LT202:** integração da resposta `shiny_for: string[] | null` do PoGoCoordinates. Exibe rótulo compacto e sanitizado de treinadores vinculados somente com conta verificada, sem transformar lista de contas em prova de Shiny. `shiny` e `background` permanecem indicadores para o `shiny_account` selecionado; background-only também usa o treinador vinculado por Pokébola. Dados de usuários não são repassados em consultas anônimas e as seleções P1/P2 seguem independentes.
+
+**Rare Candy:** mantém `POST /rare-candy/search` com `coords` diretas, sem `/reveal`; raio do menu em metros convertido para km na API e limites do provedor preservados. Tiers/quotas: usar sempre a resposta `cap`, com até 10 resultados visíveis no overlay.
+
+**APK:** 29.262.143 bytes · SHA-256 `d375602f4857ad031906b581ae9795798bdcc0fba4d1821aa5dc62e65ea5a4f1` · assinatura permanente v2 certificado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` · SOURCE_COMMIT `912ff2c78d2526532a75b42ee4c9a6e0cb39ebb1`.
+
+**Drive:** ZIP 26.922.827 bytes · SHA-256 `de60f71651b9e689ec561994042b924baf43ae92f5f0864eb5fc77a181430d84`, com APK idêntico, versão, assinatura e hash. Atualização disponível via `latest` do GitHub Releases, instalação depende de autorização em cada aparelho. **Pendente físico:** confirmar `shiny_for` preenchido numa conta autorizada e vinculada em Samsung; testes sintéticos não comprovam esse retorno em sessão real.
+
+[Guia Mestre](docs/GUIA_MESTRE.md) · [Auditoria e checklist LT202](docs/LT202_POGOCORDINATES_SHINY_FOR_QA_20261031.md).
+
+---
+
+## Histórico — versão oficial anterior LT201 · 0.02.01 · 54408
 
 [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.01-54408/PokeSearch-v0.02.01-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.01-54408) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1v3b2pXlMkWITpefNfXYkAnA7pFQoMKeJ/view?usp=drivesdk) · [GitHub Actions SUCCESS #41226844970](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226844970) · [PR #168 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/168).
 
