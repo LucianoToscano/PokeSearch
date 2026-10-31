@@ -32,3 +32,18 @@ assert.equal(fields.coordsRateTimer.textContent,"Tente em 24h 00m");
 vm.runInContext('renderCoordsRate({type:"quota",retrySeconds:7200})',context);
 assert.equal(fields.coordsRateTimer.hidden,true);
 console.log("LT206 interactive coordinate timer smoke PASS");
+
+async function checkCandyRetry(header,expectedMin,expectedMax){
+ const context=vm.createContext({window:{},location:{protocol:"https:",hostname:"pogocoordinates.com",pathname:"/search"},localStorage:{getItem:()=>null},fetch:async()=>({ok:false,status:429,headers:{get:()=>header}}),Date});
+ vm.runInContext(candy,context);
+ const output=JSON.parse(await context.window.PokeSearchCandy.search("",1000));
+ assert.equal(output.status,429);
+ assert.ok(output.retry_after>=expectedMin&&output.retry_after<=expectedMax);
+}
+(async()=>{
+ await checkCandyRetry("7200",7200,7200);
+ await checkCandyRetry("95000",86400,86400);
+ await checkCandyRetry("invalid",60,60);
+ await checkCandyRetry(new Date(Date.now()+7200000).toUTCString(),7198,7200);
+ console.log("LT206 runtime Rare Candy HTTP-date and numeric Retry-After PASS");
+})().catch(e=>{console.error(e);process.exitCode=1});
