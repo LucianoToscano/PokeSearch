@@ -5026,6 +5026,17 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
+            // Temporarily suspended by the provider. Do not submit shiny_only,
+            // trigger trainer login, or flip the saved option. Keep the control
+            // discoverable so the feature can be restored in a later release.
+            shiny=false;
+            shinyVerified=false;
+            overlayPrefs().edit().putBoolean("shiny",false).apply();
+            status("✨ Shiny temporariamente indisponível no PoGoCoordinates.");
+            update();
+            return;
+            // Historical login-verified Shiny path retained, but not reachable.
+            /*
             shiny=!shiny;
             overlayPrefs().edit().putBoolean("shiny",shiny).apply();
             replaceActiveFilterSearch();
@@ -5053,6 +5064,7 @@ public class OverlayService extends Service {
                 return;
             }
             startVerifiedShinySearch(generation,0);
+            */
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
@@ -5405,8 +5417,11 @@ public class OverlayService extends Service {
         ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
         ivPercentMax=Math.max(ivPercentMin,
             Math.min(100,pref.getInt("ivPercentMax",100)));
-        shiny=overlayPrefs().getBoolean("shiny",false);
-        if(!shiny)shinyVerified=false;
+        // Shiny is currently unavailable at PoGoCoordinates. Clear the
+        // active query flag, but preserve previously linked trainer records.
+        shiny=false;
+        shinyVerified=false;
+        overlayPrefs().edit().putBoolean("shiny",false).apply();
         update();
         return START_STICKY;
     }
