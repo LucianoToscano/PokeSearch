@@ -2385,9 +2385,14 @@ public class OverlayService extends Service {
             searchInProgress=false;
             String reason=configured.optString("reason","Controle do site indisponível");
             // Show concrete filter name; no account data or coordinates from the DOM.
-            String summary=reason.replace("Filtros adicionais: ","").trim();
+            String summary=reason.contains("portal oficial do seletor Pokémon")?
+                "Seletor Pokémon não abriu no site":
+                reason.replace("Filtros adicionais: ","").trim();
             if(summary.length()>38)summary=summary.substring(0,38);
-            searchFailure("⚠ Filtro: "+summary,"Falha na configuração: "+reason);
+            searchFailure("⚠ Filtro: "+summary,
+                "Falha na configuração do site: "+reason+
+                (reason.contains("portal oficial do seletor Pokémon")?
+                 ". A seleção continua salva. Reabra o seletor oficial e tente novamente.":""));
         });
     }
     private void configureLocationAndVerify(int generation,boolean manual,int attempt){
