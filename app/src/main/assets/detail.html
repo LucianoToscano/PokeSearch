@@ -807,7 +807,11 @@ function clearCoordsRate(){
 function updateCoordsRateTimer(){
  const timer=document.getElementById("coordsRateTimer");if(!timer)return;
  const seconds=coordsRateUntil?Math.max(0,Math.ceil((coordsRateUntil-Date.now())/1000)):0;
- timer.hidden=!seconds;timer.textContent=seconds?"Tente em "+seconds+"s":"";
+ let readable="";
+ if(seconds>=3600)readable=Math.floor(seconds/3600)+"h "+String(Math.floor(seconds%3600/60)).padStart(2,"0")+"m";
+ else if(seconds>=60)readable=Math.floor(seconds/60)+"m "+String(seconds%60).padStart(2,"0")+"s";
+ else if(seconds)readable=seconds+"s";
+ timer.hidden=!seconds;timer.textContent=seconds?"Tente em "+readable:"";
  if(!seconds&&coordsRateTick){clearInterval(coordsRateTick);coordsRateTick=null;}
 }
 function renderCoordsRate(data){
@@ -816,7 +820,7 @@ function renderCoordsRate(data){
  if(kind!=="rate"&&kind!=="quota")return;
  coordsRestriction=kind;
  const seconds=kind==="rate"&&Number.isInteger(data.retrySeconds)&&
-  data.retrySeconds>0&&data.retrySeconds<=3600?data.retrySeconds:0;
+  data.retrySeconds>0&&data.retrySeconds<=86400?data.retrySeconds:0;
  coordsRateUntil=seconds?Date.now()+seconds*1000:0;
  const notice=document.getElementById("coordsRateNotice");if(notice)notice.hidden=false;
  updateCoordsRateTimer();if(seconds)coordsRateTick=setInterval(updateCoordsRateTimer,1000);
