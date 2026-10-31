@@ -12,8 +12,8 @@ jobs:
     environment: official-updates
     timeout-minutes: 85
     env:
-      POKE_TEST_VERSION_CODE: '54402'
-      POKE_TEST_VERSION_LABEL: '51202'
+      POKE_TEST_VERSION_CODE: '54403'
+      POKE_TEST_VERSION_LABEL: '51203'
       POKE_TEST_PUBLIC_VERSION: '0.01.97'
       POKE_CONTROLLED_DISTRIBUTION: 'true'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
@@ -25,7 +25,7 @@ jobs:
       POKE_SCRAPBOOK_STAGE1_QA: 'false'
       POKE_SCRAPBOOK_ONLINE_QA: 'false'
       GH_TOKEN: ${{ github.token }}
-      QA_APK: 'PokeSearch-LT197-QA-0.01.97-54402.apk'
+      QA_APK: 'PokeSearch-LT197-QA2-0.01.97-54403.apk'
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0, persist-credentials: false, ref: "${{ github.sha }}"}
@@ -70,6 +70,10 @@ jobs:
           node app/tests/lt196-candy-pickup-confirmation.test.js
           node app/tests/lt196-candy-collected-visibility.test.js
           node app/tests/lt197-candy-visual-consent.test.js
+          # Must pass dual-sprite fallback, actual despawn window and fixed
+          # native status diagnostics before allowing signed QA packaging.
+          grep -Fq 'hasDualCandyBanner' app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyScreenCaptureService.java
+          grep -Fq 'getCandyCaptureStatus' app/src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java
           mkdir -p "$RUNNER_TEMP/lt197-jvm"
           javac --release 17 -d "$RUNNER_TEMP/lt197-jvm" app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyPickupEvidence.java app/tests/CandyPickupEvidenceTest.java
           java -cp "$RUNNER_TEMP/lt197-jvm" com.lucianotoscano.pokesearchoverlay.CandyPickupEvidenceTest
@@ -93,7 +97,7 @@ jobs:
           unzip -t "$APK" >/dev/null
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54402'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54403'" PACKAGE-VERSION.txt
           grep -Fq "versionName='0.01.97'" PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
@@ -107,7 +111,7 @@ jobs:
           printf 'TEST BUILD ONLY. Not published to GitHub Releases, OTA, or Drive.\n' > QA-NOT-PUBLIC.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-LT197-QA-Signed-Verified
+          name: PokeSearch-LT197-QA2-Signed-Verified
           path: |
             ${{ env.QA_APK }}
             SHA256SUMS.txt
