@@ -230,6 +230,10 @@
    const pvp=config&&(config.mode==="gl"||config.mode==="ul");
    const parsed=d.apiContract.normalizeResponse(result.body,{
     nowMs:dateNow(),shiny:config&&config.shiny===true,
+    // Only show linked account labels when an explicitly verified trainer
+    // was selected by the native account slot for this same Pokébola.
+    showTrainerNames:config?.shiny===true&&
+      typeof config.shinyAccount==="string"&&/^\d{12}$/.test(config.shinyAccount),
     pvpLeague:pvp?proposed.payload.pvp_league:null,
     pvpMaxRank:pvp?proposed.payload.pvp_top_rank:null
    });
