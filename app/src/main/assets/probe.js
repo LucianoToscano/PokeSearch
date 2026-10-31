@@ -488,12 +488,21 @@ function pokemonSuggestion(query){
  }
  const popup=pokemonPickerPopup(input,trigger,wanted);
  if(!popup){
-  // Never toggle another site's menu. Only operate on the identified
-  // Pokémon trigger, and let React finish opening its listbox.
+  // React portals may hydrate AFTER the input value. Repeatedly clicking
+  // an unlabelled trigger can toggle it CLOSED on each native retry.
+  // Focus the exact Pokémon input, then issue at most one click per 1.5s.
+  // Never click other open dropdowns (Weather/Form/Gender).
   if(input.getAttribute('aria-expanded')!=='true'&&
      trigger?.getAttribute('aria-expanded')!=='true'){
-   if(trigger&&!trigger.disabled)trigger.click();
-   else if(document.activeElement!==input)input.focus?.();
+   if(document.activeElement!==input&&typeof input.focus==='function')
+    input.focus();
+   else if(trigger&&!trigger.disabled){
+    const now=Date.now(),last=Number(input.__psPokemonPortalTryAt)||0;
+    if(!last||now-last>=1500){
+     input.__psPokemonPortalTryAt=now;
+     trigger.click();
+    }
+   }
   }
   return {ok:false,pending:true,state:'pending',query:originalQuery,
    reason:'Aguardando portal oficial do seletor Pokémon'};
@@ -1473,7 +1482,6 @@ function locationModeControl(label){
 }
 function coordsModeSelected(){
  const coordButton=locationModeControl("Coords"),areaButton=locationModeControl("Area");
- if(!coordButton&&!areaButton)return null;
  const active=e=>e&&(e.checked===true||
   e.getAttribute("aria-checked")==="true"||e.getAttribute("aria-pressed")==="true"||
   e.getAttribute("aria-selected")==="true"||
@@ -1495,10 +1503,16 @@ function coordsModeSelected(){
  const coordPattern=/^\s*[-+]?\d{1,2}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?\s*$/;
  const providerCoords=pair.filter(e=>coordPattern.test(e.getAttribute("placeholder")||""));
  const providerRadius=pair.filter(e=>/^\s*radius\s*\(\s*km\b/i.test(e.getAttribute("placeholder")||""));
- if(coordButton&&!active(areaButton)&&fields.coords&&fields.radius&&
-    providerCoords.length===1&&providerRadius.length===1&&
-    fields.coords===providerCoords[0]&&fields.radius===providerRadius[0])
-   return true;
+ // Mobile provider builds can omit the Coords/Area tab buttons entirely
+ // while retaining their unique, editable official Coords + Radius pair.
+ // Accept only the exact provider placeholders and only if no visible Area
+ // control is active. Unrelated generic Distance filters cannot pass.
+ const uniqueOfficialPair=fields.coords&&fields.radius&&
+   !fields.coords.disabled&&!fields.radius.disabled&&
+   providerCoords.length===1&&providerRadius.length===1&&
+   fields.coords===providerCoords[0]&&fields.radius===providerRadius[0];
+ if(uniqueOfficialPair&&!active(areaButton)&&
+   (coordButton||(!coordButton&&!areaButton)))return true;
  return null;
 }
 function locationValue(field){return field?String(field.value||"").trim():"";}
@@ -1554,8 +1568,11 @@ function configureLocation(req){
     Math.abs(Number(req.coords.split(",")[0]))>90||Math.abs(Number(req.coords.split(",")[1]))>180)
     return JSON.stringify({ok:false,reason:"Parâmetros de localização inválidos"});
  const coords=locationModeControl("Coords");
- if(!coords)return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
  const selected=coordsModeSelected();
+ // A site version with only the unique official Coords/Radius fields does
+ // not need a tab click; every actual field is still validated after input.
+ if(selected!==true&&!coords)
+  return JSON.stringify({ok:false,pending:true,reason:"Aguardando opção Coords"});
  if(selected!==true){
   if(!coords.disabled&&selected===false)coords.click();
   else if(!coords.disabled&&selected===null){

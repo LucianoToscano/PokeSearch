@@ -4320,6 +4320,48 @@ body.popup-window.controls-window #choices.morePanel>.quickMoreAction{
  -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
  backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
 }
+
+/* LT200: cooldown reference is a view INSIDE the existing location popup.
+   It inherits the exact current menu background/transparency without creating
+   another overlay, icon, blank row or a separate opaque surface. */
+body.controls-window #choices.locationPanel .locTitleHelp{
+ flex:0 1 auto!important;width:auto!important;min-width:0!important;
+ height:auto!important;min-height:0!important;margin:0!important;padding:0!important;
+ border:0!important;box-shadow:none!important;background:transparent!important;
+ color:inherit!important;font:inherit!important;text-align:left!important;
+ white-space:nowrap!important;
+}
+body.controls-window #choices.locationPanel.locationCooldownTable{
+ max-height:min(408px,var(--popup-room,400px))!important;
+ overflow-y:auto!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownBack{
+ display:block!important;width:100%!important;height:25px!important;min-height:25px!important;
+ margin:0!important;padding:2px 4px!important;background:transparent!important;
+ border:0!important;border-bottom:1px solid #ffffff24!important;
+ color:inherit!important;text-align:left!important;font:600 11px/18px Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownHead,
+body.controls-window #choices.locationCooldownTable .locCooldownEntry{
+ display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ gap:4px!important;align-items:center!important;
+ min-width:0!important;padding:3px 5px!important;line-height:17px!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownHead{
+ position:sticky;top:0;z-index:1;
+ background:var(--visual-menu-bg,transparent)!important;
+ border-bottom:1px solid #ffffff30!important;
+ font:700 10px/17px Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownEntry{
+ font:500 10px/17px Roboto,Arial,sans-serif!important;
+ white-space:nowrap!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownEntry span:last-child,
+body.controls-window #choices.locationCooldownTable .locCooldownHead span:last-child{text-align:right!important}
+body.controls-window #choices.locationCooldownTable .locCooldownEntry:nth-child(even){
+ background:#ffffff09!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4706,7 +4748,8 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
    // and made ALL menus oscillate/shrink. scrollHeight is the independent
    // natural content height; cap at the popup's approved design height.
    const natural=Math.max(popup.scrollHeight,Math.ceil(popup.getBoundingClientRect().height));
-   const cap=popup.classList.contains("locationPanel")?265:
+   const cap=popup.classList.contains("locationCooldownTable")?408:
+    popup.classList.contains("locationPanel")?265:
     popup.classList.contains("filterPicker")?255:
     choiceOpen==="filters"?315:choiceOpen==="period"?245:
     choiceOpen==="alerts"?395:Math.max(140,Number(window.visualPrefs?.popupHeight)||390);
@@ -4737,7 +4780,7 @@ function closeChoices(){
  document.getElementById("cycle").setAttribute("aria-expanded","false");
  document.getElementById("period").setAttribute("aria-expanded","false");
  document.getElementById("location").setAttribute("aria-expanded","false");
- document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel",
+ document.getElementById("choices").classList.remove("visualPanel","locationPanel","locationCooldownTable","modePanel","standardPanel","filterPicker","morePanel",
   "modeCompact-raw","modeCompact-percent","modeCompact-league","modeCascade","modeCascadeOpen","filterCascade");
  delete document.getElementById("choices").dataset.panelKind;
  if(controlsWindow)Native.locationEditor(false);
@@ -5588,7 +5631,13 @@ window.onFilterOptions=function(response){
 function currentLocationUiState(){
  if(!locationEnabled)return "OFF";
  if(locationVerified)return "CONFIRMED";
- return activeSearchPhase==="error"?"NOT_APPLIED":"REQUESTED";
+ // A network, login or provider error is NOT evidence that Coords/Radius
+ // were rejected. Avoid the misleading "Localização não aplicada" banner.
+ if(activeSearchPhase==="error"){
+  return /localiza|coordenad|coords|radius|raio/i.test(String(status||""))
+   ?"NOT_APPLIED":"SEARCH_ERROR";
+ }
+ return "REQUESTED";
 }
 function locationPanelFeedback(){
  if(!controlsWindow||choiceOpen!=="location")return;
@@ -5625,10 +5674,12 @@ function locationPanelFeedback(){
    radiusSlider.value=String(locationRadius);
  const state=currentLocationUiState();
  hint.textContent=state==="CONFIRMED"?"✓ Localização confirmada · "+locationRadius+" km":
-  state==="NOT_APPLIED"?"⚠ Localização não aplicada":
+  state==="NOT_APPLIED"?
+   (/^⚠ Localização:/i.test(String(status||""))?String(status).replace(/ · resultados anteriores.*/,""):"⚠ Localização não confirmada"):
+  state==="SEARCH_ERROR"?"⚠ Busca falhou · confira o status":
   state==="REQUESTED"?"⌛ Verificando localização":"";
  hint.hidden=state==="OFF"||state==="CONFIRMED";
- hint.style.color=state==="NOT_APPLIED"?"#ffbf8f":"";
+ hint.style.color=state==="NOT_APPLIED"||state==="SEARCH_ERROR"?"#ffbf8f":"";
 }
 window.onLocationCopy=feedback=>{
  if(!controlsWindow||choiceOpen!=="location")return;
@@ -5674,13 +5725,63 @@ function sanitizeLocationRadiusDraft(raw){
  const digits=String(raw??"").replace(/\D/g,"").slice(0,4);
  return digits===""?"":String(Math.min(1000,Number(digits)));
 }
+const LOCATION_COOLDOWN_REFERENCE=Object.freeze([
+ ["< 10 m","0s"],["10 - 99 m","3s"],["100 - 499 m","15s"],
+ ["500 - 999 m","30s"],["1 - 4 km","2m"],["5 - 9 km","6m"],
+ ["10 - 24 km","11m"],["25 - 29 km","14m"],["30 - 64 km","22m"],
+ ["65 - 80 km","25m"],["81 - 99 km","35m"],["100 - 249 km","45m"],
+ ["250 - 499 km","1h"],["500 - 749 km","1h 15m"],
+ ["750 - 999 km","1h 30m"],[">= 1000 km","2h"]
+]);
+// The location label is the only launcher. No new icon or extra row in the
+// original three/four-row location editor. The same popup and its native
+// hitbox are reused; this table never changes live searches or cooldowns.
+let locationDraftBeforeCooldown=null;
+function renderLocationCooldownTable(){
+ const panel=document.getElementById("choices");
+ // Never discard coordinates/radius that the user was editing just because
+ // they read the reference before pressing Apply.
+ const coord=panel.querySelector("#locCoordinateInput");
+ const radius=panel.querySelector("#locRadiusValue");
+ const slider=panel.querySelector('input[type="range"]');
+ locationDraftBeforeCooldown=coord||radius?{
+  coords:coord?.value||"",radius:radius?.value||"",
+  slider:slider?.value||"0",
+  coordDirty:coord?.dataset.locationDraft==="true",
+  radiusDirty:radius?.dataset.locationDraft==="true"
+ }:null;
+ panel.replaceChildren();panel.classList.add("locationPanel","visible","locationCooldownTable");
+ panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
+ panel.dataset.panelKind="location-cooldown";
+ const back=document.createElement("button");back.type="button";
+ back.className="locCooldownBack";back.textContent="‹ Localização";
+ back.setAttribute("aria-label","Voltar ao menu Localização");
+ back.onclick=renderLocationChoices;
+ const headings=document.createElement("div");headings.className="locCooldownHead";
+ const left=document.createElement("span");left.textContent="Distância";
+ const right=document.createElement("span");right.textContent="Cooldown";
+ headings.append(left,right);panel.append(back,headings);
+ const rows=document.createElement("div");rows.className="locCooldownRows";
+ for(const [distance,wait] of LOCATION_COOLDOWN_REFERENCE){
+  const line=document.createElement("div");line.className="locCooldownEntry";
+  const d=document.createElement("span");d.textContent=distance;
+  const t=document.createElement("span");t.textContent=wait;
+  line.append(d,t);rows.appendChild(line);
+ }
+ panel.appendChild(rows);
+ panel.scrollTop=0;fit();
+}
 function renderLocationChoices(){
  const panel=document.getElementById("choices");
- panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
+ panel.replaceChildren();panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker","locationCooldownTable");
  panel.classList.add("locationPanel","visible");panel.dataset.panelKind="location";
  const make=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
  const title=make("div","choiceHeader");
- title.appendChild(make("span","","Localização"));
+ const titleAction=make("button","locTitleHelp","Localização");
+ titleAction.type="button";titleAction.title="Ver tabela de cooldown por distância";
+ titleAction.setAttribute("aria-label","Localização · abrir lista de cooldown por distância");
+ titleAction.onclick=renderLocationCooldownTable;
+ title.appendChild(titleAction);
  // No permanent help paragraph: controls speak for themselves; Native.setLocation preserves other filters.
  const fieldRow=make("div","locCoordsRow");
  const field=make("input","locField");field.id="locCoordinateInput";field.type="text";field.inputMode="decimal";
@@ -5789,6 +5890,14 @@ function renderLocationChoices(){
  panel.append(title,fieldRow,sliderRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
+ const draft=locationDraftBeforeCooldown;locationDraftBeforeCooldown=null;
+ if(draft){
+  if(draft.coordDirty){field.value=draft.coords;field.dataset.locationDraft="true";fitCoordinateGlyphs();}
+  if(draft.radiusDirty){
+   radiusField.value=draft.radius;radiusField.dataset.locationDraft="true";
+   slide.value=draft.slider;
+  }
+ }
  locationPanelFeedback();
  fit();
 }

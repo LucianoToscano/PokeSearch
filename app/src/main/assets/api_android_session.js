@@ -135,6 +135,17 @@
       if(Number.isSafeInteger(wait)&&wait>=1&&wait<=86400)
        return {ok:false,reason:"rate-limited",retryAfterSeconds:wait};
      }
+     if(r.reason==="invalid-request"){
+      // The transport has already discarded every server value/message.
+      // Forward only a validated HTTP code and a known schema field key.
+      const diagnostic={ok:false,reason:"invalid-request"};
+      if(r.httpStatus===400||r.httpStatus===422)
+       diagnostic.httpStatus=r.httpStatus;
+      if(typeof r.rejectedField==="string"&&
+         /^[a-z_]{2,40}$/.test(r.rejectedField))
+       diagnostic.rejectedField=r.rejectedField;
+      return diagnostic;
+     }
      return fail(r.reason);
     }
     const pvp=filters.mode==="gl"||filters.mode==="ul";

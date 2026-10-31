@@ -66,8 +66,9 @@ function fixture(options={}){
   body:{innerText:options.siteHint?"Paste coordinates (lat,lng) and a radius.":"Search",getClientRects:()=>[{}]},
   querySelectorAll:sel=>{
    if(sel.startsWith("input:not"))return visibleInputs;
-   if(sel.includes("[role=tab]")||sel.includes("input[type=radio]"))return buttons;
-   if(sel==="button,[role=button]")return buttons;
+   if(sel.includes("[role=tab]")||sel.includes("input[type=radio]"))
+    return options.noTabs?[]:buttons;
+   if(sel==="button,[role=button]")return options.noTabs?[]:buttons;
    return [];
   }
  };
@@ -101,6 +102,16 @@ check("Mobile site Coords numeric pair hydrates without text hint",settle(mobile
 check("Mobile pair coordinates verified after controlled React turns",mobile.run("verifyLocation",req).ok,true);
 mobile.coord.value="1,2";
 check("Mobile pair with changed spawn coordinates remains unverified",mobile.run("verifyLocation",req).ok,false);
+// Some legitimate mobile pages show the exact official editable pair but
+// no Coords/Area switch. This is distinct from two generic text inputs.
+let noTabs=fixture({noTabs:true,numericPlaceholder:true});
+check("Official unique Coords/Radius pair applies without mobile tab buttons",
+ settle(noTabs,req).ok,true);
+check("Location still verifies both values without mobile tab buttons",
+ noTabs.run("verifyLocation",req).ok,true);
+let noTabsGeneric=fixture({noTabs:true});
+check("Generic fields without tabs are not guessed as official mode",
+ noTabsGeneric.run("configureLocation",req).pending,true);
 let mobileArea=fixture({active:"area",unknownState:false,numericPlaceholder:true});
 check("Known Area tab is never mistaken for Coords",mobileArea.run("verifyLocation",req).ok,false);
 
