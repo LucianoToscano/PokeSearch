@@ -367,14 +367,29 @@ function pokemonPickerRoot(){
  }
  const input=pokemonPickerInput();
  if(input)for(let parent=input.parentElement,depth=0;parent&&depth<5;parent=parent.parentElement,depth++){
-  if(parent!==document.body&&pokemonPickerButton(parent))return parent;
+  if(parent===document.body)break;
+  if(pokemonPickerButton(parent))return parent;
+  // Mobile React can render the uniquely named official Pokémon search
+  // input directly (without a separate picker trigger). The exact input
+  // itself is sufficient evidence; never borrow a generic search field.
+  if(depth>=1&&parent.querySelectorAll){
+   const same=Array.from(parent.querySelectorAll('input:not([type=hidden])'))
+     .filter(e=>vis(e)&&pokemonSearchInputEvidence(e));
+   if(same.length===1&&same[0]===input)return parent;
+  }
  }
- return null;
+ return input&&input.parentElement&&input.parentElement!==document.body?
+  input.parentElement:null;
+}
+function pokemonSearchInputEvidence(e){
+ return /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|name.*form.*dex/i.test(
+  (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||''));
 }
 function pokemonPickerInput(){
- return elements('input:not([type=hidden])').find(e=>vis(e)&&
-  /search by name, form, or dex|search.*(?:pok[eé]mon|form|dex)|name.*form.*dex/i.test(
-   (e.getAttribute('placeholder')||'')+' '+(e.getAttribute('aria-label')||'')))||null;
+ const candidates=elements('input:not([type=hidden])').filter(e=>
+  vis(e)&&pokemonSearchInputEvidence(e));
+ // An ambiguous site with two similar inputs must NEVER pick the first.
+ return candidates.length===1?candidates[0]:null;
 }
 // PS66: a generic aria-haspopup button is NOT proof of the Pokémon trigger.
 function pokemonPickerButton(root){
@@ -417,17 +432,10 @@ function pokemonPickerPopup(input,trigger,query){
  const controls=[input,trigger].filter(Boolean);
  const ids=[...new Set(controls.flatMap(control=>
   [control.getAttribute('aria-controls'),control.getAttribute('aria-owns')].filter(Boolean)))];
- for(const id of ids){
-  const popup=document.getElementById?.(id);
-  if(popup&&vis(popup))return popup;
- }
  const selector='[role=option],[cmdk-item],[data-radix-collection-item],li';
- const all=elements('[role=listbox],[cmdk-list],[data-radix-popper-content-wrapper]')
-  .filter(vis).filter(scope=>scope.querySelectorAll(selector).length>0||
-   /(?:no results|no matches|nenhum(?:a|s)? resultado)/i.test(text(scope)));
- const innermost=all.filter(scope=>!all.some(inner=>inner!==scope&&scope.contains?.(inner)));
  const wanted=clean(query||'').toLowerCase();
- const matches=innermost.filter(scope=>{
+ const matchesQuery=scope=>{
+  if(!scope||!vis(scope))return false;
   const options=Array.from(scope.querySelectorAll(selector)).filter(vis);
   if(!options.length)return wanted!==''&&
    /(?:no results|no matches|nothing found|nenhum(?:a|s)? resultado)/i.test(text(scope))&&
@@ -437,14 +445,23 @@ function pokemonPickerPopup(input,trigger,query){
    document.activeElement===input;
   return options.some(option=>{
    const raw=text(option).toLowerCase();
-   // A #dex query can render leading zeros on the site.
    if(/^\d{1,4}$/.test(wanted)){
     const id=(raw.match(/#\s*0*(\d{1,4})\b/)||[])[1];
     return (id&&String(Number(id))===String(Number(wanted)))||raw.includes(wanted);
    }
    return raw.includes(wanted);
   });
- });
+ };
+ // An aria-controls id can become STALE during a React navigation and point
+ // to a different open filter. Do not trust the id without query evidence.
+ const linked=ids.map(id=>document.getElementById?.(id)).filter(matchesQuery);
+ if(linked.length===1)return linked[0];
+ if(linked.length>1)return null;
+ const all=elements('[role=listbox],[cmdk-list],[data-radix-popper-content-wrapper]')
+  .filter(vis).filter(scope=>scope.querySelectorAll(selector).length>0||
+   /(?:no results|no matches|nenhum(?:a|s)? resultado)/i.test(text(scope)));
+ const innermost=all.filter(scope=>!all.some(inner=>inner!==scope&&scope.contains?.(inner)));
+ const matches=innermost.filter(matchesQuery);
  return matches.length===1?matches[0]:null;
 }
 function pokemonPickerOptions(query){
