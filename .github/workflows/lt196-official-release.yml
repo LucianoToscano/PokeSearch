@@ -49,6 +49,7 @@ jobs:
           test -s app/tests/lt195-candy-next-hop-cooldown.test.js
           test -s app/tests/lt196-candy-compact-sprite.test.js
           test -s app/tests/lt196-candy-pickup-confirmation.test.js
+          test -s app/tests/lt196-candy-collected-visibility.test.js
           test -s docs/LT196_DOCE_RARO_LAYOUT_COMPACTO_QA_20261031.md
           test -s app/tests/CandyCooldownPolicyTest.java
           test -s docs/LT195_CANDY_COOLDOWN_E_DISTRIBUICAO_20261031.md
@@ -79,6 +80,7 @@ jobs:
           node app/tests/lt195-candy-next-hop-cooldown.test.js
           node app/tests/lt196-candy-compact-sprite.test.js
           node app/tests/lt196-candy-pickup-confirmation.test.js
+          node app/tests/lt196-candy-collected-visibility.test.js
           mkdir -p "$RUNNER_TEMP/lt195-candy-tests"
           javac --release 17 -d "$RUNNER_TEMP/lt195-candy-tests" app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyCooldownPolicy.java app/tests/CandyCooldownPolicyTest.java
           java -cp "$RUNNER_TEMP/lt195-candy-tests" com.lucianotoscano.pokesearchoverlay.CandyCooldownPolicyTest
