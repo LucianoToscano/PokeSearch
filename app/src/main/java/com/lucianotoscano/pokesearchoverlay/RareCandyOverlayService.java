@@ -411,7 +411,9 @@ public final class RareCandyOverlayService extends Service {
         if(candyMenuVisible&&!visible)closeCandyMenu();
         if(visible){
             placeResults();render();
-            if(!ready||cards.isEmpty())refresh(true);
+            // Opening results is presentation only; onPageFinished already
+            // triggers the initial API call. Never enqueue a duplicate
+            // manual refresh while that call is still in flight.
         }
     }
 
@@ -774,7 +776,7 @@ public final class RareCandyOverlayService extends Service {
             @Override public void onReceivedError(WebView v,
                     android.webkit.WebResourceRequest request,
                     android.webkit.WebResourceError error){
-                if(request.isForMainFrame()&&!destroyed){
+                if(v==site&&request.isForMainFrame()&&!destroyed){
                     ready=false;setCandyBusy(false);
                     setStatus("Site indisponível · atualize quando houver rede");
                 }
