@@ -4513,9 +4513,13 @@ public class OverlayService extends Service {
                 boolean pokemonEnabled=input.has("pokemonFilterEnabled")?
                     input.optBoolean("pokemonFilterEnabled",true):
                     previousMulti.optBoolean("pokemonFilterEnabled",true);
-                org.json.JSONArray remembered=input.optJSONArray("pokemonSavedSelections");
-                if(remembered==null)remembered=previousMulti.optJSONArray("pokemonSavedSelections");
+                org.json.JSONArray remembered=previousMulti.optJSONArray("pokemonSavedSelections");
                 if(remembered==null)remembered=previousMulti.optJSONArray("pokemonSelections");
+                // Old installs have an active list but no saved-list key.
+                // The dock's empty default must not erase those selections.
+                org.json.JSONArray fromUi=input.optJSONArray("pokemonSavedSelections");
+                if(fromUi!=null&&(fromUi.length()>0||remembered==null||remembered.length()==0))
+                    remembered=fromUi;
                 if(remembered==null){
                     String legacy=previousMulti.optString("pokemon","").trim();
                     if(legacy.isEmpty())legacy=input.optString("pokemon","").trim();
