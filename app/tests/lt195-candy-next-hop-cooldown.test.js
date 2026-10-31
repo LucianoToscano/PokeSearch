@@ -19,7 +19,7 @@ assert.match(candy,/prefs\.getLong\("lastCandyHopAtMs",0L\)/);
 assert.match(candy,/putString\("lastCandyHopCoords",point\)/);
 assert.match(candy,/putLong\("lastCandyHopAtMs",lastCopiedCandyAtMs\)/);
 assert.match(candy,/lastCopiedCandyCoords=point/);
-assert.match(candy,/CandyCooldownPolicy\.distanceMeters/); // moved via remainingSeconds only? see below
+assert.match(policy,/distanceMeters\\(origin,next\\)/);
 assert.match(candy,/CandyCooldownPolicy\.remainingSeconds\(/);
 assert.match(candy,/cooldownLabels\.entrySet\(\)/);
 assert.match(candy,/postDelayed\(this,1000L\)/);
