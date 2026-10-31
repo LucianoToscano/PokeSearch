@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT195 · 0.01.95 · 54400
+## Versão oficial atual — LT196 · 0.01.96 · 54401
+
+[Release LT196](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.96-54401) · [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.96-54401/PokeSearch-v0.01.96-LT.apk) · [Actions SUCCESS #41178326181](https://github.com/LucianoToscano/PokeSearch/actions/runs/41178326181) · [PR #160 integrada](https://github.com/LucianoToscano/PokeSearch/pull/160).
+
+**APK oficial:** 29.018.893 bytes · SHA-256 `b5026d73b11649e57c225b19a73e0a33e5886800dd0983425ab626e9b29b159e` · SOURCE_COMMIT `2f99205726a46dfef4f6e70b85bbb4ca96c2a9c3`, certificado original v2.
+
+**Novidade:** cópia de Doce Raro não inicia cooldown. A coleta é confirmada manualmente por ✓ Peguei; só então o doce desaparece, o contador por distância começa e o app avisa antes de copiar outro durante a espera. Doces confirmados podem ser reexibidos no menu. Distância e cooldown compactados sobre a sprite, despawn abaixo. Nenhuma leitura automática da mensagem do Pokémon GO ou permissão invasiva foi adicionada. QA físico Samsung pendente.
+
+[Google Drive LT196 — ZIP APK e relatórios](https://drive.google.com/file/d/1DPL5hxYYTaBl__e58sBABIMQRkt5BR53/view) · [Registro LT196](docs/LT196_DOCE_RARO_LAYOUT_COMPACTO_QA_20261031.md) · [Guia Mestre](docs/GUIA_MESTRE.md).
+
+---
+
+## Histórico — versão oficial anterior LT195 · 0.01.95 · 54400
 
 [Release LT195](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.95-54400) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.95-54400/PokeSearch-v0.01.95-LT.apk) · [Actions SUCCESS #41175591798](https://github.com/LucianoToscano/PokeSearch/actions/runs/41175591798) · [PR #159 integrada](https://github.com/LucianoToscano/PokeSearch/pull/159).
 
