@@ -3477,6 +3477,9 @@ public class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int req,int result,Intent data){
         super.onActivityResult(req,result,data);
+        // A very short installer launch/cancel often indicates a blocked
+        // Android/Samsung package handler; offer an explicit download route.
+        if(GitHubUpdateCenter.onInstallerResult(this,req,result,data))return;
         if((req==CommunityScrapbookOnline.REQUEST_PHOTO ||
             req==CommunityScrapbookOnline.REQUEST_GOOGLE_ADMIN) &&
             CommunityScrapbookOnline.onActivityResult(communityHomePanel,req,result,data))return;
