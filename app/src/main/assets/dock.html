@@ -516,9 +516,14 @@ body.controls-window #choices.filterPicker button:has(.weatherChoiceIcon){
 body.controls-window #choices .extraValue:has(.weatherChoiceIcon){
  display:flex!important;align-items:center!important;gap:3px!important;
 }
-/* LT57-MODES-RAW-01: original Drive PNG with non-destructive tiny IVs. */
+/* LT57-MODES-RAW-01: original Drive PNG with non-destructive tiny IVs.
+   The legacy medal contains a rectangular black matte outside its circular art.
+   Clip ONLY the raw/custom IV medal (also reused for custom IV-percent).
+   The 45% circle preserves its golden seal and removes the opaque square on
+   both dark and light menu backgrounds without affecting GL/UL or IV values. */
 body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt .quickModeImage{
  width:21px!important;height:21px!important;
+ clip-path:circle(45% at 50% 50%)!important;
 }
 /* LT57-RAW-IV-CLIP-01: SVG overlay prevents WebView text auto-zoom. */
 body.controls-window #quickMenuList .quickGlyph.modeArt.rawArt svg.quickIvValues{
