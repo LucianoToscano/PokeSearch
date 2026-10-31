@@ -1398,6 +1398,7 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
         addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
+        addHomeDrawerItem(drawer,"📍","PGSharp · localização (teste)",this::showPgsharpAutoLocationDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
@@ -1417,6 +1418,34 @@ public class MainActivity extends Activity {
     /** Text-only Android Sharesheet: prefer the verified public update manifest,
      * so each future release automatically changes both the shared URL and label.
      * Never expose credentials or accept unverified download hosts/IDs. */
+    /** One-time Android opt-in; never silently enable Accessibility. */
+    private void showPgsharpAutoLocationDialog(){
+        boolean requested=getSharedPreferences("prefs",0)
+            .getBoolean("pgsharpAutoQaEnabled",false);
+        String details="Teste automático sem root. O PokeSearch tentará ler APENAS coordenadas da posição atual do personagem, quando o PGSharp as expuser como texto acessível. "+
+            "Se o PGSharp não publicar esses dados, joystick, teleportes e rotas NÃO serão sincronizados. "+
+            "Não usamos o GPS fixo do Android nem adivinhamos coordenadas. A autorização de Acessibilidade deve ser concedida uma única vez nos Ajustes.";
+        new AlertDialog.Builder(this)
+            .setTitle("📍 PGSharp · sincronização experimental")
+            .setMessage(details+"\n\nStatus: "+(requested?"teste solicitado":"desativado")+
+                "\nUse os Ajustes de Acessibilidade para conceder ou revogar acesso.")
+            .setNegativeButton("Fechar",null)
+            .setNeutralButton("Desativar",(d,w)->{
+                getSharedPreferences("prefs",0).edit()
+                    .putBoolean("pgsharpAutoQaEnabled",false).apply();
+                Toast.makeText(this,"Teste PGSharp desativado",Toast.LENGTH_SHORT).show();
+            })
+            .setPositiveButton("Ativar teste",(d,w)->{
+                getSharedPreferences("prefs",0).edit()
+                    .putBoolean("pgsharpAutoQaEnabled",true).apply();
+                try{startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));}
+                catch(Exception ignored){
+                    Toast.makeText(this,"Abra Ajustes > Acessibilidade > apps instalados > PokeSearch",
+                        Toast.LENGTH_LONG).show();
+                }
+            }).show();
+    }
+
     private void sharePokeSearch(){
         UpdateCenter.Manifest announced=currentDriveUpdate;
         boolean current=announced!=null && announced.enabled &&

@@ -631,6 +631,10 @@ public class OverlayService extends Service {
     private String locationCoords="";
     private int locationRadius=0;
     private boolean locationEditorOpen=false;
+    // Experimental PGSharp source, not Android GPS. No live position is presumed.
+    private long lastPgsharpAutoSearchAtMs=0L;
+    private String lastPgsharpFix="";
+    private long lastPgsharpFixAtMs=0L;
     private boolean showTimers=false,alerts=false,showResultText=false;
     // Display-only preferences: they must never change remote search filters.
     private boolean resultShowName=false,resultShowNumber=false,resultShowGender=false,
@@ -5096,6 +5100,49 @@ public class OverlayService extends Service {
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null||i.getAction()==null?"":i.getAction();
+        if("com.lucianotoscano.pokesearchoverlay.PGSHARP_POSITION".equals(action)){
+            // Explicit internal component delivery from opt-in accessibility adapter.
+            // NO fallback to the Android's unchanged hardware GPS.
+            if(i==null||stopped||loginPaused||!getSharedPreferences("prefs",MODE_PRIVATE)
+                    .getBoolean("pgsharpAutoQaEnabled",false))return START_STICKY;
+            long now=System.currentTimeMillis(),timestamp=i.getLongExtra("timestamp",0L);
+            if(timestamp<=0L||timestamp>now+2000L||now-timestamp>8000L)
+                return START_STICKY;
+            String valid=extractCoordinates(i.getStringExtra("coords")==null?
+                "":i.getStringExtra("coords"));
+            if(valid.isEmpty())return START_STICKY;
+            lastPgsharpFix=valid;
+            lastPgsharpFixAtMs=timestamp;
+            if(locationEnabled&&valid.equals(locationCoords))return START_STICKY;
+            // Do not mutate a filter while another query is awaiting confirmation.
+            if(searchInProgress)return START_STICKY;
+            int radius=locationRadius>0?locationRadius:
+                overlayPrefs().getInt("locationRadius",50);
+            if(radius<=0||radius>1000)radius=50;
+            boolean changed=!valid.equals(locationCoords)||!locationEnabled;
+            if(changed){
+                locationVerified=false;
+                locationEnabled=true;
+                locationCoords=valid;
+                locationRadius=radius;
+                overlayPrefs().edit().putBoolean("locationEnabled",true)
+                    .putString("locationCoords",valid)
+                    .putInt("locationRadius",radius).apply();
+                resultsStale=count()>0;
+                hideDetails();
+                status("📍 PGSharp (teste): posição detectada; aguardando confirmação da pesquisa");
+                update();
+            }
+            // Debounce joystick/route traffic. Never override the provider's
+            // HTTP 429/Retry-After gate. Recheck current source on each new event.
+            if(now-lastPgsharpAutoSearchAtMs>=45000L &&
+               now>=nextScheduledSearchAtMs && changed){
+                lastPgsharpAutoSearchAtMs=now;
+                replaceActiveFilterSearch();
+                OverlayService.this.refresh(true);
+            }
+            return START_STICKY;
+        }
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
             return START_STICKY;

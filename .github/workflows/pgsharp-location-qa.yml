@@ -1,0 +1,107 @@
+name: PGSharp location adapter - signed QA APK (NOT PUBLIC)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/src/main/java/**'
+      - 'app/src/main/res/**'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'app/tests/PgsharpCoordinateParserTest.java'
+      - '.github/workflows/pgsharp-location-qa.yml'
+permissions: {contents: read}
+concurrency:
+  group: pgsharp-location-qa-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  signed-qa-only:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.event.pull_request.head.repo.full_name == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    env:
+      POKE_TEST_VERSION_CODE: '54402'
+      POKE_TEST_VERSION_LABEL: '51202'
+      POKE_TEST_PUBLIC_VERSION: '0.01.97'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'false'
+      POKE_SCRAPBOOK_ONLINE_QA: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.event.pull_request.head.sha }}", fetch-depth: 0, persist-credentials: false}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.11.1'}
+      - name: Offline parser tests and legacy checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pgsharp-tests"
+          javac --release 17 -d "$RUNNER_TEMP/pgsharp-tests" app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsharpCoordinateParser.java app/tests/PgsharpCoordinateParserTest.java
+          java -cp "$RUNNER_TEMP/pgsharp-tests" com.lucianotoscano.pokesearchoverlay.PgsharpCoordinateParserTest
+          for t in app/tests/*.test.js; do
+            [ "$t" = app/tests/lt74-local-update-preview.test.js ] && continue
+            node "$t" >/dev/null || { node "$t"; exit 1; }
+          done
+          python3 scripts/test_ota_builder.py
+      - name: Install SDK and validate protected permanent signer
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Missing signing material"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/pgsharp.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pgsharp.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/pgsharp.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Generate bundled metadata and build R8 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify APK package, signature, source and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > qa/PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54402'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.97'" qa/PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > qa/SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' qa/SIGNING-REPORT.txt
+          actual="$(grep 'Signer #1 certificate SHA-256 digest:' qa/SIGNING-REPORT.txt | awk '{print $NF}')"
+          test "$actual" = "$POKE_RELEASE_CERT_SHA256"
+          test "$(stat -c %s "$APK")" -lt 35000000
+          cp "$APK" qa/PokeSearch-PGSharp-AutoLocation-EXPERIMENTAL-LT197.apk
+          (cd qa && sha256sum PokeSearch-PGSharp-AutoLocation-EXPERIMENTAL-LT197.apk > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          git rev-parse HEAD > qa/SOURCE_COMMIT.txt
+          printf '%s\n' 'CANDIDATO QA; SEM INTEGRACAO DIRETA PGSHARP COMPROVADA; NAO PUBLICAR A TODOS' > qa/LEIA-PRIMEIRO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-PGSharp-AutoLocation-LT197-QA-Signed
+          path: qa/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Remove temporary keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pgsharp.p12"
