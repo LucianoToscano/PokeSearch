@@ -1,4 +1,4 @@
-# LT197 QA — Detecção visual consentida de coleta de Doce Raro
+# LT197 — Detecção visual consentida de coleta de Doce Raro
 
 ## Contexto e objetivo
 O usuário forneceu imagem do topo do Pokémon GO com `Item encontrado! DOCE RARO`, sprite de Doce Raro arco-íris e indicador `+2`. O indicador expressa quantidade recebida e **não** deve criar duas coletas/duas origens.
@@ -50,3 +50,14 @@ Versão base: LT196 oficial `0.01.96 / 54401`. Alterações isoladas na branch `
 - **APK QA2** `PokeSearch-LT197-QA2-0.01.97-54403.apk` de 29.254.823 bytes, versionCode `54403`, versionName `0.01.97`, SHA-256 `6910167b409bf8351a419b9d3a4a8fefd96f856388109ba515a4e4f6a0f92857`. APK Signature Scheme v2 **true**, certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, ZIP interno e `SHA256SUMS` conferidos.
 - [Drive QA2 APK + relatórios](https://drive.google.com/file/d/1AWtzgKmoOOv4k3nX2V4vC68E1JdNzMrW/view), 26.913.421 bytes, SHA-256 `ef8ed4687d1575810105318f0dea4d417f36f6894e1b42f63e43ce151f7c0cdc` (ZIP íntegro), pasta PokeSearch_App com permissão compartilhada.
 - A LT197 **não foi mesclada à main e não é atualização pública/OTA**: LT196 permanece latest. Não há confirmação em captura de tela ao vivo após a correção; precisa de novo teste no Samsung e inspeção do diagnóstico `A`.
+
+
+## Publicação oficial LT197 — 31/10/2026 (estado mais recente, substitui os checkpoints QA anteriores)
+- **PR #161 integrada ao main**: SOURCE_COMMIT `57cdf047676be960260603a2d91899a7cca6c8c7`.
+- **Build oficial:** [Actions #41184612797 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41184612797). Testes Node, JVM e OTA, build R8/protegido, validação de assinatura, `aapt`, ZIP e SHA-256 do asset publicado.
+- **Release latest oficial:** [`v0.01.97-54404`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.97-54404); APK `PokeSearch-v0.01.97-LT.apk` **29.255.359 bytes**, SHA-256 `fdaeb01a2ecc9c18b1b9c36cbc1ad9f9ca862175b80ba7d0dcb2b24cb448c064`; app `com.lucianotoscano.pokesearch`, versionName `0.01.97`, versionCode `54404`.
+- **Certificado de assinatura v2 original SHA-256:** `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Artifact verificado:** [#13035812746](https://github.com/LucianoToscano/PokeSearch/actions/runs/41184612797/artifacts/13035812746).
+- **Drive oficial:** [ZIP APK + SHA256SUMS, signing report, package/version e SOURCE_COMMIT](https://drive.google.com/file/d/1vfZVQqwNFqF5LM56ZsdEBCZRZsFEPq0h/view), **26.913.572 bytes**, SHA-256 `45d34fd999f2c7bab12e109d67288601579ca68455dbf9245d8bc0516dd5852e`. Upload confirmado, arquivo na pasta `PokeSearch_App` compartilhada. ZIP `testzip=None`; APK interno tem o SHA-256 do GitHub, o certificado v2 correto, versionCode 54404 e versão 0.01.97. Não foi reutilizado o APK QA2 54403.
+- **Entrega:** GitHub Releases `latest` é a fonte padrão de atualização pública do aplicativo, portanto **disponível para todos checarem/baixarem**. Não é evidência de que cada aparelho tenha recebido ou instalado a versão. Arquivos anteriores no Drive e Releases preservados.
+- **Limitação expressa:** algoritmo experimental opcional OFF por padrão, com consentimento de captura do Android a cada sessão, sem gravação/transmissão de tela; a validação de captura ao vivo no Samsung após a correção de OCR/duas sprites **ainda não foi concluída**. Botão manual `✓ Peguei` permanece como fallback. Feedback de usuários sobre falhas deve gerar QA subsequente.
