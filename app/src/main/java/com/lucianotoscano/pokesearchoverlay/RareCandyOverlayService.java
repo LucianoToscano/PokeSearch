@@ -629,6 +629,13 @@ public final class RareCandyOverlayService extends Service {
                 if(clip!=null)clip.setPrimaryClip(ClipData.newPlainText("Localização Doce Raro",normalized));
             });
         }
+        @android.webkit.JavascriptInterface public String getCandyCaptureStatus(){
+            if(!CandyScreenCaptureService.isActive())
+                return "Detecção desligada · toque A para ativar";
+            String status=prefs.getString("candyCaptureStatus",
+                "Aguardando mensagem do Doce Raro");
+            return status.length()>80?status.substring(0,80):status;
+        }
         @android.webkit.JavascriptInterface public void setAutoCandyPickup(boolean enable){
             main.post(()->{
                 if(!permitted())return;
