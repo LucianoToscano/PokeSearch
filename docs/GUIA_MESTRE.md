@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT205 — DOCE RARO, SESSÃO CORRETA E API 429 (31/10/2026)
+
+- **Escopo:** correção de erro observado em capturas do Samsung: o site PoGoCoordinates mostrava 10 Doces Raros, mas o overlay mostrava `Aguardando liberação`. A mensagem significa que o coletor recebeu HTTP 429 (ou que seu prazo `Retry-After` ainda está em curso), e **não** o cooldown de captura do jogo. A sessão da WebView pode divergir da sessão do navegador externo.
+- **Correção:** a WebView do Doce Raro acompanha agora a conta que a **Pokébola 1** seleciona (Conta 1/2), preservando isolamento de cookies/JWT e sem alterar a Pokébola 2. Trocas de conta descartam cards/respostas antigas, mantendo o bloqueio do provedor intacto.
+- **Consultas:** abrir a lista não solicita uma segunda pesquisa durante a consulta inicial. Indicador `API 429 · tempo restante` atualiza localmente sem novas chamadas e respeita `Retry-After` integralmente.
+- **Merge:** [PR #173](https://github.com/LucianoToscano/PokeSearch/pull/173) mesclada na `main` com commit `b6ea893f3cdc74be7a363ec82b2147d2c173548d`.
+- **QA do commit pré-merge `642484632ff1e3e26731204f2f337afcab286613`:** [Node #41232853484](https://github.com/LucianoToscano/PokeSearch/actions/runs/41232853484), [regressões Node #41232853508](https://github.com/LucianoToscano/PokeSearch/actions/runs/41232853508), [Java/Android #41232853713](https://github.com/LucianoToscano/PokeSearch/actions/runs/41232853713) e [OTA #41232853441](https://github.com/LucianoToscano/PokeSearch/actions/runs/41232853441) concluídos com `success`. Testes `lt205-candy-account-429.test.js` e documentação [LT205 QA](LT205_DOCE_RARO_SESSAO_429_QA_20261031.md).
+- **Distribuição:** versão solicitada `0.02.05`/`54412`. Notas da Home adicionadas e pipeline oficial de APK assinado em [lt205-official-release.yml](../.github/workflows/lt205-official-release.yml). **Publicação efetiva depende de verificar sucesso do pipeline e a API `releases/latest`.** A LT204 permanece pública até essa confirmação; não presumir instalação nos dispositivos.
+- **Limitações:** navegador Chrome autenticado não comprova autenticação do WebView isolado. QA físico Samsung, detecção do Doce Raro e resposta real do provedor ainda exigem validação; o aplicativo não remove limites HTTP 429 nem contorna cotas.
+
+---
+
 ## LT204 — BUSCA LIVRE E SHINY INDISPONÍVEL (31/10/2026)
 
 - **Alteração principal:** buscas normais por IV, CP, PvP, espécies e localização funcionam **com ou sem login** no PoGoCoordinates, em P1/P2. Autenticação Google/Discord continua opcional e não exige treinador para pesquisar.
