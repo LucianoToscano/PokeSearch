@@ -9,7 +9,7 @@
   if (root) root.PokeSearchApiContract=contract;
 })(typeof globalThis !== "undefined" ? globalThis : this, function() {
   "use strict";
-  var MAX_RESULTS=100;
+  var MAX_RESULTS=10; // Local per-overlay cap, never increase provider entitlement.
   var MAX_SOURCE_RESULTS=2000;
   var SIZES=new Set(["XXS","XS","S","M","L","XL","XXL"]);
   var rawPattern=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/;
@@ -232,7 +232,11 @@
     // not missing IV evidence. Explicitly contradictory values still fail.
     if(percent===undefined||percent===null||percent==="")
       return {raw:raw,percent:calculated};
-    var observed=Number(percent);
+    // Preserve provider numeric JSON values while accepting localized decimal strings.
+    // Reject scientific notation and unsupported precision consistently with DOM/Java.
+    var observed=typeof percent==="string"?
+      (/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,8})?$/.test(percent.trim())?
+        Number(percent.trim().replace(",",".")):NaN):Number(percent);
     if(!Number.isFinite(observed)||observed<0||observed>100) return null;
     // Example: a real 0/15/15 spawn may carry iv_percent=66.67.
     // Keep source precision for validation, but output the canonical
@@ -282,7 +286,8 @@
     var options=config||{},now=Number.isFinite(options.nowMs)?options.nowMs:Date.now();
     if(!response||typeof response!=="object"||!Array.isArray(response.results)||
       response.results.length>MAX_SOURCE_RESULTS) return {ok:false,reason:"Invalid API results"};
-    var cards=[],seen=new Set(),rejected=0,expired=0;
+    var cards=[],seen=new Set(),rejected=0,expired=0,filtered=0;
+    var rejectionCounts={shape:0,identity:0,iv:0,cpLevel:0,metadata:0,despawn:0};
     // PvP selection must be checked against the entire signed-in server result
     // BEFORE the visible ten-card cap. Validate the exact configured league/rank.
     var pvpLeague=options.pvpLeague;
@@ -293,31 +298,34 @@
       return {ok:false,reason:"Invalid PvP filters"};
     var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:response.results.length;
     var cap=Math.min(MAX_RESULTS,serverCap); // Never exceed what the source returned or authorized.
-    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
+    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,filtered:0,rejectionCounts,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
-      if(!x||typeof x!=="object") {rejected++;continue;}
+      if(!x||typeof x!=="object") {rejected++;rejectionCounts.shape++;continue;}
       var id=Number(x.pokemon_id),name=clean(x.pokemon_name,60),iv=parseIV(x.raw_iv,x.iv_percent);
-      if(!Number.isInteger(id)||id<1||id>10000||!name||!iv) {rejected++;continue;}
+      if(!Number.isInteger(id)||id<1||id>10000||!name){
+        rejected++;rejectionCounts.identity++;continue;
+      }
+      if(!iv){rejected++;rejectionCounts.iv++;continue;}
       var cp=optionalNumberSafe(x.cp,0,100000,true),lv=optionalNumberSafe(x.level,1,50,false);
-      if(cp===null||lv===null) {rejected++;continue;}
-      if(options.shiny===true&&x.shiny!==true) continue;
+      if(cp===null||lv===null){rejected++;rejectionCounts.cpLevel++;continue;}
+      if(options.shiny===true&&x.shiny!==true){filtered++;continue;}
       const pvp=x.pvp&&typeof x.pvp==="object"?x.pvp:null;
       if(pvpRequired&&(!pvp||pvp.league!==pvpLeague||
         !Number.isInteger(pvp.rank)||pvp.rank<1||
-        pvp.rank>options.pvpMaxRank))continue;
+        pvp.rank>options.pvpMaxRank)){filtered++;continue;}
       // Keep costume evidence when crossing the API->Android->WebView bridge.
       // If it is omitted, the detail WebView incorrectly substitutes a
       // normal base sprite for a verified costumed Pokémon.
       var costumeId=x.costume_id===undefined||x.costume_id===null?null:
         optionalNumberSafe(x.costume_id,0,100000,true);
-      if(x.costume_id!=null&&costumeId===null){rejected++;continue;}
+      if(x.costume_id!=null&&costumeId===null){rejected++;rejectionCounts.metadata++;continue;}
       // Optional GO form ID is encounter metadata, NEVER a synthesized image.
       var sourceFormId=x.form_id===undefined||x.form_id===null?null:
         optionalNumberSafe(x.form_id,0,100000,true);
-      if(x.form_id!=null&&sourceFormId===null){rejected++;continue;}
+      if(x.form_id!=null&&sourceFormId===null){rejected++;rejectionCounts.metadata++;continue;}
       var end=typeof x.despawn_at==="string"?Date.parse(x.despawn_at):NaN;
-      if(!Number.isFinite(end)) {rejected++;continue;}
+      if(!Number.isFinite(end)){rejected++;rejectionCounts.despawn++;continue;}
       if(end<=now) {expired++;continue;}
       var encounter=clean(x.encounter_id,100);
       var fingerprint=encounter||[id,cp,iv.raw,x.location,x.despawn_at].join(":");
@@ -345,7 +353,8 @@
       if(cards.length>=cap) break;
     }
     return {ok:true,cards:cards,found:cards.length,siteCount:response.results.length,
-      rejected:rejected,expired:expired,serverCap:serverCap,displayCap:cap,source:"api-fixture",
+      rejected:rejected,expired:expired,filtered:filtered,rejectionCounts:rejectionCounts,
+      serverCap:serverCap,displayCap:cap,source:"api-fixture",
       // The native collector must confirm the actual requested filters
       // and fresh response independently before showing results or alerts.
       criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
