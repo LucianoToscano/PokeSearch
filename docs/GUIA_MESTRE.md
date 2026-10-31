@@ -2,6 +2,10 @@
 
 ## LT197 — Detector opcional de coleta visual (QA, não distribuído · 31/10/2026)
 
+
+**Checkpoint APK LT197 QA (31/10/2026):** [Actions #41180890363 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180890363), versão `0.01.97/54402` assinada com o certificado original, APK de 29.254.623 bytes, SHA-256 `c73c8f2d7dff645944e0314eceac590486b7ca27d66be2198eee635f4cd03100`. Artifact [#13034782296](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180890363/artifacts/13034782296); ZIP QA conferido (26.912.566 bytes) e [Drive QA](https://drive.google.com/file/d/1o5Y1_b30Gohlm0WCUdo-8sUlCgLuYHTM/view). Branch LT197 permanece não mesclada; a versão pública permanece LT196. Detecção real no Samsung pendente.
+
+
 - Base: **LT196 oficial**; nova branch QA `feature/lt197-consented-candy-screen-recognition-20261031`, [PR #161 draft](https://github.com/LucianoToscano/PokeSearch/pull/161). Não mesclar/publicar até teste real com consentimento no Samsung.
 - O usuário ativa explicitamente **Detectar coleta** no menu de Informações dos doces. Android solicita MediaProjection a cada sessão. Serviço privativo em foreground tem notificação com botão `Parar`, encerra ao desligar o overlay, e não inicia no boot.
 - Somente um doce pendente, copiado nos últimos 120s, permite análise local limitada à faixa superior do quadro (27% da altura, largura amostrada <=800px, no máximo 1fps). OCR Latin ML Kit Google Play Services (modelo não agrupado) procura **ITEM ENCONTRADO** e **DOCE RARO**, combinado com sprite vermelha/amarela/verde no topo esquerdo. Duas leituras e intervalo sem banner após a cópia previnem duplicações. A rotina `recordCollectedCandy(point,true)` só recebe evento interno com coords+timestamp exatos, então oculta o doce e inicia o cooldown. **+2 não equivale a dois doces.**
