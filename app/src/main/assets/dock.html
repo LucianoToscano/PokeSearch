@@ -641,6 +641,15 @@ body.controls-window #choices.standardPanel[data-panel-kind="pokemon"]{
 #choices #pokemonFind{display:block;width:calc(100% - 8px);height:30px;margin:4px;
  padding:4px 7px;font-size:11px;color:#fff;background:#131b24;
  border:1px solid #596879;border-radius:6px}
+#choices .pokemonFilterRow{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:1px 5px}
+#choices .pokemonFilterSwitch{display:inline-flex!important;align-items:center;flex:0 0 40px!important;
+ width:40px!important;min-width:40px!important;max-width:40px!important;height:23px!important;
+ min-height:23px!important;margin:0!important;padding:2px!important;border-radius:999px!important;
+ background:#454952!important;border:1px solid #818993!important;justify-content:flex-start}
+#choices .pokemonFilterSwitch .pokemonSwitchKnob{display:block;width:17px;height:17px;
+ background:#eef0f2;border-radius:50%;transition:transform .12s ease}
+#choices .pokemonFilterSwitch[aria-checked="true"]{background:#216b58!important;border-color:#72c4a1!important}
+#choices .pokemonFilterSwitch[aria-checked="true"] .pokemonSwitchKnob{transform:translateX(16px)}
 #choices .pokemonSelected{display:flex;flex-wrap:wrap;gap:3px;padding:3px;max-height:70px;overflow-y:auto}
 #choices .pokemonSelected .pokemonChip{width:auto!important;max-width:100%;min-height:24px!important;
  padding:3px 6px!important;margin:0!important;background:#421923;color:#ffc4cd;
@@ -4499,7 +4508,7 @@ let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:
 let displayedMetadataWidth=0;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
- sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
+ sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],pokemonSavedSelections:[],pokemonFilterEnabled:true,form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
 let generalPresetExpanded=false,generalPresetSaved=[false,false,false];
 let generalPresetNames=["Perfil 1","Perfil 2","Perfil 3"];
@@ -4826,7 +4835,10 @@ function toggleChoices(kind){
   if(kind==="location"){renderLocationChoices();return;}
   if(kind==="pokemon"){
    pokemonPickerBase=pokemonFromFilters&&modeDraft?{...modeDraft}:{...searchSettings,mode};
-   pokemonDraft=Array.isArray(pokemonPickerBase.pokemonSelections)?[...pokemonPickerBase.pokemonSelections]:
+   pokemonFilterEnabledDraft=pokemonPickerBase.pokemonFilterEnabled!==false;
+   const remembered=pokemonFilterEnabledDraft?pokemonPickerBase.pokemonSelections:
+    pokemonPickerBase.pokemonSavedSelections;
+   pokemonDraft=Array.isArray(remembered)?[...remembered]:
     pokemonPickerBase.pokemon?[pokemonPickerBase.pokemon]:[];
    pokemonForceClear=false;pokemonQuery="";pokemonSuggestions=[];pokemonSuggestionStatus="Carregando opções do site...";
    pokemonSiteSelections=[];pokemonSiteSelectionVerified=false;
@@ -6907,8 +6919,12 @@ function quickState(id){
    currentLocationUiState()==="REQUESTED"?"Solicitada":
    currentLocationUiState()==="NOT_APPLIED"?"Não aplicada":"OFF";
   case "filters":return activeExtraFilterCount(searchSettings,mode)+" ativos";
-  case "pokemon":return Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length?
-   searchSettings.pokemonSelections.length+" escolhidos":"Todos";
+  case "pokemon":{
+   const enabled=searchSettings.pokemonFilterEnabled!==false;
+   const saved=enabled?searchSettings.pokemonSelections:searchSettings.pokemonSavedSelections;
+   const n=Array.isArray(saved)?saved.length:0;
+   return enabled?(n?n+" escolhidos":"Todos"):"OFF"+(n?" · "+n+" salvos":"");
+  }
   case "period":return period>0?"Auto "+period+"m":"Auto OFF";
   case "appearance":return "Personalização";
   default:return "";
@@ -7085,6 +7101,7 @@ function pooledExactSprite(url){
 // Saved chips reuse official sprite URLs, never synthetic form IDs.
 const pokemonSuggestionSpriteCache=new Map();
 let pokemonSiteSelections=[],pokemonSiteSelectionVerified=false,pokemonSuggestionSource="dom";
+let pokemonFilterEnabledDraft=true;
 function updatePokemonSiteComparison(){
  if(choiceOpen!=="pokemon")return;
  const box=document.getElementById("pokemonSiteComparison"),
@@ -7194,7 +7211,7 @@ function renderPokemonTags(){
  const target=document.getElementById("pokemonSelected");if(!target)return;
  target.replaceChildren();
  const counter=document.getElementById("pokemonCount");
- if(counter)counter.textContent=pokemonDraft.length+" selecionados";
+ if(counter)counter.textContent=pokemonDraft.length+(pokemonFilterEnabledDraft?" selecionados":" salvos · filtro OFF");
  pokemonDraft.forEach(name=>{
   const chip=document.createElement("button");chip.type="button";chip.className="pokemonChip";
   chip.setAttribute("aria-label","Remover "+name);
@@ -7217,8 +7234,26 @@ function renderPokemonTags(){
 function renderPokemonChoices(){
  const panel=uxPanel("POKÉMON · espécies e formas");
  const count=document.createElement("div");count.id="pokemonCount";count.className="uxSubheading";
+ const toggle=document.createElement("button");toggle.type="button";
+ toggle.className="pokemonFilterSwitch";toggle.setAttribute("role","switch");
+ toggle.setAttribute("aria-label","Ativar ou pausar o filtro de espécies e formas sem apagar a seleção");
+ const knob=document.createElement("span");knob.className="pokemonSwitchKnob";
+ knob.setAttribute("aria-hidden","true");toggle.appendChild(knob);
+ const updateToggle=()=>{
+  toggle.setAttribute("aria-checked",String(pokemonFilterEnabledDraft));
+  toggle.title=pokemonFilterEnabledDraft?"Filtro ativo · toque para pausar":"Filtro pausado · toque para reativar";
+  renderPokemonTags();
+ };
+ toggle.onclick=()=>{
+  pokemonFilterEnabledDraft=!pokemonFilterEnabledDraft;
+  updateToggle();
+  if(Native.setPokemonFilterEnabled)Native.setPokemonFilterEnabled(pokemonFilterEnabledDraft);
+ };
+ const toggleRow=document.createElement("div");toggleRow.className="pokemonFilterRow";
+ toggleRow.append(count,toggle);
  const chips=document.createElement("div");chips.id="pokemonSelected";
- chips.className="pokemonSelected";panel.append(count,chips);
+ chips.className="pokemonSelected";panel.append(toggleRow,chips);
+ updateToggle();
  const input=document.createElement("input");input.id="pokemonFind";
  input.type="search";input.autocomplete="off";input.placeholder="Nome, forma ou número #";
  input.value=pokemonQuery;input.maxLength=65;input.setAttribute("aria-label","Pesquisar espécies e formas oficiais");
@@ -7241,7 +7276,7 @@ function renderPokemonChoices(){
  clear.onclick=()=>{pokemonDraft=[];pokemonForceClear=true;renderPokemonTags();drawPokemonSuggestions();};
  actions.append(apply,clear);panel.appendChild(actions);
  const hint=document.createElement("p");hint.className="uxNote";
- hint.textContent="Selecione várias espécies e formas EXATAS. Só serão buscadas as escolhidas após ✓ Aplicar. As opções vêm do PoGoCoordinates.";
+ hint.textContent="A chave ON/OFF pausa ou reativa a busca específica sem apagar a lista. ✓ Aplicar salva alterações nos nomes; a lista pausada continua guardada.";
  panel.appendChild(hint);
  const siteComparison=document.createElement("p");
  siteComparison.id="pokemonSiteComparison";siteComparison.className="uxNote";

@@ -4361,6 +4361,43 @@ public class OverlayService extends Service {
                 status("Filtro inválido; nenhuma configuração foi alterada.");
             }
         });}
+        // Pause only this Pokéball's species/form criterion. Do not delete saved chips.
+        @JavascriptInterface public void setPokemonFilterEnabled(boolean enabled){handler.post(()->{
+            if(stopped)return;
+            try{
+                JSONObject extra=new JSONObject(extraFiltersJson);
+                if(extra.optBoolean("pokemonFilterEnabled",true)==enabled)return;
+                org.json.JSONArray saved=extra.optJSONArray("pokemonSavedSelections");
+                if(saved==null)saved=extra.optJSONArray("pokemonSelections");
+                if(saved==null)saved=new org.json.JSONArray();
+                org.json.JSONArray previouslyActive=extra.optJSONArray("pokemonSelections");
+                java.util.LinkedHashSet<String> clears=new java.util.LinkedHashSet<>();
+                org.json.JSONArray previousClears=extra.optJSONArray("clearExtraKeys");
+                if(previousClears!=null)for(int i=0;i<previousClears.length();i++)
+                    clears.add(previousClears.optString(i));
+                if(!enabled&&((previouslyActive!=null&&previouslyActive.length()>0)||saved.length()>0))
+                    clears.add("pokemonSelections"); // Clears an active website selection as well.
+                if(enabled&&saved.length()>0)clears.remove("pokemonSelections");
+                extra.put("pokemonFilterEnabled",enabled);
+                extra.put("pokemonSavedSelections",new org.json.JSONArray(saved.toString()));
+                extra.put("pokemonSelections",enabled?
+                    new org.json.JSONArray(saved.toString()):new org.json.JSONArray());
+                extra.put("pokemon","");
+                org.json.JSONArray resets=new org.json.JSONArray();
+                for(String key:clears)if(!key.isEmpty())resets.put(key);
+                extra.put("clearExtraKeys",resets);
+                extraFiltersJson=extra.toString();
+                overlayPrefs().edit().putString("extraFiltersJson",extraFiltersJson).apply();
+                replaceActiveFilterSearch();
+                resultsStale=count()>0;
+                hideDetails();
+                status(enabled?"Filtro Pokémon reativado • "+saved.length()+" selecionados":
+                    "Filtro Pokémon pausado • seleção preservada");
+                scheduleFilterChangeRefresh();
+            }catch(org.json.JSONException error){
+                status("Não foi possível alternar o filtro Pokémon.");
+            }
+        });}
         // LT64-FILTER-DELTA: Pokémon/form selections never replace other filters.
         @JavascriptInterface public void setPokemonSelections(String payload){handler.post(()->{
             try{
@@ -4380,11 +4417,17 @@ public class OverlayService extends Service {
                 org.json.JSONArray oldClears=extra.optJSONArray("clearExtraKeys");
                 if(oldClears!=null)for(int i=0;i<oldClears.length();i++)
                     clears.add(oldClears.optString(i));
+                boolean enabled=extra.optBoolean("pokemonFilterEnabled",true);
+                org.json.JSONArray oldSaved=extra.optJSONArray("pokemonSavedSelections");
                 if(cleaned.length()==0&&(request.optBoolean("clear",false)||
-                    (previous!=null&&previous.length()>0)||!extra.optString("pokemon","").isEmpty()))
+                    (previous!=null&&previous.length()>0)||
+                    (oldSaved!=null&&oldSaved.length()>0)||
+                    !extra.optString("pokemon","").isEmpty()))
                     clears.add("pokemonSelections");
-                if(cleaned.length()>0)clears.remove("pokemonSelections");
-                extra.put("pokemonSelections",cleaned);
+                if(cleaned.length()>0&&enabled)clears.remove("pokemonSelections");
+                extra.put("pokemonFilterEnabled",enabled);
+                extra.put("pokemonSavedSelections",cleaned);
+                extra.put("pokemonSelections",enabled?cleaned:new org.json.JSONArray());
                 extra.put("pokemon","");
                 org.json.JSONArray reset=new org.json.JSONArray();
                 for(String key:clears)if(!key.isEmpty())reset.put(key);
@@ -4466,6 +4509,38 @@ public class OverlayService extends Service {
                     extra.put("pokemonSelections",cleaned);
                     extra.put("pokemon",""); // Multi-select replaces legacy single text.
                 }
+                // Mode changes must not delete paused species/form selections.
+                // This flag is controlled by the standalone switch only.
+                // A stale mode dialog/preset must not reactivate it by accident.
+                boolean pokemonEnabled=previousMulti.optBoolean("pokemonFilterEnabled",true);
+                org.json.JSONArray remembered=previousMulti.optJSONArray("pokemonSavedSelections");
+                if(remembered==null)remembered=previousMulti.optJSONArray("pokemonSelections");
+                // Old installs have an active list but no saved-list key.
+                // Native persisted state wins over a stale mode dialog snapshot.
+                org.json.JSONArray fromUi=input.optJSONArray("pokemonSavedSelections");
+                if(remembered==null)remembered=fromUi;
+                if(remembered==null)remembered=input.optJSONArray("pokemonSelections");
+                if(remembered==null)remembered=new org.json.JSONArray();
+                if(remembered.length()==0){
+                    String legacy=previousMulti.optString("pokemon","").trim();
+                    if(legacy.isEmpty())legacy=input.optString("pokemon","").trim();
+                    if(!legacy.isEmpty())remembered.put(legacy);
+                }
+                if(input.optBoolean("clearPokemonSelection",false))remembered=new org.json.JSONArray();
+                if(remembered==null||remembered.length()>50)return;
+                org.json.JSONArray validatedSaved=new org.json.JSONArray();
+                java.util.HashSet<String> seenSaved=new java.util.HashSet<>();
+                for(int i=0;i<remembered.length();i++){
+                    String label=remembered.optString(i,"").trim();
+                    if(label.isEmpty()||label.length()>90||label.matches("(?s).*[<>\\r\\n].*"))return;
+                    if(seenSaved.add(label.toLowerCase(java.util.Locale.ROOT)))
+                        validatedSaved.put(label);
+                }
+                extra.put("pokemonFilterEnabled",pokemonEnabled);
+                extra.put("pokemonSavedSelections",validatedSaved);
+                extra.put("pokemonSelections",pokemonEnabled?
+                    new org.json.JSONArray(validatedSaved.toString()):new org.json.JSONArray());
+                extra.put("pokemon","");
                 if(extra.optString("sortBy","").isEmpty())extra.put("sortBy","Despawn (longest)");
                 for(String[] pair:new String[][]{{"cpMin","cpMax"},{"levelMin","levelMax"}}){
                     String low=extra.optString(pair[0]),high=extra.optString(pair[1]);
