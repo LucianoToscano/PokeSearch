@@ -286,7 +286,7 @@
     var options=config||{},now=Number.isFinite(options.nowMs)?options.nowMs:Date.now();
     if(!response||typeof response!=="object"||!Array.isArray(response.results)||
       response.results.length>MAX_SOURCE_RESULTS) return {ok:false,reason:"Invalid API results"};
-    var cards=[],seen=new Set(),rejected=0,expired=0,filtered=0;
+    var cards=[],seen=new Set(),rejected=0,expired=0,filtered=0,eligible=0,duplicates=0;
     var rejectionCounts={shape:0,identity:0,iv:0,cpLevel:0,metadata:0,despawn:0};
     // PvP selection must be checked against the entire signed-in server result
     // BEFORE the visible ten-card cap. Validate the exact configured league/rank.
@@ -298,7 +298,7 @@
       return {ok:false,reason:"Invalid PvP filters"};
     var serverCap=Number.isInteger(response.cap)&&response.cap>=0?response.cap:response.results.length;
     var cap=Math.min(MAX_RESULTS,serverCap); // Never exceed what the source returned or authorized.
-    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,filtered:0,rejectionCounts,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
+    if(cap===0)return {ok:true,cards:[],found:0,siteCount:response.results.length,rejected:0,expired:0,filtered:0,eligible:0,duplicates:0,rejectionCounts,serverCap:serverCap,displayCap:cap,source:"api-fixture",criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false};
     for(var i=0;i<response.results.length;i++) {
       var x=response.results[i];
       if(!x||typeof x!=="object") {rejected++;rejectionCounts.shape++;continue;}
@@ -329,7 +329,7 @@
       if(end<=now) {expired++;continue;}
       var encounter=clean(x.encounter_id,100);
       var fingerprint=encounter||[id,cp,iv.raw,x.location,x.despawn_at].join(":");
-      if(seen.has(fingerprint)) continue;
+      if(seen.has(fingerprint)){duplicates++;continue;}
       seen.add(fingerprint);
       var size=typeof x.size==="string"&&SIZES.has(x.size)?x.size:"";
       var gender=x.gender==="Male"?"♂":x.gender==="Female"?"♀":x.gender==="Genderless"?"⚲":"";
@@ -349,11 +349,13 @@
       };
       if(sourceFormId!==null)entry.form_id=sourceFormId;
       if(Number.isFinite(end)) entry.expiresAtMs=end;
-      cards.push(entry);
-      if(cards.length>=cap) break;
+      eligible++;
+      // Count every bounded server row for diagnostics, but never show more than ten.
+      if(cards.length<cap)cards.push(entry);
     }
     return {ok:true,cards:cards,found:cards.length,siteCount:response.results.length,
-      rejected:rejected,expired:expired,filtered:filtered,rejectionCounts:rejectionCounts,
+      rejected:rejected,expired:expired,filtered:filtered,eligible:eligible,
+      duplicates:duplicates,rejectionCounts:rejectionCounts,
       serverCap:serverCap,displayCap:cap,source:"api-fixture",
       // The native collector must confirm the actual requested filters
       // and fresh response independently before showing results or alerts.
