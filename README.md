@@ -1,6 +1,20 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT199 · 0.01.99 · 54406
+## Versão oficial atual — LT200 · 0.02.00 · 54407
+
+[APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.00-54407/PokeSearch-v0.02.00-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.00-54407) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1yvV4wTNehuiVnpDaFjpeXRAmzE3RYYsm/view?usp=drivesdk) · [Workflow SUCCESS #41225317922](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225317922) · [PR #167 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/167).
+
+**LT200:** tocar no título **Localização** abre tabela compacta de 16 intervalos distância/cooldown no mesmo menu glass/translúcido sem mover Copiar/Colar. ✓ permite revalidar coordenadas e raio mesmo com dados idênticos (respeitando HTTP 429); falhas de API HTTP 400/422 apresentam apenas um grupo de campo previamente validado, sem divulgar dados privados. Seletor Pokémon do site evita cliques repetidos e não apaga escolhas quando React não confirma o portal.
+
+**APK:** 29.259.867 bytes · SHA-256 `8ecab4ad92fe4cb161606767962a858f03196b3e7a6dd3a369879660f5c8b6bb` · assinatura v2 original certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` · SOURCE_COMMIT `2887d8bf1dfe7b4cd09fbb7104493f31132d57cd`.
+
+**Drive:** ZIP oficial 26.920.489 bytes · SHA-256 `fcd99f9ef70017481a61f537d20744e78f25ec818779ae29751d609fea06baa0`, inclui APK idêntico e relatórios. **Distribuição:** latest disponível para o mecanismo de atualização do aplicativo; instalação exige aceite em cada Android. **Pendente:** comprovar em Samsung a resolução efetiva de `invalid-request` e do seletor oficial após a atualização; testes automatizados não verificam o comportamento do provedor em tempo real.
+
+[Guia Mestre](docs/GUIA_MESTRE.md) · [Checklist LT200](docs/LT200_LOCATION_COOLDOWN_APPLY_QA_20261031.md).
+
+---
+
+## Histórico — versão oficial anterior LT199 · 0.01.99 · 54406
 
 [Release oficial LT199](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.99-54406) · [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.99-54406/PokeSearch-v0.01.99-LT.apk) · [Google Drive — ZIP com APK + relatórios](https://drive.google.com/file/d/16Wwqs6PDXpBM9sROLw8eZs_H5DCq5qfC/view?usp=drivesdk) · [Actions SUCCESS #41199748150](https://github.com/LucianoToscano/PokeSearch/actions/runs/41199748150) · [PR #166 integrada](https://github.com/LucianoToscano/PokeSearch/pull/166).
 
