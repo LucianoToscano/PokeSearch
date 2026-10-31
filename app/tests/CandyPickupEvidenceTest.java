@@ -32,6 +32,25 @@ public final class CandyPickupEvidenceTest {
                     y<58?rgb(244,194,36):rgb(30,191,81);
         expect(CandyPickupEvidence.hasCandyRainbow(image,width,height),
             "red/yellow/green sprite accepted");
+        expect(!CandyPickupEvidence.hasDualCandyBanner(image,width,height),
+            "a single candy sprite must not falsely confirm collection");
+        int[] dual=image.clone();
+        for(int y=10;y<82;y++)for(int x=203;x<225;x++)
+            dual[y*width+x]=y<35?rgb(245,55,95):
+                y<58?rgb(244,194,36):rgb(30,191,81);
+        expect(CandyPickupEvidence.hasDualCandyBanner(dual,width,height),
+            "two candy sprites on light banner reliably confirm visually");
+        expect(CandyPickupEvidence.foundMessageWithCandy(
+            "Item encontrado!",true),"white DOCE RARO text OCR fallback");
+        expect(!CandyPickupEvidence.foundMessageWithCandy(
+            "Item encontrado!",false),"message alone is insufficient");
+        expect(!CandyPickupEvidence.foundMessageWithCandy(
+            "DOCE RARO",true),"candy name alone is not a collection event");
+        int[] darkBanner=dual.clone();
+        darkBanner[(height*7/100)*width+width/2]=rgb(12,12,16);
+        expect(!CandyPickupEvidence.hasDualCandyBanner(darkBanner,width,height),
+            "do not match a dark map with two scattered sprites");
+
         int[] plain=image.clone();
         java.util.Arrays.fill(plain,rgb(245,245,245));
         expect(!CandyPickupEvidence.hasCandyRainbow(plain,width,height),
