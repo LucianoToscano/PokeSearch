@@ -26,3 +26,10 @@ Casos: null anônimo, arrays preenchidos, sem trainer selecionado, String invál
 
 ## Limitação / homologação
 A documentação foi produzida com dados fornecidos pelo usuário; a presença de nomes reais em `shiny_for` no ambiente autenticado ainda requer teste com contas autorizadas e treinador efetivamente vinculado. Os testes automatizados não substituem a verificação visual no Samsung. O spec anexado não autoriza ações destrutivas nem mudanças nos planos VIP.
+
+## Publicação oficial verificada (31/10/2026)
+- Merge [PR #169](https://github.com/LucianoToscano/PokeSearch/pull/169), fonte `912ff2c78d2526532a75b42ee4c9a6e0cb39ebb1`.
+- [Workflow #41228184179](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228184179) **SUCCESS**, incluindo testes de regressão, build Android protegido, assinatura v2 permanente e hash do APK publicado.
+- [Release LT202 oficial / latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.02-54409): 29.262.143 bytes, SHA-256 `d375602f4857ad031906b581ae9795798bdcc0fba4d1821aa5dc62e65ea5a4f1`.
+- [Google Drive — ZIP com APK e relatórios](https://drive.google.com/file/d/1XWrMubOZlFN9ax5LZ1kC7Z0jvgTSvn30/view?usp=drivesdk): 26.922.827 bytes, SHA-256 `de60f71651b9e689ec561994042b924baf43ae92f5f0864eb5fc77a181430d84`. O ZIP e o hash do APK interno foram verificados.
+- **Ainda pendente:** validar com sessão de treinador real vinculada em aparelho Samsung que `shiny_for` preenchido corresponde à conta; não afirmar Shiny de contas alheias, alteração do servidor ou homologação física sem teste.
