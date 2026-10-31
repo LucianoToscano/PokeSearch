@@ -61,6 +61,65 @@ final class CandyPickupEvidence {
         return false;
     }
 
+    // OCR often misses the low-contrast white "DOCE RARO" label on the
+    // light item-found banner. Two distinctive rainbow sprites plus the
+    // light banner are a strong independent visual signal in this UI.
+    // Do NOT accept a single rainbow sprite (e.g. the overlay or a menu).
+    static boolean hasDualCandyBanner(int[] argb,int width,int height){
+        if(!hasCandyRainbow(argb,width,height))return false;
+        if(width<100||height<40||argb==null||argb.length<width*height)
+            return false;
+        int middle=width/2;
+        int top=Math.max(0,height*7/100),bottom=Math.min(height-1,height*30/100);
+        if(!isLight(argb[top*width+middle])||
+            !isLight(argb[bottom*width+middle]))return false;
+        return hasRainbowInBox(argb,width,height,80,99,4,40,3);
+    }
+
+    private static boolean isLight(int color){
+        int r=(color>>16)&255,g=(color>>8)&255,b=color&255;
+        return r>=215&&g>=215&&b>=205&&
+            Math.max(r,Math.max(g,b))-Math.min(r,Math.min(g,b))<48;
+    }
+
+    private static boolean hasRainbowInBox(int[] argb,int width,int height,
+        int xStartPct,int xEndPct,int yStartPct,int yEndPct,int bins){
+        int x1=width*xStartPct/100,x2=Math.min(width,width*xEndPct/100);
+        int y1=height*yStartPct/100,y2=Math.min(height,height*yEndPct/100);
+        for(int bin=0;bin<bins;bin++){
+            int left=x1+(x2-x1)*bin/bins;
+            int right=x1+(x2-x1)*(bin+1)/bins;
+            int red=0,yellow=0,green=0;
+            long redY=0,yellowY=0,greenY=0;
+            for(int y=y1;y<y2;y+=3){
+                for(int x=left;x<right;x+=3){
+                    int color=argb[y*width+x];
+                    int r=(color>>16)&255,g=(color>>8)&255,b=color&255;
+                    int hi=Math.max(r,Math.max(g,b));
+                    int lo=Math.min(r,Math.min(g,b));
+                    if(hi<110||hi-lo<55)continue;
+                    if(r>145&&r>g*1.38&&r>b*1.12){red++;redY+=y;}
+                    else if(r>145&&g>95&&r>b*1.55&&g>b*1.40){
+                        yellow++;yellowY+=y;
+                    }else if(g>105&&g>r*1.26&&g>b*1.07){
+                        green++;greenY+=y;
+                    }
+                }
+            }
+            if(red>=4&&yellow>=4&&green>=3&&
+                redY/red<yellowY/yellow&&yellowY/yellow<greenY/green)
+                return true;
+        }
+        return false;
+    }
+
+    static boolean foundMessageWithCandy(String text,boolean candyRainbow){
+        String normalized=normalize(text);
+        return candyRainbow&&(
+            normalized.contains("ITEM ENCONTRADO")||
+            titleMatches(text));
+    }
+
     /** Two independent sightings required, with 350ms separation and <=3s. */
     static final class TwoFrameGate {
         private long firstMs=-1, lastHitMs=-1;
