@@ -984,7 +984,8 @@ public final class RareCandyOverlayService extends Service {
         prefs.edit().putString("confirmedCandyHopCoords",point)
             .putLong("confirmedCandyHopAtMs",wallNow)
             .putBoolean("pendingCandyPickup",false)
-            .remove("selectedCandyCopyAtMs").apply();
+            .remove("selectedCandyCopyAtMs")
+            .remove("selectedCandyExpireAtMs").apply();
         Toast.makeText(this,automatic?
             "Doce Raro detectado · cooldown estimado iniciado":
             "Coleta confirmada · cooldown estimado iniciado",
@@ -1035,9 +1036,15 @@ public final class RareCandyOverlayService extends Service {
         clipboard.setPrimaryClip(ClipData.newPlainText("Doce Raro",point));
         selectedCandyCoords=point;
         pendingCandyPickup=true;
+        long copiedNow=System.currentTimeMillis();
+        Candy selected=cards.get(point);
+        long remainingLifetime=selected==null?30L*60L*1000L:
+            Math.max(0L,selected.deadline-SystemClock.elapsedRealtime());
+        long validFor=Math.min(30L*60L*1000L,remainingLifetime);
         prefs.edit().putString("selectedCandyCoords",point)
             .putBoolean("pendingCandyPickup",true)
-            .putLong("selectedCandyCopyAtMs",System.currentTimeMillis()).apply();
+            .putLong("selectedCandyCopyAtMs",copiedNow)
+            .putLong("selectedCandyExpireAtMs",copiedNow+validFor).apply();
         copied.add(point);
         // Keep the last 100 copied points, independent of P1/P2 and tokens.
         if(copied.size()>100){
