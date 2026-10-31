@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT198 OFICIAL — Captura de Doce Raro corrigida (31/10/2026)
+
+- **Latest:** `v0.01.98-54405` · código 54405 · APK assinado de 29.255.819 bytes · SHA-256 `52a853c0686a6ff42060f4bf8bfdae232205a6cf37fce8013bf90de1a2e0dc33`.
+- **Merge:** PR #165 integrada; fonte `4df63b21d5a0a9d65d7a0c386d3f2ec7e3f82105`. Workflow oficial #41187283116: SUCCESS.
+- **Drive:** ZIP oficial `1z1x6MrfnFeCVKSaKoRB8paE4zY8vAVmS`, 26.914.348 bytes, SHA-256 `9e40415063304bb1ed1957825904cf83c59bc3626436693ae2163eac2c6cc5ec`. Integridade e SHA do APK interno verificados.
+- **Correções:** análise visual a cada 350ms independente do OCR; evita que OCR lento bloqueie o reconhecimento, ignora resultados antigos, informa falta de imagens e só confirma após o serviço aceitar a coleta.
+- **Limites:** detector OFF por padrão, consentimento Android por sessão, fallback ✓ Peguei. Testes automatizados passaram; validação de coleta real pós-LT198 no Samsung pendente. A versão está disponível pelo atualizador, sem comprovação de instalação em cada aparelho.
+- **Links:** [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.98-54405) · [Drive](https://drive.google.com/file/d/1z1x6MrfnFeCVKSaKoRB8paE4zY8vAVmS/view) · [QA](LT198_AUDITORIA_CAPTURE_OCR_TRAVADO_COLETA_20261031.md).
+
+---
+
 ## LT197 OFICIAL — Detecção opcional de Doce Raro (31/10/2026)
 
 - **Release/latest pública confirmada:** [v0.01.97-54404](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.97-54404) de `PokeSearch-v0.01.97-LT.apk`, versão `0.01.97` / versionCode `54404`, **29.255.359 bytes**, SHA-256 `fdaeb01a2ecc9c18b1b9c36cbc1ad9f9ca862175b80ba7d0dcb2b24cb448c064`. SOURCE_COMMIT `57cdf047676be960260603a2d91899a7cca6c8c7`. [PR #161 integrada](https://github.com/LucianoToscano/PokeSearch/pull/161). [Workflow de publicação #41184612797 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41184612797) valida a versão, build protegido/R8, assinatura original v2 e hash do asset no GitHub Releases.
