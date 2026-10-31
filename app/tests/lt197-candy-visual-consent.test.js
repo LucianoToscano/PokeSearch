@@ -31,7 +31,7 @@ assert.match(capture,/SAMPLE_INTERVAL_MS=1000L/);
 assert.match(capture,/h\*27\/100/);
 assert.match(capture,/!pending\|\|selectedAt<=0/);
 assert.match(capture,/wallNow>expiresAt/);
-assert.match(candy,/putLong\\("selectedCandyExpireAtMs",copiedNow\\+validFor\\)/);
+assert.ok(candy.includes('putLong("selectedCandyExpireAtMs",copiedNow+validFor)'));
 assert.match(capture,/expiresAt<=selectedAt/);
 assert.match(capture,/gate\.observe\(true,SystemClock\.elapsedRealtime\(\)\)/);
 assert.match(capture,/if\(dualBanner\)/);
@@ -46,7 +46,7 @@ assert.match(capture,/private void observeEvidence\(boolean matched,boolean dual
 assert.match(capture,/waitForOldBannerToClear/);
 assert.match(capture,/reportStatus\("Duas sprites reconhecidas/);
 assert.match(candy,/getCandyCaptureStatus\(\)/);
-assert.match(menu,/function pollCandyDetection\(\)/);
+assert.ok(menu.includes("window.setCandyDetectionStatus=function(status)"));
 assert.match(menu,/id="candyDetectStatus"/);
 
 assert.match(capture,/CandyPickupEvidence\.foundMessageWithCandy/);
