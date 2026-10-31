@@ -414,7 +414,7 @@ public class OverlayService extends Service {
         try{
             JSONObject config=new JSONObject(filterConfigJson());
             config.put("mode",mode);
-            config.put("shiny",shiny);
+            config.put("shiny",ProviderFeatureFlags.SHINY_AVAILABLE&&shiny);
             // Both shiny_only and background_only are account-specific
             // filters. Reuse only trainers verified under the assigned
             // PoGoCoordinates account and never guess another account.
@@ -5017,6 +5017,17 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
+            if(!ProviderFeatureFlags.SHINY_AVAILABLE){
+                // Never send shiny_only=true or force a login/trainer link
+                // while the provider is not supporting this feature.
+                shiny=false;shinyVerified=false;
+                overlayPrefs().edit().putBoolean("shiny",false).apply();
+                android.widget.Toast.makeText(OverlayService.this,
+                    "✨ Shiny temporariamente indisponível · busca normal liberada",
+                    android.widget.Toast.LENGTH_LONG).show();
+                update();
+                return;
+            }
             shiny=!shiny;
             overlayPrefs().edit().putBoolean("shiny",shiny).apply();
             replaceActiveFilterSearch();
@@ -5396,7 +5407,13 @@ public class OverlayService extends Service {
         ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
         ivPercentMax=Math.max(ivPercentMin,
             Math.min(100,pref.getInt("ivPercentMax",100)));
-        shiny=overlayPrefs().getBoolean("shiny",false);
+        // Shiny is paused upstream, not the general search. An old ON value
+        // must never strand a guest or a logged-in user behind trainer checks.
+        if(!ProviderFeatureFlags.SHINY_AVAILABLE&&
+           overlayPrefs().getBoolean("shiny",false))
+            overlayPrefs().edit().putBoolean("shiny",false).apply();
+        shiny=ProviderFeatureFlags.SHINY_AVAILABLE&&
+            overlayPrefs().getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
         return START_STICKY;
