@@ -2372,10 +2372,17 @@ public class OverlayService extends Service {
                     return;
                 }
                 searchInProgress=false;
-                searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Pesquisa não confirmada",
+                String why=configured.optString("reason","verifique o formulário do site.");
+                // The official React page can change selectors without making
+                // the coordinates invalid. Surface a safe, actionable category,
+                // without echoing any private latitude/longitude to the UI.
+                String label=why.contains("Coords")?"Modo/Campo Coords indisponível":
+                    why.contains("raio")||why.contains("Radius")?"Raio não aplicado":
+                    why.contains("coordenadas")?"Coordenadas não persistiram":
+                    "Verificação pendente no site";
+                searchFailure(locationEnabled?"⚠ Localização: "+label:"⚠ Pesquisa não confirmada",
                     (locationEnabled?"Não foi possível configurar localização: ":
-                    "Filtro geográfico do site não pôde ser neutralizado: ")+
-                    configured.optString("reason","verifique o formulário do site."));
+                    "Filtro geográfico do site não pôde ser neutralizado: ")+why);
                 return;
             }
             handler.postDelayed(()->{
@@ -2388,10 +2395,14 @@ public class OverlayService extends Service {
                         return;
                     }
                     searchInProgress=false;
-                    searchFailure("⚠ Localização não confirmada",
+                    String why=verified.optString("reason","estado ainda diferente");
+                    String label=why.contains("Radius")||why.contains("Raio")?"Raio não confirmado":
+                        why.contains("Coords")||why.contains("modo")?"Modo/Campo Coords não confirmado":
+                        why.contains("Coordenadas")?"Coordenadas não persistiram":
+                        "Campos não confirmados no site";
+                    searchFailure("⚠ Localização: "+label,
                         "Aguardando confirmação dos dois campos Coords/Radius no site: "+
-                        verified.optString("reason","estado ainda diferente")+
-                        ". Pesquisa não enviada.");
+                        why+". Pesquisa não enviada.");
                     return;
                 }
                 // Only confirm after the actual fields and active Coords form
@@ -2648,7 +2659,7 @@ public class OverlayService extends Service {
                             return;
                         }
                         searchInProgress=false;
-                        searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Localização residual",
+                        searchFailure(locationEnabled?"⚠ Localização: campos divergentes":"⚠ Localização residual",
                             "Busca não enviada: último formulário de localização divergente. "+
                             lastLocation.optString("reason","reabra Localização, confirme os dados e tente novamente."));
                         return;
@@ -3826,16 +3837,17 @@ public class OverlayService extends Service {
             }
             if(locationEnabled==enabled&&
                 (!enabled||(locationCoords.equals(valid)&&locationRadius==radius))){
-                // A user tap on ✓ Aplicar is the equivalent of Search even
-                // if Coords/Radius were already verified. Keep the existing
-                // settings, avoid resetting proof prematurely, and respect the
-                // in-flight/rate-limit gate before launching a fresh search.
-                if(!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()){
-                    status(enabled?"📍 Pesquisando com coordenadas e filtros ativos...":
-                        "📍 Pesquisando com filtros ativos (busca geral)...");
+                // Clicking ✓ is an explicit retry even with UNCHANGED coords.
+                // A local nextScheduledSearchAtMs must not permanently block
+                // Apply after a failed attempt. refresh(true) already enforces
+                // the real HTTP 429 / Retry-After gate and the in-flight lock.
+                if(!searchInProgress){
+                    status(enabled?"📍 Revalidando coordenadas e raio...":
+                        "📍 Revalidando busca geral...");
                     OverlayService.this.refresh(true);
                 }else{
-                    status("⌛ Aguarde a busca atual ou o intervalo do site antes de pesquisar novamente.");
+                    queuedManualRefresh=true;
+                    status("⌛ Busca atual em andamento; nova tentativa de localização em seguida.");
                     update();
                 }
                 return;
