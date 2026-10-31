@@ -7,7 +7,7 @@ package com.lucianotoscano.pokesearchoverlay;
  * request limits, spawn expiry, or account state.
  */
 final class CandyCooldownPolicy {
-    static final long MAX_AGE_MS=2L*60L*60L*1000L;
+    static final long MAX_AGE_MS=24L*60L*60L*1000L;
     private static final double EARTH_RADIUS_METERS=6371000d;
     private CandyCooldownPolicy(){}
 
