@@ -6621,8 +6621,9 @@ function draw(){
    locationEnabled?"⌛ Localização solicitada, ainda não aplicada":
    "📍 Localização desligada · busca geral";
  geoControl.setAttribute("aria-label",geoControl.title);
- document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
- document.getElementById("sh").title=shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":shiny?"✨ Shiny confirmado":"Shiny desativado";
+ document.getElementById("sh").setAttribute("aria-pressed","false");
+ document.getElementById("sh").setAttribute("aria-disabled","true");
+ document.getElementById("sh").title="✨ Shiny indisponível temporariamente no PoGoCoordinates · busca comum liberada";
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status)){
   document.getElementById("manualRefresh").classList.remove("requested");
@@ -6924,7 +6925,7 @@ window.setMinimized=value=>{
 
 /* UX-MENU-01: contextual menu reuses native actions and verified filters. */
 const QUICK_ACTIONS=[
- ["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"],
+ ["mode","☷","Modos","mode"],["sh","✨","Shiny indisponível","sh"],["filters","≡","Filtros","filters"],
  ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
  ["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"],
  ["period","↻","Atualização","period"],["appearance","⚙","Personalização","appearance"],
@@ -7032,7 +7033,7 @@ function updateFiltersPanelStatus(){
 function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
-  case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
+  case "sh":return "Indisponível";
   case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return currentLocationUiState()==="CONFIRMED"?"✓ "+locationRadius+" km":
