@@ -21,3 +21,30 @@
 - Executar `node app/tests/location-probe.test.js`, `node app/tests/lt200-location-cooldown.test.js`, `node app/tests/overlay-ux.test.js` e todas as suítes antes de assinar.
 
 **Atenção**: screenshot isolado comprova o aviso genérico, mas não comprova qual erro de backend/DOM ocorreu naquela execução. Os caminhos corrigidos são verificáveis no código; confirmação no dispositivo permanece obrigatória.
+
+## Sintomas adicionais documentados (31/10/2026, Samsung)
+
+O usuário enviou capturas com `⚠ API: invalid-request` e
+`⚠ Filtro: Aguardando portal oficial do seletor P`. Elas mostram **caminhos
+diferentes**, não comprovam falha específica das coordenadas.
+
+- `invalid-request` vem do `POST /search` que retornou HTTP 400/422
+  ou de validação de chamada; o status anterior não mostrava o campo.
+  O transporte agora extrai, de erros de validação estruturados, **somente**
+  o nome de um campo **permitido** (`species_forms`, `radius_km`, etc.)
+  e somente HTTP 400/422; mensagens e valores retornados nunca entram no
+  WebView→Android, log, toast ou relatório. Multiplos campos = diagnóstico
+  genérico. **NÃO** reenvia um 400/422 automaticamente nem relaxa critérios.
+- O seletor React agora recebe foco antes de abrir e no máximo um clique
+  de abertura a cada 1,5 s. Isso evita alternar continuamente um portal ainda
+  não montado; a confirmação dos chips e formas exatas continua obrigatória.
+- Ao esgotar a configuração do portal, o erro visível é
+  `⚠ Filtro: Seletor Pokémon não abriu no site`; lista anterior preservada.
+- Para diagnóstico sem apagar seleção, testar a chave de filtro Pokémon OFF,
+  pesquisar apenas IV100/0% em cada Pokébola, reativar e comparar. Testar
+  tanto API quanto site/DOM; **não** prometer êxito sem resposta real.
+- Verificar que as buscas não aplicam filtros inválidos em silêncio e
+  que nomes de treinador, tokens, coordenadas e conteúdos completos de erros
+  do provedor não aparecem nos relatórios.
+- Testes: `node app/tests/lt200-api-dom-failures.test.js`, contrato de
+  transporte e sessão, testes de seleção de espécies + CI Android.
