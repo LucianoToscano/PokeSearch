@@ -79,7 +79,8 @@ public final class CandyScreenCaptureService extends Service {
             return START_NOT_STICKY;
         }
         SharedPreferences prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
-        if(!prefs.getBoolean("candyAutoPickupOptIn",false)){
+        if(!RareCandyOverlayService.isRunning()||
+            !prefs.getBoolean("candyAutoPickupOptIn",false)){
             stopSelf();return START_NOT_STICKY;
         }
         int code=intent.getIntExtra(EXTRA_RESULT_CODE,0);
@@ -170,6 +171,7 @@ public final class CandyScreenCaptureService extends Service {
             image=source.acquireLatestImage();
             if(image==null)return;
             long now=SystemClock.elapsedRealtime();
+            if(!RareCandyOverlayService.isRunning()){stopSelf();return;}
             if(stopped||!sourceVisible||inFlight||
                 now-lastFrameAt<SAMPLE_INTERVAL_MS)return;
             lastFrameAt=now;
