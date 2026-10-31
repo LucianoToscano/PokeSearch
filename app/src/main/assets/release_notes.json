@@ -1054,6 +1054,31 @@
           "A ausência real de resultados para um IV continua possível e não pode ser transformada em um Pokémon inventado."
         ]
       }
+    },
+    {
+      "id": "lt195-candy-next-hop-cooldown-20261031",
+      "minVersionCode": 54400,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT195 — Cooldown dos Doces Raros",
+      "sections": {
+        "novidades": [
+          "Ao copiar um doce, ele passa a ser referência para estimar o tempo até cada próximo doce pela distância real entre as coordenadas.",
+          "Contagem no item em vermelho, rosa (últimos 30 segundos) e verde quando a estimativa terminar."
+        ],
+        "melhorias": [
+          "O contador é atualizado a cada segundo e continua após fechar e reabrir o overlay.",
+          "A opção ↺ no menu de Informações limpa a referência sem apagar doces ou filtros.",
+          "Resultados e filtros das duas Pokébolas preservados; limite de 10 cartões respeitado."
+        ],
+        "correcoes": [
+          "Harmonizada a validação de IV decimal da LT194 entre API, DOM e Android.",
+          "Respostas da API com ocorrências rejeitadas não são confundidas com ausência confirmada de Pokémon."
+        ],
+        "emDesenvolvimento": [
+          "A tabela de espera é uma estimativa informativa por distância, não confirmação de ação ou cooldown real do jogo.",
+          "Requer validação autenticada no Samsung com dois overlays."
+        ]
+      }
     }
   ]
 }
