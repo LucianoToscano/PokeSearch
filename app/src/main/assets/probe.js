@@ -488,12 +488,21 @@ function pokemonSuggestion(query){
  }
  const popup=pokemonPickerPopup(input,trigger,wanted);
  if(!popup){
-  // Never toggle another site's menu. Only operate on the identified
-  // Pokémon trigger, and let React finish opening its listbox.
+  // React portals may hydrate AFTER the input value. Repeatedly clicking
+  // an unlabelled trigger can toggle it CLOSED on each native retry.
+  // Focus the exact Pokémon input, then issue at most one click per 1.5s.
+  // Never click other open dropdowns (Weather/Form/Gender).
   if(input.getAttribute('aria-expanded')!=='true'&&
      trigger?.getAttribute('aria-expanded')!=='true'){
-   if(trigger&&!trigger.disabled)trigger.click();
-   else if(document.activeElement!==input)input.focus?.();
+   if(document.activeElement!==input&&typeof input.focus==='function')
+    input.focus();
+   else if(trigger&&!trigger.disabled){
+    const now=Date.now(),last=Number(input.__psPokemonPortalTryAt)||0;
+    if(!last||now-last>=1500){
+     input.__psPokemonPortalTryAt=now;
+     trigger.click();
+    }
+   }
   }
   return {ok:false,pending:true,state:'pending',query:originalQuery,
    reason:'Aguardando portal oficial do seletor Pokémon'};
