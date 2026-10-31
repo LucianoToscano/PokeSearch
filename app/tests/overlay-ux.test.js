@@ -1000,7 +1000,7 @@ test("UX-MENU-02 preserves independent Reportar and Apoiar actions",
 test("PL-04 OFF does not force Area when default Coords are blank",
  read("assets/probe.js").includes('An empty Coords form is still')&&
  read("assets/probe.js").includes('return JSON.stringify({ok:blank,reason:blank?')&&
- service.includes('locationEnabled?"⚠ Localização não aplicada":"⚠ Pesquisa não confirmada"'));
+ service.includes('searchFailure(locationEnabled?"⚠ Localização: "+label:"⚠ Pesquisa não confirmada"'));
 
 
 test("UX-MENU-03 keeps one tiny toolbar, cascade and independent other menus",
@@ -1247,7 +1247,7 @@ test("PL-04 final site verification happens after IV filters and before Search",
  const submit=service.indexOf('execute("submitSearch",submitted->',verified);
  return verified>=0&&finalVerify>verified&&submit>finalVerify&&
   service.includes('locationVerified=locationEnabled;')&&
-  service.includes('searchFailure(locationEnabled?"⚠ Localização não aplicada":"⚠ Localização residual"')&&
+  service.includes('searchFailure(locationEnabled?"⚠ Localização: campos divergentes":"⚠ Localização residual"')&&
   dock.includes('locationVerified=!!verifiedLocation&&locationEnabled;')&&
   dock.includes('geoControl.classList.toggle("locOn",geoConfirmed)')&&
   dock.includes('id==="location"?(locationEnabled&&locationVerified)');
@@ -2804,9 +2804,10 @@ test("FILTERS-POGO-05 reusing confirmed coordinates still executes Search",()=>{
   ?.split('@JavascriptInterface public void pasteLocationCoords()')[0]||"";
  const same=handler.split('if(locationEnabled==enabled&&')[1]
   ?.split('locationVerified=false;')[0]||"";
- return same.includes('!searchInProgress&&nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
+ return same.includes('if(!searchInProgress){')&&
   same.includes('OverlayService.this.refresh(true)')&&
-  same.includes('Pesquisando com coordenadas e filtros ativos')&&
+  same.includes('Revalidando coordenadas e raio')&&
+  !same.includes('nextScheduledSearchAtMs<=System.currentTimeMillis()')&&
   !same.includes('enabled&&!locationVerified')&&
   handler.includes('replaceActiveFilterSearch();')&&
   handler.includes('locationCoords=enabled?valid:""');
@@ -3149,7 +3150,7 @@ test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()
   dock.includes('event.target.closest("#choices")')&&
   dock.includes('event.target.closest("#choices")')&&
   dock.includes('event.target.closest(\'#quickMenuList button[data-key]\')')&&
-  dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","modePanel","standardPanel","filterPicker","morePanel"')&&
+  dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","locationCooldownTable","modePanel","standardPanel","filterPicker","morePanel"')&&
   dock.includes('if(!menuOpen){closeChoices();')&&
   dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
   dock.includes('for(const id of quickPrefs.order)')&&
@@ -3318,13 +3319,14 @@ test("LT60-LOC-STATE-01 distinguishes OFF, requested, confirmed and not applied"
  const start=dock.indexOf("function currentLocationUiState(){");
  const end=dock.indexOf("function locationPanelFeedback(){",start);
  if(start<0||end<=start)return false;
- const fn=new Function("locationEnabled","locationVerified","activeSearchPhase",
+ const fn=new Function("locationEnabled","locationVerified","activeSearchPhase","status",
   dock.slice(start,end)+"return currentLocationUiState();");
- return fn(false,false,"idle")==="OFF"&&
-  fn(true,false,"filling")==="REQUESTED"&&
-  fn(true,false,"error")==="NOT_APPLIED"&&
-  fn(true,true,"updated")==="CONFIRMED"&&
-  fn(true,true,"searching")==="CONFIRMED";
+ return fn(false,false,"idle","")==="OFF"&&
+  fn(true,false,"filling","")==="REQUESTED"&&
+  fn(true,false,"error","⚠ Localização: Raio não aplicado")==="NOT_APPLIED"&&
+  fn(true,false,"error","⚠ API: limite temporário")==="SEARCH_ERROR"&&
+  fn(true,true,"updated","")==="CONFIRMED"&&
+  fn(true,true,"searching","")==="CONFIRMED";
 });
 test("LT60-LOC-STATE-02 new Search revokes stale site confirmation before submit",()=>{
  const refresh=service.split("private void refresh(boolean manual){")[1]
@@ -3338,7 +3340,8 @@ test("LT60-LOC-STATE-03 native feedback observes updated error status",()=>{
  const bridge=dock.split("window.onNativeData=")[1]?.split("function quickState(",1)[0]||"";
  return bridge.indexOf('activeSearchPhase=String(searchPhase||"idle");')<
   bridge.indexOf('if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();')&&
-  dock.includes('state==="NOT_APPLIED"?"⚠ Localização não aplicada')&&
+  dock.includes('state==="NOT_APPLIED"?')&&
+  dock.includes('state==="SEARCH_ERROR"?"⚠ Busca falhou')&&
   dock.includes('state==="REQUESTED"?"⌛ Verificando localização')&&
   service.includes('prefs.remove("locationCoords").remove("locationRadius")');
 });
