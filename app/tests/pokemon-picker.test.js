@@ -185,4 +185,48 @@ test('Official costume and regional forms preserve exact site labels',()=>{
  site.available.splice(-2);
 });
 
+
+test('Stale linked aria-controls cannot redirect Pokemon search into another filter',()=>{
+ const oldInput=input.getAttribute,oldGet=document.getElementById;
+ site.open=true;site.foreignOpen=true;site.query='';
+ input.getAttribute=name=>name==='aria-controls'?'stale-weather':oldInput(name);
+ document.getElementById=name=>name==='stale-weather'?unrelated:null;
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Charmander')).state,'pending');
+ const result=run('pokemonSuggest:'+JSON.stringify('Charmander'));
+ assert.equal(result.state,'ready');
+ assert.equal(result.options.length,2);
+ assert.ok(result.options.every(v=>/Charmander/.test(v.label)));
+ input.getAttribute=oldInput;
+ if(oldGet===undefined)delete document.getElementById;else document.getElementById=oldGet;
+ site.foreignOpen=false;
+});
+test('Official mobile picker with unique named input and no separate trigger',()=>{
+ const oldRoot=root.querySelectorAll,oldParent=input.parentElement;
+ site.open=true;site.foreignOpen=false;site.query='';input.value='';
+ input.parentElement=root;
+ root.querySelectorAll=selector=>{
+  if(selector==='button,[role=combobox],input:not([type=hidden])')return [input];
+  if(selector==='input:not([type=hidden])')return [input];
+  if(selector==='button,[role=combobox],[aria-haspopup]')return [];
+  if(selector==='button,[role=button]')return [];
+  return [];
+ };
+ assert.equal(run('pokemonSuggest:'+JSON.stringify('Ivysaur')).state,'pending');
+ const result=run('pokemonSuggest:'+JSON.stringify('Ivysaur'));
+ assert.equal(result.state,'ready');
+ assert.ok(result.options.some(x=>x.label==='Ivysaur'));
+ input.parentElement=oldParent;root.querySelectorAll=oldRoot;
+});
+test('Two conflicting Pokemon search inputs are not selected by first-match guessing',()=>{
+ const old=document.querySelectorAll;
+ const duplicate=el('',{placeholder:'Search by name, form, or dex #'},{tagName:'INPUT'});
+ site.open=true;
+ document.querySelectorAll=selector=>
+  selector==='input:not([type=hidden])'?[input,duplicate]:old(selector);
+ const result=run('pokemonSuggest:'+JSON.stringify('Pikachu'));
+ assert.notEqual(result.state,'ready');
+ assert.notEqual(result.ok,true);
+ document.querySelectorAll=old;
+});
+
 console.log('PokeSearch official multi-Pokemon picker: '+tested+' tests passed');
