@@ -188,6 +188,9 @@ test('Official costume and regional forms preserve exact site labels',()=>{
 
 test('Stale linked aria-controls cannot redirect Pokemon search into another filter',()=>{
  const oldInput=input.getAttribute,oldGet=document.getElementById;
+ const oldForeign={text:unrelated.innerText,textContent:unrelated.textContent,rows:unrelated.querySelectorAll};
+ unrelated.innerText='Sunny';unrelated.textContent='Sunny';
+ unrelated.querySelectorAll=selector=>selector.includes('[role=option]')?[el('Sunny')]:[];
  site.open=true;site.foreignOpen=true;site.query='';
  input.getAttribute=name=>name==='aria-controls'?'stale-weather':oldInput(name);
  document.getElementById=name=>name==='stale-weather'?unrelated:null;
@@ -198,6 +201,8 @@ test('Stale linked aria-controls cannot redirect Pokemon search into another fil
  assert.ok(result.options.every(v=>/Charmander/.test(v.label)));
  input.getAttribute=oldInput;
  if(oldGet===undefined)delete document.getElementById;else document.getElementById=oldGet;
+ unrelated.innerText=oldForeign.text;unrelated.textContent=oldForeign.textContent;
+ unrelated.querySelectorAll=oldForeign.rows;
  site.foreignOpen=false;
 });
 test('Official mobile picker with unique named input and no separate trigger',()=>{
