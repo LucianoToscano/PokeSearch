@@ -19,3 +19,10 @@
 - Confirmar comportamento do seletor somente no site oficial (não em listas de clima/gênero) após o React carregar. Se os controles remotos tiverem mudado completamente, não é seguro acertar por heurística: precisa de captura autorizada do DOM atual sem cookies.
 
 **Status da integração remota:** testes sintéticos verificam que não aplica filtros errados. Mudanças exatas do servidor ainda não homologadas por teste de sessão real; a correção é de compatibilidade robusta, não confirmação de restauração de serviço.
+
+## Publicação e assinatura verificadas (31/10/2026)
+- [PR #168](https://github.com/LucianoToscano/PokeSearch/pull/168) mesclada; source commit `38ae944b0c8e18cec2aa993ced868907a5ac1113`.
+- [Workflow oficial #41226844970](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226844970) SUCCESS: Node, Java/Android Gradle, R8, assinatura original v2 e verificação do hash do asset no release público.
+- [Release oficial LT201 (latest)](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.01-54408) — APK 29.260.927 bytes, SHA-256 `5c1686bc4e21b6792f676085eb048114eb0009fcd9e2aa50f0bad614b6b6e6e3`.
+- [Google Drive — ZIP assinado com relatórios](https://drive.google.com/file/d/1v3b2pXlMkWITpefNfXYkAnA7pFQoMKeJ/view?usp=drivesdk): 26.921.507 bytes, SHA-256 `0600459467d26f0cb505ef0b3cf18419dbfe575d5250b0914ae925fc1b283454`. ZIP íntegro; APK interno tem o mesmo SHA-256 do release. Assinatura v2 com certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Não homologado em Samsung:** prova de seleção de espécies/formas, API HTTP 400/422 reais e login/treinador Shiny após LT201. A versão pública oferece testes e mensagens melhoradas, mas não confirma alteração específica no provedor nem uma busca remota bem-sucedida.
