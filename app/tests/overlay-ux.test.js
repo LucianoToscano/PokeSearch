@@ -2320,7 +2320,7 @@ test("UX-LOC-SHINY-02 live account badge can prove linked trainer without exposi
 });
 test("SITE-POKEMON-01 picker exposes selected chips and exact official suggestions",()=>
  dock.includes('function renderPokemonChoices()')&&
- dock.includes('pokemonDraft.length+" selecionados"')&&
+ dock.includes('pokemonDraft.length+(pokemonFilterEnabledDraft?" selecionados":" salvos · filtro OFF")')&&
  dock.includes('input.placeholder="Nome, forma ou número #"')&&
  dock.includes('const selection={selections:[...pokemonDraft],clear:pokemonForceClear}')&&
  dock.includes('pokemonDraft.length<50'));
@@ -3396,7 +3396,8 @@ test("LT64-FILTER-DELTA species selection preserves unrelated search configurati
  return ui.includes("Native.setPokemonSelections(JSON.stringify(selection))")&&
   !ui.includes("Native.setSearchConfig(")&&
   native.includes('new JSONObject(extraFiltersJson)')&&
-  native.includes('extra.put("pokemonSelections",cleaned)')&&
+  native.includes('extra.put("pokemonSavedSelections",cleaned)')&&
+  native.includes('extra.put("pokemonSelections",enabled?cleaned:new org.json.JSONArray())')&&
   native.includes('extra.put("clearExtraKeys",reset)')&&
   native.includes('overlayPrefs().edit().putString("extraFiltersJson",next).apply()')&&
    service.includes('getSharedPreferences(isSecondaryOverlay()?"prefs_secondary":"prefs",0)')&&
