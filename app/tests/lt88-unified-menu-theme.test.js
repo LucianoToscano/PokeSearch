@@ -34,7 +34,8 @@ test("one surface theme rules every menu; cascade holders remain unpainted",()=>
 });
 test("location paste and copy are NOT in header, but are beside radius",()=>{
  const l=html.split("function renderLocationChoices(){")[1]?.split("let requestedInterval=null",1)[0]||"";
- assert.ok(l.includes('title.appendChild(make("span","","Localização"))'));
+ assert.ok(l.includes('titleAction=make("button","locTitleHelp","Localização")')&&
+ l.includes('titleAction.onclick=renderLocationCooldownTable'));
  assert.ok(l.includes("label.append(labelName,radiusWrap)"));
  assert.ok(!l.includes("title.append(paste,copy)"));
  assert.ok(l.includes('const copy=make("button","locCopy"'));
