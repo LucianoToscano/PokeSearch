@@ -4362,6 +4362,13 @@ body.controls-window #choices.locationCooldownTable .locCooldownHead span:last-c
 body.controls-window #choices.locationCooldownTable .locCooldownEntry:nth-child(even){
  background:#ffffff09!important;
 }
+
+/* LT203: upstream Shiny is paused. Keep the icon recognizable and tappable
+   for explanation, but no visual ON state or false promise of availability. */
+body.controls-window #sh.upstreamUnavailable,
+body.controls-window #quickMenuList button[data-key="sh"].upstreamUnavailable{
+ opacity:.48!important;filter:grayscale(1)!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4548,6 +4555,9 @@ let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
  speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
 let displayedMetadataWidth=0;
+// Temporary upstream pause. Keep the original Shiny code and icons for
+// later verified reactivation; ordinary guest/logged searches stay active.
+const PROVIDER_SHINY_AVAILABLE=false;
 let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],pokemonSavedSelections:[],pokemonFilterEnabled:true,form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
@@ -6622,7 +6632,14 @@ function draw(){
    "📍 Localização desligada · busca geral";
  geoControl.setAttribute("aria-label",geoControl.title);
  document.getElementById("sh").setAttribute("aria-pressed",String(shiny));
- document.getElementById("sh").title=shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":shiny?"✨ Shiny confirmado":"Shiny desativado";
+ document.getElementById("sh").title=!PROVIDER_SHINY_AVAILABLE?
+  "✨ Shiny temporariamente indisponível no PoGoCoordinates":
+  shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":
+  shiny?"✨ Shiny confirmado":"Shiny desativado";
+ document.getElementById("sh").classList.toggle("upstreamUnavailable",
+  !PROVIDER_SHINY_AVAILABLE);
+ document.querySelector('#quickMenuList button[data-key="sh"]')
+  ?.classList.toggle("upstreamUnavailable",!PROVIDER_SHINY_AVAILABLE);
  document.getElementById("clock").classList.toggle("timerOn",showTimers);
  if(/atualizad|resultados|sem resultados|erro|falha|não confirmado/i.test(status)){
   document.getElementById("manualRefresh").classList.remove("requested");
@@ -7032,7 +7049,8 @@ function updateFiltersPanelStatus(){
 function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
-  case "sh":return shinyPending?"Pendente":shiny?"ON":"OFF";
+  case "sh":return !PROVIDER_SHINY_AVAILABLE?"Indisp.":
+   shinyPending?"Pendente":shiny?"ON":"OFF";
   case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
   case "star":return hasFavorites?"Ativos":"";
   case "location":return currentLocationUiState()==="CONFIRMED"?"✓ "+locationRadius+" km":
