@@ -1305,6 +1305,30 @@
           "O aviso HTTP 422 ainda precisa de diagnóstico real do provedor para identificar exatamente o campo rejeitado; não foi ocultado nem contornado."
         ]
       }
+    },
+    {
+      "id": "lt205-candy-account-provider-429-20261031",
+      "minVersionCode": 54412,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT205 — Doces Raros, conta correta e consultas sem duplicação",
+      "sections": {
+        "novidades": [
+          "O Doce Raro agora acompanha a Conta 1 ou Conta 2 selecionada na Pokébola 1, sem precisar reiniciar o aplicativo.",
+          "Quando o PoGoCoordinates limita a API, o aviso exibe HTTP 429 e tempo aproximado de liberação."
+        ],
+        "melhorias": [
+          "A lista de Doces Raros abre sem iniciar uma consulta extra enquanto a pesquisa inicial está em andamento.",
+          "O temporizador de espera do provedor é separado do cooldown de coleta no Pokémon GO e é atualizado localmente."
+        ],
+        "correcoes": [
+          "Ao trocar a conta da Pokébola 1, o WebView dos Doces Raros recarrega com o perfil isolado correto e descarta respostas antigas.",
+          "Respeita integralmente as limitações e o Retry-After informados pelo PoGoCoordinates, preservando as duas Pokébolas e suas configurações."
+        ],
+        "emDesenvolvimento": [
+          "Aparelhos Samsung e sessões reais do PoGoCoordinates ainda precisam confirmar em campo o resultado da correção. A disponibilidade depende de limites e resposta do provedor.",
+          "A instalação da atualização exige confirmação do usuário no Android."
+        ]
+      }
     }
   ]
 }
