@@ -452,8 +452,8 @@ test("Despawn removes expired sprites then reloads the site even when AUTO is OF
 test("Expired 0:00 cards are never restored or announced as live",()=>{
  return service.includes('if(secs<0||secs>86400)return Long.MAX_VALUE;')&&
   service.includes('if(end<=now)continue;')&&
-  service.includes('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')&&
-  service.indexOf('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')<
+  service.includes('JSONArray inSortOrder=sortItems(retainVerifiedEncounterFields(unexpired));')&&
+  service.indexOf('JSONArray inSortOrder=sortItems(retainVerifiedEncounterFields(unexpired));')<
    service.indexOf('recordNewResults(sorted,');
 });
 test("Reopening menu immediately re-applies active visual states to recreated buttons",()=>{
@@ -1432,8 +1432,8 @@ test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
  const nativeGate=service.indexOf("if(card!=null&&verifiedTargetCriteria(card))verified.put(card)",apply);
  const newResults=service.indexOf("recordNewResults(sorted,",apply);
  return verify>=0&&nativeGate>apply&&newResults>nativeGate&&
-  service.includes("if(!matchesVerifiedIvPercent(observed,sum))return false;")&&
-  service.includes("if(!isAllowedIvPercent(actual))return false;")&&
+  service.includes("VerifiedIvMath.matchesVerifiedPercent(observed,sum)")&&
+  service.includes("VerifiedIvMath.matchesCriteria(mode,")&&
   !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
   service.includes('differentVerifiedIv>0?"⚠ Resultados divergentes"')&&
   service.includes('"⚠ IV não comprovado"');
