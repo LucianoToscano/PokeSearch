@@ -194,14 +194,15 @@ public final class CandyScreenCaptureService extends Service {
             String selected=prefs.getString("selectedCandyCoords","");
             boolean pending=prefs.getBoolean("pendingCandyPickup",false);
             long selectedAt=prefs.getLong("selectedCandyCopyAtMs",0L);
+            long expiresAt=prefs.getLong("selectedCandyExpireAtMs",0L);
             long wallNow=System.currentTimeMillis();
             if(!pending||selectedAt<=0||wallNow<selectedAt||
-                wallNow-selectedAt>120000L||
+                expiresAt<=selectedAt||wallNow>expiresAt||
                 CandyCooldownPolicy.parseCoordinates(selected)==null){
                 pendingPoint="";pendingSince=0;
                 gate.reset();
-                reportStatus(pending&&selectedAt>0&&wallNow-selectedAt>120000L?
-                    "Cópia expirada · copie novamente":"Aguardando cópia de um doce");
+                reportStatus(pending&&expiresAt>0&&wallNow>expiresAt?
+                    "Doce expirado · copie outro":"Aguardando cópia de um doce");
                 return;
             }
             if(!selected.equals(pendingPoint)||selectedAt!=pendingSince){
