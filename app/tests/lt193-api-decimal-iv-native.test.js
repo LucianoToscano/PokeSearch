@@ -55,9 +55,8 @@ assert.equal(mixed.cards.filter(c=>c.iv==="0/15/15").length,1);
 // The native defence-in-depth uses the same exact IV arithmetic, including
 // source percentages with one/two decimals and exact multi-decimal values.
 assert.match(java,/private static boolean matchesVerifiedIvPercent\(double observed,int sum\)/);
-assert.match(java,/matchesVerifiedIvPercent\(observed,sum\)/);
-assert.match(java,/actual=computed/);
-assert.match(java,/if\("raw"\.equals\(mode\)\)/);
-assert.match(java,/hasRaw&&\(rawAttack\+"\/"\+rawDefense\+"\/"\+rawStamina\)\.equals\(raw\)/);
+assert.match(java,/VerifiedIvMath\.matchesVerifiedPercent\(observed,sum\)/);
+assert.match(java,/VerifiedIvMath\.matchesCriteria\(mode,/);
+assert.match(java,/cards\.length\(\)>10/);
 assert.match(secondary,/extends OverlayService/);
 console.log("LT193 PASS: API 0/15/15 66.67% survives native canonical IV gate on P1/P2");
