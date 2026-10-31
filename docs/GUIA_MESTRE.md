@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT201 — COMPATIBILIDADE POGOCORDINATES (31/10/2026)
+
+- **Integração:** [PR #168](https://github.com/LucianoToscano/PokeSearch/pull/168) na `main`, commit `38ae944b0c8e18cec2aa993ced868907a5ac1113`. Versão preparada: `0.02.01` / `54408`.
+- **Seletor de Pokémon:** compatibilidade com a página móvel que exibe um único campo oficial de pesquisa por nome/forma/dex sem botão independente; controles ambíguos não são escolhidos. Um `aria-controls` React antigo não autoriza usar uma lista diferente: opções devem coincidir com a pesquisa e a seleção exata continua necessária.
+- **Erros API 400/422:** extração de campos permitidos em estruturas `detail`, `detail.errors` e `errors`; identificação segura de `shiny_account` e contagem limitada de múltiplos campos rejeitados. Nunca expõe valores, JWTs, coordenadas, IDs ou mensagens do servidor. Não relaxa filtros, não remove escolhas e não contorna HTTP 429.
+- **Preservação:** P1 e P2 independentes, login e vinculação de Shiny exigidos, raio e coordenadas sob confirmação oficial, tipagem PvP mantida. Nenhum endpoint, enum ou identidade Shiny foi inventado.
+- **QA concluída antes do merge:** [Node](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226726624) SUCCESS · [Regressão completa](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226726578) SUCCESS · [Java Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226726668) SUCCESS · [OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226726645) SUCCESS.
+- **Distribuição:** workflow [lt201-official-release.yml](../.github/workflows/lt201-official-release.yml) exige `latest` LT200, testes completos, assinatura v2 permanente, compilação protegida, hash e verificação do release. **Neste registro inicial, publicação e instalação ainda dependem da conclusão/verificação desse workflow.**
+- **Limitação importante:** a página pública `/search` do PoGoCoordinates é dinâmica e não informa o esquema autenticado atual. Não foi comprovada uma alteração exata do provedor ou uma busca bem-sucedida em Samsung. [Checklist LT201](LT201_COMPAT_POGOCORDINATES_QA_20261031.md).
+
+---
+
 ## LT200 — LOCALIZAÇÃO, API E SELETOR POKÉMON (31/10/2026)
 
 - **Código integrado:** [PR #167](https://github.com/LucianoToscano/PokeSearch/pull/167) mesclada à `main`; commit `2887d8bf1dfe7b4cd09fbb7104493f31132d57cd`. Versão preparada: **0.02.00 / versionCode 54407**.
