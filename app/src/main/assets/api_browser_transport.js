@@ -232,6 +232,7 @@
    return {ok:true,searchId:generation,cards:parsed.cards,
     found:parsed.found,siteCount:parsed.siteCount,
     rejected:parsed.rejected,expired:parsed.expired,filtered:parsed.filtered,
+    eligible:parsed.eligible,duplicates:parsed.duplicates,
     rejectionCounts:parsed.rejectionCounts,serverCap:parsed.serverCap,displayCap:parsed.displayCap,
     criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false,
     source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,
