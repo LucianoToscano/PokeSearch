@@ -804,6 +804,10 @@ public class MainActivity extends Activity {
         secondTrainerLp.topMargin=d(13);
         secondAccountConnected.addView(secondTrainerPanel,secondTrainerLp);
         secondTrainerPanel.setOrientation(LinearLayout.VERTICAL);
+        // The second profile also needs login only, without an empty
+        // unconfirmed-trainer card while Shiny is unavailable upstream.
+        if(!ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE)
+            secondTrainerPanel.setVisibility(View.GONE);
         View secondRule=new View(this);
         secondRule.setBackgroundColor(homeLightMode?Color.rgb(194,205,218):
             Color.rgb(62,72,84));
@@ -1180,21 +1184,31 @@ public class MainActivity extends Activity {
             TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
             if(label==null)continue;
             int slot=PogoAccountSlots.assigned(this,secondary);
-            String chosen=PogoAccountSlots.trainer(this,secondary);
-            label.setText((secondary?"P2":"P1")+" · Conta "+slot+
-                (chosen.matches("[0-9]{12}")?
-                    " · "+(showCode?"••••"+chosen.substring(8):"XXXX"):" · Treinador —"));
+            if(!ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE){
+                label.setText((secondary?"P2":"P1")+" · Conta "+slot+
+                    (PogoAccountSlots.loggedIn(this,slot)?" · Logado":" · Visitante"));
+            }else{
+                String chosen=PogoAccountSlots.trainer(this,secondary);
+                label.setText((secondary?"P2":"P1")+" · Conta "+slot+
+                    (chosen.matches("[0-9]{12}")?
+                        " · "+(showCode?"••••"+chosen.substring(8):"XXXX"):
+                        " · Treinador —"));
+            }
         }
     }
     private void showPokeballAccountChoice(boolean secondary){
         int assigned=PogoAccountSlots.assigned(this,secondary);
         int trainers1=selectableTrainerCount(PogoAccountSlots.prefs(this,1));
         int trainers2=selectableTrainerCount(PogoAccountSlots.prefs(this,2));
-        String[] choices={
-            "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
-            "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
-                trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
-        };
+        String[] choices=ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE?
+            new String[]{
+                "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
+                "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
+                    trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
+            }:new String[]{
+                "Conta 1 · "+(PogoAccountSlots.loggedIn(this,1)?"Logado":"Visitante"),
+                "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?"Logado":"Entrar primeiro")
+            };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
             .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
@@ -1205,7 +1219,26 @@ public class MainActivity extends Activity {
                     Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
                     return;
                 }
-                choosePokeballTrainer(secondary,slot);
+                if(ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE){
+                    choosePokeballTrainer(secondary,slot);
+                }else{
+                    // Account assignment is not a trainer selection. Preserve
+                    // independent P1/P2 account choices without Shiny prompts.
+                    PogoAccountSlots.bind(this,secondary,slot,"");
+                    Class<?> service=secondary?SecondaryOverlayService.class:
+                        OverlayService.class;
+                    boolean running=secondary?OverlayService.isSecondaryRunning():
+                        OverlayService.isRunning();
+                    if(running){
+                        stopService(new Intent(this,service));
+                        getWindow().getDecorView().postDelayed(()->{
+                            Intent intent=new Intent(this,service);
+                            if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);
+                            else startService(intent);
+                        },350L);
+                    }
+                    refreshSessionSummary();
+                }
             }).setNegativeButton("Cancelar",null).show();
     }
     private void choosePokeballTrainer(boolean secondary,int account){
@@ -2256,7 +2289,7 @@ public class MainActivity extends Activity {
         if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
         if(sessionHint!=null)sessionHint.setText(
-            "Buscas comuns sem login · Shiny exige treinador vinculado");
+            "Busca normal com ou sem login · Shiny temporariamente indisponível");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getBoolean("homeShowPogoAccountName",true)?
                 prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
@@ -2271,8 +2304,15 @@ public class MainActivity extends Activity {
             code=prefs.getString("profileTrainerCode","");
         boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}")&&
             "linked".equals(prefs.getString("profileTrainerState","unknown"));
-        if(trainerPanel!=null)trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE);
-        if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE);
+        // Upstream trainer linking/Shiny are paused. Keep the existing
+        // profile preferences and the complete future UI implementation;
+        // hide only the obsolete trainer section (no empty gap).
+        if(trainerPanel!=null)trainerPanel.setVisibility(
+            ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged?
+                View.VISIBLE:View.GONE);
+        if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(
+            ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged?
+                View.VISIBLE:View.GONE);
         if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(linked?View.VISIBLE:View.INVISIBLE);
         if(trainerCopyButton!=null)trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE);
         if(trainerSectionTitle!=null)trainerSectionTitle.setText(linked?
