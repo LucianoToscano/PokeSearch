@@ -30,7 +30,9 @@ final class CandyPickupEvidence {
     static boolean hasCandyRainbow(int[] argb,int width,int height){
         if(argb==null||width<100||height<40||argb.length<width*height)return false;
         int fromX=Math.max(0,width*4/100),toX=Math.min(width,width*46/100);
-        int fromY=Math.max(0,height*4/100),toY=Math.min(height,height*89/100);
+        // Item banner is at the very top. Ignore the rest of the 27% screen
+        // crop: map objects below the banner could skew stripe order.
+        int fromY=Math.max(0,height*4/100),toY=Math.min(height,height*40/100);
         int bins=6;
         for(int bin=0;bin<bins;bin++){
             int left=fromX+(toX-fromX)*bin/bins;
