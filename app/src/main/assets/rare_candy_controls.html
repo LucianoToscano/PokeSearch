@@ -86,6 +86,10 @@ body:not(.expanded) #choices{display:none}
 #choices.periodPanel{left:32px!important;width:30px!important;min-width:30px!important;max-width:30px!important;display:flex!important;flex-direction:column!important;gap:3px!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
 #choices.periodPanel>.periodTile{box-sizing:border-box!important;flex:0 0 30px!important;width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;max-height:30px!important;padding:0!important;border-radius:6px!important;background:var(--visual-menu-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;box-shadow:var(--visual-menu-tile-shadow)!important}
 #choices.periodPanel>.periodTile.chosen{border-color:#a8efd4!important;color:#a8efd4!important}
+#choices.infoPanel:has(.candyDetectStatus){max-height:171px!important}
+#choices.infoPanel .candyDetectStatus{min-height:15px;margin:3px 2px 0;
+font-size:8.5px;line-height:14px;color:#a8efd4;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis;text-align:center}
 #choices.infoPanel>.infoGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important}
 #choices.infoPanel .infoTile{box-sizing:border-box!important;min-width:0!important;width:100%!important;height:30px!important;min-height:30px!important;padding:2px 3px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:2px!important;font-size:9px!important;text-align:left!important;background:var(--visual-menu-readable-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;border-radius:6px!important}
 #choices.infoPanel .autoCaptureToggle{width:21px;min-width:21px;height:23px;min-height:23px;
@@ -211,8 +215,10 @@ function renderPanel(){
     .map(([id,label])=>'<button type="button" class="infoTile'+
       (settings[id]?' chosen':'')+'" data-key="'+id+'" aria-pressed="'+
       (!!settings[id])+'" onclick="toggleInfo(this.dataset.key)"><span>'+
-      label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>';
-   requestHeight(142,false);
+      label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>'+
+    (settings.candyAutoPickupActive?
+     '<div id="candyDetectStatus" class="candyDetectStatus" role="status" aria-live="polite">Aguardando aviso…</div>':'');
+   requestHeight(settings.candyAutoPickupActive?161:142,false);
  }else if(currentPanel==="location"){
    el.innerHTML='<div class="choiceHeader"><span>Localização</span><div class="locClipboardTools">'+
     '<button type="button" onclick="copyCoords()" title="Copiar coordenadas" aria-label="Copiar coordenadas">'+copyGlyph+'</button>'+
@@ -246,6 +252,14 @@ function changeInfo(key,checked){
  if(currentPanel==="infos")renderPanel();
 }
 function toggleInfo(key){changeInfo(key,!settings[key])}
+function pollCandyDetection(){
+ if(currentPanel!=="infos"||!settings.candyAutoPickupActive)return;
+ const el=$("candyDetectStatus");
+ if(!el)return;
+ try{el.textContent=String(Native.getCandyCaptureStatus()||"Aguardando aviso");}
+ catch(e){el.textContent="Detecção indisponível";}
+}
+setInterval(pollCandyDetection,1000);
 function toggleAutoCandy(){
  // A dead Android projection requires fresh consent, never a fake ON state.
  const enable=!settings.candyAutoPickupActive;
