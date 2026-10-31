@@ -1,0 +1,64 @@
+name: LT206 - exportacao completa de codigo-fonte para outras IAs
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt206-ai-source-export.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-zip:
+    if: github.repository == 'LucianoToscano/PokeSearch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Download only public already-signed official LT206 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/lt206-release-apk
+          gh release download v0.02.06-54413 -R "$GITHUB_REPOSITORY" \
+            --pattern 'PokeSearch-v0.02.06-LT.apk' \
+            --dir dist/lt206-release-apk
+          echo '15513c98364fa6a4ca3f1909e170edb6978a918de8cabdbd52863ebf0aa8b75a  dist/lt206-release-apk/PokeSearch-v0.02.06-LT.apk' | sha256sum -c -
+      - name: Build complete safe editable source bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/export_ai_source_bundle_lt206.py
+          python3 scripts/export_ai_source_bundle_lt206.py
+          (cd dist/ai-source-lt206 && sha256sum -c ZIP_SHA256.txt)
+          python3 - <<'PY'
+          import json,pathlib,zipfile
+          d=pathlib.Path('dist/ai-source-lt206')
+          p=d/'PokeSearch-LT206-FONTE-COMPLETA-PARA-IAS.zip'
+          assert p.stat().st_size<199_000_000
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              names=z.namelist()
+              assert any(n.endswith('AGENTS.md') for n in names)
+              assert any(n.endswith('APK_OFICIAL_PUBLICO/PokeSearch-v0.02.06-LT.apk') for n in names)
+              assert any(n.endswith('AUDITORIA_PARA_IAS/INVENTARIO_SHA256.json') for n in names)
+          m=json.loads((d/'PokeSearch-LT206-CODIGO-COMPLETO/AUDITORIA_PARA_IAS/INVENTARIO_SHA256.json').read_text())
+          assert m['source_file_count']>780
+          assert m['official_apk_included']
+          print('Validated snapshot',m['source_commit'],'files',m['source_file_count'])
+          PY
+      - name: Upload complete editable source tree (one ZIP on download)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT206-FONTE-COMPLETA-PARA-IAS
+          path: dist/ai-source-lt206/PokeSearch-LT206-CODIGO-COMPLETO/
+          if-no-files-found: error
+          include-hidden-files: true
+          compression-level: 7
+          retention-days: 90
