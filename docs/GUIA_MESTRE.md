@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT197 — Detector opcional de coleta visual (QA, não distribuído · 31/10/2026)
+
+- Base: **LT196 oficial**; nova branch QA `feature/lt197-consented-candy-screen-recognition-20261031`, [PR #161 draft](https://github.com/LucianoToscano/PokeSearch/pull/161). Não mesclar/publicar até teste real com consentimento no Samsung.
+- O usuário ativa explicitamente **Detectar coleta** no menu de Informações dos doces. Android solicita MediaProjection a cada sessão. Serviço privativo em foreground tem notificação com botão `Parar`, encerra ao desligar o overlay, e não inicia no boot.
+- Somente um doce pendente, copiado nos últimos 120s, permite análise local limitada à faixa superior do quadro (27% da altura, largura amostrada <=800px, no máximo 1fps). OCR Latin ML Kit Google Play Services (modelo não agrupado) procura **ITEM ENCONTRADO** e **DOCE RARO**, combinado com sprite vermelha/amarela/verde no topo esquerdo. Duas leituras e intervalo sem banner após a cópia previnem duplicações. A rotina `recordCollectedCandy(point,true)` só recebe evento interno com coords+timestamp exatos, então oculta o doce e inicia o cooldown. **+2 não equivale a dois doces.**
+- Nenhuma imagem/texto do quadro é salva/enviada, não há serviço de acessibilidade ou GPS, e o modelo OCR pode requerer download inicial via Google Play Services. Captura MediaProjection recebe o quadro da janela/tela inteira no Android, mas copia/processa apenas a faixa superior; redimensionamento de janela compartilhada e encerramento na revogação implementados.
+- Testes: [Node QA PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180555006) inclui `lt197-candy-visual-consent.test.js`, [regressão Node completa PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180554945), [compilação Java Android PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180554983), [Android/OTA PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180554940). `CandyPickupEvidenceTest.java` compila e executa 20 checagens (sintéticas), mas não substitui reconhecimento real em Samsung. [Especificação LT197](LT197_AUTO_DETECCAO_DOCE_RARO_QA_20261031.md).
+- **Pendências:** homologação física, detectar banner efetivo em vídeo ao vivo (não somente imagem enviada), verificar falsos positivos/negativos, produzir APK QA assinado verificado. Sem merge ou Release LT197.
+
+---
+
 ## LT196 OFICIAL — Doces coletados ocultos, coleta confirmada e cooldown compacto (31/10/2026)
 
 - **Release pública verificada:** [LT196 v0.01.96-54401](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.96-54401) é `latest`, com APK `PokeSearch-v0.01.96-LT.apk` (29.018.893 bytes), SHA-256 `b5026d73b11649e57c225b19a73e0a33e5886800dd0983425ab626e9b29b159e`, SOURCE_COMMIT `2f99205726a46dfef4f6e70b85bbb4ca96c2a9c3`, versionCode 54401, assinatura v2 com certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [CI #41178326181 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41178326181); [PR #160 integrada](https://github.com/LucianoToscano/PokeSearch/pull/160).
