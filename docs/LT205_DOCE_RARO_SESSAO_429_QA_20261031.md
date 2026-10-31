@@ -11,10 +11,11 @@ A LT204 tornou opcional o login e permitiu escolher Conta 1/2 em P1/P2. O servi�
 
 ## Mudanças propostas (QA, não publicar sem validação)
 1. Registrar listener exclusivamente para `pogoOverlayAccount1`; P2 não muda Doce Raro. Se P1 trocar de conta, descartar callbacks do WebView antigo e criar outro com o perfil isolado correto, sem copiar cookies/JWT, alterar treinador, ou reativar Shiny.
-2. Manter o prazo HTTP 429 (`blockedUntil`) durante a troca de conta: **nunca contornar Retry-After**. Não retirar cotas do servidor nem criar requisições paralelas.
-3. Trocar o rótulo ambíguo por `API 429 · XmYYs` e atualizar a contagem localmente uma vez por segundo **sem fazer nova chamada à API**. Após o prazo, apenas o ciclo normal ou pedido pendente faz nova consulta.
-4. Preservar as configurações visuais, posição do overlay, coleta confirmada e as duas Pokébolas. O estado anterior de cards é descartado ao trocar de conta para não exibir resultados de outro perfil.
-5. Regressão de código: `app/tests/lt205-candy-account-429.test.js`; CI Node deve executá-la com os demais testes.
+2. Ao abrir/fechar a lista de doces, **não disparar uma segunda busca enquanto a consulta automática inicial já está em andamento**; mostrar dados é diferente de pesquisar. Proteger também callbacks de erro de WebView antigo após trocar conta.
+3. Manter o prazo HTTP 429 (`blockedUntil`) durante a troca de conta: **nunca contornar Retry-After**. Não retirar cotas do servidor nem criar requisições paralelas.
+4. Trocar o rótulo ambíguo por `API 429 · XmYYs` e atualizar a contagem localmente uma vez por segundo **sem fazer nova chamada à API**. Após o prazo, apenas o ciclo normal ou pedido pendente faz nova consulta.
+5. Preservar as configurações visuais, posição do overlay, coleta confirmada e as duas Pokébolas. O estado anterior de cards é descartado ao trocar de conta para não exibir resultados de outro perfil.
+6. Regressão de código: `app/tests/lt205-candy-account-429.test.js`; CI Node deve executá-la com os demais testes.
 
 ## Checklist de aparelho real
 - Com P1 visitante, abrir doce e observar resposta ou erro explícito.
