@@ -11,6 +11,7 @@ function body(start,end) {
  return java.slice(x,y);
 }
 const confirm=body("    private void confirmCandyPicked(String point){","    private void copy(String point){");
+const record=body("    private void recordCollectedCandy(String point,boolean automatic){","    private void confirmCandyPicked(String point){");
 const copy=body("    private void copy(String point){","    private void completeCopy(String point){");
 const complete=body("    private void completeCopy(String point){","    private void render(){");
 const onCreate=body("    @Override public void onCreate(){","    private void createBubble");
@@ -37,9 +38,9 @@ assert.doesNotMatch(complete,/confirmedCandyHopAtMs/,
 assert.match(confirm,/!pendingCandyPickup/);
 assert.match(confirm,/point\.equals\(selectedCandyCoords\)/);
 assert.match(confirm,/mensagem de coleta do Doce Raro/);
-assert.match(confirm,/lastCopiedCandyAtMs=System\.currentTimeMillis\(\)/);
-assert.match(confirm,/putLong\("confirmedCandyHopAtMs",lastCopiedCandyAtMs\)/);
-assert.match(confirm,/putBoolean\("pendingCandyPickup",false\)/);
+assert.match(record,/lastCopiedCandyAtMs=wallNow/);
+assert.match(record,/putLong\("confirmedCandyHopAtMs",wallNow\)/);
+assert.match(record,/putBoolean\("pendingCandyPickup",false\)/);
 assert.match(java,/Native/); // JavaScript bridge remains
 assert.match(java,/public void confirmCandyPicked\(\)/);
 assert.match(java,/collected\.setOnClickListener\(v->confirmCandyPicked\(card.coords\)\)/);

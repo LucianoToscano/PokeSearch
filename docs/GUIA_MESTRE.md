@@ -1,5 +1,20 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT197 — Detector opcional de coleta visual (QA, não distribuído · 31/10/2026)
+
+
+**Checkpoint APK LT197 QA (31/10/2026):** [Actions #41180890363 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180890363), versão `0.01.97/54402` assinada com o certificado original, APK de 29.254.623 bytes, SHA-256 `c73c8f2d7dff645944e0314eceac590486b7ca27d66be2198eee635f4cd03100`. Artifact [#13034782296](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180890363/artifacts/13034782296); ZIP QA conferido (26.912.566 bytes) e [Drive QA](https://drive.google.com/file/d/1o5Y1_b30Gohlm0WCUdo-8sUlCgLuYHTM/view). Branch LT197 permanece não mesclada; a versão pública permanece LT196. Detecção real no Samsung pendente.
+
+
+- Base: **LT196 oficial**; nova branch QA `feature/lt197-consented-candy-screen-recognition-20261031`, [PR #161 draft](https://github.com/LucianoToscano/PokeSearch/pull/161). Não mesclar/publicar até teste real com consentimento no Samsung.
+- O usuário ativa explicitamente **Detectar coleta** no menu de Informações dos doces. Android solicita MediaProjection a cada sessão. Serviço privativo em foreground tem notificação com botão `Parar`, encerra ao desligar o overlay, e não inicia no boot.
+- Somente um doce pendente, ainda dentro do seu despawn (máximo 30 min), permite análise local limitada à faixa superior do quadro (27% da altura, largura amostrada <=800px, no máximo 1fps). OCR Latin ML Kit Google Play Services procura **ITEM ENCONTRADO** e sprite esquerda; alternativa sem OCR exige duas sprites arco-íris (esquerda/direita) e fundo claro do aviso para contornar o baixo contraste de **DOCE RARO**. Duas leituras e intervalo sem banner após a cópia previnem duplicações. A rotina `recordCollectedCandy(point,true)` só recebe evento interno com coords+timestamp exatos, então oculta o doce e inicia o cooldown. **+2 não equivale a dois doces.**
+- Nenhuma imagem/texto do quadro é salva/enviada, não há serviço de acessibilidade ou GPS, e o modelo OCR pode requerer download inicial via Google Play Services. Captura MediaProjection recebe o quadro da janela/tela inteira no Android, mas copia/processa apenas a faixa superior; redimensionamento de janela compartilhada e encerramento na revogação implementados.
+- Testes: [Node QA PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180555006) inclui `lt197-candy-visual-consent.test.js`, [regressão Node completa PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180554945), [compilação Java Android PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180554983), [Android/OTA PASS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180554940). `CandyPickupEvidenceTest.java` compila e executa 20 checagens (sintéticas), mas não substitui reconhecimento real em Samsung. [Especificação LT197](LT197_AUTO_DETECCAO_DOCE_RARO_QA_20261031.md).
+- **Pendências:** homologação física, detectar banner efetivo em vídeo ao vivo (não somente imagem enviada), verificar falsos positivos/negativos, produzir APK QA assinado verificado. Sem merge ou Release LT197.
+
+---
+
 ## LT196 OFICIAL — Doces coletados ocultos, coleta confirmada e cooldown compacto (31/10/2026)
 
 - **Release pública verificada:** [LT196 v0.01.96-54401](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.96-54401) é `latest`, com APK `PokeSearch-v0.01.96-LT.apk` (29.018.893 bytes), SHA-256 `b5026d73b11649e57c225b19a73e0a33e5886800dd0983425ab626e9b29b159e`, SOURCE_COMMIT `2f99205726a46dfef4f6e70b85bbb4ca96c2a9c3`, versionCode 54401, assinatura v2 com certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [CI #41178326181 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41178326181); [PR #160 integrada](https://github.com/LucianoToscano/PokeSearch/pull/160).
@@ -965,3 +980,12 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - `OverlayService` agora escuta as preferências globais em ambas as instâncias e reavalia somente resultados verificados, atuais, não expirados, que correspondam aos filtros próprios da Pokébola; filas e deduplicação seguem independentes. Testes nativos identificam P1/P2.
 - Regressões adicionadas à suíte LT112 de ambas as Pokébolas. **Publicação oficial efetuada:** PR #142 mesclada, GitHub Actions assinado e APK LT184 publicado e espelhado no mesmo ID do Drive; restam QA físico Samsung P1/P2 e confirmação de encontro real IV 100%.
 - Detalhes e roteiro: [LT184 QA](LT184_FAVORITOS_ALERTAS_P1_P2_QA_20261029.md).
+
+
+### LT197 QA2 — Correção da falha observada no Samsung (31/10/2026)
+- As duas capturas de tela do usuário mostram o botão **A ativo** e o banner `Item encontrado! DOCE RARO +1`, mas o detector anterior não concluiu a confirmação. O teste local das regiões cromáticas encontra as faixas coloridas nas sprites do topo; o OCR do texto branco sobre painel branco é pouco confiável. As imagens não foram enviadas ao repositório.
+- **Correção implementada:** critério visual independente com sprite arco-íris **esquerda e direita** sobre painel claro na faixa superior, além de OCR parcial como opção; duas leituras distintas e proteção contra reuso do banner na próxima seleção; validade da coleta pendente até o despawn do doce (teto 30 minutos), não mais 120 segundos. Exibição de estados sanitizados (nenhum texto OCR ou imagem salva) no menu de Informações quando `A` está ativo.
+- **Qualidade:** suites Node e Android/OTA verdes no PR; workflow de QA2 assinado [#41182923397 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41182923397), artifact [#13035772738](https://github.com/LucianoToscano/PokeSearch/actions/runs/41182923397/artifacts/13035772738), SOURCE_COMMIT `a20ad38cc363dec7a97c99ac4f2cea87f1e24522`.
+- **APK QA2** `PokeSearch-LT197-QA2-0.01.97-54403.apk` de 29.254.823 bytes, versionCode `54403`, versionName `0.01.97`, SHA-256 `6910167b409bf8351a419b9d3a4a8fefd96f856388109ba515a4e4f6a0f92857`. APK Signature Scheme v2 **true**, certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, ZIP interno e `SHA256SUMS` conferidos.
+- [Drive QA2 APK + relatórios](https://drive.google.com/file/d/1AWtzgKmoOOv4k3nX2V4vC68E1JdNzMrW/view), 26.913.421 bytes, SHA-256 `ef8ed4687d1575810105318f0dea4d417f36f6894e1b42f63e43ce151f7c0cdc` (ZIP íntegro), pasta PokeSearch_App com permissão compartilhada.
+- A LT197 **não foi mesclada à main e não é atualização pública/OTA**: LT196 permanece latest. Não há confirmação em captura de tela ao vivo após a correção; precisa de novo teste no Samsung e inspeção do diagnóstico `A`.

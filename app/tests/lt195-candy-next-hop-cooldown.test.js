@@ -17,7 +17,7 @@ assert.match(policy,/static int remainingSeconds/);
 assert.match(candy,/prefs\.getString\("confirmedCandyHopCoords",""\)/);
 assert.match(candy,/prefs\.getLong\("confirmedCandyHopAtMs",0L\)/);
 assert.match(candy,/putString\("confirmedCandyHopCoords",point\)/);
-assert.match(candy,/putLong\("confirmedCandyHopAtMs",lastCopiedCandyAtMs\)/);
+assert.match(candy,/putLong\("confirmedCandyHopAtMs",wallNow\)/);
 assert.match(candy,/lastCopiedCandyCoords=point/);
 assert.ok(policy.includes("static double distanceMeters(String from,String to)"));
 assert.match(candy,/CandyCooldownPolicy\.remainingSeconds\(/);

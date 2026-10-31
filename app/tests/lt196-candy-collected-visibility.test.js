@@ -10,6 +10,7 @@ const between=(start,end)=>{
  return service.slice(i,j);
 };
 const confirm=between("    private void confirmCandyPicked(String point){","    private void copy(String point){");
+const record=between("    private void recordCollectedCandy(String point,boolean automatic){","    private void confirmCandyPicked(String point){");
 const copy=between("    private void completeCopy(String point){","    private void refreshIfAllCollected(){");
 const render=between("    private void render(){","    private final Runnable tick=");
 const position=between("    private void placeResults(){","    private void toggleResults(){");
@@ -18,8 +19,8 @@ assert.match(service,/prefs\.getString\("confirmedCandyCollected","\{\}"\)/);
 assert.match(service,/prefs\.edit\(\)\.putString\("confirmedCandyCollected",json\.toString\(\)\)\.apply\(\)/);
 assert.match(service,/private void pruneCollected\(\)/);
 assert.match(service,/confirmed\.deadline>elapsed/);
-assert.match(confirm,/collected\.put\(point,until\)/);
-assert.match(confirm,/saveCollected\(\)/);
+assert.match(record,/collected\.put\(point,until\)/);
+assert.match(record,/saveCollected\(\)/);
 assert.doesNotMatch(copy,/collected\.put\(/,"copy must never hide candy");
 assert.match(copy,/pendingCandyPickup=true/);
 assert.match(render,/!showCollected&&collected\.containsKey\(card\.coords\)/);

@@ -86,8 +86,17 @@ body:not(.expanded) #choices{display:none}
 #choices.periodPanel{left:32px!important;width:30px!important;min-width:30px!important;max-width:30px!important;display:flex!important;flex-direction:column!important;gap:3px!important;padding:0!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
 #choices.periodPanel>.periodTile{box-sizing:border-box!important;flex:0 0 30px!important;width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;max-height:30px!important;padding:0!important;border-radius:6px!important;background:var(--visual-menu-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;box-shadow:var(--visual-menu-tile-shadow)!important}
 #choices.periodPanel>.periodTile.chosen{border-color:#a8efd4!important;color:#a8efd4!important}
+#choices.infoPanel:has(.candyDetectStatus){max-height:171px!important}
+#choices.infoPanel .candyDetectStatus{min-height:15px;margin:3px 2px 0;
+font-size:8.5px;line-height:14px;color:#a8efd4;white-space:nowrap;
+overflow:hidden;text-overflow:ellipsis;text-align:center}
 #choices.infoPanel>.infoGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important}
 #choices.infoPanel .infoTile{box-sizing:border-box!important;min-width:0!important;width:100%!important;height:30px!important;min-height:30px!important;padding:2px 3px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:2px!important;font-size:9px!important;text-align:left!important;background:var(--visual-menu-readable-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;border-radius:6px!important}
+#choices.infoPanel .autoCaptureToggle{width:21px;min-width:21px;height:23px;min-height:23px;
+padding:0!important;font-size:11px!important;font-weight:800!important;border-radius:6px!important;
+border:1px solid var(--visual-menu-border)!important;color:#aab8c9!important;
+background:var(--visual-menu-readable-button-bg)!important}
+#choices.infoPanel .autoCaptureToggle.autoCaptureOn{color:#50e39b!important;border-color:#50e39b!important}
 #choices.infoPanel .infoTile.chosen{border-color:#a8efd4!important}
 #choices.infoPanel .infoTile b{font-size:11px!important;color:#a8efd4!important}
 #choices.infoPanel .showCollected{width:23px;min-width:23px;height:23px;min-height:23px;
@@ -114,7 +123,7 @@ background:var(--visual-menu-readable-button-bg)!important}
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false,pendingCandyPickup:false,showCollected:false,hasCollected:false};
+let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false,pendingCandyPickup:false,showCollected:false,hasCollected:false,candyAutoPickupOptIn:false,candyAutoPickupActive:false};
 let currentPanel="";
 // Same colors, opacity formula and blur as visual_editor.js for P1/P2.
 function applyCandyMenuTheme(mode,transparency,blur){
@@ -185,7 +194,14 @@ function renderPanel(){
    requestHeight(34+6*30+5*3+6,false);
   }else if(currentPanel==="infos"){
    // Same compact grid as the Pokémon information menu.
-   el.innerHTML='<div class="choiceHeader">Informações'+
+   el.innerHTML='<div class="choiceHeader">Info'+
+    '<button type="button" class="autoCaptureToggle'+
+    (settings.candyAutoPickupActive?' autoCaptureOn':'')+
+    '" onclick="toggleAutoCandy()" title="Detectar coleta automaticamente: '+
+    (settings.candyAutoPickupActive?'ligado':'desligado')+
+    ' · precisa permitir captura de tela do Android" aria-label="Detecção automática de coleta: '+
+    (settings.candyAutoPickupActive?'ligada':'desligada')+
+    '">A</button>'+
     (settings.pendingCandyPickup?
      '<button type="button" class="pickedCandy" onclick="confirmPickedCandy()" title="Confirmar doce pego" aria-label="Peguei este doce">✓</button>':'')+
     (settings.hasCollected?
@@ -194,12 +210,16 @@ function renderPanel(){
      '" aria-label="'+(settings.showCollected?'Ocultar coletados':'Mostrar coletados')+
      '">'+(settings.showCollected?'◉':'◌')+'</button>':'')+
     '<button type="button" class="resetCooldown" onclick="resetCooldown()" title="Limpar referência do contador" aria-label="Limpar contador dos doces">↺</button></div><div class="infoGrid">'+
+
     [["name","Nome"],["location","Local"],["despawn","Despawn"],["distance","Dist."]]
     .map(([id,label])=>'<button type="button" class="infoTile'+
       (settings[id]?' chosen':'')+'" data-key="'+id+'" aria-pressed="'+
       (!!settings[id])+'" onclick="toggleInfo(this.dataset.key)"><span>'+
-      label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>';
-   requestHeight(142,false);
+      label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>'+
+    (settings.candyAutoPickupActive?
+     '<div id="candyDetectStatus" class="candyDetectStatus" role="status" aria-live="polite">Aguardando aviso…</div>':'');
+   if(settings.candyAutoPickupActive)requestHeight(161,false);
+   else requestHeight(142,false);
  }else if(currentPanel==="location"){
    el.innerHTML='<div class="choiceHeader"><span>Localização</span><div class="locClipboardTools">'+
     '<button type="button" onclick="copyCoords()" title="Copiar coordenadas" aria-label="Copiar coordenadas">'+copyGlyph+'</button>'+
@@ -233,6 +253,18 @@ function changeInfo(key,checked){
  if(currentPanel==="infos")renderPanel();
 }
 function toggleInfo(key){changeInfo(key,!settings[key])}
+window.setCandyDetectionStatus=function(status){
+ if(currentPanel!=="infos")return;
+ const el=$("candyDetectStatus");
+ if(el)el.textContent=String(status||"Aguardando aviso").slice(0,80);
+};
+function toggleAutoCandy(){
+ // A dead Android projection requires fresh consent, never a fake ON state.
+ const enable=!settings.candyAutoPickupActive;
+ settings.candyAutoPickupOptIn=enable;
+ Native.setAutoCandyPickup(enable);
+ closePanel();
+}
 function confirmPickedCandy(){Native.confirmCandyPicked();closePanel()}
 function toggleCollected(){
  settings.showCollected=!settings.showCollected;

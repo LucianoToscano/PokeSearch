@@ -1106,6 +1106,30 @@
           "Teste visual e de coleta autenticada em Samsung ainda necessário."
         ]
       }
+    },
+    {
+      "id": "lt197-automatic-rare-candy-pickup-20261031",
+      "minVersionCode": 54404,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT197 — Detecção opcional de Doce Raro",
+      "sections": {
+        "novidades": [
+          "Detector experimental de coleta: botão A em Informações dos Doces Raros; ativar exige autorização de compartilhamento da tela pelo Android para cada sessão.",
+          "Quando aparece o aviso Item encontrado! e as sprites do Doce Raro, o app tenta reconhecer duas leituras e confirmar apenas o único doce pendente, ocultando-o e iniciando o cooldown estimado."
+        ],
+        "melhorias": [
+          "Reconhecimento visual de duas sprites e painel claro sem depender do OCR do texto branco; alternativa OCR local e diagnóstico no menu quando o detector está ativo.",
+          "Vigência da seleção até o despawn do doce (no máximo 30 minutos), notificação permanente com Parar detecção, confirmação manual ✓ Peguei preservada."
+        ],
+        "correcoes": [
+          "Corrigidas as condições excessivamente rígidas da versão experimental que impediam reconhecer a coleta apesar da mensagem na tela.",
+          "Não reutilizar a mesma mensagem para confirmar o próximo doce e não contar +2 como duas localizações."
+        ],
+        "emDesenvolvimento": [
+          "Recurso opcional, desligado por padrão e sem envio ou armazenamento de imagens. O Android exige consentimento de captura a cada sessão; o modelo OCR pode precisar ser baixado pelo Google Play Services.",
+          "A detecção automática foi testada por suíte automatizada, mas ainda não foi homologada com captura ao vivo no Samsung. Se falhar, use ✓ Peguei manualmente; mantenha a captura desligada quando não estiver usando."
+        ]
+      }
     }
   ]
 }
