@@ -1,11 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT195 — Cooldown estimado para próximo Doce Raro (31/10/2026)
+## LT195 OFICIAL — Cooldown dos Doces Raros (31/10/2026)
 
-- Implementação na branch `feature/lt195-candy-next-hop-cooldown-20261031`, derivada da LT194 QA, preservando integralmente LT193 como última versão oficial até aprovação.
-- Cópia de uma coordenada de doce grava referência e horário local; timer individual de cada outro doce usa Haversine + tabela do usuário de 0–120 minutos, vermelho/rosa (<=30s)/verde, persistência, reset no menu de Informações, atualização 1s e listas compactas. **Estimativa por distância, sem confirmação de cooldown do jogo**.
-- Não modificar GPS, JWT, backend, limites, Doce Raro /reveal, P1/P2, cadência, sprites, notificações ou assinatura. Integrar as correções LT194 (IV e resultados da API) na entrega LT195. Testes Java e Node em [registro LT195](LT195_CANDY_COOLDOWN_E_DISTRIBUICAO_20261031.md).
-- Meta de distribuição `0.01.95 / 54400` depois de CI, assinatura e Release verificadas. Drive e entrega pública requerem prova de bytes, hash e status. **Homologação autenticada no Samsung continua pendente**, mesmo que testes automatizados passem.
+- **Release pública confirmada:** [LT195 v0.01.95-54400](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.95-54400) é latest, com APK `PokeSearch-v0.01.95-LT.apk` de **29.018.177 bytes**, SHA-256 `1d4c78ef06cfc6bab3fa5ceadfa628c6f908d1532f168ec7ab2668b7bd06c942`, SOURCE_COMMIT `c023c3c2ab9747db13a0a975226747517379e71c`. [Actions #41175591798 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41175591798), [PR #159 integrada](https://github.com/LucianoToscano/PokeSearch/pull/159), certificado v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Drive verificado:** [ZIP LT195 APK + relatórios](https://drive.google.com/file/d/1HV7MzU7VhSqPlJtk_R9roR7IiazsX2x9/view) **26.725.076 bytes**, SHA-256 do ZIP `13d1b7f4b793bf8086fd5e408d2173a2761cac6cd2143caf10642b45aef96456`, pasta `PokeSearch_App`. O ZIP contém APK, assinatura, versão, SHA256SUMS e SOURCE_COMMIT; arquivo de integridade ZIP validado. O link legado de APK Drive permanece antigo, não reapontar silenciosamente.
+- **Novo Doce Raro:** clicar no doce copia a coord e estabelece origem local; outros doces mostram temporizadores individuais por distância Haversine e tabela informativa 0–120m, vermelho/rosa (últimos 30s)/verde, persistência por até 24h e reset ↺ em Informações, sem GPS, /reveal, cota extra ou mudança na API. A cópia não confirma o teleporte nem o cooldown real do jogo.
+- **Correções LT194 agora distribuídas:** IV decimal consistente na API, DOM, Android e duas Pokébolas, falsos zeros evitados quando a API devolve cartões rejeitados, cap de 10 resultados/Pokébola. Testes Node, 108 checks Java IV, 56 checks Java Candy e Android/R8/OTA aprovados. [Registro LT195](LT195_CANDY_COOLDOWN_E_DISTRIBUICAO_20261031.md).
+- **Pendente:** QA físico Samsung autenticado com PoGoCoordinates e dois overlays; CI não substitui teste real de captura/espera.
 
 ---
 
