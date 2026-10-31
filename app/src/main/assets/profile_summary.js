@@ -45,8 +45,9 @@
    (/Pokemon GO accounts\s*\d+\s*\/\s*\d+/i.test(x.s)||/Link my account/i.test(x.s)))
    .sort((a,b)=>a.s.length-b.s.length);
  const section=accounts[0]?accounts[0].s:"";
- const explicitZero=/Pokemon GO accounts\s*0\s*\/\s*\d+/i.test(section)||
-   /Pokemon GO accounts.*?\bLink my account\b/i.test(section);
+ // "Link my account" can also appear on a partially filled VIP account.
+ // It is NOT evidence of zero linked trainers. Only an explicit 0/N is.
+ const explicitZero=/Pokemon GO accounts\s*0\s*\/\s*\d+/i.test(section);
  const trainerCards=nodes.map(e=>text(e)).filter(t=>t.length<1300&&
    /\bTrainer code\s*[\d\s]{12,24}/i.test(t)).sort((a,b)=>a.length-b.length);
  let parsed=null;
