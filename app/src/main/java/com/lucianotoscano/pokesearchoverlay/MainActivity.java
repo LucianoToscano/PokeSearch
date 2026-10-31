@@ -2523,6 +2523,78 @@ public class MainActivity extends Activity {
             }
         });
     }
+    // Recovery when the official React /profile DOM never hydrates into the
+    // old "Trainer code" visual layout. Only the authenticated, READ-ONLY
+    // /users/me response may confirm a linked trainer. Each account remains
+    // on its own WebView profile; no cookies/JWTs leave that site origin.
+    private void recoverOfficialTrainerFromAccountApi(WebView view,int generation){
+        final int slot=activeLoginSlot;
+        if(view!=website||loginDialog==null||!loginDialog.isShowing()||
+           generation!=loginPageGeneration||!PogoAccountSlots.loggedIn(this,slot))return;
+        AuthorizedApiCollector reader=new AuthorizedApiCollector(view,getAssets(),
+            new android.os.Handler(android.os.Looper.getMainLooper()));
+        reader.accountStatus(result->{
+            if(view!=website||slot!=activeLoginSlot||generation!=loginPageGeneration||
+               loginDialog==null||!loginDialog.isShowing())return;
+            if(result.optBoolean("ok",false)&&
+               "authenticated".equals(result.optString("auth",""))){
+                String state=result.optString("trainerState","unknown");
+                if("linked".equals(state)||"unlinked".equals(state)){
+                    JSONArray list=result.optJSONArray("trainers");
+                    JSONObject first=list!=null&&list.length()>0?list.optJSONObject(0):null;
+                    SharedPreferences prefs=PogoAccountSlots.prefs(this,slot);
+                    String selected=prefs.getString("profileSelectedTrainerCode","");
+                    JSONObject chosen=null;
+                    if(list!=null)for(int i=0;i<list.length()&&i<20;i++){
+                        JSONObject item=list.optJSONObject(i);
+                        if(item!=null&&selected.equals(item.optString("code",""))){
+                            chosen=item;break;
+                        }
+                    }
+                    if(chosen==null)chosen=first;
+                    SharedPreferences.Editor edit=prefs.edit();
+                    if("linked".equals(state)&&chosen!=null){
+                        String code=chosen.optString("code","");
+                        String name=chosen.optString("name","");
+                        String team=chosen.optString("team","");
+                        String level=chosen.optString("level","");
+                        if(code.matches("[0-9]{12}")&&
+                           name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")&&
+                           team.matches("Mystic|Valor|Instinct")&&
+                           level.matches("[0-9]{1,2}")){
+                            edit.putString("profileTrainerState","linked")
+                                .putString("profileTrainerList",list.toString())
+                                .putString("profileTrainerCode",code)
+                                .putString("profileSelectedTrainerCode",code)
+                                .putString("profileTrainerName",name)
+                                .putString("profileTrainerTeam",team)
+                                .putString("profileTrainerLevel",level)
+                                .putString("profileTrainerDetails","Nível "+level+" · "+team);
+                        }
+                    }else if("unlinked".equals(state)){
+                        // Explicitly empty active trainer list from the owner API,
+                        // not merely a missing profile widget.
+                        edit.putString("profileTrainerState","unlinked")
+                            .remove("profileTrainerName").remove("profileTrainerCode")
+                            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
+                            .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                            .remove("profileTrainerLevel");
+                    }
+                    edit.apply();
+                    BugReport.log(this,"PROFILE_API","Conta "+slot+
+                        " · perfis ativos confirmados="+(list==null?0:list.length()));
+                    notifyOverlaySessionReady();
+                }
+            }
+            if(loginCover!=null)loginCover.setVisibility(View.GONE);
+            refreshSessionSummary();
+            if(!"manage".equals(loginPurpose)&&loginDialog!=null&&loginDialog.isShowing()){
+                loginDialog.dismiss();
+            }else if("manage".equals(loginPurpose)&&loginWaitLabel!=null){
+                loginWaitLabel.setText("Vínculo consultado na conta oficial.");
+            }
+        });
+    }
     private void captureOfficialProfile(WebView view,int generation){
         if(view!=website||loginDialog==null||!loginDialog.isShowing()||
            !("manage".equals(loginPurpose)||loginAutoReturnQueued)||
@@ -2635,9 +2707,8 @@ public class MainActivity extends Activity {
                     view.postDelayed(()->captureOfficialProfile(view,generation),600L);
                 }else{
                     profileCaptureInProgress=false;
-                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    Toast.makeText(this,"Login reconhecido. Não foi possível verificar o perfil; confira no site oficial.",
-                        Toast.LENGTH_LONG).show();
+                    if(loginWaitLabel!=null)loginWaitLabel.setText("Conferindo vínculo na API oficial…");
+                    recoverOfficialTrainerFromAccountApi(view,generation);
                 }
                 return;
             }
@@ -2650,9 +2721,8 @@ public class MainActivity extends Activity {
                     view.postDelayed(()->captureOfficialProfile(view,generation),600L);
                 }else{
                     profileCaptureInProgress=false;
-                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    Toast.makeText(this,"Discord/Google autorizado. Vínculo do treinador ainda não confirmado; confira no site.",
-                        Toast.LENGTH_LONG).show();
+                    if(loginWaitLabel!=null)loginWaitLabel.setText("Conferindo treinador na API oficial…");
+                    recoverOfficialTrainerFromAccountApi(view,generation);
                 }
                 return;
             }
