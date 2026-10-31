@@ -27,7 +27,7 @@ assert.ok(capture.includes("display.resize(width,height,"));
 assert.ok(capture.includes("display.setSurface(next.getSurface())"));
 assert.ok(capture.includes("onCapturedContentVisibilityChanged(boolean visible)"));
 assert.match(capture,/ImageReader\.newInstance/);
-assert.match(capture,/SAMPLE_INTERVAL_MS=1000L/);
+assert.match(capture,/SAMPLE_INTERVAL_MS=350L/);
 assert.match(capture,/h\*27\/100/);
 assert.match(capture,/!pending\|\|selectedAt<=0/);
 assert.match(capture,/wallNow>expiresAt/);

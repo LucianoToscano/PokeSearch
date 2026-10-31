@@ -1130,6 +1130,31 @@
           "A detecção automática foi testada por suíte automatizada, mas ainda não foi homologada com captura ao vivo no Samsung. Se falhar, use ✓ Peguei manualmente; mantenha a captura desligada quando não estiver usando."
         ]
       }
+    },
+    {
+      "id": "lt198-candy-capture-watchdog-and-ack-20261031",
+      "minVersionCode": 54405,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT198 — Captura mais confiável e diagnóstico do Doce Raro",
+      "sections": {
+        "novidades": [
+          "Detector opcional de Doce Raro ganhou diagnóstico do recebimento real de imagens da tela, com aviso quando a captura não está entregando quadros válidos.",
+          "Registro da coleta automática só é indicado depois de o serviço do PokeSearch aceitar o doce correto e iniciar o cooldown estimado."
+        ],
+        "melhorias": [
+          "Análise visual de sprites a cada 350ms, independente do reconhecimento de texto, que pode demorar enquanto o modelo OCR é carregado.",
+          "Respostas antigas do OCR não desfazem um reconhecimento visual recente; dois quadros sem o banner anterior liberam a próxima seleção.",
+          "Mensagens objetivas de erro de captura, pixels e seleção no menu compacto dos doces."
+        ],
+        "correcoes": [
+          "Corrigida a condição em que uma tarefa de OCR pendente impedia o detector visual de receber novas análises e fazia o aviso de coleta passar despercebido.",
+          "Botão A verde isoladamente não é tratado como evidência de captura real ou confirmação bem-sucedida."
+        ],
+        "emDesenvolvimento": [
+          "Detecção continua experimental, desligada por padrão, exigindo consentimento do Android a cada sessão, sem salvar ou enviar imagens; use ✓ Peguei se o reconhecimento falhar.",
+          "Testes automatizados e assinatura foram verificados; captura real no Samsung após a LT198 ainda precisa de validação. Uma atualização disponível no app não comprova instalação em todos os aparelhos."
+        ]
+      }
     }
   ]
 }
