@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT200 — LOCALIZAÇÃO, API E SELETOR POKÉMON (31/10/2026)
+
+- **Código integrado:** [PR #167](https://github.com/LucianoToscano/PokeSearch/pull/167) mesclada à `main`; commit `2887d8bf1dfe7b4cd09fbb7104493f31132d57cd`. Versão preparada: **0.02.00 / versionCode 54407**.
+- **Localização:** toque no texto do título abre a tabela compacta de 16 intervalos da referência de cooldown, no mesmo popup translúcido e sem mudar Copiar/Colar; voltar preserva coordenadas e raio editados. O ✓ pode solicitar nova validação com valores idênticos sem ficar bloqueado por timer local, ainda respeitando limites reais HTTP 429/Retry-After.
+- **API:** `invalid-request` agora diferencia HTTP 400/422; quando o provedor envia erro estruturado, apenas um campo validado/permitido é apresentado em diagnóstico resumido. Nenhum dado privado, token, coordenada ou mensagem bruta do provedor é exposto; não ocorre remoção automática de filtros nem bypass do limite.
+- **Seletor Pokémon:** foco do campo oficial e limitação de cliques de abertura impedem alternar um portal React em carregamento; falha explícita mantém a seleção salva e não confirma busca inconclusiva.
+- **Compatibilidade:** duas Pokébolas continuam com critérios e estados isolados; nenhuma alteração na identidade de assinatura. Os tempos de cooldown são apenas referência da imagem enviada pelo usuário, não confirmação oficial nem garantia de liberação de jogo.
+- **QA da PR (SUCCESS):** [Node](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225217911), [regressão completa](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225217760), [Java/Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225217791), [Android/OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225217772). [Checklist](LT200_LOCATION_COOLDOWN_APPLY_QA_20261031.md).
+- **Distribuição:** [workflow oficial LT200](../.github/workflows/lt200-official-release.yml) possui validações pré-publicação, artefato com hash e assinatura v2 e verificação de `GitHub Releases/latest`. **Publicação e hash reais precisam ser confirmados pelo workflow; merge por si só não publica nem instala o APK.**
+- **Homologação em dispositivo:** os avisos `API: invalid-request` e `Aguardando portal oficial do seletor Pokémon` exigem nova captura após instalação. Os testes automatizados não verificam o comportamento ao vivo de PoGoCoordinates.
+
+---
+
 ## LT199 — CHAVE ON/OFF POKÉMON (31/10/2026)
 
 - **Merge confirmado:** [PR #166](https://github.com/LucianoToscano/PokeSearch/pull/166) integrada à `main`, merge commit `9573a49b15f3f286d766c341cc1e99c18a14b255`.
