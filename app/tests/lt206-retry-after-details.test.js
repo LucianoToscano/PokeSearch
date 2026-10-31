@@ -1,0 +1,49 @@
+"use strict";
+const fs=require("node:fs"),assert=require("node:assert/strict");
+const path=require("node:path");
+const dir=path.resolve(__dirname,"../src/main");
+const detail=fs.readFileSync(path.join(dir,"assets/detail.html"),"utf8");
+const candy=fs.readFileSync(path.join(dir,"assets/rare_candy_probe.js"),"utf8");
+const service=fs.readFileSync(path.join(dir,"java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+const second=fs.readFileSync(path.join(dir,"java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
+assert.match(detail,/data\.retrySeconds>0&&data\.retrySeconds<=86400/);
+assert.match(detail,/seconds>=3600/);
+assert.match(detail,/Math\.floor\(seconds\/3600\)/);
+assert.match(detail,/Math\.floor\(seconds\/60\)/);
+assert.match(candy,/Date\.parse\(retryHeader\)/);
+assert.match(candy,/Math\.ceil\(\(until-Date\.now\(\)\)\/1000\)/);
+assert.match(candy,/Math\.min\(86400,Math\.ceil\(retry\)\)/);
+assert.match(candy,/if\(response\.status===429&&retry===0\)retry=60/);
+assert.match(second,/extends OverlayService/);
+assert.match(service,/detail\.html/);
+console.log("LT206 static 24h, HTTP-date, P1/P2 regression PASS");
+
+const vm=require("node:vm");
+const start=detail.indexOf("let coordsRestriction=null"),stop=detail.indexOf("function coordButtons()",start);
+assert.ok(start>0&&stop>start);
+const fields={};for(const name of ["coordsRateNotice","coordsRatePopover","coordsRateInfo","coordsRateTimer"])fields[name]={hidden:true,textContent:"",setAttribute(){}};
+let now=100000;
+const context=vm.createContext({document:{getElementById:n=>fields[n]},Date:{now:()=>now},setInterval:()=>1,clearInterval(){},resizeEvolutionPanel(){}});
+vm.runInContext(detail.slice(start,stop),context);
+vm.runInContext('renderCoordsRate({type:"rate",retrySeconds:7200})',context);
+assert.equal(fields.coordsRateTimer.textContent,"Tente em 2h 00m");
+vm.runInContext('renderCoordsRate({type:"rate",retrySeconds:86400})',context);
+assert.equal(fields.coordsRateTimer.textContent,"Tente em 24h 00m");
+vm.runInContext('renderCoordsRate({type:"quota",retrySeconds:7200})',context);
+assert.equal(fields.coordsRateTimer.hidden,true);
+console.log("LT206 interactive coordinate timer smoke PASS");
+
+async function checkCandyRetry(header,expectedMin,expectedMax){
+ const context=vm.createContext({window:{},location:{protocol:"https:",hostname:"pogocoordinates.com",pathname:"/search"},localStorage:{getItem:()=>null},fetch:async()=>({ok:false,status:429,headers:{get:()=>header}}),Date});
+ vm.runInContext(candy,context);
+ const output=JSON.parse(await context.window.PokeSearchCandy.search("",1000));
+ assert.equal(output.status,429);
+ assert.ok(output.retry_after>=expectedMin&&output.retry_after<=expectedMax);
+}
+(async()=>{
+ await checkCandyRetry("7200",7200,7200);
+ await checkCandyRetry("95000",86400,86400);
+ await checkCandyRetry("invalid",60,60);
+ await checkCandyRetry(new Date(Date.now()+7200000).toUTCString(),7198,7200);
+ console.log("LT206 runtime Rare Candy HTTP-date and numeric Retry-After PASS");
+})().catch(e=>{console.error(e);process.exitCode=1});

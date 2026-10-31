@@ -1329,6 +1329,29 @@
           "A instalação da atualização exige confirmação do usuário no Android."
         ]
       }
+    },
+    {
+      "id": "lt206-retry-after-24h-details-20261031",
+      "minVersionCode": 54413,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT206 — Espera de 24h e diagnóstico de Doces Raros",
+      "sections": {
+        "novidades": [
+          "Contador de limitação de coordenadas mostra a espera em horas, minutos e segundos quando a API informa até 24 horas."
+        ],
+        "melhorias": [
+          "Doce Raro respeita Retry-After tanto em segundos quanto no formato de data HTTP.",
+          "Documentação de continuidade e checklist de validação Samsung atualizados."
+        ],
+        "correcoes": [
+          "Removido o limite residual de 3600 segundos do contador visual do botão Pegar Coordenadas nas duas Pokébolas.",
+          "Datas HTTP válidas não são mais confundidas com prazo inválido de 60 segundos no coletor de Doces Raros."
+        ],
+        "emDesenvolvimento": [
+          "As restrições reais do PoGoCoordinates continuam sendo respeitadas; o PokeSearch não acelera desbloqueios nem contorna cotas.",
+          "O funcionamento na API real e a instalação em Samsung requerem validação física; testes automatizados não comprovam esses resultados."
+        ]
+      }
     }
   ]
 }
