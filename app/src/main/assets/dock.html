@@ -4363,6 +4363,57 @@ body.controls-window #choices.locationCooldownTable .locCooldownEntry:nth-child(
  background:#ffffff09!important;
 }
 
+/* LT207 LOCATION REFERENCE: all 16 rows fit in the ordinary-height popup on
+   a full-height phone. On short screens, allow scroll rather than clip data.
+   Keep the current 148dp native hitbox and the Editor Visual transparency. */
+body.controls-window #choices.locationPanel.locationCooldownTable,
+body.popup-window.controls-window #choices.locationPanel.locationCooldownTable{
+ box-sizing:border-box!important;height:auto!important;
+ max-height:min(370px,var(--popup-room,400px))!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownBack{
+ height:22px!important;min-height:22px!important;
+ padding:1px 4px!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownHead,
+body.controls-window #choices.locationCooldownTable .locCooldownEntry{
+ padding:1px 5px!important;line-height:17px!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownHead{
+ position:static!important;
+}
+/* A reference bubble follows the kilometer thumb while dragging, but never
+   changes the search radius or implies that a cooldown timer is running. */
+body.controls-window #choices.locationPanel>.locSliderRow{
+ position:relative!important;overflow:visible!important;
+}
+body.controls-window #choices.locationPanel .locCooldownPreview{
+ box-sizing:border-box!important;position:absolute!important;
+ left:clamp(46px,var(--loc-preview-position,50%),calc(100% - 46px))!important;
+ top:-22px!important;transform:translate(-50%,3px)!important;
+ z-index:5!important;pointer-events:none!important;
+ display:block!important;width:max-content!important;max-width:calc(100% - 2px)!important;
+ margin:0!important;padding:2px 5px!important;
+ border:1px solid var(--visual-menu-border,#ffffff48)!important;
+ border-radius:6px!important;
+ background:var(--visual-menu-button-bg,rgba(32,38,44,.78))!important;
+ color:var(--visual-menu-fg,#f3f6fa)!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ font:600 9px/14px Roboto,Arial,sans-serif!important;
+ text-align:center!important;white-space:nowrap!important;
+ opacity:0!important;visibility:hidden!important;
+ transition:opacity .13s ease,transform .13s ease,visibility .13s ease!important;
+}
+body.controls-window #choices.locationPanel .locCooldownPreview.is-visible{
+ opacity:1!important;visibility:visible!important;
+ transform:translate(-50%,0)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ body.controls-window #choices.locationPanel .locCooldownPreview{transition:none!important}
+}
+
 /* LT203: upstream Shiny is paused. Keep the icon recognizable and tappable
    for explanation, but no visual ON state or false promise of availability. */
 body.controls-window #sh.upstreamUnavailable,
@@ -5743,6 +5794,16 @@ const LOCATION_COOLDOWN_REFERENCE=Object.freeze([
  ["250 - 499 km","1h"],["500 - 749 km","1h 15m"],
  ["750 - 999 km","1h 30m"],[">= 1000 km","2h"]
 ]);
+// The reference table describes distance between game actions, not search
+// radius. The slider only previews the hypothetical distance tier; it NEVER
+// starts, cancels or enforces a cooldown.
+function locationCooldownReferenceForKm(raw){
+ const km=Math.max(0,Math.min(1000,Math.round(Number(raw)||0)));
+ const index=km===0?0:km<=4?4:km<=9?5:km<=24?6:km<=29?7:
+  km<=64?8:km<=80?9:km<=99?10:km<=249?11:km<=499?12:
+  km<=749?13:km<=999?14:15;
+ return LOCATION_COOLDOWN_REFERENCE[index];
+}
 // The location label is the only launcher. No new icon or extra row in the
 // original three/four-row location editor. The same popup and its native
 // hitbox are reused; this table never changes live searches or cooldowns.
@@ -5844,13 +5905,34 @@ function renderLocationChoices(){
  const slide=make("input");slide.type="range";slide.min="0";slide.max="1000";slide.step="1";slide.value=String(locationRadius);
  // Full-width slider, identical usable width to the coordinate editor.
  slide.setAttribute("aria-label","Ajustar raio de 0 a 1000");
- slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
+ const preview=make("span","locCooldownPreview");
+ preview.setAttribute("aria-live","off");preview.setAttribute("aria-hidden","true");
+ let previewTimer=null;
+ const showLocationCooldownPreview=()=>{
+  const km=Math.max(0,Math.min(1000,Math.round(Number(slide.value)||0)));
+  const [tier,wait]=locationCooldownReferenceForKm(km);
+  preview.textContent=tier.replace(/ - /g,"–").replace(">=","≥")+" · ≈"+wait;
+  preview.title="Referência hipotética para deslocamento de "+km+
+   " km. O raio de busca não determina o cooldown real.";
+  preview.style.setProperty("--loc-preview-position",km/10+"%");
+  slide.setAttribute("aria-valuetext",km+" km de raio de busca");
+  preview.classList.add("is-visible");
+  if(previewTimer!==null)clearTimeout(previewTimer);
+  previewTimer=setTimeout(()=>{preview.classList.remove("is-visible");previewTimer=null;},1250);
+ };
+ slide.addEventListener("pointerdown",showLocationCooldownPreview);
+ slide.oninput=()=>{
+  radiusField.value=slide.value;radiusField.dataset.locationDraft="true";
+  showLocationCooldownPreview();
+ };
  radiusField.oninput=()=>{
   // Keep the Android text input numeric and limited to four visible digits.
   const value=sanitizeLocationRadiusDraft(radiusField.value);
   if(radiusField.value!==value)radiusField.value=value;
   radiusField.dataset.locationDraft="true";
-  if(value!=="")slide.value=value;
+  if(value!==""){
+   slide.value=value;showLocationCooldownPreview();
+  }
  };
  const message=make("p","");message.id="locHint";
  message.setAttribute("role","status");message.setAttribute("aria-live","polite");
@@ -5896,7 +5978,7 @@ function renderLocationChoices(){
  apply.onclick=submit;
  actions.append(apply,clear);label.append(actions);
  const sliderRow=make("div","locSliderRow");
- sliderRow.append(slide);
+ sliderRow.append(slide,preview);
  panel.append(title,fieldRow,sliderRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
