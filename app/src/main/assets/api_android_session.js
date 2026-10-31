@@ -144,6 +144,9 @@
       if(typeof r.rejectedField==="string"&&
          /^[a-z_]{2,40}$/.test(r.rejectedField))
        diagnostic.rejectedField=r.rejectedField;
+      if(Number.isSafeInteger(r.rejectedFieldCount)&&
+         r.rejectedFieldCount>=2&&r.rejectedFieldCount<=20)
+       diagnostic.rejectedFieldCount=r.rejectedFieldCount;
       return diagnostic;
      }
      return fail(r.reason);
