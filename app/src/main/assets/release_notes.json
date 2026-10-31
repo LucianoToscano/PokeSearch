@@ -1079,6 +1079,31 @@
           "Requer validação autenticada no Samsung com dois overlays."
         ]
       }
+    },
+    {
+      "id": "lt196-candy-confirmed-pickup-and-compact-sprites-20261031",
+      "minVersionCode": 54401,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT196 — Doces Raros compactos e confirmação da coleta",
+      "sections": {
+        "novidades": [
+          "Ao copiar um Doce Raro, o contador não começa automaticamente: confirme a coleta real no botão ✓ da sprite, com toque longo ou em Informações → ✓ Peguei.",
+          "Antes de copiar outro doce durante o cooldown estimado, um aviso mostra distância e tempo restante, permitindo Cancelar ou Copiar mesmo assim."
+        ],
+        "melhorias": [
+          "Indicadores de cooldown vermelho/rosa/verde e origem azul na própria sprite, com ✓ verde em vez de Pronto repetido.",
+          "Distância sobre a imagem e apenas o despawn abaixo. Altura constante e menu compacto.",
+          "Doces copiados mantêm a imagem reconhecível, com redução sutil da saturação."
+        ],
+        "correcoes": [
+          "Cópias antigas da LT195 não são confundidas com coletas confirmadas após atualizar.",
+          "O cooldown só é iniciado ao confirmar Peguei; copiar outro doce não reinicia automaticamente o relógio."
+        ],
+        "emDesenvolvimento": [
+          "A mensagem de coleta mostrada no Pokémon GO é confirmada manualmente: o PokeSearch não lê automaticamente eventos de outros aplicativos.",
+          "Teste visual e de coleta autenticada em Samsung ainda necessário."
+        ]
+      }
     }
   ]
 }
