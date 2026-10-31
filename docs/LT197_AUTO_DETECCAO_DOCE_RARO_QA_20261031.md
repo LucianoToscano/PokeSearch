@@ -26,3 +26,11 @@ Versão base: LT196 oficial `0.01.96 / 54401`. Alterações isoladas na branch `
 - `lt197-candy-visual-consent.test.js`: confirma consentimento, manifesto, notificação, no-save, privacidade, fluxo único de coleta e fallback.
 - CI Node, compilação Java Android e OTA; testes com a captura real no Samsung **pendentes**.
 - **Não publicar automaticamente** sem comprovação de compile, mediaProjection real e verificação do certificado. O recurso é experimental opt-in e deve ser marcado como tal.
+
+## Checkpoint de QA — 31/10/2026
+- Node QA #41180555006: SUCCESS; teste de estrutura de consentimento, OCR, sem armazenamento/captura invasiva e fallback manual.
+- Node regressões completas #41180554945: SUCCESS; contratos de P1/P2 e doces mantidos.
+- Android Java compile #41180554983: SUCCESS, inclusive biblioteca ML Kit Play Services.
+- Android/OTA #41180554940: SUCCESS.
+- Classificador real `CandyPickupEvidenceTest.java` na JVM: **20 casos aprovados**. Teste adicional com pixel sampling da imagem fornecida executado localmente, sem enviar a imagem ao repositório.
+- **Não houve:** reconhecimento autenticado num Samsung, build/assinatura de APK QA, merge ou distribuição. LT196 permanece oficial.
