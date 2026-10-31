@@ -1,0 +1,157 @@
+name: LT196 official signed release - candy pickup confirmed and compact badge
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt196-official-release.yml']
+permissions: {contents: write}
+concurrency: {group: pokesearch-lt196-official-once, cancel-in-progress: false}
+jobs:
+  publish:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    timeout-minutes: 85
+    env:
+      POKE_TEST_VERSION_CODE: '54401'
+      POKE_TEST_VERSION_LABEL: '51201'
+      POKE_TEST_PUBLIC_VERSION: '0.01.96'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'false'
+      POKE_SCRAPBOOK_ONLINE_QA: 'false'
+      GH_TOKEN: ${{ github.token }}
+      OFFICIAL_TAG: 'v0.01.96-54401'
+      OFFICIAL_APK: 'PokeSearch-v0.01.96-LT.apk'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false, ref: "${{ github.sha }}"}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.11.1'}
+      - name: Check immutable release and requested corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.95-54400'
+          ! gh release view "$OFFICIAL_TAG" >/dev/null 2>&1
+          test -s app/tests/lt191-provider-backoff-24h.test.js
+          test -s app/tests/lt192-iv-evidence-mode-transition.test.js
+          test -s app/tests/lt193-api-decimal-iv-native.test.js
+          test -s app/tests/lt194-api-dom-iv-evidence-parity.test.js
+          test -s app/tests/lt195-candy-next-hop-cooldown.test.js
+          test -s app/tests/lt196-candy-compact-sprite.test.js
+          test -s app/tests/lt196-candy-pickup-confirmation.test.js
+          test -s app/tests/lt196-candy-collected-visibility.test.js
+          test -s docs/LT196_DOCE_RARO_LAYOUT_COMPACTO_QA_20261031.md
+          test -s app/tests/CandyCooldownPolicyTest.java
+          test -s docs/LT195_CANDY_COOLDOWN_E_DISTRIBUICAO_20261031.md
+          test -s docs/LT193_API_IV_DECIMAL_SAMSUNG_20261030.md
+          node -e "const x=require('./app/src/main/assets/release_notes.json');if(x.releases.filter(r=>r.minVersionCode===54401).length!==1)process.exit(1)"
+      - name: SDK and exact permanent signer
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          for k in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do test -n "$(printenv "$k")"; done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/lt196.p12"
+          chmod 600 "$RUNNER_TEMP/lt196.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt196.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt196.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Run Node and OTA regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node app/tests/lt192-iv-evidence-mode-transition.test.js
+          node app/tests/lt193-api-decimal-iv-native.test.js
+          node app/tests/lt194-api-dom-iv-evidence-parity.test.js
+          node app/tests/lt195-candy-next-hop-cooldown.test.js
+          node app/tests/lt196-candy-compact-sprite.test.js
+          node app/tests/lt196-candy-pickup-confirmation.test.js
+          node app/tests/lt196-candy-collected-visibility.test.js
+          mkdir -p "$RUNNER_TEMP/lt195-candy-tests"
+          javac --release 17 -d "$RUNNER_TEMP/lt195-candy-tests" app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyCooldownPolicy.java app/tests/CandyCooldownPolicyTest.java
+          java -cp "$RUNNER_TEMP/lt195-candy-tests" com.lucianotoscano.pokesearchoverlay.CandyCooldownPolicyTest
+          for t in app/tests/*.test.js; do
+            [ "$t" = app/tests/lt74-local-update-preview.test.js ] && continue
+            node "$t" >/dev/null || { node "$t"; exit 1; }
+          done
+          python3 scripts/test_ota_builder.py
+      - name: Generate complete official assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+      - name: Build signed protected release
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Validate APK and signer
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54401'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.96'" PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          test "$(stat -c %s "$APK")" -lt 35000000
+          cp "$APK" "$OFFICIAL_APK"
+          sha256sum "$OFFICIAL_APK" > SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT196-Signed-Verified
+          path: |
+            ${{ env.OFFICIAL_APK }}
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            PACKAGE-VERSION.txt
+            SOURCE_COMMIT.txt
+          retention-days: 90
+          if-no-files-found: error
+      - name: Release to all app users
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.95-54400'
+          ! gh release view "$OFFICIAL_TAG" >/dev/null 2>&1
+          gh release create "$OFFICIAL_TAG" "$OFFICIAL_APK" --target "$GITHUB_SHA" --latest --title 'PokeSearch LT196 — Coleta confirmada e sprites compactas dos Doces Raros' --notes 'Contador estimado de Doces Raros inicia somente após confirmação manual ✓ Peguei, não na cópia das coordenadas. Um alerta permite Cancelar ou Copiar mesmo assim antes do fim do tempo. Novo layout compacto de 47dp com distância e cooldown sobre a sprite, despawn abaixo, check verde e origem azul, sem Pronto repetido. As correções de API/IV da LT194 e o controle LT195 são preservados. A mensagem do Pokémon GO não é detectada automaticamente; requer confirmação manual. Testes Node, Java, Android e assinatura permanente verificados; homologação física Samsung ainda pendente.'
+      - name: Verify public release and hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > RELEASE-VERIFIED.json
+          python3 - <<'PY'
+          import json,hashlib,os,pathlib
+          r=json.load(open('RELEASE-VERIFIED.json'))
+          assert r['tag_name']==os.environ['OFFICIAL_TAG'] and not r['draft'] and not r['prerelease']
+          data=pathlib.Path(os.environ['OFFICIAL_APK']).read_bytes()
+          a=[x for x in r['assets'] if x['name']==os.environ['OFFICIAL_APK']]
+          assert len(a)==1 and a[0]['state']=='uploaded'
+          assert a[0]['size']==len(data)
+          assert a[0]['digest']=='sha256:'+hashlib.sha256(data).hexdigest()
+          PY
+      - name: Erase private signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt196.p12"

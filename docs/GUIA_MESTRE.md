@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT196 — Compactação e coleta confirmada dos Doces Raros (QA 31/10/2026)
+
+- **Branch QA** `feature/lt196-candy-sprite-compact-status-20261031`, PR #160. Implementação sobre a LT195 pública; planejada `0.01.96 / versionCode 54401`, sem alterar a assinatura original, API, limitações, P1/P2 ou visibilidade do Doce Raro.
+- Layout 47dp fixo: distância no rodapé da sprite (quando habilitada), tempo de cooldown sobre a sprite (vermelho, rosa, ✓ verde), ponto de origem azul; despawn sozinho abaixo. O texto “✓ Pronto” repetido foi substituído por um check pequeno; doce copiado mantém 60% de saturação e 88% de opacidade.
+- **Visual e ocultação:** doces permanecem coloridos ao apenas copiar; ✓ Peguei confirma e esconde o doce por padrão. ◌/◉ no menu de Informações mostra/oculta coletados; registro expira com o despawn e não impede novo doce nas mesmas coordenadas. Auto-refresh de dez doces só ocorre após dez confirmações, não dez cópias. A detecção automática de mensagem/sprite do Pokémon GO requer protótipo opt-in separado com permissão explícita; não incluída.
+- **Correção de semântica:** copiar coordenadas seleciona doce mas NÃO inicia cooldown. A contagem estimada começa após o usuário confirmar explicitamente a mensagem de coleta no jogo (`✓ Peguei` no card, toque longo ou menu de Informações). O PokeSearch não monitora eventos internos do Pokémon GO.
+- Antes de copiar destino com espera ativa (estimada por Haversine desde a última coleta confirmada), modal com tempo/distância e duas opções: `Cancelar` ou `Copiar mesmo assim`; nenhuma opção confirma automaticamente o novo doce. Migração LT195 não herda o falso checkpoint de cópia como coleta.
+- Testes: `lt196-candy-compact-sprite.test.js`, `lt196-candy-pickup-confirmation.test.js` e `CandyCooldownPolicyTest.java` ampliado. QA Android/Samsung físico ainda pendente; liberar apenas após CI assinado. [Documento de escopo](LT196_DOCE_RARO_LAYOUT_COMPACTO_QA_20261031.md).
+
+---
+
 ## LT195 OFICIAL — Cooldown dos Doces Raros (31/10/2026)
 
 - **Release pública confirmada:** [LT195 v0.01.95-54400](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.95-54400) é latest, com APK `PokeSearch-v0.01.95-LT.apk` de **29.018.177 bytes**, SHA-256 `1d4c78ef06cfc6bab3fa5ceadfa628c6f908d1532f168ec7ab2668b7bd06c942`, SOURCE_COMMIT `c023c3c2ab9747db13a0a975226747517379e71c`. [Actions #41175591798 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41175591798), [PR #159 integrada](https://github.com/LucianoToscano/PokeSearch/pull/159), certificado v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.

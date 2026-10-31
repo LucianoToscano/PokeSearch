@@ -64,6 +64,26 @@ final class CandyCooldownPolicy {
         return (int)Math.max(0L,wait-elapsed);
     }
 
+    // Compact badge in the 46dp candy sprite. Keep full timerLabel for
+    // accessibility while using h:mm for long waits, mm:ss below an hour.
+    static boolean shouldWarnBeforeCopy(String confirmedOrigin,String next,
+        long confirmedAtMs,long nowMs){
+        return parseCoordinates(confirmedOrigin)!=null&&
+            parseCoordinates(next)!=null&&
+            !confirmedOrigin.equals(next)&&
+            remainingSeconds(confirmedOrigin,next,confirmedAtMs,nowMs)>0;
+    }
+
+    static String compactTimerLabel(int seconds){
+        if(seconds<0)return "";
+        if(seconds==0)return "✓";
+        if(seconds>=3600){
+            int minutes=(seconds+59)/60; // always round up, never prematurely ready
+            return (minutes/60)+"h"+two(minutes%60);
+        }
+        return (seconds/60)+":"+two(seconds%60);
+    }
+
     static String timerLabel(int seconds){
         if(seconds<0)return "";
         if(seconds==0)return "✓ Pronto";

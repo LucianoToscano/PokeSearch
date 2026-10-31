@@ -67,9 +67,9 @@ assert(menu.includes('if(!refreshHeld)requestRefreshNow();'),"Short press must r
 assert(menu.includes('refresh.addEventListener("click"'),"Click fallback must work when WebView drops pointerup");
 assert(menu.includes('lastRefreshRequestAt'),"Prevent double search from pointerup plus synthetic click");
 assert(menu.includes('refreshHeld=true;')&&menu.includes('openPanel("period")'),"Long hold must open interval menu");
-assert(source.includes('boolean newlyCopied=copied.add(point)'),"Only a newly copied candy can auto-refresh");
+assert(source.includes('private void refreshIfAllCollected()'),"Only confirmed candy collection may auto-refresh");
 assert(source.includes('lastAllCopiedRefreshGeneration!=generation'),"At most one all-copied auto-refresh per batch");
-assert(source.includes('if(visibleCount==10&&!hasUncopied)'),"Auto refresh when all visible candies turn gray");
+assert(source.includes('if(visibleCount==10&&!hasUncollected)'),"Refresh only after all ten candies were confirmed collected");
 assert(source.includes('if(pendingManualRefresh&&!busy&&ready'),"Queued refresh must resume after rate limit");
 assert(source.includes('if(manual)pendingManualRefresh=true'),"Keep manual request during HTTP 429");
 assert(source.includes('new LinkedHashSet<>()'),"Copied candy history must evict oldest entries");

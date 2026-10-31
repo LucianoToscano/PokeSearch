@@ -53,6 +53,33 @@ public final class CandyCooldownPolicyTest {
         ok(CandyCooldownPolicy.timerLabel(0).contains("Pronto"),"green label");
         ok("0:08".equals(CandyCooldownPolicy.timerLabel(8)),"short label");
         ok("1:15:00".equals(CandyCooldownPolicy.timerLabel(4500)),"long label");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("","0,0.001",0,now),
+            "a copy without confirmed pickup never warns");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",0,now),
+            "unconfirmed timestamp cannot start cooldown");
+        ok(CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",now,now),
+            "confirmed pickup warns before early different candy");
+        ok(CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",now,now+14000),
+            "one second remaining must warn");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",now,now+15000),
+            "do not warn after wait reaches zero");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0",now,now),
+            "copying confirmed origin does not warn");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","bad",now,now),
+            "invalid target never generates a cooldown");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",
+            now,now+CandyCooldownPolicy.MAX_AGE_MS+1),
+            "stale capture checkpoint is invalid");
+
+        ok("✓".equals(CandyCooldownPolicy.compactTimerLabel(0)),"compact ready is check only");
+        ok("0:08".equals(CandyCooldownPolicy.compactTimerLabel(8)),"compact 8 seconds");
+        ok("1:15".equals(CandyCooldownPolicy.compactTimerLabel(75)),"compact 75 seconds");
+        ok("59:59".equals(CandyCooldownPolicy.compactTimerLabel(3599)),"minute precision under hour");
+        ok("1h00".equals(CandyCooldownPolicy.compactTimerLabel(3600)),"compact one hour");
+        ok("1h15".equals(CandyCooldownPolicy.compactTimerLabel(4500)),"compact one hour fifteen");
+        ok("1h16".equals(CandyCooldownPolicy.compactTimerLabel(4501)),"round long waits up");
+        ok("2h00".equals(CandyCooldownPolicy.compactTimerLabel(7200)),"compact two hours");
+        ok("".equals(CandyCooldownPolicy.compactTimerLabel(-1)),"unverified stays blank");
         eq(0xFF50E39B,CandyCooldownPolicy.remainingColor(0),"green");
         eq(0xFFFF83BB,CandyCooldownPolicy.remainingColor(30),"pink");
         eq(0xFFFF5F70,CandyCooldownPolicy.remainingColor(31),"red");

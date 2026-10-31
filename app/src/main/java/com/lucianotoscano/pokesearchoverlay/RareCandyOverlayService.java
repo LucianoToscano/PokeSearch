@@ -62,6 +62,10 @@ public final class RareCandyOverlayService extends Service {
     private final Map<String,TextView> countdownLabels=new LinkedHashMap<>();
     private final Map<String,TextView> cooldownLabels=new LinkedHashMap<>();
     private final Set<String> copied=new LinkedHashSet<>();
+    // A copy does not mean pickup; confirmed collection records expire
+    // at their despawn time so future candy may reuse coordinates.
+    private final Map<String,Long> collected=new LinkedHashMap<>();
+    private boolean showCollected=false;
     private SharedPreferences prefs;
     private WindowManager wm;
     private FrameLayout bubbleWindow;
@@ -82,8 +86,13 @@ public final class RareCandyOverlayService extends Service {
     private long lastRefresh=0,blockedUntil=0;
     // Advisory timer uses only user-selected candy coordinates; never GPS,
     // account details, or the provider's distance from the search center.
+    // A copy only selects a candy. This checkpoint is created exclusively
+    // when the user explicitly confirms seeing the in-game pickup message.
     private String lastCopiedCandyCoords="";
     private long lastCopiedCandyAtMs=0L;
+    private String selectedCandyCoords="";
+    private boolean pendingCandyPickup=false;
+    private android.app.AlertDialog candyConfirmationDialog;
     private boolean pendingManualRefresh=false;
     private int lastAllCopiedRefreshGeneration=-1;
 
@@ -131,8 +140,10 @@ public final class RareCandyOverlayService extends Service {
         if(icon!=null)view.setImageBitmap(icon);
         else view.setImageResource(R.drawable.ic_notification);
         if(dim){
-            ColorMatrix m=new ColorMatrix();m.setSaturation(0f);
-            view.setColorFilter(new ColorMatrixColorFilter(m));view.setAlpha(.65f);
+            // Copied candy is still recognizable: only a subtle tint, not a
+            // solid gray column when the whole batch has been visited.
+            ColorMatrix m=new ColorMatrix();m.setSaturation(.60f);
+            view.setColorFilter(new ColorMatrixColorFilter(m));view.setAlpha(.88f);
         }
         view.setContentDescription(dim?"Doce Raro · coordenadas já copiadas":
             "Doce Raro · toque para copiar coordenadas");
@@ -155,15 +166,43 @@ public final class RareCandyOverlayService extends Service {
         showLocation=prefs.getBoolean("candyShowLocation",false);
         showDespawn=prefs.getBoolean("candyShowDespawn",true);
         showDistance=prefs.getBoolean("candyShowDistance",false);
-        String savedHop=prefs.getString("lastCandyHopCoords","");
-        long savedHopAt=prefs.getLong("lastCandyHopAtMs",0L);
+        showCollected=prefs.getBoolean("candyShowCollected",false);
+        try{
+            JSONObject savedCollected=new JSONObject(
+                prefs.getString("confirmedCandyCollected","{}"));
+            java.util.Iterator<String> it=savedCollected.keys();
+            long wallTime=System.currentTimeMillis();
+            while(it.hasNext()){
+                String point=it.next();
+                long until=savedCollected.optLong(point,0L);
+                if(validCoords(point)&&until>wallTime&&
+                    until-wallTime<=24L*60L*60L*1000L&&collected.size()<100)
+                    collected.put(point,until);
+            }
+        }catch(org.json.JSONException ignored){}
+        saveCollected();
+        // LT195 stored copied coordinates as if collected. Never migrate that
+        // timestamp into a confirmed pickup. Older data becomes pending only.
         long wallNow=System.currentTimeMillis();
+        String legacyCopied=prefs.getString("lastCandyHopCoords","");
+        long legacyCopiedAt=prefs.getLong("lastCandyHopAtMs",0L);
+        if(legacyCopiedAt<=0||wallNow<legacyCopiedAt||
+            wallNow-legacyCopiedAt>CandyCooldownPolicy.MAX_AGE_MS)
+            legacyCopied="";
+        selectedCandyCoords=prefs.getString("selectedCandyCoords",legacyCopied);
+        if(!validCoords(selectedCandyCoords))selectedCandyCoords="";
+        pendingCandyPickup=!selectedCandyCoords.isEmpty()&&
+            prefs.getBoolean("pendingCandyPickup",
+                !prefs.contains("selectedCandyCoords"));
+        String savedHop=prefs.getString("confirmedCandyHopCoords","");
+        long savedHopAt=prefs.getLong("confirmedCandyHopAtMs",0L);
         if(CandyCooldownPolicy.parseCoordinates(savedHop)!=null&&
             savedHopAt>0&&wallNow>=savedHopAt&&
             wallNow-savedHopAt<=CandyCooldownPolicy.MAX_AGE_MS){
             lastCopiedCandyCoords=savedHop;lastCopiedCandyAtMs=savedHopAt;
         }else{
-            prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+            prefs.edit().remove("confirmedCandyHopCoords")
+                .remove("confirmedCandyHopAtMs").apply();
         }
         try{
             JSONArray state=new JSONArray(prefs.getString("copied","[]"));
@@ -172,6 +211,13 @@ public final class RareCandyOverlayService extends Service {
                 if(validCoords(p))copied.add(p);
             }
         }catch(Exception ignored){}
+        // Persist one-time migration before clearing LT195 copy-only keys.
+        SharedPreferences.Editor migrated=prefs.edit()
+            .remove("lastCandyHopCoords").remove("lastCandyHopAtMs");
+        if(pendingCandyPickup&&validCoords(selectedCandyCoords))
+            migrated.putString("selectedCandyCoords",selectedCandyCoords)
+                .putBoolean("pendingCandyPickup",true);
+        migrated.apply();
         icon=loadIcon(this);
         running=true;
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -321,13 +367,13 @@ public final class RareCandyOverlayService extends Service {
         // cards; fit the entire list when room allows, otherwise enable
         // vertical scrolling in the clipped native viewport.
         long now=SystemClock.elapsedRealtime();
+        pruneCollected();
         int activeCount=0;
-        for(Candy card:cards.values())if(card.deadline>now)activeCount++;
-        long wallNow=System.currentTimeMillis();
-        boolean withHop=!lastCopiedCandyCoords.isEmpty()&&lastCopiedCandyAtMs>0&&
-            wallNow>=lastCopiedCandyAtMs&&
-            wallNow-lastCopiedCandyAtMs<=CandyCooldownPolicy.MAX_AGE_MS;
-        int rowHeight=withHop?62:47;
+        for(Candy card:cards.values())
+            if(card.deadline>now&&(showCollected||!collected.containsKey(card.coords)))
+                activeCount++;
+        // LT196: status lives inside sprite cell, never adds a third line.
+        int rowHeight=47;
         int wantedHeight=dp(activeCount==0?35:activeCount*rowHeight+4);
         int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
         int roomBelow=height-margin-belowY;
@@ -407,7 +453,9 @@ public final class RareCandyOverlayService extends Service {
         try{
             state.put("coords",coords).put("radius",radius).put("period",period)
                 .put("name",showName).put("location",showLocation)
-                .put("despawn",showDespawn).put("distance",showDistance);
+                .put("despawn",showDespawn).put("distance",showDistance)
+                .put("pendingCandyPickup",pendingCandyPickup&&validCoords(selectedCandyCoords))
+                .put("showCollected",showCollected).put("hasCollected",!collected.isEmpty());
             candyMenuPanel.evaluateJavascript("window.syncCandy("+
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
@@ -549,6 +597,14 @@ public final class RareCandyOverlayService extends Service {
                 editor.apply();render();syncCandyMenu();
             });
         }
+        @android.webkit.JavascriptInterface public void setShowCollected(boolean enabled){
+            main.post(()->{
+                if(!permitted())return;
+                showCollected=enabled;
+                prefs.edit().putBoolean("candyShowCollected",enabled).apply();
+                render();syncCandyMenu();
+            });
+        }
         @android.webkit.JavascriptInterface public void setCandyLocation(String center,int meters){
             main.post(()->{
                 if(!permitted()||meters<1||meters>1000000||
@@ -571,12 +627,19 @@ public final class RareCandyOverlayService extends Service {
                 if(clip!=null)clip.setPrimaryClip(ClipData.newPlainText("Localização Doce Raro",normalized));
             });
         }
+        @android.webkit.JavascriptInterface public void confirmCandyPicked(){
+            main.post(()->{
+                if(!permitted())return;
+                RareCandyOverlayService.this.confirmCandyPicked(selectedCandyCoords);
+            });
+        }
         @android.webkit.JavascriptInterface public void clearCandyCooldown(){
             main.post(()->{
                 if(!permitted())return;
                 lastCopiedCandyCoords="";
                 lastCopiedCandyAtMs=0L;
-                prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+                prefs.edit().remove("confirmedCandyHopCoords")
+                    .remove("confirmedCandyHopAtMs").apply();
                 render();
                 syncCandyMenu();
             });
@@ -825,38 +888,144 @@ public final class RareCandyOverlayService extends Service {
                 Math.abs(Double.parseDouble(pair[1].trim()))<=180;
         }catch(NumberFormatException ex){return false;}
     }
+    /**
+     * Android overlay can neither inspect the Pokémon GO pickup popup nor
+     * infer a successful interaction from copying coordinates. Only an
+     * explicit user confirmation creates a cooldown checkpoint.
+     */
+    private void showCandyConfirmation(String title,String message,
+        String positive,Runnable onConfirmed){
+        if(destroyed||!Settings.canDrawOverlays(this))return;
+        if(candyConfirmationDialog!=null&&candyConfirmationDialog.isShowing())return;
+        try{
+            android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this)
+                .setTitle(title).setMessage(message)
+                .setNegativeButton("Cancelar",(d,which)->{})
+                .setPositiveButton(positive,(d,which)->onConfirmed.run())
+                .create();
+            if(dialog.getWindow()!=null)
+                dialog.getWindow().setType(
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+            candyConfirmationDialog=dialog;
+            dialog.setOnDismissListener(d->{
+                if(candyConfirmationDialog==dialog)candyConfirmationDialog=null;
+            });
+            dialog.show();
+        }catch(RuntimeException problem){
+            candyConfirmationDialog=null;
+            Toast.makeText(this,"Não foi possível abrir a confirmação",
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void saveCollected(){
+        if(prefs==null)return;
+        long wallNow=System.currentTimeMillis();
+        JSONObject json=new JSONObject();
+        for(Map.Entry<String,Long> record:collected.entrySet()){
+            long until=record.getValue();
+            if(until>wallNow&&until-wallNow<=24L*60L*60L*1000L)
+                try{json.put(record.getKey(),until);}
+                catch(org.json.JSONException ignored){}
+        }
+        prefs.edit().putString("confirmedCandyCollected",json.toString()).apply();
+    }
+    private void pruneCollected(){
+        long wallNow=System.currentTimeMillis();
+        if(collected.entrySet().removeIf(e->e.getValue()<=wallNow))
+            saveCollected();
+    }
+    private void confirmCandyPicked(String point){
+        if(!validCoords(point)||!pendingCandyPickup||
+            !point.equals(selectedCandyCoords)){
+            Toast.makeText(this,"Copie primeiro o doce que você pegou",
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showCandyConfirmation("Confirmar Doce Raro",
+            "A mensagem de coleta do Doce Raro já apareceu no Pokémon GO? "+
+            "O contador começa somente depois da sua confirmação.",
+            "✓ Peguei",()->{
+                if(destroyed||!pendingCandyPickup||
+                    !point.equals(selectedCandyCoords))return;
+                lastCopiedCandyCoords=point;
+                lastCopiedCandyAtMs=System.currentTimeMillis();
+                pendingCandyPickup=false;
+                Candy confirmed=cards.get(point);
+                long elapsed=SystemClock.elapsedRealtime();
+                if(confirmed!=null&&confirmed.deadline>elapsed){
+                    long until=System.currentTimeMillis()+
+                        Math.min(24L*60L*60L*1000L,confirmed.deadline-elapsed);
+                    collected.put(point,until);
+                    saveCollected();
+                }
+                prefs.edit().putString("confirmedCandyHopCoords",point)
+                    .putLong("confirmedCandyHopAtMs",lastCopiedCandyAtMs)
+                    .putBoolean("pendingCandyPickup",false).apply();
+                Toast.makeText(this,"Coleta confirmada · cooldown estimado iniciado",
+                    Toast.LENGTH_SHORT).show();
+                render();syncCandyMenu();
+                refreshIfAllCollected();
+            });
+    }
     private void copy(String point){
         if(!validCoords(point))return;
+        int remaining=CandyCooldownPolicy.remainingSeconds(
+            lastCopiedCandyCoords,point,lastCopiedCandyAtMs,
+            System.currentTimeMillis());
+        if(CandyCooldownPolicy.shouldWarnBeforeCopy(
+            lastCopiedCandyCoords,point,lastCopiedCandyAtMs,
+            System.currentTimeMillis())){
+            double distance=CandyCooldownPolicy.distanceMeters(
+                lastCopiedCandyCoords,point);
+            String meters=distance<1000?
+                Math.round(distance)+" m":
+                String.format(java.util.Locale.US,"%.1f km",distance/1000d);
+            showCandyConfirmation("Cooldown estimado ativo",
+                "Distância desde a última coleta confirmada: "+meters+
+                ". Faltam "+CandyCooldownPolicy.timerLabel(remaining)+
+                " pelo cálculo de distância. "+
+                "Deseja copiar outro doce antes de terminar esse tempo?",
+                "Copiar mesmo assim",()->completeCopy(point));
+            return;
+        }
+        completeCopy(point);
+    }
+    private void completeCopy(String point){
+        if(!validCoords(point)||destroyed)return;
         ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+        if(clipboard==null)return;
         clipboard.setPrimaryClip(ClipData.newPlainText("Doce Raro",point));
-        // Copying selects a new local reference for estimating the next hop.
-        // It does NOT mean a teleport or a game interaction actually happened.
-        lastCopiedCandyCoords=point;
-        lastCopiedCandyAtMs=System.currentTimeMillis();
-        prefs.edit().putString("lastCandyHopCoords",point)
-            .putLong("lastCandyHopAtMs",lastCopiedCandyAtMs).apply();
-        boolean newlyCopied=copied.add(point);
+        selectedCandyCoords=point;
+        pendingCandyPickup=true;
+        prefs.edit().putString("selectedCandyCoords",point)
+            .putBoolean("pendingCandyPickup",true).apply();
+        copied.add(point);
         // Keep the last 100 copied points, independent of P1/P2 and tokens.
         if(copied.size()>100){
             String first=copied.iterator().next();
             copied.remove(first);
         }
         prefs.edit().putString("copied",new JSONArray(copied).toString()).apply();
-        Toast.makeText(this,"Coordenadas copiadas",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,
+            "Copiado. Ao receber o doce no jogo, toque no ✓ da sprite ou segure o item.",
+            Toast.LENGTH_LONG).show();
         render();
-        // Trigger once on the transition to ALL visible candies copied. A
-        // repeated tap on an already-gray candy must not generate a loop if
-        // the provider returns the same ten coordinates in the next response.
-        if(newlyCopied&&cards.size()==10&&lastAllCopiedRefreshGeneration!=generation){
+    }
+    private void refreshIfAllCollected(){
+        // Never replace live uncaptured candies merely because coordinates
+        // were copied; refresh once after ten confirmed pickups.
+        if(cards.size()==10&&lastAllCopiedRefreshGeneration!=generation){
             long now=SystemClock.elapsedRealtime();
             int visibleCount=0;
-            boolean hasUncopied=false;
+            boolean hasUncollected=false;
             for(Candy candidate:cards.values()){
                 if(candidate.deadline<=now)continue;
                 visibleCount++;
-                if(!copied.contains(candidate.coords)){hasUncopied=true;break;}
+                if(!collected.containsKey(candidate.coords)){
+                    hasUncollected=true;break;
+                }
             }
-            if(visibleCount==10&&!hasUncopied){
+            if(visibleCount==10&&!hasUncollected){
                 lastAllCopiedRefreshGeneration=generation;
                 refresh(true);
             }
@@ -867,13 +1036,15 @@ public final class RareCandyOverlayService extends Service {
         resultsList.removeAllViews();
         countdownLabels.clear();
         cooldownLabels.clear();
+        pruneCollected();
         long now=SystemClock.elapsedRealtime();
         long wallNow=System.currentTimeMillis();
         boolean hasCooldownOrigin=!lastCopiedCandyCoords.isEmpty()&&
             lastCopiedCandyAtMs>0&&wallNow>=lastCopiedCandyAtMs&&
             wallNow-lastCopiedCandyAtMs<=CandyCooldownPolicy.MAX_AGE_MS;
         for(Candy card:new ArrayList<>(cards.values())){
-            if(card.deadline<=now)continue;
+            if(card.deadline<=now||
+                (!showCollected&&collected.containsKey(card.coords)))continue;
             LinearLayout row=new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(0,0,0,0);
@@ -886,7 +1057,7 @@ public final class RareCandyOverlayService extends Service {
             spriteColumn.setOrientation(LinearLayout.VERTICAL);
             spriteColumn.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.TOP);
             FrameLayout spriteCell=new FrameLayout(this);
-            ImageView image=sprite(CANDY_ART_DP,copied.contains(card.coords));
+            ImageView image=sprite(CANDY_ART_DP,collected.containsKey(card.coords));
             FrameLayout.LayoutParams imageLp=new FrameLayout.LayoutParams(
                 dp(CANDY_ART_DP),dp(CANDY_ART_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             spriteCell.addView(image,imageLp);
@@ -898,9 +1069,57 @@ public final class RareCandyOverlayService extends Service {
                 distance.setPadding(dp(2),0,dp(2),0);
                 distance.setBackground(background(0xB8111A26,5,0));
                 FrameLayout.LayoutParams distLp=new FrameLayout.LayoutParams(
-                    -2,dp(13),Gravity.RIGHT|Gravity.BOTTOM);
+                    -2,dp(12),Gravity.RIGHT|Gravity.BOTTOM);
                 spriteCell.addView(distance,distLp);
                 distance.setOnClickListener(v->copy(card.coords));
+            }
+            // The small ✓ button is available only AFTER copying this candy.
+            // It prompts for an explicit confirmation of the in-game pickup.
+            if(pendingCandyPickup&&card.coords.equals(selectedCandyCoords)){
+                TextView collected=label("✓",10,0xFF50E39B,true);
+                collected.setGravity(Gravity.CENTER);
+                collected.setPadding(dp(2),0,dp(2),0);
+                collected.setBackground(background(0xD318202B,5,0));
+                collected.setContentDescription("Peguei este doce no Pokémon GO: "+
+                    "confirmar coleta e iniciar contador");
+                FrameLayout.LayoutParams markLp=new FrameLayout.LayoutParams(
+                    dp(14),dp(14),Gravity.LEFT|Gravity.TOP);
+                spriteCell.addView(collected,markLp);
+                collected.setOnClickListener(v->confirmCandyPicked(card.coords));
+            }
+            // Cooldown badge stays on the sprite (never a third text row).
+            // Red/pink waiting, green check ready, blue dot confirmed origin.
+            if(hasCooldownOrigin){
+                boolean origin=lastCopiedCandyCoords.equals(card.coords);
+                int remain=origin?0:CandyCooldownPolicy.remainingSeconds(
+                    lastCopiedCandyCoords,card.coords,lastCopiedCandyAtMs,wallNow);
+                if(remain>=0){
+                    String shortLabel=origin?"●":CandyCooldownPolicy.compactTimerLabel(remain);
+                    int color=origin?0xFF91C6FF:CandyCooldownPolicy.remainingColor(remain);
+                    TextView badge=label(shortLabel,8,color,true);
+                    badge.setGravity(Gravity.CENTER);
+                    badge.setSingleLine(true);
+                    badge.setMaxLines(1);
+                    badge.setPadding(dp(2),0,dp(2),0);
+                    badge.setBackground(background(0xC318202B,5,0));
+                    badge.setContentDescription(origin?
+                        "Origem selecionada para estimar o próximo doce":
+                        "Cooldown estimado para o próximo doce: "+
+                        CandyCooldownPolicy.timerLabel(remain)+
+                        ". Copiar coordenadas não confirma o cooldown do jogo");
+                    FrameLayout.LayoutParams badgeLp=new FrameLayout.LayoutParams(
+                        -2,dp(12),origin?
+                        Gravity.LEFT|Gravity.TOP:Gravity.RIGHT|Gravity.TOP);
+                    // When user selected the confirmed point again, the ✓
+                    // confirmation control takes precedence over the origin dot.
+                    if(origin&&pendingCandyPickup&&
+                        card.coords.equals(selectedCandyCoords)){
+                        badgeLp.gravity=Gravity.RIGHT|Gravity.TOP;
+                    }
+                    spriteCell.addView(badge,badgeLp);
+                    badge.setOnClickListener(v->copy(card.coords));
+                    if(!origin)cooldownLabels.put(card.coords,badge);
+                }
             }
             spriteColumn.addView(spriteCell,space(46,29,0));
             if(showDespawn){
@@ -912,24 +1131,6 @@ public final class RareCandyOverlayService extends Service {
                 spriteColumn.addView(countdown,space(46,15,0));
                 countdownLabels.put(card.coords,countdown);
             }
-            if(hasCooldownOrigin){
-                boolean origin=lastCopiedCandyCoords.equals(card.coords);
-                int remain=origin?0:CandyCooldownPolicy.remainingSeconds(
-                    lastCopiedCandyCoords,card.coords,lastCopiedCandyAtMs,wallNow);
-                if(remain>=0){
-                    TextView next=label(origin?"● Orig.":CandyCooldownPolicy.timerLabel(remain),
-                        9,origin?0xFFAFC6DA:CandyCooldownPolicy.remainingColor(remain),true);
-                    next.setGravity(Gravity.CENTER);
-                    next.setSingleLine(true);
-                    next.setContentDescription(origin?
-                        "Doce de referência para o próximo salto":
-                        "Tempo estimado por distância para o próximo doce: "+
-                        CandyCooldownPolicy.timerLabel(remain)+
-                        ". Não confirma cooldown real do Pokémon GO");
-                    spriteColumn.addView(next,space(46,14,0));
-                    if(!origin)cooldownLabels.put(card.coords,next);
-                }
-            }
             row.addView(spriteColumn,space(46,-2,0));
 
             if(showName||showLocation){
@@ -937,8 +1138,8 @@ public final class RareCandyOverlayService extends Service {
                 info.setOrientation(LinearLayout.VERTICAL);
                 info.setGravity(Gravity.CENTER_VERTICAL);
                 if(showName){
-                    TextView title=label(copied.contains(card.coords)?"Doce Raro ✓":"Doce Raro",
-                        11,copied.contains(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
+                    TextView title=label(collected.containsKey(card.coords)?"Doce Raro ✓":"Doce Raro",
+                        11,collected.containsKey(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
                     info.addView(title,space(-1,16,0));
                 }
                 if(showLocation&&!card.city.isEmpty()){
@@ -950,11 +1151,31 @@ public final class RareCandyOverlayService extends Service {
             }
             row.setOnClickListener(v->copy(card.coords));
             image.setOnClickListener(v->copy(card.coords));
-            resultsList.addView(row,space(-1,hasCooldownOrigin?60:45,2));
+            // A long press works even when the candy sprite is tiny.
+            row.setOnLongClickListener(v->{
+                confirmCandyPicked(card.coords);return true;
+            });
+            image.setOnLongClickListener(v->{
+                confirmCandyPicked(card.coords);return true;
+            });
+            spriteCell.setOnLongClickListener(v->{
+                confirmCandyPicked(card.coords);return true;
+            });
+            resultsList.addView(row,space(-1,45,2));
         }
-        boolean anyActive=false;
-        for(Candy card:cards.values())if(card.deadline>now){anyActive=true;break;}
-        if(status!=null)status.setVisibility(anyActive?View.GONE:View.VISIBLE);
+        boolean anyActive=false,anyHidden=false;
+        for(Candy card:cards.values()){
+            if(card.deadline<=now)continue;
+            if(!showCollected&&collected.containsKey(card.coords)){
+                anyHidden=true;continue;
+            }
+            anyActive=true;break;
+        }
+        if(status!=null){
+            status.setVisibility(anyActive?View.GONE:View.VISIBLE);
+            if(!anyActive&&anyHidden)
+                status.setText("Doces coletados ocultos · use o olho no menu");
+        }
         placeResults();
     }
     private final Runnable tick=new Runnable(){
@@ -987,8 +1208,11 @@ public final class RareCandyOverlayService extends Service {
                 if(remaining<0){
                     next.setText("");
                 }else{
-                    next.setText(CandyCooldownPolicy.timerLabel(remaining));
+                    next.setText(CandyCooldownPolicy.compactTimerLabel(remaining));
                     next.setTextColor(CandyCooldownPolicy.remainingColor(remaining));
+                    next.setContentDescription("Cooldown estimado: "+
+                        CandyCooldownPolicy.timerLabel(remaining)+
+                        ". Não confirma cooldown real do jogo");
                 }
             }
             // A new batch is requested only by the chosen interval, a manual
@@ -1032,6 +1256,10 @@ public final class RareCandyOverlayService extends Service {
         return START_STICKY;
     }
     @Override public void onDestroy(){
+        if(candyConfirmationDialog!=null){
+            candyConfirmationDialog.dismiss();
+            candyConfirmationDialog=null;
+        }
         destroyed=true;running=false;
         ++generation;main.removeCallbacksAndMessages(null);
         if(site!=null){

@@ -90,6 +90,14 @@ body:not(.expanded) #choices{display:none}
 #choices.infoPanel .infoTile{box-sizing:border-box!important;min-width:0!important;width:100%!important;height:30px!important;min-height:30px!important;padding:2px 3px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:2px!important;font-size:9px!important;text-align:left!important;background:var(--visual-menu-readable-button-bg)!important;color:var(--visual-menu-fg)!important;border:1px solid var(--visual-menu-border)!important;border-radius:6px!important}
 #choices.infoPanel .infoTile.chosen{border-color:#a8efd4!important}
 #choices.infoPanel .infoTile b{font-size:11px!important;color:#a8efd4!important}
+#choices.infoPanel .showCollected{width:23px;min-width:23px;height:23px;min-height:23px;
+padding:0!important;font-size:15px!important;border-radius:6px!important;
+border:1px solid var(--visual-menu-border)!important;color:#91c6ff!important;
+background:var(--visual-menu-readable-button-bg)!important}
+#choices.infoPanel .pickedCandy{width:23px;min-width:23px;height:23px;min-height:23px;
+padding:0!important;font-size:14px!important;border-radius:6px!important;
+border:1px solid var(--visual-menu-border)!important;color:#50e39b!important;
+background:var(--visual-menu-readable-button-bg)!important}
 #choices.infoPanel .resetCooldown{width:23px;min-width:23px;height:23px;min-height:23px;
 padding:0!important;font-size:16px!important;border-radius:6px!important;
 border:1px solid var(--visual-menu-border)!important;color:#ff83bb!important;
@@ -106,7 +114,7 @@ background:var(--visual-menu-readable-button-bg)!important}
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false};
+let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false,pendingCandyPickup:false,showCollected:false,hasCollected:false};
 let currentPanel="";
 // Same colors, opacity formula and blur as visual_editor.js for P1/P2.
 function applyCandyMenuTheme(mode,transparency,blur){
@@ -177,7 +185,15 @@ function renderPanel(){
    requestHeight(34+6*30+5*3+6,false);
   }else if(currentPanel==="infos"){
    // Same compact grid as the Pokémon information menu.
-   el.innerHTML='<div class="choiceHeader">Informações <button type="button" class="resetCooldown" onclick="resetCooldown()" title="Limpar referência do contador" aria-label="Limpar contador dos doces">↺</button></div><div class="infoGrid">'+
+   el.innerHTML='<div class="choiceHeader">Informações'+
+    (settings.pendingCandyPickup?
+     '<button type="button" class="pickedCandy" onclick="confirmPickedCandy()" title="Confirmar doce pego" aria-label="Peguei este doce">✓</button>':'')+
+    (settings.hasCollected?
+     '<button type="button" class="showCollected" onclick="toggleCollected()" title="'+
+     (settings.showCollected?'Ocultar coletados':'Mostrar coletados')+
+     '" aria-label="'+(settings.showCollected?'Ocultar coletados':'Mostrar coletados')+
+     '">'+(settings.showCollected?'◉':'◌')+'</button>':'')+
+    '<button type="button" class="resetCooldown" onclick="resetCooldown()" title="Limpar referência do contador" aria-label="Limpar contador dos doces">↺</button></div><div class="infoGrid">'+
     [["name","Nome"],["location","Local"],["despawn","Despawn"],["distance","Dist."]]
     .map(([id,label])=>'<button type="button" class="infoTile'+
       (settings[id]?' chosen':'')+'" data-key="'+id+'" aria-pressed="'+
@@ -217,6 +233,12 @@ function changeInfo(key,checked){
  if(currentPanel==="infos")renderPanel();
 }
 function toggleInfo(key){changeInfo(key,!settings[key])}
+function confirmPickedCandy(){Native.confirmCandyPicked();closePanel()}
+function toggleCollected(){
+ settings.showCollected=!settings.showCollected;
+ Native.setShowCollected(!!settings.showCollected);
+ if(currentPanel==="infos")renderPanel();
+}
 function resetCooldown(){Native.clearCandyCooldown();closePanel()}
 function applyLocation(){
  const center=$("candyCoords").value.trim(),km=Number($("candyRadius").value);
