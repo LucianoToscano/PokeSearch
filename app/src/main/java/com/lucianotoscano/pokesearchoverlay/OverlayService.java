@@ -459,6 +459,10 @@ public class OverlayService extends Service {
                         // key, never provider messages, JWTs, trainer IDs or
                         // coordinate values. Do not blindly retry a 400/422.
                         String key=response.optString("rejectedField","");
+                        String part=response.optString("rejectedPart","");
+                        // Only a provider-validated, allowlisted error LOCATION
+                        // is shown. No JWT, request body or server msg is logged.
+                        if(!part.equals("body")&&!part.equals("header"))key="";
                         String label=switch(key){
                             case "pokemon_ids","species_forms","forms",
                                  "blacklist_pokemon_ids","blacklist_species_forms",
@@ -473,15 +477,20 @@ public class OverlayService extends Service {
                             case "level_min","level_max" -> "Nível";
                             case "sort" -> "Ordenação";
                             case "shiny_only","shiny_account" -> "Shiny/treinador";
+                            case "trainer_code" -> "Código do treinador";
+                            case "authorization" -> "Autenticação";
                             case "sizes","gender","weather_id","boosted",
                                  "min_ttl","background_only" -> "Filtros";
                             default -> "";
                         };
                         int count=Math.max(0,Math.min(20,response.optInt("rejectedFieldCount",0)));
                         BugReport.log(this,"API_SCHEMA",
-                            (isSecondaryOverlay()?"P2":"P1")+" HTTP="+code+
+                            (isSecondaryOverlay()?"P2":"P1")+
+                            " method=POST path=/search HTTP="+code+
+                            " part="+(part.equals("header")?"header":part.equals("body")?"body":"unknown")+
                             " field="+(label.isEmpty()?"unknown":key)+
-                            " fields="+count+" mode="+mode);
+                            " fields="+count+" mode="+mode+
+                            " auth=present-or-absent-not-logged");
                         searchFailure("⚠ API"+(code>0?" "+code:"")+": "+
                             (label.isEmpty()?(count>1?"vários campos":"requisição rejeitada"):label),
                             "Provedor rejeitou a busca"+
