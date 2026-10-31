@@ -20,3 +20,10 @@
 
 ## Nota de homologação
 A disponibilidade atual do recurso Shiny é uma declaração do usuário, não uma confirmação contratual permanente do PoGoCoordinates. A reativação deve exigir nova validação real antes de alterar a chave de recurso. Não apagar perfis, cookies ou vínculos salvo logout explícito.
+
+## Publicação oficial verificada (31/10/2026)
+- [PR #172 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/172): source merge commit `ea3a4b72add2b6b9f3f66a63858ef07904406411`.
+- [Workflow oficial #41231635596](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231635596) **SUCCESS**, incluindo regressões Node, compilação protegida, assinatura original v2, publicação e verificação do hash.
+- [Release público LT204 / latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.04-54411): APK 29.263.311 bytes, SHA-256 `73a72edeea948747666dc18401cd13348301b9fe5f70d26971ed29fdf95f53cf`.
+- [Google Drive — ZIP LT204 com APK e relatórios](https://drive.google.com/file/d/1pxeWIcjyJLpMonkg2u8hFzhwEt-f0Nuy/view?usp=drivesdk): 26.922.166 bytes, SHA-256 `07162ab631099cacab3f2f8133ae5b80fd614699eec4a1783e8dbd05e0751d4c`. A assinatura do APK interno é v2, com certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- Testes automatizados não demonstram êxito da busca em tempo real no Samsung. O HTTP 422 original precisa de uma inspeção separada por rota e campo rejeitado; não atribuir automaticamente a erro de login ou ausência de treinador.
