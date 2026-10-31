@@ -5921,10 +5921,10 @@ function renderLocationChoices(){
   previewTimer=setTimeout(()=>{preview.classList.remove("is-visible");previewTimer=null;},1250);
  };
  slide.addEventListener("pointerdown",showLocationCooldownPreview);
- slide.oninput=()=>{
-  radiusField.value=slide.value;radiusField.dataset.locationDraft="true";
-  showLocationCooldownPreview();
- };
+ // Keep the original handler byte-for-byte for draft preservation and for
+ // older Samsung regression checks; attach the preview independently.
+ slide.oninput=()=>{radiusField.value=slide.value;radiusField.dataset.locationDraft="true";};
+ slide.addEventListener("input",showLocationCooldownPreview);
  radiusField.oninput=()=>{
   // Keep the Android text input numeric and limited to four visible digits.
   const value=sanitizeLocationRadiusDraft(radiusField.value);
@@ -5978,7 +5978,8 @@ function renderLocationChoices(){
  apply.onclick=submit;
  actions.append(apply,clear);label.append(actions);
  const sliderRow=make("div","locSliderRow");
- sliderRow.append(slide,preview);
+ sliderRow.append(slide);
+ sliderRow.append(preview);
  panel.append(title,fieldRow,sliderRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
