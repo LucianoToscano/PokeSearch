@@ -18,5 +18,15 @@
 ## QA e governança
 - Testes executáveis `CandyCooldownPolicyTest.java` e `lt195-candy-next-hop-cooldown.test.js`, com cobertura da tabela, precisão Haversine, persistência, início, fim, reset e alinhamento dos overlays.
 - Inclui todas as correções da LT194: paridade de IV, proteção contra falsos zeros e limite local de 10 por Pokébola.
-- **Versão prevista** LT195 / 0.01.95 / versionCode 54400, assinatura v2 permanente (certificado SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e).
+- **Versão oficial publicada** LT195 / 0.01.95 / versionCode 54400, assinatura v2 permanente (certificado SHA-256: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e).
 - A build oficial, merge, entrega ao Drive e homologação física devem ser registrados apenas quando suas verificações concluírem; não inventar datas, links, hashes ou resultados.
+
+## Evidências pós-publicação — 31/10/2026
+- Merge PR #159: `c023c3c2ab9747db13a0a975226747517379e71c`.
+- CI de publicação [#41175591798](https://github.com/LucianoToscano/PokeSearch/actions/runs/41175591798) **SUCCESS**, R8/assinatura verificados.
+- Release latest: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.95-54400
+- APK oficial: 29.018.177 bytes, SHA-256 `1d4c78ef06cfc6bab3fa5ceadfa628c6f908d1532f168ec7ab2668b7bd06c942`.
+- ZIP da execução [#41175591798](https://github.com/LucianoToscano/PokeSearch/actions/runs/41175591798/artifacts/13032791572), 26.725.076 bytes, SHA-256 `13d1b7f4b793bf8086fd5e408d2173a2761cac6cd2143caf10642b45aef96456`, ZIP íntegro.
+- Drive verificado: https://drive.google.com/file/d/1HV7MzU7VhSqPlJtk_R9roR7IiazsX2x9/view ; pasta compartilhada `PokeSearch_App`. O arquivo é ZIP, não APK direto.
+- `aapt`: `versionCode=54400`, `versionName=0.01.95`. `apksigner`: v2 true, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- Testes autenticados no Samsung permanecem pendentes; não foi validada a sincronização da ação real do jogo com o temporizador estimado.
