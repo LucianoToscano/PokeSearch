@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT195 — Cooldown estimado para próximo Doce Raro (31/10/2026)
+
+- Implementação na branch `feature/lt195-candy-next-hop-cooldown-20261031`, derivada da LT194 QA, preservando integralmente LT193 como última versão oficial até aprovação.
+- Cópia de uma coordenada de doce grava referência e horário local; timer individual de cada outro doce usa Haversine + tabela do usuário de 0–120 minutos, vermelho/rosa (<=30s)/verde, persistência, reset no menu de Informações, atualização 1s e listas compactas. **Estimativa por distância, sem confirmação de cooldown do jogo**.
+- Não modificar GPS, JWT, backend, limites, Doce Raro /reveal, P1/P2, cadência, sprites, notificações ou assinatura. Integrar as correções LT194 (IV e resultados da API) na entrega LT195. Testes Java e Node em [registro LT195](LT195_CANDY_COOLDOWN_E_DISTRIBUICAO_20261031.md).
+- Meta de distribuição `0.01.95 / 54400` depois de CI, assinatura e Release verificadas. Drive e entrega pública requerem prova de bytes, hash e status. **Homologação autenticada no Samsung continua pendente**, mesmo que testes automatizados passem.
+
+---
+
+
 ## LT194 — Correções em QA da auditoria LT193 (31/10/2026)
 
 - **Branch QA** `fix/lt194-iv-evidence-api-dom-parity-20261031`, derivada de LT193 oficial. Sem merge ou nova Release pública; LT193 continua versão distribuída.
