@@ -9,6 +9,9 @@ dependencies {
     implementation("androidx.webkit:webkit:1.17.1")
     // Offline QR generation from Mercado Pago Pix payload; no third-party service.
     implementation("com.google.zxing:core:3.5.3")
+    // Unbundled Latin OCR via Google Play Services: smaller APK than bundled
+    // model; local inference only after Android screen-sharing consent.
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.2")
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("androidx.credentials:credentials:1.6.0")
