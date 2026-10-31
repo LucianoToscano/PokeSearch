@@ -27,7 +27,7 @@ check("LT82 Location coordinates use separate line with compact popup",()=>{
 check("header Location centered with adjacent paste/copy actions",()=>{
  for(const s of ['.choiceHeader{','justify-content:center!important;',
  'const title=make("div","choiceHeader")',
- 'title.appendChild(make("span","","Localização"))',
+ 'titleAction=make("button","locTitleHelp","Localização")',
  'label.append(labelName,radiusWrap)','clipboard.append(paste,copy)','title.appendChild(clipboard)'])assert.ok((s.includes("const")||s.includes("title.")||s.includes("clipboard.")||s.includes("label.append(")?location:css).includes(s),s);
 });
 check("input has exactly four numeric characters and bound 0–1000",()=>{
