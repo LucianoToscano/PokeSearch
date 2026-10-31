@@ -1,0 +1,65 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs"),path=require("node:path");
+const root=path.join(__dirname,"../src/main");
+const java=file=>fs.readFileSync(path.join(root,
+ "java/com/lucianotoscano/pokesearchoverlay",file),"utf8");
+const capture=java("CandyScreenCaptureService.java");
+const consent=java("CandyCaptureConsentActivity.java");
+const candy=java("RareCandyOverlayService.java");
+const classification=java("CandyPickupEvidence.java");
+const menu=fs.readFileSync(path.join(root,"assets/rare_candy_controls.html"),"utf8");
+const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
+const gradle=fs.readFileSync(path.join(__dirname,"../build.gradle.kts"),"utf8");
+
+for(const marker of [
+ "createScreenCaptureIntent()","startActivityForResult(","onActivityResult(",
+ "code!=RESULT_OK","CandyScreenCaptureService.ACTION_START"
+]) assert.ok(consent.includes(marker),"missing explicit OS consent "+marker);
+assert.ok(consent.includes("finish();"),"consent Activity is one-shot");
+assert.ok(consent.includes("candyAutoPickupOptIn"),"off by default");
+assert.match(capture,/START_NOT_STICKY/);
+assert.match(capture,/ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION/);
+assert.match(capture,/projection\.registerCallback\(projectionCallback,handler\)/);
+assert.match(capture,/createVirtualDisplay\("PokeSearchCandyConsent"/);
+assert.match(capture,/ImageReader\.newInstance/);
+assert.match(capture,/SAMPLE_INTERVAL_MS=1000L/);
+assert.match(capture,/h\*27\/100/);
+assert.match(capture,/!pending\|\|selectedAt<=0/);
+assert.match(capture,/wallNow-selectedAt>120000L/);
+assert.match(capture,/gate\.observe\(matched,SystemClock\.elapsedRealtime\(\)\)/);
+assert.match(capture,/if\(confirmed&&sawBlankSinceSelection\)/);
+assert.match(capture,/setAction\(RareCandyOverlayService\.ACTION_VISUAL_PICKUP_CONFIRMED\)/);
+assert.match(capture,/getSharedPreferences\("rare_candy_overlay",MODE_PRIVATE\)/);
+assert.match(capture,/ACTION_STOP/);
+assert.match(capture,/getMediaProjection\(code,data\)/);
+assert.match(capture,/TextRecognition\.getClient/);
+assert.match(capture,/CandyPickupEvidence\.hasCandyRainbow/);
+assert.match(capture,/CandyPickupEvidence\.titleMatches/);
+assert.match(capture,/\.addOnFailureListener/);
+assert.match(capture,/top\.recycle\(\)/);
+assert.match(capture,/projection\.stop\(\)/);
+assert.match(capture,/textRecognizer\.close\(\)/);
+assert.match(capture,/putBoolean\("candyAutoPickupOptIn",false\)/);
+assert.match(candy,/private void recordCollectedCandy\(String point,boolean automatic\)/);
+assert.match(candy,/recordCollectedCandy\(point,false\)/);
+assert.match(candy,/recordCollectedCandy\(point,true\)/);
+assert.match(candy,/copiedAt==prefs\.getLong\("selectedCandyCopyAtMs",-1\)/);
+assert.match(candy,/CandyScreenCaptureService\.isActive\(\)/);
+assert.match(candy,/putLong\("selectedCandyCopyAtMs",System\.currentTimeMillis\(\)\)/);
+assert.match(candy,/setAutoCandyPickup\(boolean enable\)/);
+assert.match(candy,/stopService\(new Intent\(this,CandyScreenCaptureService\.class\)\)/);
+assert.match(menu,/function toggleAutoCandy\(\)/);
+assert.match(menu,/Native\.setAutoCandyPickup\(enable\)/);
+assert.match(menu,/settings\.candyAutoPickupActive/);
+assert.match(manifest,/FOREGROUND_SERVICE_MEDIA_PROJECTION/);
+assert.match(manifest,/foregroundServiceType="mediaProjection"/);
+assert.match(manifest,/CandyCaptureConsentActivity/);
+assert.match(manifest,/android:exported="false"/);
+assert.match(gradle,/play-services-mlkit-text-recognition:19\.0\.2/);
+assert.match(classification,/ITEM ENCONTRADO/);
+assert.match(classification,/DOCE RARO/);
+assert.match(classification,/redY\/red<yellowY\/yellow/);
+assert.doesNotMatch(capture,/openConnection\(|HttpURLConnection|FileOutputStream|\.compress\(|sendBroadcast\(/);
+assert.doesNotMatch(manifest,/BIND_ACCESSIBILITY_SERVICE|READ_MEDIA_IMAGES|READ_EXTERNAL_STORAGE/);
+console.log("PASS LT197: opt-in Android media capture, local OCR + sprite + two-frame gate and manual fallback");
