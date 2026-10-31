@@ -18,6 +18,14 @@ Base: LT195 oficial (0.01.95/54400), PR #159, mantendo a assinatura permanente e
 - O mesmo controle compacto de 47dp é preservado; temporizador só aparece após coleta confirmada e botão ✓ de confirmação usa o canto da sprite, não outra linha.
 - Testes adicionais `lt196-candy-pickup-confirmation.test.js` e regressões Java `CandyCooldownPolicyTest.java` validam confirmação, migração, estado copiando/pegando e aviso antes de copiar.
 
+## Lista limpa — coletados desaparecem
+- **Somente o ✓ Peguei confirmado** insere o doce no registro de coletados. Copiar não esconde, não deixa a imagem cinza e não dispara atualização ao copiar dez itens.
+- Ao confirmar coleta, esconder o doce do overlay imediatamente por padrão; a lista ajusta a altura ao número de doces restantes, evitando buracos.
+- Botão ◌/◉ discreto no cabeçalho de Informações mostra/oculta os coletados confirmados para consulta. É opcional, sem nova linha nem menu mais alto.
+- O registro fica em `SharedPreferences` com coordenadas e prazo da ocorrência; ao expirar o despawn, o registro é retirado para evitar bloquear um doce novo no mesmo lugar. Não enviar coordenadas nem registros para servidores adicionais.
+- Quando os dez doces da lista tiverem **coleta confirmada**, permitir o refresh existente; nenhuma cópia isolada dispara essa regra.
+- Detecção automática da mensagem do Pokémon GO **não implementada**: requer avaliação independente de permissões de acessibilidade e/ou projeção de tela com consentimento. A UI do jogo pode não expor texto; reconhecer sprite por imagem/OCR é um experimento opt-in e não deve ser anunciado como confiável ou ativado silenciosamente.
+
 ## Testes
 - Nova suíte Node `lt196-candy-compact-sprite.test.js`: altura fixa, única linha de despawn, badges dentro do sprite, cores, copiar/reset, 10 doces e atualizações por segundo.
 - Teste Java de produção `CandyCooldownPolicyTest.java`: acrescenta 9 cenários de labels compactos a 56 checagens de LT195.
