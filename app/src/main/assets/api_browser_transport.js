@@ -201,6 +201,12 @@
    // proof of zero matching spawns; preserve old results instead.
    if(pvp&&result.body.results.length>0&&parsed.cards.length===0)
     return fail("pvp-unverified");
+   // HTTP 200 with rows discarded by IV/metadata/expiry is NOT a
+   // provider-confirmed zero. Never replace prior verified cards with it.
+   if(parsed.siteCount>0&&parsed.cards.length===0)
+    return {ok:false,reason:"unverified-results",siteCount:parsed.siteCount,
+     rejected:parsed.rejected,expired:parsed.expired,filtered:parsed.filtered,
+     rejectionCounts:parsed.rejectionCounts};
    // Store only codes belonging to sanitized, live results.
    const all=result.body.results;
    for(const card of parsed.cards){
@@ -224,8 +230,8 @@
    // Sanitize output: not an attestation of actual applied search criteria.
    return {ok:true,searchId:generation,cards:parsed.cards,
     found:parsed.found,siteCount:parsed.siteCount,
-    rejected:parsed.rejected,expired:parsed.expired,
-    serverCap:parsed.serverCap,displayCap:parsed.displayCap,
+    rejected:parsed.rejected,expired:parsed.expired,filtered:parsed.filtered,
+    rejectionCounts:parsed.rejectionCounts,serverCap:parsed.serverCap,displayCap:parsed.displayCap,
     criteriaConfirmed:false,resultChanged:false,leagueConfirmed:false,
     source:"experimental-api",requiresIntegrationValidation:true,requestValidated:true,
     pvpVerified:!!pvp&&(parsed.cards.length>0||result.body.results.length===0)};
