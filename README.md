@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT197 · 0.01.97 · 54404
+## Versão oficial atual — LT198 · 0.01.98 · 54405
+
+[Release oficial LT198](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.98-54405) · [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.98-54405/PokeSearch-v0.01.98-LT.apk) · [Workflow SUCCESS #41187283116](https://github.com/LucianoToscano/PokeSearch/actions/runs/41187283116) · [PR #165 integrada](https://github.com/LucianoToscano/PokeSearch/pull/165).
+
+APK 29.255.819 bytes, SHA-256 `52a853c0686a6ff42060f4bf8bfdae232205a6cf37fce8013bf90de1a2e0dc33`, SOURCE_COMMIT `4df63b21d5a0a9d65d7a0c386d3f2ec7e3f82105`, assinatura original v2.
+
+**Correção LT198:** detector de Doce Raro observa quadros a cada 350ms independentemente do OCR, mostra falta de imagens recebidas e distingue aviso reconhecido de coleta realmente registrada. Permissão MediaProjection a cada sessão, detector OFF por padrão, confirmação manual `✓ Peguei` disponível. Testes automatizados aprovados; captura real após a correção ainda não homologada no Samsung.
+
+[Google Drive oficial LT198 — APK e relatórios](https://drive.google.com/file/d/1z1x6MrfnFeCVKSaKoRB8paE4zY8vAVmS/view) · [Guia Mestre](docs/GUIA_MESTRE.md).
+
+---
+
+## Histórico — versão oficial anterior LT197 · 0.01.97 · 54404
 
 [Release LT197](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.97-54404) · [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.97-54404/PokeSearch-v0.01.97-LT.apk) · [Actions SUCCESS #41184612797](https://github.com/LucianoToscano/PokeSearch/actions/runs/41184612797) · [PR #161 integrada](https://github.com/LucianoToscano/PokeSearch/pull/161).
 
