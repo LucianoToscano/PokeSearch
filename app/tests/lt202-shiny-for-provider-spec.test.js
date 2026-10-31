@@ -42,7 +42,7 @@ assert.equal(paid.serverCap,100);
 assert.equal(paid.displayCap,10);
 assert.match(dock,/card\?\.shinyFor/);
 assert.match(dock,/card\?\.background===true/);
-assert.match(dock,/\+" para "|\+" ":"\)\+"para "/);
+assert.ok(dock.includes('lines.push((icons?icons+" ":"")+"para "+display);'));
 assert.match(dock,/forNames\.slice\(0,3\)/);
 assert.match(session,/requestedShiny:filters\.shiny===true/);
 assert.match(candy,/payload\.radius_km=radiusMeters\/1000/);
