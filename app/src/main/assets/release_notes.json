@@ -1230,6 +1230,31 @@
           "É recomendado testar no Samsung a busca após a atualização e, em caso de erro HTTP, usar o diagnóstico de categoria/contagem de campos sem expor credenciais ou coordenadas."
         ]
       }
+    },
+    {
+      "id": "lt202-provider-shiny-for-20261031",
+      "minVersionCode": 54409,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT202 — Shiny por treinador, background e contrato PoGoCoordinates",
+      "sections": {
+        "novidades": [
+          "Cards da API reconhecem shiny_for (nomes de treinadores vinculados), além dos indicadores Shiny ✨ e Background 🏞️ da conta selecionada.",
+          "Exibição compacta de nomes vinculados quando o filtro específico e a conta selecionada são verificados, sem aumentar a largura dos cards."
+        ],
+        "melhorias": [
+          "Consulta Background usa a conta de treinador verificada, como a busca Shiny.",
+          "Respostas anônimas ou sem conta selecionada não exibem identificadores de treinadores.",
+          "Tiers da API e cap são respeitados; o overlay continua limitado a dez resultados para manter o layout compacto."
+        ],
+        "correcoes": [
+          "Distingue Shiny da conta selecionada do campo shiny_for, que pode incluir outras contas: não gera previsão falsa.",
+          "Bloqueia valores malformados ou duplicados de nomes e não encaminha informações arbitrárias do provedor para a interface."
+        ],
+        "emDesenvolvimento": [
+          "Esquema atualizado conforme documentação e JS fornecidos em 31/10/2026; ainda requer teste real autenticado no Samsung para confirmar shiny_for preenchido.",
+          "Rare Candy mantém coordenadas diretas, km calculado a partir dos metros do menu e limites 429 sem alteração de seu fluxo de pesquisa."
+        ]
+      }
     }
   ]
 }

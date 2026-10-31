@@ -2265,7 +2265,8 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
    dock.includes(key+':!!displayPrefs.'+key))&&
   keys.every(key=>service.includes('case "'+key+'":')&&
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
-  keys.every(key=>dock.includes('opts.'+key+'&&'))&&
+  keys.every(key=>key==="shiny"?dock.includes('if(opts.shiny){'):
+    dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
   dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');

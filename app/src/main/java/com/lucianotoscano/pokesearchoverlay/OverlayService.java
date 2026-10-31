@@ -415,9 +415,10 @@ public class OverlayService extends Service {
             JSONObject config=new JSONObject(filterConfigJson());
             config.put("mode",mode);
             config.put("shiny",shiny);
-            // Only a trainer previously verified from this site's own profile
-            // may be selected for account-specific Shiny results.
-            if(shiny){
+            // Both shiny_only and background_only are account-specific
+            // filters. Reuse only trainers verified under the assigned
+            // PoGoCoordinates account and never guess another account.
+            if(shiny||config.optBoolean("backgroundOnly",false)){
                 int slot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
                 String selected=PogoAccountSlots.trainer(this,isSecondaryOverlay());
                 if(PogoAccountSlots.hasTrainer(this,slot,selected))

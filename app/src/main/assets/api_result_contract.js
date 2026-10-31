@@ -279,6 +279,25 @@
     return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+
       (item.shiny===true?"shiny/":"")+item.pokemon_id+".png";
   }
+  // The provider's shiny_for is string[] | null (verified JS bundle 31/10).
+  // Linked trainer labels are optional display metadata, NEVER an independent
+  // Shiny proof. Use the selected account's own shiny/background booleans.
+  // No raw IDs, emails, messages or arbitrary strings cross to the UI.
+  function safeShinyFor(raw){
+    if(raw===null||raw===undefined)return null;
+    if(!Array.isArray(raw)||raw.length>100)return null;
+    const seen=new Set(),out=[];
+    for(const value of raw){
+      if(typeof value!=="string")return null;
+      const name=value.trim();
+      if(!name||name.length>32||!/^[\p{L}\p{N} _.-]+$/u.test(name))return null;
+      if(!seen.has(name.toLocaleLowerCase())){
+        seen.add(name.toLocaleLowerCase());
+        if(out.length<20)out.push(name);
+      }
+    }
+    return out.length?out:null;
+  }
   /* Standalone fixture parser. This is NOT an authentication, Search,
    * freshness, ranking or filter-application attestation.
    */
@@ -343,7 +362,10 @@
         iv:iv.raw,ivPercent:String(iv.percent),
         rank:pvpRequired?String(pvp.rank):"",ivRank:null,
         ivRankSource:pvpRequired?"api-pvp":"",ivRankLeague:pvpRequired?pvpLeague:"",
-        shiny:x.shiny===true,
+        shiny:x.shiny===true,background:x.background===true,
+        // Only an account-specific query with a locally verified selected
+        // trainer may include server-provided linked trainer names in cards.
+        shinyFor:options.showTrainerNames===true?safeShinyFor(x.shiny_for):null,
         form:clean(x.form,70),costume:clean(x.costume,70),
         costume_id:costumeId
       };
