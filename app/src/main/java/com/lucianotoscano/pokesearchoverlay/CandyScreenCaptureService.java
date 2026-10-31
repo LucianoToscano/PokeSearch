@@ -171,15 +171,30 @@ public final class CandyScreenCaptureService extends Service {
             int w=image.getWidth(),h=image.getHeight();
             Image.Plane plane=image.getPlanes()[0];
             if(plane.getPixelStride()!=4||w<100||h<200)return;
-            // A single top band; no bottom map, chat, notification or location.
-            int paddedWidth=plane.getRowStride()/plane.getPixelStride();
-            if(paddedWidth<w)return;
-            ByteBuffer buffer=plane.getBuffer();
-            Bitmap full=Bitmap.createBitmap(paddedWidth,h,Bitmap.Config.ARGB_8888);
-            full.copyPixelsFromBuffer(buffer);
+            // Read ONLY the top band from ImageReader's full-screen frame.
+            // Never materialize a full-screen Bitmap or keep raw screenshots.
             int bandHeight=Math.min(h,Math.max(80,h*27/100));
-            Bitmap top=Bitmap.createBitmap(full,0,0,w,bandHeight);
-            full.recycle();
+            int outW=Math.min(w,800);
+            int outH=Math.max(40,(int)Math.round(
+                bandHeight*(outW/(double)w)));
+            int[] argb=new int[outW*outH];
+            ByteBuffer buffer=plane.getBuffer();
+            int rowStride=plane.getRowStride();
+            int pixelStride=plane.getPixelStride();
+            for(int y=0;y<outH;y++){
+                int srcY=Math.min(bandHeight-1,y*bandHeight/outH);
+                for(int x=0;x<outW;x++){
+                    int srcX=Math.min(w-1,x*w/outW);
+                    int offset=srcY*rowStride+srcX*pixelStride;
+                    if(offset+3>=buffer.limit())return;
+                    int red=buffer.get(offset)&255;
+                    int green=buffer.get(offset+1)&255;
+                    int blue=buffer.get(offset+2)&255;
+                    argb[y*outW+x]=0xff000000|(red<<16)|(green<<8)|blue;
+                }
+            }
+            Bitmap top=Bitmap.createBitmap(
+                argb,outW,outH,Bitmap.Config.ARGB_8888);
             inFlight=true;
             processTopBand(top,selected,selectedAt);
         }catch(RuntimeException ignore){
