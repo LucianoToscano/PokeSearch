@@ -1179,6 +1179,32 @@
           "Testes automatizados de interface, contrato da API e compilação Android; validar alternância ON/OFF em sessão real no Samsung após instalar."
         ]
       }
+    },
+    {
+      "id": "lt200-location-cooldown-api-dom-20261031",
+      "minVersionCode": 54407,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT200 — Localização, cooldown e diagnóstico de filtros",
+      "sections": {
+        "novidades": [
+          "Toque na palavra Localização para ver a tabela compacta de 16 faixas de distância e cooldown no mesmo painel translúcido, sem mover os botões Copiar/Colar.",
+          "Botão ‹ Localização volta ao editor preservando coordenadas e raio ainda não aplicados."
+        ],
+        "melhorias": [
+          "Ao tocar ✓ com coordenadas e raio já cadastrados, o app permite revalidar a consulta sem bloquear pelo agendamento local; limites reais do provedor permanecem respeitados.",
+          "Mensagens distinguem falhas no site, no formulário geográfico e na API; busca não declara filtros aplicados sem confirmação.",
+          "Nas respostas HTTP 400/422, a API pode indicar qual grupo de parâmetros foi rejeitado sem exibir credenciais, coordenadas ou mensagens privadas."
+        ],
+        "correcoes": [
+          "No modo site, seletor Pokémon recebe foco e não é aberto por cliques repetidos que poderiam fechá-lo; seleção salva permanece intacta quando o portal não responde.",
+          "Versões móveis que exibem o par único e oficial de campos Coords/Radius sem abas podem ser verificadas com segurança.",
+          "Corrigida mensagem genérica de localização quando a falha pertence à API ou a outros filtros; sem limpar escolhas automaticamente."
+        ],
+        "emDesenvolvimento": [
+          "Tempo de cooldown exibido reproduz tabela fornecida pelo usuário: referência informativa, não garantia oficial do Pokémon GO.",
+          "A API ou site real pode mudar e continuar rejeitando parâmetros. Validação em Samsung, nas Pokébolas 1 e 2, é necessária para confirmar solução dos avisos HTTP 400/422 e seletor Pokémon."
+        ]
+      }
     }
   ]
 }
