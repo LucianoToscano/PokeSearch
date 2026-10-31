@@ -1,6 +1,20 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT198 · 0.01.98 · 54405
+## Versão oficial atual — LT199 · 0.01.99 · 54406
+
+[Release oficial LT199](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.99-54406) · [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.99-54406/PokeSearch-v0.01.99-LT.apk) · [Google Drive — ZIP com APK + relatórios](https://drive.google.com/file/d/16Wwqs6PDXpBM9sROLw8eZs_H5DCq5qfC/view?usp=drivesdk) · [Actions SUCCESS #41199748150](https://github.com/LucianoToscano/PokeSearch/actions/runs/41199748150) · [PR #166 integrada](https://github.com/LucianoToscano/PokeSearch/pull/166).
+
+**LT199:** chave ON/OFF no seletor Pokémon · espécies e formas. OFF pausa o filtro de espécies, pesquisa quaisquer Pokémon e **não apaga** os nomes já selecionados. ON restabelece a mesma lista sem exigir reaplicar. `Limpar todos` continua sendo a exclusão explícita. Estado salvo após reinício e independente para cada uma das duas Pokébolas.
+
+**APK:** 29.256.743 bytes · SHA-256 `2abb3898468a2681b3b46db9abb5f1cd79bb51165ccf7e51596ac94f7f4a2a30` · certificado permanente v2 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` · SOURCE_COMMIT `9573a49b15f3f286d766c341cc1e99c18a14b255`.
+
+**Drive:** ZIP 26.916.408 bytes, SHA-256 `39a124248f9fada142249188d0a88318eff3fbf18642fd8143462108d540b4bc`, conteúdo e APK interno verificados. **Atualização pública:** GitHub Releases/latest publicado, portanto o app pode oferecer a nova versão; cada usuário precisa autorizar a instalação. Teste físico Samsung ainda recomendado.
+
+[Registro no Guia Mestre](docs/GUIA_MESTRE.md) · [Auditoria e checklist LT199](docs/LT199_POKEMON_FILTER_PAUSE_QA_20261031.md).
+
+---
+
+## Histórico — versão oficial anterior LT198 · 0.01.98 · 54405
 
 [Release oficial LT198](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.98-54405) · [Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.98-54405/PokeSearch-v0.01.98-LT.apk) · [Workflow SUCCESS #41187283116](https://github.com/LucianoToscano/PokeSearch/actions/runs/41187283116) · [PR #165 integrada](https://github.com/LucianoToscano/PokeSearch/pull/165).
 
