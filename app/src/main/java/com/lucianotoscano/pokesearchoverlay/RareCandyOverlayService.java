@@ -131,8 +131,10 @@ public final class RareCandyOverlayService extends Service {
         if(icon!=null)view.setImageBitmap(icon);
         else view.setImageResource(R.drawable.ic_notification);
         if(dim){
-            ColorMatrix m=new ColorMatrix();m.setSaturation(0f);
-            view.setColorFilter(new ColorMatrixColorFilter(m));view.setAlpha(.65f);
+            // Copied candy is still recognizable: only a subtle tint, not a
+            // solid gray column when the whole batch has been visited.
+            ColorMatrix m=new ColorMatrix();m.setSaturation(.60f);
+            view.setColorFilter(new ColorMatrixColorFilter(m));view.setAlpha(.88f);
         }
         view.setContentDescription(dim?"Doce Raro · coordenadas já copiadas":
             "Doce Raro · toque para copiar coordenadas");
@@ -323,11 +325,8 @@ public final class RareCandyOverlayService extends Service {
         long now=SystemClock.elapsedRealtime();
         int activeCount=0;
         for(Candy card:cards.values())if(card.deadline>now)activeCount++;
-        long wallNow=System.currentTimeMillis();
-        boolean withHop=!lastCopiedCandyCoords.isEmpty()&&lastCopiedCandyAtMs>0&&
-            wallNow>=lastCopiedCandyAtMs&&
-            wallNow-lastCopiedCandyAtMs<=CandyCooldownPolicy.MAX_AGE_MS;
-        int rowHeight=withHop?62:47;
+        // LT196: status lives inside sprite cell, never adds a third line.
+        int rowHeight=47;
         int wantedHeight=dp(activeCount==0?35:activeCount*rowHeight+4);
         int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
         int roomBelow=height-margin-belowY;
@@ -898,9 +897,38 @@ public final class RareCandyOverlayService extends Service {
                 distance.setPadding(dp(2),0,dp(2),0);
                 distance.setBackground(background(0xB8111A26,5,0));
                 FrameLayout.LayoutParams distLp=new FrameLayout.LayoutParams(
-                    -2,dp(13),Gravity.RIGHT|Gravity.BOTTOM);
+                    -2,dp(12),Gravity.RIGHT|Gravity.BOTTOM);
                 spriteCell.addView(distance,distLp);
                 distance.setOnClickListener(v->copy(card.coords));
+            }
+            // Cooldown badge is overlaid on the candy, not below despawn.
+            // Waiting: red/pink time. Ready: small green check only.
+            // Reference: blue dot. All badges fit within 46 × 29 dp.
+            if(hasCooldownOrigin){
+                boolean origin=lastCopiedCandyCoords.equals(card.coords);
+                int remain=origin?0:CandyCooldownPolicy.remainingSeconds(
+                    lastCopiedCandyCoords,card.coords,lastCopiedCandyAtMs,wallNow);
+                if(remain>=0){
+                    String shortLabel=origin?"●":CandyCooldownPolicy.compactTimerLabel(remain);
+                    int color=origin?0xFF91C6FF:CandyCooldownPolicy.remainingColor(remain);
+                    TextView badge=label(shortLabel,8,color,true);
+                    badge.setGravity(Gravity.CENTER);
+                    badge.setSingleLine(true);
+                    badge.setMaxLines(1);
+                    badge.setPadding(dp(2),0,dp(2),0);
+                    badge.setBackground(background(0xC318202B,5,0));
+                    badge.setContentDescription(origin?
+                        "Origem selecionada para estimar o próximo doce":
+                        "Cooldown estimado para o próximo doce: "+
+                        CandyCooldownPolicy.timerLabel(remain)+
+                        ". Copiar coordenadas não confirma o cooldown do jogo");
+                    FrameLayout.LayoutParams badgeLp=new FrameLayout.LayoutParams(
+                        -2,dp(12),origin?
+                        Gravity.LEFT|Gravity.TOP:Gravity.RIGHT|Gravity.TOP);
+                    spriteCell.addView(badge,badgeLp);
+                    badge.setOnClickListener(v->copy(card.coords));
+                    if(!origin)cooldownLabels.put(card.coords,badge);
+                }
             }
             spriteColumn.addView(spriteCell,space(46,29,0));
             if(showDespawn){
@@ -911,24 +939,6 @@ public final class RareCandyOverlayService extends Service {
                 countdown.setGravity(Gravity.CENTER);
                 spriteColumn.addView(countdown,space(46,15,0));
                 countdownLabels.put(card.coords,countdown);
-            }
-            if(hasCooldownOrigin){
-                boolean origin=lastCopiedCandyCoords.equals(card.coords);
-                int remain=origin?0:CandyCooldownPolicy.remainingSeconds(
-                    lastCopiedCandyCoords,card.coords,lastCopiedCandyAtMs,wallNow);
-                if(remain>=0){
-                    TextView next=label(origin?"● Orig.":CandyCooldownPolicy.timerLabel(remain),
-                        9,origin?0xFFAFC6DA:CandyCooldownPolicy.remainingColor(remain),true);
-                    next.setGravity(Gravity.CENTER);
-                    next.setSingleLine(true);
-                    next.setContentDescription(origin?
-                        "Doce de referência para o próximo salto":
-                        "Tempo estimado por distância para o próximo doce: "+
-                        CandyCooldownPolicy.timerLabel(remain)+
-                        ". Não confirma cooldown real do Pokémon GO");
-                    spriteColumn.addView(next,space(46,14,0));
-                    if(!origin)cooldownLabels.put(card.coords,next);
-                }
             }
             row.addView(spriteColumn,space(46,-2,0));
 
@@ -950,7 +960,7 @@ public final class RareCandyOverlayService extends Service {
             }
             row.setOnClickListener(v->copy(card.coords));
             image.setOnClickListener(v->copy(card.coords));
-            resultsList.addView(row,space(-1,hasCooldownOrigin?60:45,2));
+            resultsList.addView(row,space(-1,45,2));
         }
         boolean anyActive=false;
         for(Candy card:cards.values())if(card.deadline>now){anyActive=true;break;}
@@ -987,8 +997,11 @@ public final class RareCandyOverlayService extends Service {
                 if(remaining<0){
                     next.setText("");
                 }else{
-                    next.setText(CandyCooldownPolicy.timerLabel(remaining));
+                    next.setText(CandyCooldownPolicy.compactTimerLabel(remaining));
                     next.setTextColor(CandyCooldownPolicy.remainingColor(remaining));
+                    next.setContentDescription("Cooldown estimado: "+
+                        CandyCooldownPolicy.timerLabel(remaining)+
+                        ". Não confirma cooldown real do jogo");
                 }
             }
             // A new batch is requested only by the chosen interval, a manual
