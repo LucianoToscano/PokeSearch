@@ -5736,8 +5736,20 @@ const LOCATION_COOLDOWN_REFERENCE=Object.freeze([
 // The location label is the only launcher. No new icon or extra row in the
 // original three/four-row location editor. The same popup and its native
 // hitbox are reused; this table never changes live searches or cooldowns.
+let locationDraftBeforeCooldown=null;
 function renderLocationCooldownTable(){
  const panel=document.getElementById("choices");
+ // Never discard coordinates/radius that the user was editing just because
+ // they read the reference before pressing Apply.
+ const coord=panel.querySelector("#locCoordinateInput");
+ const radius=panel.querySelector("#locRadiusValue");
+ const slider=panel.querySelector('input[type="range"]');
+ locationDraftBeforeCooldown=coord||radius?{
+  coords:coord?.value||"",radius:radius?.value||"",
+  slider:slider?.value||"0",
+  coordDirty:coord?.dataset.locationDraft==="true",
+  radiusDirty:radius?.dataset.locationDraft==="true"
+ }:null;
  panel.replaceChildren();panel.classList.add("locationPanel","visible","locationCooldownTable");
  panel.classList.remove("modePanel","standardPanel","modeCascade","modeCascadeOpen","filterPicker");
  panel.dataset.panelKind="location-cooldown";
@@ -5878,6 +5890,14 @@ function renderLocationChoices(){
  panel.append(title,fieldRow,sliderRow,label,message);
  panel.classList.add("visible");
  document.getElementById("location").setAttribute("aria-expanded","true");
+ const draft=locationDraftBeforeCooldown;locationDraftBeforeCooldown=null;
+ if(draft){
+  if(draft.coordDirty){field.value=draft.coords;field.dataset.locationDraft="true";fitCoordinateGlyphs();}
+  if(draft.radiusDirty){
+   radiusField.value=draft.radius;radiusField.dataset.locationDraft="true";
+   slide.value=draft.slider;
+  }
+ }
  locationPanelFeedback();
  fit();
 }
