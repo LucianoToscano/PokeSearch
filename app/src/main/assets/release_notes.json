@@ -1155,6 +1155,30 @@
           "Testes automatizados e assinatura foram verificados; captura real no Samsung após a LT198 ainda precisa de validação. Uma atualização disponível no app não comprova instalação em todos os aparelhos."
         ]
       }
+    },
+    {
+      "id": "lt199-pokemon-filter-on-off-saved-selection-20261031",
+      "minVersionCode": 54406,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT199 — Filtro Pokémon ON/OFF com seleção salva",
+      "sections": {
+        "novidades": [
+          "Nova chave compacta no menu Pokémon · espécies e formas: desative ou ative a busca específica com um toque, sem precisar limpar a lista nem usar Aplicar.",
+          "Ao desligar, o PokeSearch consulta todos os Pokémon e guarda a seleção anterior para reutilização."
+        ],
+        "melhorias": [
+          "A lista de espécies e formas é preservada após fechar o aplicativo e ao alternar entre os modos IV, IV%, Grande Liga e Ultra Liga.",
+          "Pokébola 1 e Pokébola 2 têm estado ON/OFF e seleção salvos separadamente.",
+          "O contador mostra quantos Pokémon ficaram salvos enquanto o filtro está pausado."
+        ],
+        "correcoes": [
+          "A busca da API e a verificação do site recebem somente a seleção ativa; o filtro do site é removido quando a chave fica em OFF.",
+          "Aplicar mantém sua função de salvar os nomes escolhidos, sem reativar um filtro pausado."
+        ],
+        "emDesenvolvimento": [
+          "Testes automatizados de interface, contrato da API e compilação Android; validar alternância ON/OFF em sessão real no Samsung após instalar."
+        ]
+      }
     }
   ]
 }
