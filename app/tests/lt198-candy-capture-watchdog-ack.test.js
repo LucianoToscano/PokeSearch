@@ -1,0 +1,45 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const root=path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay");
+const capture=fs.readFileSync(path.join(root,"CandyScreenCaptureService.java"),"utf8");
+const candy=fs.readFileSync(path.join(root,"RareCandyOverlayService.java"),"utf8");
+function section(source,from,to){
+ const a=source.indexOf(from),b=source.indexOf(to,a+from.length);
+ assert.ok(a>=0&&b>a,"Missing section "+from);return source.slice(a,b);
+}
+const onFrame=section(capture,"private void onFrame(ImageReader source){","private void processTopBand(");
+const processing=section(capture,"private void processTopBand(","private void observeEvidence(");
+const ack=section(candy,"@Override public int onStartCommand(Intent i,int flags,int startId){","@Override public void onDestroy(){");
+assert.match(capture,/SAMPLE_INTERVAL_MS=350L/);
+assert.match(onFrame,/now-lastFrameAt<SAMPLE_INTERVAL_MS/);
+assert.ok(!onFrame.includes("if(inFlight){"),"blocked OCR must never skip visual frame sampling");
+assert.ok(!onFrame.includes("||inFlight"),"short banner frames must still be analyzed");
+assert.ok(!onFrame.includes("inFlight=true"),"OCR exclusivity must be set only in OCR path");
+assert.match(onFrame,/processTopBand\(top,selected,selectedAt\)/);
+assert.match(processing,/if\(dualBanner\)\{/);
+assert.match(processing,/observeEvidence\(true,true,selected,selectedAt\)/);
+const dual=processing.indexOf("if(dualBanner){");
+const ocrGuard=processing.indexOf("if(inFlight){");
+assert.ok(dual>=0&&ocrGuard>dual,
+ "dual-sprite detection runs even when OCR is pending");
+assert.match(processing,/lastVisualPositiveAt/);
+assert.match(processing,/if\(frameAt<lastVisualPositiveAt\)return/);
+assert.match(processing,/if\(frameAt>=lastVisualPositiveAt\)/);
+assert.match(processing,/bannerAbsentFrames>=2/);
+assert.match(processing,/waitForOldBannerToClear=false/);
+assert.match(capture,/candyCaptureLastFrameAtMs/);
+assert.match(capture,/candyCaptureHasValidPixels/);
+assert.match(capture,/reportStatus\("Formato de imagem não suportado"\)/);
+assert.match(capture,/reportStatus\("Erro na leitura dos pixels"\)/);
+assert.match(capture,/reportStatus\("Falha ao processar quadro/);
+assert.match(candy,/private String captureHealthStatus\(\)/);
+assert.match(candy,/now-last>6000L/);
+assert.match(candy,/Sem imagens da tela · reautorize captura completa/);
+assert.match(candy,/Recebendo tela · aguardando pixels válidos/);
+assert.match(candy,/String message=captureHealthStatus\(\)/);
+assert.match(ack,/boolean accepted=CandyScreenCaptureService\.isActive\(\)/);
+assert.match(ack,/recordCollectedCandy\(point,true\)/);
+assert.match(ack,/✓ Coleta confirmada no PokeSearch/);
+assert.match(ack,/Aviso visto · copie novamente o doce correto/);
+assert.doesNotMatch(capture,/Bitmap\.compress\(|FileOutputStream|HttpURLConnection/);
+console.log("PASS LT198: capture frame health, OCR-independent visual frames, actual overlay ACK, privacy");
