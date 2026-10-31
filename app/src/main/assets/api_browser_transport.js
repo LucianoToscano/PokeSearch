@@ -224,7 +224,7 @@
     const code=row.trainer_code, name=row.trainer_name;
     const team=typeof row.team_name==="string"?row.team_name:"";
     const level=Number(row.level);
-    if(typeof code!=="string"||!/^\\d{12}$/.test(code)||
+    if(typeof code!=="string"||!/^\d{12}$/.test(code)||
        typeof name!=="string"||
        !/^[A-Za-z][A-Za-z0-9_.-]{2,39}$/.test(name)||
        !["Mystic","Valor","Instinct"].includes(team)||
