@@ -471,18 +471,22 @@ public class OverlayService extends Service {
                             case "cp_min","cp_max" -> "PC";
                             case "level_min","level_max" -> "Nível";
                             case "sort" -> "Ordenação";
+                            case "shiny_only","shiny_account" -> "Shiny/treinador";
                             case "sizes","gender","weather_id","boosted",
-                                 "min_ttl","shiny_only","background_only" -> "Filtros";
+                                 "min_ttl","background_only" -> "Filtros";
                             default -> "";
                         };
+                        int count=Math.max(0,Math.min(20,response.optInt("rejectedFieldCount",0)));
                         BugReport.log(this,"API_SCHEMA",
                             (isSecondaryOverlay()?"P2":"P1")+" HTTP="+code+
-                            " field="+(label.isEmpty()?"unknown":key)+" mode="+mode);
+                            " field="+(label.isEmpty()?"unknown":key)+
+                            " fields="+count+" mode="+mode);
                         searchFailure("⚠ API"+(code>0?" "+code:"")+": "+
-                            (label.isEmpty()?"requisição rejeitada":label),
+                            (label.isEmpty()?(count>1?"vários campos":"requisição rejeitada"):label),
                             "Provedor rejeitou a busca"+
                             (code>0?" (HTTP "+code+")":"")+
-                            (label.isEmpty()?". Campo não identificado.":
+                            (label.isEmpty()?(count>1?". Campos inválidos: "+count+".":
+                                ". Campo não identificado."):
                                 ". Campo: "+key+".")+
                             " Nenhuma pesquisa alternativa nem filtro removido automaticamente.");
                     }else{

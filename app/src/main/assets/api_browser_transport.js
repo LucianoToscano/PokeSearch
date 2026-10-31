@@ -76,7 +76,7 @@
    "iv_percent_min","iv_percent_max","cp_min","cp_max",
    "level_min","level_max","center_lat","center_lng","radius_km",
    "weather_id","boosted","gender","sizes","sort","min_ttl",
-   "shiny_only","background_only","location","blacklist_pokemon_ids",
+   "shiny_only","shiny_account","background_only","location","blacklist_pokemon_ids",
    "blacklist_species_forms","blacklist_forms"
   ]);
   async function httpFailure(response){
@@ -104,16 +104,23 @@
      if(kind==="vip_required")return fail("vip-required");
      return base;
     }
-    const errors=Array.isArray(body?.detail)?body.detail:[];
+    // FastAPI-compatible validation errors may be direct detail arrays or
+    // nested in an errors/detail.errors array. Only extract exact field KEYS.
+    // Never relay "msg", "input", raw values, status bodies or identifiers.
+    const nested=body&&typeof body==="object"?body.detail:null;
+    const errors=Array.isArray(nested)?nested:
+      Array.isArray(nested?.errors)?nested.errors:
+      Array.isArray(body?.errors)?body.errors:[];
     const fields=[...new Set(errors.map(e=>{
      if(!e||!Array.isArray(e.loc)||e.loc.length<2||
         e.loc[0]!=="body")return "";
      const key=e.loc[1];
      return typeof key==="string"&&DIAGNOSTIC_FIELDS.has(key)?key:"";
     }).filter(Boolean))];
-    // One explicitly identified field is actionable; multiple ambiguous
-    // validation paths are shown only as HTTP 422, never guessed.
+    // Do not guess a specific cause when multiple fields were rejected.
+    // Keep only a bounded count, not the input contents or field values.
     if(fields.length===1)base.rejectedField=fields[0];
+    if(fields.length>1)base.rejectedFieldCount=Math.min(20,fields.length);
    }catch(_){}
    return base;
   }

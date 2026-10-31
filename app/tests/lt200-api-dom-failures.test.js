@@ -35,7 +35,17 @@ function client(reply){
  const ambiguous=client(response(422,{detail:[
   {loc:["body","pokemon_ids"],msg:secret},{loc:["body","cp_min"],msg:secret}
  ]}));
- assert.deepEqual(await ambiguous.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422});
+ assert.deepEqual(await ambiguous.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,rejectedFieldCount:2});
+ const nested=client(response(422,{detail:{errors:[{loc:["body","shiny_account"],msg:secret,input:secret}]}}));
+ assert.deepEqual(await nested.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,rejectedField:"shiny_account"});
+ const longErrors=client(response(422,{errors:[
+  {loc:["body","species_forms"],msg:secret,input:secret},
+  {loc:["body","radius_km"],msg:secret,input:secret},
+  {loc:["body","shiny_account"],msg:secret,input:secret}
+ ]}));
+ const many=await longErrors.c.search(common);
+ assert.deepEqual(many,{ok:false,reason:"invalid-request",httpStatus:422,rejectedFieldCount:3});
+ assert.ok(!JSON.stringify(many).includes(secret));
  const tooLarge=client({status:422,headers:{get:()=>String(5000)},
   text:async()=>{throw Error("Must never read oversized response");}});
  assert.deepEqual(await tooLarge.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422});
