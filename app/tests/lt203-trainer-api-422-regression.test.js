@@ -95,6 +95,19 @@ function make(routes,token="head.payload.signature"){
  assert.ok(!JSON.stringify(radius).includes(confidential));
  x.client.dispose();
 
+ // Both public anonymous search and logged-in search remain valid;
+ // no trainer code is required when Shiny is suspended.
+ x=make({"/search":ok({tier:"non_logged_in",cap:5,results:[]})},"");
+ const free=await x.client.search({mode:"raw",attack:15,defense:15,stamina:15,shiny:false});
+ assert.equal(free.ok,true,"Anonymous normal /search must remain enabled");
+ assert.equal(x.calls[0].authenticated,false);
+ x.client.dispose();
+ x=make({"/search":ok({tier:"logged_in",cap:10,results:[]})});
+ const signed=await x.client.search({mode:"raw",attack:15,defense:15,stamina:15,shiny:false});
+ assert.equal(signed.ok,true,"Authenticated normal /search must remain enabled");
+ assert.equal(x.calls[0].authenticated,true);
+ x.client.dispose();
+
  assert.match(native,/recoverOfficialTrainerFromAccountApi\(view,generation\)/);
  assert.match(native,/AuthorizedApiCollector reader=new AuthorizedApiCollector/);
  assert.match(native,/profileTrainerState","linked"/);
