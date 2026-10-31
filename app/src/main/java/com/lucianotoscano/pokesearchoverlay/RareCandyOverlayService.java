@@ -60,6 +60,7 @@ public final class RareCandyOverlayService extends Service {
     private final Handler main=new Handler(Looper.getMainLooper());
     private final Map<String,Candy> cards=new LinkedHashMap<>();
     private final Map<String,TextView> countdownLabels=new LinkedHashMap<>();
+    private final Map<String,TextView> cooldownLabels=new LinkedHashMap<>();
     private final Set<String> copied=new LinkedHashSet<>();
     private SharedPreferences prefs;
     private WindowManager wm;
@@ -79,6 +80,10 @@ public final class RareCandyOverlayService extends Service {
     private String coords="";
     private int radius=1000,period=3,generation=0;
     private long lastRefresh=0,blockedUntil=0;
+    // Advisory timer uses only user-selected candy coordinates; never GPS,
+    // account details, or the provider's distance from the search center.
+    private String lastCopiedCandyCoords="";
+    private long lastCopiedCandyAtMs=0L;
     private boolean pendingManualRefresh=false;
     private int lastAllCopiedRefreshGeneration=-1;
 
@@ -150,6 +155,16 @@ public final class RareCandyOverlayService extends Service {
         showLocation=prefs.getBoolean("candyShowLocation",false);
         showDespawn=prefs.getBoolean("candyShowDespawn",true);
         showDistance=prefs.getBoolean("candyShowDistance",false);
+        String savedHop=prefs.getString("lastCandyHopCoords","");
+        long savedHopAt=prefs.getLong("lastCandyHopAtMs",0L);
+        long wallNow=System.currentTimeMillis();
+        if(CandyCooldownPolicy.parseCoordinates(savedHop)!=null&&
+            savedHopAt>0&&wallNow>=savedHopAt&&
+            wallNow-savedHopAt<=CandyCooldownPolicy.MAX_AGE_MS){
+            lastCopiedCandyCoords=savedHop;lastCopiedCandyAtMs=savedHopAt;
+        }else{
+            prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+        }
         try{
             JSONArray state=new JSONArray(prefs.getString("copied","[]"));
             for(int i=0;i<state.length()&&i<100;i++){
@@ -308,7 +323,11 @@ public final class RareCandyOverlayService extends Service {
         long now=SystemClock.elapsedRealtime();
         int activeCount=0;
         for(Candy card:cards.values())if(card.deadline>now)activeCount++;
-        int rowHeight=47;
+        long wallNow=System.currentTimeMillis();
+        boolean withHop=!lastCopiedCandyCoords.isEmpty()&&lastCopiedCandyAtMs>0&&
+            wallNow>=lastCopiedCandyAtMs&&
+            wallNow-lastCopiedCandyAtMs<=CandyCooldownPolicy.MAX_AGE_MS;
+        int rowHeight=withHop?62:47;
         int wantedHeight=dp(activeCount==0?35:activeCount*rowHeight+4);
         int belowY=bubbleParams.y+dp(BUBBLE_DP)+dp(1);
         int roomBelow=height-margin-belowY;
@@ -550,6 +569,16 @@ public final class RareCandyOverlayService extends Service {
                 }
                 ClipboardManager clip=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
                 if(clip!=null)clip.setPrimaryClip(ClipData.newPlainText("Localização Doce Raro",normalized));
+            });
+        }
+        @android.webkit.JavascriptInterface public void clearCandyCooldown(){
+            main.post(()->{
+                if(!permitted())return;
+                lastCopiedCandyCoords="";
+                lastCopiedCandyAtMs=0L;
+                prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+                render();
+                syncCandyMenu();
             });
         }
         @android.webkit.JavascriptInterface public void pasteCandyLocation(){
@@ -800,6 +829,12 @@ public final class RareCandyOverlayService extends Service {
         if(!validCoords(point))return;
         ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         clipboard.setPrimaryClip(ClipData.newPlainText("Doce Raro",point));
+        // Copying selects a new local reference for estimating the next hop.
+        // It does NOT mean a teleport or a game interaction actually happened.
+        lastCopiedCandyCoords=point;
+        lastCopiedCandyAtMs=System.currentTimeMillis();
+        prefs.edit().putString("lastCandyHopCoords",point)
+            .putLong("lastCandyHopAtMs",lastCopiedCandyAtMs).apply();
         boolean newlyCopied=copied.add(point);
         // Keep the last 100 copied points, independent of P1/P2 and tokens.
         if(copied.size()>100){
@@ -831,7 +866,12 @@ public final class RareCandyOverlayService extends Service {
         if(resultsList==null)return;
         resultsList.removeAllViews();
         countdownLabels.clear();
+        cooldownLabels.clear();
         long now=SystemClock.elapsedRealtime();
+        long wallNow=System.currentTimeMillis();
+        boolean hasCooldownOrigin=!lastCopiedCandyCoords.isEmpty()&&
+            lastCopiedCandyAtMs>0&&wallNow>=lastCopiedCandyAtMs&&
+            wallNow-lastCopiedCandyAtMs<=CandyCooldownPolicy.MAX_AGE_MS;
         for(Candy card:new ArrayList<>(cards.values())){
             if(card.deadline<=now)continue;
             LinearLayout row=new LinearLayout(this);
@@ -872,6 +912,24 @@ public final class RareCandyOverlayService extends Service {
                 spriteColumn.addView(countdown,space(46,15,0));
                 countdownLabels.put(card.coords,countdown);
             }
+            if(hasCooldownOrigin){
+                boolean origin=lastCopiedCandyCoords.equals(card.coords);
+                int remain=origin?0:CandyCooldownPolicy.remainingSeconds(
+                    lastCopiedCandyCoords,card.coords,lastCopiedCandyAtMs,wallNow);
+                if(remain>=0){
+                    TextView next=label(origin?"● Orig.":CandyCooldownPolicy.timerLabel(remain),
+                        9,origin?0xFFAFC6DA:CandyCooldownPolicy.remainingColor(remain),true);
+                    next.setGravity(Gravity.CENTER);
+                    next.setSingleLine(true);
+                    next.setContentDescription(origin?
+                        "Doce de referência para o próximo salto":
+                        "Tempo estimado por distância para o próximo doce: "+
+                        CandyCooldownPolicy.timerLabel(remain)+
+                        ". Não confirma cooldown real do Pokémon GO");
+                    spriteColumn.addView(next,space(46,14,0));
+                    if(!origin)cooldownLabels.put(card.coords,next);
+                }
+            }
             row.addView(spriteColumn,space(46,-2,0));
 
             if(showName||showLocation){
@@ -892,7 +950,7 @@ public final class RareCandyOverlayService extends Service {
             }
             row.setOnClickListener(v->copy(card.coords));
             image.setOnClickListener(v->copy(card.coords));
-            resultsList.addView(row,space(-1,45,2));
+            resultsList.addView(row,space(-1,hasCooldownOrigin?60:45,2));
         }
         boolean anyActive=false;
         for(Candy card:cards.values())if(card.deadline>now){anyActive=true;break;}
@@ -920,6 +978,18 @@ public final class RareCandyOverlayService extends Service {
                     java.util.Locale.US,"%02d",seconds%60));
                 label.setTextColor(seconds<=60?0xFFFF666D:
                     seconds<=300?0xFFFFC35A:0xFFC0D9EE);
+            }
+            long wallNow=System.currentTimeMillis();
+            for(Map.Entry<String,TextView> entry:cooldownLabels.entrySet()){
+                int remaining=CandyCooldownPolicy.remainingSeconds(lastCopiedCandyCoords,
+                    entry.getKey(),lastCopiedCandyAtMs,wallNow);
+                TextView next=entry.getValue();
+                if(remaining<0){
+                    next.setText("");
+                }else{
+                    next.setText(CandyCooldownPolicy.timerLabel(remaining));
+                    next.setTextColor(CandyCooldownPolicy.remainingColor(remaining));
+                }
             }
             // A new batch is requested only by the chosen interval, a manual
             // tap, or copying all ten candies. Expiration still removes TTL
