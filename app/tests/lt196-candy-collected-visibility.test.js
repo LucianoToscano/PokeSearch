@@ -1,0 +1,38 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs"),path=require("node:path");
+const service=fs.readFileSync(path.join(__dirname,
+ "../src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java"),"utf8");
+const menu=fs.readFileSync(path.join(__dirname,"../src/main/assets/rare_candy_controls.html"),"utf8");
+const between=(start,end)=>{
+ const i=service.indexOf(start),j=service.indexOf(end,i+start.length);
+ assert.ok(i>=0&&j>i,"missing "+start);
+ return service.slice(i,j);
+};
+const confirm=between("    private void confirmCandyPicked(String point){","    private void copy(String point){");
+const copy=between("    private void completeCopy(String point){","    private void refreshIfAllCollected(){");
+const render=between("    private void render(){","    private final Runnable tick=");
+const position=between("    private void placeResults(){","    private void toggleResults(){");
+assert.match(service,/private final Map<String,Long> collected=new LinkedHashMap/);
+assert.match(service,/prefs\.getString\("confirmedCandyCollected","\{\}"\)/);
+assert.match(service,/prefs\.edit\(\)\.putString\("confirmedCandyCollected",json\.toString\(\)\)\.apply\(\)/);
+assert.match(service,/private void pruneCollected\(\)/);
+assert.match(service,/confirmed\.deadline>elapsed/);
+assert.match(confirm,/collected\.put\(point,until\)/);
+assert.match(confirm,/saveCollected\(\)/);
+assert.doesNotMatch(copy,/collected\.put\(/,"copy must never hide candy");
+assert.match(copy,/pendingCandyPickup=true/);
+assert.match(render,/!showCollected&&collected\.containsKey\(card\.coords\)/);
+assert.match(position,/showCollected\|\|!collected\.containsKey\(card\.coords\)/);
+assert.match(render,/sprite\(CANDY_ART_DP,collected\.containsKey\(card\.coords\)\)/);
+assert.doesNotMatch(render,/sprite\(CANDY_ART_DP,copied\.contains/);
+assert.match(service,/if\(!collected\.containsKey\(candidate\.coords\)\)/);
+assert.match(service,/private void refreshIfAllCollected\(\)/);
+assert.match(service,/setShowCollected\(boolean enabled\)/);
+assert.match(service,/prefs\.edit\(\)\.putBoolean\("candyShowCollected",enabled\)\.apply\(\)/);
+assert.match(menu,/function toggleCollected\(\)/);
+assert.match(menu,/Native\.setShowCollected/);
+assert.match(menu,/settings\.hasCollected/);
+assert.match(menu,/settings\.showCollected/);
+assert.match(render,/Doces coletados ocultos/);
+console.log("PASS LT196: confirmed-only hiding, expiry, persistent show/hide and no copied-only gray");
