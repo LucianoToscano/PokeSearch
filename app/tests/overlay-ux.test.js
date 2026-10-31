@@ -1903,7 +1903,8 @@ test("HOME-04 shows genuine trainer data and the four transparent team assets",(
   home.includes('teamBadge.setImageResource(R.drawable.ps_team_neutral)')&&
   home.includes('trainerAction.setOnClickListener(v->openTrainerManagement())')&&
   state.includes('homeTeamIcon(linked?team:"")')&&
-  state.includes('trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE)')&&
+  state.includes('trainerCodeGroup.setVisibility(')&&
+  state.includes('ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged')&&
   state.includes('trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE)')&&
   main.includes('avatar.setImageResource(android.R.drawable.ic_menu_myplaces)')&&
   !home.includes('Luciano Toscano');
@@ -1957,7 +1958,8 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  const update=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return update.includes('code.matches("[0-9]{12}")')&&
-  update.includes('trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE)')&&
+  update.includes('trainerPanel.setVisibility(')&&
+  update.includes('ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged')&&
   update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
   main.includes("A remoção precisa ser confirmada no perfil oficial")&&
   main.includes('readAsset("profile_summary.js")')&&
@@ -3759,7 +3761,8 @@ test("LT61-SHINY-MODE-02 dock preserves requested Shiny during verification",()=
   dock.includes("button.classList.toggle(\"pending\",id===\"sh\"&&shinyPending);");
 });
 test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filter",()=>{
- return dock.includes("shinyPending?\"✨ Shiny solicitado · aguardando confirmação no site\":shiny?\"✨ Shiny confirmado\"")&&
+ return dock.includes('shinyPending?"✨ Shiny solicitado · aguardando confirmação no site":')&&
+  dock.includes('PROVIDER_SHINY_AVAILABLE=false')&&
   dock.includes("shiny=!!shi||shinyPending;")&&
   dock.includes("shownShiny=!!resultSourceShiny;resultsStale=!!stale;")&&
   service.includes("(shiny&&shinyVerified)+\"")&&
