@@ -2522,6 +2522,11 @@ public class OverlayService extends Service {
             PogoAccountSlots.assigned(this,isSecondaryOverlay()),
             PogoAccountSlots.trainer(this,isSecondaryOverlay()));
     }
+    private boolean shinyServiceAvailable(){
+        // Hard-coded temporary provider capability switch. Do not infer that
+        // login or a historic trainer binding re-enables the remote feature.
+        return false;
+    }
     private boolean siteConfirmsShinyAccount(JSONObject session){
         return "autenticada".equals(session.optString("auth","")) &&
             (session.optBoolean("trainerLinked",false)||hasConfirmedTrainerLink());
@@ -5026,14 +5031,42 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
-            // Provider-side Shiny service temporarily unavailable. A user can
-            // still search anonymously or while signed in on either account.
-            // No Shiny-only request, login prompt, or trainer confirmation.
-            shiny=false;
+            // Search works anonymously or logged in on either Pokébola.
+            // Provider disabled Shiny for now; this guard does NOT request
+            // authentication, alter saved trainers or change normal searches.
+            if(!shinyServiceAvailable()){
+                shiny=false;shinyVerified=false;
+                overlayPrefs().edit().putBoolean("shiny",false).apply();
+                status("✨ Shiny temporariamente indisponível no PoGoCoordinates");
+                update();return;
+            }
+            shiny=!shiny;
+            overlayPrefs().edit().putBoolean("shiny",shiny).apply();
+            replaceActiveFilterSearch();
+            final int generation=requestGeneration;
             shinyVerified=false;
-            overlayPrefs().edit().putBoolean("shiny",false).apply();
-            status("✨ Shiny temporariamente indisponível no PoGoCoordinates");
-            update();
+            shinyLoginWindowOpened=false;
+            shinyLoginPromptRequested=shiny;
+            // Existing cards were collected under the prior Shiny selection.
+            // Keep them visible but clearly stale until the site confirms new ones.
+            resultsStale=count()>0;
+            hideDetails();
+            // Show the neutral pending state immediately; it becomes yellow
+            // only after the actual website confirms the active Shiny filter.
+            status(shiny?"✨ Shiny solicitado · verificando no site...":
+                "✨ Shiny OFF · aplicando na busca...");
+            if(!loaded||website==null){
+                if(shiny)status("✨ Site carregando; Shiny aguardando confirmação.");
+                else status("✨ Shiny desligado; sincronização no próximo carregamento.");
+                return;
+            }
+            if(!shiny){
+                // No login is required for OFF. Reconfigure Shiny plus all
+                // existing filters in ONE verified request (even with Coords).
+                OverlayService.this.refresh(true);
+                return;
+            }
+            startVerifiedShinySearch(generation,0);
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
