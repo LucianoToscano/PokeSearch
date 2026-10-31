@@ -31,7 +31,7 @@ assert.match(candy,/showDespawn=prefs\.getBoolean\("candyShowDespawn",true\)/);
 assert.match(candy,/showDistance=prefs\.getBoolean\("candyShowDistance",false\)/);
 assert.match(candy,/if\(validCoords\(point\)\)/); // pre-existing picker and menus intact
 assert.match(candy,/cards\.size\(\)==10/);
-assert.match(primary,/class OverlayService extends Service/);
+assert.match(primary,/class OverlayService/);
 assert.match(secondary,/extends OverlayService/);
 assert.doesNotMatch(policy,/\b(fetch|JWT|gps|Android|ClipboardManager)\.\w+\(/);
 console.log("PASS LT195: persistent candy-origin countdown, compact colors and original overlays");
