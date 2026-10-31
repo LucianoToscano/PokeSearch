@@ -1280,6 +1280,31 @@
           "Recomendado instalar manualmente pelo Chrome/Meus Arquivos se a LT202 instalada ainda não oferecer o novo fluxo da LT203."
         ]
       }
+    },
+    {
+      "id": "lt204-login-optional-shiny-paused-20261031",
+      "minVersionCode": 54411,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT204 — busca com ou sem login; Shiny temporariamente indisponível",
+      "sections": {
+        "novidades": [
+          "Busca padrão disponível sem login ou com conta conectada, com contas independentes nas duas Pokébolas.",
+          "Seletor de conta permite escolher sessão por Pokébola sem abrir lista de treinadores."
+        ],
+        "melhorias": [
+          "Home oculta as seções de treinadores que o provedor não oferece atualmente, sem apagar vínculos antigos.",
+          "Conta 2 pode realizar buscas como visitante no próprio perfil WebView isolado, quando o aparelho suporta essa função.",
+          "Shiny ✨ indica indisponibilidade temporária, sem solicitar login, vinculação ou pesquisa de Shiny."
+        ],
+        "correcoes": [
+          "Preferências antigas de Shiny ativado não impedem pesquisas normais por IV, PvP, espécie ou localização.",
+          "Preservados filtros e limites reais tanto da API anônima quanto da autenticada; sem alterações especulativas de parâmetros."
+        ],
+        "emDesenvolvimento": [
+          "O recurso Shiny só será reativado quando voltar a funcionar no PoGoCoordinates e for verificado novamente.",
+          "O aviso HTTP 422 ainda precisa de diagnóstico real do provedor para identificar exatamente o campo rejeitado; não foi ocultado nem contornado."
+        ]
+      }
     }
   ]
 }
