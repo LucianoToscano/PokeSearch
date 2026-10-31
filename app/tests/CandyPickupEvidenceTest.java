@@ -22,7 +22,7 @@ public final class CandyPickupEvidenceTest {
         expect(!CandyPickupEvidence.titleMatches("PokeSearch Doce Raro disponível"),
             "overlay should not auto-confirm");
         expect(!CandyPickupEvidence.titleMatches(null),"null OCR");
-        int width=240,height=110;
+        int width=240,height=300;
         int[] image=new int[width*height];
         java.util.Arrays.fill(image,rgb(240,242,244));
         // A synthetic rainbow sprite in the upper-left portion.
