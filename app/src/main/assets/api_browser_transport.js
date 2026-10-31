@@ -67,24 +67,55 @@
    return Number.isSafeInteger(value)&&value>=min&&value<=max?value:null;
   }
   function fail(code){return {ok:false,reason:code};}
+  // Only enumerated API SCHEMA KEYS may cross into the overlay; error
+  // messages, values, JWTs, trainer identifiers and response JSON never do.
+  const DIAGNOSTIC_FIELDS=new Set([
+   "pokemon_ids","species_forms","forms","pvp_mode","pvp_league",
+   "pvp_top_rank","pvp_include_pre_evolutions","pvp_min_cp",
+   "raw_iv_atk","raw_iv_def","raw_iv_sta","iv_mode",
+   "iv_percent_min","iv_percent_max","cp_min","cp_max",
+   "level_min","level_max","center_lat","center_lng","radius_km",
+   "weather_id","boosted","gender","sizes","sort","min_ttl",
+   "shiny_only","background_only","location","blacklist_pokemon_ids",
+   "blacklist_species_forms","blacklist_forms"
+  ]);
   async function httpFailure(response){
-   if(response.status!==403||typeof response.text!=="function")
-    return fail(status(response.status));
-   // A controlled, short machine-readable error code is the ONLY field read.
-   // Never relay server messages or entire response objects to the overlay.
+   const statusCode=response.status;
+   if(statusCode!==403&&statusCode!==400&&statusCode!==422)
+    return fail(status(statusCode));
+   const base=fail(status(statusCode));
+   if(statusCode===400||statusCode===422)base.httpStatus=statusCode;
+   if(typeof response.text!=="function")return base;
+   // Never accept unknown error shape, long data, or arbitrary provider text.
    try{
-    const length=response.headers&&response.headers.get?
-     Number(response.headers.get("content-length")):0;
-    if(!Number.isFinite(length)||length>4096)return fail("access-denied");
+    const header=response.headers&&response.headers.get?
+     response.headers.get("content-length"):null;
+    if(header!==null&&header!==undefined&&header!==""){
+     const length=Number(header);
+     if(!Number.isInteger(length)||length<0||length>4096)return base;
+    }
     const raw=await response.text();
-    if(typeof raw!=="string"||raw.length>4096)return fail("access-denied");
+    if(typeof raw!=="string"||raw.length>4096)return base;
     const body=JSON.parse(raw);
-    const kind=body&&body.detail&&body.detail.error;
-    if(kind==="trainer_not_linked")return fail("trainer-not-linked");
-    if(kind==="shiny_account_unavailable")return fail("shiny-account-unavailable");
-    if(kind==="vip_required")return fail("vip-required");
+    if(statusCode===403){
+     const kind=body&&body.detail&&body.detail.error;
+     if(kind==="trainer_not_linked")return fail("trainer-not-linked");
+     if(kind==="shiny_account_unavailable")return fail("shiny-account-unavailable");
+     if(kind==="vip_required")return fail("vip-required");
+     return base;
+    }
+    const errors=Array.isArray(body?.detail)?body.detail:[];
+    const fields=[...new Set(errors.map(e=>{
+     if(!e||!Array.isArray(e.loc)||e.loc.length<2||
+        e.loc[0]!=="body")return "";
+     const key=e.loc[1];
+     return typeof key==="string"&&DIAGNOSTIC_FIELDS.has(key)?key:"";
+    }).filter(Boolean))];
+    // One explicitly identified field is actionable; multiple ambiguous
+    // validation paths are shown only as HTTP 422, never guessed.
+    if(fields.length===1)base.rejectedField=fields[0];
    }catch(_){}
-   return fail("access-denied");
+   return base;
   }
   function jwt(){
    // Read only after origin verification, never stringify a JWT into a
