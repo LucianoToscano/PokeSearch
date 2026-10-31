@@ -1,0 +1,37 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const root=path.resolve(__dirname,"../src/main");
+const java=(name)=>fs.readFileSync(path.join(root,
+ "java/com/lucianotoscano/pokesearchoverlay",name),"utf8");
+const candy=java("RareCandyOverlayService.java");
+const policy=java("CandyCooldownPolicy.java");
+const html=fs.readFileSync(path.join(root,"assets/rare_candy_controls.html"),"utf8");
+const primary=java("OverlayService.java");
+const secondary=java("SecondaryOverlayService.java");
+assert.match(policy,/static double distanceMeters\(String from,String to\)/);
+assert.match(policy,/Math\.cos\(lat1\)\*Math\.cos\(lat2\)/);
+assert.match(policy,/return 7200;/);
+assert.match(policy,/static int remainingSeconds/);
+assert.match(candy,/prefs\.getString\("lastCandyHopCoords",""\)/);
+assert.match(candy,/prefs\.getLong\("lastCandyHopAtMs",0L\)/);
+assert.match(candy,/putString\("lastCandyHopCoords",point\)/);
+assert.match(candy,/putLong\("lastCandyHopAtMs",lastCopiedCandyAtMs\)/);
+assert.match(candy,/lastCopiedCandyCoords=point/);
+assert.match(candy,/CandyCooldownPolicy\.distanceMeters/); // moved via remainingSeconds only? see below
+assert.match(candy,/CandyCooldownPolicy\.remainingSeconds\(/);
+assert.match(candy,/cooldownLabels\.entrySet\(\)/);
+assert.match(candy,/postDelayed\(this,1000L\)/);
+assert.match(candy,/0xFFAFC6DA/);
+assert.match(candy,/clearCandyCooldown\(\)/);
+assert.match(html,/Native\.clearCandyCooldown\(\)/);
+assert.match(html,/resetCooldown\(\)/);
+assert.match(candy,/showDespawn=prefs\.getBoolean\("candyShowDespawn",true\)/);
+assert.match(candy,/showDistance=prefs\.getBoolean\("candyShowDistance",false\)/);
+assert.match(candy,/if\(validCoords\(point\)\)/); // pre-existing picker and menus intact
+assert.match(candy,/cards\.size\(\)==10/);
+assert.match(primary,/class OverlayService extends Service/);
+assert.match(secondary,/extends OverlayService/);
+assert.doesNotMatch(policy,/\b(fetch|JWT|gps|Android|ClipboardManager)\.\w+\(/);
+console.log("PASS LT195: persistent candy-origin countdown, compact colors and original overlays");
