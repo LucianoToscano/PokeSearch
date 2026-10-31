@@ -13,7 +13,7 @@ assert(native.includes('prefs.getInt("period",3)'),"Default saved period must be
 assert(native.includes("period=(saved==0||saved==3||saved==5||saved==10||saved==15||saved==20)?saved:3"),
   "Match OFF and Pokeball preset minutes, migrate old 1 minute default");
 assert(native.includes("cards.size()==10"),"All-copied search requires 10 results");
-assert(native.includes("visibleCount==10&&!hasUncopied"),"Only 10 active gray candies trigger immediate refresh");
+assert(native.includes("visibleCount==10&&!hasUncollected"),"Only 10 confirmed collected candies trigger immediate refresh");
 assert(native.includes("lastAllCopiedRefreshGeneration=generation"),
   "Deduplicate auto search when same ten items return");
 assert(!native.includes("now-lastRefresh<15000"),"No added 15s cooldown for manual or all copied");
