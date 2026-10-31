@@ -41,7 +41,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.02.05-54411'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.02.04-54411'
           ! gh release view "$OFFICIAL_TAG" >/dev/null 2>&1
           test -s app/tests/lt191-provider-backoff-24h.test.js
           test -s app/tests/lt192-iv-evidence-mode-transition.test.js
@@ -171,7 +171,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.02.05-54411'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.02.04-54411'
           ! gh release view "$OFFICIAL_TAG" >/dev/null 2>&1
           gh release create "$OFFICIAL_TAG" "$OFFICIAL_APK" --target "$GITHUB_SHA" --latest --title 'PokeSearch LT205 — Doces Raros sem busca duplicada e sessão sincronizada' --notes 'Doce Raro acompanha a conta selecionada na Pokébola 1 sem misturar sessões; ao abrir a lista não dispara uma busca adicional enquanto a inicial está em andamento. O limite HTTP 429 do PoGoCoordinates mostra o tempo de espera e continua sendo respeitado. Busca de Pokémon mantém login opcional e Shiny temporariamente indisponível. Testes automáticos e assinatura Android v2 validados; sessão real e instalação no Samsung ainda requerem teste em campo.'
       - name: Verify public release and hash
