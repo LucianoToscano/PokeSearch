@@ -114,7 +114,7 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -144,7 +144,7 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -186,7 +186,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -2267,7 +2267,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");
