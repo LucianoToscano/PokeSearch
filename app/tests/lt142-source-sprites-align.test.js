@@ -26,7 +26,7 @@ assert.match(sprites.resolve({...zubat,shiny:true}).src,/pm41\.fHALLOWEEN_2026_0
 const sameCostume="https://pogocoordinates.com/assets/pokemon/zubat-halloween2026.png";
 assert.equal(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).src,sameCostume);
 assert.match(sprites.resolve({...zubat,image:sameCostume,imageFromSite:true}).original,/pm41\.fHALLOWEEN_2026_01\.icon\.png$/);
-assert.equal(api.MAX_RESULTS,100,"Preserve already published VIP100 ceiling");
+assert.equal(api.MAX_RESULTS,10,"Preserve per-overlay maximum of ten verified cards");
 const probe=read("probe.js"),dock=read("dock.html"),detail=read("detail.html");
 new vm.Script(probe);
 assert.match(probe,/imageFromSite:siteImageExact/);
@@ -34,6 +34,6 @@ assert.match(probe,/const siteImageUrl=image\?candidateImageUrl\(image\):""/);
 assert.match(dock,/font-variant-numeric:tabular-nums/);
 assert.match(dock,/body\.result-window \.spawnInfoLine\.wrap\{white-space:nowrap/);
 assert.match(dock,/vip-results-scroll/);
-assert.match(dock,/cards=Array\.isArray\(a\)\?a\.slice\(0,100\)/);
+assert.match(dock,/cards=Array\.isArray\(a\)\?a\.slice\(0,10\)/);
 assert.match(detail,/PokeSearchOfflineSprite\.resolve\(c\)/);
-console.log("PASS LT142: exact site sprites, Gengar/Zubat, no mismatched variants, VIP100 and baseline alignment");
+console.log("PASS LT142: exact site sprites, Gengar/Zubat, no mismatched variants, ten-card cap and baseline alignment");
