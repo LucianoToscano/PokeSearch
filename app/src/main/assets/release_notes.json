@@ -1205,6 +1205,31 @@
           "A API ou site real pode mudar e continuar rejeitando parâmetros. Validação em Samsung, nas Pokébolas 1 e 2, é necessária para confirmar solução dos avisos HTTP 400/422 e seletor Pokémon."
         ]
       }
+    },
+    {
+      "id": "lt201-pogocoordinates-compat-20261031",
+      "minVersionCode": 54408,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT201 — Compatibilidade do seletor Pokémon e diagnóstico da API",
+      "sections": {
+        "novidades": [
+          "A busca por espécie/forma passa a reconhecer o campo oficial de nome/forma/dex também nas telas móveis sem botão separado para abrir o seletor."
+        ],
+        "melhorias": [
+          "A seleção do site exige opções compatíveis com a pesquisa atual; conexões antigas de portais React não são usadas para clicar no filtro errado.",
+          "A API apresenta diagnóstico seguro de erros HTTP 400/422, incluindo campos estruturados e casos de múltiplos campos inválidos, sem mostrar dados pessoais.",
+          "Erros relacionados ao treinador Shiny são identificados como categoria própria quando a API informa essa condição."
+        ],
+        "correcoes": [
+          "Evita confundir um menu aberto de clima ou sexo com o seletor Pokémon quando o site reutiliza identificadores de componentes.",
+          "Evita escolher a primeira caixa de pesquisa quando a página apresenta controles ambíguos.",
+          "Preserva as listas selecionadas e os estados independentes das Pokébolas 1 e 2; nenhum filtro é apagado automaticamente."
+        ],
+        "emDesenvolvimento": [
+          "Não foi possível verificar o JSON autenticado atual do PoGoCoordinates em uma sessão real. Os testes garantem comportamento local seguro, mas não confirmam mudança exata no esquema do servidor.",
+          "É recomendado testar no Samsung a busca após a atualização e, em caso de erro HTTP, usar o diagnóstico de categoria/contagem de campos sem expor credenciais ou coordenadas."
+        ]
+      }
     }
   ]
 }
