@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT197 OFICIAL — Detecção opcional de Doce Raro (31/10/2026)
+
+- **Release/latest pública confirmada:** [v0.01.97-54404](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.97-54404) de `PokeSearch-v0.01.97-LT.apk`, versão `0.01.97` / versionCode `54404`, **29.255.359 bytes**, SHA-256 `fdaeb01a2ecc9c18b1b9c36cbc1ad9f9ca862175b80ba7d0dcb2b24cb448c064`. SOURCE_COMMIT `57cdf047676be960260603a2d91899a7cca6c8c7`. [PR #161 integrada](https://github.com/LucianoToscano/PokeSearch/pull/161). [Workflow de publicação #41184612797 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41184612797) valida a versão, build protegido/R8, assinatura original v2 e hash do asset no GitHub Releases.
+- **Assinatura permanente:** APK Signature Scheme v2 `true`, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; applicationId `com.lucianotoscano.pokesearch`; `minSdk 26/targetSdk 33`.
+- **Drive oficial verificado:** [ZIP LT197 com APK assinado + relatórios](https://drive.google.com/file/d/1vfZVQqwNFqF5LM56ZsdEBCZRZsFEPq0h/view) **26.913.572 bytes**, SHA-256 `45d34fd999f2c7bab12e109d67288601579ca68455dbf9245d8bc0516dd5852e`. ZIP íntegro e APK interno com hash correspondente ao GitHub; inclui SHA256SUMS.txt, SIGNING-REPORT.txt, PACKAGE-VERSION.txt e SOURCE_COMMIT.txt. Pasta compartilhada `PokeSearch_App`, arquivo de LT196 preservado.
+- **Função entregue:** menu Info dos Doces Raros, botão `A` opcional OFF por padrão. Ao ativar, o Android pede consentimento de captura da tela para cada sessão e mantém notificação com parada. Serviço privado de MediaProjection analisa somente pixels amostrados da faixa superior localmente; alternativa OCR ML Kit e detecção de duas sprites arco-íris sobre painel claro, com duas leituras para confirmar um doce pendente. Após confirmação, oculta o doce e inicia cooldown estimado. Diagnóstico discreto no menu, validade da seleção até o despawn (máximo 30 minutos), opção manual `✓ Peguei` preservada. Sem salvar/enviar capturas, sem GPS, proxy ou nova cota de API.
+- **Distribuição:** GitHub Releases latest atualizado oficialmente; o mecanismo de atualização do PokeSearch pode mostrar a LT197 aos usuários. Isso **não comprova** que todos os aparelhos já receberam ou instalaram a atualização. O ZIP do Drive é complementar, não um substituto do APK no feed público.
+- **Limite de qualidade:** testes automatizados Node/JVM, compilação Android/OTA e APK R8 assinado passaram. **Ainda não há homologação após a correção da LT197 com coleta real no Samsung**, nem garantia de reconhecimento em todos os desenhos/idiomas/banners. Captura é experimental e opcional; usar ✓ Peguei se falhar. [Registro LT197](LT197_AUTO_DETECCAO_DOCE_RARO_QA_20261031.md).
+
+---
+
 ## LT197 — Detector opcional de coleta visual (QA, não distribuído · 31/10/2026)
 
 
