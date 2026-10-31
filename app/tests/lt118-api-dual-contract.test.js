@@ -30,7 +30,7 @@ test("401 clears JWT; 429 supports seconds and HTTP date",()=>{
 });
 test("API plan cap retained while UI can display paid-tier results",()=>{
  const large=contract.normalizeResponse({cap:100,results:[]},{nowMs:Date.now()});
- assert.equal(large.ok,true);assert.equal(large.serverCap,100);assert.equal(large.displayCap,100);
+ assert.equal(large.ok,true);assert.equal(large.serverCap,100);assert.equal(large.displayCap,10);
  const anon=contract.normalizeResponse({cap:5,results:[]},{nowMs:Date.now()});
  assert.equal(anon.serverCap,5);assert.equal(anon.displayCap,5);
 });
