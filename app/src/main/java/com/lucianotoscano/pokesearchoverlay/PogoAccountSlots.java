@@ -60,8 +60,8 @@ final class PogoAccountSlots {
      */
     static void bindAccountOnly(Context context,boolean secondary,int account){
         if(account!=1&&account!=2)throw new IllegalArgumentException("account");
-        if(account==2&&(!supportsSecond()||!loggedIn(context,2)))
-            throw new IllegalStateException("Connect account 2 first");
+        if(account==2&&!supportsSecond())
+            throw new IllegalStateException("WebView cannot isolate account 2");
         context.getSharedPreferences("prefs",Context.MODE_PRIVATE).edit()
             .putInt(secondary?"pogoOverlayAccount2":"pogoOverlayAccount1",account).apply();
         android.content.Intent changed=new android.content.Intent(CHANGE)
