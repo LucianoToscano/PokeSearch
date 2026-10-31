@@ -905,7 +905,9 @@ public final class RareCandyOverlayService extends Service {
         int remaining=CandyCooldownPolicy.remainingSeconds(
             lastCopiedCandyCoords,point,lastCopiedCandyAtMs,
             System.currentTimeMillis());
-        if(remaining>0&&!point.equals(lastCopiedCandyCoords)){
+        if(CandyCooldownPolicy.shouldWarnBeforeCopy(
+            lastCopiedCandyCoords,point,lastCopiedCandyAtMs,
+            System.currentTimeMillis())){
             double distance=CandyCooldownPolicy.distanceMeters(
                 lastCopiedCandyCoords,point);
             String meters=distance<1000?
