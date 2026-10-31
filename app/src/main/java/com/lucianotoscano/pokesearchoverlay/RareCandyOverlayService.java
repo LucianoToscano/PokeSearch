@@ -367,8 +367,11 @@ public final class RareCandyOverlayService extends Service {
         // cards; fit the entire list when room allows, otherwise enable
         // vertical scrolling in the clipped native viewport.
         long now=SystemClock.elapsedRealtime();
+        pruneCollected();
         int activeCount=0;
-        for(Candy card:cards.values())if(card.deadline>now)activeCount++;
+        for(Candy card:cards.values())
+            if(card.deadline>now&&(showCollected||!collected.containsKey(card.coords)))
+                activeCount++;
         // LT196: status lives inside sprite cell, never adds a third line.
         int rowHeight=47;
         int wantedHeight=dp(activeCount==0?35:activeCount*rowHeight+4);
@@ -1033,13 +1036,15 @@ public final class RareCandyOverlayService extends Service {
         resultsList.removeAllViews();
         countdownLabels.clear();
         cooldownLabels.clear();
+        pruneCollected();
         long now=SystemClock.elapsedRealtime();
         long wallNow=System.currentTimeMillis();
         boolean hasCooldownOrigin=!lastCopiedCandyCoords.isEmpty()&&
             lastCopiedCandyAtMs>0&&wallNow>=lastCopiedCandyAtMs&&
             wallNow-lastCopiedCandyAtMs<=CandyCooldownPolicy.MAX_AGE_MS;
         for(Candy card:new ArrayList<>(cards.values())){
-            if(card.deadline<=now)continue;
+            if(card.deadline<=now||
+                (!showCollected&&collected.containsKey(card.coords)))continue;
             LinearLayout row=new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setPadding(0,0,0,0);
@@ -1052,7 +1057,7 @@ public final class RareCandyOverlayService extends Service {
             spriteColumn.setOrientation(LinearLayout.VERTICAL);
             spriteColumn.setGravity(Gravity.CENTER_HORIZONTAL|Gravity.TOP);
             FrameLayout spriteCell=new FrameLayout(this);
-            ImageView image=sprite(CANDY_ART_DP,copied.contains(card.coords));
+            ImageView image=sprite(CANDY_ART_DP,collected.containsKey(card.coords));
             FrameLayout.LayoutParams imageLp=new FrameLayout.LayoutParams(
                 dp(CANDY_ART_DP),dp(CANDY_ART_DP),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             spriteCell.addView(image,imageLp);
@@ -1133,8 +1138,8 @@ public final class RareCandyOverlayService extends Service {
                 info.setOrientation(LinearLayout.VERTICAL);
                 info.setGravity(Gravity.CENTER_VERTICAL);
                 if(showName){
-                    TextView title=label(copied.contains(card.coords)?"Doce Raro ✓":"Doce Raro",
-                        11,copied.contains(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
+                    TextView title=label(collected.containsKey(card.coords)?"Doce Raro ✓":"Doce Raro",
+                        11,collected.containsKey(card.coords)?0xFFB1B6C1:0xFFF1F6FF,true);
                     info.addView(title,space(-1,16,0));
                 }
                 if(showLocation&&!card.city.isEmpty()){
@@ -1158,9 +1163,19 @@ public final class RareCandyOverlayService extends Service {
             });
             resultsList.addView(row,space(-1,45,2));
         }
-        boolean anyActive=false;
-        for(Candy card:cards.values())if(card.deadline>now){anyActive=true;break;}
-        if(status!=null)status.setVisibility(anyActive?View.GONE:View.VISIBLE);
+        boolean anyActive=false,anyHidden=false;
+        for(Candy card:cards.values()){
+            if(card.deadline<=now)continue;
+            if(!showCollected&&collected.containsKey(card.coords)){
+                anyHidden=true;continue;
+            }
+            anyActive=true;break;
+        }
+        if(status!=null){
+            status.setVisibility(anyActive?View.GONE:View.VISIBLE);
+            if(!anyActive&&anyHidden)
+                status.setText("Doces coletados ocultos · use o olho no menu");
+        }
         placeResults();
     }
     private final Runnable tick=new Runnable(){
