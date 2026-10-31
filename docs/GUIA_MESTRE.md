@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT202 — POGOCORDINATES SHINY_FOR (31/10/2026)
+
+- **Integração na main:** [PR #169](https://github.com/LucianoToscano/PokeSearch/pull/169) mesclada, source commit `912ff2c78d2526532a75b42ee4c9a6e0cb39ebb1`. Versão preparada `0.02.02`/`54409`.
+- **Referência técnica:** spec e diff fornecidos pelo usuário, revalidados em 31/10/2026; somente resumo sanitizado foi incorporado em [LT202 QA](LT202_POGOCORDINATES_SHINY_FOR_QA_20261031.md). **Não** republicar os anexos completos: contêm dados de perfil de terceiros e exemplo de autenticação.
+- **Resposta `/search`:** `shiny_for: string[] | null` identificado como lista de treinadores vinculados. `shiny` e `background` continuam **booleanos da conta selecionada**, sem inferir Shiny pelo fato de `shiny_for` não estar vazio. Parser valida tamanho, tipos, caracteres, remove duplicações; rótulo compacto até três nomes + contador de extras.
+- **Privacidade/autenticação:** os nomes de treinador aparecem somente em contexto de filtro Shiny/Background com conta explicitamente vinculada/verificada na Pokébola correspondente e tier não `non_logged_in`. Não aparecem em busca anônima, sem conta ou em logs. Background-only agora também seleciona o treinador vinculado (antes somente shiny-only). P1/P2 isoladas.
+- **Compatibilidade preservada:** `tier` e `cap` vêm da resposta, teto visual de 10; `non_logged_in` 5, Free logado 10, VIP conforme provedor. Rare Candy permanece em `POST /rare-candy/search`, usa `coords` sem `/reveal`, converte raio m→km, respeita 429/Retry-After. Sem criação de endpoints nem bypass de 403/429.
+- **QA da PR concluído:** [Node](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228079338) SUCCESS; [regressão completa](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228079285) SUCCESS; [Java/Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228079320) SUCCESS; [OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228079269) SUCCESS.
+- **Distribuição:** workflow de release [LT202](../.github/workflows/lt202-official-release.yml) acrescentado na main, com verificação de `latest` LT201, assinatura permanente v2, hash, Gradle/R8 e testes; **a publicação e o arquivo assinado dependem da conclusão do workflow e verificação separada**.
+- **Pendente físico:** autenticar com treinador efetivamente vinculado no Samsung e validar `shiny_for` preenchido e a correspondência por conta; os testes automatizados não demonstram essa resposta ao vivo.
+
+---
+
 ## LT201 — COMPATIBILIDADE POGOCORDINATES (31/10/2026)
 
 - **Integração:** [PR #168](https://github.com/LucianoToscano/PokeSearch/pull/168) na `main`, commit `38ae944b0c8e18cec2aa993ced868907a5ac1113`. Versão preparada: `0.02.01` / `54408`.
