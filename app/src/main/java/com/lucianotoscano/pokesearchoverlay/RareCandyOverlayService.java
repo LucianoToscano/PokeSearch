@@ -82,8 +82,13 @@ public final class RareCandyOverlayService extends Service {
     private long lastRefresh=0,blockedUntil=0;
     // Advisory timer uses only user-selected candy coordinates; never GPS,
     // account details, or the provider's distance from the search center.
+    // A copy only selects a candy. This checkpoint is created exclusively
+    // when the user explicitly confirms seeing the in-game pickup message.
     private String lastCopiedCandyCoords="";
     private long lastCopiedCandyAtMs=0L;
+    private String selectedCandyCoords="";
+    private boolean pendingCandyPickup=false;
+    private android.app.AlertDialog candyConfirmationDialog;
     private boolean pendingManualRefresh=false;
     private int lastAllCopiedRefreshGeneration=-1;
 
@@ -157,15 +162,24 @@ public final class RareCandyOverlayService extends Service {
         showLocation=prefs.getBoolean("candyShowLocation",false);
         showDespawn=prefs.getBoolean("candyShowDespawn",true);
         showDistance=prefs.getBoolean("candyShowDistance",false);
-        String savedHop=prefs.getString("lastCandyHopCoords","");
-        long savedHopAt=prefs.getLong("lastCandyHopAtMs",0L);
+        // LT195 stored copied coordinates as if collected. Never migrate that
+        // timestamp into a confirmed pickup. Older data becomes pending only.
+        selectedCandyCoords=prefs.getString("selectedCandyCoords",
+            prefs.getString("lastCandyHopCoords",""));
+        if(!validCoords(selectedCandyCoords))selectedCandyCoords="";
+        pendingCandyPickup=!selectedCandyCoords.isEmpty()&&
+            prefs.getBoolean("pendingCandyPickup",
+                !prefs.contains("selectedCandyCoords"));
+        String savedHop=prefs.getString("confirmedCandyHopCoords","");
+        long savedHopAt=prefs.getLong("confirmedCandyHopAtMs",0L);
         long wallNow=System.currentTimeMillis();
         if(CandyCooldownPolicy.parseCoordinates(savedHop)!=null&&
             savedHopAt>0&&wallNow>=savedHopAt&&
             wallNow-savedHopAt<=CandyCooldownPolicy.MAX_AGE_MS){
             lastCopiedCandyCoords=savedHop;lastCopiedCandyAtMs=savedHopAt;
         }else{
-            prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+            prefs.edit().remove("confirmedCandyHopCoords")
+                .remove("confirmedCandyHopAtMs").apply();
         }
         try{
             JSONArray state=new JSONArray(prefs.getString("copied","[]"));
@@ -174,6 +188,7 @@ public final class RareCandyOverlayService extends Service {
                 if(validCoords(p))copied.add(p);
             }
         }catch(Exception ignored){}
+        prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
         icon=loadIcon(this);
         running=true;
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -406,7 +421,8 @@ public final class RareCandyOverlayService extends Service {
         try{
             state.put("coords",coords).put("radius",radius).put("period",period)
                 .put("name",showName).put("location",showLocation)
-                .put("despawn",showDespawn).put("distance",showDistance);
+                .put("despawn",showDespawn).put("distance",showDistance)
+                .put("pendingCandyPickup",pendingCandyPickup&&validCoords(selectedCandyCoords));
             candyMenuPanel.evaluateJavascript("window.syncCandy("+
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
@@ -570,12 +586,19 @@ public final class RareCandyOverlayService extends Service {
                 if(clip!=null)clip.setPrimaryClip(ClipData.newPlainText("Localização Doce Raro",normalized));
             });
         }
+        @android.webkit.JavascriptInterface public void confirmCandyPicked(){
+            main.post(()->{
+                if(!permitted())return;
+                confirmCandyPicked(selectedCandyCoords);
+            });
+        }
         @android.webkit.JavascriptInterface public void clearCandyCooldown(){
             main.post(()->{
                 if(!permitted())return;
                 lastCopiedCandyCoords="";
                 lastCopiedCandyAtMs=0L;
-                prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+                prefs.edit().remove("confirmedCandyHopCoords")
+                    .remove("confirmedCandyHopAtMs").apply();
                 render();
                 syncCandyMenu();
             });
