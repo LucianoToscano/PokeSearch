@@ -589,7 +589,7 @@ public final class RareCandyOverlayService extends Service {
         @android.webkit.JavascriptInterface public void confirmCandyPicked(){
             main.post(()->{
                 if(!permitted())return;
-                confirmCandyPicked(selectedCandyCoords);
+                RareCandyOverlayService.this.confirmCandyPicked(selectedCandyCoords);
             });
         }
         @android.webkit.JavascriptInterface public void clearCandyCooldown(){
