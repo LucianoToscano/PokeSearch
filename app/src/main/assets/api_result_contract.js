@@ -290,7 +290,7 @@
     for(const value of raw){
       if(typeof value!=="string")return null;
       const name=value.trim();
-      if(!name||name.length>32||!/^[\\p{L}\\p{N} _.-]+$/u.test(name))return null;
+      if(!name||name.length>32||!/^[\p{L}\p{N} _.-]+$/u.test(name))return null;
       if(!seen.has(name.toLocaleLowerCase())){
         seen.add(name.toLocaleLowerCase());
         if(out.length<20)out.push(name);
