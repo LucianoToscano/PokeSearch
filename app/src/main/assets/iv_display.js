@@ -9,9 +9,9 @@
 })(typeof globalThis!=="undefined"?globalThis:this,function(){
  "use strict";
  const rawPattern=/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/;
- // Some verified source responses express IV% with 1–2 decimals
+ // Some verified source responses express IV% with 1–8 decimals
  // (e.g. 44/45 => 97.8 or 97.78), while the badge rounds to 98%.
- const percentPattern=/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?$/;
+ const percentPattern=/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,8})?$/;
  const possible=new Set(Array.from({length:46},(_,sum)=>Math.round(sum*100/45)));
  const unavailable=Object.freeze({valid:false,raw:"",percent:null,color:"",derived:false});
  function colorFor(percent){
@@ -49,7 +49,7 @@
   for(let sum=0;sum<=45;sum++){
    const exact=sum*100/45;
    if(observed===Math.round(exact)||observed===Number(exact.toFixed(1))||
-      observed===Number(exact.toFixed(2))){
+      observed===Number(exact.toFixed(2))||Math.abs(observed-exact)<=0.0001){
     const percent=Math.round(exact),color=colorFor(percent);
     return {valid:true,raw:"",percent,color,derived:false,percentOnly:true};
    }
@@ -71,7 +71,7 @@
    const exact=sum*100/45;
    const valid=percentPattern.test(supplied)&&observed>=0&&observed<=100&&
     (observed===percent||observed===Number(exact.toFixed(1))||
-     observed===Number(exact.toFixed(2)));
+     observed===Number(exact.toFixed(2))||Math.abs(observed-exact)<=0.0001);
    if(!valid)return unavailable;
   }
   return {valid:true,raw,percent,color,derived:!supplied};
