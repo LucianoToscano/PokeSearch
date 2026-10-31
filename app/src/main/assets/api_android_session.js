@@ -126,6 +126,7 @@
       // Only sanitized counters cross into the Android diagnostics.
       return {ok:false,reason:"unverified-results",siteCount:r.siteCount,
        rejected:r.rejected,expired:r.expired,filtered:r.filtered,
+       eligible:r.eligible,duplicates:r.duplicates,
        rejectionCounts:r.rejectionCounts};
      }
      if(r.reason==="rate-limited"&&typeof d.transport.backoffSeconds==="function"){
