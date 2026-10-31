@@ -53,6 +53,23 @@ final class PogoAccountSlots {
             .putExtra("overlay",overlayNumber(secondary));
         context.sendBroadcast(changed);
     }
+    /**
+     * Choose a PoGoCoordinates profile without changing the trainer bindings
+     * saved for a possible future return of the upstream Shiny feature.
+     * A profile is still valid as GUEST: /search works without login.
+     * Never merge the isolated WebView cookies for account 1 vs account 2.
+     */
+    static void bindAccountOnly(Context context,boolean secondary,int account){
+        if(account!=1&&account!=2)throw new IllegalArgumentException("account");
+        if(account==2&&!supportsSecond())
+            throw new IllegalStateException("WebView does not support isolated account 2");
+        context.getSharedPreferences("prefs",Context.MODE_PRIVATE).edit()
+            .putInt(secondary?"pogoOverlayAccount2":"pogoOverlayAccount1",account).apply();
+        android.content.Intent changed=new android.content.Intent(CHANGE)
+            .setPackage(context.getPackageName())
+            .putExtra("overlay",overlayNumber(secondary));
+        context.sendBroadcast(changed);
+    }
     static boolean loggedIn(Context context,int slot){
         return "autenticada".equals(prefs(context,slot).getString("sessionStatus",""));
     }
