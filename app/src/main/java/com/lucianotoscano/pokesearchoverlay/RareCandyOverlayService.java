@@ -92,6 +92,7 @@ public final class RareCandyOverlayService extends Service {
     private long lastCopiedCandyAtMs=0L;
     private String selectedCandyCoords="";
     private boolean pendingCandyPickup=false;
+    private boolean lastMenuCaptureActive=false;
     private android.app.AlertDialog candyConfirmationDialog;
     private boolean pendingManualRefresh=false;
     private int lastAllCopiedRefreshGeneration=-1;
@@ -1264,7 +1265,14 @@ public final class RareCandyOverlayService extends Service {
                     now-lastRefresh>=period*60000L){
                 refresh(false);
             }
-            if(candyMenuVisible)syncCandyMenuTheme();
+            if(candyMenuVisible){
+                syncCandyMenuTheme();
+                boolean active=CandyScreenCaptureService.isActive();
+                if(lastMenuCaptureActive!=active){
+                    lastMenuCaptureActive=active;
+                    syncCandyMenu();
+                }
+            }
             main.postDelayed(this,1000L);
         }
     };
