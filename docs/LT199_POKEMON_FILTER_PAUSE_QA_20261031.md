@@ -1,7 +1,7 @@
 # QA — Pausar filtro Pokémon/Formas preservando lista (31/10/2026)
 
 **Base:** PokeSearch main após LT198, branch `feature/pokemon-filter-pause-keep-selection-20261031`.
-**Status:** alteração em desenvolvimento; não implica APK assinado, merge nem publicação.
+**Status:** PR #166 mesclada na main (`9573a49b15f3`); **LT199 oficial publicada** em `v0.01.99-54406`. [Actions #41199748150 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41199748150), build/R8/assinatura v2 verificados. [APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.99-54406/PokeSearch-v0.01.99-LT.apk) · [ZIP no Drive](https://drive.google.com/file/d/16Wwqs6PDXpBM9sROLw8eZs_H5DCq5qfC/view?usp=drivesdk). Homologação física Samsung continua pendente.
 
 ## Comportamento esperado
 - Em **POKÉMON · espécies e formas**, chave deslizante compacta junto ao contador.
