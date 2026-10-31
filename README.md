@@ -1,6 +1,22 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT200 · 0.02.00 · 54407
+## Versão oficial atual — LT201 · 0.02.01 · 54408
+
+[Baixar APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.01-54408/PokeSearch-v0.02.01-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.01-54408) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1v3b2pXlMkWITpefNfXYkAnA7pFQoMKeJ/view?usp=drivesdk) · [GitHub Actions SUCCESS #41226844970](https://github.com/LucianoToscano/PokeSearch/actions/runs/41226844970) · [PR #168 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/168).
+
+**LT201 — compatibilidade PoGoCoordinates:** reconhece a busca oficial de Pokémon por nome/forma/dex no mobile sem botão de dropdown separado; exige evidência de opções da consulta antes de usar portais React com IDs antigos. Erros API HTTP 400/422 agora reconhecem estruturas aninhadas, Shiny e contagem segura de múltiplos campos rejeitados, sem transmitir dados privados. Mantém 100%/0%/IV/GL/UL, localização e seleções independentes das Pokébolas P1/P2, sem apagar filtros ou contornar limites.
+
+**APK:** 29.260.927 bytes · SHA-256 `5c1686bc4e21b6792f676085eb048114eb0009fcd9e2aa50f0bad614b6b6e6e3` · assinatura permanente v2 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` · SOURCE_COMMIT `38ae944b0c8e18cec2aa993ced868907a5ac1113`.
+
+**Drive:** ZIP 26.921.507 bytes, SHA-256 `0600459467d26f0cb505ef0b3cf18419dbfe575d5250b0914ae925fc1b283454`, inclui APK idêntico, hash e relatórios de assinatura. **Atualização:** `latest` disponível no GitHub Releases para o mecanismo do app; a instalação exige aceite no dispositivo.
+
+**Limite da auditoria:** o contrato autenticado de `/search` e o seletor ao vivo não puderam ser inspecionados diretamente, portanto a correção foi validada por testes sintéticos e compilação, não por uma sessão PoGoCoordinates real no Samsung. Verificar o erro após instalar a LT201.
+
+[Guia Mestre](docs/GUIA_MESTRE.md) · [Checklist e auditoria LT201](docs/LT201_COMPAT_POGOCORDINATES_QA_20261031.md).
+
+---
+
+## Histórico — versão oficial anterior LT200 · 0.02.00 · 54407
 
 [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.00-54407/PokeSearch-v0.02.00-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.00-54407) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1yvV4wTNehuiVnpDaFjpeXRAmzE3RYYsm/view?usp=drivesdk) · [Workflow SUCCESS #41225317922](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225317922) · [PR #167 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/167).
 
