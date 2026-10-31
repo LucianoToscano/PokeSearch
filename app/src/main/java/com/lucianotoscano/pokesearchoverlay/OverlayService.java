@@ -4510,23 +4510,22 @@ public class OverlayService extends Service {
                     extra.put("pokemon",""); // Multi-select replaces legacy single text.
                 }
                 // Mode changes must not delete paused species/form selections.
-                boolean pokemonEnabled=input.has("pokemonFilterEnabled")?
-                    input.optBoolean("pokemonFilterEnabled",true):
-                    previousMulti.optBoolean("pokemonFilterEnabled",true);
+                // This flag is controlled by the standalone switch only.
+                // A stale mode dialog/preset must not reactivate it by accident.
+                boolean pokemonEnabled=previousMulti.optBoolean("pokemonFilterEnabled",true);
                 org.json.JSONArray remembered=previousMulti.optJSONArray("pokemonSavedSelections");
                 if(remembered==null)remembered=previousMulti.optJSONArray("pokemonSelections");
                 // Old installs have an active list but no saved-list key.
-                // The dock's empty default must not erase those selections.
+                // Native persisted state wins over a stale mode dialog snapshot.
                 org.json.JSONArray fromUi=input.optJSONArray("pokemonSavedSelections");
-                if(fromUi!=null&&(fromUi.length()>0||remembered==null||remembered.length()==0))
-                    remembered=fromUi;
-                if(remembered==null){
+                if(remembered==null)remembered=fromUi;
+                if(remembered==null)remembered=input.optJSONArray("pokemonSelections");
+                if(remembered==null)remembered=new org.json.JSONArray();
+                if(remembered.length()==0){
                     String legacy=previousMulti.optString("pokemon","").trim();
                     if(legacy.isEmpty())legacy=input.optString("pokemon","").trim();
-                    remembered=new org.json.JSONArray();
                     if(!legacy.isEmpty())remembered.put(legacy);
                 }
-                if(pokemonEnabled&&species!=null)remembered=extra.optJSONArray("pokemonSelections");
                 if(input.optBoolean("clearPokemonSelection",false))remembered=new org.json.JSONArray();
                 if(remembered==null||remembered.length()>50)return;
                 org.json.JSONArray validatedSaved=new org.json.JSONArray();
