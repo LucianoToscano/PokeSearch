@@ -52,7 +52,7 @@ public final class CandyScreenCaptureService extends Service {
     private HandlerThread thread;
     private Handler handler;
     private TextRecognizer textRecognizer;
-    private volatile boolean inFlight=false,stopped=false;
+    private volatile boolean inFlight=false,stopped=false,sourceVisible=true;
     private long lastFrameAt=0L;
     private long pendingSince=0L;
     private String pendingPoint="";
@@ -107,6 +107,26 @@ public final class CandyScreenCaptureService extends Service {
             handler=new Handler(thread.getLooper());
             projectionCallback=new MediaProjection.Callback(){
                 @Override public void onStop(){stopSelf();}
+                @Override public void onCapturedContentResize(int width,int height){
+                    // Android 14+ may share a selected app window instead of
+                    // the whole display. Resize the SAME virtual display.
+                    if(stopped||display==null||width<100||height<200)return;
+                    try{
+                        ImageReader next=ImageReader.newInstance(
+                            width,height,PixelFormat.RGBA_8888,2);
+                        next.setOnImageAvailableListener(
+                            CandyScreenCaptureService.this::onFrame,handler);
+                        display.resize(width,height,
+                            getResources().getDisplayMetrics().densityDpi);
+                        display.setSurface(next.getSurface());
+                        ImageReader old=reader;
+                        reader=next;
+                        if(old!=null){old.setOnImageAvailableListener(null,null);old.close();}
+                    }catch(RuntimeException ex){stopSelf();}
+                }
+                @Override public void onCapturedContentVisibilityChanged(boolean visible){
+                    sourceVisible=visible;
+                }
             };
             projection.registerCallback(projectionCallback,handler);
             textRecognizer=TextRecognition.getClient(
@@ -150,7 +170,8 @@ public final class CandyScreenCaptureService extends Service {
             image=source.acquireLatestImage();
             if(image==null)return;
             long now=SystemClock.elapsedRealtime();
-            if(stopped||inFlight||now-lastFrameAt<SAMPLE_INTERVAL_MS)return;
+            if(stopped||!sourceVisible||inFlight||
+                now-lastFrameAt<SAMPLE_INTERVAL_MS)return;
             lastFrameAt=now;
             SharedPreferences prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
             // Idle uses no OCR: only scan after one single pending selection.
