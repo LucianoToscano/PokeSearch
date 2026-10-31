@@ -5026,45 +5026,14 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
-            // Temporarily suspended by the provider. Do not submit shiny_only,
-            // trigger trainer login, or flip the saved option. Keep the control
-            // discoverable so the feature can be restored in a later release.
+            // Provider-side Shiny service temporarily unavailable. A user can
+            // still search anonymously or while signed in on either account.
+            // No Shiny-only request, login prompt, or trainer confirmation.
             shiny=false;
             shinyVerified=false;
             overlayPrefs().edit().putBoolean("shiny",false).apply();
-            status("✨ Shiny temporariamente indisponível no PoGoCoordinates.");
+            status("✨ Shiny temporariamente indisponível no PoGoCoordinates");
             update();
-            return;
-            // Historical login-verified Shiny path retained, but not reachable.
-            /*
-            shiny=!shiny;
-            overlayPrefs().edit().putBoolean("shiny",shiny).apply();
-            replaceActiveFilterSearch();
-            final int generation=requestGeneration;
-            shinyVerified=false;
-            shinyLoginWindowOpened=false;
-            shinyLoginPromptRequested=shiny;
-            // Existing cards were collected under the prior Shiny selection.
-            // Keep them visible but clearly stale until the site confirms new ones.
-            resultsStale=count()>0;
-            hideDetails();
-            // Show the neutral pending state immediately; it becomes yellow
-            // only after the actual website confirms the active Shiny filter.
-            status(shiny?"✨ Shiny solicitado · verificando no site...":
-                "✨ Shiny OFF · aplicando na busca...");
-            if(!loaded||website==null){
-                if(shiny)status("✨ Site carregando; Shiny aguardando confirmação.");
-                else status("✨ Shiny desligado; sincronização no próximo carregamento.");
-                return;
-            }
-            if(!shiny){
-                // No login is required for OFF. Reconfigure Shiny plus all
-                // existing filters in ONE verified request (even with Coords).
-                OverlayService.this.refresh(true);
-                return;
-            }
-            startVerifiedShinySearch(generation,0);
-            */
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
