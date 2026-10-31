@@ -122,6 +122,12 @@
     const r=await d.transport.search(filters);
     if(destroyed||activeSearchTicket!==ticket)return fail("superseded-search");
     if(!r.ok){
+     if(r.reason==="unverified-results"){
+      // Only sanitized counters cross into the Android diagnostics.
+      return {ok:false,reason:"unverified-results",siteCount:r.siteCount,
+       rejected:r.rejected,expired:r.expired,filtered:r.filtered,
+       rejectionCounts:r.rejectionCounts};
+     }
      if(r.reason==="rate-limited"&&typeof d.transport.backoffSeconds==="function"){
       // Report only the bounded provider wait, never JWT, headers or server body.
       const wait=d.transport.backoffSeconds("search");
@@ -135,12 +141,13 @@
     activeSearchId=r.searchId;
     return {
      ok:true,cards:r.cards,found:r.found,siteCount:r.siteCount,
-     rejected:r.rejected,expired:r.expired,searchId:r.searchId,
+     rejected:r.rejected,expired:r.expired,filtered:r.filtered,
+     rejectionCounts:r.rejectionCounts,searchId:r.searchId,
      criteriaConfirmed:true,resultChanged:true,leagueConfirmed:pvp,
      // The transport accepted the exact signed-in HTTP search payload,
      // not a fixture or DOM-derived visual-only result.
      requestValidated:r.requestValidated===true,
-     explicitEmpty:r.cards.length===0,
+     explicitEmpty:r.siteCount===0&&r.cards.length===0,
      requestedShiny:filters.shiny===true,
      apiReturnedShiny:r.cards.length>0&&r.cards.every(card=>card.shiny===true),
      apiFilterAccepted:r.requestValidated===true&&
