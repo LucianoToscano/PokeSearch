@@ -76,6 +76,14 @@ public final class RareCandyOverlayService extends Service {
     private boolean candyMenuVisible=false,candyMenuLoaded=false;
     private WindowManager.LayoutParams bubbleParams,resultsParams,menuParams;
     private WebView site;
+    private int sourceAccount=1;
+    // Keep candy on P1's selected WebView profile, never share JWT/cookies.
+    private SharedPreferences accountBindingPrefs;
+    private final SharedPreferences.OnSharedPreferenceChangeListener candyAccountListener=
+        (shared,key)->{
+            if("pogoOverlayAccount1".equals(key)&&!destroyed)
+                main.post(this::syncCandyAccountBinding);
+        };
     private Bitmap icon;
     private TextView status;
     private String probe="";
@@ -237,6 +245,8 @@ public final class RareCandyOverlayService extends Service {
         createBubble();
         createResults();
         createCandyMenu();
+        accountBindingPrefs=getSharedPreferences("prefs",MODE_PRIVATE);
+        accountBindingPrefs.registerOnSharedPreferenceChangeListener(candyAccountListener);
         attachSource();
         main.post(tick);
     }
@@ -692,12 +702,28 @@ public final class RareCandyOverlayService extends Service {
                 url.getPath()!=null&&url.getPath().startsWith("/search");
         }catch(Exception ignored){return false;}
     }
+    private void syncCandyAccountBinding(){
+        if(destroyed||site==null||bubbleWindow==null)return;
+        int selected=PogoAccountSlots.assigned(this,false);
+        if(selected==sourceAccount)return;
+        // Retain provider Retry-After while changing local WebView profiles.
+        ++generation;
+        ready=false;setCandyBusy(false);pendingManualRefresh=false;
+        cards.clear();render();
+        WebView old=site;site=null;
+        old.stopLoading();
+        bubbleWindow.removeView(old);
+        old.destroy();
+        setStatus("Conta "+selected+" · conectando Doce Raro…");
+        attachSource();
+    }
     private void attachSource(){
         site=new WebView(this);
         // Like P1, use the actual selected, already-authenticated browser
         // profile; never transfer cookies/JWT between account slots manually.
         int account=PogoAccountSlots.assigned(this,false);
         PogoAccountSlots.attach(site,account);
+        sourceAccount=account;
         site.getSettings().setJavaScriptEnabled(true);
         site.getSettings().setUseWideViewPort(true);
         site.getSettings().setLoadWithOverviewMode(false);
@@ -735,11 +761,11 @@ public final class RareCandyOverlayService extends Service {
                 return !isAllowedUrl(request.getUrl().toString());
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(!destroyed&&isAllowedUrl(url)){
+                if(!destroyed&&view==site&&isAllowedUrl(url)){
                     ready=true;
                     // A manual tap while loading must never be silently lost.
                     main.postDelayed(()->{
-                        if(destroyed)return;
+                        if(destroyed||view!=site)return;
                         pendingManualRefresh=false;
                         refresh(true);
                     },250L);
@@ -766,6 +792,14 @@ public final class RareCandyOverlayService extends Service {
                  "www.pogocoordinates.com".equals(p.getHost()))&&
                  p.getPath()!=null&&p.getPath().startsWith("/search");
         }catch(Exception ignored){return false;}
+    }
+    private String providerWaitLabel(){
+        long seconds=Math.max(1L,
+            (blockedUntil-SystemClock.elapsedRealtime()+999L)/1000L);
+        if(seconds>=3600L)return "API 429 · "+
+            (seconds/3600L)+"h"+((seconds%3600L+59L)/60L)+"m";
+        return "API 429 · "+(seconds/60L)+"m"+
+            String.format(java.util.Locale.US,"%02d",seconds%60L)+"s";
     }
     private void setStatus(String message){
         if(status!=null){
@@ -797,7 +831,7 @@ public final class RareCandyOverlayService extends Service {
             // Keep the last explicit tap/all-copied request until the provider
             // permits another call; never bypass 429 Retry-After.
             if(manual)pendingManualRefresh=true;
-            setStatus("Aguardando liberação do PoGoCoordinates");
+            setStatus(providerWaitLabel());
             return;
         }
         // No extra local throttle for manual or all-copied searches.
@@ -851,7 +885,7 @@ public final class RareCandyOverlayService extends Service {
                     if(code==429){
                         int retry=Math.max(1,Math.min(86400,response.optInt("retry_after",60)));
                         blockedUntil=SystemClock.elapsedRealtime()+retry*1000L;
-                        setStatus("Aguardando liberação do PoGoCoordinates");
+                        setStatus(providerWaitLabel());
                     }else if(code==401){
                         setStatus("Sessão expirada · entre no PoGoCoordinates");
                     }else setStatus("Busca indisponível · tente novamente");
@@ -1271,6 +1305,11 @@ public final class RareCandyOverlayService extends Service {
                         ". Não confirma cooldown real do jogo");
                 }
             }
+            // 429 belongs to the provider, not to the in-game collection timer.
+            if(cards.isEmpty()&&now<blockedUntil&&status!=null){
+                String wait=providerWaitLabel();
+                if(!wait.contentEquals(status.getText()))setStatus(wait);
+            }
             // A new batch is requested only by the chosen interval, a manual
             // tap, or copying all ten candies. Expiration still removes TTL
             // cards, but no longer launches an extra local-throttle search.
@@ -1353,6 +1392,8 @@ public final class RareCandyOverlayService extends Service {
         if(prefs!=null)prefs.edit().putBoolean("candyAutoPickupOptIn",false).apply();
         stopService(new Intent(this,CandyScreenCaptureService.class));
         destroyed=true;running=false;
+        if(accountBindingPrefs!=null)
+            accountBindingPrefs.unregisterOnSharedPreferenceChangeListener(candyAccountListener);
         ++generation;main.removeCallbacksAndMessages(null);
         if(site!=null){
             site.stopLoading();
