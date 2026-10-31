@@ -847,16 +847,89 @@ public final class RareCandyOverlayService extends Service {
                 Math.abs(Double.parseDouble(pair[1].trim()))<=180;
         }catch(NumberFormatException ex){return false;}
     }
+    /**
+     * Android overlay can neither inspect the Pokémon GO pickup popup nor
+     * infer a successful interaction from copying coordinates. Only an
+     * explicit user confirmation creates a cooldown checkpoint.
+     */
+    private void showCandyConfirmation(String title,String message,
+        String positive,Runnable onConfirmed){
+        if(destroyed||!Settings.canDrawOverlays(this))return;
+        if(candyConfirmationDialog!=null&&candyConfirmationDialog.isShowing())return;
+        try{
+            android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this)
+                .setTitle(title).setMessage(message)
+                .setNegativeButton("Cancelar",(d,which)->{})
+                .setPositiveButton(positive,(d,which)->onConfirmed.run())
+                .create();
+            if(dialog.getWindow()!=null)
+                dialog.getWindow().setType(
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+            candyConfirmationDialog=dialog;
+            dialog.setOnDismissListener(d->{
+                if(candyConfirmationDialog==dialog)candyConfirmationDialog=null;
+            });
+            dialog.show();
+        }catch(RuntimeException problem){
+            candyConfirmationDialog=null;
+            Toast.makeText(this,"Não foi possível abrir a confirmação",
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void confirmCandyPicked(String point){
+        if(!validCoords(point)||!pendingCandyPickup||
+            !point.equals(selectedCandyCoords)){
+            Toast.makeText(this,"Copie primeiro o doce que você pegou",
+                Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showCandyConfirmation("Confirmar Doce Raro",
+            "A mensagem de coleta do Doce Raro já apareceu no Pokémon GO? "+
+            "O contador começa somente depois da sua confirmação.",
+            "✓ Peguei",()->{
+                if(destroyed||!pendingCandyPickup||
+                    !point.equals(selectedCandyCoords))return;
+                lastCopiedCandyCoords=point;
+                lastCopiedCandyAtMs=System.currentTimeMillis();
+                pendingCandyPickup=false;
+                prefs.edit().putString("confirmedCandyHopCoords",point)
+                    .putLong("confirmedCandyHopAtMs",lastCopiedCandyAtMs)
+                    .putBoolean("pendingCandyPickup",false).apply();
+                Toast.makeText(this,"Coleta confirmada · cooldown estimado iniciado",
+                    Toast.LENGTH_SHORT).show();
+                render();syncCandyMenu();
+            });
+    }
     private void copy(String point){
         if(!validCoords(point))return;
+        int remaining=CandyCooldownPolicy.remainingSeconds(
+            lastCopiedCandyCoords,point,lastCopiedCandyAtMs,
+            System.currentTimeMillis());
+        if(remaining>0&&!point.equals(lastCopiedCandyCoords)){
+            double distance=CandyCooldownPolicy.distanceMeters(
+                lastCopiedCandyCoords,point);
+            String meters=distance<1000?
+                Math.round(distance)+" m":
+                String.format(java.util.Locale.US,"%.1f km",distance/1000d);
+            showCandyConfirmation("Cooldown estimado ativo",
+                "Distância desde a última coleta confirmada: "+meters+
+                ". Faltam "+CandyCooldownPolicy.timerLabel(remaining)+
+                " pelo cálculo de distância. "+
+                "Deseja copiar outro doce antes de terminar esse tempo?",
+                "Copiar mesmo assim",()->completeCopy(point));
+            return;
+        }
+        completeCopy(point);
+    }
+    private void completeCopy(String point){
+        if(!validCoords(point)||destroyed)return;
         ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+        if(clipboard==null)return;
         clipboard.setPrimaryClip(ClipData.newPlainText("Doce Raro",point));
-        // Copying selects a new local reference for estimating the next hop.
-        // It does NOT mean a teleport or a game interaction actually happened.
-        lastCopiedCandyCoords=point;
-        lastCopiedCandyAtMs=System.currentTimeMillis();
-        prefs.edit().putString("lastCandyHopCoords",point)
-            .putLong("lastCandyHopAtMs",lastCopiedCandyAtMs).apply();
+        selectedCandyCoords=point;
+        pendingCandyPickup=true;
+        prefs.edit().putString("selectedCandyCoords",point)
+            .putBoolean("pendingCandyPickup",true).apply();
         boolean newlyCopied=copied.add(point);
         // Keep the last 100 copied points, independent of P1/P2 and tokens.
         if(copied.size()>100){
@@ -864,7 +937,9 @@ public final class RareCandyOverlayService extends Service {
             copied.remove(first);
         }
         prefs.edit().putString("copied",new JSONArray(copied).toString()).apply();
-        Toast.makeText(this,"Coordenadas copiadas",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,
+            "Copiado. Ao receber o doce no jogo, toque no ✓ da sprite ou segure o item.",
+            Toast.LENGTH_LONG).show();
         render();
         // Trigger once on the transition to ALL visible candies copied. A
         // repeated tap on an already-gray candy must not generate a loop if
@@ -1068,6 +1143,10 @@ public final class RareCandyOverlayService extends Service {
         return START_STICKY;
     }
     @Override public void onDestroy(){
+        if(candyConfirmationDialog!=null){
+            candyConfirmationDialog.dismiss();
+            candyConfirmationDialog=null;
+        }
         destroyed=true;running=false;
         ++generation;main.removeCallbacksAndMessages(null);
         if(site!=null){
