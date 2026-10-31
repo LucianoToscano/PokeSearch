@@ -41,7 +41,9 @@ public final class CandyScreenCaptureService extends Service {
     static final String EXTRA_RESULT_DATA="resultData";
     private static final String CHANNEL="pokesearch_candy_capture";
     private static final int NOTIFICATION_ID=1987;
-    private static final long SAMPLE_INTERVAL_MS=1000L;
+    // Sample while waiting for the short Pokemon GO item banner.
+    // The previous one-frame-per-second gate could miss a transient popup.
+    private static final long SAMPLE_INTERVAL_MS=350L;
     private static volatile boolean active=false;
     static boolean isActive(){return active;}
 
@@ -54,6 +56,8 @@ public final class CandyScreenCaptureService extends Service {
     private TextRecognizer textRecognizer;
     private volatile boolean inFlight=false,stopped=false,sourceVisible=true;
     private long lastFrameAt=0L;
+    private long lastFrameSharedAt=0L;
+    private long inFlightSince=0L;
     private long pendingSince=0L;
     private String pendingPoint="";
     private boolean previousBannerVisible=false;
@@ -155,7 +159,9 @@ public final class CandyScreenCaptureService extends Service {
                 width,height,dm.densityDpi,DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 reader.getSurface(),null,handler);
             active=true;
-            reportStatus("Aguardando cópia de um doce");
+            prefs.edit().putLong("candyCaptureLastFrameAtMs",0L)
+                .putBoolean("candyCaptureHasValidPixels",false).apply();
+            reportStatus("Captura iniciada · aguardando imagens");
         }catch(Exception ex){
             reportStatus("Falha ao iniciar captura · reautorize");
             stopSelf();
@@ -186,9 +192,19 @@ public final class CandyScreenCaptureService extends Service {
             if(image==null)return;
             long now=SystemClock.elapsedRealtime();
             if(!RareCandyOverlayService.isRunning()){stopSelf();return;}
-            if(stopped||!sourceVisible||inFlight||
-                now-lastFrameAt<SAMPLE_INTERVAL_MS)return;
+            if(stopped||!sourceVisible||now-lastFrameAt<SAMPLE_INTERVAL_MS)return;
+            if(inFlight){
+                if(now-inFlightSince>6000L)
+                    reportStatus("OCR demorando · mantenha captura ativa");
+                return;
+            }
             lastFrameAt=now;
+            long wallTime=System.currentTimeMillis();
+            if(wallTime-lastFrameSharedAt>=1500L){
+                getSharedPreferences("rare_candy_overlay",MODE_PRIVATE).edit()
+                    .putLong("candyCaptureLastFrameAtMs",wallTime).apply();
+                lastFrameSharedAt=wallTime;
+            }
             SharedPreferences prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
             // Idle uses no OCR: only scan after one single pending selection.
             String selected=prefs.getString("selectedCandyCoords","");
@@ -215,7 +231,10 @@ public final class CandyScreenCaptureService extends Service {
             }
             int w=image.getWidth(),h=image.getHeight();
             Image.Plane plane=image.getPlanes()[0];
-            if(plane.getPixelStride()!=4||w<100||h<200)return;
+            if(plane.getPixelStride()!=4||w<100||h<200){
+                reportStatus("Formato de imagem não suportado");
+                return;
+            }
             // Read ONLY the top band from ImageReader's full-screen frame.
             // Never materialize a full-screen Bitmap or keep raw screenshots.
             int bandHeight=Math.min(h,Math.max(80,h*27/100));
@@ -231,7 +250,10 @@ public final class CandyScreenCaptureService extends Service {
                 for(int x=0;x<outW;x++){
                     int srcX=Math.min(w-1,x*w/outW);
                     int offset=srcY*rowStride+srcX*pixelStride;
-                    if(offset+3>=buffer.limit())return;
+                    if(offset+3>=buffer.limit()){
+                        reportStatus("Erro na leitura dos pixels");
+                        return;
+                    }
                     int red=buffer.get(offset)&255;
                     int green=buffer.get(offset+1)&255;
                     int blue=buffer.get(offset+2)&255;
@@ -240,9 +262,13 @@ public final class CandyScreenCaptureService extends Service {
             }
             Bitmap top=Bitmap.createBitmap(
                 argb,outW,outH,Bitmap.Config.ARGB_8888);
+            getSharedPreferences("rare_candy_overlay",MODE_PRIVATE).edit()
+                .putBoolean("candyCaptureHasValidPixels",true).apply();
             inFlight=true;
+            inFlightSince=now;
             processTopBand(top,selected,selectedAt);
-        }catch(RuntimeException ignore){
+        }catch(RuntimeException issue){
+            reportStatus("Falha ao processar quadro · reinicie a captura");
             inFlight=false;
         }finally{
             if(image!=null)image.close();
@@ -326,7 +352,7 @@ public final class CandyScreenCaptureService extends Service {
                 .putExtra(RareCandyOverlayService.EXTRA_VISUAL_COORDS,selected)
                 .putExtra(RareCandyOverlayService.EXTRA_VISUAL_COPIED_AT,selectedAt);
             startService(event);
-            reportStatus("✓ Coleta detectada");
+            reportStatus("Aviso reconhecido · aguardando confirmação do overlay");
         }catch(RuntimeException failure){
             reportStatus("Não foi possível confirmar · use ✓ Peguei");
         }
@@ -343,7 +369,9 @@ public final class CandyScreenCaptureService extends Service {
         if(textRecognizer!=null){textRecognizer.close();textRecognizer=null;}
         if(thread!=null){thread.quitSafely();thread=null;}
         getSharedPreferences("rare_candy_overlay",MODE_PRIVATE).edit()
-            .putBoolean("candyAutoPickupOptIn",false).apply();
+            .putBoolean("candyAutoPickupOptIn",false)
+            .putLong("candyCaptureLastFrameAtMs",0L)
+            .putBoolean("candyCaptureHasValidPixels",false).apply();
         super.onDestroy();
     }
 }
