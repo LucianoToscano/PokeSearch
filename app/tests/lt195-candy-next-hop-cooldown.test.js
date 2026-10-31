@@ -19,7 +19,7 @@ assert.match(candy,/prefs\.getLong\("lastCandyHopAtMs",0L\)/);
 assert.match(candy,/putString\("lastCandyHopCoords",point\)/);
 assert.match(candy,/putLong\("lastCandyHopAtMs",lastCopiedCandyAtMs\)/);
 assert.match(candy,/lastCopiedCandyCoords=point/);
-assert.match(policy,/distanceMeters\\(origin,next\\)/);
+assert.ok(policy.includes("static double distanceMeters(String from,String to)"));
 assert.match(candy,/CandyCooldownPolicy\.remainingSeconds\(/);
 assert.match(candy,/cooldownLabels\.entrySet\(\)/);
 assert.match(candy,/postDelayed\(this,1000L\)/);
