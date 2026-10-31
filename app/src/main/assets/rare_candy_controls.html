@@ -247,7 +247,8 @@ function changeInfo(key,checked){
 }
 function toggleInfo(key){changeInfo(key,!settings[key])}
 function toggleAutoCandy(){
- const enable=!settings.candyAutoPickupOptIn;
+ // A dead Android projection requires fresh consent, never a fake ON state.
+ const enable=!settings.candyAutoPickupActive;
  settings.candyAutoPickupOptIn=enable;
  Native.setAutoCandyPickup(enable);
  closePanel();
