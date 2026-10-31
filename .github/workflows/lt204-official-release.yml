@@ -1,4 +1,5 @@
 name: LT204 official signed release - optional login and Shiny paused
+# Release requires integrated Home notes for versionCode 54411.
 on:
   push:
     branches: [main]
