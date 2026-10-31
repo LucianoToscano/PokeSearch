@@ -75,11 +75,11 @@ jobs:
             console.log(file+': '+count+' blocos JS validados');
           }
           NODE
-      - name: Executar vinte e duas suítes Node, incluindo regressões LT188/LT189 nas duas Pokébolas
+      - name: Executar suítes Node até LT194, incluindo P1/P2 e IV API/DOM
         shell: bash
         run: |
           set -euo pipefail
-          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js             app/tests/firebase-stats.test.js             app/tests/lt62-menu-visual-states.test.js             app/tests/lt104-dual-overlays.test.js             app/tests/lt112-dual-overlay-parity.test.js             app/tests/lt113-get-coords-canonical-dual.test.js             app/tests/lt165-pvp-costume-evolution-references.test.js             app/tests/lt167-chat-capture-uid-avatar-icons.test.js             app/tests/lt168-legacy-chat-identity-icon-matte.test.js             app/tests/lt168-home-data-import.test.js             app/tests/lt169-all-go-sprites-api-dom-parity.test.js             app/tests/lt188-dual-mode-filters.test.js             app/tests/lt189-api-default-schema.test.js             app/tests/lt190-provider-429-backoff-dual.test.js             app/tests/lt191-provider-backoff-24h.test.js             app/tests/lt192-iv-evidence-mode-transition.test.js             app/tests/lt193-api-decimal-iv-native.test.js; do
+          for suite in             app/tests/location-probe.test.js             app/tests/probe-smoke.test.js             app/tests/pokemon-picker.test.js             app/tests/login-entry.test.js             app/tests/overlay-ux.test.js             app/tests/visual-editor.test.js             app/tests/signing-contract.test.js             app/tests/firebase-stats.test.js             app/tests/lt62-menu-visual-states.test.js             app/tests/lt104-dual-overlays.test.js             app/tests/lt112-dual-overlay-parity.test.js             app/tests/lt113-get-coords-canonical-dual.test.js             app/tests/lt165-pvp-costume-evolution-references.test.js             app/tests/lt167-chat-capture-uid-avatar-icons.test.js             app/tests/lt168-legacy-chat-identity-icon-matte.test.js             app/tests/lt168-home-data-import.test.js             app/tests/lt169-all-go-sprites-api-dom-parity.test.js             app/tests/lt188-dual-mode-filters.test.js             app/tests/lt189-api-default-schema.test.js             app/tests/lt190-provider-429-backoff-dual.test.js             app/tests/lt191-provider-backoff-24h.test.js             app/tests/lt192-iv-evidence-mode-transition.test.js             app/tests/lt193-api-decimal-iv-native.test.js             app/tests/lt194-api-dom-iv-evidence-parity.test.js; do
             echo "::group::$suite"
             node "$suite"
             echo "::endgroup::"
@@ -101,6 +101,16 @@ jobs:
             app/tests/PopupTouchGeometryTest.java
           java -cp "$RUNNER_TEMP/pokesearch-popup-geometry" \
             com.lucianotoscano.pokesearchoverlay.PopupTouchGeometryTest
+      - name: Executar política nativa Java de IV (produção) sem Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pokesearch-iv-policy"
+          javac --release 17 -d "$RUNNER_TEMP/pokesearch-iv-policy" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/VerifiedIvMath.java \
+            app/tests/VerifiedIvMathTest.java
+          java -cp "$RUNNER_TEMP/pokesearch-iv-policy" \
+            com.lucianotoscano.pokesearchoverlay.VerifiedIvMathTest
       - name: Verificar checkout somente leitura
         shell: bash
         run: |
