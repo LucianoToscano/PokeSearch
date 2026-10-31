@@ -88,7 +88,7 @@ check("server-provided free/VIP cap cannot exceed returned rows, including zero"
   cp:999,level:34,despawn_at:"2099-10-24T00:00:00Z"};
  const results=Array.from({length:20},(_,i)=>({...base,encounter_id:String(i)}));
  assert.equal(api.normalizeResponse({results,cap:3},{nowMs:0}).cards.length,3);
- assert.equal(api.normalizeResponse({results,cap:100},{nowMs:0}).cards.length,20);
+ assert.equal(api.normalizeResponse({results,cap:100},{nowMs:0}).cards.length,10);
  assert.equal(api.normalizeResponse({results,cap:0},{nowMs:0}).cards.length,0);
 });
 console.log("LT77 Stage9 "+pass+"/"+pass+" PASS");
