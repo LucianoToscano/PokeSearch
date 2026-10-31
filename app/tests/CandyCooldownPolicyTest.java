@@ -53,6 +53,24 @@ public final class CandyCooldownPolicyTest {
         ok(CandyCooldownPolicy.timerLabel(0).contains("Pronto"),"green label");
         ok("0:08".equals(CandyCooldownPolicy.timerLabel(8)),"short label");
         ok("1:15:00".equals(CandyCooldownPolicy.timerLabel(4500)),"long label");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("","0,0.001",0,now),
+            "a copy without confirmed pickup never warns");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",0,now),
+            "unconfirmed timestamp cannot start cooldown");
+        ok(CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",now,now),
+            "confirmed pickup warns before early different candy");
+        ok(CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",now,now+14000),
+            "one second remaining must warn");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",now,now+15000),
+            "do not warn after wait reaches zero");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0",now,now),
+            "copying confirmed origin does not warn");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","bad",now,now),
+            "invalid target never generates a cooldown");
+        ok(!CandyCooldownPolicy.shouldWarnBeforeCopy("0,0","0,0.001",
+            now,now+CandyCooldownPolicy.MAX_AGE_MS+1),
+            "stale capture checkpoint is invalid");
+
         ok("✓".equals(CandyCooldownPolicy.compactTimerLabel(0)),"compact ready is check only");
         ok("0:08".equals(CandyCooldownPolicy.compactTimerLabel(8)),"compact 8 seconds");
         ok("1:15".equals(CandyCooldownPolicy.compactTimerLabel(75)),"compact 75 seconds");
