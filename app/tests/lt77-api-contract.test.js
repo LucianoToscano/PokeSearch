@@ -113,19 +113,20 @@ check("response mapping is structured, capped and secrets stripped",()=>{
  assert.ok(!JSON.stringify(r).includes("NEVER_EXPORT_ME"));
  assert.ok(!JSON.stringify(r).includes("encounter_id"));
 });
-check("verified free 10, VIP 25 and higher-tier result caps without local bypass",()=>{
+check("verified provider entitlement stays intact while local display caps at ten",()=>{
  const data=Array.from({length:100},(_,i)=>fixture(i+1));
  for(const cap of [10,25,50,75,100]){
    const r=contract.normalizeResponse({results:data.slice(0,cap),cap},{nowMs:0});
    assert.equal(r.ok,true,JSON.stringify(r));
-   assert.equal(r.cards.length,cap);
-   assert.equal(r.displayCap,cap);
-   assert.equal(new Set(r.cards.map(x=>x.sourceIndex)).size,cap);
+   assert.equal(r.cards.length,Math.min(cap,10));
+   assert.equal(r.displayCap,Math.min(cap,10));
+   assert.equal(r.serverCap,cap);
+   assert.equal(new Set(r.cards.map(x=>x.sourceIndex)).size,Math.min(cap,10));
  }
  const free=contract.normalizeResponse({results:data,cap:10},{nowMs:0});
  assert.equal(free.cards.length,10,"A client cannot raise server-authorized free cap");
  const withoutCap=contract.normalizeResponse({results:data.slice(0,25)},{nowMs:0});
- assert.equal(withoutCap.cards.length,25,"Display all verified rows actually returned");
+ assert.equal(withoutCap.cards.length,10,"Never exceed ten local cards without provider bypass");
  const dup=contract.normalizeResponse({results:[fixture(1),fixture(1),fixture(2)]},{nowMs:0});
  assert.equal(dup.cards.length,2);
 });

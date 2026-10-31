@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT194 — Correções em QA da auditoria LT193 (31/10/2026)
+
+- **Branch QA** `fix/lt194-iv-evidence-api-dom-parity-20261031`, derivada de LT193 oficial. Sem merge ou nova Release pública; LT193 continua versão distribuída.
+- API ON: resposta não vazia com todos os spawns rejeitados **não vira zero confirmado**; motivo `unverified-results`, preservação de cartões antigos e diagnóstico local com contagens/motivos sem segredos.
+- API ON/OFF: IV expresso explicitamente no card DOM não é sobrescrito por percentual derivado; validação harmonizada até 8 decimais e string com vírgula; `VerifiedIvMath.java` é usado por ambas as Pokébolas e é testado via `javac/java` contra 46 somas.
+- Limite local rígido **10 cartões por Pokébola** em API, Android e WebViews de exibição; sem aumentar o cap do provedor. Regressões Node/testes JVM e documentação no [registro LT194](LT194_AUDITORIA_CORRECOES_API_DOM_IV_20261031.md).
+- **Pendentes:** CI conclusivo, teste autenticado API e Samsung P1/P2. Não declarar homologação física nem assinatura de nova versão antes da evidência.
+
+---
+
 ## LT193 — IV da API com percentual decimal (30/10/2026)
 
 - **LT193 OFICIAL: 0.01.93 / versionCode 54398**, [Release/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.93-54398), APK 29.016.937 bytes, SHA-256 `bd52034270913ae7c48a14bfe82d64e1ab5cef7ad8588f7e3d56e4c615928546`, SOURCE_COMMIT `6995cd7b80633994d010f6d987f10b018ab4dc68`, [Actions #41025717103 SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/41025717103). **QA físico Samsung pendente.**

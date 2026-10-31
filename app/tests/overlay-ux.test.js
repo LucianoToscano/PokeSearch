@@ -114,7 +114,7 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -144,7 +144,7 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -186,7 +186,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,100):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -452,8 +452,8 @@ test("Despawn removes expired sprites then reloads the site even when AUTO is OF
 test("Expired 0:00 cards are never restored or announced as live",()=>{
  return service.includes('if(secs<0||secs>86400)return Long.MAX_VALUE;')&&
   service.includes('if(end<=now)continue;')&&
-  service.includes('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')&&
-  service.indexOf('JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));')<
+  service.includes('JSONArray inSortOrder=sortItems(retainVerifiedEncounterFields(unexpired));')&&
+  service.indexOf('JSONArray inSortOrder=sortItems(retainVerifiedEncounterFields(unexpired));')<
    service.indexOf('recordNewResults(sorted,');
 });
 test("Reopening menu immediately re-applies active visual states to recreated buttons",()=>{
@@ -1432,8 +1432,8 @@ test("PL-01 PSC-02 native IV gate runs before display, cache and alerts",()=>{
  const nativeGate=service.indexOf("if(card!=null&&verifiedTargetCriteria(card))verified.put(card)",apply);
  const newResults=service.indexOf("recordNewResults(sorted,",apply);
  return verify>=0&&nativeGate>apply&&newResults>nativeGate&&
-  service.includes("if(!matchesVerifiedIvPercent(observed,sum))return false;")&&
-  service.includes("if(!isAllowedIvPercent(actual))return false;")&&
+  service.includes("VerifiedIvMath.matchesVerifiedPercent(observed,sum)")&&
+  service.includes("VerifiedIvMath.matchesCriteria(mode,")&&
   !service.includes('return iv.isEmpty()||')&&!service.includes('if(pct.isEmpty())return true;')&&
   service.includes('differentVerifiedIv>0?"⚠ Resultados divergentes"')&&
   service.includes('"⚠ IV não comprovado"');
@@ -2267,7 +2267,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   keys.every(key=>dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,100):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");

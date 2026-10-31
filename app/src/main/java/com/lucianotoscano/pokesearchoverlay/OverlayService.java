@@ -391,6 +391,22 @@ public class OverlayService extends Service {
             "service-unavailable".equals(reason)||"invalid-results".equals(reason)||
             "api-unavailable".equals(reason)||"catalog-unavailable".equals(reason);
     }
+    // Sanitized counts only: never log JWT, coordinates, trainer IDs or raw response.
+    private void logApiEvidence(String state,JSONObject response){
+        if(response==null||!response.has("siteCount"))return;
+        JSONObject reasons=response.optJSONObject("rejectionCounts");
+        StringBuilder summary=new StringBuilder(
+            (isSecondaryOverlay()?"P2":"P1")+" state="+state+" mode="+mode);
+        for(String key:new String[]{"siteCount","found","eligible","rejected","expired","filtered","duplicates"}){
+            summary.append(" ").append(key).append("=")
+                .append(Math.max(0,Math.min(2000,response.optInt(key,0))));
+        }
+        for(String key:new String[]{"shape","identity","iv","cpLevel","metadata","despawn"}){
+            summary.append(" ").append(key).append("=")
+                .append(reasons==null?0:Math.max(0,Math.min(2000,reasons.optInt(key,0))));
+        }
+        BugReport.log(this,"API_IV_EVIDENCE",summary.toString());
+    }
     private void performAuthorizedApiSearch(int generation,boolean manual){
         if(authorizedApiCollector==null){
             authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
@@ -415,6 +431,7 @@ public class OverlayService extends Service {
             status(manual?"API: busca manual...":"API: pesquisando...");
             authorizedApiCollector.search(config,response->{
                 if(stopped||loginPaused||generation!=requestGeneration)return;
+                logApiEvidence(response.optBoolean("ok",false)?"accepted":"inconclusive",response);
                 if(!response.optBoolean("ok",false)){
                     String reason=response.optString("reason","api-unavailable");
                     if(reason.length()>50)reason="api-unavailable";
@@ -439,6 +456,7 @@ public class OverlayService extends Service {
                             "Busca recusada (HTTP 400/422). Confira filtros e vínculo do treinador.":
                             "login-required".equals(reason)?"Sessão expirada. Entre novamente no PoGoCoordinates.":
                             "access-denied".equals(reason)?"Acesso negado (HTTP 403). Confira permissões e vínculo.":
+                            "unverified-results".equals(reason)?"A API retornou ocorrências, mas nenhuma passou na validação. Não foram tratadas como zero Pokémon.":
                             "timeout".equals(reason)?"Tempo esgotado. Verifique a conexão.":
                             "Consulta API não validada ("+reason+").";
                         searchFailure("⚠ API: "+reason,
@@ -449,7 +467,7 @@ public class OverlayService extends Service {
                 JSONArray cards=response.optJSONArray("cards");
                 if(!"authorized-api-qa".equals(response.optString("source"))||
                     !response.optBoolean("criteriaConfirmed",false)||
-                    cards==null||cards.length()>100||
+                    cards==null||cards.length()>10||
                     response.optInt("searchId",-1)<0||
                     (response.optBoolean("requestedShiny",false)!=shiny)||
                      (shiny&&(!response.optBoolean("apiFilterAccepted",false)||
@@ -2952,61 +2970,16 @@ public class OverlayService extends Service {
         try{return Integer.parseInt(card.optString("rank","999999"));}
         catch(NumberFormatException ignored){return 999999;}
     }
-    // Match only canonical 0..45 IV percentages (integer, one/two
-    // decimals, or unrounded precision). Do not silently accept arbitrary
-    // nearby percentages; a known A/D/S must agree with the same IV sum.
+    // Shared production policy is a pure Java class with executable JVM tests.
     private static boolean matchesVerifiedIvPercent(double observed,int sum){
-        if(!Double.isFinite(observed)||observed<0||observed>100||sum<0||sum>45)
-            return false;
-        double exact=sum*100d/45d;
-        return Math.abs(observed-Math.round(exact))<0.0000001d||
-            Math.abs(observed-Math.round(exact*10d)/10d)<0.0000001d||
-            Math.abs(observed-Math.round(exact*100d)/100d)<0.0000001d||
-            Math.abs(observed-exact)<=0.0001d;
+        return VerifiedIvMath.matchesVerifiedPercent(observed,sum);
     }
     private boolean verifiedTargetCriteria(JSONObject card){
         if(card==null)return false;
-        // A configured site filter never proves the IV of an individual spawn.
-        // Independently validate site value(s) before showing or notifying.
-        if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)){
-            String raw=card.optString("iv","").trim();
-            String pct=card.optString("ivPercent","").trim();
-            boolean hasRaw=!raw.isEmpty();
-            int computed=-1,sum=-1;
-            if(hasRaw){
-                if(!raw.matches("(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])"))
-                    return false;
-                String[] stats=raw.split("/");
-                sum=Integer.parseInt(stats[0])+Integer.parseInt(stats[1])+Integer.parseInt(stats[2]);
-                computed=ivPercentageForSum(sum);
-            }
-            int actual=computed;
-            if(!pct.isEmpty()){
-                if(!pct.matches("(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?"))
-                    return false;
-                double observed;
-                try{observed=Double.parseDouble(pct.replace(',','.'));}
-                catch(NumberFormatException ignored){return false;}
-                if(sum>=0){
-                    if(!matchesVerifiedIvPercent(observed,sum))return false;
-                    actual=computed;
-                }else{
-                    // Percent-only source may confirm percent-mode only,
-                    // never a guessed 0/15/15 spread.
-                    actual=-1;
-                    for(int candidate=0;candidate<=45;candidate++){
-                        if(matchesVerifiedIvPercent(observed,candidate)){
-                            actual=ivPercentageForSum(candidate);break;
-                        }
-                    }
-                }
-                if(!isAllowedIvPercent(actual))return false;
-            }
-            if("iv".equals(mode))return actual==100;
-            if("raw".equals(mode))
-                return hasRaw&&(rawAttack+"/"+rawDefense+"/"+rawStamina).equals(raw);
-            return actual>=0&&within(actual,ivPercentMin,ivPercentMax);
-        }
+        if("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode))
+            return VerifiedIvMath.matchesCriteria(mode,
+                card.optString("iv",""),card.optString("ivPercent",""),
+                rawAttack,rawDefense,rawStamina,ivPercentMin,ivPercentMax);
         if("gl".equals(mode)||"ul".equals(mode)){
             int max="ul".equals(mode)?ulRank:glRank;
             int shown=rankForSort(card);
@@ -3241,7 +3214,7 @@ public class OverlayService extends Service {
                                 Integer.parseInt(parts[2]);
                             String pct=card.optString("ivPercent","").trim();
                             if(pct.isEmpty())differentVerifiedIv++;
-                            else if(pct.matches("(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?")){
+                            else if(pct.matches("(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,8})?")){
                                 try{
                                     double observed=Double.parseDouble(pct.replace(',','.'));
                                     if(matchesVerifiedIvPercent(observed,sum))
@@ -3287,7 +3260,10 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("marcar despawn",e);}
             unexpired.put(card);
         }
-        JSONArray sorted=sortItems(retainVerifiedEncounterFields(unexpired));
+        JSONArray inSortOrder=sortItems(retainVerifiedEncounterFields(unexpired));
+        JSONArray sorted=new JSONArray();
+        // Both P1 and P2 must cap display, cache, history and notifications.
+        for(int i=0;i<inSortOrder.length()&&i<10;i++)sorted.put(inSortOrder.opt(i));
         // An authenticated, criteria-verified API search is a REAL search,
         // not synthetic QA fixture data. Previously all API-backed encounters
         // skipped recordNewResults, so neither New nor Favorites ever alerted.

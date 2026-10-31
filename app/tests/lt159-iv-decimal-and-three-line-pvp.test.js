@@ -14,7 +14,7 @@ assert.deepEqual(verify({iv:"14/15/15",ivPercent:"97,78"}),{raw:"14/15/15",perce
 assert.equal(verify({iv:"14/15/15",ivPercent:"96.1"}),null);
 assert.deepEqual(verify({iv:"",ivPercent:"97.8"}),{raw:"",percent:98});
 assert.equal(verify({iv:"",ivPercent:"99.73"}),null);
-assert.ok(probe.includes("const ivMatch=body.match(/(\\d{1,3}(?:[.,]\\d{1,2})?)"),"DOM parser reads decimal source percent");
+assert.ok(probe.includes("const ivMatch=body.match(/(\\d{1,3}(?:[.,]\\d{1,8})?)"),"DOM parser reads decimal source percent");
 const dcStart=dock.indexOf("function verifiedSpawnIvPercent(");
 const dcEnd=dock.indexOf("function verifiedSpawnRawIv(",dcStart);
 assert.ok(dcStart>=0&&dcEnd>dcStart);

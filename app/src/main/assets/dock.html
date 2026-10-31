@@ -4520,7 +4520,7 @@ function verifiedSpawnIvPercent(card){
   sum=raw.split("/").map(Number).reduce((total,n)=>total+n,0);
  }
  if(pct){
-  if(!/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,2})?$/.test(pct))return null;
+  if(!/^(?:0|[1-9][0-9]?|100)(?:[.,][0-9]{1,8})?$/.test(pct))return null;
   const observed=Number(pct.replace(",","."));
   if(!Number.isFinite(observed)||observed<0||observed>100)return null;
   // Cross-check source precision against the exact, 1-decimal, 2-decimal,
@@ -4528,7 +4528,7 @@ function verifiedSpawnIvPercent(card){
   const match=indices=>indices.some(total=>{
    const exact=total*100/45;
    return observed===Math.round(exact)||observed===Number(exact.toFixed(1))||
-    observed===Number(exact.toFixed(2));
+    observed===Number(exact.toFixed(2))||Math.abs(observed-exact)<=0.0001;
   });
   if(sum!==null){
    if(!match([sum]))return null;
@@ -6698,7 +6698,7 @@ window.addEventListener("pagehide",releaseUiTimers);
 window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
- cards=Array.isArray(a)?a.slice(0,100):[];
+ cards=Array.isArray(a)?a.slice(0,10):[]; // max 10 per overlay, even for DOM source
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
