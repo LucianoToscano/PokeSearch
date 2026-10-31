@@ -25,7 +25,7 @@ assert(android.includes('menuParams.width=dp(h>34?("period".equals(panel)?142:15
 assert(android.includes('getSharedPreferences("prefs",MODE_PRIVATE)')&&
  android.includes('getString("visualPrefsJson","{}")'),
  "Candy reads the exact same visual preferences as Pokeballs");
-assert(android.includes("syncCandyMenuTheme()")&&android.includes("if(candyMenuVisible)syncCandyMenuTheme()"),
+assert(android.includes("syncCandyMenuTheme()")&&android.includes("if(candyMenuVisible){")&&android.includes("syncCandyMenuTheme();"),
  "Candy theme updates without closing or recreating the overlay");
 assert(android.includes('lastCandyMenuTheme="";syncCandyMenu()'),
  "Reopening WebView resends theme even when preferences are unchanged");
