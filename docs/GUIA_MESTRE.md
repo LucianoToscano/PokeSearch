@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT206 — RETRY-AFTER 24H, DOCE RARO E CONTINUIDADE (31/10/2026)
+
+- **Base real:** LT205, não LT190. O patch LT191 de 24 horas já integrava o transporte, a sessão WebView e o serviço das Pokébolas. Nenhum downgrade ou reaplicação insegura do patch antigo.
+- **Correção nova (P1/P2):** `app/src/main/assets/detail.html` tinha teto visual residual `retrySeconds<=3600`, ocultando a espera quando o servidor enviava `7200` ou `86400`. Corrigido para `86400`, com contador compacto em horas/minutos/segundos; não muda o backoff efetivo do provedor.
+- **Doce Raro:** `rare_candy_probe.js` aceita agora Retry-After numérico e data HTTP; uma data válida não reduz a espera a 60s. Preservados JWT exclusivo do WebView, limite de 10, contas P1/P2, cooldown de captura separado e proibição de contornar HTTP 429.
+- **QA:** [PR #174](https://github.com/LucianoToscano/PokeSearch/pull/174) mesclada em `e0bf6910b31187fafd44e6b82a3951147256835f`. Node [#41239338926](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239338926), regressões Node [#41239338897](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239338897), Java [#41239338778](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239338778) e OTA [#41239338885](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239338885) SUCCESS. Beta privada separada falhou ao gerar assinatura temporária (`POKE_RELEASE_CERT_SHA256` ausente), sem afetar o workflow oficial. [Checklist e inventário](LT206_AUDITORIA_CONTINUIDADE_20261031.md).
+- **Release oficial LT206:** `0.02.06` / versionCode `54413`, [workflow de produção #41239515825](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239515825) SUCCESS, [Release latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.06-54413) estável. [APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.06-54413/PokeSearch-v0.02.06-LT.apk) **29.264.103 bytes**, SHA-256 `15513c98364fa6a4ca3f1909e170edb6978a918de8cabdbd52863ebf0aa8b75a`, assinatura v2 certificada SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, SOURCE_COMMIT `7eb57cf3e327c89b99d3e986c4607bf062f832a5`.
+- **Google Drive:** [PokeSearch LT206 — APK assinado e relatórios](https://drive.google.com/file/d/1s8Tyvvnl_9Ppt-q5ixvZJiAEks7_kluu/view?usp=drivesdk), pasta `PokeSearch_App`; ZIP de **26.925.022 bytes**, SHA-256 `b573f1bcfb28c1c9148a27c238914f0ee28d02747b39e7ee294a5f385af725cc`, CRC válido e APK interno com hash idêntico ao Release.
+- **Limites:** atualização disponível pelo `releases/latest`, mas sem instalação silenciosa. Homologação física Samsung e API PoGoCoordinates autenticada ainda não realizadas. `dock.html` e 227 workflows históricos não foram refatorados/removidos em massa: exigem mudança faseada com QA, mapa de dependências e rollback.
+
+---
+
 ## LT205 — DOCE RARO, SESSÃO CORRETA E API 429 (31/10/2026)
 
 - **Escopo:** correção de erro observado em capturas do Samsung: o site PoGoCoordinates mostrava 10 Doces Raros, mas o overlay mostrava `Aguardando liberação`. A mensagem significa que o coletor recebeu HTTP 429 (ou que seu prazo `Retry-After` ainda está em curso), e **não** o cooldown de captura do jogo. A sessão da WebView pode divergir da sessão do navegador externo.
