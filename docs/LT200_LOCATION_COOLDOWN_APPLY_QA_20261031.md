@@ -48,3 +48,11 @@ diferentes**, não comprovam falha específica das coordenadas.
   do provedor não aparecem nos relatórios.
 - Testes: `node app/tests/lt200-api-dom-failures.test.js`, contrato de
   transporte e sessão, testes de seleção de espécies + CI Android.
+
+## Publicação oficial verificada (31/10/2026)
+
+- Merge [PR #167](https://github.com/LucianoToscano/PokeSearch/pull/167), commit `2887d8bf1dfe7b4cd09fbb7104493f31132d57cd`.
+- [GitHub Actions #41225317922](https://github.com/LucianoToscano/PokeSearch/actions/runs/41225317922) **SUCCESS**; testes, Gradle/R8, assinatura original v2 e release/hash completos.
+- [Release oficial LT200 (latest)](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.00-54407) — APK 29.259.867 bytes, SHA-256 `8ecab4ad92fe4cb161606767962a858f03196b3e7a6dd3a369879660f5c8b6bb`.
+- [Google Drive — ZIP assinado/relatórios](https://drive.google.com/file/d/1yvV4wTNehuiVnpDaFjpeXRAmzE3RYYsm/view?usp=drivesdk) — 26.920.489 bytes, SHA-256 `fcd99f9ef70017481a61f537d20744e78f25ec818779ae29751d609fea06baa0`.
+- **Ainda não homologado:** autenticação, localização real, duas Pokébolas e comportamento ao vivo das respostas HTTP 400/422 e portal Pokémon no aparelho. Capturas anteriores à instalação da LT200 não servem como teste da versão nova.
