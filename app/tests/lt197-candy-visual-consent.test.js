@@ -60,7 +60,7 @@ assert.match(candy,/recordCollectedCandy\(point,false\)/);
 assert.match(candy,/recordCollectedCandy\(point,true\)/);
 assert.match(candy,/copiedAt==prefs\.getLong\("selectedCandyCopyAtMs",-1\)/);
 assert.match(candy,/CandyScreenCaptureService\.isActive\(\)/);
-assert.match(candy,/putLong\("selectedCandyCopyAtMs",System\.currentTimeMillis\(\)\)/);
+assert.ok(candy.includes('putLong("selectedCandyCopyAtMs",copiedNow)'));
 assert.match(candy,/setAutoCandyPickup\(boolean enable\)/);
 assert.match(candy,/stopService\(new Intent\(this,CandyScreenCaptureService\.class\)\)/);
 assert.match(menu,/function toggleAutoCandy\(\)/);
