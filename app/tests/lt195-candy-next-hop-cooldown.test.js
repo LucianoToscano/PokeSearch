@@ -23,7 +23,7 @@ assert.ok(policy.includes("static double distanceMeters(String from,String to)")
 assert.match(candy,/CandyCooldownPolicy\.remainingSeconds\(/);
 assert.match(candy,/cooldownLabels\.entrySet\(\)/);
 assert.match(candy,/postDelayed\(this,1000L\)/);
-assert.match(candy,/0xFFAFC6DA/);
+assert.match(candy,/0xFF91C6FF/); // compact blue origin marker, LT196
 assert.match(candy,/clearCandyCooldown\(\)/);
 assert.match(html,/Native\.clearCandyCooldown\(\)/);
 assert.match(html,/resetCooldown\(\)/);
