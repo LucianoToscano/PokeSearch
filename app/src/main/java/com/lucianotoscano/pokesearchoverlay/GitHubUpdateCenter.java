@@ -327,7 +327,7 @@ public final class GitHubUpdateCenter {
         if(activity.isFinishing()||activity.isDestroyed())return;
         new AlertDialog.Builder(activity)
             .setTitle("Instalação não iniciada")
-            .setMessage(reason+"\\n\\nSe o instalador do Samsung fechar, baixe o APK oficial pelo navegador e abra em Meus Arquivos → Downloads. Não desinstale a versão atual.")
+            .setMessage(reason+"\n\nSe o instalador do Samsung fechar, baixe o APK oficial pelo navegador e abra em Meus Arquivos → Downloads. Não desinstale a versão atual.")
             .setPositiveButton("Abrir APK no navegador",(d,w)->openOfficialDownload(activity,url))
             .setNegativeButton("Fechar",null).show();
     }
