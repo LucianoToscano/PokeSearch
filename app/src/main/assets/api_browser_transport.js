@@ -206,6 +206,7 @@
    if(parsed.siteCount>0&&parsed.cards.length===0)
     return {ok:false,reason:"unverified-results",siteCount:parsed.siteCount,
      rejected:parsed.rejected,expired:parsed.expired,filtered:parsed.filtered,
+     eligible:parsed.eligible,duplicates:parsed.duplicates,
      rejectionCounts:parsed.rejectionCounts};
    // Store only codes belonging to sanitized, live results.
    const all=result.body.results;
