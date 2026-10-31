@@ -1007,19 +1007,22 @@ public final class RareCandyOverlayService extends Service {
             "Copiado. Ao receber o doce no jogo, toque no ✓ da sprite ou segure o item.",
             Toast.LENGTH_LONG).show();
         render();
-        // Trigger once on the transition to ALL visible candies copied. A
-        // repeated tap on an already-gray candy must not generate a loop if
-        // the provider returns the same ten coordinates in the next response.
-        if(newlyCopied&&cards.size()==10&&lastAllCopiedRefreshGeneration!=generation){
+    }
+    private void refreshIfAllCollected(){
+        // Never replace live uncaptured candies merely because coordinates
+        // were copied; refresh once after ten confirmed pickups.
+        if(cards.size()==10&&lastAllCopiedRefreshGeneration!=generation){
             long now=SystemClock.elapsedRealtime();
             int visibleCount=0;
-            boolean hasUncopied=false;
+            boolean hasUncollected=false;
             for(Candy candidate:cards.values()){
                 if(candidate.deadline<=now)continue;
                 visibleCount++;
-                if(!copied.contains(candidate.coords)){hasUncopied=true;break;}
+                if(!collected.containsKey(candidate.coords)){
+                    hasUncollected=true;break;
+                }
             }
-            if(visibleCount==10&&!hasUncopied){
+            if(visibleCount==10&&!hasUncollected){
                 lastAllCopiedRefreshGeneration=generation;
                 refresh(true);
             }
