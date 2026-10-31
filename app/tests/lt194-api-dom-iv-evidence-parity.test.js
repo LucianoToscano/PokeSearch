@@ -64,6 +64,15 @@ assert.equal(norm.displayCap,10);
 const many=api.normalizeResponse({results:Array.from({length:20},(_,i)=>({...base,
  encounter_id:"spawn-"+i})),cap:100},{nowMs:0});
 assert.equal(many.cards.length,10,"never exceed ten even if provider says 100");
+assert.equal(many.eligible,20,"scan all returned rows for diagnostics");
+const lateInvalid=api.normalizeResponse({results:[
+ ...Array.from({length:20},(_,i)=>({...base,encounter_id:"valid-"+i})),
+ wrongRaw],cap:100},{nowMs:0});
+assert.equal(lateInvalid.cards.length,10);
+assert.equal(lateInvalid.eligible,20);
+assert.equal(lateInvalid.rejected,1,"do not hide invalid rows after display cap");
+assert.equal(lateInvalid.rejectionCounts.iv,1);
+
 function createClient(results,cap=10){
  return transport.createClient({
   fetchImpl:async()=>({status:200,headers:{get:()=>null},
