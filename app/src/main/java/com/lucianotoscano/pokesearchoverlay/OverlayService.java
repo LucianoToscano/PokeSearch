@@ -459,6 +459,10 @@ public class OverlayService extends Service {
                         // key, never provider messages, JWTs, trainer IDs or
                         // coordinate values. Do not blindly retry a 400/422.
                         String key=response.optString("rejectedField","");
+                        String part=response.optString("rejectedPart","");
+                        // Only a provider-validated, allowlisted error LOCATION
+                        // is shown. No JWT, request body or server msg is logged.
+                        if(!part.equals("body")&&!part.equals("header"))key="";
                         String label=switch(key){
                             case "pokemon_ids","species_forms","forms",
                                  "blacklist_pokemon_ids","blacklist_species_forms",
@@ -473,15 +477,20 @@ public class OverlayService extends Service {
                             case "level_min","level_max" -> "Nível";
                             case "sort" -> "Ordenação";
                             case "shiny_only","shiny_account" -> "Shiny/treinador";
+                            case "trainer_code" -> "Código do treinador";
+                            case "authorization" -> "Autenticação";
                             case "sizes","gender","weather_id","boosted",
                                  "min_ttl","background_only" -> "Filtros";
                             default -> "";
                         };
                         int count=Math.max(0,Math.min(20,response.optInt("rejectedFieldCount",0)));
                         BugReport.log(this,"API_SCHEMA",
-                            (isSecondaryOverlay()?"P2":"P1")+" HTTP="+code+
+                            (isSecondaryOverlay()?"P2":"P1")+
+                            " method=POST path=/search HTTP="+code+
+                            " part="+(part.equals("header")?"header":part.equals("body")?"body":"unknown")+
                             " field="+(label.isEmpty()?"unknown":key)+
-                            " fields="+count+" mode="+mode);
+                            " fields="+count+" mode="+mode+
+                            " auth=present-or-absent-not-logged");
                         searchFailure("⚠ API"+(code>0?" "+code:"")+": "+
                             (label.isEmpty()?(count>1?"vários campos":"requisição rejeitada"):label),
                             "Provedor rejeitou a busca"+
@@ -2512,6 +2521,11 @@ public class OverlayService extends Service {
         return PogoAccountSlots.hasTrainer(this,
             PogoAccountSlots.assigned(this,isSecondaryOverlay()),
             PogoAccountSlots.trainer(this,isSecondaryOverlay()));
+    }
+    private boolean shinyServiceAvailable(){
+        // Hard-coded temporary provider capability switch. Do not infer that
+        // login or a historic trainer binding re-enables the remote feature.
+        return false;
     }
     private boolean siteConfirmsShinyAccount(JSONObject session){
         return "autenticada".equals(session.optString("auth","")) &&
@@ -5017,6 +5031,15 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void shiny(){handler.post(()->{
             if(stopped||loginPaused)return;
+            // Search works anonymously or logged in on either Pokébola.
+            // Provider disabled Shiny for now; this guard does NOT request
+            // authentication, alter saved trainers or change normal searches.
+            if(!shinyServiceAvailable()){
+                shiny=false;shinyVerified=false;
+                overlayPrefs().edit().putBoolean("shiny",false).apply();
+                status("✨ Shiny temporariamente indisponível no PoGoCoordinates");
+                update();return;
+            }
             shiny=!shiny;
             overlayPrefs().edit().putBoolean("shiny",shiny).apply();
             replaceActiveFilterSearch();
@@ -5396,8 +5419,11 @@ public class OverlayService extends Service {
         ivPercentMin=Math.max(0,Math.min(100,pref.getInt("ivPercentMin",0)));
         ivPercentMax=Math.max(ivPercentMin,
             Math.min(100,pref.getInt("ivPercentMax",100)));
-        shiny=overlayPrefs().getBoolean("shiny",false);
-        if(!shiny)shinyVerified=false;
+        // Shiny is currently unavailable at PoGoCoordinates. Clear the
+        // active query flag, but preserve previously linked trainer records.
+        shiny=false;
+        shinyVerified=false;
+        overlayPrefs().edit().putBoolean("shiny",false).apply();
         update();
         return START_STICKY;
     }

@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         secondTrainerCode,secondTrainerHeading;
     private ImageView secondAvatar,secondTeamBadge,secondAvatarFrame;
     private ImageButton secondTrainerSelectButton;
-    private LinearLayout secondAccountConnected,secondAccountGuest,secondTrainerCodeGroup;
+    private LinearLayout secondAccountConnected,secondAccountGuest,secondTrainerCodeGroup,secondTrainerPanel;
     private Button secondAccountLogin,secondAccountManage,secondAccountLogout,secondTrainerAction;
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
@@ -799,7 +799,7 @@ public class MainActivity extends Activity {
             .setNegativeButton("Cancelar",null)
             .setPositiveButton("Desconectar",(dialog,which)->logoutSecondAccount()).show());
 
-        LinearLayout secondTrainerPanel=new LinearLayout(this);
+        secondTrainerPanel=new LinearLayout(this);
         LinearLayout.LayoutParams secondTrainerLp=new LinearLayout.LayoutParams(-1,-2);
         secondTrainerLp.topMargin=d(13);
         secondAccountConnected.addView(secondTrainerPanel,secondTrainerLp);
@@ -1129,6 +1129,7 @@ public class MainActivity extends Activity {
             secondAccountGuest.setVisibility(connected||!available?View.GONE:View.VISIBLE);
         if(secondAccountConnected!=null)
             secondAccountConnected.setVisibility(connected?View.VISIBLE:View.GONE);
+        if(secondTrainerPanel!=null)secondTrainerPanel.setVisibility(View.GONE);
         if(secondAccountLogin!=null)secondAccountLogin.setEnabled(available);
         if(secondAccountManage!=null)secondAccountManage.setEnabled(available);
         if(secondAccountSummary!=null)
@@ -1180,32 +1181,27 @@ public class MainActivity extends Activity {
             TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
             if(label==null)continue;
             int slot=PogoAccountSlots.assigned(this,secondary);
-            String chosen=PogoAccountSlots.trainer(this,secondary);
-            label.setText((secondary?"P2":"P1")+" · Conta "+slot+
-                (chosen.matches("[0-9]{12}")?
-                    " · "+(showCode?"••••"+chosen.substring(8):"XXXX"):" · Treinador —"));
+            label.setText((secondary?"P2":"P1")+" · Conta "+slot);
         }
     }
     private void showPokeballAccountChoice(boolean secondary){
         int assigned=PogoAccountSlots.assigned(this,secondary);
-        int trainers1=selectableTrainerCount(PogoAccountSlots.prefs(this,1));
-        int trainers2=selectableTrainerCount(PogoAccountSlots.prefs(this,2));
         String[] choices={
-            "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
+            "Conta 1 · busca livre",
             "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
-                trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
+                "conta conectada":"busca livre")
         };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
             .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
                 dialog.dismiss();
                 int slot=which+1;
-                if(slot==2&&(!PogoAccountSlots.supportsSecond()||
-                    !PogoAccountSlots.loggedIn(this,2))){
-                    Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
+                if(slot==2&&!PogoAccountSlots.supportsSecond()){
+                    Toast.makeText(this,"Conta 2 não suportada neste WebView",Toast.LENGTH_LONG).show();
                     return;
                 }
-                choosePokeballTrainer(secondary,slot);
+                PogoAccountSlots.bindAccountOnly(this,secondary,slot);
+                refreshSessionSummary();
             }).setNegativeButton("Cancelar",null).show();
     }
     private void choosePokeballTrainer(boolean secondary,int account){
@@ -2256,7 +2252,7 @@ public class MainActivity extends Activity {
         if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
         if(sessionHint!=null)sessionHint.setText(
-            "Buscas comuns sem login · Shiny exige treinador vinculado");
+            "Busca livre com ou sem login · Shiny temporariamente indisponível");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getBoolean("homeShowPogoAccountName",true)?
                 prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
@@ -2271,7 +2267,9 @@ public class MainActivity extends Activity {
             code=prefs.getString("profileTrainerCode","");
         boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}")&&
             "linked".equals(prefs.getString("profileTrainerState","unknown"));
-        if(trainerPanel!=null)trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE);
+        // Account-only mode: no trainer is required for IV/PvP searches.
+        // Preserve stored verified trainers for future service restoration.
+        if(trainerPanel!=null)trainerPanel.setVisibility(View.GONE);
         if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE);
         if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(linked?View.VISIBLE:View.INVISIBLE);
         if(trainerCopyButton!=null)trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE);
@@ -2523,6 +2521,76 @@ public class MainActivity extends Activity {
             }
         });
     }
+    // Recovery when the official React /profile DOM never hydrates into the
+    // old "Trainer code" visual layout. Only the authenticated, READ-ONLY
+    // /users/me response may confirm a linked trainer. Each account remains
+    // on its own WebView profile; no cookies/JWTs leave that site origin.
+    private void recoverOfficialTrainerFromAccountApi(WebView view,int generation){
+        final int slot=activeLoginSlot;
+        if(view!=website||loginDialog==null||!loginDialog.isShowing()||
+           generation!=loginPageGeneration||!PogoAccountSlots.loggedIn(this,slot))return;
+        AuthorizedApiCollector reader=new AuthorizedApiCollector(view,getAssets(),
+            new android.os.Handler(android.os.Looper.getMainLooper()));
+        reader.accountStatus(result->{
+            if(view!=website||slot!=activeLoginSlot||generation!=loginPageGeneration||
+               loginDialog==null||!loginDialog.isShowing())return;
+            if(result.optBoolean("ok",false)&&
+               "authenticated".equals(result.optString("auth",""))){
+                String state=result.optString("trainerState","unknown");
+                if("linked".equals(state)){
+                    JSONArray list=result.optJSONArray("trainers");
+                    JSONObject first=list!=null&&list.length()>0?list.optJSONObject(0):null;
+                    SharedPreferences prefs=PogoAccountSlots.prefs(this,slot);
+                    String selected=prefs.getString("profileSelectedTrainerCode","");
+                    JSONObject chosen=null;
+                    if(list!=null)for(int i=0;i<list.length()&&i<20;i++){
+                        JSONObject item=list.optJSONObject(i);
+                        if(item!=null&&selected.equals(item.optString("code",""))){
+                            chosen=item;break;
+                        }
+                    }
+                    if(chosen==null)chosen=first;
+                    SharedPreferences.Editor edit=prefs.edit();
+                    if("linked".equals(state)&&chosen!=null){
+                        String code=chosen.optString("code","");
+                        String name=chosen.optString("name","");
+                        String team=chosen.optString("team","");
+                        String level=chosen.optString("level","");
+                        if(code.matches("[0-9]{12}")&&
+                           name.matches("[A-Za-z][A-Za-z0-9_.-]{2,39}")&&
+                           team.matches("Mystic|Valor|Instinct")&&
+                           level.matches("[0-9]{1,2}")){
+                            edit.putString("profileTrainerState","linked")
+                                .putString("profileTrainerList",list.toString())
+                                .putString("profileTrainerCode",code)
+                                .putString("profileSelectedTrainerCode",code)
+                                .putString("profileTrainerName",name)
+                                .putString("profileTrainerTeam",team)
+                                .putString("profileTrainerLevel",level)
+                                .putString("profileTrainerDetails","Nível "+level+" · "+team);
+                        }
+                    }
+                    // This read-only refresh never removes an existing trainer.
+                    // An unknown, empty or mismatched API schema must not
+                    // overwrite the last known verified account information.
+                    edit.apply();
+                    BugReport.log(this,"PROFILE_API","Conta "+slot+
+                        " · perfis ativos confirmados="+(list==null?0:list.length()));
+                    notifyOverlaySessionReady();
+                }
+            }
+            if(loginCover!=null)loginCover.setVisibility(View.GONE);
+            refreshSessionSummary();
+            if(!"manage".equals(loginPurpose)&&loginDialog!=null&&loginDialog.isShowing()){
+                loginDialog.dismiss();
+            }else if("manage".equals(loginPurpose)&&loginWaitLabel!=null){
+                String status=result.optString("trainerState","unknown");
+                loginWaitLabel.setText("linked".equals(status)?
+                    "Treinador confirmado pela conta oficial.":
+                    "Conta consultada; vínculo ainda não confirmado. Confira Gerenciar.");
+            }
+        });
+    }
     private void captureOfficialProfile(WebView view,int generation){
         if(view!=website||loginDialog==null||!loginDialog.isShowing()||
            !("manage".equals(loginPurpose)||loginAutoReturnQueued)||
@@ -2635,9 +2703,8 @@ public class MainActivity extends Activity {
                     view.postDelayed(()->captureOfficialProfile(view,generation),600L);
                 }else{
                     profileCaptureInProgress=false;
-                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    Toast.makeText(this,"Login reconhecido. Não foi possível verificar o perfil; confira no site oficial.",
-                        Toast.LENGTH_LONG).show();
+                    if(loginWaitLabel!=null)loginWaitLabel.setText("Conferindo vínculo na API oficial…");
+                    recoverOfficialTrainerFromAccountApi(view,generation);
                 }
                 return;
             }
@@ -2650,9 +2717,8 @@ public class MainActivity extends Activity {
                     view.postDelayed(()->captureOfficialProfile(view,generation),600L);
                 }else{
                     profileCaptureInProgress=false;
-                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    Toast.makeText(this,"Discord/Google autorizado. Vínculo do treinador ainda não confirmado; confira no site.",
-                        Toast.LENGTH_LONG).show();
+                    if(loginWaitLabel!=null)loginWaitLabel.setText("Conferindo treinador na API oficial…");
+                    recoverOfficialTrainerFromAccountApi(view,generation);
                 }
                 return;
             }

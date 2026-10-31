@@ -1957,7 +1957,8 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  const update=main.split("private void refreshSessionSummary(){")[1]?.split("private void askLogout(){")[0]||"";
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return update.includes('code.matches("[0-9]{12}")')&&
-  update.includes('trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE)')&&
+  update.includes('trainerPanel.setVisibility(View.GONE)')&&
+  update.includes('code.matches("[0-9]{12}")')&&
   update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
   main.includes("A remoção precisa ser confirmada no perfil oficial")&&
   main.includes('readAsset("profile_summary.js")')&&

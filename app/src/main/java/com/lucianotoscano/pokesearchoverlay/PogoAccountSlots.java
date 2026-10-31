@@ -53,6 +53,22 @@ final class PogoAccountSlots {
             .putExtra("overlay",overlayNumber(secondary));
         context.sendBroadcast(changed);
     }
+    /**
+     * October 2026 provider state: account-only selection, no active trainer
+     * entitlement in the app. Preserve every previous trainer preference for
+     * possible future support; switching account must not clear saved links.
+     */
+    static void bindAccountOnly(Context context,boolean secondary,int account){
+        if(account!=1&&account!=2)throw new IllegalArgumentException("account");
+        if(account==2&&!supportsSecond())
+            throw new IllegalStateException("WebView cannot isolate account 2");
+        context.getSharedPreferences("prefs",Context.MODE_PRIVATE).edit()
+            .putInt(secondary?"pogoOverlayAccount2":"pogoOverlayAccount1",account).apply();
+        android.content.Intent changed=new android.content.Intent(CHANGE)
+            .setPackage(context.getPackageName())
+            .putExtra("overlay",overlayNumber(secondary));
+        context.sendBroadcast(changed);
+    }
     static boolean loggedIn(Context context,int slot){
         return "autenticada".equals(prefs(context,slot).getString("sessionStatus",""));
     }

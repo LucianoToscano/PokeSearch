@@ -25,30 +25,30 @@ function client(reply){
  const t422=client(response(422,{detail:[{loc:["body","species_forms",0],
   msg:"Bad value: "+secret,input:{private:secret},type:"model_attributes_type"}]}));
  const r=await t422.c.search(common);
- assert.deepEqual(r,{ok:false,reason:"invalid-request",httpStatus:422,rejectedField:"species_forms"});
+ assert.deepEqual(r,{ok:false,reason:"invalid-request",httpStatus:422,endpoint:"search",rejectedPart:"body",rejectedField:"species_forms"});
  assert.equal(t422.calls(),1,"No implicit retry or unauthorized fallback");
  assert.ok(!JSON.stringify(r).includes(secret));
  const t400=client(response(400,{detail:{message:secret}}));
- assert.deepEqual(await t400.c.search(common),{ok:false,reason:"invalid-request",httpStatus:400});
+ assert.deepEqual(await t400.c.search(common),{ok:false,reason:"invalid-request",httpStatus:400,endpoint:"search"});
  const unknown=client(response(422,{detail:[{loc:["body","password"],msg:secret,input:secret}]}));
- assert.deepEqual(await unknown.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422});
+ assert.deepEqual(await unknown.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,endpoint:"search"});
  const ambiguous=client(response(422,{detail:[
   {loc:["body","pokemon_ids"],msg:secret},{loc:["body","cp_min"],msg:secret}
  ]}));
- assert.deepEqual(await ambiguous.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,rejectedFieldCount:2});
+ assert.deepEqual(await ambiguous.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,endpoint:"search",rejectedFieldCount:2});
  const nested=client(response(422,{detail:{errors:[{loc:["body","shiny_account"],msg:secret,input:secret}]}}));
- assert.deepEqual(await nested.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,rejectedField:"shiny_account"});
+ assert.deepEqual(await nested.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,endpoint:"search",rejectedPart:"body",rejectedField:"shiny_account"});
  const longErrors=client(response(422,{errors:[
   {loc:["body","species_forms"],msg:secret,input:secret},
   {loc:["body","radius_km"],msg:secret,input:secret},
   {loc:["body","shiny_account"],msg:secret,input:secret}
  ]}));
  const many=await longErrors.c.search(common);
- assert.deepEqual(many,{ok:false,reason:"invalid-request",httpStatus:422,rejectedFieldCount:3});
+ assert.deepEqual(many,{ok:false,reason:"invalid-request",httpStatus:422,endpoint:"search",rejectedFieldCount:3});
  assert.ok(!JSON.stringify(many).includes(secret));
  const tooLarge=client({status:422,headers:{get:()=>String(5000)},
   text:async()=>{throw Error("Must never read oversized response");}});
- assert.deepEqual(await tooLarge.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422});
+ assert.deepEqual(await tooLarge.c.search(common),{ok:false,reason:"invalid-request",httpStatus:422,endpoint:"search"});
  assert.match(session,/r\.httpStatus===400\|\|r\.httpStatus===422/);
  assert.match(session,/diagnostic\.rejectedField=r\.rejectedField/);
  assert.match(native,/BugReport\.log\(this,"API_SCHEMA"/);

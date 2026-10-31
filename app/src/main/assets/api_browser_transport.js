@@ -13,6 +13,7 @@
  const API="https://coordinates-api.pokemongopro.com";
  const SEARCH_URL=API+"/search";
   const ACCOUNT_URL=API+"/users/me";
+ const TRAINER_URL=API+"/trainer";
  const MAX_RESPONSE_BYTES=1024*1024;
  const TOKEN_RE=/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/;
  const CODE_RE=/^[A-Za-z0-9_-]{12,2048}$/;
@@ -28,7 +29,7 @@
  function safeMethod(verb,url){
   if(verb==="POST")return url===SEARCH_URL;
   if(verb==="GET"){
-   if(url===ACCOUNT_URL)return true;
+   if(url===ACCOUNT_URL||url===TRAINER_URL)return true;
    if(!url.startsWith(API+"/reveal/"))return false;
    return CODE_RE.test(url.slice((API+"/reveal/").length));
   }
@@ -76,15 +77,19 @@
    "iv_percent_min","iv_percent_max","cp_min","cp_max",
    "level_min","level_max","center_lat","center_lng","radius_km",
    "weather_id","boosted","gender","sizes","sort","min_ttl",
-   "shiny_only","shiny_account","background_only","location","blacklist_pokemon_ids",
+   "shiny_only","shiny_account","background_only","location","trainer_code","blacklist_pokemon_ids",
    "blacklist_species_forms","blacklist_forms"
   ]);
-  async function httpFailure(response){
+  async function httpFailure(response,endpoint){
    const statusCode=response.status;
    if(statusCode!==403&&statusCode!==400&&statusCode!==422)
     return fail(status(statusCode));
    const base=fail(status(statusCode));
-   if(statusCode===400||statusCode===422)base.httpStatus=statusCode;
+   if(statusCode===400||statusCode===422){
+    base.httpStatus=statusCode;
+    // No arbitrary URL, query, trainer code, or server error body.
+    base.endpoint=["search","account","reveal"].includes(endpoint)?endpoint:"unknown";
+   }
    if(typeof response.text!=="function")return base;
    // Never accept unknown error shape, long data, or arbitrary provider text.
    try{
@@ -111,16 +116,23 @@
     const errors=Array.isArray(nested)?nested:
       Array.isArray(nested?.errors)?nested.errors:
       Array.isArray(body?.errors)?body.errors:[];
-    const fields=[...new Set(errors.map(e=>{
-     if(!e||!Array.isArray(e.loc)||e.loc.length<2||
-        e.loc[0]!=="body")return "";
-     const key=e.loc[1];
-     return typeof key==="string"&&DIAGNOSTIC_FIELDS.has(key)?key:"";
+    const locations=[...new Set(errors.map(e=>{
+     if(!e||!Array.isArray(e.loc)||e.loc.length<2)return "";
+     const part=e.loc[0],key=e.loc[1];
+     if(part==="header"&&typeof key==="string"&&
+        key.toLowerCase()==="authorization")return "header:authorization";
+     if(part==="body"&&typeof key==="string"&&
+        DIAGNOSTIC_FIELDS.has(key))return "body:"+key;
+     return "";
     }).filter(Boolean))];
-    // Do not guess a specific cause when multiple fields were rejected.
-    // Keep only a bounded count, not the input contents or field values.
-    if(fields.length===1)base.rejectedField=fields[0];
-    if(fields.length>1)base.rejectedFieldCount=Math.min(20,fields.length);
+    // A server can return header.authorization MISSING rather than 401.
+    // Only the literal allowlisted key is forwarded; never the header value.
+    if(locations.length===1){
+      const [part,key]=locations[0].split(":");
+      base.rejectedPart=part;
+      base.rejectedField=key;
+    }
+    if(locations.length>1)base.rejectedFieldCount=Math.min(20,locations.length);
    }catch(_){}
    return base;
   }
@@ -135,7 +147,8 @@
   }
   async function request(method,url,data,withAuth,timeoutMs){
    if(!originValid()||disposed||!safeMethod(method,url))return fail("invalid-origin");
-   const kind=method==="POST"?"search":url===ACCOUNT_URL?"account":"reveal";
+   const kind=method==="POST"?"search":
+     (url===ACCOUNT_URL||url===TRAINER_URL)?"account":"reveal";
    // Per-endpoint backoff; no retries or limit bypass when the server says 429.
    if(dateNow()<retryUntil[kind])return fail("rate-limited");
    let token=null;
@@ -178,7 +191,7 @@
      // Invalid site JWT: clear it on the authenticated site origin; never bypass the denial.
      try{if(d.storage&&typeof d.storage.removeItem==="function")d.storage.removeItem("jwt");}catch(_){}
     }
-    if(response.status!==200)return await httpFailure(response);
+    if(response.status!==200)return await httpFailure(response,kind);
     const len=response.headers&&response.headers.get&&Number(response.headers.get("content-length"));
     if(Number.isFinite(len)&&len>MAX_RESPONSE_BYTES)return fail("response-too-large");
     if(typeof response.text!=="function")return fail("invalid-response");
@@ -198,19 +211,56 @@
     token=null;
    }
   }
-  async function accountStatus(){
-   // Only the provider may confirm its own session. No PII or raw JSON crosses
-   // the WebView bridge. This endpoint is READ ONLY and consumes no coords.
-   if(disposed||!originValid())return fail("invalid-origin");
-   if(!jwt())return {ok:true,auth:"login-required"};
-   const result=await request("GET",ACCOUNT_URL,null,true,6000);
-   if(!result.ok){
-    if(result.reason==="login-required")return {ok:true,auth:"login-required"};
-    return fail(result.reason);
+  function parseLinkedTrainers(body){
+   // Only exact, explicitly active links can prove an account-specific Shiny
+   // entitlement. The UI having no Remove button is never evidence of unlink.
+   const rows=Array.isArray(body)?body:
+    Array.isArray(body?.trainers)?body.trainers:
+    Array.isArray(body?.linked_trainers)?body.linked_trainers:
+    body?.trainer&&typeof body.trainer==="object"?[body.trainer]:
+    body?.link&&typeof body.link==="object"?[body.link]:null;
+   const result=[],seen=new Set();
+   if(rows)for(const row of rows.slice(0,30)){
+    if(!row||typeof row!=="object"||row.active!==true)continue;
+    const code=row.trainer_code??row.code;
+    const name=row.trainer_name??row.name;
+    const team=row.team_name??row.team;
+    const level=Number(row.level);
+    if(typeof code!=="string"||!/^\d{12}$/.test(code)||
+       typeof name!=="string"||
+       !/^[A-Za-z][A-Za-z0-9_.-]{2,39}$/.test(name)||
+       !["Mystic","Valor","Instinct"].includes(team)||
+       !Number.isInteger(level)||level<1||level>80||seen.has(code))continue;
+    seen.add(code);
+    result.push({code,name,team,level:String(level)});
+    if(result.length>=20)break;
    }
-   if(!result.body||typeof result.body!=="object"||Array.isArray(result.body))
-    return fail("invalid-account-response");
-   return {ok:true,auth:"authenticated"};
+   return {recognized:rows!==null,confirmed:result};
+  }
+  async function accountStatus(){
+   // No writes. /users/me is the first choice; /trainer is a read-only
+   // fallback when the site moves its profile/linked trainer presentation.
+   // An empty/unknown shape is NOT permission to erase saved links.
+   if(disposed||!originValid())return fail("invalid-origin");
+   if(!jwt())return {ok:true,auth:"login-required",trainerState:"unknown",trainers:[]};
+   const primary=await request("GET",ACCOUNT_URL,null,true,6000);
+   if(!primary.ok&&primary.reason==="login-required")
+    return {ok:true,auth:"login-required",trainerState:"unknown",trainers:[]};
+   let found=primary.ok?parseLinkedTrainers(primary.body):{recognized:false,confirmed:[]};
+   if(found.confirmed.length)
+    return {ok:true,auth:"authenticated",trainerState:"linked",trainers:found.confirmed};
+   const second=await request("GET",TRAINER_URL,null,true,6000);
+   if(!second.ok&&second.reason==="login-required")
+    return {ok:true,auth:"login-required",trainerState:"unknown",trainers:[]};
+   const fallback=second.ok?parseLinkedTrainers(second.body):{recognized:false,confirmed:[]};
+   if(fallback.confirmed.length)
+    return {ok:true,auth:"authenticated",trainerState:"linked",trainers:fallback.confirmed};
+   // Even if the server returns [], a removed UI button or stale endpoint
+   // does not prove a permanent unlink. Keep trainer status unknown and
+   // require a successful explicit verified link before Shiny can be enabled.
+   if(primary.ok||second.ok)
+    return {ok:true,auth:"authenticated",trainerState:"unknown",trainers:[]};
+   return fail(primary.reason||second.reason||"account-unavailable");
   }
   async function search(config){
    if(disposed)return fail("disposed");

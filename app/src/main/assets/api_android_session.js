@@ -141,9 +141,15 @@
       const diagnostic={ok:false,reason:"invalid-request"};
       if(r.httpStatus===400||r.httpStatus===422)
        diagnostic.httpStatus=r.httpStatus;
-      if(typeof r.rejectedField==="string"&&
-         /^[a-z_]{2,40}$/.test(r.rejectedField))
+      // Only /search is invoked here. Never forward arbitrary URLs or the
+      // raw Authorization header / POST body in an error report.
+      if(r.endpoint==="search")diagnostic.endpoint="search";
+      if((r.rejectedPart==="body"||r.rejectedPart==="header")&&
+         typeof r.rejectedField==="string"&&
+         /^[a-z_]{2,40}$/.test(r.rejectedField)){
+       diagnostic.rejectedPart=r.rejectedPart;
        diagnostic.rejectedField=r.rejectedField;
+      }
       if(Number.isSafeInteger(r.rejectedFieldCount)&&
          r.rejectedFieldCount>=2&&r.rejectedFieldCount<=20)
        diagnostic.rejectedFieldCount=r.rejectedFieldCount;
