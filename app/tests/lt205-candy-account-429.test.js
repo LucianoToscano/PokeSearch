@@ -24,6 +24,8 @@ check("new WebView profile is isolated and does not carry a previous result",()=
  assert.match(candy,/old\.destroy\(\);\s*setStatus\("Conta "/);
  assert.match(candy,/if\(!destroyed&&view==site&&isAllowedUrl\(url\)\)/);
  assert.match(candy,/if\(destroyed\|\|view!=site\)return;/);
+ assert.match(candy,/if\(v==site&&request\.isForMainFrame\(\)&&!destroyed\)/);
+
  assert.match(candy,/PogoAccountSlots\.attach\(site,account\)/);
 });
 check("429 is diagnosed and Retry-After is respected without server bypass",()=>{
@@ -32,6 +34,10 @@ check("429 is diagnosed and Retry-After is respected without server bypass",()=>
  assert.match(candy,/setStatus\(providerWaitLabel\(\)\)/);
  assert.match(candy,/if\(cards\.isEmpty\(\)&&now<blockedUntil&&status!=null\)/);
  assert.match(candy,/if\(pendingManualRefresh&&!busy&&ready&&\s*isOfficialSearch\(\)&&now>=blockedUntil\)/);
+ // Viewing cards must not enqueue a second API call while the first is busy.
+ const open=candy.slice(candy.indexOf("private void toggleResults()"),candy.indexOf("/** Candy toolbar"));
+ assert.doesNotMatch(open,/refresh\(true\)/);
+
  assert.match(candy,/Math\.min\(86400,response\.optInt\("retry_after",60\)\)/);
  assert.match(probe,/if\(response\.status===429&&retry===0\)retry=60/);
  assert.match(probe,/response\.headers\.get\("Retry-After"\)/);
