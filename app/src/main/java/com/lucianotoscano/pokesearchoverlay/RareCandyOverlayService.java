@@ -62,6 +62,10 @@ public final class RareCandyOverlayService extends Service {
     private final Map<String,TextView> countdownLabels=new LinkedHashMap<>();
     private final Map<String,TextView> cooldownLabels=new LinkedHashMap<>();
     private final Set<String> copied=new LinkedHashSet<>();
+    // A copy does not mean pickup; confirmed collection records expire
+    // at their despawn time so future candy may reuse coordinates.
+    private final Map<String,Long> collected=new LinkedHashMap<>();
+    private boolean showCollected=false;
     private SharedPreferences prefs;
     private WindowManager wm;
     private FrameLayout bubbleWindow;
@@ -162,6 +166,21 @@ public final class RareCandyOverlayService extends Service {
         showLocation=prefs.getBoolean("candyShowLocation",false);
         showDespawn=prefs.getBoolean("candyShowDespawn",true);
         showDistance=prefs.getBoolean("candyShowDistance",false);
+        showCollected=prefs.getBoolean("candyShowCollected",false);
+        try{
+            JSONObject savedCollected=new JSONObject(
+                prefs.getString("confirmedCandyCollected","{}"));
+            java.util.Iterator<String> it=savedCollected.keys();
+            long wallTime=System.currentTimeMillis();
+            while(it.hasNext()){
+                String point=it.next();
+                long until=savedCollected.optLong(point,0L);
+                if(validCoords(point)&&until>wallTime&&
+                    until-wallTime<=24L*60L*60L*1000L&&collected.size()<100)
+                    collected.put(point,until);
+            }
+        }catch(org.json.JSONException ignored){}
+        saveCollected();
         // LT195 stored copied coordinates as if collected. Never migrate that
         // timestamp into a confirmed pickup. Older data becomes pending only.
         long wallNow=System.currentTimeMillis();
@@ -432,7 +451,8 @@ public final class RareCandyOverlayService extends Service {
             state.put("coords",coords).put("radius",radius).put("period",period)
                 .put("name",showName).put("location",showLocation)
                 .put("despawn",showDespawn).put("distance",showDistance)
-                .put("pendingCandyPickup",pendingCandyPickup&&validCoords(selectedCandyCoords));
+                .put("pendingCandyPickup",pendingCandyPickup&&validCoords(selectedCandyCoords))
+                .put("showCollected",showCollected).put("hasCollected",!collected.isEmpty());
             candyMenuPanel.evaluateJavascript("window.syncCandy("+
                 JSONObject.quote(state.toString())+")",null);
         }catch(org.json.JSONException ignored){}
@@ -572,6 +592,14 @@ public final class RareCandyOverlayService extends Service {
                     showDistance=enabled;editor.putBoolean("candyShowDistance",enabled);
                 }else return;
                 editor.apply();render();syncCandyMenu();
+            });
+        }
+        @android.webkit.JavascriptInterface public void setShowCollected(boolean enabled){
+            main.post(()->{
+                if(!permitted())return;
+                showCollected=enabled;
+                prefs.edit().putBoolean("candyShowCollected",enabled).apply();
+                render();syncCandyMenu();
             });
         }
         @android.webkit.JavascriptInterface public void setCandyLocation(String center,int meters){
@@ -886,6 +914,23 @@ public final class RareCandyOverlayService extends Service {
                 Toast.LENGTH_SHORT).show();
         }
     }
+    private void saveCollected(){
+        if(prefs==null)return;
+        long wallNow=System.currentTimeMillis();
+        JSONObject json=new JSONObject();
+        for(Map.Entry<String,Long> record:collected.entrySet()){
+            long until=record.getValue();
+            if(until>wallNow&&until-wallNow<=24L*60L*60L*1000L)
+                try{json.put(record.getKey(),until);}
+                catch(org.json.JSONException ignored){}
+        }
+        prefs.edit().putString("confirmedCandyCollected",json.toString()).apply();
+    }
+    private void pruneCollected(){
+        long wallNow=System.currentTimeMillis();
+        if(collected.entrySet().removeIf(e->e.getValue()<=wallNow))
+            saveCollected();
+    }
     private void confirmCandyPicked(String point){
         if(!validCoords(point)||!pendingCandyPickup||
             !point.equals(selectedCandyCoords)){
@@ -902,12 +947,21 @@ public final class RareCandyOverlayService extends Service {
                 lastCopiedCandyCoords=point;
                 lastCopiedCandyAtMs=System.currentTimeMillis();
                 pendingCandyPickup=false;
+                Candy confirmed=cards.get(point);
+                long elapsed=SystemClock.elapsedRealtime();
+                if(confirmed!=null&&confirmed.deadline>elapsed){
+                    long until=System.currentTimeMillis()+
+                        Math.min(24L*60L*60L*1000L,confirmed.deadline-elapsed);
+                    collected.put(point,until);
+                    saveCollected();
+                }
                 prefs.edit().putString("confirmedCandyHopCoords",point)
                     .putLong("confirmedCandyHopAtMs",lastCopiedCandyAtMs)
                     .putBoolean("pendingCandyPickup",false).apply();
                 Toast.makeText(this,"Coleta confirmada · cooldown estimado iniciado",
                     Toast.LENGTH_SHORT).show();
                 render();syncCandyMenu();
+                refreshIfAllCollected();
             });
     }
     private void copy(String point){
@@ -942,7 +996,7 @@ public final class RareCandyOverlayService extends Service {
         pendingCandyPickup=true;
         prefs.edit().putString("selectedCandyCoords",point)
             .putBoolean("pendingCandyPickup",true).apply();
-        boolean newlyCopied=copied.add(point);
+        copied.add(point);
         // Keep the last 100 copied points, independent of P1/P2 and tokens.
         if(copied.size()>100){
             String first=copied.iterator().next();
