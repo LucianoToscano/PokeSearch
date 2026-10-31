@@ -44,7 +44,7 @@ assert.match(capture,/CandyPickupEvidence\.hasCandyRainbow/);
 assert.match(capture,/CandyPickupEvidence\.hasDualCandyBanner/);
 assert.match(capture,/private void observeEvidence\(boolean matched,boolean dualBanner,/);
 assert.match(capture,/waitForOldBannerToClear/);
-assert.match(capture,/reportStatus\("Duas sprites reconhecidas/);
+assert.ok(capture.includes('dualBanner?"Duas sprites reconhecidas'));
 assert.match(candy,/getCandyCaptureStatus\(\)/);
 assert.ok(menu.includes("window.setCandyDetectionStatus=function(status)"));
 assert.match(menu,/id="candyDetectStatus"/);
