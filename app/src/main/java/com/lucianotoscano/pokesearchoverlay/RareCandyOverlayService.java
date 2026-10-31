@@ -164,15 +164,19 @@ public final class RareCandyOverlayService extends Service {
         showDistance=prefs.getBoolean("candyShowDistance",false);
         // LT195 stored copied coordinates as if collected. Never migrate that
         // timestamp into a confirmed pickup. Older data becomes pending only.
-        selectedCandyCoords=prefs.getString("selectedCandyCoords",
-            prefs.getString("lastCandyHopCoords",""));
+        long wallNow=System.currentTimeMillis();
+        String legacyCopied=prefs.getString("lastCandyHopCoords","");
+        long legacyCopiedAt=prefs.getLong("lastCandyHopAtMs",0L);
+        if(legacyCopiedAt<=0||wallNow<legacyCopiedAt||
+            wallNow-legacyCopiedAt>CandyCooldownPolicy.MAX_AGE_MS)
+            legacyCopied="";
+        selectedCandyCoords=prefs.getString("selectedCandyCoords",legacyCopied);
         if(!validCoords(selectedCandyCoords))selectedCandyCoords="";
         pendingCandyPickup=!selectedCandyCoords.isEmpty()&&
             prefs.getBoolean("pendingCandyPickup",
                 !prefs.contains("selectedCandyCoords"));
         String savedHop=prefs.getString("confirmedCandyHopCoords","");
         long savedHopAt=prefs.getLong("confirmedCandyHopAtMs",0L);
-        long wallNow=System.currentTimeMillis();
         if(CandyCooldownPolicy.parseCoordinates(savedHop)!=null&&
             savedHopAt>0&&wallNow>=savedHopAt&&
             wallNow-savedHopAt<=CandyCooldownPolicy.MAX_AGE_MS){
