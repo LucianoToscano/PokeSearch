@@ -6408,7 +6408,18 @@ function resultLines(card,opts,league){
  }
  if(opts.distance&&/^(?:\d+(?:[.,]\d+)?)\s*(?:km|m|mi)$/i.test(safeText(card?.distance)))
   lines.push(safeText(card.distance,20));
- if(opts.shiny&&card?.shiny===true)lines.push("✨");
+ if(opts.shiny){
+  const icons=(card?.shiny===true?"✨":"")+(card?.background===true?"🏞️":"");
+  const forNames=Array.isArray(card?.shinyFor)?card.shinyFor.filter(x=>
+   typeof x==="string"&&x.length<=32&&/^[\\p{L}\\p{N} _.-]+$/u.test(x)).slice(0,20):[];
+  if(forNames.length){
+   // Same label semantics as the official site's shiny_for helper.
+   // Compact long lists: never exceed the result overlay's narrow width.
+   const display=forNames.slice(0,3).join(", ")+
+    (forNames.length>3?" +"+(forNames.length-3):"");
+   lines.push((icons?icons+" ":"")+"para "+display);
+  }else if(icons)lines.push(icons);
+ }
  const cp=String(card?.cp??"").trim(),lvl=String(card?.level??"").trim();
  if(opts.cp&&/^[0-9]{1,5}$/.test(cp)&&Number(cp)>0&&Number(cp)<=10000)compact.push("PC"+cp);
  if(opts.level&&/^\d{1,2}(?:\.5)?$/.test(lvl)&&Number(lvl)>=1&&Number(lvl)<=55)compact.push("Nv"+lvl);
