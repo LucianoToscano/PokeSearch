@@ -143,6 +143,7 @@
     return {
      ok:true,cards:r.cards,found:r.found,siteCount:r.siteCount,
      rejected:r.rejected,expired:r.expired,filtered:r.filtered,
+     eligible:r.eligible,duplicates:r.duplicates,
      rejectionCounts:r.rejectionCounts,searchId:r.searchId,
      criteriaConfirmed:true,resultChanged:true,leagueConfirmed:pvp,
      // The transport accepted the exact signed-in HTTP search payload,
