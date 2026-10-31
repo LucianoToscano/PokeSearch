@@ -1189,16 +1189,15 @@ public class MainActivity extends Activity {
         String[] choices={
             "Conta 1 · busca livre",
             "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
-                "conta conectada":"entrar primeiro")
+                "conta conectada":"busca livre")
         };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
             .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
                 dialog.dismiss();
                 int slot=which+1;
-                if(slot==2&&(!PogoAccountSlots.supportsSecond()||
-                    !PogoAccountSlots.loggedIn(this,2))){
-                    Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
+                if(slot==2&&!PogoAccountSlots.supportsSecond()){
+                    Toast.makeText(this,"Conta 2 não suportada neste WebView",Toast.LENGTH_LONG).show();
                     return;
                 }
                 PogoAccountSlots.bindAccountOnly(this,secondary,slot);
