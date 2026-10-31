@@ -55,7 +55,8 @@ check("GL/UL/IV mode changes and older saved filters keep remembered names",()=>
  const config=native.split("@JavascriptInterface public void setSearchConfig(String payload)")[1]||"";
  assert.match(config,/previousMulti\.optJSONArray\("pokemonSavedSelections"\)/);
  assert.match(config,/previousMulti\.optJSONArray\("pokemonSelections"\)/);
- assert.match(config,/fromUi\.length\(\)>0\|\|remembered==null\|\|remembered\.length\(\)==0/);
+ assert.match(config,/boolean pokemonEnabled=previousMulti\.optBoolean\("pokemonFilterEnabled",true\)/);
+ assert.match(config,/if\(remembered==null\)remembered=fromUi/);
  assert.match(config,/pokemonEnabled\?\s*new org\.json\.JSONArray\(validatedSaved\.toString\(\)\):new org\.json\.JSONArray\(\)/);
  assert.match(config,/clearPokemonSelection/);
 });
