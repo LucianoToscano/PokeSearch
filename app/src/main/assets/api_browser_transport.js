@@ -210,7 +210,32 @@
    }
    if(!result.body||typeof result.body!=="object"||Array.isArray(result.body))
     return fail("invalid-account-response");
-   return {ok:true,auth:"authenticated"};
+   // Official GET /users/me is the authoritative, authenticated account
+   // registry when the React /profile cards are unhydrated. Only bounded
+   // trainer metadata enters the private Android app; never email, OAuth IDs,
+   // JWT, billing information, or provider error bodies.
+   const body=result.body;
+   const trainers=Array.isArray(body.trainers)?body.trainers:
+     body.trainer&&typeof body.trainer==="object"?[body.trainer]:null;
+   const safe=[];
+   const seen=new Set();
+   if(trainers)for(const row of trainers.slice(0,30)){
+    if(!row||typeof row!=="object"||row.active===false)continue;
+    const code=row.trainer_code, name=row.trainer_name;
+    const team=typeof row.team_name==="string"?row.team_name:"";
+    const level=Number(row.level);
+    if(typeof code!=="string"||!/^\\d{12}$/.test(code)||
+       typeof name!=="string"||
+       !/^[A-Za-z][A-Za-z0-9_.-]{2,39}$/.test(name)||
+       !["Mystic","Valor","Instinct"].includes(team)||
+       !Number.isInteger(level)||level<1||level>80||seen.has(code))continue;
+    seen.add(code);
+    safe.push({code,name,team,level:String(level)});
+    if(safe.length===20)break;
+   }
+   return {ok:true,auth:"authenticated",
+    trainerState:safe.length?"linked":trainers!==null?"unlinked":"unknown",
+    trainers:safe};
   }
   async function search(config){
    if(disposed)return fail("disposed");
