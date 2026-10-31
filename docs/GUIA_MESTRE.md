@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT199 — CHAVE ON/OFF POKÉMON (31/10/2026)
+
+- **Merge confirmado:** [PR #166](https://github.com/LucianoToscano/PokeSearch/pull/166) integrada à `main`, merge commit `9573a49b15f3f286d766c341cc1e99c18a14b255`.
+- **Alterações:** novo switch compacto no painel `POKÉMON · espécies e formas`, liga e desliga o filtro de espécies sem excluir a lista selecionada; exibe `OFF · N salvos`. Seleção mantida em `pokemonSavedSelections`, filtro ativo em `pokemonSelections`, estado `pokemonFilterEnabled` persistido por Pokébola (prefs/prefs_secondary).
+- **Contrato:** OFF pesquisa todos os Pokémon e limpa apenas a restrição no PoGoCoordinates; ON recupera os nomes salvos. `✓ Aplicar` continua para edição da lista, `Limpar todos` continua para apagar. Mudanças de modos IV/IV%/GL/UL não devem apagar os nomes.
+- **Validação:** Node QA, regressão LT169 e compilação Java/Android da branch de trabalho concluídas com sucesso. Checklist de QA físico e de busca API/DOM: [LT199_POKEMON_FILTER_PAUSE_QA_20261031.md](LT199_POKEMON_FILTER_PAUSE_QA_20261031.md).
+- **Distribuição solicitada:** workflow oficial [lt199-official-release.yml](../.github/workflows/lt199-official-release.yml) adicionado à `main`, com gates para latest LT198, assinatura v2 original, R8, verificação de pacote/versão, testes e publicação da tag `v0.01.99-54406`. **Status de execução e APK/Drive ainda não confirmados neste registro inicial; não confundir merge com publicação ou instalação.**
+- **Notas da Home:** `release_notes.json` possui entrada LT199 (minVersionCode 54406).
+- **Pendências:** verificar workflow e release/latest, obter hash e tamanho real do APK assinado, espelhar ZIP APK + relatórios na pasta Drive `PokeSearch_App` e validar a busca em Samsung com cada Pokébola.
+
+---
+
 ## LT198 OFICIAL — Captura de Doce Raro corrigida (31/10/2026)
 
 - **Latest:** `v0.01.98-54405` · código 54405 · APK assinado de 29.255.819 bytes · SHA-256 `52a853c0686a6ff42060f4bf8bfdae232205a6cf37fce8013bf90de1a2e0dc33`.
