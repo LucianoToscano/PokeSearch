@@ -34,8 +34,8 @@ assert.ok(candy.includes('showDistance=prefs.getBoolean("candyShowDistance",fals
  "respect distance default off");
 assert.ok(candy.includes('showDespawn=prefs.getBoolean("candyShowDespawn",true)'),
  "respect despawn default on");
-assert.ok(candy.includes("if(newlyCopied&&cards.size()==10"),
- "keep existing ten-copied refresh logic");
+assert.ok(candy.includes("if(cards.size()==10&&lastAllCopiedRefreshGeneration!=generation)"),
+ "refresh only after ten confirmed collections");
 assert.ok(candy.includes("lastCopiedCandyAtMs=System.currentTimeMillis()"),
  "copy still updates origin");
 console.log("PASS LT196: 47dp compact candy, overlaid cooldown & distance, accessible timers");
