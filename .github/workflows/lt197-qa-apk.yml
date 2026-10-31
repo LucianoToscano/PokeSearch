@@ -1,0 +1,127 @@
+name: LT197 signed QA APK - automatic Rare Candy detection
+on:
+  push:
+    branches: [feature/lt197-consented-candy-screen-recognition-20261031]
+    paths: ['.github/workflows/lt197-qa-apk.yml']
+permissions: {contents: read}
+concurrency: {group: pokesearch-lt197-qa-signed-once, cancel-in-progress: false}
+jobs:
+  qa-apk:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/feature/lt197-consented-candy-screen-recognition-20261031'
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    timeout-minutes: 85
+    env:
+      POKE_TEST_VERSION_CODE: '54402'
+      POKE_TEST_VERSION_LABEL: '51202'
+      POKE_TEST_PUBLIC_VERSION: '0.01.97'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'false'
+      POKE_SCRAPBOOK_ONLINE_QA: 'false'
+      GH_TOKEN: ${{ github.token }}
+      QA_APK: 'PokeSearch-LT197-QA-0.01.97-54402.apk'
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false, ref: "${{ github.sha }}"}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.11.1'}
+      - name: Verify QA isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/feature/lt197-consented-candy-screen-recognition-20261031'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.96-54401'
+          test -s app/tests/lt197-candy-visual-consent.test.js
+          test -s app/tests/CandyPickupEvidenceTest.java
+          test -s app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyScreenCaptureService.java
+          test -s app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyPickupEvidence.java
+          test -s app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyCaptureConsentActivity.java
+      - name: Install SDK and verify permanent signing certificate
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          for k in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do test -n "$(printenv "$k")"; done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/lt197qa.p12"
+          chmod 600 "$RUNNER_TEMP/lt197qa.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt197qa.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt197qa.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Run Rare Candy regressions and real visual evidence classifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          node app/tests/lt195-candy-next-hop-cooldown.test.js
+          node app/tests/lt196-candy-compact-sprite.test.js
+          node app/tests/lt196-candy-pickup-confirmation.test.js
+          node app/tests/lt196-candy-collected-visibility.test.js
+          node app/tests/lt197-candy-visual-consent.test.js
+          mkdir -p "$RUNNER_TEMP/lt197-jvm"
+          javac --release 17 -d "$RUNNER_TEMP/lt197-jvm" app/src/main/java/com/lucianotoscano/pokesearchoverlay/CandyPickupEvidence.java app/tests/CandyPickupEvidenceTest.java
+          java -cp "$RUNNER_TEMP/lt197-jvm" com.lucianotoscano.pokesearchoverlay.CandyPickupEvidenceTest
+          python3 scripts/test_ota_builder.py
+      - name: Generate complete assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+      - name: Build protected QA release with original signer
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify signed QA APK and version, do not publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54402'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.97'" PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          test "$(stat -c %s "$APK")" -lt 35000000
+          cp "$APK" "$QA_APK"
+          sha256sum "$QA_APK" > SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          printf 'TEST BUILD ONLY. Not published to GitHub Releases, OTA, or Drive.\n' > QA-NOT-PUBLIC.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT197-QA-Signed-Verified
+          path: |
+            ${{ env.QA_APK }}
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            PACKAGE-VERSION.txt
+            SOURCE_COMMIT.txt
+            QA-NOT-PUBLIC.txt
+          retention-days: 30
+          if-no-files-found: error
+      - name: Verify public latest has not changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.01.96-54401'
+      - name: Erase signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt197qa.p12"
