@@ -17,3 +17,18 @@ assert.match(candy,/if\(response\.status===429&&retry===0\)retry=60/);
 assert.match(second,/extends OverlayService/);
 assert.match(service,/detail\.html/);
 console.log("LT206 static 24h, HTTP-date, P1/P2 regression PASS");
+
+const vm=require("node:vm");
+const start=detail.indexOf("let coordsRestriction=null"),stop=detail.indexOf("function coordButtons()",start);
+assert.ok(start>0&&stop>start);
+const fields={};for(const name of ["coordsRateNotice","coordsRatePopover","coordsRateInfo","coordsRateTimer"])fields[name]={hidden:true,textContent:"",setAttribute(){}};
+let now=100000;
+const context=vm.createContext({document:{getElementById:n=>fields[n]},Date:{now:()=>now},setInterval:()=>1,clearInterval(){},resizeEvolutionPanel(){}});
+vm.runInContext(detail.slice(start,stop),context);
+vm.runInContext('renderCoordsRate({type:"rate",retrySeconds:7200})',context);
+assert.equal(fields.coordsRateTimer.textContent,"Tente em 2h 00m");
+vm.runInContext('renderCoordsRate({type:"rate",retrySeconds:86400})',context);
+assert.equal(fields.coordsRateTimer.textContent,"Tente em 24h 00m");
+vm.runInContext('renderCoordsRate({type:"quota",retrySeconds:7200})',context);
+assert.equal(fields.coordsRateTimer.hidden,true);
+console.log("LT206 interactive coordinate timer smoke PASS");
