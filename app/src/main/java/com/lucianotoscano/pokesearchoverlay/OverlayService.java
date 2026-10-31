@@ -451,10 +451,42 @@ public class OverlayService extends Service {
                         noteProviderRateLimit(response.optInt("retryAfterSeconds",60));
                         searchFailure("⚠ API: limite temporário",
                             "HTTP 429 do provedor; próxima tentativa somente após intervalo de segurança.");
+                    }else if("invalid-request".equals(reason)){
+                        int code=response.optInt("httpStatus",0);
+                        if(code!=400&&code!=422)code=0;
+                        // The API session forwards ONLY an allowlisted schema
+                        // key, never provider messages, JWTs, trainer IDs or
+                        // coordinate values. Do not blindly retry a 400/422.
+                        String key=response.optString("rejectedField","");
+                        String label=switch(key){
+                            case "pokemon_ids","species_forms","forms",
+                                 "blacklist_pokemon_ids","blacklist_species_forms",
+                                 "blacklist_forms" -> "Pokémon/formas";
+                            case "center_lat","center_lng","radius_km","location" ->
+                                 "Localização";
+                            case "raw_iv_atk","raw_iv_def","raw_iv_sta",
+                                 "iv_mode","iv_percent_min","iv_percent_max" -> "IV";
+                            case "pvp_mode","pvp_league","pvp_top_rank",
+                                 "pvp_min_cp","pvp_include_pre_evolutions" -> "PvP";
+                            case "cp_min","cp_max" -> "PC";
+                            case "level_min","level_max" -> "Nível";
+                            case "sort" -> "Ordenação";
+                            case "sizes","gender","weather_id","boosted",
+                                 "min_ttl","shiny_only","background_only" -> "Filtros";
+                            default -> "";
+                        };
+                        BugReport.log(this,"API_SCHEMA",
+                            (isSecondaryOverlay()?"P2":"P1")+" HTTP="+code+
+                            " field="+(label.isEmpty()?"unknown":key)+" mode="+mode);
+                        searchFailure("⚠ API"+(code>0?" "+code:"")+": "+
+                            (label.isEmpty()?"requisição rejeitada":label),
+                            "Provedor rejeitou a busca"+
+                            (code>0?" (HTTP "+code+")":"")+
+                            (label.isEmpty()?". Campo não identificado.":
+                                ". Campo: "+key+".")+
+                            " Nenhuma pesquisa alternativa nem filtro removido automaticamente.");
                     }else{
-                        String hint="invalid-request".equals(reason)?
-                            "Busca recusada (HTTP 400/422). Confira filtros e vínculo do treinador.":
-                            "login-required".equals(reason)?"Sessão expirada. Entre novamente no PoGoCoordinates.":
+                        String hint="login-required".equals(reason)?"Sessão expirada. Entre novamente no PoGoCoordinates.":
                             "access-denied".equals(reason)?"Acesso negado (HTTP 403). Confira permissões e vínculo.":
                             "unverified-results".equals(reason)?"A API retornou ocorrências, mas nenhuma passou na validação. Não foram tratadas como zero Pokémon.":
                             "timeout".equals(reason)?"Tempo esgotado. Verifique a conexão.":
