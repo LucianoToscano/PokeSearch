@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
         secondTrainerCode,secondTrainerHeading;
     private ImageView secondAvatar,secondTeamBadge,secondAvatarFrame;
     private ImageButton secondTrainerSelectButton;
-    private LinearLayout secondAccountConnected,secondAccountGuest,secondTrainerCodeGroup;
+    private LinearLayout secondAccountConnected,secondAccountGuest,secondTrainerCodeGroup,secondTrainerPanel;
     private Button secondAccountLogin,secondAccountManage,secondAccountLogout,secondTrainerAction;
     private boolean profileCaptureInProgress=false;
     private int avatarReadRetryCount=0; // bounded retry for lazy official Google image
@@ -799,7 +799,7 @@ public class MainActivity extends Activity {
             .setNegativeButton("Cancelar",null)
             .setPositiveButton("Desconectar",(dialog,which)->logoutSecondAccount()).show());
 
-        LinearLayout secondTrainerPanel=new LinearLayout(this);
+        secondTrainerPanel=new LinearLayout(this);
         LinearLayout.LayoutParams secondTrainerLp=new LinearLayout.LayoutParams(-1,-2);
         secondTrainerLp.topMargin=d(13);
         secondAccountConnected.addView(secondTrainerPanel,secondTrainerLp);
@@ -1129,6 +1129,7 @@ public class MainActivity extends Activity {
             secondAccountGuest.setVisibility(connected||!available?View.GONE:View.VISIBLE);
         if(secondAccountConnected!=null)
             secondAccountConnected.setVisibility(connected?View.VISIBLE:View.GONE);
+        if(secondTrainerPanel!=null)secondTrainerPanel.setVisibility(View.GONE);
         if(secondAccountLogin!=null)secondAccountLogin.setEnabled(available);
         if(secondAccountManage!=null)secondAccountManage.setEnabled(available);
         if(secondAccountSummary!=null)
@@ -1180,20 +1181,15 @@ public class MainActivity extends Activity {
             TextView label=secondary?overlayAccountLabel2:overlayAccountLabel1;
             if(label==null)continue;
             int slot=PogoAccountSlots.assigned(this,secondary);
-            String chosen=PogoAccountSlots.trainer(this,secondary);
-            label.setText((secondary?"P2":"P1")+" · Conta "+slot+
-                (chosen.matches("[0-9]{12}")?
-                    " · "+(showCode?"••••"+chosen.substring(8):"XXXX"):" · Treinador —"));
+            label.setText((secondary?"P2":"P1")+" · Conta "+slot);
         }
     }
     private void showPokeballAccountChoice(boolean secondary){
         int assigned=PogoAccountSlots.assigned(this,secondary);
-        int trainers1=selectableTrainerCount(PogoAccountSlots.prefs(this,1));
-        int trainers2=selectableTrainerCount(PogoAccountSlots.prefs(this,2));
         String[] choices={
-            "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
+            "Conta 1 · busca livre",
             "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
-                trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
+                "conta conectada":"entrar primeiro")
         };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
@@ -1205,7 +1201,8 @@ public class MainActivity extends Activity {
                     Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
                     return;
                 }
-                choosePokeballTrainer(secondary,slot);
+                PogoAccountSlots.bindAccountOnly(this,secondary,slot);
+                refreshSessionSummary();
             }).setNegativeButton("Cancelar",null).show();
     }
     private void choosePokeballTrainer(boolean secondary,int account){
@@ -2256,7 +2253,7 @@ public class MainActivity extends Activity {
         if(guestPanel!=null)guestPanel.setVisibility(logged?View.GONE:View.VISIBLE);
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
         if(sessionHint!=null)sessionHint.setText(
-            "Buscas comuns sem login · Shiny exige treinador vinculado");
+            "Busca livre com ou sem login · Shiny temporariamente indisponível");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getBoolean("homeShowPogoAccountName",true)?
                 prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
@@ -2271,7 +2268,9 @@ public class MainActivity extends Activity {
             code=prefs.getString("profileTrainerCode","");
         boolean linked=logged&&!trainer.isEmpty()&&code.matches("[0-9]{12}")&&
             "linked".equals(prefs.getString("profileTrainerState","unknown"));
-        if(trainerPanel!=null)trainerPanel.setVisibility(logged?View.VISIBLE:View.GONE);
+        // Account-only mode: no trainer is required for IV/PvP searches.
+        // Preserve stored verified trainers for future service restoration.
+        if(trainerPanel!=null)trainerPanel.setVisibility(View.GONE);
         if(trainerCodeGroup!=null)trainerCodeGroup.setVisibility(logged?View.VISIBLE:View.GONE);
         if(trainerCodeTexts!=null)trainerCodeTexts.setVisibility(linked?View.VISIBLE:View.INVISIBLE);
         if(trainerCopyButton!=null)trainerCopyButton.setVisibility(linked?View.VISIBLE:View.GONE);
