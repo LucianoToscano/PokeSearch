@@ -56,14 +56,24 @@ public final class CandyScreenCaptureService extends Service {
     private long lastFrameAt=0L;
     private long pendingSince=0L;
     private String pendingPoint="";
-    private boolean sawBlankSinceSelection=false;
+    private boolean previousBannerVisible=false;
+    private boolean waitForOldBannerToClear=false;
     private final CandyPickupEvidence.TwoFrameGate gate=
         new CandyPickupEvidence.TwoFrameGate();
 
     @Override public IBinder onBind(Intent intent){return null;}
 
+    // Diagnostic consists only of predefined status strings. Never store OCR
+    // content, pixels, screenshots, or exact coordinates.
+    private void reportStatus(String status){
+        SharedPreferences prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
+        if(!status.equals(prefs.getString("candyCaptureStatus","")))
+            prefs.edit().putString("candyCaptureStatus",status).apply();
+    }
+
     @Override public void onCreate(){
         super.onCreate();
+        reportStatus("Iniciando detector");
         ((NotificationManager)getSystemService(NOTIFICATION_SERVICE))
             .createNotificationChannel(new NotificationChannel(CHANNEL,
                 "Detecção de Doce Raro · Captura autorizada",
@@ -127,6 +137,8 @@ public final class CandyScreenCaptureService extends Service {
                 }
                 @Override public void onCapturedContentVisibilityChanged(boolean visible){
                     sourceVisible=visible;
+                    if(!visible)reportStatus("Captura pausada · retorne ao Pokémon GO");
+                    else reportStatus("Aguardando aviso do Doce Raro");
                 }
             };
             projection.registerCallback(projectionCallback,handler);
@@ -143,7 +155,9 @@ public final class CandyScreenCaptureService extends Service {
                 width,height,dm.densityDpi,DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 reader.getSurface(),null,handler);
             active=true;
+            reportStatus("Aguardando cópia de um doce");
         }catch(Exception ex){
+            reportStatus("Falha ao iniciar captura · reautorize");
             stopSelf();
         }
         return START_NOT_STICKY;
@@ -184,12 +198,19 @@ public final class CandyScreenCaptureService extends Service {
             if(!pending||selectedAt<=0||wallNow<selectedAt||
                 wallNow-selectedAt>120000L||
                 CandyCooldownPolicy.parseCoordinates(selected)==null){
-                pendingPoint="";pendingSince=0;sawBlankSinceSelection=false;
-                gate.reset();return;
+                pendingPoint="";pendingSince=0;
+                gate.reset();
+                reportStatus(pending&&selectedAt>0&&wallNow-selectedAt>120000L?
+                    "Cópia expirada · copie novamente":"Aguardando cópia de um doce");
+                return;
             }
             if(!selected.equals(pendingPoint)||selectedAt!=pendingSince){
+                // Prevent a second copy from reusing the same still-visible
+                // banner that confirmed the previous pending candy.
+                waitForOldBannerToClear=previousBannerVisible;
                 pendingPoint=selected;pendingSince=selectedAt;
-                sawBlankSinceSelection=false;gate.reset();
+                gate.reset();
+                reportStatus("Procurando aviso de coleta");
             }
             int w=image.getWidth(),h=image.getHeight();
             Image.Plane plane=image.getPlanes()[0];
@@ -232,7 +253,23 @@ public final class CandyScreenCaptureService extends Service {
         final int[] pixels=new int[w*h];
         top.getPixels(pixels,0,w,0,0,w,h);
         final boolean rainbow=CandyPickupEvidence.hasCandyRainbow(pixels,w,h);
-        Task<Text> task=textRecognizer.process(InputImage.fromBitmap(top,0));
+        final boolean dualBanner=CandyPickupEvidence.hasDualCandyBanner(pixels,w,h);
+        // Visual fallback is essential: "DOCE RARO" is white-on-white in
+        // the actual popup, and unbundled OCR can still be downloading.
+        if(dualBanner){
+            observeEvidence(true,true,selected,selectedAt);
+            top.recycle();
+            inFlight=false;
+            return;
+        }
+        Task<Text> task;
+        try{
+            task=textRecognizer.process(InputImage.fromBitmap(top,0));
+        }catch(RuntimeException unavailable){
+            reportStatus("OCR indisponível · verificando sprites");
+            observeEvidence(false,false,selected,selectedAt);
+            top.recycle();inFlight=false;return;
+        }
         task.addOnSuccessListener(text->{
             try{
                 // Guard both old selections and revoked consent in async results.
@@ -241,26 +278,57 @@ public final class CandyScreenCaptureService extends Service {
                     !selected.equals(prefs.getString("selectedCandyCoords",""))||
                     selectedAt!=prefs.getLong("selectedCandyCopyAtMs",0L))
                     return;
-                boolean matched=rainbow&&CandyPickupEvidence.titleMatches(text.getText());
-                if(!matched)sawBlankSinceSelection=true;
-                boolean confirmed=gate.observe(matched,SystemClock.elapsedRealtime());
-                // Require evidence of a blank banner AFTER the coordinate copy,
-                // preventing a pre-existing item popup from confirming a new hop.
-                if(confirmed&&sawBlankSinceSelection){
-                    Intent event=new Intent(this,RareCandyOverlayService.class)
-                        .setAction(RareCandyOverlayService.ACTION_VISUAL_PICKUP_CONFIRMED)
-                        .putExtra(RareCandyOverlayService.EXTRA_VISUAL_COORDS,selected)
-                        .putExtra(RareCandyOverlayService.EXTRA_VISUAL_COPIED_AT,selectedAt);
-                    startService(event);
-                    gate.reset();
-                    sawBlankSinceSelection=false;
-                }
+                boolean matched=CandyPickupEvidence.foundMessageWithCandy(
+                    text.getText(),rainbow);
+                observeEvidence(matched,false,selected,selectedAt);
+                if(!matched)reportStatus(rainbow?
+                    "Sprite vista · aguardando mensagem":
+                    "Aguardando mensagem e sprite");
             }finally{
                 top.recycle();inFlight=false;
             }
         }).addOnFailureListener(error->{
+            reportStatus("OCR indisponível · verificando sprites");
+            observeEvidence(false,false,selected,selectedAt);
             top.recycle();inFlight=false;
         });
+    }
+
+    private void observeEvidence(boolean matched,boolean dualBanner,
+        String selected,long selectedAt){
+        SharedPreferences prefs=getSharedPreferences("rare_candy_overlay",MODE_PRIVATE);
+        if(stopped||!active||!prefs.getBoolean("candyAutoPickupOptIn",false)||
+            !prefs.getBoolean("pendingCandyPickup",false)||
+            !selected.equals(prefs.getString("selectedCandyCoords",""))||
+            selectedAt!=prefs.getLong("selectedCandyCopyAtMs",-1L))
+            return;
+
+        if(!matched){
+            previousBannerVisible=false;
+            waitForOldBannerToClear=false;
+            gate.observe(false,SystemClock.elapsedRealtime());
+            return;
+        }
+        if(waitForOldBannerToClear){
+            reportStatus("Aguardando aviso anterior desaparecer");
+            return;
+        }
+        previousBannerVisible=true;
+        reportStatus(dualBanner?"Duas sprites reconhecidas · confirmando":
+            "Mensagem e sprite reconhecidas · confirmando");
+        if(!gate.observe(true,SystemClock.elapsedRealtime()))return;
+        // Double evidence is restricted to the currently selected candy.
+        // +1/+2 on the game's banner does not represent more coordinates.
+        try{
+            Intent event=new Intent(this,RareCandyOverlayService.class)
+                .setAction(RareCandyOverlayService.ACTION_VISUAL_PICKUP_CONFIRMED)
+                .putExtra(RareCandyOverlayService.EXTRA_VISUAL_COORDS,selected)
+                .putExtra(RareCandyOverlayService.EXTRA_VISUAL_COPIED_AT,selectedAt);
+            startService(event);
+            reportStatus("✓ Coleta detectada");
+        }catch(RuntimeException failure){
+            reportStatus("Não foi possível confirmar · use ✓ Peguei");
+        }
     }
 
     @Override public void onDestroy(){
