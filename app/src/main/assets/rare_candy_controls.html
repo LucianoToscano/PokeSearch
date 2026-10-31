@@ -218,7 +218,8 @@ function renderPanel(){
       label+'</span><b>'+(settings[id]?'✓':'–')+'</b></button>').join("")+'</div>'+
     (settings.candyAutoPickupActive?
      '<div id="candyDetectStatus" class="candyDetectStatus" role="status" aria-live="polite">Aguardando aviso…</div>':'');
-   requestHeight(settings.candyAutoPickupActive?161:142,false);
+   if(settings.candyAutoPickupActive)requestHeight(161,false);
+   else requestHeight(142,false);
  }else if(currentPanel==="location"){
    el.innerHTML='<div class="choiceHeader"><span>Localização</span><div class="locClipboardTools">'+
     '<button type="button" onclick="copyCoords()" title="Copiar coordenadas" aria-label="Copiar coordenadas">'+copyGlyph+'</button>'+
@@ -252,14 +253,11 @@ function changeInfo(key,checked){
  if(currentPanel==="infos")renderPanel();
 }
 function toggleInfo(key){changeInfo(key,!settings[key])}
-function pollCandyDetection(){
- if(currentPanel!=="infos"||!settings.candyAutoPickupActive)return;
+window.setCandyDetectionStatus=function(status){
+ if(currentPanel!=="infos")return;
  const el=$("candyDetectStatus");
- if(!el)return;
- try{el.textContent=String(Native.getCandyCaptureStatus()||"Aguardando aviso");}
- catch(e){el.textContent="Detecção indisponível";}
-}
-setInterval(pollCandyDetection,1000);
+ if(el)el.textContent=String(status||"Aguardando aviso").slice(0,80);
+};
 function toggleAutoCandy(){
  // A dead Android projection requires fresh consent, never a fake ON state.
  const enable=!settings.candyAutoPickupActive;
