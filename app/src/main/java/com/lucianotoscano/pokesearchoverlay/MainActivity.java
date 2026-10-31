@@ -1207,7 +1207,8 @@ public class MainActivity extends Activity {
                     trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
             }:new String[]{
                 "Conta 1 · "+(PogoAccountSlots.loggedIn(this,1)?"Logado":"Visitante"),
-                "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?"Logado":"Entrar primeiro")
+                "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?"Logado":
+                    PogoAccountSlots.supportsSecond()?"Visitante":"Indisponível")
             };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
@@ -1215,8 +1216,12 @@ public class MainActivity extends Activity {
                 dialog.dismiss();
                 int slot=which+1;
                 if(slot==2&&(!PogoAccountSlots.supportsSecond()||
-                    !PogoAccountSlots.loggedIn(this,2))){
-                    Toast.makeText(this,"Conecte a Conta 2 antes de selecionar",Toast.LENGTH_LONG).show();
+                    (ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&
+                     !PogoAccountSlots.loggedIn(this,2)))){
+                    Toast.makeText(this,PogoAccountSlots.supportsSecond()?
+                        "Conecte a Conta 2 antes de selecionar treinador":
+                        "Perfil independente indisponível neste WebView",
+                        Toast.LENGTH_LONG).show();
                     return;
                 }
                 if(ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE){
@@ -1224,7 +1229,7 @@ public class MainActivity extends Activity {
                 }else{
                     // Account assignment is not a trainer selection. Preserve
                     // independent P1/P2 account choices without Shiny prompts.
-                    PogoAccountSlots.bind(this,secondary,slot,"");
+                    PogoAccountSlots.bindAccountOnly(this,secondary,slot);
                     Class<?> service=secondary?SecondaryOverlayService.class:
                         OverlayService.class;
                     boolean running=secondary?OverlayService.isSecondaryRunning():
