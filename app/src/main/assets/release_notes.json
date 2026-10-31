@@ -1255,6 +1255,31 @@
           "Rare Candy mantém coordenadas diretas, km calculado a partir dos metros do menu e limites 429 sem alteração de seu fluxo de pesquisa."
         ]
       }
+    },
+    {
+      "id": "lt203-android-installer-handoff-20261031",
+      "minVersionCode": 54410,
+      "date": "31/10/2026",
+      "title": "PokeSearch LT203 — Instalador Android/Samsung corrigido",
+      "sections": {
+        "novidades": [
+          "Novo botão alternativo 'Instalar pelo navegador' ao confirmar o download verificado, útil quando o instalador interno do Samsung não abre.",
+          "Se o instalador fechar imediatamente, o aplicativo apresenta orientações de permissões e acesso ao APK oficial sem exigir limpar dados."
+        ],
+        "melhorias": [
+          "A abertura do APK utiliza a ação oficial do instalador Android com permissão temporária de leitura via FileProvider e ClipData.",
+          "Se a ação oficial de instalação não existir no dispositivo, o sistema tenta o modo Android tradicional de abrir arquivos APK.",
+          "A permissão para instalar aplicativos desconhecidos recebe orientação clara e link para as configurações do próprio PokeSearch."
+        ],
+        "correcoes": [
+          "Antes da instalação, o APK é revalidado quanto ao pacote, versão, assinatura permanente e localização segura no cache.",
+          "A instalação não é executada silenciosamente, não força a desativação de proteções Samsung e não desinstala o aplicativo existente."
+        ],
+        "emDesenvolvimento": [
+          "O bloqueio específico que fechou o instalador no Samsung ainda precisa ser confirmado em teste real; pode envolver o Bloqueador Automático da Samsung ou outra política do Android.",
+          "Recomendado instalar manualmente pelo Chrome/Meus Arquivos se a LT202 instalada ainda não oferecer o novo fluxo da LT203."
+        ]
+      }
     }
   ]
 }
