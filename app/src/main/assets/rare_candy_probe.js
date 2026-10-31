@@ -51,8 +51,16 @@
       const response=await fetch(API,{method:"POST",mode:"cors",credentials:"omit",
         cache:"no-store",headers,body:JSON.stringify(payload)});
       if(!response.ok){
-        let retry=Number(response.headers.get("Retry-After")||0);
-        if(!Number.isFinite(retry)||retry<0)retry=0;
+        const retryHeader=response.headers&&response.headers.get?
+          response.headers.get("Retry-After"):null;
+        let retry=Number(retryHeader||0);
+        // Retry-After accepts both seconds and RFC 7231 HTTP-date.
+        // Compute the date locally and never shorten the server's wait.
+        if(!Number.isFinite(retry)||retry<0){
+          const until=typeof retryHeader==="string"?Date.parse(retryHeader):NaN;
+          retry=Number.isFinite(until)?
+            Math.max(0,Math.ceil((until-Date.now())/1000)):0;
+        }
         // Honor the provider-specified Retry-After exactly; use 60 s only when
         // the 429 response supplies no usable delay.
         if(response.status===429&&retry===0)retry=60;
