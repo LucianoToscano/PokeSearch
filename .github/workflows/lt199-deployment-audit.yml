@@ -1,0 +1,45 @@
+name: LT199 deployment audit register (one-shot)
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt199-deployment-audit.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  register:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED_SHA: 9573a49b15f3f286d766c341cc1e99c18a14b255
+    steps:
+      - name: Observe official LT199 release workflow and publish a factual audit record
+        shell: bash
+        run: |
+          set -euo pipefail
+          run='null'
+          for attempt in $(seq 1 65); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/lt199-official-release.yml/runs?per_page=30&branch=main" > "$RUNNER_TEMP/runs.json"
+            run="$(jq -c --arg sha "$EXPECTED_SHA" '[.workflow_runs[] | select(.head_sha == $sha)] | first // null' "$RUNNER_TEMP/runs.json")"
+            status="$(jq -r '.status // "missing"' <<< "$run")"
+            if [ "$status" = completed ]; then break; fi
+            sleep 15
+          done
+          id="$(jq -r '.id // empty' <<< "$run")"
+          conclusion="$(jq -r '.conclusion // "not_completed"' <<< "$run")"
+          if [ -n "$id" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts" > "$RUNNER_TEMP/artifacts.json"
+          else
+            printf '{"artifacts":[]}' > "$RUNNER_TEMP/artifacts.json"
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/releases/latest" > "$RUNNER_TEMP/latest.json"
+          jq -n --arg merge_sha "$EXPECTED_SHA" --argjson workflow "$run" \
+            --slurpfile artifacts "$RUNNER_TEMP/artifacts.json" --slurpfile latest "$RUNNER_TEMP/latest.json" \
+            '{merge_sha:$merge_sha,workflow: {id:$workflow.id,status:$workflow.status,conclusion:$workflow.conclusion,url:$workflow.html_url,head_sha:$workflow.head_sha},
+            artifacts:($artifacts[0].artifacts | map({id,name,size_in_bytes,expired})),
+            latest:{tag_name:$latest[0].tag_name,url:$latest[0].html_url,draft:$latest[0].draft,prerelease:$latest[0].prerelease,assets:($latest[0].assets | map({name,size,digest,download_count,browser_download_url}))}}' > "$RUNNER_TEMP/lt199-audit.json"
+          body="$(base64 -w0 "$RUNNER_TEMP/lt199-audit.json")"
+          gh api -X PUT "repos/$GITHUB_REPOSITORY/contents/docs/LT199_RUN_AUDIT.json" -f message="docs(audit): record LT199 official run and release verification" -f content="$body" -f branch=main > "$RUNNER_TEMP/write-result.json"
+          echo "Audit committed. Official workflow conclusion: $conclusion"
