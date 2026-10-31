@@ -2539,7 +2539,7 @@ public class MainActivity extends Activity {
             if(result.optBoolean("ok",false)&&
                "authenticated".equals(result.optString("auth",""))){
                 String state=result.optString("trainerState","unknown");
-                if("linked".equals(state)||"unlinked".equals(state)){
+                if("linked".equals(state)){
                     JSONArray list=result.optJSONArray("trainers");
                     JSONObject first=list!=null&&list.length()>0?list.optJSONObject(0):null;
                     SharedPreferences prefs=PogoAccountSlots.prefs(this,slot);
@@ -2571,15 +2571,10 @@ public class MainActivity extends Activity {
                                 .putString("profileTrainerLevel",level)
                                 .putString("profileTrainerDetails","Nível "+level+" · "+team);
                         }
-                    }else if("unlinked".equals(state)){
-                        // Explicitly empty active trainer list from the owner API,
-                        // not merely a missing profile widget.
-                        edit.putString("profileTrainerState","unlinked")
-                            .remove("profileTrainerName").remove("profileTrainerCode")
-                            .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-                            .remove("profileTrainerDetails").remove("profileTrainerTeam")
-                            .remove("profileTrainerLevel");
                     }
+                    // This read-only refresh never removes an existing trainer.
+                    // An unknown, empty or mismatched API schema must not
+                    // overwrite the last known verified account information.
                     edit.apply();
                     BugReport.log(this,"PROFILE_API","Conta "+slot+
                         " · perfis ativos confirmados="+(list==null?0:list.length()));
@@ -2591,7 +2586,10 @@ public class MainActivity extends Activity {
             if(!"manage".equals(loginPurpose)&&loginDialog!=null&&loginDialog.isShowing()){
                 loginDialog.dismiss();
             }else if("manage".equals(loginPurpose)&&loginWaitLabel!=null){
-                loginWaitLabel.setText("Vínculo consultado na conta oficial.");
+                String status=result.optString("trainerState","unknown");
+                loginWaitLabel.setText("linked".equals(status)?
+                    "Treinador confirmado pela conta oficial.":
+                    "Conta consultada; vínculo ainda não confirmado. Confira Gerenciar.");
             }
         });
     }
