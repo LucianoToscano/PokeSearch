@@ -999,9 +999,22 @@ public final class RareCandyOverlayService extends Service {
                 spriteCell.addView(distance,distLp);
                 distance.setOnClickListener(v->copy(card.coords));
             }
-            // Cooldown badge is overlaid on the candy, not below despawn.
-            // Waiting: red/pink time. Ready: small green check only.
-            // Reference: blue dot. All badges fit within 46 × 29 dp.
+            // The small ✓ button is available only AFTER copying this candy.
+            // It prompts for an explicit confirmation of the in-game pickup.
+            if(pendingCandyPickup&&card.coords.equals(selectedCandyCoords)){
+                TextView collected=label("✓",10,0xFF50E39B,true);
+                collected.setGravity(Gravity.CENTER);
+                collected.setPadding(dp(2),0,dp(2),0);
+                collected.setBackground(background(0xD318202B,5,0));
+                collected.setContentDescription("Peguei este doce no Pokémon GO: "+
+                    "confirmar coleta e iniciar contador");
+                FrameLayout.LayoutParams markLp=new FrameLayout.LayoutParams(
+                    dp(14),dp(14),Gravity.LEFT|Gravity.TOP);
+                spriteCell.addView(collected,markLp);
+                collected.setOnClickListener(v->confirmCandyPicked(card.coords));
+            }
+            // Cooldown badge stays on the sprite (never a third text row).
+            // Red/pink waiting, green check ready, blue dot confirmed origin.
             if(hasCooldownOrigin){
                 boolean origin=lastCopiedCandyCoords.equals(card.coords);
                 int remain=origin?0:CandyCooldownPolicy.remainingSeconds(
@@ -1023,6 +1036,12 @@ public final class RareCandyOverlayService extends Service {
                     FrameLayout.LayoutParams badgeLp=new FrameLayout.LayoutParams(
                         -2,dp(12),origin?
                         Gravity.LEFT|Gravity.TOP:Gravity.RIGHT|Gravity.TOP);
+                    // When user selected the confirmed point again, the ✓
+                    // confirmation control takes precedence over the origin dot.
+                    if(origin&&pendingCandyPickup&&
+                        card.coords.equals(selectedCandyCoords)){
+                        badgeLp.gravity=Gravity.RIGHT|Gravity.TOP;
+                    }
                     spriteCell.addView(badge,badgeLp);
                     badge.setOnClickListener(v->copy(card.coords));
                     if(!origin)cooldownLabels.put(card.coords,badge);
@@ -1058,6 +1077,16 @@ public final class RareCandyOverlayService extends Service {
             }
             row.setOnClickListener(v->copy(card.coords));
             image.setOnClickListener(v->copy(card.coords));
+            // A long press works even when the candy sprite is tiny.
+            row.setOnLongClickListener(v->{
+                confirmCandyPicked(card.coords);return true;
+            });
+            image.setOnLongClickListener(v->{
+                confirmCandyPicked(card.coords);return true;
+            });
+            spriteCell.setOnLongClickListener(v->{
+                confirmCandyPicked(card.coords);return true;
+            });
             resultsList.addView(row,space(-1,45,2));
         }
         boolean anyActive=false;
