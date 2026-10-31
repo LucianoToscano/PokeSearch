@@ -397,7 +397,7 @@ public class OverlayService extends Service {
         JSONObject reasons=response.optJSONObject("rejectionCounts");
         StringBuilder summary=new StringBuilder(
             (isSecondaryOverlay()?"P2":"P1")+" state="+state+" mode="+mode);
-        for(String key:new String[]{"siteCount","found","rejected","expired","filtered"}){
+        for(String key:new String[]{"siteCount","found","eligible","rejected","expired","filtered","duplicates"}){
             summary.append(" ").append(key).append("=")
                 .append(Math.max(0,Math.min(2000,response.optInt(key,0))));
         }
