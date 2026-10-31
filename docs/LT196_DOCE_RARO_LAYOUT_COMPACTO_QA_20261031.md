@@ -32,3 +32,12 @@ Base: LT195 oficial (0.01.95/54400), PR #159, mantendo a assinatura permanente e
 - Workflow `pokesearch-node-qa.yml` inclui LT196.
 - Necessária compilação Android, screenshot e teste autenticado no Samsung antes da publicação.
 - **Estado inicial:** branch de QA; não publicada/mesclada, sem alteração do APK público LT195.
+
+## Publicação oficial verificada em 31/10/2026
+- PR #160 mesclada; SOURCE_COMMIT `2f99205726a46dfef4f6e70b85bbb4ca96c2a9c3`; versão `0.01.96`, `versionCode=54401`.
+- [Workflow de assinatura #41178326181](https://github.com/LucianoToscano/PokeSearch/actions/runs/41178326181): **SUCCESS**, Node, JVM, Android, OTA, build R8 e validação de assinatura.
+- [Release oficial LT196](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.96-54401), APK de **29.018.893 bytes**, SHA-256 `b5026d73b11649e57c225b19a73e0a33e5886800dd0983425ab626e9b29b159e`.
+- Certificado de assinatura v2 original, SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- [Google Drive LT196](https://drive.google.com/file/d/1DPL5hxYYTaBl__e58sBABIMQRkt5BR53/view) com ZIP oficial e relatórios (**26.728.300 bytes**), SHA-256 `c93059f6a42cb78028b0566e9ddf8a442038ac7582ea82a693990241ebd91e96`. Verificação ZIP passou, hash do APK interno coincide com o GitHub.
+- A LT196 é latest do GitHub e está disponível ao mecanismo padrão de atualizações; não há confirmação de recebimento por cada aparelho.
+- Samsung físico e API autenticada não testados nesta execução. Detecção da mensagem/sprite pelo outro app ainda não foi implementada.
