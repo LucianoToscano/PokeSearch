@@ -58,6 +58,7 @@ public final class CandyScreenCaptureService extends Service {
     private long lastFrameAt=0L;
     private long lastFrameSharedAt=0L;
     private long inFlightSince=0L;
+    private long lastVisualPositiveAt=0L;
     private long pendingSince=0L;
     private String pendingPoint="";
     private boolean previousBannerVisible=false;
@@ -193,11 +194,9 @@ public final class CandyScreenCaptureService extends Service {
             long now=SystemClock.elapsedRealtime();
             if(!RareCandyOverlayService.isRunning()){stopSelf();return;}
             if(stopped||!sourceVisible||now-lastFrameAt<SAMPLE_INTERVAL_MS)return;
-            if(inFlight){
-                if(now-inFlightSince>6000L)
-                    reportStatus("OCR demorando · mantenha captura ativa");
-                return;
-            }
+            // Never stall frame sampling because ML Kit is downloading its
+            // unbundled OCR model or a previous OCR request is unresolved.
+            // Visual two-sprite evidence must remain independent of OCR.
             lastFrameAt=now;
             long wallTime=System.currentTimeMillis();
             if(wallTime-lastFrameSharedAt>=1500L){
@@ -264,8 +263,6 @@ public final class CandyScreenCaptureService extends Service {
                 argb,outW,outH,Bitmap.Config.ARGB_8888);
             getSharedPreferences("rare_candy_overlay",MODE_PRIVATE).edit()
                 .putBoolean("candyCaptureHasValidPixels",true).apply();
-            inFlight=true;
-            inFlightSince=now;
             processTopBand(top,selected,selectedAt);
         }catch(RuntimeException issue){
             reportStatus("Falha ao processar quadro · reinicie a captura");
@@ -284,11 +281,21 @@ public final class CandyScreenCaptureService extends Service {
         // Visual fallback is essential: "DOCE RARO" is white-on-white in
         // the actual popup, and unbundled OCR can still be downloading.
         if(dualBanner){
+            lastVisualPositiveAt=SystemClock.elapsedRealtime();
             observeEvidence(true,true,selected,selectedAt);
             top.recycle();
-            inFlight=false;
             return;
         }
+        if(inFlight){
+            // Keep scanning every 350ms even if OCR has stalled.
+            if(SystemClock.elapsedRealtime()-inFlightSince>5000L)
+                reportStatus("OCR lento · análise visual continua");
+            top.recycle();
+            return;
+        }
+        inFlight=true;
+        inFlightSince=SystemClock.elapsedRealtime();
+        final long frameAt=inFlightSince;
         Task<Text> task;
         try{
             task=textRecognizer.process(InputImage.fromBitmap(top,0));
@@ -305,6 +312,9 @@ public final class CandyScreenCaptureService extends Service {
                     !selected.equals(prefs.getString("selectedCandyCoords",""))||
                     selectedAt!=prefs.getLong("selectedCandyCopyAtMs",0L))
                     return;
+                // An older OCR response cannot cancel more recent,
+                // confirmed visual evidence from the item-found banner.
+                if(frameAt<lastVisualPositiveAt)return;
                 boolean matched=CandyPickupEvidence.foundMessageWithCandy(
                     text.getText(),rainbow);
                 observeEvidence(matched,false,selected,selectedAt);
@@ -315,8 +325,10 @@ public final class CandyScreenCaptureService extends Service {
                 top.recycle();inFlight=false;
             }
         }).addOnFailureListener(error->{
-            reportStatus("OCR indisponível · verificando sprites");
-            observeEvidence(false,false,selected,selectedAt);
+            if(frameAt>=lastVisualPositiveAt){
+                reportStatus("OCR indisponível · verificando sprites");
+                observeEvidence(false,false,selected,selectedAt);
+            }
             top.recycle();inFlight=false;
         });
     }
