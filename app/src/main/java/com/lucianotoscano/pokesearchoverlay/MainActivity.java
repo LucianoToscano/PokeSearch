@@ -1422,20 +1422,38 @@ public class MainActivity extends Activity {
     private void showPgsharpAutoLocationDialog(){
         boolean requested=getSharedPreferences("prefs",0)
             .getBoolean("pgsharpAutoQaEnabled",false);
-        String details="Teste automático sem root. O PokeSearch tentará ler APENAS coordenadas da posição atual do personagem, quando o PGSharp as expuser como texto acessível. "+
-            "Se o PGSharp não publicar esses dados, joystick, teleportes e rotas NÃO serão sincronizados. "+
-            "Não usamos o GPS fixo do Android nem adivinhamos coordenadas. A autorização de Acessibilidade deve ser concedida uma única vez nos Ajustes.";
+        SharedPreferences diag=getSharedPreferences("pgsharp_qa_diagnostics",0);
+        long now=System.currentTimeMillis();
+        long lastEvent=diag.getLong("lastEventAt",0L);
+        long lastValid=diag.getLong("lastValidAt",0L);
+        String eventAge=lastEvent>0L?
+            Math.max(0,(now-lastEvent)/1000)+" s atrás":"nenhum evento";
+        String validAge=lastValid>0L?
+            Math.max(0,(now-lastValid)/1000)+" s atrás":"nenhuma";
+        String message="Diagnóstico LT198 (somente dados locais):\n"+
+            "Teste solicitado: "+(requested?"SIM":"NÃO")+"\n"+
+            "Serviço do Android: "+(diag.getBoolean("connected",false)?"CONECTADO":"NÃO CONECTADO")+"\n"+
+            "Eventos Pokémon GO: "+diag.getInt("events",0)+"\n"+
+            "Último evento: "+eventAge+"\n"+
+            "Origem da árvore: "+diag.getString("source","nenhuma")+"\n"+
+            "Nós visíveis: "+diag.getInt("nodes",0)+"\n"+
+            "Nós com texto: "+diag.getInt("texts",0)+"\n"+
+            "Coordenada atual reconhecida: "+validAge+"\n"+
+            "Diagnóstico: "+diag.getString("status","sem leitura ainda")+"\n\n"+
+            "Abra o PGSharp, faça um teleporte e mova o joystick; volte aqui para conferir. "+
+            "O GPS do Android NÃO é utilizado. Se eventos chegarem sem coordenadas, "+
+            "o PGSharp pode não expor a posição via Acessibilidade. "+
+            "Nenhum texto de outras telas é gravado neste relatório.";
         new AlertDialog.Builder(this)
-            .setTitle("📍 PGSharp · sincronização experimental")
-            .setMessage(details+"\n\nStatus: "+(requested?"teste solicitado":"desativado")+
-                "\nUse os Ajustes de Acessibilidade para conceder ou revogar acesso.")
+            .setTitle("📍 PGSharp · diagnóstico experimental")
+            .setMessage(message)
             .setNegativeButton("Fechar",null)
             .setNeutralButton("Desativar",(d,w)->{
                 getSharedPreferences("prefs",0).edit()
                     .putBoolean("pgsharpAutoQaEnabled",false).apply();
                 Toast.makeText(this,"Teste PGSharp desativado",Toast.LENGTH_SHORT).show();
             })
-            .setPositiveButton("Ativar teste",(d,w)->{
+            .setPositiveButton(requested?"Abrir Acessibilidade":"Ativar teste",(d,w)->{
                 getSharedPreferences("prefs",0).edit()
                     .putBoolean("pgsharpAutoQaEnabled",true).apply();
                 try{startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));}
