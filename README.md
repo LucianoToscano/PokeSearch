@@ -1,6 +1,22 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial atual — LT202 · 0.02.02 · 54409
+## Versão oficial atual — LT204 · 0.02.04 · 54411
+
+[Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.04-54411/PokeSearch-v0.02.04-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.04-54411) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1pxeWIcjyJLpMonkg2u8hFzhwEt-f0Nuy/view?usp=drivesdk) · [Workflow oficial #41231635596](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231635596) · [PR #172](https://github.com/LucianoToscano/PokeSearch/pull/172).
+
+**Busca normal:** funciona **com ou sem login** para as duas Pokébolas, com seleção de Conta 1/Conta 2 sem exigir treinador vinculado. Quando disponível, Conta 2 usa perfil de WebView isolado para pesquisa anônima ou autenticada. Estados de login e seleções P1/P2 permanecem independentes.
+
+**Shiny ✨:** identificação temporariamente indisponível no PoGoCoordinates conforme relato do usuário. Controle pausado, não envia `shiny_only:true` nem solicita treinador; vínculos históricos são preservados sem aparecer como erro na Home. Recursos e limites do serviço seguem sujeitos à resposta real do provedor.
+
+**APK:** 29.263.311 bytes · SHA-256 `73a72edeea948747666dc18401cd13348301b9fe5f70d26971ed29fdf95f53cf` · certificado v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` · source commit `3905d582f663d87870441b8d272d6916c57277d7`.
+
+**Drive:** ZIP 26.922.166 bytes · SHA-256 `07162ab631099cacab3f2f8133ae5b80fd614699eec4a1783e8dbd05e0751d4c`; APK idêntico, relatórios de assinatura e integridade. A atualização já aparece em GitHub Releases/latest; instalação exige aceite no Android. **Pendente:** HTTP 422 específico do PoGoCoordinates e testes reais de busca no Samsung continuam sem validação definitiva.
+
+[Guia Mestre](docs/GUIA_MESTRE.md) · [QA LT204](docs/LT204_LOGIN_OPCIONAL_SHINY_PAUSADO_QA_20261031.md).
+
+---
+
+## Histórico — LT202 · 0.02.02 · 54409
 
 [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.02-54409/PokeSearch-v0.02.02-LT.apk) · [Release público/latest](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.02-54409) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1XWrMubOZlFN9ax5LZ1kC7Z0jvgTSvn30/view?usp=drivesdk) · [Actions SUCCESS #41228184179](https://github.com/LucianoToscano/PokeSearch/actions/runs/41228184179) · [PR #169 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/169).
 
