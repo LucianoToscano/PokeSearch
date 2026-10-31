@@ -34,3 +34,10 @@ Versão base: LT196 oficial `0.01.96 / 54401`. Alterações isoladas na branch `
 - Android/OTA #41180554940: SUCCESS.
 - Classificador real `CandyPickupEvidenceTest.java` na JVM: **20 casos aprovados**. Teste adicional com pixel sampling da imagem fornecida executado localmente, sem enviar a imagem ao repositório.
 - **Não houve:** reconhecimento autenticado num Samsung, build/assinatura de APK QA, merge ou distribuição. LT196 permanece oficial.
+
+## APK de teste LT197 gerado em 31/10/2026
+- **CI privado assinado:** [Actions #41180890363](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180890363) — `SUCCESS`, usando certificado permanente original, versão `0.01.97 / 54402`.
+- **Artifact QA:** [PokeSearch-LT197-QA-Signed-Verified](https://github.com/LucianoToscano/PokeSearch/actions/runs/41180890363/artifacts/13034782296). APK incluído: `PokeSearch-LT197-QA-0.01.97-54402.apk` de 29.254.623 bytes, SHA-256 `c73c8f2d7dff645944e0314eceac590486b7ca27d66be2198eee635f4cd03100`. `apksigner` v2 aprovado e certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **ZIP de QA:** 26.912.566 bytes, SHA-256 `3bc4da904f105e6746853b3e08c82993cb3870c1a7a6b8c34813fa54dfc5011e`. Verificação de ZIP e SHA256SUMS passou, SOURCE_COMMIT `490cf03532a59402a6967899639aa2105c76ebe3`.
+- **Drive QA, sem OTA:** [ZIP com APK e relatórios](https://drive.google.com/file/d/1o5Y1_b30Gohlm0WCUdo-8sUlCgLuYHTM/view) no folder PokeSearch_App, conferido por metadados. O aviso `QA-NOT-PUBLIC.txt` foi escrito pelo CI antes do upload manual ao Drive e se refere à ausência de publicação automática no workflow.
+- A PR #161 permanece **draft/aberta**, ainda sem merge. Release oficial mais recente continua `LT196 / 0.01.96`. Não houve distribuição pelo mecanismo de atualização para todos. **Teste real de reconhecimento com tela compartilhada no Samsung permanece pendente.**
