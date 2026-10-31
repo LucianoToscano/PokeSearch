@@ -63,6 +63,7 @@ public final class CandyScreenCaptureService extends Service {
     private String pendingPoint="";
     private boolean previousBannerVisible=false;
     private boolean waitForOldBannerToClear=false;
+    private int bannerAbsentFrames=0;
     private final CandyPickupEvidence.TwoFrameGate gate=
         new CandyPickupEvidence.TwoFrameGate();
 
@@ -224,6 +225,7 @@ public final class CandyScreenCaptureService extends Service {
                 // Prevent a second copy from reusing the same still-visible
                 // banner that confirmed the previous pending candy.
                 waitForOldBannerToClear=previousBannerVisible;
+                bannerAbsentFrames=0;
                 pendingPoint=selected;pendingSince=selectedAt;
                 gate.reset();
                 reportStatus("Procurando aviso de coleta");
@@ -281,10 +283,19 @@ public final class CandyScreenCaptureService extends Service {
         // Visual fallback is essential: "DOCE RARO" is white-on-white in
         // the actual popup, and unbundled OCR can still be downloading.
         if(dualBanner){
+            bannerAbsentFrames=0;
             lastVisualPositiveAt=SystemClock.elapsedRealtime();
             observeEvidence(true,true,selected,selectedAt);
             top.recycle();
             return;
+        }
+        if(waitForOldBannerToClear&&++bannerAbsentFrames>=2){
+            // Two frames without the old dual-sprite banner release the
+            // next selected candy even if ML Kit OCR never returns.
+            waitForOldBannerToClear=false;
+            previousBannerVisible=false;
+            gate.reset();
+            reportStatus("Aviso anterior saiu · aguardando novo doce");
         }
         if(inFlight){
             // Keep scanning every 350ms even if OCR has stalled.
