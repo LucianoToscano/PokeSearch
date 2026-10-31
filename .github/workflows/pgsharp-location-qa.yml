@@ -1,4 +1,4 @@
-name: PGSharp location adapter - signed QA APK (NOT PUBLIC)
+name: LT198 PGSharp source diagnostic - signed QA APK (NOT PUBLIC)
 on:
   pull_request:
     branches: [main]
@@ -18,9 +18,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 85
     env:
-      POKE_TEST_VERSION_CODE: '54402'
-      POKE_TEST_VERSION_LABEL: '51202'
-      POKE_TEST_PUBLIC_VERSION: '0.01.97'
+      POKE_TEST_VERSION_CODE: '54403'
+      POKE_TEST_VERSION_LABEL: '51203'
+      POKE_TEST_PUBLIC_VERSION: '0.01.98'
       POKE_CONTROLLED_DISTRIBUTION: 'true'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
@@ -85,20 +85,20 @@ jobs:
           unzip -t "$APK" >/dev/null
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > qa/PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" qa/PACKAGE-VERSION.txt
-          grep -Fq "versionCode='54402'" qa/PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.01.97'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54403'" qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.01.98'" qa/PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > qa/SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' qa/SIGNING-REPORT.txt
           actual="$(grep 'Signer #1 certificate SHA-256 digest:' qa/SIGNING-REPORT.txt | awk '{print $NF}')"
           test "$actual" = "$POKE_RELEASE_CERT_SHA256"
           test "$(stat -c %s "$APK")" -lt 35000000
-          cp "$APK" qa/PokeSearch-PGSharp-AutoLocation-EXPERIMENTAL-LT197.apk
-          (cd qa && sha256sum PokeSearch-PGSharp-AutoLocation-EXPERIMENTAL-LT197.apk > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          cp "$APK" qa/PokeSearch-PGSharp-Diagnostico-EXPERIMENTAL-LT198.apk
+          (cd qa && sha256sum PokeSearch-PGSharp-Diagnostico-EXPERIMENTAL-LT198.apk > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
           git rev-parse HEAD > qa/SOURCE_COMMIT.txt
-          printf '%s\n' 'CANDIDATO QA; SEM INTEGRACAO DIRETA PGSHARP COMPROVADA; NAO PUBLICAR A TODOS' > qa/LEIA-PRIMEIRO.txt
+          printf '%s\n' 'QA LT198; DIAGNOSTICO, NAO INTEGRACAO DIRETA; NAO PUBLICAR A TODOS' > qa/LEIA-PRIMEIRO.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: PokeSearch-PGSharp-AutoLocation-LT197-QA-Signed
+          name: PokeSearch-PGSharp-Diagnostico-LT198-QA-Signed
           path: qa/
           retention-days: 30
           if-no-files-found: error
