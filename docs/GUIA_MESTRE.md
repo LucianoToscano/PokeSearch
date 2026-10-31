@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT203 — ATUALIZADOR ANDROID SAMSUNG (31/10/2026)
+
+- **Sintoma na LT201/LT202:** captura do Samsung mostra download oficial completo e `APK verificado — 100%`, mas ao clicar em **Instalar atualização**, o instalador abre e fecha. O valor de progresso confirma download, **não** comprova que o Package Installer iniciou ou concluiu.
+- **Merge:** [PR #170](https://github.com/LucianoToscano/PokeSearch/pull/170) integrada na `main`; commit `3ea7d878adf80784f5ed1032e98efd931700cc7f`. Versão alvo `0.02.03` / `54410`.
+- **Correção de entrega de APK:** `GitHubUpdateCenter` passa a usar `ACTION_INSTALL_PACKAGE` + `FileProvider` + `ClipData` + `FLAG_GRANT_READ_URI_PERMISSION` + retorno de Activity; fallback `ACTION_VIEW` caso a ação principal não consiga abrir. Cancelamento quase instantâneo mostra orientação e opção de baixar pelo navegador. Botão secundário `Instalar pelo navegador` aparece no diálogo após validação do download.
+- **Segurança:** revalida assinatura permanente, pacote, versionCode e cache/updates antes de entregar ao instalador; não usa instalação silenciosa, não desativa Auto Blocker Samsung e não remove dados. Quando a instalação de fontes desconhecidas não está autorizada, mostra configurações apropriadas; link externo restrito ao APK oficial do GitHub Releases. **Não é possível contornar proteções do Android.**
+- **QA aprovada antes do merge:** [Node](https://github.com/LucianoToscano/PokeSearch/actions/runs/41229618933) SUCCESS · [regressão](https://github.com/LucianoToscano/PokeSearch/actions/runs/41229618931) SUCCESS · [Java/Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/41229618948) SUCCESS · [OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41229618935) SUCCESS. Teste dedicado `app/tests/lt203-ota-installer-handoff.test.js`.
+- **Publicação:** workflow `.github/workflows/lt203-official-release.yml` exige latest LT202, testes, compilação R8, certificado original v2 e hash público antes de distribuir; status da publicação ainda sujeito à execução do workflow neste registro.
+- **Limitação:** sem logs de Package Installer do aparelho ainda não é possível determinar se o fechamento decorreu de permissão, Samsung Auto Blocker ou outro bloqueio de sistema; confirmação física obrigatória após LT203. Instruções e QA em [LT203 Android Samsung](LT203_ANDROID_INSTALLER_SAMSUNG_QA_20261031.md).
+
+---
+
 ## LT202 — POGOCORDINATES SHINY_FOR (31/10/2026)
 
 - **Integração na main:** [PR #169](https://github.com/LucianoToscano/PokeSearch/pull/169) mesclada, source commit `912ff2c78d2526532a75b42ee4c9a6e0cb39ebb1`. Versão preparada `0.02.02`/`54409`.
