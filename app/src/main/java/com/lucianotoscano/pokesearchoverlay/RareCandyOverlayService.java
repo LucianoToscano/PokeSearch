@@ -192,7 +192,13 @@ public final class RareCandyOverlayService extends Service {
                 if(validCoords(p))copied.add(p);
             }
         }catch(Exception ignored){}
-        prefs.edit().remove("lastCandyHopCoords").remove("lastCandyHopAtMs").apply();
+        // Persist one-time migration before clearing LT195 copy-only keys.
+        SharedPreferences.Editor migrated=prefs.edit()
+            .remove("lastCandyHopCoords").remove("lastCandyHopAtMs");
+        if(pendingCandyPickup&&validCoords(selectedCandyCoords))
+            migrated.putString("selectedCandyCoords",selectedCandyCoords)
+                .putBoolean("pendingCandyPickup",true);
+        migrated.apply();
         icon=loadIcon(this);
         running=true;
         NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
