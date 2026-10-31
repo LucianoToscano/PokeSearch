@@ -631,11 +631,7 @@ public final class RareCandyOverlayService extends Service {
             });
         }
         @android.webkit.JavascriptInterface public String getCandyCaptureStatus(){
-            if(!CandyScreenCaptureService.isActive())
-                return "Detecção desligada · toque A para ativar";
-            String status=prefs.getString("candyCaptureStatus",
-                "Aguardando mensagem do Doce Raro");
-            return status.length()>80?status.substring(0,80):status;
+            return RareCandyOverlayService.this.captureHealthStatus();
         }
         @android.webkit.JavascriptInterface public void setAutoCandyPickup(boolean enable){
             main.post(()->{
@@ -1224,6 +1220,20 @@ public final class RareCandyOverlayService extends Service {
         }
         placeResults();
     }
+    /** Actual frame health, not merely the green A capture-service flag. */
+    private String captureHealthStatus(){
+        if(!CandyScreenCaptureService.isActive())
+            return "Detecção parada · toque A para reautorizar";
+        long last=prefs.getLong("candyCaptureLastFrameAtMs",0L);
+        long now=System.currentTimeMillis();
+        if(last<=0||now<last||now-last>6000L)
+            return "Sem imagens da tela · reautorize captura completa";
+        String status=prefs.getString("candyCaptureStatus","Aguardando mensagem");
+        if(!prefs.getBoolean("candyCaptureHasValidPixels",false))
+            return "Recebendo tela · aguardando pixels válidos";
+        return status.length()>80?status.substring(0,80):status;
+    }
+
     private final Runnable tick=new Runnable(){
         @Override public void run(){
             if(destroyed)return;
@@ -1280,10 +1290,8 @@ public final class RareCandyOverlayService extends Service {
                     syncCandyMenu();
                 }
                 if(active&&candyMenuLoaded&&candyMenuPanel!=null){
-                    String message=prefs.getString("candyCaptureStatus",
-                        "Aguardando mensagem");
-                    // The capture service only stores bounded fixed status
-                    // messages, not OCR text or coordinates.
+                    String message=captureHealthStatus();
+                    // Only fixed diagnostic strings, never OCR text/pixels.
                     if(message.length()>80)message=message.substring(0,80);
                     candyMenuPanel.evaluateJavascript(
                         "window.setCandyDetectionStatus("+
@@ -1319,11 +1327,17 @@ public final class RareCandyOverlayService extends Service {
             long copiedAt=i.getLongExtra(EXTRA_VISUAL_COPIED_AT,0L);
             // The capture service is private and this callback must match
             // the SINGLE active selection made after an explicit screen grant.
-            if(CandyScreenCaptureService.isActive()&&
+            boolean accepted=CandyScreenCaptureService.isActive()&&
                 prefs.getBoolean("candyAutoPickupOptIn",false)&&
                 pendingCandyPickup&&point!=null&&point.equals(selectedCandyCoords)&&
-                copiedAt>0&&copiedAt==prefs.getLong("selectedCandyCopyAtMs",-1)){
+                copiedAt>0&&copiedAt==prefs.getLong("selectedCandyCopyAtMs",-1);
+            if(accepted){
                 recordCollectedCandy(point,true);
+                prefs.edit().putString("candyCaptureStatus",
+                    "✓ Coleta confirmada no PokeSearch").apply();
+            }else{
+                prefs.edit().putString("candyCaptureStatus",
+                    "Aviso visto · copie novamente o doce correto").apply();
             }
             return START_NOT_STICKY;
         }
