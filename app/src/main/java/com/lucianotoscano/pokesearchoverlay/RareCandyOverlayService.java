@@ -1279,6 +1279,16 @@ public final class RareCandyOverlayService extends Service {
                     lastMenuCaptureActive=active;
                     syncCandyMenu();
                 }
+                if(active&&candyMenuLoaded&&candyMenuPanel!=null){
+                    String message=prefs.getString("candyCaptureStatus",
+                        "Aguardando mensagem");
+                    // The capture service only stores bounded fixed status
+                    // messages, not OCR text or coordinates.
+                    if(message.length()>80)message=message.substring(0,80);
+                    candyMenuPanel.evaluateJavascript(
+                        "window.setCandyDetectionStatus("+
+                        JSONObject.quote(message)+")",null);
+                }
             }
             main.postDelayed(this,1000L);
         }
