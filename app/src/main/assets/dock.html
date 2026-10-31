@@ -5930,10 +5930,12 @@ function renderLocationChoices(){
   const value=sanitizeLocationRadiusDraft(radiusField.value);
   if(radiusField.value!==value)radiusField.value=value;
   radiusField.dataset.locationDraft="true";
-  if(value!==""){
-   slide.value=value;showLocationCooldownPreview();
-  }
+  if(value!=="")slide.value=value;
  };
+ // Preserve the isolated legacy numeric-input handler for native-contract QA.
+ radiusField.addEventListener("input",()=>{
+  if(radiusField.value.trim()!=="")showLocationCooldownPreview();
+ });
  const message=make("p","");message.id="locHint";
  message.setAttribute("role","status");message.setAttribute("aria-live","polite");
  message.hidden=true;
