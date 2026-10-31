@@ -6411,7 +6411,7 @@ function resultLines(card,opts,league){
  if(opts.shiny){
   const icons=(card?.shiny===true?"✨":"")+(card?.background===true?"🏞️":"");
   const forNames=Array.isArray(card?.shinyFor)?card.shinyFor.filter(x=>
-   typeof x==="string"&&x.length<=32&&/^[\\p{L}\\p{N} _.-]+$/u.test(x)).slice(0,20):[];
+   typeof x==="string"&&x.length<=32&&/^[\p{L}\p{N} _.-]+$/u.test(x)).slice(0,20):[];
   if(forNames.length){
    // Same label semantics as the official site's shiny_for helper.
    // Compact long lists: never exceed the result overlay's narrow width.
