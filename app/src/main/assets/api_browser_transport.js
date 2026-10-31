@@ -211,31 +211,20 @@
     token=null;
    }
   }
-  async function accountStatus(){
-   // Only the provider may confirm its own session. No PII or raw JSON crosses
-   // the WebView bridge. This endpoint is READ ONLY and consumes no coords.
-   if(disposed||!originValid())return fail("invalid-origin");
-   if(!jwt())return {ok:true,auth:"login-required"};
-   const result=await request("GET",ACCOUNT_URL,null,true,6000);
-   if(!result.ok){
-    if(result.reason==="login-required")return {ok:true,auth:"login-required"};
-    return fail(result.reason);
-   }
-   if(!result.body||typeof result.body!=="object"||Array.isArray(result.body))
-    return fail("invalid-account-response");
-   // Official GET /users/me is the authoritative, authenticated account
-   // registry when the React /profile cards are unhydrated. Only bounded
-   // trainer metadata enters the private Android app; never email, OAuth IDs,
-   // JWT, billing information, or provider error bodies.
-   const body=result.body;
-   const trainers=Array.isArray(body.trainers)?body.trainers:
-     body.trainer&&typeof body.trainer==="object"?[body.trainer]:null;
-   const safe=[];
-   const seen=new Set();
-   if(trainers)for(const row of trainers.slice(0,30)){
-    if(!row||typeof row!=="object"||row.active===false)continue;
-    const code=row.trainer_code, name=row.trainer_name;
-    const team=typeof row.team_name==="string"?row.team_name:"";
+  function parseLinkedTrainers(body){
+   // Only exact, explicitly active links can prove an account-specific Shiny
+   // entitlement. The UI having no Remove button is never evidence of unlink.
+   const rows=Array.isArray(body)?body:
+    Array.isArray(body?.trainers)?body.trainers:
+    Array.isArray(body?.linked_trainers)?body.linked_trainers:
+    body?.trainer&&typeof body.trainer==="object"?[body.trainer]:
+    body?.link&&typeof body.link==="object"?[body.link]:null;
+   const result=[],seen=new Set();
+   if(rows)for(const row of rows.slice(0,30)){
+    if(!row||typeof row!=="object"||row.active!==true)continue;
+    const code=row.trainer_code??row.code;
+    const name=row.trainer_name??row.name;
+    const team=row.team_name??row.team;
     const level=Number(row.level);
     if(typeof code!=="string"||!/^\d{12}$/.test(code)||
        typeof name!=="string"||
@@ -243,12 +232,35 @@
        !["Mystic","Valor","Instinct"].includes(team)||
        !Number.isInteger(level)||level<1||level>80||seen.has(code))continue;
     seen.add(code);
-    safe.push({code,name,team,level:String(level)});
-    if(safe.length===20)break;
+    result.push({code,name,team,level:String(level)});
+    if(result.length>=20)break;
    }
-   return {ok:true,auth:"authenticated",
-    trainerState:safe.length?"linked":trainers!==null?"unlinked":"unknown",
-    trainers:safe};
+   return {recognized:rows!==null,confirmed:result};
+  }
+  async function accountStatus(){
+   // No writes. /users/me is the first choice; /trainer is a read-only
+   // fallback when the site moves its profile/linked trainer presentation.
+   // An empty/unknown shape is NOT permission to erase saved links.
+   if(disposed||!originValid())return fail("invalid-origin");
+   if(!jwt())return {ok:true,auth:"login-required",trainerState:"unknown",trainers:[]};
+   const primary=await request("GET",ACCOUNT_URL,null,true,6000);
+   if(!primary.ok&&primary.reason==="login-required")
+    return {ok:true,auth:"login-required",trainerState:"unknown",trainers:[]};
+   let found=primary.ok?parseLinkedTrainers(primary.body):{recognized:false,confirmed:[]};
+   if(found.confirmed.length)
+    return {ok:true,auth:"authenticated",trainerState:"linked",trainers:found.confirmed};
+   const second=await request("GET",TRAINER_URL,null,true,6000);
+   if(!second.ok&&second.reason==="login-required")
+    return {ok:true,auth:"login-required",trainerState:"unknown",trainers:[]};
+   const fallback=second.ok?parseLinkedTrainers(second.body):{recognized:false,confirmed:[]};
+   if(fallback.confirmed.length)
+    return {ok:true,auth:"authenticated",trainerState:"linked",trainers:fallback.confirmed};
+   // Even if the server returns [], a removed UI button or stale endpoint
+   // does not prove a permanent unlink. Keep trainer status unknown and
+   // require a successful explicit verified link before Shiny can be enabled.
+   if(primary.ok||second.ok)
+    return {ok:true,auth:"authenticated",trainerState:"unknown",trainers:[]};
+   return fail(primary.reason||second.reason||"account-unavailable");
   }
   async function search(config){
    if(disposed)return fail("disposed");
