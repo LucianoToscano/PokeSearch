@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT204 — BUSCA LIVRE E SHINY INDISPONÍVEL (31/10/2026)
+
+- **Alteração principal:** buscas normais por IV, CP, PvP, espécies e localização funcionam **com ou sem login** no PoGoCoordinates, em P1/P2. Autenticação Google/Discord continua opcional e não exige treinador para pesquisar.
+- **Shiny:** recurso de identificação por treinador temporariamente indisponível no provedor, conforme relato do usuário. Chave `ProviderFeatureFlags.SHINY_AVAILABLE=false` impede enviar `shiny_only:true` ou abrir fluxo de login/vínculo ao tocar ✨. O código histórico e os vínculos permanecem armazenados para eventual retorno verificado.
+- **Contas:** os painéis de treinador não confirmado ficam ocultos, sem espaço extra. Identificação das Pokébolas prioriza Conta 1 ou Conta 2 e Visitante/Logado; a escolha da conta deixa de abrir seleção de treinador. Conta 2 como visitante só é permitida em Android WebView com `MULTI_PROFILE`; nunca usar cookies da Conta 1 como fallback.
+- **QA:** [PR #172](https://github.com/LucianoToscano/PokeSearch/pull/172) mesclada à `main`, commit `ea3a4b72add2b6b9f3f66a63858ef07904406411`; [Node QA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231348955), [regressão Node](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231348926), [Java/Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231348944), [OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41231348987) SUCCESS. Checklist: [LT204](LT204_LOGIN_OPCIONAL_SHINY_PAUSADO_QA_20261031.md).
+- **Release oficial:** `0.02.04` / `54411`, pipeline [LT204](../.github/workflows/lt204-official-release.yml) com assinatura v2 permanente, validação de integridade e distribuição por GitHub Releases/latest. **Publicação real ainda precisa ser verificada** antes de afirmar que todos podem instalar.
+- **Erro HTTP 422:** investigação separada em [PR #171](https://github.com/LucianoToscano/PokeSearch/pull/171) (QA), sem declarar causa específica do servidor, sem expor JWT/Authorization ou remover filtros para contornar validação.
+
+---
+
 ## LT203 — ATUALIZADOR ANDROID SAMSUNG (31/10/2026)
 
 - **Sintoma na LT201/LT202:** captura do Samsung mostra download oficial completo e `APK verificado — 100%`, mas ao clicar em **Instalar atualização**, o instalador abre e fecha. O valor de progresso confirma download, **não** comprova que o Package Installer iniciou ou concluiu.
