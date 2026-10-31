@@ -1,0 +1,33 @@
+{
+  "merge_sha": "9573a49b15f3f286d766c341cc1e99c18a14b255",
+  "workflow": {
+    "id": 41199748150,
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/LucianoToscano/PokeSearch/actions/runs/41199748150",
+    "head_sha": "9573a49b15f3f286d766c341cc1e99c18a14b255"
+  },
+  "artifacts": [
+    {
+      "id": 13041609375,
+      "name": "PokeSearch-LT199-Signed-Verified",
+      "size_in_bytes": 26916408,
+      "expired": false
+    }
+  ],
+  "latest": {
+    "tag_name": "v0.01.99-54406",
+    "url": "https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.01.99-54406",
+    "draft": false,
+    "prerelease": false,
+    "assets": [
+      {
+        "name": "PokeSearch-v0.01.99-LT.apk",
+        "size": 29256743,
+        "digest": "sha256:2abb3898468a2681b3b46db9abb5f1cd79bb51165ccf7e51596ac94f7f4a2a30",
+        "download_count": 0,
+        "browser_download_url": "https://github.com/LucianoToscano/PokeSearch/releases/download/v0.01.99-54406/PokeSearch-v0.01.99-LT.apk"
+      }
+    ]
+  }
+}
