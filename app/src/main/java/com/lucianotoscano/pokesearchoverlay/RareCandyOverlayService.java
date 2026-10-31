@@ -79,15 +79,15 @@ public final class RareCandyOverlayService extends Service {
     private int sourceAccount=1;
     // Keep candy on P1's selected WebView profile, never share JWT/cookies.
     private SharedPreferences accountBindingPrefs;
+    private Bitmap icon;
+    private TextView status;
+    private String probe="";
+    private boolean visible=false,ready=false,destroyed=false,busy=false,showInfos=true;
     private final SharedPreferences.OnSharedPreferenceChangeListener candyAccountListener=
         (shared,key)->{
             if("pogoOverlayAccount1".equals(key)&&!destroyed)
                 main.post(this::syncCandyAccountBinding);
         };
-    private Bitmap icon;
-    private TextView status;
-    private String probe="";
-    private boolean visible=false,ready=false,destroyed=false,busy=false,showInfos=true;
     private boolean showName=false,showLocation=false,showDespawn=true,showDistance=false;
     private String coords="";
     private int radius=1000,period=3,generation=0;
