@@ -572,7 +572,8 @@ public final class RareCandyOverlayService extends Service {
                 menuParams.height=dp(h);
                 // Pokébola location/info panels are 148px, not 232px.
                 // A transparent 158dp native frame fits the exact CSS card.
-                menuParams.width=dp(h>34?("period".equals(panel)?142:158):142);
+                menuParams.width=dp(h>34?("location-cooldown".equals(panel)?232:
+                    "period".equals(panel)?142:158):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
