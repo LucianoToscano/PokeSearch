@@ -16,6 +16,22 @@ final class FavoritePanelGeometry {
             clamp(y,margin,displayH-panelH-margin)
         };
     }
+    /** Chooses a side of the actual visible toolbar, not the expanded WebView.
+     * The y coordinates are native WindowManager screen pixels, not menu-local.
+     */
+    static int[] adjacentToToolbar(int anchorX,int toolbarTop,int toolbarBottom,
+                                   int displayW,int displayH,int panelW,int panelH,
+                                   int margin,int gap){
+        int above=Math.max(0,toolbarTop-gap-margin);
+        int below=Math.max(0,displayH-margin-toolbarBottom-gap);
+        boolean preferBelow=below>=panelH || (above<panelH && below>=above);
+        int y=preferBelow?toolbarBottom+gap:toolbarTop-gap-panelH;
+        return onScreen(anchorX-panelW/2,y,displayW,displayH,panelW,panelH,margin);
+    }
+    static boolean overlapsToolbar(int top,int height,int toolbarTop,int toolbarBottom){
+        return toolbarTop>=0 && toolbarBottom>toolbarTop &&
+            top<toolbarBottom && top+height>toolbarTop;
+    }
     static int[] adjacent(int anchorX,int anchorY,int displayW,int displayH,
                           int panelW,int panelH,int margin,int gap,int halfToolbarH){
         int below=anchorY+halfToolbarH+gap;
