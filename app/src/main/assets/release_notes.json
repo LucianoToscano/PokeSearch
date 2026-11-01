@@ -1352,6 +1352,32 @@
           "O funcionamento na API real e a instalação em Samsung requerem validação física; testes automatizados não comprovam esses resultados."
         ]
       }
+    },
+    {
+      "id": "lt211-layout-reset-background-favorites-20261101",
+      "minVersionCode": 54418,
+      "date": "01/11/2026",
+      "title": "PokeSearch LT211 — Favoritos móveis, menus e Background",
+      "sections": {
+        "novidades": [
+          "Personalização: novo botão ↺ restaura a ordem e a visibilidade padrão dos menus.",
+          "Novo botão de busca Background ao lado de Shiny, ambos ocultos inicialmente; podem ser exibidos no organizador."
+        ],
+        "melhorias": [
+          "Agora são 13 ações organizáveis com arraste por ≡; apenas Personalização não pode ser ocultada.",
+          "Favoritos pode ser movido pelas áreas livres da própria janela, sem alça especial; posição escolhida é lembrada.",
+          "Localização mantém o painel compacto e a visualização discreta de cooldown durante o ajuste de raio."
+        ],
+        "correcoes": [
+          "Favoritos passa a tentar abrir fora da barra de menus, escolhendo acima ou abaixo conforme espaço disponível.",
+          "Preferências antigas de menus são migradas sem apagar a ordem personalizada; reset não apaga filtros, Favoritos ou Editor Visual.",
+          "Background usa o parâmetro real background_only da API, sem confundir filtro solicitado com confirmação do provedor."
+        ],
+        "emDesenvolvimento": [
+          "Validação final do arraste e posição dos Favoritos em aparelhos Samsung ainda depende de teste físico.",
+          "Shiny permanece temporariamente indisponível no provedor; ocultação do botão não significa remoção do recurso."
+        ]
+      }
     }
   ]
 }

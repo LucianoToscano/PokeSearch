@@ -78,7 +78,7 @@ test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
  const longPress=service.split("final Runnable dockLongPress=()->{")[1]?.split("};")[0]||"";
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
-  bridge.includes("},anchorX,anchorY);")&&
+  bridge.includes("},anchorX,anchorY,")&&
   publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
@@ -952,11 +952,11 @@ test("UX-MENU-01 keeps independent cascade, filters, alerts, info and appearance
  dock.includes('function renderFiltersChoices()')&&dock.includes('function renderAlertsChoices()')&&
  dock.includes('function renderInfoChoices()')&&dock.includes('function renderAppearanceChoices()')&&
  dock.includes('renderExtraFilters(panel,make)'));
-test("UX-MENU-01 persists ordered and hidden commands without hiding close",
+test("UX-MENU-01 persists ordered and hidden commands with Personalização protected",
  service.includes('void saveMenuPrefs(String json)')&&
- service.includes('!"close".equals(id)')&&
+ service.includes('!"appearance".equals(id)')&&
  dock.includes('quickPrefs.hidden.filter(x=>x!==id)')&&
- dock.includes('return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.'));
+ dock.includes('return {direction:"horizontal",labels:false,order,hidden};'));
 test("UX-MENU-01 visibility toggles cannot invent unverified data",
  service.includes('void setResultTextVisible(boolean value)')&&
  dock.includes('showResultText=!!textVisible;')&&
@@ -966,7 +966,8 @@ test("UX-MENU-01 visibility toggles cannot invent unverified data",
 
 // UX-MENU-02 · explicit visual checkpoint, no APK build or site claim.
 test("UX-MENU-02 orders Modos, Filtros, Localização and Pokémon consecutively",
- dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
+ dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],')&&
+  dock.includes('["bg","▧","Background Only","bg"],["filters","≡","Filtros","filters"]')&&
  dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
  dock.includes('["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"]'));
 test("UX-MENU-02 uses earlier SVG icons for location, alerts, favorites, appearance and support",
@@ -992,7 +993,7 @@ test("UX-MENU-04 restores twelve small icons in the old thin row while migrating
  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important')&&
  dock.includes('body.controls-window #quickRows,')&&
  dock.includes('display:contents!important')&&
- dock.includes('const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")'));
+ dock.includes('const legacy=!saved||!saved.includes("pokemon")'));
 test("UX-MENU-02 preserves independent Reportar and Apoiar actions",
  dock.includes('case "report":Native.openReport();break;')&&
  dock.includes('case "donate":Native.openPix();break;')&&
@@ -1010,7 +1011,8 @@ test("UX-MENU-03 keeps one tiny toolbar, cascade and independent other menus",
  dock.includes('width:220px!important')&&dock.includes('width:306px!important'));
 test("UX-MENU-04 keeps twelve icon-first entry points in one thin row",
   dock.includes('const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0])')&&
-  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"]')&&
+  dock.includes('["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],')&&
+  dock.includes('["bg","▧","Background Only","bg"],["filters","≡","Filtros","filters"]')&&
   dock.includes('["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"]')&&
   dock.includes('["report","⚠","Reportar","report"]')&&
   dock.includes('["donate","♡","Apoiar","donate"]')&&
@@ -1026,7 +1028,7 @@ test("UX-MENU-03 highlights active states by icon without visible labels",
 test("UX-MENU-04 exposes exactly the approved twelve icons in order",(()=>{
  const chunk=dock.split('const QUICK_ACTIONS=[')[1]?.split('];')[0]||"";
  const keys=[...chunk.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(m=>m[1]);
- return JSON.stringify(keys)===JSON.stringify(["mode","sh","filters","location","pokemon","star",
+ return JSON.stringify(keys)===JSON.stringify(["mode","sh","bg","filters","location","pokemon","star",
    "bell","period","appearance","report","donate","close"])&&
    chunk.includes('"period"')&&!chunk.includes('"info"')&&
    chunk.includes('["sh","✨","Shiny Only","sh"]')&&
@@ -1057,27 +1059,27 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
  const bridge=["setIntervalMinutes","refresh","toggleTimers","setResultTextVisible","setAlertMode",
   "openWatchList","openReport","openPix"];
  return bridge.every(name=>service.includes('void '+name+'('))&&
- dock.includes('p.order.some(id=>!ids.includes(id))')&&
+ dock.includes('saved.some(id=>!ids.includes(id))')&&
  dock.includes('const QUICK_UTILITY_IDS=[];')&&
- service.includes('String[] allowed={"mode","sh","filters","location","pokemon","star",')&&
+ service.includes('String[] allowed={"mode","sh","bg","filters","location","pokemon","star",')&&
  service.includes('"bell","period","appearance","report","donate","close"')&&
  dock.includes('["sh","✨","Shiny Only","sh"]')&&
  dock.includes('grid-template-columns:repeat(12,minmax(0,1fr))!important');
 })());
 
 
-test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native gating",(()=>{
- const prefs=dock.split("function normalizedQuickPrefs(p){")[1]?.split("function saveQuickPrefs()")[0]||"";
+test("UX-SHINY-02 allows moving Shiny independently while retaining native gating",(()=>{
+ const prefs=dock.split("function normalizedQuickPrefs(p={}){")[1]?.split("function saveQuickPrefs()")[0]||"";
  const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
  const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
- return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
-  prefs.includes('"appearance","sh"')&&
+ return prefs.includes('const order=[...previous,...ids.filter(id=>!previous.includes(id))]')&&
+  prefs.includes('x!=="appearance"')&&
   click.includes('case "sh":Native.shiny();break;')&&
   dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
   state.includes('id==="sh"?shiny:')&&
   dock.includes('[data-key=sh].selected')&&dock.includes('[data-key=sh].pending')&&
-  service.includes('!"sh".equals(id)')&&
+  service.includes('!"appearance".equals(id)')&&
   service.includes('siteConfirmsShinyAccount(session)')&&
   !dock.split("function getResultIcon(")[1].split("let locationEnabled=")[0].includes('result-icons/modes/');
 })());
@@ -1141,7 +1143,8 @@ test("REG-51049 OFF public search ignores inert radius while refusing residual c
 test("UX-MENU-06 refresh directly after Alertas and personalization before Reportar",()=>{
  const raw=dock.split("const QUICK_ACTIONS=[")[1]?.split("];")[0]||"";
  const ids=[...raw.matchAll(/\["([a-z]+)","[^"]+","[^"]+","[^"]+"\]/g)].map(x=>x[1]);
- return ids.length===12&&ids.indexOf("sh")===ids.indexOf("mode")+1&&
+ return ids.length===13&&ids.indexOf("sh")===ids.indexOf("mode")+1&&
+   ids.indexOf("bg")===ids.indexOf("sh")+1&&
   ids.indexOf("period")===ids.indexOf("bell")+1&&
   ids.indexOf("appearance")===ids.indexOf("report")-1&&
   dock.includes('case "bell":toggleChoices("alerts")')&&
@@ -3098,7 +3101,7 @@ test("UX-QUICK-MORE-01 keeps all three original action IDs movable in settings",
   ?.split("let quickPrefs=")[0]||"";
  const make=new Function("quickPrefs","const MORE_ACTION_IDS=Object.freeze("+group+
   ";return groupedMoreIds;");
- const originals=["mode","sh","filters","location","pokemon","star","bell","period","appearance","report","donate","close"];
+ const originals=["mode","sh","bg","filters","location","pokemon","star","bell","period","appearance","report","donate","close"];
  const find=make({order:originals,hidden:[]});
  const moveReport=make({order:["mode","report","sh","filters","location","pokemon","star","bell","period","appearance","donate","close"],hidden:[]});
  const hideDonor=make({order:originals,hidden:["donate"]});
@@ -3155,7 +3158,7 @@ test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()
   dock.includes('event.target.closest(\'#quickMenuList button[data-key]\')')&&
   dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","locationCooldownTable","modePanel","standardPanel","filterPicker","morePanel"')&&
   dock.includes('if(!menuOpen){closeChoices();')&&
-  dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
+  dock.includes('const hidden=legacy?[...QUICK_DEFAULT_HIDDEN]:Array.isArray(p.hidden)')&&
   dock.includes('for(const id of quickPrefs.order)')&&
   dock.includes('quickPrefs.order.indexOf(id)');
 });

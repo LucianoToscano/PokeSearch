@@ -3786,7 +3786,9 @@ public class OverlayService extends Service {
             },()->{
                 pickerOpen=false;favoritePickerDialog=null;
                 if(!stopped)update();
-            },anchorX,anchorY);
+            },anchorX,anchorY,
+                menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp)),
+                menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp))+dp(visualMenuBaseDp()));
             // Empty catalog: no dialog was created, so don't leave pickerOpen stuck.
             if(favoritePickerDialog==null)pickerOpen=false;
         }catch(Exception e){
@@ -4329,6 +4331,26 @@ public class OverlayService extends Service {
             android.widget.Toast.makeText(OverlayService.this,
                 "Ordenar por distância exige coordenadas e raio ativos. Outros filtros continuam disponíveis.",
                 android.widget.Toast.LENGTH_LONG).show();
+        });}
+        // LT211: Background toggle uses the existing, per-Pokébola
+        // background_only API criterion. Visibility preferences are independent.
+        @JavascriptInterface public void setBackgroundOnly(boolean enabled){handler.post(()->{
+            if(stopped||loginPaused)return;
+            try{
+                JSONObject extra=new JSONObject(extraFiltersJson);
+                if(extra.optBoolean("backgroundOnly",false)==enabled)return;
+                extra.put("backgroundOnly",enabled);
+                String updated=extra.toString();
+                extraFiltersJson=updated;
+                overlayPrefs().edit().putString("extraFiltersJson",updated).apply();
+                replaceActiveFilterSearch();
+                resultsStale=count()>0;
+                hideDetails();
+                status(enabled?"Background solicitado • pesquisando":"Background desligado • pesquisando");
+                scheduleFilterChangeRefresh();
+            }catch(org.json.JSONException ignored){
+                status("Não foi possível alterar o filtro Background.");
+            }
         });}
         @JavascriptInterface public void patchSearchFilters(String payload){handler.post(()->{
             try{
@@ -4910,15 +4932,15 @@ public class OverlayService extends Service {
                 String direction=incoming.optString("direction","vertical");
                 clean.put("direction","horizontal".equals(direction)?"horizontal":"vertical");
                 clean.put("labels",incoming.optBoolean("labels",true));
-                String[] allowed={"mode","sh","filters","location","pokemon","star",
+                String[] allowed={"mode","sh","bg","filters","location","pokemon","star",
                     "bell","period","appearance","report","donate","close"};
                 java.util.Set<String> valid=new java.util.HashSet<>(java.util.Arrays.asList(allowed));
                 for(String key:new String[]{"order","hidden"}){
                     org.json.JSONArray items=incoming.optJSONArray(key),safe=new org.json.JSONArray();
                     java.util.Set<String> seen=new java.util.HashSet<>();
-                    if(items!=null)for(int i=0;i<items.length()&&i<12;i++){
+                    if(items!=null)for(int i=0;i<items.length()&&i<13;i++){
                         String id=items.optString(i,"");
-                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||(!"close".equals(id)&&!"appearance".equals(id)&&!"sh".equals(id))))
+                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||!"appearance".equals(id)))
                             safe.put(id);
                     }
                     clean.put(key,safe);

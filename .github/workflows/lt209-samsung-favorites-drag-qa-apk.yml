@@ -1,0 +1,158 @@
+name: LT209 Samsung QA - favorites anchored and draggable - signed APK
+on:
+  push:
+    branches:
+      - qa/lt209-favoritos-ancora-arrastar-20261031
+    paths:
+      - .github/workflows/lt209-samsung-favorites-drag-qa-apk.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pokesearch-lt209-favorites-drag-samsung-qa
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/qa/lt209-favoritos-ancora-arrastar-20261031'
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    timeout-minutes: 85
+    env:
+      POKE_TEST_VERSION_CODE: '54416'
+      POKE_TEST_VERSION_LABEL: '51216'
+      POKE_TEST_PUBLIC_VERSION: '0.02.09'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'false'
+      POKE_SCRAPBOOK_ONLINE_QA: 'false'
+      QA_APK: 'PokeSearch-v0.02.09-LT209-FAVORITOS-QA.apk'
+      QA_TAG: 'v0.02.09-54416-qa-favoritos-mover-20261031'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      # LT209: final popup geometry boundary cases verified before permanent signing.
+      - name: Confirm LT206 source and compact 148dp layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor ed829ab7c4e908069dc2b63283a2bde0c3a98112 HEAD
+          node app/tests/lt200-location-cooldown.test.js
+          node app/tests/lt207-location-cooldown-preview.test.js
+          node app/tests/mode-icon-matte.test.js
+          node app/tests/lt208-menu-drag-visibility.test.js
+          node app/tests/lt209-favorites-position-drag.test.js
+          node app/tests/lt77-stage4-popup-anchor.test.js
+          node app/tests/lt82-samsung-ux-polish.test.js
+          mkdir -p "$RUNNER_TEMP/lt209-favorites"
+          javac --release 17 -d "$RUNNER_TEMP/lt209-favorites" app/src/main/java/com/lucianotoscano/pokesearchoverlay/FavoritePanelGeometry.java app/tests/FavoritePanelGeometryTest.java
+          java -cp "$RUNNER_TEMP/lt209-favorites" com.lucianotoscano.pokesearchoverlay.FavoritePanelGeometryTest
+          node app/tests/lt62-menu-visual-states.test.js
+          node app/tests/lt68-refresh-weather-icons.test.js
+          node app/tests/overlay-ux.test.js
+          node app/tests/lt70-location-radius-toggle.test.js
+          node app/tests/lt88-r8-compact-controls-sound.test.js
+          node app/tests/lt206-retry-after-details.test.js
+          node - <<'NODE'
+          const fs=require('node:fs'),vm=require('node:vm');
+          const dock=fs.readFileSync('app/src/main/assets/dock.html','utf8');
+          if(!dock.includes('max-height:min(145px,var(--popup-room,400px))')||
+             !dock.includes('width:min(148px,calc(100vw - 8px))')||
+             !dock.includes('clip-path:circle(45% at 50% 50%)!important;')||
+             !dock.includes('function locationCooldownReferenceForKm(raw)'))
+              throw Error('Original compact layout or LT207 fixes missing');
+          for(const match of dock.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))
+              new vm.Script(match[1]);
+          console.log('Original compact 148dp/145px menu, badges, cooldown JS: OK');
+          NODE
+      - name: Install Android SDK and restore permanent signing certificate
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          for k in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$k")" || { echo "::error::Missing permanent signer secret"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/lt209-qa.p12"
+          chmod 600 "$RUNNER_TEMP/lt209-qa.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt209-qa.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt209-qa.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Regenerate pinned GO resources and package signed QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Validate real installability and publish immutable QA checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p lt209-qa
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          cp "$APK" "lt209-qa/$QA_APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > lt209-qa/PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" lt209-qa/PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54416'" lt209-qa/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.02.09'" lt209-qa/PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > lt209-qa/SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' lt209-qa/SIGNING-REPORT.txt
+          CERT="$(grep 'Signer #1 certificate SHA-256 digest:' lt209-qa/SIGNING-REPORT.txt | awk '{print $NF}')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+          test "$(stat -c %s "$APK")" -lt 40000000
+          (cd lt209-qa && sha256sum "$QA_APK" > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          git rev-parse HEAD > lt209-qa/SOURCE_COMMIT.txt
+          printf 'QA only; not distributed via app updater. Do not merge without Samsung visual test.\n' > lt209-qa/QA-NOTAS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT209-Favoritos-Samsung-APK-Signed-QA
+          path: lt209-qa/
+          retention-days: 90
+          if-no-files-found: error
+      - name: Publish opt-in prerelease without updating all users
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.02.06-54413'
+          ! gh release view "$QA_TAG" >/dev/null 2>&1
+          gh release create "$QA_TAG" \
+            "lt209-qa/$QA_APK" \
+            "lt209-qa/SHA256SUMS.txt" \
+            "lt209-qa/SIGNING-REPORT.txt" \
+            "lt209-qa/PACKAGE-VERSION.txt" \
+            "lt209-qa/SOURCE_COMMIT.txt" \
+            --target "$GITHUB_SHA" --prerelease --latest=false \
+            --title 'PokeSearch LT209 — APK QA Favoritos posicionáveis' \
+            --notes 'QA opt-in: Favoritos abre acima ou abaixo da barra após medir altura real. Segurar ⠿ FAVORITOS para arrastar; posição salva no Android e toque no título para restaurar o encaixe automático. Botões, perfis, sprites e pesquisa intactos. Inclui LT207 e LT208. Sem OTA geral nem merge; necessário teste físico Samsung.'
+          test "$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')" = 'v0.02.06-54413'
+      - name: Erase private signing material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt209-qa.p12"
