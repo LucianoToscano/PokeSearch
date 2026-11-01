@@ -3007,12 +3007,12 @@ test("LT62 one-pass Shiny + location share verified Search with no reset",()=>{
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)');
 });
-test("LT57-DRIVE-ICON-01 exact replacement StarGL, StarUL and StarIVRaw PNGs",()=>{
+test("LT57/LT212-DRIVE-ICON-01 exact GL/UL and transparent IV artwork verified",()=>{
  const crypto=require("node:crypto");
  const icons={
   "StarGL.png":"cdca6c1b159e7a3da45758d073bf88d4fe05798e9343e4ef4056e77ccb8df575",
   "StarUL.png":"7f59249d48556a43d0769667bb7a7c032d31ae69a96fe6db229da7f1413f5a9a",
-  "StarIVRaw.png":"74a9141ab3eff6ce3adab305a22aa478ee4022191f62bf8915ac88d4c9184cee"
+  "StarIVRaw.png":"1d2cddf9af153c51696abbdd844d6ad946c306aa2bef39ee90d7468691ca8cd5"
  };
  return Object.entries(icons).every(([name,expected])=>{
   const file=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
