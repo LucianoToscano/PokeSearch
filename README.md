@@ -1,8 +1,8 @@
 # PokeSearch — Android Overlay
 
-## Versão candidata de publicação — LT215 · 0.02.15 · 54422
+## Versão oficial publicada — LT215 · 0.02.15 · 54422
 
-**Base integrada:** LT214 · 0.02.14 · 54421 (QA), correções de clipboard automático e tabela de cooldown do Doce Raro. O APK da versão oficial LT215 precisa passar pelo workflow de publicação assinado e aparecer em [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) antes de ser tratado como estável.
+**Publicação confirmada:** [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) = [v0.02.15-54422](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.15-54422). APK oficial `PokeSearch-v0.02.15-LT.apk` (28.074.579 bytes; SHA-256 `0968883ed67f84fc4d75985bf50da3d9ae5e3af4f7003d7e8ae08cdd29cdaa91`), assinatura Android v2 permanente verificada. [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.15-54422/PokeSearch-v0.02.15-LT.apk) · [Workflow oficial](https://github.com/LucianoToscano/PokeSearch/actions/runs/41273254334) · [Drive com APK e relatórios](https://drive.google.com/file/d/18yLB6TWmP5r-V7Q7RqHhX3hmACYZa0ZZ/view?usp=drivesdk).
 
 **Alterações:** Localização do Doce Raro tenta preencher as coordenadas previamente copiadas ao abrir o painel (sem executar busca); o texto **Localização** abre uma tabela de 16 faixas de cooldown estimado; o ajuste do raio (km) exibe uma prévia temporária, preservando o campo e mantendo o botão Colar. Inclui ícone IV sem fundo preto (LT212) e posições dos Favoritos separadas para duas Pokébolas (LT213).
 
@@ -11,7 +11,7 @@
 **Auditoria e reconstrução:** consulte [AGENTS.md](AGENTS.md), [guia mestre](docs/GUIA_MESTRE.md), [checklist técnico LT214](docs/LT214_DOCE_RARO_LOCALIZACAO_CLIPBOARD_COOLDOWN_QA_20261101.md) e [inventário LT215](docs/LT215_INVENTARIO_RECRIACAO_AUDITORIA_20261101.md). Os arquivos públicos não incluem a chave de assinatura privada, senhas ou credenciais operacionais.
 
 
-## Versão oficial atual — LT206 · 0.02.06 · 54413
+## Histórico preservado — LT206 · 0.02.06 · 54413 (NÃO é versão atual)
 
 [Baixar APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.06-54413/PokeSearch-v0.02.06-LT.apk) · [Release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.06-54413) · [Google Drive — APK e relatórios](https://drive.google.com/file/d/1s8Tyvvnl_9Ppt-q5ixvZJiAEks7_kluu/view?usp=drivesdk) · [Workflow oficial SUCCESS #41239515825](https://github.com/LucianoToscano/PokeSearch/actions/runs/41239515825) · [PR #174](https://github.com/LucianoToscano/PokeSearch/pull/174).
 
