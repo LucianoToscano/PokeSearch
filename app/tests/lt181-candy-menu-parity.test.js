@@ -20,8 +20,10 @@ assert(candy.includes("grid-template-columns:repeat(2,minmax(0,1fr))"),"Informat
 assert(candy.includes("requestHeight(172,false)"),"Candy location native popup is compact");
 assert(candy.includes("requestHeight(142,false)"),"Candy information popup is compact");
 assert(candy.includes("requestHeight(34+6*30+5*3+6,false)"),"Candy interval menu is six compact tiles");
-assert(android.includes('menuParams.width=dp(h>34?("period".equals(panel)?142:158):142)'),
- "Android window fits compact 148px card, not old 240dp card");
+assert(android.includes('"period".equals(panel)?142:158'),
+ "Android keeps compact period and normal Location popup widths");
+assert(android.includes('"location-cooldown".equals(panel)?232:'),
+ "Only LT214 reference table uses a readable wider window");
 assert(android.includes('getSharedPreferences("prefs",MODE_PRIVATE)')&&
  android.includes('getString("visualPrefsJson","{}")'),
  "Candy reads the exact same visual preferences as Pokeballs");
