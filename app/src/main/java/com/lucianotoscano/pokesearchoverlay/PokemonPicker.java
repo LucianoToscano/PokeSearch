@@ -273,6 +273,13 @@ public final class PokemonPicker {
     /** Native icon anchor is in physical screen pixels; negative means legacy centering. */
     public static Dialog show(Context activity,Runnable changed,Runnable dismissed,
                             int anchorX,int anchorY){
+        return show(activity,changed,dismissed,anchorX,anchorY,
+            anchorY<0?-1:anchorY-dp(activity,17),
+            anchorY<0?-1:anchorY+dp(activity,17));
+    }
+    /** LT210: true toolbar screen edges, accounting for native popups ABOVE it. */
+    public static Dialog show(Context activity,Runnable changed,Runnable dismissed,
+                            int anchorX,int anchorY,int toolbarTop,int toolbarBottom){
         List<Entry> all=readCatalog(activity);
         if(all.isEmpty()){
             Toast.makeText(activity,"Catálogo de Pokémon indisponível",Toast.LENGTH_LONG).show();
@@ -310,10 +317,10 @@ public final class PokemonPicker {
         FrameLayout header=new FrameLayout(activity);
         header.setMinimumHeight(dp(activity,29));
         TextView title=new TextView(activity);
-        title.setText("⠿ FAVORITOS");
-        // The header title is the drag handle; unlike the sprites, input and
-        // saved-profile stars it has no destructive or search action.
-        title.setContentDescription("Favoritos. Segure o título e arraste para mover; toque para voltar à posição automática.");
+        title.setText("☆ FAVORITOS");
+        // No special button or long press: any free header surface drags
+        // immediately, exactly like the results detail card's transparent grip.
+        title.setContentDescription("Arraste a área livre para mover os Favoritos");
         title.setTextColor(panelFg);
         title.setTypeface(null,Typeface.BOLD);
         title.setTextSize(11);
@@ -600,141 +607,154 @@ public final class PokemonPicker {
         dialog.setContentView(root);
         dialog.setCanceledOnTouchOutside(false);
         finish.setOnClickListener(v->dialog.dismiss());
-        if(!(activity instanceof Activity)&&dialog.getWindow()!=null)
-            dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+        final android.view.Window window=dialog.getWindow();
+        if(!(activity instanceof Activity)&&window!=null)
+            window.setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
         dialog.setOnDismissListener(d->{if(dismissed!=null)dismissed.run();});
-        dialog.show();
-        if(dialog.getWindow()!=null){
-            android.view.Window window=dialog.getWindow();
+        if(window!=null){
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
             window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-            // A floating picker must not swallow taps OUTSIDE its own bounds.
-            // FLAG_NOT_TOUCH_MODAL passes external taps to the app underneath,
-            // unlike the former modal Dialog; internal tiles remain clickable.
+            // Keep everything outside the panel clickable, including the toolbar.
             window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
             window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND |
                 android.view.WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
             window.setDimAmount(0.0f);
-            // Optional blur is restricted to this nonmodal dialog bounds; on
-            // Android versions without cross-window blur support we retain
-            // the same translucent background without changing overlay flags.
             if(android.os.Build.VERSION.SDK_INT>=31){
                 try{window.setBackgroundBlurRadius(dp(activity,blurRadius));}
                 catch(RuntimeException ignored){}
             }
-            int screen=activity.getResources().getDisplayMetrics().widthPixels;
-            int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
+
+            final int screen=activity.getResources().getDisplayMetrics().widthPixels;
+            final int displayH=activity.getResources().getDisplayMetrics().heightPixels;
+            final int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
+            final int margin=dp(activity,8),gap=dp(activity,8);
+            final SharedPreferences positionPrefs=activity.getSharedPreferences("prefs",0);
+            final int barTop=toolbarTop>=0?toolbarTop:Math.max(0,anchorY-dp(activity,17));
+            final int barBottom=toolbarBottom>barTop?toolbarBottom:barTop+dp(activity,34);
+
+            // PRE-SHOW placement is mandatory: a Samsung Dialog can open at
+            // CENTER and fail to receive a nonzero decor height in the first
+            // post(). Measuring the actual content up front prevents the
+            // Favorites dialog from first appearing on top of the toolbar.
+            root.measure(
+                View.MeasureSpec.makeMeasureSpec(preferredWidth,View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED));
+            final int[] lastHeight={0};
+            final boolean[] repositioning={false},dragInProgress={false};
+            final Runnable position=()->{
+                if(anchorX<0||anchorY<0||dragInProgress[0]||repositioning[0])return;
+                int actualHeight=root.getHeight()>0?root.getHeight():root.getMeasuredHeight();
+                if(actualHeight<=0)return;
+                boolean saved=positionPrefs.getBoolean("favoritePanelManualV1",false)
+                    &&Math.abs(positionPrefs.getInt("favoritePanelScreenWV1",0)-screen)<dp(activity,10)
+                    &&Math.abs(positionPrefs.getInt("favoritePanelScreenHV1",0)-displayH)<dp(activity,10);
+                int[] xy;
+                if(saved){
+                    xy=FavoritePanelGeometry.onScreen(
+                        positionPrefs.getInt("favoritePanelXV1",margin),
+                        positionPrefs.getInt("favoritePanelYV1",margin),
+                        screen,displayH,preferredWidth,actualHeight,margin);
+                    // A saved position from LT209 may cover the toolbar.
+                    // Never reopen over the controls: re-anchor safely.
+                    if(FavoritePanelGeometry.overlapsToolbar(
+                        xy[1],actualHeight,barTop,barBottom))saved=false;
+                }
+                if(!saved)xy=FavoritePanelGeometry.adjacentToToolbar(
+                    anchorX,barTop,barBottom,screen,displayH,preferredWidth,
+                    actualHeight,margin,gap);
+                android.view.WindowManager.LayoutParams lp=window.getAttributes();
+                if(lp.gravity== (Gravity.TOP|Gravity.LEFT) &&
+                    lp.x==xy[0]&&lp.y==xy[1]&&lastHeight[0]==actualHeight)return;
+                repositioning[0]=true;
+                try{
+                    lp.gravity=Gravity.TOP|Gravity.LEFT;
+                    lp.x=xy[0];lp.y=xy[1];window.setAttributes(lp);
+                    lastHeight[0]=actualHeight;
+                }finally{repositioning[0]=false;}
+            };
+            // Set TOP|LEFT even before the first show: no CENTER flash.
+            if(anchorX>=0&&anchorY>=0){
+                android.view.WindowManager.LayoutParams initial=window.getAttributes();
+                initial.gravity=Gravity.TOP|Gravity.LEFT;
+                window.setAttributes(initial);
+                position.run();
+            }
+            dialog.show();
             window.setLayout(preferredWidth,
                 android.view.WindowManager.LayoutParams.WRAP_CONTENT);
             if(anchorX>=0&&anchorY>=0){
-                // LT209: the title is movable; place the popup only after its
-                // real content height has been measured. On some Samsung
-                // overlays decorView.getHeight() is zero in the first post(),
-                // leaving the previous default CENTER dialog over the toolbar.
-                // Use root's layout callback and a post() fallback instead.
-                final SharedPreferences positionPrefs=activity.getSharedPreferences("prefs",0);
-                final int displayH=activity.getResources().getDisplayMetrics().heightPixels;
-                final int margin=dp(activity,8),gap=dp(activity,4);
-                final boolean[] placed={false},dragged={false};
-                final Runnable[] place={null};
-                place[0]=()->{
-                    int actualHeight=root.getHeight();
-                    if(placed[0]||actualHeight<=0||!root.isAttachedToWindow())return;
-                    int[] xy;
-                    boolean saved=positionPrefs.getBoolean("favoritePanelManualV1",false);
-                    if(saved&&Math.abs(positionPrefs.getInt("favoritePanelScreenWV1",0)-screen)<dp(activity,10)
-                        &&Math.abs(positionPrefs.getInt("favoritePanelScreenHV1",0)-displayH)<dp(activity,10)){
-                        xy=FavoritePanelGeometry.onScreen(
-                            positionPrefs.getInt("favoritePanelXV1",margin),
-                            positionPrefs.getInt("favoritePanelYV1",margin),
-                            screen,displayH,preferredWidth,actualHeight,margin);
-                        dragged[0]=true;
-                    }else{
-                        xy=FavoritePanelGeometry.adjacent(anchorX,anchorY,screen,displayH,
-                            preferredWidth,actualHeight,margin,gap,dp(activity,17));
-                    }
-                    android.view.WindowManager.LayoutParams lp=window.getAttributes();
-                    lp.gravity=Gravity.TOP|Gravity.LEFT;
-                    lp.x=xy[0];lp.y=xy[1];
-                    window.setAttributes(lp);
-                    placed[0]=true;
-                };
-                root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->place[0].run());
-                root.post(place[0]);
-                window.getDecorView().post(place[0]);
-                // Tap title to restore auto-above/below; long-press title to
-                // drag anywhere. No effect on Favorite profiles or Search.
-                title.setOnClickListener(v->{
-                    if(!dragged[0]){
-                        Toast.makeText(activity,"Segure FAVORITOS e arraste para mover o painel",
-                            Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    positionPrefs.edit().remove("favoritePanelManualV1").apply();
-                    dragged[0]=false;placed[0]=false;place[0].run();
+                // Layout may grow with selected sprites and suggestions.
+                root.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{
+                    if((b-t)!=(ob-ot))position.run();
                 });
-                title.setOnTouchListener(new View.OnTouchListener(){
-                    boolean armed=false,moved=false,canceled=false;
-                    float downX,downY;
-                    int initialX,initialY;
-                    Runnable arm=null;
-                    @Override public boolean onTouch(View v,android.view.MotionEvent e){
-                        switch(e.getActionMasked()){
-                            case android.view.MotionEvent.ACTION_DOWN:{
-                                armed=false;moved=false;canceled=false;
-                                downX=e.getRawX();downY=e.getRawY();
-                                android.view.WindowManager.LayoutParams current=window.getAttributes();
-                                initialX=current.x;initialY=current.y;
-                                arm=()->{
-                                    if(!canceled&&v.isAttachedToWindow()){
-                                        armed=true;
-                                        v.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
-                                    }
-                                };
-                                v.postDelayed(arm,220);
-                                return true;
-                            }
-                            case android.view.MotionEvent.ACTION_MOVE:{
-                                if(!armed){
-                                    if(Math.hypot(e.getRawX()-downX,e.getRawY()-downY)>dp(activity,9)){
-                                        canceled=true;if(arm!=null)v.removeCallbacks(arm);
-                                    }
-                                    return true;
-                                }
-                                int actualHeight=Math.max(dp(activity,90),root.getHeight());
+                root.post(position);
+                window.getDecorView().post(position);
+
+                // The user can pull the blank header, the title/counter or
+                // empty panel padding. Profiles, close, sprites and the search
+                // retain their own touch gestures. No handle or long press.
+                final float[] origin={0f,0f};
+                final int[] start={0,0};
+                final boolean[] tracking={false},moved={false};
+                final long[] lastFrame={0L};
+                View.OnTouchListener freePanelDrag=(v,e)->{
+                    switch(e.getActionMasked()){
+                        case android.view.MotionEvent.ACTION_DOWN:{
+                            tracking[0]=true;moved[0]=false;
+                            origin[0]=e.getRawX();origin[1]=e.getRawY();
+                            android.view.WindowManager.LayoutParams current=window.getAttributes();
+                            start[0]=current.x;start[1]=current.y;
+                            return true;
+                        }
+                        case android.view.MotionEvent.ACTION_MOVE:
+                        case android.view.MotionEvent.ACTION_UP:{
+                            if(!tracking[0])return false;
+                            int dx=Math.round(e.getRawX()-origin[0]);
+                            int dy=Math.round(e.getRawY()-origin[1]);
+                            if(Math.abs(dx)+Math.abs(dy)>dp(activity,4))moved[0]=true;
+                            if(moved[0]){
+                                dragInProgress[0]=true;
+                                int h=Math.max(1,root.getHeight()>0?root.getHeight():root.getMeasuredHeight());
                                 int[] xy=FavoritePanelGeometry.onScreen(
-                                    initialX+Math.round(e.getRawX()-downX),
-                                    initialY+Math.round(e.getRawY()-downY),
-                                    screen,displayH,preferredWidth,actualHeight,margin);
-                                android.view.WindowManager.LayoutParams lp=window.getAttributes();
-                                lp.gravity=Gravity.TOP|Gravity.LEFT;lp.x=xy[0];lp.y=xy[1];
-                                window.setAttributes(lp);moved=true;
-                                return true;
+                                    start[0]+dx,start[1]+dy,
+                                    screen,displayH,preferredWidth,h,margin);
+                                long now=android.os.SystemClock.uptimeMillis();
+                                if(e.getActionMasked()==android.view.MotionEvent.ACTION_UP ||
+                                    now-lastFrame[0]>=16L){
+                                    lastFrame[0]=now;
+                                    android.view.WindowManager.LayoutParams lp=window.getAttributes();
+                                    lp.gravity=Gravity.TOP|Gravity.LEFT;
+                                    lp.x=xy[0];lp.y=xy[1];
+                                    window.setAttributes(lp);
+                                }
                             }
-                            case android.view.MotionEvent.ACTION_UP:{
-                                if(arm!=null)v.removeCallbacks(arm);
-                                if(armed&&moved){
+                            if(e.getActionMasked()==android.view.MotionEvent.ACTION_UP){
+                                tracking[0]=false;dragInProgress[0]=false;
+                                if(moved[0]){
                                     android.view.WindowManager.LayoutParams lp=window.getAttributes();
                                     positionPrefs.edit().putBoolean("favoritePanelManualV1",true)
-                                        .putInt("favoritePanelXV1",lp.x).putInt("favoritePanelYV1",lp.y)
+                                        .putInt("favoritePanelXV1",lp.x)
+                                        .putInt("favoritePanelYV1",lp.y)
                                         .putInt("favoritePanelScreenWV1",screen)
                                         .putInt("favoritePanelScreenHV1",displayH).apply();
-                                    dragged[0]=true;
-                                }else if(!armed&&!canceled&&
-                                    Math.hypot(e.getRawX()-downX,e.getRawY()-downY)<dp(activity,9)){
-                                    v.performClick();
                                 }
-                                return true;
                             }
-                            case android.view.MotionEvent.ACTION_CANCEL:{
-                                canceled=true;if(arm!=null)v.removeCallbacks(arm);
-                                return true;
-                            }
-                            default:return true;
+                            return true;
                         }
+                        case android.view.MotionEvent.ACTION_CANCEL:{
+                            tracking[0]=false;dragInProgress[0]=false;
+                            return true;
+                        }
+                        default:return false;
                     }
-                });
+                };
+                root.setOnTouchListener(freePanelDrag);
+                header.setOnTouchListener(freePanelDrag);
+                title.setOnTouchListener(freePanelDrag);
+                count.setOnTouchListener(freePanelDrag);
             }
+        }else{
+            dialog.show();
         }
         return dialog;
     }
