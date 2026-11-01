@@ -3875,6 +3875,21 @@ public class OverlayService extends Service {
         @JavascriptInterface public void saveVisualPrefs(String json){
             handler.post(()->OverlayService.this.saveVisualPrefs(json));
         }
+        /** LT218 - orientation first, native position second, in one UI task.
+         * Never read visualMenuVertical while a pending 100ms JS save still
+         * contains the previous layout (the cause of full-width stacked rows).
+         */
+        @JavascriptInterface public void applyTopHorizontalPreset(String json){
+            handler.post(()->{
+                try{
+                    JSONObject normalized=normalizeVisualPrefs(json);
+                    if(!"horizontal".equals(normalized.optString("menuOrientation"))||
+                       !"vertical".equals(normalized.optString("resultsOrientation")))return;
+                    OverlayService.this.saveVisualPrefs(normalized.toString());
+                    OverlayService.this.applyTopHorizontalLayout();
+                }catch(org.json.JSONException ignored){}
+            });
+        }
         @JavascriptInterface public void applyTopHorizontalLayout(){
             handler.post(()->OverlayService.this.applyTopHorizontalLayout());
         }
