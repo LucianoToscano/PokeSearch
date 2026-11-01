@@ -4500,6 +4500,75 @@ body.result-window:not(.visual-results-horizontal) #spawns{
  align-items:flex-start!important;width:100%!important;
 }
 
+
+/* LT218 — ORIENTATION IS POSITION, NOT SIZE.
+ * Keep the same 30×30dp tile and SVG/icon regardless of axis.
+ * This final rule supersedes older 232dp full-width vertical rows.
+ * Never alter a result sprite's intrinsic size when changing orientation. */
+body.controls-window.visual-menu-vertical #menu{
+  width:34px!important;height:384px!important;min-height:384px!important;
+}
+body.controls-window.visual-menu-vertical #quickMenuList,
+body.controls-window.visual-menu-vertical #menu.subview #quickMenuList,
+body.controls-window.visual-menu-vertical.popup-above #quickMenuList{
+  display:grid!important;position:absolute!important;top:0!important;
+  left:0!important;bottom:auto!important;
+  width:34px!important;min-width:34px!important;max-width:34px!important;
+  height:384px!important;min-height:384px!important;max-height:384px!important;
+  padding:0 2px!important;margin:0!important;overflow:hidden!important;
+  grid-template-columns:30px!important;
+  grid-template-rows:repeat(12,30px)!important;
+  grid-auto-flow:row!important;gap:2px!important;
+  align-content:start!important;align-items:start!important;
+}
+body.controls-window.visual-menu-vertical #quickRows,
+body.controls-window.visual-menu-vertical #quickUtilities,
+body.controls-window.visual-menu-vertical #quickFooter{
+  display:contents!important;
+}
+body.controls-window.visual-menu-vertical #quickMenuList .quickRow,
+body.controls-window.visual-menu-vertical #quickMenuList .quickFooterAction{
+  box-sizing:border-box!important;display:flex!important;
+  flex:0 0 30px!important;align-self:start!important;
+  width:30px!important;min-width:30px!important;max-width:30px!important;
+  height:30px!important;min-height:30px!important;max-height:30px!important;
+  padding:0!important;margin:0!important;
+  flex-direction:row!important;justify-content:center!important;
+  align-items:center!important;gap:0!important;
+}
+body.controls-window.visual-menu-vertical #choices{
+  top:384px!important;bottom:auto!important;
+}
+body.controls-window.visual-menu-vertical.popup-above #choices{
+  bottom:384px!important;top:auto!important;
+}
+/* Horizontal keeps the exact 30dp button height and a single native row.
+ * Narrow screens may group items under Mais instead of stretching controls. */
+body.controls-window:not(.visual-menu-vertical) #quickMenuList{
+  height:34px!important;min-height:34px!important;max-height:34px!important;
+  grid-template-rows:30px!important;grid-auto-flow:column!important;
+}
+body.controls-window:not(.visual-menu-vertical) #quickMenuList .quickRow,
+body.controls-window:not(.visual-menu-vertical) #quickMenuList .quickFooterAction{
+  height:30px!important;min-height:30px!important;max-height:30px!important;
+  flex-direction:row!important;align-items:center!important;
+}
+/* The visual editor always fits the detached, clamped Android popup. Its
+ * header alone is a drag handle, and the rest remains normally scrollable. */
+body.popup-window.controls-window #choices.visualPanel{
+  box-sizing:border-box!important;position:relative!important;
+  left:0!important;right:auto!important;top:0!important;bottom:auto!important;
+  width:min(268px,100%)!important;max-width:100%!important;
+  max-height:calc(100vh - 4px)!important;overflow-y:auto!important;
+}
+body.popup-window.controls-window #choices.visualPanel .choiceHeader.visualEditorDragHandle{
+  cursor:grab;touch-action:none!important;user-select:none!important;
+  -webkit-user-select:none!important;
+}
+body.popup-window.controls-window #choices.visualPanel .choiceHeader.visualEditorDragHandle:active{
+  cursor:grabbing;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
