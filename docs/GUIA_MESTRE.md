@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT222 QA — ARRASTE NATIVO DO EDITOR VISUAL COMO NOS CARDS (01/11/2026)
+
+- **Evidência:** usuário confirmou que mesmo após a LT221 não consegue arrastar a janela do Editor Visual como arrasta cards dos resultados. Na captura, o menu vertical e os Pokémon horizontais estão separados para evitar conflito; o pedido de arraste do Editor é prioritário.
+- **Causa provável confirmada por arquitetura:** LT218 usava apenas `pointerdown/pointermove` do HTML para arrastar uma janela WebView pelo Android; a captura do ponteiro pode ser interrompida quando a janela nativa se move. Cards de resultado já usam uma camada View nativa transparente com `MotionEvent.getRawX/Y()`.
+- **Correção:** [PR #194](https://github.com/LucianoToscano/PokeSearch/pull/194), merge `d5867aea263986e8a235f50bfb43351db754dda1` na main. `OverlayService.java` cria `visualEditorDragGrip` **somente sobre o título** do popup Editor Visual, deixando ao menos 64dp livres na direita para X e todos os demais botões/sliders. Acompanha gesto nativo down/move/up/cancel, margem de toque 4dp, atualizações por quadro de até 16ms, restrição da janela à tela e persistência `visualEditorX/Y` por Pokébola. Ao fechar/sair de visual, grip fica GONE e arraste cancela. Eventos JS não interrompem o alvo nativo durante movimento.
+- **Gates da PR:** Node QA, Node LT169, QA Core LT211, LT62 Java e LT173 Android/OTA **SUCCESS**, regressão `app/tests/lt222-native-visual-editor-drag.test.js`. [Checklist LT222](LT222_EDITOR_VISUAL_ARRASTE_NATIVO_QA_20261101.md).
+- **Build privado:** workflow [LT222 assinado](https://github.com/LucianoToscano/PokeSearch/actions/runs/41285831335) gera APK `0.02.22` / `versionCode 54429`; registrar checksum/certificado/Drive quando o artefato for concluído e verificado.
+- **Critério físico Samsung:** abrir Editor Visual, segurar `EDITOR VISUAL` (não o X), arrastar livremente e soltar, fechar/reabrir, testar segunda Pokébola e controles. Testes automáticos **não** confirmam funcionamento dos gestos no aparelho.
+- **Não alterado:** chat, modos, consulta de Pokémon, cooldown, tamanho dos sprites e menus, OTA público. Última release estável permanece LT215 até homologação QA.
+
+---
+
 ## LT221 QA — EDITOR VISUAL SEM RODAPÉ CORTADO (01/11/2026)
 
 - **Evidência:** vídeo Samsung de 76 segundos e duas imagens do layout-alvo (Menu vertical/Pokémon horizontal e Menu horizontal/Pokémon vertical). As orientações independentes funcionam; no vídeo às 04:17 o botão **‹ Voltar** no Editor Visual fica cortado no rodapé apesar de haver espaço vertical no display.
