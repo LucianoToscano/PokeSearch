@@ -21,7 +21,7 @@ for(const part of [
  'root.setOnTouchListener(freePanelDrag);','header.setOnTouchListener(freePanelDrag);',
  'title.setOnTouchListener(freePanelDrag);','count.setOnTouchListener(freePanelDrag);',
  'android.view.MotionEvent.ACTION_MOVE','Math.abs(dx)+Math.abs(dy)>dp(activity,4)',
- 'positionPrefs.edit().putBoolean("favoritePanelManualV1",true)',
+ 'positionPrefs.edit().putBoolean(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelManualV1"),true)',
  'setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)',
  'title.setText("☆ FAVORITOS")'
 ])assert.ok(picker.includes(part),"missing: "+part);
