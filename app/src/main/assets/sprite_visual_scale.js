@@ -52,7 +52,7 @@ function visibleBounds(img){
   const pixels=ctx.getImageData(0,0,SAMPLE,SAMPLE).data;
   let left=SAMPLE,right=-1,top=SAMPLE,bottom=-1,count=0;
   for(let y=0;y<SAMPLE;y++)for(let x=0;x<SAMPLE;x++){
-   if(pixels[(y*SAMPLE+x)*4+3]<18)continue;
+   if(pixels[(y*SAMPLE+x)*4+3]<38)continue;
    left=Math.min(left,x);right=Math.max(right,x);
    top=Math.min(top,y);bottom=Math.max(bottom,y);count++;
   }
