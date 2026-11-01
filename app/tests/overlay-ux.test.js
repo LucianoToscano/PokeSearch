@@ -1072,7 +1072,7 @@ test("UX-SHINY-02 allows moving Shiny independently while retaining native gatin
  const prefs=dock.split("function normalizedQuickPrefs(p={}){")[1]?.split("function saveQuickPrefs()")[0]||"";
  const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
  const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
- return prefs.includes('const order=[...previous,...ids.filter(x=>!previous.includes(x))]')&&
+ return prefs.includes('const order=[...previous,...ids.filter(id=>!previous.includes(id))]')&&
   prefs.includes('x!=="appearance"')&&
   click.includes('case "sh":Native.shiny();break;')&&
   dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
@@ -3158,7 +3158,7 @@ test("UX-QUICK-MORE-05 close on outside tap and ordinary preferences survive",()
   dock.includes('event.target.closest(\'#quickMenuList button[data-key]\')')&&
   dock.includes('document.getElementById("choices").classList.remove("visualPanel","locationPanel","locationCooldownTable","modePanel","standardPanel","filterPicker","morePanel"')&&
   dock.includes('if(!menuOpen){closeChoices();')&&
-  dock.includes('const hidden=legacy?[]:Array.isArray(p.hidden)')&&
+  dock.includes('const hidden=legacy?[...QUICK_DEFAULT_HIDDEN]:Array.isArray(p.hidden)')&&
   dock.includes('for(const id of quickPrefs.order)')&&
   dock.includes('quickPrefs.order.indexOf(id)');
 });
