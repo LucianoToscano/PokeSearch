@@ -1,5 +1,19 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT214 — LOCALIZAÇÃO DO DOCE RARO, ÁREA DE TRANSFERÊNCIA E REFERÊNCIA DE COOLDOWN (01/11/2026)
+
+- **PR #185:** [Localização do Doce Raro](https://github.com/LucianoToscano/PokeSearch/pull/185) integrada à `main` em `900f9f7f89af65f11c824068e88a9e96d73a8550`. Java, Node, regressões históricas, OTA e compilação Android **SUCCESS** após adequar testes legados de layout e colagem.
+- **Comportamento efetivo:** abrir Localização do Doce Raro tenta ler coordenadas previamente copiadas sem toque no botão Colar, após foco transitório de overlay Android (180ms). Parser `CandyClipboardCoordinates` de forma local, sem armazenamento nem logging; apenas par válido e inequívoco preenche campo. Quando Android bloquear clipboard, botão Colar/IME permanece. Colagem **não aplica filtro, não busca e não confirma coleta** automaticamente.
+- **Referência visual:** tocar no título `Localização` abre tabela das **16 faixas já usadas** por `CandyCooldownPolicy` e pelo menu Pokémon. O botão voltar preserva o rascunho de coords e raio. O slider km mostra faixa/tempo estimado temporário, sem iniciar cooldown real nem alterar a API. Os valores do gráfico enviado pelo usuário diferem da referência já implementada; não foram declarados oficiais.
+- **Layout:** a tabela usa janela nativa 232dp com altura máxima de 290dp e scroll interno; o editor normal e os painéis Info/Período mantêm largura e ações anteriores. Sem mudanças em chat, localização física GPS, filtros das Pokébolas, cooldown confirmado, HTTP 429 ou permissões.
+- **Testes:** `CandyClipboardCoordinatesTest.java` (13 verificações), `lt214-candy-location-parity.test.js`, revisão dos contratos de LT175, LT181 e LT195, adição do Java puro em `qa-core-contracts.yml`. [Relatório e checklist](LT214_DOCE_RARO_LOCALIZACAO_CLIPBOARD_COOLDOWN_QA_20261101.md).
+- **APK QA:** [workflow #41268473271](https://github.com/LucianoToscano/PokeSearch/actions/runs/41268473271) **SUCCESS**. `PokeSearch-LT214-QA-v0.02.14-54421.apk`, versão `0.02.14`, versionCode `54421`, applicationId `com.lucianotoscano.pokesearch`, tamanho **28.074.139 bytes**, SHA-256 `e822820da8a737ebbe29b07a3ec1f83fe3bf3a912f0fc58aaa09942ece052100`. Certificado SHA256 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, assinatura Android v2 verificada. APK/ZIP verificadas por Python (SHA256SUMS, `zipfile.testzip()`).
+- **Drive:** [Pacote LT214 QA APK + assinatura, hash, versionamento e commit](https://drive.google.com/file/d/1yyOlD6sEfwQAdEHRUvhLT00NhKuZAzQS/view?usp=drivesdk), pasta `PokeSearch_App`, **25.892.704 bytes**, ZIP SHA-256 `a3315024b76dd3f4764cca2348c614aa70cc758a9a3e950db980d98c8b2092eb`; tamanho confirmado por leitura de metadados.
+- **Distribuição:** build **privado de QA**, sem publicação automática de APK aos usuários. A release `latest` permanece `v0.02.11-54418` (LT211). Próxima estável para aparelhos com LT214 QA instalado deverá usar `versionCode > 54421`.
+- **Pendente:** homologação visual e funcional no Samsung Android 16, incluindo permissão do clipboard, teclado, botão Colar, retorno do menu de referência, arraste do slider e leitura real de busca/autenticação. Nenhuma alegação de teste físico foi feita.
+
+---
+
 ## LT213 — FAVORITOS INDEPENDENTES P1/P2, QA ASSINADO E DRIVE (01/11/2026)
 
 - **PR #184:** [correção de posições P1/P2](https://github.com/LucianoToscano/PokeSearch/pull/184) integrada à `main` no commit `3e6ed8b798be8530177d25ae3ff95ee3d426b2dd`. Os testes Node, Java, OTA, QA geral e compilação Android da PR concluíram com **SUCCESS**.
