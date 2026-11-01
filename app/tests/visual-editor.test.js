@@ -258,8 +258,8 @@ test("geometry diagnostic reports only stage measurements, never spawn data",()=
  assert.ok(f.includes('stageGapPx'));
  assert.ok(!f.includes('card.')&&!f.includes('locationCoords'));
 });
-test("Visual Editor Pokémon tab has direct P M G size buttons without restarting overlay",()=>{
- assert.ok(script.includes('if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);'));
+test("Visual Editor explains fixed menu-sized Pokémon tiles; legacy P/M/G controls still exist",()=>{
+ assert.ok(script.includes('Padrão dos menus: cada Pokémon 30×30 dp'));
  assert.ok(dock.includes('className="spriteSizeChoices"'));
  assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
  assert.ok(dock.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
