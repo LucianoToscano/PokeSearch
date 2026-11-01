@@ -836,7 +836,7 @@ check("LT62 audit: Visual Editor parameters and touch limitations remain explici
  assert.ok(visual.includes('renderVisualEditor()'));
  assert.ok(visual.includes('Padrão dos menus: cada Pokémon 30×30 dp'));
  assert.ok(visual.includes('arte centralizada em 84%'));
- assert.ok(visual.includes('addSlider(panel,"resultGapTop"')));
+ assert.ok(visual.includes('addSlider(panel,"resultGapTop"'));
  assert.ok(visual.includes('addSlider(panel,"popupWidth"'));
  assert.ok(visual.includes('addSlider(panel,"popupHeight"'));
  assert.ok(visual.includes('addSegment(panel,"menuOrientation"'));
