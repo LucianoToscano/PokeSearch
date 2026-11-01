@@ -283,19 +283,21 @@ check("LT62 Personalização: short labels, fixed-size sprites and aligned menu 
  const body=dock.split("function renderAppearanceChoices(){")[1]?.split('document.addEventListener("pointerdown",event=>{')[0]||"";
  assert.ok(body.includes('link("Info Pokémon","info")'));
  assert.ok(body.includes('link("Editor Visual","visual")'));
- assert.ok(body.includes('heading.textContent="Menus"'));
+ assert.ok(body.includes('heading.textContent="Menus · segure ≡ para arrastar"'));
  assert.ok(body.includes('commands.className="appearanceCommands"'));
  assert.ok(body.includes('line.dataset.key=id'));
- assert.ok(body.includes('up.disabled=i===0'));
- assert.ok(body.includes('down.disabled=i===movable.length-1'));
+ assert.ok(body.includes('handle.className="orderHandle"'));
+ assert.ok(body.includes('bindAppearanceReorder(commands,panel)'));
  assert.ok(body.includes('eye.disabled=locked'));
- assert.ok(dock.includes('grid-template-columns:minmax(0,1fr) 26px 25px 25px'));
+ assert.ok(dock.includes('grid-template-columns:minmax(0,1fr) 27px 30px'));
  assert.ok(dock.includes('grid-template-columns:repeat(3,27px)'));
  assert.ok(dock.includes('button.onclick=()=>{if(Native.setSpriteSize)Native.setSpriteSize(size);}'));
 });
-check("LT62 menu ordering: skips fixed items and persists moves in both directions",()=>{
+check("LT208 menu ordering: all twelve menu items support drag and keyboard reorder",()=>{
  const code=dock.split("function movableMenuIds(){")[1]?.split("function renderAppearanceChoices(){")[0]||"";
- assert.ok(code.includes('!["close","appearance","sh"].includes(id)'));
+ assert.ok(code.includes('return quickPrefs.order.filter(id=>QUICK_ACTIONS.some(action=>action[0]===id))'));
+ assert.ok(code.includes('function bindAppearanceReorder(commands,panel)'));
+ assert.ok(code.includes('commands.setPointerCapture(event.pointerId)'));
  assert.ok(code.includes('const movable=movableMenuIds(),index=movable.indexOf(id),other=movable[index+direction]'));
  assert.ok(code.includes('[quickPrefs.order[a],quickPrefs.order[b]]=[quickPrefs.order[b],quickPrefs.order[a]]'));
  assert.ok(code.includes('saveQuickPrefs();return true;'));
