@@ -952,9 +952,9 @@ test("UX-MENU-01 keeps independent cascade, filters, alerts, info and appearance
  dock.includes('function renderFiltersChoices()')&&dock.includes('function renderAlertsChoices()')&&
  dock.includes('function renderInfoChoices()')&&dock.includes('function renderAppearanceChoices()')&&
  dock.includes('renderExtraFilters(panel,make)'));
-test("UX-MENU-01 persists ordered and hidden commands without hiding close",
+test("UX-MENU-01 persists ordered and hidden commands with Personalização protected",
  service.includes('void saveMenuPrefs(String json)')&&
- service.includes('!"close".equals(id)')&&
+ service.includes('!"appearance".equals(id)')&&
  dock.includes('quickPrefs.hidden.filter(x=>x!==id)')&&
  dock.includes('return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.'));
 test("UX-MENU-01 visibility toggles cannot invent unverified data",
@@ -1066,18 +1066,18 @@ test("UX-MENU-04 preserves all old Android feature bridges and migrates 12-icon 
 })());
 
 
-test("UX-SHINY-02 keeps Shiny beside Modos through saved preferences and native gating",(()=>{
+test("UX-SHINY-02 allows moving Shiny independently while retaining native gating",(()=>{
  const prefs=dock.split("function normalizedQuickPrefs(p){")[1]?.split("function saveQuickPrefs()")[0]||"";
  const state=dock.split("function refreshQuickMenuStates(){")[1]?.split("function uxPanel(")[0]||"";
  const click=dock.split("function quickClick(id){")[1]?.split("const QUICK_SVG=")[0]||"";
- return prefs.includes('order.splice(modeIndex+1,0,"sh")')&&
-  prefs.includes('"appearance","sh"')&&
+ return prefs.includes('const order=[...previous,...ids.filter(x=>!previous.includes(x))]')&&
+  prefs.includes('x!=="appearance"')&&
   click.includes('case "sh":Native.shiny();break;')&&
   dock.includes('if(id==="sh")button.setAttribute("aria-pressed",String(shiny))')&&
   state.includes('button.classList.toggle("pending",id==="sh"&&shinyPending)')&&
   state.includes('id==="sh"?shiny:')&&
   dock.includes('[data-key=sh].selected')&&dock.includes('[data-key=sh].pending')&&
-  service.includes('!"sh".equals(id)')&&
+  service.includes('!"appearance".equals(id)')&&
   service.includes('siteConfirmsShinyAccount(session)')&&
   !dock.split("function getResultIcon(")[1].split("let locationEnabled=")[0].includes('result-icons/modes/');
 })());
