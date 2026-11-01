@@ -4918,7 +4918,7 @@ public class OverlayService extends Service {
                     java.util.Set<String> seen=new java.util.HashSet<>();
                     if(items!=null)for(int i=0;i<items.length()&&i<12;i++){
                         String id=items.optString(i,"");
-                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||(!"close".equals(id)&&!"appearance".equals(id)&&!"sh".equals(id))))
+                        if(valid.contains(id)&&seen.add(id)&&(!"hidden".equals(key)||!"appearance".equals(id)))
                             safe.put(id);
                     }
                     clean.put(key,safe);
