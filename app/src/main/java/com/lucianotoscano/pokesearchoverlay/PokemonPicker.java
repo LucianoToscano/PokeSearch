@@ -648,20 +648,20 @@ public final class PokemonPicker {
                 boolean saved=positionPrefs.getBoolean("favoritePanelManualV1",false)
                     &&Math.abs(positionPrefs.getInt("favoritePanelScreenWV1",0)-screen)<dp(activity,10)
                     &&Math.abs(positionPrefs.getInt("favoritePanelScreenHV1",0)-displayH)<dp(activity,10);
-                int[] xy;
+                // Always have a valid initial position, even when stored
+                // coordinates are absent, stale or invalid.
+                int[] xy=FavoritePanelGeometry.adjacentToToolbar(
+                    anchorX,barTop,barBottom,screen,displayH,preferredWidth,
+                    actualHeight,margin,gap);
                 if(saved){
-                    xy=FavoritePanelGeometry.onScreen(
+                    int[] candidate=FavoritePanelGeometry.onScreen(
                         positionPrefs.getInt("favoritePanelXV1",margin),
                         positionPrefs.getInt("favoritePanelYV1",margin),
                         screen,displayH,preferredWidth,actualHeight,margin);
-                    // A saved position from LT209 may cover the toolbar.
-                    // Never reopen over the controls: re-anchor safely.
-                    if(FavoritePanelGeometry.overlapsToolbar(
-                        xy[1],actualHeight,barTop,barBottom))saved=false;
+                    // An older LT209 position must never reopen over toolbar.
+                    if(!FavoritePanelGeometry.overlapsToolbar(
+                        candidate[1],actualHeight,barTop,barBottom))xy=candidate;
                 }
-                if(!saved)xy=FavoritePanelGeometry.adjacentToToolbar(
-                    anchorX,barTop,barBottom,screen,displayH,preferredWidth,
-                    actualHeight,margin,gap);
                 android.view.WindowManager.LayoutParams lp=window.getAttributes();
                 if(lp.gravity== (Gravity.TOP|Gravity.LEFT) &&
                     lp.x==xy[0]&&lp.y==xy[1]&&lastHeight[0]==actualHeight)return;
