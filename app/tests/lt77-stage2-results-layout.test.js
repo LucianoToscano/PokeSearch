@@ -59,7 +59,8 @@ check("horizontal result gaps are no longer the legacy 31px value",()=>{
   assert.match(markup,/--visual-result-spacing",\s*additionalResultGapPx\(vp\.resultGapBetween\)\+"px"/);
   assert.match(markup,/column-gap:var\(--visual-result-spacing,0px\)/);
   assert.match(markup,/row-gap:var\(--visual-result-spacing,0px\)/);
-  assert.match(service,/ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)\*\(columns-1\)/);
+  assert.match(service,/int gap=ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)/);
+  assert.match(service,/gap\*\(columns-1\)\+2/);
   const result=layout(31,"horizontal",45,5);
   assert.equal(result.gap,0);
   assert.deepEqual(Array.from(result.result.rows),[45,45,45,45,45]);
