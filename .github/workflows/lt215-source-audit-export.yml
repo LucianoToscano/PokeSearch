@@ -1,0 +1,81 @@
+name: LT215 source archive - editable Android code and full audit index
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt215-source-audit-export.yml']
+permissions: {contents: read}
+concurrency: {group: pokesearch-lt215-source-export-once, cancel-in-progress: false}
+jobs:
+  export:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - name: Verify files and create reproducible editable source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,os,pathlib,re,subprocess,zipfile,datetime
+          files=subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          files=[x for x in files if x]
+          commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          prohibited=re.compile(r'(^|/)(\.env($|\.)|id_rsa$|.*\.(?:jks|p12|pfx|keystore|pem)$|private[-_]key(?:\.|$))',re.I)
+          dangerous=[p for p in files if prohibited.search(p)]
+          if dangerous:
+              raise SystemExit('Private material matched archive denylist: '+repr(dangerous))
+          require=['AGENTS.md','README.md','LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md',
+                   'docs/GUIA_MESTRE.md','app/build.gradle.kts',
+                   'app/src/main/AndroidManifest.xml',
+                   'docs/LT215_INVENTARIO_RECRIACAO_AUDITORIA_20261101.md',
+                   'app/src/main/assets/release_notes.json']
+          for item in require:
+              assert item in files, 'Missing expected source file: '+item
+          source='POKESEARCH_LT215_FONTE_COMPLETA_EDITAVEL_AUDITORIA.zip'
+          top='PokeSearch-LT215-FONTE/'
+          audit=['# PokeSearch LT215 — Arquivo-fonte editável',
+                 'Commit GitHub: '+commit,
+                 'Data do pacote: 2026-11-01',
+                 'Origem: https://github.com/LucianoToscano/PokeSearch',
+                 'Inclui TODOS os arquivos rastreados desse commit, SEM .git e SEM chaves privadas.',
+                 'Começar por LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md, AGENTS.md, README.md,',
+                 'docs/GUIA_MESTRE.md e docs/LT215_INVENTARIO_RECRIACAO_AUDITORIA_20261101.md.',
+                 'Não equivale a certificado de publicação ou licença de propriedade intelectual.',
+                 'O teste físico do clipboard no Android/Samsung ainda precisa de validação.']
+          manifest=[]
+          with zipfile.ZipFile(source,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=8,allowZip64=True) as out:
+              for item in sorted(files):
+                  if not pathlib.Path(item).is_file():
+                      raise SystemExit('Missing tracked file '+item)
+                  data=pathlib.Path(item).read_bytes()
+                  if b'-----BEGIN PRIVATE KEY-----' in data or b'-----BEGIN OPENSSH PRIVATE KEY-----' in data:
+                      raise SystemExit('Private key signature in tracked source: '+item)
+                  out.writestr(top+item,data)
+                  manifest.append(hashlib.sha256(data).hexdigest()+'  '+item)
+              out.writestr(top+'AUDITORIA/LEIA_PRIMEIRO_ARQUIVO_FONTE.md','\n'.join(audit)+'\n')
+              out.writestr(top+'AUDITORIA/SHA256_POR_ARQUIVO.txt','\n'.join(manifest)+'\n')
+              out.writestr(top+'AUDITORIA/SOURCE_COMMIT.txt',commit+'\n')
+          with zipfile.ZipFile(source) as z:
+              assert z.testzip() is None
+              assert len(z.namelist())==len(files)+3
+          digest=hashlib.sha256(pathlib.Path(source).read_bytes()).hexdigest()
+          pathlib.Path('SOURCE_ARCHIVE_SHA256SUMS.txt').write_text(digest+'  '+source+'\n')
+          pathlib.Path('SOURCE_ARCHIVE_INFO.txt').write_text(
+              'SHA-256: '+digest+'\nCommit: '+commit+'\n'
+              'Tracked source files: '+str(len(files))+'\n'
+              'Archive bytes: '+str(os.path.getsize(source))+'\n'
+              'Excluded: Git internal history, build caches and private signing keys\n')
+          print('SOURCE_ARCHIVE_SUCCESS',len(files),commit,os.path.getsize(source),digest)
+          PY
+          sha256sum -c SOURCE_ARCHIVE_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT215-Editable-Complete-Source-Audit
+          path: |
+            POKESEARCH_LT215_FONTE_COMPLETA_EDITAVEL_AUDITORIA.zip
+            SOURCE_ARCHIVE_SHA256SUMS.txt
+            SOURCE_ARCHIVE_INFO.txt
+          retention-days: 90
+          if-no-files-found: error
