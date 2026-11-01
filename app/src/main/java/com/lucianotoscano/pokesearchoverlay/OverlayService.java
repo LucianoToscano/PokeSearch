@@ -1338,6 +1338,10 @@ public class OverlayService extends Service {
             if(visualEditorDragGrip!=null)visualEditorDragGrip.setVisibility(View.GONE);
             popupRoot.setVisibility(View.GONE);return;
         }
+        // Native ACTION_MOVE must keep its touch target stable. Do not
+        // relayout/hide the grip during a drag even if a WebView fit() callback
+        // arrives concurrently; the native listener owns the live position.
+        if(visualEditorNativeDragging&&"visual".equals(popupKind))return;
         if(visualEditorDragGrip!=null){
             boolean isEditor="visual".equals(popupKind);
             visualEditorDragGrip.setVisibility(isEditor?View.VISIBLE:View.GONE);
@@ -1350,7 +1354,6 @@ public class OverlayService extends Service {
                 visualEditorDragGrip.setLayoutParams(gripLayout);
             }
         }
-        if(visualEditorNativeDragging&&"visual".equals(popupKind))return;
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
             popupParams.width=b.width;popupParams.height=b.height;
