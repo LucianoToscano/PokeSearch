@@ -54,6 +54,7 @@ ctx.window.setPastedCoords("-5.123456,-37.123456",true,1,"invalid");
 assert.equal(element("candyCoords").value,"-5.123456,-37.123456","valid clipboard pasted without tapping");
 ctx.window.setPastedCoords("",true,1,"unavailable");
 assert.equal(element("candyCoords").value,"-5.123456,-37.123456","empty clipboard preserves coords");
+element("candyRadiusSlider").value="250"; // simulate native slider moving before input event
 vm.runInContext('setRadiusFromSlider(250)',ctx);
 assert.equal(element("candyRadius").value,"250","radius still follows slider");
 assert.ok(element("candyCooldownPreview").textContent.includes("1h"),"slider previews tier");
