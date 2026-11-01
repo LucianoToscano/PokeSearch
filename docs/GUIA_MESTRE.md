@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT211 — FAVORITOS MÓVEIS, ORGANIZADOR, BACKGROUND E DISTRIBUIÇÃO (01/11/2026)
+
+- **Origem:** LT206 oficial, passando pelas correções incrementais LT207, LT208, LT209, LT210 e LT211. [PR #181](https://github.com/LucianoToscano/PokeSearch/pull/181) mesclada à `main` no commit `0d9ae0288db7eb5fa68cf0408ac1d6ae19a5731f`.
+- **Favoritos:** popup usa coordenadas reais da barra e escolhe posicionamento acima/abaixo antes de ser exibido; arraste imediato por áreas livres, sem botão especial, posição manual salva com prevenção de sobreposição; validar fisicamente no Samsung.
+- **Menus:** 13 ações arrastáveis (inclusive Personalização, que não pode ser ocultada); novo reset ↺ restaura somente ordem/visibilidade. Shiny e Background ficam ocultos por padrão; Background foi inserido ao lado de Shiny, e pode ser exibido no organizador.
+- **Busca Background:** botão independente chama `setBackgroundOnly`, persiste o critério `backgroundOnly` por Pokébola e usa o parâmetro já existente `background_only`; solicitado não equivale a provedor confirmado. Shiny continua temporariamente indisponível no upstream.
+- **APK:** versão aprovada para publicação `0.02.11`, versionCode `54418`, certificado v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; QA assinada [aqui](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.11-54418-qa-menus-background-20261101), com testes completos e integridade verificados.
+- **Distribuição oficial:** workflow [LT211](https://github.com/LucianoToscano/PokeSearch/actions/runs/41259696033) iniciado após o merge. O aplicativo consulta `releases/latest` e não realiza instalação silenciosa. **Publicação e Drive aguardavam verificação no momento deste registro**; atualizar este item com URLs, SHA-256 e resultado antes de encerrar.
+- **Limites de QA:** ainda faltam teste físico de arraste/instalação no Samsung e confirmação com sessão real autenticada do PoGoCoordinates.
+
+---
+
 ## LT206 — RETRY-AFTER 24H, DOCE RARO E CONTINUIDADE (31/10/2026)
 
 - **Base real:** LT205, não LT190. O patch LT191 de 24 horas já integrava o transporte, a sessão WebView e o serviço das Pokébolas. Nenhum downgrade ou reaplicação insegura do patch antigo.
