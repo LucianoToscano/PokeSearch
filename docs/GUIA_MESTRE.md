@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT213 — FAVORITOS INDEPENDENTES P1/P2, QA ASSINADO E DRIVE (01/11/2026)
+
+- **PR #184:** [correção de posições P1/P2](https://github.com/LucianoToscano/PokeSearch/pull/184) integrada à `main` no commit `3e6ed8b798be8530177d25ae3ff95ee3d426b2dd`. Os testes Node, Java, OTA, QA geral e compilação Android da PR concluíram com **SUCCESS**.
+- **Problema resolvido no código:** as duas instâncias gravavam as mesmas cinco chaves de posição da janela Favoritos em `prefs`; a P2 agora usa chaves com sufixo `P2`, enquanto P1 preserva os nomes legados. Catálogo, alertas e perfis de Favoritos continuam compartilhados. Mantidos arraste por área livre, localização relativa à barra, popup não modal, 13 menus, estados ocultos Shiny/Background e os dois serviços de Pokébolas.
+- **Testes novos:** `FavoritePanelPositionKeysTest.java` e `lt213-dual-favorites-position.test.js`; adaptado teste LT209 e gate Java `qa-core-contracts.yml`. [Checklist LT213](LT213_FAVORITOS_P1_P2_POSICAO_QA_20261101.md).
+- **APK de homologação privado:** workflow [LT213 QA #41266014842](https://github.com/LucianoToscano/PokeSearch/actions/runs/41266014842) **SUCCESS**. `PokeSearch-LT213-QA-v0.02.13-54420.apk` — **28.072.263 bytes**, SHA-256 `64c73e4b05379e38e62d1e6c981772ff78e9cc094c5891143374d53419593d89`, versionName `0.02.13`, versionCode `54420`, package `com.lucianotoscano.pokesearch`, mesma assinatura v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Dentro do APK, o ícone IV corrigido permaneceu com hash `1d2cddf9af153c51696abbdd844d6ad946c306aa2bef39ee90d7468691ca8cd5`.
+- **Drive:** [ZIP QA LT213 com APK e relatórios](https://drive.google.com/file/d/1qrgR7n1olvO-Wu_9nCIqOLx1kxCDQo9K/view?usp=drivesdk), pasta `PokeSearch_App`, **25.890.406 bytes** e SHA-256 `37753ac2ae67f4e9a9a6ca031ddf6d6f441091ce80ec981ed04bd99d6e5ee24e`. ZIP íntegro; `SHA256SUMS.txt` validou APK; relatórios de versão, certificado, commit de origem e aviso de uso exclusivo para QA incluídos.
+- **Segurança da distribuição:** artefato apenas para **teste manual**. **Não** foi feito GitHub Release novo, nem alterado o endpoint de atualizações: a versão pública *latest* continua **LT211 / `0.02.11` / `54418`**. A próxima versão estável para quem instalar LT213 QA precisará de `versionCode > 54420`.
+- **Pendência obrigatória:** teste físico no Samsung de posições independentes de P1 e P2 após arrastar/fechar/reabrir, 13 menus, 50 favoritos, popover sem cobrir barra, resolução/rotação, ícone IV em fundos claro/escuro e buscas reais do provedor. **Chat não alterado**.
+
+---
+
 ## LT212 — ÍCONE IV TRANSPARENTE E QA VISUAL (01/11/2026)
 
 - **PR #183:** [LT212 QA — ícone IV transparente](https://github.com/LucianoToscano/PokeSearch/pull/183) mesclada à `main` no commit `95977959b52bccb5268359f5de06142f07c65ad2`. **Não há nova versão pública**: `0.02.11` / `54418` segue como release oficial instalada, sem reuso do mesmo versionCode ou troca de assinatura.
