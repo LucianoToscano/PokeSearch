@@ -4590,9 +4590,11 @@ body.result-window.visual-results-tiles .spriteStage::before{
   box-shadow:var(--visual-result-tile-shadow,0 1px 4px #0005);
   pointer-events:none;z-index:0;
 }
-body.result-window.visual-results-tiles .spriteStage .sprite,
-body.result-window.visual-results-tiles .spriteStage .spriteFallback{
+body.result-window.visual-results-tiles .spriteStage .sprite{
   position:relative;z-index:1;
+}
+body.result-window.visual-results-tiles .spriteStage .spriteFallback{
+  z-index:1; /* preserve original absolute/inset fallback geometry */
 }
 /* Without tiles, retain the exact old transparent, borderless render. */
 body.result-window:not(.visual-results-tiles) .spriteStage::before{
