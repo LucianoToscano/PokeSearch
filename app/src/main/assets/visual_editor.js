@@ -9,6 +9,7 @@ const DEFAULTS=Object.freeze({
  popupWidth:232,popupHeight:390,
  resultsOrientation:"vertical",menuOrientation:"horizontal",
  resultsBgMode:"dark",resultsTransparency:100,
+ resultsTileStyle:"none",resultsTileTransparency:40,
  menuBgMode:"dark",menuTransparency:50,menuBlur:4,showGuides:false,menuGuides:false,resultsGuides:false
 });
 const RANGES={
@@ -17,7 +18,8 @@ const RANGES={
  resultsOffsetX:[-200,200],resultsOffsetY:[-350,350],
  menuOffsetX:[-200,200],menuOffsetY:[-350,350],
  gearMenuGap:[0,80],menuItemGap:[0,16],popupWidth:[160,330],popupHeight:[140,420],
- resultsTransparency:[0,100],menuTransparency:[0,100],menuBlur:[0,16]
+ resultsTransparency:[0,100],resultsTileTransparency:[0,100],
+ menuTransparency:[0,100],menuBlur:[0,16]
 };
 const PRESETS={
  compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:130,menuItemGap:0},
@@ -43,6 +45,8 @@ function normalize(raw){
   if(src[key]==="vertical"||src[key]==="horizontal")result[key]=src[key];
  for(const key of ["resultsBgMode","menuBgMode"])
   if(src[key]==="light"||src[key]==="dark")result[key]=src[key];
+ // An independent, opt-in tile per sprite; legacy saved prefs stay bare.
+ if(src.resultsTileStyle==="card")result.resultsTileStyle="card";
  result.showGuides=src.showGuides===true;
  result.menuGuides=src.menuGuides===true||(src.menuGuides===undefined&&result.showGuides);
  result.resultsGuides=src.resultsGuides===true||(src.resultsGuides===undefined&&result.showGuides);
@@ -68,6 +72,16 @@ function applyVisual(){
  set("top-gap",current.resultGapTop+"px");
  set("menu-gap",current.menuItemGap+"px");
  set("results-bg",rgba(current.resultsBgMode,current.resultsTransparency));
+ // LT223: tile background is separate from the legacy whole-window background.
+ // A dark or light framed card sits BEHIND the original sprite, without
+ // changing the sprite element, its dimensions, metadata, or click target.
+ const tileAlpha=Math.max(0,1-current.resultsTileTransparency/100);
+ const tileRgb=current.resultsBgMode==="light"?"248,250,252":"21,25,32";
+ const tileBorderRgb=current.resultsBgMode==="light"?"56,68,88":"211,221,235";
+ set("result-tile-bg","rgba("+tileRgb+","+(tileAlpha*0.95).toFixed(3)+")");
+ set("result-tile-border","rgba("+tileBorderRgb+","+(tileAlpha*0.65).toFixed(3)+")");
+ set("result-tile-shadow",tileAlpha===0?"none":
+  "0 1px 4px rgba(0,0,0,"+(tileAlpha*0.28).toFixed(3)+")");
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
  set("menu-readable-bg",readableSurface(current.menuBgMode,current.menuTransparency));
  set("menu-readable-button-bg",readableSurface(current.menuBgMode,
@@ -85,6 +99,7 @@ function applyVisual(){
  set("results-fg",current.resultsBgMode==="light"?"#172533":"#e6eefa");
  body.classList.toggle("visual-light-menu",current.menuBgMode==="light");
  body.classList.toggle("visual-light-results",current.resultsBgMode==="light");
+ body.classList.toggle("visual-results-tiles",current.resultsTileStyle==="card");
  set("sprite-scale",String(current.resultSpriteScale/100));
  set("header-y",current.headerIconY+"px");
  set("header-x",current.headerOffsetX+"px");
@@ -297,8 +312,12 @@ function renderVisualEditor(){
     [["vertical","Vertical"],["horizontal","Horizontal"]]);
   });
   visualGroup(panel,"theme","Cores e guias",panel=>{
+   addSegment(panel,"resultsTileStyle","Fundo dos Pokémon",
+    [["none","Sem fundo"],["card","Com fundo"]]);
    addSegment(panel,"resultsBgMode","Tema",[["dark","Escuro"],["light","Claro"]]);
-   addSlider(panel,"resultsTransparency","Transparência dos resultados","%");
+   if(current.resultsTileStyle==="card")
+    addSlider(panel,"resultsTileTransparency","Transparência dos cartões","%");
+   addSlider(panel,"resultsTransparency","Transparência da área","%");
    btn(panel,"Linhas-guia resultados: "+(current.resultsGuides?"ON":"OFF"),()=>{
     change("resultsGuides",!current.resultsGuides);renderVisualEditor();
    });
