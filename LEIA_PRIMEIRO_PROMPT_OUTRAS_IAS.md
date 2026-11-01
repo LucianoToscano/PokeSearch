@@ -2,7 +2,7 @@
 
 **Repositório:** https://github.com/LucianoToscano/PokeSearch
 
-**Estado do código:** merge LT214 concluído. Candidato estável LT215 (`0.02.15`, versionCode `54422`). **Não presuma que foi publicado:** consulte o endpoint GitHub Releases/latest e o relatório de publicação. A última versão pública antes deste candidato era LT211 (`0.02.11`, `54418`). LT212, LT213 e LT214 foram builds QA assinados, não releases estáveis.
+**Estado verificado:** LT215 (`0.02.15`, versionCode `54422`) é release estável publicada em GitHub Releases/latest com APK assinado v2, hash `0968883ed67f84fc4d75985bf50da3d9ae5e3af4f7003d7e8ae08cdd29cdaa91` e source commit `de6866772831026d3882b586434a336b8ed3451e`. LT211 (`0.02.11`, `54418`) era a estável anterior. LT212, LT213 e LT214 foram builds privados de QA. Ao continuar o projeto, verifique o estado atual do GitHub antes de assumir a versão.
 
 ## Para qualquer IA que receba o pacote editável
 
