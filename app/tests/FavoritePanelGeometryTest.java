@@ -26,6 +26,22 @@ public final class FavoritePanelGeometryTest {
             400,1200,500,800,420,330,8),72,462);
         equal("too-tall popup clamps safely",FavoritePanelGeometry.onScreen(
             40,400,740,250,620,280,8),40,8);
-        System.out.println("PASS LT209 FavoritePanelGeometry: "+checks+" visible-placement and drag tests");
+        // First-frame anchoring uses ACTUAL toolbar top and bottom, including
+        // menus that reserve native popup space above the row.
+        equal("real toolbar middle -> below",FavoritePanelGeometry.adjacentToToolbar(
+            360,810,852,740,1500,620,270,8,8),50,860);
+        equal("real toolbar near bottom -> above",FavoritePanelGeometry.adjacentToToolbar(
+            360,1290,1332,740,1500,620,270,8,8),50,1012);
+        equal("expanded native menu above does not shift toolbar anchor",
+            FavoritePanelGeometry.adjacentToToolbar(
+                360,810,852,740,1500,620,270,8,8),50,860);
+        if(!FavoritePanelGeometry.overlapsToolbar(800,270,810,852))
+            throw new AssertionError("saved pane covering toolbar must be rejected");
+        if(FavoritePanelGeometry.overlapsToolbar(860,270,810,852))
+            throw new AssertionError("pane just below toolbar must remain valid");
+        if(FavoritePanelGeometry.overlapsToolbar(532,270,810,852))
+            throw new AssertionError("pane safely above toolbar must remain valid");
+        checks+=3;
+        System.out.println("PASS LT210 FavoritePanelGeometry: "+checks+" placement, overlap and drag tests");
     }
 }
