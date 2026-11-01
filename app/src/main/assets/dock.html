@@ -4910,8 +4910,13 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
    const measuredWidth=Math.min(330,Math.ceil(Math.max(rect.width,pane.scrollWidth,right-rect.left))+2);
    const exactWidth=choiceOpen==="location"?
       Math.min(148,Math.max(1,Math.floor(window.innerWidth||148))):measuredWidth;
+   // LT221: the Visual Editor can exceed 450dp even on a tall phone.
+   // Measure its full scrollHeight before sizing the native popup, so the
+   // last action ("Voltar") is not sliced off by the old 450dp hard cap.
+   // Ordinary menus preserve the existing 450dp behavior.
+   const maxPopupHeight=choiceOpen==="visual"?740:450;
    Native.resizePopup(exactWidth,
-    Math.min(450,Math.ceil(Math.max(rect.height,pane.scrollHeight,bottom-rect.top))+2));
+    Math.min(maxPopupHeight,Math.ceil(Math.max(rect.height,pane.scrollHeight,bottom-rect.top))+2));
   }
   return;
  }
@@ -5011,7 +5016,8 @@ window.showNativePopup=(kind,measuredTileWidth=0)=>{
 window.hideNativePopup=()=>{if(popupWindow&&choiceOpen)closeChoices();};
 window.setNativePopupRoom=height=>{
  if(!popupWindow)return;
- const next=Math.max(30,Math.min(450,Number(height)||440));
+ const maxRoom=choiceOpen==="visual"?740:450;
+ const next=Math.max(30,Math.min(maxRoom,Number(height)||440));
  const previous=Number.parseFloat(document.documentElement.style.getPropertyValue("--popup-room"));
  if(!Number.isFinite(previous)||Math.abs(previous-next)>1)
   document.documentElement.style.setProperty("--popup-room",next+"px");
