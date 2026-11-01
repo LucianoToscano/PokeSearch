@@ -125,8 +125,35 @@ background:var(--visual-menu-readable-button-bg)!important}
  padding:1px 5px;opacity:0;transition:opacity .12s;max-width:185px}
 #choices .locCooldownPreview.is-visible{opacity:1}
 #choices .locSliderRow{position:relative;overflow:visible}
-#choices.locationCooldownTable{width:232px;max-height:280px;overflow-y:auto;
- overflow-x:hidden;overscroll-behavior:contain;padding:5px}
+/* LT216: separate popup: never inherit the 148px/145px locationPanel
+   override (which applies overflow:visible!important). The native WebView is
+   290dp high, the toolbar occupies 34px; keep the full card INSIDE it. */
+#choices.locationCooldownTable{
+ display:flex;flex-direction:column;box-sizing:border-box;
+ top:34px;left:0;width:232px;max-width:calc(100vw - 8px);
+ height:250px;max-height:calc(100vh - 40px);min-height:0;
+ padding:6px 5px;overflow:hidden;overscroll-behavior:contain;
+ background:var(--visual-menu-readable-bg,#151c27ed);
+ color:var(--visual-menu-fg,#f2f7fc);
+ border:1px solid var(--visual-menu-border,#ffffff38);
+ border-radius:9px;box-shadow:var(--visual-menu-tile-shadow,0 4px 12px #0008);
+ backdrop-filter:blur(var(--visual-menu-blur,4px));
+}
+#choices.locationCooldownTable .candyCooldownHeader,
+#choices.locationCooldownTable .candyCooldownNotice{flex:0 0 auto}
+#choices.locationCooldownTable .candyCooldownRows{
+ display:flex;flex:1 1 auto;flex-direction:column;gap:3px;
+ min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;
+ overscroll-behavior:contain;touch-action:pan-y;
+ -webkit-overflow-scrolling:touch;scrollbar-width:thin;
+ padding:0 2px 3px 0;
+}
+#choices.locationCooldownTable .candyCooldownRow{
+ flex:0 0 auto;min-height:23px;align-items:center;
+}
+#choices.locationCooldownTable .candyCooldownRow span:last-child{
+ white-space:nowrap;text-align:right;
+}
 #choices .candyCooldownHeader{display:flex;align-items:center;gap:7px;
  margin:0 0 5px;padding:2px 3px}
 #choices .candyCooldownBack{flex:0 0 27px;min-width:27px;height:26px;
@@ -177,14 +204,14 @@ function candyCooldownReferenceForKm(raw){
 }
 function renderCandyCooldownReference(){
  const el=$("choices");
- el.className="visible locationPanel locationCooldownTable";
+ el.className="visible locationCooldownTable"; // distinct from compact locationPanel styles
  const rows=CANDY_COOLDOWN_REFERENCE.map(([d,t])=>
-  '<div class="candyCooldownRow"><span>'+d+'</span><span>≈ '+t+'</span></div>').join("");
+  '<div class="candyCooldownRow" role="listitem"><span>'+d+'</span><span>≈ '+t+'</span></div>').join("");
  el.innerHTML='<div class="candyCooldownHeader">'+
   '<button type="button" class="candyCooldownBack" onclick="backToCandyLocation()" aria-label="Voltar à Localização">‹</button>'+
   '<span class="candyCooldownTitle">Referência de cooldown</span></div>'+
-  '<p class="candyCooldownNotice">Estimativa não oficial por distância ENTRE coletas. O raio da busca não inicia um contador.</p>'+
-  '<div class="candyCooldownRows">'+rows+'</div>';
+  '<p class="candyCooldownNotice">16 faixas · estimativa não oficial entre coletas. Deslize a lista para ver todas. O raio não inicia cooldown.</p>'+
+  '<div class="candyCooldownRows" role="list" tabindex="0" aria-label="16 distâncias e tempos de cooldown; deslize para percorrer">'+rows+'</div>';
  requestHeight(290,false);
 }
 function showCandyCooldownReference(){
