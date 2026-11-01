@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT218 QA — CORREÇÃO DO PRESET TOPO HORIZONTAL APÓS CAPTURAS SAMSUNG (01/11/2026)
+
+- **Bug confirmado visualmente na LT217:** usuário instalou `0.02.17 / 54424` e mostrou 5 capturas em que o menu se tornava uma coluna de cartões largos no meio da tela, apesar do preset Topo Horizontal, enquanto resultados permaneciam fora do posicionamento previsto.
+- **Causa:** `visual_editor.js` utilizava `saveSoon()` (100ms) e chamava `Native.applyTopHorizontalLayout()` **antes** da gravação das novas orientações; a lógica nativa ainda via `visualMenuVertical=true` e construía hitbox de 232dp com CSS de lista vertical.
+- **Correção:** [PR #189](https://github.com/LucianoToscano/PokeSearch/pull/189), merge `08a1d4507e79ecdf11e7abd825f98c1668e2bf30`. Novo bridge `Native.applyTopHorizontalPreset(String json)` valida orientações e, numa única execução do handler UI, chama `saveVisualPrefs` **antes** de `applyTopHorizontalLayout`. O preset cancela temporizador anterior, envia JSON completo da instância, e deixa outros presets e troca individual das orientações intactos.
+- **CSS:** nova classe explícita `visual-menu-horizontal` e regras finais de alta especificidade no `dock.html` para faixa de 34px em 12 espaços compactos; nenhuma coluna de `quickRow` com 100% da largura neste modo. Resultados verticais recebem `flex-direction:column`. O modo vertical anterior permanece selecionável. P1/P2 continuam persistidos em `prefs` e `prefs_secondary`.
+- **Testes:** `lt218-horizontal-native-layout.test.js`, `lt217-top-horizontal-layout.test.js`, Node integral, Java, OTA e Android da PR **SUCCESS**. [Causa e checklist](LT218_CORRECAO_PRESET_TOPO_HORIZONTAL_QA_20261101.md). O código não altera chat, login, filtros, cooldown, Favoritos ou quantidade de resultados.
+- **Distribuição:** gerar e validar pacote privado LT218 `0.02.18`, versionCode `54425`, workflow [#41278916400](https://github.com/LucianoToscano/PokeSearch/actions/runs/41278916400). Registro de hash e Drive **somente após sucesso do build e verificação independente**. Release pública permanece LT215 `0.02.15 / 54422`. Próxima versão estável para aparelhos com QA LT218 instalada deve utilizar `versionCode > 54425`.
+- **Pendência:** confirmar no Samsung que, ao tocar **Topo Horizontal**, os botões ficam em linha ao lado da Pokébola e os resultados verticais abaixo, sem barras verticais largas, tanto em P1 quanto P2. CI não substitui teste físico.
+
+---
+
 ## LT217 — PRESET TOPO HORIZONTAL, ORIENTAÇÃO INDEPENDENTE POR POKÉBOLA (01/11/2026)
 
 - **Pedido do usuário:** imagens de referência mostram (A) menu vertical com resultados horizontais e (B) menu horizontal ao lado da Pokébola no canto superior esquerdo com Pokémon verticais abaixo. Requisito: aplicar modelo B sem apagar A, manter quatro combinações possíveis, com controles independentes em Editor Visual.
