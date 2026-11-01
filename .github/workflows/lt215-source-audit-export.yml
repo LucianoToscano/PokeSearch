@@ -50,7 +50,7 @@ jobs:
                   if not pathlib.Path(item).is_file():
                       raise SystemExit('Missing tracked file '+item)
                   data=pathlib.Path(item).read_bytes()
-                  if b'-----BEGIN PRIVATE KEY-----' in data or b'-----BEGIN OPENSSH PRIVATE KEY-----' in data:
+                  if b'-----BEGIN '+b'PRIVATE KEY-----' in data or b'-----BEGIN OPENSSH '+b'PRIVATE KEY-----' in data:
                       raise SystemExit('Private key signature in tracked source: '+item)
                   out.writestr(top+item,data)
                   manifest.append(hashlib.sha256(data).hexdigest()+'  '+item)
