@@ -7717,6 +7717,7 @@ function refreshQuickMenuStates(){
    }
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
+   if(id==="bg")button.setAttribute("aria-pressed",String(searchSettings.backgroundOnly===true));
   if(["mode","filters","location","pokemon","bell","appearance","more"].includes(id)){
    // Keep the state renderer safe when historical standalone tests
    // execute it without bootstrapping the separate toolbar WebView.
