@@ -25,7 +25,7 @@ assert.match(resultCss,/pointer-events:none;z-index:0/);
 assert.match(resultCss,/visual-results-tiles \.spriteStage \.spriteFallback\{[\s\S]*?z-index:1/);
 assert.match(resultCss,/body\.result-window:not\(\.visual-results-tiles\) \.spriteStage::before\{[\s\S]*?content:none!important/);
 assert.doesNotMatch(resultCss,/(?:\.spawn|\.spriteStage|\.sprite)\s*\{[^}]*?(?:height:var\(--row\)|transform:scale\()/);
-assert.match(native,/\{"resultsTileStyle",/);
+assert.match(native,/clean\.put\("resultsTileStyle",/);
 assert.match(native,/"card"\.equals\(input\.optString\("resultsTileStyle","none"\)\)\?"card":"none"/);
 assert.match(native,/"resultsTileTransparency","menuTransparency"/);
 assert.match(native,/\{0,100,100\},\{0,100,40\},\{0,100,50\}/);
