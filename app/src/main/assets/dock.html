@@ -6866,7 +6866,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  // LT224: one fixed-size tile in either orientation and either background
  // mode. WebView row geometry must match the 30dp menu button exactly.
  // Keep every result and all metadata; overflow stays scrollable if needed.
- if(resultWindow){
+ if(typeof resultWindow!=="undefined"&&resultWindow){
   const visible=Math.min(items.length,10);
   return {rows:items.map(()=>30),sprite:30,
    total:visible?visible*30+(visible-1)*2:0,
