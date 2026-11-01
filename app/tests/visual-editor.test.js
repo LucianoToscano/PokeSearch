@@ -259,7 +259,7 @@ test("geometry diagnostic reports only stage measurements, never spawn data",()=
  assert.ok(!f.includes('card.')&&!f.includes('locationCoords'));
 });
 test("Visual Editor explains fixed menu-sized Pokémon tiles; legacy P/M/G controls still exist",()=>{
- assert.ok(script.includes('Padrão dos menus: cada Pokémon 30×30 dp'));
+ assert.ok(script.includes('P 30×30 dp · M 40×40 dp · G 50×50 dp'));
  assert.ok(dock.includes('className="spriteSizeChoices"'));
  assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
  assert.ok(dock.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
