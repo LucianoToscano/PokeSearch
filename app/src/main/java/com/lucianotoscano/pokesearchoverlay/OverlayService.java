@@ -166,6 +166,26 @@ public class OverlayService extends Service {
     }
     private static final int BUBBLE_DP=45, DETAIL_DP=200, TOOLBAR_DP=34, MENU_BASE_DP=34;
     private static final int RESULTS_HEADER_DP=30;
+    // Coordinates only: never share logins, filters, results or service objects
+    // between P1 and P2. Clear on close and service destruction.
+    private static final Object MENU_GEOMETRY_LOCK=new Object();
+    private static final int[][] OPEN_MENU_BOUNDS=new int[2][];
+    private int[] otherMenuBounds(){
+        synchronized(MENU_GEOMETRY_LOCK){
+            int[] other=OPEN_MENU_BOUNDS[isSecondaryOverlay()?0:1];
+            return other==null?null:other.clone();
+        }
+    }
+    private void clearMenuBounds(){
+        synchronized(MENU_GEOMETRY_LOCK){
+            OPEN_MENU_BOUNDS[isSecondaryOverlay()?1:0]=null;
+        }
+    }
+    private void publishMenuBounds(int x,int y,int w,int h){
+        synchronized(MENU_GEOMETRY_LOCK){
+            OPEN_MENU_BOUNDS[isSecondaryOverlay()?1:0]=new int[]{x,y,w,h};
+        }
+    }
     private int spriteSize=45;
     private String visualPrefsJson="{}";
     private boolean visualMenuVertical=false,visualResultsHorizontal=false;
@@ -318,13 +338,16 @@ public class OverlayService extends Service {
         if(visualResultsHorizontal&&!resultCollapsed){
             // Never cover the full screen with an invisible touch-blocking overlay
             // when the site returned only one or two Pokemon.
-            int columns=Math.max(1,Math.min(5,count()));
             int perCard=dockDp()+resultMetadataWidthDp;
-            // CSS flex gap occupies additional real width between cards.
-            // Reserve 2dp for fractional WebView measurement/rounding.
-            int width=perCard*columns+
-                ResultsSpacingPolicy.additionalRowGapPx(visualResultGapBetween)*(columns-1)+2;
-            return Math.max(dockDp(),Math.min(screenWidthDp()-16,width));
+            int gap=ResultsSpacingPolicy.additionalRowGapPx(visualResultGapBetween);
+            int usable=Math.max(perCard,screenWidthDp()-16);
+            // LT220: the old fixed 5-column cap wastes space for smaller
+            // sprites. Pack as many ORIGINAL-SIZE sprites as physically fit
+            // (at most 10); wrap only when ten truly cannot fit the display.
+            int fit=Math.max(1,(usable+gap-2)/Math.max(1,perCard+gap));
+            int columns=Math.max(1,Math.min(Math.min(10,count()),fit));
+            int width=perCard*columns+gap*(columns-1)+2;
+            return Math.max(dockDp(),Math.min(usable,width));
         }
         return dockDp()+resultMetadataWidthDp;
     }
@@ -1192,6 +1215,23 @@ public class OverlayService extends Service {
         menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),
             menuParams.x+dp(visualMenuOffsetX)));
         rowY=Math.max(0,Math.min(Math.max(0,bottom-dp(menuBase)),rowY+dp(visualMenuOffsetY)));
+        // The menu and Pokémon are separate native overlays. Avoid covering
+        // visible sprites or the other Pokéball's menu, but keep the current
+        // 30dp buttons and all dimensions unchanged. Prefer the nearest
+        // side-by-side or above/below position that really fits on screen.
+        int[] otherMenu=otherMenuBounds();
+        int[] visibleResults=null;
+        if(resultParams!=null&&resultRoot!=null&&!resultCollapsed&&!minimized&&
+                resultRoot.getVisibility()==View.VISIBLE){
+            visibleResults=new int[]{resultParams.x,resultParams.y,
+                resultParams.width,resultParams.height};
+        }
+        int[] safePosition=OverlayPlacementPolicy.avoid(
+            menuParams.x,rowY,width,dp(menuBase),screen,bottom,dp(4),
+            new int[][]{visibleResults,otherMenu});
+        menuParams.x=safePosition[0];
+        rowY=safePosition[1];
+        menuLeft=menuParams.x+width<=params.x;
         menuPadDp=0; // Results remain in their own separate native overlay.
 
         // The old resize/clamp moved the entire toolbar when a long numeric
@@ -1208,6 +1248,7 @@ public class OverlayService extends Service {
         menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,
             rowY-(abovePopup?actualPopup:0)));
 
+        publishMenuBounds(menuParams.x,rowY,width,rowHeight);
         int offsetDp=abovePopup?Math.round(actualPopup/d.density):0;
         int roomDp=requestedPopup==0?420:Math.max(0,Math.round(actualPopup/d.density)-5);
         if(menuDrawX!=menuParams.x||menuDrawY!=menuParams.y||
@@ -3502,6 +3543,7 @@ public class OverlayService extends Service {
         if(show==menuExpanded)return;
         if(!show){if(locationEditorOpen)locationEditor(false);closeIndependentPopup();}
         menuExpanded=show;
+        if(!show)clearMenuBounds();
         menuPadDp=0; // Only the measured overlap may shift the sprite list.
         if(show){
             menuDrawHeight=-1;menuDrawWidth=-1;
@@ -5559,6 +5601,7 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        clearMenuBounds();
         WatchAlerts.sharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(sharedFavoritesListener);
         if(cooldownChangedReceiverRegistered){
