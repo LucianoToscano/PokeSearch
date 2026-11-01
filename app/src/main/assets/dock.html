@@ -7759,6 +7759,7 @@ function refreshQuickMenuStates(){
   button.classList.toggle("pokemon-has-selection",id==="pokemon"&&((Array.isArray(searchSettings.pokemonSelections)&&searchSettings.pokemonSelections.length>0)||!!String(searchSettings.pokemon||"").trim()));
    button.classList.toggle("selected",id==="location"?(locationEnabled&&locationVerified):
    id==="sh"?shiny:
+   id==="bg"?(searchSettings.backgroundOnly===true):
    id==="bell"?(bellState.newSound||bellState.favoriteSound):id==="period"?period>0:
    id==="star"?hasFavorites:id==="mode"?(mode==="gl"||mode==="ul"):false);
  });
