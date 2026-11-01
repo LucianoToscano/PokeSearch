@@ -2109,6 +2109,16 @@ body.controls-window #choices.visualPanel .spriteSizeChoices button{
 body.controls-window #choices.appearanceCompact .uxSubheading{
  margin:3px 3px 3px!important;font-size:10px!important;letter-spacing:0!important;
 }
+body.controls-window #choices.appearanceCompact .menuOrganizerHeading{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:4px!important;min-height:27px!important;
+}
+body.controls-window #choices.appearanceCompact .resetMenuLayout{
+ box-sizing:border-box!important;width:26px!important;height:25px!important;flex:0 0 26px!important;
+ margin:0!important;padding:0!important;border:1px solid var(--visual-menu-border,#ffffff44)!important;
+ border-radius:5px!important;background:var(--visual-menu-button-bg,#ffffff12)!important;
+ color:var(--visual-menu-fg,#eff3f6)!important;font:600 20px/22px Roboto,Arial,sans-serif!important;
+ text-align:center!important;
+}
 body.controls-window #choices.appearanceCompact .appearanceCommands{
  display:flex!important;flex-direction:column!important;gap:2px!important;
 }
@@ -7051,7 +7061,8 @@ window.setMinimized=value=>{
 
 /* UX-MENU-01: contextual menu reuses native actions and verified filters. */
 const QUICK_ACTIONS=[
- ["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],["filters","≡","Filtros","filters"],
+ ["mode","☷","Modos","mode"],["sh","✨","Shiny Only","sh"],
+ ["bg","▧","Background Only","bg"],["filters","≡","Filtros","filters"],
  ["location","⌾","Localização","location"],["pokemon","♧","Pokémon","pokemon"],
  ["star","☆","Favoritos","star"],["bell","♧","Alertas","alerts"],
  ["period","↻","Atualização","period"],["appearance","⚙","Personalização","appearance"],
@@ -7059,9 +7070,13 @@ const QUICK_ACTIONS=[
  ["donate","♡","Apoiar","donate"],["close","×","Fechar","close"]
 ];
 // Shiny Only is the independent second switch next to Modos; search entries follow.
-const QUICK_PRIMARY_IDS=["mode","sh","filters","location","pokemon","star","bell","period","appearance"];
+const QUICK_PRIMARY_IDS=["mode","sh","bg","filters","location","pokemon","star","bell","period","appearance"];
 const QUICK_UTILITY_IDS=[]; // All non-footer buttons share the same DOM list.
 const QUICK_DEFAULT_ORDER=QUICK_ACTIONS.map(a=>a[0]);
+const QUICK_DEFAULT_HIDDEN=["sh","bg"];
+function defaultQuickPrefs(){
+ return {direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[...QUICK_DEFAULT_HIDDEN]};
+}
 // Only a presentation group; original IDs remain independently movable.
 const MORE_ACTION_IDS=Object.freeze(["report","donate","close"]);
 function groupedMoreIds(prefs=quickPrefs){
@@ -7073,23 +7088,26 @@ function groupedMoreIds(prefs=quickPrefs){
  const visible=suffix.filter(id=>!hidden.includes(id));
  return visible.length>=2?visible:[];
 }
-let quickPrefs={direction:"horizontal",labels:false,order:[...QUICK_DEFAULT_ORDER],hidden:[]};
-function normalizedQuickPrefs(p){
- const ids=QUICK_DEFAULT_ORDER;
- // Preserve the other buttons and saved order when upgrading from the 51053 menu.
- const legacy=!Array.isArray(p.order)||!p.order.includes("pokemon")||
-  p.order.some(id=>!ids.includes(id));
- const needsRefreshMigration=!legacy&&!p.order.includes("period");
- const previous=(legacy||needsRefreshMigration)?[...ids]:
-  p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
- // Preserve the saved position of ALL twelve items, including Shiny and Fechar.
- // Only Personalização is always visible; never hide the way back to this editor.
- const order=[...previous,...ids.filter(x=>!previous.includes(x))];
- const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter((x,i,a)=>
-  ids.includes(x)&&x!=="appearance"&&a.indexOf(x)===i):[];
- return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
-  labels:false,
-  order,hidden};
+let quickPrefs=defaultQuickPrefs();
+function normalizedQuickPrefs(p={}){
+ const ids=QUICK_DEFAULT_ORDER,oldIds=ids.filter(id=>id!=="bg");
+ const saved=Array.isArray(p?.order)?p.order:null;
+ const legacy=!saved||!saved.includes("pokemon")||saved.some(id=>!ids.includes(id));
+ const oldRefresh=!legacy&&!saved.includes("period");
+ const previous=(legacy||oldRefresh)?[...ids]:saved.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
+ if(!previous.includes("bg")){
+  const at=previous.indexOf("sh");
+  previous.splice(at<0?previous.length:at+1,0,"bg");
+ }
+ const order=[...previous,...ids.filter(id=>!previous.includes(id))];
+ const untouchedOld=!legacy&&!saved.includes("bg")&&
+  saved.join("|")===oldIds.join("|")&&
+  (!Array.isArray(p.hidden)||p.hidden.length===0);
+ const hidden=legacy?[...QUICK_DEFAULT_HIDDEN]:Array.isArray(p.hidden)?
+  p.hidden.filter((x,i,a)=>ids.includes(x)&&x!=="appearance"&&a.indexOf(x)===i):[];
+ if((legacy||untouchedOld)&&!hidden.includes("sh"))hidden.push("sh");
+ if(!saved?.includes("bg")&&!hidden.includes("bg"))hidden.push("bg");
+ return {direction:"horizontal",labels:false,order,hidden};
 }
 function saveQuickPrefs(){
  quickPrefs=normalizedQuickPrefs(quickPrefs);renderQuickMenu();
@@ -7158,6 +7176,7 @@ function updateFiltersPanelStatus(){
 function quickState(id){
  switch(id){
   case "mode":return specialIVLabel(mode,searchSettings);
+  case "bg":return searchSettings.backgroundOnly===true?"Solicitado":"OFF";
   case "sh":return !PROVIDER_SHINY_AVAILABLE?"Indisp.":
    shinyPending?"Pendente":shiny?"ON":"OFF";
   case "bell":return !notificationPermissionGranted?"Permissão":(generalAlerts||(favoriteAlertMode!=="off"&&hasFavorites))?"ON":"OFF";
@@ -7184,6 +7203,7 @@ function quickClick(id){
  if(["mode","location","filters","appearance","more"].includes(id)){toggleChoices(id);return;}
  switch(id){
   case "sh":Native.shiny();break; // Reuse native, login-verified Shiny toggle.
+  case "bg":if(Native.setBackgroundOnly)Native.setBackgroundOnly(searchSettings.backgroundOnly!==true);break;
   case "bell":toggleChoices("alerts");break;
   case "star":{
    const tile=document.querySelector('#quickMenuList button[data-key="star"]');
@@ -7203,6 +7223,7 @@ function quickClick(id){
 /* Use the ORIGINAL illustrated toolbar symbols instead of arbitrary
    Unicode glyphs. The Pokémon silhouette is a new custom outline. */
 const QUICK_SVG=Object.freeze({
+ bg:'<rect x="3.5" y="5" width="25" height="22" rx="3"/><circle cx="11" cy="12" r="2.4"/><path d="m5 25 8-9 5 5 4-5 5 9"/>',
  more:'<circle cx="7" cy="16" r="2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="2" fill="currentColor" stroke="none"/><circle cx="25" cy="16" r="2" fill="currentColor" stroke="none"/>',
  mode:'<path d="M4 7h16M4 12h16M4 17h16"/><path d="M9 4v6m6-1v6m-6-1v6" stroke-width="2.8"/>',
  filters:'<path d="M6 8h20M6 16h20M6 24h20"/>',
@@ -7624,6 +7645,7 @@ function renderQuickMenu(){
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
   }
   if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny));
+  if(renderedId==="bg")button.setAttribute("aria-pressed",String(searchSettings.backgroundOnly===true));
   const label=document.createElement("span");label.className="quickName";label.textContent=name;
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(renderedId);
   button.append(glyph,label);
@@ -8050,7 +8072,7 @@ function moveMenuCommand(id,direction){
  saveQuickPrefs();return true;
 }
 const APPEARANCE_SHORT_NAMES=Object.freeze({
- mode:"Modos",sh:"Shiny ✨",filters:"Filtros",location:"Local",pokemon:"Pokémon",
+ mode:"Modos",sh:"Shiny ✨",bg:"Background",filters:"Filtros",location:"Local",pokemon:"Pokémon",
  star:"Favoritos",bell:"Alertas",period:"Atualizar",appearance:"Personalização",
  report:"Reportar",donate:"Apoiar",close:"Fechar"
 });
@@ -8135,7 +8157,13 @@ function renderAppearanceChoices(){
  panel.appendChild(shortcuts);
  renderSpriteSizeButtons(panel);
  const heading=document.createElement("div");heading.className="uxSubheading";
- heading.textContent="Menus · segure ≡ para arrastar";
+ heading.classList.add("menuOrganizerHeading");
+ const help=document.createElement("span");help.textContent="Menus · segure ≡ para arrastar";
+ const reset=document.createElement("button");reset.type="button";reset.className="resetMenuLayout";
+ reset.textContent="↺";reset.title="Restaurar organização padrão dos menus";
+ reset.setAttribute("aria-label","Restaurar ordem e visibilidade padrão dos menus");
+ reset.onclick=()=>{appearanceScrollTop=0;quickPrefs=defaultQuickPrefs();saveQuickPrefs();renderAppearanceChoices();};
+ heading.append(help,reset);
  panel.appendChild(heading);
  const commands=document.createElement("div");commands.className="appearanceCommands";
  commands.setAttribute("role","group");commands.setAttribute("aria-label","Mostrar, ocultar e organizar menus");
