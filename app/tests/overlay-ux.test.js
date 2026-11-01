@@ -3774,10 +3774,10 @@ test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filte
   service.includes('execute("verifyShiny",verified->{');
 });
 
-test("LT62 P/M/G selector shared by Personalização and Editor Visual",()=>{
+test("LT224 fixed 30dp results, with legacy P/M/G controls preserved in Personalização",()=>{
  const visual=read("assets/visual_editor.js");
  return dock.includes("window.renderSpriteSizeButtons=renderSpriteSizeButtons;")&&
-  visual.includes("window.renderSpriteSizeButtons(panel,true)")&&
+  visual.includes("Padrão dos menus: cada Pokémon 30×30 dp")&&
   dock.includes("if(Native.setSpriteSize)Native.setSpriteSize(size)")&&
   dock.includes("refreshSpriteSizeButtons();")&&
   service.includes("@JavascriptInterface public void setSpriteSize(int size)")&&

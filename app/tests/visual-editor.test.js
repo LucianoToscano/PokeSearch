@@ -144,7 +144,7 @@ test("styling changes don't need reload of all Pokemon images",()=>{
 });
 test("horizontal native width includes the live CSS inter-card spacing",()=>{
  assert.match(java,/visualResultGapBetween=o\.optInt\("resultGapBetween",31\)/);
- assert.match(java,/int gap=ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)/);
+ assert.match(java,/int gap=2; \/\/ same 2dp gap as quick-menu tiles/);
  assert.match(java,/int width=perCard\*columns\+gap\*\(columns-1\)\+2/);
  assert.ok(java.includes("resultParams.width=dp(resultWidthDp())"));
  assert.ok(dock.includes("column-gap:var(--visual-result-spacing,0px)!important"));
@@ -258,8 +258,8 @@ test("geometry diagnostic reports only stage measurements, never spawn data",()=
  assert.ok(f.includes('stageGapPx'));
  assert.ok(!f.includes('card.')&&!f.includes('locationCoords'));
 });
-test("Visual Editor Pokémon tab has direct P M G size buttons without restarting overlay",()=>{
- assert.ok(script.includes('if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);'));
+test("Visual Editor explains fixed menu-sized Pokémon tiles; legacy P/M/G controls still exist",()=>{
+ assert.ok(script.includes('Padrão dos menus: cada Pokémon 30×30 dp'));
  assert.ok(dock.includes('className="spriteSizeChoices"'));
  assert.ok(dock.includes('function refreshSpriteSizeButtons(){'));
  assert.ok(dock.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
@@ -356,7 +356,7 @@ test("Pokebola rectangle X width height and after-gap are controlled together",(
   assert.equal(styles[key],value);
  assert.ok(dock.includes("margin-left:clamp(0px,"));
  assert.ok(dock.includes("margin-bottom:var(--visual-header-after,0px)!important"));
- assert.ok(java.includes("Math.round((dockDp()-width)/2f)+visualHeaderX"));
+ assert.ok(java.includes("Math.round((headerRail-width)/2f)+visualHeaderX"));
  assert.ok(java.includes("box.leftMargin=dp(left)"));
 });
 test("Editor supports precise one-unit adjustments and touch-area guides",()=>{

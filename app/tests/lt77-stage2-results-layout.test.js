@@ -56,10 +56,10 @@ check("saved Editor Visual spacing above neutral remains an intentional extra",(
   }
 });
 check("horizontal result gaps are no longer the legacy 31px value",()=>{
-  assert.match(markup,/--visual-result-spacing",\s*additionalResultGapPx\(vp\.resultGapBetween\)\+"px"/);
+  assert.match(markup,/resultWindow\?2:additionalResultGapPx\(vp\.resultGapBetween\)/);
   assert.match(markup,/column-gap:var\(--visual-result-spacing,0px\)/);
   assert.match(markup,/row-gap:var\(--visual-result-spacing,0px\)/);
-  assert.match(service,/int gap=ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)/);
+  assert.match(service,/int gap=2; \/\/ same 2dp gap as quick-menu tiles/);
   assert.match(service,/gap\*\(columns-1\)\+2/);
   const result=layout(31,"horizontal",45,5);
   assert.equal(result.gap,0);

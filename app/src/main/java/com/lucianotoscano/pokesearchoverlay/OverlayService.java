@@ -338,12 +338,15 @@ public class OverlayService extends Service {
         js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(popupPanel,popupLoaded,code);js(resultPanel,resultLoaded,code);
     }
     private int dockDp(){return spriteSize+8;}
+    // LT224: match the 30dp result tile DOM regardless of sprite P/M/G,
+    // the frame transparency, or horizontal/vertical orientation.
+    private int resultTileDp(){return 30;}
     private int resultWidthDp(){
         if(visualResultsHorizontal&&!resultCollapsed){
             // Never cover the full screen with an invisible touch-blocking overlay
             // when the site returned only one or two Pokemon.
-            int perCard=dockDp()+resultMetadataWidthDp;
-            int gap=ResultsSpacingPolicy.additionalRowGapPx(visualResultGapBetween);
+            int perCard=resultTileDp()+resultMetadataWidthDp;
+            int gap=2; // same 2dp gap as quick-menu tiles
             int usable=Math.max(perCard,screenWidthDp()-16);
             // LT220: the old fixed 5-column cap wastes space for smaller
             // sprites. Pack as many ORIGINAL-SIZE sprites as physically fit
@@ -351,9 +354,11 @@ public class OverlayService extends Service {
             int fit=Math.max(1,(usable+gap-2)/Math.max(1,perCard+gap));
             int columns=Math.max(1,Math.min(Math.min(10,count()),fit));
             int width=perCard*columns+gap*(columns-1)+2;
-            return Math.max(dockDp(),Math.min(usable,width));
+            return Math.max(38,Math.min(usable,width));
         }
-        return dockDp()+resultMetadataWidthDp;
+        // 38dp reserves room for the existing 35dp mode/header hitbox;
+        // every Pokémon tile itself remains exactly 30dp wide.
+        return Math.max(38,resultTileDp()+resultMetadataWidthDp);
     }
     private String resultDisplayOptionsJson(){
         return "{\"count\":"+resultShowCount+
@@ -2375,8 +2380,9 @@ public class OverlayService extends Service {
     private void updateResultHeaderGrip(){
         if(resultGrip==null)return;
         int width=visualHeaderTouchWidth;
-        int maxLeft=Math.max(0,dockDp()-width);
-        int left=Math.max(0,Math.min(maxLeft,Math.round((dockDp()-width)/2f)+visualHeaderX));
+        int headerRail=Math.max(38,resultTileDp());
+        int maxLeft=Math.max(0,headerRail-width);
+        int left=Math.max(0,Math.min(maxLeft,Math.round((headerRail-width)/2f)+visualHeaderX));
         FrameLayout.LayoutParams box=new FrameLayout.LayoutParams(
             dp(width),dp(visualHeaderTouchHeight),Gravity.TOP|Gravity.LEFT);
         box.leftMargin=dp(left);
