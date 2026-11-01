@@ -208,11 +208,11 @@ public class OverlayService extends Service {
         String[] keys={"resultGapTop","resultGapBetween","resultSpriteScale","headerIconY",
             "headerOffsetX","headerTouchWidth","headerTouchHeight","headerAfterGap",
             "resultsOffsetX","resultsOffsetY","menuOffsetX","menuOffsetY",
-            "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","menuTransparency","menuBlur"};
+            "gearMenuGap","menuItemGap","popupWidth","popupHeight","resultsTransparency","resultsTileTransparency","menuTransparency","menuBlur"};
         int[][] limits={{-80,80,0},{0,65,31},{70,160,100},{0,72,0},
             {-16,16,0},{26,42,35},{24,50,30},{0,36,0},
             {-200,200,0},{-350,350,0},{-200,200,0},{-350,350,0},
-            {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,50},{0,16,4}};
+            {0,80,0},{0,16,0},{160,330,232},{140,420,390},{0,100,100},{0,100,40},{0,100,50},{0,16,4}};
         for(int i=0;i<keys.length;i++)clean.put(keys[i],
             vInt(input,keys[i],limits[i][2],limits[i][0],limits[i][1]));
         for(String key:new String[]{"resultsOrientation","menuOrientation"}){
@@ -223,6 +223,10 @@ public class OverlayService extends Service {
         for(String key:new String[]{"resultsBgMode","menuBgMode"}){
             clean.put(key,"light".equals(input.optString(key,"dark"))?"light":"dark");
         }
+        // LT223: framed results are opt-in. Old layouts remain unframed;
+        // each Pokeball's visualPrefsJson continues to persist separately.
+        clean.put("resultsTileStyle",
+            "card".equals(input.optString("resultsTileStyle","none"))?"card":"none");
         clean.put("showGuides",input.optBoolean("showGuides",false));
         clean.put("menuGuides",input.optBoolean("menuGuides",input.optBoolean("showGuides",false)));
         clean.put("resultsGuides",input.optBoolean("resultsGuides",input.optBoolean("showGuides",false)));
