@@ -268,6 +268,38 @@ public class OverlayService extends Service {
             BugReport.log(this,"UX","Configuração visual inválida");
         }
     }
+    /** LT217 explicit layout preset: place only THIS Pokéball at the upper
+     * left. The results stay anchored below, menus fit beside the icon, and
+     * existing quick-button order, search, user accounts and other overlay
+     * preferences are untouched. Manual dragging still works afterwards.
+     */
+    private void applyTopHorizontalLayout(){
+        if(stopped||params==null||root==null||wm==null)return;
+        DisplayMetrics screen=metrics();
+        params.x=Math.max(0,Math.min(dp(8),
+            Math.max(0,screen.widthPixels-params.width)));
+        params.y=Math.max(0,Math.min(dp(12),
+            Math.max(0,screen.heightPixels-params.height)));
+        android.content.SharedPreferences.Editor saved=overlayPrefs().edit()
+            .putInt("pokeballX",Math.round(params.x/screen.density))
+            .putInt("pokeballY",Math.round(params.y/screen.density));
+        if(resultParams!=null){
+            // The result window is independent. Preserve its normal native
+            // header spacing instead of covering the upper horizontal menu.
+            positionResultsUnderPokeball(false);
+            saved.putInt("resultsX",
+                Math.round(resultParams.x/screen.density)-visualResultsOffsetX);
+            saved.putInt("resultsY",
+                Math.round(resultParams.y/screen.density)-visualResultsOffsetY);
+        }
+        saved.apply();
+        updateWindow();
+        if(resultParams!=null&&resultRoot!=null&&resultRoot.isAttachedToWindow()){
+            try{wm.updateViewLayout(resultRoot,resultParams);}
+            catch(Exception error){recordFailure("preset Topo Horizontal · resultados",error);}
+        }
+        moveDetail();
+    }
     private void syncHomeThemeVisual(boolean broadcast){ } // Legacy action is now Home-only.
     private String visualEditorPreview="";
     private void setVisualEditorPreview(String area){
@@ -1125,6 +1157,13 @@ public class OverlayService extends Service {
         int screen=d.widthPixels, bottom=d.heightPixels, width=dp(menuDp());
         int menuBase=visualMenuBaseDp();
         int gap=dp(visualGearMenuGap);
+        // When the dock is deliberately placed near the upper-left edge,
+        // shrink the horizontal menu's actual native hitbox to fit beside it.
+        // Otherwise the old all-or-nothing 330dp check pushes it BELOW the
+        // Pokéball (incorrect for the Topo Horizontal reference layout).
+        int roomRight=screen-params.x-dp(dockDp())-gap-dp(4);
+        if(!visualMenuVertical&&params.x<=dp(24)&&roomRight>=dp(160))
+            width=Math.min(width,roomRight);
         // Rotation and window switching can change the available screen width.
         // Keep the native hit area aligned with the 12 visible toolbar buttons.
         if(menuParams.width!=width)menuParams.width=width;
@@ -3835,6 +3874,9 @@ public class OverlayService extends Service {
         }
         @JavascriptInterface public void saveVisualPrefs(String json){
             handler.post(()->OverlayService.this.saveVisualPrefs(json));
+        }
+        @JavascriptInterface public void applyTopHorizontalLayout(){
+            handler.post(()->OverlayService.this.applyTopHorizontalLayout());
         }
         @JavascriptInterface public void visualEditorFocus(boolean focused){
             handler.post(()->locationEditor(focused));
