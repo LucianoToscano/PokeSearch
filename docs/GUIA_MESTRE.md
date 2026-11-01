@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT218 — ORIENTAÇÃO FIXA E EDITOR ARRASTÁVEL (01/11/2026)
+
+- **Evidência Samsung:** prints da LT217 mostram ações do menu como retângulos longos em coluna, colidindo com os Pokémon, e Editor Visual parcialmente fora da borda direita. Requisito do usuário: mudar apenas a organização horizontal ↔ vertical, mantendo **os mesmos tamanhos e aparência dos ícones e sprites**, quatro combinações de orientação e editor livremente arrastável, sem cortes.
+- **PR e merge:** [#190](https://github.com/LucianoToscano/PokeSearch/pull/190), commit `1c101dc3f044148630de0ddec9809b29c5ffd0dd` na `main`. Testes Node, Java, QA Core e compilação LT173 Android/OTA da PR **SUCCESS**.
+- **Correção 1:** `visual_editor.js` envia direção do menu e dos Pokémon no mesmo JSON pela ponte `Native.applyTopHorizontalPreset` e Android salva antes de reposicionar janelas. Elimina corrida com `saveSoon()` da LT217.
+- **Correção 2:** `dock.html` implementa ícones **30×30dp** nas duas orientações, em grade horizontal ou vertical (sem cards esticados). `OverlayService.java` usa hitbox nativa vertical de **34dp** de largura e **384dp** de altura, em vez de 198×232dp com botões de largura 100%. O sentido horizontal mantém barra de altura 34dp, sem redimensionar sprites de resultado.
+- **Correção 3:** cabeçalho do Editor Visual é alça de arraste; ponte `moveVisualEditorBy(dx,dy)` move o popup nativo e grava posição por `prefs`/`prefs_secondary`. Posicionamento inicial, restauração e rotação restringem a janela **inteira** às dimensões reais da tela; botões e sliders permanecem clicáveis.
+- **Testes de regressão:** novos `app/tests/lt218-orientation-editor-drag.test.js` e relatório `docs/LT218_MENU_ORIENTACAO_EDITOR_ARRASTAVEL_20261101.md`. Também atualizado `lt218-horizontal-native-layout.test.js` que ainda esperava dimensões antigas e incorretas do menu vertical.
+- **APK QA privado:** workflow [LT218 #41280521995](https://github.com/LucianoToscano/PokeSearch/actions/runs/41280521995) gera `0.02.18`, versionCode `54425`, assinatura permanente. Hash e destino Drive devem ser acrescentados apenas depois de verificar o artefato; teste físico Samsung permanece pendente.
+- **Distribuição:** **não** publicar automaticamente como estável. O atualizador dos usuários continua na LT215 `v0.02.15-54422` até homologação do novo layout. Uma futura versão estável para aparelhos com LT218 QA instalado deve ter `versionCode > 54425`. Não foram alterados chat, acesso PoGoCoordinates, limites, cooldown dos Doces nem filtros.
+
+---
+
 ## LT218 QA — CORREÇÃO DO PRESET TOPO HORIZONTAL APÓS CAPTURAS SAMSUNG (01/11/2026)
 
 - **Bug confirmado visualmente na LT217:** usuário instalou `0.02.17 / 54424` e mostrou 5 capturas em que o menu se tornava uma coluna de cartões largos no meio da tela, apesar do preset Topo Horizontal, enquanto resultados permaneciam fora do posicionamento previsto.
