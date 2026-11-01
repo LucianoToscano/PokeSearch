@@ -293,7 +293,7 @@ function syncCandy(json) {
  // Do not rebuild the location editor while a user is typing.
 }
 function requestHeight(height,focus) {
- Native.candyMenuHeight(Math.max(34,Math.min(290,height)),!!focus,currentPanel);
+ Native.candyMenuHeight(Math.max(34,Math.min(currentPanel==="location-cooldown"?396:290,height)),!!focus,currentPanel);
 }
 function closePanel(){
  currentPanel="";$("choices").innerHTML="";$("choices").className="";
