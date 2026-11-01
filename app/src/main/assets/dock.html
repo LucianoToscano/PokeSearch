@@ -2113,11 +2113,33 @@ body.controls-window #choices.appearanceCompact .appearanceCommands{
  display:flex!important;flex-direction:column!important;gap:2px!important;
 }
 body.controls-window #choices.appearanceCompact .uxAdjust{
- display:grid!important;grid-template-columns:minmax(0,1fr) 26px 25px 25px!important;
- gap:3px!important;align-items:center!important;
- min-height:27px!important;height:27px!important;
+ display:grid!important;grid-template-columns:minmax(0,1fr) 27px 30px!important;
+ gap:4px!important;align-items:center!important;
+ min-height:30px!important;height:30px!important;
  margin:0!important;padding:1px 4px!important;
  border-radius:5px!important;background:#ffffff09!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust.dragging{
+ background:var(--visual-menu-button-bg,rgba(40,48,60,.65))!important;
+ outline:1px solid var(--visual-menu-fg,#f2f7fc)!important;
+ box-shadow:0 2px 8px #0004!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust.dragTarget{
+ outline:1px dashed var(--visual-menu-border,#fff7)!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust .orderHandle{
+ font-size:17px!important;letter-spacing:-3px!important;line-height:1!important;
+ cursor:grab!important;touch-action:none!important;user-select:none!important;
+ -webkit-user-select:none!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust .orderHandle:active{
+ cursor:grabbing!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust .orderVisibility[disabled]{
+ opacity:.47!important;
+}
+body.controls-window #choices.appearanceCompact .appearanceCommands.draggingMenu{
+ user-select:none!important;-webkit-user-select:none!important;
 }
 body.controls-window #choices.appearanceCompact .uxAdjust .commandName{
  min-width:0!important;width:auto!important;font-size:10px!important;
@@ -7060,15 +7082,14 @@ function normalizedQuickPrefs(p){
  const needsRefreshMigration=!legacy&&!p.order.includes("period");
  const previous=(legacy||needsRefreshMigration)?[...ids]:
   p.order.filter((x,i,a)=>ids.includes(x)&&a.indexOf(x)===i);
- // Shiny stays immediately AFTER Modos even with saved custom menu preferences.
- const order=previous.filter(id=>id!=="sh");
- const modeIndex=order.indexOf("mode");
- if(modeIndex>=0)order.splice(modeIndex+1,0,"sh");
- const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter(x=>
-  ids.includes(x)&&!["close","appearance","sh"].includes(x)):[];
+ // Preserve the saved position of ALL twelve items, including Shiny and Fechar.
+ // Only Personalização is always visible; never hide the way back to this editor.
+ const order=[...previous,...ids.filter(x=>!previous.includes(x))];
+ const hidden=legacy?[]:Array.isArray(p.hidden)?p.hidden.filter((x,i,a)=>
+  ids.includes(x)&&x!=="appearance"&&a.indexOf(x)===i):[];
  return {direction:"horizontal", // Fixed old-style thin ribbon; no tall menu.
   labels:false,
-  order:[...order,...ids.filter(x=>!order.includes(x))],hidden};
+  order,hidden};
 }
 function saveQuickPrefs(){
  quickPrefs=normalizedQuickPrefs(quickPrefs);renderQuickMenu();
@@ -8015,11 +8036,10 @@ function renderSpriteSizeButtons(panel,visual=false){
 }
 // visual_editor.js calls the selector through window, not local lexical scope.
 window.renderSpriteSizeButtons=renderSpriteSizeButtons;
-// Only movable commands are traversed by order arrows. Shiny and protected
-// controls keep their fixed semantics; visible moves skip hidden/protected slots.
+// All actual toolbar actions are configurable. Personalização is reorderable
+// but cannot be hidden; hidden buttons stay in the editor to be restored.
 function movableMenuIds(){
- return quickPrefs.order.filter(id=>QUICK_ACTIONS.some(action=>action[0]===id)&&
-  !["close","appearance","sh"].includes(id));
+ return quickPrefs.order.filter(id=>QUICK_ACTIONS.some(action=>action[0]===id));
 }
 function moveMenuCommand(id,direction){
  const movable=movableMenuIds(),index=movable.indexOf(id),other=movable[index+direction];
@@ -8030,9 +8050,78 @@ function moveMenuCommand(id,direction){
  saveQuickPrefs();return true;
 }
 const APPEARANCE_SHORT_NAMES=Object.freeze({
- mode:"Modos",filters:"Filtros",location:"Local",pokemon:"Pokémon",
- star:"Favoritos",bell:"Alertas",period:"Atualizar",report:"Reportar",donate:"Apoiar"
+ mode:"Modos",sh:"Shiny ✨",filters:"Filtros",location:"Local",pokemon:"Pokémon",
+ star:"Favoritos",bell:"Alertas",period:"Atualizar",appearance:"Personalização",
+ report:"Reportar",donate:"Apoiar",close:"Fechar"
 });
+// Touch-safe reorder: use the small grip, never intercept eye clicks or a
+// normal vertical scroll. Pointer capture stays on the stable parent.
+function bindAppearanceReorder(commands,panel){
+ let gesture=null;
+ const reset=()=>{
+  if(!gesture)return;
+  clearTimeout(gesture.hold);
+  if(commands.hasPointerCapture?.(gesture.pointerId))
+   try{commands.releasePointerCapture(gesture.pointerId);}catch(_){}
+  commands.classList.remove("draggingMenu");
+  commands.querySelectorAll(".uxAdjust").forEach(line=>line.classList.remove("dragging","dragTarget"));
+  gesture=null;
+ };
+ commands.addEventListener("pointerdown",event=>{
+  const handle=event.target.closest(".orderHandle");
+  if(!handle||event.button!==0||gesture)return;
+  const line=handle.closest(".uxAdjust");if(!line)return;
+  event.stopPropagation();
+  const point={pointerId:event.pointerId,line,x:event.clientX,y:event.clientY,
+   active:false,moved:false,hold:null};
+  gesture=point;
+  try{commands.setPointerCapture(event.pointerId);}catch(_){}
+  point.hold=setTimeout(()=>{
+   if(gesture!==point)return;
+   point.active=true;commands.classList.add("draggingMenu");
+   line.classList.add("dragging");
+   handle.setAttribute("aria-grabbed","true");
+  },220);
+ });
+ commands.addEventListener("pointermove",event=>{
+  const g=gesture;if(!g||event.pointerId!==g.pointerId)return;
+  if(!g.active){
+   if(Math.hypot(event.clientX-g.x,event.clientY-g.y)>9)reset();
+   return;
+  }
+  event.preventDefault();
+  const bounds=panel.getBoundingClientRect();
+  if(event.clientY<bounds.top+36)panel.scrollTop-=9;
+  else if(event.clientY>bounds.bottom-30)panel.scrollTop+=9;
+  const siblings=[...commands.querySelectorAll(".uxAdjust")].filter(node=>node!==g.line);
+  const target=siblings.find(node=>event.clientY<node.getBoundingClientRect().top+
+   node.getBoundingClientRect().height/2);
+  if(target){
+   if(g.line.nextElementSibling!==target)commands.insertBefore(g.line,target);
+  }else if(commands.lastElementChild!==g.line)commands.appendChild(g.line);
+  commands.querySelectorAll(".uxAdjust").forEach(node=>node.classList.remove("dragTarget"));
+  if(target)target.classList.add("dragTarget");
+  g.moved=true;
+ });
+ commands.addEventListener("pointerup",event=>{
+  const g=gesture;if(!g||event.pointerId!==g.pointerId)return;
+  const ordered=[...commands.querySelectorAll(".uxAdjust")].map(node=>node.dataset.key);
+  const changed=g.active&&g.moved&&ordered.join("|")!==quickPrefs.order.join("|");
+  if(g.line.querySelector(".orderHandle"))g.line.querySelector(".orderHandle").setAttribute("aria-grabbed","false");
+  reset();
+  if(changed){
+   appearanceScrollTop=panel.scrollTop;
+   quickPrefs.order=ordered;saveQuickPrefs();renderAppearanceChoices();
+  }
+ });
+ commands.addEventListener("pointercancel",reset);
+ commands.addEventListener("lostpointercapture",()=>{
+  if(!gesture)return;
+  // Release after gesture end only; a canceled drag never saves partial order.
+  reset();
+ });
+}
+
 function renderAppearanceChoices(){
  const panel=uxPanel("PERSONALIZAÇÃO");panel.classList.add("appearanceCompact");
  const scrollRestoration=appearanceScrollTop;
@@ -8045,7 +8134,8 @@ function renderAppearanceChoices(){
  link("Info Pokémon","info");link("Editor Visual","visual");
  panel.appendChild(shortcuts);
  renderSpriteSizeButtons(panel);
- const heading=document.createElement("div");heading.className="uxSubheading";heading.textContent="Menus";
+ const heading=document.createElement("div");heading.className="uxSubheading";
+ heading.textContent="Menus · segure ≡ para arrastar";
  panel.appendChild(heading);
  const commands=document.createElement("div");commands.className="appearanceCommands";
  commands.setAttribute("role","group");commands.setAttribute("aria-label","Mostrar, ocultar e organizar menus");
@@ -8058,7 +8148,7 @@ function renderAppearanceChoices(){
   name.textContent=APPEARANCE_SHORT_NAMES[id]||action[2];
   name.title=action[2];line.appendChild(name);
   const hidden=quickPrefs.hidden.includes(id);
-  const locked=false; // LT68: Atualizar may be hidden and restored like other movable menus.
+  const locked=id==="appearance"; // Personalização must always stay accessible.
   const eye=document.createElement("button");eye.type="button";
   eye.textContent=hidden?"□":"☑";eye.className="orderVisibility";
   eye.disabled=locked;eye.setAttribute("aria-pressed",String(!hidden));
@@ -8067,20 +8157,22 @@ function renderAppearanceChoices(){
   eye.onclick=()=>{if(locked)return;appearanceScrollTop=panel.scrollTop;
    quickPrefs.hidden=hidden?quickPrefs.hidden.filter(x=>x!==id):[...quickPrefs.hidden,id];
    saveQuickPrefs();renderAppearanceChoices();};
-  const i=movable.indexOf(id);
-  const up=document.createElement("button");up.type="button";up.textContent="↑";
-  up.className="orderUp";up.disabled=i===0;
-  up.setAttribute("aria-label","Mover "+action[2]+" para cima");
-  up.onclick=()=>{appearanceScrollTop=panel.scrollTop;
-   if(moveMenuCommand(id,-1))renderAppearanceChoices();};
-  const down=document.createElement("button");down.type="button";down.textContent="↓";
-  down.className="orderDown";down.disabled=i===movable.length-1;
-  down.setAttribute("aria-label","Mover "+action[2]+" para baixo");
-  down.onclick=()=>{appearanceScrollTop=panel.scrollTop;
-   if(moveMenuCommand(id,1))renderAppearanceChoices();};
-  line.append(eye,up,down);commands.appendChild(line);
+  const handle=document.createElement("button");handle.type="button";
+  handle.className="orderHandle";handle.textContent="≡";
+  handle.title="Segure e arraste para mudar a posição";
+  handle.setAttribute("aria-label","Segure e arraste para mover "+action[2]+
+   "; pelo teclado use as setas para cima ou para baixo");
+  handle.setAttribute("aria-grabbed","false");
+  handle.addEventListener("keydown",event=>{
+   const direction=event.key==="ArrowUp"?-1:event.key==="ArrowDown"?1:0;
+   if(!direction)return;
+   event.preventDefault();appearanceScrollTop=panel.scrollTop;
+   if(moveMenuCommand(id,direction))renderAppearanceChoices();
+  });
+  line.append(eye,handle);commands.appendChild(line);
  }
  panel.appendChild(commands);
+ bindAppearanceReorder(commands,panel);
  requestAnimationFrame(()=>{if(choiceOpen==="appearance"&&panel.isConnected)panel.scrollTop=scrollRestoration;});
  fit();
 }
