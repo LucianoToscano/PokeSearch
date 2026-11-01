@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT217 — PRESET TOPO HORIZONTAL, ORIENTAÇÃO INDEPENDENTE POR POKÉBOLA (01/11/2026)
+
+- **Pedido do usuário:** imagens de referência mostram (A) menu vertical com resultados horizontais e (B) menu horizontal ao lado da Pokébola no canto superior esquerdo com Pokémon verticais abaixo. Requisito: aplicar modelo B sem apagar A, manter quatro combinações possíveis, com controles independentes em Editor Visual.
+- **Código:** [PR #188](https://github.com/LucianoToscano/PokeSearch/pull/188) integrada à `main` em `8fc062880db36ce689d5521b223afb79a78770e0`. Preset `Topo Horizontal` em `app/src/main/assets/visual_editor.js` escolhe `menuOrientation=horizontal`, `resultsOrientation=vertical` e offsets alinhados. O app posiciona explicitamente a Pokébola desta instância no topo/esquerda (8dp/12dp), reancora os resultados e reduz a largura da janela nativa de menu à área disponível à direita quando necessário. O arraste manual posterior continua funcional.
+- **Persistência:** P1 e P2 usam os arquivos existentes `prefs`/`prefs_secondary`, sem mudar estrutura de login, espécies, favoritos, ordens de menus, filtros, chat, sprites ou cooldown.
+- **Testes:** `app/tests/lt217-top-horizontal-layout.test.js` + regressões Node, Java, QA Core e compilação Android da PR **SUCCESS**. [Checklist e arquitetura](LT217_TOPO_HORIZONTAL_LAYOUT_QA_20261101.md).
+- **Versão QA:** LT217 `0.02.17`, `versionCode 54424`, workflow [#41277388566](https://github.com/LucianoToscano/PokeSearch/actions/runs/41277388566) de assinatura permanente, não é release estável. Registrar hash, certificado, destino no Drive e evidência APK somente após término do build.
+- **Disponibilidade pública:** LT215 `v0.02.15-54422` permanece a release latest e atualizador oficial. QA físico no Samsung para as orientações, menu/popup e 10 resultados ainda não foi realizado. A próxima versão estável para quem instalou LT217 QA precisa usar `versionCode > 54424`.
+- **Observação responsiva:** 13 botões lado a lado não cabem com toques seguros em todas as larguras; PokeSearch usa agrupamento `Mais` já existente para menus em telas estreitas. A orientação horizontal deve ficar ao lado da Pokébola, não cobrir a tela.
+
+---
+
 ## LT216 QA — TABELA DE COOLDOWN DOS DOCES SEM ROLAGEM (01/11/2026)
 
 - **Defeito real na LT215:** captura Samsung mostrou o card `Referência de cooldown` encerrando a moldura após poucas linhas, enquanto outras distâncias eram desenhadas fora dela. Causa verificada em `app/src/main/assets/rare_candy_controls.html`: a tabela herdava `locationPanel`, cujo CSS impunha `max-height:145px!important` e `overflow:visible!important`.
