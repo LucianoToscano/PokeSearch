@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT212 — ÍCONE IV TRANSPARENTE E QA VISUAL (01/11/2026)
+
+- **PR #183:** [LT212 QA — ícone IV transparente](https://github.com/LucianoToscano/PokeSearch/pull/183) mesclada à `main` no commit `95977959b52bccb5268359f5de06142f07c65ad2`. **Não há nova versão pública**: `0.02.11` / `54418` segue como release oficial instalada, sem reuso do mesmo versionCode ou troca de assinatura.
+- **Imagem efetivamente corrigida:** `app/src/main/assets/result-icons/modes/StarIVRaw.png`, antes RGB 1254×1254 com preto incorporado (1.198.192 B), agora PNG indexado com canal alfa real 128×128 (3.221 B). SHA-256 `1d2cddf9af153c51696abbdd844d6ad946c306aa2bef39ee90d7468691ca8cd5`. Arte central preservada; versões P1/P2 reutilizam o mesmo caminho de recurso, e IV% misto continua apontando para este ícone.
+- **Teste:** `app/tests/lt212-mode-icons-alpha.test.js` decodifica PNG e verifica cantos transparentes, centro opaco, suavização e integração dos modos. Atualizado também hash histórico intencional em `overlay-ux.test.js`, sem enfraquecer checagens GL/UL. Pipelines de regressão Node/Java/QA geral e compilação Android da PR: SUCCESS.
+- **Menus/Favoritos:** preservados sem refatoração arriscada; manter 13 ações, Shiny e Background ocultos inicialmente, reset de organização sem alterar filtros e Favoritos arrastáveis em janela não modal. Ainda **pendente validar fisicamente no Samsung**.
+- **Chat:** expressamente **fora do escopo** desta etapa.
+- **Relatório/checklist:** [QA LT212](LT212_ICONES_MODOS_VISUAL_QA_20261101.md). [ZIP no Google Drive](https://drive.google.com/file/d/144PCu3WS0XpjFrTHFFj6xPuNp7KW7Idq/view?usp=drivesdk) armazenado em PokeSearch_App, **1.259.867 bytes**, SHA-256 `5e2a2f050c83a3e80e10777bdb2346dbb172caf352fc59e02fb5cf0699cce77f`. Inclui ícone correto, original, prévia e SHA256SUMS; **não contém APK**.
+- **Gate próximo:** build QA instalável assinado, validação de menus, ícones, Favoritos, janelas P1/P2 e regressão de busca real em aparelhos; só então promover uma nova versão com versionCode maior e publicar no canal estável/Drive.
+
+---
+
 ## LT211 — AUDITORIA 360° PÓS-RELEASE E CORREÇÕES DE BASE (31/10/2026)
 
 - **Integração:** [PR #182](https://github.com/LucianoToscano/PokeSearch/pull/182) mesclada à `main` em `198ed990e258814a263623b2d2e7329274505865` após QA no GitHub. O código-fonte mudou, **mas não foi publicado novo APK**: a versão oficial instalada continua LT211 (`0.02.11`, versionCode `54418`), com a assinatura e os hashes originais da distribuição.
