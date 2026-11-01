@@ -55,7 +55,8 @@ test("location saved slots and name/help removed without deleting stored data",(
 });
 test("favorite native popup stays nonmodal and anchored beside floating bar",()=>{
  assert.ok(service.includes("showFavoritePicker(menuParams==null?-1:"));
- assert.ok(favorite.includes("placeBelow=spaceBelow>=actualHeight"));
+ assert.ok(favorite.includes("FavoritePanelGeometry.adjacentToToolbar("));
+ assert.ok(favorite.includes("root.measure("));
  assert.ok(favorite.includes("FLAG_NOT_TOUCH_MODAL"));
 });
 test("tones and Pix are native overlay menus, no forced home",()=>{
