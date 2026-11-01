@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT223 QA — RESULTADOS COM OU SEM FUNDO INDIVIDUAL (01/11/2026)
+
+- **Referência:** oito imagens enviadas pelo usuário mostram cinco Pokémon horizontais/verticais em quadrados escuros individuais (vidro/borda arredondada) ou sprites transparentes sem moldura, em combinações independentes da barra de menus. Pedido: aplicar o mesmo recurso ao PokeSearch, sem mexer no tamanho, ordem, dados ou interação dos resultados.
+- **PR e merge:** [#195](https://github.com/LucianoToscano/PokeSearch/pull/195) mesclada na main no commit `8e5082f71def0cb9c45bf7799bc1c407f8026974`. CI Node QA, LT169, QA Core LT211, Java LT62 e OTA/Android LT173 **SUCCESS**.
+- **Opção independente por Pokébola:** `resultsTileStyle` = `none` (padrão para perfis antigos) ou `card`. O Editor Visual > Pokémon > Cores e guias exibe “Fundo dos Pokémon: Sem fundo / Com fundo”, tema Escuro/Claro e `resultsTileTransparency` (0–100%, padrão 40%). A transparência dos cartões NÃO modifica a transparência global dos resultados (`resultsTransparency`) nem a dos menus.
+- **CSS:** `body.result-window.visual-results-tiles .spriteStage::before` insere quadrado de vidro e borda atrás da sprite, usando `--sprite` exatamente como a altura/largura da linha (sem sobreposição). Não entra no fluxo ou na hitbox (`pointer-events:none`). O `#shell` fica transparente em modo cartões, para não virar uma faixa sólida sob vários Pokémon; modo sem fundo mantém o visual existente. Mesmo tamanho, fallback, meta, IVs e eventos.
+- **Validação de entrada:** `OverlayService.normalizeVisualPrefs` valida as novas chaves e preserva as configurações separadas P1/P2, incluindo importações JSON. Orientação vertical/horizontal já existente não muda.
+- **QA:** novo teste `app/tests/lt223-result-tiles-background.test.js`, [plano de homologação](LT223_RESULTADOS_COM_SEM_FUNDO_QA_20261101.md); testar no Samsung ambas as orientações, fundo claro/escuro, transparência 0/40/100, cartões visíveis separados sem cortes e sprites clicáveis. Repetir com duas Pokébolas.
+- **Build assinado privado:** workflow [LT223 QA](https://github.com/LucianoToscano/PokeSearch/actions/runs/41286706157), versionName `0.02.23`, versionCode `54430`. Registrar SHA-256, tamanho, assinatura e Drive quando concluídos.
+- **Não publicar** no atualizador estável antes de homologação física; versão pública continua LT215.
+
+---
+
 ## LT222 QA — ARRASTE NATIVO DO EDITOR VISUAL COMO NOS CARDS (01/11/2026)
 
 - **Evidência:** usuário confirmou que mesmo após a LT221 não consegue arrastar a janela do Editor Visual como arrasta cards dos resultados. Na captura, o menu vertical e os Pokémon horizontais estão separados para evitar conflito; o pedido de arraste do Editor é prioritário.
