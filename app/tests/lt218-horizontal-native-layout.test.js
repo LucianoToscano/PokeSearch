@@ -39,10 +39,13 @@ assert.match(css,/grid-template-columns:repeat\(12,minmax\(0,1fr\)\)!important/)
 assert.match(css,/visual-menu-horizontal #quickRows,[^\{]*\{[^}]*display:contents!important/s);
 assert.match(css,/visual-menu-horizontal #quickMenuList \.quickRow,[^\{]*\{[^}]*width:100%!important;[^}]*height:30px!important/s);
 assert.match(css,/result-window:not\(\.visual-results-horizontal\) #spawns\{[^}]*flex-direction:column!important/s);
-assert.ok(!css.includes("overflow-y:auto"),"top horizontal menu must never turn into a vertical scroll");
+const menuCss=css.slice(0,css.indexOf("/* LT218 — ORIENTATION IS POSITION"));
+assert.ok(!menuCss.includes("overflow-y:auto"),"horizontal menu is never scrollable");
+assert.match(css,/visual-menu-vertical #quickMenuList[^\{]*\{[^}]*grid-template-columns:30px!important/s);
+assert.match(css,/visual-menu-vertical #quickMenuList \.quickRow,[^\{]*\{[^}]*width:30px!important/s);
 assert.ok(dock.includes("body.controls-window.visual-menu-vertical #quickRows"),"legacy list remains supported");
 // Screenshot regression: never allow the tall 232px list after applying horizontal preset.
-assert.match(java,/private int visualMenuBaseDp\(\)\{\s*return visualMenuVertical\?232:MENU_BASE_DP;/);
+assert.match(java,/private int visualMenuBaseDp\(\)\{[\s\S]*?return visualMenuVertical\?384:MENU_BASE_DP;/);
 assert.match(java,/int menuBase=visualMenuBaseDp\(\)/);
 assert.ok(editorPreset.includes("pendingVisualJson=JSON.stringify(current)"));
 console.log("PASS LT218: atomic native orientation save; one-row 12-slot horizontal ribbon; independent vertical results; old modes retained");
