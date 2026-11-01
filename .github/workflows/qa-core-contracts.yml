@@ -34,7 +34,7 @@ jobs:
           mkdir -p "$out"
           base=app/src/main/java/com/lucianotoscano/pokesearchoverlay
           sources=(
-            CandyCooldownPolicy CandyPickupEvidence FavoritePanelGeometry
+            CandyCooldownPolicy CandyPickupEvidence FavoritePanelGeometry FavoritePanelPositionKeys
             DiagnosticSanitizer EncounterAlertText
             LocalBridgePagePolicy PresenceWindowState
             PopupTouchGeometry ResultsSpacingPolicy
