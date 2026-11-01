@@ -48,9 +48,9 @@ test("More only scrolls when content is clipped",()=>{
  assert.ok(dock.includes('pane.scrollHeight>next+1'));
 });
 test("Favorites anchored near tapped star with outside touches preserved",()=>{
- assert.ok(picker.includes('gap=dp(activity,2),iconHalf=dp(activity,12)'));
- assert.ok(picker.includes('int below=anchorY+iconHalf+gap;'));
- assert.ok(picker.includes('int above=anchorY-iconHalf-actualHeight-gap;'));
+ assert.ok(picker.includes('final int margin=dp(activity,8),gap=dp(activity,4);'));
+ assert.ok(picker.includes('FavoritePanelGeometry.adjacent(anchorX,anchorY,screen,displayH,'));
+ assert.ok(picker.includes('root.addOnLayoutChangeListener('));
  assert.ok(picker.includes('FLAG_NOT_TOUCH_MODAL'));
  assert.ok(service.includes('menuParams.x+dp(Math.max(0,Math.min(menuDp(),triggerDp)))'));
 });
