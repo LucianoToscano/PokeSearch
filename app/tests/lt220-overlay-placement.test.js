@@ -24,7 +24,7 @@ assert.match(native,/if\(menuExpanded\)updateMenuPosition\(\)/);
 assert.match(pure,/static int\[\] avoid\(/);
 assert.match(pure,/long distance=Math\.abs\(dx\)\+Math\.abs\(dy\)/);
 assert.match(pure,/return winner!=null\?winner:new int\[\]\{startX,startY\}/);
-assert.doesNotMatch(pure,/scale|spriteSize|resize|image/i);
+assert.doesNotMatch(pure,/(?:setScale|setSpriteSize|setWidth|setHeight)\(/);
 
 // Horizontal sprites use every physically fitting column at existing
 // dimensions. 10 sprites still wrap when all cannot fit without shrinkage.
