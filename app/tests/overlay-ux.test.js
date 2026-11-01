@@ -78,7 +78,7 @@ test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
  const longPress=service.split("final Runnable dockLongPress=()->{")[1]?.split("};")[0]||"";
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
-  bridge.includes("},anchorX,anchorY);")&&
+  bridge.includes("},anchorX,anchorY,")&&
   publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
