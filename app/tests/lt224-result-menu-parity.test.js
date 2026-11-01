@@ -13,8 +13,8 @@ assert.match(finalCss,/body\.result-window #spawns\{[\s\S]*?gap:2px!important/);
 assert.match(finalCss,/body\.result-window \.spriteStage \.sprite\{[\s\S]*?width:var\(--result-art-size,26\.4px\)!important/);
 assert.match(finalCss,/object-fit:contain!important;object-position:center center!important/);
 // LT226 restores only measured result alpha zoom, preserving the original sprite bytes.
-assert.match(finalCss,/transform:translate\\(var\\(--tile-alpha-x,0px\\),var\\(--tile-alpha-y,0px\\)\\)/);
-assert.match(finalCss,/scale\\(var\\(--tile-alpha-zoom,1\\)\\)!important/);
+assert.ok(finalCss.includes('transform:translate(var(--tile-alpha-x,0px),var(--tile-alpha-y,0px))'));
+assert.ok(finalCss.includes('scale(var(--tile-alpha-zoom,1))!important'));
 assert.match(finalCss,/body\.result-window\.visual-results-horizontal \.spawn\{[\s\S]*?flex:0 0 calc\(var\(--result-tile-size,30px\) \+ var\(--visual-meta-width,0px\)\)!important/);
 assert.match(finalCss,/body\.result-window\.visual-results-tiles \.spriteStage::before\{[\s\S]*?width:var\(--result-tile-size,30px\)!important/);
 assert.match(finalCss,/body\.result-window:not\(\.visual-results-tiles\) \.spriteStage::before\{[\s\S]*?content:none!important/);
