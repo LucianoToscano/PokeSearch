@@ -4649,7 +4649,12 @@ body.result-window .spriteStage .sprite{
   min-height:0!important;max-height:var(--result-art-size,26.4px)!important;
   flex:none!important;display:block!important;
   object-fit:contain!important;object-position:center center!important;
-  transform:none!important;transform-origin:center center!important;
+  /* LT226: native tile is fixed, but visible PNG silhouette can occupy
+     a small fraction of its 88% image box. Fit measured alpha bounds into
+     the square and shift to visual centre without changing the hit target. */
+  transform:translate(var(--tile-alpha-x,0px),var(--tile-alpha-y,0px))
+    scale(var(--tile-alpha-zoom,1))!important;
+  transform-origin:center center!important;
   margin:0!important;padding:0!important;
   position:relative!important;z-index:1!important;
 }
@@ -6295,7 +6300,10 @@ function attachSpriteFeedback(){
   const loaded=()=>{
    if(good()){
     done=true;stage.classList.remove("failed");stage.classList.add("loaded");
-    if(typeof window!=="undefined")window.PokeSearchSpriteScale?.apply?.(img);
+    if(typeof window!=="undefined"){
+     window.PokeSearchSpriteScale?.apply?.(img); // legacy detail unchanged
+     if(resultWindow)window.PokeSearchSpriteScale?.applyResultTile?.(img);
+    }
    }
    else failed();
   };
@@ -7046,8 +7054,13 @@ function draw(){
    /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(costumeHint)||
    (c.costume_id!=null&&Number(c.costume_id)>0));
   const effectiveArtFit=halloweenGengar?0.42:artFit;
+  // Allow alpha sampling for public GitHub/jsDelivr sprites with CORS
+  // headers. Keep provider/private art untouched if its origin is unknown.
+  const publicCors=/^https:\\/\\/(?:raw\\.githubusercontent\\.com|cdn\\.jsdelivr\\.net)\\//i.test(imageUrl);
   const icon='<span class="spriteStage">'+
-   (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'" data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
+   (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
+    (publicCors?' crossorigin="anonymous"':'')+
+    ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" aria-hidden="true">'+
    esc(String(c.name||"").replace(/\s*\([^)]*\)\s*$/,"").trim().slice(0,2).toLocaleUpperCase()||"·")+'</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
