@@ -60,6 +60,7 @@ jobs:
           node app/tests/mode-icon-matte.test.js
           node app/tests/lt208-menu-drag-visibility.test.js
           node app/tests/lt62-menu-visual-states.test.js
+          node app/tests/lt68-refresh-weather-icons.test.js
           node app/tests/overlay-ux.test.js
           node app/tests/lt70-location-radius-toggle.test.js
           node app/tests/lt88-r8-compact-controls-sound.test.js
