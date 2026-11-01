@@ -572,7 +572,8 @@ public final class RareCandyOverlayService extends Service {
                 menuParams.height=dp(h);
                 // Pokébola location/info panels are 148px, not 232px.
                 // A transparent 158dp native frame fits the exact CSS card.
-                menuParams.width=dp(h>34?("period".equals(panel)?142:158):142);
+                menuParams.width=dp(h>34?("location-cooldown".equals(panel)?232:
+                    "period".equals(panel)?142:158):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
@@ -679,19 +680,55 @@ public final class RareCandyOverlayService extends Service {
                 syncCandyMenu();
             });
         }
+        // Opening the location editor is a deliberate user action. Attempt
+        // one Android clipboard read, never auto-apply coordinates or search.
+        @android.webkit.JavascriptInterface public void autoPasteCandyLocation(int session){
+            main.post(()->prepareCandyClipboardRead(true,session));
+        }
         @android.webkit.JavascriptInterface public void pasteCandyLocation(){
-            main.post(()->{
-                if(!permitted())return;
+            main.post(()->prepareCandyClipboardRead(false,-1));
+        }
+        private void prepareCandyClipboardRead(boolean automatic,int session){
+            if(!permitted()||!candyMenuVisible||menuParams==null)return;
+            // Android 10+ may deny clipboard reads from FLAG_NOT_FOCUSABLE
+            // overlays. Match the Pokemon location menu's temporary focus.
+            menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+            placeCandyMenu();
+            candyMenuPanel.requestFocus();
+            main.postDelayed(()->readCandyClipboard(automatic,session),180L);
+        }
+        private void readCandyClipboard(boolean automatic,int session){
+            if(!permitted()||!candyMenuVisible)return;
+            String point="",reason="unavailable";
+            try{
                 ClipboardManager clip=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                if(clip==null||!clip.hasPrimaryClip())return;
-                CharSequence val=clip.getPrimaryClip().getItemAt(0).coerceToText(
-                    RareCandyOverlayService.this);
-                String point=val==null?"":val.toString().trim();
-                if(validCoords(point))candyMenuPanel.evaluateJavascript(
-                    "window.setPastedCoords("+JSONObject.quote(point)+")",null);
-                else Toast.makeText(RareCandyOverlayService.this,
-                    "Área de transferência sem coordenadas",Toast.LENGTH_SHORT).show();
-            });
+                ClipData entries=clip==null?null:clip.getPrimaryClip();
+                if(entries!=null&&entries.getItemCount()>0){
+                    reason="invalid";
+                    boolean conflict=false;
+                    for(int i=0;i<Math.min(5,entries.getItemCount());i++){
+                        CharSequence value=entries.getItemAt(i).coerceToText(
+                            RareCandyOverlayService.this);
+                        String candidate=CandyClipboardCoordinates.extract(
+                            value==null?"":value.toString());
+                        if(candidate.isEmpty())continue;
+                        if(!point.isEmpty()&&!point.equals(candidate)){
+                            conflict=true;break;
+                        }
+                        point=candidate;
+                    }
+                    if(conflict){point="";reason="ambiguous";}
+                }
+            }catch(SecurityException ignored){
+                reason="unavailable";
+            }catch(RuntimeException ignored){
+                reason="unavailable";
+            }
+            // Do not log clipboard text or silently persist it.
+            candyMenuPanel.evaluateJavascript(
+                "window.setPastedCoords("+JSONObject.quote(point)+","+
+                automatic+","+session+","+JSONObject.quote(reason)+")",null);
         }
     }
     private boolean isOfficialSearch(){

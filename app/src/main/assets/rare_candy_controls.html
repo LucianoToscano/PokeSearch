@@ -112,6 +112,37 @@ padding:0!important;font-size:16px!important;border-radius:6px!important;
 border:1px solid var(--visual-menu-border)!important;color:#ff83bb!important;
 background:var(--visual-menu-readable-button-bg)!important}
 
+
+/* LT214: compact reference in the existing Candy Location popup. */
+#choices.locationPanel .locTitleHelp{appearance:none;border:0;background:transparent;
+ color:var(--visual-menu-fg,#f2f7fc);font:700 12px/1.25 Roboto,Arial,sans-serif;
+ padding:0 2px;min-height:26px;text-align:left;cursor:pointer}
+#choices .locCooldownPreview{display:block;position:absolute;top:-24px;
+ left:var(--loc-preview-position,50%);transform:translateX(-50%);
+ pointer-events:none;white-space:nowrap;background:var(--visual-menu-readable-bg,#18232d);
+ border:1px solid var(--visual-menu-border,#ffffff58);border-radius:5px;
+ font:700 10px/17px Roboto,Arial,sans-serif;color:var(--visual-menu-fg,#f2f7fc);
+ padding:1px 5px;opacity:0;transition:opacity .12s;max-width:185px}
+#choices .locCooldownPreview.is-visible{opacity:1}
+#choices .locSliderRow{position:relative;overflow:visible}
+#choices.locationCooldownTable{width:232px;max-height:280px;overflow-y:auto;
+ overflow-x:hidden;overscroll-behavior:contain;padding:5px}
+#choices .candyCooldownHeader{display:flex;align-items:center;gap:7px;
+ margin:0 0 5px;padding:2px 3px}
+#choices .candyCooldownBack{flex:0 0 27px;min-width:27px;height:26px;
+ border-radius:6px;background:var(--visual-menu-readable-button-bg,#343b49);
+ border:1px solid var(--visual-menu-border,#ffffff55);
+ color:var(--visual-menu-fg,#fff);font-size:17px;line-height:1}
+#choices .candyCooldownTitle{font-weight:700;font-size:12px;color:var(--visual-menu-fg,#fff)}
+#choices .candyCooldownNotice{font-size:9px;line-height:1.3;color:var(--visual-menu-fg,#dae4ef);
+ opacity:.85;margin:2px 3px 6px}
+#choices .candyCooldownRows{display:flex;flex-direction:column;gap:2px}
+#choices .candyCooldownRow{display:flex;justify-content:space-between;gap:8px;
+ padding:3px 6px;border:1px solid var(--visual-menu-border,#ffffff22);
+ border-radius:5px;color:var(--visual-menu-fg,#f2f7fc);font:500 10px/1.15 Roboto,Arial,sans-serif}
+#choices .candyCooldownRow span:last-child{font-weight:700}
+#choices .locError{min-height:10px}
+
 </style></head><body>
 <div id="controls" role="toolbar" aria-label="Controles Doce Raro">
 <button id="location" aria-label="Localização e raio" onclick="openPanel('location')" title="Localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
@@ -125,6 +156,63 @@ background:var(--visual-menu-readable-button-bg)!important}
 const $=id=>document.getElementById(id);
 let settings={coords:"",radius:1000,period:3,name:false,location:false,despawn:true,distance:false,pendingCandyPickup:false,showCollected:false,hasCollected:false,candyAutoPickupOptIn:false,candyAutoPickupActive:false};
 let currentPanel="";
+let candyLocationSession=0,candyLocationDraftDirty=false,candyLocationDraft=null;
+let candyCooldownPreviewTimer=null;
+// Advisory distances already used by the app's CandyCooldownPolicy and Pokemon
+// Location reference. A search radius is NOT the actual distance traveled.
+const CANDY_COOLDOWN_REFERENCE=Object.freeze([
+ ["< 10 m","0s"],["10 – 99 m","3s"],["100 – 499 m","15s"],
+ ["500 – 999 m","30s"],["1 – 4 km","2m"],["5 – 9 km","6m"],
+ ["10 – 24 km","11m"],["25 – 29 km","14m"],["30 – 64 km","22m"],
+ ["65 – 80 km","25m"],["81 – 99 km","35m"],["100 – 249 km","45m"],
+ ["250 – 499 km","1h"],["500 – 749 km","1h 15m"],
+ ["750 – 999 km","1h 30m"],["≥ 1000 km","2h"]
+]);
+function candyCooldownReferenceForKm(raw){
+ const km=Math.max(0,Math.min(1000,Math.round(Number(raw)||0)));
+ const index=km===0?0:km<=4?4:km<=9?5:km<=24?6:km<=29?7:
+  km<=64?8:km<=80?9:km<=99?10:km<=249?11:km<=499?12:
+  km<=749?13:km<=999?14:15;
+ return CANDY_COOLDOWN_REFERENCE[index];
+}
+function renderCandyCooldownReference(){
+ const el=$("choices");
+ el.className="visible locationPanel locationCooldownTable";
+ const rows=CANDY_COOLDOWN_REFERENCE.map(([d,t])=>
+  '<div class="candyCooldownRow"><span>'+d+'</span><span>≈ '+t+'</span></div>').join("");
+ el.innerHTML='<div class="candyCooldownHeader">'+
+  '<button type="button" class="candyCooldownBack" onclick="backToCandyLocation()" aria-label="Voltar à Localização">‹</button>'+
+  '<span class="candyCooldownTitle">Referência de cooldown</span></div>'+
+  '<p class="candyCooldownNotice">Estimativa não oficial por distância ENTRE coletas. O raio da busca não inicia um contador.</p>'+
+  '<div class="candyCooldownRows">'+rows+'</div>';
+ requestHeight(290,false);
+}
+function showCandyCooldownReference(){
+ if(currentPanel!=="location")return;
+ candyLocationDraft={coords:$("candyCoords")?.value||"",
+   radius:$("candyRadius")?.value||"",
+   slider:$("candyRadiusSlider")?.value||"1",dirty:candyLocationDraftDirty};
+ currentPanel="location-cooldown";
+ renderPanel();
+}
+function backToCandyLocation(){
+ if(currentPanel!=="location-cooldown")return;
+ currentPanel="location";renderPanel();
+}
+function showCandyCooldownPreview(){
+ const slide=$("candyRadiusSlider"),preview=$("candyCooldownPreview");
+ if(!slide||!preview)return;
+ const km=Number(slide.value)||0,[tier,wait]=candyCooldownReferenceForKm(km);
+ preview.textContent=tier+" · ≈"+wait;
+ preview.style.setProperty("--loc-preview-position",Math.max(8,Math.min(92,km/10))+"%");
+ preview.title="Simulação para "+km+" km, não é um cooldown real.";
+ slide.setAttribute("aria-valuetext",km+" km de raio; referência ≈"+wait);
+ preview.classList.add("is-visible");
+ if(candyCooldownPreviewTimer!==null)clearTimeout(candyCooldownPreviewTimer);
+ candyCooldownPreviewTimer=setTimeout(()=>{preview.classList.remove("is-visible");
+   candyCooldownPreviewTimer=null;},1350);
+}
+
 // Same colors, opacity formula and blur as visual_editor.js for P1/P2.
 function applyCandyMenuTheme(mode,transparency,blur){
  const light=mode==="light";
@@ -176,7 +264,13 @@ function closePanel(){
 }
 function openPanel(name){
  if(currentPanel===name){closePanel();return}
- currentPanel=name;renderPanel();
+ currentPanel=name;
+ if(name==="location"){
+   candyLocationSession++;candyLocationDraftDirty=false;candyLocationDraft=null;
+ }
+ renderPanel();
+ if(name==="location"&&Native.autoPasteCandyLocation)
+   Native.autoPasteCandyLocation(candyLocationSession);
 }
 const copyGlyph='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h12v12H8zM16 8V4H4v12h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>';
 const pasteGlyph='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h2a2 2 0 0 1 4 0h2v3H8zM8 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M12 9v10m-4-4 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>';
@@ -220,12 +314,14 @@ function renderPanel(){
      '<div id="candyDetectStatus" class="candyDetectStatus" role="status" aria-live="polite">Aguardando aviso…</div>':'');
    if(settings.candyAutoPickupActive)requestHeight(161,false);
    else requestHeight(142,false);
+ }else if(currentPanel==="location-cooldown"){
+   renderCandyCooldownReference();
  }else if(currentPanel==="location"){
-   el.innerHTML='<div class="choiceHeader"><span>Localização</span><div class="locClipboardTools">'+
+   el.innerHTML='<div class="choiceHeader"><button type="button" class="locTitleHelp" onclick="showCandyCooldownReference()" title="Abrir tabela de cooldown por distância" aria-label="Localização · abrir referência de cooldown">Localização</button><div class="locClipboardTools">'+
     '<button type="button" onclick="copyCoords()" title="Copiar coordenadas" aria-label="Copiar coordenadas">'+copyGlyph+'</button>'+
     '<button type="button" onclick="pasteCoords()" title="Colar coordenadas" aria-label="Colar coordenadas">'+pasteGlyph+'</button></div></div>'+
-    '<div class="locCoordsRow"><input class="locField" id="candyCoords" onfocus="Native.candyMenuFocus(true)" placeholder="53.759856,-1.495755" inputmode="decimal" maxlength="30" autocomplete="off" spellcheck="false" aria-label="Coordenadas latitude e longitude"></div>'+
-    '<div class="locSliderRow"><input id="candyRadiusSlider" aria-label="Raio de 1 a 1000 quilômetros" type="range" min="1" max="1000" step="1" oninput="setRadiusFromSlider(this.value)"></div>'+
+    '<div class="locCoordsRow"><input class="locField" id="candyCoords" onfocus="Native.candyMenuFocus(true)" oninput="candyLocationDraftDirty=true" placeholder="53.759856,-1.495755" inputmode="decimal" maxlength="30" autocomplete="off" spellcheck="false" aria-label="Coordenadas latitude e longitude"></div>'+
+    '<div class="locSliderRow"><input id="candyRadiusSlider" aria-label="Raio de 1 a 1000 quilômetros" type="range" min="1" max="1000" step="1" onpointerdown="showCandyCooldownPreview()" oninput="setRadiusFromSlider(this.value)"><span id="candyCooldownPreview" class="locCooldownPreview" aria-hidden="true"></span></div>'+
     '<div class="locRadiusRow"><div class="locRadiusInputWrap"><input class="locRadiusNumber" id="candyRadius" onfocus="Native.candyMenuFocus(true)" type="number" min="0.001" max="1000" step="0.001" oninput="setSliderFromRadius(this.value)" aria-label="Raio em quilômetros"><span class="locRadiusUnit">km</span></div>'+
     '<div class="compactLocationActions">'+
     '<button type="button" class="locSave" onclick="applyLocation()" aria-label="Aplicar localização" title="Aplicar">'+applyGlyph+'</button>'+
@@ -234,14 +330,27 @@ function renderPanel(){
    $("candyCoords").value=settings.coords||"";
    $("candyRadius").value=kmDisplay(settings.radius);
    $("candyRadiusSlider").value=String(Math.max(1,Math.min(1000,Math.round(settings.radius/1000))));
+   if(candyLocationDraft){
+      $("candyCoords").value=candyLocationDraft.coords;
+      $("candyRadius").value=candyLocationDraft.radius;
+      $("candyRadiusSlider").value=candyLocationDraft.slider;
+      candyLocationDraftDirty=candyLocationDraft.dirty;
+      candyLocationDraft=null;
+   }
    requestHeight(172,false);
  }
 }
-function setRadiusFromSlider(km){if($("candyRadius"))$("candyRadius").value=String(km)}
+function setRadiusFromSlider(km){
+ if($("candyRadius"))$("candyRadius").value=String(km);
+ candyLocationDraftDirty=true;showCandyCooldownPreview();
+}
 function setSliderFromRadius(value){
  const n=Number(value);
  if(Number.isFinite(n)&&n>=.001&&n<=1000&&$("candyRadiusSlider"))
    $("candyRadiusSlider").value=String(Math.max(1,Math.round(n)));
+ if(Number.isFinite(n)&&n>=.001&&n<=1000){
+   candyLocationDraftDirty=true;showCandyCooldownPreview();
+ }
 }
 function choosePeriod(value){
  if(![0,3,5,10,15,20].includes(value))return;
@@ -293,8 +402,22 @@ function clearLocation(){
 }
 function copyCoords(){if($("candyCoords"))Native.copyCandyLocation($("candyCoords").value.trim())}
 function pasteCoords(){Native.pasteCandyLocation()}
-function setPastedCoords(value){
- if(currentPanel==="location"&&$("candyCoords"))$("candyCoords").value=value||"";
+function setPastedCoords(value,automatic=false,session=-1,reason=""){
+ if(automatic&&session!==candyLocationSession)return;
+ if(currentPanel!=="location")return;
+ const field=$("candyCoords");if(!field)return;
+ if(automatic&&candyLocationDraftDirty)return;
+ if(value){
+   field.value=value;
+   candyLocationDraftDirty=!automatic;
+ }else if(!automatic&&$("locError")){
+   $("locError").textContent=reason==="ambiguous"?
+      "Mais de um par de coordenadas. Copie só um.":reason==="invalid"?
+      "Não há coordenadas válidas no texto copiado.":
+      "Android bloqueou a leitura. Use Colar no teclado.";
+ }
+ // Restore compact non-focusable popup only for automatic clipboard reads.
+ if(automatic&&Native.candyMenuFocus)Native.candyMenuFocus(false);
 }
 // One-shot short tap via pointerup with click fallback for WebViews that
 // drop pointerup after pointerleave. Deduplicate synthetic click after touch.
