@@ -3786,7 +3786,9 @@ public class OverlayService extends Service {
             },()->{
                 pickerOpen=false;favoritePickerDialog=null;
                 if(!stopped)update();
-            },anchorX,anchorY);
+            },anchorX,anchorY,
+                menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp)),
+                menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp))+dp(visualMenuBaseDp()));
             // Empty catalog: no dialog was created, so don't leave pickerOpen stuck.
             if(favoritePickerDialog==null)pickerOpen=false;
         }catch(Exception e){
