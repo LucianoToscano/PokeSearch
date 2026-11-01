@@ -798,10 +798,7 @@ public final class RareCandyOverlayService extends Service {
     private String providerWaitLabel(){
         long seconds=Math.max(1L,
             (blockedUntil-SystemClock.elapsedRealtime()+999L)/1000L);
-        if(seconds>=3600L)return "API 429 · "+
-            (seconds/3600L)+"h"+((seconds%3600L+59L)/60L)+"m";
-        return "API 429 · "+(seconds/60L)+"m"+
-            String.format(java.util.Locale.US,"%02d",seconds%60L)+"s";
+        return ProviderWaitFormatter.format429(seconds);
     }
     private void setStatus(String message){
         if(status!=null){
