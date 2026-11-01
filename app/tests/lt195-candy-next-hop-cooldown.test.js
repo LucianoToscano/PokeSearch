@@ -29,7 +29,7 @@ assert.match(html,/Native\.clearCandyCooldown\(\)/);
 assert.match(html,/resetCooldown\(\)/);
 assert.match(candy,/showDespawn=prefs\.getBoolean\("candyShowDespawn",true\)/);
 assert.match(candy,/showDistance=prefs\.getBoolean\("candyShowDistance",false\)/);
-assert.match(candy,/CandyClipboardCoordinates\\.extract\\(/); // LT214 validated clipboard without mutating collection
+assert.ok(candy.includes("CandyClipboardCoordinates.extract(")); // LT214 validated clipboard without mutating collection
 assert.match(candy,/cards\.size\(\)==10/);
 assert.match(primary,/class OverlayService/);
 assert.match(secondary,/extends OverlayService/);
