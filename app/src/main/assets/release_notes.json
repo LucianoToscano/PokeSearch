@@ -1378,6 +1378,33 @@
           "Shiny permanece temporariamente indisponível no provedor; ocultação do botão não significa remoção do recurso."
         ]
       }
+    },
+    {
+      "id": "lt215-candy-location-clipboard-cooldown-stable-20261101",
+      "minVersionCode": 54422,
+      "date": "01/11/2026",
+      "title": "PokeSearch LT215 — Localização do Doce Raro e correções de estabilidade",
+      "sections": {
+        "novidades": [
+          "No Doce Raro, abrir Localização tenta preencher automaticamente as coordenadas copiadas antes, sem aplicar a busca.",
+          "Tocar no nome Localização abre uma tabela compacta de referência de cooldown por distância.",
+          "Ao ajustar o raio em km, o menu mostra uma prévia temporária da faixa e do tempo estimado."
+        ],
+        "melhorias": [
+          "Copiar e Colar usam validação de coordenadas mais robusta, com alternativas quando o Android bloqueia a área de transferência.",
+          "O menu preserva o texto e o raio ainda não aplicados ao consultar a tabela, com botão para voltar.",
+          "Correções já integradas nas versões de QA anteriores: transparência do ícone IV e posição independente dos Favoritos em duas Pokébolas."
+        ],
+        "correcoes": [
+          "Colagem das coordenadas do Doce Raro não inicia automaticamente busca nem contador.",
+          "Leitura da área de transferência lida com textos, links e pares ambíguos, sem registrar conteúdos sensíveis.",
+          "Tabela de referência ajustada à largura da janela para evitar textos cortados."
+        ],
+        "emDesenvolvimento": [
+          "A tabela é apenas referência estimada; o raio de busca não mede o deslocamento entre coletas e não garante tempos oficiais.",
+          "Homologação visual e funcional em aparelho Samsung continua recomendada."
+        ]
+      }
     }
   ]
 }
