@@ -20,7 +20,7 @@ assert.match(editor,/addSegment\(panel,"resultsOrientation","Resultados"/);
 assert.match(editor,/\["vertical","Vertical"\],\["horizontal","Horizontal"\]/);
 assert.match(resultCss,/body\.result-window\.visual-results-tiles #shell\{[\s\S]*?background:transparent!important;/);
 assert.match(resultCss,/body\.result-window\.visual-results-tiles \.spriteStage::before\{[\s\S]*?border-radius:10px/);
-assert.match(resultCss,/width:calc\(var\(--dock\) - 3px\);height:calc\(var\(--dock\) - 3px\)/);
+assert.match(resultCss,/width:var\(--sprite\);height:var\(--sprite\)/);
 assert.match(resultCss,/pointer-events:none;z-index:0/);
 assert.match(resultCss,/visual-results-tiles \.spriteStage \.spriteFallback\{[\s\S]*?z-index:1/);
 assert.match(resultCss,/body\.result-window:not\(\.visual-results-tiles\) \.spriteStage::before\{[\s\S]*?content:none!important/);
