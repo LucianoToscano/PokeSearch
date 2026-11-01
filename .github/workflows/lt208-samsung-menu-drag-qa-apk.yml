@@ -50,6 +50,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
+      # Recheck full LT208 migration tests after updating historical menu contracts.
       - name: Confirm LT206 source and compact 148dp layout
         shell: bash
         run: |
