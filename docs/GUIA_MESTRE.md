@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT220 QA — DISTÂNCIA ENTRE MENUS P1/P2 E RESULTADOS, SEM REDIMENSIONAR (01/11/2026)
+
+- **Capturas Samsung da LT219:** menu vertical e Personalização estão agora compactos; o menu pode ocupar a mesma região dos Pokémon e do menu da outra Pokébola, e resultados horizontais usam 5 colunas no máximo apesar de haver espaço para mais em determinadas larguras.
+- **PR e merge:** [#192](https://github.com/LucianoToscano/PokeSearch/pull/192) mesclada em `d6dead276d63824d65ab453b11a4166f3c1a61f9`, após testes Node LT169, Node QA, Java LT62, core Java e Android/OTA LT173 **SUCCESS**.
+- **Política `OverlayPlacementPolicy.java`:** matemática pura com posições em pixels físicos. Quando há sobreposição entre janelas, procura a posição livre mais próxima à direita, à esquerda, acima ou abaixo, preservando tamanho e aparência. Caso não exista espaço livre, mantém a posição original limitada à tela.
+- **Posições P1/P2:** `OverlayService.java` registra **apenas retângulos temporários de menus** de cada instância para impedir sobreposição, sem transmitir dados de conta, busca, espécies, filtros ou preferências; limpa ao fechar e no `onDestroy`. Os menus também evitam a janela de resultados da mesma Pokébola quando há espaço e recalculam após redimensionamento do resultado.
+- **Pokémon horizontais:** limite artificial de 5 colunas removido; usa quantas colunas de sprites originais couberem fisicamente na tela, até 10. Em telas que não comportam os dez sprites em uma única linha sem mudar tamanho, os itens **continuam quebrando em linhas**, sem cortes nem compressão.
+- **QA:** novos `app/tests/OverlayPlacementPolicyTest.java` e `app/tests/lt220-overlay-placement.test.js`, contratos `visual-editor.test.js` e `lt77-stage2-results-layout.test.js` atualizados, `qa-core-contracts.yml` inclui Java puro novo. [Checklist visual](LT220_P1_P2_MENU_RESULTADOS_ESPACAMENTO_QA_20261101.md).
+- **APK privado de teste:** workflow [LT220 QA](https://github.com/LucianoToscano/PokeSearch/actions/workflows/lt220-signed-qa.yml), versão `0.02.20`, versionCode `54427`, não publicado como estável. Registrar SHA-256, certificado, APK e Drive após execução e verificação.
+- **Preservado:** Editor Visual arrastável, 2 Pokébolas com preferências separadas, autenticação, chat, favoritos, alertas, permissões e limites/cooldown da API. **LT215 continua a última versão estável pública**, aguardando homologação física Samsung das QA posteriores.
+
+---
+
 ## LT219 QA — MENU EM COLUNA ÚNICA E PERSONALIZAÇÃO NA TELA (01/11/2026)
 
 - **Screenshots Samsung da LT218:** (a) 9 botões verticais + últimos 3 fora da coluna à direita, (b) menus independentes P1/P2, (c) submenu Modo lateral, (d) menu horizontal compacto com dez Pokémon distribuídos em linhas por limitação física de largura, (e) launcher **PERSONALIZAÇÃO** aparecendo cortado no rodapé.
