@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT225 QA — P/M/G NOS RESULTADOS COM ARTE CENTRALIZADA EM 88% (01/11/2026)
+
+- **Pedido confirmado:** o tamanho de **30×30dp corresponde somente ao P**. Ao selecionar **M** e **G**, crescer o quadrado do resultado E a imagem. A arte deve preencher **85–90%** do quadrado, centrada e sem deformação.
+- **Contrato implementado:** configurações nativas antigas P=35/M=45/G=55 mapeiam no resultado para **P 30×30dp (sprite 26,4dp)**, **M 40×40dp (sprite 35,2dp)**, **G 50×50dp (sprite 44dp)**. Imagem tem **88%** do lado do cartão e `object-fit:contain`; 2dp entre cartões, com/sem fundo, horizontal/vertical. O menu preserva seus botões de **30×30dp**.
+- **PR e merge:** [#197](https://github.com/LucianoToscano/PokeSearch/pull/197), commit `950b968b73b18d1a40091b7abfaded561bc13d67`. Gates Node QA, LT169, QA Core LT211, Java LT62, Android/OTA LT173 **SUCCESS**.
+- **Implementação:** `dock.html` usa tamanho dinâmico de cartão `--result-tile-size` e imagem `--result-art-size`, calculados em `computeResultLayout` e aplicados ao resultado sem transformar a sprite. `OverlayService.resultTileDp()` usa o mesmo mapa para dimensionar largura/hitbox nativa; Editor Visual mostra P/M/G e 88% sem controles inoperantes.
+- **Testes:** `app/tests/lt224-result-menu-parity.test.js` expandido para 12 combinações P/M/G × com/sem fundo × horizontal/vertical, `app/tests/overlay-ux.test.js`, `app/tests/lt62-menu-visual-states.test.js` e `app/tests/visual-editor.test.js` atualizados. [Plano de QA físico](LT225_PMG_RESULTADOS_SPRITES_88_QA_20261101.md).
+- **QA privada assinada:** workflow [LT225](https://github.com/LucianoToscano/PokeSearch/actions/runs/41291857076), versão `0.02.25`, versionCode `54432`; registrar APK/certificado/SHA-256 e Drive após verificação.
+- **Sem distribuição pública** até validação física Samsung; stable permanece LT215.
+
+---
+
 ## LT224 QA — CARTÕES 30×30 DP E SPRITES CENTRALIZADAS A 84% (01/11/2026)
 
 - **Evidência LT223:** screenshot Samsung mostrou Pokémon muito pequenos dentro de quadrados de fundo, com dimensões de sprite, pitch e escalas antigas diferentes das dimensões dos botões do menu. O usuário confirmou o alvo exato: **resultados com as mesmas dimensões dos botões do menu: 30×30dp, 2dp entre itens, sprites proporcionais e centradas em ~84% do quadrado, com/sem fundo e nas duas orientações**.
