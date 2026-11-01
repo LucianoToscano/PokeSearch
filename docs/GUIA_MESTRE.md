@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT226 QA — NORMALIZAÇÃO DA SILHUETA VISÍVEL DOS POKÉMON (01/11/2026)
+
+- **Evidência Samsung:** screenshot LT225 (enviado pelo usuário) mostra cartões P/M/G e menu na proporção correta, mas Pokémon visivelmente minúsculos no interior, apesar da caixa da imagem CSS ocupar 88%. PNGs/WebPs incluem grandes margens transparentes.
+- **Causa:** a LT225 define `transform:none!important` nos resultados, eliminando a rotina antiga de escala alfa; 88% se aplica ao elemento `img`, não aos pixels visíveis da espécie.
+- **Correção:** [PR #198](https://github.com/LucianoToscano/PokeSearch/pull/198), merge `346c3231992831f135eeeaca976e1507f00f6424` na main, gates Node QA, LT169, QA Core LT211, Java LT62 e Android LT173 **SUCCESS**. `sprite_visual_scale.js` preserva `measure/factor/apply` para detalhes e acrescenta medição 96×96 da silhueta alfa (threshold 38), centralização X/Y e escala limitada 0,8–2,85. Meta ~**87% da área do cartão VISÍVEL**. Cada `img.sprite` recebe variáveis CSS `--tile-alpha-zoom/x/y` somente no resultado, após carregar a imagem. Origem publicamente acessível via raw GitHub/jsDelivr habilita `crossorigin=anonymous`. Imagem CORS bloqueada permanece intacta, sem recorte arbitrário ou troca de forma.
+- **Preserva:** P30/M40/G50 dp, botão menu 30dp, janela/hitbox, fundos com/sem, vertical/horizontal, P1/P2, sprite original, IV/CP/timers, fallback original, Editor Visual arrastável e login/chat/APIs.
+- **QA:** [relatório e checklist](LT226_SPRITES_ALPHA_VISIBLE_87_QA_20261101.md), novo teste Node `app/tests/lt226-visible-sprite-alpha-fill.test.js` com retângulos alfa simulados, CORS negado, offsets e saturação. `app/tests/lt224-result-menu-parity.test.js` atualizado para esperar escala medida nos resultados. QA física Samsung ainda pendente para avaliar silhuetas reais, caudas, orelhas e fantasias, diferentes origens CORS e duas Pokébolas.
+- **QA assinada privada:** [workflow LT226 #41293509202](https://github.com/LucianoToscano/PokeSearch/actions/runs/41293509202), versionName `0.02.26`, versionCode `54433`. Registrar APK, SHA-256, certificado e Drive após compilação e verificação. Não atualizar canal estável (última publicada LT215) antes de homologação física.
+
+---
+
 ## LT225 QA — P/M/G NOS RESULTADOS COM ARTE CENTRALIZADA EM 88% (01/11/2026)
 
 - **Pedido confirmado:** o tamanho de **30×30dp corresponde somente ao P**. Ao selecionar **M** e **G**, crescer o quadrado do resultado E a imagem. A arte deve preencher **85–90%** do quadrado, centrada e sem deformação.
