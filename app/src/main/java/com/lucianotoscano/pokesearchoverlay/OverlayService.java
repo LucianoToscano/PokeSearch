@@ -374,7 +374,8 @@ public class OverlayService extends Service {
     private WindowManager wm;
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams,popupParams;
     private FrameLayout root,detailRoot,menuRoot,resultRoot,popupRoot;
-    private View grip;
+    private View grip,visualEditorDragGrip;
+    private boolean visualEditorNativeDragging=false;
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
     private androidx.webkit.WebViewAssetLoader otaWebLoader;
     private boolean popupLoaded=false;
@@ -1333,7 +1334,26 @@ public class OverlayService extends Service {
             y=Math.max(margin,Math.min(m.heightPixels-safeH-margin,y));
             b=new PopupTouchGeometry.Bounds(x,y,safeW,safeH,false);
         }
-        if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
+        if(!b.visible()){
+            if(visualEditorDragGrip!=null)visualEditorDragGrip.setVisibility(View.GONE);
+            popupRoot.setVisibility(View.GONE);return;
+        }
+        // Native ACTION_MOVE must keep its touch target stable. Do not
+        // relayout/hide the grip during a drag even if a WebView fit() callback
+        // arrives concurrently; the native listener owns the live position.
+        if(visualEditorNativeDragging&&"visual".equals(popupKind))return;
+        if(visualEditorDragGrip!=null){
+            boolean isEditor="visual".equals(popupKind);
+            visualEditorDragGrip.setVisibility(isEditor?View.VISIBLE:View.GONE);
+            if(isEditor){
+                FrameLayout.LayoutParams gripLayout=
+                    (FrameLayout.LayoutParams)visualEditorDragGrip.getLayoutParams();
+                gripLayout.width=Math.max(dp(10),Math.min(dp(205),b.width-dp(64)));
+                gripLayout.height=dp(27);
+                gripLayout.leftMargin=dp(6);
+                visualEditorDragGrip.setLayoutParams(gripLayout);
+            }
+        }
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
             popupParams.width=b.width;popupParams.height=b.height;
@@ -1391,6 +1411,9 @@ public class OverlayService extends Service {
     private void closeIndependentPopup(){
         if(popupKind.isEmpty())return;
         popupKind="";popupWidthDp=popupHeightDp=0;
+        visualEditorNativeDragging=false;
+        if(visualEditorDragGrip!=null)
+            visualEditorDragGrip.setVisibility(View.GONE);
         // The toolbar is a separate WebView; notify it when native closes.
         js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind(\"\")");
         locationEditorOpen=false;
@@ -1430,6 +1453,9 @@ public class OverlayService extends Service {
         if(wasSameOutsideTap)return;
         if(kind.equals(popupKind)){closeIndependentPopup();return;}
         popupKind=kind;
+        visualEditorNativeDragging=false;
+        if(visualEditorDragGrip!=null)
+            visualEditorDragGrip.setVisibility(View.GONE);
         // Mirror native state back to the toolbar: tapping Location again closes.
         js(menuPanel,menuLoaded,"window.setActiveNativePopupKind&&window.setActiveNativePopupKind("+JSONObject.quote(kind)+")");
         popupTriggerDp=Math.max(0,Math.min(menuDp(),x));
@@ -2092,6 +2118,78 @@ public class OverlayService extends Service {
         popupPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
         popupPanel.addJavascriptInterface(new Bridge(),"Native");
         popupRoot.addView(popupPanel,new FrameLayout.LayoutParams(-1,-1));
+        // LT222: SAME native raw-touch drag model as resultGrip/detailDragGrip.
+        // The LT218 HTML pointer handlers lost the gesture when WindowManager
+        // moved the WebView during pointer capture. A transparent native grip
+        // above the title keeps ACTION_MOVE delivered throughout the drag.
+        // It covers only the header TITLE; the right-side close X and all
+        // sliders/buttons remain clickable in the underlying WebView.
+        visualEditorDragGrip=new View(this);
+        visualEditorDragGrip.setBackgroundColor(Color.TRANSPARENT);
+        visualEditorDragGrip.setVisibility(View.GONE);
+        final float[] visualTouchStart=new float[2];
+        final int[] visualStartXY=new int[2];
+        final boolean[] visualMoved={false};
+        final long[] visualLastFrame={0L};
+        visualEditorDragGrip.setOnTouchListener((view,event)->{
+            if(!"visual".equals(popupKind)||popupParams==null||popupRoot==null||
+                popupRoot.getVisibility()!=View.VISIBLE||wm==null)return false;
+            int action=event.getActionMasked();
+            if(action==MotionEvent.ACTION_DOWN){
+                visualTouchStart[0]=event.getRawX();
+                visualTouchStart[1]=event.getRawY();
+                visualStartXY[0]=popupParams.x;
+                visualStartXY[1]=popupParams.y;
+                visualMoved[0]=false;
+                visualEditorNativeDragging=true;
+                visualLastFrame[0]=0L;
+                return true;
+            }
+            if(action==MotionEvent.ACTION_MOVE||action==MotionEvent.ACTION_UP||
+               action==MotionEvent.ACTION_CANCEL){
+                int dx=Math.round(event.getRawX()-visualTouchStart[0]);
+                int dy=Math.round(event.getRawY()-visualTouchStart[1]);
+                if(Math.abs(dx)+Math.abs(dy)>dp(4))visualMoved[0]=true;
+                if(visualMoved[0]){
+                    DisplayMetrics m=metrics();
+                    int margin=dp(4);
+                    popupParams.x=Math.max(margin,Math.min(
+                        Math.max(margin,m.widthPixels-popupParams.width-margin),
+                        visualStartXY[0]+dx));
+                    popupParams.y=Math.max(margin,Math.min(
+                        Math.max(margin,m.heightPixels-popupParams.height-margin),
+                        visualStartXY[1]+dy));
+                    lastPopupX=popupParams.x;
+                    lastPopupY=popupParams.y;
+                    long now=android.os.SystemClock.uptimeMillis();
+                    if(action!=MotionEvent.ACTION_MOVE||
+                       now-visualLastFrame[0]>=16L){
+                        visualLastFrame[0]=now;
+                        try{wm.updateViewLayout(popupRoot,popupParams);}
+                        catch(Exception e){recordFailure("arrastar Editor Visual",e);}
+                    }
+                }
+                if(action!=MotionEvent.ACTION_MOVE){
+                    visualEditorNativeDragging=false;
+                    if(visualMoved[0]){
+                        DisplayMetrics m=metrics();
+                        overlayPrefs().edit()
+                            .putInt("visualEditorX",
+                                Math.round(popupParams.x/m.density))
+                            .putInt("visualEditorY",
+                                Math.round(popupParams.y/m.density))
+                            .apply();
+                    }
+                    visualMoved[0]=false;
+                }
+                return true;
+            }
+            return true;
+        });
+        FrameLayout.LayoutParams visualGripParams=new FrameLayout.LayoutParams(
+            dp(190),dp(27),Gravity.TOP|Gravity.LEFT);
+        visualGripParams.leftMargin=dp(6);
+        popupRoot.addView(visualEditorDragGrip,visualGripParams);
         popupPanel.setWebViewClient(new WebViewClient(){
             // Never expose the Native bridge to a navigated remote document.
             @Override public boolean shouldOverrideUrlLoading(

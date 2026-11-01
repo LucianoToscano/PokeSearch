@@ -37,7 +37,9 @@ test("historical three-argument bridge stays compatible",()=>{
 test("native window never expands toolbar to position submenu",()=>{
  assert.ok(service.includes('popupParams.width=b.width;popupParams.height=b.height;'));
  assert.ok(service.includes('PopupTouchGeometry.avoidResult('));
- assert.ok(service.includes('if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}'));
+ assert.ok(service.includes('if(!b.visible()){')); 
+ assert.ok(service.includes('popupRoot.setVisibility(View.GONE);return;'));
+ assert.ok(service.includes('visualEditorDragGrip.setVisibility(View.GONE)'));
 });
 test("More only scrolls when content is clipped",()=>{
  const css=dock.split('/* LT77 Stage 4: More needs a scrollbar')[1]?.split('</style>',1)[0]||"";
