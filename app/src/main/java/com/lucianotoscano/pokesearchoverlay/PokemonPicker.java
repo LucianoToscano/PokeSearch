@@ -310,7 +310,7 @@ public final class PokemonPicker {
         FrameLayout header=new FrameLayout(activity);
         header.setMinimumHeight(dp(activity,29));
         TextView title=new TextView(activity);
-        title.setText("☆ FAVORITOS");
+        title.setText("⠿ FAVORITOS");
         // The header title is the drag handle; unlike the sprites, input and
         // saved-profile stars it has no destructive or search action.
         title.setContentDescription("Favoritos. Segure o título e arraste para mover; toque para voltar à posição automática.");
@@ -712,7 +712,7 @@ public final class PokemonPicker {
                                 return true;
                             }
                             case android.view.MotionEvent.ACTION_UP:{
-                                canceled=true;if(arm!=null)v.removeCallbacks(arm);
+                                if(arm!=null)v.removeCallbacks(arm);
                                 if(armed&&moved){
                                     android.view.WindowManager.LayoutParams lp=window.getAttributes();
                                     positionPrefs.edit().putBoolean("favoritePanelManualV1",true)
@@ -720,9 +720,8 @@ public final class PokemonPicker {
                                         .putInt("favoritePanelScreenWV1",screen)
                                         .putInt("favoritePanelScreenHV1",displayH).apply();
                                     dragged[0]=true;
-                                }else if(!armed&&!moved&&!canceled){
-                                    // unreachable; preserved to distinguish canceled gestures
-                                }else if(!armed&&Math.hypot(e.getRawX()-downX,e.getRawY()-downY)<dp(activity,9)){
+                                }else if(!armed&&!canceled&&
+                                    Math.hypot(e.getRawX()-downX,e.getRawY()-downY)<dp(activity,9)){
                                     v.performClick();
                                 }
                                 return true;
