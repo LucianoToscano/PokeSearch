@@ -56,10 +56,9 @@ check("first-ever onboarding persisted and only two short coaching messages",()=
  assert.ok(native.includes("👆 ↻: toque = atualizar"));
 });
 check("Favorites native dialog chooses above/below available room",()=>{
- for(const t of ["int spaceBelow=Math.max(0,displayH-margin-below);",
- "int spaceAbove=Math.max(0,anchorY-iconHalf-gap-margin);",
- "boolean placeBelow=spaceBelow>=actualHeight||",
- "int top=placeBelow?below:Math.max(margin,above);",
+ for(const t of ["root.addOnLayoutChangeListener(",
+ "FavoritePanelGeometry.adjacent(anchorX,anchorY,screen,displayH,",
+ "root.post(place[0]);",
  "window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)",
  'sprites.setColumnCount(10)'])assert.ok(favorite.includes(t),t);
 });
