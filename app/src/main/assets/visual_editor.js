@@ -22,7 +22,12 @@ const RANGES={
 const PRESETS={
  compact:{resultGapTop:-6,resultGapBetween:0,resultSpriteScale:130,menuItemGap:0},
  balanced:{resultGapTop:0,resultGapBetween:13,resultSpriteScale:115,menuItemGap:3},
- readable:{resultGapTop:8,resultGapBetween:40,resultSpriteScale:100,menuItemGap:7}
+ readable:{resultGapTop:8,resultGapBetween:40,resultSpriteScale:100,menuItemGap:7},
+ // LT217: screenshot layout. Existing orientation keys remain independent.
+ // Do not touch account, filters, quick-menu order/visibility, or sprites.
+ topHorizontal:{menuOrientation:"horizontal",resultsOrientation:"vertical",
+  menuOffsetX:0,menuOffsetY:0,resultsOffsetX:0,resultsOffsetY:0,
+  gearMenuGap:0,menuItemGap:0,headerAfterGap:0,resultGapTop:0,resultGapBetween:13}
 };
 let current={...DEFAULTS},tab="results",saveTimer=null,pendingVisualJson="",saveEpoch=0,previewArea="";
 const visualOpenSection={results:"spacing",menu:"position"};
@@ -132,9 +137,15 @@ function toast(msg){
  if(el)el.textContent=msg;
 }
 function usePreset(name){
+ if(!Object.prototype.hasOwnProperty.call(PRESETS,name))return;
  current=normalize({...current,...PRESETS[name]});
  applyVisual();saveSoon();renderVisualEditor();
- toast("✓ Preset "+name+" aplicado em tempo real");
+ // Only explicit "Topo Horizontal" moves the dock; ordinary orientation
+ // selectors must never teleport the Pokéball or reset its manual position.
+ if(name==="topHorizontal"&&window.Native&&Native.applyTopHorizontalLayout)
+  Native.applyTopHorizontalLayout();
+ toast("✓ "+(name==="topHorizontal"?"Topo Horizontal":"Preset "+name)+
+  " aplicado nesta Pokébola");
 }
 function heading(container,label){
  const el=document.createElement("div");el.className="uxSubheading";el.textContent=label;
@@ -208,6 +219,13 @@ function renderVisualEditor(){
  const panel=uxPanel("EDITOR VISUAL");
  if(window.Native&&Native.previewVisualArea)Native.previewVisualArea(tab);
  panel.classList.add("visualPanel","visualCompact");
+ // Orientations already have separate keys and persist in P1/P2 prefs.
+ // Surface an immediately accessible layout preset in either editor tab.
+ const quickPreset=document.createElement("div");quickPreset.className="visualPresets";
+ const quickTop=btn(quickPreset,"↗ Topo Horizontal",()=>usePreset("topHorizontal"));
+ quickTop.title="Menus horizontais no topo e resultados verticais abaixo da Pokébola";
+ quickTop.setAttribute("aria-label","Aplicar preset Topo Horizontal nesta Pokébola");
+ panel.appendChild(quickPreset);
  const nav=document.createElement("div");nav.className="visualTabs";
  for(const [id,title] of [["results","Pokémon"],["menu","Menu"]]){
   const b=btn(nav,title,()=>{tab=id;renderVisualEditor();});
@@ -295,6 +313,9 @@ function renderVisualEditor(){
   btn(presets,"Compacto",()=>usePreset("compact"));
   btn(presets,"Equilibrado",()=>usePreset("balanced"));
   btn(presets,"Legível",()=>usePreset("readable"));
+  const topHorizontal=btn(presets,"Topo Horizontal",()=>usePreset("topHorizontal"));
+  topHorizontal.title="Pokébola no alto, menus na horizontal, Pokémon em coluna";
+  topHorizontal.setAttribute("aria-label","Aplicar Topo Horizontal apenas nesta Pokébola");
   panel.appendChild(presets);
   const actions=document.createElement("div");actions.className="visualActions";
   btn(actions,"Restaurar",()=>{
