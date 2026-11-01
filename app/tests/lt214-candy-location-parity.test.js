@@ -17,6 +17,7 @@ assert.ok(html.includes('oninput="setRadiusFromSlider(this.value)"'),"slider inp
 assert.ok(html.includes("locationCooldownTable")&&html.includes("candyCooldownRows"),"compact scrollable reference");
 assert.ok(html.includes("Estimativa não oficial"),"do not represent estimates as game guarantees");
 assert.ok(native.includes("autoPasteCandyLocation(int session)"),"native auto fill requested on open");
+assert.ok(native.includes('"location-cooldown".equals(panel)?232'),"reference uses a readable 232dp native width");
 assert.ok(native.includes("CandyClipboardCoordinates.extract("),"same robust parser as Pokemon");
 assert.ok(native.includes("candyMenuPanel.requestFocus()"),"temporary Android focus for clipboard");
 assert.ok(native.includes("main.postDelayed(()->readCandyClipboard(automatic,session),180L)"),"Android clipboard focus transition");
