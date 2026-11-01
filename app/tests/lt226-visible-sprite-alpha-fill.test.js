@@ -12,7 +12,7 @@ assert.match(code,/scale\(var\(--tile-alpha-zoom,1\)\)!important/);
 assert.match(code,/object-fit:contain!important;object-position:center center!important/);
 assert.match(code,/width:var\(--result-art-size,26\.4px\)!important/);
 assert.match(dock,/if\(resultWindow\)window\.PokeSearchSpriteScale\?\.applyResultTile\?\.\(img\)/);
-assert.match(dock,/const publicCors=\/\^https:/);
+assert.match(dock,/const publicCors=imageUrl\.startsWith\("https:\/\/raw\.githubusercontent\.com\/"\)/);
 assert.match(dock,/crossorigin="anonymous"/);
 assert.match(editor,/P 30×30 dp · M 40×40 dp · G 50×50 dp/);
 assert.match(dock,/const tile=size===55\?50:size===45\?40:30/);
