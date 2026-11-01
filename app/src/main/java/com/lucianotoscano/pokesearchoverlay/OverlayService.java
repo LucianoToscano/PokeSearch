@@ -338,9 +338,12 @@ public class OverlayService extends Service {
         js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(popupPanel,popupLoaded,code);js(resultPanel,resultLoaded,code);
     }
     private int dockDp(){return spriteSize+8;}
-    // LT224: match the 30dp result tile DOM regardless of sprite P/M/G,
-    // the frame transparency, or horizontal/vertical orientation.
-    private int resultTileDp(){return 30;}
+    // LT225: native overlay footprint matches the WebView's P/M/G result
+    // tiles. Historical settings P=35, M=45, G=55 are retained for the
+    // Pokéball and menu; results alone use 30/40/50dp with 2dp gaps.
+    private int resultTileDp(){
+        return spriteSize==55?50:spriteSize==45?40:30;
+    }
     private int resultWidthDp(){
         if(visualResultsHorizontal&&!resultCollapsed){
             // Never cover the full screen with an invisible touch-blocking overlay
