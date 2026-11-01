@@ -40,7 +40,7 @@ function spriteEnv(rect,tainted=false) {
 let e=spriteEnv({left:24,right:70,top:20,bottom:75});
 let f=e.api.applyResultTile(e.img);
 assert.ok(f.zoom>1.4&&f.zoom<1.9);
-assert.ok(f.x>0&&f.y>0);
+assert.ok(f.x>0&&Math.abs(f.y)<.1,"already vertically centered silhouette should not be shifted");
 assert.ok(Math.max(47,56)/96*.88*f.zoom >= .84); // visible silhouette target
 assert.ok(Math.max(47,56)/96*.88*f.zoom <= .90);
 assert.equal(Number(e.props["--tile-alpha-zoom"]),f.zoom);
