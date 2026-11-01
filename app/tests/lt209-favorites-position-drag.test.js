@@ -27,7 +27,7 @@ for(const part of [
 ])assert.ok(picker.includes(part),"missing: "+part);
 assert.ok(!picker.includes('v.postDelayed(arm,220)'),"long press must not be required");
 assert.ok(!picker.includes('title.setText("⠿ FAVORITOS")'),"special drag button removed");
-assert.ok(geometry.includes('boolean placeBelow=below>=panelH ||'));
+assert.ok(geometry.includes('boolean preferBelow=below>=panelH ||'));
 assert.ok(geometry.includes('above<panelH && below>=above'));
 assert.ok(picker.includes('finish.setOnClickListener(v->dialog.dismiss());'));
 assert.ok(picker.includes('selectedRow.setVisibility(size>0?View.VISIBLE:View.GONE);'));
