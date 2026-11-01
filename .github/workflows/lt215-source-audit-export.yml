@@ -33,6 +33,8 @@ jobs:
                    'app/src/main/assets/release_notes.json']
           for item in require:
               assert item in files, 'Missing expected source file: '+item
+          assert 'Versão oficial publicada — LT215' in pathlib.Path('README.md').read_text(), 'README does not identify official LT215'
+          assert 'LT215 — RELEASE ESTÁVEL' in pathlib.Path('docs/GUIA_MESTRE.md').read_text(), 'Master lacks official release checkpoint'
           source='POKESEARCH_LT215_FONTE_COMPLETA_EDITAVEL_AUDITORIA.zip'
           top='PokeSearch-LT215-FONTE/'
           audit=['# PokeSearch LT215 — Arquivo-fonte editável',
