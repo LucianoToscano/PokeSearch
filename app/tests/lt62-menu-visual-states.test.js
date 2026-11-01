@@ -835,7 +835,7 @@ check("LT62 audit: Visual Editor parameters and touch limitations remain explici
  const visual=fs.readFileSync(path.join(__dirname,"../src/main/assets/visual_editor.js"),"utf8");
  assert.ok(visual.includes('renderVisualEditor()'));
  assert.ok(visual.includes('P 30×30 dp · M 40×40 dp · G 50×50 dp'));
- assert.ok(visual.includes('arte centralizada em 84%'));
+ assert.ok(visual.includes('Sprites centralizadas a 88%'));
  assert.ok(visual.includes('addSlider(panel,"resultGapTop"'));
  assert.ok(visual.includes('addSlider(panel,"popupWidth"'));
  assert.ok(visual.includes('addSlider(panel,"popupHeight"'));
