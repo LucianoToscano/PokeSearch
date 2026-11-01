@@ -1,5 +1,19 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT224 QA — CARTÕES 30×30 DP E SPRITES CENTRALIZADAS A 84% (01/11/2026)
+
+- **Evidência LT223:** screenshot Samsung mostrou Pokémon muito pequenos dentro de quadrados de fundo, com dimensões de sprite, pitch e escalas antigas diferentes das dimensões dos botões do menu. O usuário confirmou o alvo exato: **resultados com as mesmas dimensões dos botões do menu: 30×30dp, 2dp entre itens, sprites proporcionais e centradas em ~84% do quadrado, com/sem fundo e nas duas orientações**.
+- **PR e merge:** [#196](https://github.com/LucianoToscano/PokeSearch/pull/196) integrada na main no commit `6f5b0f781be0c42c4635ebdf20c00297a2ecf1cd`. Gates Node QA, regressão Node LT169, QA Core LT211, Java LT62 e LT173 Android/OTA **SUCCESS**.
+- **Geometria única real:** `computeResultLayout` do `dock.html` retorna slots de 30dp e sprite 30dp na WebView de resultados, com 2dp entre eles. Dez resultados verticais ocupam 318dp; CSS `.spriteStage` com 30×30 e imagem `.sprite` com 25,2×25,2, `object-fit:contain;object-position:center`, sem segunda transformação de escala. A estrutura original, estados de imagem, cliques e metadados são preservados. **Mesmo padrão em `resultsTileStyle=card` e `none`, e horizontal/vertical**.
+- **Cartão e fundo:** CSS final `visual-results-tiles .spriteStage::before` fixa moldura 30×30dp com raio 8dp; `none` remove inteiramente a pseudo-moldura, não o slot.
+- **Janela nativa:** `OverlayService.resultTileDp()=30`; a largura horizontal considera 30dp por resultado e gap 2dp, preservando metadados opcionais e hitbox de cabeçalho >=38dp. `updateResultHeaderGrip` usa trilho seguro 38dp para não cortar ícone. A altura nativa acompanha a dimensão medida na WebView.
+- **Editor Visual:** grupo Pokémon/“Sprites e espaçamento” exibe o padrão fixo (30dp, 84%, 2dp) e mantém o controle de distância da Pokébola ao primeiro resultado; sliders de escala e distância entre sprites foram retirados desse painel por não terem mais efeito no padrão fixo. Preferências antigas continuam importáveis, e o controle P/M/G da Personalização geral permanece no aplicativo.
+- **Testes:** `app/tests/lt224-result-menu-parity.test.js` executa o cálculo real nas quatro combinações, verifica 30dp/25,2dp/2dp, CSS e ponte Android. Contratos históricos LT62, LT77, `visual-editor.test.js` e `overlay-ux.test.js` atualizados. [Plano Samsung](LT224_CARTOES_30DP_SPRITES_CENTRALIZADAS_QA_20261101.md).
+- **APK QA privado:** workflow [LT224 signed #41289254094](https://github.com/LucianoToscano/PokeSearch/actions/runs/41289254094), versão `0.02.24`, versionCode `54431`. Hash, certificado, tamanho e link Drive devem ser registrados apenas após verificar o artefato assinado.
+- **Distribuição:** não atualizar o canal estável até homologação física no Samsung. A última release pública previamente observada era LT215; verificar novamente o canal antes de afirmar versão pública atual. Sem alterações ao chat, API, login, filtros, posições de contas ou cooldown.
+
+---
+
 ## LT223 QA — RESULTADOS COM OU SEM FUNDO INDIVIDUAL (01/11/2026)
 
 - **Referência:** oito imagens enviadas pelo usuário mostram cinco Pokémon horizontais/verticais em quadrados escuros individuais (vidro/borda arredondada) ou sprites transparentes sem moldura, em combinações independentes da barra de menus. Pedido: aplicar o mesmo recurso ao PokeSearch, sem mexer no tamanho, ordem, dados ou interação dos resultados.
