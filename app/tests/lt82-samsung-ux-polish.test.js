@@ -57,8 +57,8 @@ check("first-ever onboarding persisted and only two short coaching messages",()=
 });
 check("Favorites native dialog chooses above/below available room",()=>{
  for(const t of ["root.addOnLayoutChangeListener(",
- "FavoritePanelGeometry.adjacent(anchorX,anchorY,screen,displayH,",
- "root.post(place[0]);",
+ "FavoritePanelGeometry.adjacentToToolbar(",
+ "root.post(position);",
  "window.addFlags(android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)",
  'sprites.setColumnCount(10)'])assert.ok(favorite.includes(t),t);
 });
