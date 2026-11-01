@@ -22,8 +22,8 @@ assert(candy.includes("requestHeight(142,false)"),"Candy information popup is co
 assert(candy.includes("requestHeight(34+6*30+5*3+6,false)"),"Candy interval menu is six compact tiles");
 assert(android.includes('"period".equals(panel)?142:158'),
  "Android keeps compact period and normal Location popup widths");
-assert(android.includes('"location-cooldown".equals(panel)?232:'),
- "Only LT214 reference table uses a readable wider window");
+assert(android.includes('boolean reference="location-cooldown".equals(panel)'),
+ "LT216 reference fits all bands vertically in the existing compact width");
 assert(android.includes('getSharedPreferences("prefs",MODE_PRIVATE)')&&
  android.includes('getString("visualPrefsJson","{}")'),
  "Candy reads the exact same visual preferences as Pokeballs");
