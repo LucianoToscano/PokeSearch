@@ -356,7 +356,7 @@ test("Pokebola rectangle X width height and after-gap are controlled together",(
   assert.equal(styles[key],value);
  assert.ok(dock.includes("margin-left:clamp(0px,"));
  assert.ok(dock.includes("margin-bottom:var(--visual-header-after,0px)!important"));
- assert.ok(java.includes("Math.round((dockDp()-width)/2f)+visualHeaderX"));
+ assert.ok(java.includes("Math.round((headerRail-width)/2f)+visualHeaderX"));
  assert.ok(java.includes("box.leftMargin=dp(left)"));
 });
 test("Editor supports precise one-unit adjustments and touch-area guides",()=>{
