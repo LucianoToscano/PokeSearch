@@ -99,7 +99,7 @@ test("light theme changes foreground and actual button backgrounds",()=>{
  assert.ok(dock.includes('background:var(--visual-menu-button-bg'));
 });
 test("service bounds horizontal overlay touch area to populated columns",()=>{
- assert.ok(java.includes("int columns=Math.max(1,Math.min(5,count()))"));
+ assert.ok(java.includes("int columns=Math.max(1,Math.min(Math.min(10,count()),fit))"));
  assert.ok(java.includes("perCard*columns"));
  assert.ok(java.includes("resultParams.width!=dp(resultWidthDp())"));
  assert.ok(java.includes("updateResultsWidth();"));
