@@ -94,6 +94,7 @@ function applyVisual(){
  set("popup-width",current.popupWidth+"px");
  set("popup-height",current.popupHeight+"px");
  body.classList.toggle("visual-menu-vertical",current.menuOrientation==="vertical");
+ body.classList.toggle("visual-menu-horizontal",current.menuOrientation==="horizontal");
  body.classList.toggle("visual-results-horizontal",current.resultsOrientation==="horizontal");
  const guided=controlsWindow?(current.menuGuides||previewArea==="menu"):
   resultWindow?(current.resultsGuides||previewArea==="results"):false;
