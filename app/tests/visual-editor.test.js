@@ -144,7 +144,8 @@ test("styling changes don't need reload of all Pokemon images",()=>{
 });
 test("horizontal native width includes the live CSS inter-card spacing",()=>{
  assert.match(java,/visualResultGapBetween=o\.optInt\("resultGapBetween",31\)/);
- assert.match(java,/ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)\*\(columns-1\)\+2/);
+ assert.match(java,/int gap=ResultsSpacingPolicy\.additionalRowGapPx\(visualResultGapBetween\)/);
+ assert.match(java,/int width=perCard\*columns\+gap\*\(columns-1\)\+2/);
  assert.ok(java.includes("resultParams.width=dp(resultWidthDp())"));
  assert.ok(dock.includes("column-gap:var(--visual-result-spacing,0px)!important"));
  const width=(count,card,gap)=>card*count+gap*(count-1)+2;
