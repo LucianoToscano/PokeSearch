@@ -4568,6 +4568,36 @@ body.popup-window.controls-window #choices.visualPanel .choiceHeader.visualEdito
   cursor:grabbing;
 }
 
+
+/* LT223: framed/bare RESULTS are independent of the MENU background.
+ * Preserve original row size, sprite alpha, metadata, card click handlers,
+ * native hit rectangles, order, and horizontal/vertical orientation.
+ * The card is drawn behind the existing sprite, with NO layout contribution.
+ */
+body.result-window.visual-results-tiles #shell{
+  background:transparent!important;
+}
+body.result-window.visual-results-tiles .spriteStage{
+  isolation:isolate!important;
+}
+body.result-window.visual-results-tiles .spriteStage::before{
+  content:"";display:block;position:absolute;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  width:calc(var(--dock) - 3px);height:calc(var(--dock) - 3px);
+  box-sizing:border-box;border-radius:10px;
+  background:var(--visual-result-tile-bg,rgba(21,25,32,.57));
+  border:1px solid var(--visual-result-tile-border,rgba(211,221,235,.39));
+  box-shadow:var(--visual-result-tile-shadow,0 1px 4px #0005);
+  pointer-events:none;z-index:0;
+}
+body.result-window.visual-results-tiles .spriteStage .sprite,
+body.result-window.visual-results-tiles .spriteStage .spriteFallback{
+  position:relative;z-index:1;
+}
+/* Without tiles, retain the exact old transparent, borderless render. */
+body.result-window:not(.visual-results-tiles) .spriteStage::before{
+  content:none!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
