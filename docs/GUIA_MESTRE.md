@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT221 QA — EDITOR VISUAL SEM RODAPÉ CORTADO (01/11/2026)
+
+- **Evidência:** vídeo Samsung de 76 segundos e duas imagens do layout-alvo (Menu vertical/Pokémon horizontal e Menu horizontal/Pokémon vertical). As orientações independentes funcionam; no vídeo às 04:17 o botão **‹ Voltar** no Editor Visual fica cortado no rodapé apesar de haver espaço vertical no display.
+- **Causa confirmada:** `dock.html fit()` enviava `resizePopup(... Math.min(450,...))`, `window.setNativePopupRoom` também limitava a 450; `OverlayService.resizeIndependentPopup()` fixava todo popup em 450dp. O Editor Visual em abas expandidas é maior.
+- **Correção:** [PR #193](https://github.com/LucianoToscano/PokeSearch/pull/193), merge `888f3a07aba01a161e07d28b49fe25f98cec9848`. Apenas `choiceOpen/popupKind="visual"` pode expandir à altura natural até 740dp, respeitando `screenHeightDp()-16`. Outros painéis continuam com cap 450dp. O arraste do Editor e screen clamp permanecem. O menu e Pokémon não mudam tamanhos, posições manuais, número máximo de resultados ou orientações.
+- **Testes:** novo `app/tests/lt221-visual-editor-full-height.test.js`, [plano de validação](LT221_EDITOR_VISUAL_SEM_CORTE_QA_20261101.md). Gates Node LT169, Node QA, QA Core, Java LT62 e Android LT173 aprovados na PR. QA físico Samsung ainda pendente.
+- **QA APK:** workflow [LT221 assinado](https://github.com/LucianoToscano/PokeSearch/actions/runs/41284706249), versionName `0.02.21`, versionCode `54428`; confirmar assinatura, integridade, origem e SHA-256 antes de distribuir. Não alterar release pública LT215.
+
+---
+
 ## LT220 QA — DISTÂNCIA ENTRE MENUS P1/P2 E RESULTADOS, SEM REDIMENSIONAR (01/11/2026)
 
 - **Capturas Samsung da LT219:** menu vertical e Personalização estão agora compactos; o menu pode ocupar a mesma região dos Pokémon e do menu da outra Pokébola, e resultados horizontais usam 5 colunas no máximo apesar de haver espaço para mais em determinadas larguras.
