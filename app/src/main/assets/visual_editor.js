@@ -293,11 +293,11 @@ function renderVisualEditor(){
  panel.appendChild(nav);
  if(tab==="results"){
   visualGroup(panel,"spacing","Sprites e espaçamento",panel=>{
-   // LT224: fixed sprite tiles stay identical to the 30dp menu buttons.
-   // Do not offer inert size/spacing sliders which could mislead the user.
+   // LT225: P shares the 30dp menu footprint. M/G progressively enlarge
+   // result cards via the native P/M/G selector, without scaling menu icons.
    const note=document.createElement("p");
    note.className="uxNote";
-   note.textContent="Padrão dos menus: cada Pokémon 30×30 dp, arte centralizada em 84% e espaço de 2 dp, com ou sem fundo.";
+   note.textContent="Tamanho dos resultados: P 30×30 dp · M 40×40 dp · G 50×50 dp. Sprites centralizadas a 88% e espaço de 2 dp, com ou sem fundo. Escolha P/M/G em Personalização.";
    panel.appendChild(note);
    addSlider(panel,"resultGapTop","Pokébola → primeiro"," px");
   });
