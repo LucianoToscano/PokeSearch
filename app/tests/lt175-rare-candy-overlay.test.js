@@ -23,7 +23,7 @@ assert(!source.includes("site.setOnTouchListener((v,e)->true)"),"do not steal to
 assert(source.includes("createCandyMenu()"));
 assert(source.includes("candyMenuPanel.loadUrl(\"file:///android_asset/rare_candy_controls.html\")"));
 assert(source.includes("allowedMenuUrl"),"bridge must be confined to local page");
-assert(source.includes('"location-cooldown".equals(panel)?232:'),"readable cooldown reference extends only this popup");
+assert(source.includes('boolean reference="location-cooldown".equals(panel)'),"full 16-row reference uses own native height");
 assert(source.includes('"period".equals(panel)?142:158'),"original period and location widths remain unchanged");
 assert(menu.includes("grid-template-columns:repeat(4,34px)"));
 assert(menu.includes("grid-auto-rows:30px"));
