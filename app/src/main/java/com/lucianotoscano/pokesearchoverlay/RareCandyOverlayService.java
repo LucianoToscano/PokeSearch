@@ -568,12 +568,15 @@ public final class RareCandyOverlayService extends Service {
         @android.webkit.JavascriptInterface public void candyMenuHeight(int height,boolean focus,String panel){
             main.post(()->{
                 if(!permitted()||menuParams==null||!candyMenuVisible)return;
-                int h=Math.max(34,Math.min(290,height));
-                menuParams.height=dp(h);
-                // Pokébola location/info panels are 148px, not 232px.
-                // A transparent 158dp native frame fits the exact CSS card.
-                menuParams.width=dp(h>34?("location-cooldown".equals(panel)?232:
-                    "period".equals(panel)?142:158):142);
+                boolean reference="location-cooldown".equals(panel);
+                int h=Math.max(34,Math.min(reference?396:290,height));
+                // The 16-row compact reference matches Pokemon Location:
+                // 148dp card inside 158dp hitbox, all rows visible at once.
+                // Keep the window on screen; short displays are constrained by
+                // the actual screen, not by the old 290dp generic popup cap.
+                menuParams.height=Math.min(dp(h),Math.max(dp(34),
+                    getResources().getDisplayMetrics().heightPixels-dp(12)));
+                menuParams.width=dp(h>34?("period".equals(panel)?142:158):142);
                 menuParams.flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
                     WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH|
                     (focus?0:WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
