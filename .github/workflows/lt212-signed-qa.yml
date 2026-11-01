@@ -1,0 +1,111 @@
+name: LT212 QA signed APK - transparent mode icon (no public release)
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/lt212-signed-qa.yml']
+permissions: {contents: read}
+concurrency: {group: lt212-qa-signed-once, cancel-in-progress: false}
+jobs:
+  build:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    timeout-minutes: 85
+    env:
+      POKE_TEST_VERSION_CODE: '54419'
+      POKE_TEST_VERSION_LABEL: '51219'
+      POKE_TEST_PUBLIC_VERSION: '0.02.12-qa'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+      POKE_SCRAPBOOK_STAGE1_QA: 'false'
+      POKE_SCRAPBOOK_ONLINE_QA: 'false'
+      APK_QA: PokeSearch-LT212-QA-v0.02.12-54419.apk
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.11.1'}
+      - name: Verify scope and icon QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s app/tests/lt212-mode-icons-alpha.test.js
+          test -s docs/LT212_ICONES_MODOS_VISUAL_QA_20261101.md
+          node app/tests/lt212-mode-icons-alpha.test.js
+          node app/tests/lt211-menu-reset-background.test.js
+          node app/tests/lt209-favorites-position-drag.test.js
+          node app/tests/lt208-menu-drag-visibility.test.js
+          for t in app/tests/*.test.js; do node "$t" >/dev/null || { node "$t"; exit 1; }; done
+          python3 scripts/test_ota_builder.py
+      - name: SDK and permanent signer for private QA
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          for k in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do test -n "$(printenv "$k")"; done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/lt212qa.p12"
+          chmod 600 "$RUNNER_TEMP/lt212qa.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt212qa.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt212qa.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Generate assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 12 --minimum-normal 950
+      - name: Build protected QA APK
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Verify APK version, R8, signature and icon in APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54419'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.02.12-qa'" PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
+          ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}')"
+          test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
+          unzip -p "$APK" assets/result-icons/modes/StarIVRaw.png > "$RUNNER_TEMP/icon.png"
+          cmp "$RUNNER_TEMP/icon.png" app/src/main/assets/result-icons/modes/StarIVRaw.png
+          test "$(stat -c %s "$APK")" -lt 35000000
+          cp "$APK" "$APK_QA"
+          sha256sum "$APK_QA" > SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          printf '%s\n' 'Somente para teste físico no Samsung. NÃO é publicação estável.' > QA_README.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT212-QA-Signed-Private
+          path: |
+            ${{ env.APK_QA }}
+            SHA256SUMS.txt
+            SIGNING-REPORT.txt
+            PACKAGE-VERSION.txt
+            SOURCE_COMMIT.txt
+            QA_README.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Erase private key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt212qa.p12"
