@@ -175,7 +175,9 @@ public class OverlayService extends Service {
         visualHeaderY=0,visualHeaderX=0,visualHeaderTouchWidth=35,
         visualHeaderTouchHeight=30,visualHeaderAfterGap=0;
     private int visualMenuBaseDp(){
-        return visualMenuVertical?232:MENU_BASE_DP;
+        // Same 30dp tile in both directions: only its POSITION changes.
+        // The old 232dp frame made icons stretch to full-width rows.
+        return visualMenuVertical?384:MENU_BASE_DP;
     }
     private int vInt(JSONObject obj,String key,int def,int min,int max){
         return Math.max(min,Math.min(max,obj.optInt(key,def)));
@@ -343,7 +345,7 @@ public class OverlayService extends Service {
             ",\"speciesIvRankMl\":"+resultShowSpeciesIvRankMl+"}";
     }
     private int menuDp(){return visualMenuVertical?
-        Math.max(1,Math.min(198,screenWidthDp()-8)):
+        Math.max(1,Math.min(34,screenWidthDp()-8)):
         Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
