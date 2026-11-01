@@ -1270,19 +1270,24 @@ public class OverlayService extends Service {
             b=PopupTouchGeometry.avoidResult(b,new PopupTouchGeometry.Bounds(
                 resultParams.x,resultParams.y,resultParams.width,resultParams.height,false),
                 m.widthPixels,m.heightPixels,dp(6));
-        if("visual".equals(popupKind)){
-            // LT218: editor may be moved like a result card. Clamp the entire
-            // native hit rectangle, not only the CSS panel. This works even
-            // when menu/toolbar moves or the screen rotates, and is scoped
-            // to the active Pokéball via overlayPrefs().
+        if("visual".equals(popupKind)||"appearance".equals(popupKind)){
+            // LT219: the entry-level Personalização window ALSO needs the
+            // screen clamp. The LT218 clamp covered only the Editor Visual,
+            // leaving its parent launcher partially off-screen at the bottom.
+            // Keep saved drag offsets exclusively for Editor Visual and P1/P2.
+            boolean visual="visual".equals(popupKind);
             int margin=dp(4);
             int safeW=Math.min(b.width,Math.max(dp(40),m.widthPixels-2*margin));
             int safeH=Math.min(b.height,Math.max(dp(40),m.heightPixels-2*margin));
             android.content.SharedPreferences prefs=overlayPrefs();
-            int savedX=prefs.getInt("visualEditorX",-1);
-            int savedY=prefs.getInt("visualEditorY",-1);
+            int savedX=visual?prefs.getInt("visualEditorX",-1):-1;
+            int savedY=visual?prefs.getInt("visualEditorY",-1):-1;
             int x=savedX<0?b.x:dp(savedX);
             int y=savedY<0?b.y:dp(savedY);
+            // If the popup is launched near the bottom, prefer a centered
+            // complete window rather than a two-line sliver at screen edge.
+            if(savedY<0&&b.y+safeH>m.heightPixels-margin)
+                y=Math.max(margin,(m.heightPixels-safeH)/2);
             x=Math.max(margin,Math.min(m.widthPixels-safeW-margin,x));
             y=Math.max(margin,Math.min(m.heightPixels-safeH-margin,y));
             b=new PopupTouchGeometry.Bounds(x,y,safeW,safeH,false);
