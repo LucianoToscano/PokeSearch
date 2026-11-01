@@ -54,7 +54,7 @@ assert.ok(f.x>3,"off-centre alpha art is shifted toward centre");
 assert.ok(f.y>0);
 e=spriteEnv({left:0,right:95,top:0,bottom:95});
 f=e.api.applyResultTile(e.img);
-assert.ok(f.zoom>=.80&&f.zoom<=.90,"full-frame image not cropped");
+assert.ok(f.zoom>=.96&&f.zoom<=1.01,"full-frame image scales near unity without cropping");
 e=spriteEnv({left:40,right:54,top:40,bottom:54});
 f=e.api.applyResultTile(e.img);
 assert.equal(f.zoom,2.85,"tiny icon scale bounded to avoid wild growth");
