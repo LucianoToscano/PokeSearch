@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT211 — AUDITORIA 360° PÓS-RELEASE E CORREÇÕES DE BASE (31/10/2026)
+
+- **Integração:** [PR #182](https://github.com/LucianoToscano/PokeSearch/pull/182) mesclada à `main` em `198ed990e258814a263623b2d2e7329274505865` após QA no GitHub. O código-fonte mudou, **mas não foi publicado novo APK**: a versão oficial instalada continua LT211 (`0.02.11`, versionCode `54418`), com a assinatura e os hashes originais da distribuição.
+- **Correção efetiva:** normalização da exibição de bloqueios HTTP 429 no Doce Raro; `1h60m` não aparece mais nos valores 7141–7199 s. Aguardar o provedor e os limites continuam idênticos. `ProviderWaitFormatterTest`: 15/15 casos Java no teste isolado.
+- **Teste histórico:** `lt74-local-update-preview.test.js` deixou de exigir simulação removida e agora protege os caminhos reais de atualização Drive/GitHub. Base LT206 usada na revalidação: 191/191 testes Node, 897/897 arquivos íntegros por SHA-256 e 13/13 testes Java puros históricos.
+- **Novos gates CI:** `.github/workflows/qa-core-contracts.yml` verifica todos os Java puros, regressões Node e OTA. QA da PR + pipelines Node/Java/Android: SUCCESS; homologação **física** Samsung, login real do provedor, Firebase publicado e certificação de um **novo** APK permanecem pendentes.
+- **Auditoria:** [Relatório QA LT211](LT211_AUDITORIA_COMPARATIVA_QA_20261031.md). Priorizados: quota/moderação no chat Firebase e App Check, direitos dos áudios/sprites de terceiros, PNG StarIVRaw com fundo preto, política LGPD, acessibilidade, 235 workflows históricos, redundância de arquivos e testes dos menus/Favoritos em dois overlays.
+- **Atenção:** NÃO alterar a tag LT211 publicada nem republicar binário diferente com `54418`. Qualquer versão subsequente exige versionCode monotônico, assinatura permanente, QA Android real, APK/ZIP com SHA-256, atualização e registro no Drive.
+
+---
+
 ## LT211 — FAVORITOS MÓVEIS, ORGANIZADOR, BACKGROUND E DISTRIBUIÇÃO (01/11/2026)
 
 - **Origem:** LT206 oficial, passando pelas correções incrementais LT207, LT208, LT209, LT210 e LT211. [PR #181](https://github.com/LucianoToscano/PokeSearch/pull/181) mesclada à `main` no commit `0d9ae0288db7eb5fa68cf0408ac1d6ae19a5731f`.
