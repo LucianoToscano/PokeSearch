@@ -280,6 +280,14 @@ public final class PokemonPicker {
     /** LT210: true toolbar screen edges, accounting for native popups ABOVE it. */
     public static Dialog show(Context activity,Runnable changed,Runnable dismissed,
                             int anchorX,int anchorY,int toolbarTop,int toolbarBottom){
+        return show(activity,changed,dismissed,anchorX,anchorY,toolbarTop,toolbarBottom,false);
+    }
+    /** P1 and P2 can each move their Favorites panel without moving the other.
+     * Favorite entries/profiles stay shared; only the window geometry is scoped.
+     */
+    public static Dialog show(Context activity,Runnable changed,Runnable dismissed,
+                            int anchorX,int anchorY,int toolbarTop,int toolbarBottom,
+                            boolean secondaryOverlay){
         List<Entry> all=readCatalog(activity);
         if(all.isEmpty()){
             Toast.makeText(activity,"Catálogo de Pokémon indisponível",Toast.LENGTH_LONG).show();
@@ -628,6 +636,8 @@ public final class PokemonPicker {
             final int displayH=activity.getResources().getDisplayMetrics().heightPixels;
             final int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
             final int margin=dp(activity,8),gap=dp(activity,8);
+            // Keep the existing P1 prefs file and historic key names for upgrades.
+            // The P2 suffix is applied ONLY to window position, never favorites.
             final SharedPreferences positionPrefs=activity.getSharedPreferences("prefs",0);
             final int barTop=toolbarTop>=0?toolbarTop:Math.max(0,anchorY-dp(activity,17));
             final int barBottom=toolbarBottom>barTop?toolbarBottom:barTop+dp(activity,34);
@@ -645,9 +655,9 @@ public final class PokemonPicker {
                 if(anchorX<0||anchorY<0||dragInProgress[0]||repositioning[0])return;
                 int actualHeight=root.getHeight()>0?root.getHeight():root.getMeasuredHeight();
                 if(actualHeight<=0)return;
-                boolean saved=positionPrefs.getBoolean("favoritePanelManualV1",false)
-                    &&Math.abs(positionPrefs.getInt("favoritePanelScreenWV1",0)-screen)<dp(activity,10)
-                    &&Math.abs(positionPrefs.getInt("favoritePanelScreenHV1",0)-displayH)<dp(activity,10);
+                boolean saved=positionPrefs.getBoolean(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelManualV1"),false)
+                    &&Math.abs(positionPrefs.getInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelScreenWV1"),0)-screen)<dp(activity,10)
+                    &&Math.abs(positionPrefs.getInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelScreenHV1"),0)-displayH)<dp(activity,10);
                 // Always have a valid initial position, even when stored
                 // coordinates are absent, stale or invalid.
                 int[] xy=FavoritePanelGeometry.adjacentToToolbar(
@@ -655,8 +665,8 @@ public final class PokemonPicker {
                     actualHeight,margin,gap);
                 if(saved){
                     int[] candidate=FavoritePanelGeometry.onScreen(
-                        positionPrefs.getInt("favoritePanelXV1",margin),
-                        positionPrefs.getInt("favoritePanelYV1",margin),
+                        positionPrefs.getInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelXV1"),margin),
+                        positionPrefs.getInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelYV1"),margin),
                         screen,displayH,preferredWidth,actualHeight,margin);
                     // An older LT209 position must never reopen over toolbar.
                     if(!FavoritePanelGeometry.overlapsToolbar(
@@ -732,11 +742,11 @@ public final class PokemonPicker {
                                 tracking[0]=false;dragInProgress[0]=false;
                                 if(moved[0]){
                                     android.view.WindowManager.LayoutParams lp=window.getAttributes();
-                                    positionPrefs.edit().putBoolean("favoritePanelManualV1",true)
-                                        .putInt("favoritePanelXV1",lp.x)
-                                        .putInt("favoritePanelYV1",lp.y)
-                                        .putInt("favoritePanelScreenWV1",screen)
-                                        .putInt("favoritePanelScreenHV1",displayH).apply();
+                                    positionPrefs.edit().putBoolean(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelManualV1"),true)
+                                        .putInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelXV1"),lp.x)
+                                        .putInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelYV1"),lp.y)
+                                        .putInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelScreenWV1"),screen)
+                                        .putInt(FavoritePanelPositionKeys.key(secondaryOverlay,"favoritePanelScreenHV1"),displayH).apply();
                                 }
                             }
                             return true;
