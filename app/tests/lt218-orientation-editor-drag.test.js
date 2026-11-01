@@ -23,8 +23,8 @@ assert.match(preset,/!"vertical"\.equals\(normalized\.optString\("resultsOrienta
 assert.match(native,/return visualMenuVertical\?384:MENU_BASE_DP/);
 assert.match(native,/visualMenuVertical\?\s*Math\.max\(1,Math\.min\(34,screenWidthDp\(\)-8\)\)/);
 const finalCss=dock.slice(dock.indexOf("/* LT218 — ORIENTATION IS POSITION"));
-assert.ok(finalCss.includes("grid-template-rows:repeat(12,30px)!important"));
-assert.ok(finalCss.includes("grid-template-columns:30px!important"));
+assert.ok(finalCss.includes("display:flex!important;flex-flow:column nowrap!important"));
+assert.ok(finalCss.includes("width:34px!important;min-width:34px!important;max-width:34px!important"));
 assert.match(finalCss,/visual-menu-vertical #quickMenuList \.quickRow,[\s\S]*?width:30px!important/);
 assert.match(finalCss,/visual-menu-vertical #quickMenuList \.quickRow,[\s\S]*?height:30px!important/);
 assert.match(finalCss,/not\(\.visual-menu-vertical\) #quickMenuList[\s\S]*?grid-auto-flow:column!important/);
@@ -48,8 +48,8 @@ assert.match(native,/private void moveVisualEditorBy\(int dxDp,int dyDp\)/);
 assert.match(native,/!"visual"\.equals\(popupKind\)/);
 assert.match(native,/\.putInt\("visualEditorX"/);
 assert.match(native,/\.putInt\("visualEditorY"/);
-assert.match(native,/int savedX=prefs\.getInt\("visualEditorX",-1\)/);
-assert.match(native,/int savedY=prefs\.getInt\("visualEditorY",-1\)/);
+assert.match(native,/int savedX=visual\?prefs\.getInt\("visualEditorX",-1\):-1/);
+assert.match(native,/int savedY=visual\?prefs\.getInt\("visualEditorY",-1\):-1/);
 assert.match(native,/Math\.min\(b\.height,Math\.max\(dp\(40\),m\.heightPixels-2\*margin\)\)/);
 assert.match(finalCss,/body\.popup-window\.controls-window #choices\.visualPanel\{/);
 

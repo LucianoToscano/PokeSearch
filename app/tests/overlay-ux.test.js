@@ -31,7 +31,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
 test("Atualização offers OFF, 3, 5, 10, 15 and 20 minutes without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
- dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
+ dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?384:34;')&&
  dock.includes("Native.resizeMenu(h)")&&service.includes("menuRequestedHeightDp=visualMenuBaseDp();"));
 test("Bridge supports explicit filter selection",service.includes("public void setMode(String s)"));
 test("Bridge supports explicit interval selection",service.includes("public void setIntervalMinutes(int minutes)"));
@@ -637,7 +637,7 @@ test("Android responsive controls have no phantom spacer below popup",
   service.includes('menuParams.y=Math.max(0,Math.min(bottom-menuParams.height,')&&
   dock.includes('#choices{display:none;position:absolute;top:34px;'));
 test("UX-MENU-01 measures horizontal and vertical menus with dynamic base height",
- dock.includes('if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?232:34;')&&
+ dock.includes('if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?384:34;')&&
  service.includes("menuParams.height=dp(visualMenuBaseDp())")&&
  service.includes("Math.min(450,screenHeightDp()-24)"));
 test("All legacy twelve bridge buttons remain unique in HTML",

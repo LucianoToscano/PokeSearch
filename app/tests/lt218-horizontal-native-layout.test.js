@@ -41,7 +41,7 @@ assert.match(css,/visual-menu-horizontal #quickMenuList \.quickRow,[^\{]*\{[^}]*
 assert.match(css,/result-window:not\(\.visual-results-horizontal\) #spawns\{[^}]*flex-direction:column!important/s);
 const menuCss=css.slice(0,css.indexOf("/* LT218 — ORIENTATION IS POSITION"));
 assert.ok(!menuCss.includes("overflow-y:auto"),"horizontal menu is never scrollable");
-assert.match(css,/visual-menu-vertical #quickMenuList[^\{]*\{[^}]*grid-template-columns:30px!important/s);
+assert.match(css,/visual-menu-vertical #quickMenuList[^\{]*\{[^}]*flex-flow:column nowrap!important/s);
 assert.match(css,/visual-menu-vertical #quickMenuList \.quickRow,[^\{]*\{[^}]*width:30px!important/s);
 assert.ok(dock.includes("body.controls-window.visual-menu-vertical #quickRows"),"legacy list remains supported");
 // Screenshot regression: never allow the tall 232px list after applying horizontal preset.

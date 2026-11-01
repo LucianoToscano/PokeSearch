@@ -4511,15 +4511,14 @@ body.controls-window.visual-menu-vertical #menu{
 body.controls-window.visual-menu-vertical #quickMenuList,
 body.controls-window.visual-menu-vertical #menu.subview #quickMenuList,
 body.controls-window.visual-menu-vertical.popup-above #quickMenuList{
-  display:grid!important;position:absolute!important;top:0!important;
+  display:flex!important;flex-flow:column nowrap!important;
+  position:absolute!important;top:0!important;
   left:0!important;bottom:auto!important;
   width:34px!important;min-width:34px!important;max-width:34px!important;
   height:384px!important;min-height:384px!important;max-height:384px!important;
   padding:0 2px!important;margin:0!important;overflow:hidden!important;
-  grid-template-columns:30px!important;
-  grid-template-rows:repeat(12,30px)!important;
-  grid-auto-flow:row!important;gap:2px!important;
-  align-content:start!important;align-items:start!important;
+  gap:2px!important;align-content:flex-start!important;
+  align-items:flex-start!important;justify-content:flex-start!important;
 }
 body.controls-window.visual-menu-vertical #quickRows,
 body.controls-window.visual-menu-vertical #quickUtilities,
@@ -4896,7 +4895,7 @@ let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
- if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?232:34; // scrolling column or original ribbon.
+ if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?384:34; // 12 fixed 30px tiles in a single column.
  if(typeof popupWindow!=="undefined"&&popupWindow){
   if(choiceOpen&&menuOpen){
    const pane=document.getElementById("choices"),rect=pane.getBoundingClientRect();
@@ -4931,7 +4930,7 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
  if(controlsWindow&&choiceOpen&&menuOpen){
   positionPopupUnderTrigger();
   const popup=document.getElementById("choices");
-  const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?232:34;
+  const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?384:34;
   if(choiceOpen==="more"){
    // Exactly N original 30px tiles, independent of WebView height/reflow.
    const tiles=popup.querySelectorAll(".quickMoreAction").length;
