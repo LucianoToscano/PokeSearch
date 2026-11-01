@@ -13,7 +13,7 @@ assert.equal(new Set(ids).size,12,"each action unique");
 assert.ok(ids.includes("appearance")&&ids.includes("sh")&&ids.includes("close"));
 const prefs=dock.split("function normalizedQuickPrefs(p){")[1]?.split("function saveQuickPrefs()")[0]||"";
 assert.ok(prefs,"normalized preferences exist");
-const clean=new Function("p","QUICK_DEFAULT_ORDER", "const QUICK_DEFAULT_ORDER_IGNORED=0; return (function normalizedQuickPrefs(p){"+prefs+"})(p)");
+const clean=new Function("p","QUICK_DEFAULT_ORDER","function normalizedQuickPrefs(p){"+prefs+";return normalizedQuickPrefs(p);");
 const before=ids.slice();
 const initial=clean({order:before,hidden:[]},ids);
 assert.deepEqual(initial.order,ids,"default order unchanged");
