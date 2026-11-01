@@ -4601,13 +4601,11 @@ body.result-window:not(.visual-results-tiles) .spriteStage::before{
   content:none!important;
 }
 
-/* LT224: the Pokémon RESULTS now use the exact 30×30dp button footprint
- * of the menu, with 2dp spacing, in BOTH background modes and orientations.
- * Image art uses a centered 84% safe square (25.2dp), never a compounded
- * species art-fit / Editor zoom that made LT223 sprites microscopic.
- * Each sprite keeps original aspect ratio via object-fit:contain.
- * Metadata remains in its independent adjacent strip, never discarded.
- */
+
+/* LT225: menu button equivalence only at P. M/G enlarge RESULT slots,
+ * not the menu. 2dp between tiles; centered 88% sprite art. Native hitboxes
+ * and sprite geometry are based on the same 30/40/50dp mapping.
+ * Scoped to result-window so no menu or editor dimensions are modified. */
 body.result-window #spawns{
   column-gap:2px!important;row-gap:2px!important;
   gap:2px!important;
@@ -4616,35 +4614,39 @@ body.result-window #spawns{
 body.result-window .spawn,
 body.result-window.visual-results-horizontal .spawn{
   box-sizing:border-box!important;
-  width:calc(30px + var(--visual-meta-width,0px))!important;
-  min-width:calc(30px + var(--visual-meta-width,0px))!important;
-  max-width:calc(30px + var(--visual-meta-width,0px))!important;
-  height:30px!important;min-height:30px!important;max-height:30px!important;
-  flex:0 0 30px!important;
+  width:calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
+  min-width:calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
+  max-width:calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
+  height:var(--result-tile-size,30px)!important;
+  min-height:var(--result-tile-size,30px)!important;
+  max-height:var(--result-tile-size,30px)!important;
+  flex:0 0 var(--result-tile-size,30px)!important;
   margin:0!important;padding:0!important;
   display:flex!important;align-items:center!important;
-  justify-content:flex-start!important;
-  background:transparent!important;
+  justify-content:flex-start!important;background:transparent!important;
 }
 body.result-window.visual-results-horizontal .spawn{
-  flex:0 0 calc(30px + var(--visual-meta-width,0px))!important;
+  flex:0 0 calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
 }
 body.result-window .spriteStage{
   box-sizing:border-box!important;
-  width:30px!important;height:30px!important;
-  min-width:30px!important;min-height:30px!important;
-  max-width:30px!important;max-height:30px!important;
-  flex:0 0 30px!important;
+  width:var(--result-tile-size,30px)!important;
+  height:var(--result-tile-size,30px)!important;
+  min-width:var(--result-tile-size,30px)!important;
+  min-height:var(--result-tile-size,30px)!important;
+  max-width:var(--result-tile-size,30px)!important;
+  max-height:var(--result-tile-size,30px)!important;
+  flex:0 0 var(--result-tile-size,30px)!important;
   display:flex!important;align-items:center!important;
-  justify-content:center!important;
-  position:relative!important;
+  justify-content:center!important;position:relative!important;
   padding:0!important;margin:0!important;
 }
 body.result-window .spriteStage .sprite{
   box-sizing:border-box!important;
-  width:25.2px!important;height:25.2px!important;
-  min-width:0!important;max-width:25.2px!important;
-  min-height:0!important;max-height:25.2px!important;
+  width:var(--result-art-size,26.4px)!important;
+  height:var(--result-art-size,26.4px)!important;
+  min-width:0!important;max-width:var(--result-art-size,26.4px)!important;
+  min-height:0!important;max-height:var(--result-art-size,26.4px)!important;
   flex:none!important;display:block!important;
   object-fit:contain!important;object-position:center center!important;
   transform:none!important;transform-origin:center center!important;
@@ -4653,27 +4655,22 @@ body.result-window .spriteStage .sprite{
 }
 body.result-window .spriteStage .spriteFallback{
   inset:0!important;display:flex!important;
-  width:30px!important;height:30px!important;
+  width:var(--result-tile-size,30px)!important;
+  height:var(--result-tile-size,30px)!important;
   align-items:center!important;justify-content:center!important;
-  font-size:10px!important;
+  font-size:calc(var(--result-tile-size,30px) * .33)!important;
 }
-body.result-window .spriteStage.loaded .spriteFallback{
-  display:none!important;
-}
-body.result-window .spriteStage.failed .sprite{
-  display:none!important;
-}
+body.result-window .spriteStage.loaded .spriteFallback{display:none!important}
+body.result-window .spriteStage.failed .sprite{display:none!important}
 body.result-window.visual-results-tiles .spriteStage::before{
-  width:30px!important;height:30px!important;
+  width:var(--result-tile-size,30px)!important;
+  height:var(--result-tile-size,30px)!important;
   border-radius:8px!important;
   left:50%!important;top:50%!important;
   transform:translate(-50%,-50%)!important;
   pointer-events:none!important;
 }
-body.result-window:not(.visual-results-tiles) .spriteStage::before{
-  content:none!important;
-}
-
+body.result-window:not(.visual-results-tiles) .spriteStage::before{content:none!important}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -6863,13 +6860,14 @@ function additionalResultGapPx(raw){
  return Math.max(0,Math.min(34,stored-31));
 }
 function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,textEnabled,opts=null,league="",preparedLines=null){
- // LT224: one fixed-size tile in either orientation and either background
- // mode. WebView row geometry must match the 30dp menu button exactly.
- // Keep every result and all metadata; overflow stays scrollable if needed.
+ // LT225: P is the menu's 30dp size; M=40dp and G=50dp.
+ // Match Android's 35/45/55 native size presets without changing menus.
  if(typeof resultWindow!=="undefined"&&resultWindow){
+  const size=Number(chosenSprite);
+  const tile=size===55?50:size===45?40:30;
   const visible=Math.min(items.length,10);
-  return {rows:items.map(()=>30),sprite:30,
-   total:visible?visible*30+(visible-1)*2:0,
+  return {rows:items.map(()=>tile),sprite:tile,
+   total:visible?visible*tile+(visible-1)*2:0,
    visibleCount:visible,scrollable:items.length>10,infoScale:1};
  }
  const size=Math.max(18,Number(chosenSprite)||45);
@@ -6935,13 +6933,17 @@ function draw(){
  document.documentElement.style.setProperty("--row",row+"px");
  document.documentElement.style.setProperty("--sprite",(resultLayout?resultLayout.sprite:spriteSize)+"px");
  document.documentElement.style.setProperty("--result-info-scale",String(resultLayout?.infoScale||1));
- document.documentElement.style.setProperty("--dock",(resultWindow?30:spriteSize+8)+"px");
+ document.documentElement.style.setProperty("--dock",(resultWindow?resultLayout.sprite:spriteSize+8)+"px");
+ if(resultWindow){
+  document.documentElement.style.setProperty("--result-tile-size",resultLayout.sprite+"px");
+  document.documentElement.style.setProperty("--result-art-size",(resultLayout.sprite*0.88).toFixed(1)+"px");
+ }
  // P/M/G scales the header DOWN, never above its original 21px.
  const metadataVisible=resultWindow&&preparedLines.some(lines=>lines.length>0);
  const metaWidth=metadataVisible?96:0;
  document.documentElement.style.setProperty("--results-width",
   resultWindow&&window.visualPrefs?.resultsOrientation==="horizontal"?"calc(100vw - 2px)":
-  Math.max(38,resultWindow?30+metaWidth:spriteSize+8+metaWidth)+"px");
+  Math.max(38,resultWindow?resultLayout.sprite+metaWidth:spriteSize+8+metaWidth)+"px");
  document.documentElement.style.setProperty("--visual-meta-width",metaWidth+"px");
  if(resultWindow&&displayedMetadataWidth!==metaWidth){
   displayedMetadataWidth=metaWidth;
