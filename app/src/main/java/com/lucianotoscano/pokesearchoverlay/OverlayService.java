@@ -1366,7 +1366,13 @@ public class OverlayService extends Service {
     }
     private void resizeIndependentPopup(int width,int height){
         if(popupKind.isEmpty()||!popupLoaded||!menuExpanded)return;
-        int w=Math.max(1,Math.min(330,width)),h=Math.max(1,Math.min(450,height));
+        // LT221: give only Editor Visual enough vertical room to show its
+        // entire form when the physical display permits. Never enlarge other
+        // popup designs; on compact screens keep content scrollable in-bounds.
+        int visualMax="visual".equals(popupKind)?
+            Math.max(100,Math.min(740,screenHeightDp()-16)):450;
+        int w=Math.max(1,Math.min(330,width)),
+            h=Math.max(1,Math.min(visualMax,height));
         // The Location popup must never feed a transient shrinking WebView
         // width back to WindowManager after keyboard focus or React updates.
         // LT103: the LOCATION native window was hard-clamped to 286dp even
