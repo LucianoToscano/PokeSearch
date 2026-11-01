@@ -139,11 +139,21 @@ function toast(msg){
 function usePreset(name){
  if(!Object.prototype.hasOwnProperty.call(PRESETS,name))return;
  current=normalize({...current,...PRESETS[name]});
- applyVisual();saveSoon();renderVisualEditor();
- // Only explicit "Topo Horizontal" moves the dock; ordinary orientation
- // selectors must never teleport the Pokéball or reset its manual position.
- if(name==="topHorizontal"&&window.Native&&Native.applyTopHorizontalLayout)
-  Native.applyTopHorizontalLayout();
+ applyVisual();renderVisualEditor();
+ // LT218: the previous implementation moved the native windows BEFORE the
+ // delayed visual prefs save. Java still saw menuOrientation="vertical" and
+ // created the tall 232dp one-button-per-row toolbar in the screenshots.
+ // Persist new directions and move the dock in a SINGLE ordered UI-thread task.
+ if(name==="topHorizontal"&&window.Native&&Native.applyTopHorizontalPreset){
+  clearTimeout(saveTimer);saveTimer=null;
+  pendingVisualJson=JSON.stringify(current);
+  Native.applyTopHorizontalPreset(pendingVisualJson);
+ }else{
+  // Keep original presets and compatibility with older native bridges.
+  saveSoon();
+  if(name==="topHorizontal"&&window.Native&&Native.applyTopHorizontalLayout)
+   Native.applyTopHorizontalLayout();
+ }
  toast("✓ "+(name==="topHorizontal"?"Topo Horizontal":"Preset "+name)+
   " aplicado nesta Pokébola");
 }
