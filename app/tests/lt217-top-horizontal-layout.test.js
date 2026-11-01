@@ -15,7 +15,9 @@ assert.match(editor,/btn\(quickPreset,"↗ Topo Horizontal"/);
 assert.match(editor,/if\(name==="topHorizontal"&&window\.Native&&Native\.applyTopHorizontalLayout\)/);
 assert.match(editor,/if\(!Object\.prototype\.hasOwnProperty\.call\(PRESETS,name\)\)return/);
 assert.match(editor,/current=normalize\(\{\.\.\.current,\.\.\.PRESETS\[name\]\}\)/);
-assert.match(editor,/applyVisual\(\);saveSoon\(\);renderVisualEditor\(\)/);
+assert.match(editor,/applyVisual\(\);renderVisualEditor\(\)/);
+assert.match(editor,/Native\.applyTopHorizontalPreset\(pendingVisualJson\)/,
+ "LT218: orientation persisted before native geometry in one call");
 assert.match(editor,/body\.classList\.toggle\("visual-menu-vertical",current\.menuOrientation==="vertical"\)/);
 assert.match(editor,/body\.classList\.toggle\("visual-results-horizontal",current\.resultsOrientation==="horizontal"\)/);
 assert.match(dock,/body\.result-window\.visual-results-horizontal #spawns/);
