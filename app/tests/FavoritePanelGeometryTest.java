@@ -13,7 +13,7 @@ public final class FavoritePanelGeometryTest {
             360,300,740,1500,620,270,8,4,17),50,321);
         // Low toolbar -> prefer above and leave the entire bar unobstructed.
         equal("near bottom -> above",FavoritePanelGeometry.adjacent(
-            360,1050,740,1500,620,270,8,4,17),50,759);
+            360,1300,740,1500,620,270,8,4,17),50,1009);
         equal("right edge stays visible",FavoritePanelGeometry.adjacent(
             739,300,740,1500,620,270,8,4,17),112,321);
         equal("left edge stays visible",FavoritePanelGeometry.adjacent(
