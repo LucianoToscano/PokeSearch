@@ -1,0 +1,59 @@
+name: QA core LT211 - Android logic and Node contracts
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'scripts/test_ota_builder.py'
+      - '.github/workflows/qa-core-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qa-core-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  core-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pure Java contracts including update/bridge/popup/security
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="${RUNNER_TEMP}/pokesearch-core-java"
+          mkdir -p "$out"
+          base=app/src/main/java/com/lucianotoscano/pokesearchoverlay
+          sources=(
+            CandyCooldownPolicy CandyPickupEvidence FavoritePanelGeometry
+            DiagnosticSanitizer EncounterAlertText
+            LocalBridgePagePolicy PresenceWindowState
+            PopupTouchGeometry ResultsSpacingPolicy
+            SupportMissionPolicy UpdatePolicy VerifiedIvMath
+            VersionNames ProviderWaitFormatter
+          )
+          inputs=()
+          for name in "${sources[@]}"; do inputs+=("$base/$name.java"); done
+          javac --release 17 -encoding UTF-8 -d "$out" "${inputs[@]}" app/tests/*Test.java
+          for test in app/tests/*Test.java; do
+            name="$(basename "$test" .java)"
+            java -cp "$out" "com.lucianotoscano.pokesearchoverlay.$name"
+          done
+      - name: Node regressions (including LT74 retirement contract)
+        shell: bash
+        run: |
+          set -euo pipefail
+          for t in app/tests/*.test.js; do
+            node "$t"
+          done
+      - name: Validate OTA manifest builder
+        run: python3 scripts/test_ota_builder.py
