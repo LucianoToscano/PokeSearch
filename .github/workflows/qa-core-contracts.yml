@@ -48,15 +48,11 @@ jobs:
             name="$(basename "$test" .java)"
             java -cp "$out" "com.lucianotoscano.pokesearchoverlay.$name"
           done
-      - name: Node regressions (excluding retired LT74 preview contract)
+      - name: Node regressions (including LT74 retirement contract)
         shell: bash
         run: |
           set -euo pipefail
           for t in app/tests/*.test.js; do
-            if [[ "$t" == "app/tests/lt74-local-update-preview.test.js" ]]; then
-              echo "::notice::LT74 preview removed in LT75: obsolete test intentionally excluded"
-              continue
-            fi
             node "$t"
           done
       - name: Validate OTA manifest builder
