@@ -24,7 +24,7 @@ assert.deepEqual(custom.order,shuffled,"Shiny and Close maintain user-chosen pos
 assert.deepEqual(custom.hidden,["sh","close","donate"],"only Personalização is never hidden");
 assert.equal(custom.hidden.includes("appearance"),false);
 assert.equal(custom.order.length,12);
-const partial=clean({order:ids.slice(0,3),hidden:["close"]},ids);
+const partial=clean({order:ids.filter(id=>id!=="bell"),hidden:["close"]},ids);
 assert.equal(partial.order.length,12,"missing IDs restored without dropping existing");
 assert.ok(partial.hidden.includes("close"));
 assert.ok(service.includes('!"appearance".equals(id)'),"Android only forbids hiding Personalização");
