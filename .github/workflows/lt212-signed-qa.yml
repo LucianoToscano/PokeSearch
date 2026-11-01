@@ -14,7 +14,7 @@ jobs:
     env:
       POKE_TEST_VERSION_CODE: '54419'
       POKE_TEST_VERSION_LABEL: '51219'
-      POKE_TEST_PUBLIC_VERSION: '0.02.12-qa'
+      POKE_TEST_PUBLIC_VERSION: '0.02.12'
       POKE_CONTROLLED_DISTRIBUTION: 'true'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
@@ -81,7 +81,7 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
           grep -Fq "versionCode='54419'" PACKAGE-VERSION.txt
-          grep -Fq "versionName='0.02.12-qa'" PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.02.12'" PACKAGE-VERSION.txt
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > SIGNING-REPORT.txt
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
           ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}')"
