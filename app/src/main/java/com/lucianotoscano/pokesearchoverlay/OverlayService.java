@@ -175,7 +175,9 @@ public class OverlayService extends Service {
         visualHeaderY=0,visualHeaderX=0,visualHeaderTouchWidth=35,
         visualHeaderTouchHeight=30,visualHeaderAfterGap=0;
     private int visualMenuBaseDp(){
-        return visualMenuVertical?232:MENU_BASE_DP;
+        // Same 30dp tile in both directions: only its POSITION changes.
+        // The old 232dp frame made icons stretch to full-width rows.
+        return visualMenuVertical?384:MENU_BASE_DP;
     }
     private int vInt(JSONObject obj,String key,int def,int min,int max){
         return Math.max(min,Math.min(max,obj.optInt(key,def)));
@@ -343,7 +345,7 @@ public class OverlayService extends Service {
             ",\"speciesIvRankMl\":"+resultShowSpeciesIvRankMl+"}";
     }
     private int menuDp(){return visualMenuVertical?
-        Math.max(1,Math.min(198,screenWidthDp()-8)):
+        Math.max(1,Math.min(34,screenWidthDp()-8)):
         Math.max(1,Math.min(330,screenWidthDp()-8));} // twelve compact icons, single-row thin menu
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
@@ -1268,6 +1270,23 @@ public class OverlayService extends Service {
             b=PopupTouchGeometry.avoidResult(b,new PopupTouchGeometry.Bounds(
                 resultParams.x,resultParams.y,resultParams.width,resultParams.height,false),
                 m.widthPixels,m.heightPixels,dp(6));
+        if("visual".equals(popupKind)){
+            // LT218: editor may be moved like a result card. Clamp the entire
+            // native hit rectangle, not only the CSS panel. This works even
+            // when menu/toolbar moves or the screen rotates, and is scoped
+            // to the active Pokéball via overlayPrefs().
+            int margin=dp(4);
+            int safeW=Math.min(b.width,Math.max(dp(40),m.widthPixels-2*margin));
+            int safeH=Math.min(b.height,Math.max(dp(40),m.heightPixels-2*margin));
+            android.content.SharedPreferences prefs=overlayPrefs();
+            int savedX=prefs.getInt("visualEditorX",-1);
+            int savedY=prefs.getInt("visualEditorY",-1);
+            int x=savedX<0?b.x:dp(savedX);
+            int y=savedY<0?b.y:dp(savedY);
+            x=Math.max(margin,Math.min(m.widthPixels-safeW-margin,x));
+            y=Math.max(margin,Math.min(m.heightPixels-safeH-margin,y));
+            b=new PopupTouchGeometry.Bounds(x,y,safeW,safeH,false);
+        }
         if(!b.visible()){popupRoot.setVisibility(View.GONE);return;}
         if(lastPopupX!=b.x||lastPopupY!=b.y||lastPopupW!=b.width||lastPopupH!=b.height){
             popupParams.x=b.x;popupParams.y=b.y;
@@ -1279,6 +1298,25 @@ public class OverlayService extends Service {
         if(popupRoot.getVisibility()!=View.VISIBLE)popupRoot.setVisibility(View.VISIBLE);
         js(popupPanel,popupLoaded,"window.setNativePopupRoom&&window.setNativePopupRoom("+
             Math.max(30,Math.round(b.height/m.density))+")");
+    }
+    private void moveVisualEditorBy(int dxDp,int dyDp){
+        if(!"visual".equals(popupKind)||popupParams==null||popupRoot==null||
+            wm==null||popupRoot.getVisibility()!=View.VISIBLE)return;
+        if(Math.abs(dxDp)>80||Math.abs(dyDp)>80)return; // reject malformed JS
+        DisplayMetrics m=metrics();
+        int margin=dp(4);
+        int maxX=Math.max(margin,m.widthPixels-popupParams.width-margin);
+        int maxY=Math.max(margin,m.heightPixels-popupParams.height-margin);
+        int nextX=Math.max(margin,Math.min(maxX,popupParams.x+dp(dxDp)));
+        int nextY=Math.max(margin,Math.min(maxY,popupParams.y+dp(dyDp)));
+        if(nextX==popupParams.x&&nextY==popupParams.y)return;
+        popupParams.x=nextX;popupParams.y=nextY;
+        lastPopupX=nextX;lastPopupY=nextY;
+        overlayPrefs().edit()
+            .putInt("visualEditorX",Math.round(nextX/m.density))
+            .putInt("visualEditorY",Math.round(nextY/m.density)).apply();
+        try{wm.updateViewLayout(popupRoot,popupParams);}
+        catch(Exception e){recordFailure("arrastar editor visual",e);}
     }
     private void resizeIndependentPopup(int width,int height){
         if(popupKind.isEmpty()||!popupLoaded||!menuExpanded)return;
@@ -3892,6 +3930,9 @@ public class OverlayService extends Service {
         }
         @JavascriptInterface public void applyTopHorizontalLayout(){
             handler.post(()->OverlayService.this.applyTopHorizontalLayout());
+        }
+        @JavascriptInterface public void moveVisualEditorBy(int dxDp,int dyDp){
+            handler.post(()->OverlayService.this.moveVisualEditorBy(dxDp,dyDp));
         }
         @JavascriptInterface public void visualEditorFocus(boolean focused){
             handler.post(()->locationEditor(focused));

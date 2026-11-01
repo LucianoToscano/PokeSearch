@@ -230,6 +230,38 @@ function renderVisualEditor(){
  const panel=uxPanel("EDITOR VISUAL");
  if(window.Native&&Native.previewVisualArea)Native.previewVisualArea(tab);
  panel.classList.add("visualPanel","visualCompact");
+ // LT218: only the header drags the independent native popup. Buttons,
+ // fields and sliders retain their normal pointer interaction.
+ if(popupWindow&&window.Native&&Native.moveVisualEditorBy){
+  const handle=panel.querySelector(".choiceHeader");
+  if(handle){
+   handle.classList.add("visualEditorDragHandle");
+   handle.title="Segure e arraste para mover o Editor Visual";
+   let drag=null;
+   const at=ev=>({
+    x:Number.isFinite(ev.screenX)?ev.screenX:ev.clientX,
+    y:Number.isFinite(ev.screenY)?ev.screenY:ev.clientY
+   });
+   handle.addEventListener("pointerdown",ev=>{
+    if(ev.button!==0||ev.target.closest("button,input,textarea,select"))return;
+    drag={id:ev.pointerId,...at(ev)};
+    try{handle.setPointerCapture(ev.pointerId)}catch(_){}
+    ev.preventDefault();
+   });
+   handle.addEventListener("pointermove",ev=>{
+    if(!drag||drag.id!==ev.pointerId)return;
+    const pos=at(ev);
+    const dx=Math.round(pos.x-drag.x),dy=Math.round(pos.y-drag.y);
+    drag={id:ev.pointerId,...pos};
+    if(dx||dy)Native.moveVisualEditorBy(dx,dy);
+    ev.preventDefault();
+   });
+   const stop=()=>{drag=null};
+   handle.addEventListener("pointerup",stop);
+   handle.addEventListener("pointercancel",stop);
+   handle.addEventListener("lostpointercapture",stop);
+  }
+ }
  // Orientations already have separate keys and persist in P1/P2 prefs.
  // Surface an immediately accessible layout preset in either editor tab.
  const quickPreset=document.createElement("div");quickPreset.className="visualPresets";
