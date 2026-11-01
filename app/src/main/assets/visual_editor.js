@@ -293,10 +293,13 @@ function renderVisualEditor(){
  panel.appendChild(nav);
  if(tab==="results"){
   visualGroup(panel,"spacing","Sprites e espaçamento",panel=>{
-   if(window.renderSpriteSizeButtons)window.renderSpriteSizeButtons(panel,true);
-   addSlider(panel,"resultSpriteScale","Escala dos Pokémon","%");
+   // LT224: fixed sprite tiles stay identical to the 30dp menu buttons.
+   // Do not offer inert size/spacing sliders which could mislead the user.
+   const note=document.createElement("p");
+   note.className="uxNote";
+   note.textContent="Padrão dos menus: cada Pokémon 30×30 dp, arte centralizada em 84% e espaço de 2 dp, com ou sem fundo.";
+   panel.appendChild(note);
    addSlider(panel,"resultGapTop","Pokébola → primeiro"," px");
-   addSlider(panel,"resultGapBetween","Entre Pokémon"," px");
   });
   visualGroup(panel,"ball","Pokébola e toque",panel=>{
    addSlider(panel,"headerIconY","Posição Y"," px");
