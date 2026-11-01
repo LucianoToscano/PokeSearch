@@ -2317,6 +2317,9 @@ public class OverlayService extends Service {
         updateResultHeaderGrip();
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar largura dos resultados",e);}
+        // The horizontal sprites may now occupy a different rectangle.
+        // Reposition the toolbar, not the sprites, if either overlaps.
+        if(menuExpanded)updateMenuPosition();
     }
     private void resizeResultsMetadata(int widthDp){
         // Data column is an optional 0–100dp beside the original sprite column.
@@ -3516,12 +3519,14 @@ public class OverlayService extends Service {
         if(Math.abs(resultParams.height-pixels)<dp(2)){
             // E.g. changing visual Y offset while the list height is unchanged.
             positionResultsUnderPokeball(true);
+            if(menuExpanded)updateMenuPosition();
             return;
         }
         resultParams.height=pixels;
         positionResultsUnderPokeball(false);
         try{wm.updateViewLayout(resultRoot,resultParams);}
         catch(Exception e){recordFailure("redimensionar resultados",e);}
+        if(menuExpanded)updateMenuPosition();
         moveDetail();
     }
     private void toggleResultsCollapsed(){
