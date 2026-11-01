@@ -1,0 +1,40 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
+const dock=fs.readFileSync(path.join(__dirname,"../src/main/assets/dock.html"),"utf8");
+const native=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+const section='const QUICK_ACTIONS=['+dock.split("const QUICK_ACTIONS=[")[1]?.split("function saveQuickPrefs()")[0];
+assert.ok(section.length>600,"menu definitions exist");
+const ctx=new Function(section+';return {QUICK_DEFAULT_ORDER,defaultQuickPrefs,normalizedQuickPrefs};')();
+const ids=ctx.QUICK_DEFAULT_ORDER;
+assert.equal(ids.length,13);
+assert.deepEqual(ids.slice(0,4),["mode","sh","bg","filters"]);
+assert.deepEqual(ctx.defaultQuickPrefs().hidden,["sh","bg"]);
+assert.deepEqual(ctx.normalizedQuickPrefs({}).hidden,["sh","bg"]);
+const old=ids.filter(x=>x!=="bg");
+assert.deepEqual(ctx.normalizedQuickPrefs({order:old,hidden:[]}).hidden,["sh","bg"]);
+const userOrder=[...old].reverse();
+const migrated=ctx.normalizedQuickPrefs({order:userOrder,hidden:["close","sh"]});
+assert.equal(migrated.order.indexOf("bg"),migrated.order.indexOf("sh")+1);
+assert.ok(migrated.hidden.includes("bg")&&migrated.hidden.includes("sh")&&migrated.hidden.includes("close"));
+assert.deepEqual(ctx.normalizedQuickPrefs(ctx.defaultQuickPrefs()),ctx.defaultQuickPrefs());
+const custom=ctx.normalizedQuickPrefs({order:[...ids].reverse(),hidden:["appearance","sh"]});
+assert.deepEqual(custom.order,[...ids].reverse());
+assert.deepEqual(custom.hidden,["sh"]);
+const editor=dock.split("function renderAppearanceChoices(){")[1]?.split('document.addEventListener("pointerdown",event=>{')[0]||"";
+for(const part of ['reset.className="resetMenuLayout"','reset.textContent="↺"',
+ 'quickPrefs=defaultQuickPrefs();saveQuickPrefs();renderAppearanceChoices()',
+ 'const locked=id==="appearance"','heading.append(help,reset)','bindAppearanceReorder(commands,panel)'])
+ assert.ok(editor.includes(part),"reset and accessible editor: "+part);
+assert.ok(dock.includes('case "bg":if(Native.setBackgroundOnly)Native.setBackgroundOnly(searchSettings.backgroundOnly!==true);break;'));
+assert.ok(dock.includes('case "bg":return searchSettings.backgroundOnly===true?"Solicitado":"OFF"'));
+assert.ok(dock.includes('bg:"Background"'));
+assert.ok(dock.includes('if(id==="bg")button.setAttribute("aria-pressed"'));
+assert.ok(native.includes('void setBackgroundOnly(boolean enabled)'));
+assert.ok(native.includes('extra.put("backgroundOnly",enabled);'));
+assert.ok(native.includes('putString("extraFiltersJson",updated).apply();'));
+assert.ok(native.includes('replaceActiveFilterSearch();'));
+assert.ok(native.includes('scheduleFilterChangeRefresh();'));
+assert.ok(native.includes('"mode","sh","bg","filters"')&&native.includes('i<13'));
+assert.ok(!editor.includes("Native.setBackgroundOnly"),"reset is layout-only, never resets filters");
+for(const part of dock.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))new vm.Script(part[1]);
+console.log("PASS LT211: Background API toggle, default hidden menu, retained custom prefs, layout-only reset, 13 IDs");
