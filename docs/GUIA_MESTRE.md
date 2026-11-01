@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT219 QA — MENU EM COLUNA ÚNICA E PERSONALIZAÇÃO NA TELA (01/11/2026)
+
+- **Screenshots Samsung da LT218:** (a) 9 botões verticais + últimos 3 fora da coluna à direita, (b) menus independentes P1/P2, (c) submenu Modo lateral, (d) menu horizontal compacto com dez Pokémon distribuídos em linhas por limitação física de largura, (e) launcher **PERSONALIZAÇÃO** aparecendo cortado no rodapé.
+- **Defeito CSS:** última regra vertical da LT218 usava `grid-template-rows:repeat(12,30px)` e `grid-auto-flow:row`, permitindo criação de uma segunda coluna implícita. Corrigido em `app/src/main/assets/dock.html` para `display:flex;flex-flow:column nowrap`, com botões **30×30dp**, altura **384dp** e largura **34dp** na janela nativa; sem alterar os ícones, filtros, favoritos ou resultados.
+- **Defeito de altura WebView:** `fit()` ainda declarava 232px para menu vertical apesar da altura atual de 384dp. Corrigidos o cálculo de janela e o deslocamento dos popups para 384px.
+- **Personalização:** `OverlayService.positionIndependentPopup()` agora aplica o mesmo screen clamp a `appearance` e `visual`, com centralização quando a âncora ficaria além do rodapé. O arraste e a posição persistente são exclusivos do Editor Visual por Pokébola; menu launcher não herda suas coordenadas.
+- **PR:** [#191](https://github.com/LucianoToscano/PokeSearch/pull/191), merge `3cbff76f9e61aed29721805e2df42b8abd8bc1f4` na `main`. CI da PR **SUCCESS** em Node, QA Core, LT169, LT62 Java e LT173 Android/OTA. Novo teste `lt219-single-column-popup-bounds.test.js`; contratos antigos `lt218-*` e `overlay-ux.test.js` atualizados para as dimensões reais.
+- **APK privado:** LT219 QA `0.02.19`, `versionCode 54426`, workflow [#41282142186](https://github.com/LucianoToscano/PokeSearch/actions/runs/41282142186) iniciado. Não afirmar artefato publicado antes de confirmação de assinatura, integridade, tamanho e hash.
+- **Distribuição:** a versão pública **LT215 v0.02.15-54422 permanece inalterada**. QA físico Samsung pendente. As duas Pokébolas mantêm contas, filtros e menus independentes; não fechar automaticamente a outra instância. Não modificar login, APIs, chat nem cooldown.
+
+---
+
 ## LT218 — ORIENTAÇÃO FIXA E EDITOR ARRASTÁVEL (01/11/2026)
 
 - **Evidência Samsung:** prints da LT217 mostram ações do menu como retângulos longos em coluna, colidindo com os Pokémon, e Editor Visual parcialmente fora da borda direita. Requisito do usuário: mudar apenas a organização horizontal ↔ vertical, mantendo **os mesmos tamanhos e aparência dos ícones e sprites**, quatro combinações de orientação e editor livremente arrastável, sem cortes.
