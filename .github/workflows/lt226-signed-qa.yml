@@ -146,3 +146,5 @@ jobs:
       - name: Erase private key
         if: always()
         run: rm -f "$RUNNER_TEMP/lt226qa.p12"
+
+# LT227 frameless-result QA rebuild requested 2026-11-02; no public release.
