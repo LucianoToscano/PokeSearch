@@ -1,5 +1,7 @@
 # PokeSearch — Android Overlay
 
+**Continuidade para outra conta/IA:** [Manual operacional para analisar, corrigir, testar, mesclar, assinar APK, publicar OTA, enviar Drive e registrar o Arquivo Mestre](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Leia antes de qualquer atualização pública; não misturar APK de QA com release oficial.
+
 ## Versão oficial publicada — LT227 · 0.02.27 · 54434
 
 **Atualização pública confirmada:** [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) = [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [Baixar APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk) · [GitHub Actions SUCCESS #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) · [ZIP no Google Drive](https://drive.google.com/file/d/125GyTbrh7_-8kJSC4BZFxhIiopxz-Afg/view?usp=drivesdk).
