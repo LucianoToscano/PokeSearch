@@ -1,6 +1,18 @@
 # PokeSearch — Android Overlay
 
-## Versão oficial publicada — LT215 · 0.02.15 · 54422
+## Versão oficial publicada — LT227 · 0.02.27 · 54434
+
+**Atualização pública confirmada:** [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) = [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [Baixar APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk) · [GitHub Actions SUCCESS #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) · [ZIP no Google Drive](https://drive.google.com/file/d/125GyTbrh7_-8kJSC4BZFxhIiopxz-Afg/view?usp=drivesdk).
+
+**Melhorias:** resultados Pokémon P/M/G (30/40/50 dp), sprites centralizados usando área alfa visível quando CORS permitir e modo Sem fundo sem molduras/sombras. O modo Com fundo continua disponível. Duas Pokébolas, Editor Visual, login opcional, Shiny pausado, Doces Raros e limites de PoGoCoordinates preservados.
+
+**Integridade:** APK de 28.080.679 bytes; SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6; assinatura v2 com certificado original SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. SOURCE_COMMIT do APK 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f. O ZIP do Drive inclui o APK e relatórios, não o projeto editável.
+
+**Distribuição:** atualização oferecida via GitHub Releases/latest aos aparelhos elegíveis; Android exige confirmação para instalar. QA físico Samsung e API autenticada permanecem pendentes. [Guia Mestre](docs/GUIA_MESTRE.md) · [Plano de QA LT227](docs/LT227_PUBLICACAO_RESULTADOS_FUNDO_SPRITES_QA_20261102.md).
+
+---
+
+## Histórico — LT215 · 0.02.15 · 54422
 
 **Publicação confirmada:** [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) = [v0.02.15-54422](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.15-54422). APK oficial `PokeSearch-v0.02.15-LT.apk` (28.074.579 bytes; SHA-256 `0968883ed67f84fc4d75985bf50da3d9ae5e3af4f7003d7e8ae08cdd29cdaa91`), assinatura Android v2 permanente verificada. [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.15-54422/PokeSearch-v0.02.15-LT.apk) · [Workflow oficial](https://github.com/LucianoToscano/PokeSearch/actions/runs/41273254334) · [Drive com APK e relatórios](https://drive.google.com/file/d/18yLB6TWmP5r-V7Q7RqHhX3hmACYZa0ZZ/view?usp=drivesdk).
 
