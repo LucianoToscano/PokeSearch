@@ -1405,6 +1405,30 @@
           "Homologação visual e funcional em aparelho Samsung continua recomendada."
         ]
       }
+    },
+    {
+      "id": "lt227-visible-sprites-and-frameless-20261102",
+      "minVersionCode": 54434,
+      "date": "02/11/2026",
+      "title": "PokeSearch LT227 — Sprites maiores, resultados sem moldura e menus compactos",
+      "sections": {
+        "novidades": [
+          "Resultados Pokémon com tamanho P, M e G padronizado, centralização da silhueta e escolha de fundo com ou sem moldura.",
+          "O modo Sem fundo agora remove bordas, sombras e caixas residuais sem perder as sprites nem os controles."
+        ],
+        "melhorias": [
+          "Editor Visual e menus continuam com posicionamento ajustável e geometria compacta.",
+          "A posição dos resultados e menus permanece independente entre as duas Pokébolas, com orientação vertical/horizontal configurável."
+        ],
+        "correcoes": [
+          "Escala visual dos Pokémon considera as margens transparentes da imagem; caso a origem da sprite não permita a leitura, é preservada a imagem original.",
+          "Resultados sem fundo não deixam molduras transparentes ou pretas ocultas atrás das sprites."
+        ],
+        "emDesenvolvimento": [
+          "A leitura de silhueta depende das permissões CORS da origem de cada sprite; testar tamanhos, espécies e fantasias no Samsung.",
+          "A disponibilidade de filtros e Doces Raros depende do serviço PoGoCoordinates; limites HTTP 429 continuam preservados."
+        ]
+      }
     }
   ]
 }
