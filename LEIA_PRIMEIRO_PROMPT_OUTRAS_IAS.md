@@ -1,8 +1,12 @@
-# LEIA PRIMEIRO — PokeSearch LT215 (01/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT227 (02/11/2026)
 
-**Repositório:** https://github.com/LucianoToscano/PokeSearch
+**Fonte oficial:** https://github.com/LucianoToscano/PokeSearch
 
-**Estado verificado:** LT215 (`0.02.15`, versionCode `54422`) é release estável publicada em GitHub Releases/latest com APK assinado v2, hash `0968883ed67f84fc4d75985bf50da3d9ae5e3af4f7003d7e8ae08cdd29cdaa91` e source commit `de6866772831026d3882b586434a336b8ed3451e`. LT211 (`0.02.11`, `54418`) era a estável anterior. LT212, LT213 e LT214 foram builds privados de QA. Ao continuar o projeto, verifique o estado atual do GitHub antes de assumir a versão.
+**Estado público verificado:** LT227, versão 0.02.27, code 54434. GitHub Releases/latest aponta para [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk): 28.080.679 bytes, SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6. SOURCE_COMMIT 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f. Workflow oficial #41433915635 SUCCESS. LT215 é estável histórica; LT226 foi QA (0.02.26/54433).
+
+**Novidades LT227:** sprites P/M/G nos resultados com escala da área alfa visível, moldura opcional e Sem fundo sem sombras/bordas, preservando duas Pokébolas, preferências independentes e os filtros. É um hotfix incremental, não um projeto novo.
+
+**IMPORTANTE:** este arquivo pode ser posterior ao commit de fonte do APK. Antes de auditar, verificar o HEAD, Release/latest e versão do pacote ZIP realmente recebido. Não afirmar QA Samsung, sessão real de API ou instalação sem evidências. Atualizações estáveis e assinatura só com autorização explícita do dono. Não publicar credenciais.
 
 ## Para qualquer IA que receba o pacote editável
 
