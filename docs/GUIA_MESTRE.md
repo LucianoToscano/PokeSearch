@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT227 OFICIAL — SPRITES P/M/G E RESULTADOS SEM MOLDURA (02/11/2026)
+
+- **Versão pública:** LT227 / 0.02.27 / versionCode 54434. [Release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434) confirmada sem draft/prerelease. A estável anterior era LT215/54422; a LT226/54433 estava em QA. LT227 pode atualizar aparelhos que instalaram a LT226 de testes.
+- **Código incluído:** LT226 da [PR #198](https://github.com/LucianoToscano/PokeSearch/pull/198), merge 346c3231992831f135eeeaca976e1507f00f6424; LT227 corrige o modo sem fundo no commit 3ae9b4d5517db221100e0e332d7092f6a8b9f540. Os sprites P/M/G usam quadrados 30/40/50dp e arte nominal 88%, com zoom da área alfa visível visando ~87% (onde CORS permite). Sem fundo remove backgrounds, pseudo-molduras e sombras, preservando o modo Com fundo, P1/P2, menus, login, preferências e regras HTTP 429.
+- **QA:** testes Node completos, lt226-visible-sprite-alpha-fill.test.js, lt227-frameless-results.test.js, OTA e Gradle Android/R8. [Workflow oficial #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) SUCCESS. SOURCE_COMMIT do APK: 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f.
+- **APK oficial:** [PokeSearch-v0.02.27-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk), 28.080.679 bytes, SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6. Pacote com.lucianotoscano.pokesearch; assinatura Android v2 permanente verificada pelo certificado SHA-256 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
+- **Google Drive:** [ZIP LT227 APK e relatórios](https://drive.google.com/file/d/125GyTbrh7_-8kJSC4BZFxhIiopxz-Afg/view?usp=drivesdk) na pasta PokeSearch_App, 25.900.966 bytes; SHA-256 c0a8735caa86564cf8516f59330395af43d2de5ed03d5f4c112314dd11fd3215; CRC íntegro. APK interno com mesmo hash da release, incluindo relatórios de assinatura, versão e fonte. Não é ZIP editável completo.
+- **OTA:** o GitHub Releases/latest já aponta para LT227. Aparelhos elegíveis podem receber atualização ao consultar o canal, com autorização do Android para instalar. Não comprova instalação nos telefones.
+- **Limites:** testes físicos Samsung e chamadas reais ao PoGoCoordinates ainda não homologados; validar CORS, sprites de formas/fantasias, P/M/G, resultados com/sem fundo, orientações, P1/P2 e update por cima de LT215/LT226 QA. Checklist: [LT227 QA](LT227_PUBLICACAO_RESULTADOS_FUNDO_SPRITES_QA_20261102.md).
+
+---
+
 ## LT226 QA — NORMALIZAÇÃO DA SILHUETA VISÍVEL DOS POKÉMON (01/11/2026)
 
 - **Evidência Samsung:** screenshot LT225 (enviado pelo usuário) mostra cartões P/M/G e menu na proporção correta, mas Pokémon visivelmente minúsculos no interior, apesar da caixa da imagem CSS ocupar 88%. PNGs/WebPs incluem grandes margens transparentes.
