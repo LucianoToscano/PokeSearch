@@ -1,5 +1,50 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## CONTINUIDADE ENTRE CONTAS — PROCEDIMENTO OPERACIONAL VERIFICADO (02/11/2026)
+
+**REGRA PRINCIPAL PARA QUALQUER NOVA IA: NÃO INVENTAR, NÃO RECOMEÇAR E NÃO CONFUNDIR ESTÁGIOS.** O manual detalhado e permanente fica em **[MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md](MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md)**, com procedimentos e comandos reproduzíveis de auditoria, correção, QA, merge, compilação, assinatura v2, release, distribuição pelo atualizador, espelho do Drive, controle de versão, registro histórico, troca de conta, diagnóstico e rollback. **Ler por inteiro antes de criar APK ou publicar nova versão.** Ele é parte canônica deste Arquivo Mestre, não apenas uma referência opcional.
+
+### Fonte de verdade e estado inicial
+
+- Repositório único: [LucianoToscano/PokeSearch](https://github.com/LucianoToscano/PokeSearch), branch principal main. Leia primeiro AGENTS.md, este Guia Mestre, manual operacional e LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md. O backup histórico docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md não deve ser sobrescrito ou truncado.
+- Em **02/11/2026**, a versão estável verificada era **LT227 / 0.02.27 / code 54434**, [Release v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434) e [workflow #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) SUCCESS. APK PokeSearch-v0.02.27-LT.apk, 28.080.679 bytes, SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6; SOURCE_COMMIT 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f. A main pode estar à frente do SOURCE_COMMIT do APK.
+- **Não perpetuar LT227 como "a versão mais recente"**: a nova IA deve consultar AGORA releases/latest, commits/main, runs e PRs, e conferir o maior versionCode estável/QA já instalado antes de reservar um novo.
+- A nova conta ChatGPT não herda conectores, permissões, histórico completo, acesso ao Drive nem secrets do GitHub. O proprietário deve autorizá-los pelo GitHub/Google Drive; a IA não pede senhas, cookies, tokens, JWT ou keystore na conversa. Repositório público não garante direitos de escrita/merge/release.
+
+### Localização dos componentes reais
+
+- **Build:** app/build.gradle.kts, settings.gradle.kts, gradle.properties; Java 17, Gradle 8.11.1, Android SDK 36 + build-tools 36.0.0, Node 22, Python 3; compileSdk 36, targetSdk 33, minSdk 26; applicationId com.lucianotoscano.pokesearch, namespace com.lucianotoscano.pokesearchoverlay.
+- **Código:** app/src/main/java/com/lucianotoscano/pokesearchoverlay; app/src/main/assets (dock.html, probe.js, detail.html, sprite_visual_scale.js, visual_editor.js e scripts de rede); recursos app/src/main/res; testes app/tests; scripts/; docs/.
+- **Duas Pokébolas:** OverlayService e SecondaryOverlayService, com prefs / prefs_secondary independentes, preservando controles/sprites, filtros, horários, contas e resultados. PogoAccountSlots.java mantém profiles WebView separados; contas não compartilham cookies/JWT. Login opcional, Shiny upstream pausado, limite máximo de 10 resultados e quotas HTTP 429 respeitadas.
+- **Atualizador de APK:** app/src/main/java/com/lucianotoscano/pokesearchoverlay/GitHubUpdateCenter.java lê HTTPS api.github.com/repos/LucianoToscano/PokeSearch/releases/latest. Só apresenta tag estável válida e APK com versionCode superior, asset nomeado, status uploaded, size, SHA-256 e certificado pinado. O Android solicita confirmação para instalar; **não existe instalação silenciosa**. scripts/build_ota_pack.py é um mecanismo separado de assets assinados, NÃO publica código Java.
+- **Assinatura permanente:** certificado SHA-256 público 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e. A chave privada não entra na documentação nem em ZIP de fontes; secrets permanecem em GitHub Actions/ambiente protegido official-updates.
+
+### Sequência executável segura — corrigir, compilar, atualizar, registrar
+
+1. **Auditar estado real:** confirmar main HEAD, releases/latest, maior versionCode público/QA, PRs abertas, direitos GitHub/Drive e workflows atuais; comparar arquivos do ZIP com SOURCE_COMMIT. Nunca aplicar correção sobre snapshot antigo sem verificar diferenças.
+2. **Branch e PR:** partir da main recente; localizar causa e dependências; aplicar diff pequeno; escrever teste e documento QA; abrir PR apontando para main. Rodar testes de P1/P2 e CI na SHA real. **PR aberta NÃO é merge.**
+3. **QA:** Node 22 (testes JS), Python scripts/test_ota_builder.py, Java 17 e Gradle. Para Android assinado, usar workflow de QA apropriado; nunca usar assinatura debug como substituta do APK oficial.
+4. **Merge:** somente após testes e autorização explícita do dono; usar PR e SHA exatos, confirmar que GitHub marca merged, conferir commit da main. Registro de PR/merge deve ter URL e hash.
+5. **Versão:** definir code maior que estável e QA instalados. Preparar release_notes.json e novo YAML de publicação baseado no workflow oficial de versão anterior, **sem executar novamente workflow histórico de uma só versão**. Revisar cada nome, código, tag, condição de Releases/latest anterior, artefato, teste e env protegido.
+6. **Build protegido:** na execução oficial, regenerar metadata/sprites; compilar com gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace. Runner usa secrets de assinatura protegidos e apaga a keystore temporária. Confirmar app/build/outputs/apk/release/app-release.apk, mapping R8, assinatura v2, package, versionName/code e integridade.
+7. **Publicação:** apenas após autorização, o workflow cria tag e asset GitHub Release **imutáveis** e verifica a API releases/latest e digest remoto. A release estável publicada é o sinal usado pelo atualizador do app; testes Node/QA anteriores por si só não liberam atualização.
+8. **Google Drive:** selecionar artifact assinado do run oficial (APK e SHA256SUMS.txt, SIGNING-REPORT.txt, PACKAGE-VERSION.txt, SOURCE_COMMIT.txt). Conferir ZIP/CRC/hash e enviar o arquivo real à pasta PokeSearch_App (ID 1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR); depois validar upload por ID, tamanho, link e permissões. Drive é espelho secundário; não confundir com o feed do app.
+9. **Registro:** inserir seção no topo deste Guia Mestre com data, versão, problema/correções/arquivos, PR e merge SHA, runs e conclusões, SOURCE_COMMIT do APK, versionName/code, SHA-256, bytes, certificado, link Release, link/bytes/hash Drive, status de QA físico e pendências. Atualizar README, AGENTS.md, handoff e documento QA. Nunca escrever "publicado" ou "instalado" antes das respectivas confirmações.
+10. **QA físico e rollback:** testar instalação sobre versões anteriores e QA code inferior, telas Samsung, P1/P2, modos, recursos e rede. Testes automáticos não homologam Samsung/API real. Se publicar hotfix, usar novo versionCode e tag; não substituir APK/tag existentes nem orientar desinstalação sem análise de dados.
+
+### Atalhos reais, gates e anti-alucinação
+
+- **Verificar remote:** https://api.github.com/repos/LucianoToscano/PokeSearch/releases/latest e https://api.github.com/repos/LucianoToscano/PokeSearch/commits/main.
+- **CI Node:** .github/workflows/pokesearch-node-qa.yml; **QA assinado exemplo:** .github/workflows/lt226-signed-qa.yml; **Release oficial SUCCESS exemplo (não reusar para publicar nova versão):** [.github/workflows/lt227-official-release.yml](../.github/workflows/lt227-official-release.yml).
+- **Aprovação manual alternativa:** .github/workflows/pokesearch-official-release-manual.yml; possui restrição ao ator LucianoToscano, campos de QA/version e regex de nome de artifact; verificar compatibilidade antes de disparar.
+- **Tentar um build local sem release:** gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug; exige SDK/JDK configurados e não produz APK com certificado de distribuição.
+- **Checar APK real no runner:** unzip -t, sha256sum, Android SDK aapt dump badging, apksigner verify --verbose --print-certs, comparar certificado, code e nome. Nunca marcar sem conferir.
+- **Logs/status:** outcomes distintos "código corrigido", "PR aberta", "PR merged", "Node QA PASS", "APK compilado", "APK assinado", "Release latest", "Drive enviado", "instalado Samsung". Cada afirmação precisa de link de evidência; em caso de acesso insuficiente, declarar PENDENTE.
+- **Problemas conhecidos:** 404 "Library file not found" é problema de entrega ChatGPT, não prova de APK inválido. Usar [protocolo de distribuição](PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md); não insistir em links sandbox inexistentes. Sem sessão GitHub/Drive na nova conta, não declarar operações externas.
+- **Manual completo (leitura obrigatória):** [MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md](MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Essa página contém operações, exemplos, critérios de aceite, diagnóstico de falhas, guarda de versão, significado de OTA, espelho Drive e texto pronto para passagem entre contas. **Toda IA que assumir deve começar aqui**.
+
+---
+
 ## LT227 OFICIAL — SPRITES P/M/G E RESULTADOS SEM MOLDURA (02/11/2026)
 
 - **Versão pública:** LT227 / 0.02.27 / versionCode 54434. [Release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434) confirmada sem draft/prerelease. A estável anterior era LT215/54422; a LT226/54433 estava em QA. LT227 pode atualizar aparelhos que instalaram a LT226 de testes.
