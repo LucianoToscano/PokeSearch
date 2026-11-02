@@ -1,5 +1,7 @@
 # LEIA PRIMEIRO — PokeSearch LT227 (02/11/2026)
 
+**LEITURA OBRIGATÓRIA DE CONTINUIDADE:** [manual completo de GitHub, CI, build, APK assinado, merge, OTA, Drive, Arquivo Mestre e recuperação](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Verifique o estado remoto antes de agir e preserve o protocolo de consentimento. Este documento não transfere acesso, secrets nem permissões entre contas.
+
 **Fonte oficial:** https://github.com/LucianoToscano/PokeSearch
 
 **Estado público verificado:** LT227, versão 0.02.27, code 54434. GitHub Releases/latest aponta para [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk): 28.080.679 bytes, SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6. SOURCE_COMMIT 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f. Workflow oficial #41433915635 SUCCESS. LT215 é estável histórica; LT226 foi QA (0.02.26/54433).
