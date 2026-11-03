@@ -22,7 +22,7 @@ for(const card of options){
  }
 }
 assert.match(dock,/const nativeArt=window\.PokeSearchOfflineSprite\?\.bundledExactForArt\?\.\(c,art\)/);
-assert.match(dock,/verifiedBundledData\?\.\(c\)/);
+assert.match(dock,/bundledExactForArt\?\.\(c,art\)/);
 assert.match(detail,/const initialNative=/);
 assert.match(detail,/verifiedBundledData\?\.\(c\)/);
 assert.match(service,/private final VerifiedEncounterCoordinates verifiedEncounterCoords/);
