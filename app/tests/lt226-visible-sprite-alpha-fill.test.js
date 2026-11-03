@@ -10,12 +10,12 @@ const code=dock.slice(dock.lastIndexOf("/* LT225: menu button equivalence only a
 assert.match(code,/transform:translate\(var\(--tile-alpha-x,0px\),var\(--tile-alpha-y,0px\)\)/);
 assert.match(code,/scale\(var\(--tile-alpha-zoom,1\)\)!important/);
 assert.match(code,/object-fit:contain!important;object-position:center center!important/);
-assert.match(code,/width:var\(--result-art-size,26\.4px\)!important/);
+assert.match(code,/width:var\(--result-art-size,21\.12px\)!important/);
 assert.match(dock,/if\(resultWindow\)window\.PokeSearchSpriteScale\?\.applyResultTile\?\.\(img\)/);
 assert.match(dock,/const publicCors=imageUrl\.startsWith\("https:\/\/raw\.githubusercontent\.com\/"\)/);
 assert.match(dock,/crossorigin="anonymous"/);
-assert.match(editor,/P 30×30 dp · M 40×40 dp · G 50×50 dp/);
-assert.match(dock,/const tile=size===55\?50:size===45\?40:30/);
+assert.match(editor,/P 24×24 dp · M 32×32 dp · G 40×40 dp/);
+assert.match(dock,/const tile=size===55\?40:size===45\?32:24/);
 
 function spriteEnv(rect,tainted=false) {
  const pixels=new Uint8ClampedArray(96*96*4);

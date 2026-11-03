@@ -4614,39 +4614,39 @@ body.result-window #spawns{
 body.result-window .spawn,
 body.result-window.visual-results-horizontal .spawn{
   box-sizing:border-box!important;
-  width:calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
-  min-width:calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
-  max-width:calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
-  height:var(--result-tile-size,30px)!important;
-  min-height:var(--result-tile-size,30px)!important;
-  max-height:var(--result-tile-size,30px)!important;
-  flex:0 0 var(--result-tile-size,30px)!important;
+  width:calc(var(--result-tile-size,24px) + var(--visual-meta-width,0px))!important;
+  min-width:calc(var(--result-tile-size,24px) + var(--visual-meta-width,0px))!important;
+  max-width:calc(var(--result-tile-size,24px) + var(--visual-meta-width,0px))!important;
+  height:var(--result-tile-size,24px)!important;
+  min-height:var(--result-tile-size,24px)!important;
+  max-height:var(--result-tile-size,24px)!important;
+  flex:0 0 var(--result-tile-size,24px)!important;
   margin:0!important;padding:0!important;
   display:flex!important;align-items:center!important;
   justify-content:flex-start!important;background:transparent!important;
 }
 body.result-window.visual-results-horizontal .spawn{
-  flex:0 0 calc(var(--result-tile-size,30px) + var(--visual-meta-width,0px))!important;
+  flex:0 0 calc(var(--result-tile-size,24px) + var(--visual-meta-width,0px))!important;
 }
 body.result-window .spriteStage{
   box-sizing:border-box!important;
-  width:var(--result-tile-size,30px)!important;
-  height:var(--result-tile-size,30px)!important;
-  min-width:var(--result-tile-size,30px)!important;
-  min-height:var(--result-tile-size,30px)!important;
-  max-width:var(--result-tile-size,30px)!important;
-  max-height:var(--result-tile-size,30px)!important;
-  flex:0 0 var(--result-tile-size,30px)!important;
+  width:var(--result-tile-size,24px)!important;
+  height:var(--result-tile-size,24px)!important;
+  min-width:var(--result-tile-size,24px)!important;
+  min-height:var(--result-tile-size,24px)!important;
+  max-width:var(--result-tile-size,24px)!important;
+  max-height:var(--result-tile-size,24px)!important;
+  flex:0 0 var(--result-tile-size,24px)!important;
   display:flex!important;align-items:center!important;
   justify-content:center!important;position:relative!important;
   padding:0!important;margin:0!important;
 }
 body.result-window .spriteStage .sprite{
   box-sizing:border-box!important;
-  width:var(--result-art-size,26.4px)!important;
-  height:var(--result-art-size,26.4px)!important;
-  min-width:0!important;max-width:var(--result-art-size,26.4px)!important;
-  min-height:0!important;max-height:var(--result-art-size,26.4px)!important;
+  width:var(--result-art-size,21.12px)!important;
+  height:var(--result-art-size,21.12px)!important;
+  min-width:0!important;max-width:var(--result-art-size,21.12px)!important;
+  min-height:0!important;max-height:var(--result-art-size,21.12px)!important;
   flex:none!important;display:block!important;
   object-fit:contain!important;object-position:center center!important;
   /* LT226: native tile is fixed, but visible PNG silhouette can occupy
@@ -4660,16 +4660,16 @@ body.result-window .spriteStage .sprite{
 }
 body.result-window .spriteStage .spriteFallback{
   inset:0!important;display:flex!important;
-  width:var(--result-tile-size,30px)!important;
-  height:var(--result-tile-size,30px)!important;
+  width:var(--result-tile-size,24px)!important;
+  height:var(--result-tile-size,24px)!important;
   align-items:center!important;justify-content:center!important;
-  font-size:calc(var(--result-tile-size,30px) * .33)!important;
+  font-size:calc(var(--result-tile-size,24px) * .28)!important;
 }
 body.result-window .spriteStage.loaded .spriteFallback{display:none!important}
 body.result-window .spriteStage.failed .sprite{display:none!important}
 body.result-window.visual-results-tiles .spriteStage::before{
-  width:var(--result-tile-size,30px)!important;
-  height:var(--result-tile-size,30px)!important;
+  width:var(--result-tile-size,24px)!important;
+  height:var(--result-tile-size,24px)!important;
   border-radius:8px!important;
   left:50%!important;top:50%!important;
   transform:translate(-50%,-50%)!important;
@@ -6314,6 +6314,19 @@ function attachSpriteFeedback(){
    if(exact&&img.src!==exact){nativeTried=true;img.src=exact;return true;}
    return false;
   };
+  let localTried=false;
+  const tryVerifiedLocal=()=>{
+   if(localTried||!sourceCard)return false;
+   const engine=window.PokeSearchOfflineSprite;
+   if(!engine?.verifiedBase?.(sourceCard))return false;
+   // Preserve imageFromSite first; the exact bundled ordinary species image
+   // becomes the bounded offline fallback only after the remote load stalls.
+   const ordinary=engine.resolve({...sourceCard,imageFromSite:false});
+   const src=String(ordinary?.src||"");
+   if(!/^file:\/\/\/android_asset\/pokemon-sprites\/(?:base|shiny)\/\d{1,4}\.png$/.test(src)||
+       img.getAttribute("src")===src)return false;
+   localTried=true;img.src=src;return true;
+  };
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
   const loaded=()=>{
    if(good()){
@@ -6329,7 +6342,7 @@ function attachSpriteFeedback(){
    if(done||!img.isConnected)return;
    // Deterministic identity-checked bytes from the bundled APK beat fragile
    // Samsung WebView file and remote image retries for ordinary species.
-   if(tryExactBundled())return;
+   if(tryExactBundled()||tryVerifiedLocal())return;
    const original=img.getAttribute("data-original-src")||"";
    // Exact, verified PokeAPI base sprite path only. Never guess a different
    // sprite for forms, shadows, costumes or a provider-supplied image URL.
@@ -6361,7 +6374,7 @@ function attachSpriteFeedback(){
   const original=img.getAttribute("data-original-src")||"";
   const known=/^https:\/\/raw\.githubusercontent\.com\/PokeAPI\/sprites\/master\/sprites\/pokemon\/((?:shiny\/)?[0-9]{1,4}\.png)$/.exec(original);
   setTimeout(()=>{
-   if(!done&&img.isConnected&&!good())tryExactBundled();
+   if(!done&&img.isConnected&&!good()&&!tryExactBundled())tryVerifiedLocal();
   },1700);
   if(known)setTimeout(()=>{
    if(!done&&img.isConnected&&!mirrorAttempted&&!good()){
@@ -6890,7 +6903,7 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
  // Match Android's 35/45/55 native size presets without changing menus.
  if(typeof resultWindow!=="undefined"&&resultWindow){
   const size=Number(chosenSprite);
-  const tile=size===55?50:size===45?40:30;
+  const tile=size===55?40:size===45?32:24;
   const visible=Math.min(items.length,10);
   return {rows:items.map(()=>tile),sprite:tile,
    total:visible?visible*tile+(visible-1)*2:0,

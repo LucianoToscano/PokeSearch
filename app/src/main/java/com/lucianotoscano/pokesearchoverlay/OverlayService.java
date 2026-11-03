@@ -339,11 +339,11 @@ public class OverlayService extends Service {
         js(panel,panelLoaded,code);js(menuPanel,menuLoaded,code);js(popupPanel,popupLoaded,code);js(resultPanel,resultLoaded,code);
     }
     private int dockDp(){return spriteSize+8;}
-    // LT225: native overlay footprint matches the WebView's P/M/G result
+    // LT232: compact native sprite footprints; the visible alpha art scales inside each tile
     // tiles. Historical settings P=35, M=45, G=55 are retained for the
     // Pokéball and menu; results alone use 30/40/50dp with 2dp gaps.
     private int resultTileDp(){
-        return spriteSize==55?50:spriteSize==45?40:30;
+        return spriteSize==55?40:spriteSize==45?32:24;
     }
     private int resultWidthDp(){
         if(visualResultsHorizontal&&!resultCollapsed){
@@ -2406,7 +2406,11 @@ public class OverlayService extends Service {
         // exactly 2 physical pixels, not 2dp (which grows with density).
         // Only an explicit Editor Visual after-header offset adds to it.
         int gap=ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX+dp(visualHeaderAfterGap);
-        int x=params.x+dp(visualResultsOffsetX);
+        // LT232: native Pokébola is centred in dockDp(), but the independent
+        // results WebView begins at the left edge of a narrower sprite tile.
+        // Align both visual centres, preserving a deliberate user Editor offset.
+        int x=params.x+dp(ResultsSpacingPolicy.centeredSpriteOffsetDp(dockDp(),resultTileDp()))
+            +dp(visualResultsOffsetX);
         int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);
         int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);
         int y=below;

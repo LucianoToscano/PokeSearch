@@ -9,6 +9,13 @@ final class ResultsSpacingPolicy {
     static final int LEGACY_NEUTRAL_ROW_SPACING = 31;
     static final int MAX_ADDITIONAL_GAP_PX = 34;
 
+    /** Centre the first result sprite beneath the visible native Pokébola.
+     * Both independent overlays use this policy, with user offsets added later.
+     */
+    static int centeredSpriteOffsetDp(int dockWidthDp,int spriteTileDp){
+        return Math.round((dockWidthDp-spriteTileDp)/2f);
+    }
+
     private ResultsSpacingPolicy() {}
 
     static int additionalRowGapPx(int storedSpacing) {

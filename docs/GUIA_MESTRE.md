@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT232 QA — Alinhamento, P/M/G, sprites, golpes PT-BR (03/11/2026)
+
+**ESTADO NESTE COMMIT:** alterações em QA na branch `fix/lt232-compact-sprites-alignment-ptbr-20261103`, base `245efcd05f8f4a032326230b15b121014013e98b`. **Não considerar merge, APK assinado nem distribuição concluídos sem consultar GitHub Actions e `releases/latest`.** A versão pública anterior é LT231 (0.02.31, code 54435), que continua instalável até a nova publicação ser comprovada.
+
+- **Problema físico observado:** Pokébola fora do centro da coluna; sprites P/M/G visualmente maiores que o menu esperado; fallback `RO`/`FR` e outras letras para imagens não carregadas; painel de ataques ⚔️ longo, inglês e sem cores.
+- **Correções na fonte:** `ResultsSpacingPolicy.centeredSpriteOffsetDp` e `OverlayService` alinham o centro da coluna ao da Pokébola em P1/P2 com offsets do Editor preservados; tamanhos internos P=24, M=32, G=40dp (IDs de preferência preservados); `dock.html` tenta imagem local/nativa exata somente quando o carregamento falha, não substitui formas/trajes/Shiny sem prova; `detail.html` apresenta apenas Ataques Recomendados, Ágil, Carregado 1/2 e 💠 menor para legado.
+- **Fonte dos golpes:** recomendações, status Elite e legado continuam no snapshot PvPoke `e02bde78d19be9b9099b5a6629c6a8d0835a53be`; nomes em português brasileiro e tipo vêm de `WatWowMap/pogo-data-api`, commit `31a3bcdc2e412f315c4be2bb593807f45cb9bd9b`, consulta sob demanda sem credenciais. Tipos têm cor fixa e legível; dado não verificado nunca gera uma tradução inventada.
+- **Testes locais:** 214/214 suítes JS, Java `ResultsSpacingPolicyTest` 12/12, `scripts/test_ota_builder.py` verde. PNGs Rowlet/Froakie/Snover/Shuppet comprovadamente presentes no APK LT231; a correção LT232 ainda precisa de QA de carregamento real no Samsung.
+- **Versão candidata autorizada:** 0.02.32 / versionCode 54436, mantendo certificado Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, sem mudar limite de 10 resultados, conta, Shiny pausado, Doces Raros, módulos Android ou preferências independentes.
+- **Manual/roteiro completo:** [LT232 QA](LT232_POKEBOLA_SPRITES_GOLPES_PTBR_QA_20261103.md). Publicação e SHA só devem ser registrados após verificação no GitHub.
+
 ## LT231 OFICIAL — 0.02.31 / versionCode 54435 — Publicação assinada e Drive (03/11/2026)
 
 **ESTADO VERIFICADO:** a última release estável consultada no GitHub `releases/latest` é [v0.02.31-54435](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.31-54435), publicada em **03/11/2026, 10:07:55 UTC** (draft=false, prerelease=false). Ela é oferecida pelo canal oficial de atualizações do app (GitHubUpdateCenter); a instalação no Android requer confirmação do usuário e **não foi comprovada** neste registro. **QA físico Samsung pós-publicação continua PENDENTE.**

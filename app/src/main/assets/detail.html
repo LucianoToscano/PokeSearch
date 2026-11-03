@@ -633,6 +633,17 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* Recover 23% more legibility without enlarging or distorting the card shell. */
 #header{grid-template-columns:38px minmax(0,1fr) 77px}
 #artColumn #img,#artColumn #imageFallback{width:37px;height:37px;flex-basis:37px}
+/* LT232: compact PT-BR PvP move summary, PokeGenie-style type colours. */
+.psMovesCompact{font:500 11px/1.32 Roboto,Arial,sans-serif;padding:4px 6px!important;
+ background:#18202bea;border:1px solid #ffffff36;border-radius:7px;color:#eaf0f9;
+ margin:2px 0;overflow-wrap:anywhere}
+.psMovesCompact[hidden]{display:none!important}
+.psMovesCompact .psMoveTitle{font-size:11px;font-weight:800;margin-bottom:2px}
+.psMovesCompact .psMoveRow{display:flex;align-items:baseline;gap:4px;min-height:15px}
+.psMovesCompact .psMoveLabel{font-size:10px;color:#e6edf7;white-space:nowrap;flex:0 0 79px}
+.psMovesCompact .psMoveName{font-size:11px;font-weight:800;min-width:0}
+.psMovesCompact .psMoveLegacy{font-size:8px;vertical-align:baseline;line-height:1;margin-left:1px}
+.psMovesCompact .psMoveLegend{font-size:9px;color:#c9d9e9;margin-top:2px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -652,7 +663,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
    <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span class="despawnLabel">Despawn</span><span id="timeRemaining"></span></span>
   </div>
  </div>
- <div id="major"></div><div id="rankLine" class="rankLineSafe" hidden></div><div id="movesPopover" hidden role="status" style="font-size:10px;padding:6px 8px;border:1px solid #ffffff44;border-radius:7px;background:#18202bea;line-height:1.5"></div><div id="info"></div>
+ <div id="major"></div><div id="rankLine" class="rankLineSafe" hidden></div><div id="movesPopover" hidden role="status" class="psMovesCompact"></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -1143,28 +1154,38 @@ function renderRankOneMoves(){
  btn.onclick=async()=>{
   const show=popover.hidden;popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
-  const parts=currentCardMoves.trim().split(/\s*\/\s*/);
-  const current=parts.length>=2?
-   "Atuais de "+watchName+": Ágil "+parts[0]+" · Carregado "+parts.slice(1).join(" / "):
-   "Atuais de "+watchName+": "+(currentCardMoves||"não informados");
-  popover.textContent="⚔️ "+species+" · "+league.toUpperCase()+"\n"+current+
-   "\nBuscando recomendações verificadas...";
-  popover.style.whiteSpace="pre-line";resizeEvolutionPanel();
   const identity=detailIdentity;
+  popover.textContent="Ataques Recomendados: ···";
+  resizeEvolutionPanel();
   const recommendation=await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
   if(detailIdentity!==identity||popover.hidden||!btn.isConnected)return;
   if(!recommendation){
-   popover.textContent="⚔️ "+species+" · "+league.toUpperCase()+"\n"+current+
-    "\nRecomendação/MT Elite não verificadas (PvPoke indisponível).";
+   popover.textContent="Ataques Recomendados: indisponíveis";
    resizeEvolutionPanel();return;
   }
-  const status=m=>m.status==="elite"?" [MT Elite]":
-   m.status==="legacy"?" [Legado: conferir]":
-   m.status==="normal"?" [Normal]":" [?]";
-  popover.textContent="⚔️ "+recommendation.species+" · "+league.toUpperCase()+"\n"+
-   "Recomendados (PvPoke):\nÁgil: "+recommendation.fast.name+status(recommendation.fast)+
-   "\nCarregados: "+recommendation.charged.map(m=>m.name+status(m)).join(" / ")+
-   "\n"+current+"\nBase PvPoke: 03/11/2026. Legado ≠ MT Elite confirmada.";
+  // Only an explicit typed PT-BR move record can be displayed; never fall
+  // back to English or infer the attack's type from its English name.
+  const colours={normal:"#bec9d5",fighting:"#ff9a82",flying:"#a2b9ff",
+   poison:"#cda0fa",ground:"#e0ba86",rock:"#dcc78c",bug:"#b5da70",
+   ghost:"#b7a2ff",steel:"#bad2e4",fire:"#ff9d68",water:"#67b8ff",
+   grass:"#7de79a",electric:"#ffe77a",psychic:"#ff9ebc",ice:"#8ceafa",
+   dragon:"#aeabff",dark:"#cbb0a5",fairy:"#ff9ed5"};
+  let hasLegacy=false;
+  const row=(label,move)=>{
+   if(!move)return "";
+   const type=Object.prototype.hasOwnProperty.call(colours,move.type)?move.type:"normal";
+   const legacy=move.status==="elite"||move.status==="legacy";
+   if(legacy)hasLegacy=true;
+   const tip=move.status==="elite"?"Ataque legado · MT de Elite identificada":
+    "Ataque legado · disponibilidade de MT de Elite não comprovada";
+   return '<div class="psMoveRow"><span class="psMoveLabel">'+h(label)+':</span>'+
+     '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
+     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+'</div>';
+  };
+  popover.innerHTML='<div class="psMoveTitle">Ataques Recomendados:</div>'+
+   row("Ágil",recommendation.fast)+row("Carregado 1",recommendation.charged[0])+
+   row("Carregado 2",recommendation.charged[1])+(!hasLegacy?"":
+   '<div class="psMoveLegend">💠 Ataque Legado</div>');
   resizeEvolutionPanel();
  };
  rankLine.appendChild(btn);

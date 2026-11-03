@@ -297,7 +297,7 @@ function renderVisualEditor(){
    // result cards via the native P/M/G selector, without scaling menu icons.
    const note=document.createElement("p");
    note.className="uxNote";
-   note.textContent="Tamanho dos resultados: P 30×30 dp · M 40×40 dp · G 50×50 dp. Sprites centralizadas a 88% e espaço de 2 dp, com ou sem fundo. Escolha P/M/G em Personalização.";
+   note.textContent="Tamanho dos resultados: P 24×24 dp · M 32×32 dp · G 40×40 dp. Sprites centralizadas a 88% e espaço de 2 dp, com ou sem fundo. Escolha P/M/G em Personalização.";
    panel.appendChild(note);
    addSlider(panel,"resultGapTop","Pokébola → primeiro"," px");
   });
