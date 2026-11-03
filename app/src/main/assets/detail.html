@@ -508,7 +508,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  background:linear-gradient(95deg,#e7bf451d,#ffffff0c);
  color:#f6d994;font:800 9px/12px Roboto,Arial,sans-serif;
  letter-spacing:.1px;text-shadow:none}
-#rankLine::before{content:"★";font-size:10px;color:#ffd16e}
+#rankLine::before{content:"";font-size:7px;color:transparent}
 #rankLine[hidden]{display:none!important}
 #info{margin-top:2px;row-gap:1px;overflow-wrap:anywhere}
 #evolutions{margin-top:3px}
@@ -523,7 +523,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #major .statHeading,#major .statValue{position:relative;top:1px}
 #rankLine{gap:3px;border-color:#8fbfd755;background:linear-gradient(95deg,#74b8d31b,#ffffff09);
  color:#c2e6f4;text-shadow:none}
-#rankLine::before{content:"▥";font-size:11px;line-height:11px;color:#80cce9}
+/* Liga PvP: indicador circular no lugar do glifo quadriculado, mantendo o espaço compacto. */
+#rankLine::before{content:"";display:none}
+#rankLine[data-league]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:1px;flex:0 0 7px}
+#rankLine[data-league="gl"]::before{background:#2489e8}
+#rankLine[data-league="ul"]::before{background:#e8b927}
+#rankLine[data-league="ml"]::before{background:#a36ce8}
 /* Keep IV percentages and raw A/D/S in one verified, identical color band.
    The 100% hundo color uses the existing PokeSearch coral palette. */
 #major .ivTile .statValue.red,#major .ivTile .ivPercent{color:var(--ps-iv-color,#bac6d4)}
@@ -623,6 +628,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #coordRow #coordsQuota,#coordRow #coordsQuota.official{display:none!important}
 #coordRow #coords:not(.hasCoords){padding-left:13px;padding-right:13px;text-align:center}
 #coordRow #coords.hasCoords{padding-right:7px}
+/* LT231: 7px liga marker remains smaller than the GL/UL/ML text. */
+#rankLine[data-league]::before{width:7px;height:7px;flex-basis:7px;margin-right:2px}
+/* Recover 23% more legibility without enlarging or distorting the card shell. */
+#header{grid-template-columns:38px minmax(0,1fr) 77px}
+#artColumn #img,#artColumn #imageFallback{width:37px;height:37px;flex-basis:37px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -642,7 +652,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
    <span id="timer" class="unknown" hidden aria-label="Tempo até desaparecer"><svg class="timerClock" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 6v6l4 3"></path></svg><span class="despawnLabel">Despawn</span><span id="timeRemaining"></span></span>
   </div>
  </div>
- <div id="major"></div><div id="rankLine" class="rankLineSafe" hidden></div><div id="info"></div>
+ <div id="major"></div><div id="rankLine" class="rankLineSafe" hidden></div><div id="movesPopover" hidden role="status" style="font-size:10px;padding:6px 8px;border:1px solid #ffffff44;border-radius:7px;background:#18202bea;line-height:1.5"></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -673,10 +683,42 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
+<script src="pvp_rank_moves.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
 let coordsNote="",coordsPending=false,coordsRequestSeq=0;
+// LT229: local, bounded cache of verified reveals. Never stores a reveal code,
+// account data or a location without an exact spawn expiry and fingerprint.
+const verifiedRevealCache=new Map();
+let currentRevealKey="";
+function revealKey(card){
+ const expiry=Number(card?.expiresAtMs);
+ if(!Number.isFinite(expiry)||expiry<=Date.now())return "";
+ const fields=[card?.number,card?.name,card?.form,card?.gender,card?.shiny,
+  card?.cp,card?.level,card?.iv,card?.size,card?.location,
+  card?.costume,card?.costume_id,expiry];
+ if(!card?.number||!card?.cp||!card?.iv)return "";
+ return JSON.stringify(fields);
+}
+function cleanRevealCache(){
+ const now=Date.now();
+ for(const [key,item] of verifiedRevealCache){
+  if(item.expiry<=now)verifiedRevealCache.delete(key);
+ }
+ while(verifiedRevealCache.size>100)verifiedRevealCache.delete(verifiedRevealCache.keys().next().value);
+}
+function rememberReveal(coords){
+ const parsed=window.PokeSearchCooldown?.coords?.(coords);
+ if(!parsed||!currentRevealKey||!expiresAt||expiresAt<=Date.now())return;
+ cleanRevealCache();
+ verifiedRevealCache.set(currentRevealKey,{coords:String(coords),expiry:expiresAt});
+}
+function restoreReveal(){
+ cleanRevealCache();
+ const item=currentRevealKey&&verifiedRevealCache.get(currentRevealKey);
+ return item&&item.expiry>Date.now()?item.coords:"";
+}
+
 let shareReady=false,shareSent=false,sharePending=false,shareAwaitingOffer=false;
 let cooldownLinked=false,cooldownActive=false,cooldownReference=null;
 function refreshCooldownButtons(){
@@ -920,6 +962,8 @@ function updateCountdown(){
   (state.tone==="good"?"Mais de 15 min":state.tone==="warning"?"5–15 min":
    state.tone==="pink"?"2–5 min":"Menos de 2 min");
  if(remaining<=0){
+  if(currentRevealKey)verifiedRevealCache.delete(currentRevealKey);
+  currentCoords="";coordButtons();
   window.pauseDetailTimer();
   if(Native.expiredResults)Native.expiredResults();
  }
@@ -961,7 +1005,7 @@ window.coordsResult=function(coords,message,restriction){
  coordsPending=false;
  renderCoordsRate(coords?null:restriction);
  if(coords){
-  currentCoords=coords;coordsNote="";
+  currentCoords=coords;coordsNote="";rememberReveal(coords);
   if(/copiad/i.test(String(message||""))&&window.PokeSearchCooldown?.coords?.(coords))
    showCopySuccess();
  }else coordsNote=coordsRestriction?"":String(message||"Coordenadas indisponíveis");
@@ -1080,6 +1124,51 @@ function evolutionRow(x,first){
 }
 // Compact rank shown OUTSIDE the collapsed analysis in the search league.
 // The toolbar #1 is only a search threshold; use verified species IV ranks.
+// ⚔️ is intentionally tiny and shown only for a VERIFIED class #1.
+// PvP recommended attacks must come from the source-pinned PvPoke rankings;
+// Elite/legacy status must come from the corresponding gamemaster species.
+let currentRankSpecies="",currentCardMoves="";
+function renderRankOneMoves(){
+ const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
+ if(!rankLine||!popover)return;
+ popover.hidden=true;popover.textContent="";
+ if(!/Rank Classe: #1(?!\d)/.test(rankLine.textContent||""))return;
+ const league=(rankLine.dataset&&rankLine.dataset.league)||"";
+ const species=currentRankSpecies||watchName;
+ if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
+ const btn=document.createElement("button");btn.type="button";btn.textContent="⚔️";
+ btn.title="Golpes ágeis, carregados e situação da MT de Elite";
+ btn.setAttribute("aria-label","Golpes PvP e MT Elite");
+ btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
+ btn.onclick=async()=>{
+  const show=popover.hidden;popover.hidden=!show;
+  if(!show){resizeEvolutionPanel();return;}
+  const parts=currentCardMoves.trim().split(/\s*\/\s*/);
+  const current=parts.length>=2?
+   "Atuais de "+watchName+": Ágil "+parts[0]+" · Carregado "+parts.slice(1).join(" / "):
+   "Atuais de "+watchName+": "+(currentCardMoves||"não informados");
+  popover.textContent="⚔️ "+species+" · "+league.toUpperCase()+"\n"+current+
+   "\nBuscando recomendações verificadas...";
+  popover.style.whiteSpace="pre-line";resizeEvolutionPanel();
+  const identity=detailIdentity;
+  const recommendation=await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
+  if(detailIdentity!==identity||popover.hidden||!btn.isConnected)return;
+  if(!recommendation){
+   popover.textContent="⚔️ "+species+" · "+league.toUpperCase()+"\n"+current+
+    "\nRecomendação/MT Elite não verificadas (PvPoke indisponível).";
+   resizeEvolutionPanel();return;
+  }
+  const status=m=>m.status==="elite"?" [MT Elite]":
+   m.status==="legacy"?" [Legado: conferir]":
+   m.status==="normal"?" [Normal]":" [?]";
+  popover.textContent="⚔️ "+recommendation.species+" · "+league.toUpperCase()+"\n"+
+   "Recomendados (PvPoke):\nÁgil: "+recommendation.fast.name+status(recommendation.fast)+
+   "\nCarregados: "+recommendation.charged.map(m=>m.name+status(m)).join(" / ")+
+   "\n"+current+"\nBase PvPoke: 03/11/2026. Legado ≠ MT Elite confirmada.";
+  resizeEvolutionPanel();
+ };
+ rankLine.appendChild(btn);
+}
 function updateVisiblePvPRank(payload){
  if(activeRankLeague!=="gl"&&activeRankLeague!=="ul")return false;
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
@@ -1107,6 +1196,7 @@ function updateVisiblePvPRank(payload){
   (a.kind==="current"?-1:b.kind==="current"?1:0));
  const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
  const best=inSearch[0],label=activeRankLeague.toUpperCase();
+  if(rankLine.dataset)rankLine.dataset.league=activeRankLeague;
  if(!best){
   // A Top-N search is NOT evidence that the base species itself is Top-N.
   const own=candidates.find(x=>x.kind==="current");
@@ -1117,6 +1207,7 @@ function updateVisiblePvPRank(payload){
   rankLine.hidden=false;
   return false;
  }
+ currentRankSpecies=best.name;
  const scope=best.kind==="evolution"?" · ↳ "+best.name:
   best.kind==="reference"?" · ↳ "+best.name:"";
  rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
@@ -1138,6 +1229,7 @@ function updateVisiblePvPRank(payload){
   (own&&own.name!==best.name?" · "+payload.name+" atual: #"+own.rank:"")+
   (limit!==null?" · Filtro de pesquisa: Top #"+limit:"");
  rankLine.hidden=false;
+ if(typeof renderRankOneMoves==="function")renderRankOneMoves();
  return true;
 }
 window.showEvolutionDetails=payload=>{
@@ -1222,7 +1314,9 @@ window.showDetails=(c,mode,watched)=>{
  watchName=String(c.name||"");window.watchFeedback(!!watched);
  currentIndex=Number(c.sourceIndex);
  shareUi();
- if(!currentCoords&&c.coords)currentCoords=String(c.coords);
+ currentRevealKey=revealKey(c);
+ if(c.coords&&window.PokeSearchCooldown?.coords?.(c.coords))currentCoords=String(c.coords);
+ if(!window.PokeSearchCooldown?.coords?.(currentCoords))currentCoords=restoreReveal();
  coordButtons();
  refreshCooldownButtons();
  const parts=String(c.despawn||"").split(":").map(Number);
@@ -1271,6 +1365,8 @@ window.showDetails=(c,mode,watched)=>{
  img.onload=null;img.onerror=null;
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
  let artAttempt=0,displayed=false,verifiedNativeTried=false,loadGeneration=0;
+ // Every new card invalidates callbacks from a previous image request.
+ // WebView can keep a previous image pending without onerror/onload.
  const nativeFallback=()=>{
   if(verifiedNativeTried)return "";
   verifiedNativeTried=true;
@@ -1301,7 +1397,14 @@ window.showDetails=(c,mode,watched)=>{
   img.src=src;
   if(img.complete&&img.naturalWidth>=8&&img.naturalHeight>=8)img.onload();
  };
- useArt(art.src);
+ // Local base sprites are generated at build time and may be missing in a
+ // particular APK or overridden by OTA. Prefer the exact verified native PNG
+ // when available; keep the normal URL path as fallback. Never use a base
+ // sprite for an unverified form, costume, region or Shiny variant.
+ const initialNative=(art.src.startsWith("file:///android_asset/pokemon-sprites/base/")||
+   art.src.startsWith("file:///android_asset/pokemon-sprites/shiny/"))?
+   nativeFallback():"";
+ useArt(initialNative||art.src);
  // Android WebView can leave a file/remote image pending forever with no
  // error; a strict verified base image can still be restored from our APK.
  const expectedSourceIndex=currentIndex,expectedName=watchName;
@@ -1309,7 +1412,13 @@ window.showDetails=(c,mode,watched)=>{
   if(!displayed&&img.isConnected&&currentIndex===expectedSourceIndex&&
      watchName===expectedName&&img.naturalWidth<8){
    const direct=nativeFallback();
-   if(direct&&img.getAttribute("src")!==direct)useArt(direct);
+   if(direct&&img.getAttribute("src")!==direct){useArt(direct);return;}
+   // The native bridge may be unavailable in a test or on a partial build.
+   // Try the exact upstream URL, not a guessed species or form. This also
+   // handles a local asset request stuck without either image event.
+   if(art.original&&art.original!==img.getAttribute("src")&&
+      /^(https:\/\/|data:image\/)/i.test(art.original))useArt(art.original);
+   else {img.style.display="none";fallback.style.display="flex";}
   }
  },1800);
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
@@ -1342,12 +1451,17 @@ window.showDetails=(c,mode,watched)=>{
  // c.rank is unlabeled provider metadata; never show it as a verified IV/PvP rank.
  // Render only an explicitly identified species IV rank for a known PvP league.
  const rankText=verifiedIvRank?league.toUpperCase()+" · Rank Classe: #"+ivValue:"";
+  if(rankLine.dataset)rankLine.dataset.league=verifiedIvRank?league:"";
  rankLine.textContent=rankText;
  rankLine.hidden=!verifiedIvRank;
  rankLine.title=verifiedIvRank?
   "Ranking dos IVs desta espécie na "+(league==="gl"?"Grande Liga":"Ultra Liga")+
    ". Não indica a posição entre espécies nem a força do Pokémon.":"";
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
+ window.currentCardMoves=String(c.moves||"");
+ currentCardMoves=window.currentCardMoves;
+ currentRankSpecies=String(c.name||"");
+ if(verifiedIvRank)renderRankOneMoves();
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=

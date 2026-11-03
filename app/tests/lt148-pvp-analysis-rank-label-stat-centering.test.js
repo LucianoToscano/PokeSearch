@@ -3,7 +3,7 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("n
 const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);new vm.Script(script);
 const css=html.slice(html.indexOf("/* LT148: native card"));
-assert.ok(css.includes('#rankLine::before{content:"▥";'),"no favorite star on rank");
+assert.ok(css.includes('#rankLine[data-league="gl"]::before{background:#2489e8}'),"no favorite star on rank");
 assert.ok(!css.includes('#rankLine.isSite'),"unverified site rank has no badge style");
 assert.ok(css.includes('#major .statHeading,#major .statValue{position:relative;top:1px}'),"1px lower text, not whole cards");
 assert.ok(html.includes('#major .statTile{height:23px;min-height:23px;max-height:23px;'),"height unchanged");

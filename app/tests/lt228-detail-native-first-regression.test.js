@@ -1,0 +1,15 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const detail=fs.readFileSync(path.join(__dirname,'../src/main/assets/detail.html'),'utf8');
+const offline=fs.readFileSync(path.join(__dirname,'../src/main/assets/sprite_offline.js'),'utf8');
+const bridge=fs.readFileSync(path.join(__dirname,'../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java'),'utf8');
+assert.match(detail,/const initialNative=/);
+assert.match(detail,/nativeFallback\(\):""/);
+assert.match(detail,/useArt\(initialNative\|\|art\.src\)/);
+assert.match(detail,/art\.original&&art\.original!==img\.getAttribute\("src"\)/);
+assert.match(offline,/function verifiedBundledData\(card\)/);
+assert.match(offline,/if\(!verifiedBase\(card\)\)return ""/);
+assert.match(bridge,/@JavascriptInterface public String bundledBaseSprite\(int dex,boolean shiny\)/);
+console.log('PASS LT228: card native-first, exact upstream fallback, verified species and shared Android bridge');

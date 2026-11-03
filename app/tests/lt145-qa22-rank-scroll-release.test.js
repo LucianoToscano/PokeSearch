@@ -11,7 +11,7 @@ assert.ok(css.includes('#panel.needsScroll{overflow-y:auto;'),"tall content can 
 assert.ok(code.includes('panel.classList.toggle("needsScroll",clipped)'),"scroll based on actual overflow");
 assert.ok(code.includes('Native.resizeDetail(height)'),"native height adapts to panel");
 assert.ok(css.includes('max-width:100%;min-height:15px;margin-top:2px;'),"Rank compact");
-assert.ok(html.includes('#rankLine::before{content:"▥";'),"Rank badge uses ranking glyph, not Favorites star");
+assert.ok(html.includes('#rankLine[data-league="gl"]::before{background:#2489e8}'),"Rank badge uses ranking glyph, not Favorites star");
 assert.ok(html.includes('rankLine.hidden=!verifiedIvRank;'),"badge hidden unless PvP IV rank is verified");
 assert.ok(css.includes('grid-template-columns:minmax(87px,1fr) 42px 38px'),"IV PC Nv readable widths");
 assert.ok(css.includes('#major .statTile{height:23px;min-height:23px;max-height:23px;'),"no tiny boxes");

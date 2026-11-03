@@ -51,6 +51,7 @@ public class OverlayService extends Service {
                 // Pokeball searches. Revalidate the official login and Shiny
                 // before emitting new cards/alerts; never mix cached results.
                 ++requestGeneration;
+                verifiedEncounterCoords.clear(); // no coordinates cross trainer changes
                 searchInProgress=false;
                 queuedManualRefresh=false;
                 results="[]";resultsStale=false;
@@ -656,6 +657,7 @@ public class OverlayService extends Service {
                 }catch(Exception ignored){
                     deliverCoords("","Erro ao guardar coordenadas.");return;
                 }
+                rememberVerifiedEncounterCoords(target,coords);
                 if(autoCopy)copyCoordinatesInternal(coords);
                 CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"✓ Coordenadas API copiadas":
@@ -3559,7 +3561,16 @@ public class OverlayService extends Service {
         JSONArray inSortOrder=sortItems(retainVerifiedEncounterFields(unexpired));
         JSONArray sorted=new JSONArray();
         // Both P1 and P2 must cap display, cache, history and notifications.
-        for(int i=0;i<inSortOrder.length()&&i<10;i++)sorted.put(inSortOrder.opt(i));
+        for(int i=0;i<inSortOrder.length()&&i<10;i++){
+            JSONObject card=inSortOrder.optJSONObject(i);
+            if(card==null)continue;
+            String saved=cachedVerifiedEncounterCoords(card);
+            if(!saved.isEmpty()){
+                try{card.put("coords",saved);}
+                catch(org.json.JSONException ignored){}
+            }
+            sorted.put(card);
+        }
         // An authenticated, criteria-verified API search is a REAL search,
         // not synthetic QA fixture data. Previously all API-backed encounters
         // skipped recordNewResults, so neither New nor Favorites ever alerted.
@@ -3711,6 +3722,10 @@ public class OverlayService extends Service {
             if(selected!=index){coordinateRequestToken++;detailManuallyPositioned=false;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
+            // A card can be reopened after a refresh or a WebView recreation.
+            // Reattach ONLY a verified coordinate of the exact unexpired spawn.
+            String verifiedCoords=cachedVerifiedEncounterCoords(obj);
+            if(!verifiedCoords.isEmpty())obj.put("coords",verifiedCoords);
             js(detailPanel,true,"window.showDetails("+obj.toString()+","+JSONObject.quote(count()>0?shownMode:mode)+","+WatchAlerts.isWatched(this,obj.optString("name",""))+")");
             detailRoot.setVisibility(View.VISIBLE);
             pushCoordsQuota();
@@ -3777,6 +3792,44 @@ public class OverlayService extends Service {
             detailParams.height=dp(detailHeight);moveDetail();
         }
     }
+    // LT231: one bounded cache per OverlayService instance, never shared by P1/P2.
+    // Source/list index intentionally does NOT identify a spawn across refresh.
+    private final VerifiedEncounterCoordinates verifiedEncounterCoords =
+        new VerifiedEncounterCoordinates(60);
+
+    private String verifiedCoordsEncounterKey(JSONObject card){
+        if(card==null)return "";
+        long deadline=card.optLong("expiresAtMs",0L);
+        if(deadline<=System.currentTimeMillis()||
+           deadline-System.currentTimeMillis()>24L*60*60*1000)return "";
+        // Never assign coordinates to merely a species, nearby location or index.
+        for(String field:new String[]{"number","name","cp","level","location"})
+            if(card.optString(field,"").trim().isEmpty())return "";
+        int account=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+        return (isSecondaryOverlay()?"P2":"P1")+"|"+account+"|"+
+            PogoAccountSlots.trainer(this,isSecondaryOverlay())+"|"+
+            card.optString("number")+"|"+card.optString("name")+"|"+
+            card.optString("cp")+"|"+card.optString("level")+"|"+
+            card.optString("location")+"|"+card.optString("iv")+"|"+
+            card.optString("form")+"|"+card.optString("gender")+"|"+
+            card.optString("size")+"|"+card.optString("costume")+"|"+
+            card.optString("costume_id")+"|"+card.optBoolean("shiny",false)+
+            "|"+deadline;
+    }
+
+    private void rememberVerifiedEncounterCoords(JSONObject card,String responseCoords){
+        String coords=extractCoordinates(responseCoords);
+        String key=verifiedCoordsEncounterKey(card);
+        if(key.isEmpty()||coords.isEmpty())return;
+        verifiedEncounterCoords.put(key,coords,card.optLong("expiresAtMs",0L),
+            System.currentTimeMillis());
+    }
+
+    private String cachedVerifiedEncounterCoords(JSONObject card){
+        String key=verifiedCoordsEncounterKey(card);
+        return key.isEmpty()?"":verifiedEncounterCoords.get(key,System.currentTimeMillis());
+    }
+
     private boolean currentCoordinateTarget(JSONObject target){
         try{
             JSONArray a=new JSONArray(results);
@@ -3827,6 +3880,7 @@ public class OverlayService extends Service {
                     }
                     results=existing.toString();
                 }catch(Exception e){recordFailure("armazenar coordenadas",e);}
+                rememberVerifiedEncounterCoords(target,coords);
                 if(autoCopy)copyCoordinatesInternal(coords);
                 CoordsQuotaStore.successfulReveal(this,null);
                 deliverCoords(coords,autoCopy?"Coordenadas copiadas":"Coordenadas obtidas");return;
@@ -5415,8 +5469,15 @@ public class OverlayService extends Service {
         }catch(Exception e){recordFailure("ler cartão coordenadas",e);}
         if(chosen==null){deliverCoords("","Pokémon indisponível");return;}
         JSONObject target=chosen;
+        // A stale card must not supply coordinates after its documented despawn,
+        // even when a preceding reveal populated the current results JSON.
+        long expiresAt=target.optLong("expiresAtMs",0L);
+        if(expiresAt>0&&expiresAt<=System.currentTimeMillis()){
+            deliverCoords("","Pokémon expirou. Aguarde um novo resultado.");return;
+        }
         // Reuse a previously verified coordinate without another site click.
         String saved=extractCoordinates(target.optString("coords",""));
+        if(saved.isEmpty())saved=cachedVerifiedEncounterCoords(target);
         if(!saved.isEmpty()){
             if(autoCopy)copyCoordinatesInternal(saved);
             deliverCoords(saved,autoCopy?"✓ Coordenadas copiadas":"Coordenadas disponíveis");
@@ -5742,6 +5803,7 @@ public class OverlayService extends Service {
             missionScreenOffRegistered = false;
         }
         stopped=true;
+        verifiedEncounterCoords.clear(); // no disk persistence or sensitive leak
         if(isSecondaryOverlay())secondaryRunning=false;
         else running=false;
         if(!running&&!secondaryRunning){
