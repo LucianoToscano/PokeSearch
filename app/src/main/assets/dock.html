@@ -6300,8 +6300,25 @@ function spriteClick(i){if(longDone){longDone=false;return;}Native.toggleDetail(
 // Retry bounded image failures in-place; never rerender cards or touch Search.
 function attachSpriteFeedback(){
  document.querySelectorAll(".spawn .spriteStage").forEach(stage=>{
-  const img=stage.querySelector("img.sprite");
-  if(!img){stage.classList.add("failed");return;}
+  let img=stage.querySelector("img.sprite");
+  if(!img){
+   // Prior versions never revisited sprites when the first resolution returned
+   // no image. Re-probe only a verified base or packaged exact variant.
+   const item=stage.closest?.(".spawn");
+   const ix=Number(item?.getAttribute("data-index")??-1);
+   const card=ix>=0&&ix<cards.length?cards[ix]:null;
+   const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
+   const art=card&&engine?.resolve(card);
+   const data=card&&engine?.bundledExactForArt?.(card,art);
+   const src=data||art?.src||"";
+   if(!/^(?:data:image\/png;base64,|file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/)/.test(src)){
+    stage.classList.add("failed");return;
+   }
+   img=document.createElement("img");img.className="sprite";
+   img.alt="";img.loading="eager";img.decoding="async";
+   img.setAttribute("data-original-src",art?.original||"");
+   stage.insertBefore(img,stage.firstChild);img.src=src;
+  }
   let retries=0,done=false,mirrorAttempted=false,nativeTried=false;
   const spawnNode=stage.closest?.(".spawn")||stage.parentElement;
   const currentIndex=Number(spawnNode?.getAttribute?.("data-index")??-1);
@@ -6309,15 +6326,14 @@ function attachSpriteFeedback(){
   const tryExactBundled=()=>{
    if(nativeTried)return false;
    const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
-   const exact=engine?.verifiedBundledData?.(sourceCard)||
-      (sourceCard?engine?.exactBundledData?.(engine.resolve(sourceCard)):"")||"";
+   const exact=sourceCard?engine?.bundledExactForArt?.(sourceCard,engine.resolve(sourceCard)):"";
    if(exact&&img.src!==exact){nativeTried=true;img.src=exact;return true;}
    return false;
   };
   let localTried=false;
   const tryVerifiedLocal=()=>{
    if(localTried||!sourceCard)return false;
-   const engine=window.PokeSearchOfflineSprite;
+   const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
    if(!engine?.verifiedBase?.(sourceCard))return false;
    // Preserve imageFromSite first; the exact bundled ordinary species image
    // becomes the bounded offline fallback only after the remote load stalls.
@@ -6435,7 +6451,7 @@ if(PVPOKE_OVERALL){
 // species' PvP base stats; regional/stat-changing forms NEVER do.
 // Require independently verified species number/name, not fuzzy names alone.
 function cosmeticPvpIdentity(card){
- const engine=window.PokeSearchOfflineSprite;
+ const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
  if(!card||engine?.verifiedSpeciesIdentity?.(card)!==true)return false;
  const key=speciesKey(card.name),form=speciesKey(card.form).replace(/[^a-z0-9]/g,"");
  const variant=speciesKey(card.variant),region=speciesKey(card.region);
@@ -7072,9 +7088,10 @@ function draw(){
   // card. Read the EXACT variant into this separate results WebView up front,
   // avoiding file:// and remote-image stalls observed with Rowlet/Froakie.
   // Unknown forms/costumes never borrow the ordinary species image.
-  const nativeArt=(art.offline||art.goExact)&&window.PokeSearchOfflineSprite?
-   (window.PokeSearchOfflineSprite.verifiedBundledData?.(c)||
-    window.PokeSearchOfflineSprite.exactBundledData?.(art)||""):"";
+  // A different view can see the same verified species through distinct
+  // provider field formats. Native reads are local, bounded and do not reveal
+  // coordinates or trigger network/search requests.
+  const nativeArt=window.PokeSearchOfflineSprite?.bundledExactForArt?.(c,art)||"";
   const imageUrl=nativeArt||art.src,originalUrl=art.original;
   const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
   // Fixed-size art box for everyone; extra reduction only for Minior's
@@ -7100,8 +7117,7 @@ function draw(){
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
     (publicCors?' crossorigin="anonymous"':'')+
     ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
-   '<span class="spriteFallback fallback" aria-hidden="true">'+
-   esc(String(c.name||"").replace(/\s*\([^)]*\)\s*$/,"").trim().slice(0,2).toLocaleUpperCase()||"·")+'</span></span>';
+   '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">◈</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
   let cooldownMarkup="";
@@ -7629,7 +7645,7 @@ function pooledBaseSprite(url){
 // Unverified costumes continue to display a neutral placeholder, never base art.
 function exactSuggestionSprite(item){
  const dex=Number(item&&item.dex),label=String(item&&item.label||"");
- const engine=window.PokeSearchOfflineSprite;
+ const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
  if(!engine||!Number.isInteger(dex)||dex<1||!label)return "";
  const art=engine.resolve({number:"#"+dex,form:label,name:"",image:"",shiny:false});
  return art.officialForm||art.officialCostume||art.offline&&/\/(?:forms|costumes)\//.test(art.src)?art.src:"";

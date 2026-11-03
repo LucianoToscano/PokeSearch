@@ -186,6 +186,15 @@ COSTUME_FILES.update({
     "costumes/pm94.fCOSTUME_2020.s.icon.png": ("pm94.fCOSTUME_2020.s.icon.png", "404b4259bae47346e6abab069eeb118229c7f807"),
 })
 
+# Halloween 2024 Rowlet/Froakie costumes returned in GO Halloween 2026 Part II.
+# Verified against immutable PokeMiners git blobs; NOT plain 656/722 art.
+COSTUME_FILES.update({
+    "costumes/pm656.cFALL_2024.icon.png": ("pm656.cFALL_2024.icon.png", "f8314ce59587cdcec314718fb592eba98f24174f"),
+    "costumes/pm656.cFALL_2024.s.icon.png": ("pm656.cFALL_2024.s.icon.png", "e92fb7eecdfed6d3e90953b436cc629bbf5d7ebf"),
+    "costumes/pm722.cFALL_2024.icon.png": ("pm722.cFALL_2024.icon.png", "41c9f22c78c6dac03be722bed181c0b82bdde0d7"),
+    "costumes/pm722.cFALL_2024.s.icon.png": ("pm722.cFALL_2024.s.icon.png", "096734e3d27eb546f39affc0fed6f77d99000014"),
+})
+
 # Official GO Deerling/Sawsbuck Autumn normal and Shiny.
 # Immutable PokeMiners git objects, NOT guessed from the Spring or base form.
 SEASONAL_GO_FORMS = {
