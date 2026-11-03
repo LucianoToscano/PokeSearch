@@ -292,6 +292,16 @@ def main():
                 hashes[f"{category}/{dex}.png"] = hashlib.sha256(data).hexdigest()
             if index % 200 == 0:
                 print(f"Offline sprites verified: {index}/{len(jobs)}", flush=True)
+    # LT231 Samsung regression gate: do not distribute an APK missing exact
+    # base images for the demonstrated failures or common seasonal forms.
+    # The manifest may legitimately omit unknown Dex variants; we never
+    # silently replace missing normal/shiny base sprites with wrong species.
+    required_ids = {94, 422, 423, 459, 656, 669, 670, 671, 722, 723, 724}
+    missing_required = {kind: sorted(required_ids.intersection(misses[kind]))
+                        for kind in ("base", "shiny")}
+    if any(missing_required.values()):
+        raise SystemExit("Required verified Samsung sprite(s) missing: " +
+                         json.dumps(missing_required, separators=(",", ":")))
     # Exact extra form sprites. Fail the QA build on missing/bad bytes rather
     # than silently shipping the diamond placeholder or the wrong base form.
     form_hashes = {}

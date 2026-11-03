@@ -6308,11 +6308,10 @@ function attachSpriteFeedback(){
   const sourceCard=Number.isInteger(currentIndex)&&currentIndex>=0?cards[currentIndex]:null;
   const tryExactBundled=()=>{
    if(nativeTried)return false;
-   nativeTried=true;
    const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
    const exact=engine?.verifiedBundledData?.(sourceCard)||
       (sourceCard?engine?.exactBundledData?.(engine.resolve(sourceCard)):"")||"";
-   if(exact&&img.src!==exact){img.src=exact;return true;}
+   if(exact&&img.src!==exact){nativeTried=true;img.src=exact;return true;}
    return false;
   };
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
@@ -7056,7 +7055,14 @@ function draw(){
   const art=window.PokeSearchOfflineSprite?
    window.PokeSearchOfflineSprite.resolve(c):
    {src:String(c.image||""),original:String(c.image||""),offline:false};
-  const imageUrl=art.src,originalUrl=art.original;
+  // The native bridge owns the same immutable APK sprites used by the detail
+  // card. Read the EXACT variant into this separate results WebView up front,
+  // avoiding file:// and remote-image stalls observed with Rowlet/Froakie.
+  // Unknown forms/costumes never borrow the ordinary species image.
+  const nativeArt=(art.offline||art.goExact)&&window.PokeSearchOfflineSprite?
+   (window.PokeSearchOfflineSprite.verifiedBundledData?.(c)||
+    window.PokeSearchOfflineSprite.exactBundledData?.(art)||""):"";
+  const imageUrl=nativeArt||art.src,originalUrl=art.original;
   const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
   // Fixed-size art box for everyone; extra reduction only for Minior's
   // unusually full artwork. Never alter its species identity or image URL.

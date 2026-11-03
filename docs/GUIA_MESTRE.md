@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT231 QA LOCAL — Sprites, coordenadas persistentes e golpes PvP (03/11/2026)
+
+**ESTADO EXATO:** código-fonte preparado e testado localmente; **NÃO mergeado na main, NÃO assinado, NÃO publicado no GitHub Releases/OTA/Drive**. A referência oficial anterior continua LT227 / 54434 até verificação contrária em `releases/latest`. Base da revisão: `50901e8e55c0ad1696cc95044de284c0afd88317` e cópia local LT230, sem reescrita da aplicação.
+
+- `dock.html`, `detail.html`, `app/scripts/build_sprite_bundle.py`: sprites exatas (P1/P2, fallback local nativo, confirmação obrigatória da presença Rowlet/Froakie/Snover/Shellos/Flabébé/Gengar) e card visual compacto.
+- `VerifiedEncounterCoordinates.java`, `OverlayService.java`: reaproveitar coordenadas já verificadas até o despawn, inclusive entre card fechado/aberto e refresh com identidade estável, sem gastar outra chamada `/reveal` em P1/P2; memória temporária por serviço, não persistente após encerramento.
+- `detail.html`, `pvp_rank_moves.js`: ⚔️ pequeno em Rank Classe #1 efetivamente comprovado, golpes atuais vs. recomendados PvPoke, distinção entre Elite/Legado/Normal e fallback não verificado.
+- Liga: indicadores redondos de **7 px** (GL azul, UL amarelo, ML roxo), sem alterar fonte/altura da faixa. GL/UL aplicados; ML só se ranking de classe estiver realmente disponível.
+- **QA local:** 212/212 suítes de testes Node (incluindo 487 verificações `overlay-ux`), teste Java do cache, teste Python OTA de fixture e compilação sintática do gerador de sprites PASS. **Não houve build Android, QA físico, merge ou publicação.**
+- Roteiro, limitações, arquivos e segurança: [LT231_SPRITES_COORDS_GOLPES_QA_20261103.md](LT231_SPRITES_COORDS_GOLPES_QA_20261103.md). Para continuar, seguir manual operacional e fluxo protegido de PR, CI, assinatura, GitHub Releases/latest, Drive e registro comprovado dos SHAs/hashes.
+
 ## CONTINUIDADE ENTRE CONTAS — PROCEDIMENTO OPERACIONAL VERIFICADO (02/11/2026)
 
 **REGRA PRINCIPAL PARA QUALQUER NOVA IA: NÃO INVENTAR, NÃO RECOMEÇAR E NÃO CONFUNDIR ESTÁGIOS.** O manual detalhado e permanente fica em **[MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md](MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md)**, com procedimentos e comandos reproduzíveis de auditoria, correção, QA, merge, compilação, assinatura v2, release, distribuição pelo atualizador, espelho do Drive, controle de versão, registro histórico, troca de conta, diagnóstico e rollback. **Ler por inteiro antes de criar APK ou publicar nova versão.** Ele é parte canônica deste Arquivo Mestre, não apenas uma referência opcional.
