@@ -1452,6 +1452,29 @@
           "Testes físicos Samsung e API autenticada continuam necessários para homologar todos os cenários."
         ]
       }
+    },
+    {
+      "id": "lt232-compact-sprites-ptbr-20261103",
+      "minVersionCode": 54436,
+      "date": "03/11/2026",
+      "title": "PokeSearch LT232 — Sprites menores, alinhamento e golpes PT-BR",
+      "sections": {
+        "novidades": [
+          "Ataques Recomendados em português brasileiro, com cores correspondentes ao tipo e 💠 pequeno para golpes legados.",
+          "Painel de golpes ⚔️ simplificado: Ágil, Carregado 1 e Carregado 2."
+        ],
+        "melhorias": [
+          "Pokébola centralizada sobre a coluna de resultados nas duas Pokébolas, respeitando o Editor Visual.",
+          "Tamanhos de sprites mais compactos: P 24dp, M 32dp e G 40dp."
+        ],
+        "correcoes": [
+          "Recuperação extra de sprites normais/Shiny verificadas na lista quando a imagem exata remota não carrega.",
+          "Formas, fantasias e sprites exatas do site continuam protegidas contra substituições incorretas."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual pós-instalação em Samsung, incluindo Rowlet, Froakie, Shellos, Flabébé e golpes com MT Elite."
+        ]
+      }
     }
   ]
 }
