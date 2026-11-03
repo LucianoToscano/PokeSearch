@@ -1,16 +1,31 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT231 — PR #199 (QA/merge e publicação sujeitos ao CI) — Sprites, coordenadas persistentes e golpes PvP (03/11/2026)
+## LT231 OFICIAL — 0.02.31 / versionCode 54435 — Publicação assinada e Drive (03/11/2026)
 
-**ESTADO EXATO (03/11/2026):** implementação e testes LT231 enviados à [PR #199](https://github.com/LucianoToscano/PokeSearch/pull/199), branch `fix/lt231-sprites-coords-pvp-20261103`; QA do GitHub e workflow protegido da nova versão em preparação. **Não declarar merge, APK assinado nem atualização do aplicativo antes da confirmação de cada etapa.** A referência oficial anterior continua LT227 / 54434 até verificação contrária em `releases/latest`. Base da revisão: `50901e8e55c0ad1696cc95044de284c0afd88317` e cópia local LT230, sem reescrita da aplicação.
+**ESTADO VERIFICADO:** a última release estável consultada no GitHub `releases/latest` é [v0.02.31-54435](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.31-54435), publicada em **03/11/2026, 10:07:55 UTC** (draft=false, prerelease=false). Ela é oferecida pelo canal oficial de atualizações do app (GitHubUpdateCenter); a instalação no Android requer confirmação do usuário e **não foi comprovada** neste registro. **QA físico Samsung pós-publicação continua PENDENTE.**
 
-- `dock.html`, `detail.html`, `app/scripts/build_sprite_bundle.py`: sprites exatas (P1/P2, fallback local nativo, confirmação obrigatória da presença Rowlet/Froakie/Snover/Shellos/Flabébé/Gengar) e card visual compacto.
-- `VerifiedEncounterCoordinates.java`, `OverlayService.java`: reaproveitar coordenadas já verificadas até o despawn, inclusive entre card fechado/aberto e refresh com identidade estável, sem gastar outra chamada `/reveal` em P1/P2; memória temporária por serviço, não persistente após encerramento.
-- `detail.html`, `pvp_rank_moves.js`: ⚔️ pequeno em Rank Classe #1 efetivamente comprovado, golpes atuais vs. recomendados PvPoke, distinção entre Elite/Legado/Normal e fallback não verificado.
-- Liga: indicadores redondos de **7 px** (GL azul, UL amarelo, ML roxo), sem alterar fonte/altura da faixa. GL/UL aplicados; ML só se ranking de classe estiver realmente disponível.
-- **QA local antes da PR:** 212/212 suítes de testes Node (incluindo 487 verificações `overlay-ux`), teste Java do cache, teste Python OTA de fixture e compilação sintática do gerador de sprites PASS. **Não houve build Android, QA físico, merge ou publicação.**
-- **Publicação planejada e autorizada:** LT231 / `0.02.31` / versionCode `54435`; workflow `.github/workflows/lt231-official-release.yml` com ambiente protegido `official-updates`, guarda de release anterior LT227 e certificado público permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; o feed oficial é `GitHub Releases/latest`. Se CI falhar, não publicar. Dados reais de merge, artifact e publicação serão anexados após confirmação.
-- Roteiro, limitações, arquivos e segurança: [LT231_SPRITES_COORDS_GOLPES_QA_20261103.md](LT231_SPRITES_COORDS_GOLPES_QA_20261103.md). Para continuar, seguir manual operacional e fluxo protegido de PR, CI, assinatura, GitHub Releases/latest, Drive e registro comprovado dos SHAs/hashes.
+### Proveniência imutável e operações realizadas
+
+- Fonte original pré-LT231: `50901e8e55c0ad1696cc95044de284c0afd88317` (após LT227, com documentação posterior).
+- [PR #199](https://github.com/LucianoToscano/PokeSearch/pull/199) — correções reais e registro mestre mesclados: squash merge SHA `4b9926a8c54670522723b127103d6f7d256cbb91`.
+- [PR #200](https://github.com/LucianoToscano/PokeSearch/pull/200) — correção do gate documental do workflow da release mesclada: squash SHA **`08b6853dd37e10aee38af344d6fdab607375fd90`**. Este é também o **SOURCE_COMMIT** compilado para o APK LT231, conforme workflow e release.
+- [GitHub Actions #41616160161](https://github.com/LucianoToscano/PokeSearch/actions/runs/41616160161), **conclusion=success**, head_sha `08b6853dd37e10aee38af344d6fdab607375fd90`; protegido pelo ambiente `official-updates`, JDK 17/Gradle 8.11.1, testes Node/OTA/Java, geração de sprites offline, compilação, validação do APK e certificado permanente.
+- APK oficial: [PokeSearch-v0.02.31-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.31-54435/PokeSearch-v0.02.31-LT.apk), **28.084.961 bytes**, SHA-256 **`915b0458100eb63da70a31a0eb4f3de79ef274fbf9748b8899909a4c683854b5`**, certificado Android v2 permanente SHA-256 **`34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`**. Não distribuir builds privados assinados com chaves temporárias como atualização pública.
+- Artifact assinado do workflow: `PokeSearch-LT231-Signed-Verified`, ID `13221143777`, 25.906.050 bytes, digest SHA-256 **`963e717a389e5b4c0e1ffe593562fe732dbb50c65d331349641199c2756114bf`**, [workflow e artefato](https://github.com/LucianoToscano/PokeSearch/actions/runs/41616160161).
+- Espelho confirmado no [Google Drive — pacote APK + relatórios LT231](https://drive.google.com/file/d/1dA9sJ1HwbBDZSJgudprKY7k94oBto5lW/view?usp=drivesdk), ID `1dA9sJ1HwbBDZSJgudprKY7k94oBto5lW`, pasta `PokeSearch_App` ID `1fVw93qUDE0YWp6tlJZaNjRmymyhEAUbR`, tamanho confirmado via metadados: 25.906.050 bytes. A confirmação do SHA do ZIP espelhado usa o digest verificado do artifact de origem; o checksum do arquivo armazenado no Drive não foi calculado independentemente.
+- **Distinção obrigatória:** fonte do APK e último merge da correção são `08b6853...`; o HEAD da main após esta atualização documental ficará posterior e **não** deve ser rotulado SOURCE_COMMIT. A tag oficial e os digests acima permanecem imutáveis.
+
+### Correções integradas
+
+- **Sprites P1/P2:** fallback de PNGs normais/Shiny na lista e cards; checagem do pacote offline para Rowlet, Froakie, Snover, Shellos, Flabébé e Gengar; preservar formas/trajes corretos e tamanho P/M/G. Testes automatizados não substituem inspeção das imagens no Samsung.
+- **Coordenadas e consumo de consultas:** `VerifiedEncounterCoordinates.java` + `OverlayService.java` reutilizam as coordenadas verificadas do mesmo encontro até expirar, inclusive fechando/reabrindo cards e atualizando lista; cache por serviço e Pokébola, não persiste quando o serviço é encerrado.
+- **PvP ⚔️:** botão pequeno condicionado ao Rank Classe #1 real, golpes atuais e sugestões PvPoke sob consulta; MT Elite/Legado identificados somente quando a fonte sustenta; não exibir afirmação não verificada.
+- **Ligas:** círculos de 7 px, azul GL, amarelo UL, roxo ML, mantendo fonte/altura; ML somente com base correspondente.
+- **Qualidade:** 212/212 suítes Node e testes Java/CI Android e OTA aprovados antes de publicar; PR #199 checks e workflow protegido oficial SUCCESS. O workflow LT146 histórico foi disparado em paralelo após merge e apresentou falha; **não se confunde esse job histórico com o workflow LT231 oficial concluído com êxito**.
+- **Segurança de assinatura:** identificador imutável e fingerprint permanente, sem tokens, certificados privados, keystore ou material de assinatura incluídos na documentação/ZIP de fonte.
+- **Pendências reais:** validar visualmente sprites, detalhes, coordenadas e movimentos no Samsung (P1 e P2), verificar qualidade dos golpes e estados de Elite com a API/dataset atual; testar instalação no aparelho; verificar eventuais regressões da experiência de atualização. Não presumir instalação nem funcionamento físico só porque CI concluiu.
+
+Roteiro técnico e regressões: [LT231_SPRITES_COORDS_GOLPES_QA_20261103.md](LT231_SPRITES_COORDS_GOLPES_QA_20261103.md). Processo de continuidade e release: [MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md](MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md).
 
 ## CONTINUIDADE ENTRE CONTAS — PROCEDIMENTO OPERACIONAL VERIFICADO (02/11/2026)
 
