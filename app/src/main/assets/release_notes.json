@@ -1475,6 +1475,30 @@
           "Validação visual pós-instalação em Samsung, incluindo Rowlet, Froakie, Shellos, Flabébé e golpes com MT Elite."
         ]
       }
+    },
+    {
+      "id": "lt233-halloween-sprite-verified-recovery-20261103",
+      "minVersionCode": 54437,
+      "date": "03/11/2026",
+      "title": "PokeSearch LT233 — Halloween, Sprites e PvP",
+      "sections": {
+        "novidades": [
+          "Sprites oficiais verificadas de fantasias de Halloween, incluindo Rowlet e Froakie normais e Shiny.",
+          "Correspondência por ID de espécie, fantasia e forma para recuperar imagens exatas sem trocar cores ou vestimentas."
+        ],
+        "melhorias": [
+          "Recuperação de PNGs verificados diretamente do pacote Android ao falhar a WebView.",
+          "Os botões ⓘ e ⚔️ permanecem visíveis na faixa de Rank Classe #1."
+        ],
+        "correcoes": [
+          "Remove siglas de fallback RO, FR e SH de Pokémon cujo sprite ainda não foi carregado.",
+          "Centraliza novamente as coordenadas reveladas como no botão Pegar Coordenadas.",
+          "Preserva a escala P/M/G e a separação entre as duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Testes visuais pós-instalação no Samsung continuam necessários para todas as fantasias raras."
+        ]
+      }
     }
   ]
 }
