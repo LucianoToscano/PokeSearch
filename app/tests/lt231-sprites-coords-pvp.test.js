@@ -21,7 +21,7 @@ for(const card of options){
   assert.match(art.src,/^file:\/\/\/android_asset\/pokemon-sprites\/base\/\d+\.png$/);
  }
 }
-assert.match(dock,/const nativeArt=\(art\.offline\|\|art\.goExact\)/);
+assert.match(dock,/const nativeArt=window\.PokeSearchOfflineSprite\?\.bundledExactForArt\?\.\(c,art\)/);
 assert.match(dock,/verifiedBundledData\?\.\(c\)/);
 assert.match(detail,/const initialNative=/);
 assert.match(detail,/verifiedBundledData\?\.\(c\)/);
