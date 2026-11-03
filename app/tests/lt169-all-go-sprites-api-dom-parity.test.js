@@ -63,7 +63,7 @@ assert.match(dock,/img\.src=original;return;/);
 assert.match(detail,/art\.offline\|\|art\.goExact/);
 assert.ok(!dock.includes('aria-hidden="true">◉</span>'),"no generic empty ring in result");
 assert.ok(!detail.includes('content:"◉";display:block'),"no generic empty ring in detail");
-assert.match(dock,/esc\(String\(c\.name\|\|""\)/);
+assert.match(dock,/class="spriteFallback fallback" role="img"/);
 assert.match(detail,/fallback\.textContent=/);
 // Explicit upstream Git-blob manifest and Android caching must agree with
 // every browser-side icon path, or first loads would be unverified.
