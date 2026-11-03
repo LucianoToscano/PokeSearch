@@ -1429,6 +1429,29 @@
           "A disponibilidade de filtros e Doces Raros depende do serviço PoGoCoordinates; limites HTTP 429 continuam preservados."
         ]
       }
+    },
+    {
+      "id": "lt231-verified-sprites-coords-pvp-20261103",
+      "minVersionCode": 54435,
+      "date": "03/11/2026",
+      "title": "PokeSearch LT231 — Sprites, coordenadas e PvP",
+      "sections": {
+        "novidades": [
+          "Botão ⚔️ no card para Rank Classe #1 verificado: golpes atuais e recomendações PvP, com identificação Elite/Legado quando confirmada.",
+          "Indicadores menores das ligas: círculo azul GL, amarelo UL e roxo ML."
+        ],
+        "melhorias": [
+          "Coordenadas já reveladas permanecem disponíveis no card do mesmo encontro até o despawn enquanto o serviço estiver ativo; não é necessário revelar novamente ao reabrir.",
+          "Sprites normais e Shiny com recuperação local verificável em listas e cards das duas Pokébolas, mantendo formas e trajes corretos."
+        ],
+        "correcoes": [
+          "Reduz casos de sprites substituídos por letras (como RO/FR) na lista vertical e no card.",
+          "Identidade estável do encontro para reutilização segura de coordenadas, sem depender do índice na lista."
+        ],
+        "emDesenvolvimento": [
+          "Testes físicos Samsung e API autenticada continuam necessários para homologar todos os cenários."
+        ]
+      }
     }
   ]
 }
