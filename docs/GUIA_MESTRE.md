@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT233 QA — Auditoria geral Halloween, recuperação de sprites, ⓘ/⚔️ e coordenadas (03/11/2026)
+
+**STATUS NO INÍCIO DA PR #203:** fonte alterada em QA; **merge e publicação LT233 pendentes**. Base: `541f0d5f06528b74f832c49454ae616daaa9f548`; versão pública anterior LT232 `v0.02.32-54436` (GitHub Actions `41632445884` SUCCESS). SHA do APK anterior `fe49e4de58bfdfc0c8abac9d3912dd8c15e11016234ef7cb0a1eb63261668f5b`.
+
+- Erro de campo: siglas RO/FR/SH na lista, fantasias 2026 sem ilustração; botão ⚔️ cortado quando ⓘ presente; coordenadas reveladas desalinhadas.
+- Auditoria LT232: **2.876 PNGs verificados e válidos**; causa principal é mapeamento/carregamento WebView e sprites de Halloween 2024 ausentes do pacote. Novo gerador contém **106 entradas de fantasias**, das quais 4 adicionadas para Rowlet e Froakie normal/Shiny de 2024 que retornaram em 2026.
+- Identificação: `number`, `dex`, `pokemon_id`, `costume_id`, `form_id`, sexo/Shiny; regras estritas de não substituir ilustrações de fantasias por formas-base erradas. Recuperação de bytes verificados via ponte Android e revisão do primeiro carregamento da lista.
+- Rank: preservar ⓘ e ⚔️ fixos de 18 px e reduzir somente texto do Rank Classe. Centro simétrico das coordenadas reveladas, inclusive quando longas.
+- QA: [relatório LT233](LT233_AUDITORIA_GERAL_SPRITES_HALLOWEEN_PVP_COORDS_20261103.md), teste de identidade de 36 casos, workflow assinado deve verificar os 4 PNGs dentro do APK antes de liberar `releases/latest`.
+- Nova versão pretendida **LT233 0.02.33 / 54437**, com certificado Android permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Qualquer merge, APK, OTA ou Drive só será registrado como concluído após conferência externa do SHA e workflow. Teste físico Samsung continua pendente.
+
 ## LT232 QA — Alinhamento, P/M/G, sprites, golpes PT-BR (03/11/2026)
 
 **ESTADO NESTE COMMIT:** alterações em QA na branch `fix/lt232-compact-sprites-alignment-ptbr-20261103`, base `245efcd05f8f4a032326230b15b121014013e98b`. **Não considerar merge, APK assinado nem distribuição concluídos sem consultar GitHub Actions e `releases/latest`.** A versão pública anterior é LT231 (0.02.31, code 54435), que continua instalável até a nova publicação ser comprovada.
