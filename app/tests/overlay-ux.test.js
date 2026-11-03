@@ -1748,7 +1748,7 @@ test("UX-SPRITE-01 uses equal square image slots with no cropping or opaque pane
 })());
 test("UX-SPRITE-01 missing images remain visible without inventing Pokémon or breaking taps",(()=>{
  return dock.includes('class="spriteStage"')&&
-  dock.includes('class="spriteFallback fallback" aria-hidden="true"')&&
+  dock.includes('class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata"')&&
   dock.includes('.spriteStage.loaded .spriteFallback{display:none}')&&
   dock.includes('.spriteStage.failed .sprite{display:none}')&&
   dock.includes('alt="" loading="eager" decoding="async"')&&

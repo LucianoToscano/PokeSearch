@@ -56,8 +56,8 @@ assert.match(native,/@JavascriptInterface public String bundledExactSprite\(Stri
 assert.match(src,/function exactBundledData\(art\)/);
 assert.match(native,/android\.util\.Base64\.encodeToString\(png,android\.util\.Base64\.NO_WRAP\)/);
 assert.match(native,/buffer\.size\(\)\+count>128\*1024/);
-assert.match(dock,/verifiedBundledData\?\.\(sourceCard\)/);
-assert.match(dock,/exactBundledData\?\.\(engine\.resolve\(sourceCard\)\)/);
+assert.match(dock,/bundledExactForArt\?\.\(sourceCard,engine\.resolve\(sourceCard\)\)/);
+assert.match(src,/function bundledExactForArt\(card,art\)/);
 assert.match(detail,/verifiedBundledData\?\.\(c\)/);
 assert.match(detail,/exactBundledData\?\.\(art\)/);
 assert.match(dock,/verifiedBundledData\?\.\(exactCard\)/);

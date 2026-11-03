@@ -644,6 +644,26 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .psMovesCompact .psMoveName{font-size:11px;font-weight:800;min-width:0}
 .psMovesCompact .psMoveLegacy{font-size:8px;vertical-align:baseline;line-height:1;margin-left:1px}
 .psMovesCompact .psMoveLegend{font-size:9px;color:#c9d9e9;margin-top:2px}
+
+/* LT233: PvP rank text may ellipsize; the info and sword buttons may not. */
+#rankLine{box-sizing:border-box!important;display:flex!important;align-items:center!important;
+ width:100%!important;max-width:100%!important;min-width:0;gap:3px!important;
+ white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;
+ padding:2px 4px!important}
+#rankLine .psRankLabel{display:block;min-width:0;flex:1 1 auto;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rankLine .evoInfoBtn,#rankLine .psMovesAction{flex:0 0 18px;min-width:18px;max-width:18px;
+ width:18px;height:18px;padding:0!important;margin:0!important;border:0;background:transparent;
+ display:inline-flex;align-items:center;justify-content:center;line-height:18px;
+ font-size:13px;color:#dfe9f8;cursor:pointer;position:relative;z-index:1}
+#rankLine .psMovesAction{font-size:12px!important}
+/* Symmetrical numeric coordinate label: same centre as Get Coordinates. */
+#coordRow #coords.hasCoords{box-sizing:border-box!important;width:100%!important;
+ display:flex!important;align-items:center;justify-content:center;
+ text-align:center!important;padding:5px 8px!important;
+ overflow:visible!important;text-overflow:clip!important;white-space:normal!important;
+ overflow-wrap:anywhere;word-break:normal;font-variant-numeric:tabular-nums;
+ line-height:1.3;min-height:29px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1188,9 +1208,22 @@ function renderRankOneMoves(){
    '<div class="psMoveLegend">💠 Ataque Legado</div>');
   resizeEvolutionPanel();
  };
+ btn.className="psMovesAction";
  rankLine.appendChild(btn);
 }
 function updateVisiblePvPRank(payload){
+// Keep a text fallback for older DOM adapters used by Android and QA mocks.
+function setRankLineLabel(rankLine,label){
+ if(typeof rankLine.replaceChildren!=="function"||
+    typeof rankLine.appendChild!=="function"||
+    typeof document.createElement!=="function"){
+  rankLine.textContent=label;return;
+ }
+ rankLine.replaceChildren();
+ const text=document.createElement("span");text.className="psRankLabel";
+ text.textContent=label;rankLine.appendChild(text);
+}
+
  if(activeRankLeague!=="gl"&&activeRankLeague!=="ul")return false;
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
  if(!league)return false;
@@ -1221,8 +1254,9 @@ function updateVisiblePvPRank(payload){
  if(!best){
   // A Top-N search is NOT evidence that the base species itself is Top-N.
   const own=candidates.find(x=>x.kind==="current");
-  rankLine.textContent=label+" · Filtro Top #"+limit+
+  const summary=label+" · Filtro Top #"+limit+
    (own?" · "+payload.name+" atual #"+own.rank:" · posição não identificada");
+  setRankLineLabel(rankLine,summary);
   rankLine.title="A busca pode considerar evoluções ou uma classificação da fonte. "+
    "Nenhuma combinação correspondente ao Top #"+limit+" foi confirmada no cálculo local.";
   rankLine.hidden=false;
@@ -1231,7 +1265,7 @@ function updateVisiblePvPRank(payload){
  currentRankSpecies=best.name;
  const scope=best.kind==="evolution"?" · ↳ "+best.name:
   best.kind==="reference"?" · ↳ "+best.name:"";
- rankLine.textContent=label+" · Rank Classe: #"+best.rank+scope;
+ setRankLineLabel(rankLine,label+" · Rank Classe: #"+best.rank+scope);
  if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
   const info=document.createElement("button");
   info.type="button";
