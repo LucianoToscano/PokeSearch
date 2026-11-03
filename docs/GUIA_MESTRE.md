@@ -1,14 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT231 QA LOCAL — Sprites, coordenadas persistentes e golpes PvP (03/11/2026)
+## LT231 — PR #199 (QA/merge e publicação sujeitos ao CI) — Sprites, coordenadas persistentes e golpes PvP (03/11/2026)
 
-**ESTADO EXATO:** código-fonte preparado e testado localmente; **NÃO mergeado na main, NÃO assinado, NÃO publicado no GitHub Releases/OTA/Drive**. A referência oficial anterior continua LT227 / 54434 até verificação contrária em `releases/latest`. Base da revisão: `50901e8e55c0ad1696cc95044de284c0afd88317` e cópia local LT230, sem reescrita da aplicação.
+**ESTADO EXATO (03/11/2026):** implementação e testes LT231 enviados à [PR #199](https://github.com/LucianoToscano/PokeSearch/pull/199), branch `fix/lt231-sprites-coords-pvp-20261103`; QA do GitHub e workflow protegido da nova versão em preparação. **Não declarar merge, APK assinado nem atualização do aplicativo antes da confirmação de cada etapa.** A referência oficial anterior continua LT227 / 54434 até verificação contrária em `releases/latest`. Base da revisão: `50901e8e55c0ad1696cc95044de284c0afd88317` e cópia local LT230, sem reescrita da aplicação.
 
 - `dock.html`, `detail.html`, `app/scripts/build_sprite_bundle.py`: sprites exatas (P1/P2, fallback local nativo, confirmação obrigatória da presença Rowlet/Froakie/Snover/Shellos/Flabébé/Gengar) e card visual compacto.
 - `VerifiedEncounterCoordinates.java`, `OverlayService.java`: reaproveitar coordenadas já verificadas até o despawn, inclusive entre card fechado/aberto e refresh com identidade estável, sem gastar outra chamada `/reveal` em P1/P2; memória temporária por serviço, não persistente após encerramento.
 - `detail.html`, `pvp_rank_moves.js`: ⚔️ pequeno em Rank Classe #1 efetivamente comprovado, golpes atuais vs. recomendados PvPoke, distinção entre Elite/Legado/Normal e fallback não verificado.
 - Liga: indicadores redondos de **7 px** (GL azul, UL amarelo, ML roxo), sem alterar fonte/altura da faixa. GL/UL aplicados; ML só se ranking de classe estiver realmente disponível.
-- **QA local:** 212/212 suítes de testes Node (incluindo 487 verificações `overlay-ux`), teste Java do cache, teste Python OTA de fixture e compilação sintática do gerador de sprites PASS. **Não houve build Android, QA físico, merge ou publicação.**
+- **QA local antes da PR:** 212/212 suítes de testes Node (incluindo 487 verificações `overlay-ux`), teste Java do cache, teste Python OTA de fixture e compilação sintática do gerador de sprites PASS. **Não houve build Android, QA físico, merge ou publicação.**
+- **Publicação planejada e autorizada:** LT231 / `0.02.31` / versionCode `54435`; workflow `.github/workflows/lt231-official-release.yml` com ambiente protegido `official-updates`, guarda de release anterior LT227 e certificado público permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; o feed oficial é `GitHub Releases/latest`. Se CI falhar, não publicar. Dados reais de merge, artifact e publicação serão anexados após confirmação.
 - Roteiro, limitações, arquivos e segurança: [LT231_SPRITES_COORDS_GOLPES_QA_20261103.md](LT231_SPRITES_COORDS_GOLPES_QA_20261103.md). Para continuar, seguir manual operacional e fluxo protegido de PR, CI, assinatura, GitHub Releases/latest, Drive e registro comprovado dos SHAs/hashes.
 
 ## CONTINUIDADE ENTRE CONTAS — PROCEDIMENTO OPERACIONAL VERIFICADO (02/11/2026)
