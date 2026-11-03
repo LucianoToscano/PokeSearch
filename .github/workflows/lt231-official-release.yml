@@ -84,7 +84,7 @@ jobs:
           test -s docs/GUIA_MESTRE.md
           test -s app/tests/lt226-visible-sprite-alpha-fill.test.js
           test -s app/tests/lt227-frameless-results.test.js
-          test -s docs/LT231_PUBLICACAO_RESULTADOS_FUNDO_SPRITES_QA_20261102.md
+          test -s docs/LT227_PUBLICACAO_RESULTADOS_FUNDO_SPRITES_QA_20261102.md
           test -s app/src/main/assets/sprite_visual_scale.js
           node app/tests/lt226-visible-sprite-alpha-fill.test.js
           node app/tests/lt227-frameless-results.test.js
