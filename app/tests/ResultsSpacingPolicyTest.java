@@ -26,6 +26,12 @@ public final class ResultsSpacingPolicyTest {
             "maximum configured spacing");
         equal(34, ResultsSpacingPolicy.additionalRowGapPx(99),
             "out-of-range values fail clamped");
+        equal(10, ResultsSpacingPolicy.centeredSpriteOffsetDp(43,24),
+            "P Pokeball and sprite centres coincide");
+        equal(11, ResultsSpacingPolicy.centeredSpriteOffsetDp(53,32),
+            "M Pokeball and sprite centres coincide");
+        equal(12, ResultsSpacingPolicy.centeredSpriteOffsetDp(63,40),
+            "G Pokeball and sprite centres coincide");
         System.out.println("LT77 Stage 2 ResultsSpacingPolicyTest: "
             + checks + "/" + checks + " PASS");
     }

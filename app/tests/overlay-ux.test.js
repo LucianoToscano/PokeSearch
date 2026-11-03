@@ -3774,16 +3774,16 @@ test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filte
   service.includes('execute("verifyShiny",verified->{');
 });
 
-test("LT225 P/M/G results 30/40/50dp, with native selector preserved",()=>{
+test("LT232 compact P/M/G results 24/32/40dp, with native selector preserved",()=>{
  const visual=read("assets/visual_editor.js");
  return dock.includes("window.renderSpriteSizeButtons=renderSpriteSizeButtons;")&&
-  visual.includes("P 30×30 dp · M 40×40 dp · G 50×50 dp")&&
+  visual.includes("P 24×24 dp · M 32×32 dp · G 40×40 dp")&&
   visual.includes("Sprites centralizadas a 88%")&&
   dock.includes("if(Native.setSpriteSize)Native.setSpriteSize(size)")&&
   dock.includes("refreshSpriteSizeButtons();")&&
   service.includes("@JavascriptInterface public void setSpriteSize(int size)")&&
   service.includes('putInt("spriteSize",size).apply()')&&
-  service.includes("return spriteSize==55?50:spriteSize==45?40:30;");
+  service.includes("return spriteSize==55?40:spriteSize==45?32:24;");
 });
 test("LT62 Android notifications are confirmed from permission callbacks",()=>{
  return service.includes("SYNC_NOTIFICATION_PERMISSION")&&

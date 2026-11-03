@@ -504,7 +504,7 @@ check("LT62 unified Pokébola: results start directly below icon, not at old sav
  assert.ok(anchor.length>200,"anchoring routine exists");
  for(const contract of [
   "int gap=ResultsSpacingPolicy.DEFAULT_TOP_GAP_PX+dp(visualHeaderAfterGap);",
-  "int x=params.x+dp(visualResultsOffsetX);",
+  "int x=params.x+dp(ResultsSpacingPolicy.centeredSpriteOffsetDp(dockDp(),resultTileDp()))",
   "int below=params.y+dp(30)+gap+dp(visualResultsOffsetY);",
   "int above=params.y-resultParams.height-gap+dp(visualResultsOffsetY);",
   "if(below+resultParams.height>display.heightPixels&&above>=0)",
@@ -522,22 +522,22 @@ check("LT62 unified Pokébola: results start directly below icon, not at old sav
  const migrated=native.indexOf("positionResultsUnderPokeball(true); // Migrate legacy independently saved list coordinates.");
  assert.ok(first>=0&&migrated>first,"legacy coordinate is replaced by the new anchor");
 });
-check("LT62 unified Pokébola: anchored placement clamps and flips above only when needed",()=>{
- const place=({iconX,iconY,iconW=53,resultsW=53,resultsH=400,width=400,height=850,gap=2,offX=0,offY=0})=>{
-  const x=iconX+offX;
+check("LT232 unified Pokébola: result tile centred under dock icon with Editor offsets",()=>{
+ const place=({iconX,iconY,iconW=53,tile=32,resultsW=53,resultsH=400,width=400,height=850,gap=2,offX=0,offY=0})=>{
+  const x=iconX+Math.round((iconW-tile)/2)+offX;
   const below=iconY+30+gap+offY,above=iconY-resultsH-gap+offY;
   const y=below+resultsH>height&&above>=0?above:below;
   return {x:Math.max(0,Math.min(Math.max(0,width-resultsW),x)),
    y:Math.max(0,Math.min(Math.max(0,height-resultsH),y))};
  };
  let a=place({iconX:280,iconY:90});
- assert.equal(a.x,280);assert.equal(a.y,122,"sprites begin 2dp below 30dp icon");
+ assert.equal(a.x,291);assert.equal(a.y,122,"centre alignment, normal 2px gap");
  a=place({iconX:280,iconY:700,resultsH:400});
- assert.equal(a.x,280);assert.equal(a.y,298,"above icon when below would overflow");
+ assert.equal(a.x,291);assert.equal(a.y,298,"above icon when below would overflow");
  a=place({iconX:375,iconY:50,resultsH:600,width:400,height:850});
  assert.equal(a.x,347,"clamp when right edge reached");
  a=place({iconX:280,iconY:90,offX:-12,offY:8,resultsH:400});
- assert.equal(a.x,268);assert.equal(a.y,130,"Editor offsets remain relative");
+ assert.equal(a.x,279);assert.equal(a.y,130,"explicit editor offsets remain relative");
 });
 
 check("LT62 Shiny one-pass: tap only submits one verified Search, no extra setShiny calls",()=>{
@@ -834,7 +834,7 @@ check("LT62 audit: Visual Editor parameters and touch limitations remain explici
  assert.ok(native.includes('WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL'));
  const visual=fs.readFileSync(path.join(__dirname,"../src/main/assets/visual_editor.js"),"utf8");
  assert.ok(visual.includes('renderVisualEditor()'));
- assert.ok(visual.includes('P 30×30 dp · M 40×40 dp · G 50×50 dp'));
+ assert.ok(visual.includes('P 24×24 dp · M 32×32 dp · G 40×40 dp'));
  assert.ok(visual.includes('Sprites centralizadas a 88%'));
  assert.ok(visual.includes('addSlider(panel,"resultGapTop"'));
  assert.ok(visual.includes('addSlider(panel,"popupWidth"'));

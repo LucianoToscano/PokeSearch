@@ -28,6 +28,6 @@ assert.ok(dock.includes(framed),"framed mode must remain active");
 assert.ok(dock.includes("scale(var(--tile-alpha-zoom,1))!important"),"visible silhouette zoom must be preserved");
 assert.match(editor,/body\.classList\.toggle\("visual-results-tiles",current\.resultsTileStyle==="card"\)/);
 assert.match(editor,/resultsTileStyle:"none"/);
-assert.match(native,/private int resultTileDp\(\)\{[\s\S]*?return spriteSize==55\?50:spriteSize==45\?40:30;/);
+assert.match(native,/private int resultTileDp\(\)\{[\s\S]*?return spriteSize==55\?40:spriteSize==45\?32:24;/);
 assert.match(secondary,/extends OverlayService/);
 console.log("PASS LT227: frameless means no backgrounds, pseudo-borders or shadows; P/M/G + P1/P2 remain unchanged");

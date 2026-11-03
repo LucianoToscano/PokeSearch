@@ -12,6 +12,13 @@
  const commit="e02bde78d19be9b9099b5a6629c6a8d0835a53be";
  const source="PvPoke/pvpoke · 03/11/2026";
  const base="https://raw.githubusercontent.com/pvpoke/pvpoke/"+commit+"/src/data/";
+ // Public GO move IDs + official-game pt-BR text, pinned to one snapshot.
+ // The PvPoke move recommendation stays authoritative for the suggested set.
+ const localeBase="https://raw.githubusercontent.com/WatWowMap/pogo-data-api/"+
+  "31a3bcdc2e412f315c4be2bb593807f45cb9bd9b/data/v1/";
+ const typeIds=Object.freeze({1:"normal",2:"fighting",3:"flying",4:"poison",5:"ground",
+   6:"rock",7:"bug",8:"ghost",9:"steel",10:"fire",11:"water",12:"grass",
+   13:"electric",14:"psychic",15:"ice",16:"dragon",17:"dark",18:"fairy"});
  const caps={gl:"1500",ul:"2500",ml:"10000"};
  const cache=new Map();
  const speciesId=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -24,7 +31,7 @@
    const ctl=typeof AbortController!=="undefined"?new AbortController():null;
    const handle=ctl&&setTimeout(()=>ctl.abort(),12000);
    try{
-    const response=await fetch(base+path,{method:"GET",credentials:"omit",cache:"force-cache",
+    const response=await fetch(/^https:\/\//.test(path)?path:base+path,{method:"GET",credentials:"omit",cache:"force-cache",
       ...(ctl?{signal:ctl.signal}:{})});
     if(!response.ok)throw Error("PvPoke HTTP "+response.status);
     const size=Number(response.headers?.get?.("content-length")||0);
@@ -58,13 +65,43 @@
   return {source,commit,league,species:pokemon.speciesName||ranking.speciesName||name,
    fast:moves[0],charged:moves.slice(1)};
  }
+
+ // Match the SAME canonical move + category. PokeGO uses a `_FAST` suffix
+ // for quick moves whereas PvPoke recommendation IDs omit that suffix.
+ // Never derive types or PT-BR names from English guesses.
+ function localizedMoves(data,moves,translations){
+  if(!data||!Array.isArray(moves)||!translations||typeof translations!=="object")return null;
+  const byProto=new Map();
+  for(const item of moves){
+   if(typeof item?.proto!=="string"||!Number.isInteger(item.moveId))continue;
+   byProto.set(item.proto,item);
+  }
+  function localized(move,fast){
+   if(!move||typeof move.id!=="string")return null;
+   const key=move.id+(fast?"_FAST":"");
+   const match=byProto.get(key)||(!fast?byProto.get(move.id):null);
+   const translated=match&&translations["move_"+match.moveId];
+   // Do not put a wrong English label into the Portuguese card when source
+   // identity or type is missing. Leave a neutral unknown placeholder.
+   const verified=typeof translated==="string"&&translated.trim().length>1&&
+       Number.isInteger(match.type)&&!!typeIds[match.type];
+   return {...move,name:verified?translated.trim():"—",
+     type:verified?typeIds[match.type]:"unknown",localeVerified:verified};
+  }
+  return {...data,fast:localized(data.fast,true),
+    charged:data.charged.map(m=>localized(m,false))};
+ }
+
  async function lookup(league,name){
   const cap=caps[league];if(!cap||!name)return null;
   try{
-   const [ranking,master]=await Promise.all([
-    getJson("rankings/all/overall/rankings-"+cap+".json"),getJson("gamemaster.json")]);
-   return fromData(ranking,master,league,name);
+   const [ranking,master,moveData,translations]=await Promise.all([
+    getJson("rankings/all/overall/rankings-"+cap+".json"),getJson("gamemaster.json"),
+    getJson(localeBase+"moves.json"),
+    getJson(localeBase+"translations/pt-br/moves.json")]);
+   const recommended=fromData(ranking,master,league,name);
+   return localizedMoves(recommended,moveData,translations);
   }catch(_){return null;}
  }
- return Object.freeze({lookup,fromData,speciesId,source,commit});
+ return Object.freeze({lookup,fromData,localizedMoves,speciesId,source,commit});
 });
