@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT236 — Integração concluída, distribuição oficial pendente (04/11/2026)
+
+**Estado operacional auditado: MERGE CONCLUÍDO / RELEASE AINDA NÃO PUBLICADA.** O código principal do PokeSearch já contém os dois ajustes pedidos. A última versão estável disponibilizada pelo atualizador continua **LT233 / `0.02.33` / `54437`**, tag `v0.02.33-54437`, até publicação verificável de nova release. **Não afirmar envio ao app enquanto `releases/latest` continuar LT233.**
+
+- **PR #205 — Pokébola 2 sem VIP:** [merged](https://github.com/LucianoToscano/PokeSearch/pull/205) com SHA de merge `f684bbbe84efdb9bca882e697f60db4b2e141c25`. P2 liga sem licença Premium/Google, sem parada automática por logout/lease; permissões Android separadas P1=101, P2=103; sessões e preferências individuais preservadas.
+- **PR #206 — PvP de todas as Megas:** [merged](https://github.com/LucianoToscano/PokeSearch/pull/206) com SHA de merge `e93906dbddc6be9c0d53c64396bd77249aad7c47`. Identificação dinâmica das **60 Megaformas, 57 espécies-base** verificadas no snapshot PvPoke local; projeções separadas GL/UL/ML, inclusive X/Y, com Rank Classe/eficiência/PC/nível e selo **TOP 1 MEGA** somente quando confirmado. Sableye `0/15/12`: normal GL #14/99,01%; Mega GL #1/100%, PC projetado 1499 Nv 30. Não confundir prévia Mega com permissão para competir na Liga de Batalha GO.
+- **QA do código combinado aprovado:** SHA `33d4b7ca933302f7837e4cbcd26167a45a96b44b`, GitHub Actions `core-regressions`, Node integral, suíte Node, compilação Java Android, `signed-ota-qa` e APK beta privado concluíram **success**; build genérico `skipped` por configuração. **APK beta assinado para teste não substitui APK oficial.** Teste físico Samsung pendente.
+- **LT236 candidata, não publicada:** notas preparadas em `app/src/main/assets/release_notes.json`, id `lt236-p2-free-and-all-megas-20261104`, versionName `0.02.36`, `versionCode 54440`, tag futura pretendida `v0.02.36-54440`; code deve ser maior que eventual QA instalada. **A publicação protegida ficou bloqueada** porque a ferramenta recusou, por política de segurança, gravar novo workflow GitHub Actions que usa secrets de assinatura. Não foi gerado/assinado/publicado o APK LT236, nem atualizado o feed do app neste registro.
+- **Procedimento restante:** operador autorizado deve criar um workflow oficial LT236 novo pelo fluxo seguro com `environment: official-updates`, segredos apenas no runner, certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, gerar/build/testar APK completo, confirmar SHA-256 e `releases/latest`, então registrar resultado real, entregar atualização e testar no Samsung. Não reutilizar release LT233 ou APK beta.
+
+**Documento operacional LT236:** [LT236_ATUALIZACAO_OFICIAL_P2_MEGAS_20261104.md](LT236_ATUALIZACAO_OFICIAL_P2_MEGAS_20261104.md). A distinção entre `main` integrada, notas candidatas e publicação pendente é obrigatória para continuidade entre contas.
+
 ## LT235 QA — Projeção de Rank Classe para Mega (04/11/2026)
 
 **Branch isolada:** `fix/lt235-mega-pvp-rank-projection-20261104` (base `main` LT233 `eac2e15706e7d64712912905faefb3bca248d54d`). **Ainda não mesclada nem publicada**; LT233 `0.02.33 / 54437` continua oficial. PR e testes devem ser comprovados em CI.
