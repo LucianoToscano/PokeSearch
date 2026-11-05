@@ -6765,6 +6765,9 @@ function rankedOverallOnlyEvolutions(card,league){
 // RANK-EVO-DETAIL-01: export bounded, read-only PvP projections to the native
 // detail WebView. Never disclose cookies or query the PoGoCoordinates page.
 // Computed on demand; does not allocate another Game Master in detail.html.
+/* LT253: rank cache scoped to this Pokébola, exact encounter and despawn.
+   This stores derived rankings only, never coordinates or account secrets. */
+const psPvpPayloadCache=new Map();
 window.pvpEvolutionDetails=function(index){
  if(!resultWindow||!Number.isInteger(index)||index<0||index>=cards.length)return null;
  const card=cards[index];
@@ -6778,6 +6781,19 @@ window.pvpEvolutionDetails=function(index){
  if(verifiedSpawnIvPercent(card)===null&&!missingIv)return null;
  if(missingIv&&String(card.ivPercent??"").trim()&&
     verifiedSpawnIvPercent(card)===null)return null;
+ const until=Number(card.expiresAtMs),now=Date.now();
+ for(const [key,entry] of psPvpPayloadCache){
+  if(entry.until<=now)psPvpPayloadCache.delete(key);
+ }
+ const cacheable=Number.isFinite(until)&&until>now&&until-now<=86400000;
+ const fingerprint=cacheable?JSON.stringify([
+  card.sourceIndex,card.number,card.name,card.iv,card.ivPercent,
+  card.cp,card.level,card.form,card.costume,card.costume_id,
+  card.gender,card.size,card.shiny,card.location,until,mode,
+  searchSettings.glRank,searchSettings.ulRank,
+  searchSettings.includePreviousEvolutions,shownMode]):"";
+ const cached=fingerprint&&psPvpPayloadCache.get(fingerprint);
+ if(cached&&cached.until>now)return cached.value;
  const output={
   sourceIndex:Number(card.sourceIndex??-1),
   name:String(card.name||"").slice(0,100),
@@ -6820,6 +6836,11 @@ window.pvpEvolutionDetails=function(index){
  }
  // No rank may be shown unless it is grounded in the pinned catalogue.
  if(missingIv&&!output.leagues.some(l=>l.own||l.evolutions.length))return null;
+ if(fingerprint){
+  psPvpPayloadCache.set(fingerprint,{value:output,until});
+  while(psPvpPayloadCache.size>50)
+   psPvpPayloadCache.delete(psPvpPayloadCache.keys().next().value);
+ }
  return output;
 };
 
