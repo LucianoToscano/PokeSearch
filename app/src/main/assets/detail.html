@@ -1494,7 +1494,10 @@ let metricCard=null,metricKind="";
 function closeDetailMetric(){
  metricKind="";
  const panel=document.getElementById("psMetricPanel");
- if(panel){panel.hidden=true;panel.replaceChildren();}
+ if(panel){panel.hidden=true;
+  if(typeof panel.replaceChildren==="function")panel.replaceChildren();
+  else panel.innerHTML="";
+ }
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
 }
 function detailMetricKey(event,kind){
