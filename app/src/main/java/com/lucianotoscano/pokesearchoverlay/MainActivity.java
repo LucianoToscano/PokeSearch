@@ -1671,9 +1671,6 @@ public class MainActivity extends Activity {
             }
             new AlertDialog.Builder(this)
                 .setTitle("Filtros PGSharp · "+templates.size()+" modelos")
-                .setMessage("Escolha um filtro para conferir IVs, nível e espécies. "+
-                    "Nada é ativado automaticamente; raides e pesquisas não são "+
-                    "compatíveis com o provedor de encontros atual.")
                 .setItems(names,(dialog,index)->{
                     PgsFilterImport.Template selected=templates.get(index);
                     try{
