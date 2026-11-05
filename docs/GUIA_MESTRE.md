@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT251 — seletor completo PC/Nível (05/11/2026; candidata)
+
+- Print Oddish: a forma Bellossom aparece como `B...` no seletor PC/Nível porque a LT249/LT250 colocava Forma, Nível e valor em três colunas apertadas. Não é erro da família evolutiva nem do cálculo.
+- Correção sem mudar lógica: somente override CSS final em `app/src/main/assets/detail.html`. `Forma` ocupa a largura inteira na primeira linha; slider `Nível` e número ficam na segunda. Select 34px/fonte 12px, setas 30px, resultados maiores e painel rolável `min(68vh,430px)`. Preservada a família Oddish→Gloom→Vileplume/Bellossom e Teddiursa→Ursaring→Ursaluna, CP-alvo e Megas verificadas.
+- **Preservar integralmente LT250**, já assinada e pública (0.02.50/54454): três divisões Rank Classe / evolução / RG + ⚔️, único indicador colorido 🔵/🟡/🟣 e contador 0 (conforme configuração), P1/P2, atualização OTA e login.
+- Teste: `app/tests/lt251-readable-cp-selector-oddish.test.js`. Documentação [LT251_SIMULADOR_EVOLUCOES_LEGIVEL_20261105.md](LT251_SIMULADOR_EVOLUCOES_LEGIVEL_20261105.md).
+- Versão candidata **LT251 · 0.02.51 · versionCode 54455 · label 51255**. Exigir QA completo, merge, release assinada, hash verificado e manter QA físico Samsung P/M/G pendente.
+
 ## LT250 OFICIAL — 0.02.50 / versionCode 54454 (05/11/2026)
 
 - **Prints e causa-raiz:** o cartão exibia dois 🔵, texto pouco legível, um fundo único e só duas divisões aparentes; o 0 de resultados vazios sumiu. O CSS histórico `#rankLine[data-league]::before` desenhava outro círculo sobre o botão novo `[🔵 GL IV #N]`. A LT249 ocultara `body.result-window #empty`.
