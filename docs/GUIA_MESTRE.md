@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT241 — Emblema de Mega Evolução (05/11/2026; desenvolvimento)
+
+- Objetivo: substituir o losango genérico `◈` pelo símbolo vetorial de Mega Evolução em linhas de formas Mega, TOP 1 MEGA, radar Top PvP e comparador Normal/Mega/Evoluções. Formas normais não ganham o símbolo.
+- Arte própria, inspirada no emblema Mega, sem fundo sólido, de 12–14 px: `app/src/main/assets/mega_evolution_icon.svg`; sem download em runtime. CSS compacto P/M/G; P1/P2 compartilham os assets.
+- Código: `detail.html` e `pvp_rank_advanced_ui.js`; entrega segura pela allowlist `OtaAssets.java` + `scripts/build_ota_pack.py`. Nenhuma mudança em API, rank, IV, permissões, autenticação ou assinatura.
+- Testes: `app/tests/lt241-mega-evolution-symbol.test.js` e suíte completa Android/OTA; inspeção física Samsung ainda pendente. Planejamento versão 0.02.41 / code 54445 / label 51245.
+- Documento: [LT241_ICONE_MEGA_EVOLUCAO_20261105.md](LT241_ICONE_MEGA_EVOLUCAO_20261105.md). **Status: em desenvolvimento; não comprova APK nem publicação.**
+
 ## LT240 OFICIAL — 0.02.40 / versionCode 54444 — 05/11/2026
 
 - **Estado comprovado:** release oficial estável [v0.02.40-54444](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.40-54444), publicada em 2026-11-05T05:41:36Z, `draft=false`, `prerelease=false`, atual em `releases/latest`.
