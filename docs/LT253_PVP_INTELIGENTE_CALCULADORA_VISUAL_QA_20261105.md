@@ -63,3 +63,12 @@ Registro inicial de desenvolvimento no PR #231. Anexar aqui commits, IDs de runs
 - Embutidas notas da versão `0.02.53 / versionCode 54457 / label 51257` no `release_notes.json`. A solicitação de publicação permanente está em [#42033581350](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033581350). Não presumir que foi publicada até obter resultado **completed/success** e asset com SHA-256 validado.
 - Fonte da distribuição anterior preservada como rollback: [v0.02.52-54456](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.52-54456).
 
+
+## Publicação oficial concluída e verificada
+
+- **GitHub Actions oficial**: [#42033581350](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033581350) **completed / success**, com preflight, certificado permanente, regressões, compilação assinada, verificação do APK, publicação, conferência pública de hash e limpeza de material de assinatura.
+- **Versão**: **LT253 · 0.02.53 · versionCode 54457 · label 51257**, solicitações oficiais no commit `094896b3b881a3a2798711306240deb732a2e4b1`, baseada no merge `45b157aa082fa568d178162486501b768147ea37`.
+- **Release oficial estável**: [v0.02.53-54457](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.53-54457), publicação UTC `2026-11-05T13:15:24Z`, `draft=false`, `prerelease=false` e **confirmada em `releases/latest`**.
+- **APK público assinado**: [PokeSearch-v0.02.53-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.53-54457/PokeSearch-v0.02.53-LT.apk), 28.394.641 bytes, `state=uploaded`, digest **SHA-256 `8346bb8a5f3abc72fd90179c9b85cf875c0dff15014799d5b47e573392ba622a`**.
+- **Atualização no app**: o canal existente pode detectar a versão publicada no GitHub latest; **não há evidência de que o aparelho já baixou/instalou**. O Android precisa de confirmação de instalação.
+- **Limite não resolvido por CI**: homologação física no Samsung, inclusive P/M/G e P1/P2, ainda necessita inspeção do usuário; capturas de navegador e Android CI não substituem prova de uso real.
