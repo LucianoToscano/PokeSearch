@@ -1683,11 +1683,6 @@ public class OverlayService extends Service {
         }
         // Independent app-wide maintenance and per-version stop for both overlays.
         if(!AppAvailability.isAllowed(this)){stopSelf();return;}
-        // Only P2 needs a Premium lease. P1 remains free and works offline.
-        if(isSecondaryOverlay()&&PremiumAccess.controlled()&&!PremiumAccess.permitted(true)){
-            stopSelf();
-            return;
-        }
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
             android.widget.Toast.makeText(this,"Cópia não autorizada ou inválida",android.widget.Toast.LENGTH_LONG).show();
@@ -1741,25 +1736,6 @@ public class OverlayService extends Service {
             }
         };
         handler.post(availabilityGuard);
-        if(isSecondaryOverlay()&&PremiumAccess.controlled()){
-            // A revoked or expired P2 lease stops only the secondary overlay.
-            handler.postDelayed(new Runnable(){
-                @Override public void run(){
-                    if(stopped)return;
-                    if(!PremiumAccess.permitted(isSecondaryOverlay())){stopSelf();return;}
-                    handler.postDelayed(this,5000L);
-                }
-            },5000L);
-            handler.postDelayed(new Runnable(){
-                @Override public void run(){
-                    if(stopped)return;
-                    PremiumAccess.verify(OverlayService.this,(allowed,premium)->{
-                        if(!allowed||(isSecondaryOverlay()&&!premium))stopSelf();
-                    });
-                    if(!stopped)handler.postDelayed(this,45000L);
-                }
-            },45000L);
-        }
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         try{visualPrefsJson=normalizeVisualPrefs(
             overlayPrefs().getString("visualPrefsJson","{}")).toString();}
