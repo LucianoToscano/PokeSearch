@@ -37,6 +37,34 @@ function compareForms(gm,forms,iv,league,getRows){
  }
  return out.sort((a,b)=>a.rank-b.rank||a.name.localeCompare(b.name));
 }
+/* LT253: distinguish IV-quality ranking from verified overall meta strength.
+ * Mega is always a projection and never receives an invented GBL RG. */
+function recommendFamily(gm,forms,iv,league,getRows,overallSnapshot){
+ const projected=compareForms(gm,forms,iv,league,getRows);
+ const raw=Array.isArray(forms)?forms:[];
+ const result=projected.map(r=>{
+  const descriptor=raw.find(x=>norm(typeof x==="string"?x:x?.name)===norm(r.name));
+  const excluded=typeof descriptor==="object"&&
+   (descriptor?.eligible===false||descriptor?.referenceOnly===true);
+  const matches=!r.mega&&!excluded&&Array.isArray(overallSnapshot?.[league])?
+   overallSnapshot[league].filter(x=>Array.isArray(x)&&norm(x[1])===norm(r.name)&&
+      Number.isInteger(x[2])&&x[2]>=1):[];
+  const verified=matches.length===1?matches[0][2]:null;
+  return {...r,eligible:!excluded&&!r.mega,
+   overallRank:verified,megaProjection:r.mega===true};
+ });
+ const playable=result.filter(r=>r.eligible);
+ const byIv=(a,b)=>a.rank-b.rank||a.name.localeCompare(b.name);
+ const bestClass=[...playable].sort(byIv)[0]||null;
+ // Bad spreads are not promoted merely because a species is strong.
+ const bestGeneral=playable.filter(r=>r.rank<=50&&r.overallRank!==null)
+  .sort((a,b)=>a.overallRank-b.overallRank||byIv(a,b))[0]||null;
+ const bestMega=result.filter(r=>r.megaProjection)
+  .sort(byIv)[0]||null;
+ return {forms:result,bestClass,bestGeneral,bestMega,
+  recommended:bestGeneral||bestClass||null,overallVerified:!!bestGeneral,
+  megaEligibility:"projeção matemática; não garante elegibilidade na Liga GO"};
+}
 function topBadges(leagues,limit=5){
  if(!Array.isArray(leagues)||![1,5,10,50].includes(limit))return [];
  const hits=[];
@@ -64,5 +92,5 @@ function topBadges(leagues,limit=5){
   return av-bv||a.rank-b.rank;
  }).slice(0,10);
 }
-return Object.freeze({lookup,compareForms,topBadges,ivIndex});
+return Object.freeze({lookup,compareForms,recommendFamily,topBadges,ivIndex});
 });
