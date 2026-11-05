@@ -74,6 +74,6 @@ assert.ok(dock.includes('empty.style.display=cards.length||resultWindow?"none":"
  "independent results windows have no detached empty row");
 assert.ok(dock.includes('body.result-window #empty{display:none!important'),
  "empty notice is not a second row under standalone Pokébola");
-assert.ok(dock.includes('count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):""'),
- "counter only shown when there are actual results");
+assert.ok(dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""'),
+ "explicitly enabled counter can still show 0 inside the Pokébola icon");
 console.log("LT249 PASS: Machop GL Top #1 mismatch shows Machoke IV #2 RG #500, no phantom '0', P1/P2");
