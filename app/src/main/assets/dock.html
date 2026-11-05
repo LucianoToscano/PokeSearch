@@ -7286,8 +7286,8 @@ function draw(){
    (activeSearchPhase==="searching"||activeSearchPhase==="filling"));
   const header=document.getElementById("resultHeader");
   const count=document.getElementById("resultSpawnCount");
-  count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count&&cards.length?"inline":"none";
+  count.textContent=resultDisplayOptions.count?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count?"inline":"none";
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
    image.style.visibility="visible";
@@ -7339,8 +7339,8 @@ function draw(){
   document.getElementById("dockIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("dockIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
   const count=document.getElementById("dockSpawnCount");
-  count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count&&cards.length?"inline":"none";
+  count.textContent=resultDisplayOptions.count?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count?"inline":"none";
   const gear=document.getElementById("gear");
   gear.removeAttribute("title");
   gear.setAttribute("aria-label","Pokébola: toque para resultados; segure para menu; arraste para mover");
