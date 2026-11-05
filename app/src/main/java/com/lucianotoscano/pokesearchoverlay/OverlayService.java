@@ -157,6 +157,10 @@ public class OverlayService extends Service {
     }
     private static volatile boolean running=false;
     private static volatile boolean secondaryRunning=false;
+    // LT243: menus are independent in state, but only one ribbon may be
+    // visible at a time. Both overlay Services run on the main thread.
+    private static volatile OverlayService primaryMenuOwner=null;
+    private static volatile OverlayService secondaryMenuOwner=null;
     public static boolean isRunning(){return running;}
     public static boolean isSecondaryRunning(){return secondaryRunning;}
     // A segunda instância mantém TODA a pesquisa, filtros e posições isolados.
@@ -1670,6 +1674,8 @@ public class OverlayService extends Service {
     }
     @Override public void onCreate(){
         super.onCreate();
+        if(isSecondaryOverlay())secondaryMenuOwner=this;
+        else primaryMenuOwner=this;
         otaWebLoader=OtaAssets.loader(this);
         OtaAssets.checkAsync(this);
         // No second account may accidentally use the default cookie profile.
@@ -3670,6 +3676,13 @@ public class OverlayService extends Service {
     private void menu(boolean show){
         if(params==null||minimized)return;
         if(show==menuExpanded)return;
+        if(show){
+            // Opening Modos or any submenu on one Pokébola must not reveal
+            // the other Pokébola's full toolbar beneath it. The other overlay
+            // retains filters, positions, results, and account context.
+            OverlayService other=isSecondaryOverlay()?primaryMenuOwner:secondaryMenuOwner;
+            if(other!=null&&other!=this&&other.menuExpanded)other.menu(false);
+        }
         if(!show){if(locationEditorOpen)locationEditor(false);closeIndependentPopup();}
         menuExpanded=show;
         if(!show)clearMenuBounds();
@@ -5822,6 +5835,8 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        if(primaryMenuOwner==this)primaryMenuOwner=null;
+        if(secondaryMenuOwner==this)secondaryMenuOwner=null;
         clearMenuBounds();
         WatchAlerts.sharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(sharedFavoritesListener);
