@@ -1553,10 +1553,8 @@ function setRankLineLabel(rankLine,label){
   (a.kind==="current"?-1:b.kind==="current"?1:0);
  const sortGeneral=(a,b)=>(a.overallRank??Infinity)-(b.overallRank??Infinity)||
   sortClass(a,b);
- const realClass=inSearch.filter(x=>x.kind!=="mega"&&x.kind!=="reference");
  const best=(withOverall.length?withOverall.sort(sortGeneral):
-  realClass.length?[...realClass].sort(sortClass):
-  [...inSearch].sort(sortClass))[0];
+   [...inSearch].sort(sortClass))[0];
  // Alternative forms must also have good verified IVs; no invented Mega RG
  // or speculative costume evolutions are promoted to the main compact UI.
  const otherChoices=excellent.filter(x=>x!==best).filter((x,i,all)=>
