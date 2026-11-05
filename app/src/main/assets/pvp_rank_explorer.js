@@ -69,7 +69,9 @@
 
  const PAGE_SIZE=10;
  const FILTER_LIMITS=[10,50,100,0]; // 0 = full ranking
- let state=null,view=null;
+ let state=null,view=null,openKey="";
+ const clickKey=opts=>[opts?.kind==="overall"?"overall":"class",
+  n(opts?.name||""),String(opts?.league||""),Number(opts?.rank)||0].join("|");
  function pageForRank(rows,rank){
   const index=rows.findIndex(r=>r.rank===rank);
   return index>=0?Math.floor(index/PAGE_SIZE):0;
@@ -180,13 +182,22 @@
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,scrollSelected:true,
    sourceDate:sourceFor(kind,gm,overall),status:""};
-  if(!mount()){state=null;return false;}
+  if(!mount()){state=null;openKey="";return false;}
+  openKey=clickKey(opts);
   draw();
   return true;
  }
+ // LT252: tap a selected class/overall chip again to collapse the panel.
+ // Changing form, league or rank switches directly without extra windows.
+ function toggle(opts){
+  if(state&&view&&!view.hidden&&openKey===clickKey(opts)){
+   close();return true;
+  }
+  return open(opts);
+ }
  function close(){
   if(view)view.hidden=true;
-  state=null;
+  state=null;openKey="";
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
@@ -395,7 +406,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,close,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
