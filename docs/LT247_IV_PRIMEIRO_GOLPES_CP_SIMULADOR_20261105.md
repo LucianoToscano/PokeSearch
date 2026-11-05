@@ -20,3 +20,17 @@
 - A publicação permanente deve ser solicitada por `release/official-request.json` somente após aprovação CI e merge. Confirmar artefato APK, assinatura e hash SHA-256 e registrar no Arquivo Mestre.
 - A verificação visual física no Samsung/P1/P2 ainda precisa ocorrer após instalar; testes automatizados não substituem essa etapa.
 - **Este registro inicial não afirma release publicada.**
+
+## Evidências oficiais da LT247 — 05/11/2026
+
+- **Correção integrada:** [PR #223](https://github.com/LucianoToscano/PokeSearch/pull/223), merge na `main` com SHA `94f408d4cc57024a00156aa8b94781d26d4a453b`. Último commit da revisão testada `e52896cb8101d62ae439b5b6ba374b9b213e00d5`.
+- **Testes verdes da revisão:** Node QA [#42003579014](https://github.com/LucianoToscano/PokeSearch/actions/runs/42003579014), regressão Node LT169 [#42003578980](https://github.com/LucianoToscano/PokeSearch/actions/runs/42003578980), QA core LT211 [#42003578977](https://github.com/LucianoToscano/PokeSearch/actions/runs/42003578977), compilação Java LT62 [#42003578990](https://github.com/LucianoToscano/PokeSearch/actions/runs/42003578990), OTA LT173 [#42003578851](https://github.com/LucianoToscano/PokeSearch/actions/runs/42003578851) e APK beta privado [#42003578830](https://github.com/LucianoToscano/PokeSearch/actions/runs/42003578830): `completed/success`.
+- **Teste novo:** `app/tests/lt247-compact-iv-first-move-status-cp-simulator.test.js` confere ordem IV → evolução → RG, ausência de quebra no CSS, seleção de Mega Sableye #1 como projeção sem RG fictício, ícones ⚔️/🗡 condicionados à verificação de status e fórmula de PC/PS com Game Master. Verifica também catálogo de Mega Charizard X e Y e teto GL.
+- **Solicitação oficial:** `release/official-request.json` no SHA `ec53d939964cc68ec35f1b17669883b94f427af5`, `version 0.02.47`, `versionCode 54451`, `label 51251`, `previous_tag v0.02.46-54450`.
+- **Workflow oficial permanente:** [Actions #42004046633](https://github.com/LucianoToscano/PokeSearch/actions/runs/42004046633) `completed/success`; `preflight` e `publish` `success`, inclusive `Build signed protected release`, `Validate APK and signer`, `Release to all app users`, `Verify public release and hash`.
+- **Release estável em `releases/latest`:** [v0.02.47-54451](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.47-54451), publicada em `2026-11-05T09:42:57Z`, `draft=false`, `prerelease=false`.
+- **APK oficial assinado:** [PokeSearch-v0.02.47-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.47-54451/PokeSearch-v0.02.47-LT.apk), **28.366.621 bytes**, SHA-256 `593a2dbfcd6b70049e06d7b5e7ee7d0cf0cfd5417c7f139c62a26eab1e3921a9`, asset `uploaded`.
+- **Artefato de CI:** `PokeSearch-v0.02.47-54451-Signed-Verified`, ID `13403343382`, **26.181.295 bytes**, SHA-256 do ZIP `b96c0d4538b266776b61e4d72c308341f24f6f95ec573f0878a5ef15aaf58ca3`. O hash do ZIP NÃO substitui o hash do APK publicado.
+- **Atualização pelo app:** disponível no canal `releases/latest`, que o atualizador do PokeSearch consulta. A instalação depende da confirmação do Android. **Não há comprovante de instalação nem QA visual físico Samsung nas duas Pokébolas em P/M/G.** Custos de Doces/Poeira não foram implementados, por falta de fonte de custos validada.
+
+A seção inicial de desenvolvimento é histórica; o estado oficial atual é publicado e assinado, com a ressalva de validação física.
