@@ -296,6 +296,15 @@ body.result-window #empty{display:block;margin:0 auto;width:var(--dock);
  padding:0;border:0;background:transparent;text-align:center;
  font:800 12px/18px Roboto,Arial,sans-serif;color:#e6f2ff;
  text-shadow:0 1px 2px #000,0 0 3px #000}
+/* LT252: 0 is centered on the first sprite/Pokébola axis,
+   never on the whole (wider) result-column box. */
+body.result-window #empty{box-sizing:border-box!important;
+ width:var(--sprite)!important;max-width:var(--sprite)!important;
+ height:16px!important;min-height:16px!important;line-height:16px!important;
+ margin:0!important;padding:0!important;text-align:center!important;
+ font:750 11px/16px Roboto,Arial,sans-serif!important;
+ color:#d6e1ec!important;letter-spacing:0!important;
+ text-shadow:0 1px 2px #000b!important;pointer-events:none!important}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 

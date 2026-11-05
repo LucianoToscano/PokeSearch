@@ -46,7 +46,7 @@ const render=new Function("document","window","watchName","h","resizeEvolutionPa
  doc,win,"Houndstone",s=>String(s),()=>{resize++;},
  ()=>identity,()=>card,()=>"Lick / Shadow Ball",()=> "gl");
 async function test(){
- render();assert.equal(line.children.at(-1).textContent,"⚔️");
+ render();assert.equal(line.children.at(-1).textContent,"🗡");
  const first=line.children.at(-1);
  await first.onclick();
  assert.equal(pop.hidden,false);
@@ -58,7 +58,7 @@ async function test(){
  assert.ok(line.children.at(-1).title.includes("sem golpe legado"));
  identity="card-B";card="Litwick";line.textContent="GL IV #1 Atual";
  render();const litwick=line.children.at(-1);
- assert.equal(litwick.textContent,"⚔️","other species must not inherit verified dagger");
+ assert.equal(litwick.textContent,"🗡","other species must start neutral without legacy assertion");
  await litwick.onclick();
  assert.ok(pop.innerHTML.includes("Sem conjunto PvP recomendado"));
  assert.ok(pop.innerHTML.includes('<details class="psAvailableMoveDetails">'),
@@ -66,7 +66,7 @@ async function test(){
  assert.ok(pop.innerHTML.includes("Ver 6 golpes possíveis"));
  assert.ok(pop.innerHTML.includes("Fogo Místico"));
  assert.ok(!pop.innerHTML.includes("Ataques Recomendados:"));
- assert.equal(litwick.textContent,"⚔️","unranked moves do not claim no legacy");
+ assert.equal(litwick.textContent,"🗡","unranked moves retain neutral action");
  identity="card-C";card="Greninja";line.textContent="GL IV #1 Atual";
  render();const greninja=line.children.at(-1);
  await greninja.onclick();assert.equal(greninja.textContent,"⚔️");
@@ -74,7 +74,7 @@ async function test(){
  render();assert.ok(line.children.at(-1).title.includes("exige pelo menos um"));
  identity="card-D";card="Unknown";line.textContent="GL IV #1 Atual";
  render();const unknown=line.children.at(-1);await unknown.onclick();
- assert.equal(unknown.textContent,"⚔️");
+ assert.equal(unknown.textContent,"🗡");
  assert.ok(pop.innerHTML.includes("Sem recomendação PvPoke"));
  assert.ok(lookups>=4&&resize>=4);
  assert.match(html,/#movesPopover \.psAvailableMoveDetails\{[^}]*border-top/);

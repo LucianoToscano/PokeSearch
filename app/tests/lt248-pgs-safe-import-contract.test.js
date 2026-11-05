@@ -16,7 +16,7 @@ assert.ok(detail.includes("const statusKey=league+"));
 assert.ok(detail.includes("const prior=psVerifiedMoveIcons.get(statusKey)"));
 assert.ok(detail.includes("psVerifiedMoveIcons.set(statusKey"));
 assert.ok(detail.includes('btn.textContent=hasLegacy?"⚔️":"🗡"'));
-assert.ok(detail.includes('btn.textContent=prior?.icon||"⚔️"'));
+assert.ok(detail.includes('btn.textContent=prior?.icon||"🗡"'));
 assert.ok(detail.includes('btn.title=prior?.title'));
 // Fallback-only Litwick is not an optimized PvP moveset, and must not fill
 // the overlay card with 6–20 move rows unless the user expands the details.
