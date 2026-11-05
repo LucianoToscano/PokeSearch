@@ -103,5 +103,33 @@
    return localizedMoves(recommended,moveData,translations);
   }catch(_){return null;}
  }
- return Object.freeze({lookup,fromData,localizedMoves,speciesId,source,commit});
+
+ const rankingCategories=Object.freeze({overall:"Geral",leads:"Abertura",
+  closers:"Finalização",switches:"Troca",chargers:"Carregadores"});
+ // LT240: explicit, read-only ranking categories pinned to the same source.
+ // No automatic remote fetch on search/results; only a user tap in the explorer.
+ async function categoryRows(league,category){
+  const cap=caps[league];
+  if(!cap||!Object.prototype.hasOwnProperty.call(rankingCategories,category))return null;
+  try{
+   const items=await getJson("rankings/all/"+category+"/rankings-"+cap+".json");
+   if(!Array.isArray(items)||items.length<10)return null;
+   return {category,categoryName:rankingCategories[category],source,commit,league,
+    rows:items.slice(0,500).map((x,index)=>({
+      id:String(x?.speciesId||"").slice(0,100),
+      name:String(x?.speciesName||"").slice(0,100),
+      rank:index+1,
+      score:Number.isFinite(x?.score)?Math.max(0,Math.min(100,x.score)):null,
+      moveset:Array.isArray(x?.moveset)?x.moveset.filter(m=>typeof m==="string").slice(0,3):[],
+      matchups:Array.isArray(x?.matchups)?x.matchups.slice(0,5).filter(m=>m?.opponent).map(m=>({
+       name:String(m.opponent).replace(/_/g," ").slice(0,90),rating:Number.isFinite(m.rating)?m.rating:null
+      })):[],
+      counters:Array.isArray(x?.counters)?x.counters.slice(0,5).filter(m=>m?.opponent).map(m=>({
+       name:String(m.opponent).replace(/_/g," ").slice(0,90),rating:Number.isFinite(m.rating)?m.rating:null
+      })):[]
+    })).filter(x=>x.id&&x.name)};
+  }catch(_){return null;}
+ }
+
+ return Object.freeze({lookup,fromData,localizedMoves,speciesId,source,commit,categoryRows,rankingCategories});
 });
