@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.47",
-  "code": 54451,
-  "label": 51251,
-  "previous_tag": "v0.02.46-54450",
-  "qa_max_code": 54450,
-  "release_notes": "LT247: resumo PvP em linha única mostra GL/UL, IV # primeiro, nome da forma/evolução ↳, RG # em seguida e golpe; preserva escolha da evolução por melhor RG comprovado. Mostra Mega IV #1 projetada (ex. Mega Sableye) mesmo fora do modo GL/UL, sem atribuir elegibilidade GBL ou RG à Mega. Ao tocar nos golpes recomendados, ⚔️ indica conjunto que exige legado/Elite e 🗡 indica combinação sem legado, somente após verificação da fonte; em Mega usa a espécie-base com aviso. Tocar PC ou Nível abre simulador offline de 1 a 50, passo 0,5, com escolha de forma, PC/PS para IV atual, 0/0/0, 15/15/15 e tetos GL/UL, calculados com stats base e CPM do Game Master. Não mostra custos de Poeira/Doces sem tabela validada; não há buscas extras no provedor. Preserva LT246, P1/P2, filtros, assinatura e atualizador. Inspeção visual física Samsung P/M/G pendente; instalação Android depende de confirmação."
+  "version": "0.02.48",
+  "code": 54452,
+  "label": 51252,
+  "previous_tag": "v0.02.47-54451",
+  "qa_max_code": 54451,
+  "release_notes": "LT248: corrigido o ícone dos golpes recomendados que voltava de 🗡 (sem legado) para ⚔️ depois de fechar/reabrir o card, preservando o status verificado por liga e espécie. Pokémon sem recomendação PvPoke (ex.: Litwick) agora mostram um painel compacto com 'Ver N golpes possíveis' recolhido por padrão, sem anunciar golpes possíveis como um conjunto recomendado. Novo importador local no Home aceita apenas o catálogo JSON PGS sanitizado, mostra modelos Pokémon, permite escolher IV%, IV exatos A/D/S, nível e espécies em grupos de até 50, com prévia e aplicação explicitamente direcionada à Pokébola 1 ou 2. Critérios não mapeados como Shiny por treinador, intervalo IV individual não exato, gênero, forma ou tamanho são bloqueados em vez de descartados silenciosamente; raides e pesquisas não são convertidos em buscas de encontros. Sem importação de dados de conta/PGSharp .dat bruto, localização ou alertas automáticos. Mantidas todas as correções LT247, login, filtros, assinatura e OTA. Instalação exige aprovação Android; QA visual físico Samsung P1/P2 P/M/G pendente."
 }
