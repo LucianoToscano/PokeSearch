@@ -1496,7 +1496,17 @@ function setRankLineLabel(rankLine,label){
  text.textContent=label;rankLine.appendChild(text);
 }
 
- if(activeRankLeague!=="gl"&&activeRankLeague!=="ul")return false;
+ if(activeRankLeague!=="gl"&&activeRankLeague!=="ul"){
+  // Other search modes still deserve a compact GL/UL badge when a verified
+  // Top #1 opportunity (including a separate Mega preview) exists.
+  const highlight=(payload.leagues||[]).find(x=>
+   (x?.league==="gl"||x?.league==="ul")&&[
+    x.own,...(Array.isArray(x.evolutions)?x.evolutions:[]),
+    ...(Array.isArray(x.megas)?x.megas:[])
+   ].some(e=>e&&Number(e.rank)===1));
+  if(!highlight)return false;
+  activeRankLeague=highlight.league;
+ }
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
  if(!league)return false;
  const rankLine=document.getElementById("rankLine");
@@ -1949,6 +1959,9 @@ window.showDetails=(c,mode,watched)=>{
  const changed=detailIdentity!==nextIdentity;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
+  psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
+   Math.round(Number(c.level)*2)/2:20;
+  psCpTargetSpecies="";
   closePvpReferenceInfo();
   closePvpRankAlternates();
   closeDetailMetric();
