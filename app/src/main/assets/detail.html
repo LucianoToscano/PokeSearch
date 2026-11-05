@@ -723,6 +723,30 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psMetricRow span:first-child{overflow-wrap:anywhere}
 #psMetricPanel .psMetricRow strong{font-size:10px}
 #psMetricPanel .psMetricFoot{font-size:9px;color:#b6c6d6;margin-top:4px}
+
+/* LT245: RG is primary; Class IV and +N are independent compact controls. */
+#rankLine .psCompactIv,#rankLine .psRankMore,
+#psRankAlternates .psCompactIv,#psRankAlternates .psCompactOverall{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:22px;padding:1px 5px;border:1px solid #91b5c85e;
+ border-radius:5px;background:#aec9d515;color:#dde9f5;
+ font:650 9px/1.2 Roboto,Arial,sans-serif;white-space:nowrap;
+ cursor:pointer;touch-action:manipulation;flex:0 0 auto}
+#rankLine .psCompactOverall{border-color:#8de4b67c;color:#c4f0dc;
+ background:#34775b33;font-weight:800}
+#rankLine .psRankMore{color:#d3e0fb;border-style:dashed}
+#psRankAlternates[hidden]{display:none!important}
+#psRankAlternates{margin:3px 2px 5px;max-height:136px;overflow-y:auto;
+ overscroll-behavior:contain;border:1px solid #8faac14f;border-radius:7px;
+ background:#182637ed;padding:3px 5px}
+#psRankAlternates .psRankAlternative{display:flex;align-items:center;gap:5px;
+ min-width:0;padding:4px 0;border-bottom:1px solid #ffffff21}
+#psRankAlternates .psRankAlternative:last-child{border-bottom:0}
+#psRankAlternates .psAltName{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;
+ color:#e6eff9;font:600 10px/1.2 Roboto,Arial,sans-serif}
+@media(max-width:320px){#rankLine .psRankMore,
+ #rankLine .psCompactIv{padding:1px 3px;font-size:8px}
+ #psRankAlternates .psRankAlternative{gap:3px}}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -744,7 +768,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  </div>
  <div id="major"></div>
  <section id="psMetricPanel" hidden role="region" aria-label="Projeções de PC e Nível"></section>
- <div id="rankLine" class="rankLineSafe" hidden></div><div id="movesPopover" hidden role="status" class="psMovesCompact"></div><div id="info"></div>
+ <div id="rankLine" class="rankLineSafe" hidden></div><div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div><div id="movesPopover" hidden role="status" class="psMovesCompact"></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -1310,6 +1334,55 @@ function renderRankOneMoves(){
  btn.className="psMovesAction";
  rankLine.appendChild(btn);
 }
+
+/* LT245: small, on-demand list of the other forms; all actions stay local.
+   A choice's IV and RG are opened independently, and a missing RG stays —. */
+function closePvpRankAlternates(){
+ const panel=document.getElementById("psRankAlternates");
+ if(!panel)return;
+ panel.hidden=true;
+ if(typeof panel.replaceChildren==="function")panel.replaceChildren();
+ else panel.textContent="";
+ const toggle=document.getElementById("rankLine")?.querySelector?.(".psRankMore");
+ toggle?.setAttribute?.("aria-expanded","false");
+}
+function togglePvpRankAlternates(event,button,choices,league){
+ event?.preventDefault?.();event?.stopPropagation?.();
+ const panel=document.getElementById("psRankAlternates");
+ if(!panel||typeof document.createElement!=="function")return false;
+ if(!panel.hidden){closePvpRankAlternates();return true;}
+ if(typeof panel.replaceChildren!=="function"||
+    typeof panel.appendChild!=="function")return false;
+ panel.replaceChildren();
+ for(const choice of choices.slice(0,24)){
+  if(!choice||!Number.isInteger(choice.rank))continue;
+  const row=document.createElement("div");row.className="psRankAlternative";
+  const name=document.createElement("span");name.className="psAltName";
+  name.textContent=(choice.kind==="current"?"Atual":"↳ "+choice.name);
+  row.appendChild(name);
+  const make=(kind,n,text,title)=>{
+   const b=document.createElement("button");b.type="button";
+   b.className=kind==="overall"?"psCompactOverall":"psCompactIv";
+   b.textContent=text;b.title=title;
+   b.dataset.psKind=kind;b.dataset.psName=choice.name;
+   b.dataset.psLeague=league;b.dataset.psRank=String(n);
+   b.onclick=e=>openPvpRankExplorer(e,b);
+   b.setAttribute?.("aria-label","Abrir "+text+" de "+choice.name);
+   return b;
+  };
+  if(Number.isInteger(choice.overallRank)&&choice.overallRank>=1){
+   row.appendChild(make("overall",choice.overallRank,"RG #"+choice.overallRank,
+    "Ranking geral da espécie"));
+  }
+  row.appendChild(make("class",choice.rank,"IV #"+choice.rank,
+   "Classificação da combinação IV"));
+  panel.appendChild(row);
+ }
+ panel.hidden=false;button?.setAttribute?.("aria-expanded","true");
+ if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
+ return true;
+}
+
 function updateVisiblePvPRank(payload){
 // Keep a text fallback for older DOM adapters used by Android and QA mocks.
 function setRankLineLabel(rankLine,label){
@@ -1347,10 +1420,29 @@ function setRankLineLabel(rankLine,label){
    if(e?.referenceOnly===true)add(e,e.name,"reference");
  }
  if(!candidates.length)return false;
- candidates.sort((a,b)=>a.rank-b.rank||
-  (a.kind==="current"?-1:b.kind==="current"?1:0));
+ if(typeof rankLine.querySelector==="function")closePvpRankAlternates();
+ // LT245: a strong IV spread is necessary; among Top 50 (or the chosen
+ // stricter search limit), a VERIFIED overall rank determines which species
+ // deserves the main card. Never elevate a weak IV #4000 just for a good RG.
  const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
- const best=inSearch[0],label=activeRankLeague.toUpperCase();
+ const qualityLimit=limit===null?50:limit;
+ const excellent=inSearch.filter(x=>x.kind!=="reference"&&x.rank<=qualityLimit);
+ const withOverall=excellent.filter(x=>Number.isInteger(x.overallRank)&&x.overallRank>=1);
+ const sortClass=(a,b)=>a.rank-b.rank||
+  (a.kind==="current"?-1:b.kind==="current"?1:0);
+ const sortGeneral=(a,b)=>(a.overallRank??Infinity)-(b.overallRank??Infinity)||
+  sortClass(a,b);
+ const best=(withOverall.length?withOverall.sort(sortGeneral):[...inSearch].sort(sortClass))[0];
+ // Alternative forms must also have good verified IVs; no invented Mega RG
+ // or speculative costume evolutions are promoted to the main compact UI.
+ const otherChoices=excellent.filter(x=>x!==best).filter((x,i,all)=>
+  all.findIndex(y=>y.name.toLowerCase()===x.name.toLowerCase())===i)
+  .sort((a,b)=>{
+   const ar=Number.isInteger(a.overallRank)?a.overallRank:Infinity;
+   const br=Number.isInteger(b.overallRank)?b.overallRank:Infinity;
+   return ar-br||sortClass(a,b);
+  });
+ const label=activeRankLeague.toUpperCase();
   if(rankLine.dataset)rankLine.dataset.league=activeRankLeague;
  if(!best){
   // A Top-N search is NOT evidence that the base species itself is Top-N.
@@ -1365,12 +1457,15 @@ function setRankLineLabel(rankLine,label){
  }
  currentRankSpecies=best.name;
  const scope=best.kind==="current"?" · Atual":" · ↳ "+best.name;
- setRankLineLabel(rankLine,label+" · IV #"+best.rank+scope);
- // Separate real PvPoke species ranking from IV-class rank, only when known.
- // A generic provider rank or a Mega projection is NOT a valid RG number.
+ const hasVerifiedOverall=best.kind!=="reference"&&
+   Number.isInteger(best.overallRank)&&best.overallRank>=1;
+ // Present RG before IV when a trusted species rank is available.
+ // The IV rank keeps its own click target (same 4,096-spread explorer).
+ setRankLineLabel(rankLine,hasVerifiedOverall?label+scope:
+  label+" · IV #"+best.rank+scope);
  const leagueOverall=best.overallRank;
- if(Number.isInteger(leagueOverall)&&leagueOverall>=1&&
-    typeof document.createElement==="function"&&typeof rankLine.appendChild==="function"){
+ if(hasVerifiedOverall&&typeof document.createElement==="function"&&
+    typeof rankLine.appendChild==="function"){
   const badge=document.createElement("button");
   badge.type="button";badge.className="psCompactOverall psRankOpen";
   badge.textContent="RG #"+leagueOverall;
@@ -1382,6 +1477,27 @@ function setRankLineLabel(rankLine,label){
   badge.dataset.psRank=String(leagueOverall);
   badge.onclick=event=>openPvpRankExplorer(event,badge);
   rankLine.appendChild(badge);
+  const iv=document.createElement("button");
+  iv.type="button";iv.className="psCompactIv psRankOpen";
+  iv.textContent="IV #"+best.rank;
+  iv.title="Rank Classe #"+best.rank+" de "+best.name+" · abrir 4.096 IVs";
+  iv.setAttribute?.("aria-label","Abrir IV #"+best.rank+" de "+best.name);
+  iv.dataset.psKind="class";iv.dataset.psName=best.name;
+  iv.dataset.psLeague=activeRankLeague;iv.dataset.psRank=String(best.rank);
+  iv.onclick=event=>openPvpRankExplorer(event,iv);
+  rankLine.appendChild(iv);
+ }
+ if(otherChoices.length&&typeof document.createElement==="function"&&
+    typeof rankLine.appendChild==="function"){
+  const more=document.createElement("button");
+  more.type="button";more.className="psRankMore";
+  more.textContent="+"+otherChoices.length;
+  more.title=otherChoices.length+" outra(s) forma(s) com bons IVs";
+  more.setAttribute?.("aria-label","Ver "+otherChoices.length+" outras formas PvP");
+  more.setAttribute?.("aria-controls","psRankAlternates");
+  more.setAttribute?.("aria-expanded","false");
+  more.onclick=event=>togglePvpRankAlternates(event,more,otherChoices,activeRankLeague);
+  rankLine.appendChild(more);
  }
  if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
   const info=document.createElement("button");
@@ -1430,6 +1546,19 @@ window.showEvolutionDetails=payload=>{
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
+  // LT245: put verified species meta rankings ahead when IV spreads are good.
+  // Mega previews and costume reference rows retain independent semantics.
+  const quality=x=>Number.isInteger(Number(x?.rank))&&
+    Number(x.rank)>=1&&Number(x.rank)<=50&&x?.eligible!==false;
+  const general=x=>x?.referenceOnly===true?Infinity:
+    Number.isInteger(Number(x?.overallRank))&&Number(x.overallRank)>0?
+    Number(x.overallRank):Infinity;
+  entries.sort((a,b)=>{
+   const aq=quality(a),bq=quality(b);
+   if(aq!==bq)return aq?-1:1;
+   if(aq&&bq&&general(a)!==general(b))return general(a)-general(b);
+   return (Number(a?.rank)||4097)-(Number(b?.rank)||4097);
+  });
   // Costume references are projected by the calculator, but are not an
   // assertion that an event Pokémon can evolve. Keep both result types visible.
   const references=payload.includePreviousEvolutions!==false&&Array.isArray(league.comparisons)?
@@ -1571,6 +1700,7 @@ window.showDetails=(c,mode,watched)=>{
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
   closePvpReferenceInfo();
+  closePvpRankAlternates();
   closeDetailMetric();
   window.PokeSearchRankExplorer?.close();
   window.psRankContext=null;

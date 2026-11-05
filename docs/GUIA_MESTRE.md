@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT245 — Prioridade por Rank Geral e +N formas (05/11/2026; desenvolvimento)
+
+- Pedido confirmado com print de Litwick 0/15/14: Chandelure GL `IV #1 / RG #808` e Lampent GL `IV #1 / RG #519`. Priorizar Lampent pelo menor RG **entre espécies com bons IVs**, não apenas IV Classe.
+- Regra: considerar primeiro espécies reais elegíveis com IV Top 50, ou Top N mais restrito se filtro ativo. Escolher o menor RG confirmado da liga; se nenhum RG disponível, manter a melhor combinação IV como critério. Nunca promover uma forma IV ruim ou um RG de Mega/referência teórica. RG é rank de meta, IV é posição entre 4.096 spreads.
+- Faixa: `🔵 GL · ↳ Lampent · RG #519 · IV #1 · +1`; cada RG/IV abre sua própria tabela. `+1` mostra `↳ Chandelure · RG #808 · IV #1` num painel pequeno recolhível; várias alternativas são listadas de forma segura, somente quando o usuário toca.
+- Análise expandida e alertas TOP passam a seguir prioridade de RG entre IVs competitivos. Nenhum acesso extra à PoGoCoordinates, sem alterar permissões, contas, captura, sprites, sistema de atualização ou os dois overlays. Estilo P/M/G preservado.
+- Código: `app/src/main/assets/detail.html`, `pvp_rank_insights.js`, `app/tests/lt245-general-rank-priority-alternates.test.js` e notas de release. Documento: [LT245_PRIORIDADE_RANK_GERAL_EVOLUCOES_20261105.md](LT245_PRIORIDADE_RANK_GERAL_EVOLUCOES_20261105.md).
+- Versão candidata: `LT245 · 0.02.45 · versionCode 54449 · label 51249` sobre LT244. Gate Node, regressões, Android Java, OTA, beta, merge e release assinada. **Teste físico Samsung P1/P2 pendente e publicação não presumida.**
+
 ## LT244 OFICIAL — 0.02.44 / versionCode 54448 (05/11/2026)
 
 - **Regressão corrigida:** LT243 retirou ↳ da faixa IV e não distinguia claramente rank de evolução vs. rank do Pokémon capturado. A LT244 mostra `GL · IV #1 · ↳ Houndstone` para Greavard 1/14/15 e `GL · IV #1 · Atual` para Charmander 15/15/15. Não afirmar que ranking Classe #1 implica espécie RG #1.

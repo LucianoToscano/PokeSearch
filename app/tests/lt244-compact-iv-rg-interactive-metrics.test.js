@@ -39,10 +39,12 @@ const hook=new Function("document","window","activeRankLeague","pvpFormsForLeagu
  document,window,"gl",()=>[],explorer,()=>{});
 const ctx=window.psRankContext;
 assert.equal(hook(ctx),true);
-assert.ok(rankLine.children[0].textContent.includes("GL · IV #1 · ↳ Houndstone"));
+assert.ok(rankLine.children[0].textContent.includes("GL · ↳ Houndstone"),"general rank comes before IV when verified");
 const badge=rankLine.children.find(x=>x.className==="psCompactOverall psRankOpen");
 assert.ok(badge,"valid PvPoke species RG is a separate button");
 assert.equal(badge.textContent,"RG #653");
+const classButton=rankLine.children.find(x=>x.className==="psCompactIv psRankOpen");
+assert.ok(classButton&&classButton.textContent==="IV #1","IV ranking remains independently clickable");
 assert.equal(badge.dataset.psKind,"overall");
 assert.equal(badge.dataset.psName,"Houndstone");
 assert.equal(badge.dataset.psLeague,"gl");
@@ -56,7 +58,7 @@ assert.equal(hook({...ctx,leagues:[
  {league:"gl",own:{rank:1,overallRank:85},evolutions:[]},
  {league:"ul"},{league:"ml"}
 ]}),true);
-assert.ok(rankLine.children[0].textContent.includes("GL · IV #1 · Atual"));
+assert.ok(rankLine.children[0].textContent.includes("GL · Atual"));
 assert.equal(rankLine.children[1].textContent,"RG #85");
 rankLine.hidden=true;
 assert.equal(hook({...ctx,leagues:[

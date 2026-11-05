@@ -48,11 +48,21 @@ function topBadges(leagues,limit=5){
   for(const c of candidates){
    const rank=Number(c?.rank);
    if(!Number.isInteger(rank)||rank<1||rank>limit||c?.eligible===false)continue;
+   const overall=Number(c?.overallRank);
    hits.push({name:String(c.name||"Atual").slice(0,90),league:l.league,rank,
-    mega:c.megaProjection===true,reference:c.referenceOnly===true});
+    mega:c.megaProjection===true,reference:c.referenceOnly===true,
+    overallRank:c?.referenceOnly===true||c?.megaProjection===true?null:
+     Number.isInteger(overall)&&overall>=1?overall:null});
   }
  }
- return hits.sort((a,b)=>a.rank-b.rank).slice(0,10);
+ // LT245: within each league, a known species RG takes priority for good IV
+ // spreads. No RG is fabricated for Mega previews or reference-only forms.
+ const order={gl:0,ul:1,ml:2};
+ return hits.sort((a,b)=>{
+  if(a.league!==b.league)return order[a.league]-order[b.league];
+  const av=a.overallRank??Infinity,bv=b.overallRank??Infinity;
+  return av-bv||a.rank-b.rank;
+ }).slice(0,10);
 }
 return Object.freeze({lookup,compareForms,topBadges,ivIndex});
 });
