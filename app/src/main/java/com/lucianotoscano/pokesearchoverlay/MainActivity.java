@@ -1440,6 +1440,7 @@ public class MainActivity extends Activity {
         addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
         addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
         addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
+        addHomeDrawerItem(drawer,"◇","Filtros PGSharp",this::showSavedPgsFilters);
         addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
         addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
         if(CommunityScrapbookStage1.isEnabled(this))
@@ -1551,6 +1552,18 @@ public class MainActivity extends Activity {
                 bytes.write(buf,0,n);
             }
             JSONObject backup=new JSONObject(bytes.toString("UTF-8"));
+            if(PgsFilterImport.SCHEMA.equals(backup.optString("catalog_type",""))){
+                // This format contains only sanitised PGS search presets.
+                // Save privately on device; never publish the user's .dat,
+                // credentials, account settings or location favourites.
+                PgsFilterImport.parse(backup); // validate every template first
+                try(java.io.OutputStream out=openFileOutput(
+                    PgsFilterImport.PRIVATE_FILE,MODE_PRIVATE)){
+                    out.write(bytes.toByteArray());
+                }
+                showPgsFilterCatalog(backup);
+                return;
+            }
             if(!"pokesearch-home-export-v1".equals(backup.optString("schema","")))
                 throw new IllegalArgumentException("Formato incompatível");
             JSONObject settings=backup.optJSONObject("filtersAndPreferences");
@@ -1624,6 +1637,114 @@ public class MainActivity extends Activity {
         }catch(Exception error){
             Toast.makeText(this,"Arquivo inválido ou incompatível com o PokeSearch",
                            Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** LT248: list the user's local, sanitised PGSharp templates inside Home.
+     * This does not create another floating overlay or copy private account data. */
+    private void showSavedPgsFilters(){
+        try(java.io.InputStream input=openFileInput(PgsFilterImport.PRIVATE_FILE)){
+            ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+            byte[] buf=new byte[4096];int n;
+            while((n=input.read(buf))!=-1){
+                if(bytes.size()+n>200000)throw new java.io.IOException("Catálogo muito grande");
+                bytes.write(buf,0,n);
+            }
+            showPgsFilterCatalog(new JSONObject(bytes.toString("UTF-8")));
+        }catch(Exception unavailable){
+            new AlertDialog.Builder(this).setTitle("Filtros PGSharp")
+                .setMessage("Importe o catálogo JSON sanitizado de filtros. "+
+                    "O arquivo .dat original não é aceito por conter dados privados. "+
+                    "A biblioteca de filtros fica apenas neste aparelho.")
+                .setNegativeButton("Cancelar",null)
+                .setPositiveButton("Selecionar JSON",(d,w)->importHomeData()).show();
+        }
+    }
+    private void showPgsFilterCatalog(JSONObject catalog){
+        try{
+            java.util.List<PgsFilterImport.Template> templates=PgsFilterImport.parse(catalog);
+            java.util.Map<Integer,String> dex=PgsFilterImport.dexNames(this);
+            CharSequence[] names=new CharSequence[templates.size()];
+            for(int i=0;i<names.length;i++){
+                PgsFilterImport.Template t=templates.get(i);
+                names[i]=t.name;
+            }
+            new AlertDialog.Builder(this)
+                .setTitle("Filtros PGSharp · "+templates.size()+" modelos")
+                .setMessage("Escolha um filtro para conferir IVs, nível e espécies. "+
+                    "Nada é ativado automaticamente; raides e pesquisas não são "+
+                    "compatíveis com o provedor de encontros atual.")
+                .setItems(names,(dialog,index)->{
+                    PgsFilterImport.Template selected=templates.get(index);
+                    try{
+                        PgsFilterImport.Prepared first=PgsFilterImport.prepare(selected,dex,0);
+                        if(first.parts==1){
+                            showPgsFilterPreview(selected,dex,0);
+                            return;
+                        }
+                        CharSequence[] parts=new CharSequence[first.parts];
+                        for(int n=0;n<parts.length;n++)
+                            parts[n]="Grupo "+(n+1)+"/"+parts.length+
+                                " · até 50 espécies";
+                        new AlertDialog.Builder(this)
+                            .setTitle(selected.name+" · dividir sem perder espécies")
+                            .setItems(parts,(d,indexPart)->
+                                showPgsFilterPreview(selected,dex,indexPart))
+                            .setNegativeButton("Cancelar",null).show();
+                    }catch(Exception unsupported){
+                        new AlertDialog.Builder(this).setTitle("Filtro não compatível")
+                            .setMessage("Este filtro exige critérios ainda não mapeados. "+
+                                "Nada foi aplicado. Motivo: "+unsupported.getMessage())
+                            .setPositiveButton("OK",null).show();
+                    }
+                }).setNegativeButton("Fechar",null).show();
+        }catch(Exception error){
+            Toast.makeText(this,"Catálogo de filtros inválido",Toast.LENGTH_LONG).show();
+        }
+    }
+    private void showPgsFilterPreview(PgsFilterImport.Template filter,
+                                      java.util.Map<Integer,String> dex,int part){
+        try{
+            PgsFilterImport.Prepared p=PgsFilterImport.prepare(filter,dex,part);
+            JSONObject q=p.query;
+            String mode=q.optString("mode","percent");
+            String iv="raw".equals(mode)?
+                q.optInt("attack")+"/"+q.optInt("defense")+"/"+q.optInt("stamina"):
+                q.optInt("percentMin")+"–"+q.optInt("percentMax")+"%";
+            String level=q.optString("levelMin","1")+"–"+q.optString("levelMax","50");
+            String range=part+1+"/"+p.parts;
+            String msg="Critério: "+("raw".equals(mode)?"IV A/D/S ":"IV% ")+iv+
+                "\nNível: "+level+"\nEspécies neste grupo: "+p.count+
+                (p.parts>1?" (grupo "+range+", total "+p.total+")":"")+
+                "\n\n"+p.warning+"\n\nEscolha a Pokébola em execução.";
+            new AlertDialog.Builder(this).setTitle(filter.name)
+                .setMessage(msg).setNegativeButton("Cancelar",null)
+                .setPositiveButton("Pokébola 1",(d,w)->applyPgsFilter(p,false))
+                .setNeutralButton("Pokébola 2",(d,w)->applyPgsFilter(p,true)).show();
+        }catch(Exception error){
+            Toast.makeText(this,"Este modelo não pode ser aplicado com segurança",
+                Toast.LENGTH_LONG).show();
+        }
+    }
+    private void applyPgsFilter(PgsFilterImport.Prepared prepared,boolean secondary){
+        boolean running=secondary?OverlayService.isSecondaryRunning():OverlayService.isRunning();
+        if(!running){
+            Toast.makeText(this,"Abra a Pokébola "+(secondary?"2":"1")+
+                " antes de aplicar o filtro.",Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent action=new Intent(this,secondary?
+            SecondaryOverlayService.class:OverlayService.class);
+        action.setAction(PgsFilterImport.ACTION);
+        action.putExtra(PgsFilterImport.EXTRA,prepared.query.toString());
+        try{
+            if(Build.VERSION.SDK_INT>=26)startForegroundService(action);
+            else startService(action);
+            Toast.makeText(this,"Filtro enviado à Pokébola "+(secondary?"2":"1")+
+                ". Confira a confirmação do site.",Toast.LENGTH_LONG).show();
+        }catch(Exception error){
+            Toast.makeText(this,"Não foi possível enviar o filtro ao overlay",
+                Toast.LENGTH_LONG).show();
         }
     }
     private void toggleHomeOverlay(){
