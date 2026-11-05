@@ -30,6 +30,17 @@ assert.ok(explorer.getIvRows(gm,"Mega Charizard X","gl")?.length===4096);
 assert.ok(explorer.getIvRows(gm,"Mega Charizard Y","ul")?.length===4096);
 assert.equal(explorer.getIvRows(gm,"Not A Known Species","gl"),null);
 assert.equal(explorer.getIvRows(gm,"Sableye","unknown"),null);
+// Every verified Mega form must be resolvable by its displayed name.
+const megaEntries=gm.pokemon.filter(([id,name])=>
+ /^(.+)_mega(?:_[xy])?$/.test(id)&&/^.+ \\(Mega(?: [XY])?\\)$/.test(name));
+assert.ok(megaEntries.length>=60);
+for(const [,name] of megaEntries){
+ const shown=name.replace(/^(.+) \\(Mega(?: ([XY]))?\\)$/,(_,base,variant)=>
+  "Mega "+base+(variant?" "+variant:""));
+ assert.equal(explorer.getIvRows(gm,shown,"gl")?.length,4096,
+  "explorer must cover "+shown);
+}
+
 assert.equal(explorer.ivIndex(""),-1);
 assert.equal(explorer.ivIndex("15/15/16"),-1);
 const o=explorer.getOverallRows(overall,"gl");
@@ -48,6 +59,7 @@ for(const league of ["gl","ul","ml"]){
 const html=read("detail.html");
 const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(script);
+assert.ok(html.includes("window.PokeSearchRankExplorer?.close()"),"old card explorer resets on new encounter");
 new vm.Script(script);
 for(const token of [
  'src="pvpoke-overall-ranks.js"','src="pvpoke-iv-gamemaster.js"',
