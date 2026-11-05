@@ -967,6 +967,10 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpPresets{display:flex;gap:5px;margin:7px 0}
 #psMetricPanel .psCpPresets button{flex:1;min-width:0;min-height:30px;border:1px solid #a6c0da55;border-radius:6px;background:#ffffff12;color:#e6f3ff;font:700 11px Roboto,Arial,sans-serif}
 @media(max-width:240px){#psMetricPanel .psCpIvComparison{grid-template-columns:1fr}}
+
+#movesPopover .psMoveRow{min-width:0;flex-wrap:wrap}
+#movesPopover .psMoveStats{font-size:9px;color:#b6d9e9;line-height:1.3;
+ white-space:normal;overflow-wrap:anywhere;padding-left:3px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1595,13 +1599,19 @@ function renderRankOneMoves(){
   const row=(label,move)=>{
    if(!move)return "";
    const type=Object.prototype.hasOwnProperty.call(colours,move.type)?move.type:"normal";
-   const legacy=move.status==="elite"||move.status==="legacy";
+   const legacy=(move.status==="elite"||move.status==="legacy")&&move.localeVerified!==false;
    if(legacy)hasLegacy=true;
    const tip=move.status==="elite"?"Ataque legado · MT de Elite identificada":
     "Ataque legado · disponibilidade de MT de Elite não comprovada";
+   const stats=move.stats||{};
+   const valid=(n,max)=>typeof n==="number"&&Number.isFinite(n)&&n>0&&n<=max;
+   const metrics=[valid(stats.power,500)?"Poder "+stats.power:"",
+    valid(stats.energyGain,100)?"Energia +"+stats.energyGain:"",
+    valid(stats.energyCost,200)?"Custo "+stats.energyCost:""].filter(Boolean);
    return '<div class="psMoveRow"><span class="psMoveLabel">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
-     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+'</div>';
+     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+
+     (metrics.length?'<span class="psMoveStats">'+h(metrics.join(" · "))+'</span>':"")+'</div>';
   };
   if(recommendation.availableOnly===true){ 
    btn.title="Consultar golpes possíveis · sem recomendação PvP confirmada";
@@ -1645,6 +1655,10 @@ function renderRankOneMoves(){
   popover.innerHTML='<div class="psMoveTitle">'+
    (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
    '</div>'+fastRow+chargedRows+
+   (String(currentCardMoves||"").trim()?'<div class="psMoveLegend">Capturados: '+
+    h(currentCardMoves)+'</div>':"")+
+   '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
+    ' · recomendação não é ataque capturado</div>'+
    (hasLegacy?'<div class="psMoveLegend">⚔️ Pelo menos um golpe legado / Elite</div>':
     complete?'<div class="psMoveLegend">🗡 Conjunto sem golpes legados</div>':
     '<div class="psMoveLegend">Status de legado não verificado</div>');
