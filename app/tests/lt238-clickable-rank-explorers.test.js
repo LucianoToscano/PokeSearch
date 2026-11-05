@@ -15,7 +15,7 @@ const base=explorer.getIvRows(gm,"Sableye","gl");
 const mega=explorer.getIvRows(gm,"Mega Sableye","gl");
 assert.equal(base.length,4096);
 assert.equal(mega.length,4096);
-assert.equal(base[index].rank,undefined,"result array must be rank ordered, not IV indexed");
+assert.equal(base[0].rank,1,"result array is rank ordered");
 const sb=base.find(x=>x.index===index),sm=mega.find(x=>x.index===index);
 assert.equal(sb.rank,14,"existing GL Sableye normal #14");
 assert.equal(sb.efficiency,"99,01");
