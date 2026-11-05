@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT250 OFICIAL — 0.02.50 / versionCode 54454 (05/11/2026)
+
+- **Prints e causa-raiz:** o cartão exibia dois 🔵, texto pouco legível, um fundo único e só duas divisões aparentes; o 0 de resultados vazios sumiu. O CSS histórico `#rankLine[data-league]::before` desenhava outro círculo sobre o botão novo `[🔵 GL IV #N]`. A LT249 ocultara `body.result-window #empty`.
+- **Correção LT250:** `detail.html` desativa definitivamente o pseudo-elemento duplicado. `#rankLine` agora é contêiner transparente de 32px, sem fundo/borda globais; ficam três botões com bordas e fontes legíveis (27px de altura) `[🔵 GL IV #N]` → Rank Classe, `[↳ Evolução]` → Análise PvP, `[RG #N]` → Rank Geral, seguidos de ⚔️/🗡 **fora** da terceira divisão → golpes. Sem segunda linha; `RG —` desativado se não for conhecido. Outras evoluções aparecem na Análise PvP, sem botão extra `+N` comprimindo o nome.
+- **Resultados vazios 0:** `dock.html` mostra zero junto ao ícone se contador ativo, ou zero centralizado abaixo da Pokébola quando opção de contador está desligada, sem duplicação. Buscar/erro têm indicadores próprios, posições manuais e filtros da Pokébola 1 e 2 mantidos. Não adiciona menus flutuantes.
+- **Merge:** [PR #226](https://github.com/LucianoToscano/PokeSearch/pull/226), head aprovado `91c13af837011a0a8f9bfb6ed9e073f82f392c69`, mesclada no commit `6e05f8ae3ac7b1ccd7e159e5a3834244da3eb6bb`.
+- **QA comprovado:** Node QA #42020110609, LT169 Node completo #42020110782, QA core LT211 #42020110750, Java LT62 #42020110715, OTA LT173 #42020110734, APK beta #42020110554: seis `completed/success`.
+- **Assinatura/distribuição:** [workflow oficial #42020576085](https://github.com/LucianoToscano/PokeSearch/actions/runs/42020576085), `completed/success`, com `Validate APK and signer`, `Release to all app users`, `Verify public release and hash` aprovados. `release/official-request.json` no SHA `b4b7c8be1879f22ef2a04c87f1b426cd47ac92e4`.
+- **Versão estável pública:** [v0.02.50-54454](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.50-54454), `draft=false`, `prerelease=false`, `releases/latest`, publicada em `2026-11-05T11:41:48Z`. **APK** [PokeSearch-v0.02.50-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.50-54454/PokeSearch-v0.02.50-LT.apk), tamanho **28.388.797 bytes**, SHA-256 `61263c52c2aa03eb6b7a36c84367e56880e858462660d6c7912ffbeccebcfafc`.
+- **Limites:** ainda **sem instalação confirmada** no Samsung e sem teste físico P/M/G da barra e do contador 0 nas Pokébolas. Distribuição pública não prova instalação automática; Android precisa aprovar pacote. Detalhes: [LT250_BARRA_PVP_TRES_DIVISOES_ZERO_20261105.md](LT250_BARRA_PVP_TRES_DIVISOES_ZERO_20261105.md).
+
 ## LT250 — 3 divisões legíveis e 0 de resultados vazio (05/11/2026; desenvolvimento)
 
 - **Erro comprovado:** após LT249 o cartão tinha dois círculos 🔵, texto pequeno, uma faixa/fundo único obscurecendo as três divisões e o 0 vazio deixou de aparecer. Causa do 🔵 duplicado: CSS legado `#rankLine[data-league]::before` continuava desenhando um círculo mesmo após o botão `[🔵 GL IV #1]` passar a incluí-lo.
