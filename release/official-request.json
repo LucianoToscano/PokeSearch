@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.45",
-  "code": 54449,
-  "label": 51249,
-  "previous_tag": "v0.02.44-54448",
-  "qa_max_code": 54448,
-  "release_notes": "LT245: resumo PvP prioriza o menor Rank Geral (RG) verificado entre espécies/evoluções reais com IV Classe Top 50, ou dentro do Top N mais restrito selecionado. Exemplo Litwick 0/15/14: Lampent GL RG #519 / IV #1 antes de Chandelure GL RG #808 / IV #1. RG e IV são botões separados que abrem suas tabelas; +N mostra evoluções alternativas no mesmo card, recolhido por padrão. Ordem também aplicada à análise expandida e avisos Top PvP. Sem RG confirmado o Rank Classe continua como critério; Megas/referências teóricas não recebem RG inventado. Mantidas LT244, dados offline, filtros, contas, as duas Pokébolas e UI P/M/G. QA físico Samsung pendente; instalação exige confirmação Android."
+  "version": "0.02.46",
+  "code": 54450,
+  "label": 51250,
+  "previous_tag": "v0.02.45-54449",
+  "qa_max_code": 54449,
+  "release_notes": "LT246: corrige ausência de sprites de Flabébé na lista lateral ao empacotar offline os 10 ícones originais exatos das cinco cores, normal e brilhante, sem trocar espécie/forma. O botão ⚔️ distingue ataques recomendados PvPoke dos golpes possíveis verificados no Game Master; se a fonte remota não responder, os ataques capturados são exibidos, em vez de mensagem indisponível genérica. Falhas de rede não ficam cacheadas permanentemente. Regressão confirma Ursaluna GL IV #1 e RG #163 clicáveis na faixa compacta; casos sem RG confirmado não recebem número inventado (Rattata). Preserva a priorização de RG da LT245, os filtros, a assinatura permanente, a atualização, os dois overlays e layouts P/M/G. Instalação depende de confirmação Android; inspeção visual real Samsung P1/P2 ainda não comprovada."
 }
