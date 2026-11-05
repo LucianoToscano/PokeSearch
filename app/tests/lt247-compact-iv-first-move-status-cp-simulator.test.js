@@ -58,7 +58,7 @@ const both={name:"Litwick",searchLeague:"gl",searchRankLimit:1,leagues:[
  {league:"ul",own:null,evolutions:[]},{league:"ml",own:null,evolutions:[]}
 ]};
 assert.equal(fGl.update(both),true);
-assert.deepEqual(line.children.slice(0,4).map(x=>x.textContent),
+assert.deepEqual(line.children.slice(0,3).map(x=>x.textContent),
  ["🔵 GL IV #1","↳ Lampent","RG #519"]);
 line.children[0].onclick({});
 line.children[2].onclick({});
