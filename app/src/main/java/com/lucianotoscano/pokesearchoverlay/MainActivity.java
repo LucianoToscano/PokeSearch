@@ -364,7 +364,7 @@ public class MainActivity extends Activity {
         dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
         overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
         secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,
-            PremiumAccess.controlled()?"Pokébola 2 Premium - requer licença":"Ativar Pokébola 2");
+            "Ativar Pokébola 2");
         ImageView[] paired={overlayControl,secondaryOverlayControl};
         for(int i=0;i<paired.length;i++){
             final int which=i;
@@ -1686,33 +1686,12 @@ public class MainActivity extends Activity {
             refreshHomeOverlay();
             return;
         }
-        if(PremiumAccess.controlled()){
-            if(!PremiumGoogleLogin.isGoogleSignedIn(this)){
-                PremiumPurchaseDialog.show(this,()->{
-                    if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
-                });
-                return;
-            }
-            PremiumAccess.verify(this,(allowed,premium)->{
-                if(!allowed){
-                    Toast.makeText(this,"Esta versão de testes ainda não foi liberada ou está offline.",
-                        Toast.LENGTH_LONG).show();
-                }else if(!premium){
-                    if(PremiumAccess.deviceConflict()){
-                        promptPremiumDeviceTransfer(this::startSecondaryOverlayAuthorized);
-                    }else PremiumPurchaseDialog.show(this,()->{
-                        if(PremiumAccess.permitted(true))startSecondaryOverlayAuthorized();
-                    });
-                }else startSecondaryOverlayAuthorized();
-            });
-            return;
-        }
+        // As duas Pokébolas podem ser ativadas sem login ou licença Premium.
         startSecondaryOverlayAuthorized();
     }
     private void logoutPremiumAccount(boolean switchAccount){
         // Sign-out must NEVER depend indefinitely on a network response.
-        // Keep P1, saved filters, chat and PoGoCoordinates session untouched.
-        stopService(new Intent(this,SecondaryOverlayService.class));
+        // Sair do Google Premium nunca encerra P1 ou P2 nem apaga seus filtros.
         PremiumAccess.invalidateLease();
         final java.util.concurrent.atomic.AtomicBoolean finished=
             new java.util.concurrent.atomic.AtomicBoolean(false);
@@ -1898,10 +1877,13 @@ public class MainActivity extends Activity {
             .show();
     }
     private void startSecondaryOverlayAuthorized(){
-        if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;
+        // Mesmo requisito da P1: disponibilidade geral e permissão de overlay.
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
         if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
             startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:"+getPackageName())),101);
+                Uri.parse("package:"+getPackageName())),103);
             return;
         }
         initializeSecondaryFilterDefaults();
@@ -2407,13 +2389,6 @@ public class MainActivity extends Activity {
         applyAppAvailability(AppAvailability.cached(this));
         availabilityHandler.removeCallbacks(availabilityTick);
         availabilityHandler.post(availabilityTick);
-        if(PremiumAccess.controlled())PremiumAccess.verify(this,(allowed,premium)->{
-            if(!allowed){
-                stopService(new Intent(this,OverlayService.class));
-                stopService(new Intent(this,SecondaryOverlayService.class));
-            }else if(!premium)stopService(new Intent(this,SecondaryOverlayService.class));
-            refreshHomeOverlay();
-        });
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
@@ -3534,6 +3509,7 @@ public class MainActivity extends Activity {
             return;
         }
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
+        if(req==103&&Settings.canDrawOverlays(this))startSecondaryOverlayAuthorized();
         if(req==303){
             if(result==RESULT_OK&&data!=null&&data.getData()!=null)
                 readHomeDataBackup(data.getData());
