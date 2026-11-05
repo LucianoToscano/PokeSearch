@@ -960,6 +960,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #panel{min-width:0!important;max-width:100%!important;overscroll-behavior:contain}
 #panel.lt253Expanded{overflow-y:auto!important;scrollbar-width:thin!important}
 #evoBody .ps253Family{padding:5px 6px;margin:3px 0 5px;border:1px solid #91bda753;border-radius:7px;background:#41604d22;font:500 10px/1.45 Roboto,Arial,sans-serif}
+#movesPopover .ps253MoveMeta{display:inline-block;margin-left:4px;color:#a3cadb;font:500 8.5px/1.25 Roboto,Arial,sans-serif;white-space:normal}
 #evoBody .ps253Family strong{display:block;font-size:10.5px;color:#c9f0d9}
 #evoBody .ps253Family .ps253Line{margin:3px 0;overflow-wrap:anywhere}
 #evoBody .ps253Family .ps253Actions{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 0}
@@ -1605,9 +1606,16 @@ function renderRankOneMoves(){
    if(legacy)hasLegacy=true;
    const tip=move.status==="elite"?"Ataque legado · MT de Elite identificada":
     "Ataque legado · disponibilidade de MT de Elite não comprovada";
+   const meta=[
+    Number.isFinite(move.energyGain)?"Energia +"+move.energyGain:null,
+    Number.isFinite(move.energyCost)?"Custo "+move.energyCost:null,
+    Number.isFinite(move.turns)?"Turnos "+move.turns:null,
+    Number.isFinite(move.power)?"Poder "+move.power:null
+   ].filter(Boolean).join(" · ");
    return '<div class="psMoveRow"><span class="psMoveLabel">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
-     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+'</div>';
+     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+
+     (meta?'<small class="ps253MoveMeta">'+h(meta)+'</small>':"")+'</div>';
   };
   if(recommendation.availableOnly===true){ 
    btn.title="Consultar golpes possíveis · sem recomendação PvP confirmada";
@@ -1648,12 +1656,18 @@ function renderRankOneMoves(){
    btn.setAttribute?.("aria-label",btn.title);
    psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
   }
+  const sourceLabel=String(recommendation.source||"Fonte não identificada").slice(0,80);
+  const captured=String(currentCardMoves||"").trim().slice(0,100);
   popover.innerHTML='<div class="psMoveTitle">'+
    (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
    '</div>'+fastRow+chargedRows+
    (hasLegacy?'<div class="psMoveLegend">⚔️ Pelo menos um golpe legado / Elite</div>':
     complete?'<div class="psMoveLegend">🗡 Conjunto sem golpes legados</div>':
-    '<div class="psMoveLegend">Status de legado não verificado</div>');
+    '<div class="psMoveLegend">Status de legado não verificado</div>')+
+   (captured?'<div class="psMoveLegend">Capturado: '+h(captured)+
+     ' · não é o conjunto recomendado</div>':"")+
+   '<div class="psMoveLegend">Fonte: '+h(sourceLabel)+
+   ' · energia/tempo somente se verificados</div>';
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
