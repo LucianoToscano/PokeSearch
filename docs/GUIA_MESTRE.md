@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT239 OFICIAL — 0.02.39 / versionCode 54443 (05/11/2026)
+
+- **Status comprovado:** LT239 em GitHub releases/latest, tag [v0.02.39-54443](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.39-54443), draft=false, prerelease=false, publicada em 2026-11-05T04:20:40Z.
+- **Implementação:** [PR #213](https://github.com/LucianoToscano/PokeSearch/pull/213), merge SHA 98f6fdf9c73e5c4396a116b9f3caff9ae2acfa6c. Motor de ranking compartilhado por P1/P2: abertura na página do IV exato, filtros Top 10/50/100/Todos, comparação de até 2 IVs tocando linhas, dados ATK/DEF/HP/PC/Nível/Eficiência, rolagem interna mais legível, copiar texto, compartilhar via Android e CSV do filtro.
+- **Testes:** Node QA [#41966669465](https://github.com/LucianoToscano/PokeSearch/actions/runs/41966669465), regressão LT169 #41966669531, core QA #41966669503, compilação Java Android #41966669619, OTA #41966669462 e beta privado #41966669452 concluíram success. Não confundir beta privado com release.
+- **Solicitação oficial permanente:** release/official-request.json atualizada no commit dc129ca3b05d1df9abf81ade29d9f0429c4f1b2e, versão 0.02.39, code 54443, label 51243, previous_tag LT238 v0.02.38-54442, qa_max_code 54442.
+- **Workflow protegido oficial:** [Actions #41966852328](https://github.com/LucianoToscano/PokeSearch/actions/runs/41966852328), completed/success; jobs preflight e publish success. Testes, geração de assets, build protegido, signature v2, validação do APK, publicação e verificação de SHA todos success.
+- **APK oficial:** [PokeSearch-v0.02.39-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.39-54443/PokeSearch-v0.02.39-LT.apk), **28.133.710 bytes**, SHA-256 público 647f244930a621dde444abc0fab2069efcd495083854f852599cc638b6227013, asset uploaded. Certificado Android v2 permanente exigido/validado no workflow: 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e.
+- **Artefato de validação:** PokeSearch-v0.02.39-54443-Signed-Verified, ID 13388052133, ZIP 25.956.171 bytes e digest f467523b967bada8ee9541dfcba675e0480d599fa0ea86fa571e102a6d9af9cd.
+- **Canal de atualização:** GitHub releases/latest detectável pelo aplicativo LT237+; Android exige confirmação para instalação. Sem evidência de instalação física ou homologação Samsung P1/P2. Compartilhamento Android precisa de QA físico.
+- **Registro técnico:** [LT239_EXPLORADOR_PVP_FILTROS_COMPARACAO_EXPORT_20261105.md](LT239_EXPLORADOR_PVP_FILTROS_COMPARACAO_EXPORT_20261105.md). Seção antiga "LT239 ... desenvolvimento" representa o histórico anterior e está superada por esta.
+
 ## LT239 — Explorador PvP avançado (05/11/2026, desenvolvimento)
 
 - **Escopo solicitado:** entrar diretamente na página dos IVs do Pokémon; filtros Top 10/50/100/Todos; comparação de dois spreads tocando nas linhas; visual compacto com scroll interno; copiar texto, compartilhar por Android e copiar CSV do filtro.
