@@ -31,12 +31,25 @@ function openQuery(s,query,api,ins){
 }
 function formList(s,api,ins){
  const iv=s.rows.find(r=>r.index===s.selectedIv)?.iv;
- const rows=ins.compareForms(s.gm,s.forms,iv,s.league,api.getIvRows);
+ const result=ins.recommendFamily?.(s.gm,s.forms,iv,s.league,api.getIvRows,
+   typeof window!=="undefined"?window.POKESEARCH_PVPOKE_OVERALL:null);
+ const rows=result?.forms||ins.compareForms(s.gm,s.forms,iv,s.league,api.getIvRows);
  if(!rows.length)return '<div class="psaMuted">Formas não identificadas com segurança.</div>';
- return '<div class="psaForm">'+rows.map(r=>'<div class="psaLine">'+
-  (r.rank===1?'<span class="psaTop">TOP 1 </span>':"")+
-  '<b>'+esc(r.name)+'</b> '+(r.mega?'(Mega projetada) · ':'')+'#'+r.rank+
-  ' · '+r.efficiency+'% · PC '+r.cp+' · Nv. '+String(r.level).replace(".",",")+'</div>').join("")+'</div>';
+ const best=result?.recommended;
+ const chosen=best?'<div class="psaMuted">Melhor '+(result.overallVerified?'Rank Geral verificado':'IV da família')+
+   ': <b>'+esc(best.name)+'</b> · IV #'+best.rank+
+   (best.overallRank?' · RG #'+best.overallRank:'')+'</div>':
+   '<div class="psaMuted">Sem recomendação comprovada para esta liga.</div>';
+ const mega=result?.bestMega?'<div class="psaMuted">Mega projetada: '+esc(result.bestMega.name)+
+  ' · IV #'+result.bestMega.rank+' (não confirma uso na Liga GO)</div>':"";
+ return '<div class="psaForm" aria-label="Comparação de evoluções e Megas">'+chosen+mega+
+  rows.map(r=>'<div class="psaLine">'+
+   (r.rank===1?'<span class="psaTop">IV #1 </span>':"")+
+   '<b>'+esc(r.name)+'</b> · IV #'+r.rank+
+   (r.overallRank?' · RG #'+r.overallRank:'')+
+   (r.mega?' · Mega projetada':r.eligible===false?' · Não elegível/teórico':'')+
+   ' · '+r.efficiency+'% · PC '+r.cp+' · Nv. '+String(r.level).replace(".",",")+
+   '</div>').join("")+'</div>';
 }
 function categoryList(s){
  if(!s.categoryRows)return '<div class="psaMuted">'+(s.categoryLoading?"Consultando fonte PvPoke…":
