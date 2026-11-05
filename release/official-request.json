@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.49",
-  "code": 54453,
-  "label": 51253,
-  "previous_tag": "v0.02.48-54452",
-  "qa_max_code": 54452,
-  "release_notes": "LT249: corrigido o falso GL Top #1 (o número do filtro não é o Rank Classe real), mostrando o IV mais próximo calculado e RG confirmado da evolução quando nenhum candidato é Top #1; para Machop 0/15/15 o destaque mostra Machoke IV #2/RG #500 sem afirmar que corresponde ao filtro Top 1. Faixa PvP de uma linha e quatro ações independentes: [🔵 GL IV #N] abre Rank Classe, [↳ Evolução] abre e destaca Análise PvP, [RG #N] abre Rank Geral, ⚔️/🗡 abre golpes com estado de legado verificado. Cores automáticas 🔵 GL, 🟡 UL, 🟣 ML e ícone autêntico de Mega quando existir projeção; sem RG fictício de Mega ou permissão presumida na GBL. Calculadora PC/Nv. usa a família evolutiva completa do grafo oficial e Game Master, independente do filtro: Teddiursa → Ursaring → Ursaluna (sem Mega), formas Mega somente onde existem, seleção por setas, níveis ±0,5 e campo PC-alvo para calcular nível matematicamente possível até nível 50; sem custos de Doces/Poeira não verificados. Corrigido o '0' desprendido abaixo da segunda Pokébola vazia sem remover a opção de contador numérico dentro do ícone. Preserva LT248, duas Pokébolas e configurações. Validação automatizada Node/Java/OTA/beta aprovada; ainda é necessária validação visual manual P/M/G Samsung e confirmação de instalação pelo Android."
+  "version": "0.02.50",
+  "code": 54454,
+  "label": 51254,
+  "previous_tag": "v0.02.49-54453",
+  "qa_max_code": 54453,
+  "release_notes": "LT250: barra de ranking PvP agora tem exatamente três divisões com bordas próprias em uma linha [🔵 GL IV #N] [↳ Evolução] [RG #N], seguidas do botão separado ⚔️/🗡 para golpes; removidos o pseudo-elemento CSS que duplicava 🔵, o fundo compartilhado que escondia as divisões e o botão extra +N que apertava os nomes. Texto aumentado e mais contrastante, os três destinos continuam independentes: IV abre Rank Classe, espécie abre Análise PvP e RG abre Rank Geral. Sem RG verificado, mostra RG — desativado (não fabrica classificação). Destaques 🟡 UL, 🟣 ML e ícone verdadeiro Mega mantidos. Restaurado 0 quando não há encontros: com contador ativo, o zero aparece no indicador da Pokébola; sem contador, centralizado logo abaixo do ícone, sem duas cópias. Erro e busca preservam seus indicadores próprios. Corrigido para P1/P2 preservando localização, filtros, login, posições salvas, simulador de evolução/PC da LT249, recursos da LT248 e atualização OTA. Testes automatizados Node, regressão completa, QA central, Java Android, OTA e APK beta passaram; inspeção visual manual Samsung P/M/G e confirmação de instalação ainda necessárias."
 }
