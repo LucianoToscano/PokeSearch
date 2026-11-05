@@ -54,7 +54,7 @@ test("Premium logout and Home resume never close P2 due to license status",()=>{
  assert.match(resume,/refreshHomeOverlay\(\)/);
 });
 test("first-time Android overlay permission resumes requested Pokeball",()=>{
- assert.match(start,/getPackageName\(\)\)\,103\);/);
+ assert.ok(start.includes('getPackageName())),103);'),"P2 needs its own permission request");
  assert.match(result,/if\(req==101&&Settings\.canDrawOverlays\(this\)\)startOverlay\(\);/);
  assert.match(result,/if\(req==103&&Settings\.canDrawOverlays\(this\)\)startSecondaryOverlayAuthorized\(\);/);
 });
