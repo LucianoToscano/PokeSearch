@@ -289,7 +289,13 @@ body.result-window.vip-results-scroll #spawns{
 }
 /* Preserve the final sprite's overhang without adding gaps between entries. */
 body.result-window #spawns:not(:empty){padding-bottom:0!important}
-body.result-window #empty{display:none!important;margin:0 auto;max-height:0;height:0;overflow:hidden}
+/* LT250: 0 stays attached to its Pokébola when the search is empty.
+   Only the hidden independent header is removed, not the empty-result count. */
+body.result-window #empty{display:block;margin:0 auto;width:var(--dock);
+ max-height:18px;height:18px;line-height:18px;overflow:hidden;
+ padding:0;border:0;background:transparent;text-align:center;
+ font:800 12px/18px Roboto,Arial,sans-serif;color:#e6f2ff;
+ text-shadow:0 1px 2px #000,0 0 3px #000}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 
@@ -7266,12 +7272,16 @@ function draw(){
   setTimeout(attachSpriteFeedback,14500);}
  }
  const empty=document.getElementById("empty");
- // LT249: the independent P2 results window printed a detached "0"
- // below its Pokébola. Keep empty-search feedback in Native.showStatus(),
- // not as a second text row floating on the desktop.
- empty.style.display=cards.length||resultWindow?"none":"block";
+ // LT250: if the number badge is enabled, 0 is shown INSIDE the
+ // Pokébola counter; otherwise 0 is shown centered directly below it.
+ // No duplicate numbers or hidden empty result; same logic on P1 and P2.
+ const emptyResult=!cards.length;
+ empty.style.display=emptyResult&&(!resultWindow||!resultDisplayOptions.count)?
+  "block":"none";
  const waiting=nextQueryAt>Date.now();
- empty.textContent=activeSearchPhase==="empty"?"0":activeSearchPhase==="error"?"!":"…";
+ empty.textContent=emptyResult&&
+  !["error","searching","filling"].includes(activeSearchPhase)?
+  "0":activeSearchPhase==="error"?"!":"…";
  empty.title=status||"Aguardando busca";
  if(resultWindow){
   // Only show a Shiny badge after the site confirms that Shiny-only is active.

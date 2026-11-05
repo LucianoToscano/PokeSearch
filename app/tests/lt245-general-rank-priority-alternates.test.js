@@ -48,19 +48,21 @@ const primary=line.children.find(x=>x.className==="psCompactOverall psRankOpen")
 const more=line.children.find(x=>x.className==="psRankMore");
 assert.equal(primary.textContent,"RG #519");
 assert.equal(classButton.textContent,"🔵 GL IV #1");
-assert.equal(more.textContent,"+1");
+assert.equal(more,undefined,"no fifth chip: alternatives are reached through Análise PvP");
+assert.equal(line.attrs["data-alternatives"],"1");
 assert.equal(primary.dataset.psName,"Lampent");
 assert.equal(primary.dataset.psRank,"519");
 assert.equal(classButton.dataset.psKind,"class");
 assert.equal(classButton.dataset.psName,"Lampent");
-assert.equal(more.attrs["aria-expanded"],"false");
+assert.ok(line.children.filter(x=>x.className==="psCompactOverall psRankOpen").length===1);
 assert.equal(primary.onclick({preventDefault(){},stopPropagation(){}}),true);
 assert.equal(classButton.onclick({preventDefault(){},stopPropagation(){}}),true);
 assert.deepEqual(events.slice(0,2),[
  {kind:"overall",name:"Lampent",rank:519,league:"gl"},
  {kind:"class",name:"Lampent",rank:1,league:"gl"}
 ]);
-assert.equal(more.onclick({preventDefault(){},stopPropagation(){}}),true);
+const mockMore=make("button");
+assert.equal(moduleObj.toggle({preventDefault(){},stopPropagation(){}},mockMore,[ch],"gl"),true);
 assert.equal(panel.hidden,false);
 assert.equal(panel.children.length,1);
 assert.equal(panel.children[0].children[0].textContent,"↳ Chandelure");
@@ -73,9 +75,9 @@ assert.deepEqual(events.slice(2),[
  {kind:"overall",name:"Chandelure",rank:808,league:"gl"},
  {kind:"class",name:"Chandelure",rank:1,league:"gl"}
 ]);
-assert.equal(more.onclick({preventDefault(){},stopPropagation(){}}),true);
+assert.equal(moduleObj.toggle({preventDefault(){},stopPropagation(){}},mockMore,[ch],"gl"),true);
 assert.equal(panel.hidden,true);
-assert.equal(more.attrs["aria-expanded"],"false");
+assert.equal(panel.hidden,true,"alternate panel closes without reintroducing a fifth control");
 assert.ok(resize>0);
 const quality=gl([{...ch,rank:380,overallRank:1},la]);
 assert.equal(moduleObj.update(quality),true);
@@ -86,7 +88,7 @@ const noRg=gl([{...ch,overallRank:null},{...la,rank:2,overallRank:null}]);
 assert.equal(moduleObj.update(noRg),true);
 assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Chandelure",
  "without confirmed RG fall back to original IV rank");
-assert.equal(line.children.some(x=>x.className==="psCompactOverall psRankOpen"),false);
+assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG —");
 const strict=gl([{...ch,rank:1,overallRank:808},{...la,rank:2,overallRank:1}]);
 strict.searchRankLimit=1;
 assert.equal(moduleObj.update(strict),true);
@@ -100,8 +102,8 @@ assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").
 const ref=gl([],{comparisons:[{name:"Costume Reference",rank:1,overallRank:1,referenceOnly:true}]});
 assert.equal(moduleObj.update(ref),true,"reference-only result can still be displayed as IV projection");
 assert.ok(line.children.some(x=>x.className==="psCompactSpecies"&&x.textContent.includes("↳ Costume Reference")));
-assert.equal(line.children.some(x=>x.className==="psCompactOverall psRankOpen"),false,
- "reference-only projection never becomes a claimed real RG");
+assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG —",
+ "reference-only projection gets disabled neutral RG placeholder, not a false ranking");
 assert.ok(html.includes('id="psRankAlternates" hidden'));
 assert.ok(html.includes('panel.hidden=false;button?.setAttribute?.("aria-expanded","true")'));
 assert.ok(html.includes("entries.sort((a,b)=>"),"expanded evolutions must share RG priority");
@@ -127,5 +129,5 @@ assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent
 assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG #163",
  "Ursaluna verified RG must appear on compact card, not only expanded analysis");
 assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv").textContent,"🔵 GL IV #1");
-assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
+assert.equal(line.attrs["data-alternatives"],"1","extra forms are found in the PvP analysis, not a fifth chip");
 console.log("LT245: RG first among good IVs, class fallback, strict Top filter, +N comparison, P1/P2 PASS");

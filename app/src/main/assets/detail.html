@@ -844,6 +844,52 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpTargetRow button{border:1px solid #8ad9b56a;
  border-radius:5px;padding:4px 7px;background:#24584555;color:#d7ffe9;
  font-size:10px;touch-action:manipulation}
+/* LT250: the outer rank rail has NO shared glass panel. Exactly three
+   separate readable outlined chips + one ⚔️/🗡 action, even in P size.
+   The old pseudo-element produced a duplicated 🔵 before [🔵 GL IV #N]. */
+#rankLine,#rankLine[data-league]{box-sizing:border-box!important;display:flex!important;
+ align-items:center!important;flex-wrap:nowrap!important;justify-content:flex-start!important;
+ gap:3px!important;width:100%!important;max-width:100%!important;
+ min-height:32px!important;height:32px!important;padding:1px 0!important;
+ margin:3px 0 0!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;background:transparent!important;overflow:hidden!important}
+#rankLine::before,#rankLine[data-league]::before{
+ display:none!important;content:none!important;width:0!important;
+ flex:0 0 0!important;margin:0!important}
+#rankLine .psLeagueIv,#rankLine .psCompactSpecies,
+#rankLine .psCompactOverall{box-sizing:border-box!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;
+ height:27px!important;min-height:27px!important;max-height:27px!important;
+ border:1px solid #a8bfda85!important;border-radius:6px!important;
+ background:#2633466e!important;color:#f1f6fc!important;
+ box-shadow:none!important;text-decoration:none!important;
+ font:750 11px/1.15 Roboto,Arial,sans-serif!important;letter-spacing:0!important;
+ white-space:nowrap!important;padding:2px 4px!important;margin:0!important;
+ overflow:hidden!important;text-overflow:ellipsis!important;touch-action:manipulation!important}
+#rankLine .psLeagueIv{flex:0 0 auto!important;border-color:#80bdec94!important;
+ color:#eff8ff!important}
+#rankLine .psCompactSpecies{flex:1 1 0!important;min-width:0!important;
+ font-size:11.5px!important;font-weight:750!important;max-width:none!important}
+#rankLine .psCompactOverall{flex:0 0 auto!important;border-color:#8ecdad82!important;
+ color:#d7ffe9!important;background:#203e355e!important}
+#rankLine .psCompactOverall:disabled{opacity:.67!important;
+ border-color:#8895a36e!important;color:#bfcedb!important;background:#29313a60!important}
+#rankLine .psMovesAction{box-sizing:border-box!important;
+ flex:0 0 23px!important;width:23px!important;min-width:23px!important;
+ max-width:23px!important;height:27px!important;min-height:27px!important;
+ margin:0!important;padding:0!important;overflow:visible!important;
+ background:transparent!important;border:0!important;font-size:18px!important}
+#rankLine .psRankMore{display:none!important}
+#rankLine .psCompactMegaEmblem{flex:0 0 12px!important;width:12px!important;
+ height:12px!important;max-width:12px!important;object-fit:contain!important}
+@media(max-width:340px){
+ #rankLine{gap:2px!important}
+ #rankLine .psLeagueIv,#rankLine .psCompactOverall{
+  font-size:10px!important;padding:2px 3px!important}
+ #rankLine .psCompactSpecies{font-size:10.5px!important;padding:2px 3px!important}
+ #rankLine .psMovesAction{flex-basis:20px!important;width:20px!important;
+  min-width:20px!important;max-width:20px!important}
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1722,32 +1768,34 @@ function setRankLineLabel(rankLine,label){
    emblem.setAttribute?.("aria-hidden","true");
    nameChip.appendChild(emblem);
   }
+  if(otherChoices.length){
+   // Alternatives remain visible inside the already-existing PvP analysis;
+   // the primary rank strip must NOT become a 4th/5th chip and hide names.
+   nameChip.title+=" · "+otherChoices.length+
+    " outra(s) forma(s) na Análise PvP";
+  }
   rankLine.appendChild(nameChip);
+  // Always keep the THIRD division. An unverified RG is disabled/neutral,
+  // never made up and never linked to an unrelated Pokémon.
+  const badge=document.createElement("button");
+  badge.type="button";badge.className="psCompactOverall psRankOpen";
+  badge.textContent=hasVerifiedOverall?"RG #"+best.overallRank:"RG —";
+  badge.title=hasVerifiedOverall?
+   "Rank Geral PvPoke "+best.name+" · abrir tabela de espécies":
+   "Rank Geral não verificado para esta forma/liga";
+  badge.setAttribute?.("aria-label",badge.title);
   if(hasVerifiedOverall){
-   const badge=document.createElement("button");
-   badge.type="button";badge.className="psCompactOverall psRankOpen";
-   badge.textContent="RG #"+best.overallRank;
-   badge.title="Rank Geral PvPoke "+best.name+" · abrir tabela de espécies";
-   badge.setAttribute?.("aria-label","Abrir RG #"+best.overallRank+" de "+best.name);
    badge.dataset.psKind="overall";badge.dataset.psName=best.name;
    badge.dataset.psLeague=activeRankLeague;
    badge.dataset.psRank=String(best.overallRank);
    badge.onclick=event=>openPvpRankExplorer(event,badge);
-   rankLine.appendChild(badge);
+  }else{
+   badge.disabled=true;badge.setAttribute?.("aria-disabled","true");
   }
+  rankLine.appendChild(badge);
  }
- if(otherChoices.length&&typeof document.createElement==="function"&&
-    typeof rankLine.appendChild==="function"){
-  const more=document.createElement("button");
-  more.type="button";more.className="psRankMore";
-  more.textContent="+"+otherChoices.length;
-  more.title=otherChoices.length+" outra(s) forma(s) com bons IVs";
-  more.setAttribute?.("aria-label","Ver "+otherChoices.length+" outras formas PvP");
-  more.setAttribute?.("aria-controls","psRankAlternates");
-  more.setAttribute?.("aria-expanded","false");
-  more.onclick=event=>togglePvpRankAlternates(event,more,otherChoices,activeRankLeague);
-  rankLine.appendChild(more);
- }
+ if(otherChoices.length&&typeof rankLine.setAttribute==="function")
+  rankLine.setAttribute("data-alternatives",String(otherChoices.length));
  if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
   const info=document.createElement("button");
   info.type="button";

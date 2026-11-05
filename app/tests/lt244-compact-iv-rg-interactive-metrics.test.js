@@ -66,7 +66,9 @@ assert.equal(hook({...ctx,leagues:[
  {league:"gl",own:{rank:1,overallRank:null},evolutions:[]},
  {league:"ul"},{league:"ml"}
 ]}),true);
-assert.equal(rankLine.children.length,2,"no RG badge when no verified overall rank");
+assert.equal(rankLine.children.length,3,"three slots with neutral unverified RG placeholder");
+assert.equal(rankLine.children[2].textContent,"RG —");
+assert.equal(rankLine.children[2].disabled,true);
 assert.match(html,/#rankLine \.psCompactOverall\{[\s\S]*?cursor:pointer/);
 assert.match(html,/#rankLine \.psRankLabel\{overflow:visible!important;text-overflow:clip!important/);
 // The inline card retains a click target to the 4,096 local IV rankings.
