@@ -9,8 +9,8 @@ const inline=detail.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(inline);
 new vm.Script(inline);
 // Short rank label always makes room for full evolution name, no rank metadata loss.
-assert.ok(detail.includes('label+" · IV #"+best.rank+scope'),'fallback IV rank remains when no verified RG');
-assert.ok(detail.includes('setRankLineLabel(rankLine,hasVerifiedOverall?label+scope:'),'RG priority for verified species');
+assert.ok(detail.includes('const compactName=label+" · IV #"+best.rank+" · "+scope+'),'fallback compact text always preserves IV rank');
+assert.ok(detail.includes('iv.textContent="IV #"+best.rank'),'IV rank is independent and first');
 assert.ok(detail.includes('const scope=best.kind==="current"?" · Atual":" · ↳ "+best.name'));
 assert.ok(detail.includes('league.toUpperCase()+" · IV #"+ivValue'));
 assert.ok(detail.includes('#rankLine .psRankLabel{display:block;min-width:0;flex:1 1 auto;'));
