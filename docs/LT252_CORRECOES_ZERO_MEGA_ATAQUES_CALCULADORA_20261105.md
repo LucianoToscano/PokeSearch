@@ -18,3 +18,14 @@ Quatro screenshots Android mostram: zero sozinho desalinhado abaixo da Pokébola
 Executar as suítes Node/Java/OTA e build Android CI, conferir ordem e truncamento no Samsung em tamanhos P, M, G e nas duas Pokébolas; testar Sableye (normal e Mega), Rowlet sem legado, um golpe legado confirmado e Snivy com simulação de formas/níveis.
 
 **Limites:** aprovação automatizada não equivale a inspeção física Android. Não afirmar instalação, APK assinado, publicação OTA ou merge enquanto essas evidências não estiverem disponíveis.
+
+
+## Evidência oficial de integração e publicação
+
+- **PR #230**: [integração à main](https://github.com/LucianoToscano/PokeSearch/pull/230), squash commit `c1dd07171d92edd65d512cca7c9e832a8b5f65d7`.
+- **Seis gates do head `1b208ea5156c3eff39799935992bc8f6ec90fb36` concluídos com success**: [Node QA](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026130114), [regressões completas](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026130313), [QA core](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026130265), [Android Java](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026130292), [OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026130361) e [APK beta isolado](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026130103).
+- **Publicação permanente**: [Actions #42026677432](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026677432), `completed/success` nos jobs `preflight` e `publish`. O fluxo validou certificado, APK, regressões, asset público e hash.
+- **Release pública estável**: [v0.02.52-54456](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.52-54456), publicada em 05/11/2026 às 12:26:24 UTC, `draft=false`, `prerelease=false`, confirmada em `releases/latest`.
+- **APK oficial**: [PokeSearch-v0.02.52-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.52-54456/PokeSearch-v0.02.52-LT.apk), **28.390.841 bytes**, SHA-256 `df169994899bb16d1450b6228e677f274df94e663bbccfb5d29df66ef3367b5e`, asset `uploaded`.
+- **Versionamento**: `0.02.52` / `versionCode 54456` / `label 51256`, anterior `0.02.51 / 54455`. Solicitação em `release/official-request.json` commit `e16d4540abf35832b0f5395cb1a49fafbcc912b5`.
+- **Atualizador no aplicativo**: versão passa a ser detectável pela release pública latest; instalação depende da confirmação do Android. Nem o GitHub Actions nem estes registros demonstram download ou instalação física, tampouco inspeção visual em Samsung P/M/G nas duas Pokébolas.
