@@ -10,6 +10,9 @@ Quatro screenshots Android mostram: zero sozinho desalinhado abaixo da Pokébola
 - `detail.html`: comparativo PC/Nível remove o teto da rolagem aninhada, aplica rolagem no próprio card, seletor de forma flexível, linhas de resultados quebráveis, slider com largura disponível e barra de rolagem perceptível. Fórmulas e Game Master intactos; sem menu flutuante extra.
 - `app/tests/lt247-compact-iv-first-move-status-cp-simulator.test.js`: expectativa atualizada para ícone Mega antes de Sableye, sem alteração da identidade canônica.
 - `app/tests/lt252-zero-mega-icon-attacks-calculator.test.js`: novas checagens preventivas.
+- `pvp_rank_explorer.js`: tocar novamente no mesmo chip GL IV/RG recolhe o explorador; chips distintos alternam conteúdo e preservam a tabela correta.
+- `detail.html`: o chip central ↳ da espécie alterna a abertura/fechamento da Análise PvP e permite selecionar outra evolução sem recolher a seção.
+- `app/tests/lt252-toggle-rank-and-species-accordion.test.js`: regressão funcional dos dois ciclos abrir → fechar → reabrir.
 
 ## Critérios de homologação
 Executar as suítes Node/Java/OTA e build Android CI, conferir ordem e truncamento no Samsung em tamanhos P, M, G e nas duas Pokébolas; testar Sableye (normal e Mega), Rowlet sem legado, um golpe legado confirmado e Snivy com simulação de formas/níveis.
