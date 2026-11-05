@@ -1575,8 +1575,17 @@ function setRankLineLabel(rankLine,label){
   (a.kind==="current"?-1:b.kind==="current"?1:0);
  const sortGeneral=(a,b)=>(a.overallRank??Infinity)-(b.overallRank??Infinity)||
   sortClass(a,b);
+ // LT249: a Top #N request is a filter setting, not proof that this
+ // encounter actually has a Rank Classe in that Top #N. The old fallback
+ // ("GL · Top #1 · Machop #611") was visually claiming a false #1.
+ // When the local Game Master has no qualifying rank, show the NEAREST
+ // VERIFIED class rank, never invent #1 or suppress the real IV #2.
+ const unverifiedTop=limit!==null&&!inSearch.length&&!forcedMegaPreview;
+ const nearest=unverifiedTop?candidates.filter(x=>
+   x.kind==="current"||x.kind==="evolution").sort((a,b)=>
+    a.rank-b.rank||(a.overallRank??Infinity)-(b.overallRank??Infinity)):[];
  const best=(withOverall.length?withOverall.sort(sortGeneral):
-   [...inSearch].sort(sortClass))[0];
+   [...inSearch].sort(sortClass))[0]||nearest[0];
  // Alternative forms must also have good verified IVs; no invented Mega RG
  // or speculative costume evolutions are promoted to the main compact UI.
  const otherChoices=excellent.filter(x=>x!==best).filter((x,i,all)=>
@@ -1591,8 +1600,9 @@ function setRankLineLabel(rankLine,label){
  if(!best){
   // A Top-N search is NOT evidence that the base species itself is Top-N.
   const own=candidates.find(x=>x.kind==="current");
-  const summary=label+" · Top #"+limit+
-   (own?" · "+payload.name+" #"+own.rank:" · sem posição");
+  const summary=label+" · "+
+   (own?"IV #"+own.rank+" · Atual":"Sem IV comprovado")+
+   (limit!==null?" · filtro Top #"+limit+" não confirmado":"");
   setRankLineLabel(rankLine,summary);
   rankLine.title="A busca pode considerar evoluções ou uma classificação da fonte. "+
    "Nenhuma combinação correspondente ao Top #"+limit+" foi confirmada no cálculo local.";
@@ -1611,6 +1621,7 @@ function setRankLineLabel(rankLine,label){
    Number.isInteger(best.overallRank)&&best.overallRank>=1;
  const compactName=label+" · IV #"+best.rank+" · "+scope+
    (hasVerifiedOverall?" · RG #"+best.overallRank:"");
+ if(rankLine.dataset)rankLine.dataset.topVerified=unverifiedTop?"false":"true";
  // Legacy DOM and QA stubs still have a safe text-only summary.
  setRankLineLabel(rankLine,compactName);
  if(typeof rankLine.replaceChildren==="function"&&
@@ -1619,6 +1630,8 @@ function setRankLineLabel(rankLine,label){
   rankLine.replaceChildren();
   const leagueChip=document.createElement("span");
   leagueChip.className="psRankLeague";leagueChip.textContent=label;
+  if(unverifiedTop)leagueChip.title="Filtro Top #"+limit+
+   " não confirmado para este encontro; melhor IV local: #"+best.rank;
   rankLine.appendChild(leagueChip);
   const iv=document.createElement("button");
   iv.type="button";iv.className="psCompactIv psRankOpen";
@@ -1680,7 +1693,9 @@ function setRankLineLabel(rankLine,label){
   (best.kind==="reference"?
    ". Referência matemática: não confirma que a fantasia possa evoluir.":"")+
   (own&&own.name!==best.name?" · "+payload.name+" atual: #"+own.rank:"")+
-  (limit!==null?" · Filtro de pesquisa: Top #"+limit:"");
+  (limit!==null?" · Filtro de pesquisa: Top #"+limit:"")+
+  (unverifiedTop?" · NENHUM IV Top #"+limit+
+    " confirmado; exibindo IV real mais próximo (#"+best.rank+")":"");
  rankLine.hidden=false;
  if(typeof renderRankOneMoves==="function")renderRankOneMoves();
  return true;
