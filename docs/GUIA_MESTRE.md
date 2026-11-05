@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT239 — Explorador PvP avançado (05/11/2026, desenvolvimento)
+
+- **Escopo solicitado:** entrar diretamente na página dos IVs do Pokémon; filtros Top 10/50/100/Todos; comparação de dois spreads tocando nas linhas; visual compacto com scroll interno; copiar texto, compartilhar por Android e copiar CSV do filtro.
+- **Código:** `app/src/main/assets/pvp_rank_explorer.js`, ponte nativa `OverlayService.java` com métodos `copyPvpRanking` / `sharePvpRanking`; ambos os overlays usam o mesmo motor de detalhe. Sem novas chamadas à PoGoCoordinates.
+- **Segurança e dados:** texto e CSV gerados no dispositivo dos snapshots PvPoke locais; exportação apenas por toque. Limites nativos de 300k caracteres para cópia e 16k para compartilhamento; sem coordenadas/tokens/conta.
+- **Testes:** `app/tests/lt239-pvp-explorer-comparison-export.test.js` e suíte LT238/Node/Java/OTA, a confirmar em CI. QA físico Samsung P1/P2 e compatibilidade de compartilhamento pendentes.
+- **Plano de lançamento:** `LT239 / 0.02.39 / versionCode 54443`, manter certificado v2 permanente, versão anterior LT238 `54442`, usar fluxo de pedido de release permanente `release/official-request.json` após merge/testes. 
+- **Documento técnico:** [LT239_EXPLORADOR_PVP_FILTROS_COMPARACAO_EXPORT_20261105.md](LT239_EXPLORADOR_PVP_FILTROS_COMPARACAO_EXPORT_20261105.md). **Estado deste registro: código em branch, NÃO comprova APK novo/publicação.**
+
 ## LT238 OFICIAL — 0.02.38 / versionCode 54442 — Rankings PvP clicáveis (05/11/2026)
 
 - **Publicação confirmada em `releases/latest`:** [v0.02.38-54442](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.38-54442), estável (`draft=false`, `prerelease=false`), publicada em 2026-11-05T03:59:47Z.
