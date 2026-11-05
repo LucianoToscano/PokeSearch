@@ -1747,6 +1747,31 @@
           "A base offline de rankings ainda usa o snapshot fixado do PvPoke; atualizar fontes sem validação não altera a precisão."
         ]
       }
+    },
+    {
+      "id": "lt246-offline-flabebe-moves-rg-visibility-20261105",
+      "minVersionCode": 54450,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT246 — Sprites Flabébé, golpes PvP e RG",
+      "sections": {
+        "novidades": [
+          "Flabébé ganhou as cinco cores originais do Pokémon GO no pacote offline, para formas normais e brilhantes: 10 sprites verificados por hash.",
+          "Para espécies sem recomendações no ranking PvPoke, o painel ⚔️ pode listar golpes aprendíveis registrados no Game Master, com a indicação de que não são recomendações PvP."
+        ],
+        "melhorias": [
+          "Falhas temporárias de conexão nos arquivos públicos de golpes não bloqueiam tentativas futuras; o painel pode usar dados verificados já existentes para mostrar golpes possíveis.",
+          "A falta de recomendação não oculta os ataques da captura: o painel distingue dados capturados de sugestões estratégicas.",
+          "Nova regressão confirma que a classificação RG #163 de Ursaluna GL também aparece na faixa compacta da LT245, quando carregada e confirmada."
+        ],
+        "correcoes": [
+          "Flabébé Vermelha e demais cores não dependem de carregar a imagem via rede na lista lateral; as dez variantes ficam disponíveis no APK.",
+          "Substituída a mensagem genérica Ataques Recomendados: indisponíveis por informação diferenciada sobre golpes capturados, recomendados ou possíveis."
+        ],
+        "emDesenvolvimento": [
+          "Instalação manual/automática da versão oficial LT246 no Samsung ainda requer confirmação Android; um print mostrando GL · IV #1 sem RG pode indicar que os assets da LT245 ainda não foram instalados/carregados.",
+          "Testes visuais físicos com as duas Pokébolas e tamanhos P/M/G permanecem pendentes."
+        ]
+      }
     }
   ]
 }
