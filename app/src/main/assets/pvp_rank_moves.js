@@ -130,7 +130,8 @@
   const cap=caps[league];if(!cap||!name)return null;
   try{
    const [ranking,master,moveData,translations]=await Promise.all([
-    getJson("rankings/all/overall/rankings-"+cap+".json"),getJson("gamemaster.json"),
+    getJson("rankings/all/overall/rankings-"+cap+".json").catch(()=>null),
+    getJson("gamemaster.json"),
     getJson(localeBase+"moves.json"),
     getJson(localeBase+"translations/pt-br/moves.json")]);
    const recommended=fromData(ranking,master,league,name);
