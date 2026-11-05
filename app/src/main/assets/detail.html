@@ -1500,10 +1500,9 @@ function setRankLineLabel(rankLine,label){
   // Other search modes still deserve a compact GL/UL badge when a verified
   // Top #1 opportunity (including a separate Mega preview) exists.
   const highlight=(payload.leagues||[]).find(x=>
-   (x?.league==="gl"||x?.league==="ul")&&[
-    x.own,...(Array.isArray(x.evolutions)?x.evolutions:[]),
-    ...(Array.isArray(x.megas)?x.megas:[])
-   ].some(e=>e&&Number(e.rank)===1));
+   (x?.league==="gl"||x?.league==="ul")&&
+   (Array.isArray(x.megas)?x.megas:[]).some(m=>
+    m?.megaProjection===true&&Number(m.rank)===1));
   if(!highlight)return false;
   activeRankLeague=highlight.league;
  }
