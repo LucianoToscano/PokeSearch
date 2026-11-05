@@ -1348,6 +1348,7 @@ window.coordsResult=function(coords,message,restriction){
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
+let psActiveAnalysisKey="";
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
@@ -1371,6 +1372,7 @@ function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");
  if(section.hidden)return;
  evolutionExpanded=!evolutionExpanded;
+ if(!evolutionExpanded)psActiveAnalysisKey="";
  document.getElementById("evoBody").hidden=!evolutionExpanded;
  document.getElementById("evoChevron").textContent=evolutionExpanded?"▴":"▾";
  document.getElementById("evoToggle").setAttribute("aria-expanded",String(evolutionExpanded));
@@ -1429,7 +1431,8 @@ function openPvpRankExplorer(event,button){
  if(!button||!window.psRankContext)return false;
  const data=button.dataset||{},engine=window.PokeSearchRankExplorer;
  if(!engine||typeof engine.open!=="function")return false;
- return engine.open({
+ const action=typeof engine.toggle==="function"?engine.toggle.bind(engine):engine.open.bind(engine);
+ return action({
   kind:data.psKind==="overall"?"overall":"class",
   name:data.psName||window.psRankContext.name,
   league:data.psLeague||"gl",
@@ -1445,9 +1448,15 @@ function openPvpAnalysisForSpecies(event,button){
  const section=document.getElementById("evolutions");
  const body=document.getElementById("evoBody");
  if(!section||!body||section.hidden)return false;
- if(!evolutionExpanded)toggleEvolutionDetails();
  const species=String(button?.dataset?.psName||"").toLowerCase();
  const league=String(button?.dataset?.psLeague||activeRankLeague||"gl");
+ const key=league+"|"+species;
+ if(evolutionExpanded&&psActiveAnalysisKey===key){
+  toggleEvolutionDetails();
+  return true;
+ }
+ if(!evolutionExpanded)toggleEvolutionDetails();
+ psActiveAnalysisKey=key;
  if(typeof body.querySelectorAll==="function"){
   const rows=[...body.querySelectorAll(".evoLine")];
   const exact=rows.find(x=>String(x.dataset?.psLeague||"")===league&&
@@ -2254,7 +2263,7 @@ window.showDetails=(c,mode,watched)=>{
   closeDetailMetric();
   window.PokeSearchRankExplorer?.close();
   window.psRankContext=null;
-  detailIdentity=nextIdentity;evolutionExpanded=false;
+  detailIdentity=nextIdentity;evolutionExpanded=false;psActiveAnalysisKey="";
   coordsRequestSeq++;
   clearCoordsRate();
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
