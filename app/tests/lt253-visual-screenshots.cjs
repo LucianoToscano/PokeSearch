@@ -56,11 +56,16 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
        bad.push({selector,left:r.left,right:r.right,width:r.width});
      }
     return {bad,scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,
+     sliderWidth:document.querySelector("#psCpLevel").getBoundingClientRect().width,
+     minIvInputWidth:Math.min(...Array.from(document.querySelectorAll(".psCpIvInputs input"),e=>e.getBoundingClientRect().width)),
+     formWidth:document.querySelector("#psCpForm").getBoundingClientRect().width,
      internalMax:getComputedStyle(inner).maxHeight,
      nativeResizes:window.__nativeResizes.length};
    });
    assert.deepEqual(top.bad,[],"no clipped calculator controls "+sz.name);
    assert.equal(top.internalMax,"none","no clipped nested panel "+sz.name);
+   assert.ok(top.sliderWidth>=55&&top.formWidth>=60&&top.minIvInputWidth>=24,
+    "usable level slider / form selector / A-B IV inputs "+sz.name+" "+JSON.stringify(top));
    assert.ok(top.nativeResizes>=1,"native resize requested "+sz.name);
    await page.evaluate(()=>{
     const panel=document.getElementById("panel");
@@ -102,6 +107,41 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     "compact Mega emblem before unclipped name "+sz.name+" "+JSON.stringify(mega));
    await page.evaluate(()=>{document.getElementById("panel").scrollTop=0;});
    await page.screenshot({path:path.join(output,sz.name+"-mega-rank.png")});
+   // LT254: run actual attack-card renderer on the same shipping detail HTML.
+   const moves=await page.evaluate(async()=>{
+    document.querySelector("#psMetricPanel").hidden=true;
+    document.querySelector("#panel").classList.remove("metricOpen");
+    document.getElementById("evolutions").hidden=true;
+    const rank=document.getElementById("rankLine");
+    rank.hidden=false;rank.dataset.league="gl";rank.textContent="GL IV #1";
+    currentRankSpecies="Bulbasaur";currentCardMoves="Tackle / Power Whip";
+    window.PokeSearchPvpRankMoves={lookup:async()=>({
+     source:"PvPoke · verificável",availableOnly:false,
+     fast:{name:"Chicote de Vinha",status:"normal",type:"grass",
+      stats:{power:5,energyGain:8}},
+     charged:[
+      {name:"Chicote Poderoso",status:"normal",type:"grass",stats:{power:90,energyCost:50}},
+      {name:"Bomba de Sementes",status:"normal",type:"grass",stats:{power:55,energyCost:40}}
+     ]})};
+    renderRankOneMoves();
+    const action=rank.querySelector(".psMovesAction");
+    if(!action)return {ok:false,why:"missing action"};
+    await action.onclick();
+    const pop=document.getElementById("movesPopover");
+    const rows=Array.from(pop.querySelectorAll(".psMoveRow"));
+    return {ok:!pop.hidden&&rows.length===3&&action.textContent==="⚡"&&
+      pop.scrollWidth<=pop.clientWidth+3,
+      icon:action.textContent,width:pop.scrollWidth,client:pop.clientWidth,
+      rows:rows.map(row=>{
+       const label=row.querySelector(".psMoveLabel").getBoundingClientRect(),
+        name=row.querySelector(".psMoveName").getBoundingClientRect();
+       return {labelRight:label.right,nameLeft:name.left,
+        nameWidth:name.width,labelText:row.querySelector(".psMoveLabel").textContent}
+      })};
+   });
+   assert.ok(moves.ok&&moves.rows.every(row=>row.nameLeft>=row.labelRight-2&&row.nameWidth>=70),
+    "recommended attacks C1/C2 do not wrap into separate labels "+sz.name+" "+JSON.stringify(moves));
+   await page.screenshot({path:path.join(output,sz.name+"-moves-compact.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,
