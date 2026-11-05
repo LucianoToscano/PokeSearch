@@ -955,6 +955,22 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpSimResultRow{display:flex!important;flex-wrap:wrap!important;justify-content:space-between!important;gap:3px 6px!important}
 #psMetricPanel .psCpSimResultRow strong{white-space:normal!important;overflow-wrap:anywhere!important;text-align:right!important}
 #psMetricPanel .psCpTargetRow{flex-wrap:wrap!important}
+
+/* LT253: one native glass card, inner contents adaptive and scrollable. */
+#panel{min-width:0!important;max-width:100%!important;overscroll-behavior:contain}
+#panel.lt253Expanded{overflow-y:auto!important;scrollbar-width:thin!important}
+#evoBody .ps253Family{padding:5px 6px;margin:3px 0 5px;border:1px solid #91bda753;border-radius:7px;background:#41604d22;font:500 10px/1.45 Roboto,Arial,sans-serif}
+#evoBody .ps253Family strong{display:block;font-size:10.5px;color:#c9f0d9}
+#evoBody .ps253Family .ps253Line{margin:3px 0;overflow-wrap:anywhere}
+#evoBody .ps253Family .ps253Actions{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 0}
+#evoBody .ps253Family button{min-height:26px;max-width:100%;padding:4px 6px;background:#ffffff13;border:1px solid #ffffff4f;border-radius:6px;color:#e5f4ff;font:600 10px Roboto,Arial,sans-serif}
+#evoBody .ps253Family .ps253Caveat{font-size:9px;color:#b3c6c2}
+#psMetricPanel .ps253Comparison{margin-top:7px;padding:6px;border:1px solid #8cb8d959;border-radius:7px;background:#8cb8d915}
+#psMetricPanel .ps253Comparison label{display:block;min-width:0;font-size:11px}
+#psMetricPanel .ps253Comparison input{box-sizing:border-box;width:100%;max-width:160px;min-width:0;min-height:32px;margin-top:3px;padding:6px;color:#fff;background:#253951;border:1px solid #abc9e36d;border-radius:5px;font:600 12px Roboto,Arial,sans-serif}
+#psMetricPanel .ps253ComparisonInfo{margin-top:5px;line-height:1.4;overflow-wrap:anywhere}
+#psMetricPanel .ps253Comparison .ps253Result{padding:3px 0;border-top:1px solid #ffffff24}
+#psMetricPanel .psCpFormStepper select{min-height:34px!important;overflow:hidden!important;text-overflow:ellipsis!important}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1010,7 +1026,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvpoke-overall-ranks.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
 <script src="pvp_rank_explorer.js"></script>
-<script src="pvp_rank_insights.js"></script>
+<script src="pvp_rank_insights.js"></script><script src="pvp_lt253_features.js"></script>
 <script src="pvp_rank_moves.js"></script>
 <script src="pvp_rank_advanced_ui.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
@@ -1349,6 +1365,7 @@ window.coordsResult=function(coords,message,restriction){
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
 let psActiveAnalysisKey="";
+let psLt253CurrentCard=null;
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
@@ -1357,6 +1374,7 @@ function resizeEvolutionPanel(){
   // Full scrollHeight plus the 2px border and rounding; not a clipped
   // max-height minus six pixels as on previous builds.
   const height=Math.ceil(panel.scrollHeight)+3;
+  panel.classList?.toggle?.("lt253Expanded",height>panel.clientHeight+3);
   Native.resizeDetail(height);
   // Native WindowManager layout is asynchronous; check afterward.
   const recheck=()=>{
@@ -1904,6 +1922,7 @@ window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  window.psRankContext=payload;
+ window.PokeSearchLT253?.remember?.(psLt253CurrentCard,payload);
  updateVisiblePvPRank(payload);
  if(metricKind)renderDetailMetric();
  // Compact rank label is also an entrypoint, without intercepting move buttons.
@@ -1983,7 +2002,25 @@ window.showEvolutionDetails=payload=>{
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="mega_evolution_icon.svg" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
- html=topHtml+html;
+ // RG, IV Class and projected Mega are three distinct metrics.
+ const familyLeague=["gl","ul","ml"].includes(activeRankLeague)?activeRankLeague:"gl";
+ const family=window.PokeSearchLT253?.family?.(payload,familyLeague);
+ const familyRow=(caption,item,type)=>item?
+  '<div class="ps253Line"><b>'+h(caption)+':</b> '+h(item.name)+
+  ' · '+h(type==="rg"?"RG #"+item.overallRank+" · IV #"+item.rank:"IV #"+item.rank)+
+  (item.efficiency!=null?' · '+h(item.efficiency.toFixed(2).replace(".",","))+'%':"")+
+  '</div>':"";
+ const summary=family&&(family.normalByRg||family.normalByIv||family.megaByIv)?
+  '<div class="ps253Family" aria-label="Comparador inteligente de formas">'+
+  '<strong>Comparar família · '+h(familyLeague.toUpperCase())+'</strong>'+
+  familyRow("Melhor RG conhecido",family.normalByRg,"rg")+
+  familyRow("Melhor Rank Classe",family.normalByIv,"iv")+
+  familyRow("Mega (projeção)",family.megaByIv,"iv")+
+  '<div class="ps253Caveat">RG compara espécies; IV Classe compara distribuições. Mega não garante GBL.</div>'+
+  '<div class="ps253Actions"><button type="button" onclick="sharePvpMiniCard()" title="Compartilhar sem localização">Compartilhar PvP</button>'+
+  '<button type="button" onclick="copyPvpMiniCard()" title="Copiar dados PvP">Copiar</button></div>'+
+  '<div id="psLt253Status" role="status" aria-live="polite"></div></div>':"";
+ html=topHtml+summary+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
  document.getElementById("evoLabel").textContent=payload.ivUnavailable?
@@ -1997,6 +2034,28 @@ window.showEvolutionDetails=payload=>{
  requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,Math.max(0,panel.scrollHeight-panel.clientHeight));});
  return true;
 };
+function psLt253ShareValue(){
+ const payload=window.psRankContext;
+ if(!psLt253CurrentCard||!payload)return "";
+ const league=["gl","ul","ml"].includes(activeRankLeague)?activeRankLeague:"gl";
+ return window.PokeSearchLT253?.shareText?.(psLt253CurrentCard,payload,league)||"";
+}
+function sharePvpMiniCard(){
+ const message=psLt253ShareValue();
+ if(!message||!window.Native?.sharePvpRanking)return false;
+ Native.sharePvpRanking(message);
+ const status=document.getElementById("psLt253Status");
+ if(status)status.textContent="Abrindo compartilhamento Android…";
+ return true;
+}
+function copyPvpMiniCard(){
+ const message=psLt253ShareValue();
+ if(!message||!window.Native?.copyPvpRanking)return false;
+ Native.copyPvpRanking(message);
+ const status=document.getElementById("psLt253Status");
+ if(status)status.textContent="Solicitando cópia ao Android…";
+ return true;
+}
 /* LT244: zero-cost contextual stats actions. No new API requests or account data.
    IV opens existing 4096-row explorer; CP/Nv show verified local PvP projections. */
 let metricCard=null,metricKind="";
