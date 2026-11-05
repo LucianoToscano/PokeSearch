@@ -101,7 +101,12 @@
  }
  const levelString=l=>String(l).replace(".",",");
  const statString=x=>Number(x).toFixed(2).replace(".",",");
- const csvCell=x=>'"'+String(x??"").replace(/"/g,'""')+'"';
+ // Prevent formula execution when a third-party ranking name is pasted into Sheets.
+ const csvCell=x=>{
+  const raw=String(x??"");
+  const guarded=/^[\s\t\r]*[=+@-]/.test(raw)?"'"+raw:raw;
+  return '"'+guarded.replace(/"/g,'""')+'"';
+ };
  function filteredCsv(s){
   const filtered=visibleRows(s);
   const head=s.kind==="class"?
@@ -297,7 +302,7 @@
  }
  function feedback(ok,action){
   if(!state)return;
-  state.status=ok?(action==="copy"?"✓ Copiado para área de transferência":"✓ Enviado ao compartilhamento"):
+  state.status=ok?(action==="copy"?"✓ Copiado para área de transferência":"✓ Seletor de compartilhamento aberto"):
    "Não foi possível "+(action==="copy"?"copiar":"compartilhar")+".";
   draw();
  }
