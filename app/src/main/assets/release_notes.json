@@ -1871,6 +1871,10 @@
         ],
         "emDesenvolvimento": [
           "QA visual com o aplicativo instalado nas duas Pokébolas ainda precisa ser conferido em dispositivo Samsung; teste automatizado não substitui comparação visual com os prints."
+        ],
+        "novidades": [
+          "Barra PvP redesenhada com três botões legíveis e independentes, mais o acesso aos ataques no mesmo alinhamento.",
+          "Número 0 voltou a aparecer quando não há resultados, junto à Pokébola ou imediatamente abaixo, sem duplicação."
         ]
       }
     }
