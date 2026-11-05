@@ -204,6 +204,8 @@ test("UX-INFO-02 legacy and new IV/rank display choices persist independently",(
   service.includes('resultDisplayOptionsJson()')&&
   service.includes('void setResultDisplayOption(String key,boolean value)');
 });
+// LT240 pinned PvPoke 2026-11-03 updated Altaria UL from #275 to #264;
+// the IV-class rank remains independently computed from the same IV stats.
 test("UX-INFO-03 PvPoke species overall rank and within-species IV rank never conflate",()=>{
  const file=read("assets/pvpoke-overall-ranks.js");
  const win={};new Function("window",file)(win);
@@ -221,7 +223,7 @@ test("UX-INFO-03 PvPoke species overall rank and within-species IV rank never co
  const lines=functions.resultLines(alt,choice,"gl");
  return list.gl.length>1000&&list.ul.length>700&&
   functions.verifiedOverallRank(alt,"gl")===2&&
-  functions.verifiedOverallRank(alt,"ul")===275&&
+  functions.verifiedOverallRank(alt,"ul")===264&&
   functions.verifiedSpeciesIvRank(alt,"gl")===1&&
   functions.verifiedSpeciesIvRank(alt,"ul")===null&&
   functions.verifiedSpeciesIvRank(wrong,"gl")===null&&
@@ -2010,7 +2012,7 @@ test("UX-INFO-LEAGUES exposes GL UL ML independently without changing search mod
   api.verifiedSpawnRawIv(alt)==="0/14/15"&&
   lines.includes("0/14/15")&&lines.includes("64%")&&
   lines.includes("GL RG#2")&&lines.includes("GL IV#1")&&lines.includes("GL P100,00%")&&
-  lines.includes("UL RG#275")&&lines.includes("UL IV#1460")&&lines.includes("UL P89,97%")&&
+  lines.includes("UL RG#264")&&lines.includes("UL IV#1460")&&lines.includes("UL P89,97%")&&
   master.includes("ML RG#1")&&master.includes("ML IV#1")&&master.includes("ML P100,00%")&&
   api.pvpIvClassPercent(1460,alt,"ul")==="89,97"&&
   !unknown.includes("?/?/?")&&
@@ -2611,7 +2613,7 @@ test("RANK-EVO-DETAIL-01 exports all evolution stages only in results WebView",(
   gl?.own?.rank===1266&&gl.own.statProductPct==="82,60"&&
   knight?.rank===1&&knight?.statProductPct==="100,00"&&
   knight?.cp===1500&&knight?.level===23.5&&knight?.currentCp===1468&&
-  knight?.overallRank===6&&corvisquire?.rank===1397&&
+  knight?.overallRank===8&&corvisquire?.rank===1397&&
   exportCard(1)===null&&fn(false,[card])(0)===null&&
   fn(true,[{...card,ivPercent:100}])(0)===null;
 });
