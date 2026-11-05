@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT250 — legibilidade PvP e contador vazio (05/11/2026; candidata)
+
+- Prints Android LT249: Oddish 0/12/14 mostra **dois círculos azuis**, itens PvP quase ilegíveis agrupados dentro de uma caixa sem três divisões claras; o simulador PC/Nv. trunca o seletor de evolução para “B...” e controles minúsculos; a Pokébola deixa de mostrar **0** quando não há resultados.
+- Correção CSS `detail.html`: eliminar `#rankLine[data-league]::before` legado, que duplicava o emoji de liga; usar exatamente **três caixas glass independentes** [🔵 GL IV #N] [↳ Evolução] [RG #N] + ⚔️/🗡 em quarta ação, sem fundo externo, sem quinto item `+N` ou ícone informativo no resumo. Alternativas continuam na Análise PvP expandida. Quatro toques distintos preservados, GL/UL/ML/Mega diferenciados (símbolo Mega autêntico).
+- Simulador: separar Forma e Nível em linhas de largura inteira, seletor 34px, setas 30px, slider de nível mais largo, texto 11–12px, `max-height:min(66vh,430px)` e rolagem. Família Teddiursa–Ursaring–Ursaluna, nível e PC-alvo não alterados.
+- `dock.html`: exibir 0 dentro de `#resultSpawnCount` / `#dockSpawnCount` quando `cards.length===0`, independentemente de preferência de números positivos; quando houver capturas mantém a opção de contar. Não recriar a antiga linha `0` desprendida de `#empty` na Pokébola independente.
+- Testes: `app/tests/lt250-three-rank-chips-readable-cp-empty-count.test.js`; contratos de UX e LT245/LT247/LT249 atualizados. Relatório [LT250_LEGIBILIDADE_PVP_CONTADOR_20261105.md](LT250_LEGIBILIDADE_PVP_CONTADOR_20261105.md).
+- Versão candidata LT250 / 0.02.50 / versionCode 54454 / label 51254 (base LT249). Exigir verificações Node, Java, OTA, beta, merge e release assinada com hash antes de chamar de publicada; QA visual Samsung P1/P2 P/M/G pendente.
+
 ## LT249 — evitar Top #1 falso e contador 0 flutuante (05/11/2026; desenvolvimento)
 
 - Print Samsung: Machop GL Top #1 mostrou `GL · Top #1 · Machop #611` apesar de Machop IV #611/RG #513, Machoke IV #2/RG #500 e Machamp IV #196/RG #253 na análise. Isso era **número do filtro solicitado**, não um Top 1 comprovado. Corrigir a faixa mostrando o rank verdadeiro mais próximo (`GL · IV #2 · ↳ Machoke · RG #500`), com tooltip indicando que Top #1 NÃO foi confirmado; apenas candidatos reais. Para evolução desligada, manter rank real do Pokémon atual.
