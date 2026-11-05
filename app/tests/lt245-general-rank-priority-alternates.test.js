@@ -41,9 +41,11 @@ const gl=(evolutions,other={})=>({
 const ch={name:"Chandelure",rank:1,overallRank:808,eligible:true};
 const la={name:"Lampent",rank:1,overallRank:519,eligible:true};
 assert.equal(moduleObj.update(gl([ch,la])),true);
-assert.equal(line.children[0].textContent,"GL · ↳ Lampent",
+assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Lampent",
  "the better confirmed species RG, not array order, determines promoted evolution");
-const primary=line.children[1],classButton=line.children[2],more=line.children[3];
+const classButton=line.children.find(x=>x.className==="psCompactIv psRankOpen");
+const primary=line.children.find(x=>x.className==="psCompactOverall psRankOpen");
+const more=line.children.find(x=>x.className==="psRankMore");
 assert.equal(primary.textContent,"RG #519");
 assert.equal(classButton.textContent,"IV #1");
 assert.equal(more.textContent,"+1");
@@ -77,27 +79,27 @@ assert.equal(more.attrs["aria-expanded"],"false");
 assert.ok(resize>0);
 const quality=gl([{...ch,rank:380,overallRank:1},la]);
 assert.equal(moduleObj.update(quality),true);
-assert.equal(line.children[0].textContent,"GL · ↳ Lampent",
+assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Lampent",
  "a lower species RG must not promote a bad IV Class #380");
 assert.equal(line.children.filter(x=>x.className==="psRankMore").length,0);
 const noRg=gl([{...ch,overallRank:null},{...la,rank:2,overallRank:null}]);
 assert.equal(moduleObj.update(noRg),true);
-assert.equal(line.children[0].textContent,"GL · IV #1 · ↳ Chandelure",
+assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Chandelure",
  "without confirmed RG fall back to original IV rank");
 assert.equal(line.children.some(x=>x.className==="psCompactOverall psRankOpen"),false);
 const strict=gl([{...ch,rank:1,overallRank:808},{...la,rank:2,overallRank:1}]);
 strict.searchRankLimit=1;
 assert.equal(moduleObj.update(strict),true);
-assert.equal(line.children[0].textContent,"GL · ↳ Chandelure",
+assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Chandelure",
  "Top 1 query must not select the better RG at IV Class #2");
 const present=gl([{...ch,rank:1,overallRank:808}],{});
 present.leagues[0].own={name:"Litwick",rank:1,overallRank:25};
 assert.equal(moduleObj.update(present),true);
-assert.equal(line.children[0].textContent,"GL · Atual");
-assert.equal(line.children[1].textContent,"RG #25");
+assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"Atual");
+assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG #25");
 const ref=gl([],{comparisons:[{name:"Costume Reference",rank:1,overallRank:1,referenceOnly:true}]});
 assert.equal(moduleObj.update(ref),true,"reference-only result can still be displayed as IV projection");
-assert.ok(line.children[0].textContent.includes("↳ Costume Reference"));
+assert.ok(line.children.some(x=>x.className==="psCompactSpecies"&&x.textContent.includes("↳ Costume Reference")));
 assert.equal(line.children.some(x=>x.className==="psCompactOverall psRankOpen"),false,
  "reference-only projection never becomes a claimed real RG");
 assert.ok(html.includes('id="psRankAlternates" hidden'));
@@ -121,9 +123,9 @@ const teddi=gl([
 ]);
 teddi.name="Teddiursa";teddi.leagues[0].own={rank:812,overallRank:360};
 assert.equal(moduleObj.update(teddi),true);
-assert.equal(line.children[0].textContent,"GL · ↳ Ursaluna");
-assert.equal(line.children[1].textContent,"RG #163",
+assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Ursaluna");
+assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG #163",
  "Ursaluna verified RG must appear on compact card, not only expanded analysis");
-assert.equal(line.children[2].textContent,"IV #1");
+assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen").textContent,"IV #1");
 assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
 console.log("LT245: RG first among good IVs, class fallback, strict Top filter, +N comparison, P1/P2 PASS");

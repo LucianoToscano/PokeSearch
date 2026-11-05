@@ -138,7 +138,9 @@ assert.ok(detail.includes("Não confirma que Mega seja permitida na Liga de Bata
 const compactBegin=detail.indexOf("function updateVisiblePvPRank(payload){");
 const compactEnd=detail.indexOf("window.showEvolutionDetails=payload=>",compactBegin);
 assert.ok(compactBegin>0&&compactEnd>compactBegin);
-assert.ok(!detail.slice(compactBegin,compactEnd).includes("league.megas"),
- "projected Mega rank must not spoof ordinary Top-N/compact search");
+assert.ok(detail.slice(compactBegin,compactEnd).includes('if(e?.megaProjection===true)add(e,e.name,"mega")'),
+ "Mega Top 1 is visible in its own compact mathematical projection");
+assert.ok(detail.slice(compactBegin,compactEnd).includes('kind!=="mega"'),
+ "Mega projection must not claim an ordinary GBL RG");
 new vm.Script(detail.match(/<script>([\s\S]*?)<\/script>/)[1]);
 console.log("LT235 Mega PvP: base vs projected GL/UL/ML, Charizard X/Y, unsupported forms, strict IV and card UI PASS");

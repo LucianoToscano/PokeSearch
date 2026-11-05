@@ -752,6 +752,52 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #movesPopover:not([hidden]){max-height:168px;overflow-y:auto;overscroll-behavior:contain}
 #movesPopover .psMoveRow{gap:5px}
 #movesPopover .psMoveName{overflow-wrap:anywhere}
+
+/* LT247: rigid single-row PvP strip; only the species chip can shrink. */
+#rankLine{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ white-space:nowrap!important;gap:2px!important;min-height:27px;overflow:hidden!important}
+#rankLine .psRankLabel{flex:1 1 auto;min-width:0;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important}
+#rankLine .psRankLeague{font-size:10px;font-weight:750;color:#8bc7ff;
+ flex:0 0 auto;white-space:nowrap}
+#rankLine .psCompactSpecies{flex:1 1 auto;min-width:0;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:10px;font-weight:700;color:#e9f0fa}
+#rankLine .psCompactIv,#rankLine .psCompactOverall{min-height:20px!important;
+ padding:1px 3px!important;flex:0 0 auto;font-size:9px!important}
+#rankLine .psCompactMega{color:#e5c8ff;font-size:8px;font-weight:750;
+ border:1px solid #b995e87d;border-radius:4px;padding:1px 2px}
+#rankLine .psRankMore{min-height:19px;padding:0 2px!important;font-size:8px!important}
+#rankLine .psMovesAction{flex:0 0 19px!important;width:19px!important;
+ min-width:19px!important;max-width:19px!important;height:22px!important;
+ margin:0!important;font-size:14px!important}
+@media(max-width:340px){
+ #rankLine{gap:1px!important;padding:2px!important}
+ #rankLine .psCompactSpecies{font-size:9px}
+ #rankLine .psCompactIv,#rankLine .psCompactOverall{font-size:8px!important;
+ padding:1px 2px!important}
+}
+
+/* LT247: compact, real CP/level simulator. Open only from stat tiles. */
+#psMetricPanel{max-height:290px;overflow-y:auto}
+#psMetricPanel .psCpSimulator{padding:5px 0;border-top:1px solid #8ebddd53}
+#psMetricPanel .psCpSimTitle{font-weight:750;margin:0 0 5px;color:#d9f2ff}
+#psMetricPanel .psCpSimFields{display:grid;grid-template-columns:minmax(0,1fr)
+ minmax(0,1.2fr) auto;gap:5px;align-items:end}
+#psMetricPanel .psCpSimFields label{display:flex;flex-direction:column;gap:2px;
+ min-width:0;color:#baccde;font-size:9px}
+#psMetricPanel .psCpSimFields select{min-width:0;width:100%;max-width:100%;
+ padding:3px;background:#253951;color:#f2f8ff;border:1px solid #b5cce264;
+ border-radius:5px;font-size:10px}
+#psMetricPanel .psCpSimFields input[type=range]{width:100%;margin:4px 0;
+ accent-color:#79b7e8}
+#psMetricPanel .psCpSimResultRow{display:flex;justify-content:space-between;
+ gap:5px;align-items:center;padding:3px 0;border-bottom:1px solid #ffffff1a}
+#psMetricPanel .psCpSimResultRow span{min-width:0}
+#psMetricPanel .psCpSimResultRow strong{white-space:nowrap;font-size:10px}
+#psMetricPanel .psCpSimFoot{font-size:9px;color:#a6b8c9;margin:5px 0}
+#psMetricPanel .psCpPvpProjections{margin-top:4px;padding-top:3px}
+#psMetricPanel .psCpPvpProjections summary{cursor:pointer;color:#93d0ff}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1291,13 +1337,22 @@ function renderRankOneMoves(){
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
  popover.hidden=true;popover.textContent="";
- if(!/(?:Rank Classe:|IV) #1(?!\d)/.test(rankLine.textContent||""))return;
+ const hasRank=/(?:Rank Classe:|IV) #\d+/.test(rankLine.textContent||"");
+ const megaTop=window.psRankContext?.leagues?.some?.(x=>x?.league===activeRankLeague&&
+   x?.megas?.some?.(m=>m?.megaProjection===true&&Number(m.rank)===1));
+ if(!hasRank&&!megaTop)return;
  const league=(rankLine.dataset&&rankLine.dataset.league)||"";
- const species=currentRankSpecies||watchName;
+ const featured=currentRankSpecies||watchName;
+ const isMega=/^mega\s+/i.test(featured)||/\(mega\)/i.test(featured);
+ // PvPoke does not simulate Mega GBL usage. Use its base species learnset,
+ // clearly labelled, never claim that the Mega was PvPoke recommended.
+ const species=isMega?featured.replace(/^mega\s+/i,"")
+  .replace(/\s*\(mega(?: [XY])?\)\s*/i,"")
+  .replace(/\s+[XY]$/i,"").trim():featured;
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";btn.textContent="⚔️";
- btn.title="Golpes ágeis, carregados e situação da MT de Elite";
- btn.setAttribute("aria-label","Golpes PvP e MT Elite");
+ btn.title="Consultar golpes: ⚔️ contém legado / 🗡 sem legado após verificação";
+ btn.setAttribute("aria-label","Consultar golpes recomendados e necessidade de MT Elite");
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
   const show=popover.hidden;popover.hidden=!show;
@@ -1316,6 +1371,7 @@ function renderRankOneMoves(){
     (shown?'<div class="psMoveRow"><span class="psMoveLabel">Capturado:</span>'+
       '<span class="psMoveName">'+h(shown)+'</span></div>':
       '<div class="psMoveLegend">Golpes ainda não disponíveis nesta fonte.</div>');
+   btn.title="⚔️ Status de legado não verificado; somente golpes capturados";
    resizeEvolutionPanel();return;
   }
   // Only an explicit typed PT-BR move record can be displayed; never fall
@@ -1337,7 +1393,8 @@ function renderRankOneMoves(){
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
      (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+'</div>';
   };
-  if(recommendation.availableOnly===true){
+  if(recommendation.availableOnly===true){ 
+   btn.title="⚔️ Lista de golpes possíveis; sem combinação PvP recomendada";
    const fast=(recommendation.fastMoves||[]).slice(0,8);
    const charged=(recommendation.chargedMoves||[]).slice(0,12);
    if(!fast.length&&!charged.length){
@@ -1354,10 +1411,25 @@ function renderRankOneMoves(){
    }
    resizeEvolutionPanel();return;
   }
-  popover.innerHTML='<div class="psMoveTitle">Ataques Recomendados:</div>'+
-   row("Ágil",recommendation.fast)+row("Carregado 1",recommendation.charged[0])+
-   row("Carregado 2",recommendation.charged[1])+(!hasLegacy?"":
-   '<div class="psMoveLegend">💠 Ataque Legado</div>');
+  const fastRow=row("Ágil",recommendation.fast);
+  const chargedRows=(recommendation.charged||[]).slice(0,2)
+    .map((m,i)=>row("Carregado "+(i+1),m)).join("");
+  // Status should describe the verified recommended set, not captured moves.
+  const verified=[recommendation.fast,...(recommendation.charged||[])].filter(Boolean);
+  const complete=verified.length>=2&&verified.every(m=>
+   m.status==="normal"||m.status==="elite"||m.status==="legacy");
+  if(complete){
+   btn.textContent=hasLegacy?"⚔️":"🗡";
+   btn.title=hasLegacy?"⚔️ Conjunto recomendado exige pelo menos um golpe legado":
+    "🗡 Conjunto PvP recomendado sem golpe legado";
+   btn.setAttribute?.("aria-label",btn.title);
+  }
+  popover.innerHTML='<div class="psMoveTitle">'+
+   (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
+   '</div>'+fastRow+chargedRows+
+   (hasLegacy?'<div class="psMoveLegend">⚔️ Pelo menos um golpe legado / Elite</div>':
+    complete?'<div class="psMoveLegend">🗡 Conjunto sem golpes legados</div>':
+    '<div class="psMoveLegend">Status de legado não verificado</div>');
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
@@ -1425,7 +1497,18 @@ function setRankLineLabel(rankLine,label){
  text.textContent=label;rankLine.appendChild(text);
 }
 
- if(activeRankLeague!=="gl"&&activeRankLeague!=="ul")return false;
+ let forcedMegaPreview=false;
+ if(activeRankLeague!=="gl"&&activeRankLeague!=="ul"){
+  // Other search modes still deserve a compact GL/UL badge when a verified
+  // Top #1 opportunity (including a separate Mega preview) exists.
+  const highlight=(payload.leagues||[]).find(x=>
+   (x?.league==="gl"||x?.league==="ul")&&
+   (Array.isArray(x.megas)?x.megas:[]).some(m=>
+    m?.megaProjection===true&&Number(m.rank)===1));
+  if(!highlight)return false;
+  forcedMegaPreview=true;
+  activeRankLeague=highlight.league;
+ }
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
  if(!league)return false;
  const rankLine=document.getElementById("rankLine");
@@ -1436,10 +1519,13 @@ function setRankLineLabel(rankLine,label){
  const candidates=[];
  const add=(x,name,kind)=>{
   const rank=Number(x?.rank);
-  if(!Number.isInteger(rank)||rank<1||rank>4096||x?.eligible===false)return;
+  if(!Number.isInteger(rank)||rank<1||rank>4096||
+     (x?.eligible===false&&kind!=="mega"))return;
   const overall=Number(x?.overallRank);
+  const realOverall=kind!=="reference"&&kind!=="mega"&&
+    Number.isInteger(overall)&&overall>=1;
   candidates.push({rank,name:String(name||"").slice(0,90),kind,
-   overallRank:Number.isInteger(overall)&&overall>=1?overall:null});
+   overallRank:realOverall?overall:null});
  };
  if(league.own)add(league.own,payload.name,"current");
  if(payload.includePreviousEvolutions!==false){
@@ -1448,20 +1534,28 @@ function setRankLineLabel(rankLine,label){
   for(const e of Array.isArray(league.comparisons)?league.comparisons.slice(0,24):[])
    if(e?.referenceOnly===true)add(e,e.name,"reference");
  }
+ // Mega rank is a mathematical preview, never an eligible GBL meta RG.
+ // A Top 1 Mega must remain visible when no eligible normal IV Top 1 exists.
+ for(const e of Array.isArray(league.megas)?league.megas.slice(0,12):[])
+  if(e?.megaProjection===true)add(e,e.name,"mega");
  if(!candidates.length)return false;
  if(typeof rankLine.querySelector==="function")closePvpRankAlternates();
  // LT245: a strong IV spread is necessary; among Top 50 (or the chosen
  // stricter search limit), a VERIFIED overall rank determines which species
  // deserves the main card. Never elevate a weak IV #4000 just for a good RG.
- const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
+ const allWithinFilter=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
+ const inSearch=forcedMegaPreview?
+  allWithinFilter.filter(x=>x.kind==="mega"&&x.rank===1):allWithinFilter;
  const qualityLimit=limit===null?50:limit;
- const excellent=inSearch.filter(x=>x.kind!=="reference"&&x.rank<=qualityLimit);
+ const excellent=inSearch.filter(x=>x.kind!=="reference"&&x.kind!=="mega"&&
+   x.rank<=qualityLimit);
  const withOverall=excellent.filter(x=>Number.isInteger(x.overallRank)&&x.overallRank>=1);
  const sortClass=(a,b)=>a.rank-b.rank||
   (a.kind==="current"?-1:b.kind==="current"?1:0);
  const sortGeneral=(a,b)=>(a.overallRank??Infinity)-(b.overallRank??Infinity)||
   sortClass(a,b);
- const best=(withOverall.length?withOverall.sort(sortGeneral):[...inSearch].sort(sortClass))[0];
+ const best=(withOverall.length?withOverall.sort(sortGeneral):
+   [...inSearch].sort(sortClass))[0];
  // Alternative forms must also have good verified IVs; no invented Mega RG
  // or speculative costume evolutions are promoted to the main compact UI.
  const otherChoices=excellent.filter(x=>x!==best).filter((x,i,all)=>
@@ -1485,36 +1579,57 @@ function setRankLineLabel(rankLine,label){
   return false;
  }
  currentRankSpecies=best.name;
- const scope=best.kind==="current"?" · Atual":" · ↳ "+best.name;
- const hasVerifiedOverall=best.kind!=="reference"&&
+ const isMega=best.kind==="mega";
+ // LT247: exactly one compact row: [GL IV #1] [↳ Form] [RG #N] [⚔/🗡].
+ // All are independent controls except the name, which truncates locally
+ // rather than forcing the sword onto another row.
+ const scope=best.kind==="current"?"Atual":
+  "↳ "+(isMega&&/^mega\s/i.test(best.name)?best.name:
+     isMega?"Mega "+best.name:best.name);
+ const hasVerifiedOverall=best.kind!=="reference"&&!isMega&&
    Number.isInteger(best.overallRank)&&best.overallRank>=1;
- // Present RG before IV when a trusted species rank is available.
- // The IV rank keeps its own click target (same 4,096-spread explorer).
- setRankLineLabel(rankLine,hasVerifiedOverall?label+scope:
-  label+" · IV #"+best.rank+scope);
- const leagueOverall=best.overallRank;
- if(hasVerifiedOverall&&typeof document.createElement==="function"&&
-    typeof rankLine.appendChild==="function"){
-  const badge=document.createElement("button");
-  badge.type="button";badge.className="psCompactOverall psRankOpen";
-  badge.textContent="RG #"+leagueOverall;
-  badge.title="Rank Geral PvPoke de "+best.name+" · abrir tabela de espécies";
-  badge.setAttribute?.("aria-label","Abrir Rank Geral #"+leagueOverall+" de "+best.name);
-  badge.dataset.psKind="overall";
-  badge.dataset.psName=best.name;
-  badge.dataset.psLeague=activeRankLeague;
-  badge.dataset.psRank=String(leagueOverall);
-  badge.onclick=event=>openPvpRankExplorer(event,badge);
-  rankLine.appendChild(badge);
+ const compactName=label+" · IV #"+best.rank+" · "+scope+
+   (hasVerifiedOverall?" · RG #"+best.overallRank:"");
+ // Legacy DOM and QA stubs still have a safe text-only summary.
+ setRankLineLabel(rankLine,compactName);
+ if(typeof rankLine.replaceChildren==="function"&&
+    typeof rankLine.appendChild==="function"&&
+    typeof document.createElement==="function"){
+  rankLine.replaceChildren();
+  const leagueChip=document.createElement("span");
+  leagueChip.className="psRankLeague";leagueChip.textContent=label;
+  rankLine.appendChild(leagueChip);
   const iv=document.createElement("button");
   iv.type="button";iv.className="psCompactIv psRankOpen";
   iv.textContent="IV #"+best.rank;
-  iv.title="Rank Classe #"+best.rank+" de "+best.name+" · abrir 4.096 IVs";
+  iv.title="Rank Classe #"+best.rank+" de "+best.name+" · 4.096 IVs";
   iv.setAttribute?.("aria-label","Abrir IV #"+best.rank+" de "+best.name);
   iv.dataset.psKind="class";iv.dataset.psName=best.name;
   iv.dataset.psLeague=activeRankLeague;iv.dataset.psRank=String(best.rank);
   iv.onclick=event=>openPvpRankExplorer(event,iv);
   rankLine.appendChild(iv);
+  const nameChip=document.createElement("span");
+  nameChip.className="psCompactSpecies";
+  nameChip.textContent=scope;
+  nameChip.title=isMega?scope+" · projeção Mega, não elegibilidade GBL":scope;
+  rankLine.appendChild(nameChip);
+  if(isMega){
+   const megaTag=document.createElement("span");
+   megaTag.className="psCompactMega";megaTag.textContent="MEGA";
+   rankLine.appendChild(megaTag);
+  }
+  if(hasVerifiedOverall){
+   const badge=document.createElement("button");
+   badge.type="button";badge.className="psCompactOverall psRankOpen";
+   badge.textContent="RG #"+best.overallRank;
+   badge.title="Rank Geral PvPoke "+best.name+" · abrir tabela de espécies";
+   badge.setAttribute?.("aria-label","Abrir RG #"+best.overallRank+" de "+best.name);
+   badge.dataset.psKind="overall";badge.dataset.psName=best.name;
+   badge.dataset.psLeague=activeRankLeague;
+   badge.dataset.psRank=String(best.overallRank);
+   badge.onclick=event=>openPvpRankExplorer(event,badge);
+   rankLine.appendChild(badge);
+  }
  }
  if(otherChoices.length&&typeof document.createElement==="function"&&
     typeof rankLine.appendChild==="function"){
@@ -1663,6 +1778,123 @@ function detailMetricKey(event,kind){
  event.preventDefault();
  openDetailMetric(kind);
 }
+/* LT247: Level/CP simulator uses the pinned PvPoke offline gamemaster and CPM
+   only; it never guesses candy or stardust costs. It is not an API query. */
+let psCpTargetLevel=20,psCpTargetSpecies="";
+function psCpNormalize(value){
+ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase().replace(/^mega\s+/,"").replace(/[^a-z0-9]+/g,"_")
+  .replace(/^_|_$/g,"");
+}
+function psCpVariants(){
+ const master=window.POKESEARCH_PVP_IV_DATA;
+ if(!master||!Array.isArray(master.pokemon)||!Array.isArray(master.cpms)||
+    master.cpms.length<99)return [];
+ const source=window.psRankContext||{},names=[metricCard?.name,source.name];
+ for(const league of source.leagues||[]){
+  if(league?.own)names.push(source.name);
+  for(const kind of ["evolutions","megas"]){
+   for(const form of (Array.isArray(league?.[kind])?league[kind]:[])){
+    if(form?.referenceOnly===true&&form?.megaProjection!==true)continue;
+    names.push(form?.name);
+   }
+  }
+ }
+ const ids=new Set();
+ const byId=new Map(master.pokemon.filter(x=>Array.isArray(x)&&x.length>=5)
+  .map(x=>[String(x[0]),x]));
+ const result=[];
+ for(const raw of names){
+  let norm=psCpNormalize(raw);
+  if(!norm)continue;
+  if(/^mega\s+/i.test(String(raw))){
+   norm=/_([xy])$/.test(norm)?
+    norm.replace(/_([xy])$/,"_mega_$1"):norm+"_mega";
+  }
+  const row=byId.get(norm)||byId.get(norm.replace(/_mega$/,"")+"_mega");
+  if(!row||ids.has(row[0]))continue;
+  if(!row.slice(2,5).every(x=>Number.isFinite(x)&&x>0))continue;
+  result.push(row);ids.add(row[0]);if(result.length>=18)break;
+ }
+ return result;
+}
+function psCpIv(){
+ const raw=String(metricCard?.iv||"");
+ const m=raw.match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})/);
+ if(!m)return null;
+ const iv=m.slice(1,4).map(Number);
+ return iv.every(x=>Number.isInteger(x)&&x>=0&&x<=15)?iv:null;
+}
+function psCpAt(row,ivs,level){
+ const cpm=window.POKESEARCH_PVP_IV_DATA?.cpms;
+ const index=Math.round((level-1)*2);
+ if(!row||!ivs||!Array.isArray(cpm)||index<0||index>=cpm.length)return null;
+ const mult=Number(cpm[index]);
+ if(!Number.isFinite(mult)||mult<=0)return null;
+ const atk=row[2]+ivs[0],def=row[3]+ivs[1],hp=row[4]+ivs[2];
+ return {cp:Math.max(10,Math.floor(atk*Math.sqrt(def)*Math.sqrt(hp)*mult*mult/10)),
+  hp:Math.max(10,Math.floor(hp*mult)),level};
+}
+function psCpLeagueCeiling(row,ivs,limit){
+ let found=null;
+ for(let level=1;level<=50;level+=0.5){
+  const v=psCpAt(row,ivs,level);
+  if(v&&v.cp<=limit)found=v;
+ }
+ return found;
+}
+function psCpControls(){
+ const forms=psCpVariants();
+ if(!forms.length)return "";
+ const preferred=forms.find(x=>x[0]===psCpTargetSpecies)||
+  forms[0];
+ psCpTargetSpecies=String(preferred[0]);
+ const l=Number(metricCard?.level);
+ if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
+  psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
+ return '<div class="psCpSimulator">'+
+  '<div class="psCpSimTitle">Simulador PC / Nível · dados locais</div>'+
+  '<div class="psCpSimFields"><label>Forma <select id="psCpForm" onchange="updatePvpCpSimulator()">'+
+   forms.map(x=>'<option value="'+h(String(x[0]))+'"'+
+    (x[0]===psCpTargetSpecies?' selected':'')+'>'+h(String(x[1]))+'</option>').join("")+
+   '</select></label>'+
+   '<label>Nível <input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
+   ' value="'+psCpTargetLevel+'" oninput="updatePvpCpSimulator()"></label>'+
+   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
+  '<div id="psCpSimResult" aria-live="polite"></div>'+
+  '<div class="psCpSimFoot">CP e PS calculados com atributos-base e CPM do snapshot local. '+
+  'Não inclui custos de Doces/Poeira nem nível 51.</div></div>';
+}
+function updatePvpCpSimulator(){
+ const root=document.getElementById("psCpSimResult");
+ if(!root)return false;
+ const input=document.getElementById("psCpLevel");
+ const selection=document.getElementById("psCpForm");
+ const value=Number(input?.value??psCpTargetLevel);
+ if(Number.isFinite(value)&&value>=1&&value<=50)
+  psCpTargetLevel=Math.round(value*2)/2;
+ const levelText=document.getElementById("psCpLevelValue");
+ if(levelText)levelText.textContent=psCpTargetLevel.toFixed(1).replace(".",",");
+ const forms=psCpVariants();
+ const key=String(selection?.value||psCpTargetSpecies);
+ const row=forms.find(x=>x[0]===key)||forms[0];
+ if(!row){root.textContent="Atributos-base indisponíveis.";return false;}
+ psCpTargetSpecies=String(row[0]);
+ const iv=psCpIv();
+ if(!iv){root.textContent="IV A/D/S exatos necessários para simular.";return false;}
+ const current=psCpAt(row,iv,psCpTargetLevel),zero=psCpAt(row,[0,0,0],psCpTargetLevel),
+  perfect=psCpAt(row,[15,15,15],psCpTargetLevel);
+ const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500);
+ if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
+ const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
+ root.innerHTML='<div class="psCpSimResultRow"><span>IV atual '+h(iv.join("/"))+
+  '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>';
+ return true;
+}
 function renderDetailMetric(){
  const panel=document.getElementById("psMetricPanel");
  if(!panel||!metricKind)return false;
@@ -1692,9 +1924,13 @@ function renderDetailMetric(){
   '<button type="button" onclick="closeDetailMetric()" aria-label="Fechar comparativo">×</button></div>'+
   '<div class="psMetricCurrent">Capturado · PC '+h(own.cp??"—")+
   ' · Nv. '+h(own.level??"—")+'</div>'+
-  (rows||'<div class="psMetricEmpty">Análise PvP local ainda não disponível.</div>')+
+  psCpControls()+
+  (rows?'<details class="psCpPvpProjections"><summary>Projeções PvP por liga</summary>'+rows+'</details>':
+   '<div class="psMetricEmpty">Projeções por liga indisponíveis.</div>')+
   '<div class="psMetricFoot">PC e Nv. das ligas são projeções dos mesmos IVs, não os atributos atuais nem promessa de elegibilidade PvP.</div>';
  panel.hidden=false;
+ if(typeof panel.querySelector==="function"&&panel.querySelector("#psCpSimResult"))
+  updatePvpCpSimulator();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
  return true;
 }
@@ -1728,6 +1964,9 @@ window.showDetails=(c,mode,watched)=>{
  const changed=detailIdentity!==nextIdentity;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
+  psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
+   Math.round(Number(c.level)*2)/2:20;
+  psCpTargetSpecies="";
   closePvpReferenceInfo();
   closePvpRankAlternates();
   closeDetailMetric();

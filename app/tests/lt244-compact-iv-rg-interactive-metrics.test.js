@@ -39,7 +39,8 @@ const hook=new Function("document","window","activeRankLeague","pvpFormsForLeagu
  document,window,"gl",()=>[],explorer,()=>{});
 const ctx=window.psRankContext;
 assert.equal(hook(ctx),true);
-assert.ok(rankLine.children[0].textContent.includes("GL · ↳ Houndstone"),"general rank comes before IV when verified");
+assert.equal(rankLine.children[1].textContent,"IV #1","IV Class badge must be first");
+assert.equal(rankLine.children[2].textContent,"↳ Houndstone");
 const badge=rankLine.children.find(x=>x.className==="psCompactOverall psRankOpen");
 assert.ok(badge,"valid PvPoke species RG is a separate button");
 assert.equal(badge.textContent,"RG #653");
@@ -58,14 +59,14 @@ assert.equal(hook({...ctx,leagues:[
  {league:"gl",own:{rank:1,overallRank:85},evolutions:[]},
  {league:"ul"},{league:"ml"}
 ]}),true);
-assert.ok(rankLine.children[0].textContent.includes("GL · Atual"));
-assert.equal(rankLine.children[1].textContent,"RG #85");
+assert.equal(rankLine.children[2].textContent,"Atual");
+assert.equal(rankLine.children[3].textContent,"RG #85");
 rankLine.hidden=true;
 assert.equal(hook({...ctx,leagues:[
  {league:"gl",own:{rank:1,overallRank:null},evolutions:[]},
  {league:"ul"},{league:"ml"}
 ]}),true);
-assert.equal(rankLine.children.length,1,"no RG badge when no verified overall rank");
+assert.equal(rankLine.children.length,3,"no RG badge when no verified overall rank");
 assert.match(html,/#rankLine \.psCompactOverall\{[\s\S]*?cursor:pointer/);
 assert.match(html,/#rankLine \.psRankLabel\{overflow:visible!important;text-overflow:clip!important/);
 // The inline card retains a click target to the 4,096 local IV rankings.

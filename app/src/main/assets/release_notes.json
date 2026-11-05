@@ -1772,6 +1772,32 @@
           "Testes visuais físicos com as duas Pokébolas e tamanhos P/M/G permanecem pendentes."
         ]
       }
+    },
+    {
+      "id": "lt247-iv-first-move-legacy-compact-cp-level-20261105",
+      "minVersionCode": 54451,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT247 — IV primeiro, Mega, ataques e simulador de PC",
+      "sections": {
+        "novidades": [
+          "Faixa PvP em uma linha: liga, IV #, evolução ↳, RG # e golpes; IV e RG permanecem clicáveis, priorizando visualmente IV sem desfazer a escolha da melhor espécie por RG.",
+          "Simulador offline acessível tocando em PC ou Nv.: forma/evolução e nível 1 a 50 em intervalos de 0,5, com PC/PS dos IVs atuais, PC 0/0/0, PC 15/15/15 e melhores níveis calculados para GL/UL.",
+          "Golpes recomendados diferenciam ⚔️ quando existe legado/MT Elite verificado e 🗡 quando a combinação recomendada não usa golpes legados. O status só é definido após consultar a fonte no toque."
+        ],
+        "melhorias": [
+          "Sem segunda linha vazia para os botões do Rookidee; a faixa mantém altura e fonte compactas em P/M/G.",
+          "Mega Sableye e outras Megas com IV #1 projetado aparecem na faixa mesmo quando o modo de busca não é GL/UL, sem afirmar elegibilidade na Liga de Batalha GO.",
+          "Ao consultar golpes de uma forma Mega projetada, mostra as recomendações verificadas da espécie-base com rótulo explicativo em vez de inventar um metajogo Mega."
+        ],
+        "correcoes": [
+          "Restaurada a ordem visual solicitada: IV antes do RG, sem inverter a prioridade competitiva da LT245.",
+          "A consulta de golpes não desaparece quando a combinação destacada é Mega IV #1 ou quando o Rank Classe não é exatamente #1."
+        ],
+        "emDesenvolvimento": [
+          "Os custos em Doces/Poeira não são estimados nesta versão até a validação de uma tabela de custos.",
+          "Conferir visualmente as duas Pokébolas, tamanhos P/M/G e possíveis nomes de formas longos no Samsung."
+        ]
+      }
     }
   ]
 }

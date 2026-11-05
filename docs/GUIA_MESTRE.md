@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT247 — IV antes do RG, movimentos com legado e simulador de PC (05/11/2026; desenvolvimento)
+
+- Prints Samsung: Rookidee quebra botão de golpes para uma segunda linha; deseja `[🔵 GL IV #1][↳ evolução][RG #N] ⚔️`, com **IV mostrado primeiro** mas **Rank Geral como prioridade competitiva** preservada da LT245. Sableye Mega GL IV #1 também deve aparecer na faixa em modo não PvP. Exemplos Gastly/Haunter/Gengar motivaram cálculo por PC e nível.
+- Implementação: `detail.html` usa uma faixa `flex-wrap:nowrap`, chips independentes de IV e RG, evolução ↳ ou Atual, +N e movimento; o nome é a única parte reduzível. Mega Top1 é rotulada como projeção sem RG fictício e sem afirmar elegibilidade GBL.
+- Golpes: ⚔️ neutro até consulta; ⚔️ verificado = combinação recomendada exige pelo menos um legado/Elite, 🗡 verificado = nenhuma habilidade recomendada é legado. Sem origem verificada, não rotular como livre de Elite. Golpes da espécie-base são referenciados para projeção Mega, sem alegar recomendações da Mega. Nada é buscado automaticamente.
+- Simulador: tocar em PC ou Nv. abre painel recolhível com seleção da forma e slider de Nv. 1–50 por 0,5, calculando CP/PS com stats base e CP multipliers do Game Master offline instalado para IV atual, 0% e 100%; exibe máximos de GL e UL. Sem custos de Doces/Poeira (fonte não validada), sem nível 51, sem chamadas à PoGoCoordinates.
+- Arquivos: `app/src/main/assets/detail.html`, `release_notes.json` e teste `app/tests/lt247-compact-iv-first-move-status-cp-simulator.test.js`, regressões LT231/LT235/LT243/LT244/LT245/LT164; detalhes [LT247_IV_PRIMEIRO_GOLPES_CP_SIMULADOR_20261105.md](LT247_IV_PRIMEIRO_GOLPES_CP_SIMULADOR_20261105.md).
+- Proposta `LT247 · 0.02.47 · versionCode 54451 · label 51251`, base LT246. Não afirmar build/merge/release antes de completar CI; teste físico P1/P2 P/M/G ainda pendente.
+
 ## LT246 OFICIAL — 0.02.46 / versionCode 54450 (05/11/2026)
 
 - **Problemas relatados no Samsung:** Flabébé Red aparece com `#669` sem sprite na lista, Rattata 15/15/15 retorna `Ataques Recomendados: indisponíveis` ao tocar ⚔️, Teddiursa 0/14/14 apresenta GL IV #1 de Ursaluna mas não mostra RG #163 na faixa apesar de existir na análise expandida.
