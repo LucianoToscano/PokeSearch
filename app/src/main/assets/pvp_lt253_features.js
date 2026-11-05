@@ -69,8 +69,35 @@
   if(!key||!details||!Array.isArray(details.leagues)||details.leagues.length!==3)return false;
   if(!LEAGUES.every(league=>details.leagues.some(x=>x?.league===league)))return false;
   clean(now);memory.delete(key);
-  // Snapshot is bounded and contains only public PvP rankings; no coords or auth.
-  const data=JSON.stringify(details);
+  // Allowlist public PvP fields, never cache private coordinates, tokens,
+  // trainer identity, arbitrary provider fields or whole raw API objects.
+  const pickEntry=value=>{
+   if(!value||typeof value!=="object")return null;
+   const out={};
+   for(const k of ["name","rank","overallRank","statProductPct","cp","level",
+    "eligible","referenceOnly","megaProjection"]){
+    if(value[k]!=null&&(typeof value[k]==="string"||typeof value[k]==="number"||
+       typeof value[k]==="boolean"))out[k]=typeof value[k]==="string"?
+        str(value[k],90):value[k];
+   }
+   return out;
+  };
+  const normalized={
+   sourceIndex:Number(details.sourceIndex),name:str(details.name),iv:str(details.iv,8),
+   cp:str(details.cp,10),searchLeague:str(details.searchLeague,2),
+   searchRankLimit:details.searchRankLimit,
+   includePreviousEvolutions:details.includePreviousEvolutions!==false,
+   ivUnavailable:details.ivUnavailable===true,
+   familyForms:Array.isArray(details.familyForms)?details.familyForms.slice(0,36)
+     .map(x=>str(x,90)):[],
+   leagues:details.leagues.slice(0,3).map(l=>({
+    league:str(l.league,2),own:pickEntry(l.own),
+    evolutions:Array.isArray(l.evolutions)?l.evolutions.slice(0,24).map(pickEntry):[],
+    megas:Array.isArray(l.megas)?l.megas.slice(0,20).map(pickEntry):[],
+    comparisons:Array.isArray(l.comparisons)?l.comparisons.slice(0,24).map(pickEntry):[]
+   }))
+  };
+  const data=JSON.stringify(normalized);
   if(data.length>160000)return false;
   memory.set(key,{expiry:Number(card.expiresAtMs),data});
   clean(now);return true;
