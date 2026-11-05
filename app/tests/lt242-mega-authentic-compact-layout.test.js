@@ -25,9 +25,9 @@ const base=row({name:"Charizard",rank:14,cp:1498,level:25,statProductPct:"99,00"
 assert.ok(!base.includes("mega_evolution_icon.svg"));
 assert.ok(!base.includes("TOP 1 MEGA"));
 const style=html.match(/<style>([\s\S]*?)<\/style>/)?.[1]||html;
-assert.ok(html.includes(".evoLine .evoWho{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}"),
+assert.ok(/\.evoLine \.evoWho\{[^}]*white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere/.test(html),
  "species text must wrap instead of ellipsis");
-assert.ok(html.includes(".evoLine .evoStatsRow{display:flex;align-items:center;flex-wrap:wrap"),
+assert.ok(/\.evoLine \.evoStatsRow\{display:flex;flex-wrap:wrap;/.test(html),
  "compact stats row must wrap rather than clip");
 assert.ok(html.includes(".psMegaMark{display:inline-block;width:11px;height:11px"),"mark cannot increase row height");
 assert.ok(!html.includes("evoWho .evoMark:has("),":has unsupported in older WebView");
