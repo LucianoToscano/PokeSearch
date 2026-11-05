@@ -16,7 +16,7 @@ ALLOWED = {
     "dock.html", "detail.html", "sprite_offline.js", "sprite_visual_scale.js",
     "visual_editor.js", "pokemon_card_presentation.js",
     "pvpoke-overall-ranks.js", "pvpoke-iv-gamemaster.js",
-    "pvp_rank_explorer.js", "probe.js",
+    "pvp_rank_explorer.js", "pvp_lt240_tools.js", "probe.js",
     "release_notes.json", "pokemon_catalog.json",
 }
 ASSET_PREFIX = "app/src/main/assets/"

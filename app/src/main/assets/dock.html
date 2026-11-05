@@ -6728,6 +6728,38 @@ function rankedOverallOnlyEvolutions(card,league){
  }
  return matches.sort((a,b)=>a.overallRank-b.overallRank||a.name.localeCompare(b.name)).slice(0,24);
 }
+// LT240: TOP PvP candidates are derived only from the confirmed encounter IVs.
+// Each overlay reports only opt-in and non-stale results to its own Android service.
+function topPvpCandidates(source,threshold){
+ if(![1,5,10].includes(threshold)||!Array.isArray(source))return [];
+ const out=[];
+ for(const card of source.slice(0,10)){
+  const iv=String(card?.iv||"");
+  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(iv)||
+     verifiedSpawnIvPercent(card)===null||
+     !Number.isInteger(Number(card?.sourceIndex))||
+     Number(card?.sourceIndex)<0||
+     !Number.isFinite(Number(card?.expiresAtMs))||
+     Number(card.expiresAtMs)<=Date.now())continue;
+  const sourceIndex=Number(card.sourceIndex);
+  for(const league of ["gl","ul","ml"]){
+   const entries=[];
+   const own=calculatedSpeciesIvDetail(card,league);
+   if(own)entries.push({rank:own.rank,name:card.name,kind:"Normal"});
+   for(const x of evolutionCandidates(card,league).slice(0,12)){
+    if(x.eligible!==false)entries.push({rank:x.rank,name:x.name,kind:"Evolução"});
+   }
+   for(const x of megaFormProjections(card,league))
+    entries.push({rank:x.rank,name:x.name,kind:"Mega"});
+   for(const item of entries){
+    if(!Number.isInteger(item.rank)||item.rank<1||item.rank>threshold)continue;
+    out.push({sourceIndex,iv,rank:item.rank,league,
+      kind:item.kind,name:String(item.name||"").slice(0,80)});
+   }
+  }
+ }
+ return out.sort((a,b)=>a.rank-b.rank).slice(0,10);
+}
 // RANK-EVO-DETAIL-01: export bounded, read-only PvP projections to the native
 // detail WebView. Never disclose cookies or query the PoGoCoordinates page.
 // Computed on demand; does not allocate another Game Master in detail.html.
@@ -7390,6 +7422,15 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  }
  if(active>=cards.length)active=-1;
  draw();
+ if(resultWindow&&!resultsStale&&!searchActive&&alertMode!=="off"&&
+    typeof Native.getTopPvpAlertLevel==="function"&&
+    typeof Native.emitTopPvpAlerts==="function"){
+  const limit=Number(Native.getTopPvpAlertLevel())||0;
+  if([1,5,10].includes(limit)){
+   const candidates=topPvpCandidates(cards,limit);
+   if(candidates.length)Native.emitTopPvpAlerts(JSON.stringify(candidates));
+  }
+ }
  // Refresh checkmarks only after the Android bridge reports applied settings.
  if(controlsWindow&&choiceOpen==="info"&&
     JSON.stringify(resultDisplayOptions)!==previousDisplayPrefs)renderInfoChoices();
@@ -8189,6 +8230,23 @@ function renderAlertsChoices(){
  };
  section("Novos Pokémon","general",alertMode,generalCustomTone);
  section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone);
+ // Independent per-Pokébola opt-in; follows the existing "Novos" sound/silent/OFF.
+ const topTitle=document.createElement("div");topTitle.className="miniAlertHeading";
+ topTitle.textContent="⚔️ TOP PvP · exige Novos ligado";
+ panel.appendChild(topTitle);
+ const topModes=document.createElement("div");topModes.className="miniAlertModes";
+ const savedTop=typeof Native.getTopPvpAlertLevel==="function"?
+  Number(Native.getTopPvpAlertLevel())||0:0;
+ for(const value of [0,1,5,10]){
+  const button=document.createElement("button");button.type="button";
+  button.className="miniAlertState"+(savedTop===value?" chosen":"");
+  button.textContent=value?"Top "+value:"OFF";
+  button.title=value?"Notificar IVs Top "+value+" na forma atual, evolução ou Mega projetada":"Desativar radar Top PvP";
+  button.setAttribute("aria-pressed",String(savedTop===value));
+  button.onclick=()=>{if(Native.setTopPvpAlertLevel)Native.setTopPvpAlertLevel(value);};
+  topModes.appendChild(button);
+ }
+ panel.appendChild(topModes);
  // Feature remains implemented in MainActivity, just absent from public UI.
  if(SHOW_INDIVIDUAL_FAVORITE_TONES)
   uxOption(panel,"Som de cada Pokémon favorito",

@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT240 — PvP inteligente (05/11/2026; branch em QA)
+
+- **Base protegida:** LT239 0.02.39 / code 54443 / tag v0.02.39-54443. Proposta de versão LT240: 0.02.40 / code 54444 / label 51244.
+- **Funções:** pesquisa IV/rank/eficiência, comparação Normal/Mega/evoluções com mesmo IV, Rank Geral avançado (score/moveset IDs/confrontos/ameaças), radar visual TOP e notificações TOP 1/5/10 opcionais, independentes por Pokébola (permissão Android, OFF por padrão, de-dup TTL). UI P/M/G com cache limitado e carregamento sob demanda.
+- **Fonte atualizada:** PvPoke revisão e02bde78d19be9b9099b5a6629c6a8d0835a53be (03/11/2026), verificada em 05/11. GL arquivo 31/10, UL 21/10, ML 01/10, Game Master + Mega Chandelure. Datas da fonte variam por liga; nunca tratar IV rank como Overall. Ataques técnicos em IDs requerem localização verificada na ação ⚔️.
+- **Arquivos:** app/src/main/assets/pvp_lt240_tools.js, pvp_rank_explorer.js, pvpoke-overall-ranks.js, pvpoke-iv-gamemaster.js, dock.html, detail.html, OverlayService.java, scripts/build_ota_pack.py e app/tests/lt240-pvp-advanced.test.js.
+- **Registro técnico:** [LT240_PVP_INTELIGENTE_20261105.md](LT240_PVP_INTELIGENTE_20261105.md). **A presente entrada documenta código em QA, não release.** Exigir CI, merge, publicação com assinatura v2 oficial e prova de releases/latest antes de declarar atualização distribuída. Teste físico Samsung P1/P2 pendente.
+
 ## LT239 OFICIAL — 0.02.39 / versionCode 54443 (05/11/2026)
 
 - **Status comprovado:** LT239 em GitHub releases/latest, tag [v0.02.39-54443](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.39-54443), draft=false, prerelease=false, publicada em 2026-11-05T04:20:40Z.

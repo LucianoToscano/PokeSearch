@@ -31,6 +31,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
+/* LT240: compact on-card TOP PvP opportunities, no false push claims. */
+.psTopPvpRadar{margin:4px 0 6px;padding:5px;border:1px solid #88c7a456;
+ border-radius:8px;background:#2a4e4160;color:#eafbea;font-size:9px}
+.psTopPvpRadar>b{display:block;margin-bottom:4px}
+.psTopPvpChip{display:inline-block;padding:3px 5px;margin:1px 2px;border-radius:5px;
+ background:#87cfa828;color:#e5ffef;overflow-wrap:anywhere}
 /* LT238: click targets remain visible before explorer JS first opens. */
 #evoBody .psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 #evoBody .psRankOpen:focus-visible{outline:2px solid #9bd5ff;border-radius:3px}
@@ -729,6 +735,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvpoke-overall-ranks.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
 <script src="pvp_rank_explorer.js"></script>
+<script src="pvp_lt240_tools.js"></script>
 <script src="pvp_rank_moves.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
@@ -1138,12 +1145,15 @@ function openPvpRankExplorer(event,button){
  if(!button||!window.psRankContext)return false;
  const data=button.dataset||{},engine=window.PokeSearchRankExplorer;
  if(!engine||typeof engine.open!=="function")return false;
+ const ctx=window.psRankContext,league=data.psLeague||"gl";
+ const group=ctx.leagues?.find?.(x=>x.league===league);
+ const names=[ctx.name,...(group?.evolutions||[]).map(x=>x.name),
+  ...(group?.megas||[]).map(x=>x.name),
+  ...(group?.comparisons||[]).map(x=>x.name)].filter(Boolean);
  return engine.open({
   kind:data.psKind==="overall"?"overall":"class",
-  name:data.psName||window.psRankContext.name,
-  league:data.psLeague||"gl",
-  iv:window.psRankContext.iv,
-  rank:Number(data.psRank)||null
+  name:data.psName||ctx.name,league,iv:ctx.iv,
+  rank:Number(data.psRank)||null,forms:names
  });
 }
 function evolutionRow(x,first){
@@ -1340,7 +1350,9 @@ window.showEvolutionDetails=payload=>{
    if(!league||!context)return;
    window.PokeSearchRankExplorer?.open({
     kind:"class",name:currentRankSpecies||context.name,
-    iv:context.iv,league
+    iv:context.iv,league,
+    forms:[context.name,...(context.leagues?.find?.(x=>x.league===league)?.evolutions||[]).map(x=>x.name),
+     ...(context.leagues?.find?.(x=>x.league===league)?.megas||[]).map(x=>x.name)]
    });
   });
  }
@@ -1367,6 +1379,16 @@ window.showEvolutionDetails=payload=>{
   if(own)ownCount++;
  }
  window.psRankRenderLeague="";
+ // Rank Class Top ≠ Overall Top; Mega rows are explicitly projections only.
+ const radar=window.PokeSearchLt240?.topHighlights?.(payload,10)||[];
+ if(radar.length){
+  html='<div class="psTopPvpRadar" role="status" aria-label="Destaques de rank PvP">'+
+   '<b>🔔 Radar TOP PvP</b><div>'+
+   radar.slice(0,6).map(x=>'<span class="psTopPvpChip">'+
+    h(x.league.toUpperCase())+' #'+x.rank+' · '+h(x.name)+
+    (x.isProjection?' (Mega projetada)':'')+'</span>').join("")+
+   '</div></div>'+html;
+ }
  if(!count&&!ownCount){
   // A missing/unverified analysis must not occupy vertical card space.
   // A costume with no catalog mapping does NOT prove this species has no rank.
