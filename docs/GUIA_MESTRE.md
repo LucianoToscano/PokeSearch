@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT254 — merge e publicação solicitada (05/11/2026)
+
+- **Autorização explícita do usuário:** fazer merge, registrar no Arquivo Mestre e enviar atualização ao app. Revisão [PR #233](https://github.com/LucianoToscano/PokeSearch/pull/233) foi mesclada em `main`, merge commit `c532a2ccca3159dc8d2c3ee163168654c0286697`. Sem sobrescrever a release LT253 `v0.02.53-54457`.
+- **Nova versão preparada:** LT254 `0.02.54 / versionCode 54458 / label 51258`, notas embutidas `app/src/main/assets/release_notes.json` no commit `1d6423461b05957a3a6cf312b6ac544b9604abde`. Publicação só é comprovada após workflow oficial e verificação do APK.
+- **Correções verificadas na fonte e CI:** cálculo compacto Diglett (IV A/B, PC B − A), golpes Ágil/C1/C2 e ícone de legado apenas quando confirmado; popups Modo, Filtro, Localização sem duplicação de barra; recomendações para Megaedição diferenciadas de golpes aprendidos na forma base; Rank Classe Ursaluna GL `0/14/15` #2 não herda scroll de Ursaring #1; duas Pokébolas continuam isoladas.
+- **Evidências de testes na PR:** [Node completo #42048515261](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048515261), [Node QA #42048515322](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048515322), [QA core #42048515833](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048515833), [compilação Java #42048515265](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048515265), [validação OTA #42048515551](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048515551), [screenshots P/M/G #42048515419](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048515419): todos concluídos com sucesso.
+- **QA detalhado:** [LT254_QA_CALCULADORA_GOLPES_COMPACTOS_20261105.md](LT254_QA_CALCULADORA_GOLPES_COMPACTOS_20261105.md), incluindo testes `lt254-ursaluna-form-rank-scroll.test.js` e `lt254-popup-single-owner-mega-attacks.test.js`.
+- **Risco residual explicitado:** inspeção e instalação reais no Samsung P/M/G e P1/P2 não foram observadas. A autorização permite acionar a distribuição após gates do workflow, mas **não** autoriza alegar instalação concluída; o Android exige confirmação do usuário. As credenciais de assinatura permanecem nos segredos do ambiente `official-updates`; nunca exportar chaves.
+- **Registro de publicação:** manter pendentes até verificar workflow oficial, `releases/latest`, SHA-256, certificado permanente e asset publicado. Se falhar, não inventar versão instalada nem substituir APK público.
+
+
 
 ### LT254 — explorer de Ursaluna GL com troca de espécie (05/11/2026)
 
