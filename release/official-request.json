@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.50",
-  "code": 54454,
-  "label": 51254,
-  "previous_tag": "v0.02.49-54453",
-  "qa_max_code": 54453,
-  "release_notes": "LT250: barra de ranking PvP agora tem exatamente três divisões com bordas próprias em uma linha [🔵 GL IV #N] [↳ Evolução] [RG #N], seguidas do botão separado ⚔️/🗡 para golpes; removidos o pseudo-elemento CSS que duplicava 🔵, o fundo compartilhado que escondia as divisões e o botão extra +N que apertava os nomes. Texto aumentado e mais contrastante, os três destinos continuam independentes: IV abre Rank Classe, espécie abre Análise PvP e RG abre Rank Geral. Sem RG verificado, mostra RG — desativado (não fabrica classificação). Destaques 🟡 UL, 🟣 ML e ícone verdadeiro Mega mantidos. Restaurado 0 quando não há encontros: com contador ativo, o zero aparece no indicador da Pokébola; sem contador, centralizado logo abaixo do ícone, sem duas cópias. Erro e busca preservam seus indicadores próprios. Corrigido para P1/P2 preservando localização, filtros, login, posições salvas, simulador de evolução/PC da LT249, recursos da LT248 e atualização OTA. Testes automatizados Node, regressão completa, QA central, Java Android, OTA e APK beta passaram; inspeção visual manual Samsung P/M/G e confirmação de instalação ainda necessárias."
+  "version": "0.02.51",
+  "code": 54455,
+  "label": 51255,
+  "previous_tag": "v0.02.50-54454",
+  "qa_max_code": 54454,
+  "release_notes": "LT251: corrigida a legibilidade do simulador de PC e Nível após a LT250. No Oddish a seleção da evolução era truncada em 'B...' (Bellossom) porque o menu Forma dividia a linha com Nível e valor. Agora Forma ocupa uma linha inteira, com seletor de 34px e fonte 12px, nomes completos como Gloom, Vileplume, Bellossom e Ursaluna, setas de 30px; Nível usa uma segunda linha com slider largo e botões ±0,5. O painel usa fonte maior e rolagem responsiva até 68vh/430px, mantendo os cálculos de CP/PS, PC-alvo, IV 0/0/0 e 15/15/15, a família evolutiva confiável e as Megas verificadas. Preserva integralmente a LT250: a barra PvP com três divisões e ⚔️/🗡, marcador de liga único 🔵/🟡/🟣, RG verdadeiro, contador zero, as duas Pokébolas, filtros, favoritos, login e atualizações automáticas. Testes automatizados Node, regressão completa, QA core, Java, OTA e APK beta aprovados; teste visual manual no Samsung P/M/G e confirmação de instalação ainda necessários."
 }
