@@ -178,6 +178,46 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     "Mega Sableye uses Mega Edition and never normal Power Gem "+sz.name+
     " "+JSON.stringify(megaMoves));
    await page.screenshot({path:path.join(output,sz.name+"-mega-moves.png")});
+   // LT254: actual species switch in the SAME rank explorer DOM. Previously
+   // Ursaluna GL #2 opened halfway down the list (#5–#8) after Ursaring #1.
+   const family=await page.evaluate(()=>{
+    const ex=window.PokeSearchRankExplorer;
+    const gm=window.POKESEARCH_PVP_IV_DATA;
+    if(!ex?.open||!gm)return {ok:false,reason:"rank explorer not loaded"};
+    const a=ex.getIvRows(gm,"Ursaring","gl"),
+      b=ex.getIvRows(gm,"Ursaluna","gl");
+    const iv="0/14/15";
+    if(!ex.open({kind:"class",name:"Ursaring",league:"gl",iv,rank:1}))
+     return {ok:false,reason:"cannot open Ursaring"};
+    const old=document.querySelector("#psRankExplorer .psrRows");
+    old.scrollTop=110;
+    const priorScroll=old.scrollTop;
+    if(!ex.open({kind:"class",name:"Ursaluna",league:"gl",iv,rank:2}))
+     return {ok:false,reason:"cannot switch to Ursaluna"};
+    const panel=document.querySelector("#psRankExplorer");
+    const list=panel.querySelector(".psrRows");
+    const title=panel.querySelector(".psrTitle")?.textContent||"";
+    const context=panel.querySelector(".psrSub")?.textContent||"";
+    const first=panel.querySelector("tr[data-ps-row='1']");
+    const selected=panel.querySelector("tr[data-ps-owned='true']");
+    const firstBox=first?.getBoundingClientRect(),box=selected?.getBoundingClientRect(),
+      holder=list.getBoundingClientRect();
+    return {ok:!!selected&&selected.dataset.psRow==="2"&&
+      title.includes("Ursaluna")&&context.includes("0/14/15")&&
+      !title.includes("Ursaring")&&
+      list.scrollTop<15&&
+      firstBox?.top>=holder.top-4&&box?.bottom<=holder.bottom+4&&
+      a.find(x=>x.iv===iv)?.rank===1&&b.find(x=>x.iv===iv)?.rank===2,
+      priorScroll,afterScroll:list.scrollTop,title,context,
+      rowText:panel.querySelector("tr[data-ps-row='2']")?.textContent?.slice(0,75),
+      selected:!!selected,firstTop:firstBox?.top,holderTop:holder.top};
+   });
+   assert.ok(family.ok,"Ursaring → Ursaluna must reset scroll and show GL #2: "+
+    JSON.stringify(family));
+   await page.evaluate(()=>{
+    document.querySelector("#psRankExplorer")?.scrollIntoView({block:"nearest"});
+   });
+   await page.screenshot({path:path.join(output,sz.name+"-ursaluna-class-selected.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,
