@@ -2190,7 +2190,7 @@ function stepPvpCpLevel(delta){
 }
 function psCpApplyTarget(){
  const forms=psCpVariants(),key=String(document.getElementById("psCpForm")?.value||psCpTargetSpecies);
- const row=forms.find(x=>x[0]===key),iv=psCpIv();
+ const row=forms.find(x=>x[0]===key),iv=psCpInputIv("psCpIvA",psCpCustomIv||psCpIv());
  const input=document.getElementById("psCpTargetCp");
  const n=Number(input?.value);
  if(!row||!iv||!Number.isInteger(n)||n<10||n>10000)return false;
@@ -2220,18 +2220,27 @@ function updatePvpCpSimulator(){
  const row=forms.find(x=>x[0]===key)||forms[0];
  if(!row){root.textContent="Atributos-base indisponíveis.";return false;}
  psCpTargetSpecies=String(row[0]);
- const iv=psCpIv();
- if(!iv){root.textContent="IV A/D/S exatos necessários para simular.";return false;}
+ const iv=psCpInputIv("psCpIvA",psCpCustomIv||psCpIv());
+ const compare=psCpInputIv("psCpIvB",psCpCompareIv);
+ if(!iv||!compare){
+  root.textContent="IV A/B: informe números inteiros de 0 a 15.";return false;
+ }
+ psCpCustomIv=iv;psCpCompareIv=compare;
  const current=psCpAt(row,iv,psCpTargetLevel),zero=psCpAt(row,[0,0,0],psCpTargetLevel),
   perfect=psCpAt(row,[15,15,15],psCpTargetLevel);
- const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500),
+ const little=psCpLeagueCeiling(row,iv,500),gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500),
   target=psCpLeagueCeiling(row,iv,psCpTargetCp);
  if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
  const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
- root.innerHTML='<div class="psCpSimResultRow"><span>IV atual '+h(iv.join("/"))+
+ const compared=psCpAt(row,compare,psCpTargetLevel);
+ root.innerHTML='<div class="psCpSimResultRow"><span>IV atual A '+h(iv.join("/"))+
   '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
+  (compared?'<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
+   '</span><strong>PC '+compared.cp+' · PS '+compared.hp+
+   ' · ΔPC '+(current.cp-compared.cp)+'</strong></div>':'')+
   '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>⚪ Até 500</span><strong>'+label(little)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
@@ -2311,7 +2320,7 @@ window.showDetails=(c,mode,watched)=>{
   psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
    Math.round(Number(c.level)*2)/2:20;
   psCpTargetSpecies="";
-  psCpTargetCp=1500;
+  psCpTargetCp=1500;psCpCustomIv=null;psCpCompareIv=[15,15,15];
   closePvpReferenceInfo();
   closePvpRankAlternates();
   closeDetailMetric();
