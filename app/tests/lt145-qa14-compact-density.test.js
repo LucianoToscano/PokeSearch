@@ -6,7 +6,7 @@ const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(script);n
 const compact=html.slice(html.indexOf("/* QA14 — restore near-original compact dimensions;"));
 assert.ok(java.includes("DETAIL_DP=200"),"narrower native width");
 assert.ok(java.includes("detailHeight=125"),"smaller first-frame height");
-assert.ok(java.includes("Math.min(520,available)"),"full content remains accessible");
+assert.ok(java.includes("Math.min(available,heightDp+2)"),"full content remains accessible");
 assert.ok(compact.includes("#panel{padding:5px 5px 6px}"));
 assert.ok(compact.includes("#header{grid-template-columns:34px minmax(0,1fr) 89px;"));
 assert.ok(compact.includes("#artColumn #img,#artColumn #imageFallback{width:33px;height:33px;"));
