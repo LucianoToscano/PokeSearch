@@ -9,7 +9,7 @@ const ota=fs.readFileSync(path.join(__dirname,"../../scripts/build_ota_pack.py")
 const nativeOta=fs.readFileSync(path.join(assets,"../java/com/lucianotoscano/pokesearchoverlay/OtaAssets.java"),"utf8");
 assert.match(svg,/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
 assert.ok(svg.includes('viewBox="6 6 52 52"'));
-assert.ok(svg.includes('aria-label="Mega Evolução"'));
+assert.ok(svg.includes('aria-label="Símbolo Mega Evolução"'));
 const embedded=svg.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
 assert.ok(embedded,"official Pokémon GO image is embedded locally");
 const png=Buffer.from(embedded[1],"base64");
