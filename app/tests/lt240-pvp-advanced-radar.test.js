@@ -72,6 +72,9 @@ assert.equal(move.rankingCategories.chargers,"Carregadores");
   assert.ok(read("pvp_rank_advanced_ui.js").length>0);
   new vm.Script(read(n));
  }
+ const secondary=fs.readFileSync(path.join(assets,"../java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
+ assert.ok(secondary.includes("extends OverlayService"),"Pokébola 2 inherits main PvP notification and detail bridge");
+ assert.ok(secondary.includes("isSecondaryOverlay(){return true;}"),"P2 scope independent");
  const bridge=fs.readFileSync(path.join(assets,"../java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
  assert.ok(bridge.includes("verifiedTopPvpRank(c,leagueConfirmed)"));
  assert.ok(bridge.includes("higherPriority=candidateTopRank>0"));
