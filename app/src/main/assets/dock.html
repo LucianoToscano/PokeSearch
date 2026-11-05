@@ -289,7 +289,7 @@ body.result-window.vip-results-scroll #spawns{
 }
 /* Preserve the final sprite's overhang without adding gaps between entries. */
 body.result-window #spawns:not(:empty){padding-bottom:0!important}
-body.result-window #empty{margin:0 auto;max-height:18px}
+body.result-window #empty{display:none!important;margin:0 auto;max-height:0;height:0;overflow:hidden}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 
@@ -7220,7 +7220,10 @@ function draw(){
   setTimeout(attachSpriteFeedback,14500);}
  }
  const empty=document.getElementById("empty");
- empty.style.display=cards.length?"none":"block";
+ // LT249: the independent P2 results window printed a detached "0"
+ // below its Pokébola. Keep empty-search feedback in Native.showStatus(),
+ // not as a second text row floating on the desktop.
+ empty.style.display=cards.length||resultWindow?"none":"block";
  const waiting=nextQueryAt>Date.now();
  empty.textContent=activeSearchPhase==="empty"?"0":activeSearchPhase==="error"?"!":"…";
  empty.title=status||"Aguardando busca";
@@ -7237,8 +7240,8 @@ function draw(){
    (activeSearchPhase==="searching"||activeSearchPhase==="filling"));
   const header=document.getElementById("resultHeader");
   const count=document.getElementById("resultSpawnCount");
-  count.textContent=resultDisplayOptions.count?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count?"inline":"none";
+  count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count&&cards.length?"inline":"none";
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
    image.style.visibility="visible";
@@ -7290,8 +7293,8 @@ function draw(){
   document.getElementById("dockIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("dockIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
   const count=document.getElementById("dockSpawnCount");
-  count.textContent=resultDisplayOptions.count?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count?"inline":"none";
+  count.textContent=resultDisplayOptions.count&&cards.length?String(cards.length):"";
+  count.style.display=resultDisplayOptions.count&&cards.length?"inline":"none";
   const gear=document.getElementById("gear");
   gear.removeAttribute("title");
   gear.setAttribute("aria-label","Pokébola: toque para resultados; segure para menu; arraste para mover");
