@@ -1627,6 +1627,30 @@
           "Atualização integral do snapshot offline PvPoke depende de importação validada das fontes oficiais; o app não inventa rankings recentes."
         ]
       }
+    },
+    {
+      "id": "lt241-mega-evolution-symbol-20261105",
+      "minVersionCode": 54445,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT241 — Ícone Mega Evolução",
+      "sections": {
+        "novidades": [
+          "Identificação visual das formas Mega com símbolo de Mega Evolução, em lugar do losango genérico.",
+          "O selo TOP 1 MEGA apresenta o símbolo ao lado da classificação.",
+          "Destaques Top PvP e comparador Normal/Mega/evoluções utilizam o mesmo identificador."
+        ],
+        "melhorias": [
+          "Ícone vetorial leve, de fundo transparente, com traços finos e tons sutis de Mega Evolução, adaptado ao espaço compacto do card P/M/G.",
+          "O ícone é um indicador de forma/projeção e não afirma que a Mega esteja ativa nem elegível para uma liga.",
+          "O mesmo visual funciona nas duas Pokébolas e está incluído no pacote OTA permitido."
+        ],
+        "correcoes": [
+          "Pokémon da forma normal permanecem sem identificação de Mega, mesmo quando seus IVs favorecem uma Mega Evolução."
+        ],
+        "emDesenvolvimento": [
+          "Teste visual físico no Samsung para confirmar proporção e nitidez do ícone nas duas Pokébolas."
+        ]
+      }
     }
   ]
 }
