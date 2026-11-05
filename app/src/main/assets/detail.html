@@ -2430,6 +2430,7 @@ window.showDetails=(c,mode,watched)=>{
  img.onload=null;img.onerror=null;
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
  let artAttempt=0,displayed=false,verifiedNativeTried=false,loadGeneration=0;
+ const usedArt=new Set();
  // Every new card invalidates callbacks from a previous image request.
  // WebView can keep a previous image pending without onerror/onload.
  const nativeFallback=()=>{
@@ -2439,8 +2440,10 @@ window.showDetails=(c,mode,watched)=>{
   return engine?.verifiedBundledData?.(c)||engine?.exactBundledData?.(art)||"";
  };
  const useArt=src=>{
+  if(src&&usedArt.has(src))return;
   const generation=++loadGeneration;
   if(!src||!(/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/)/i.test(src)))return;
+  usedArt.add(src);
   img.onload=()=>{
    if(generation!==loadGeneration)return;
    if(img.naturalWidth>=8&&img.naturalHeight>=8){
@@ -2472,10 +2475,10 @@ window.showDetails=(c,mode,watched)=>{
  useArt(initialNative||art.src);
  // Android WebView can leave a file/remote image pending forever with no
  // error; a strict verified base image can still be restored from our APK.
- const expectedSourceIndex=currentIndex,expectedName=watchName;
+ const expectedSourceIndex=currentIndex,expectedName=watchName,expectedDetailIdentity=detailIdentity;
  setTimeout(()=>{
   if(!displayed&&img.isConnected&&currentIndex===expectedSourceIndex&&
-     watchName===expectedName&&img.naturalWidth<8){
+     watchName===expectedName&&detailIdentity===expectedDetailIdentity&&img.naturalWidth<8){
    const direct=nativeFallback();
    if(direct&&img.getAttribute("src")!==direct){useArt(direct);return;}
    // The native bridge may be unavailable in a test or on a partial build.
@@ -2486,6 +2489,17 @@ window.showDetails=(c,mode,watched)=>{
    else {img.style.display="none";fallback.style.display="flex";}
   }
  },1800);
+ // One final exact-source attempt for Chromium file loads stuck pending:
+ // no retry loop, guessed costume or stale card update.
+ setTimeout(()=>{
+  if(displayed||!img.isConnected||currentIndex!==expectedSourceIndex||
+     watchName!==expectedName||detailIdentity!==expectedDetailIdentity)return;
+  const candidate=[art.src,art.original].find(src=>typeof src==="string"&&
+   /^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/)/i.test(src)&&
+    !usedArt.has(src));
+  if(candidate)useArt(candidate);
+  else {img.style.display="none";fallback.style.display="flex";}
+ },4200);
  const stat=(label,value,css="")=>value?'<span class="'+css+'">'+h(label)+" "+h(value)+"</span>":"";
  const ivDisplay=window.PokeSearchIVDisplay?.fromCard?.(c);
  const showRaw=ivDisplay?.valid===true;
