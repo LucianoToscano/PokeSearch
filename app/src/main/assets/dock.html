@@ -6318,7 +6318,24 @@ function attachSpriteFeedback(){
    img.setAttribute("data-original-src",art?.original||"");
    stage.insertBefore(img,stage.firstChild);img.src=src;
   }
-  if(img.dataset.psSpriteManaged==="1")return;
+  if(img.dataset.psSpriteManaged==="1"){
+   // A real native asset may become available after the initial 12s error.
+   // Re-probe only the exact card, never a substituted form or other Pokémon.
+   if(stage.classList.contains("failed")&&!img.dataset.psSpriteRecovered){
+    const item=stage.closest?.(".spawn");
+    const ix=Number(item?.getAttribute("data-index")??-1);
+    const card=ix>=0&&ix<cards.length?cards[ix]:null;
+    const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
+    const art=card&&engine?.resolve(card);
+    const exact=card&&engine?.bundledExactForArt?.(card,art)||"";
+    if(exact&&img.getAttribute("src")!==exact){
+     img.dataset.psSpriteRecovered="1";
+     stage.classList.remove("failed");
+     img.src=exact;
+    }
+   }
+   return;
+  }
   img.dataset.psSpriteManaged="1";
   let retries=0,done=false,mirrorAttempted=false,nativeTried=false;
   const spawnNode=stage.closest?.(".spawn")||stage.parentElement;
@@ -7198,7 +7215,8 @@ function draw(){
   attachLongPress();attachSpriteFeedback();syncTimerTicker();
   // Two bounded passes can repair newly available exact sprites in-place.
   setTimeout(attachSpriteFeedback,1800);
-  setTimeout(attachSpriteFeedback,4800);}
+  setTimeout(attachSpriteFeedback,4800);
+  setTimeout(attachSpriteFeedback,14500);}
  }
  const empty=document.getElementById("empty");
  empty.style.display=cards.length?"none":"block";
