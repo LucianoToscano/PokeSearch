@@ -142,6 +142,42 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    assert.ok(moves.ok&&moves.rows.every(row=>row.nameLeft>=row.labelRight-2&&row.nameWidth>=70),
     "recommended attacks C1/C2 do not wrap into separate labels "+sz.name+" "+JSON.stringify(moves));
    await page.screenshot({path:path.join(output,sz.name+"-moves-compact.png")});
+   // Mega has a separate source-pinned ranking. It must NEVER visually
+   // inherit the base species' second Charged Attack (Power Gem vs Dazzling Gleam).
+   const megaMoves=await page.evaluate(async()=>{
+    let wrongBase=0,megaCalls=0;
+    currentRankSpecies="Mega Sableye";
+    const rank=document.getElementById("rankLine");
+    rank.dataset.league="gl";rank.textContent="🔵 GL IV #1 ↳ Sableye";
+    window.psRankContext={leagues:[{league:"gl",megas:[
+      {name:"Mega Sableye",megaProjection:true,rank:1}]}]};
+    window.PokeSearchPvpRankMoves={
+      lookup:async()=>{wrongBase++;return {source:"BASE (não autorizado)"}},
+      lookupMega:async()=>{megaCalls++;return {
+       source:"PvPoke Mega Edition 03/11/2026",megaRecommendation:true,format:"mega",
+       fast:{name:"Garra Sombria",type:"ghost",status:"normal",localeVerified:true},
+       charged:[
+        {name:"Jogo Sujo",type:"dark",status:"normal",localeVerified:true},
+        {name:"Clarão Deslumbrante",type:"fairy",status:"normal",localeVerified:true}]
+      }}
+    };
+    renderRankOneMoves();
+    const action=rank.querySelector(".psMovesAction");
+    if(!action)return {ok:false,why:"missing Mega action"};
+    await action.onclick();
+    const pop=document.getElementById("movesPopover"),html=pop.innerHTML;
+    const result={ok:!pop.hidden&&action.textContent==="⚡"&&
+      megaCalls===1&&wrongBase===0&&html.includes("Megaedição")&&
+      html.includes("Clarão Deslumbrante")&&!html.includes("Gema Poderosa"),
+      width:pop.scrollWidth,client:pop.clientWidth,
+      megaCalls,wrongBase,content:pop.textContent.slice(0,90)};
+    result.ok=result.ok&&pop.scrollWidth<=pop.clientWidth+3;
+    return result;
+   });
+   assert.ok(megaMoves.ok,
+    "Mega Sableye uses Mega Edition and never normal Power Gem "+sz.name+
+    " "+JSON.stringify(megaMoves));
+   await page.screenshot({path:path.join(output,sz.name+"-mega-moves.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,
