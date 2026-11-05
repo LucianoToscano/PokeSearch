@@ -1407,7 +1407,7 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">🔔 '+h(x.league.toUpperCase())+' #'+x.rank+
-   ' '+h(x.name)+(x.mega?' · Mega projetada':'')+'</span>').join("")+'</div>':"";
+   ' '+h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
