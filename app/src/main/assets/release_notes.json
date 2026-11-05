@@ -1844,6 +1844,11 @@
         ],
         "emDesenvolvimento": [
           "Validação visual física Samsung P1/P2 e tamanhos P/M/G permanece pendente; regressões automatizadas não substituem teste com o APK instalado."
+        ],
+        "novidades": [
+          "Faixa PvP com quatro áreas independentes: [🔵 GL IV #N] abre Rank Classe, [↳ evolução] abre e destaca a Análise PvP, [RG #N] abre classificação geral e ⚔️/🗡 mostra os golpes recomendados; tudo em uma única linha.",
+          "Marcadores automáticos de 🔵 GL, 🟡 UL, 🟣 ML e símbolo Mega autêntico quando existir uma projeção confirmada, sem inventar Rank Geral da Mega.",
+          "Simulador PC/Nível com a família evolutiva real independente dos filtros ativos (Teddiursa → Ursaring → Ursaluna), setas para trocar forma, controles ±0,5 nível e campo PC-alvo que calcula o maior nível elegível."
         ]
       }
     }
