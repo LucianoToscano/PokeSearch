@@ -19,3 +19,14 @@
 - Gates: Node, QA core, Java, OTA e APK beta antes de merge e release assinada. Teste físico Samsung das duas Pokébolas e P/M/G continua necessário.
 - Em futuras versões, o toque em Nv. pode evoluir para simulador de aprimoramento com custos Poeira/Doces somente se tabelas verificadas forem incorporadas. Não fabricar custos.
 - Este registro inicial de branch **não comprova** merge, APK ou publicação.
+
+## Evidências de QA, merge e publicação oficial (05/11/2026)
+
+- **Código na main:** [PR #220](https://github.com/LucianoToscano/PokeSearch/pull/220) mesclada em `dfc05128b25dda60351ef55294aabed23abaa139`. Commit QA pré-merge: `bd78ef672c0b2289d5eaf09f9aa9ca011aacca86`.
+- **CI da revisão final:** Node QA #41988454628, regressão completa Node LT169 #41988454737, QA core LT211 #41988454702, Android Java LT62 #41988454771, OTA LT173 #41988454825 e APK beta privado #41988454764: todos `completed/success`. O novo `lt244-compact-iv-rg-interactive-metrics.test.js` confere separação Classe/Geral, glifo ↳, classe do Pokémon atual, ação RG e interações IV/PC/Nv.
+- **Solicitação oficial:** `release/official-request.json`, commit `d1b9f21c1f2f2e2d9aee4324dcb251d061b0b96f`, `0.02.44`, `versionCode 54448`, `label 51248`, `previous_tag v0.02.43-54447`.
+- **Compilação oficial:** [GitHub Actions #41988808913](https://github.com/LucianoToscano/PokeSearch/actions/runs/41988808913) `completed/success`; `preflight` e `publish` `success`. Etapas `Build signed protected release`, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash` todas `success`.
+- **Release estável:** [v0.02.44-54448](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.44-54448), publicada em `2026-11-05T07:43:48Z`, `draft=false`, `prerelease=false`, disponibilizada em `releases/latest`.
+- **APK:** [PokeSearch-v0.02.44-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.44-54448/PokeSearch-v0.02.44-LT.apk), **28.148.751 bytes**, SHA-256 `c82c473db8879e985d9b95c63b98718b19e141424abf829ee2dcaad59f3830cd`, asset `uploaded`.
+- **CI Signed-Verified:** `PokeSearch-v0.02.44-54448-Signed-Verified`, ID `13396224784`, ZIP 25.972.199 bytes, SHA-256 do ZIP `78a05fb747f54e8ff9860e57996aef4ef0779d99b420dc283a8bc46bc7b75cfd` (não confundir com digest do APK).
+- **Atualização:** o atualizador interno que consulta `releases/latest` pode detectar a LT244; Android requer confirmação de instalação. **Não existe prova de instalação nem de testes físicos Samsung P1/P2 e P/M/G.** Custos de Poeira/Doces não foram calculados nem exibidos.
