@@ -76,7 +76,7 @@ assert.deepEqual(events.slice(2),[
 ]);
 assert.equal(moduleObj.toggle({preventDefault(){},stopPropagation(){}},more,[ch],"gl"),true);
 assert.equal(panel.hidden,true);
-assert.equal(more.attrs["aria-expanded"],"false");
+assert.equal(panel.hidden,true,"comparison helper is independently closable");
 assert.ok(resize>0);
 const quality=gl([{...ch,rank:380,overallRank:1},la]);
 assert.equal(moduleObj.update(quality),true);
