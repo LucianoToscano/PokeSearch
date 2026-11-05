@@ -88,13 +88,13 @@ assert.equal(opened.at(-1).kind,"class");assert.equal(opened.at(-1).league,"gl")
 assert.equal(opened.at(-1).name,"Greavard");
 assert.equal(metrics.openDetailMetric("cp"),true);
 assert.equal(panel.hidden,false);
-assert.ok(panel.innerHTML.includes("Capturado · PC 306 · Nv. 12"));
+assert.ok(panel.innerHTML.includes("Capturado: PC 306 · Nv. 12"));
 assert.ok(panel.innerHTML.includes("Houndstone"));
 assert.ok(panel.innerHTML.includes("PC 1500"));
 assert.ok(panel.innerHTML.includes("Nv. 22,5"));
 assert.ok(panel.innerHTML.includes("não os atributos atuais"));
 assert.equal(metrics.openDetailMetric("level"),true);
-assert.ok(panel.innerHTML.includes("Nível · comparativo"));
+assert.ok(panel.innerHTML.includes("Calculadora PvP · Nível"));
 assert.equal(metrics.openDetailMetric("level"),true);
 assert.equal(panel.hidden,true);
 assert.ok(resized>=2);

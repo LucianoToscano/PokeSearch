@@ -56,11 +56,16 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
        bad.push({selector,left:r.left,right:r.right,width:r.width});
      }
     return {bad,scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,
+     sliderWidth:document.querySelector("#psCpLevel").getBoundingClientRect().width,
+     minIvInputWidth:Math.min(...Array.from(document.querySelectorAll(".psCpIvInputs input"),e=>e.getBoundingClientRect().width)),
+     formWidth:document.querySelector("#psCpForm").getBoundingClientRect().width,
      internalMax:getComputedStyle(inner).maxHeight,
      nativeResizes:window.__nativeResizes.length};
    });
    assert.deepEqual(top.bad,[],"no clipped calculator controls "+sz.name);
    assert.equal(top.internalMax,"none","no clipped nested panel "+sz.name);
+   assert.ok(top.sliderWidth>=55&&top.formWidth>=60&&top.minIvInputWidth>=24,
+    "usable level slider / form selector / A-B IV inputs "+sz.name+" "+JSON.stringify(top));
    assert.ok(top.nativeResizes>=1,"native resize requested "+sz.name);
    await page.evaluate(()=>{
     const panel=document.getElementById("panel");
@@ -102,11 +107,168 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     "compact Mega emblem before unclipped name "+sz.name+" "+JSON.stringify(mega));
    await page.evaluate(()=>{document.getElementById("panel").scrollTop=0;});
    await page.screenshot({path:path.join(output,sz.name+"-mega-rank.png")});
+   // LT254: run actual attack-card renderer on the same shipping detail HTML.
+   const moves=await page.evaluate(async()=>{
+    document.querySelector("#psMetricPanel").hidden=true;
+    document.querySelector("#panel").classList.remove("metricOpen");
+    document.getElementById("evolutions").hidden=true;
+    const rank=document.getElementById("rankLine");
+    rank.hidden=false;rank.dataset.league="gl";rank.textContent="GL IV #1";
+    currentRankSpecies="Bulbasaur";currentCardMoves="Tackle / Power Whip";
+    window.PokeSearchPvpRankMoves={lookup:async()=>({
+     source:"PvPoke · verificável",availableOnly:false,
+     fast:{name:"Chicote de Vinha",status:"normal",type:"grass",
+      stats:{power:5,energyGain:8}},
+     charged:[
+      {name:"Chicote Poderoso",status:"normal",type:"grass",stats:{power:90,energyCost:50}},
+      {name:"Bomba de Sementes",status:"normal",type:"grass",stats:{power:55,energyCost:40}}
+     ]})};
+    renderRankOneMoves();
+    const action=rank.querySelector(".psMovesAction");
+    if(!action)return {ok:false,why:"missing action"};
+    await action.onclick();
+    const pop=document.getElementById("movesPopover");
+    const rows=Array.from(pop.querySelectorAll(".psMoveRow"));
+    return {ok:!pop.hidden&&rows.length===3&&action.textContent==="⚡"&&
+      pop.scrollWidth<=pop.clientWidth+3,
+      icon:action.textContent,width:pop.scrollWidth,client:pop.clientWidth,
+      rows:rows.map(row=>{
+       const label=row.querySelector(".psMoveLabel").getBoundingClientRect(),
+        name=row.querySelector(".psMoveName").getBoundingClientRect();
+       return {labelRight:label.right,nameLeft:name.left,
+        nameWidth:name.width,labelText:row.querySelector(".psMoveLabel").textContent}
+      })};
+   });
+   assert.ok(moves.ok&&moves.rows.every(row=>row.nameLeft>=row.labelRight-2&&row.nameWidth>=70),
+    "recommended attacks C1/C2 do not wrap into separate labels "+sz.name+" "+JSON.stringify(moves));
+   await page.screenshot({path:path.join(output,sz.name+"-moves-compact.png")});
+   // Mega has a separate source-pinned ranking. It must NEVER visually
+   // inherit the base species' second Charged Attack (Power Gem vs Dazzling Gleam).
+   const megaMoves=await page.evaluate(async()=>{
+    let wrongBase=0,megaCalls=0;
+    currentRankSpecies="Mega Sableye";
+    const rank=document.getElementById("rankLine");
+    rank.dataset.league="gl";rank.textContent="🔵 GL IV #1 ↳ Sableye";
+    window.psRankContext={leagues:[{league:"gl",megas:[
+      {name:"Mega Sableye",megaProjection:true,rank:1}]}]};
+    window.PokeSearchPvpRankMoves={
+      lookup:async()=>{wrongBase++;return {source:"BASE (não autorizado)"}},
+      lookupMega:async()=>{megaCalls++;return {
+       source:"PvPoke Mega Edition 03/11/2026",megaRecommendation:true,format:"mega",
+       fast:{name:"Garra Sombria",type:"ghost",status:"normal",localeVerified:true},
+       charged:[
+        {name:"Jogo Sujo",type:"dark",status:"normal",localeVerified:true},
+        {name:"Clarão Deslumbrante",type:"fairy",status:"normal",localeVerified:true}]
+      }}
+    };
+    renderRankOneMoves();
+    const action=rank.querySelector(".psMovesAction");
+    if(!action)return {ok:false,why:"missing Mega action"};
+    await action.onclick();
+    const pop=document.getElementById("movesPopover"),html=pop.innerHTML;
+    const result={ok:!pop.hidden&&action.textContent==="⚡"&&
+      megaCalls===1&&wrongBase===0&&html.includes("Megaedição")&&
+      html.includes("Clarão Deslumbrante")&&!html.includes("Gema Poderosa"),
+      width:pop.scrollWidth,client:pop.clientWidth,
+      megaCalls,wrongBase,content:pop.textContent.slice(0,90)};
+    result.ok=result.ok&&pop.scrollWidth<=pop.clientWidth+3;
+    return result;
+   });
+   assert.ok(megaMoves.ok,
+    "Mega Sableye uses Mega Edition and never normal Power Gem "+sz.name+
+    " "+JSON.stringify(megaMoves));
+   await page.screenshot({path:path.join(output,sz.name+"-mega-moves.png")});
+   // LT254: actual species switch in the SAME rank explorer DOM. Previously
+   // Ursaluna GL #2 opened halfway down the list (#5–#8) after Ursaring #1.
+   const family=await page.evaluate(()=>{
+    const ex=window.PokeSearchRankExplorer;
+    const gm=window.POKESEARCH_PVP_IV_DATA;
+    if(!ex?.open||!gm)return {ok:false,reason:"rank explorer not loaded"};
+    const a=ex.getIvRows(gm,"Ursaring","gl"),
+      b=ex.getIvRows(gm,"Ursaluna","gl");
+    const iv="0/14/15";
+    if(!ex.open({kind:"class",name:"Ursaring",league:"gl",iv,rank:1}))
+     return {ok:false,reason:"cannot open Ursaring"};
+    const old=document.querySelector("#psRankExplorer .psrRows");
+    old.scrollTop=110;
+    const priorScroll=old.scrollTop;
+    if(!ex.open({kind:"class",name:"Ursaluna",league:"gl",iv,rank:2}))
+     return {ok:false,reason:"cannot switch to Ursaluna"};
+    const panel=document.querySelector("#psRankExplorer");
+    const list=panel.querySelector(".psrRows");
+    const title=panel.querySelector(".psrTitle")?.textContent||"";
+    const context=panel.querySelector(".psrSub")?.textContent||"";
+    const first=panel.querySelector("tr[data-ps-row='1']");
+    const selected=panel.querySelector("tr[data-ps-owned='true']");
+    const firstBox=first?.getBoundingClientRect(),box=selected?.getBoundingClientRect(),
+      holder=list.getBoundingClientRect();
+    return {ok:!!selected&&selected.dataset.psRow==="2"&&
+      title.includes("Ursaluna")&&context.includes("0/14/15")&&
+      !title.includes("Ursaring")&&
+      list.scrollTop<15&&
+      firstBox?.top>=holder.top-4&&box?.bottom<=holder.bottom+4&&
+      a.find(x=>x.iv===iv)?.rank===1&&b.find(x=>x.iv===iv)?.rank===2,
+      priorScroll,afterScroll:list.scrollTop,title,context,
+      rowText:panel.querySelector("tr[data-ps-row='2']")?.textContent?.slice(0,75),
+      selected:!!selected,firstTop:firstBox?.top,holderTop:holder.top};
+   });
+   assert.ok(family.ok,"Ursaring → Ursaluna must reset scroll and show GL #2: "+
+    JSON.stringify(family));
+   await page.evaluate(()=>{
+    document.querySelector("#psRankExplorer")?.scrollIntoView({block:"nearest"});
+   });
+   await page.screenshot({path:path.join(output,sz.name+"-ursaluna-class-selected.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,
      bottomReachable:bottom.lastVisible,mega:mega.text});
    await page.close();
   }
+
+  // LT254 — reproduce the SECOND Android dock.html WebView. Its .controls-window
+  // class once let later horizontal/orientation rules redraw the entire ribbon
+  // inside the translucent popup, even though popup-window tried to hide it.
+  const popup=await browser.newPage({viewport:{width:360,height:700},
+   deviceScaleFactor:1,isMobile:true,hasTouch:true});
+  const popupErrors=[];popup.on("pageerror",e=>popupErrors.push(String(e)));
+  await popup.addInitScript(()=>{
+   window.Native=new Proxy({}, {get(_t,key){
+    if(key==="openPopup")return ()=>undefined;
+    return ()=>undefined;
+   }});
+  });
+  await popup.goto("file://"+path.resolve(__dirname,"../src/main/assets/dock.html")+
+   "?controls=1&popup=1",{waitUntil:"load"});
+  const scenarios=[
+   {name:"mode",kind:"mode",above:false},
+   {name:"mode-above",kind:"mode",above:true},
+   {name:"filters",kind:"filters",above:false},
+   {name:"location",kind:"location",above:false}
+  ];
+  for(const scenario of scenarios){
+   const state=await popup.evaluate(({kind,above})=>{
+    document.body.classList.add("visual-menu-horizontal");
+    document.body.classList.toggle("popup-above",above);
+    window.showNativePopup(kind);
+    const get=id=>document.getElementById(id);
+    const panel=get("choices"),menu=get("menu");
+    return {kind,visible:panel.classList.contains("visible"),
+     ribbon:getComputedStyle(get("quickMenuList")).display,
+     head:getComputedStyle(get("quickHead")).display,
+     controls:getComputedStyle(get("controls")).display,
+     gear:getComputedStyle(get("gear")).display,
+     actualMenuHeight:menu.getBoundingClientRect().height,
+     popupWidth:panel.getBoundingClientRect().width};
+   },scenario);
+   assert.ok(state.visible&&state.ribbon==="none"&&state.head==="none"&&
+    state.controls==="none"&&state.gear==="none"&&
+    state.actualMenuHeight===0&&state.popupWidth>20,
+    "popup must paint one independent surface without toolbar clones: "+
+    JSON.stringify(state));
+   await popup.screenshot({path:path.join(output,"popup-single-owner-"+scenario.name+".png")});
+   console.log("LT254 popup one-toolbar-owner PASS",state);
+  }
+  assert.deepEqual(popupErrors,[],"popup WebView must have no JS runtime failures");
+  await popup.close();
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

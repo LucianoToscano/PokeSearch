@@ -971,6 +971,74 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #movesPopover .psMoveRow{min-width:0;flex-wrap:wrap}
 #movesPopover .psMoveStats{font-size:9px;color:#b6d9e9;line-height:1.3;
  white-space:normal;overflow-wrap:anywhere;padding-left:3px}
+
+/* LT254: real Samsung screenshots 05/11 — keep all calculator controls
+ * inside the existing compact 200dp card, without tiny sliders/oversized IVs. */
+#psMetricPanel{box-sizing:border-box!important;min-width:0!important;padding:5px 6px!important}
+#psMetricPanel .psMetricHead{font-size:10.5px!important;line-height:1.2!important;margin:0 0 2px!important;gap:3px!important}
+#psMetricPanel .psMetricHead b{min-width:0!important;overflow-wrap:anywhere}
+#psMetricPanel .psMetricCurrent{font-size:9.5px!important;margin:0 0 3px!important}
+#psMetricPanel .psCpSimulator{padding:2px 0!important}
+#psMetricPanel .psCpSimTitle{font-size:10px!important;line-height:1.25!important;margin:2px 0 3px!important}
+#psMetricPanel .psCpSimFields{grid-template-columns:minmax(0,1fr) 34px!important;gap:3px 4px!important;align-items:center!important}
+#psMetricPanel .psCpSimFields label{font-size:9.5px!important;gap:2px!important}
+#psMetricPanel .psCpFormStepper,#psMetricPanel .psCpLevelStepper{gap:3px!important;min-width:0!important}
+#psMetricPanel .psCpFormStepper button,
+#psMetricPanel .psCpLevelStepper button{box-sizing:border-box!important;flex:0 0 23px!important;
+ width:23px!important;min-width:23px!important;max-width:23px!important;height:27px!important;
+ line-height:25px!important;font-size:15px!important;padding:0!important}
+#psMetricPanel .psCpFormStepper select{min-height:28px!important;height:28px!important;padding:3px 4px!important;font-size:11px!important}
+#psMetricPanel .psCpLevelStepper input[type=range]{box-sizing:border-box!important;
+ min-width:42px!important;width:100%!important;flex:1 1 auto!important;height:27px!important;margin:0!important}
+#psMetricPanel #psCpLevelValue{min-width:34px!important;grid-column:2!important;align-self:end!important;
+ padding:0 0 7px!important;text-align:right!important;font-size:10.5px!important}
+#psMetricPanel .psCpIvComparison{grid-template-columns:minmax(0,1fr)!important;gap:3px!important;margin:4px 0!important}
+#psMetricPanel .psCpIvGroup{box-sizing:border-box!important;min-width:0!important;
+ display:grid!important;grid-template-columns:32px minmax(0,1fr) 24px!important;align-items:center!important;
+ gap:3px!important;padding:3px 4px!important;border-radius:5px!important}
+#psMetricPanel .psCpIvGroup>b{grid-column:1!important;margin:0!important;font-size:10px!important;line-height:1.2!important}
+#psMetricPanel .psCpIvInputs{grid-column:2!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:3px!important;min-width:0!important}
+#psMetricPanel .psCpIvInputs label{font-size:8px!important;gap:1px!important;line-height:1.15!important}
+#psMetricPanel .psCpIvInputs input{height:25px!important;min-height:25px!important;
+ font-size:11px!important;padding:2px 0!important}
+#psMetricPanel .psCpIvGroup>button{grid-column:3!important;width:24px!important;min-width:24px!important;
+ height:25px!important;min-height:25px!important;padding:0!important;margin:0!important;
+ font-size:16px!important;line-height:22px!important}
+#psMetricPanel .psCpSimResultRow{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center!important;gap:2px 4px!important;padding:2px 0!important;
+ line-height:1.2!important;font-size:9.5px!important}
+#psMetricPanel .psCpSimResultRow strong{font-size:9.5px!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;max-width:105px!important;text-align:right!important}
+#psMetricPanel .psCpSimExtra{margin:3px 0!important;border-top:1px solid #ffffff24;padding:3px 0}
+#psMetricPanel .psCpSimExtra summary{font-size:9px!important;color:#afcfe5;font-weight:650;
+ cursor:pointer;min-height:20px;line-height:20px}
+#psMetricPanel .psCpTargetRow{gap:4px!important;flex-wrap:nowrap!important;margin:3px 0!important}
+#psMetricPanel .psCpTargetRow input{width:69px!important;height:26px!important;font-size:11px!important}
+#psMetricPanel .psCpTargetRow button{min-height:27px!important;height:27px!important;font-size:10px!important;padding:3px 5px!important}
+#psMetricPanel .psCpPresets{gap:3px!important;margin:4px 0!important}
+#psMetricPanel .psCpPresets button{min-height:25px!important;font-size:10px!important}
+#psMetricPanel .psCpSimFoot{margin:3px 0!important;font-size:9px!important;line-height:1.3!important}
+#psMetricPanel .psCpSimFoot details{margin-top:2px}
+#psMetricPanel .psCpSimFoot summary{cursor:pointer;color:#afcfe5}
+#movesPopover:not([hidden]){max-height:178px!important;overflow-y:auto!important}
+#movesPopover .psMoveRow{display:grid!important;grid-template-columns:40px minmax(0,1fr) 10px!important;
+ align-items:center!important;gap:1px 3px!important;flex-wrap:nowrap!important;
+ padding:2px 0!important;min-height:0!important}
+#movesPopover .psMoveLabel{grid-column:1!important;flex:none!important;
+ font-size:9px!important;white-space:nowrap!important}
+#movesPopover .psMoveName{grid-column:2!important;min-width:0!important;
+ font-size:10.5px!important;line-height:1.2!important;overflow-wrap:normal!important;word-break:normal!important}
+#movesPopover .psMoveLegacy{grid-column:3!important;font-size:9px!important}
+#movesPopover .psMoveStats{grid-column:2/-1!important;display:block!important;padding:0!important;
+ min-width:0!important;font-size:8.5px!important;line-height:1.2!important;white-space:normal!important}
+#movesPopover .psMoveLegend{font-size:8.5px!important;line-height:1.25!important;margin:2px 0!important}
+#movesPopover .psMoveTitle{font-size:10.5px!important;margin-bottom:3px!important}
+
+/* LT254: Mega is a form/ranking projection, never a separate charged attack. */
+#movesPopover .psMegaMoveIcon{display:inline-block!important;width:12px!important;
+ height:12px!important;vertical-align:-1px!important;margin-right:4px!important}
+#movesPopover .psMegaMoveContext{font-size:9px!important;line-height:1.25!important;
+ color:#c2ddd1!important;overflow-wrap:anywhere!important;margin:3px 0 5px!important}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1552,19 +1620,20 @@ function renderRankOneMoves(){
  if(!hasRank&&!megaTop)return;
  const league=(rankLine.dataset&&rankLine.dataset.league)||"";
  const featured=currentRankSpecies||watchName;
- const isMega=/^mega\s+/i.test(featured)||/\(mega\)/i.test(featured);
- // PvPoke does not simulate Mega GBL usage. Use its base species learnset,
- // clearly labelled, never claim that the Mega was PvPoke recommended.
+ const isMega=/^mega\s+/i.test(featured)||/\(mega(?: [XY])?\)/i.test(featured);
+ // PvPoke Mega Edition is distinct from regular GO Battle League.
+ // Moves remain learned on the base form, but recommendations may change.
  const species=isMega?featured.replace(/^mega\s+/i,"")
   .replace(/\s*\(mega(?: [XY])?\)\s*/i,"")
   .replace(/\s+[XY]$/i,"").trim():featured;
- const statusKey=league+"|"+String(species).toLowerCase().trim();
+ const statusKey=league+"|"+(isMega?"mega":"normal")+"|"+String(species).toLowerCase().trim();
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";
  const prior=psVerifiedMoveIcons.get(statusKey);
- btn.textContent=prior?.icon||"🗡";
+ btn.textContent=prior?.icon||"⚡";
  btn.title=prior?.title||
-  "Consultar golpes; ícone neutro até verificar legado e recomendação";
+  (isMega?"Consultar recomendação PvP da Megaedição; golpes aprendidos na forma normal":
+   "Consultar golpes; ícone neutro até verificar legado e recomendação");
  btn.setAttribute("aria-label",btn.title);
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
@@ -1573,14 +1642,21 @@ function renderRankOneMoves(){
   const identity=detailIdentity;
   popover.textContent="Consultando golpes PvP...";
   resizeEvolutionPanel();
-  const recommendation=await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
+  const recommendation=isMega?
+   await window.PokeSearchPvpRankMoves?.lookupMega?.(league,featured):
+   await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
   if(detailIdentity!==identity||popover.hidden||!btn.isConnected)return;
-  if(!recommendation){
+  // Never label a normal-league recommendation as simulated for the Mega.
+  if(!recommendation||(isMega&&recommendation.megaRecommendation!==true)){
    // No remote ranking or translation is authoritative right now.
    // Show known moves of this exact capture rather than a misleading empty
    // "recommended" panel. Never present them as a PvPoke recommendation.
    const shown=String(currentCardMoves||"").trim();
-   popover.innerHTML='<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
+   popover.innerHTML=isMega?
+    '<div class="psMoveTitle">Megaedição indisponível</div>'+
+    '<div class="psMoveLegend">Mega Evolução não aprende golpes exclusivos. '+
+    'Os golpes são do '+h(species)+' normal; recomendação Mega não verificada.</div>':
+    '<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
     (shown?'<div class="psMoveRow"><span class="psMoveLabel">Capturado:</span>'+
       '<span class="psMoveName">'+h(shown)+'</span></div>':
       '<div class="psMoveLegend">Golpes ainda não disponíveis nesta fonte.</div>');
@@ -1608,7 +1684,8 @@ function renderRankOneMoves(){
    const metrics=[valid(stats.power,500)?"Poder "+stats.power:"",
     valid(stats.energyGain,100)?"Energia +"+stats.energyGain:"",
     valid(stats.energyCost,200)?"Custo "+stats.energyCost:""].filter(Boolean);
-   return '<div class="psMoveRow"><span class="psMoveLabel">'+h(label)+':</span>'+
+   return '<div class="psMoveRow"><span class="psMoveLabel" title="'+
+     h(/^C[12]$/.test(label)?"Carregado "+label.slice(1):label)+'">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
      (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+
      (metrics.length?'<span class="psMoveStats">'+h(metrics.join(" · "))+'</span>':"")+'</div>';
@@ -1640,27 +1717,30 @@ function renderRankOneMoves(){
   }
   const fastRow=row("Ágil",recommendation.fast);
   const chargedRows=(recommendation.charged||[]).slice(0,2)
-    .map((m,i)=>row("Carregado "+(i+1),m)).join("");
+    .map((m,i)=>row("C"+(i+1),m)).join("");
   // Status should describe the verified recommended set, not captured moves.
   const verified=[recommendation.fast,...(recommendation.charged||[])].filter(Boolean);
   const complete=verified.length>=2&&verified.every(m=>
    m.status==="normal"||m.status==="elite"||m.status==="legacy");
   if(complete){
-   btn.textContent=hasLegacy?"⚔️":"🗡";
+   btn.textContent=hasLegacy?"⚔️":"⚡";
    btn.title=hasLegacy?"⚔️ Conjunto recomendado exige pelo menos um golpe legado":
-    "🗡 Conjunto PvP recomendado sem golpe legado";
+    "⚡ Consultar conjunto PvP confirmado sem golpe legado";
    btn.setAttribute?.("aria-label",btn.title);
    psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
   }
   popover.innerHTML='<div class="psMoveTitle">'+
-   (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
-   '</div>'+fastRow+chargedRows+
-   (String(currentCardMoves||"").trim()?'<div class="psMoveLegend">Capturados: '+
-    h(currentCardMoves)+'</div>':"")+
+   (isMega?'<img class="psMegaMoveIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">'+
+    'Mega '+h(species)+' · PvP':'Golpes PvP recomendados')+
+   '</div>'+
+   (isMega?'<div class="psMoveLegend psMegaMoveContext">'+
+    'Mesmos golpes do '+h(species)+' normal · avaliação Megaedição.</div>':"")+
+   fastRow+chargedRows+
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
-    ' · recomendação não é ataque capturado</div>'+
-   (hasLegacy?'<div class="psMoveLegend">⚔️ Pelo menos um golpe legado / Elite</div>':
-    complete?'<div class="psMoveLegend">🗡 Conjunto sem golpes legados</div>':
+    (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
+      ' · recomendados ≠ capturados')+'</div>'+
+   (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado/Elite confirmado</div>':
+    complete?'<div class="psMoveLegend">⚡ Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">Status de legado não verificado</div>');
   resizeEvolutionPanel();
  };
@@ -2149,7 +2229,7 @@ function psCpControls(){
  if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
   psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Simulador PC / Nível · família completa</div>'+
+  '<div class="psCpSimTitle">Normal / evoluções / Mega · mesmos IVs</div>'+
   '<div class="psCpSimFields"><label>Forma'+
   '<div class="psCpFormStepper"><button type="button" onclick="stepPvpCpForm(-1)"'+
   ' aria-label="Forma anterior" title="Forma anterior">‹</button>'+
@@ -2166,10 +2246,10 @@ function psCpControls(){
   '</div></label>'+
   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
   '<div class="psCpIvComparison">'+
-  '<div class="psCpIvGroup"><b>IV A · editável</b>'+
+  '<div class="psCpIvGroup"><b>IV A</b>'+
   psCpIvFields("A",psCpCustomIv||psCpIv()||[0,0,0])+
-  '<button type="button" onclick="psCpResetIv()">IV capturado</button></div>'+
-  '<div class="psCpIvGroup"><b>IV B · comparação</b>'+
+  '<button type="button" onclick="psCpResetIv()" title="Restaurar IV capturado" aria-label="Restaurar IV capturado">↶</button></div>'+
+  '<div class="psCpIvGroup"><b>IV B</b>'+
   psCpIvFields("B",psCpCompareIv)+'</div></div>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
   '<div class="psCpTargetRow"><label>PC-alvo '+
@@ -2182,8 +2262,10 @@ function psCpControls(){
   '<button type="button" onclick="psCpSetPreset(500)">500</button>'+
   '<button type="button" onclick="psCpSetPreset(1500)">1500</button>'+
   '<button type="button" onclick="psCpSetPreset(2500)">2500</button></div>'+
-  '<div class="psCpSimFoot">Projeção matemática com IVs editáveis e Game Master offline. '+
-  'Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</div></div>';
+  '<div class="psCpSimFoot">Projeção offline · Mega não garante entrada na GBL.'+
+  '<details><summary>Notas da simulação</summary>'+
+  'Projeção matemática com IVs editáveis e Game Master offline. Não confirma '+
+  'disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</details></div></div>';
 }
 function stepPvpCpForm(delta){
  const forms=psCpVariants(),sel=document.getElementById("psCpForm");
@@ -2247,18 +2329,21 @@ function updatePvpCpSimulator(){
  if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
  const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
  const compared=psCpAt(row,compare,psCpTargetLevel);
- root.innerHTML='<div class="psCpSimResultRow"><span>IV atual A '+h(iv.join("/"))+
+ const delta=compared?compared.cp-current.cp:0;
+ const signed=delta>0?"+"+delta:String(delta);
+ root.innerHTML='<div class="psCpSimResultRow"><span>IV A '+h(iv.join("/"))+
   '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
   (compared?'<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
-   '</span><strong>PC '+compared.cp+' · PS '+compared.hp+
-   ' · ΔPC '+(current.cp-compared.cp)+'</strong></div>':'')+
-  '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>⚪ Até 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>'+
+   '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
+   '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div>':'')+
+  '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🔵 GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🟡 UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
-  '</span><strong>'+label(target)+'</strong></div>';
+  '</span><strong>'+label(target)+'</strong></div>'+
+  '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+
+  '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div></details>';
  return true;
 }
 function renderDetailMetric(){
@@ -2286,9 +2371,9 @@ function renderDetailMetric(){
  }
  const selected=metricKind==="cp"?"PC":"Nível";
  const own=metricCard||{};
- panel.innerHTML='<div class="psMetricHead"><b>'+selected+' · comparativo por liga</b>'+
+ panel.innerHTML='<div class="psMetricHead"><b>Calculadora PvP · '+selected+'</b>'+
   '<button type="button" onclick="closeDetailMetric()" aria-label="Fechar comparativo">×</button></div>'+
-  '<div class="psMetricCurrent">Capturado · PC '+h(own.cp??"—")+
+  '<div class="psMetricCurrent">Capturado: PC '+h(own.cp??"—")+
   ' · Nv. '+h(own.level??"—")+'</div>'+
   psCpControls()+
   (rows?'<details class="psCpPvpProjections"><summary>Projeções PvP por liga</summary>'+rows+'</details>':

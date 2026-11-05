@@ -25,6 +25,7 @@ function openQuery(s,query,api,ins){
  const found=ins.lookup(s.rows,s.kind,query);
  if(!found){s.advancedStatus="Combinação não encontrada.";return false;}
  s.filter=0;s.page=api.pageForRank(s.rows,found.rank);
+ s.resetTableScroll=true;
  s.foundRank=found.rank;s.advancedStatus="Localizado #"+found.rank+
   (s.kind==="class"?" · "+found.iv+" · "+found.efficiency+"%":" · "+found.name);
  return true;
