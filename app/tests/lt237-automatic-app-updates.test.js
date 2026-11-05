@@ -19,7 +19,7 @@ check("official release only; package and signing checks retained",()=>{
 });
 check("network is unmetered and opt-in may be disabled",()=>{
  assert.match(manifest,/android.permission.ACCESS_NETWORK_STATE/);
- assert.match(center,/NETWORK_CAPABILITY_NOT_METERED/);
+ assert.match(center,/NET_CAPABILITY_NOT_METERED/);
  assert.match(center,/autoDownloadEnabled\(context\)&&onUnmeteredNetwork\(context\)/);
  assert.match(center,/getBoolean\("githubAutoDownloadWifi",true\)/);
  assert.match(main,/Baixar atualizações automaticamente no Wi-Fi/);
@@ -30,7 +30,7 @@ check("background worker prefetch and in-home check keep existing schedule",()=>
  assert.match(center,/30,TimeUnit.MINUTES/);
  assert.match(center,/ExistingPeriodicWorkPolicy.KEEP/);
  assert.match(center,/downloadVerified\(context,r,new AtomicBoolean\(false\)/);
- assert.match(center,/prefetchOrNotify\(activity.getApplicationContext\(\),r\)/);
+ assert.match(center,/prefetchOrNotify\(activity.getApplicationContext\(\),r,/);
  assert.match(main,/GitHubUpdateCenter.schedule\(this\)/);
  assert.match(main,/GitHubUpdateCenter.check\(this\)/);
 });
