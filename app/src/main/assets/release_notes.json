@@ -1826,6 +1826,26 @@
           "QA visual real no Samsung com as duas Pokébolas e os tamanhos P/M/G continua necessário."
         ]
       }
+    },
+    {
+      "id": "lt249-no-false-top1-no-detached-zero-20261105",
+      "minVersionCode": 54453,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT249 — PvP fiel ao IV e resultados vazios sem contador solto",
+      "sections": {
+        "correcoes": [
+          "Busca GL/UL Top #N não inventa IV #1: se nenhuma combinação for confirmada dentro do limite solicitado, o card mostra o IV Classe REAL mais próximo e o RG comprovado, com aviso no tooltip de que o filtro Top #N não foi confirmado.",
+          "Machop IV #611 com evoluções Machoke IV #2 RG #500 e Machamp IV #196: o resumo usa 'GL · IV #2 · ↳ Machoke · RG #500', e não 'GL · Top #1 · Machop #611'.",
+          "Quando não há resultados na Pokébola independente, ocultar a linha '0' desprendida e não mostrar o contador numérico 0; o status continua disponível no comando de status do aplicativo."
+        ],
+        "melhorias": [
+          "Mantidos IV antes do RG, evolução ↳, botões independentes, classificação PvP real, lista compacta e respeito a critérios de mega/elegibilidade.",
+          "Não alterar automaticamente posição manual, localização, filtros, login e preferências das duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual física Samsung P1/P2 e tamanhos P/M/G permanece pendente; regressões automatizadas não substituem teste com o APK instalado."
+        ]
+      }
     }
   ]
 }
