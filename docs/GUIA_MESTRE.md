@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## Publicação permanente pelo assistente — 05/11/2026
+
+- Pedido do proprietário: próximas atualizações solicitadas devem ser executadas pelo assistente até publicar, validar e registrar evidências, sem upload manual de YAML ou disparo de build pelo usuário. Preferência registrada em AGENTS.md; não autoriza mudanças/publicações não solicitadas.
+- [PR #211](https://github.com/LucianoToscano/PokeSearch/pull/211) mesclada, commit `bff497116a0aa6d02809bb69308ccfd803f85e17`. Fluxo `.github/workflows/pokesearch-official-release.yml` disparado por `release/official-request.json` na main. Ambiente `official-updates`, certificado permanente e segredos no runner preservados.
+- Validação: 18 cenários de gates e YAML local aprovados; [CI da PR #41961331714](https://github.com/LucianoToscano/PokeSearch/actions/runs/41961331714) e regressões Node #41961331818 success; [execução na main #41961482865](https://github.com/LucianoToscano/PokeSearch/actions/runs/41961482865) success.
+- Instalação inicial com `enabled=false`: nenhuma nova release solicitada, nenhuma substituição de LT237. O primeiro build/publicação futuro pelo fluxo genérico ainda precisa de acompanhamento; não confundir preflight aprovado com novo APK compilado.
+- Procedimento: [PUBLICACAO_OFICIAL_PERMANENTE.md](PUBLICACAO_OFICIAL_PERMANENTE.md). Rejeita códigos menores/iguais aos de QA conhecidos, regressão de versão, mudança inesperada de latest e notas ausentes; não sobrescreve releases. Android continua exigindo confirmação de instalação; acesso futuro às ferramentas e eventuais aprovações GitHub não podem ser garantidos.
+
 ## LT237 OFICIAL — 0.02.37 / versionCode 54441 — LT236 cumulativa publicada (05/11/2026)
 
 **Estado confirmado:** release estável [v0.02.37-54441](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.37-54441), publicada em 2026-11-05T03:16:32Z (00:16:32 America/Fortaleza), retornada por `releases/latest`, draft=false e prerelease=false. O proprietário autorizou concluir o pedido LT236 pela LT237 cumulativa. LT236 não teve release separada; suas correções estão incluídas na LT237. Instalação e homologação física Samsung permanecem pendentes.
