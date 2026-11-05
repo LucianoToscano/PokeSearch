@@ -111,12 +111,9 @@ final class PremiumAccess {
         leaseElapsed=-1L;
     }
     static synchronized boolean permitted(boolean secondary){
-        // P1 is always free, including offline and when QA distribution is disabled.
-        if(!secondary||!controlled())return true;
-        // P2 requires both the remotely enabled QA version and an active entitlement.
-        return leaseElapsed>=0&&SystemClock.elapsedRealtime()>=leaseElapsed&&
-          SystemClock.elapsedRealtime()-leaseElapsed<LEASE_MS&&
-          globallyAllowed&&secondAllowed;
+        // LT234: ativação de P1/P2 não depende de conta Google ou licença Premium.
+        // O backend Premium continua disponível apenas para recursos opcionais.
+        return true;
     }
     static void verify(Context context,AccessCallback callback){
         if(!controlled()){callback.done(true,true);return;}
