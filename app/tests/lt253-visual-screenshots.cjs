@@ -184,5 +184,51 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      bottomReachable:bottom.lastVisible,mega:mega.text});
    await page.close();
   }
+
+  // LT254 — reproduce the SECOND Android dock.html WebView. Its .controls-window
+  // class once let later horizontal/orientation rules redraw the entire ribbon
+  // inside the translucent popup, even though popup-window tried to hide it.
+  const popup=await browser.newPage({viewport:{width:360,height:700},
+   deviceScaleFactor:1,isMobile:true,hasTouch:true});
+  const popupErrors=[];popup.on("pageerror",e=>popupErrors.push(String(e)));
+  await popup.addInitScript(()=>{
+   window.Native=new Proxy({}, {get(_t,key){
+    if(key==="openPopup")return ()=>undefined;
+    return ()=>undefined;
+   }});
+  });
+  await popup.goto("file://"+path.resolve(__dirname,"../src/main/assets/dock.html")+
+   "?controls=1&popup=1",{waitUntil:"load"});
+  const scenarios=[
+   {name:"mode",kind:"mode",above:false},
+   {name:"mode-above",kind:"mode",above:true},
+   {name:"filters",kind:"filters",above:false},
+   {name:"location",kind:"location",above:false}
+  ];
+  for(const scenario of scenarios){
+   const state=await popup.evaluate(({kind,above})=>{
+    document.body.classList.add("visual-menu-horizontal");
+    document.body.classList.toggle("popup-above",above);
+    window.showNativePopup(kind);
+    const get=id=>document.getElementById(id);
+    const panel=get("choices"),menu=get("menu");
+    return {kind,visible:panel.classList.contains("visible"),
+     ribbon:getComputedStyle(get("quickMenuList")).display,
+     head:getComputedStyle(get("quickHead")).display,
+     controls:getComputedStyle(get("controls")).display,
+     gear:getComputedStyle(get("gear")).display,
+     actualMenuHeight:menu.getBoundingClientRect().height,
+     popupWidth:panel.getBoundingClientRect().width};
+   },scenario);
+   assert.ok(state.visible&&state.ribbon==="none"&&state.head==="none"&&
+    state.controls==="none"&&state.gear==="none"&&
+    state.actualMenuHeight===0&&state.popupWidth>20,
+    "popup must paint one independent surface without toolbar clones: "+
+    JSON.stringify(state));
+   await popup.screenshot({path:path.join(output,"popup-single-owner-"+scenario.name+".png")});
+   console.log("LT254 popup one-toolbar-owner PASS",state);
+  }
+  assert.deepEqual(popupErrors,[],"popup WebView must have no JS runtime failures");
+  await popup.close();
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
