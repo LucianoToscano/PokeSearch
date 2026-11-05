@@ -12,7 +12,7 @@ assert.ok(script.includes('document.getElementById("name").textContent=String(c.
 assert.ok(script.includes('document.getElementById("types").innerHTML=presenter?.types(c,metadata)||"";'));
 assert.ok(script.includes('[h(c.number),gender].filter(Boolean)'));
 assert.ok(script.includes('[c.size,c.form].filter(Boolean)'));
-assert.ok(script.includes('statTile("PC",c.cp)+statTile("Nv.",c.level)'));
+assert.ok(script.includes('statTile("PC",c.cp,"cp")+statTile("Nv.",c.level,"level")'));
 assert.ok(script.includes('class="ivPercent"'),"percent inside IV card");
 assert.ok(script.includes('h(showRaw?ivDisplay.raw:"—")'),"raw IV still uses original data");
 assert.ok(script.includes('rankLine.textContent=rankText;'),"rank preserved");

@@ -10,7 +10,7 @@ assert.ok(inline);
 new vm.Script(inline);
 // Short rank label always makes room for full evolution name, no rank metadata loss.
 assert.ok(detail.includes('setRankLineLabel(rankLine,label+" · IV #"+best.rank+scope)'));
-assert.ok(detail.includes('const scope=best.kind==="current"?"":" · "+best.name'));
+assert.ok(detail.includes('const scope=best.kind==="current"?" · Atual":" · ↳ "+best.name'));
 assert.ok(detail.includes('league.toUpperCase()+" · IV #"+ivValue'));
 assert.ok(detail.includes('#rankLine .psRankLabel{display:block;min-width:0;flex:1 1 auto;'));
 assert.match(detail,/#rankLine \.psRankLabel\{[^}]*overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere/);

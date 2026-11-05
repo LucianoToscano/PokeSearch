@@ -1695,6 +1695,31 @@
           "Conferir os dois menus, o card expandido e os tamanhos P/M/G no Samsung."
         ]
       }
+    },
+    {
+      "id": "lt244-iv-rg-evolution-current-cp-level-20261105",
+      "minVersionCode": 54448,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT244 — Evolução ↳, Rank Geral e métricas interativas",
+      "sections": {
+        "novidades": [
+          "RG #N no card compacto quando o PvPoke confirma o ranking geral da espécie; toque abre a tabela completa diretamente naquela posição.",
+          "Tocar em IV abre as 4.096 combinações do Pokémon; tocar em PC ou Nv. abre o comparativo recolhível dos mesmos IVs por liga, sem consultas adicionais."
+        ],
+        "melhorias": [
+          "Restaurado ↳ antes da evolução responsável pelo IV Rank; quando o #1 pertence ao próprio Pokémon aparece Atual.",
+          "Rank Classe (IV #N) e Rank Geral (RG #N) têm atalhos separados e legíveis em P/M/G, preservando os comandos ⚔️.",
+          "Projeções de PC e nível não confundem atributos do encontro atual com resultados teóricos das ligas."
+        ],
+        "correcoes": [
+          "Corrigida a perda da seta de evolução introduzida com o resumo compacto LT243.",
+          "Rank Geral deixa de exigir abrir a análise PvP expandida quando existe um número comprovado para a forma selecionada."
+        ],
+        "emDesenvolvimento": [
+          "QA visual real no Samsung para os tamanhos P/M/G e as duas Pokébolas.",
+          "Custos de Poeira Estelar e Doces não foram implementados; exigem tabelas oficiais verificadas e não são inferidos."
+        ]
+      }
     }
   ]
 }

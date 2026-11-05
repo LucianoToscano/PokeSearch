@@ -55,7 +55,7 @@ assert.ok(html.includes('#headerActions #timer{display:inline-flex;align-items:c
 assert.ok(html.includes('id="timeRemaining"'),"clock value anchored to a fixed-width icon");
 assert.ok(html.includes('id="dexGender" class="metaPair"'));
 assert.ok(html.includes('id="sizeForm" class="metaPair"'));
-assert.ok(script.includes('statTile("PC",c.cp)+statTile("Nv.",c.level)'));
+assert.ok(script.includes('statTile("PC",c.cp,"cp")+statTile("Nv.",c.level,"level")'));
 assert.ok(script.includes('h(showRaw?ivDisplay.raw:"—")'));
 assert.ok(script.includes('rankLine.textContent=rankText;'));
 // Copy feedback must follow successful native clipboard confirmation.
