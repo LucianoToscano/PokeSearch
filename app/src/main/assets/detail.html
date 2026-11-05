@@ -1413,6 +1413,8 @@ window.showDetails=(c,mode,watched)=>{
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
   closePvpReferenceInfo();
+  window.PokeSearchRankExplorer?.close();
+  window.psRankContext=null;
   detailIdentity=nextIdentity;evolutionExpanded=false;
   coordsRequestSeq++;
   clearCoordsRate();
