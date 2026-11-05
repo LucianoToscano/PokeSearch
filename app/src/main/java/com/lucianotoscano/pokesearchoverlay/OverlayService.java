@@ -5835,9 +5835,9 @@ public class OverlayService extends Service {
         try{web.destroy();}catch(RuntimeException e){recordFailure(stage+" destroy",e);}
     }
     @Override public void onDestroy(){
+        clearMenuBounds();
         if(primaryMenuOwner==this)primaryMenuOwner=null;
         if(secondaryMenuOwner==this)secondaryMenuOwner=null;
-        clearMenuBounds();
         WatchAlerts.sharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(sharedFavoritesListener);
         if(cooldownChangedReceiverRegistered){
