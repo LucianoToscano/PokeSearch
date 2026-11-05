@@ -6295,9 +6295,8 @@ function manualRefreshTap(){
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let longTimer, longDone=false;
 function spriteClick(i){if(longDone){longDone=false;return;}Native.toggleDetail(i);}
-// Broken remote image URLs and 1px placeholders must not leave invisible rows.
-// LT64: the site's offscreen lazy sprites can arrive after the list appears.
-// Retry bounded image failures in-place; never rerender cards or touch Search.
+// LT243: sprites can recover after native/local assets initialize without
+// rerendering cards or sending another request to PoGoCoordinates.
 function attachSpriteFeedback(){
  document.querySelectorAll(".spawn .spriteStage").forEach(stage=>{
   let img=stage.querySelector("img.sprite");
@@ -6319,6 +6318,26 @@ function attachSpriteFeedback(){
    img.setAttribute("data-original-src",art?.original||"");
    stage.insertBefore(img,stage.firstChild);img.src=src;
   }
+  const spriteState=img.dataset||(img.dataset={}); // legacy WebView QA stubs
+  if(spriteState.psSpriteManaged==="1"){
+   // A real native asset may become available after the initial 12s error.
+   // Re-probe only the exact card, never a substituted form or other Pokémon.
+   if(stage.classList.contains("failed")&&!spriteState.psSpriteRecovered){
+    const item=stage.closest?.(".spawn");
+    const ix=Number(item?.getAttribute("data-index")??-1);
+    const card=ix>=0&&ix<cards.length?cards[ix]:null;
+    const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
+    const art=card&&engine?.resolve(card);
+    const exact=card&&engine?.bundledExactForArt?.(card,art)||"";
+    if(exact&&img.getAttribute("src")!==exact){
+     spriteState.psSpriteRecovered="1";
+     stage.classList.remove("failed");
+     img.src=exact;
+    }
+   }
+   return;
+  }
+  spriteState.psSpriteManaged="1";
   let retries=0,done=false,mirrorAttempted=false,nativeTried=false;
   const spawnNode=stage.closest?.(".spawn")||stage.parentElement;
   const currentIndex=Number(spawnNode?.getAttribute?.("data-index")??-1);
@@ -7161,7 +7180,8 @@ function draw(){
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
     (publicCors?' crossorigin="anonymous"':'')+
     ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
-   '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">◈</span></span>';
+   '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">#'+
+    esc(String(dexNumber||"?"))+'</span></span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
   let cooldownMarkup="";
@@ -7192,7 +7212,12 @@ function draw(){
   return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
- if(resultWindow){attachLongPress();attachSpriteFeedback();syncTimerTicker();}
+ if(resultWindow){
+  attachLongPress();attachSpriteFeedback();syncTimerTicker();
+  // Two bounded passes can repair newly available exact sprites in-place.
+  setTimeout(attachSpriteFeedback,1800);
+  setTimeout(attachSpriteFeedback,4800);
+  setTimeout(attachSpriteFeedback,14500);}
  }
  const empty=document.getElementById("empty");
  empty.style.display=cards.length?"none":"block";

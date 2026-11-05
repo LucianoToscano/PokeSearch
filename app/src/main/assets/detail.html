@@ -666,13 +666,21 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .psMovesCompact .psMoveLegacy{font-size:8px;vertical-align:baseline;line-height:1;margin-left:1px}
 .psMovesCompact .psMoveLegend{font-size:9px;color:#c9d9e9;margin-top:2px}
 
+/* LT243: inline ranking is abbreviated; never hide the target Pokémon name.
+   Large projection-info overlays are suppressed; numeric ranks remain clickable. */
+.evoLine .evoInfoBtn,.rankLineSafe .evoInfoBtn,#rankLine .evoInfoBtn{display:none!important}
+#pvpRefPopover{display:none!important}
+.evoLine.isReference .evoWho{display:flex;align-items:flex-start;gap:2px}
+.evoLine.isReference .evoWho b{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+#rankLine .psMovesAction{flex:0 0 16px!important;min-width:16px!important;max-width:16px!important}
+@media(max-width:340px){#rankLine{font-size:9px!important;gap:2px!important}}
 /* LT233: PvP rank text may ellipsize; the info and sword buttons may not. */
 #rankLine{box-sizing:border-box!important;display:flex!important;align-items:center!important;
  width:100%!important;max-width:100%!important;min-width:0;gap:3px!important;
- white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important;
+ white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
  padding:2px 4px!important}
 #rankLine .psRankLabel{display:block;min-width:0;flex:1 1 auto;
- overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;line-height:1.2}
 #rankLine .evoInfoBtn,#rankLine .psMovesAction{flex:0 0 18px;min-width:18px;max-width:18px;
  width:18px;height:18px;padding:0!important;margin:0!important;border:0;background:transparent;
  display:inline-flex;align-items:center;justify-content:center;line-height:18px;
@@ -1222,7 +1230,7 @@ function renderRankOneMoves(){
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
  popover.hidden=true;popover.textContent="";
- if(!/Rank Classe: #1(?!\d)/.test(rankLine.textContent||""))return;
+ if(!/(?:Rank Classe:|IV) #1(?!\d)/.test(rankLine.textContent||""))return;
  const league=(rankLine.dataset&&rankLine.dataset.league)||"";
  const species=currentRankSpecies||watchName;
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
@@ -1313,8 +1321,8 @@ function setRankLineLabel(rankLine,label){
  if(!best){
   // A Top-N search is NOT evidence that the base species itself is Top-N.
   const own=candidates.find(x=>x.kind==="current");
-  const summary=label+" · Filtro Top #"+limit+
-   (own?" · "+payload.name+" atual #"+own.rank:" · posição não identificada");
+  const summary=label+" · Top #"+limit+
+   (own?" · "+payload.name+" #"+own.rank:" · sem posição");
   setRankLineLabel(rankLine,summary);
   rankLine.title="A busca pode considerar evoluções ou uma classificação da fonte. "+
    "Nenhuma combinação correspondente ao Top #"+limit+" foi confirmada no cálculo local.";
@@ -1322,9 +1330,8 @@ function setRankLineLabel(rankLine,label){
   return false;
  }
  currentRankSpecies=best.name;
- const scope=best.kind==="evolution"?" · ↳ "+best.name:
-  best.kind==="reference"?" · ↳ "+best.name:"";
- setRankLineLabel(rankLine,label+" · Rank Classe: #"+best.rank+scope);
+ const scope=best.kind==="current"?"":" · "+best.name;
+ setRankLineLabel(rankLine,label+" · IV #"+best.rank+scope);
  if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
   const info=document.createElement("button");
   info.type="button";
@@ -1598,7 +1605,7 @@ window.showDetails=(c,mode,watched)=>{
   Number.isInteger(ivValue)&&ivValue>=1&&ivValue<=4096;
  // c.rank is unlabeled provider metadata; never show it as a verified IV/PvP rank.
  // Render only an explicitly identified species IV rank for a known PvP league.
- const rankText=verifiedIvRank?league.toUpperCase()+" · Rank Classe: #"+ivValue:"";
+ const rankText=verifiedIvRank?league.toUpperCase()+" · IV #"+ivValue:"";
   if(rankLine.dataset)rankLine.dataset.league=verifiedIvRank?league:"";
  rankLine.textContent=rankText;
  rankLine.hidden=!verifiedIvRank;

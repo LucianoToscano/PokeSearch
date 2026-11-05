@@ -48,23 +48,23 @@ const display=()=>new Function("document","activeRankLeague",
  script.slice(a,b)+"return updateVisiblePvPRank;")({
  getElementById(id){assert.equal(id,"rankLine");return badge;}}, "gl");
 assert.equal(display()(ordinary),true);
-assert.equal(badge.textContent,"GL · Rank Classe: #5 · ↳ Noivern");
+assert.equal(badge.textContent,"GL · IV #5 · Noivern");
 assert.ok(badge.title.includes("Noibat atual: #1600"));
 badge.hidden=true;
 assert.equal(display()(costume),true);
-assert.equal(badge.textContent,"GL · Rank Classe: #5 · ↳ Noivern");
+assert.equal(badge.textContent,"GL · IV #5 · Noivern");
 assert.ok(badge.title.includes("não confirma"));
 badge.hidden=true;
 const notInLimit=build(noibat,"gl",4);
 assert.equal(display()(notInLimit),false);
-assert.ok(badge.textContent.includes("Filtro Top #4")&&badge.textContent.includes("Noibat atual #1600"),
+assert.ok(badge.textContent.includes("Top #4")&&badge.textContent.includes("Noibat #1600"),
  "never label #1600 as a Top #4 match");
 badge.hidden=true;
 const noPrev=build(noibat,"gl",5,false);
 assert.equal(display()(noPrev),false,"when includePreviousEvolutions OFF, do not use Noivern rank");
-assert.ok(badge.textContent.includes("Filtro Top #5"));
+assert.ok(badge.textContent.includes("Top #5"));
 badge.hidden=true;
 assert.equal(display()({...ordinary,searchLeague:"ul",searchRankLimit:5}),true,
  "without a matching GL search context show a verified local best instead of inventing a GL threshold");
-assert.ok(!badge.textContent.includes("Filtro Top #5"));
+assert.ok(!badge.textContent.includes("Top #5"));
 console.log("LT164 GL Top #5 Noibat 0/14/12 -> Noivern Rank Classe #5; Noibat #1600; cosmetic reference, limited search PASS");

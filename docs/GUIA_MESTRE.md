@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT243 — Sprites, menus e Rank PvP compacto (05/11/2026, desenvolvimento)
+
+- Screenshots Samsung mostram ausência de algumas sprites, segunda barra de menu exibida enquanto Modos está aberto, Rank Classe longo cortando nome de evolução e grandes janelas de informação sobre projeção.
+- **Correção visual:** barra pequena exibe `GL · IV #N · nome completo` sem `ellipsis`; grandes popovers de projeção ocultos, mas Rank Classe, Rank Geral, Mega e acesso a golpes permanecem. Sprite sem variante verificada usa número Dex neutro, nunca imagem de espécie/forma diferente.
+- **Sprites:** nova verificação finita in-place em 1,8/4,8/14,5s com bytes nativos da mesma espécie/forma exata e listener idempotente; não há mais chamadas ao provedor para reabrir/recuperar sprite.
+- **P1/P2:** abrir a barra de uma Pokébola fecha a outra, mantendo contas, resultados, posições, filtros e configurações independentes. Serviços limpam referência no `onDestroy`.
+- **Arquivos:** `dock.html`, `detail.html`, `OverlayService.java`, `release_notes.json`, testes legados e `lt243-compact-ranks-single-menu-sprite-retry.test.js`.
+- **Planejamento:** candidata LT243 / 0.02.43 / versionCode 54447 / label 51247; após aprovação do Node, Java, OTA e beta privado, merge e publicação permanente assinado. Teste físico Samsung P/M/G das duas Pokébolas permanece pendente.
+- **Relatório:** [LT243_SPRITES_MODO_RANK_COMPACTO_20261105.md](LT243_SPRITES_MODO_RANK_COMPACTO_20261105.md). Código em branch ainda **não** comprova APK publicado.
+
 ## LT242 OFICIAL — 0.02.42 / versionCode 54446 (05/11/2026)
 
 - **Corrigido erro da LT241:** desenho estilizado falso substituído pelo símbolo Mega real de Pokémon GO, PNG `Mega x64.png` dos assets do jogo, Git blob SHA-1 `d156e4b3eb88822376155778182744d4a94cd203`. A imagem original 64×64 está embutida em `mega_evolution_icon.svg` sem alterar os pixels, acessível offline; recorte apenas via viewBox. Direitos de Pokémon GO reservados aos titulares.

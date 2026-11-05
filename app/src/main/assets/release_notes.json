@@ -1673,6 +1673,28 @@
         ],
         "novidades": []
       }
+    },
+    {
+      "id": "lt243-sprite-mode-rank-compact-20261105",
+      "minVersionCode": 54447,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT243 — Sprites, Modo e Rank compacto",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "O indicador compacto de PvP agora usa GL · IV #N · nome completo da evolução, com quebra de linha quando necessária.",
+          "As duas Pokébolas preservam filtros independentes, mas somente uma barra de menus fica aberta de cada vez."
+        ],
+        "correcoes": [
+          "Corrigida a sobreposição das barras de menus ao alternar entre as Pokébolas e abrir Modo.",
+          "Avisos explicativos extensos de projeção não aparecem mais sobre os cards compactos; detalhes de rank e golpes permanecem acessíveis.",
+          "Sprites que chegarem após a inicialização da WebView podem ser recuperados no próprio card sem repetir a pesquisa; o fallback mostra o número da espécie em vez de um losango genérico."
+        ],
+        "emDesenvolvimento": [
+          "Verificar os sprites que ainda não têm variante oficial/local exata. Não substituir fantasias, formas ou Shiny por uma imagem incorreta.",
+          "Conferir os dois menus, o card expandido e os tamanhos P/M/G no Samsung."
+        ]
+      }
     }
   ]
 }
