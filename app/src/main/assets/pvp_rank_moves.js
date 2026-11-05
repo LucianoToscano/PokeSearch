@@ -55,14 +55,25 @@
   const names=new Map((Array.isArray(master.moves)?master.moves:[])
     .filter(m=>m&&typeof m.moveId==="string"&&typeof m.name==="string")
     .map(m=>[m.moveId,m.name]));
+  const moveInfo=new Map((Array.isArray(master.moves)?master.moves:[])
+    .filter(m=>m&&typeof m.moveId==="string").map(m=>[m.moveId,m]));
   const elite=new Set(Array.isArray(pokemon.eliteMoves)?pokemon.eliteMoves:[]);
   const legacy=new Set(Array.isArray(pokemon.legacyMoves)?pokemon.legacyMoves:[]);
   const ordinary=new Set([...(pokemon.fastMoves||[]),...(pokemon.chargedMoves||[])]);
-  const moves=ranking.moveset.slice(0,3).filter(x=>typeof x==="string").map(moveId=>({
-   id:moveId,name:names.get(moveId)||displayId(moveId),
-   status:elite.has(moveId)?"elite":legacy.has(moveId)?"legacy":
-    ordinary.has(moveId)?"normal":"unknown"
-  }));
+  const moves=ranking.moveset.slice(0,3).filter(x=>typeof x==="string").map((moveId,index)=>{
+   const raw=moveInfo.get(moveId)||{};
+   // Only explicit pinned Game Master fields; never infer duration from name.
+   const energy=Number(raw.energy),power=Number(raw.power);
+   const cooldown=Number(raw.cooldown);
+   return {id:moveId,name:names.get(moveId)||displayId(moveId),
+    status:elite.has(moveId)?"elite":legacy.has(moveId)?"legacy":
+     ordinary.has(moveId)?"normal":"unknown",
+    energyGain:index===0&&Number.isFinite(energy)&&energy>0&&energy<=50?energy:null,
+    energyCost:index>0&&Number.isFinite(energy)&&energy<0&&energy>=-100?-energy:null,
+    power:Number.isFinite(power)&&power>0&&power<=500?power:null,
+    turns:index===0&&Number.isInteger(cooldown)&&cooldown>=500&&
+     cooldown<=3000&&cooldown%500===0?cooldown/500:null};
+  });
   if(moves.length<2)return null;
   return {source,commit,league,species:pokemon.speciesName||ranking.speciesName||name,
    fast:moves[0],charged:moves.slice(1)};
