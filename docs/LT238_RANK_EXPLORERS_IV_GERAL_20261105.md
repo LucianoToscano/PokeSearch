@@ -17,3 +17,12 @@
 
 ## Versão e publicação
 Este documento descreve o código da branch/PR. **Não comprova APK oficial, assinatura, merge ou distribuição por OTA**. Publicar apenas em uma nova versão monotônica após CI, revisão, assinatura permanente e validação do GitHub Release/latest. A LT237 publicada anteriormente não deve ser sobrescrita nem reutilizada.
+
+## Publicação oficial verificada — 05/11/2026
+- **Merge:** PR #212 concluída, commit-fonte `607ac0e7505bd1dc946b16ed5a58a73fb7df5234`.
+- **Workflow:** [LT238 oficial #41964685804](https://github.com/LucianoToscano/PokeSearch/actions/runs/41964685804), job publish **completed/success**, incluindo Node/OTA, geração de assets, compilação release, validação do certificado v2 permanente, upload, criação e verificação do GitHub Release.
+- **Release estável em releases/latest:** [v0.02.38-54442](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.38-54442), publicada em 2026-11-05T03:59:47Z, `draft=false`, `prerelease=false`; fonte vinculada ao commit acima.
+- **APK:** [PokeSearch-v0.02.38-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.38-54442/PokeSearch-v0.02.38-LT.apk), 28.130.290 bytes, digest SHA-256 público `1d2b459e7afef53d8c8a37706e1aa011b553abef54b6caaa5b51af44bba71cc2`, asset `uploaded`.
+- **Artefato de CI:** `PokeSearch-LT238-Signed-Verified`, ID 13386529117, 25.952.782 bytes, digest ZIP `e6ab0f3bd20fde2410ac616e8d634c4a9858073bb53767e2d85cb23c31e475c9`. O job confirma `Validate APK and signer` e `Verify public release and hash` como `success`. Certificado previsto no workflow: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Disponibilidade:** já distribuído pelo canal `GitHub Releases/latest`, consumido pelo atualizador do aplicativo. LT237+ pode pré-baixar em Wi-Fi não tarifado; instalação exige confirmação do Android.
+- **Pendente:** teste físico com Samsung e P1/P2, verificação visual da janela, toque/rolagem e instalação preservando dados. Não afirmar instalação remota no aparelho.
