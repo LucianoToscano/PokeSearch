@@ -11,7 +11,7 @@ assert.match(svg,/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
 assert.ok(svg.includes('viewBox="0 0 64 64"'));
 assert.ok(svg.includes('aria-label="Mega Evolução"'));
 assert.ok(svg.includes('fill-opacity=".18"'),"no opaque rectangle behind icon");
-assert.ok(!svg.includes("<script")&&!svg.includes("<image")&&!svg.includes("http://") ,"icon must be self-contained");
+assert.ok(!svg.includes("<script")&&!svg.includes("<image")&&!svg.includes("<foreignObject"),"icon must be self-contained");
 assert.ok(svg.length<5000);
 assert.ok(!detail.includes("isMega?'◈'"),"old ambiguous glyph removed");
 assert.ok(detail.includes("isMega?'<img src=\"mega_evolution_icon.svg\""));
