@@ -798,6 +798,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpSimFoot{font-size:9px;color:#a6b8c9;margin:5px 0}
 #psMetricPanel .psCpPvpProjections{margin-top:4px;padding-top:3px}
 #psMetricPanel .psCpPvpProjections summary{cursor:pointer;color:#93d0ff}
+/* LT248: large fallback move pools stay closed by default, without losing data. */
+#movesPopover .psAvailableMoveDetails{margin:5px 0 0;border-top:1px solid #ffffff25;
+ padding:5px 0 0;color:#bcd9ef;font-size:10px}
+#movesPopover .psAvailableMoveDetails summary{cursor:pointer;user-select:none;
+ font-weight:650;min-height:20px;line-height:20px}
+#movesPopover .psAvailableMoveList{max-height:130px;overflow-y:auto;
+ overscroll-behavior:contain;padding-top:4px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1333,6 +1340,9 @@ function evolutionRow(x,first){
 // PvP recommended attacks must come from the source-pinned PvPoke rankings;
 // Elite/legacy status must come from the corresponding gamemaster species.
 let currentRankSpecies="",currentCardMoves="";
+// LT248: keep the verified move label consistent when the panel is
+// collapsed, rerendered or reopened for the same form and league.
+const psVerifiedMoveIcons=new Map();
 function renderRankOneMoves(){
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
@@ -1349,10 +1359,14 @@ function renderRankOneMoves(){
  const species=isMega?featured.replace(/^mega\s+/i,"")
   .replace(/\s*\(mega(?: [XY])?\)\s*/i,"")
   .replace(/\s+[XY]$/i,"").trim():featured;
+ const statusKey=league+"|"+String(species).toLowerCase().trim();
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
- const btn=document.createElement("button");btn.type="button";btn.textContent="⚔️";
- btn.title="Consultar golpes: ⚔️ contém legado / 🗡 sem legado após verificação";
- btn.setAttribute("aria-label","Consultar golpes recomendados e necessidade de MT Elite");
+ const btn=document.createElement("button");btn.type="button";
+ const prior=psVerifiedMoveIcons.get(statusKey);
+ btn.textContent=prior?.icon||"⚔️";
+ btn.title=prior?.title||
+  "Consultar golpes; ícone neutro até verificar legado e recomendação";
+ btn.setAttribute("aria-label",btn.title);
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
   const show=popover.hidden;popover.hidden=!show;
@@ -1403,11 +1417,17 @@ function renderRankOneMoves(){
      (captured?'<div class="psMoveRow">Golpes capturados: '+h(captured)+'</div>':
       '<div class="psMoveLegend">Fonte de golpes indisponível.</div>');
    }else{
-    popover.innerHTML='<div class="psMoveTitle">Golpes possíveis · sem recomendação</div>'+
+    // Do not flood a tiny overlay with the entire Game Master move pool.
+    // This is NOT a PvP recommendation; show the full pool only on demand.
+    const total=fast.length+charged.length;
+    popover.innerHTML='<div class="psMoveTitle">Sem conjunto PvP recomendado</div>'+
+     '<div class="psMoveLegend">Esta forma não tem uma combinação otimizada nesta fonte.</div>'+
+     '<details class="psAvailableMoveDetails"><summary>Ver '+total+
+     ' golpes possíveis</summary><div class="psAvailableMoveList">'+
      fast.map(x=>row("Ágil",x)).join("")+
      charged.map(x=>row("Carregado",x)).join("")+
-     (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado / Elite conforme a fonte</div>':"")+
-     '<div class="psMoveLegend">Movimentos do Game Master, não um conjunto otimizado de PvP.</div>';
+     (hasLegacy?'<div class="psMoveLegend">💠 Alguns golpes podem ser legados / Elite</div>':"")+
+     '</div></details>';
    }
    resizeEvolutionPanel();return;
   }
@@ -1423,6 +1443,7 @@ function renderRankOneMoves(){
    btn.title=hasLegacy?"⚔️ Conjunto recomendado exige pelo menos um golpe legado":
     "🗡 Conjunto PvP recomendado sem golpe legado";
    btn.setAttribute?.("aria-label",btn.title);
+   psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
   }
   popover.innerHTML='<div class="psMoveTitle">'+
    (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
