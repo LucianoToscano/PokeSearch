@@ -130,7 +130,7 @@ assert.ok(out.innerHTML.includes("até 1500"));
 assert.equal(levelValue.textContent,"35,5");
 assert.equal(funcs.render(),false,"metric panel should not render until the CP/level tile is tapped");
 assert.equal(funcs.open("cp"),true);
-assert.ok(panel.innerHTML.includes("Simulador PC / Nível"));
+assert.ok(panel.innerHTML.includes("Evoluções · PC / Nível"));
 assert.ok(panel.innerHTML.includes("Sem custos")===false);
 assert.ok(panel.innerHTML.includes("Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira"),"no unverified evolution legality or candy/stardust costs");
 assert.ok(panel.innerHTML.includes("Projeções PvP por liga"));
