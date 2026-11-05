@@ -67,7 +67,7 @@ assert.equal(s.filter,0);
 assert.equal(s.page,1);
 engine.applySearch(s,"99,5%");
 assert.equal(engine.visibleRows(s).length,2);
-assert.ok(engine.summaryText(s).includes("Sableye")===false||true);
+assert.ok(engine.visibleRows(s).every(r=>Number(r.efficiency.replace(",","."))>=99.5));
 engine.setFilter(s,50);
 assert.equal(engine.visibleRows(s).length,50);
 assert.equal(s.searchRows,null);
@@ -90,10 +90,10 @@ assert.ok(service.includes('leagueConfirmed,verifiedTargetCriteria(c)'));
 assert.ok(service.includes('successfullyNotifiedGeneralSpawns.put(topPvpKey,topPvpExpiry)'));
 assert.ok(service.includes('topPvpCard!=null&&!"off".equals(alertsMode)&&alerts'));
 assert.ok(service.includes('if(newSpawn&&successfullyNotifiedGeneralSpawns'));
-assert.ok(service.includes('TOP '+"" )||service.includes('"🏆 TOP "'));
+assert.ok(service.includes('"🏆 TOP "'));
 assert.ok(native.includes('rank<=limit&&'));
 assert.ok(native.includes('leagueConfirmed&&targetConfirmed'));
-assert.ok(!native.includes('Mega'));
+assert.ok(native.includes('"gl".equals(mode)||"ul".equals(mode)'));
 for(const html of [detail,dock]){
  const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
  assert.ok(blocks.length>0);
@@ -101,7 +101,7 @@ for(const html of [detail,dock]){
 }
 new vm.Script(read("pvp_rank_explorer.js"));
 const ota=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OtaAssets.java"),"utf8");
-const pack=fs.readFileSync(path.join(__dirname,"../../../scripts/build_ota_pack.py"),"utf8");
+const pack=fs.readFileSync(path.join(__dirname,"../../scripts/build_ota_pack.py"),"utf8");
 for(const name of ["pvp_rank_explorer.js","pvpoke-advanced-gl.js","pvpoke-advanced-ul.js","pvpoke-advanced-ml.js"]){
  assert.ok(ota.includes('"'+name+'"'));
  assert.ok(pack.includes('"'+name+'"'));
