@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.42",
-  "code": 54446,
-  "label": 51246,
-  "previous_tag": "v0.02.41-54445",
-  "qa_max_code": 54445,
-  "release_notes": "LT242: corrige o símbolo Mega incorreto da LT241 utilizando o ícone visual original do Pokémon GO (64x64 em SVG local, offline); mantém apenas um indicador de 10–11 px ao lado da Mega. Remove imagens duplicadas de TOP 1 MEGA, avisos e comparações. O nome do Pokémon não é mais truncado; PC, nível, eficiência e TOP 1 MEGA se ajustam em uma única área flexível com quebra de linha quando necessária. Preserva rankings, filtros, duas Pokébolas, dados, notificações e atualizador. Instalação requer confirmação Android e QA físico Samsung P1/P2 continua pendente."
+  "version": "0.02.43",
+  "code": 54447,
+  "label": 51247,
+  "previous_tag": "v0.02.42-54446",
+  "qa_max_code": 54446,
+  "release_notes": "LT243: card PvP compacto com GL/UL · IV #N · nome completo da evolução, sem texto cortado; grandes explicações de projeções ocultas; somente uma barra de menu ativa entre as duas Pokébolas, preservando filtros e resultados independentes. Reforçado o carregamento/reparo finito dos sprites exatos verificados (sem novos acessos à PoGoCoordinates e sem substituir formas), fallback com número Dex quando não houver imagem confiável. Preservados rankings GL/UL/ML, Mega, favoritas, golpes, assinatura e OTA. Teste visual Samsung P/M/G pendente; instalação exige confirmação Android."
 }
