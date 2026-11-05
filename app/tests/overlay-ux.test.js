@@ -2858,7 +2858,8 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   confirmed.includes("submittedSearchGeneration==requestGeneration")&&
   confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
   confirmed.includes("!searchInProgress&&!resultsStale")&&
-  dock.includes("filtersConfirmed=false)=>{")&&
+  (dock.includes("filtersConfirmed=false)=>{")||
+   dock.includes("filtersConfirmed=false,smartRankLimit=0)=>{"))&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
   phase.includes("dirty?\"● Falta aplicar\"")&&

@@ -1,0 +1,46 @@
+name: LT253 headless visual layout P-M-G smoke
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - app/src/main/assets/detail.html
+      - app/src/main/assets/pvp_lt253_features.js
+      - scripts/lt253_visual_fixtures.cjs
+      - .github/workflows/lt253-visual-qa.yml
+permissions:
+  contents: read
+jobs:
+  visual-layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate exact CSS visual fixtures
+        run: node scripts/lt253_visual_fixtures.cjs "$RUNNER_TEMP/lt253-visual"
+      - name: Chromium screenshot and measured overflow assertions at three widths
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || true)"
+          if [ -z "$CHROME" ]; then echo "::error::Chromium not present: visual QA cannot pass"; exit 1; fi
+          for WIDTH in 200 240 300; do
+            "$CHROME" --headless --disable-gpu --no-sandbox --disable-dev-shm-usage \
+              --window-size=420,900 --virtual-time-budget=1800 \
+              --user-data-dir="$RUNNER_TEMP/lt253-chrome-$WIDTH" \
+              --screenshot="$RUNNER_TEMP/lt253-visual/lt253-$WIDTH.png" \
+              --dump-dom "file://$RUNNER_TEMP/lt253-visual/lt253-$WIDTH.html" \
+              > "$RUNNER_TEMP/lt253-visual/lt253-$WIDTH.dom"
+            node scripts/lt253_visual_fixtures.cjs verify "$RUNNER_TEMP/lt253-visual/lt253-$WIDTH.dom"
+            test -s "$RUNNER_TEMP/lt253-visual/lt253-$WIDTH.png"
+          done
+      - name: Upload screenshots and measurement evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: LT253-visual-fixtures-200-240-300
+          path: ${{ runner.temp }}/lt253-visual/
+          if-no-files-found: warn
+          retention-days: 14

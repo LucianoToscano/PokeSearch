@@ -10,7 +10,7 @@ assert.ok(script.includes('panel.classList.toggle("needsScroll",clipped);'),"scr
 assert.ok(script.includes('if(!clipped)panel.scrollTop=0;'),"stale small scroll reset");
 assert.ok(script.includes("const height=Math.ceil(panel.scrollHeight)+3;"),"native measured intrinsic card");
 assert.ok(java.includes("detailParams.height=dp(detailHeight);moveDetail();"),"native resizes actual overlay");
-assert.ok(java.includes("Math.min(520,available)"),"oversized evolutions can scroll");
+assert.ok(java.includes("Math.min(720,available)"),"oversized evolutions can scroll");
 assert.ok(html.includes('#major .statTile{height:23px;min-height:23px;max-height:23px;'),"stat sizes unchanged");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red coordinates");
 assert.ok(html.includes('#artColumn.gengarSprite.gengarHalloween #img'),"costume art unchanged");

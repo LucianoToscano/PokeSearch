@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT253 — pacote integrado de dez melhorias (05/11/2026; EM QA, NÃO PUBLICADO)
+
+- **Fonte de verdade:** branch `feature/lt253-integrated-pvp-smart-ui-20261105`, [PR #232](https://github.com/LucianoToscano/PokeSearch/pull/232). **Base pública protegida** LT252 `0.02.52/54456`. Próximo rótulo pretendido `0.02.53/54457`, mas **nenhuma release oficial LT253 existe até a aprovação**.
+- Implementado no branch: comparador RG × IV Classe × Mega, cartão de altura adaptável/rolagem, golpes com status de legado e metadados explicitamente verificados, calculadora de segundo IV e LC/GL/UL, alertas Top PvP **opt-in** (OFF padrão), cache PvP estrito até despawn, recuperação limitada de sprite correto, posicionamento evitando menus, compartilhar/copiar texto PvP sem coords/localização, e PR-only screenshots de layout em 200/240/300 px.
+- Contratos: duas Pokébolas independentes; mesmo visual compacto; sem menu Android flutuante novo, contas/credenciais/API inalteradas, Mega não é aprovação de GBL. O cache nativo de coordenadas exatas já existia na LT252 e continua independente por P1/P2.
+- **Auditoria, testes, captura visual e critérios de publicação:** [LT253_IMPLANTACAO_INTEGRADA_QA_VISUAL_20261105.md](LT253_IMPLANTACAO_INTEGRADA_QA_VISUAL_20261105.md). Não afirmar merge, APK oficial, OTA ou instalação física até existirem evidências específicas. A validação de screenshots headless não substitui Samsung P/M/G/P1/P2.
+
+
 ## LT252 — correções do cartão PvP e menus retráteis (05/11/2026; OFICIAL)
 
 - **Versão pública mais recente verificada:** `0.02.52`, `versionCode 54456`, label `51256`, [release v0.02.52-54456](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.52-54456) presente em `releases/latest`. APK oficial `PokeSearch-v0.02.52-LT.apk`, 28.390.841 bytes, SHA-256 `df169994899bb16d1450b6228e677f274df94e663bbccfb5d29df66ef3367b5e`.
