@@ -31,11 +31,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
-/* LT241: slim Mega Evolution emblem with no solid background, shared by all cards. */
-.psMegaMark{display:inline-block;width:14px;height:14px;object-fit:contain;vertical-align:-3px;flex:0 0 14px;margin-right:2px}
-.evoLine .evoMegaTop .psMegaMark,.psTopPvpTag .psMegaMark{width:12px;height:12px;vertical-align:-3px;flex-basis:12px}
-.evoLine .evoWho .evoMark:has(.psMegaMark){display:inline-flex;align-items:center;vertical-align:middle}
-@media(max-width:320px){.psMegaMark{width:12px;height:12px;flex-basis:12px}}
+/* LT242: original in-game Mega mark replaces the old glyph, never occupies a
+   second badge/column. No :has dependency or forced flex-basis on tiny cards. */
+.psMegaMark{display:inline-block;width:11px;height:11px;max-width:11px;max-height:11px;vertical-align:-2px;object-fit:contain;margin:0}
+.evoLine .evoWho .evoMark{display:inline;white-space:nowrap}
+.evoLine .evoMegaTop{flex:0 0 auto}
+@media(max-width:320px){.psMegaMark{width:10px;height:10px;max-width:10px;max-height:10px}.evoLine .evoStatsRow{gap:3px 5px}}
 /* LT240: compact verified Top PvP opportunities, never implied eligibility. */
 .psTopPvP{display:flex;flex-wrap:wrap;gap:3px;padding:3px 0}
 .psTopPvpTag{font-size:9px;color:#ddf4e5;border:1px solid #84cb9777;border-radius:5px;padding:2px 4px;background:#40815c24}
@@ -559,13 +560,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine.isMega{border-left:2px solid #aa93dc;padding-left:5px;background:#a88ed80c;border-radius:3px}
 .evoLine .evoMegaTop{flex:0 0 auto;border:1px solid #b89ef25a;border-radius:5px;
  background:#a28fda20;color:#e9d7ff;font-size:8px;font-weight:800;padding:1px 3px;white-space:nowrap}
-.evoLine .evoSummary{display:flex;align-items:baseline;gap:5px;min-width:0;white-space:nowrap}
-.evoLine .evoWho{min-width:0;flex:1 1 auto;font-size:10px;overflow:hidden;text-overflow:ellipsis;color:#f5f8fc}
+.evoLine .evoSummary{display:flex;align-items:flex-start;gap:4px;min-width:0;white-space:normal}
+.evoLine .evoWho{min-width:0;flex:1 1 auto;font-size:10px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;color:#f5f8fc}
 .evoLine .evoWho b{font-weight:800}
 .evoLine .evoWho .evoMark{font-size:9px;color:#adc6db;font-weight:600}
 .evoLine .evoCp,.evoLine .evoLevel{flex:0 0 auto;font-size:9px;color:#c4d0dd;font-weight:600;white-space:nowrap}
 .evoLine .evoPct{flex:0 0 auto;font-size:10px;color:var(--ps-rank-percent-color,#c4d0dd);font-weight:800;white-space:nowrap}
-.evoLine .evoStatsRow{display:flex;gap:12px;justify-content:flex-start;align-items:baseline;padding:2px 4px 0;min-width:0}
+.evoLine .evoStatsRow{display:flex;flex-wrap:wrap;gap:3px 7px;justify-content:flex-start;align-items:center;padding:2px 4px 0;min-width:0;overflow:visible}
 .evoLine .evoMeta{display:flex;align-items:baseline;flex-wrap:wrap;margin-top:3px;color:#c4d0dd;font-size:9px;line-height:1.3}
 .evoLine .evoRankRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:4px;row-gap:2px;padding-inline:4px;text-align:center;justify-items:center}
 .evoLine .evoClass{color:#e0e8f3;font-weight:700;white-space:nowrap}
@@ -1201,12 +1202,13 @@ function evolutionRow(x,first){
   '"><div class="evoSummary">'+
   '<span class="evoWho"><span class="evoMark">'+(first?'Atual':isMega?'<img src="mega_evolution_icon.svg" class="psMegaMark" alt="" aria-hidden="true">':'↳')+'</span> <b>'+h(name)+'</b>'+
   (isReference?'<button type="button" class="evoInfoBtn" '+(isMega?'data-mega-projection="true" ':'')+'aria-label="'+(isMega?'Informações sobre projeção da forma Mega':'Informações sobre rank de evolução projetado')+'" aria-expanded="false" onclick="togglePvpReferenceInfo(event,this)">ⓘ</button>':'')+'</span>'+
-  (isMega&&hasClass&&rank===1?'<span class="evoMegaTop"><img src="mega_evolution_icon.svg" class="psMegaMark" alt="" aria-hidden="true">TOP 1 MEGA</span>':'')+
+  '</div>'+
+  '<div class="evoStatsRow">'+stats.join("")+
+  (isMega&&hasClass&&rank===1?'<span class="evoMegaTop">TOP 1 MEGA</span>':"")+
   (hasClass&&pct?'<span class="evoPct" title="Eficiência relativa de IVs"'+
    (window.PokeSearchIVDisplay?.colorForEfficiency?.(pct)?
     ' style="--ps-rank-percent-color:'+window.PokeSearchIVDisplay.colorForEfficiency(pct)+'"':"")+
    '>'+h(pct)+'%</span>':"")+'</div>'+
-  (stats.length?'<div class="evoStatsRow">'+stats.join("")+'</div>':"")+
   '<div class="evoMeta evoRankRow">'+ranks.join("")+'</div>'+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
 }
@@ -1412,7 +1414,7 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">🔔 '+h(x.league.toUpperCase())+' #'+x.rank+
-   ' '+h(x.name)+(x.mega?' <img src="mega_evolution_icon.svg" class="psMegaMark" alt="" aria-hidden="true"> Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
+   ' '+h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;

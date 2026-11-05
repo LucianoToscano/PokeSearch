@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT242 — Correção símbolo Mega verdadeiro e textos do card (05/11/2026; desenvolvimento)
+
+- **Falha em LT241:** emblema inventado/estilizado, repetido em selo, radar e comparador, comprimindo o nome e provocando elipses no card. LT242 usa arte real de Pokémon GO: `Mega x64.png` do repo `hintbox/Pokemon-Go-Assets`, Git blob SHA-1 `d156e4b3eb88822376155778182744d4a94cd203`. PNG original 64×64 está embutido sem alterar pixels dentro do SVG local `app/src/main/assets/mega_evolution_icon.svg`, recortado via viewBox. Direitos permanecem de seus proprietários.
+- **Layout corrigido:** somente UM ícone 10–11px no marcador Mega, sem imagem duplicada no selo TOP 1 MEGA, avisos ou comparações. Nome pode quebrar linha, sem `ellipsis`; TOP 1 MEGA e eficiência ficam na linha flexível de PC/Nv., com `flex-wrap`. Corrigidas regras CSS definitivas que antes eram sobrescritas na cascata.
+- **Arquivos:** `detail.html`, `pvp_rank_advanced_ui.js`, `mega_evolution_icon.svg`. OTA assinada já permite esse SVG; não há alterações de API, assinatura ou rankings.
+- **Plano:** versão `LT242 · 0.02.42 · versionCode 54446 · label 51246`; testes LT241 atualizados e teste novo `lt242-mega-authentic-compact-layout.test.js`, Node geral, Java Android, OTA e beta privado antes de merge/release. Validação física no Samsung P1/P2 pendente.
+- **Documentação:** [LT242_ICONE_MEGA_ORIGINAL_TEXTO_LEGIVEL_20261105.md](LT242_ICONE_MEGA_ORIGINAL_TEXTO_LEGIVEL_20261105.md). **Registro inicial não significa publicação.**
+
 ## LT241 OFICIAL — 0.02.41 / versionCode 54445 (05/11/2026)
 
 - **Estado verificado:** [Release oficial v0.02.41-54445](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.41-54445), publicada em 2026-11-05T06:01:16Z, `draft=false`, `prerelease=false`, disponível em `releases/latest`.

@@ -28,14 +28,14 @@ const noivern=render({name:"Noivern",rank:2,overallRank:385,
 const firstRow=noivern.match(/<div class="evoSummary">([\s\S]*?)<\/div>/)?.[1]||"";
 const secondRow=noivern.match(/<div class="evoStatsRow">([\s\S]*?)<\/div>/)?.[1]||"";
 const thirdRow=noivern.match(/<div class="evoMeta evoRankRow">([\s\S]*?)<\/div>/)?.[1]||"";
-for(const token of ["Noivern","92,17%"])
- assert.ok(firstRow.includes(token),"first row has "+token);
-for(const token of ["PC 2890","Nv. 50,0"])
- assert.ok(secondRow.includes(token),"second row has "+token);
+assert.ok(firstRow.includes("Noivern"),"first row preserves full name");
+assert.ok(!firstRow.includes("92,17%"),"compact name row must not be squeezed by percentage");
+for(const token of ["PC 2890","Nv. 50,0","92,17%"])
+ assert.ok(secondRow.includes(token),"compact stats row has "+token);
 for(const token of ["Rank Classe: #2","Rank Geral: #385"])
  assert.ok(thirdRow.includes(token),"third row has "+token);
 assert.ok(!firstRow.includes("PC 2890"),"PC moved below heading");
-assert.ok(firstRow.includes('--ps-rank-percent-color:#C084FC'),"92,17% must be purple");
+assert.ok(secondRow.includes('--ps-rank-percent-color:#C084FC'),"92,17% must stay purple in stats row");
 assert.ok(piplup.includes('--ps-rank-percent-color:#F04B70'),"100% must be coral");
 const almost=render({name:"Noivern",rank:3,statProductPct:"99,73",overallRank:385},false);
 assert.ok(almost.includes('--ps-rank-percent-color:#C084FC'),"99,73% is NOT 100%");

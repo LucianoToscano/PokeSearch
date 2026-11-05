@@ -1651,6 +1651,28 @@
           "Teste visual físico no Samsung para confirmar proporção e nitidez do ícone nas duas Pokébolas."
         ]
       }
+    },
+    {
+      "id": "lt242-authentic-mega-symbol-card-text-20261105",
+      "minVersionCode": 54446,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT242 — Símbolo Mega correto e cards legíveis",
+      "sections": {
+        "correcoes": [
+          "Substituído o desenho estilizado incorreto pelo símbolo original de Mega Evolução extraído dos assets visuais do Pokémon GO.",
+          "Corrigido o corte dos nomes nas linhas Mega: o texto agora pode quebrar naturalmente no card.",
+          "Eliminada a duplicação do ícone no selo TOP 1 MEGA, nos avisos de Top PvP e no comparador."
+        ],
+        "melhorias": [
+          "Símbolo original colorido, com fundo transparente, exibido uma única vez em tamanho compacto de 10–11 px no lugar do antigo losango.",
+          "O selo TOP 1 MEGA e a porcentagem de eficiência ficam junto a PC e nível em área flexível que quebra linha se necessário.",
+          "Ajustes preservam tamanhos P/M/G, ambas as Pokébolas, rankings, alertas e todos os recursos da LT241."
+        ],
+        "emDesenvolvimento": [
+          "Conferir no Samsung se o símbolo fica nítido e os textos aparecem completos em P1 e P2."
+        ],
+        "novidades": []
+      }
     }
   ]
 }

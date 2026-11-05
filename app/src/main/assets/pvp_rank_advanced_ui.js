@@ -14,7 +14,6 @@ const css=[
  "#psRankExplorer .psaForm{max-height:140px;overflow:auto;overscroll-behavior:contain;padding:3px;border-radius:6px;border:1px solid #ffffff21}",
  "#psRankExplorer .psaLine{font-size:9px;padding:5px 2px;border-bottom:1px solid #ffffff20;overflow-wrap:anywhere}",
  "#psRankExplorer .psaTop{color:#bbeacf;font-weight:700}",
- "#psRankExplorer .psaMegaIcon{width:13px;height:13px;vertical-align:-3px;margin-right:3px;object-fit:contain}",
  "#psRankExplorer .psaMuted{color:#b9c4d0;font-size:9px}",
  "#psRankExplorer .psaResult{max-height:158px;overflow:auto;overscroll-behavior:contain}",
  "#psRankExplorer .psaResult button{width:100%;text-align:left;white-space:normal}",
@@ -36,7 +35,7 @@ function formList(s,api,ins){
  if(!rows.length)return '<div class="psaMuted">Formas não identificadas com segurança.</div>';
  return '<div class="psaForm">'+rows.map(r=>'<div class="psaLine">'+
   (r.rank===1?'<span class="psaTop">TOP 1 </span>':"")+
-  '<b>'+esc(r.name)+'</b> '+(r.mega?'<img class="psaMegaIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">Mega projetada · ':'')+'#'+r.rank+
+  '<b>'+esc(r.name)+'</b> '+(r.mega?'(Mega projetada) · ':'')+'#'+r.rank+
   ' · '+r.efficiency+'% · PC '+r.cp+' · Nv. '+String(r.level).replace(".",",")+'</div>').join("")+'</div>';
 }
 function categoryList(s){
