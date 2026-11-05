@@ -1599,7 +1599,21 @@ public class OverlayService extends Service {
                     spaceAbove>spaceBelow?above:below));
             }
         }
-        detailParams.x=x;detailParams.y=y;
+        // LT253: use native window geometry, never CSS guesses. Avoid visible
+        // results, our own expanded toolbar and the other Pokébola's toolbar.
+        // User-dragged detail cards remain manually positioned and only clamp.
+        int[] resultObstacle=resultParams!=null&&resultRoot!=null&&
+            resultRoot.getVisibility()==View.VISIBLE&&!resultCollapsed?
+            new int[]{resultParams.x,resultParams.y,resultParams.width,resultParams.height}:null;
+        int[] menuObstacle=menuExpanded&&menuParams!=null&&menuRoot!=null&&
+            menuRoot.getVisibility()==View.VISIBLE?
+            new int[]{menuParams.x,menuParams.y,menuParams.width,menuParams.height}:null;
+        int[] ownDock=new int[]{params.x,params.y,params.width,
+            Math.max(params.height,dp(TOOLBAR_DP))};
+        int[] free=OverlayPlacementPolicy.avoid(x,y,cardWidth,cardHeight,
+            screen.widthPixels,screen.heightPixels,margin,
+            new int[][]{resultObstacle,menuObstacle,ownDock,otherMenuBounds()});
+        detailParams.x=free[0];detailParams.y=free[1];
         try{wm.updateViewLayout(detailRoot,detailParams);}
         catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
@@ -3278,9 +3292,13 @@ public class OverlayService extends Service {
     private int verifiedTopPvpRank(JSONObject card,boolean leagueConfirmed){
         if(card==null||!leagueConfirmed||!("gl".equals(mode)||"ul".equals(mode))||
            !verifiedTargetCriteria(card))return 0;
+        // LT253: honor the existing Top #1–#50 league filter; badges never
+        // imply a Meta Rank Geral or Mega eligibility and require verified IV.
         String value=card.optString("rank","").replace("#","").trim();
-        if(!value.matches("[1-5]"))return 0;
-        return Integer.parseInt(value);
+        if(!value.matches("(?:[1-9]|[1-4][0-9]|50)"))return 0;
+        int rank=Integer.parseInt(value);
+        int limit=Math.max(1,Math.min(50,"ul".equals(mode)?ulRank:glRank));
+        return rank<=limit?rank:0;
     }
     private String encounterAlertTitle(JSONObject card){
         String base=EncounterAlertText.title(card.optString("name","Pokémon"),
@@ -3795,8 +3813,10 @@ public class OverlayService extends Service {
         // screen-bounded native window and let #panel scroll all content.
         // Show the complete compact card whenever the device has room; use
         // inner scrolling only for genuinely tall content/evolution details.
-        int available=Math.max(96,screenHeightDp()-40);
-        detailHeight=Math.max(96,Math.min(Math.min(520,available),heightDp));
+        // LT253: remove the historical 520dp ceiling. Expanded simulators
+        // grow until the real available screen height and then scroll in #panel.
+        int available=Math.max(96,screenHeightDp()-24);
+        detailHeight=Math.max(96,Math.min(available,heightDp+2));
         if(detailParams!=null&&detailRoot!=null){
             detailParams.height=dp(detailHeight);moveDetail();
         }
