@@ -115,4 +115,15 @@ assert.equal(badgeRows[1].name,"Chandelure");
 const mega=insights.topBadges([{league:"gl",megas:[{name:"Mega Gengar",
  rank:1,overallRank:1,megaProjection:true,referenceOnly:true}]}],5);
 assert.equal(mega[0].overallRank,null,"Mega projection cannot claim a verified GBL species RG");
+const teddi=gl([
+ {name:"Ursaluna",rank:1,overallRank:163,eligible:true},
+ {name:"Ursaring",rank:10,overallRank:415,eligible:true}
+]);
+teddi.name="Teddiursa";teddi.leagues[0].own={rank:812,overallRank:360};
+assert.equal(moduleObj.update(teddi),true);
+assert.equal(line.children[0].textContent,"GL · ↳ Ursaluna");
+assert.equal(line.children[1].textContent,"RG #163",
+ "Ursaluna verified RG must appear on compact card, not only expanded analysis");
+assert.equal(line.children[2].textContent,"IV #1");
+assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
 console.log("LT245: RG first among good IVs, class fallback, strict Top filter, +N comparison, P1/P2 PASS");
