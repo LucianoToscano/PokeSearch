@@ -1,7 +1,12 @@
 # LT237 — Atualização automática segura no aplicativo (04/11/2026)
 
-## Estado
-**Código em branch de desenvolvimento / QA e publicação NÃO comprovada.** O último GitHub Release estável confirmado no início deste trabalho é LT233 / 0.02.33 / 54437. O código da main já tem as melhorias LT236 (Pokébola 2 livre e rank Mega), mas elas **não estão no APK público**. A candidata cumulativa LT237 tem notas 0.02.37 / 54441; nenhum APK LT237 foi assinado, publicado ou testado fisicamente neste registro.
+## Atualização de estado — LT237 OFICIAL (05/11/2026)
+
+- **Publicação confirmada:** [v0.02.37-54441](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.37-54441) em `2026-11-05T03:16:32Z`, `releases/latest`, estável (sem draft/prerelease), compilação e assinatura concluídas.
+- **Código de origem:** merge da [PR #208](https://github.com/LucianoToscano/PokeSearch/pull/208), SHA `061fdfa678ac25fbd65c3783cf9c0be02e4d71bc`. Incorpora a LT236 (segunda Pokébola livre de VIP e PvP das Megas).
+- **Workflow:** [Actions #41960200682](https://github.com/LucianoToscano/PokeSearch/actions/runs/41960200682) finalizado com `success`; certificado v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **APK:** [PokeSearch-v0.02.37-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.37-54441/PokeSearch-v0.02.37-LT.apk), 28.125.033 bytes, SHA-256 `954572ce0f21d6e90e8ac665d73389e2d9b0682127c215ba02ded6d7b3097dd2`. Guia Mestre contém verificação independente de download/assinatura, reports e artefato.
+- **Instalação em Samsung:** ainda sem comprovação física. A versão LT233 detecta LT237 como atualização, mas a primeira instalação exige ação do usuário. Depois, a LT237 fará pré-download automático em rede não tarifada por padrão; a instalação segue exigindo a confirmação do Android.
 
 ## Comportamento implementado
 - Fonte única dos APKs: GitHub `releases/latest`, Release estável, tag/nome/versionCode/digest válidos e acima do `BuildConfig.VERSION_CODE`.
@@ -12,12 +17,13 @@
 - Ao tocar em **Instalar atualização**, o APK é **revalidado** e entregue ao instalador oficial do Android com `FileProvider`. O usuário deve confirmar a instalação; não há instalação silenciosa, bypass de Play Protect, Bloqueador Automático Samsung ou permissões especiais.
 - O fallback por navegador continua disponível; alterações Java exigem APK completo assinado, não apenas OTA de assets.
 
-## Limitações e próximos gates
-1. Validar `app/tests/lt237-automatic-app-updates.test.js` e compilação Java Android em CI no SHA exato da PR.
-2. Auditar consumo de dados, teste de retomada após erro HTTP/sem Wi-Fi, cache corrompido, espaço baixo, app fechado, Doze, permissão de notificação negada e dupla Pokébola.
-3. Com aprovação de publicação, preparar release oficial **cumulativa** contendo LT236+LT237 usando o certificado permanente, Gradle 8.11.1/JDK 17, e número de versão monotônico (candidata 0.02.37/54441, sujeita a revalidação).
-4. Publicação exige runner autorizado com `official-updates`; não colocar keystore/tokens em arquivos ou chat. Verificar a nova tag/asset/SHA-256 e `releases/latest` **antes** de dizer que foi enviado ao app.
-5. Instalar sobre LT233 no Samsung **sem desinstalar**, conferir preservação de dados, notificação e instalador, funções P1/P2, Megas e rede. Teste físico ainda pendente.
+## Validações e pendências pós-publicação
+
+1. **Concluído:** testes Node, Android/Java, OTA assinado, beta privado e APK oficial, além da verificação de SHA-256, packageName, versionCode e certificado.
+2. **Concluído:** `releases/latest` contém o asset oficial assinado e oferece a LT237 às versões elegíveis.
+3. **Pendente:** teste físico no Samsung com LT233 instalada (sem desinstalar), instalação sobreposta, permissões, notificações, P1/P2, Megas e integridade dos dados.
+4. **Pendente:** teste real de Wi-Fi sem rede, rede tarifada, VPN, Doze, cache danificado e pouco espaço; WorkManager não garante horário exato.
+5. **Futuras versões:** serão procuradas e pré-baixadas pelo app quando disponibilizadas como Releases oficiais estáveis; gerar, assinar e aprovar cada nova release ainda requer pipeline de publicação e QA. Não há instalação silenciosa.
 
 ## Arquivos alterados
 - `app/src/main/java/com/lucianotoscano/pokesearchoverlay/GitHubUpdateCenter.java`
@@ -25,5 +31,8 @@
 - `app/src/main/AndroidManifest.xml`
 - `app/tests/lt237-automatic-app-updates.test.js`
 - `app/src/main/assets/release_notes.json`
+- `.github/workflows/lt237-official-release.yml`
+- `app/tests/lt203-ota-installer-handoff.test.js`
+- `.github/workflows/pokesearch-node-qa.yml`
 
 Documentos de continuidade: `AGENTS.md`, `docs/GUIA_MESTRE.md`, `docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md`, `docs/LT236_ATUALIZACAO_OFICIAL_P2_MEGAS_20261104.md`.
