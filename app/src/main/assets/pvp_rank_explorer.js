@@ -175,6 +175,7 @@
   const selectedRank=selected?.rank??(Number.isInteger(candidateRank)&&candidateRank>=1&&
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
+   forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,scrollSelected:true,
    sourceDate:sourceFor(kind,gm,overall),status:""};
   if(!mount()){state=null;return false;}
@@ -388,6 +389,7 @@
     s.scrollSelected=false;
    }
   }
+  if(typeof window!=="undefined")window.PokeSearchPvpAdvanced?.enhance(view,s,{getIvRows,pageForRank,redraw:draw});
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
