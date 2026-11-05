@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.43",
-  "code": 54447,
-  "label": 51247,
-  "previous_tag": "v0.02.42-54446",
-  "qa_max_code": 54446,
-  "release_notes": "LT243: card PvP compacto com GL/UL · IV #N · nome completo da evolução, sem texto cortado; grandes explicações de projeções ocultas; somente uma barra de menu ativa entre as duas Pokébolas, preservando filtros e resultados independentes. Reforçado o carregamento/reparo finito dos sprites exatos verificados (sem novos acessos à PoGoCoordinates e sem substituir formas), fallback com número Dex quando não houver imagem confiável. Preservados rankings GL/UL/ML, Mega, favoritas, golpes, assinatura e OTA. Teste visual Samsung P/M/G pendente; instalação exige confirmação Android."
+  "version": "0.02.44",
+  "code": 54448,
+  "label": 51248,
+  "previous_tag": "v0.02.43-54447",
+  "qa_max_code": 54447,
+  "release_notes": "LT244: restaurado ↳ no resumo PvP quando IV #N pertence à evolução (e 'Atual' quando é do Pokémon capturado). Botão independente RG #N somente para ranking geral PvPoke validado da mesma forma e liga, abrindo a tabela de espécies; IV # abre a tabela de 4.096 combinações. Os campos IV, PC e Nv. agora são tocáveis: IV abre explorador local; PC e Nv. exibem comparativo local recolhível das projeções por GL/UL/ML dos mesmos IVs, sem novos acessos à PoGoCoordinates. Mantidos ajustes compactos P/M/G, duas Pokébolas, filtros, Mega e alertas. As projeções não garantem elegibilidade PvP, nem são custos de aprimoramento. Instalação requer confirmação Android; QA visual Samsung P1/P2 pendente."
 }
