@@ -62,8 +62,9 @@ for(const width of [200,240,300]){
  const a=panel.getBoundingClientRect(),b=form.getBoundingClientRect(),c=slider.getBoundingClientRect();
  const overflow=panel.scrollWidth>panel.clientWidth+3;
  const ok=!overflow&&panel.scrollHeight>panel.clientHeight&&
-  b.width>=55&&b.left>=a.left-2&&b.right<=a.right+2&&
-  c.width>10&&mega.getBoundingClientRect().width>0;
+  b.width>=80&&b.left>=a.left-2&&b.right<=a.right+2&&
+  c.width>=80&&mega.getBoundingClientRect().width>0&&
+  mega.getBoundingClientRect().right<=document.querySelector('.psCompactSpeciesName').getBoundingClientRect().left+2;
  document.getElementById("lt253-metrics").textContent=JSON.stringify({
   ok,width:${width},scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,
   scrollWidth:panel.scrollWidth,clientWidth:panel.clientWidth,formWidth:Math.round(b.width),
