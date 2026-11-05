@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT244 — Evolução ↳, Rank Geral clicável e métricas (05/11/2026; desenvolvimento)
+
+- **Evidências Samsung:** LT243 removeu ↳ da faixa GL/UL, confundindo um IV Classe #1 da evolução com o próprio Pokémon. Greavard GL: Houndstone IV #1 e RG #653; Charmander GL 15/15/15 IV #1 é "Atual". Também se deseja RG clicável e funções para IV, PC e Nível.
+- **Correção da faixa:** `GL · IV #1 · ↳ Houndstone` ou `GL · IV #1 · Atual`. Exibir botão independente `RG #N` só quando a classificação PvPoke da mesma espécie/forma e liga existe; tocar abre a tabela geral na posição. IV # continua abrindo os 4.096 spreads.
+- **Caixas IV/PC/Nv:** tocar IV confirmado abre explorador da espécie/mesmos IVs; PC e Nv mostram painel curto, recolhível, de comparação entre CP/Nv atuais e projeções locais GL/UL/ML para espécie/evoluções/Mega. Sem nova chamada à PoGoCoordinates, revelar coordenadas ou alterar filtros.
+- **Código:** `detail.html`, notas de versão e teste `app/tests/lt244-compact-iv-rg-interactive-metrics.test.js`; testes LT163/LT164 ajustados. Mantidos os assets, rankings, modos, Pokébolas e assinaturas.
+- **Versão proposta:** LT244 / 0.02.44 / versionCode 54448 / label 51248, base LT243 54447. Requer CI verde, merge, publicação e hash oficial antes de anunciar APK. QA visual Samsung P1/P2 P/M/G pendente.
+- **Relatório:** [LT244_EVOLUCAO_RG_METRICAS_20261105.md](LT244_EVOLUCAO_RG_METRICAS_20261105.md). Registro de desenvolvimento não comprova publicação.
+
 ## LT243 OFICIAL — 0.02.43 / versionCode 54447 (05/11/2026)
 
 - **Problemas relatados em prints Samsung:** sprites ausentes em alguns resultados, segunda barra de menus sobreposta ao abrir Modo, texto longo de Rank Classe ocultando o nome da evolução e popovers explicativos excessivos.
