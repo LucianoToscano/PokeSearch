@@ -10,7 +10,7 @@ let checks=0;function test(name,fn){fn();checks++;console.log("PASS LT203 "+name
 test("Preserve signed HTTPS GitHub release verification",()=>{
  assert.match(center,/private static final String CERT="34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"/);
  assert.match(center,/validPackage\(context,tmp,release\)/);
- assert.match(center,/!actual.equals\(release.sha256\)/);
+ assert.match(center,/!hex\(digest.digest\(\)\).equals\(release.sha256\)/);
  assert.match(center,/!validPackage\(activity,apk,release\)/);
  assert.match(center,/!apk.getCanonicalFile\(\).getParentFile\(\).equals\(folder.getCanonicalFile\(\)\)/);
 });
