@@ -752,6 +752,31 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #movesPopover:not([hidden]){max-height:168px;overflow-y:auto;overscroll-behavior:contain}
 #movesPopover .psMoveRow{gap:5px}
 #movesPopover .psMoveName{overflow-wrap:anywhere}
+
+/* LT247: rigid single-row PvP strip; only the species chip can shrink. */
+#rankLine{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ white-space:nowrap!important;gap:2px!important;min-height:27px;overflow:hidden!important}
+#rankLine .psRankLabel{flex:1 1 auto;min-width:0;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important}
+#rankLine .psRankLeague{font-size:10px;font-weight:750;color:#8bc7ff;
+ flex:0 0 auto;white-space:nowrap}
+#rankLine .psCompactSpecies{flex:1 1 auto;min-width:0;
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:10px;font-weight:700;color:#e9f0fa}
+#rankLine .psCompactIv,#rankLine .psCompactOverall{min-height:20px!important;
+ padding:1px 3px!important;flex:0 0 auto;font-size:9px!important}
+#rankLine .psCompactMega{color:#e5c8ff;font-size:8px;font-weight:750;
+ border:1px solid #b995e87d;border-radius:4px;padding:1px 2px}
+#rankLine .psRankMore{min-height:19px;padding:0 2px!important;font-size:8px!important}
+#rankLine .psMovesAction{flex:0 0 19px!important;width:19px!important;
+ min-width:19px!important;max-width:19px!important;height:22px!important;
+ margin:0!important;font-size:14px!important}
+@media(max-width:340px){
+ #rankLine{gap:1px!important;padding:2px!important}
+ #rankLine .psCompactSpecies{font-size:9px}
+ #rankLine .psCompactIv,#rankLine .psCompactOverall{font-size:8px!important;
+ padding:1px 2px!important}
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1436,10 +1461,13 @@ function setRankLineLabel(rankLine,label){
  const candidates=[];
  const add=(x,name,kind)=>{
   const rank=Number(x?.rank);
-  if(!Number.isInteger(rank)||rank<1||rank>4096||x?.eligible===false)return;
+  if(!Number.isInteger(rank)||rank<1||rank>4096||
+     (x?.eligible===false&&kind!=="mega"))return;
   const overall=Number(x?.overallRank);
+  const realOverall=kind!=="reference"&&kind!=="mega"&&
+    Number.isInteger(overall)&&overall>=1;
   candidates.push({rank,name:String(name||"").slice(0,90),kind,
-   overallRank:Number.isInteger(overall)&&overall>=1?overall:null});
+   overallRank:realOverall?overall:null});
  };
  if(league.own)add(league.own,payload.name,"current");
  if(payload.includePreviousEvolutions!==false){
@@ -1448,6 +1476,10 @@ function setRankLineLabel(rankLine,label){
   for(const e of Array.isArray(league.comparisons)?league.comparisons.slice(0,24):[])
    if(e?.referenceOnly===true)add(e,e.name,"reference");
  }
+ // Mega rank is a mathematical preview, never an eligible GBL meta RG.
+ // A Top 1 Mega must remain visible when no eligible normal IV Top 1 exists.
+ for(const e of Array.isArray(league.megas)?league.megas.slice(0,12):[])
+  if(e?.megaProjection===true)add(e,e.name,"mega");
  if(!candidates.length)return false;
  if(typeof rankLine.querySelector==="function")closePvpRankAlternates();
  // LT245: a strong IV spread is necessary; among Top 50 (or the chosen
@@ -1455,13 +1487,17 @@ function setRankLineLabel(rankLine,label){
  // deserves the main card. Never elevate a weak IV #4000 just for a good RG.
  const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
  const qualityLimit=limit===null?50:limit;
- const excellent=inSearch.filter(x=>x.kind!=="reference"&&x.rank<=qualityLimit);
+ const excellent=inSearch.filter(x=>x.kind!=="reference"&&x.kind!=="mega"&&
+   x.rank<=qualityLimit);
  const withOverall=excellent.filter(x=>Number.isInteger(x.overallRank)&&x.overallRank>=1);
  const sortClass=(a,b)=>a.rank-b.rank||
   (a.kind==="current"?-1:b.kind==="current"?1:0);
  const sortGeneral=(a,b)=>(a.overallRank??Infinity)-(b.overallRank??Infinity)||
   sortClass(a,b);
- const best=(withOverall.length?withOverall.sort(sortGeneral):[...inSearch].sort(sortClass))[0];
+ const realClass=inSearch.filter(x=>x.kind!=="mega"&&x.kind!=="reference");
+ const best=(withOverall.length?withOverall.sort(sortGeneral):
+  realClass.length?[...realClass].sort(sortClass):
+  [...inSearch].sort(sortClass))[0];
  // Alternative forms must also have good verified IVs; no invented Mega RG
  // or speculative costume evolutions are promoted to the main compact UI.
  const otherChoices=excellent.filter(x=>x!==best).filter((x,i,all)=>
@@ -1485,36 +1521,57 @@ function setRankLineLabel(rankLine,label){
   return false;
  }
  currentRankSpecies=best.name;
- const scope=best.kind==="current"?" · Atual":" · ↳ "+best.name;
- const hasVerifiedOverall=best.kind!=="reference"&&
+ const isMega=best.kind==="mega";
+ // LT247: exactly one compact row: [GL IV #1] [↳ Form] [RG #N] [⚔/🗡].
+ // All are independent controls except the name, which truncates locally
+ // rather than forcing the sword onto another row.
+ const scope=best.kind==="current"?"Atual":
+  "↳ "+(isMega&&/^mega\s/i.test(best.name)?best.name:
+     isMega?"Mega "+best.name:best.name);
+ const hasVerifiedOverall=best.kind!=="reference"&&!isMega&&
    Number.isInteger(best.overallRank)&&best.overallRank>=1;
- // Present RG before IV when a trusted species rank is available.
- // The IV rank keeps its own click target (same 4,096-spread explorer).
- setRankLineLabel(rankLine,hasVerifiedOverall?label+scope:
-  label+" · IV #"+best.rank+scope);
- const leagueOverall=best.overallRank;
- if(hasVerifiedOverall&&typeof document.createElement==="function"&&
-    typeof rankLine.appendChild==="function"){
-  const badge=document.createElement("button");
-  badge.type="button";badge.className="psCompactOverall psRankOpen";
-  badge.textContent="RG #"+leagueOverall;
-  badge.title="Rank Geral PvPoke de "+best.name+" · abrir tabela de espécies";
-  badge.setAttribute?.("aria-label","Abrir Rank Geral #"+leagueOverall+" de "+best.name);
-  badge.dataset.psKind="overall";
-  badge.dataset.psName=best.name;
-  badge.dataset.psLeague=activeRankLeague;
-  badge.dataset.psRank=String(leagueOverall);
-  badge.onclick=event=>openPvpRankExplorer(event,badge);
-  rankLine.appendChild(badge);
+ const compactName=label+" · IV #"+best.rank+" · "+scope+
+   (hasVerifiedOverall?" · RG #"+best.overallRank:"");
+ // Legacy DOM and QA stubs still have a safe text-only summary.
+ setRankLineLabel(rankLine,compactName);
+ if(typeof rankLine.replaceChildren==="function"&&
+    typeof rankLine.appendChild==="function"&&
+    typeof document.createElement==="function"){
+  rankLine.replaceChildren();
+  const leagueChip=document.createElement("span");
+  leagueChip.className="psRankLeague";leagueChip.textContent=label;
+  rankLine.appendChild(leagueChip);
   const iv=document.createElement("button");
   iv.type="button";iv.className="psCompactIv psRankOpen";
   iv.textContent="IV #"+best.rank;
-  iv.title="Rank Classe #"+best.rank+" de "+best.name+" · abrir 4.096 IVs";
+  iv.title="Rank Classe #"+best.rank+" de "+best.name+" · 4.096 IVs";
   iv.setAttribute?.("aria-label","Abrir IV #"+best.rank+" de "+best.name);
   iv.dataset.psKind="class";iv.dataset.psName=best.name;
   iv.dataset.psLeague=activeRankLeague;iv.dataset.psRank=String(best.rank);
   iv.onclick=event=>openPvpRankExplorer(event,iv);
   rankLine.appendChild(iv);
+  const nameChip=document.createElement("span");
+  nameChip.className="psCompactSpecies";
+  nameChip.textContent=scope;
+  nameChip.title=isMega?scope+" · projeção Mega, não elegibilidade GBL":scope;
+  rankLine.appendChild(nameChip);
+  if(isMega){
+   const megaTag=document.createElement("span");
+   megaTag.className="psCompactMega";megaTag.textContent="MEGA";
+   rankLine.appendChild(megaTag);
+  }
+  if(hasVerifiedOverall){
+   const badge=document.createElement("button");
+   badge.type="button";badge.className="psCompactOverall psRankOpen";
+   badge.textContent="RG #"+best.overallRank;
+   badge.title="Rank Geral PvPoke "+best.name+" · abrir tabela de espécies";
+   badge.setAttribute?.("aria-label","Abrir RG #"+best.overallRank+" de "+best.name);
+   badge.dataset.psKind="overall";badge.dataset.psName=best.name;
+   badge.dataset.psLeague=activeRankLeague;
+   badge.dataset.psRank=String(best.overallRank);
+   badge.onclick=event=>openPvpRankExplorer(event,badge);
+   rankLine.appendChild(badge);
+  }
  }
  if(otherChoices.length&&typeof document.createElement==="function"&&
     typeof rankLine.appendChild==="function"){
