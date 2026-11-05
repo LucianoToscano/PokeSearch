@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "enabled": false,
-  "version": "0.02.37",
-  "code": 54441,
-  "label": 51241,
-  "previous_tag": "v0.02.37-54441",
-  "qa_max_code": 54441,
-  "release_notes": "Solicitação desativada: LT237 já publicada e verificada. Preencher a próxima versão autorizada antes de habilitar."
+  "enabled": true,
+  "version": "0.02.39",
+  "code": 54443,
+  "label": 51243,
+  "previous_tag": "v0.02.38-54442",
+  "qa_max_code": 54442,
+  "release_notes": "PokeSearch LT239: explorador PvP com abertura direta no IV selecionado, filtros Top 10/50/100/Todos, comparação de dois IVs com atributos e diferenças, tabela compacta com rolagem interna e exportação segura de texto, CSV e compartilhamento Android. Preservados GL/UL/ML, Mega X/Y, duas Pokébolas, filtros e dados do app. Instalação requer confirmação do Android; teste físico Samsung continua pendente."
 }
