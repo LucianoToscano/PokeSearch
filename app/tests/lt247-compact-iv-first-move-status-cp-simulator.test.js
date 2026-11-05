@@ -132,7 +132,7 @@ assert.equal(funcs.render(),false,"metric panel should not render until the CP/l
 assert.equal(funcs.open("cp"),true);
 assert.ok(panel.innerHTML.includes("Simulador PC / Nível"));
 assert.ok(panel.innerHTML.includes("Sem custos")===false);
-assert.ok(panel.innerHTML.includes("não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira"),"no unverified evolution legality or candy/stardust costs");
+assert.ok(panel.innerHTML.includes("Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira"),"no unverified evolution legality or candy/stardust costs");
 assert.ok(panel.innerHTML.includes("Projeções PvP por liga"));
 assert.ok(html.includes("psCpSimFields"),"glass UI must contain the simulator controls");
 console.log("LT247: IV-before-RG single-row, GL Mega #1, verified move icons, CP simulator and P1/P2 assets PASS");
