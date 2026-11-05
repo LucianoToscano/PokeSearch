@@ -752,6 +752,7 @@ public class OverlayService extends Service {
     private int resultMetadataWidthDp=0;
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
+    private static final String PREF_TOP_PVP_RANK_ALERT="topPvpAlertRankLimit";
     private long lastAlertAt=0L;
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
     // Only a freshly accepted API/DOM result generation may be rechecked when
@@ -3357,6 +3358,13 @@ public class OverlayService extends Service {
         String firstGeneralKey="";
         long firstGeneralExpiry=0L;
         int watchedCount=0;
+        // Per-Pokeball setting; opt-in. Never compute Top from species overall,
+        // Mega projections, missing ranks, or unconfirmed search results.
+        int topPvpLimit=preferences.getInt(PREF_TOP_PVP_RANK_ALERT,0);
+        JSONObject topPvpCard=null;
+        String topPvpKey="";
+        long topPvpExpiry=0L;
+        int topPvpRank=Integer.MAX_VALUE;
         // Commit Favorite TTL ONLY after Android accepts the actual notice.
         // Missing permission, OFF, blocked channels and retries cannot silently
         // consume an encounter without a delivered alert.
@@ -3381,6 +3389,14 @@ public class OverlayService extends Service {
             // Favorite alert. Its own dedup key prevents duplicate sound on
             // every refresh. Neither path accepts unverified/expired spawns.
             if(newSpawn)recentSpawnExpiries.put(key,expireAt);
+            if(newSpawn&&successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now){
+                int confirmedRank=rankForSort(c);
+                if(TopPvpAlertPolicy.eligible(mode,topPvpLimit,confirmedRank,
+                    leagueConfirmed,verifiedTargetCriteria(c))&&confirmedRank<topPvpRank){
+                    topPvpRank=confirmedRank;topPvpCard=c;
+                    topPvpKey=key;topPvpExpiry=expireAt;
+                }
+            }
             // A discovery can be seen while Android notifications are OFF.
             // Retain eligibility until an actual accepted notification or TTL.
             if(firstNew.isEmpty() &&
@@ -3440,6 +3456,20 @@ public class OverlayService extends Service {
             if(!WatchAlerts.permissionGranted(this))
                 getSharedPreferences("prefs",0).edit().putString("lastWatchAlertError",
                     "Permissão de notificações não concedida").apply();
+        }
+        if(topPvpCard!=null&&!"off".equals(alertsMode)&&alerts&&
+           now-lastAlertAt>60000L){
+            if(sendGeneralNotification("🏆 TOP "+topPvpRank+" PvP · "+
+                 topPvpCard.optString("name","Pokémon"),
+                 encounterAlertDetails(topPvpCard,false),
+                 NEXT_GENERAL_ALERT_ID.updateAndGet(old->old>=43999?33000:old+1),
+                 notificationArtwork(topPvpCard))){
+                lastAlertAt=now;
+                successfullyNotifiedGeneralSpawns.put(topPvpKey,topPvpExpiry);
+                BugReport.log(this,"TOP_PVP_ALERT",
+                    (isSecondaryOverlay()?"P2":"P1")+" liga="+mode+
+                    " rank="+topPvpRank+" limite="+topPvpLimit);
+            }
         }
         if(!"off".equals(alertsMode)&&alerts&&!firstNew.isEmpty()&&now-lastAlertAt>60000L){
             if(firstNewCard!=null&&sendGeneralNotification(
@@ -5188,6 +5218,23 @@ public class OverlayService extends Service {
                 group+" · "+(systemBlocked?
                     "preferência salva; libere as notificações no Android":label),
                 android.widget.Toast.LENGTH_SHORT).show();
+        }
+        /** Per-overlay preference. No alerts when off/invalid or without user consent.
+         * Uses the existing New Pokémon channel, notification permission and 60s cadence. */
+        @JavascriptInterface public int getTopPvpAlertLimit(){
+            int saved=overlayPrefs().getInt(PREF_TOP_PVP_RANK_ALERT,0);
+            return TopPvpAlertPolicy.validLimit(saved)?saved:0;
+        }
+        @JavascriptInterface public void setTopPvpAlertLimit(int limit){
+            if(!TopPvpAlertPolicy.validLimit(limit))return;
+            handler.post(()->{
+                overlayPrefs().edit().putInt(PREF_TOP_PVP_RANK_ALERT,limit).apply();
+                update();
+                android.widget.Toast.makeText(OverlayService.this,
+                    limit==0?"TOP PvP: desativado":
+                    "TOP PvP até #"+limit+" · somente resultados GL/UL confirmados",
+                    android.widget.Toast.LENGTH_SHORT).show();
+            });
         }
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
