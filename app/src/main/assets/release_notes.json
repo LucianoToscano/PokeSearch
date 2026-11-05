@@ -1526,6 +1526,31 @@
           "Novas Megaevoluções serão reconhecidas após atualização verificada do Game Master PvPoke."
         ]
       }
+    },
+    {
+      "id": "lt237-auto-wifi-verified-updates-20261104",
+      "minVersionCode": 54441,
+      "date": "04/11/2026",
+      "title": "PokeSearch LT237 — Atualização automática segura no Wi-Fi",
+      "sections": {
+        "novidades": [
+          "O PokeSearch busca lançamentos oficiais periodicamente e prepara o APK automaticamente quando está em rede Wi-Fi não tarifada.",
+          "A Home mostra quando a versão baixada está pronta para instalação, sem precisar ir ao navegador."
+        ],
+        "melhorias": [
+          "Download validado por SHA-256, pacote, versionCode e assinatura digital permanente, inclusive ao reutilizar arquivos do cache.",
+          "Opção para ativar ou desativar o pré-download no Wi-Fi, habilitada por padrão; arquivos antigos de atualização são limpos.",
+          "O aviso nativo distingue nova versão disponível de APK já preparado."
+        ],
+        "correcoes": [
+          "Se a conexão deixa de ser não tarifada durante o pré-download, a transferência automática é interrompida.",
+          "A instalação continua usando a confirmação oficial do Android para preservar a segurança do aparelho e os dados existentes."
+        ],
+        "emDesenvolvimento": [
+          "A disponibilização depende de uma nova Release oficial assinada e aprovada no GitHub; o código preparado não publica APK por si só.",
+          "A instalação silenciosa sem confirmação do Android não é suportada. Teste físico no Samsung permanece pendente."
+        ]
+      }
     }
   ]
 }
