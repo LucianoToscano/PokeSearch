@@ -3266,11 +3266,23 @@ public class OverlayService extends Service {
         }
         return false;
     }
+    // LT240: only source-confirmed PvP league results may receive a Top badge.
+    // We reuse the existing opt-in general/favorite notification channels:
+    // no additional noisy notification, API request or cooldown.
+    private int verifiedTopPvpRank(JSONObject card,boolean leagueConfirmed){
+        if(card==null||!leagueConfirmed||!("gl".equals(mode)||"ul".equals(mode))||
+           !verifiedTargetCriteria(card))return 0;
+        String value=card.optString("rank","").replace("#","").trim();
+        if(!value.matches("[1-5]"))return 0;
+        return Integer.parseInt(value);
+    }
     private String encounterAlertTitle(JSONObject card){
-        return EncounterAlertText.title(card.optString("name","Pokémon"),
+        String base=EncounterAlertText.title(card.optString("name","Pokémon"),
             card.optString("number",""),card.optString("iv",""),
             card.optString("ivPercent",""),card.optBoolean("shiny",false),
             mode,card.optString("rank",""));
+        int rank=verifiedTopPvpRank(card,true);
+        return rank>0?"🔔 TOP "+rank+" PvP · "+base:base;
     }
     private String encounterAlertDetails(JSONObject card,boolean favorite){
         return EncounterAlertText.details(favorite,isSecondaryOverlay(),
@@ -3383,7 +3395,11 @@ public class OverlayService extends Service {
             if(newSpawn)recentSpawnExpiries.put(key,expireAt);
             // A discovery can be seen while Android notifications are OFF.
             // Retain eligibility until an actual accepted notification or TTL.
-            if(firstNew.isEmpty() &&
+            int candidateTopRank=verifiedTopPvpRank(c,leagueConfirmed);
+            int currentTopRank=verifiedTopPvpRank(firstNewCard,leagueConfirmed);
+            boolean higherPriority=candidateTopRank>0&&
+                (currentTopRank==0||candidateTopRank<currentTopRank);
+            if((firstNew.isEmpty()||higherPriority) &&
                 successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c)){
