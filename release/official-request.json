@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.46",
-  "code": 54450,
-  "label": 51250,
-  "previous_tag": "v0.02.45-54449",
-  "qa_max_code": 54449,
-  "release_notes": "LT246: corrige ausência de sprites de Flabébé na lista lateral ao empacotar offline os 10 ícones originais exatos das cinco cores, normal e brilhante, sem trocar espécie/forma. O botão ⚔️ distingue ataques recomendados PvPoke dos golpes possíveis verificados no Game Master; se a fonte remota não responder, os ataques capturados são exibidos, em vez de mensagem indisponível genérica. Falhas de rede não ficam cacheadas permanentemente. Regressão confirma Ursaluna GL IV #1 e RG #163 clicáveis na faixa compacta; casos sem RG confirmado não recebem número inventado (Rattata). Preserva a priorização de RG da LT245, os filtros, a assinatura permanente, a atualização, os dois overlays e layouts P/M/G. Instalação depende de confirmação Android; inspeção visual real Samsung P1/P2 ainda não comprovada."
+  "version": "0.02.47",
+  "code": 54451,
+  "label": 51251,
+  "previous_tag": "v0.02.46-54450",
+  "qa_max_code": 54450,
+  "release_notes": "LT247: resumo PvP em linha única mostra GL/UL, IV # primeiro, nome da forma/evolução ↳, RG # em seguida e golpe; preserva escolha da evolução por melhor RG comprovado. Mostra Mega IV #1 projetada (ex. Mega Sableye) mesmo fora do modo GL/UL, sem atribuir elegibilidade GBL ou RG à Mega. Ao tocar nos golpes recomendados, ⚔️ indica conjunto que exige legado/Elite e 🗡 indica combinação sem legado, somente após verificação da fonte; em Mega usa a espécie-base com aviso. Tocar PC ou Nível abre simulador offline de 1 a 50, passo 0,5, com escolha de forma, PC/PS para IV atual, 0/0/0, 15/15/15 e tetos GL/UL, calculados com stats base e CPM do Game Master. Não mostra custos de Poeira/Doces sem tabela validada; não há buscas extras no provedor. Preserva LT246, P1/P2, filtros, assinatura e atualizador. Inspeção visual física Samsung P/M/G pendente; instalação Android depende de confirmação."
 }
