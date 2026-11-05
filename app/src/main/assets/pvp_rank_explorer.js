@@ -56,6 +56,8 @@
    r.efficiency=(Math.min(10000,Math.round(r.product/maximum*10000))/100).toFixed(2).replace(".",",");
   });
   cache.set(cacheKey,result);
+  // LT240: bound memory on 4 GB devices; new comparisons may cover many forms.
+  while(cache.size>12)cache.delete(cache.keys().next().value);
   return result;
  }
  function getOverallRows(snapshot,league){
