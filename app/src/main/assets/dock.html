@@ -4872,6 +4872,7 @@ let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=fa
 let showResultText=false;
 let notificationPermissionGranted=false,watchAlertsEnabled=true;
 let favoriteAlertMode="on",generalCustomTone=false,favoriteCustomTone=false,individualToneCount=0;
+let topPvpAlertLimit=null; // LT240 opt-in, scoped to each Pokeball
 let resultDisplayHeightDp=0;
 // Every optional Pokémon detail starts hidden. The native saved preferences
 // remain authoritative once a user explicitly enables an individual field.
@@ -8189,6 +8190,34 @@ function renderAlertsChoices(){
  };
  section("Novos Pokémon","general",alertMode,generalCustomTone);
  section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone);
+ // LT240: compact per-Pokeball Top PvP alerts, OFF by default. Only verified
+ // provider GL/UL ranks can trigger; local Mega projections never notify.
+ if(!Number.isInteger(topPvpAlertLimit)){
+  const saved=Native.getTopPvpAlertLimit?.();
+  topPvpAlertLimit=[0,1,5,10].includes(saved)?saved:0;
+ }
+ const top=document.createElement("div");top.className="miniAlertTopPvp";
+ top.style.cssText="display:flex;gap:3px;align-items:center;justify-content:space-between;margin:5px 1px";
+ const caption=document.createElement("span");caption.textContent="TOP PvP";
+ caption.style.cssText="font-size:10px;white-space:nowrap";
+ top.appendChild(caption);
+ for(const limit of [0,1,5,10]){
+  const button=document.createElement("button");button.type="button";
+  button.className="miniAlertTopChoice";
+  button.style.cssText="font-size:9px;min-width:25px;min-height:26px;padding:3px";
+  button.textContent=limit?"#"+limit:"OFF";
+  button.title=limit?"Avisar rank #1 até #"+limit+" nas buscas GL/UL confirmadas":"Desativar alertas Top PvP";
+  button.setAttribute("aria-pressed",String(topPvpAlertLimit===limit));
+  button.onclick=()=>{
+   if(!Native.setTopPvpAlertLimit)return;
+   topPvpAlertLimit=limit;Native.setTopPvpAlertLimit(limit);
+   if(limit&&!notificationPermissionGranted&&Native.requestNotificationPermission)
+    Native.requestNotificationPermission();
+   renderAlertsChoices();
+  };
+  top.appendChild(button);
+ }
+ panel.appendChild(top);
  // Feature remains implemented in MainActivity, just absent from public UI.
  if(SHOW_INDIVIDUAL_FAVORITE_TONES)
   uxOption(panel,"Som de cada Pokémon favorito",
