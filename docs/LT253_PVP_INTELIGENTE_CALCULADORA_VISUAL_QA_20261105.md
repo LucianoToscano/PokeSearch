@@ -48,3 +48,18 @@ PR: https://github.com/LucianoToscano/PokeSearch/pull/231
 ## Evidência de entrega
 
 Registro inicial de desenvolvimento no PR #231. Anexar aqui commits, IDs de runs, hash do APK, resultado da release e pendências **somente quando comprovados no GitHub**.
+
+
+## Evidências comprovadas no GitHub — PR aprovado
+
+- PR [#231](https://github.com/LucianoToscano/PokeSearch/pull/231) **mesclado à main** após as verificações; squash commit `45b157aa082fa568d178162486501b768147ea37`. Fonte testada: `440e6ce8bef98be8057bd5d2b907a0ca1324bc57`.
+- [PokeSearch Node QA](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864463): **SUCCESS**.
+- [LT169 regressão Node completa](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864514): **SUCCESS**.
+- [QA core LT211](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864793): **SUCCESS**.
+- [Android Java compile](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864928): **SUCCESS**.
+- [LT173 OTA assinado e regressões](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864434): **SUCCESS**.
+- [APK beta com chave de teste isolada](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864352): **SUCCESS**; **não** é a chave permanente e **não** deve ser distribuído como atualização.
+- [LT253 gate visual P/M/G e política de alertas](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864641): **SUCCESS**, artifact de evidências [PokeSearch-LT253-visual-PMG](https://github.com/LucianoToscano/PokeSearch/actions/runs/42032864641/artifacts/13417390541), contendo imagens P/M/G da UI HTML.
+- Embutidas notas da versão `0.02.53 / versionCode 54457 / label 51257` no `release_notes.json`. A solicitação de publicação permanente está em [#42033581350](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033581350). Não presumir que foi publicada até obter resultado **completed/success** e asset com SHA-256 validado.
+- Fonte da distribuição anterior preservada como rollback: [v0.02.52-54456](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.52-54456).
+
