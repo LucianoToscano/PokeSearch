@@ -1600,6 +1600,34 @@
           "Validar compartilhamento Android e rolagem/tamanho dos cards em Samsung com Pokébola 1 e 2 após instalar."
         ]
       }
+    },
+    {
+      "id": "lt240-pvp-intelligent-revised-data-20261105",
+      "minVersionCode": 54444,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT240 — PvP inteligente, novos rankings e alertas TOP",
+      "sections": {
+        "novidades": [
+          "Pesquisa no explorador PvP por IV (0/15/14), posição (#125), eficiência mínima (99,5%) ou nome na classificação geral.",
+          "Comparação local e verificada entre forma normal, evolução e Mega do mesmo IV, destacando a melhor posição sem presumir autorização para competir ou evoluir.",
+          "Rank Geral avançado com posição em Lead, Closer, Switch e Charger, pontuação geral e golpes recomendados consultados somente ao tocar ⚔️.",
+          "Alertas TOP PvP optativos no menu Notificações: OFF, #1, #5 e #10, apenas para resultados GL/UL e rank confirmados."
+        ],
+        "melhorias": [
+          "Atualização local do Game Master, ranks gerais GL/UL/ML e categorias do PvPoke a partir da revisão pública e identificada de 03/11/2026; consulta em 05/11/2026.",
+          "Layouts compactos P/M/G adaptados à largura disponível e resultados de comparação de formas memorizados para reduzir processamento repetido.",
+          "Configurações de alertas independentes entre as duas Pokébolas, respeitando permissões do Android e cadência de notificação.",
+          "As fontes PvP avançadas permanecem locais e são permitidas somente em pacotes OTA assinados; nenhum dado privado é enviado."
+        ],
+        "correcoes": [
+          "Proteção contra alertas TOP para ranks ausentes, inválidos, resultados vencidos, modos não PvP e fontes sem confirmação.",
+          "Preserva a navegação, filtros, comparação de IVs e exportação CSV da LT239."
+        ],
+        "emDesenvolvimento": [
+          "Verificação física no Samsung dos menus, alertas e rolagem das duas Pokébolas ainda necessária.",
+          "Alertas Mega TOP não são emitidos automaticamente sem uma classificação de spawn confiável; ranks Mega permanecem projeções matemáticas."
+        ]
+      }
     }
   ]
 }

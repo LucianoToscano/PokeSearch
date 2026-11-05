@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT240 — PvP inteligente, dados revisados e alertas TOP (05/11/2026, implementação em QA)
+
+- **Meta:** LT240 0.02.40 / versionCode 54444 / label 51244, preservando a LT239 oficial 54443.
+- **Código:** nova busca local por IV/rank/eficiência/nome, comparação dos mesmos IVs entre Normal, Megas e evoluções verificadas; Rank Geral com funções Lead/Closer/Switch/Charger, score e golpes verificados sob demanda; layouts compactos responsivos P/M/G e cache de comparações.
+- **Dados:** PvPoke público revisionado no commit `e02bde78d19be9b9099b5a6629c6a8d0835a53be` (03/11/2026), consultado em 05/11: Game Master local, GL/UL/ML gerais e funções; snapshots e fontes pinados, MIT, sem consulta de API de encontros.
+- **Alertas:** TOP 1/5/10 ou OFF (padrão) por Pokébola no menu de notificações; apenas resultados GL/UL comprovados, não vencidos, com rank válido, autorização Android e notificações gerais ligadas; sem confundir Mega teórica/Rank Geral com rank de spawn. Política nativa `TopPvpAlertPolicy.java` com teste Java isolado. P1/P2 prefs independentes e sem alteração nos favoritos.
+- **OTA:** `OtaAssets.java` e `build_ota_pack.py` incluem assets PvP novos e motor do explorador, exigindo distribuição assinada. Teste Node LT240 e suite Node/Java oficial.
+- **Escopo e pendências de QA:** [LT240_PVP_INTELIGENTE_RANKS_ALERTAS_DADOS_20261105.md](LT240_PVP_INTELIGENTE_RANKS_ALERTAS_DADOS_20261105.md). **Esta seção não comprova APK, merge ou atualização no app** até CI/Release verificáveis. Samsung físico pendente.
+
 ## LT239 OFICIAL — 0.02.39 / versionCode 54443 (05/11/2026)
 
 - **Status comprovado:** LT239 em GitHub releases/latest, tag [v0.02.39-54443](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.39-54443), draft=false, prerelease=false, publicada em 2026-11-05T04:20:40Z.

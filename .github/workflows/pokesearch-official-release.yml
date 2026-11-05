@@ -117,6 +117,9 @@ jobs:
           java -cp "$RUNNER_TEMP/lt233-verified-coords" com.lucianotoscano.pokesearchoverlay.VerifiedEncounterCoordinatesTest
           javac --release 17 -d "$RUNNER_TEMP/lt233-verified-coords" app/src/main/java/com/lucianotoscano/pokesearchoverlay/ResultsSpacingPolicy.java app/tests/ResultsSpacingPolicyTest.java
           java -cp "$RUNNER_TEMP/lt233-verified-coords" com.lucianotoscano.pokesearchoverlay.ResultsSpacingPolicyTest
+          mkdir -p "$RUNNER_TEMP/lt240-top-pvp"
+          javac --release 17 -d "$RUNNER_TEMP/lt240-top-pvp" app/src/main/java/com/lucianotoscano/pokesearchoverlay/TopPvpAlertPolicy.java app/tests/TopPvpAlertPolicyTest.java
+          java -cp "$RUNNER_TEMP/lt240-top-pvp" com.lucianotoscano.pokesearchoverlay.TopPvpAlertPolicyTest
           for t in app/tests/*.test.js; do
             [ "$t" = app/tests/lt74-local-update-preview.test.js ] && continue
             node "$t" >/dev/null || { node "$t"; exit 1; }

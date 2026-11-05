@@ -39,7 +39,7 @@ jobs:
             LocalBridgePagePolicy PresenceWindowState
             PopupTouchGeometry ResultsSpacingPolicy OverlayPlacementPolicy
             SupportMissionPolicy UpdatePolicy VerifiedIvMath VerifiedEncounterCoordinates
-            VersionNames ProviderWaitFormatter
+            VersionNames ProviderWaitFormatter TopPvpAlertPolicy
           )
           inputs=()
           for name in "${sources[@]}"; do inputs+=("$base/$name.java"); done
