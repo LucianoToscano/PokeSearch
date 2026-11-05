@@ -23,10 +23,8 @@ assert.ok(css.slice(popupFix).includes("body.popup-window.controls-window #shell
 assert.match(detail,/isMega\?\s*await window\.PokeSearchPvpRankMoves\?\.lookupMega\?\./);
 assert.match(detail,/isMega&&recommendation\.megaRecommendation!==true/);
 assert.ok(detail.includes('Mega Evolução não aprende golpes exclusivos'));
-assert.ok(detail.includes('Os golpes são do '+String("'")+String("'+h(species)+'")+
-  ' normal; recomendação Mega não verificada.'));
-assert.ok(detail.includes('Mesmos golpes do '+String("'")+String("'+h(species)+'")+
-  ' normal · avaliação Megaedição.'));
+assert.ok(detail.includes("Os golpes são do '+h(species)+' normal; recomendação Mega não verificada."));
+assert.ok(detail.includes("Mesmos golpes do '+h(species)+' normal · avaliação Megaedição."));
 assert.ok(detail.includes('Mega não tem golpes exclusivos nem garante GBL'));
 assert.ok(detail.includes('src="mega_evolution_icon.svg"'));
 assert.ok(detail.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'),"legacy-only crossed swords, neutral lightning");
