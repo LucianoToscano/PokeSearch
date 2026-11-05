@@ -7286,8 +7286,12 @@ function draw(){
    (activeSearchPhase==="searching"||activeSearchPhase==="filling"));
   const header=document.getElementById("resultHeader");
   const count=document.getElementById("resultSpawnCount");
-  count.textContent=resultDisplayOptions.count?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count?"inline":"none";
+  // LT250: display an empty-search 0 physically ATTACHED to its Pokébola
+  // even if the optional positive count is disabled. Never add a second row
+  // below the standalone results header or turn 0 into a phantom card.
+  const showCount=resultDisplayOptions.count||cards.length===0;
+  count.textContent=showCount?String(cards.length):"";
+  count.style.display=showCount?"inline":"none";
   const image=document.getElementById("resultModeIcon");
   if(image.getAttribute("src")!==selectedIcon.path){
    image.style.visibility="visible";
@@ -7339,8 +7343,12 @@ function draw(){
   document.getElementById("dockIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("dockIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
   const count=document.getElementById("dockSpawnCount");
-  count.textContent=resultDisplayOptions.count?String(cards.length):"";
-  count.style.display=resultDisplayOptions.count?"inline":"none";
+  // LT250: display an empty-search 0 physically ATTACHED to its Pokébola
+  // even if the optional positive count is disabled. Never add a second row
+  // below the standalone results header or turn 0 into a phantom card.
+  const showCount=resultDisplayOptions.count||cards.length===0;
+  count.textContent=showCount?String(cards.length):"";
+  count.style.display=showCount?"inline":"none";
   const gear=document.getElementById("gear");
   gear.removeAttribute("title");
   gear.setAttribute("aria-label","Pokébola: toque para resultados; segure para menu; arraste para mover");
