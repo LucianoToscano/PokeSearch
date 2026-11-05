@@ -49,7 +49,8 @@ assert.equal(moves.localizedMoves(localized,[{proto:"OTHER",moveId:2,type:1}],{}
 assert.match(detail,/Ataques Recomendados:/);
 assert.match(detail,/row\("Ágil",recommendation\.fast\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("Carregado "\+\(i\+1\),m\)\)/);
-assert.match(detail,/row\("Carregado 2",recommendation\.charged\[1\]\)/);
+assert.match(detail,/map\(\(m,i\)=>row\("Carregado "\+\(i\+1\),m\)\)/,
+ "the same indexed renderer covers Carregado 1 and Carregado 2");
 assert.match(detail,/💠 Ataque Legado/);
 assert.match(detail,/font-size:8px;vertical-align:baseline/);
 assert.match(detail,/ghost:"#b7a2ff"/);
