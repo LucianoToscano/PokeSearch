@@ -3313,7 +3313,10 @@ public class OverlayService extends Service {
            !verifiedTargetCriteria(card))return 0;
         String value=card.optString("rank","").replace("#","").trim();
         if(!value.matches("(?:[1-9]|[1-4][0-9]|50)"))return 0;
-        return Integer.parseInt(value);
+        int n=Integer.parseInt(value);
+        // Preserve LT252 default Top 1–5 labelling until the user explicitly
+        // opts into a larger verified Rank tier in the original bell menu.
+        return n<=5||smartPvpAlertLimit()>0?n:0;
     }
     private String encounterAlertTitle(JSONObject card){
         String base=EncounterAlertText.title(card.optString("name","Pokémon"),
