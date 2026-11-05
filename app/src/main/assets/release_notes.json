@@ -1851,6 +1851,28 @@
           "Simulador PC/Nível com a família evolutiva real independente dos filtros ativos (Teddiursa → Ursaring → Ursaluna), setas para trocar forma, controles ±0,5 nível e campo PC-alvo que calcula o maior nível elegível."
         ]
       }
+    },
+    {
+      "id": "lt250-three-readable-chips-single-league-dot-restored-empty-zero-20261105",
+      "minVersionCode": 54454,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT250 — Barra PvP legível e zero restaurado",
+      "sections": {
+        "correcoes": [
+          "Removido o segundo círculo de liga desenhado por um pseudo-elemento CSS antigo: a barra GL/UL/ML mostra exatamente um 🔵/🟡/🟣 dentro do botão IV.",
+          "Barra PvP sem fundo compartilhado: três divisões individualmente contornadas — [🔵 GL IV #N], [↳ Evolução], [RG #N] — seguidas de ⚔️/🗡 fora das divisões, sem quebra de linha. Texto aumentado, alvos separados e maior espaço para o nome.",
+          "Rank Geral ausente é apresentado como RG — desativado, mantendo a terceira divisão sem fabricar classificação.",
+          "Quando a busca retorna zero e o contador está ativado, 0 aparece no indicador junto à Pokébola. Quando o contador está desligado, 0 reaparece centralizado logo abaixo do ícone, inclusive na segunda Pokébola."
+        ],
+        "melhorias": [
+          "Removido +N da linha compacta para não roubar largura nem forçar o nome da evolução a desaparecer; outras formas continuam na Análise PvP expandida.",
+          "Preservados quatro destinos independentes: IV Classe, Análise PvP da evolução, Rank Geral e golpes com legado verificado.",
+          "Mantidos simulador de evolução e CP-alvo, nomes e estado PvP anteriores, além do aspecto P/M/G."
+        ],
+        "emDesenvolvimento": [
+          "QA visual com o aplicativo instalado nas duas Pokébolas ainda precisa ser conferido em dispositivo Samsung; teste automatizado não substitui comparação visual com os prints."
+        ]
+      }
     }
   ]
 }
