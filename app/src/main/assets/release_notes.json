@@ -1871,7 +1871,10 @@
         "emDesenvolvimento": [
           "Validação visual manual em Samsung nas duas Pokébolas e P/M/G continua necessária; compilação automatizada não comprova interação no dispositivo."
         ],
-        "novidades": []
+        "novidades": [
+          "Faixa PvP em uma linha com três botões glass independentes de 28px: [🔵 GL IV #N] [↳ Evolução] [RG #N] e ⚔️/🗡 em quarto botão separado.",
+          "Simulador de evolução expandido com seletor de forma e controles de nível em linhas distintas e legíveis."
+        ]
       }
     }
   ]
