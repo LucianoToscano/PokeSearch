@@ -101,6 +101,17 @@ const forms=funcs.variants();
 for(const n of ["Gastly","Haunter","Gengar","Gengar (Mega)"])
  assert.ok(forms.some(x=>x[1]===n),"available simulated form "+n);
 assert.deepEqual(funcs.iv(),[0,14,14]);
+const beforeCharizard=win.psRankContext;
+win.psRankContext={name:"Charizard",leagues:[{league:"gl",
+ megas:[{name:"Mega Charizard X",megaProjection:true,referenceOnly:true},
+ {name:"Mega Charizard Y",megaProjection:true,referenceOnly:true}]},
+ {league:"ul"},{league:"ml"}]};
+funcs.setCard({name:"Charizard",iv:"0/14/14",cp:100,level:10,ivValid:true});
+const megasXY=funcs.variants();
+assert.ok(megasXY.some(x=>x[0]==="charizard_mega_x"),"Mega Charizard X has verified stats");
+assert.ok(megasXY.some(x=>x[0]==="charizard_mega_y"),"Mega Charizard Y has verified stats");
+win.psRankContext=beforeCharizard;
+funcs.setCard({name:"Gastly",iv:"0/14/14",cp:477,level:20,ivValid:true});
 const gastly=forms.find(x=>x[0]==="gastly");
 const cpOne=funcs.at(gastly,[0,14,14],1);
 const cpFifty=funcs.at(gastly,[0,14,14],50);
