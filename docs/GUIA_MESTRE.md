@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT241 OFICIAL — 0.02.41 / versionCode 54445 (05/11/2026)
+
+- **Estado verificado:** [Release oficial v0.02.41-54445](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.41-54445), publicada em 2026-11-05T06:01:16Z, `draft=false`, `prerelease=false`, disponível em `releases/latest`.
+- **Código e merge:** [PR #217](https://github.com/LucianoToscano/PokeSearch/pull/217) mesclada na `main`, commit `0fda1931930e1adb2e42767249bd07febcf44554`; fonte da release no commit `e82520d1f081c46616e5776bb47ded45e41d53c8`. Testes da revisão final no SHA `01e59cdb71c2a7d9192daec5ac00844fdf17108d`.
+- **Visual Mega:** emblema vetorial de Mega Evolução `mega_evolution_icon.svg` substitui `◈` em linhas Mega, aparece em `TOP 1 MEGA`, nos destaques Top PvP e no comparador Normal/Mega/evoluções. Símbolo transparente, 12–14px, cores suaves, sem usar imagem externa. Formas normais não ganham o ícone; Mega continua identificada como projeção e não elegibilidade de GBL. A mesma interface é usada em P1/P2, com CSS responsivo P/M/G.
+- **Código de assets:** `detail.html`, `pvp_rank_advanced_ui.js`, `mega_evolution_icon.svg`, allowlists `OtaAssets.java` e `scripts/build_ota_pack.py`. Nenhum novo dado PvP, API, permissão ou regra de assinatura.
+- **Testes:** Node QA, regressão Node LT169, QA core LT211, compilação Java LT62, OTA LT173, beta privado e `lt241-mega-evolution-symbol.test.js` aprovados. Inspeção visual Samsung nas duas Pokébolas ainda pendente.
+- **Workflow permanente:** [Actions #41977215076](https://github.com/LucianoToscano/PokeSearch/actions/runs/41977215076) `completed/success`: compilação protegida com assinatura, validação do APK, publicação e hash `success`.
+- **APK oficial:** [PokeSearch-v0.02.41-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.41-54445/PokeSearch-v0.02.41-LT.apk), 28.141.675 bytes, SHA-256 `300248ed5eed250b463ce9379ca2b9cd980667dd7bfc82dfd773f40a2735aedd`, asset `uploaded`. Artefato CI `PokeSearch-v0.02.41-54445-Signed-Verified` ID 13392850272, 25.963.214 bytes, ZIP SHA-256 `7962540535d54129631ad90f3b53060db17174fa80949e503bb9480548f4293b`.
+- **Atualizador interno:** release detectável em `releases/latest`, instalação depende da confirmação do Android. **Não afirmar instalação remota ou QA físico concluído.**
+- **Detalhes:** [LT241_ICONE_MEGA_EVOLUCAO_20261105.md](LT241_ICONE_MEGA_EVOLUCAO_20261105.md). O registro anterior `LT241 — desenvolvimento` é histórico e fica superado por este.
+
 ## LT241 — Emblema de Mega Evolução (05/11/2026; desenvolvimento)
 
 - Objetivo: substituir o losango genérico `◈` pelo símbolo vetorial de Mega Evolução em linhas de formas Mega, TOP 1 MEGA, radar Top PvP e comparador Normal/Mega/Evoluções. Formas normais não ganham o símbolo.
