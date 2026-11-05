@@ -1,5 +1,19 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT245 OFICIAL — 0.02.45 / versionCode 54449 (05/11/2026)
+
+- **Pedido e exemplo:** Litwick 0/15/14 tem Chandelure GL `IV #1 / RG #808` e Lampent GL `IV #1 / RG #519`. O card agora prioriza Lampent pelo menor RG comprovado do PvPoke, **entre formas reais com IV Classe Top 50** (ou filtro Top N mais restritivo), sem promover IVs ruins.
+- **UI:** `GL · ↳ Lampent · RG #519 · IV #1 · +1`; RG e IV têm botões individuais abrindo o explorador da espécie/rank e das 4.096 combinações. O `+1` abre sob demanda Chandelure com seus rankings RG #808 / IV #1, sem nova consulta ao provedor. Alternativas são recolhidas por padrão e a faixa conserva legibilidade P/M/G. Quando falta RG confiável usa o melhor IV Classe; nunca atribui RG de Mega/referência teórica.
+- **Análise expandida e alertas TOP:** formas reais com IV competitivo são ordenadas pelo RG; Mega e comparações teóricas permanecem em seções separadas. Mesma WebView e código para P1/P2; preservados favoritos, filtros, dados offline, login, recursos da LT244 e assinatura.
+- **Código/teste:** `app/src/main/assets/detail.html`, `pvp_rank_insights.js`, teste `app/tests/lt245-general-rank-priority-alternates.test.js` e regressões LT244/LT243/LT164 revisadas. Regra estrita Top 1 confirmada, sem reduzir verificação.
+- **QA verde:** Node QA #41992018110, regressão LT169 #41992017973, QA core LT211 #41992017910, Java LT62 #41992018417, OTA LT173 #41992017946 e beta privado #41992017995: todos `completed/success`.
+- **Código integrado:** [PR #221](https://github.com/LucianoToscano/PokeSearch/pull/221) mesclada no SHA `450f7bea20a9b912e43e22e74d7a5ebcf4821044`. Solicitação de release `release/official-request.json` no SHA `eccac19a06816acc7e74c6437cf8815fb2b3132e`, `0.02.45 / 54449 / label 51249`.
+- **Build e assinatura oficial:** [Actions #41992371701](https://github.com/LucianoToscano/PokeSearch/actions/runs/41992371701) `completed/success`; preflight/publish, compilação assinada, validação do certificado, publicação e digest público `success`.
+- **Release estável:** [v0.02.45-54449](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.45-54449), publicada em `2026-11-05T08:13:26Z`, `draft=false`, `prerelease=false`, vigente em `releases/latest`.
+- **APK oficial:** [PokeSearch-v0.02.45-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.45-54449/PokeSearch-v0.02.45-LT.apk), **28.151.231 bytes**, SHA-256 `179624b08b0bb867c09f4fbfa9e7b3260387364f6710c9e27bfa8b2db9ccbdf7`, asset `uploaded`. Artefato CI `PokeSearch-v0.02.45-54449-Signed-Verified`, ID `13397994032`, ZIP **25.974.038 bytes**, SHA-256 `3a004bb58b38d5f0cb20b49c65550c73e9530929e90701bc566372f9053c6afc` (não é digest do APK).
+- **Atualizador:** versão disponível via GitHub `releases/latest` para o atualizador do aplicativo; instalação ainda exige confirmação Android. QA físico Samsung P1/P2 em P/M/G **pendente**, assim como atualização integral da base offline PvPoke.
+- **Registro técnico:** [LT245_PRIORIDADE_RANK_GERAL_EVOLUCOES_20261105.md](LT245_PRIORIDADE_RANK_GERAL_EVOLUCOES_20261105.md). A antiga seção `LT245 — desenvolvimento` continua como histórico, mas está superada por esta confirmação oficial.
+
 ## LT245 — Prioridade por Rank Geral e +N formas (05/11/2026; desenvolvimento)
 
 - Pedido confirmado com print de Litwick 0/15/14: Chandelure GL `IV #1 / RG #808` e Lampent GL `IV #1 / RG #519`. Priorizar Lampent pelo menor RG **entre espécies com bons IVs**, não apenas IV Classe.
