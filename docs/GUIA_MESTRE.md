@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT238 OFICIAL — 0.02.38 / versionCode 54442 — Rankings PvP clicáveis (05/11/2026)
+
+- **Publicação confirmada em `releases/latest`:** [v0.02.38-54442](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.38-54442), estável (`draft=false`, `prerelease=false`), publicada em 2026-11-05T03:59:47Z.
+- **Fonte/merge:** [PR #212](https://github.com/LucianoToscano/PokeSearch/pull/212), commit-fonte `607ac0e7505bd1dc946b16ed5a58a73fb7df5234`.
+- **Workflow oficial:** [Actions #41964685804](https://github.com/LucianoToscano/PokeSearch/actions/runs/41964685804) concluído `success`. Passaram gates de release imutável, Node/OTA, geração de assets, compilação assinada Android, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash`.
+- **APK disponível para atualização interna:** [PokeSearch-v0.02.38-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.38-54442/PokeSearch-v0.02.38-LT.apk), **28.130.290 bytes**, digest público SHA-256 `1d2b459e7afef53d8c8a37706e1aa011b553abef54b6caaa5b51af44bba71cc2`, asset `uploaded`. Workflow exige assinatura Android v2 com certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Artefato CI:** `PokeSearch-LT238-Signed-Verified` #13386529117, ZIP 25.952.782 bytes; digest `e6ab0f3bd20fde2410ac616e8d634c4a9858073bb53767e2d85cb23c31e475c9`.
+- **Funcionalidade:** Rank Classe clicável com 4.096 combinações de IVs (A/D/S, nível, PC, eficiência e detalhes ATK/DEF/HP); Rank Geral clicável com ranking das espécies/forma por GL/UL/ML; suporte a Mega X/Y, paginação, dados PvPoke locais, sem novos pedidos ao provedor; P1/P2 preservadas.
+- **Distribuição:** publicada via GitHub Releases/latest; atualizador da LT237 pode detectar e baixar em Wi-Fi. O Android exige confirmação para instalar. **Sem evidência de instalação física Samsung/P1/P2:** não afirmar instalação remota.
+- **Detalhes:** [LT238_RANK_EXPLORERS_IV_GERAL_20261105.md](LT238_RANK_EXPLORERS_IV_GERAL_20261105.md).
+
 ## Publicação permanente pelo assistente — 05/11/2026
 
 - Pedido do proprietário: próximas atualizações solicitadas devem ser executadas pelo assistente até publicar, validar e registrar evidências, sem upload manual de YAML ou disparo de build pelo usuário. Preferência registrada em AGENTS.md; não autoriza mudanças/publicações não solicitadas.
