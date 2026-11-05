@@ -56,15 +56,21 @@
    r.efficiency=(Math.min(10000,Math.round(r.product/maximum*10000))/100).toFixed(2).replace(".",",");
   });
   cache.set(cacheKey,result);
+  while(cache.size>24)cache.delete(cache.keys().next().value);
   return result;
  }
  function getOverallRows(snapshot,league){
   if(!snapshot||!LIGAS[league]||!Array.isArray(snapshot[league]))return null;
-  return snapshot[league].filter(e=>Array.isArray(e)&&typeof e[1]==="string"&&
+  const saved=overallCache.get(snapshot);
+  if(saved?.[league])return saved[league];
+  const rows=snapshot[league].filter(e=>Array.isArray(e)&&typeof e[1]==="string"&&
    Number.isInteger(e[2])&&e[2]>=1).map(e=>({id:e[0],name:e[1],rank:e[2]}))
    .sort((a,b)=>a.rank-b.rank);
+  overallCache.set(snapshot,{...(saved||{}),[league]:rows});
+  return rows;
  }
 
+ const overallCache=new WeakMap();
  const PAGE_SIZE=10;
  const FILTER_LIMITS=[10,50,100,0]; // 0 = full ranking
  let state=null,view=null;
@@ -176,6 +182,8 @@
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,scrollSelected:true,
+   formNames:Array.isArray(opts.forms)?opts.forms.slice(0,32):[],ownedIv:String(opts.iv||""),
+   searchQuery:"",searchRank:null,overallDetailRank:selectedRank,
    sourceDate:sourceFor(kind,gm,overall),status:""};
   if(!mount()){state=null;return false;}
   draw();
@@ -209,6 +217,7 @@
    "#psRankExplorer .psrNum{width:15%}#psRankExplorer .psrIv{width:27%}#psRankExplorer .psrLevel{width:14%}#psRankExplorer .psrCp{width:15%}#psRankExplorer .psrEff{width:29%}",
    "#psRankExplorer tr.psrSelected{background:rgba(68,125,103,.42);color:#edfff7}",
    "#psRankExplorer tr.psrCompared{box-shadow:inset 3px 0 #deb861;background:#ffffff16}",
+   "#psRankExplorer tr.psrSearched{outline:2px solid #a2d6f0;outline-offset:-2px}",
    "#psRankExplorer tr[data-ps-row]{cursor:pointer;min-height:30px}",
    "#psRankExplorer tr.psrExpanded{background:#ffffff0c}",
    "#psRankExplorer .psrTap{min-height:26px;padding:2px 3px;background:transparent;border:0;color:#a9dfff;text-decoration:underline;text-underline-offset:2px}",
@@ -350,7 +359,8 @@
     ' · DEF '+statString(r.def)+' · HP '+r.hp+' · Nível '+
     levelString(r.level)+' · PC '+r.cp+'</div></td></tr>':"";
    return '<tr data-ps-row="'+r.rank+'" tabindex="0"'+(selected?' data-ps-owned="true"':'')+
-    ' class="'+(selected?'psrSelected ':'')+(marked?'psrCompared':'')+
+    (s.searchRank===r.rank?' data-ps-search="true"':'')+
+    ' class="'+(selected?'psrSelected ':'')+(marked?'psrCompared ':'')+(s.searchRank===r.rank?'psrSearched':'')+
     '" aria-label="'+safe(s.kind==="class"?"Rank "+r.rank+", IV "+r.iv:"Rank "+r.rank+", "+r.name)+'">'+
      markup+'</tr>'+details;
   }).join("");
@@ -383,15 +393,25 @@
   if(newList){
    newList.scrollTop=oldScroll;
    if(s.scrollSelected){
-    const found=newList.querySelector?.('tr[data-ps-owned="true"]');
+    const found=newList.querySelector?.(s.searchRank?'tr[data-ps-search="true"]':'tr[data-ps-owned="true"]');
     if(found)newList.scrollTop=Math.max(0,found.offsetTop-(newList.clientHeight||0)/2);
     s.scrollSelected=false;
    }
   }
-  if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
-   window.resizeEvolutionPanel();
+  if(typeof window!=="undefined"){
+   window.PokeSearchLt240?.enhance?.(view,state,apiFacade);
+   if(typeof window.resizeEvolutionPanel==="function")window.resizeEvolutionPanel();
+  }
  }
+ function goToRank(rank){
+  if(!state||!Number.isInteger(rank)||!state.rows.some(r=>r.rank===rank))return false;
+  if(!visibleRows(state).some(r=>r.rank===rank))state.filter=0;
+  state.searchRank=rank;state.page=pageForRank(visibleRows(state),rank);
+  state.scrollSelected=true;draw();return true;
+ }
+ const apiFacade={getIvRows,getOverallRows,redraw:draw,goToRank,getState:()=>state};
  return {open,close,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
-  setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
+  setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback,
+  redraw:draw,goToRank,getState:()=>state};
 
 });
