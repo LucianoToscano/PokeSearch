@@ -1628,30 +1628,35 @@ function setRankLineLabel(rankLine,label){
     typeof rankLine.appendChild==="function"&&
     typeof document.createElement==="function"){
   rankLine.replaceChildren();
-  const leagueChip=document.createElement("span");
-  leagueChip.className="psRankLeague";leagueChip.textContent=label;
-  if(unverifiedTop)leagueChip.title="Filtro Top #"+limit+
-   " não confirmado para este encontro; melhor IV local: #"+best.rank;
-  rankLine.appendChild(leagueChip);
+  // [🔵 GL IV #N] is ONE accessible class-ranking button.
+  const leagueIcon={gl:"🔵",ul:"🟡",ml:"🟣"}[activeRankLeague]||"🔵";
   const iv=document.createElement("button");
-  iv.type="button";iv.className="psCompactIv psRankOpen";
-  iv.textContent="IV #"+best.rank;
+  iv.type="button";iv.className="psCompactIv psRankOpen psLeagueIv";
+  iv.textContent=leagueIcon+" "+label+" IV #"+best.rank;
   iv.title="Rank Classe #"+best.rank+" de "+best.name+" · 4.096 IVs";
-  iv.setAttribute?.("aria-label","Abrir IV #"+best.rank+" de "+best.name);
+  if(unverifiedTop)iv.title+=" · Top #"+limit+" não confirmado";
+  iv.setAttribute?.("aria-label",iv.title);
   iv.dataset.psKind="class";iv.dataset.psName=best.name;
   iv.dataset.psLeague=activeRankLeague;iv.dataset.psRank=String(best.rank);
   iv.onclick=event=>openPvpRankExplorer(event,iv);
   rankLine.appendChild(iv);
-  const nameChip=document.createElement("span");
-  nameChip.className="psCompactSpecies";
+  // The species button opens PvP analysis, never a Class or RG table.
+  const nameChip=document.createElement("button");
+  nameChip.type="button";nameChip.className="psCompactSpecies";
   nameChip.textContent=scope;
-  nameChip.title=isMega?scope+" · projeção Mega, não elegibilidade GBL":scope;
-  rankLine.appendChild(nameChip);
+  nameChip.title="Abrir análise PvP de "+best.name+
+   (isMega?" · Mega projetada (não indica permissão GBL)":"");
+  nameChip.setAttribute?.("aria-label",nameChip.title);
+  nameChip.dataset.psName=best.name;nameChip.dataset.psLeague=activeRankLeague;
+  nameChip.onclick=event=>openPvpAnalysisForSpecies(event,nameChip);
   if(isMega){
-   const megaTag=document.createElement("span");
-   megaTag.className="psCompactMega";megaTag.textContent="MEGA";
-   rankLine.appendChild(megaTag);
+   const emblem=document.createElement("img");
+   emblem.src="mega_evolution_icon.svg";emblem.alt="";
+   emblem.className="psCompactMegaEmblem";
+   emblem.setAttribute?.("aria-hidden","true");
+   nameChip.appendChild(emblem);
   }
+  rankLine.appendChild(nameChip);
   if(hasVerifiedOverall){
    const badge=document.createElement("button");
    badge.type="button";badge.className="psCompactOverall psRankOpen";
@@ -1712,17 +1717,14 @@ window.showEvolutionDetails=payload=>{
   quickRank.psExplorerBound=true;
   quickRank.addEventListener("click",event=>{
    if(event.target?.closest?.("button"))return;
-   const league=quickRank.dataset?.league,context=window.psRankContext;
-   if(!league||!context)return;
-   window.PokeSearchRankExplorer?.open({
-    kind:"class",name:currentRankSpecies||context.name,
-    iv:context.iv,league,forms:pvpFormsForLeague(league)
-   });
+   openPvpAnalysisForSpecies(event,{dataset:{
+    psName:currentRankSpecies||window.psRankContext?.name,
+    psLeague:quickRank.dataset?.league}});
   });
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
+ const labels={gl:"🔵 Grande Liga",ul:"🟡 Ultra Liga",ml:"🟣 Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
