@@ -31,6 +31,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
+/* LT238: make the existing compact verified rank label discoverable. */
+#rankLine:not([hidden]){cursor:pointer;text-underline-offset:2px}
+#rankLine:not([hidden]):hover .psRankLabel{text-decoration:underline}
 /* LT145 compact card: controls remain readable and accessible, without extra rows. */
 #coordRow{display:grid;grid-template-columns:minmax(0,1fr) 31px;gap:4px;margin-top:4px}
 #coords,#copy{min-height:30px;touch-action:manipulation;position:relative;z-index:1;border-radius:6px;font-weight:700}
@@ -718,6 +721,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
+<script src="pvpoke-overall-ranks.js"></script>
+<script src="pvpoke-iv-gamemaster.js"></script>
+<script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_moves.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
@@ -1122,7 +1128,21 @@ if(typeof document!=="undefined"&&typeof document.addEventListener==="function")
      !pvpRefPopover?.contains(event.target))closePvpReferenceInfo();
  });
 }
+function openPvpRankExplorer(event,button){
+ if(event){event.preventDefault();event.stopPropagation();}
+ if(!button||!window.psRankContext)return false;
+ const data=button.dataset||{},engine=window.PokeSearchRankExplorer;
+ if(!engine||typeof engine.open!=="function")return false;
+ return engine.open({
+  kind:data.psKind==="overall"?"overall":"class",
+  name:data.psName||window.psRankContext.name,
+  league:data.psLeague||"gl",
+  iv:window.psRankContext.iv,
+  rank:Number(data.psRank)||null
+ });
+}
 function evolutionRow(x,first){
+ const psLeague=String(window.psRankRenderLeague||"gl");
  if(!x||typeof x!=="object")return "";
  const rank=Number(x.rank),overall=Number(x.overallRank);
  const hasClass=Number.isInteger(rank)&&rank>=1&&rank<=4096;
@@ -1139,9 +1159,14 @@ function evolutionRow(x,first){
   stats.push('<span class="evoCp">PC '+Math.floor(cp)+'</span>');
  if(hasClass&&Number.isFinite(level)&&level>=1&&level<=55)
   stats.push('<span class="evoLevel">Nv. '+level.toFixed(1).replace(".",",")+'</span>');
- const ranks=['<span class="evoClass" title="Posição da combinação de IVs nesta espécie e liga">Rank Classe: '+
-  (hasClass?'#'+rank:'—')+'</span>'];
- if(hasOverall)ranks.push('<span class="evoOverall">Rank Geral: #'+overall+'</span>');
+ const ranks=[hasClass?
+  '<button type="button" class="evoClass psRankOpen" data-ps-kind="class" data-ps-name="'+
+   h(name)+'" data-ps-league="'+h(psLeague)+'" data-ps-rank="'+rank+
+   '" title="Abrir as 4.096 combinações de IVs" onclick="openPvpRankExplorer(event,this)">Rank Classe: #'+rank+'</button>':
+  '<span class="evoClass">Rank Classe: —</span>'];
+ if(hasOverall)ranks.push('<button type="button" class="evoOverall psRankOpen" data-ps-kind="overall" data-ps-name="'+
+   h(name)+'" data-ps-league="'+h(psLeague)+'" data-ps-rank="'+overall+
+   '" title="Abrir ranking geral de espécies" onclick="openPvpRankExplorer(event,this)">Rank Geral: #'+overall+'</button>');
  let state="";
  // Reference rows are theory-only: do not assert costume evolution legality.
  if(!isReference&&x.eligible===false&&hasClass)state="Não elegível no nível atual";
@@ -1298,7 +1323,22 @@ function setRankLineLabel(rankLine,label){
 window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
+ window.psRankContext=payload;
  updateVisiblePvPRank(payload);
+ // Compact rank label is also an entrypoint, without intercepting move buttons.
+ const quickRank=document.getElementById("rankLine");
+ if(quickRank&&typeof quickRank.addEventListener==="function"&&!quickRank.psExplorerBound){
+  quickRank.psExplorerBound=true;
+  quickRank.addEventListener("click",event=>{
+   if(event.target?.closest?.("button"))return;
+   const league=quickRank.dataset?.league,context=window.psRankContext;
+   if(!league||!context)return;
+   window.PokeSearchRankExplorer?.open({
+    kind:"class",name:currentRankSpecies||context.name,
+    iv:context.iv,league
+   });
+  });
+ }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
  const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
@@ -1313,6 +1353,7 @@ window.showEvolutionDetails=payload=>{
   // It must not alter base rank, actual CP, Top-N search or PvP eligibility.
   const megas=Array.isArray(league.megas)?
    league.megas.filter(e=>e?.megaProjection===true):[];
+  window.psRankRenderLeague=league.league;
   const rows=[...megas,...entries,...references].map(e=>evolutionRow(e,false)).filter(Boolean);
   const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
   if(!rows.length&&!own)continue;
@@ -1320,6 +1361,7 @@ window.showEvolutionDetails=payload=>{
   count+=rows.length;
   if(own)ownCount++;
  }
+ window.psRankRenderLeague="";
  if(!count&&!ownCount){
   // A missing/unverified analysis must not occupy vertical card space.
   // A costume with no catalog mapping does NOT prove this species has no rank.
