@@ -1614,13 +1614,13 @@ function renderRankOneMoves(){
  if(!hasRank&&!megaTop)return;
  const league=(rankLine.dataset&&rankLine.dataset.league)||"";
  const featured=currentRankSpecies||watchName;
- const isMega=/^mega\s+/i.test(featured)||/\(mega\)/i.test(featured);
- // PvPoke does not simulate Mega GBL usage. Use its base species learnset,
- // clearly labelled, never claim that the Mega was PvPoke recommended.
+ const isMega=/^mega\s+/i.test(featured)||/\(mega(?: [XY])?\)/i.test(featured);
+ // PvPoke Mega Edition is distinct from regular GO Battle League.
+ // Moves remain learned on the base form, but recommendations may change.
  const species=isMega?featured.replace(/^mega\s+/i,"")
   .replace(/\s*\(mega(?: [XY])?\)\s*/i,"")
   .replace(/\s+[XY]$/i,"").trim():featured;
- const statusKey=league+"|"+String(species).toLowerCase().trim();
+ const statusKey=league+"|"+(isMega?"mega":"normal")+"|"+String(species).toLowerCase().trim();
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";
  const prior=psVerifiedMoveIcons.get(statusKey);
@@ -1635,14 +1635,21 @@ function renderRankOneMoves(){
   const identity=detailIdentity;
   popover.textContent="Consultando golpes PvP...";
   resizeEvolutionPanel();
-  const recommendation=await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
+  const recommendation=isMega?
+   await window.PokeSearchPvpRankMoves?.lookupMega?.(league,featured):
+   await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
   if(detailIdentity!==identity||popover.hidden||!btn.isConnected)return;
-  if(!recommendation){
+  // Never label a normal-league recommendation as simulated for the Mega.
+  if(!recommendation||(isMega&&recommendation.megaRecommendation!==true)){
    // No remote ranking or translation is authoritative right now.
    // Show known moves of this exact capture rather than a misleading empty
    // "recommended" panel. Never present them as a PvPoke recommendation.
    const shown=String(currentCardMoves||"").trim();
-   popover.innerHTML='<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
+   popover.innerHTML=isMega?
+    '<div class="psMoveTitle">Megaedição indisponível</div>'+
+    '<div class="psMoveLegend">Sem recomendação Mega verificada. '+
+    'Os golpes pertencem à mesma espécie, mas o conjunto ideal da Mega pode mudar.</div>':
+    '<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
     (shown?'<div class="psMoveRow"><span class="psMoveLabel">Capturado:</span>'+
       '<span class="psMoveName">'+h(shown)+'</span></div>':
       '<div class="psMoveLegend">Golpes ainda não disponíveis nesta fonte.</div>');
@@ -1716,10 +1723,10 @@ function renderRankOneMoves(){
    psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
   }
   popover.innerHTML='<div class="psMoveTitle">'+
-   (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
+   (isMega?'Megaedição · Ataques recomendados':'Ataques Recomendados:')+
    '</div>'+fastRow+chargedRows+
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
-    ' · recomendados ≠ capturados</div>'+
+    (isMega?' · Mega ≠ GBL':' · recomendados ≠ capturados')+'</div>'+
    (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado/Elite confirmado</div>':
     complete?'<div class="psMoveLegend">⚡ Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">Status de legado não verificado</div>');
