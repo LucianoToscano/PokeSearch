@@ -5638,6 +5638,33 @@ public class OverlayService extends Service {
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null||i.getAction()==null?"":i.getAction();
+        if(PgsFilterImport.ACTION.equals(action)){
+            // Only an explicitly selected, sanitised filter from the app's
+            // private file is applied. Services are non-exported, so another
+            // app cannot send this command. No automation/alerts are enabled.
+            String payload=i==null?"":i.getStringExtra(PgsFilterImport.EXTRA);
+            if(payload!=null&&payload.length()>=2&&payload.length()<=12000&&
+                !stopped&&!loginPaused){
+                try{
+                    JSONObject config=new JSONObject(payload);
+                    org.json.JSONArray selected=config.optJSONArray("pokemonSelections");
+                    if(selected==null||selected.length()>50)
+                        return START_STICKY;
+                    JSONObject change=new JSONObject();
+                    change.put("selections",selected);
+                    change.put("clear",selected.length()==0);
+                    Bridge bridge=new Bridge();
+                    // Posted to the SAME Handler in order; species snapshot
+                    // is committed first, then the full validated filter.
+                    bridge.setPokemonSelections(change.toString());
+                    bridge.setSearchConfig(payload);
+                    status("Filtro importado solicitado · aguardando confirmação do site");
+                }catch(org.json.JSONException ignored){
+                    status("Filtro PGS inválido · configuração anterior preservada");
+                }
+            }
+            return START_STICKY;
+        }
         if("com.lucianotoscano.pokesearchoverlay.SYNC_PREFS".equals(action)){
             syncPreferencesWithoutSearch();
             return START_STICKY;
