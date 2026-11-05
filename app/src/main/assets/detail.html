@@ -823,6 +823,27 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  background:#537da022}
 #evoBody .psTopMegaIcon{display:inline-block;width:11px;height:11px;
  vertical-align:middle;object-fit:contain}
+
+#psMetricPanel .psCpSimFields{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 24px!important}
+#psMetricPanel .psCpFormStepper,#psMetricPanel .psCpLevelStepper{
+ display:flex;align-items:center;gap:2px;min-width:0}
+#psMetricPanel .psCpFormStepper select{flex:1 1 0;min-width:0;max-width:100%;
+ width:100%;font-size:10px}
+#psMetricPanel .psCpFormStepper button,#psMetricPanel .psCpLevelStepper button{
+ flex:0 0 20px;width:20px;height:23px;background:#304156ca;
+ border:1px solid #a9cae75a;border-radius:5px;color:#e4f2ff;
+ font-size:15px;line-height:20px;padding:0;touch-action:manipulation}
+#psMetricPanel .psCpLevelStepper input[type=range]{min-width:18px;flex:1 1 0}
+#psMetricPanel .psCpTargetRow{display:flex;align-items:flex-end;
+ gap:5px;margin:5px 0 0}
+#psMetricPanel .psCpTargetRow label{display:flex;flex-direction:column;
+ gap:2px;color:#d0deec;font-size:9px}
+#psMetricPanel .psCpTargetRow input{width:64px;height:24px;
+ color:#fff;background:#1a283a;border:1px solid #a9cae75a;border-radius:5px;
+ padding:2px 4px;font-size:11px}
+#psMetricPanel .psCpTargetRow button{border:1px solid #8ad9b56a;
+ border-radius:5px;padding:4px 7px;background:#24584555;color:#d7ffe9;
+ font-size:10px;touch-action:manipulation}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1866,7 +1887,7 @@ function detailMetricKey(event,kind){
 }
 /* LT247: Level/CP simulator uses the pinned PvPoke offline gamemaster and CPM
    only; it never guesses candy or stardust costs. It is not an API query. */
-let psCpTargetLevel=20,psCpTargetSpecies="";
+let psCpTargetLevel=20,psCpTargetSpecies="",psCpTargetCp=1500;
 function psCpNormalize(value){
  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .toLowerCase().replace(/^mega\s+/,"").replace(/[^a-z0-9]+/g,"_")
@@ -1876,7 +1897,9 @@ function psCpVariants(){
  const master=window.POKESEARCH_PVP_IV_DATA;
  if(!master||!Array.isArray(master.pokemon)||!Array.isArray(master.cpms)||
     master.cpms.length<99)return [];
- const source=window.psRankContext||{},names=[metricCard?.name,source.name];
+ const source=window.psRankContext||{};
+ const names=[metricCard?.name,source.name,
+  ...(Array.isArray(source.familyForms)?source.familyForms.slice(0,36):[])];
  for(const league of source.leagues||[]){
   if(league?.own)names.push(source.name);
   for(const kind of ["evolutions","megas"]){
@@ -1931,25 +1954,68 @@ function psCpLeagueCeiling(row,ivs,limit){
 }
 function psCpControls(){
  const forms=psCpVariants();
- if(!forms.length)return "";
- const preferred=forms.find(x=>x[0]===psCpTargetSpecies)||
-  forms[0];
+ if(!forms.length)return '<div class="psCpSimFoot">Atributos-base não encontrados.</div>';
+ const preferred=forms.find(x=>x[0]===psCpTargetSpecies)||forms[0];
  psCpTargetSpecies=String(preferred[0]);
  const l=Number(metricCard?.level);
  if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
   psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Simulador PC / Nível · dados locais</div>'+
-  '<div class="psCpSimFields"><label>Forma <select id="psCpForm" onchange="updatePvpCpSimulator()">'+
+  '<div class="psCpSimTitle">Simulador PC / Nível · família completa</div>'+
+  '<div class="psCpSimFields"><label>Forma'+
+  '<div class="psCpFormStepper"><button type="button" onclick="stepPvpCpForm(-1)"'+
+  ' aria-label="Forma anterior" title="Forma anterior">‹</button>'+
+  '<select id="psCpForm" aria-label="Selecionar evolução ou Mega" onchange="updatePvpCpSimulator()">'+
    forms.map(x=>'<option value="'+h(String(x[0]))+'"'+
     (x[0]===psCpTargetSpecies?' selected':'')+'>'+h(String(x[1]))+'</option>').join("")+
-   '</select></label>'+
-   '<label>Nível <input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
-   ' value="'+psCpTargetLevel+'" oninput="updatePvpCpSimulator()"></label>'+
-   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
+  '</select><button type="button" onclick="stepPvpCpForm(1)"'+
+  ' aria-label="Próxima forma" title="Próxima forma">›</button></div></label>'+
+  '<label>Nível <div class="psCpLevelStepper">'+
+  '<button type="button" onclick="stepPvpCpLevel(-0.5)" aria-label="Reduzir meio nível">−</button>'+
+  '<input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
+  ' value="'+psCpTargetLevel+'" oninput="updatePvpCpSimulator()">'+
+  '<button type="button" onclick="stepPvpCpLevel(0.5)" aria-label="Aumentar meio nível">+</button>'+
+  '</div></label>'+
+  '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
-  '<div class="psCpSimFoot">CP e PS calculados com atributos-base e CPM do snapshot local. '+
-  'Não inclui custos de Doces/Poeira nem nível 51.</div></div>';
+  '<div class="psCpTargetRow"><label>PC-alvo '+
+  '<input id="psCpTargetCp" type="number" min="10" max="10000" step="1"'+
+  ' value="'+psCpTargetCp+'" oninput="updatePvpCpSimulator()" '+
+  ' aria-label="PC desejado"></label>'+
+  '<button type="button" onclick="psCpApplyTarget()"'+
+  ' title="Calcular o maior nível dentro do PC desejado">Calcular nível</button></div>'+
+  '<div class="psCpSimFoot">Projeção matemática com IVs capturados e Game Master offline. '+
+  'Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</div></div>';
+}
+function stepPvpCpForm(delta){
+ const forms=psCpVariants(),sel=document.getElementById("psCpForm");
+ if(!forms.length||!sel)return false;
+ const current=String(sel.value||psCpTargetSpecies);
+ const index=Math.max(0,forms.findIndex(x=>String(x[0])===current));
+ const next=(index+(delta<0?-1:1)+forms.length)%forms.length;
+ sel.value=String(forms[next][0]);psCpTargetSpecies=sel.value;
+ return updatePvpCpSimulator();
+}
+function stepPvpCpLevel(delta){
+ const input=document.getElementById("psCpLevel");
+ if(!input)return false;
+ psCpTargetLevel=Math.max(1,Math.min(50,
+  Math.round((psCpTargetLevel+Number(delta||0))*2)/2));
+ input.value=String(psCpTargetLevel);
+ return updatePvpCpSimulator();
+}
+function psCpApplyTarget(){
+ const forms=psCpVariants(),key=String(document.getElementById("psCpForm")?.value||psCpTargetSpecies);
+ const row=forms.find(x=>x[0]===key),iv=psCpIv();
+ const input=document.getElementById("psCpTargetCp");
+ const n=Number(input?.value);
+ if(!row||!iv||!Number.isInteger(n)||n<10||n>10000)return false;
+ const result=psCpLeagueCeiling(row,iv,n);
+ if(!result)return false;
+ psCpTargetCp=n;psCpTargetLevel=result.level;
+ const slider=document.getElementById("psCpLevel");
+ if(slider)slider.value=String(psCpTargetLevel);
+ return updatePvpCpSimulator();
 }
 function updatePvpCpSimulator(){
  const root=document.getElementById("psCpSimResult");
@@ -1961,6 +2027,10 @@ function updatePvpCpSimulator(){
   psCpTargetLevel=Math.round(value*2)/2;
  const levelText=document.getElementById("psCpLevelValue");
  if(levelText)levelText.textContent=psCpTargetLevel.toFixed(1).replace(".",",");
+ const targetInput=document.getElementById("psCpTargetCp");
+ const targetNumber=Number(targetInput?.value??psCpTargetCp);
+ if(Number.isInteger(targetNumber)&&targetNumber>=10&&targetNumber<=10000)
+  psCpTargetCp=targetNumber;
  const forms=psCpVariants();
  const key=String(selection?.value||psCpTargetSpecies);
  const row=forms.find(x=>x[0]===key)||forms[0];
@@ -1970,7 +2040,8 @@ function updatePvpCpSimulator(){
  if(!iv){root.textContent="IV A/D/S exatos necessários para simular.";return false;}
  const current=psCpAt(row,iv,psCpTargetLevel),zero=psCpAt(row,[0,0,0],psCpTargetLevel),
   perfect=psCpAt(row,[15,15,15],psCpTargetLevel);
- const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500);
+ const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500),
+  target=psCpLeagueCeiling(row,iv,psCpTargetCp);
  if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
  const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
  root.innerHTML='<div class="psCpSimResultRow"><span>IV atual '+h(iv.join("/"))+
@@ -1978,7 +2049,9 @@ function updatePvpCpSimulator(){
   '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>';
+  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
+  '</span><strong>'+label(target)+'</strong></div>';
  return true;
 }
 function renderDetailMetric(){
@@ -2053,6 +2126,7 @@ window.showDetails=(c,mode,watched)=>{
   psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
    Math.round(Number(c.level)*2)/2:20;
   psCpTargetSpecies="";
+  psCpTargetCp=1500;
   closePvpReferenceInfo();
   closePvpRankAlternates();
   closeDetailMetric();
