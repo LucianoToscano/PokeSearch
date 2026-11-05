@@ -25,6 +25,18 @@
   .toLowerCase().replace(/[’']/g,"").replace(/[().]/g," ")
   .trim().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
  const displayId=value=>String(value||"").replace(/_/g," ").replace(/\b[a-z]/g,x=>x.toUpperCase());
+ /* LT254: Mega Edition is NOT the standard-league moveset. Strict Mega name
+  * normalization prevents silently reusing base Sableye/Charizard rankings. */
+ function megaSpeciesId(name){
+  const label=String(name||"").trim();
+  if(!/^mega\s+/i.test(label)&&!/\(mega(?:\s+[xy])?\)\s*$/i.test(label))return "";
+  const id=speciesId(label);
+  if(/_mega(?:_[xy])?$/.test(id))return id;
+  if(!id.startsWith("mega_"))return "";
+  const tail=id.slice(5);
+  const match=tail.match(/^(.*)_([xy])$/);
+  return match?match[1]+"_mega_"+match[2]:tail+"_mega";
+ }
  async function getJson(path){
   if(cache.has(path))return cache.get(path);
   const work=(async()=>{
@@ -146,6 +158,27 @@
     charged:data.charged.map(m=>localized(m,false))};
  }
 
+ /* Distinct, pinned PvPoke Mega Edition source: source-specific moveset can
+  * differ from normal even though Mega Evolution retains the move inventory.
+  * Never fall back to standard rankings or invent Mega-specific attacks. */
+ async function lookupMega(league,name){
+  const cap=caps[league],id=megaSpeciesId(name);
+  if(!cap||!id)return null;
+  try{
+   const [ranking,master,moveData,translations]=await Promise.all([
+    getJson("rankings/mega/overall/rankings-"+cap+".json").catch(()=>null),
+    getJson("gamemaster.json"),
+    getJson(localeBase+"moves.json"),
+    getJson(localeBase+"translations/pt-br/moves.json")
+   ]);
+   const item=fromData(ranking,master,league,id);
+   if(!item)return null;
+   const localized=localizedMoves({...item,source:source+" · Mega Edition",
+    format:"mega",megaRecommendation:true,
+    megaSpeciesId:id,baseSpeciesId:id.replace(/_mega(?:_[xy])?$/,"")},moveData,translations);
+   return localized;
+  }catch(_){return null;}
+ }
  async function lookup(league,name){
   const cap=caps[league];if(!cap||!name)return null;
   try{
@@ -189,5 +222,5 @@
   }catch(_){return null;}
  }
 
- return Object.freeze({lookup,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
+ return Object.freeze({lookup,lookupMega,megaSpeciesId,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
 });
