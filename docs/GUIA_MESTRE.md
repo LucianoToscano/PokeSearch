@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT235 QA — Projeção de Rank Classe para Mega (04/11/2026)
+
+**Branch isolada:** `fix/lt235-mega-pvp-rank-projection-20261104` (base `main` LT233 `eac2e15706e7d64712912905faefb3bca248d54d`). **Ainda não mesclada nem publicada**; LT233 `0.02.33 / 54437` continua oficial. PR e testes devem ser comprovados em CI.
+
+**Bug e prova:** Sableye `0/15/12` do screenshot tem **GL normal Rank Classe #14, 99,01%, PC 1493 no nível 50**, mas projetado como **Mega Sableye GL Rank Classe #1, eficiência 100,00%, PC 1499 no nível 30**; ambos calculados no mesmo Game Master offline PvPoke do app, não por selo de busca Top N.
+
+**Correção de QA:** `dock.html` indexa Megas reais do Game Master (`_mega`, `_mega_x`, `_mega_y`), valida identidade/IVs estritamente e exporta `league.megas` distinto da forma normal/evoluções e independente de `includePreviousEvolutions`. `detail.html` mostra a prévia Mega junto à análise GL/UL/ML, em linha compacta e botão ⓘ próprio com alerta de **projeção hipotética**; o selo **TOP 1 MEGA** só aparece quando o IV rank da forma Mega é exatamente #1. Não transforma a projeção em permissão de Liga GO ou match de pesquisa nem inventa Rank Geral. Sem projeção para espécies/formas sem fonte segura, fantasia, forma regional, Shadow e entradas sem IVs confirmados. P1/P2 usam o mesmo HTML.
+
+**Regressões e cobertura:** `app/tests/lt235-mega-pvp-projections.test.js` contempla 0/15/12 Sableye, Charizard Mega X/Y, independência GL/UL/ML, guardas da identidade/formas e card. A auditoria adicional confirmou **60 formas Mega válidas** no Game Master local (não confundir Meganium/Yanmega com Mega); os testes percorrem todas as formas no catálogo pelas **três ligas**, verificam ranks, eficiência, PC/nível, X/Y e separação da forma normal. A UI e o motor não truncam as variações Mega a três. Futuras Megas exigem nova base de dados verificada, não rankings presumidos. CI/QA físico devem ser comprovados separadamente. A alteração LT234 da Pokébola 2 sem VIP continua separada na PR #205, sem mistura acidental de branches.
+
+**Documento técnico:** [LT235_PREVIA_MEGA_PVP_RANK_20261104.md](LT235_PREVIA_MEGA_PVP_RANK_20261104.md).
+
 ## LT234 QA — Pokébola 2 sem gate VIP/Premium (04/11/2026)
 
 **Estado:** código em revisão na branch `fix/lt234-p2-free-no-vip-20261104`, base `eac2e15706e7d64712912905faefb3bca248d54d` (LT233 documental). **Sem APK novo, sem merge e sem release desta etapa.** A última versão pública continua **LT233 / 0.02.33 / 54437** até consulta contrária ao GitHub.

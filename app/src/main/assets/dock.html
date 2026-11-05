@@ -6518,6 +6518,48 @@ if(PVP_IV_GAME_MASTER&&Array.isArray(PVP_IV_GAME_MASTER.pokemon)){
   else ivSpeciesByName.set(key,[id,atk,def,hp]);
  }
 }
+// LT235: Mega projections use only verified, distinct Game Master base stats.
+// They are not evolutions and never qualify a normal encounter for a GL/UL
+// provider Top-N filter. The detail card computes them on demand.
+const megaFormsByBase=new Map();
+if(PVP_IV_GAME_MASTER&&Array.isArray(PVP_IV_GAME_MASTER.pokemon)){
+ for(const entry of PVP_IV_GAME_MASTER.pokemon){
+  const [id,name]=entry;
+  const suffix=String(id||"").match(/^(.+)_mega(?:_([xy]))?$/);
+  const identified=String(name||"").match(/^(.+) \(Mega(?: ([XY]))?\)$/);
+  if(!suffix||!identified||!!suffix[2]!==!!identified[2]||
+     (suffix[2]&&suffix[2].toUpperCase()!==identified[2]))continue;
+  const baseKey=speciesKey(identified[1]),megaKey=speciesKey(name);
+  if(!ivSpeciesByName.get(baseKey)||!ivSpeciesByName.get(megaKey))continue;
+  if(!megaFormsByBase.has(baseKey))megaFormsByBase.set(baseKey,[]);
+  megaFormsByBase.get(baseKey).push({
+   name,displayName:"Mega "+identified[1]+(identified[2]?" "+identified[2]:"")
+  });
+ }
+}
+function megaFormProjections(card,league){
+ if(!card||!["gl","ul","ml"].includes(league)||
+    verifiedSpawnIvPercent(card)===null||cosmeticPvpIdentity(card))return [];
+ // The encounter itself must be the EXACT, normal species. Regional, Shadow,
+ // existing Mega, unknown-form and costume encounters are not eligible.
+ const key=safePvpSpeciesKey(card);
+ if(!key||key.includes("("))return [];
+ const variants=megaFormsByBase.get(key)||[];
+ const result=[];
+ for(const form of variants){
+  // Re-use exactly the same three IVs in the separate Mega species stats.
+  // The projected CP and level refer to that Mega at this league's CP cap.
+  const detail=calculatedSpeciesIvDetail({
+   name:form.name,iv:card.iv,ivPercent:card.ivPercent
+  },league);
+  if(!detail)continue;
+  result.push({name:form.displayName,rank:detail.rank,
+   statProductPct:detail.statProductPct,cp:detail.cp,level:detail.level,
+   overallRank:verifiedOverallRank({name:form.name},league),
+   megaProjection:true,referenceOnly:true,eligible:null});
+ }
+ return result;
+}
 function computeSpeciesIvRanks(species,league){
  const cpms=PVP_IV_GAME_MASTER?.cpms||[];
  if(cpms.length<99)return null;
@@ -6734,6 +6776,8 @@ window.pvpEvolutionDetails=function(index){
     own?{rank:own.rank,statProductPct:own.statProductPct,
      cp:own.cp,level:own.level,overallRank:currentRank}:null,
    evolutions:descendants,
+   // Transformations are independent of evolution and provider Top-N filters.
+   megas:missingIv?[]:megaFormProjections(card,league),
    // This list never asserts evolution eligibility for costumes.
    comparisons:!missingIv&&output.includePreviousEvolutions?
     cosmeticRankComparisons(card,league):[]
