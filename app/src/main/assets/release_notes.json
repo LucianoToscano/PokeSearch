@@ -1499,6 +1499,33 @@
           "Testes visuais pós-instalação no Samsung continuam necessários para todas as fantasias raras."
         ]
       }
+    },
+    {
+      "id": "lt236-p2-free-and-all-megas-20261104",
+      "minVersionCode": 54440,
+      "date": "04/11/2026",
+      "title": "PokeSearch LT236 — Duas Pokébolas livres e Megas PvP",
+      "sections": {
+        "novidades": [
+          "A segunda Pokébola agora pode ser ativada sem licença VIP/Premium ou login Google, como a primeira.",
+          "Análise IV PvP mostra projeções de todas as 60 Megaformas catalogadas nas ligas GL, UL e ML, incluindo Mega X/Y.",
+          "Selo TOP 1 MEGA somente quando o rank IV calculado para a forma Mega for realmente #1."
+        ],
+        "melhorias": [
+          "A forma Mega é exibida separada da forma normal, com Rank Classe, Eficiência IV, PC e Nível projetados.",
+          "Informações ⓘ esclarecem que o cálculo da Mega não garante participação nas ligas nem disponibilidade da transformação.",
+          "As duas Pokébolas mantêm perfis e filtros independentes, sem bloquear a sessão da conta pelo VIP."
+        ],
+        "correcoes": [
+          "Remove bloqueio e desligamento automático da segunda Pokébola por licença Premium vencida, ausente ou logout Google.",
+          "Corrige o retorno da permissão Android para abrir a Pokébola 2 em vez de iniciar a primeira.",
+          "Corrige o card que mostrava apenas Sableye normal Rank Classe #14, omitindo a projeção Mega Sableye GL #1 para IV 0/15/12."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico de instalação e das janelas no Samsung continua necessário após publicar. Mega PvP é projeção matemática, não elegibilidade na Liga de Batalha GO.",
+          "Novas Megaevoluções serão reconhecidas após atualização verificada do Game Master PvPoke."
+        ]
+      }
     }
   ]
 }
