@@ -94,7 +94,7 @@ const funcs=new Function("window","document","h","resizeEvolutionPanel","activeR
  ()=>{},"gl",()=>[]);
 funcs.setCard({name:"Gastly",iv:"0/14/14",cp:477,level:20,ivValid:true});
 win.psRankContext={name:"Gastly",iv:"0/14/14",leagues:[
- {league:"gl",own:{rank:1},evolutions:[{name:"Haunter"},{name:"Gengar"}],
+ {league:"gl",own:{rank:1},evolutions:[{name:"Haunter",cp:1481,level:22.5},{name:"Gengar",cp:1490,level:20.5}],
   megas:[{name:"Mega Gengar",megaProjection:true,referenceOnly:true}]},
  {league:"ul"},{league:"ml"}]};
 const forms=funcs.variants();
