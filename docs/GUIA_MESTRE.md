@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT252 — correções do cartão PvP e menus retráteis (05/11/2026; OFICIAL)
+
+- **Versão pública mais recente verificada:** `0.02.52`, `versionCode 54456`, label `51256`, [release v0.02.52-54456](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.52-54456) presente em `releases/latest`. APK oficial `PokeSearch-v0.02.52-LT.apk`, 28.390.841 bytes, SHA-256 `df169994899bb16d1450b6228e677f274df94e663bbccfb5d29df66ef3367b5e`.
+- **Integração:** [PR #230 mesclada](https://github.com/LucianoToscano/PokeSearch/pull/230), commit `c1dd07171d92edd65d512cca7c9e832a8b5f65d7`; build/pedido oficial `e16d4540abf35832b0f5395cb1a49fafbcc912b5`. Workflow de distribuição [#42026677432](https://github.com/LucianoToscano/PokeSearch/actions/runs/42026677432) `completed/success`, com verificação de assinatura, publicação e SHA-256. Seis gates de QA do PR aprovados antes do merge.
+- **Correções visuais:** resultado vazio `0` alinhado ao eixo da Pokébola sem contador duplicado; forma Mega com símbolo oficial **antes do nome sem prefixo textual Mega** no chip; botão de ataques não afirma legado antes da confirmação por dados de movimentos; calculadora PC/Nível usa rolagem do cartão e seletor/slider com espaço utilizável, sem corte da parte inferior.
+- **Ações retráteis:** clicar novamente em `GL IV #...` ou `RG #...` fecha o explorador aberto; clicar novamente em `↳ Pokémon` fecha a análise de evolução. Outra espécie/classificação abre o contexto correspondente, sem nova janela flutuante. Ambos os overlays compartilham os mesmos assets.
+- **Código:** `app/src/main/assets/detail.html`, `dock.html`, `pvp_rank_explorer.js`; testes `app/tests/lt252-zero-mega-icon-attacks-calculator.test.js` e `app/tests/lt252-toggle-rank-and-species-accordion.test.js`, regressões LT247/LT248 ajustadas.
+- **Prova completa e próximos cuidados:** [docs/LT252_CORRECOES_ZERO_MEGA_ATAQUES_CALCULADORA_20261105.md](LT252_CORRECOES_ZERO_MEGA_ATAQUES_CALCULADORA_20261105.md). A release é pública e o atualizador poderá detectá-la, mas a instalação, a atualização efetiva do aparelho e a homologação visual Samsung em P/M/G, P1/P2 **não foram comprovadas** nesta execução. Android exige aceite para instalar.
+
+
 ## LT251 — seletor completo PC/Nível (05/11/2026; candidata)
 
 - Print Oddish: a forma Bellossom aparece como `B...` no seletor PC/Nível porque a LT249/LT250 colocava Forma, Nível e valor em três colunas apertadas. Não é erro da família evolutiva nem do cálculo.
