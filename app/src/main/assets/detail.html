@@ -777,6 +777,27 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  #rankLine .psCompactIv,#rankLine .psCompactOverall{font-size:8px!important;
  padding:1px 2px!important}
 }
+
+/* LT247: compact, real CP/level simulator. Open only from stat tiles. */
+#psMetricPanel{max-height:290px;overflow-y:auto}
+#psMetricPanel .psCpSimulator{padding:5px 0;border-top:1px solid #8ebddd53}
+#psMetricPanel .psCpSimTitle{font-weight:750;margin:0 0 5px;color:#d9f2ff}
+#psMetricPanel .psCpSimFields{display:grid;grid-template-columns:minmax(0,1fr)
+ minmax(0,1.2fr) auto;gap:5px;align-items:end}
+#psMetricPanel .psCpSimFields label{display:flex;flex-direction:column;gap:2px;
+ min-width:0;color:#baccde;font-size:9px}
+#psMetricPanel .psCpSimFields select{min-width:0;width:100%;max-width:100%;
+ padding:3px;background:#253951;color:#f2f8ff;border:1px solid #b5cce264;
+ border-radius:5px;font-size:10px}
+#psMetricPanel .psCpSimFields input[type=range]{width:100%;margin:4px 0;
+ accent-color:#79b7e8}
+#psMetricPanel .psCpSimResultRow{display:flex;justify-content:space-between;
+ gap:5px;align-items:center;padding:3px 0;border-bottom:1px solid #ffffff1a}
+#psMetricPanel .psCpSimResultRow span{min-width:0}
+#psMetricPanel .psCpSimResultRow strong{white-space:nowrap;font-size:10px}
+#psMetricPanel .psCpSimFoot{font-size:9px;color:#a6b8c9;margin:5px 0}
+#psMetricPanel .psCpPvpProjections{margin-top:4px;padding-top:3px}
+#psMetricPanel .psCpPvpProjections summary{cursor:pointer;color:#93d0ff}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1745,6 +1766,120 @@ function detailMetricKey(event,kind){
  event.preventDefault();
  openDetailMetric(kind);
 }
+/* LT247: Level/CP simulator uses the pinned PvPoke offline gamemaster and CPM
+   only; it never guesses candy or stardust costs. It is not an API query. */
+let psCpTargetLevel=20,psCpTargetSpecies="";
+function psCpNormalize(value){
+ return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase().replace(/^mega\s+/,"").replace(/[^a-z0-9]+/g,"_")
+  .replace(/^_|_$/g,"");
+}
+function psCpVariants(){
+ const master=window.POKESEARCH_PVP_IV_DATA;
+ if(!master||!Array.isArray(master.pokemon)||!Array.isArray(master.cpms)||
+    master.cpms.length<99)return [];
+ const source=window.psRankContext||{},names=[metricCard?.name,source.name];
+ for(const league of source.leagues||[]){
+  if(league?.own)names.push(source.name);
+  for(const kind of ["evolutions","megas"]){
+   for(const form of (Array.isArray(league?.[kind])?league[kind]:[])){
+    if(form?.referenceOnly===true&&form?.megaProjection!==true)continue;
+    names.push(form?.name);
+   }
+  }
+ }
+ const ids=new Set();
+ const byId=new Map(master.pokemon.filter(x=>Array.isArray(x)&&x.length>=5)
+  .map(x=>[String(x[0]),x]));
+ const result=[];
+ for(const raw of names){
+  let norm=psCpNormalize(raw);
+  if(!norm)continue;
+  if(/\bmega\b/i.test(String(raw))&&!norm.endsWith("_mega"))norm+="_mega";
+  const row=byId.get(norm)||byId.get(norm.replace(/_mega$/,"")+"_mega");
+  if(!row||ids.has(row[0]))continue;
+  if(!row.slice(2,5).every(x=>Number.isFinite(x)&&x>0))continue;
+  result.push(row);ids.add(row[0]);if(result.length>=18)break;
+ }
+ return result;
+}
+function psCpIv(){
+ const raw=String(metricCard?.iv||"");
+ const m=raw.match(/(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})/);
+ if(!m)return null;
+ const iv=m.slice(1,4).map(Number);
+ return iv.every(x=>Number.isInteger(x)&&x>=0&&x<=15)?iv:null;
+}
+function psCpAt(row,ivs,level){
+ const cpm=window.POKESEARCH_PVP_IV_DATA?.cpms;
+ const index=Math.round((level-1)*2);
+ if(!row||!ivs||!Array.isArray(cpm)||index<0||index>=cpm.length)return null;
+ const mult=Number(cpm[index]);
+ if(!Number.isFinite(mult)||mult<=0)return null;
+ const atk=row[2]+ivs[0],def=row[3]+ivs[1],hp=row[4]+ivs[2];
+ return {cp:Math.max(10,Math.floor(atk*Math.sqrt(def)*Math.sqrt(hp)*mult*mult/10)),
+  hp:Math.max(10,Math.floor(hp*mult)),level};
+}
+function psCpLeagueCeiling(row,ivs,limit){
+ let found=null;
+ for(let level=1;level<=50;level+=0.5){
+  const v=psCpAt(row,ivs,level);
+  if(v&&v.cp<=limit)found=v;
+ }
+ return found;
+}
+function psCpControls(){
+ const forms=psCpVariants();
+ if(!forms.length)return "";
+ const preferred=forms.find(x=>x[0]===psCpTargetSpecies)||
+  forms[0];
+ psCpTargetSpecies=String(preferred[0]);
+ const l=Number(metricCard?.level);
+ if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
+  psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
+ return '<div class="psCpSimulator">'+
+  '<div class="psCpSimTitle">Simulador PC / Nível · dados locais</div>'+
+  '<div class="psCpSimFields"><label>Forma <select id="psCpForm" onchange="updatePvpCpSimulator()">'+
+   forms.map(x=>'<option value="'+h(String(x[0]))+'"'+
+    (x[0]===psCpTargetSpecies?' selected':'')+'>'+h(String(x[1]))+'</option>').join("")+
+   '</select></label>'+
+   '<label>Nível <input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
+   ' value="'+psCpTargetLevel+'" oninput="updatePvpCpSimulator()"></label>'+
+   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
+  '<div id="psCpSimResult" aria-live="polite"></div>'+
+  '<div class="psCpSimFoot">CP e PS calculados com atributos-base e CPM do snapshot local. '+
+  'Não inclui custos de Doces/Poeira nem nível 51.</div></div>';
+}
+function updatePvpCpSimulator(){
+ const root=document.getElementById("psCpSimResult");
+ if(!root)return false;
+ const input=document.getElementById("psCpLevel");
+ const selection=document.getElementById("psCpForm");
+ const value=Number(input?.value??psCpTargetLevel);
+ if(Number.isFinite(value)&&value>=1&&value<=50)
+  psCpTargetLevel=Math.round(value*2)/2;
+ const levelText=document.getElementById("psCpLevelValue");
+ if(levelText)levelText.textContent=psCpTargetLevel.toFixed(1).replace(".",",");
+ const forms=psCpVariants();
+ const key=String(selection?.value||psCpTargetSpecies);
+ const row=forms.find(x=>x[0]===key)||forms[0];
+ if(!row){root.textContent="Atributos-base indisponíveis.";return false;}
+ psCpTargetSpecies=String(row[0]);
+ const iv=psCpIv();
+ if(!iv){root.textContent="IV A/D/S exatos necessários para simular.";return false;}
+ const current=psCpAt(row,iv,psCpTargetLevel),zero=psCpAt(row,[0,0,0],psCpTargetLevel),
+  perfect=psCpAt(row,[15,15,15],psCpTargetLevel);
+ const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500);
+ if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
+ const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
+ root.innerHTML='<div class="psCpSimResultRow"><span>IV atual '+h(iv.join("/"))+
+  '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>';
+ return true;
+}
 function renderDetailMetric(){
  const panel=document.getElementById("psMetricPanel");
  if(!panel||!metricKind)return false;
@@ -1774,9 +1909,13 @@ function renderDetailMetric(){
   '<button type="button" onclick="closeDetailMetric()" aria-label="Fechar comparativo">×</button></div>'+
   '<div class="psMetricCurrent">Capturado · PC '+h(own.cp??"—")+
   ' · Nv. '+h(own.level??"—")+'</div>'+
-  (rows||'<div class="psMetricEmpty">Análise PvP local ainda não disponível.</div>')+
+  psCpControls()+
+  (rows?'<details class="psCpPvpProjections"><summary>Projeções PvP por liga</summary>'+rows+'</details>':
+   '<div class="psMetricEmpty">Projeções por liga indisponíveis.</div>')+
   '<div class="psMetricFoot">PC e Nv. das ligas são projeções dos mesmos IVs, não os atributos atuais nem promessa de elegibilidade PvP.</div>';
  panel.hidden=false;
+ if(typeof panel.querySelector==="function"&&panel.querySelector("#psCpSimResult"))
+  updatePvpCpSimulator();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
  return true;
 }
