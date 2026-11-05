@@ -1877,6 +1877,28 @@
           "Número 0 voltou a aparecer quando não há resultados, junto à Pokébola ou imediatamente abaixo, sem duplicação."
         ]
       }
+    },
+    {
+      "id": "lt251-oddish-complete-form-name-readable-cp-simulator-20261105",
+      "minVersionCode": 54455,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT251 — Simulador de evolução legível",
+      "sections": {
+        "novidades": [
+          "Simulador PC/Nível com o seletor da evolução ocupando uma linha inteira: nomes como Bellossom, Vileplume e Ursaluna ficam legíveis."
+        ],
+        "melhorias": [
+          "Campo Forma e barra de Nível são separados em duas linhas, com setas de 30px, seletor de 34px e fonte maior para facilitar uso no Android.",
+          "Resultados de PC, PS, níveis e PC-alvo utilizam fonte mais legível e área de rolagem limitada à tela."
+        ],
+        "correcoes": [
+          "Corrigida a truncagem do seletor de forma em apenas uma letra (ex.: Oddish exibindo 'B...') devido ao grid estreito da LT249/LT250.",
+          "Mantidas as três divisões PvP e um único emoji de liga, o botão de ataques e o contador 0 da LT250."
+        ],
+        "emDesenvolvimento": [
+          "Necessária inspeção visual física no Samsung nos tamanhos P/M/G, nas duas Pokébolas, e confirmação de instalação Android."
+        ]
+      }
     }
   ]
 }
