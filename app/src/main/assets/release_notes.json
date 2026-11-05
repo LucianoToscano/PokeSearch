@@ -1574,6 +1574,32 @@
           "Teste físico dos novos botões e rolagem no Samsung continua necessário após a instalação."
         ]
       }
+    },
+    {
+      "id": "lt239-pvp-iv-navigation-compare-export-20261105",
+      "minVersionCode": 54443,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT239 — Explorador PvP avançado",
+      "sections": {
+        "novidades": [
+          "O explorador de Rank Classe abre diretamente na página dos IVs selecionados, com destaque da combinação exata.",
+          "Filtros Top 10, Top 50, Top 100 e Todos, com retorno ao Meu IV mesmo quando está fora do filtro.",
+          "Compare duas combinações de IV tocando nas linhas; confira eficiência, PC, nível, ATK, DEF, HP e as diferenças.",
+          "Copie uma análise resumida, compartilhe pelo Android ou copie CSV com todas as linhas do filtro escolhido."
+        ],
+        "melhorias": [
+          "Tabela PvP compacta com rolagem interna, cabeçalho fixo, botões legíveis e realce do IV selecionado.",
+          "O mesmo explorador é usado pelas Pokébolas 1 e 2, sem alterar filtros, API, coordenadas ou favoritos.",
+          "Comparação fica restrita ao Rank Classe; Rank Geral preserva as classificações por espécie e forma."
+        ],
+        "correcoes": [
+          "Ao usar Meu IV fora do Top 10/50/100, o explorador retorna a Todos e localiza o IV correto.",
+          "A exportação usa somente atributos PvP locais; não exporta credenciais nem coordenadas."
+        ],
+        "emDesenvolvimento": [
+          "Validar compartilhamento Android e rolagem/tamanho dos cards em Samsung com Pokébola 1 e 2 após instalar."
+        ]
+      }
     }
   ]
 }
