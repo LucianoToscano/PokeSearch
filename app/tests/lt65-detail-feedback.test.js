@@ -43,7 +43,7 @@ check("6 Preserve actual native error reason when site is unavailable",()=>{
 });
 check("7 Detail card avoids the native toolbar touch rectangle",()=>{
  const source=service.split("private void moveDetail(){")[1]?.split("private void newWebsite(){")[0]||"";
- for(const token of ["crossesToolbar","params.x+params.width","params.y+toolbarHeight","int below=params.y+toolbarHeight+margin","int above=params.y-cardHeight-margin","detailParams.x=x;detailParams.y=y"])assert.ok(source.includes(token),token);
+ for(const token of ["crossesToolbar","params.x+params.width","params.y+toolbarHeight","int below=params.y+toolbarHeight+margin","int above=params.y-cardHeight-margin","detailParams.x=free[0];detailParams.y=free[1]"])assert.ok(source.includes(token),token);
 });
 check("8 Geometry does not use CSS transparent hitbox or move the main toolbar",()=>{
  const source=service.split("private void moveDetail(){")[1]?.split("private void newWebsite(){")[0]||"";
