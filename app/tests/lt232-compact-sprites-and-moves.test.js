@@ -51,7 +51,7 @@ assert.match(detail,/row\("Ágil",recommendation\.fast\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("Carregado "\+\(i\+1\),m\)\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("Carregado "\+\(i\+1\),m\)\)/,
  "the same indexed renderer covers Carregado 1 and Carregado 2");
-assert.match(detail,/💠 Ataque Legado/);
+assert.match(detail,/⚔️ Pelo menos um golpe legado \/ Elite/);
 assert.match(detail,/font-size:8px;vertical-align:baseline/);
 assert.match(detail,/ghost:"#b7a2ff"/);
 assert.match(detail,/water:"#67b8ff"/);
