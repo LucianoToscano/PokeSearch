@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT243 OFICIAL — 0.02.43 / versionCode 54447 (05/11/2026)
+
+- **Problemas relatados em prints Samsung:** sprites ausentes em alguns resultados, segunda barra de menus sobreposta ao abrir Modo, texto longo de Rank Classe ocultando o nome da evolução e popovers explicativos excessivos.
+- **Correção entregue:** resumo `GL/UL · IV #N · nome completo` com quebra de linha sem `ellipsis`; popovers de projeção escondidos na interface compacta; apenas uma barra de menu de Pokébola ativa de cada vez (P1 e P2 mantêm suas contas, filtros, resultados e posições independentes); sprites reavaliados de maneira finita em 1,8s/4,8s/14,5s e recuperação local verificada da mesma variante. Onde não há sprite exato comprovado, fallback neutro `#Dex`, sem atribuir imagem errada.
+- **Código:** `dock.html`, `detail.html`, `OverlayService.java`; regressão `lt243-compact-ranks-single-menu-sprite-retry.test.js` e testes LT148/LT163/LT164/LT231 atualizados para rótulo compacto.
+- **PR/merge:** [#219](https://github.com/LucianoToscano/PokeSearch/pull/219) mesclada, SHA `9bee1074a6acd359ed4e4bee6186f3428a0c27f3`. Commit final testado `e990d11149a6817e93ef9ba63acc87364dfd6b14`.
+- **Checks verdes:** Node QA #41985142288, LT169 #41985142217, LT211 #41985142248, Java LT62 #41985142222, OTA LT173 #41985142272, APK beta #41985142245, todos `success`.
+- **Publicação oficial:** [Actions #41985537198](https://github.com/LucianoToscano/PokeSearch/actions/runs/41985537198) `completed/success`, `preflight` e `publish` aprovados, compilação protegida, validação de assinatura, release pública e SHA `success`. Pedido `release/official-request.json` SHA `86342c52bc8acd95800aa1f265993f749d2fe1ae`.
+- **Release latest estável:** [v0.02.43-54447](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.43-54447), `draft=false`, `prerelease=false`, publicada em `2026-11-05T07:14:38Z`. Atualizador do app pode detectar/baixar; instalar exige confirmação Android.
+- **APK oficial:** [PokeSearch-v0.02.43-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.43-54447/PokeSearch-v0.02.43-LT.apk), 28.146.551 bytes, SHA-256 `69fc942def5efec1d7cab134a99b961b74f64ba1894c3ca07aaeb27cf8ea98a6`, asset `uploaded`. Artefato CI `PokeSearch-v0.02.43-54447-Signed-Verified` ID 13395509155, 25.969.916 bytes e ZIP SHA-256 `70739fb23a8c38b622c062ccbfca893b62a5496283f5105adfcd85f262411a5a`.
+- **Limites honestos:** QA físico no Samsung P1/P2 e P/M/G ainda não concluído, e variantes sem sprite oficial exato ainda podem faltar. Não anunciar cobertura de 100% nem instalação remota confirmada.
+- **Auditoria:** [LT243_SPRITES_MODO_RANK_COMPACTO_20261105.md](LT243_SPRITES_MODO_RANK_COMPACTO_20261105.md). Registro anterior `LT243 desenvolvimento` é histórico e fica superado por este.
+
 ## LT243 — Sprites, menus e Rank PvP compacto (05/11/2026, desenvolvimento)
 
 - Screenshots Samsung mostram ausência de algumas sprites, segunda barra de menu exibida enquanto Modos está aberto, Rank Classe longo cortando nome de evolução e grandes janelas de informação sobre projeção.
