@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.39",
-  "code": 54443,
-  "label": 51243,
-  "previous_tag": "v0.02.38-54442",
-  "qa_max_code": 54442,
-  "release_notes": "PokeSearch LT239: explorador PvP com abertura direta no IV selecionado, filtros Top 10/50/100/Todos, comparação de dois IVs com atributos e diferenças, tabela compacta com rolagem interna e exportação segura de texto, CSV e compartilhamento Android. Preservados GL/UL/ML, Mega X/Y, duas Pokébolas, filtros e dados do app. Instalação requer confirmação do Android; teste físico Samsung continua pendente."
+  "version": "0.02.40",
+  "code": 54444,
+  "label": 51244,
+  "previous_tag": "v0.02.39-54443",
+  "qa_max_code": 54443,
+  "release_notes": "LT240: pesquisa direta por IV, rank e eficiência; comparação das formas normais, evoluções e Mega por IV; radar local Top 1-5 com prioridade nas notificações PvP existentes e deduplicação; Rank Geral por funções Abertura, Troca, Finalização e Carregadores, golpes recomendados e confrontos do PvPoke sob demanda (snapshot fixado de 03/11). Base offline de 19/10 preservada com data transparente; UI responsiva P/M/G e cache limitado. Preserva duas Pokébolas, favoritos, filtros e LT239. Instalação exige confirmação do Android; QA físico Samsung pendente."
 }
