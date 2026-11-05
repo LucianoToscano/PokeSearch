@@ -25,3 +25,18 @@
 5. Registrar resultados reais após publicação; não afirmar que foi instalado no dispositivo.
 
 *Este documento inicial não é prova de merge nem de publicação.*
+
+## Evidências de integração e publicação oficial (05/11/2026)
+
+- **PR #213 (implementação):** https://github.com/LucianoToscano/PokeSearch/pull/213 — merge concluído com SHA 98f6fdf9c73e5c4396a116b9f3caff9ae2acfa6c.
+- **Código final da PR:** 3100982fafa363ba01becccf158010ba7b0c4dfe.
+- **QA da PR:** PokeSearch Node QA 41966669465, regressão LT169 41966669531, QA core LT211 41966669503, compilação Java Android LT62 41966669619, QA OTA LT173 41966669462 concluíram success no SHA final. APK beta privado 41966669452: success (assinado apenas para teste, não o APK distribuído).
+- **Pedido de lançamento oficial:** release/official-request.json alterado no commit dc129ca3b05d1df9abf81ade29d9f0429c4f1b2e, solicitando 0.02.39, versionCode 54443, label 51243, previous_tag v0.02.38-54442, qa_max_code 54442; nenhum segredo foi exposto.
+- **GitHub Actions oficial permanente:** https://github.com/LucianoToscano/PokeSearch/actions/runs/41966852328 — completed/success, jobs preflight e publish aprovados. Etapas de regressões Node/OTA, geração de assets, compilação release, verificação de APK, assinatura v2, criação do Release e validação do digest público todas success.
+- **GitHub Releases/latest:** https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.39-54443 — versão estável, draft=false, prerelease=false, publicada em 2026-11-05T04:20:40Z; tag v0.02.39-54443, source commit dc129ca3b05d1df9abf81ade29d9f0429c4f1b2e.
+- **APK publicado:** https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.39-54443/PokeSearch-v0.02.39-LT.apk — 28.133.710 bytes, digest SHA-256 647f244930a621dde444abc0fab2069efcd495083854f852599cc638b6227013, asset state uploaded, verificado pelo workflow oficial.
+- **Certificado Android v2 permanente:** 34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e, exigido no workflow; etapa Validate APK and signer concluída com sucesso.
+- **Artefato assinado/relatórios da build:** PokeSearch-v0.02.39-54443-Signed-Verified, ID 13388052133, ZIP 25.956.171 bytes, digest sha256:f467523b967bada8ee9541dfcba675e0480d599fa0ea86fa571e102a6d9af9cd.
+- **Distribuição:** o sistema de atualização LT237+ consulta releases/latest, portanto a LT239 está disponível para detecção, download e instalação após confirmação do Android. **Sem confirmação de instalação no aparelho Samsung:** validar rolagem, clique, exportação e compartilhamento para P1/P2 no teste físico.
+
+> Os planos pendentes de implementação/publicação citados nas seções anteriores são históricos; este registro documenta a execução concluída.
