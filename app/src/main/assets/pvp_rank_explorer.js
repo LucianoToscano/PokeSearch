@@ -69,7 +69,7 @@
 
  const PAGE_SIZE=10;
  const FILTER_LIMITS=[10,50,100,0]; // 0 = full ranking
- let state=null,view=null,openKey="";
+ let state=null,view=null,openKey="",lastDrawState=null;
  const clickKey=opts=>[opts?.kind==="overall"?"overall":"class",
   n(opts?.name||""),String(opts?.league||""),Number(opts?.rank)||0].join("|");
  function pageForRank(rows,rank){
@@ -80,13 +80,14 @@
  function setFilter(s,filter){
   if(!s||!FILTER_LIMITS.includes(filter))return false;
   s.filter=filter;s.page=0;s.expandedRank=null;s.scrollSelected=false;
+  s.resetTableScroll=true;
   return true;
  }
  function jumpToSelected(s){
   if(!s||!Number.isInteger(s.selectedRank)||s.selectedRank<1)return false;
   if(!visibleRows(s).some(r=>r.rank===s.selectedRank))s.filter=0;
   s.page=pageForRank(visibleRows(s),s.selectedRank);
-  s.scrollSelected=true;
+  s.resetTableScroll=true;s.scrollSelected=true;
   return true;
  }
  function toggleComparison(s,rank){
@@ -180,7 +181,8 @@
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
-   page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,scrollSelected:true,
+   page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
+   scrollSelected:true,resetTableScroll:true,
    sourceDate:sourceFor(kind,gm,overall),status:""};
   if(!mount()){state=null;openKey="";return false;}
   openKey=clickKey(opts);
@@ -259,9 +261,9 @@
       if(!state)return;
       const action=b.dataset.psAct;
       if(action==="close"){close();return;}
-      if(action==="prev")state.page=Math.max(0,state.page-1);
-      if(action==="next")state.page=Math.min(Math.ceil(visibleRows(state).length/PAGE_SIZE)-1,state.page+1);
-      if(action==="top"){state.page=0;state.scrollSelected=false;}
+      if(action==="prev"){state.page=Math.max(0,state.page-1);state.resetTableScroll=true;}
+      if(action==="next"){state.page=Math.min(Math.ceil(visibleRows(state).length/PAGE_SIZE)-1,state.page+1);state.resetTableScroll=true;}
+      if(action==="top"){state.page=0;state.scrollSelected=false;state.resetTableScroll=true;}
       if(action==="selected")jumpToSelected(state);
       if(action==="expand")state.expandedRank=state.expandedRank===Number(b.dataset.rank)?null:Number(b.dataset.rank);
       if(action==="clear")state.compared=[];
@@ -343,7 +345,11 @@
   const s=state,rows=visibleRows(s);
   s.page=Math.min(Math.max(0,s.page),Math.max(0,Math.ceil(rows.length/PAGE_SIZE)-1));
   const oldList=view.querySelector?.(".psrRows");
-  const oldScroll=oldList?.scrollTop||0;
+  // Switching Ursaring → Ursaluna changes the 4096 IVs and must not
+  // retain the old species' nested scroll position.
+  const newTable=lastDrawState!==s||s.resetTableScroll===true;
+  const oldScroll=newTable?0:(oldList?.scrollTop||0);
+  lastDrawState=s;s.resetTableScroll=false;
   const from=s.page*PAGE_SIZE,subset=rows.slice(from,from+PAGE_SIZE);
   const maxPage=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
   const cells=s.kind==="class"?
@@ -369,10 +375,14 @@
      markup+'</tr>'+details;
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
+  const actualIv=s.kind==="class"&&s.selectedIv>=0?
+   s.rows.find(r=>r.index===s.selectedIv):null;
   view.innerHTML='<div class="psrHead"><div class="psrTitle">'+
-   (s.kind==="class"?"Rank Classe · IVs":"Rank Geral · PvP")+
+   (s.kind==="class"?"Rank Classe · "+safe(s.name):
+    "Rank Geral · "+safe(s.name))+
    '</div><button type="button" data-ps-act="close" aria-label="Fechar classificação">✕</button></div>'+
-   '<div class="psrSub">'+safe(s.name)+' · '+safe(LIGAS[s.league])+
+   '<div class="psrSub">'+safe(LIGAS[s.league])+
+   (actualIv?' · IV '+safe(actualIv.iv):"")+
    (s.selectedRank?' · #'+s.selectedRank:"")+'</div>'+
    '<div class="psrControls"><button type="button" data-ps-act="top">#1 Topo</button>'+
    '<button type="button" data-ps-act="selected"'+(s.selectedRank?'':' disabled')+'>'+select+'</button>'+
@@ -398,7 +408,19 @@
    newList.scrollTop=oldScroll;
    if(s.scrollSelected){
     const found=newList.querySelector?.('tr[data-ps-owned="true"]');
-    if(found)newList.scrollTop=Math.max(0,found.offsetTop-(newList.clientHeight||0)/2);
+    if(found){
+     // The selected row's offsetTop can refer to the whole Android card.
+     // Calculate in the scroller's own coordinate system instead.
+     const box=typeof found.getBoundingClientRect==="function"?
+      found.getBoundingClientRect():null;
+     const holder=typeof newList.getBoundingClientRect==="function"?
+      newList.getBoundingClientRect():null;
+     const target=box&&holder?box.top-holder.top+newList.scrollTop:
+      (found.offsetTop||0);
+     const selectedHeight=box?.height||0;
+     newList.scrollTop=Math.max(0,target-
+      Math.max(0,((newList.clientHeight||0)-selectedHeight)/2));
+    }
     s.scrollSelected=false;
    }
   }
