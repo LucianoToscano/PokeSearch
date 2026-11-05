@@ -1600,6 +1600,32 @@
           "Validar compartilhamento Android e rolagem/tamanho dos cards em Samsung com Pokébola 1 e 2 após instalar."
         ]
       }
+    },
+    {
+      "id": "lt240-intelligent-pvp-20261105",
+      "minVersionCode": 54444,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT240 — PvP inteligente, alertas TOP e dados atualizados",
+      "sections": {
+        "novidades": [
+          "Pesquisa direta no explorador por IV A/D/S, rank # e eficiência (%); busca por espécie no Rank Geral.",
+          "Comparação sob demanda do mesmo IV em formas normais, Megas e evoluções verificadas, sem confundir projeção com elegibilidade.",
+          "Alertas TOP PvP 1/5/10 opcionais nas notificações: respeitam Novos Pokémon ligado, permissões Android, TTL, deduplicação e Pokébolas independentes.",
+          "Rank Geral com score, IDs técnicos dos golpes recomendados, confrontos favoráveis e ameaças verificados no snapshot PvPoke."
+        ],
+        "melhorias": [
+          "PvPoke atualizado em snapshot fixado de 03/11/2026; GL de 31/10, UL de 21/10 e ML de 01/10; inclusão de Mega Chandelure no Game Master.",
+          "Explorador responsivo com ajustes P/M/G, carregamento de comparações sob demanda e cache limitado para economizar memória.",
+          "Mesma interface nos dois overlays, preservando LT239, filtros, favoritos, coordenadas e autenticação."
+        ],
+        "correcoes": [
+          "Pesquisa não sobrescreve os IVs do Pokémon selecionado e não gera rank inexistente.",
+          "Notificação TOP só ocorre para IVs verificados, resultados válidos ainda ativos e configuração explícita do usuário."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico no Samsung de todas as formas, alertas Android, apresentação P/M/G e duas Pokébolas após instalação."
+        ]
+      }
     }
   ]
 }
