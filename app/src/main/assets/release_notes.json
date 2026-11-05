@@ -1923,6 +1923,35 @@
           "A validação visual física P/M/G nas duas Pokébolas e a confirmação de instalação no Android continuam pendentes."
         ]
       }
+    },
+    {
+      "id": "lt253-smart-pvp-evolution-calculator-visual-20261105",
+      "minVersionCode": 54457,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT253 — PvP inteligente, comparador e cartões adaptáveis",
+      "sections": {
+        "novidades": [
+          "Explorador PvP: comparação automática entre evoluções e Mega, com melhor Rank Classe, melhor Rank Geral verificado e Mega identificada como projeção.",
+          "Calculadora PC/Nível: comparação de dois conjuntos de IV A/B editáveis e atalhos para limites de 500, 1500 e 2500 PC.",
+          "Alertas de Top PvP respeitam o limite configurado de #1 até #50, apenas quando os IVs e a fonte estiverem confirmados."
+        ],
+        "melhorias": [
+          "Cartão adapta a altura à tela e permite rolar conteúdo grande sem esconder seletor, controles ou rodapé.",
+          "Colisões entre cartão, Pokébola, menus e resultados são evitadas usando geometria nativa, preservando o arraste manual.",
+          "Golpes recomendados mostram Poder e Energia quando confirmados pelo Game Master; golpes capturados permanecem identificados separadamente.",
+          "Projeções PvP são reutilizadas para a mesma captura até o despawn, sem nova consulta de coordenadas; sprites exatas podem ser retomadas após falhas temporárias da WebView.",
+          "Testes visuais automatizados em tamanhos P/M/G, com evidências de screenshots e verificação de conteúdo acessível."
+        ],
+        "correcoes": [
+          "Preservada a legibilidade e o recolhimento dos painéis da LT252, nas duas Pokébolas.",
+          "Mega não recebe Rank Geral GBL inventado nem indicação falsa de elegibilidade.",
+          "Golpes legados/Elite não são afirmados sem status confirmado pela fonte.",
+          "Cache de coordenadas verificadas existente continua vinculado à identidade exata da captura e expira com ela."
+        ],
+        "emDesenvolvimento": [
+          "A inspeção física P/M/G no Samsung e a confirmação de instalação continuam necessárias; screenshots Chromium e testes de CI não substituem homologação em dispositivo real."
+        ]
+      }
     }
   ]
 }
