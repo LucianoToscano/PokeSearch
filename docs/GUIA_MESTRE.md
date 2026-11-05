@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT244 OFICIAL — 0.02.44 / versionCode 54448 (05/11/2026)
+
+- **Regressão corrigida:** LT243 retirou ↳ da faixa IV e não distinguia claramente rank de evolução vs. rank do Pokémon capturado. A LT244 mostra `GL · IV #1 · ↳ Houndstone` para Greavard 1/14/15 e `GL · IV #1 · Atual` para Charmander 15/15/15. Não afirmar que ranking Classe #1 implica espécie RG #1.
+- **RG clicável, sem números fictícios:** ao lado do IV na faixa compacta, `RG #N` só aparece quando `overallRank` positivo é comprovado na classificação PvPoke da mesma espécie/forma e liga (ex.: Houndstone GL RG #653). O botão abre o explorador Rank Geral existente diretamente na posição, independentemente do explorador de 4.096 IVs.
+- **Métricas:** toque em IV A/D/S verificados abre 4.096 spreads da espécie atual e liga; toque em PC ou Nível abre painel pequeno recolhível de comparação entre PC/Nv capturados e projeções GL/UL/ML já calculadas para espécie, evoluções e Mega, sem API externa ou revelações. A análise teórica não garante elegibilidade na GBL nem representa custos de aprimoramento.
+- **Arquivos:** `app/src/main/assets/detail.html`, `app/src/main/assets/release_notes.json`, teste novo `app/tests/lt244-compact-iv-rg-interactive-metrics.test.js` e regressões LT145/LT163/LT164/LT243 adaptadas mantendo verificações de ordem, fontes e nomes.
+- **Merge e QA:** [PR #220](https://github.com/LucianoToscano/PokeSearch/pull/220) mesclada, commit `dfc05128b25dda60351ef55294aabed23abaa139`. Revisão testada `bd78ef672c0b2289d5eaf09f9aa9ca011aacca86`. Checks Node QA #41988454628, Node LT169 #41988454737, QA core LT211 #41988454702, Java LT62 #41988454771, OTA LT173 #41988454825 e beta #41988454764: todos `completed/success`.
+- **Assinatura e publicação:** [Actions oficial #41988808913](https://github.com/LucianoToscano/PokeSearch/actions/runs/41988808913) `completed/success`, com signer verificado e digest publicado. Pedido `release/official-request.json` no commit `d1b9f21c1f2f2e2d9aee4324dcb251d061b0b96f`.
+- **Release estável:** [v0.02.44-54448](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.44-54448), publicada em `2026-11-05T07:43:48Z`, `draft=false`, `prerelease=false` e `releases/latest`.
+- **APK oficial:** [PokeSearch-v0.02.44-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.44-54448/PokeSearch-v0.02.44-LT.apk), **28.148.751 bytes**, SHA-256 `c82c473db8879e985d9b95c63b98718b19e141424abf829ee2dcaad59f3830cd`, `uploaded`. Artefato CI `PokeSearch-v0.02.44-54448-Signed-Verified`, ID `13396224784`, ZIP 25.972.199 bytes e digest `78a05fb747f54e8ff9860e57996aef4ef0779d99b420dc283a8bc46bc7b75cfd` (não é digest do APK).
+- **Limitações:** teste físico Samsung, duas Pokébolas e P/M/G ainda não executado; instalação pelo usuário exige confirmação Android. Calculadora de gastos de Poeira/Doces é proposta futura, não parte da LT244.
+- **Auditoria:** [LT244_EVOLUCAO_RG_METRICAS_20261105.md](LT244_EVOLUCAO_RG_METRICAS_20261105.md). Registro anterior de LT244 em desenvolvimento permanece histórico e é superado por este.
+
 ## LT244 — Evolução ↳, Rank Geral clicável e métricas (05/11/2026; desenvolvimento)
 
 - **Evidências Samsung:** LT243 removeu ↳ da faixa GL/UL, confundindo um IV Classe #1 da evolução com o próprio Pokémon. Greavard GL: Houndstone IV #1 e RG #653; Charmander GL 15/15/15 IV #1 é "Atual". Também se deseja RG clicável e funções para IV, PC e Nível.
