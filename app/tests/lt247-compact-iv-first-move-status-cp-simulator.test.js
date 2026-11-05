@@ -128,7 +128,7 @@ assert.ok(glBest&&glBest.cp<=1500);
 assert.ok(funcs.controls().includes('type="range" min="1" max="50" step="0.5"'));
 assert.ok(funcs.controls().includes("Gengar (Mega)"));
 assert.equal(funcs.update(),true);
-assert.ok(out.innerHTML.includes("IV atual 0/14/14"));
+assert.ok(out.innerHTML.includes("IV atual A 0/14/14"));
 assert.ok(out.innerHTML.includes("IV 0/0/0"));
 assert.ok(out.innerHTML.includes("IV 15/15/15"));
 assert.ok(out.innerHTML.includes("até 1500"));
