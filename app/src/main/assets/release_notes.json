@@ -1720,6 +1720,33 @@
           "Custos de Poeira Estelar e Doces não foram implementados; exigem tabelas oficiais verificadas e não são inferidos."
         ]
       }
+    },
+    {
+      "id": "lt245-general-rank-first-alternate-evolutions-20261105",
+      "minVersionCode": 54449,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT245 — Rank Geral prioritário e evoluções +N",
+      "sections": {
+        "novidades": [
+          "O resumo PvP prioriza o menor Rank Geral verificado entre formas com IVs Top 50 na liga, preservando filtros Top mais restritivos.",
+          "O card exibe primeiro o Pokémon/evolução, depois RG #N e IV #N como ações independentes.",
+          "O indicador +N abre uma lista compacta das demais evoluções com bons IVs; tocar RG ou IV de cada uma abre a tabela correspondente."
+        ],
+        "melhorias": [
+          "No exemplo Litwick 0/15/14, Lampent GL RG #519 / IV #1 aparece antes de Chandelure GL RG #808 / IV #1.",
+          "A Análise PvP expandida e os avisos Top PvP também priorizam a espécie de melhor RG comprovado quando os IVs são competitivos.",
+          "Se não houver Rank Geral confirmado, o card preserva a prioridade anterior pelo Rank Classe, sem inventar números.",
+          "Megaevoluções projetadas e comparações teóricas permanecem separadas do ranking real entre espécies."
+        ],
+        "correcoes": [
+          "A seleção por Rank Classe isolado deixa de esconder uma evolução mais competitiva no Rank Geral da mesma liga.",
+          "O indicador +N é recolhido por padrão, sem aumentar o card ou cobrir o nome dos Pokémon."
+        ],
+        "emDesenvolvimento": [
+          "Testar visualmente no Samsung as duas Pokébolas e os tamanhos P/M/G.",
+          "A base offline de rankings ainda usa o snapshot fixado do PvPoke; atualizar fontes sem validação não altera a precisão."
+        ]
+      }
     }
   ]
 }
