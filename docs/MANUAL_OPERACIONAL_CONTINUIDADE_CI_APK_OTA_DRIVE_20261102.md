@@ -1,5 +1,7 @@
 # PokeSearch — Manual operacional de continuidade para outra conta ou IA
 
+**Atualização operacional 05/11/2026:** usar o [fluxo permanente de publicação pelo assistente](PUBLICACAO_OFICIAL_PERMANENTE.md), integrado na PR #211. Para próximas versões autorizadas, editar `release/official-request.json`; não é mais necessário criar/enviar um YAML por LT nem solicitar que o usuário dispare o build. As referências a workflows por versão abaixo são históricas. Todas as exigências de QA, assinatura permanente, ambiente protegido, autorização do pedido, verificação e registro continuam válidas. A confirmação de instalação exigida pelo Android permanece.
+
 **Revisão inicial:** 02/11/2026. **Idioma:** português brasileiro.
 **Proprietário do projeto:** conta GitHub LucianoToscano; repositório público: https://github.com/LucianoToscano/PokeSearch.
 **Objetivo:** permitir que outra IA ou pessoa autorizada verifique a situação REAL, continue o código, faça QA, solicite/aplique merge, gere e assine APK, publique atualização pelo canal oficial, espelhe no Drive e atualize o Guia Mestre, sem inventar nada e sem acessar segredos no chat.
