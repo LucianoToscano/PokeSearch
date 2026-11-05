@@ -46,6 +46,24 @@
   work.catch(()=>{if(cache.get(path)===work)cache.delete(path);});
   return work;
  }
+/* LT253: take numerical move data ONLY from the pinned PvPoke gamemaster.
+   Missing fields remain absent; never derive energy/power from an English name. */
+ function moveStats(master,id){
+  const found=(Array.isArray(master?.moves)?master.moves:[])
+   .find(x=>x?.moveId===id);
+  if(!found)return {};
+  const safe=(key,max)=>{
+   const value=Number(found[key]);
+   return Number.isFinite(value)&&value>0&&value<=max?value:null;
+  };
+  const stats={};
+  const power=safe("power",500),energy=safe("energy",200),
+    gain=safe("energyGain",100);
+  if(power!==null)stats.power=power;
+  if(energy!==null)stats.energyCost=energy;
+  if(gain!==null)stats.energyGain=gain;
+  return stats;
+ }
  function fromData(rankings,master,league,name){
   if(!Array.isArray(rankings)||!master||!Array.isArray(master.pokemon))return null;
   const id=speciesId(name);
@@ -61,7 +79,8 @@
   const moves=ranking.moveset.slice(0,3).filter(x=>typeof x==="string").map(moveId=>({
    id:moveId,name:names.get(moveId)||displayId(moveId),
    status:elite.has(moveId)?"elite":legacy.has(moveId)?"legacy":
-    ordinary.has(moveId)?"normal":"unknown"
+    ordinary.has(moveId)?"normal":"unknown",
+   stats:moveStats(master,moveId)
   }));
   if(moves.length<2)return null;
   return {source,commit,league,species:pokemon.speciesName||ranking.speciesName||name,
@@ -85,7 +104,8 @@
   const legacy=new Set(Array.isArray(pokemon.legacyMoves)?pokemon.legacyMoves:[]);
   const make=moveId=>({
    id:moveId,name:names.get(moveId)||displayId(moveId),
-   status:elite.has(moveId)?"elite":legacy.has(moveId)?"legacy":"normal"
+   status:elite.has(moveId)?"elite":legacy.has(moveId)?"legacy":"normal",
+   stats:moveStats(master,moveId)
   });
   return {source,commit,league,species:pokemon.speciesName||name,
    availableOnly:true,recommended:false,
@@ -169,5 +189,5 @@
   }catch(_){return null;}
  }
 
- return Object.freeze({lookup,fromData,fromAvailable,localizedMoves,speciesId,source,commit,categoryRows,rankingCategories});
+ return Object.freeze({lookup,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
 });

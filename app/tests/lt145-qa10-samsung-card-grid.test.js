@@ -29,5 +29,5 @@ assert.ok(script.includes('const height=Math.ceil(panel.scrollHeight)+3'),"windo
 const native=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
 assert.ok(native.includes('DETAIL_DP=200'),"slightly wider card");
 assert.ok(native.includes('detailHeight=125'),"slightly larger initial window");
-assert.ok(native.includes('Math.min(520,available)'),"screen-bounded expanded height");
+assert.ok(native.includes('Math.min(available,heightDp+2)'),"screen-bounded expanded height");
 console.log("LT145 QA11: aligned header, red default coords, responsive larger card and bounded scroll PASS");

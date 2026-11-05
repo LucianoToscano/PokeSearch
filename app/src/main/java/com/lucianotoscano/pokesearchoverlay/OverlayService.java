@@ -1599,7 +1599,21 @@ public class OverlayService extends Service {
                     spaceAbove>spaceBelow?above:below));
             }
         }
-        detailParams.x=x;detailParams.y=y;
+        // LT253: use native window geometry, never CSS guesses. Avoid visible
+        // results, our own expanded toolbar and the other Pokébola's toolbar.
+        // User-dragged detail cards remain manually positioned and only clamp.
+        int[] resultObstacle=resultParams!=null&&resultRoot!=null&&
+            resultRoot.getVisibility()==View.VISIBLE&&!resultCollapsed?
+            new int[]{resultParams.x,resultParams.y,resultParams.width,resultParams.height}:null;
+        int[] menuObstacle=menuExpanded&&menuParams!=null&&menuRoot!=null&&
+            menuRoot.getVisibility()==View.VISIBLE?
+            new int[]{menuParams.x,menuParams.y,menuParams.width,menuParams.height}:null;
+        int[] ownDock=new int[]{params.x,params.y,params.width,
+            Math.max(params.height,dp(TOOLBAR_DP))};
+        int[] free=OverlayPlacementPolicy.avoid(x,y,cardWidth,cardHeight,
+            screen.widthPixels,screen.heightPixels,margin,
+            new int[][]{resultObstacle,menuObstacle,ownDock,otherMenuBounds()});
+        detailParams.x=free[0];detailParams.y=free[1];
         try{wm.updateViewLayout(detailRoot,detailParams);}
         catch(Exception e){recordFailure("reposicionar detalhes",e);}
     }
@@ -3276,11 +3290,10 @@ public class OverlayService extends Service {
     // We reuse the existing opt-in general/favorite notification channels:
     // no additional noisy notification, API request or cooldown.
     private int verifiedTopPvpRank(JSONObject card,boolean leagueConfirmed){
-        if(card==null||!leagueConfirmed||!("gl".equals(mode)||"ul".equals(mode))||
-           !verifiedTargetCriteria(card))return 0;
-        String value=card.optString("rank","").replace("#","").trim();
-        if(!value.matches("[1-5]"))return 0;
-        return Integer.parseInt(value);
+        if(card==null)return 0;
+        return PvpAlertPriority.verifiedClassRank(mode,leagueConfirmed,
+            verifiedTargetCriteria(card),card.optString("rank",""),
+            "ul".equals(mode)?ulRank:glRank);
     }
     private String encounterAlertTitle(JSONObject card){
         String base=EncounterAlertText.title(card.optString("name","Pokémon"),
@@ -3403,8 +3416,8 @@ public class OverlayService extends Service {
             // Retain eligibility until an actual accepted notification or TTL.
             int candidateTopRank=verifiedTopPvpRank(c,leagueConfirmed);
             int currentTopRank=verifiedTopPvpRank(firstNewCard,leagueConfirmed);
-            boolean higherPriority=candidateTopRank>0&&
-                (currentTopRank==0||candidateTopRank<currentTopRank);
+            boolean higherPriority=PvpAlertPriority.higherPriority(
+                candidateTopRank,currentTopRank);
             if((firstNew.isEmpty()||higherPriority) &&
                 successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
@@ -3795,8 +3808,10 @@ public class OverlayService extends Service {
         // screen-bounded native window and let #panel scroll all content.
         // Show the complete compact card whenever the device has room; use
         // inner scrolling only for genuinely tall content/evolution details.
-        int available=Math.max(96,screenHeightDp()-40);
-        detailHeight=Math.max(96,Math.min(Math.min(520,available),heightDp));
+        // LT253: remove the historical 520dp ceiling. Expanded simulators
+        // grow until the real available screen height and then scroll in #panel.
+        int available=Math.max(96,screenHeightDp()-24);
+        detailHeight=Math.max(96,Math.min(available,heightDp+2));
         if(detailParams!=null&&detailRoot!=null){
             detailParams.height=dp(detailHeight);moveDetail();
         }

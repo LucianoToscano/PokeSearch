@@ -1,0 +1,54 @@
+name: LT253 visual screenshots and verified PvP policy
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/src/main/assets/detail.html'
+      - 'app/src/main/assets/dock.html'
+      - 'app/src/main/assets/pvp_rank_insights.js'
+      - 'app/src/main/assets/pvp_rank_advanced_ui.js'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PvpAlertPriority.java'
+      - 'app/tests/lt253-*'
+      - '.github/workflows/lt253-visual-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-ui-visual-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install pinned Chromium test runner
+        run: |
+          npm install --no-save --no-audit --no-fund --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Functional LT253 integration and strict Java alert policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          node app/tests/lt253-smart-pvp-calculator-cache-layout.test.js
+          node app/tests/lt253-zero-mega-icon-attacks-calculator.test.js 2>/dev/null || test ! -e app/tests/lt253-zero-mega-icon-attacks-calculator.test.js
+          mkdir -p "$RUNNER_TEMP/lt253-pvp-alert"
+          javac --release 17 -d "$RUNNER_TEMP/lt253-pvp-alert"             app/src/main/java/com/lucianotoscano/pokesearchoverlay/PvpAlertPriority.java             app/tests/PvpAlertPriorityTest.java
+          java -cp "$RUNNER_TEMP/lt253-pvp-alert"             com.lucianotoscano.pokesearchoverlay.PvpAlertPriorityTest
+      - name: Real shipping WebView HTML - screenshot and no-clipping assertions
+        env:
+          LT253_VISUAL_OUTPUT: visual-evidence-lt253
+        run: node app/tests/lt253-visual-screenshots.cjs
+      - name: Preserve visual evidence even if screenshot assertions fail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT253-visual-PMG
+          path: visual-evidence-lt253/*.png
+          retention-days: 30
+          if-no-files-found: warn

@@ -25,7 +25,7 @@ assert.ok(inline.includes('nameChip.dataset.psName=best.name'),
 assert.ok(inline.includes('btn.textContent=prior?.icon||"🗡"'));
 assert.ok(inline.includes('btn.textContent=hasLegacy?"⚔️":"🗡"'));
 assert.ok(inline.includes('if(complete){'),"verified move status gates the legacy switch");
-assert.ok(inline.includes('const legacy=move.status==="elite"||move.status==="legacy"'));
+assert.ok(inline.includes('const legacy=(move.status==="elite"||move.status==="legacy")&&move.localeVerified!==false'));
 // 4) Simulator uses the existing card's one visible scrollbar; no nested height cutoff.
 assert.ok(detail.includes('#psMetricPanel{max-height:none!important'));
 assert.ok(detail.includes('#panel.metricOpen{overflow-y:auto!important'));
