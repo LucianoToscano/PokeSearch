@@ -73,7 +73,8 @@ const snippet=detail.slice(detail.indexOf("function updateVisiblePvPRank(payload
 assert.ok(snippet.includes("withOverall"),"RG-primary logic still present");
 assert.ok(snippet.includes('badge.textContent="RG #"+leagueOverall'));
 assert.ok(snippet.includes('iv.textContent="IV #"+best.rank'));
-assert.ok(detail.includes('kind:"overall"'));
+assert.ok(detail.includes('badge.dataset.psKind="overall"'),
+ "RG button must open the independently verified species ranking");
 const secondary=fs.readFileSync(path.join(base,"../java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
 assert.ok(secondary.includes("extends OverlayService"),"P1 and P2 use one verified asset resolver");
 console.log("LT246: exact 10 color/shiny PNGs, safe Rattata attacks, separate RG+IV, P1/P2 PASS");
