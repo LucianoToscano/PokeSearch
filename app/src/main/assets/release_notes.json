@@ -1899,6 +1899,30 @@
           "Necessária inspeção visual física no Samsung nos tamanhos P/M/G, nas duas Pokébolas, e confirmação de instalação Android."
         ]
       }
+    },
+    {
+      "id": "lt252-zero-mega-moves-cp-panels-toggle-20261105",
+      "minVersionCode": 54456,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT252 — Cartão PvP, Mega, calculadora e painéis",
+      "sections": {
+        "novidades": [
+          "Ao tocar novamente no mesmo botão IV ou RG, o explorador PvP recolhe; tocar em outra classificação alterna diretamente.",
+          "O nome/evolução na faixa PvP abre a Análise PvP e o segundo toque a recolhe sem criar janelas extras."
+        ],
+        "melhorias": [
+          "Mega Evolução mostra o símbolo oficial antes do nome da espécie, sem repetir a palavra Mega no espaço compacto; nome completo permanece na análise.",
+          "Calculadora PC/Nível usa uma única rolagem visível no cartão, seletor de forma mais largo e resultados que não cortam na horizontal."
+        ],
+        "correcoes": [
+          "Contador 0 sem resultados alinhado ao eixo da Pokébola e sem duplicar o contador opcional.",
+          "Golpes: símbolo inicial neutro; destaque de legado/Elite apenas quando a classificação do conjunto recomendado foi confirmada.",
+          "Atualizadas regressões LT247/LT248 e adicionados testes LT252 para abertura/retração de menus PvP."
+        ],
+        "emDesenvolvimento": [
+          "A validação visual física P/M/G nas duas Pokébolas e a confirmação de instalação no Android continuam pendentes."
+        ]
+      }
     }
   ]
 }
