@@ -44,6 +44,7 @@ Revisão de código testada: `56aa09050973cafc1a7659c7dbab367e867d5aed`.
 | Compilação Java Android sem APK | **success** | [Actions #42033366199](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366199) |
 | Validação OTA/assinatura Android | **success** | [Actions #42033366088](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366088) |
 | Chromium screenshot smoke, 200/240/300 px | **success** | [Actions #42033366196](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366196), [artefato #13417087131](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366196/artifacts/13417087131) |
+| APK beta com assinatura temporária isolada (teste privado; não é OTA oficial) | **success** | [Actions #42033366045](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366045), [artefato privado #13416699300](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366045/artifacts/13416699300) |
 
 O novo teste `lt253-integrated-privacy-pvp-smart-ui.test.js` foi executado pela regressão completa com mensagem de aprovação. Medições visuais sem overflow horizontal: largura 200 px — seletor 94 px e slider **98 px**; largura 240 px — seletor 134 px e slider **138 px**; largura 300 px — seletor 194 px e slider **198 px**. As três versões têm `scrollWidth === clientWidth` e conteúdo vertical rolável.
 
