@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT246 — Sprites Flabébé, golpes e RG no card (05/11/2026; desenvolvimento)
+
+- **Prints Samsung:** coluna mostra `#669` na Flabébé Red sem sprite, Rattata 15/15/15 mostra `Ataques Recomendados: indisponíveis`, Teddiursa 0/14/14 mostra `GL · IV #1 · ↳ Ursaluna` apesar de análise expandida informar `RG #163`.
+- **Sprites offline:** 10 PNGs oficiais e específicos de Flabébé `pm669.f{RED,YELLOW,BLUE,ORANGE,WHITE}[.s].icon.png` para cinco cores/normal+Shiny, copiados do PokeMiners pinned commit `c2a686eb08ace6e890d8fe3d2134c76988db87b5`, assinaturas Git blob verificadas e colocados em `app/src/main/assets/pokemon-sprites/costumes`. `sprite_offline.js` allowlist atualizada para carregar bytes nativos offline, sem trocar cor/forma/espécie.
+- **Ataques ⚔️:** `pvp_rank_moves.js` e `detail.html` diferenciam recomendações PvPoke da lista de golpes legalmente aprendíveis no Game Master (identidade/tipo/tradução pt-BR verificados), e de golpes capturados quando indisponível. Não chamar movimentos meramente possíveis de recomendação; erro de rede não fica cacheado para sempre.
+- **RG:** LT245 já contém opção de priorizar RG confiável; print apresenta o rótulo compacto LT244, não prova instalação da LT245. Teste da LT246 exige Teddiursa GL `↳ Ursaluna` com `RG #163` e `IV #1` separados e `+1` para Ursaring. Instalação da release exige confirmação Android.
+- **Versão proposta:** LT246 / `0.02.46` / `versionCode 54450` / `label 51250`, sobre LT245. Testes `lt246-flabebe-moves-compact-rg.test.js` e LT245 ampliado. CI Android, Node, OTA, beta privado e merge/publicação assinada necessários antes de marcar oficial. QA visual real P1/P2/P/M/G pendente.
+- **Relatório:** [LT246_SPRITES_GOLPES_RG_20261105.md](LT246_SPRITES_GOLPES_RG_20261105.md). Registro de desenvolvimento não significa atualização publicada.
+
 ## LT245 OFICIAL — 0.02.45 / versionCode 54449 (05/11/2026)
 
 - **Pedido e exemplo:** Litwick 0/15/14 tem Chandelure GL `IV #1 / RG #808` e Lampent GL `IV #1 / RG #519`. O card agora prioriza Lampent pelo menor RG comprovado do PvPoke, **entre formas reais com IV Classe Top 50** (ou filtro Top N mais restritivo), sem promover IVs ruins.
