@@ -1851,6 +1851,27 @@
           "Simulador PC/Nível com a família evolutiva real independente dos filtros ativos (Teddiursa → Ursaring → Ursaluna), setas para trocar forma, controles ±0,5 nível e campo PC-alvo que calcula o maior nível elegível."
         ]
       }
+    },
+    {
+      "id": "lt250-readable-single-league-icon-three-rank-tabs-empty-zero-20261105",
+      "minVersionCode": 54454,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT250 — PvP legível em três blocos e contador 0 restaurado",
+      "sections": {
+        "correcoes": [
+          "Corrigido ícone de liga duplicado: uma regra CSS antiga criava um círculo colorido além do novo emoji 🔵 GL / 🟡 UL / 🟣 ML.",
+          "Removido o fundo único e a quebra visual da faixa PvP; agora há exatamente três divisões separadas: [🔵 GL IV #N] [↳ Evolução] [RG #N] e um botão ⚔️/🗡 independente.",
+          "O contador 0 reaparece junto à Pokébola, tanto na primeira quanto na segunda, quando a busca não possui resultados; não cria uma linha 0 desprendida abaixo do ícone."
+        ],
+        "melhorias": [
+          "O simulador PC/Nível apresenta seletor de evolução e controle de nível em linhas independentes, com largura inteira, texto ampliado, setas e botões maiores. A janela possui altura máxima responsiva com rolagem própria.",
+          "Alternativas de evolução não roubam espaço na faixa compacta; elas continuam disponíveis na Análise PvP expandida, com Rank Classe e Geral verificados.",
+          "Preserva o uso das quatro ações distintas (Rank Classe, Análise PvP, Rank Geral, Golpes), a família Teddiursa → Ursaring → Ursaluna e o símbolo Mega real quando existente."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual manual em Samsung nas duas Pokébolas e P/M/G continua necessária; compilação automatizada não comprova interação no dispositivo."
+        ]
+      }
     }
   ]
 }
