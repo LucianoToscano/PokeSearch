@@ -6449,6 +6449,41 @@ function attachSpriteFeedback(){
   },18500);
  });
 }
+/* LT253: retry failed exact sprites when Android WebView becomes visible.
+ * No search, coordinate reveal, or substitution of a different form/costume.
+ * At most two refresh attempts for each row while the same row DOM lives. */
+function recoverFailedSpritesOnResume(){
+ if(!resultWindow||document.hidden)return 0;
+ let attempted=0;
+ for(const stage of document.querySelectorAll(".spawn .spriteStage.failed")){
+  const img=stage.querySelector("img.sprite");
+  const button=stage.closest?.(".spawn");
+  const ix=Number(button?.getAttribute?.("data-index")??-1);
+  if(!img||ix<0||ix>=cards.length||!img.isConnected)continue;
+  const state=img.dataset||(img.dataset={});
+  const tries=Number(state.psResumeAttempts||0);
+  const last=Number(state.psResumeAt||0),now=Date.now();
+  if(tries>=2||now-last<30000)continue;
+  const card=cards[ix],engine=window.PokeSearchOfflineSprite;
+  const resolved=engine?.resolve?.(card);
+  const exact=engine?.bundledExactForArt?.(card,resolved)||"";
+  // Provider art may be retried only from the original verified URL.
+  const source=String(img.getAttribute("data-original-src")||"");
+  const src=exact||(/^(?:https:\/\/|file:\/\/\/android_asset\/pokemon-sprites\/)/.test(source)?source:"");
+  if(!src)continue;
+  state.psResumeAttempts=String(tries+1);state.psResumeAt=String(now);
+  stage.classList.remove("failed");
+  img.removeAttribute("src");img.src=src;
+  attempted++;
+ }
+ return attempted;
+}
+if(typeof document!=="undefined"&&document.addEventListener)
+ document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden)recoverFailedSpritesOnResume();
+ });
+if(typeof window!=="undefined"&&window.addEventListener)
+ window.addEventListener("pageshow",()=>recoverFailedSpritesOnResume());
 function attachLongPress(){
  document.querySelectorAll('.spawn').forEach(el=>{
   const i=Number(el.dataset.index);
