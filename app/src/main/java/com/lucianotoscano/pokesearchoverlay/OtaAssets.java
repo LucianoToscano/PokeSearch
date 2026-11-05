@@ -57,7 +57,8 @@ final class OtaAssets {
         Collections.addAll(paths,
             "dock.html","detail.html","sprite_offline.js","sprite_visual_scale.js",
             "visual_editor.js","pokemon_card_presentation.js","pvpoke-overall-ranks.js",
-            "pvpoke-iv-gamemaster.js","probe.js","release_notes.json","pokemon_catalog.json");
+            "pvpoke-iv-gamemaster.js","pvp_rank_explorer.js","pvpoke-advanced-gl.js",
+            "pvpoke-advanced-ul.js","pvpoke-advanced-ml.js","probe.js","release_notes.json","pokemon_catalog.json");
         PATCHABLE=Collections.unmodifiableSet(paths);
     }
     private static final ExecutorService IO=Executors.newSingleThreadExecutor();
