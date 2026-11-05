@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT240 — Radar PvP avançado (05/11/2026, desenvolvimento)
+
+- Base: LT239 · 0.02.39 · 54443, mantendo 4.096 IVs, comparação, CSV e compartilhamento sem regressões. LT240 proposta: 0.02.40 / 54444 / label 51244.
+- Funcionalidade: pesquisa direta por IV, #rank, eficiência; comparação Normal/Mega/evoluções do mesmo IV; destaque dos Top 1–5 verificáveis; prioridade Top PvP nas notificações nativas já autorizadas; categorias Rank Geral (Abertura, Finalização, Troca, Carregadores) e golpes/confrontos verificados sob demanda; CSS responsivo P/M/G; ambas Pokébolas.
+- Fonte: offline PvPoke de 19/10/2026 continua válida mas antiga. Revisão pública de 03/11/2026 commit e02bde78d19be9b9099b5a6629c6a8d0835a53be consultada apenas ao abrir categorias/golpes. **Não afirmar atualização completa do snapshot offline** até a importação auditada.
+- Arquivos principais: pvp_rank_insights.js, pvp_rank_advanced_ui.js, pvp_rank_moves.js, pvp_rank_explorer.js, detail.html, OverlayService.java; inclusões em allowlist OTA de Java/Python. Testes: lt240-pvp-advanced-radar.test.js + suíte CI/Android/OTA. Ainda pendente teste físico Samsung P1/P2.
+- Documento: [LT240_RADAR_PVP_AVANCADO_20261105.md](LT240_RADAR_PVP_AVANCADO_20261105.md).
+- **Estado deste registro:** código em branch, não comprova PR mesclada nem APK publicado. Publicar via release/official-request.json apenas depois do CI e registrar evidências separadamente.
+
 ## LT239 OFICIAL — 0.02.39 / versionCode 54443 (05/11/2026)
 
 - **Status comprovado:** LT239 em GitHub releases/latest, tag [v0.02.39-54443](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.39-54443), draft=false, prerelease=false, publicada em 2026-11-05T04:20:40Z.

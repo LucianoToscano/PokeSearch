@@ -1600,6 +1600,33 @@
           "Validar compartilhamento Android e rolagem/tamanho dos cards em Samsung com Pokébola 1 e 2 após instalar."
         ]
       }
+    },
+    {
+      "id": "lt240-radar-pvp-advanced-20261105",
+      "minVersionCode": 54444,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT240 — Radar PvP avançado",
+      "sections": {
+        "novidades": [
+          "Pesquisa direta por IV exato, #Rank Classe e porcentagem de eficiência no explorador PvP.",
+          "Comparação da mesma combinação de IVs entre formas normais, Mega e evoluções verificadas, com PC, nível e eficiência.",
+          "Avisos de Top 1 a Top 5 PvP priorizados no sistema de notificações já autorizado, sem adicionar notificações duplicadas.",
+          "Rank Geral com categorias Abertura, Troca, Finalização e Carregadores, mais golpes e confrontos confirmados em consulta sob demanda."
+        ],
+        "melhorias": [
+          "Dados avançados consultados na revisão fixa PvPoke 03/11/2026; snapshot offline original de 19/10/2026 permanece disponível e identificado.",
+          "Interface compacta adaptada a larguras P/M/G com navegação, cabeçalho e rolagem existentes preservados.",
+          "O mesmo painel e os mesmos componentes atendem às duas Pokébolas, sem pesquisas extras na PoGoCoordinates."
+        ],
+        "correcoes": [
+          "Classificação por IV não é confundida com Rank Geral de espécie ou elegibilidade de Mega na Liga GO.",
+          "Alertas Top PvP respeitam o modo de notificações, a autorização Android e os bloqueios de repetição existentes."
+        ],
+        "emDesenvolvimento": [
+          "Validar nos dois overlays no Samsung a altura, rolagem, busca, golpes e avisos nativos.",
+          "Atualização integral do snapshot offline PvPoke depende de importação validada das fontes oficiais; o app não inventa rankings recentes."
+        ]
+      }
     }
   ]
 }
