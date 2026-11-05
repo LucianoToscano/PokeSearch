@@ -728,6 +728,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 </div>
 <script src="pvpoke-overall-ranks.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
+<script src="pvpoke-advanced-gl.js"></script>
+<script src="pvpoke-advanced-ul.js"></script>
+<script src="pvpoke-advanced-ml.js"></script>
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_moves.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
@@ -1133,6 +1136,17 @@ if(typeof document!=="undefined"&&typeof document.addEventListener==="function")
      !pvpRefPopover?.contains(event.target))closePvpReferenceInfo();
  });
 }
+function pvpFormsForLeague(context,league){
+ if(!context||!Array.isArray(context.leagues))return [];
+ const data=context.leagues.find(x=>x?.league===league);
+ if(!data)return [];
+ const parts=[];
+ if(data.own?.rank)parts.push({...data.own,name:context.name});
+ if(Array.isArray(data.evolutions))parts.push(...data.evolutions.slice(0,24));
+ if(Array.isArray(data.megas))parts.push(...data.megas.slice(0,16));
+ if(Array.isArray(data.comparisons))parts.push(...data.comparisons.filter(x=>x?.referenceOnly).slice(0,16));
+ return parts.filter(x=>typeof x?.name==="string"&&Number.isInteger(Number(x.rank))&&Number(x.rank)>=1);
+}
 function openPvpRankExplorer(event,button){
  if(event){event.preventDefault();event.stopPropagation();}
  if(!button||!window.psRankContext)return false;
@@ -1143,6 +1157,7 @@ function openPvpRankExplorer(event,button){
   name:data.psName||window.psRankContext.name,
   league:data.psLeague||"gl",
   iv:window.psRankContext.iv,
+  forms:pvpFormsForLeague(window.psRankContext,data.psLeague||"gl"),
   rank:Number(data.psRank)||null
  });
 }
@@ -1340,7 +1355,8 @@ window.showEvolutionDetails=payload=>{
    if(!league||!context)return;
    window.PokeSearchRankExplorer?.open({
     kind:"class",name:currentRankSpecies||context.name,
-    iv:context.iv,league
+    iv:context.iv,league,
+    forms:pvpFormsForLeague(context,league)
    });
   });
  }
