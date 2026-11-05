@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.53",
-  "code": 54457,
-  "label": 51257,
-  "previous_tag": "v0.02.52-54456",
-  "qa_max_code": 54456,
-  "release_notes": "LT253: novo comparador PvP inteligente de evoluções/Normal/Mega separa Rank Classe dos IVs, Rank Geral de desempenho da espécie e Mega projetada sem alegar elegibilidade na Liga GO. Calculadora PC/Nível 2.0 permite comparar IV A/B e escolher limites de 500, 1500 ou 2500 PC sem alterar capturas. Ataques ágeis e carregados apresentam poder/energia apenas quando disponíveis na fonte offline; indicador de legado/Elite exige confirmação, com golpes capturados separados dos recomendados. Alertas respeitam limite Top #1-#50 já configurado, com validação e deduplicação existentes. Ranking calculado usa cache local até despawn da identidade exata, preservando cache de coordenadas verificadas e evitando revelações extras. Sprites recuperam a variante exata após retomar a WebView, sem novas pesquisas. Cartões adaptáveis crescem até a tela e usam reposicionamento nativo para evitar sobreposição de resultados/menus, preservando arraste e design compacto P/M/G. Ambas as Pokébolas usam os mesmos assets, com independência de contas e configurações. PR #231 integrado após sete gates verdes: Node QA, regressão Node completa, QA core Java, compilação Android Java, contrato OTA, APK beta isolado e screenshots visuais em P/M/G do HTML real. Validação visual física Samsung e instalação do APK continuam pendentes; não confundir CI com instalação real."
+  "version": "0.02.54",
+  "code": 54458,
+  "label": 51258,
+  "previous_tag": "v0.02.53-54457",
+  "qa_max_code": 54457,
+  "release_notes": "PokeSearch LT254 — Correções solicitadas dos menus, Mega, calculadora e Rank Classe. Menus Modo, Filtro e Localização deixam de desenhar a barra de ícones duplicada na WebView secundária; a barra principal mantém posição, transparência e arraste. Mega Evolução mostra o símbolo e diferencia a recomendação estratégica PvP Megaedição dos golpes aprendidos na forma normal, sem inventar ataques exclusivos e mantendo o status de legado somente com fonte confirmada. Calculadora IV A/B mais compacta, controles acessíveis, diferença de PC identificada como B − A, alvos 500/1500/2500 e dados opcionais recolhidos. Golpes Ágil, C1 e C2 alinhados, sem duplicar ataques capturados. O Rank Classe identifica a espécie e seu IV, corrigindo rolagem retida na troca Ursaring #1 ↔ Ursaluna #2 (GL 0/14/15). Base LT253 preservada, mesmo código nas duas Pokébolas, preferências independentes e tema compacto P/M/G. PR #233 mesclada após seis gates de QA automatizados aprovados, incluindo regressões Node, core, Java, contrato OTA e capturas visuais. A instalação e a inspeção física Samsung das duas Pokébolas não foram comprovadas; o Android exige confirmação do usuário para instalar."
 }
