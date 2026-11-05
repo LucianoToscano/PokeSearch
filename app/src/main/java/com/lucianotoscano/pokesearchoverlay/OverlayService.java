@@ -3290,15 +3290,10 @@ public class OverlayService extends Service {
     // We reuse the existing opt-in general/favorite notification channels:
     // no additional noisy notification, API request or cooldown.
     private int verifiedTopPvpRank(JSONObject card,boolean leagueConfirmed){
-        if(card==null||!leagueConfirmed||!("gl".equals(mode)||"ul".equals(mode))||
-           !verifiedTargetCriteria(card))return 0;
-        // LT253: honor the existing Top #1–#50 league filter; badges never
-        // imply a Meta Rank Geral or Mega eligibility and require verified IV.
-        String value=card.optString("rank","").replace("#","").trim();
-        if(!value.matches("(?:[1-9]|[1-4][0-9]|50)"))return 0;
-        int rank=Integer.parseInt(value);
-        int limit=Math.max(1,Math.min(50,"ul".equals(mode)?ulRank:glRank));
-        return rank<=limit?rank:0;
+        if(card==null)return 0;
+        return PvpAlertPriority.verifiedClassRank(mode,leagueConfirmed,
+            verifiedTargetCriteria(card),card.optString("rank",""),
+            "ul".equals(mode)?ulRank:glRank);
     }
     private String encounterAlertTitle(JSONObject card){
         String base=EncounterAlertText.title(card.optString("name","Pokémon"),
@@ -3421,8 +3416,8 @@ public class OverlayService extends Service {
             // Retain eligibility until an actual accepted notification or TTL.
             int candidateTopRank=verifiedTopPvpRank(c,leagueConfirmed);
             int currentTopRank=verifiedTopPvpRank(firstNewCard,leagueConfirmed);
-            boolean higherPriority=candidateTopRank>0&&
-                (currentTopRank==0||candidateTopRank<currentTopRank);
+            boolean higherPriority=PvpAlertPriority.higherPriority(
+                candidateTopRank,currentTopRank);
             if((firstNew.isEmpty()||higherPriority) &&
                 successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
