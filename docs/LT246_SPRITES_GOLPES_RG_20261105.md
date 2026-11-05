@@ -17,3 +17,16 @@
 - Gates: Node geral, core Java, regressões, OTA, beta privado assinado e workflow permanente antes de anunciar publicação.
 - **Sem QA manual comprovado no Samsung** (P1/P2, P/M/G). Sem prova da versão instalada no aparelho. Não afirmar cobertura completa de sprites fora das formas verificadas.
 - Histórico da publicação será acrescentado aqui somente depois de comprovado.
+
+## Evidências oficiais do merge, testes e assinatura (05/11/2026)
+
+- **PR #222:** [LT246 sprites e golpes](https://github.com/LucianoToscano/PokeSearch/pull/222), mesclada na `main` com commit `036925e426e5f242a85372edb5bb97a7c466329a`. Revisão final aprovada no SHA `58076fb776389a937734c1d3fca817e1ec28a710`.
+- **Gates concluídos:** QA core LT211 #41995641773, regressão Node LT169 #41995641753, Node QA #41995641648, Java Android LT62 #41995641585, OTA LT173 #41995641639 e beta privado #41995641750: todos `completed/success`. Testes da LT246 validam os hashes dos 10 PNGs Flabébé, forma/cor/shiny, fontes de golpes e RG separado.
+- **Solicitação oficial:** `release/official-request.json` no commit `e448cf9f2304692bbefbd6754907b0260fb67459`, `0.02.46`, `versionCode 54450`, `label 51250`, `previous_tag v0.02.45-54449`.
+- **Workflow assinado permanente:** [Actions #41996094113](https://github.com/LucianoToscano/PokeSearch/actions/runs/41996094113), `completed/success`; preflight e publish `success`. `Build signed protected release`, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash` concluídos com `success`.
+- **Release pública e estável:** [v0.02.46-54450](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.46-54450) publicada em `2026-11-05T08:43:02Z`, `draft=false`, `prerelease=false`, fonte `e448cf9f2304692bbefbd6754907b0260fb67459`, confirmada em `releases/latest`.
+- **APK oficial:** [PokeSearch-v0.02.46-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.46-54450/PokeSearch-v0.02.46-LT.apk), **28.362.505 bytes**, SHA-256 `7d8c0fe6dc8e5c3f1b90a62e96217844ca665ba50d1dcb261ec3830ed67a1269`, asset `uploaded`.
+- **Artefato assinado no CI:** `PokeSearch-v0.02.46-54450-Signed-Verified` ID `13400237707`, ZIP **26.177.348 bytes**, SHA-256 do ZIP `4dea7a1c2be0cd1af2eb4b097b37e6c746587f8349098a5bd84a768fb45d2e7a` (não confundir com hash do APK).
+- **Entrega ao atualizador:** GitHub `releases/latest` expõe a LT246, permitindo a detecção e o download pelo aplicativo compatível. O Android precisa confirmar a instalação. **Não há comprovação de instalação remota no Samsung nem teste físico P1/P2/P/M/G.** O print antigo com GL · IV #1 sem RG continua indício de versão/asset anterior, não prova da LT246 instalada.
+
+Esta seção comprova a publicação e substitui o status "em desenvolvimento" deste relatório. Os direitos dos sprites do Pokémon GO continuam com seus titulares.
