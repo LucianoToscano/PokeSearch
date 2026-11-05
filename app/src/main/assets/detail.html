@@ -2028,7 +2028,7 @@ window.showEvolutionDetails=payload=>{
    (x.mega?'<img class="psTopMegaIcon" src="mega_evolution_icon.svg" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  // RG, IV Class and projected Mega are three distinct metrics.
- const familyLeague=["gl","ul","ml"].includes(activeRankLeague)?activeRankLeague:"gl";
+ const familyLeague=["gl","ul","ml"].includes(typeof activeRankLeague==="undefined"?"":activeRankLeague)?activeRankLeague:"gl";
  const family=window.PokeSearchLT253?.family?.(payload,familyLeague);
  const familyRow=(caption,item,type)=>item?
   '<div class="ps253Line"><b>'+h(caption)+':</b> '+h(item.name)+
