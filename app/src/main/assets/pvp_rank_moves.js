@@ -42,6 +42,8 @@
    }finally{if(handle)clearTimeout(handle);}
   })();
   cache.set(path,work);
+  // LT246: a failed network request must not poison every future tap.
+  work.catch(()=>{if(cache.get(path)===work)cache.delete(path);});
   return work;
  }
  function fromData(rankings,master,league,name){
@@ -66,6 +68,31 @@
    fast:moves[0],charged:moves.slice(1)};
  }
 
+ // LT246: when a Pokémon isn't simulated in PvPoke's overall ranking,
+ // show documented learnable moves, NOT fabricated "recommended" attacks.
+ function fromAvailable(master,league,name){
+  if(!master||!Array.isArray(master.pokemon))return null;
+  const id=speciesId(name);
+  const pokemon=master.pokemon.find(x=>x?.speciesId===id);
+  if(!pokemon)return null;
+  const fastIds=Array.isArray(pokemon.fastMoves)?pokemon.fastMoves.slice(0,12):[];
+  const chargedIds=Array.isArray(pokemon.chargedMoves)?pokemon.chargedMoves.slice(0,20):[];
+  if(!fastIds.length&&!chargedIds.length)return null;
+  const names=new Map((Array.isArray(master.moves)?master.moves:[])
+   .filter(m=>m&&typeof m.moveId==="string"&&typeof m.name==="string")
+   .map(m=>[m.moveId,m.name]));
+  const elite=new Set(Array.isArray(pokemon.eliteMoves)?pokemon.eliteMoves:[]);
+  const legacy=new Set(Array.isArray(pokemon.legacyMoves)?pokemon.legacyMoves:[]);
+  const make=moveId=>({
+   id:moveId,name:names.get(moveId)||displayId(moveId),
+   status:elite.has(moveId)?"elite":legacy.has(moveId)?"legacy":"normal"
+  });
+  return {source,commit,league,species:pokemon.speciesName||name,
+   availableOnly:true,recommended:false,
+   fastMoves:fastIds.filter(x=>typeof x==="string").map(make),
+   chargedMoves:chargedIds.filter(x=>typeof x==="string").map(make)};
+ }
+
  // Match the SAME canonical move + category. PokeGO uses a `_FAST` suffix
  // for quick moves whereas PvPoke recommendation IDs omit that suffix.
  // Never derive types or PT-BR names from English guesses.
@@ -88,6 +115,13 @@
    return {...move,name:verified?translated.trim():"—",
      type:verified?typeIds[match.type]:"unknown",localeVerified:verified};
   }
+  if(data.availableOnly===true){
+   return {...data,
+    fastMoves:(data.fastMoves||[]).map(m=>localized(m,true))
+     .filter(m=>m?.localeVerified===true),
+    chargedMoves:(data.chargedMoves||[]).map(m=>localized(m,false))
+     .filter(m=>m?.localeVerified===true)};
+  }
   return {...data,fast:localized(data.fast,true),
     charged:data.charged.map(m=>localized(m,false))};
  }
@@ -96,11 +130,15 @@
   const cap=caps[league];if(!cap||!name)return null;
   try{
    const [ranking,master,moveData,translations]=await Promise.all([
-    getJson("rankings/all/overall/rankings-"+cap+".json"),getJson("gamemaster.json"),
+    getJson("rankings/all/overall/rankings-"+cap+".json").catch(()=>null),
+    getJson("gamemaster.json"),
     getJson(localeBase+"moves.json"),
     getJson(localeBase+"translations/pt-br/moves.json")]);
    const recommended=fromData(ranking,master,league,name);
-   return localizedMoves(recommended,moveData,translations);
+   // Fallback is a catalogue of learnable attacks; never label it as
+   // competitive PvP advice when the species is missing from ranking.
+   const data=recommended||fromAvailable(master,league,name);
+   return localizedMoves(data,moveData,translations);
   }catch(_){return null;}
  }
 
@@ -131,5 +169,5 @@
   }catch(_){return null;}
  }
 
- return Object.freeze({lookup,fromData,localizedMoves,speciesId,source,commit,categoryRows,rankingCategories});
+ return Object.freeze({lookup,fromData,fromAvailable,localizedMoves,speciesId,source,commit,categoryRows,rankingCategories});
 });
