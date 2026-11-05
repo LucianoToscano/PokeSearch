@@ -59,13 +59,17 @@ assert.equal(badge.textContent,"GL · IV #5 · ↳ Noivern");
 assert.ok(badge.title.includes("não confirma"));
 badge.hidden=true;
 const notInLimit=build(noibat,"gl",4);
-assert.equal(display()(notInLimit),false);
-assert.ok(badge.textContent.includes("Top #4")&&badge.textContent.includes("Noibat #1600"),
- "never label #1600 as a Top #4 match");
+assert.equal(display()(notInLimit),true);
+assert.ok(badge.textContent.includes("IV #5")&&!badge.textContent.includes("Top #4"),
+ "do not turn requested Top #4 into a false IV rank; show true Noivern IV #5");
+assert.ok(badge.title.includes("NENHUM IV Top #4 confirmado"),
+ "strict filter still warned as unverified");
 badge.hidden=true;
 const noPrev=build(noibat,"gl",5,false);
-assert.equal(display()(noPrev),false,"when includePreviousEvolutions OFF, do not use Noivern rank");
-assert.ok(badge.textContent.includes("Top #5"));
+assert.equal(display()(noPrev),true,"when includePreviousEvolutions OFF show only actual Noibat rank");
+assert.ok(badge.textContent.includes("IV #1600")&&badge.textContent.includes("Atual"),
+ "without evolutions the real Noibat IV #1600 remains visible");
+assert.ok(badge.title.includes("NENHUM IV Top #5 confirmado"));
 badge.hidden=true;
 assert.equal(display()({...ordinary,searchLeague:"ul",searchRankLimit:5}),true,
  "without a matching GL search context show a verified local best instead of inventing a GL threshold");
