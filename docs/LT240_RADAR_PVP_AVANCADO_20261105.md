@@ -35,3 +35,14 @@ Em desenvolvimento; documentar aqui hashes, IDs de jobs, merge, tag, assets e SH
 - **Artefato de CI:** `PokeSearch-v0.02.40-54444-Signed-Verified` ID `13390844650`, 25.962.404 bytes, SHA-256 do ZIP `280f1d3cc38e6c9d51df5b96d6e100041b83fe4ad6df1a4b1a87dd4253cf2e02` (não confundir com digest do APK).
 - **Distribuição:** APK disponível via GitHub Releases/latest para o atualizador interno LT237+; o Android exige confirmação para instalar. **Ainda sem comprovante de instalação e testes interativos físicos P1/P2 no Samsung.**
 - **Limite funcional:** atualizam-se sob demanda rankings por função e golpes do snapshot fixado em 03/11/2026; o Game Master e Rank Geral **offline permanecem de 19/10/2026**. É falso afirmar atualização integral automática desses arquivos.
+
+## Publicação oficial verificada — 05/11/2026
+
+- **Implementação mesclada:** PR #215 (https://github.com/LucianoToscano/PokeSearch/pull/215), merge `14c790e840120dec7f05c53b32aa70e54c59eb55`.
+- **Pedido oficial:** commit `04cc3eff94cd9947be10d4e675a85876ee055d41`, versão 0.02.40, code 54444, label 51244, tag anterior v0.02.39-54443.
+- **GitHub Actions protegido:** https://github.com/LucianoToscano/PokeSearch/actions/runs/41975318002, status `completed/success`, jobs `preflight` e `publish` em sucesso. `SDK and exact permanent signer`, `Build signed protected release`, `Validate APK and signer`, `Release to all app users`, `Verify public release and hash` e remoção de material privado todos `success`.
+- **Release estável:** https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.40-54444, publicada em 2026-11-05T05:41:36Z, `draft=false`, `prerelease=false`, confirmação em `releases/latest`.
+- **APK:** https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.40-54444/PokeSearch-v0.02.40-LT.apk, 28.140.411 bytes, digest SHA-256 `2eade56796c20a7323c3bd61439172d7a64d3e9e370b7373f3ec66e612dc96b2` (asset `uploaded`).
+- **Artefato de QA:** `PokeSearch-v0.02.40-54444-Signed-Verified` ID 13390844650, 25.962.404 bytes, ZIP SHA-256 `280f1d3cc38e6c9d51df5b96d6e100041b83fe4ad6df1a4b1a87dd4253cf2e02`.
+- **Escopo efetivo:** novas buscas no explorador, comparação Normal/Mega/evoluções, destaque Top PvP, rankings por função, golpes e confrontos verificados sob demanda, otimizações de interface. **Snapshot offline de 19/10 não foi substituído por completo**. O código on-demand PvPoke está fixado na revisão 03/11.
+- **Instalação:** disponível ao atualizador interno por `releases/latest`; confirmação Android obrigatória. Teste físico Samsung, P1/P2, alertas e rolagem ainda não comprovados.
