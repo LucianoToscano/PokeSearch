@@ -146,7 +146,7 @@ public final class GitHubUpdateCenter {
                     if(autoDownloadEnabled(context)&&onUnmeteredNetwork(context)
                         &&DOWNLOADING.compareAndSet(false,true)){
                         try{
-                            downloadVerified(context,r,new AtomicBoolean(false),(p,m,f)->{});
+                            downloadVerified(context,r,new AtomicBoolean(false),(p,m,f)->{},true);
                             ready=true;
                         }catch(Exception ignored){}finally{DOWNLOADING.set(false);}
                     }
@@ -298,8 +298,8 @@ public final class GitHubUpdateCenter {
             return release.sha256.equals(hex(sha.digest()))&&validPackage(context,file,release);
         }catch(Exception ignored){return false;}
     }
-    private static File downloadVerified(Context context,Release release,AtomicBoolean cancel,Progress cb)
-        throws Exception {
+    private static File downloadVerified(Context context,Release release,AtomicBoolean cancel,Progress cb,
+        boolean wifiOnly) throws Exception {
         File folder=new File(context.getCacheDir(),"updates");
         if(!folder.exists()&&!folder.mkdirs())throw new IllegalStateException("Storage unavailable");
         File file=new File(folder,"pokesearch-"+release.versionCode+".apk");
@@ -307,16 +307,19 @@ public final class GitHubUpdateCenter {
         try{
             if(cancel.get())throw new InterruptedException("Cancelled");
             if(verifiedCached(context,file,release)){
+                pruneOldUpdates(folder,file);
                 cb.report(100,"Arquivo verificado",file);return file;
             }
             if(file.exists())file.delete();
+            if(wifiOnly&&!onUnmeteredNetwork(context))throw new InterruptedException("Unmetered network lost");
             MessageDigest digest=MessageDigest.getInstance("SHA-256");
             HttpsURLConnection http=open(release.url,true);
             long total=0,lastUpdate=0;
             try(InputStream in=http.getInputStream();FileOutputStream out=new FileOutputStream(tmp)){
                 byte[] buffer=new byte[8192];int n;
                 while((n=in.read(buffer))!=-1){
-                    if(cancel.get())throw new InterruptedException("Cancelled");
+                    if(cancel.get()||(wifiOnly&&!onUnmeteredNetwork(context)))
+                        throw new InterruptedException("Cancelled or Wi-Fi disconnected");
                     total+=n;
                     if(total>MAX_APK||total>release.size)throw new SecurityException("Invalid APK size");
                     out.write(buffer,0,n);digest.update(buffer,0,n);
@@ -334,9 +337,18 @@ public final class GitHubUpdateCenter {
                 ||!validPackage(context,tmp,release))
                 throw new SecurityException("APK failed integrity verification");
             if(!tmp.renameTo(file))throw new IllegalStateException("Could not finalize download");
+            pruneOldUpdates(folder,file);
             cb.report(100,"APK verificado",file);
             return file;
         }finally{if(tmp.exists())tmp.delete();}
+    }
+    private static void pruneOldUpdates(File folder,File keep){
+        File[] candidates=folder.listFiles();
+        if(candidates==null)return;
+        for(File old:candidates){
+            if(old.isFile()&&!old.equals(keep)&&old.getName().matches("pokesearch-[0-9]+\\.apk"))
+                old.delete();
+        }
     }
     private static void prefetchOrNotify(Context context,Release release){
         if(!autoDownloadEnabled(context)||!onUnmeteredNetwork(context)){
@@ -346,7 +358,7 @@ public final class GitHubUpdateCenter {
         DOWNLOAD_IO.execute(()->{
             boolean ready=false;
             try{
-                downloadVerified(context,release,new AtomicBoolean(false),(p,m,f)->{});
+                downloadVerified(context,release,new AtomicBoolean(false),(p,m,f)->{},true);
                 ready=true;
             }catch(Exception ignored){}finally{DOWNLOADING.set(false);}
             notifyIfNew(context,release,ready);
@@ -360,7 +372,7 @@ public final class GitHubUpdateCenter {
         DOWNLOAD_IO.execute(()->{
             try{
                 downloadVerified(context,release,cancel,
-                    (p,m,f)->MAIN.post(()->cb.report(p,m,f)));
+                    (p,m,f)->MAIN.post(()->cb.report(p,m,f)),false);
             }catch(InterruptedException e){
                 MAIN.post(()->cb.report(-1,"Download cancelado",null));
             }catch(Exception e){
