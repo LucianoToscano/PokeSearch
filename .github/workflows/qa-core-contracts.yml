@@ -38,7 +38,7 @@ jobs:
             DiagnosticSanitizer EncounterAlertText
             LocalBridgePagePolicy PresenceWindowState
             PopupTouchGeometry ResultsSpacingPolicy OverlayPlacementPolicy
-            SupportMissionPolicy UpdatePolicy VerifiedIvMath VerifiedEncounterCoordinates
+            SupportMissionPolicy UpdatePolicy VerifiedIvMath VerifiedEncounterCoordinates PvpAlertPriority
             VersionNames ProviderWaitFormatter
           )
           inputs=()
