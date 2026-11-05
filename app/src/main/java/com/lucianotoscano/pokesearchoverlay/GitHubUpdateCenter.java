@@ -14,6 +14,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.net.Uri;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -34,6 +36,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -66,6 +69,7 @@ public final class GitHubUpdateCenter {
     private static final long MIN_INTERVAL_MS=5*60*1000L;
     private static final AtomicBoolean DOWNLOADING=new AtomicBoolean(false);
     private static final ExecutorService IO=Executors.newSingleThreadExecutor();
+    private static final ExecutorService DOWNLOAD_IO=Executors.newSingleThreadExecutor();
     private static final Handler MAIN=new Handler(Looper.getMainLooper());
     private static volatile long lastCheck=0L;
     private static volatile Release cached=null;
@@ -100,6 +104,27 @@ public final class GitHubUpdateCenter {
     public static void setAlerts(Context c,boolean enabled) {
         c.getSharedPreferences(PREFS,0).edit().putBoolean("githubUpdateAlertsEnabled",enabled).apply();
     }
+    // Enabled by default. APKs are prefetched over unmetered networks only.
+    // The Android package installer always requires explicit user confirmation.
+    public static boolean autoDownloadEnabled(Context c) {
+        return c.getSharedPreferences(PREFS,0).getBoolean("githubAutoDownloadWifi",true);
+    }
+    public static void setAutoDownload(Context c,boolean enabled) {
+        c.getSharedPreferences(PREFS,0).edit().putBoolean("githubAutoDownloadWifi",enabled).apply();
+    }
+    private static boolean onUnmeteredNetwork(Context c) {
+        try {
+            ConnectivityManager manager=(ConnectivityManager)c.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if(manager==null)return false;
+            NetworkCapabilities caps=manager.getNetworkCapabilities(manager.getActiveNetwork());
+            return caps!=null&&caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                &&caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED);
+        }catch(RuntimeException ignored){return false;}
+    }
+    public static boolean hasReadyApk(Context c,Release r) {
+        return r!=null&&new File(new File(c.getCacheDir(),"updates"),
+            "pokesearch-"+r.versionCode+".apk").length()==r.size;
+    }
     public static void schedule(Context c) {
         try {
             Constraints constraints=new Constraints.Builder()
@@ -116,7 +141,17 @@ public final class GitHubUpdateCenter {
             try {
                 Context context=getApplicationContext();
                 Release r=checkRemote();
-                if(eligible(context,r))notifyIfNew(context,r);
+                if(eligible(context,r)){
+                    boolean ready=false;
+                    if(autoDownloadEnabled(context)&&onUnmeteredNetwork(context)
+                        &&DOWNLOADING.compareAndSet(false,true)){
+                        try{
+                            downloadVerified(context,r,new AtomicBoolean(false),(p,m,f)->{},true);
+                            ready=true;
+                        }catch(Exception ignored){}finally{DOWNLOADING.set(false);}
+                    }
+                    notifyIfNew(context,r,ready);
+                }
                 return Result.success();
             }catch(Exception ignored){return Result.retry();}
         }
@@ -136,7 +171,14 @@ public final class GitHubUpdateCenter {
         lastCheck=now;
         IO.execute(()->{
             Release r=checkRemote();cached=r;
-            if(r!=null&&eligible(activity,r))notifyIfNew(activity.getApplicationContext(),r);
+            if(r!=null&&eligible(activity,r)){
+                java.lang.ref.WeakReference<MainActivity> ref=new java.lang.ref.WeakReference<>(activity);
+                prefetchOrNotify(activity.getApplicationContext(),r,()->{
+                    MainActivity live=ref.get();
+                    if(live!=null&&!live.isFinishing()&&!live.isDestroyed())
+                        live.onGithubUpdateLoaded(r);
+                });
+            }
             MAIN.post(()->{if(!activity.isFinishing()&&!activity.isDestroyed())
                 activity.onGithubUpdateLoaded(r);});
         });
@@ -224,19 +266,20 @@ public final class GitHubUpdateCenter {
             return parse(readMetadata(open(API,false)));
         }catch(Exception ignored){return null;}
     }
-    private static void notifyIfNew(Context c,Release r){
+    private static void notifyIfNew(Context c,Release r,boolean ready){
         if(!alertsEnabled(c)||!eligible(c,r))return;
         if(Build.VERSION.SDK_INT>=33&&c.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=
             PackageManager.PERMISSION_GRANTED)return;
         android.content.SharedPreferences prefs=c.getSharedPreferences(PREFS,0);
-        if(prefs.getInt("githubUpdateLastNotified",-1)==r.versionCode)return;
+        String key=ready?"githubUpdateLastReadyNotified":"githubUpdateLastNotified";
+        if(prefs.getInt(key,-1)==r.versionCode)return;
         try{
             NotificationManager manager=(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
             if(manager==null)return;
             if(Build.VERSION.SDK_INT>=26){
-                NotificationChannel ch=new NotificationChannel(CHANNEL,"PokeSearch — Atualizações",
+                NotificationChannel channel=new NotificationChannel(CHANNEL,"PokeSearch — Atualizações",
                     NotificationManager.IMPORTANCE_DEFAULT);
-                manager.createNotificationChannel(ch);
+                manager.createNotificationChannel(channel);
             }
             Intent launch=new Intent(c,MainActivity.class);
             launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -244,60 +287,105 @@ public final class GitHubUpdateCenter {
                 PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
             android.app.Notification note=new android.app.Notification.Builder(c,CHANNEL)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setContentTitle("PokeSearch — nova versão disponível")
-                .setContentText("Versão "+r.versionName+" pronta para baixar")
+                .setContentTitle(ready?"PokeSearch — pronta para instalar":"PokeSearch — nova versão disponível")
+                .setContentText(ready?"Versão "+r.versionName+" verificada. Confirme no Android.":
+                    "Versão "+r.versionName+" disponível para baixar")
                 .setAutoCancel(true).setContentIntent(pending).build();
             manager.notify(10031,note);
-            prefs.edit().putInt("githubUpdateLastNotified",r.versionCode).apply();
+            prefs.edit().putInt(key,r.versionCode).apply();
         }catch(RuntimeException ignored){}
     }
     private interface Progress {void report(int value,String detail,File verified);}
-    private static void download(Context context,Release release,AtomicBoolean cancel,Progress cb){
-        if(!DOWNLOADING.compareAndSet(false,true)){MAIN.post(()->cb.report(-1,"Download já iniciado",null));return;}
-        IO.execute(()->{
-            File file=null,tmp=null;
-            try{
-                File folder=new File(context.getCacheDir(),"updates");
-                if(!folder.exists()&&!folder.mkdirs())throw new IllegalStateException("Storage unavailable");
-                file=new File(folder,"pokesearch-"+release.versionCode+".apk");
-                tmp=new File(folder,"pokesearch-"+release.versionCode+".partial");
-                // Revalidate even if a file was cached by a former run.
-                if(file.exists()&&validPackage(context,file,release)){
-                    File done=file;MAIN.post(()->cb.report(100,"Arquivo verificado",done));return;
-                }
-                if(file.exists())file.delete();
-                MessageDigest digest=MessageDigest.getInstance("SHA-256");
-                HttpsURLConnection http=open(release.url,true);
-                long total=0;long lastUpdate=0;
-                try(InputStream in=http.getInputStream();FileOutputStream out=new FileOutputStream(tmp)){
-                    byte[] buffer=new byte[8192];int n;
-                    while((n=in.read(buffer))!=-1){
-                        if(cancel.get())throw new InterruptedException("Cancelled");
-                        total+=n;if(total>MAX_APK||total>release.size)throw new SecurityException("Invalid APK size");
-                        out.write(buffer,0,n);digest.update(buffer,0,n);
-                        long now=android.os.SystemClock.elapsedRealtime();
-                        if(now-lastUpdate>250){
-                            lastUpdate=now;int percentage=(int)Math.min(99,total*100/release.size);
-                            MAIN.post(()->cb.report(percentage,"Baixando atualização",null));
-                        }
+    private static boolean verifiedCached(Context context,File file,Release release){
+        if(!file.isFile()||file.length()!=release.size)return false;
+        try(InputStream in=new FileInputStream(file)){
+            MessageDigest sha=MessageDigest.getInstance("SHA-256");
+            byte[] buffer=new byte[8192];int n;
+            while((n=in.read(buffer))!=-1)sha.update(buffer,0,n);
+            return release.sha256.equals(hex(sha.digest()))&&validPackage(context,file,release);
+        }catch(Exception ignored){return false;}
+    }
+    private static File downloadVerified(Context context,Release release,AtomicBoolean cancel,Progress cb,
+        boolean wifiOnly) throws Exception {
+        File folder=new File(context.getCacheDir(),"updates");
+        if(!folder.exists()&&!folder.mkdirs())throw new IllegalStateException("Storage unavailable");
+        File file=new File(folder,"pokesearch-"+release.versionCode+".apk");
+        File tmp=new File(folder,"pokesearch-"+release.versionCode+".partial");
+        try{
+            if(cancel.get())throw new InterruptedException("Cancelled");
+            if(verifiedCached(context,file,release)){
+                pruneOldUpdates(folder,file);
+                cb.report(100,"Arquivo verificado",file);return file;
+            }
+            if(file.exists())file.delete();
+            if(wifiOnly&&!onUnmeteredNetwork(context))throw new InterruptedException("Unmetered network lost");
+            MessageDigest digest=MessageDigest.getInstance("SHA-256");
+            HttpsURLConnection http=open(release.url,true);
+            long total=0,lastUpdate=0;
+            try(InputStream in=http.getInputStream();FileOutputStream out=new FileOutputStream(tmp)){
+                byte[] buffer=new byte[8192];int n;
+                while((n=in.read(buffer))!=-1){
+                    if(cancel.get()||(wifiOnly&&!onUnmeteredNetwork(context)))
+                        throw new InterruptedException("Cancelled or Wi-Fi disconnected");
+                    total+=n;
+                    if(total>MAX_APK||total>release.size)throw new SecurityException("Invalid APK size");
+                    out.write(buffer,0,n);digest.update(buffer,0,n);
+                    long now=android.os.SystemClock.elapsedRealtime();
+                    if(now-lastUpdate>250){
+                        lastUpdate=now;
+                        int percentage=(int)Math.min(99,total*100/release.size);
+                        cb.report(percentage,"Baixando atualização",null);
                     }
-                    out.getFD().sync();
-                }finally{http.disconnect();}
-                if(cancel.get())throw new InterruptedException("Cancelled");
-                String actual=hex(digest.digest());
-                if(total!=release.size||!actual.equals(release.sha256)||
-                    !validPackage(context,tmp,release))throw new SecurityException("APK failed integrity verification");
-                if(!tmp.renameTo(file))throw new IllegalStateException("Could not finalize download");
-                File done=file;
-                MAIN.post(()->cb.report(100,"APK verificado",done));
+                }
+                out.getFD().sync();
+            }finally{http.disconnect();}
+            if(cancel.get())throw new InterruptedException("Cancelled");
+            if(total!=release.size||!hex(digest.digest()).equals(release.sha256)
+                ||!validPackage(context,tmp,release))
+                throw new SecurityException("APK failed integrity verification");
+            if(!tmp.renameTo(file))throw new IllegalStateException("Could not finalize download");
+            pruneOldUpdates(folder,file);
+            cb.report(100,"APK verificado",file);
+            return file;
+        }finally{if(tmp.exists())tmp.delete();}
+    }
+    private static void pruneOldUpdates(File folder,File keep){
+        File[] candidates=folder.listFiles();
+        if(candidates==null)return;
+        for(File old:candidates){
+            if(old.isFile()&&!old.equals(keep)&&old.getName().matches("pokesearch-[0-9]+\\.apk"))
+                old.delete();
+        }
+    }
+    private static void prefetchOrNotify(Context context,Release release,Runnable onReady){
+        if(!autoDownloadEnabled(context)||!onUnmeteredNetwork(context)){
+            notifyIfNew(context,release,false);return;
+        }
+        if(!DOWNLOADING.compareAndSet(false,true))return;
+        DOWNLOAD_IO.execute(()->{
+            boolean ready=false;
+            try{
+                downloadVerified(context,release,new AtomicBoolean(false),(p,m,f)->{},true);
+                ready=true;
+            }catch(Exception ignored){}finally{DOWNLOADING.set(false);}
+            notifyIfNew(context,release,ready);
+            if(ready&&onReady!=null)MAIN.post(onReady);
+        });
+    }
+    private static void download(Context context,Release release,AtomicBoolean cancel,Progress cb){
+        if(!DOWNLOADING.compareAndSet(false,true)){
+            MAIN.post(()->cb.report(-1,"Download automático em andamento. Abra novamente em instantes.",null));
+            return;
+        }
+        DOWNLOAD_IO.execute(()->{
+            try{
+                downloadVerified(context,release,cancel,
+                    (p,m,f)->MAIN.post(()->cb.report(p,m,f)),false);
             }catch(InterruptedException e){
                 MAIN.post(()->cb.report(-1,"Download cancelado",null));
             }catch(Exception e){
                 MAIN.post(()->cb.report(-1,"Não foi possível validar o APK",null));
-            }finally{
-                if(tmp!=null&&tmp.exists())tmp.delete();
-                DOWNLOADING.set(false);
-            }
+            }finally{DOWNLOADING.set(false);}
         });
     }
     private static String hex(byte[] raw) {
@@ -416,6 +504,7 @@ public final class GitHubUpdateCenter {
     public static void showDialog(MainActivity activity,Release release){
         if(!eligible(activity,release))return;
         final AtomicBoolean cancelled=new AtomicBoolean(false);
+        final boolean cachedReady=hasReadyApk(activity,release);
         final LinearLayout layout=new LinearLayout(activity);layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(32,16,32,8);
         final TextView info=new TextView(activity);
@@ -436,7 +525,7 @@ public final class GitHubUpdateCenter {
             .setTitle("PokeSearch — atualização")
             .setView(layout).setNegativeButton("Depois",(d,w)->later(activity,release.versionCode))
             .setNeutralButton("Ignorar versão",(d,w)->ignore(activity,release.versionCode))
-            .setPositiveButton("Baixar atualização",null).create();
+            .setPositiveButton(cachedReady?"Instalar atualização":"Baixar atualização",null).create();
         dialog.setOnDismissListener(d->cancelled.set(true));
         dialog.setOnShowListener(v->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(click->{
             android.widget.Button button=dialog.getButton(AlertDialog.BUTTON_POSITIVE);
@@ -446,6 +535,11 @@ public final class GitHubUpdateCenter {
                 info.setText(msg+(percent>=0?" — "+percent+"%":""));
                 if(percent>=0)bar.setProgress(percent);
                 if(apk!=null){
+                    if(cachedReady){
+                        dialog.dismiss();
+                        install(activity,apk,release);
+                        return;
+                    }
                     button.setText("Instalar atualização");button.setEnabled(true);
                     browserFallback.setVisibility(android.view.View.VISIBLE);
                     button.setOnClickListener(v2->install(activity,apk,release));
