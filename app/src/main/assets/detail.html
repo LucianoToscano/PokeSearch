@@ -1624,7 +1624,7 @@ function renderRankOneMoves(){
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";
  const prior=psVerifiedMoveIcons.get(statusKey);
- btn.textContent=prior?.icon||"🗡";
+ btn.textContent=prior?.icon||"⚡";
  btn.title=prior?.title||
   "Consultar golpes; ícone neutro até verificar legado e recomendação";
  btn.setAttribute("aria-label",btn.title);
@@ -1670,7 +1670,8 @@ function renderRankOneMoves(){
    const metrics=[valid(stats.power,500)?"Poder "+stats.power:"",
     valid(stats.energyGain,100)?"Energia +"+stats.energyGain:"",
     valid(stats.energyCost,200)?"Custo "+stats.energyCost:""].filter(Boolean);
-   return '<div class="psMoveRow"><span class="psMoveLabel">'+h(label)+':</span>'+
+   return '<div class="psMoveRow"><span class="psMoveLabel" title="'+
+     h(/^C[12]$/.test(label)?"Carregado "+label.slice(1):label)+'">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
      (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+
      (metrics.length?'<span class="psMoveStats">'+h(metrics.join(" · "))+'</span>':"")+'</div>';
@@ -1702,27 +1703,25 @@ function renderRankOneMoves(){
   }
   const fastRow=row("Ágil",recommendation.fast);
   const chargedRows=(recommendation.charged||[]).slice(0,2)
-    .map((m,i)=>row("Carregado "+(i+1),m)).join("");
+    .map((m,i)=>row("C"+(i+1),m)).join("");
   // Status should describe the verified recommended set, not captured moves.
   const verified=[recommendation.fast,...(recommendation.charged||[])].filter(Boolean);
   const complete=verified.length>=2&&verified.every(m=>
    m.status==="normal"||m.status==="elite"||m.status==="legacy");
   if(complete){
-   btn.textContent=hasLegacy?"⚔️":"🗡";
+   btn.textContent=hasLegacy?"⚔️":"⚡";
    btn.title=hasLegacy?"⚔️ Conjunto recomendado exige pelo menos um golpe legado":
-    "🗡 Conjunto PvP recomendado sem golpe legado";
+    "⚡ Consultar conjunto PvP confirmado sem golpe legado";
    btn.setAttribute?.("aria-label",btn.title);
    psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
   }
   popover.innerHTML='<div class="psMoveTitle">'+
    (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
    '</div>'+fastRow+chargedRows+
-   (String(currentCardMoves||"").trim()?'<div class="psMoveLegend">Capturados: '+
-    h(currentCardMoves)+'</div>':"")+
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
-    ' · recomendação não é ataque capturado</div>'+
-   (hasLegacy?'<div class="psMoveLegend">⚔️ Pelo menos um golpe legado / Elite</div>':
-    complete?'<div class="psMoveLegend">🗡 Conjunto sem golpes legados</div>':
+    ' · recomendados ≠ capturados</div>'+
+   (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado/Elite confirmado</div>':
+    complete?'<div class="psMoveLegend">⚡ Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">Status de legado não verificado</div>');
   resizeEvolutionPanel();
  };
@@ -2311,18 +2310,21 @@ function updatePvpCpSimulator(){
  if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
  const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
  const compared=psCpAt(row,compare,psCpTargetLevel);
- root.innerHTML='<div class="psCpSimResultRow"><span>IV atual A '+h(iv.join("/"))+
+ const delta=compared?compared.cp-current.cp:0;
+ const signed=delta>0?"+"+delta:String(delta);
+ root.innerHTML='<div class="psCpSimResultRow"><span>IV A '+h(iv.join("/"))+
   '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
   (compared?'<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
-   '</span><strong>PC '+compared.cp+' · PS '+compared.hp+
-   ' · ΔPC '+(current.cp-compared.cp)+'</strong></div>':'')+
-  '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>⚪ Até 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>'+
+   '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
+   '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div>':'')+
+  '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🔵 GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>🟡 UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
-  '</span><strong>'+label(target)+'</strong></div>';
+  '</span><strong>'+label(target)+'</strong></div>'+
+  '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+
+  '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div></details>';
  return true;
 }
 function renderDetailMetric(){
