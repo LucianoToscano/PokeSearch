@@ -64,7 +64,7 @@ line.children[0].onclick({});
 line.children[2].onclick({});
 assert.deepEqual(actions,[{kind:"class",name:"Lampent",rank:1,league:"gl"},
  {kind:"overall",name:"Lampent",rank:519,league:"gl"}]);
-assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
+assert.equal(line.children.find(x=>x.className==="psRankMore"),undefined,"compact summary holds exactly three chips and sword");
 assert.equal(line.children[0].title.includes("4.096"),true);
 assert.ok(!line.children.some(x=>x.textContent==="RG #808"),
  "other species belongs in the +N explorer");
