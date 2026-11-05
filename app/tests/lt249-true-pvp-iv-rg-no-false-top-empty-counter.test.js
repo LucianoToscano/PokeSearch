@@ -42,33 +42,33 @@ const payload={
 };
 assert.equal(fn(payload),true);
 const view=rank.children.map(x=>x.textContent);
-assert.deepEqual(view,["GL","IV #2","↳ Machoke","RG #500"],
+assert.deepEqual(view,["🔵 GL IV #2","↳ Machoke","RG #500"],
  "Top 1 filter is not evidence of a Top 1 IV: show verified nearest rank");
 assert.equal(rank.dataset.topVerified,"false");
 assert.ok(rank.title.includes("NENHUM IV Top #1 confirmado"));
 assert.ok(!rank.textContent.includes("Top #1"),"never display a false #1");
 assert.ok(!rank.textContent.includes("Machop #611"),"don't mix source filter with own class");
-rank.children[1].onclick({});
-rank.children[3].onclick({});
+rank.children[0].onclick({});
+rank.children[2].onclick({});
 assert.deepEqual(events.map(e=>[e.psKind,e.psName,e.psRank]),[
  ["class","Machoke","2"],["overall","Machoke","500"]]);
 const local={...payload,searchRankLimit:2};
 assert.equal(fn(local),true);
 assert.equal(rank.dataset.topVerified,"true");
-assert.equal(rank.children[1].textContent,"IV #2");
+assert.equal(rank.children[0].textContent,"🔵 GL IV #2");
 const normal={...payload,searchRankLimit:1,leagues:[
  {...payload.leagues[0],evolutions:[
   {...payload.leagues[0].evolutions[0],rank:1},
   payload.leagues[0].evolutions[1]]},payload.leagues[1],payload.leagues[2]
 ]};
 assert.equal(fn(normal),true);
-assert.equal(rank.children[1].textContent,"IV #1");
+assert.equal(rank.children[0].textContent,"🔵 GL IV #1");
 assert.equal(rank.dataset.topVerified,"true");
 const none={...payload,includePreviousEvolutions:false};
 assert.equal(fn(none),true);
-assert.equal(rank.children[1].textContent,"IV #611");
-assert.equal(rank.children[2].textContent,"Atual");
-assert.equal(rank.children[3].textContent,"RG #513");
+assert.equal(rank.children[0].textContent,"🔵 GL IV #611");
+assert.equal(rank.children[1].textContent,"Atual");
+assert.equal(rank.children[2].textContent,"RG #513");
 assert.ok(rank.title.includes("NENHUM IV Top #1 confirmado"));
 assert.ok(dock.includes('empty.style.display=cards.length||resultWindow?"none":"block"'),
  "independent results windows have no detached empty row");
