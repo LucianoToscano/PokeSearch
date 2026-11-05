@@ -77,7 +77,7 @@ assert.deepEqual(events.slice(2),[
 ]);
 assert.equal(moduleObj.toggle({preventDefault(){},stopPropagation(){}},mockMore,[ch],"gl"),true);
 assert.equal(panel.hidden,true);
-assert.equal(mockMore.attrs["aria-expanded"],"false");
+assert.equal(panel.hidden,true,"alternate panel closes without reintroducing a fifth control");
 assert.ok(resize>0);
 const quality=gl([{...ch,rank:380,overallRank:1},la]);
 assert.equal(moduleObj.update(quality),true);
