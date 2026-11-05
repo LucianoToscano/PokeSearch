@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.52",
-  "code": 54456,
-  "label": 51256,
-  "previous_tag": "v0.02.51-54455",
-  "qa_max_code": 54455,
-  "release_notes": "LT252: corrigida a apresentação dos resultados vazios, alinhando o 0 ao eixo da Pokébola. O chip PvP agora exibe o símbolo oficial da Mega Evolução antes do nome abreviado (ex.: Sableye), sem cortar a palavra Mega, preservando o nome completo em consultas e rankings. O botão de ataques começa neutro e só indica legado/Elite quando a fonte confirmar um golpe do conjunto recomendado. A calculadora PC/Nível ganhou rolagem única pelo cartão, seletor de evoluções mais largo e valores que não são cortados. GL IV e RG podem ser fechados tocando no mesmo botão novamente; o nome da espécie abre/recolhe a Análise PvP no segundo toque. Preservados os três botões independentes, a segunda Pokébola, a API, filtros e o atualizador automático. Seis verificações CI verdes no PR #230 (Node QA, regressão Node, QA core, Java, OTA e APK beta); instalação e inspeção visual física P/M/G no Samsung ainda não comprovadas."
+  "version": "0.02.53",
+  "code": 54457,
+  "label": 51257,
+  "previous_tag": "v0.02.52-54456",
+  "qa_max_code": 54456,
+  "release_notes": "LT253: novo comparador PvP inteligente de evoluções/Normal/Mega separa Rank Classe dos IVs, Rank Geral de desempenho da espécie e Mega projetada sem alegar elegibilidade na Liga GO. Calculadora PC/Nível 2.0 permite comparar IV A/B e escolher limites de 500, 1500 ou 2500 PC sem alterar capturas. Ataques ágeis e carregados apresentam poder/energia apenas quando disponíveis na fonte offline; indicador de legado/Elite exige confirmação, com golpes capturados separados dos recomendados. Alertas respeitam limite Top #1-#50 já configurado, com validação e deduplicação existentes. Ranking calculado usa cache local até despawn da identidade exata, preservando cache de coordenadas verificadas e evitando revelações extras. Sprites recuperam a variante exata após retomar a WebView, sem novas pesquisas. Cartões adaptáveis crescem até a tela e usam reposicionamento nativo para evitar sobreposição de resultados/menus, preservando arraste e design compacto P/M/G. Ambas as Pokébolas usam os mesmos assets, com independência de contas e configurações. PR #231 integrado após sete gates verdes: Node QA, regressão Node completa, QA core Java, compilação Android Java, contrato OTA, APK beta isolado e screenshots visuais em P/M/G do HTML real. Validação visual física Samsung e instalação do APK continuam pendentes; não confundir CI com instalação real."
 }
