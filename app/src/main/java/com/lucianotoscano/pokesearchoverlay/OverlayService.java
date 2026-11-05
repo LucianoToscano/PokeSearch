@@ -1599,6 +1599,34 @@ public class OverlayService extends Service {
                     spaceAbove>spaceBelow?above:below));
             }
         }
+        // LT253: when the existing top menu/popup is visible, prefer adjacent
+        // free space. No new overlay; manually dragged card positions are sacred.
+        if(menuRoot!=null&&menuRoot.getVisibility()==View.VISIBLE&&menuParams!=null){
+            int menuLeft=menuParams.x,menuTop=menuParams.y;
+            int menuRight=menuLeft+menuParams.width,menuBottom=menuTop+menuParams.height;
+            boolean intersects=x<menuRight&&menuLeft<x+cardWidth&&
+                y<menuBottom&&menuTop<y+cardHeight;
+            if(intersects){
+                int below=menuBottom+margin,above=menuTop-cardHeight-margin;
+                if(below<=maxY)y=Math.max(minY,below);
+                else if(above>=minY)y=Math.min(maxY,above);
+                else if(menuRight+cardWidth+margin<=screen.widthPixels)
+                    x=menuRight+margin;
+                else if(menuLeft>=cardWidth+margin)x=menuLeft-cardWidth-margin;
+            }
+        }
+        if(popupRoot!=null&&popupRoot.getVisibility()==View.VISIBLE&&popupParams!=null){
+            int popLeft=popupParams.x,popTop=popupParams.y;
+            int popRight=popLeft+popupParams.width,popBottom=popTop+popupParams.height;
+            if(x<popRight&&popLeft<x+cardWidth&&y<popBottom&&popTop<y+cardHeight){
+                int below=popBottom+margin,above=popTop-cardHeight-margin;
+                if(below<=maxY)y=Math.max(minY,below);
+                else if(above>=minY)y=Math.min(maxY,above);
+                else if(popRight+cardWidth+margin<=screen.widthPixels)
+                    x=popRight+margin;
+                else if(popLeft>=cardWidth+margin)x=popLeft-cardWidth-margin;
+            }
+        }
         detailParams.x=x;detailParams.y=y;
         try{wm.updateViewLayout(detailRoot,detailParams);}
         catch(Exception e){recordFailure("reposicionar detalhes",e);}
@@ -3805,7 +3833,9 @@ public class OverlayService extends Service {
         // Show the complete compact card whenever the device has room; use
         // inner scrolling only for genuinely tall content/evolution details.
         int available=Math.max(96,screenHeightDp()-40);
-        detailHeight=Math.max(96,Math.min(Math.min(520,available),heightDp));
+        // LT253: expanded PvP/IV panels can use the available display height.
+        // Compact cards still request their natural intrinsic height.
+        detailHeight=Math.max(96,Math.min(Math.min(720,available),heightDp));
         if(detailParams!=null&&detailRoot!=null){
             detailParams.height=dp(detailHeight);moveDetail();
         }
