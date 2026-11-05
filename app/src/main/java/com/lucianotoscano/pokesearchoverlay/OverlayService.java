@@ -5653,6 +5653,13 @@ public class OverlayService extends Service {
                     JSONObject change=new JSONObject();
                     change.put("selections",selected);
                     change.put("clear",selected.length()==0);
+                    // Choosing Apply is an explicit request to activate this
+                    // Pokébola's selected-species filter, even if it was paused.
+                    // Never alter the other service's private preferences.
+                    JSONObject extra=new JSONObject(extraFiltersJson);
+                    extra.put("pokemonFilterEnabled",true);
+                    extraFiltersJson=extra.toString();
+                    overlayPrefs().edit().putString("extraFiltersJson",extraFiltersJson).apply();
                     Bridge bridge=new Bridge();
                     // Posted to the SAME Handler in order; species snapshot
                     // is committed first, then the full validated filter.
