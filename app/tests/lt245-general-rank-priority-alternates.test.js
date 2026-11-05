@@ -45,22 +45,23 @@ assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent
  "the better confirmed species RG, not array order, determines promoted evolution");
 const classButton=line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv");
 const primary=line.children.find(x=>x.className==="psCompactOverall psRankOpen");
-const more=line.children.find(x=>x.className==="psRankMore");
+const more=make("button");
+assert.equal(line.children.some(x=>x.className==="psRankMore"),false,"three data divisions only on compact strip");
 assert.equal(primary.textContent,"RG #519");
 assert.equal(classButton.textContent,"🔵 GL IV #1");
-assert.equal(more.textContent,"+1");
+assert.ok(html.includes('id="evoBody" hidden'),"alternatives available in PvP analysis");
 assert.equal(primary.dataset.psName,"Lampent");
 assert.equal(primary.dataset.psRank,"519");
 assert.equal(classButton.dataset.psKind,"class");
 assert.equal(classButton.dataset.psName,"Lampent");
-assert.equal(more.attrs["aria-expanded"],"false");
+assert.equal(more.attrs["aria-expanded"],undefined);
 assert.equal(primary.onclick({preventDefault(){},stopPropagation(){}}),true);
 assert.equal(classButton.onclick({preventDefault(){},stopPropagation(){}}),true);
 assert.deepEqual(events.slice(0,2),[
  {kind:"overall",name:"Lampent",rank:519,league:"gl"},
  {kind:"class",name:"Lampent",rank:1,league:"gl"}
 ]);
-assert.equal(more.onclick({preventDefault(){},stopPropagation(){}}),true);
+assert.equal(moduleObj.toggle({preventDefault(){},stopPropagation(){}},more,[ch],"gl"),true);
 assert.equal(panel.hidden,false);
 assert.equal(panel.children.length,1);
 assert.equal(panel.children[0].children[0].textContent,"↳ Chandelure");
@@ -73,7 +74,7 @@ assert.deepEqual(events.slice(2),[
  {kind:"overall",name:"Chandelure",rank:808,league:"gl"},
  {kind:"class",name:"Chandelure",rank:1,league:"gl"}
 ]);
-assert.equal(more.onclick({preventDefault(){},stopPropagation(){}}),true);
+assert.equal(moduleObj.toggle({preventDefault(){},stopPropagation(){}},more,[ch],"gl"),true);
 assert.equal(panel.hidden,true);
 assert.equal(more.attrs["aria-expanded"],"false");
 assert.ok(resize>0);
@@ -127,5 +128,5 @@ assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent
 assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG #163",
  "Ursaluna verified RG must appear on compact card, not only expanded analysis");
 assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv").textContent,"🔵 GL IV #1");
-assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
+assert.equal(line.children.find(x=>x.className==="psRankMore"),undefined);
 console.log("LT245: RG first among good IVs, class fallback, strict Top filter, +N comparison, P1/P2 PASS");
