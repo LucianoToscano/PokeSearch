@@ -1993,7 +1993,7 @@ window.showEvolutionDetails=payload=>{
 let metricCard=null,metricKind="";
 function closeDetailMetric(){
  metricKind="";
- document.getElementById("panel")?.classList?.remove?.("metricOpen");
+ document.querySelector?.("#panel")?.classList?.remove?.("metricOpen");
  const panel=document.getElementById("psMetricPanel");
  if(panel){panel.hidden=true;
   if(typeof panel.replaceChildren==="function")panel.replaceChildren();
@@ -2209,7 +2209,7 @@ function renderDetailMetric(){
    '<div class="psMetricEmpty">Projeções por liga indisponíveis.</div>')+
   '<div class="psMetricFoot">PC e Nv. das ligas são projeções dos mesmos IVs, não os atributos atuais nem promessa de elegibilidade PvP.</div>';
  panel.hidden=false;
-  document.getElementById("panel")?.classList?.add?.("metricOpen");
+  document.querySelector?.("#panel")?.classList?.add?.("metricOpen");
   if(typeof panel.querySelector==="function"&&panel.querySelector("#psCpSimResult"))
   updatePvpCpSimulator();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
