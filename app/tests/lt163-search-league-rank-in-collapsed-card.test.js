@@ -26,11 +26,11 @@ const totodile={
 };
 assert.equal(hook("gl")(totodile),true);
 assert.equal(rankLine.hidden,false,"show badge even while full analysis is collapsed");
-assert.equal(rankLine.textContent,"GL · IV #1 · Feraligatr");
+assert.equal(rankLine.textContent,"GL · IV #1 · ↳ Feraligatr");
 assert.ok(rankLine.title.includes("Feraligatr")&&rankLine.title.includes("Grande Liga"));
 rankLine.hidden=true;
 assert.equal(hook("ul")(totodile),true);
-assert.equal(rankLine.textContent,"UL · IV #120","use currently searched league, not another league's #1");
+assert.equal(rankLine.textContent,"UL · IV #120 · Atual","use currently searched league, not another league's #1");
 rankLine.hidden=true;
 assert.equal(hook("raw")(totodile),false);
 assert.equal(rankLine.hidden,true,"non-PvP mode must not reuse rank badge");
