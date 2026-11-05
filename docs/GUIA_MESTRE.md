@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT248 — Golpes e filtros PGSharp (05/11/2026; desenvolvimento)
+
+- Prints Samsung: Greavard/Houndstone GL IV #1 RG #653 volta de 🗡 sem legado para ⚔️ ao fechar o painel; Litwick IV #1 Atual mostra muitas linhas de golpes possíveis sem recomendação. Corrigir estado persistente por liga/espécie consultada, sem etiquetar erroneamente golpes não verificados.
+- Código: `detail.html` usa `psVerifiedMoveIcons` e `psAvailableMoveDetails` fechado por padrão, com altura máxima ao expandir. O status de legado é comprovado pelos golpes recomendados da fonte; sem recomendação não significa que um ataque é livre de Elite.
+- Importar 101 filtros Pokémon do catálogo **sanitizado** entregue ao usuário pelo menu Home `Importar dados` → `Filtros PGSharp`, persistido privadamente no Android; NÃO importar .dat bruto, credenciais, históricos, coordenadas. Botões permitem selecionar um filtro, prévia dos IVs/nível/espécies, aplicar explicitamente a P1 ou P2. Não criar outro menu flutuante.
+- Conversão segura: IV% e IV raw A/D/S exatos, nível 1–50, espécies reconhecidas. Dividir conjuntos acima de 50 espécies, sem descartar IDs. Bloquear Shiny, sexo, tamanho, forma ou intervalos A/D/S não suportados, com motivo explícito. Não inventar rank geral nem ativar notificações/localização/raides/pesquisas a partir do título. Preservar independência P1/P2 e API PoGoCoordinates.
+- Novos arquivos: `PgsFilterImport.java`, testes `lt248-move-icon-persistence-compact-fallback.test.js` e `lt248-pgs-safe-import-contract.test.js`; alterados `MainActivity.java`, `OverlayService.java`, `detail.html` e notas de versão. Especificação [LT248_GOLPES_E_IMPORTACAO_PGS_20261105.md](LT248_GOLPES_E_IMPORTACAO_PGS_20261105.md).
+- Versão candidata LT248 / 0.02.48 / versionCode 54452 / label 51252, base LT247 oficial. Necessários CI Node/Java/OTA/beta, merge, release assinada e SHA-256 público. QA físico Samsung P/M/G e P1/P2 não feito. Não afirmar publicação antes de evidência.
+
 ## LT247 OFICIAL — 0.02.47 / versionCode 54451 (05/11/2026)
 
 - **Prints e objetivo:** IV # visível antes de RG #, evolução ↳ seguida da classificação geral, botões de golpes sem quebra de linha (Rookidee), Mega Sableye Top 1 GL na faixa compacta e calculadora de PC/Nv. no estilo do exemplo Gastly/Haunter/Gengar.

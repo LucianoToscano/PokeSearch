@@ -1798,6 +1798,34 @@
           "Conferir visualmente as duas Pokébolas, tamanhos P/M/G e possíveis nomes de formas longos no Samsung."
         ]
       }
+    },
+    {
+      "id": "lt248-move-icon-preserve-compact-learnset-safe-pgs-import-20261105",
+      "minVersionCode": 54452,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT248 — Golpes consistentes e catálogo PGSharp seguro",
+      "sections": {
+        "novidades": [
+          "Importar no menu Home o JSON sanitizado dos 101 filtros Pokémon PGSharp; os modelos ficam armazenados somente no dispositivo e podem ser escolhidos em Filtros PGSharp.",
+          "Prévia do filtro antes de aplicar na Pokébola 1 ou 2: IV%, IVs A/D/S exatos, nível e espécies verificadas. Buscas com mais de 50 espécies são divididas em grupos explícitos, sem excluir espécies silenciosamente.",
+          "Filtros que exigem condições ainda não mapeadas (Shiny individual, forma, gênero, tamanho ou intervalos A/D/S não exatos) são bloqueados com aviso, sem modificar a busca existente."
+        ],
+        "melhorias": [
+          "Após consultar os golpes, o ícone ⚔️ com legado/Elite ou 🗡 sem legado permanece correto mesmo ao fechar/reabrir ou atualizar o card da mesma espécie e liga.",
+          "Pokémon sem combinação PvP recomendada (ex.: Litwick) mostram painel curto e a ação Ver N golpes possíveis; a lista completa fica fechada por padrão.",
+          "Os filtros importados não ativam automaticamente notificações, distância, localização nem credenciais; o provedor continua validando cada busca."
+        ],
+        "correcoes": [
+          "Corrigido o retorno enganoso de 🗡 para ⚔️ em Greavard/Houndstone ao fechar o painel de golpes.",
+          "Corrigida a expansão excessiva da lista de golpes possíveis em Pokémon sem recomendação PvP verificada.",
+          "Importação do catálogo Pokémon não sobrescreve os filtros ou a sessão da outra Pokébola."
+        ],
+        "emDesenvolvimento": [
+          "Importação de filtros de raides e pesquisas requer fontes compatíveis; não são convertidos em buscas Pokémon.",
+          "Os critérios PGSharp não reconhecidos não são importados; o aplicativo mostra os motivos em vez de imitá-los incorretamente.",
+          "QA visual real no Samsung com as duas Pokébolas e os tamanhos P/M/G continua necessário."
+        ]
+      }
     }
   ]
 }
