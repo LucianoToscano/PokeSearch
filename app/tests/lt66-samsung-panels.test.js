@@ -74,7 +74,7 @@ check("J PvP expansions scroll one container not two",()=>{
  assert.ok(!detail.includes("#evoBody{max-height:165px;overflow-y:auto"));
 });
 check("K native card can grow above former 310dp limit",()=>{
- assert.ok(java.includes("Math.min(Math.min(520,available),heightDp)"));
+ assert.ok(java.includes("Math.min(Math.min(720,available),heightDp)"));
  assert.ok(java.includes("screenHeightDp()-40"));
  assert.ok(java.includes("private void moveDetail(){"));
 });
