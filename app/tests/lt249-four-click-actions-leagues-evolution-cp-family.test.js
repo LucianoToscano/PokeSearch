@@ -70,7 +70,7 @@ assert.deepEqual(line.children.slice(0,3).map(x=>x.textContent),
 line.children[0].onclick({});
 line.children[1].onclick({});
 line.children[2].onclick({});
-assert.deepEqual(calls.slice(0,3),[
+assert.deepEqual(calls.filter(x=>x[0]!=="moves").slice(0,3),[
  ["rank","class","Ursaluna"],["analysis","Ursaluna"],
  ["rank","overall","Ursaluna"]]);
 assert.ok(detail.includes('btn.className="psMovesAction"')||
