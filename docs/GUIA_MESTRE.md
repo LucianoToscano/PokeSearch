@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+### LT254 — explorer de Ursaluna GL com troca de espécie (05/11/2026)
+
+- Captura Samsung: ao tocar `Ursaluna · GL Rank Classe #2`, o título do explorer identificava Ursaluna corretamente, mas o scroller iniciava nas linhas #5–#8 devido ao deslocamento retido no componente anteriormente usado para Ursaring.
+- Validação Game Master: IV `0/14/15` corresponde a **Ursaring #1, PC 1498, Nv.19** versus **Ursaluna #2, PC 1500, Nv.14,5**. Os registros #5–#8 da captura eram Ursaluna, não dados trocados.
+- Branch LT254 em PR #233: `pvp_rank_explorer.js` redefine o scroll ao trocar espécie/liga/tipo, usa posição local do contêiner para destacar a linha escolhida e explicita `Rank Classe · Ursaluna`, `Grande Liga · IV 0/14/15 · #2`. `pvp_rank_advanced_ui.js` também redefine scroll na busca por IV/rank.
+- Evidências de regressão: [Node #42048188592](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048188592), [capturas e gate Chromium P/M/G #42048188522](https://github.com/LucianoToscano/PokeSearch/actions/runs/42048188522). Documento de auditoria [LT254_QA_CALCULADORA_GOLPES_COMPACTOS_20261105.md](LT254_QA_CALCULADORA_GOLPES_COMPACTOS_20261105.md).
+- **Não publicado**: falta teste físico Samsung nas duas Pokébolas antes de merge ou OTA. LT253 permanece oficial.
+
 ## LT254 — menu único e golpes Mega esclarecidos (05/11/2026, EM QA, não publicada)
 
 - **Base oficial mantida:** LT253 `0.02.53/54457`. Candidata em [PR #233](https://github.com/LucianoToscano/PokeSearch/pull/233), branch `fix/lt254-compact-calculator-moves-20261105` (**rascunho, sem merge**).
