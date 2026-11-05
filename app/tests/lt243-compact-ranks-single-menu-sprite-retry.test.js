@@ -10,7 +10,7 @@ assert.ok(inline);
 new vm.Script(inline);
 // Short rank label always makes room for full evolution name, no rank metadata loss.
 assert.ok(detail.includes('const compactName=label+" · IV #"+best.rank+" · "+scope+'),'fallback compact text always preserves IV rank');
-assert.ok(detail.includes('iv.textContent="IV #"+best.rank'),'IV rank is independent and first');
+assert.ok(detail.includes('iv.textContent=leagueIcon+" "+label+" IV #"+best.rank'),'league and IV rank are one clickable chip');
 assert.ok(detail.includes('const scope=best.kind==="current"?"Atual":'),'current form remains explicit');
 assert.ok(detail.includes('"↳ "+(isMega'),'evolution marker remains visible');
 assert.ok(detail.includes('league.toUpperCase()+" · IV #"+ivValue'));

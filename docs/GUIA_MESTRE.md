@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT249 — evitar Top #1 falso e contador 0 flutuante (05/11/2026; desenvolvimento)
+
+- Print Samsung: Machop GL Top #1 mostrou `GL · Top #1 · Machop #611` apesar de Machop IV #611/RG #513, Machoke IV #2/RG #500 e Machamp IV #196/RG #253 na análise. Isso era **número do filtro solicitado**, não um Top 1 comprovado. Corrigir a faixa mostrando o rank verdadeiro mais próximo (`GL · IV #2 · ↳ Machoke · RG #500`), com tooltip indicando que Top #1 NÃO foi confirmado; apenas candidatos reais. Para evolução desligada, manter rank real do Pokémon atual.
+- A Pokébola 2 sem resultados desenhava um `0` numa linha própria abaixo da Pokébola, por causa de `dock.html #empty`. Em resultado vazio, eliminar essa segunda linha e não mostrar a linha 0 solta (o contador opcional pode exibir 0 dentro do ícone); status permanece no comando do aplicativo. Não alterar posição manual, características P/M/G, número de resultados quando positivo nem independência P1/P2.
+- **Barra definitiva:** `[🔵 GL IV #N] [↳ Evolução] [RG #N] ⚔️`, sem segunda linha e com quatro ações independentes. IV+liga abre a tabela Rank Classe; nome da evolução abre e focaliza a Análise PvP do card; RG abre o ranking geral da espécie; ⚔️/🗡 abre golpes e legado. Destaques automáticos 🔵GL/🟡UL/🟣ML e símbolo Mega real (asset `mega_evolution_icon.svg`) para ranking projetado sem RG fictício.
+- **Calculadora completa:** `dock.html` envia `familyForms` a partir do grafo verificado de evolução e Game Master; o seletor PC/Nv. mostra todas as etapas reais, independente do filtro PvP. Teddiursa→Ursaring→Ursaluna sem Mega. Com Mega somente famílias documentadas. Setas ‹/› para trocar forma, −/+ 0,5 nível, slider até 50, PC-alvo digitável e botão `Calcular nível` pelo mesmo modelo offline. Sem Doces/Poeira não verificados.
+- Código `app/src/main/assets/detail.html`, `dock.html`; testes `lt249-true-pvp-iv-rg-no-false-top-empty-counter.test.js` e `lt249-four-click-actions-leagues-evolution-cp-family.test.js`, regressões LT163/LT164/LT243/LT244/LT245/LT246/LT247 atualizadas. Detalhes [LT249_RANK_TOP_1_E_CONTADOR_P2_20261105.md](LT249_RANK_TOP_1_E_CONTADOR_P2_20261105.md).
+- Próxima versão proposta LT249 / 0.02.49 / versionCode 54453 / label 51253 sobre LT248. Não afirmar merge, assinatura ou publicação antes de completar QA. Teste visual físico Android Samsung pendente.
+
 ## LT248 OFICIAL — 0.02.48 / versionCode 54452 (05/11/2026)
 
 - **Prints e correção:** no Greavard 1/14/15, GL IV #1 ↳ Houndstone RG #653, o ícone 🗡 de conjunto recomendado sem legado voltava incorretamente a ⚔️ ao fechar o painel. LT248 grava apenas o status verificado por liga+espécie (em memória da WebView), mantendo 🗡/⚔️ ao recolher/reabrir. Para Litwick 15/15/15 sem conjunto otimizado PvPoke, os golpes possíveis do Game Master permanecem num painel `Ver N golpes possíveis` fechado por padrão, sem inventar recomendações e com altura limitada quando aberto.

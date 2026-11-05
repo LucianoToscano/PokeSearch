@@ -75,7 +75,7 @@ const snippet=detail.slice(detail.indexOf("function updateVisiblePvPRank(payload
 assert.ok(snippet.includes("withOverall"),"RG-primary logic still present");
 assert.ok(snippet.includes('badge.textContent="RG #"+best.overallRank'),
  "verified species RG is still shown without inventing ranks");
-assert.ok(snippet.includes('iv.textContent="IV #"+best.rank'));
+assert.ok(snippet.includes('iv.textContent=leagueIcon+" "+label+" IV #"+best.rank'));
 assert.ok(detail.includes('badge.dataset.psKind="overall"'),
  "RG button must open the independently verified species ranking");
 const secondary=fs.readFileSync(path.join(base,"../java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");

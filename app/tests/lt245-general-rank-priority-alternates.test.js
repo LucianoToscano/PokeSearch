@@ -43,11 +43,11 @@ const la={name:"Lampent",rank:1,overallRank:519,eligible:true};
 assert.equal(moduleObj.update(gl([ch,la])),true);
 assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Lampent",
  "the better confirmed species RG, not array order, determines promoted evolution");
-const classButton=line.children.find(x=>x.className==="psCompactIv psRankOpen");
+const classButton=line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv");
 const primary=line.children.find(x=>x.className==="psCompactOverall psRankOpen");
 const more=line.children.find(x=>x.className==="psRankMore");
 assert.equal(primary.textContent,"RG #519");
-assert.equal(classButton.textContent,"IV #1");
+assert.equal(classButton.textContent,"🔵 GL IV #1");
 assert.equal(more.textContent,"+1");
 assert.equal(primary.dataset.psName,"Lampent");
 assert.equal(primary.dataset.psRank,"519");
@@ -126,6 +126,6 @@ assert.equal(moduleObj.update(teddi),true);
 assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Ursaluna");
 assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG #163",
  "Ursaluna verified RG must appear on compact card, not only expanded analysis");
-assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen").textContent,"IV #1");
+assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv").textContent,"🔵 GL IV #1");
 assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
 console.log("LT245: RG first among good IVs, class fallback, strict Top filter, +N comparison, P1/P2 PASS");

@@ -32,8 +32,9 @@ rankLine.hidden=true;
 assert.equal(hook("ul")(totodile),true);
 assert.equal(rankLine.textContent,"UL · IV #120 · Atual","use currently searched league, not another league's #1");
 rankLine.hidden=true;
-assert.equal(hook("raw")(totodile),false);
-assert.equal(rankLine.hidden,true,"non-PvP mode must not reuse rank badge");
+assert.equal(hook("raw")(totodile),true);
+assert.ok(rankLine.textContent.includes("GL · IV #1 · ↳ Feraligatr"),
+ "non-PvP mode may promote a VERIFIED GL IV #1, but never a search Top #1 impostor");
 rankLine.hidden=true;
 assert.equal(hook("gl")({...totodile,leagues:[
  {league:"gl",own:null,evolutions:[{name:"Feraligatr",rank:1,eligible:false}]},

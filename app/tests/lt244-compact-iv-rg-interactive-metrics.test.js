@@ -39,13 +39,13 @@ const hook=new Function("document","window","activeRankLeague","pvpFormsForLeagu
  document,window,"gl",()=>[],explorer,()=>{});
 const ctx=window.psRankContext;
 assert.equal(hook(ctx),true);
-assert.equal(rankLine.children[1].textContent,"IV #1","IV Class badge must be first");
-assert.equal(rankLine.children[2].textContent,"↳ Houndstone");
+assert.equal(rankLine.children[0].textContent,"🔵 GL IV #1","League and IV form a single clickable button");
+assert.equal(rankLine.children[1].textContent,"↳ Houndstone");
 const badge=rankLine.children.find(x=>x.className==="psCompactOverall psRankOpen");
 assert.ok(badge,"valid PvPoke species RG is a separate button");
 assert.equal(badge.textContent,"RG #653");
-const classButton=rankLine.children.find(x=>x.className==="psCompactIv psRankOpen");
-assert.ok(classButton&&classButton.textContent==="IV #1","IV ranking remains independently clickable");
+const classButton=rankLine.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv");
+assert.ok(classButton&&classButton.textContent==="🔵 GL IV #1","IV ranking remains independently clickable");
 assert.equal(badge.dataset.psKind,"overall");
 assert.equal(badge.dataset.psName,"Houndstone");
 assert.equal(badge.dataset.psLeague,"gl");
@@ -59,18 +59,18 @@ assert.equal(hook({...ctx,leagues:[
  {league:"gl",own:{rank:1,overallRank:85},evolutions:[]},
  {league:"ul"},{league:"ml"}
 ]}),true);
-assert.equal(rankLine.children[2].textContent,"Atual");
-assert.equal(rankLine.children[3].textContent,"RG #85");
+assert.equal(rankLine.children[1].textContent,"Atual");
+assert.equal(rankLine.children[2].textContent,"RG #85");
 rankLine.hidden=true;
 assert.equal(hook({...ctx,leagues:[
  {league:"gl",own:{rank:1,overallRank:null},evolutions:[]},
  {league:"ul"},{league:"ml"}
 ]}),true);
-assert.equal(rankLine.children.length,3,"no RG badge when no verified overall rank");
+assert.equal(rankLine.children.length,2,"no RG badge when no verified overall rank");
 assert.match(html,/#rankLine \.psCompactOverall\{[\s\S]*?cursor:pointer/);
 assert.match(html,/#rankLine \.psRankLabel\{overflow:visible!important;text-overflow:clip!important/);
 // The inline card retains a click target to the 4,096 local IV rankings.
-assert.ok(script.includes('kind:"class",name:currentRankSpecies||context.name'));
+assert.ok(script.includes('iv.onclick=event=>openPvpRankExplorer(event,iv)'));
 // IV / CP / Level open contextual actions only when tapped.
 const x=script.indexOf("/* LT244: zero-cost contextual stats actions.");
 const y=script.indexOf("const item=(k,v)=>",x);

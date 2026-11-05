@@ -805,6 +805,45 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  font-weight:650;min-height:20px;line-height:20px}
 #movesPopover .psAvailableMoveList{max-height:130px;overflow-y:auto;
  overscroll-behavior:contain;padding-top:4px}
+/* LT249: one row, four individually tappable elements; real Mega artwork. */
+#rankLine{flex-wrap:nowrap!important;white-space:nowrap!important;gap:2px!important;
+ overflow:hidden!important;align-items:center!important}
+#rankLine .psLeagueIv{font-size:9px!important;flex:0 0 auto;white-space:nowrap!important;
+ min-width:0;padding:2px 3px!important}
+#rankLine .psCompactSpecies{display:inline-flex!important;align-items:center;
+ justify-content:center;padding:1px 2px!important;margin:0!important;
+ border:0;background:transparent;color:#e8f2fc;min-width:0;max-width:none;
+ flex:1 1 auto;white-space:nowrap;font:700 10px/1.2 Roboto,Arial,sans-serif;
+ cursor:pointer;overflow:hidden;text-overflow:ellipsis!important;touch-action:manipulation}
+#rankLine .psCompactMegaEmblem{width:11px;height:11px;max-width:11px;
+ object-fit:contain;margin-left:2px;flex:0 0 11px;pointer-events:none}
+#rankLine .psLeagueIv:focus-visible,#rankLine .psCompactSpecies:focus-visible{
+ outline:1px solid #b6dbff;outline-offset:1px}
+#evoBody .evoLine.psSelectedEvo{outline:1px solid #7fc1ff9e;outline-offset:-1px;
+ background:#537da022}
+#evoBody .psTopMegaIcon{display:inline-block;width:11px;height:11px;
+ vertical-align:middle;object-fit:contain}
+
+#psMetricPanel .psCpSimFields{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 24px!important}
+#psMetricPanel .psCpFormStepper,#psMetricPanel .psCpLevelStepper{
+ display:flex;align-items:center;gap:2px;min-width:0}
+#psMetricPanel .psCpFormStepper select{flex:1 1 0;min-width:0;max-width:100%;
+ width:100%;font-size:10px}
+#psMetricPanel .psCpFormStepper button,#psMetricPanel .psCpLevelStepper button{
+ flex:0 0 20px;width:20px;height:23px;background:#304156ca;
+ border:1px solid #a9cae75a;border-radius:5px;color:#e4f2ff;
+ font-size:15px;line-height:20px;padding:0;touch-action:manipulation}
+#psMetricPanel .psCpLevelStepper input[type=range]{min-width:18px;flex:1 1 0}
+#psMetricPanel .psCpTargetRow{display:flex;align-items:flex-end;
+ gap:5px;margin:5px 0 0}
+#psMetricPanel .psCpTargetRow label{display:flex;flex-direction:column;
+ gap:2px;color:#d0deec;font-size:9px}
+#psMetricPanel .psCpTargetRow input{width:64px;height:24px;
+ color:#fff;background:#1a283a;border:1px solid #a9cae75a;border-radius:5px;
+ padding:2px 4px;font-size:11px}
+#psMetricPanel .psCpTargetRow button{border:1px solid #8ad9b56a;
+ border-radius:5px;padding:4px 7px;background:#24584555;color:#d7ffe9;
+ font-size:10px;touch-action:manipulation}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1288,6 +1327,29 @@ function openPvpRankExplorer(event,button){
   forms:pvpFormsForLeague(data.psLeague||"gl")
  });
 }
+/* LT249: [↳ form] opens the EXISTING analysis and focuses its row.
+   No new window or false rank is created. */
+function openPvpAnalysisForSpecies(event,button){
+ event?.preventDefault?.();event?.stopPropagation?.();
+ const section=document.getElementById("evolutions");
+ const body=document.getElementById("evoBody");
+ if(!section||!body||section.hidden)return false;
+ if(!evolutionExpanded)toggleEvolutionDetails();
+ const species=String(button?.dataset?.psName||"").toLowerCase();
+ const league=String(button?.dataset?.psLeague||activeRankLeague||"gl");
+ if(typeof body.querySelectorAll==="function"){
+  const rows=[...body.querySelectorAll(".evoLine")];
+  const exact=rows.find(x=>String(x.dataset?.psLeague||"")===league&&
+   String(x.dataset?.psName||"").toLowerCase()===species);
+  if(exact){
+   for(const r of rows)r.classList?.remove?.("psSelectedEvo");
+   exact.classList?.add?.("psSelectedEvo");
+   exact.scrollIntoView?.({block:"nearest",inline:"nearest"});
+  }
+ }
+ resizeEvolutionPanel();
+ return true;
+}
 function evolutionRow(x,first){
  const psLeague=String(window.psRankRenderLeague||"gl");
  if(!x||typeof x!=="object")return "";
@@ -1318,7 +1380,8 @@ function evolutionRow(x,first){
  // Reference rows are theory-only: do not assert costume evolution legality.
  if(!isReference&&x.eligible===false&&hasClass)state="Não elegível no nível atual";
  else if(!isReference&&x.eligible===null&&hasClass)state="Elegibilidade não verificada";
- return '<div class="evoLine'+(first?' isCurrent':'')+
+ return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
+  '" class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+(isMega?' isMega':'')+
   (hasClass&&rank===1&&x.eligible!==false?' best':'')+
   '"><div class="evoSummary">'+
@@ -1519,15 +1582,18 @@ function setRankLineLabel(rankLine,label){
 }
 
  let forcedMegaPreview=false;
- if(activeRankLeague!=="gl"&&activeRankLeague!=="ul"){
-  // Other search modes still deserve a compact GL/UL badge when a verified
-  // Top #1 opportunity (including a separate Mega preview) exists.
-  const highlight=(payload.leagues||[]).find(x=>
-   (x?.league==="gl"||x?.league==="ul")&&
-   (Array.isArray(x.megas)?x.megas:[]).some(m=>
-    m?.megaProjection===true&&Number(m.rank)===1));
+ if(!["gl","ul","ml"].includes(activeRankLeague)){
+  // In ordinary IV/100% mode, automatically surface a verified Top #1
+  // (GL -> UL -> ML). Prioritize actual species over Mega projections.
+  const leagues=(payload.leagues||[]).filter(l=>
+   ["gl","ul","ml"].includes(l?.league));
+  const real=leagues.find(l=>[l.own,...(Array.isArray(l.evolutions)?l.evolutions:[])]
+   .some(x=>x&&Number(x.rank)===1&&x.eligible!==false));
+  const mega=leagues.find(l=>(l.megas||[]).some(m=>
+   m?.megaProjection===true&&Number(m.rank)===1));
+  const highlight=real||mega;
   if(!highlight)return false;
-  forcedMegaPreview=true;
+  forcedMegaPreview=!real&&!!mega;
   activeRankLeague=highlight.league;
  }
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
@@ -1575,8 +1641,17 @@ function setRankLineLabel(rankLine,label){
   (a.kind==="current"?-1:b.kind==="current"?1:0);
  const sortGeneral=(a,b)=>(a.overallRank??Infinity)-(b.overallRank??Infinity)||
   sortClass(a,b);
+ // LT249: a Top #N request is a filter setting, not proof that this
+ // encounter actually has a Rank Classe in that Top #N. The old fallback
+ // ("GL · Top #1 · Machop #611") was visually claiming a false #1.
+ // When the local Game Master has no qualifying rank, show the NEAREST
+ // VERIFIED class rank, never invent #1 or suppress the real IV #2.
+ const unverifiedTop=limit!==null&&!inSearch.length&&!forcedMegaPreview;
+ const nearest=unverifiedTop?candidates.filter(x=>
+   x.kind==="current"||x.kind==="evolution").sort((a,b)=>
+    a.rank-b.rank||(a.overallRank??Infinity)-(b.overallRank??Infinity)):[];
  const best=(withOverall.length?withOverall.sort(sortGeneral):
-   [...inSearch].sort(sortClass))[0];
+   [...inSearch].sort(sortClass))[0]||nearest[0];
  // Alternative forms must also have good verified IVs; no invented Mega RG
  // or speculative costume evolutions are promoted to the main compact UI.
  const otherChoices=excellent.filter(x=>x!==best).filter((x,i,all)=>
@@ -1591,8 +1666,9 @@ function setRankLineLabel(rankLine,label){
  if(!best){
   // A Top-N search is NOT evidence that the base species itself is Top-N.
   const own=candidates.find(x=>x.kind==="current");
-  const summary=label+" · Top #"+limit+
-   (own?" · "+payload.name+" #"+own.rank:" · sem posição");
+  const summary=label+" · "+
+   (own?"IV #"+own.rank+" · Atual":"Sem IV comprovado")+
+   (limit!==null?" · filtro Top #"+limit+" não confirmado":"");
   setRankLineLabel(rankLine,summary);
   rankLine.title="A busca pode considerar evoluções ou uma classificação da fonte. "+
    "Nenhuma combinação correspondente ao Top #"+limit+" foi confirmada no cálculo local.";
@@ -1611,34 +1687,42 @@ function setRankLineLabel(rankLine,label){
    Number.isInteger(best.overallRank)&&best.overallRank>=1;
  const compactName=label+" · IV #"+best.rank+" · "+scope+
    (hasVerifiedOverall?" · RG #"+best.overallRank:"");
+ if(rankLine.dataset)rankLine.dataset.topVerified=unverifiedTop?"false":"true";
  // Legacy DOM and QA stubs still have a safe text-only summary.
  setRankLineLabel(rankLine,compactName);
  if(typeof rankLine.replaceChildren==="function"&&
     typeof rankLine.appendChild==="function"&&
     typeof document.createElement==="function"){
   rankLine.replaceChildren();
-  const leagueChip=document.createElement("span");
-  leagueChip.className="psRankLeague";leagueChip.textContent=label;
-  rankLine.appendChild(leagueChip);
+  // [🔵 GL IV #N] is ONE accessible class-ranking button.
+  const leagueIcon={gl:"🔵",ul:"🟡",ml:"🟣"}[activeRankLeague]||"🔵";
   const iv=document.createElement("button");
-  iv.type="button";iv.className="psCompactIv psRankOpen";
-  iv.textContent="IV #"+best.rank;
+  iv.type="button";iv.className="psCompactIv psRankOpen psLeagueIv";
+  iv.textContent=leagueIcon+" "+label+" IV #"+best.rank;
   iv.title="Rank Classe #"+best.rank+" de "+best.name+" · 4.096 IVs";
-  iv.setAttribute?.("aria-label","Abrir IV #"+best.rank+" de "+best.name);
+  if(unverifiedTop)iv.title+=" · Top #"+limit+" não confirmado";
+  iv.setAttribute?.("aria-label",iv.title);
   iv.dataset.psKind="class";iv.dataset.psName=best.name;
   iv.dataset.psLeague=activeRankLeague;iv.dataset.psRank=String(best.rank);
   iv.onclick=event=>openPvpRankExplorer(event,iv);
   rankLine.appendChild(iv);
-  const nameChip=document.createElement("span");
-  nameChip.className="psCompactSpecies";
+  // The species button opens PvP analysis, never a Class or RG table.
+  const nameChip=document.createElement("button");
+  nameChip.type="button";nameChip.className="psCompactSpecies";
   nameChip.textContent=scope;
-  nameChip.title=isMega?scope+" · projeção Mega, não elegibilidade GBL":scope;
-  rankLine.appendChild(nameChip);
+  nameChip.title="Abrir análise PvP de "+best.name+
+   (isMega?" · Mega projetada (não indica permissão GBL)":"");
+  nameChip.setAttribute?.("aria-label",nameChip.title);
+  nameChip.dataset.psName=best.name;nameChip.dataset.psLeague=activeRankLeague;
+  nameChip.onclick=event=>openPvpAnalysisForSpecies(event,nameChip);
   if(isMega){
-   const megaTag=document.createElement("span");
-   megaTag.className="psCompactMega";megaTag.textContent="MEGA";
-   rankLine.appendChild(megaTag);
+   const emblem=document.createElement("img");
+   emblem.src="mega_evolution_icon.svg";emblem.alt="";
+   emblem.className="psCompactMegaEmblem";
+   emblem.setAttribute?.("aria-hidden","true");
+   nameChip.appendChild(emblem);
   }
+  rankLine.appendChild(nameChip);
   if(hasVerifiedOverall){
    const badge=document.createElement("button");
    badge.type="button";badge.className="psCompactOverall psRankOpen";
@@ -1680,7 +1764,9 @@ function setRankLineLabel(rankLine,label){
   (best.kind==="reference"?
    ". Referência matemática: não confirma que a fantasia possa evoluir.":"")+
   (own&&own.name!==best.name?" · "+payload.name+" atual: #"+own.rank:"")+
-  (limit!==null?" · Filtro de pesquisa: Top #"+limit:"");
+  (limit!==null?" · Filtro de pesquisa: Top #"+limit:"")+
+  (unverifiedTop?" · NENHUM IV Top #"+limit+
+    " confirmado; exibindo IV real mais próximo (#"+best.rank+")":"");
  rankLine.hidden=false;
  if(typeof renderRankOneMoves==="function")renderRankOneMoves();
  return true;
@@ -1697,17 +1783,14 @@ window.showEvolutionDetails=payload=>{
   quickRank.psExplorerBound=true;
   quickRank.addEventListener("click",event=>{
    if(event.target?.closest?.("button"))return;
-   const league=quickRank.dataset?.league,context=window.psRankContext;
-   if(!league||!context)return;
-   window.PokeSearchRankExplorer?.open({
-    kind:"class",name:currentRankSpecies||context.name,
-    iv:context.iv,league,forms:pvpFormsForLeague(league)
-   });
+   openPvpAnalysisForSpecies(event,{dataset:{
+    psName:currentRankSpecies||window.psRankContext?.name,
+    psLeague:quickRank.dataset?.league}});
   });
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Master"};
+ const labels={gl:"🔵 Grande Liga",ul:"🟡 Ultra Liga",ml:"🟣 Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
@@ -1766,8 +1849,11 @@ window.showEvolutionDetails=payload=>{
   unique.add(key);return true;
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
-  notices.map(x=>'<span class="psTopPvpTag">🔔 '+h(x.league.toUpperCase())+' #'+x.rank+
-   ' '+h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
+  notices.map(x=>'<span class="psTopPvpTag">'+
+   ({gl:"🔵",ul:"🟡",ml:"🟣"}[x.league]||"🔔")+' '+
+   h(x.league.toUpperCase())+' #'+x.rank+' '+
+   (x.mega?'<img class="psTopMegaIcon" src="mega_evolution_icon.svg" alt="Mega Evolução"> ':'')+
+   h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
@@ -1801,7 +1887,7 @@ function detailMetricKey(event,kind){
 }
 /* LT247: Level/CP simulator uses the pinned PvPoke offline gamemaster and CPM
    only; it never guesses candy or stardust costs. It is not an API query. */
-let psCpTargetLevel=20,psCpTargetSpecies="";
+let psCpTargetLevel=20,psCpTargetSpecies="",psCpTargetCp=1500;
 function psCpNormalize(value){
  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .toLowerCase().replace(/^mega\s+/,"").replace(/[^a-z0-9]+/g,"_")
@@ -1811,7 +1897,9 @@ function psCpVariants(){
  const master=window.POKESEARCH_PVP_IV_DATA;
  if(!master||!Array.isArray(master.pokemon)||!Array.isArray(master.cpms)||
     master.cpms.length<99)return [];
- const source=window.psRankContext||{},names=[metricCard?.name,source.name];
+ const source=window.psRankContext||{};
+ const names=[metricCard?.name,source.name,
+  ...(Array.isArray(source.familyForms)?source.familyForms.slice(0,36):[])];
  for(const league of source.leagues||[]){
   if(league?.own)names.push(source.name);
   for(const kind of ["evolutions","megas"]){
@@ -1866,25 +1954,68 @@ function psCpLeagueCeiling(row,ivs,limit){
 }
 function psCpControls(){
  const forms=psCpVariants();
- if(!forms.length)return "";
- const preferred=forms.find(x=>x[0]===psCpTargetSpecies)||
-  forms[0];
+ if(!forms.length)return '<div class="psCpSimFoot">Atributos-base não encontrados.</div>';
+ const preferred=forms.find(x=>x[0]===psCpTargetSpecies)||forms[0];
  psCpTargetSpecies=String(preferred[0]);
  const l=Number(metricCard?.level);
  if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
   psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Simulador PC / Nível · dados locais</div>'+
-  '<div class="psCpSimFields"><label>Forma <select id="psCpForm" onchange="updatePvpCpSimulator()">'+
+  '<div class="psCpSimTitle">Simulador PC / Nível · família completa</div>'+
+  '<div class="psCpSimFields"><label>Forma'+
+  '<div class="psCpFormStepper"><button type="button" onclick="stepPvpCpForm(-1)"'+
+  ' aria-label="Forma anterior" title="Forma anterior">‹</button>'+
+  '<select id="psCpForm" aria-label="Selecionar evolução ou Mega" onchange="updatePvpCpSimulator()">'+
    forms.map(x=>'<option value="'+h(String(x[0]))+'"'+
     (x[0]===psCpTargetSpecies?' selected':'')+'>'+h(String(x[1]))+'</option>').join("")+
-   '</select></label>'+
-   '<label>Nível <input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
-   ' value="'+psCpTargetLevel+'" oninput="updatePvpCpSimulator()"></label>'+
-   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
+  '</select><button type="button" onclick="stepPvpCpForm(1)"'+
+  ' aria-label="Próxima forma" title="Próxima forma">›</button></div></label>'+
+  '<label>Nível <div class="psCpLevelStepper">'+
+  '<button type="button" onclick="stepPvpCpLevel(-0.5)" aria-label="Reduzir meio nível">−</button>'+
+  '<input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
+  ' value="'+psCpTargetLevel+'" oninput="updatePvpCpSimulator()">'+
+  '<button type="button" onclick="stepPvpCpLevel(0.5)" aria-label="Aumentar meio nível">+</button>'+
+  '</div></label>'+
+  '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
-  '<div class="psCpSimFoot">CP e PS calculados com atributos-base e CPM do snapshot local. '+
-  'Não inclui custos de Doces/Poeira nem nível 51.</div></div>';
+  '<div class="psCpTargetRow"><label>PC-alvo '+
+  '<input id="psCpTargetCp" type="number" min="10" max="10000" step="1"'+
+  ' value="'+psCpTargetCp+'" oninput="updatePvpCpSimulator()" '+
+  ' aria-label="PC desejado"></label>'+
+  '<button type="button" onclick="psCpApplyTarget()"'+
+  ' title="Calcular o maior nível dentro do PC desejado">Calcular nível</button></div>'+
+  '<div class="psCpSimFoot">Projeção matemática com IVs capturados e Game Master offline. '+
+  'Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</div></div>';
+}
+function stepPvpCpForm(delta){
+ const forms=psCpVariants(),sel=document.getElementById("psCpForm");
+ if(!forms.length||!sel)return false;
+ const current=String(sel.value||psCpTargetSpecies);
+ const index=Math.max(0,forms.findIndex(x=>String(x[0])===current));
+ const next=(index+(delta<0?-1:1)+forms.length)%forms.length;
+ sel.value=String(forms[next][0]);psCpTargetSpecies=sel.value;
+ return updatePvpCpSimulator();
+}
+function stepPvpCpLevel(delta){
+ const input=document.getElementById("psCpLevel");
+ if(!input)return false;
+ psCpTargetLevel=Math.max(1,Math.min(50,
+  Math.round((psCpTargetLevel+Number(delta||0))*2)/2));
+ input.value=String(psCpTargetLevel);
+ return updatePvpCpSimulator();
+}
+function psCpApplyTarget(){
+ const forms=psCpVariants(),key=String(document.getElementById("psCpForm")?.value||psCpTargetSpecies);
+ const row=forms.find(x=>x[0]===key),iv=psCpIv();
+ const input=document.getElementById("psCpTargetCp");
+ const n=Number(input?.value);
+ if(!row||!iv||!Number.isInteger(n)||n<10||n>10000)return false;
+ const result=psCpLeagueCeiling(row,iv,n);
+ if(!result)return false;
+ psCpTargetCp=n;psCpTargetLevel=result.level;
+ const slider=document.getElementById("psCpLevel");
+ if(slider)slider.value=String(psCpTargetLevel);
+ return updatePvpCpSimulator();
 }
 function updatePvpCpSimulator(){
  const root=document.getElementById("psCpSimResult");
@@ -1896,6 +2027,10 @@ function updatePvpCpSimulator(){
   psCpTargetLevel=Math.round(value*2)/2;
  const levelText=document.getElementById("psCpLevelValue");
  if(levelText)levelText.textContent=psCpTargetLevel.toFixed(1).replace(".",",");
+ const targetInput=document.getElementById("psCpTargetCp");
+ const targetNumber=Number(targetInput?.value??psCpTargetCp);
+ if(Number.isInteger(targetNumber)&&targetNumber>=10&&targetNumber<=10000)
+  psCpTargetCp=targetNumber;
  const forms=psCpVariants();
  const key=String(selection?.value||psCpTargetSpecies);
  const row=forms.find(x=>x[0]===key)||forms[0];
@@ -1905,7 +2040,8 @@ function updatePvpCpSimulator(){
  if(!iv){root.textContent="IV A/D/S exatos necessários para simular.";return false;}
  const current=psCpAt(row,iv,psCpTargetLevel),zero=psCpAt(row,[0,0,0],psCpTargetLevel),
   perfect=psCpAt(row,[15,15,15],psCpTargetLevel);
- const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500);
+ const gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500),
+  target=psCpLeagueCeiling(row,iv,psCpTargetCp);
  if(!current||!perfect||!zero){root.textContent="Nível não encontrado no snapshot.";return false;}
  const label=x=>x?('PC '+x.cp+' · Nv. '+x.level.toFixed(1).replace(".",",")):"Não elegível";
  root.innerHTML='<div class="psCpSimResultRow"><span>IV atual '+h(iv.join("/"))+
@@ -1913,7 +2049,9 @@ function updatePvpCpSimulator(){
   '<div class="psCpSimResultRow"><span>IV 0/0/0</span><strong>PC '+zero.cp+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>IV 15/15/15</span><strong>PC '+perfect.cp+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>🔵 GL até 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>';
+  '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
+  '</span><strong>'+label(target)+'</strong></div>';
  return true;
 }
 function renderDetailMetric(){
@@ -1988,6 +2126,7 @@ window.showDetails=(c,mode,watched)=>{
   psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
    Math.round(Number(c.level)*2)/2:20;
   psCpTargetSpecies="";
+  psCpTargetCp=1500;
   closePvpReferenceInfo();
   closePvpRankAlternates();
   closeDetailMetric();

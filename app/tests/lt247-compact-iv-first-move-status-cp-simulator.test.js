@@ -43,10 +43,10 @@ const projected=gl({rank:14,overallRank:37},[],[
  {name:"Mega Sableye",rank:1,referenceOnly:true,megaProjection:true,eligible:null}
 ]);
 assert.equal(obj.update(projected),true);
-assert.equal(line.children[0].textContent,"GL");
-assert.equal(line.children[1].textContent,"IV #1");
-assert.equal(line.children[2].textContent,"↳ Mega Sableye");
-assert.equal(line.children[3].textContent,"MEGA");
+assert.equal(line.children[0].textContent,"🔵 GL IV #1");
+assert.equal(line.children[1].textContent,"↳ Mega Sableye");
+assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
+assert.equal(line.children.length,2,"Mega projection uses one inline species chip");
 assert.equal(line.children.some(x=>x.textContent.startsWith("RG #")),false,
  "mathematical Mega projection cannot claim an ordinary RG");
 assert.ok(renderCalls>0);
@@ -58,21 +58,21 @@ const both={name:"Litwick",searchLeague:"gl",searchRankLimit:1,leagues:[
  {league:"ul",own:null,evolutions:[]},{league:"ml",own:null,evolutions:[]}
 ]};
 assert.equal(fGl.update(both),true);
-assert.deepEqual(line.children.slice(0,4).map(x=>x.textContent),
- ["GL","IV #1","↳ Lampent","RG #519"]);
-line.children[1].onclick({});
-line.children[3].onclick({});
+assert.deepEqual(line.children.slice(0,3).map(x=>x.textContent),
+ ["🔵 GL IV #1","↳ Lampent","RG #519"]);
+line.children[0].onclick({});
+line.children[2].onclick({});
 assert.deepEqual(actions,[{kind:"class",name:"Lampent",rank:1,league:"gl"},
  {kind:"overall",name:"Lampent",rank:519,league:"gl"}]);
 assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
-assert.equal(line.children[1].title.includes("4.096"),true);
+assert.equal(line.children[0].title.includes("4.096"),true);
 assert.ok(!line.children.some(x=>x.textContent==="RG #808"),
  "other species belongs in the +N explorer");
 const raw=f(document,{},"", "Sableye",open,()=>{},()=>{});
 assert.equal(raw.update({...projected,searchLeague:"",searchRankLimit:null}),true,
  "Mega GL rank1 must also be shown outside GL mode");
-assert.equal(line.children[1].textContent,"IV #1");
-assert.equal(line.children[2].textContent,"↳ Mega Sableye");
+assert.equal(line.children[1].textContent,"↳ Mega Sableye");
+assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
 assert.ok(inline.includes('const isMega=/^mega\\s+/i.test(featured)'));
 assert.ok(inline.includes('btn.textContent=hasLegacy?"⚔️":"🗡"'));
 assert.ok(inline.includes("isMega?'Ataques da forma base · Mega projetada'"));
@@ -132,7 +132,7 @@ assert.equal(funcs.render(),false,"metric panel should not render until the CP/l
 assert.equal(funcs.open("cp"),true);
 assert.ok(panel.innerHTML.includes("Simulador PC / Nível"));
 assert.ok(panel.innerHTML.includes("Sem custos")===false);
-assert.ok(panel.innerHTML.includes("Não inclui custos de Doces/Poeira"));
+assert.ok(panel.innerHTML.includes("Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira"),"no unverified evolution legality or candy/stardust costs");
 assert.ok(panel.innerHTML.includes("Projeções PvP por liga"));
 assert.ok(html.includes("psCpSimFields"),"glass UI must contain the simulator controls");
 console.log("LT247: IV-before-RG single-row, GL Mega #1, verified move icons, CP simulator and P1/P2 assets PASS");
