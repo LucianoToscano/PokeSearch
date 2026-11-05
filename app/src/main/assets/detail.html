@@ -747,6 +747,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 @media(max-width:320px){#rankLine .psRankMore,
  #rankLine .psCompactIv{padding:1px 3px;font-size:8px}
  #psRankAlternates .psRankAlternative{gap:3px}}
+/* LT246: available moves for unranked species are scrollable and never
+   displace the entire card. Captured moves are labelled as captured, not meta. */
+#movesPopover:not([hidden]){max-height:168px;overflow-y:auto;overscroll-behavior:contain}
+#movesPopover .psMoveRow{gap:5px}
+#movesPopover .psMoveName{overflow-wrap:anywhere}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1298,12 +1303,19 @@ function renderRankOneMoves(){
   const show=popover.hidden;popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
   const identity=detailIdentity;
-  popover.textContent="Ataques Recomendados: ···";
+  popover.textContent="Consultando golpes PvP...";
   resizeEvolutionPanel();
   const recommendation=await window.PokeSearchPvpRankMoves?.lookup?.(league,species);
   if(detailIdentity!==identity||popover.hidden||!btn.isConnected)return;
   if(!recommendation){
-   popover.textContent="Ataques Recomendados: indisponíveis";
+   // No remote ranking or translation is authoritative right now.
+   // Show known moves of this exact capture rather than a misleading empty
+   // "recommended" panel. Never present them as a PvPoke recommendation.
+   const shown=String(currentCardMoves||"").trim();
+   popover.innerHTML='<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
+    (shown?'<div class="psMoveRow"><span class="psMoveLabel">Capturado:</span>'+
+      '<span class="psMoveName">'+h(shown)+'</span></div>':
+      '<div class="psMoveLegend">Golpes ainda não disponíveis nesta fonte.</div>');
    resizeEvolutionPanel();return;
   }
   // Only an explicit typed PT-BR move record can be displayed; never fall
@@ -1325,6 +1337,23 @@ function renderRankOneMoves(){
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
      (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+'</div>';
   };
+  if(recommendation.availableOnly===true){
+   const fast=(recommendation.fastMoves||[]).slice(0,8);
+   const charged=(recommendation.chargedMoves||[]).slice(0,12);
+   if(!fast.length&&!charged.length){
+    const captured=String(currentCardMoves||"").trim();
+    popover.innerHTML='<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
+     (captured?'<div class="psMoveRow">Golpes capturados: '+h(captured)+'</div>':
+      '<div class="psMoveLegend">Fonte de golpes indisponível.</div>');
+   }else{
+    popover.innerHTML='<div class="psMoveTitle">Golpes possíveis · sem recomendação</div>'+
+     fast.map(x=>row("Ágil",x)).join("")+
+     charged.map(x=>row("Carregado",x)).join("")+
+     (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado / Elite conforme a fonte</div>':"")+
+     '<div class="psMoveLegend">Movimentos do Game Master, não um conjunto otimizado de PvP.</div>';
+   }
+   resizeEvolutionPanel();return;
+  }
   popover.innerHTML='<div class="psMoveTitle">Ataques Recomendados:</div>'+
    row("Ágil",recommendation.fast)+row("Carregado 1",recommendation.charged[0])+
    row("Carregado 2",recommendation.charged[1])+(!hasLegacy?"":
