@@ -2076,7 +2076,7 @@ function detailMetricKey(event,kind){
 }
 /* LT247: Level/CP simulator uses the pinned PvPoke offline gamemaster and CPM
    only; it never guesses candy or stardust costs. It is not an API query. */
-let psCpTargetLevel=20,psCpTargetSpecies="",psCpTargetCp=1500;
+let psCpTargetLevel=20,psCpTargetSpecies="",psCpTargetCp=1500,psCpCompareIvText="";
 function psCpNormalize(value){
  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
   .toLowerCase().replace(/^mega\s+/,"").replace(/[^a-z0-9]+/g,"_")
@@ -2167,6 +2167,10 @@ function psCpControls(){
   '</div></label>'+
   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
+  '<div class="ps253Comparison"><label for="psCpCompareIv">Comparar outros IVs (A/D/S)'+
+  '<input id="psCpCompareIv" inputmode="numeric" maxlength="8" placeholder="0/15/15" '+
+  'value="'+h(psCpCompareIvText)+'" oninput="updatePvpCpSimulator()"></label>'+
+  '<div id="psCpCompareResult" class="ps253ComparisonInfo" aria-live="polite">Digite IVs para comparar.</div></div>'+
   '<div class="psCpTargetRow"><label>PC-alvo '+
   '<input id="psCpTargetCp" type="number" min="10" max="10000" step="1"'+
   ' value="'+psCpTargetCp+'" oninput="updatePvpCpSimulator()" '+
@@ -2220,6 +2224,8 @@ function updatePvpCpSimulator(){
  const targetNumber=Number(targetInput?.value??psCpTargetCp);
  if(Number.isInteger(targetNumber)&&targetNumber>=10&&targetNumber<=10000)
   psCpTargetCp=targetNumber;
+ const compareInput=document.getElementById("psCpCompareIv");
+ if(compareInput)psCpCompareIvText=String(compareInput.value||"").trim().slice(0,8);
  const forms=psCpVariants();
  const key=String(selection?.value||psCpTargetSpecies);
  const row=forms.find(x=>x[0]===key)||forms[0];
@@ -2241,6 +2247,27 @@ function updatePvpCpSimulator(){
   '<div class="psCpSimResultRow"><span>🟡 UL até 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
   '</span><strong>'+label(target)+'</strong></div>';
+ const compareOut=document.getElementById("psCpCompareResult");
+ const match=psCpCompareIvText.match(/^([0-9]|1[0-5])\/([0-9]|1[0-5])\/([0-9]|1[0-5])$/);
+ if(compareOut){
+  if(!psCpCompareIvText)compareOut.textContent="Digite IVs para comparar (ex.: 0/15/15).";
+  else if(!match)compareOut.textContent="IV inválido. Use A/D/S de 0 a 15.";
+  else{
+   const alt=match.slice(1).map(Number);
+   const rival=psCpAt(row,alt,psCpTargetLevel);
+   const little=psCpLeagueCeiling(row,alt,500);
+   const rivalGl=psCpLeagueCeiling(row,alt,1500);
+   const rivalUl=psCpLeagueCeiling(row,alt,2500);
+   const rivalLabel=x=>x?"PC "+x.cp+" · Nv. "+x.level.toFixed(1).replace(".",","):"Fora do limite";
+   compareOut.innerHTML='<div class="ps253Result"><b>IV '+h(psCpCompareIvText)+
+    '</b> · Nv. '+psCpTargetLevel.toFixed(1).replace(".",",")+
+    ' · PC '+(rival?.cp??"—")+' · PS '+(rival?.hp??"—")+
+    ' (diferença PC '+(rival?String(rival.cp-current.cp):"—")+')</div>'+
+    '<div class="ps253Result">⚪ LC 500 · '+rivalLabel(little)+'</div>'+
+    '<div class="ps253Result">🔵 GL 1500 · '+rivalLabel(rivalGl)+'</div>'+
+    '<div class="ps253Result">🟡 UL 2500 · '+rivalLabel(rivalUl)+'</div>';
+  }
+ }
  return true;
 }
 function renderDetailMetric(){
@@ -2309,6 +2336,7 @@ window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
 window.showDetails=(c,mode,watched)=>{
  const panel=document.getElementById("panel");
  const keepScroll=panel.scrollTop;
+ psLt253CurrentCard=c;
  const nextIdentity=evoIdentity(c);
  const changed=detailIdentity!==nextIdentity;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
@@ -2316,7 +2344,7 @@ window.showDetails=(c,mode,watched)=>{
   psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
    Math.round(Number(c.level)*2)/2:20;
   psCpTargetSpecies="";
-  psCpTargetCp=1500;
+  psCpTargetCp=1500;psCpCompareIvText="";
   closePvpReferenceInfo();
   closePvpRankAlternates();
   closeDetailMetric();
@@ -2499,6 +2527,14 @@ window.showDetails=(c,mode,watched)=>{
   item("Distância",c.distance)+
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
+ // Native P1/P2 coordinates caches are independent; this reuses only
+ // public, source-verified ranking projections for this exact live spawn.
+ const cached=window.PokeSearchLT253?.restore?.(c);
+ if(cached){
+  cached.sourceIndex=c.sourceIndex;
+  cached.name=c.name;cached.iv=c.iv;cached.cp=c.cp;
+  window.showEvolutionDetails(cached);
+ }
  updateCountdown();
  resizeEvolutionPanel();
  if(changed)panel.scrollTop=0;
