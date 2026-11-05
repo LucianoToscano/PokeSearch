@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT250 — 3 divisões legíveis e 0 de resultados vazio (05/11/2026; desenvolvimento)
+
+- **Erro comprovado:** após LT249 o cartão tinha dois círculos 🔵, texto pequeno, uma faixa/fundo único obscurecendo as três divisões e o 0 vazio deixou de aparecer. Causa do 🔵 duplicado: CSS legado `#rankLine[data-league]::before` continuava desenhando um círculo mesmo após o botão `[🔵 GL IV #1]` passar a incluí-lo.
+- **Correção visual:** remover segundo pseudo-ícone por override `content:none!important`; `#rankLine` passa a contêiner transparente, sem borda/fundo compartilhado, sem quebra de linha, altura 32px. **Exatamente três controles com borda própria**: `[🔵 GL IV #N]` abre Rank Classe; `[↳ Evolução]` abre Análise PvP e focaliza a espécie; `[RG #N]` abre Rank Geral. **Quarto botão sem fundo** ⚔️/🗡 abre golpes. Aumentar tamanho de texto e alvo: 27px; garantir IV e RG inteiros, nome do Pokémon central elástico, sem encobrir espada. `RG —` desativado quando não confirmado (incluindo projeção Mega).
+- **Outras formas:** remover botão `+N` extra do resumo para preservar as três divisões; alternativas continuam na Análise PvP e no título do botão da evolução. Não apagar cálculo nem classificação real.
+- **Contador restaurado:** `dock.html` exibe número `0` para zero resultados: se o contador está habilitado, no indicador da Pokébola; caso contrário, `#empty` centralizado logo abaixo do ícone. Não exibir duas cópias; nas fases de busca/erro, indicar `…`/`!`. Aplicável P1/P2, sem movimentar a posição manual nem alterar filtros.
+- **Arquivos:** `app/src/main/assets/detail.html`, `dock.html`, `release_notes.json`, teste `app/tests/lt250-three-readable-pvp-chips-single-league-badge-zero-count.test.js`; regressões LT244/LT245/LT247/LT249 adaptadas ao novo padrão. Ver [LT250_BARRA_PVP_TRES_DIVISOES_ZERO_20261105.md](LT250_BARRA_PVP_TRES_DIVISOES_ZERO_20261105.md).
+- **Versão candidata:** LT250 · `0.02.50` · versionCode `54454` · label `51254`, sobre a LT249 estável. Pendente QA, merge, APK oficial assinado, SHA-256, teste real P/M/G no Samsung.
+
 ## LT249 — evitar Top #1 falso e contador 0 flutuante (05/11/2026; desenvolvimento)
 
 - Print Samsung: Machop GL Top #1 mostrou `GL · Top #1 · Machop #611` apesar de Machop IV #611/RG #513, Machoke IV #2/RG #500 e Machamp IV #196/RG #253 na análise. Isso era **número do filtro solicitado**, não um Top 1 comprovado. Corrigir a faixa mostrando o rank verdadeiro mais próximo (`GL · IV #2 · ↳ Machoke · RG #500`), com tooltip indicando que Top #1 NÃO foi confirmado; apenas candidatos reais. Para evolução desligada, manter rank real do Pokémon atual.
