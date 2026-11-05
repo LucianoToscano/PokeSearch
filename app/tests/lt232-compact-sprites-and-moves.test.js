@@ -46,7 +46,7 @@ assert.equal(localized.charged[0].status,"elite");
 assert.equal(localized.charged[1].name,"Balanço Violento");
 assert.equal(localized.charged[1].type,"dark");
 assert.equal(moves.localizedMoves(localized,[{proto:"OTHER",moveId:2,type:1}],{}).fast.name,"—", "missing official translation cannot become guessed English");
-assert.match(detail,/Ataques Recomendados:/);
+assert.match(detail,/Golpes PvP recomendados/);
 assert.match(detail,/row\("Ágil",recommendation\.fast\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("C"\+\(i\+1\),m\)\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("C"\+\(i\+1\),m\)\)/,
