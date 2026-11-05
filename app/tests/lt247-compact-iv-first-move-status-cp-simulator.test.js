@@ -80,7 +80,7 @@ assert.equal(line.children[1].textContent,"Sableye");
 assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
 assert.ok(inline.includes('const isMega=/^mega\\s+/i.test(featured)'));
 assert.ok(inline.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'));
-assert.ok(inline.includes("isMega?'Ataques da forma base · Mega projetada'"));
+assert.ok(inline.includes("isMega?'Megaedição · Ataques recomendados'"));
 assert.ok(inline.includes('const hasRank=/(?:Rank Classe:|IV) #\\d+/'));
 const gm=fs.readFileSync(path.join(base,"pvpoke-iv-gamemaster.js"),"utf8");
 const win={};new Function("window",gm)(win);
