@@ -37,7 +37,7 @@ assert.match(detail,/#rankLine\[data-league="ul"\]::before\{background:#e8b927\}
 assert.match(detail,/#rankLine\[data-league="ml"\]::before\{background:#a36ce8\}/);
 assert.match(detail,/#rankLine\[data-league\]::before\{width:7px;height:7px/);
 assert.match(detail,/renderRankOneMoves/);
-assert.match(detail,/if\(!\/(?:Rank Classe:|IV) #1/);
+assert.ok(detail.includes('if(!/(?:Rank Classe:|IV) #1'),'Elite moves only for exact class rank #1');
 assert.match(detail,/currentRankSpecies=best\.name/);
 assert.match(detail,/pvp_rank_moves\.js/);
 // A verified PvPoke snapshot must classify Elite and Legacy separately.
