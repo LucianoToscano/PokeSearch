@@ -1817,32 +1817,9 @@ function setRankLineLabel(rankLine,label){
    rankLine.appendChild(badge);
   }
  }
- // Keep the compact bar strictly three data areas + the sword:
- // additional candidates are already represented in the full PvP analysis.
- // Preserve the optional +N comparison via the expanded analysis UI instead
- // of squeezing it between RG and the attacks action.
- if(false&&otherChoices.length&&typeof document.createElement==="function"&&
-    typeof rankLine.appendChild==="function"){
-  const more=document.createElement("button");
-  more.type="button";more.className="psRankMore";
-  more.textContent="+"+otherChoices.length;
-  more.title=otherChoices.length+" outra(s) forma(s) com bons IVs";
-  more.setAttribute?.("aria-label","Ver "+otherChoices.length+" outras formas PvP");
-  more.setAttribute?.("aria-controls","psRankAlternates");
-  more.setAttribute?.("aria-expanded","false");
-  more.onclick=event=>togglePvpRankAlternates(event,more,otherChoices,activeRankLeague);
-  rankLine.appendChild(more);
- }
- if(best.kind==="reference"&&typeof rankLine.appendChild==="function"){
-  const info=document.createElement("button");
-  info.type="button";
-  info.className="evoInfoBtn";
-  info.textContent="ⓘ";
-  info.setAttribute("aria-label","Explicar IV projetado para a evolução");
-  info.setAttribute("aria-expanded","false");
-  info.onclick=event=>togglePvpReferenceInfo(event,info);
-  rankLine.appendChild(info);
- }
+ // Do not add +N or reference-info buttons to the compact strip:
+ // the complete PvP analysis already lists alternative evolutions/forms
+ // and the projection explanation, keeping this strip at EXACTLY 4 targets.
  const own=candidates.find(x=>x.kind==="current");
  rankLine.title="Rank dos IVs de "+best.name+" na "+
   (activeRankLeague==="gl"?"Grande Liga":"Ultra Liga")+
@@ -2046,7 +2023,7 @@ function psCpControls(){
  if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
   psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Simulador PC / Nível · família completa</div>'+
+  '<div class="psCpSimTitle">Evoluções · PC / Nível</div>'+
   '<div class="psCpSimFields"><label>Forma'+
   '<div class="psCpFormStepper"><button type="button" onclick="stepPvpCpForm(-1)"'+
   ' aria-label="Forma anterior" title="Forma anterior">‹</button>'+
