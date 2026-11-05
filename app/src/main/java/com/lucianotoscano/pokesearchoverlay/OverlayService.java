@@ -753,6 +753,14 @@ public class OverlayService extends Service {
     private String alertsMode="off"; // off / on / silent, separate from favorite opt-in
     private String sort="site"; // Follow the ten results returned by the site, not an inverted local despawn sort.
     private long lastAlertAt=0L;
+    // LT240: local, per-Pokébola bounded TOP PvP notifications, opt-in only.
+    private long lastTopPvpAlertAt=0L;
+    private final java.util.LinkedHashMap<String,Long> topPvpAlertHistory=
+        new java.util.LinkedHashMap<String,Long>(128,0.75f,true){
+            @Override protected boolean removeEldestEntry(java.util.Map.Entry<String,Long> e){
+                return size()>128;
+            }
+        };
     private final java.util.Set<String> knownSpawns=new java.util.HashSet<>();
     // Only a freshly accepted API/DOM result generation may be rechecked when
     // the global Favorites list changes. Persisted/stale cards never notify.
@@ -5188,6 +5196,69 @@ public class OverlayService extends Service {
                 group+" · "+(systemBlocked?
                     "preferência salva; libere as notificações no Android":label),
                 android.widget.Toast.LENGTH_SHORT).show();
+        }
+        // OFF by default. These opt-in preferences belong to P1/P2 separately.
+        @JavascriptInterface public int getTopPvpAlertLevel(){
+            int value=overlayPrefs().getInt("topPvpAlertLevel",0);
+            return value==1||value==5||value==10?value:0;
+        }
+        @JavascriptInterface public void setTopPvpAlertLevel(int level){
+            if(level!=0&&level!=1&&level!=5&&level!=10)return;
+            handler.post(()->{
+                overlayPrefs().edit().putInt("topPvpAlertLevel",level).apply();
+                update();
+            });
+        }
+        @JavascriptInterface public void emitTopPvpAlerts(String payload){
+            if(payload==null||payload.length()>12000)return;
+            handler.post(()->{
+                int threshold=overlayPrefs().getInt("topPvpAlertLevel",0);
+                if(threshold!=1&&threshold!=5&&threshold!=10)return;
+                if("off".equals(alertsMode)||!alerts||
+                    !WatchAlerts.permissionGranted(OverlayService.this))return;
+                long now=System.currentTimeMillis();
+                if(now-lastTopPvpAlertAt<20000L)return;
+                try{
+                    JSONArray candidates=new JSONArray(payload);
+                    JSONArray current=new JSONArray(results);
+                    for(int i=0;i<Math.min(candidates.length(),10);i++){
+                        JSONObject candidate=candidates.optJSONObject(i);
+                        if(candidate==null)continue;
+                        int rank=candidate.optInt("rank",0),index=candidate.optInt("sourceIndex",-1);
+                        String league=candidate.optString("league","");
+                        String kind=candidate.optString("kind","");
+                        String name=candidate.optString("name","");
+                        String iv=candidate.optString("iv","");
+                        if(rank<1||rank>threshold||index<0||
+                           !("gl".equals(league)||"ul".equals(league)||"ml".equals(league))||
+                           !("Normal".equals(kind)||"Evolução".equals(kind)||"Mega".equals(kind))||
+                           !iv.matches("(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])/(?:[0-9]|1[0-5])"))continue;
+                        for(int j=0;j<Math.min(current.length(),10);j++){
+                            JSONObject card=current.optJSONObject(j);
+                            if(card==null||card.optInt("sourceIndex",-1)!=index||
+                               !iv.equals(card.optString("iv",""))||
+                               !verifiedTargetCriteria(card))continue;
+                            long expiry=card.optLong("expiresAtMs",0L);
+                            if(expiry<=now||expiry>now+24L*60*60*1000L)continue;
+                            String key=spawnKey(card)+"|"+league+"|"+kind;
+                            if(topPvpAlertHistory.getOrDefault(key,0L)>now)continue;
+                            String label=kind.equals("Mega")?"Mega projetada":
+                                kind.equals("Evolução")?"Evolução projetada":"Forma atual";
+                            String title="⚔️ TOP "+rank+" · "+league.toUpperCase(java.util.Locale.ROOT);
+                            String info=card.optString("name","Pokémon")+" · "+name+" · "+label+
+                                " · IV "+iv+" · Posição #"+rank;
+                            if(sendGeneralNotification(title,info,
+                                  NEXT_GENERAL_ALERT_ID.updateAndGet(x->x>=43999?33000:x+1))){
+                                topPvpAlertHistory.put(key,expiry);
+                                lastTopPvpAlertAt=now;
+                            }
+                            return;
+                        }
+                    }
+                }catch(org.json.JSONException e){
+                    recordFailure("interpretar TOP PvP",e);
+                }
+            });
         }
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
