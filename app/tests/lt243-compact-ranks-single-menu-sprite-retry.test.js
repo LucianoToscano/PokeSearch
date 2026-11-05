@@ -29,8 +29,8 @@ assert.ok(secondary.includes("extends OverlayService"));
 assert.ok(secondary.includes("isSecondaryOverlay(){return true;}"));
 // Exact-image recovery is bounded, local to current sprite, and cannot return
 // a different species or costume when verified bytes are absent.
-assert.ok(dock.includes("img.dataset.psSpriteManaged"));
-assert.ok(dock.includes("img.dataset.psSpriteRecovered"));
+assert.ok(dock.includes("spriteState.psSpriteManaged"));
+assert.ok(dock.includes("spriteState.psSpriteRecovered"));
 assert.ok(dock.includes("engine?.bundledExactForArt?.(card,art)"));
 assert.ok(dock.includes("setTimeout(attachSpriteFeedback,1800)"));
 assert.ok(dock.includes("setTimeout(attachSpriteFeedback,4800)"));
