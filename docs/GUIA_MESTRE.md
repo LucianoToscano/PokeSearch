@@ -1,15 +1,20 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT237 — Atualizações automáticas no Wi-Fi (04/11/2026, QA)
+## LT237 OFICIAL — 0.02.37 / versionCode 54441 — LT236 cumulativa publicada (05/11/2026)
 
-**Status: código em branch, sem merge/publicação/instalação confirmados neste registro.** A versão pública estável continua **LT233 (0.02.33 / 54437)** até confirmação posterior em GitHub `releases/latest`. A LT236 (Pokébola 2 sem VIP e rankings Mega) já foi mesclada em main, porém ainda não está em APK público. A candidata cumulativa LT237 / `0.02.37` / `54441` requer build e release oficial assinada. Nunca confundir código da branch/PR com atualização recebida pelo app.
+**Estado confirmado:** release estável [v0.02.37-54441](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.37-54441), publicada em 2026-11-05T03:16:32Z (00:16:32 America/Fortaleza), retornada por `releases/latest`, draft=false e prerelease=false. O proprietário autorizou concluir o pedido LT236 pela LT237 cumulativa. LT236 não teve release separada; suas correções estão incluídas na LT237. Instalação e homologação física Samsung permanecem pendentes.
 
-- **Branch:** `feature/lt237-updates-automatic-wifi-20261104`. `GitHubUpdateCenter`: consulta ao GitHub Releases aprovada e periódica, pré-download em rede não tarifada habilitado por padrão, cancelamento ao perder Wi-Fi, verificação SHA-256/assinatura/pacote/versão e cache privado com limpeza de APKs antigos; UI exibe `pronta para instalar` e aviso nativo dedicado. `MainActivity`: chave `Baixar atualizações automaticamente no Wi-Fi`. `AndroidManifest`: `ACCESS_NETWORK_STATE`.
-- **Limite Android:** instalação de APK exige ação de confirmação oficial do usuário; não há instalação silenciosa e nem alterações na assinatura. P1/P2 preservadas, sem mudança de suas preferências ou permissões de jogo.
-- **QA preparado:** `app/tests/lt237-automatic-app-updates.test.js`, compilação Android e regressões da PR ainda devem ser comprovadas por CI. **Nenhum APK LT237 foi criado, assinado, publicado ou testado no Samsung neste registro.**
-- **Manual:** [LT237_ATUALIZACAO_AUTOMATICA_WIFI_20261104.md](LT237_ATUALIZACAO_AUTOMATICA_WIFI_20261104.md).
+- **Fonte exata do APK:** `061fdfa678ac25fbd65c3783cf9c0be02e4d71bc`, confirmada em `SOURCE_COMMIT.txt` do artefato. Commits documentais posteriores não alteram essa proveniência.
+- **Workflow oficial:** [Actions #41960200682](https://github.com/LucianoToscano/PokeSearch/actions/runs/41960200682), completed/success, ambiente `official-updates`. Testes Node/OTA, geração de assets, testes Gradle/compilação release, assinatura, publicação e verificação pública concluídos. Segredos permaneceram no GitHub Actions.
+- **APK:** [PokeSearch-v0.02.37-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.37-54441/PokeSearch-v0.02.37-LT.apk), **28.125.033 bytes**, SHA-256 `954572ce0f21d6e90e8ac665d73389e2d9b0682127c215ba02ded6d7b3097dd2`. Download público verificado independentemente: hash igual ao digest GitHub e ao APK do artefato; `aapt` confirma pacote `com.lucianotoscano.pokesearch`, versionName `0.02.37`, versionCode `54441`, sem marcador application-debuggable.
+- **Assinatura:** `apksigner verify --verbose --print-certs` no APK público retornou Verifies e v2=true; certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, permanente e igual ao esperado.
+- **Artefato:** [PokeSearch-LT237-Signed-Verified #13384577758](https://github.com/LucianoToscano/PokeSearch/actions/runs/41960200682/artifacts/13384577758), ZIP 25.946.695 bytes, SHA-256 `d8fb21a80649fbbaa745dc896728c0c8ef66373102ce8705d34cd676b54b1ec2` calculado após download, igual ao digest GitHub. Extração concluída; APK interno, SHA256SUMS e SOURCE_COMMIT conferidos. Relatórios de pacote e assinatura incluídos. Espelho Drive LT237 não realizado nesta verificação.
+- **Conteúdo cumulativo:** Pokébola 2 livre de VIP e projeções PvP das 60 Megaformas da LT236, além de pré-download automático em Wi-Fi não tarifado, cache privado e verificações de hash/assinatura/pacote/versão. P1/P2 e preferências preservadas.
+- **Distribuição:** disponível ao atualizador do aplicativo via GitHub Releases/latest. Android exige confirmação para instalar; não afirmar instalação em aparelhos nem homologação Samsung. [Manual LT237](LT237_ATUALIZACAO_AUTOMATICA_WIFI_20261104.md).
 
-## LT236 — Integração concluída, distribuição oficial pendente (04/11/2026)
+## LT236 — Histórico de integração (04/11/2026); distribuída cumulativamente na LT237
+
+**Atualização 05/11/2026:** pendências de publicação descritas abaixo são históricas. Conteúdo publicado na LT237 oficial conforme evidências acima; não existe release LT236 separada.
 
 **Estado operacional auditado: MERGE CONCLUÍDO / RELEASE AINDA NÃO PUBLICADA.** O código principal do PokeSearch já contém os dois ajustes pedidos. A última versão estável disponibilizada pelo atualizador continua **LT233 / `0.02.33` / `54437`**, tag `v0.02.33-54437`, até publicação verificável de nova release. **Não afirmar envio ao app enquanto `releases/latest` continuar LT233.**
 
