@@ -805,6 +805,24 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  font-weight:650;min-height:20px;line-height:20px}
 #movesPopover .psAvailableMoveList{max-height:130px;overflow-y:auto;
  overscroll-behavior:contain;padding-top:4px}
+/* LT249: one row, four individually tappable elements; real Mega artwork. */
+#rankLine{flex-wrap:nowrap!important;white-space:nowrap!important;gap:2px!important;
+ overflow:hidden!important;align-items:center!important}
+#rankLine .psLeagueIv{font-size:9px!important;flex:0 0 auto;white-space:nowrap!important;
+ min-width:0;padding:2px 3px!important}
+#rankLine .psCompactSpecies{display:inline-flex!important;align-items:center;
+ justify-content:center;padding:1px 2px!important;margin:0!important;
+ border:0;background:transparent;color:#e8f2fc;min-width:0;max-width:none;
+ flex:1 1 auto;white-space:nowrap;font:700 10px/1.2 Roboto,Arial,sans-serif;
+ cursor:pointer;overflow:hidden;text-overflow:ellipsis!important;touch-action:manipulation}
+#rankLine .psCompactMegaEmblem{width:11px;height:11px;max-width:11px;
+ object-fit:contain;margin-left:2px;flex:0 0 11px;pointer-events:none}
+#rankLine .psLeagueIv:focus-visible,#rankLine .psCompactSpecies:focus-visible{
+ outline:1px solid #b6dbff;outline-offset:1px}
+#evoBody .evoLine.psSelectedEvo{outline:1px solid #7fc1ff9e;outline-offset:-1px;
+ background:#537da022}
+#evoBody .psTopMegaIcon{display:inline-block;width:11px;height:11px;
+ vertical-align:middle;object-fit:contain}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1288,6 +1306,29 @@ function openPvpRankExplorer(event,button){
   forms:pvpFormsForLeague(data.psLeague||"gl")
  });
 }
+/* LT249: [↳ form] opens the EXISTING analysis and focuses its row.
+   No new window or false rank is created. */
+function openPvpAnalysisForSpecies(event,button){
+ event?.preventDefault?.();event?.stopPropagation?.();
+ const section=document.getElementById("evolutions");
+ const body=document.getElementById("evoBody");
+ if(!section||!body||section.hidden)return false;
+ if(!evolutionExpanded)toggleEvolutionDetails();
+ const species=String(button?.dataset?.psName||"").toLowerCase();
+ const league=String(button?.dataset?.psLeague||activeRankLeague||"gl");
+ if(typeof body.querySelectorAll==="function"){
+  const rows=[...body.querySelectorAll(".evoLine")];
+  const exact=rows.find(x=>String(x.dataset?.psLeague||"")===league&&
+   String(x.dataset?.psName||"").toLowerCase()===species);
+  if(exact){
+   for(const r of rows)r.classList?.remove?.("psSelectedEvo");
+   exact.classList?.add?.("psSelectedEvo");
+   exact.scrollIntoView?.({block:"nearest",inline:"nearest"});
+  }
+ }
+ resizeEvolutionPanel();
+ return true;
+}
 function evolutionRow(x,first){
  const psLeague=String(window.psRankRenderLeague||"gl");
  if(!x||typeof x!=="object")return "";
@@ -1318,7 +1359,8 @@ function evolutionRow(x,first){
  // Reference rows are theory-only: do not assert costume evolution legality.
  if(!isReference&&x.eligible===false&&hasClass)state="Não elegível no nível atual";
  else if(!isReference&&x.eligible===null&&hasClass)state="Elegibilidade não verificada";
- return '<div class="evoLine'+(first?' isCurrent':'')+
+ return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
+  '" class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+(isMega?' isMega':'')+
   (hasClass&&rank===1&&x.eligible!==false?' best':'')+
   '"><div class="evoSummary">'+
@@ -1519,15 +1561,18 @@ function setRankLineLabel(rankLine,label){
 }
 
  let forcedMegaPreview=false;
- if(activeRankLeague!=="gl"&&activeRankLeague!=="ul"){
-  // Other search modes still deserve a compact GL/UL badge when a verified
-  // Top #1 opportunity (including a separate Mega preview) exists.
-  const highlight=(payload.leagues||[]).find(x=>
-   (x?.league==="gl"||x?.league==="ul")&&
-   (Array.isArray(x.megas)?x.megas:[]).some(m=>
-    m?.megaProjection===true&&Number(m.rank)===1));
+ if(!["gl","ul","ml"].includes(activeRankLeague)){
+  // In ordinary IV/100% mode, automatically surface a verified Top #1
+  // (GL -> UL -> ML). Prioritize actual species over Mega projections.
+  const leagues=(payload.leagues||[]).filter(l=>
+   ["gl","ul","ml"].includes(l?.league));
+  const real=leagues.find(l=>[l.own,...(Array.isArray(l.evolutions)?l.evolutions:[])]
+   .some(x=>x&&Number(x.rank)===1&&x.eligible!==false));
+  const mega=leagues.find(l=>(l.megas||[]).some(m=>
+   m?.megaProjection===true&&Number(m.rank)===1));
+  const highlight=real||mega;
   if(!highlight)return false;
-  forcedMegaPreview=true;
+  forcedMegaPreview=!real&&!!mega;
   activeRankLeague=highlight.league;
  }
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
@@ -1783,8 +1828,11 @@ window.showEvolutionDetails=payload=>{
   unique.add(key);return true;
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
-  notices.map(x=>'<span class="psTopPvpTag">🔔 '+h(x.league.toUpperCase())+' #'+x.rank+
-   ' '+h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
+  notices.map(x=>'<span class="psTopPvpTag">'+
+   ({gl:"🔵",ul:"🟡",ml:"🟣"}[x.league]||"🔔")+' '+
+   h(x.league.toUpperCase())+' #'+x.rank+' '+
+   (x.mega?'<img class="psTopMegaIcon" src="mega_evolution_icon.svg" alt="Mega Evolução"> ':'')+
+   h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
