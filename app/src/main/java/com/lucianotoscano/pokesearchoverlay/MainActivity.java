@@ -1076,7 +1076,9 @@ public class MainActivity extends Activity {
             light?Color.argb(240,248,252,255):Color.argb(233,24,35,49),
             11,light?Color.rgb(183,201,214):Color.rgb(69,91,112)));
         holder.addView(card,new LinearLayout.LayoutParams(-1,-2));
-        TextView title=homeText("PokeSearch · versão "+info.versionName+" disponível",12,primary,true);
+        boolean ready=GitHubUpdateCenter.hasReadyApk(this,info);
+        TextView title=homeText("PokeSearch · versão "+info.versionName+
+            (ready?" pronta para instalar":" disponível"),12,primary,true);
         card.addView(title);
         if(!info.notes.isEmpty()){
             TextView subtitle=homeText(info.notes,10,secondary,false);
@@ -1087,7 +1089,7 @@ public class MainActivity extends Activity {
         LinearLayout actions=new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
         card.addView(actions);
-        TextView download=homeText("⬇ Baixar atualização",11,
+        TextView download=homeText(ready?"✓ Instalar atualização":"⬇ Baixar atualização",11,
             light?Color.rgb(11,80,75):Color.rgb(172,246,215),true);
         download.setPadding(d(7),d(8),d(7),d(8));
         actions.addView(download,new LinearLayout.LayoutParams(0,-2,1));
@@ -3144,6 +3146,14 @@ public class MainActivity extends Activity {
         // The refresh icon re-runs Search using only the selected source.
         settingCheckbox(body,prefs,"authorizedApiQaOptIn",
             "Pesquisa direta pela API (padrão ON; desmarque para usar DOM)",true);
+        // LT237: Wi-Fi-only automatic prefetch, always requiring Android install confirmation.
+        CheckBox autoUpdate=new CheckBox(this);
+        autoUpdate.setText("Baixar atualizações automaticamente no Wi-Fi");
+        autoUpdate.setTextColor(Color.WHITE);
+        autoUpdate.setChecked(GitHubUpdateCenter.autoDownloadEnabled(this));
+        autoUpdate.setOnCheckedChangeListener((button,enabled)->
+            GitHubUpdateCenter.setAutoDownload(this,enabled));
+        body.addView(autoUpdate);
         // LT79: separate update notifications and explicit user-driven check.
         CheckBox updateAlerts=new CheckBox(this);
         updateAlerts.setText("Avisar quando sair nova atualização do PokeSearch");
