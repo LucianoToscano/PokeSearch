@@ -1316,13 +1316,21 @@ function renderRankOneMoves(){
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
  popover.hidden=true;popover.textContent="";
- if(!/(?:Rank Classe:|IV) #1(?!\d)/.test(rankLine.textContent||""))return;
+ const hasRank=/(?:Rank Classe:|IV) #\d+/.test(rankLine.textContent||"");
+ const megaTop=window.psRankContext?.leagues?.some?.(x=>x?.league===activeRankLeague&&
+   x?.megas?.some?.(m=>m?.megaProjection===true&&Number(m.rank)===1));
+ if(!hasRank&&!megaTop)return;
  const league=(rankLine.dataset&&rankLine.dataset.league)||"";
- const species=currentRankSpecies||watchName;
+ const featured=currentRankSpecies||watchName;
+ const isMega=/^mega\s+/i.test(featured)||/\(mega\)/i.test(featured);
+ // PvPoke does not simulate Mega GBL usage. Use its base species learnset,
+ // clearly labelled, never claim that the Mega was PvPoke recommended.
+ const species=isMega?featured.replace(/^mega\s+/i,"")
+  .replace(/\s*\(mega\)\s*/i,"").trim():featured;
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";btn.textContent="⚔️";
- btn.title="Golpes ágeis, carregados e situação da MT de Elite";
- btn.setAttribute("aria-label","Golpes PvP e MT Elite");
+ btn.title="Consultar golpes: ⚔️ contém legado / 🗡 sem legado após verificação";
+ btn.setAttribute("aria-label","Consultar golpes recomendados e necessidade de MT Elite");
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
   const show=popover.hidden;popover.hidden=!show;
@@ -1341,6 +1349,7 @@ function renderRankOneMoves(){
     (shown?'<div class="psMoveRow"><span class="psMoveLabel">Capturado:</span>'+
       '<span class="psMoveName">'+h(shown)+'</span></div>':
       '<div class="psMoveLegend">Golpes ainda não disponíveis nesta fonte.</div>');
+   btn.title="⚔️ Status de legado não verificado; somente golpes capturados";
    resizeEvolutionPanel();return;
   }
   // Only an explicit typed PT-BR move record can be displayed; never fall
@@ -1362,7 +1371,8 @@ function renderRankOneMoves(){
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
      (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+'</div>';
   };
-  if(recommendation.availableOnly===true){
+  if(recommendation.availableOnly===true){ 
+   btn.title="⚔️ Lista de golpes possíveis; sem combinação PvP recomendada";
    const fast=(recommendation.fastMoves||[]).slice(0,8);
    const charged=(recommendation.chargedMoves||[]).slice(0,12);
    if(!fast.length&&!charged.length){
@@ -1379,10 +1389,25 @@ function renderRankOneMoves(){
    }
    resizeEvolutionPanel();return;
   }
-  popover.innerHTML='<div class="psMoveTitle">Ataques Recomendados:</div>'+
-   row("Ágil",recommendation.fast)+row("Carregado 1",recommendation.charged[0])+
-   row("Carregado 2",recommendation.charged[1])+(!hasLegacy?"":
-   '<div class="psMoveLegend">💠 Ataque Legado</div>');
+  const fastRow=row("Ágil",recommendation.fast);
+  const chargedRows=(recommendation.charged||[]).slice(0,2)
+    .map((m,i)=>row("Carregado "+(i+1),m)).join("");
+  // Status should describe the verified recommended set, not captured moves.
+  const verified=[recommendation.fast,...(recommendation.charged||[])].filter(Boolean);
+  const complete=verified.length>=2&&verified.every(m=>
+   m.status==="normal"||m.status==="elite"||m.status==="legacy");
+  if(complete){
+   btn.textContent=hasLegacy?"⚔️":"🗡";
+   btn.title=hasLegacy?"⚔️ Conjunto recomendado exige pelo menos um golpe legado":
+    "🗡 Conjunto PvP recomendado sem golpe legado";
+   btn.setAttribute?.("aria-label",btn.title);
+  }
+  popover.innerHTML='<div class="psMoveTitle">'+
+   (isMega?'Ataques da forma base · Mega projetada':'Ataques Recomendados:')+
+   '</div>'+fastRow+chargedRows+
+   (hasLegacy?'<div class="psMoveLegend">⚔️ Pelo menos um golpe legado / Elite</div>':
+    complete?'<div class="psMoveLegend">🗡 Conjunto sem golpes legados</div>':
+    '<div class="psMoveLegend">Status de legado não verificado</div>');
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
