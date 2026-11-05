@@ -10,13 +10,13 @@ const importer=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearc
 const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
 for(const x of detail.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))
  new vm.Script(x[1]);
-// The screenshot: the verified 🗡 reverts to ⚔️ whenever a detail card re-renders.
+// The screenshot: the verified ⚡ reverts to ⚔️ whenever a detail card re-renders.
 assert.ok(detail.includes("const psVerifiedMoveIcons=new Map()"));
 assert.ok(detail.includes("const statusKey=league+"));
 assert.ok(detail.includes("const prior=psVerifiedMoveIcons.get(statusKey)"));
 assert.ok(detail.includes("psVerifiedMoveIcons.set(statusKey"));
-assert.ok(detail.includes('btn.textContent=hasLegacy?"⚔️":"🗡"'));
-assert.ok(detail.includes('btn.textContent=prior?.icon||"🗡"'));
+assert.ok(detail.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'));
+assert.ok(detail.includes('btn.textContent=prior?.icon||"⚡"'));
 assert.ok(detail.includes('btn.title=prior?.title'));
 // Fallback-only Litwick is not an optimized PvP moveset, and must not fill
 // the overlay card with 6–20 move rows unless the user expands the details.
