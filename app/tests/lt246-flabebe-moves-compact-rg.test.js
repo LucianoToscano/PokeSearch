@@ -71,7 +71,8 @@ assert.equal(missingTranslation.chargedMoves.length,0);
 const snippet=detail.slice(detail.indexOf("function updateVisiblePvPRank(payload){"),
  detail.indexOf("window.showEvolutionDetails=payload=>"));
 assert.ok(snippet.includes("withOverall"),"RG-primary logic still present");
-assert.ok(snippet.includes('badge.textContent="RG #"+leagueOverall'));
+assert.ok(snippet.includes('badge.textContent="RG #"+best.overallRank'),
+ "verified species RG is still shown without inventing ranks");
 assert.ok(snippet.includes('iv.textContent="IV #"+best.rank'));
 assert.ok(detail.includes('badge.dataset.psKind="overall"'),
  "RG button must open the independently verified species ranking");
