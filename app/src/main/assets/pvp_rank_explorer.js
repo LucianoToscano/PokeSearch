@@ -114,6 +114,7 @@
  }
  function formsFor(s){
   if(s?.kind!=="class"||!Array.isArray(s.forms)||s.selectedIv<0)return[];
+  if(Array.isArray(s.formCache))return s.formCache;
   const seen=new Set(),output=[];
   for(const entry of s.forms){
    if(!entry||typeof entry.name!=="string"||seen.has(n(entry.name)))continue;
@@ -129,7 +130,8 @@
     referenceOnly:entry.referenceOnly===true});
    if(output.length>=24)break;
   }
-  return output.sort((a,b)=>a.rank-b.rank);
+  s.formCache=output.sort((a,b)=>a.rank-b.rank);
+  return s.formCache;
  }
  function formsHtml(s){
   if(s.kind!=="class"||!s.showForms)return "";
@@ -338,6 +340,11 @@
    "#psRankExplorer .psrActions button{flex:1 1 auto;white-space:nowrap}",
    "#psRankExplorer .psrStatus{color:#aadfc0;min-height:12px;margin-top:3px;font-size:9px}",
    "#psRankExplorer .psrFooter{margin:4px 0 0;font-size:8px;color:#a8b4c5;overflow-wrap:anywhere}",
+   "#psRankExplorer .psrSearch input{flex:1 1 74px;min-width:72px;max-width:100%;box-sizing:border-box;border:1px solid #ffffff40;border-radius:6px;background:#ffffff12;color:#fff;font:inherit;padding:6px 5px;min-height:29px}",
+   "#psRankExplorer .psrRoleGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:5px 0}",
+   "#psRankExplorer .psrRoleGrid span{background:#ffffff14;border-radius:5px;padding:4px;white-space:nowrap}",
+   "@media(max-width:230px){#psRankExplorer{font-size:9px;padding:5px}#psRankExplorer table{font-size:8.3px}#psRankExplorer th,#psRankExplorer td{padding:5px 1px}#psRankExplorer button{padding:4px 3px}#psRankExplorer .psrPager{font-size:8.2px}}",
+   "@media(min-width:330px){#psRankExplorer{font-size:11px}#psRankExplorer table{font-size:10.5px}#psRankExplorer button,#psRankExplorer select{min-height:32px}}",
    "#evoBody button.psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}"
   ].join("\n");
   document.head.appendChild(css);
