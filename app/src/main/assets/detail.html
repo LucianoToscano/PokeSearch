@@ -806,8 +806,56 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #movesPopover .psAvailableMoveList{max-height:130px;overflow-y:auto;
  overscroll-behavior:contain;padding-top:4px}
 /* LT249: one row, four individually tappable elements; real Mega artwork. */
-#rankLine{flex-wrap:nowrap!important;white-space:nowrap!important;gap:2px!important;
- overflow:hidden!important;align-items:center!important}
+/* LT250 — rank strip is ONLY three visually distinct buttons plus one
+   attack icon. The legacy blue dot pseudo-element and enclosing glass slab
+   made the first emoji look doubled and reduced available touch space. */
+#rankLine{box-sizing:border-box!important;display:flex!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ gap:3px!important;align-items:stretch!important;flex-wrap:nowrap!important;
+ white-space:nowrap!important;overflow:hidden!important;
+ padding:1px 0!important;margin:3px 0 0!important;min-height:30px!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;color:#e9f4ff!important}
+#rankLine::before,#rankLine[data-league]::before{
+ display:none!important;content:none!important;width:0!important;
+ flex:none!important;margin:0!important}
+#rankLine .psLeagueIv,#rankLine .psCompactSpecies,
+#rankLine .psCompactOverall{box-sizing:border-box!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-height:28px!important;height:28px!important;margin:0!important;
+ padding:3px 5px!important;border:1px solid #aac6dc75!important;
+ border-radius:6px!important;background:#23364a80!important;
+ color:#e9f4ff!important;box-shadow:inset 0 1px 0 #ffffff15!important;
+ text-decoration:none!important;font:750 10px/1.15 Roboto,Arial,sans-serif!important;
+ text-shadow:0 1px 2px #000a;white-space:nowrap!important;cursor:pointer;
+ touch-action:manipulation}
+#rankLine .psLeagueIv{flex:0 1 auto!important;min-width:0!important;
+ max-width:43%!important;background:#19324ca6!important;
+ border-color:#76b7e480!important;overflow:hidden!important;text-overflow:ellipsis}
+#rankLine .psCompactSpecies{flex:1 1 0!important;min-width:0!important;
+ max-width:none!important;overflow:hidden!important;text-overflow:ellipsis!important;
+ font-size:10.5px!important}
+#rankLine .psCompactOverall{flex:0 0 auto!important;
+ padding:3px 4px!important;min-width:0!important;
+ color:#c8f4d9!important;border-color:#7ad6a783!important;
+ background:#1a443d8c!important}
+#rankLine .psMovesAction{box-sizing:border-box!important;
+ flex:0 0 28px!important;min-width:28px!important;max-width:28px!important;
+ width:28px!important;height:28px!important;margin:0!important;
+ border:1px solid #9ebdd66f!important;border-radius:6px!important;
+ background:#23364a80!important;box-shadow:inset 0 1px 0 #ffffff15!important;
+ font-size:16px!important;line-height:1!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important}
+#rankLine .psRankMore,#rankLine .psRankLeague{display:none!important}
+#rankLine .psCompactMegaEmblem{width:12px!important;height:12px!important;
+ flex:0 0 12px!important}
+@media(max-width:320px){
+ #rankLine{gap:2px!important}
+ #rankLine .psLeagueIv,#rankLine .psCompactSpecies,
+ #rankLine .psCompactOverall{font-size:9px!important;padding:2px 3px!important}
+ #rankLine .psMovesAction{flex-basis:26px!important;min-width:26px!important;
+ width:26px!important;max-width:26px!important}
+}
 #rankLine .psLeagueIv{font-size:9px!important;flex:0 0 auto;white-space:nowrap!important;
  min-width:0;padding:2px 3px!important}
 #rankLine .psCompactSpecies{display:inline-flex!important;align-items:center;
@@ -824,7 +872,40 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #evoBody .psTopMegaIcon{display:inline-block;width:11px;height:11px;
  vertical-align:middle;object-fit:contain}
 
-#psMetricPanel .psCpSimFields{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 24px!important}
+/* LT250 — the evolution selector and the half-level slider occupy separate
+   rows. Three columns squeezed Oddish's select to one character on Android. */
+#psMetricPanel{max-height:min(66vh,430px)!important;overflow-y:auto!important;
+ padding:8px!important;font:550 11.5px/1.35 Roboto,Arial,sans-serif!important}
+#psMetricPanel .psMetricHead{font-size:12px;gap:7px;margin-bottom:6px}
+#psMetricPanel .psMetricCurrent{font-size:11px;margin-bottom:6px}
+#psMetricPanel .psCpSimTitle{font-size:11px;margin-bottom:7px}
+#psMetricPanel .psCpSimFields{display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;gap:9px!important;
+ align-items:stretch!important}
+#psMetricPanel .psCpSimFields label{font-size:10.5px!important;gap:4px!important}
+#psMetricPanel .psCpFormStepper,#psMetricPanel .psCpLevelStepper{
+ display:flex!important;align-items:center!important;
+ gap:5px!important;min-width:0!important;width:100%!important}
+#psMetricPanel .psCpFormStepper select{box-sizing:border-box!important;
+ flex:1 1 auto!important;min-width:0!important;width:100%!important;
+ max-width:none!important;height:34px!important;font-size:12px!important;
+ text-overflow:ellipsis!important;padding:4px 6px!important}
+#psMetricPanel .psCpFormStepper button,
+#psMetricPanel .psCpLevelStepper button{box-sizing:border-box!important;
+ flex:0 0 30px!important;width:30px!important;min-width:30px!important;
+ height:34px!important;font-size:19px!important;line-height:29px!important}
+#psMetricPanel .psCpLevelStepper input[type=range]{
+ min-width:0!important;flex:1 1 auto!important;width:100%!important;
+ margin:0 2px!important;height:30px!important}
+#psMetricPanel #psCpLevelValue{justify-self:end;line-height:1;
+ margin-top:-6px;font-size:12px!important}
+#psMetricPanel .psCpSimResultRow{font-size:11px;padding:5px 0}
+#psMetricPanel .psCpSimResultRow strong{font-size:11px!important}
+#psMetricPanel .psCpTargetRow input{height:32px!important;font-size:12px!important}
+#psMetricPanel .psCpTargetRow button{min-height:32px!important;
+ font-size:11px!important;padding:6px 9px!important}
+#psMetricPanel .psCpSimFoot{font-size:10px!important;line-height:1.35}
+
 #psMetricPanel .psCpFormStepper,#psMetricPanel .psCpLevelStepper{
  display:flex;align-items:center;gap:2px;min-width:0}
 #psMetricPanel .psCpFormStepper select{flex:1 1 0;min-width:0;max-width:100%;
@@ -1736,7 +1817,11 @@ function setRankLineLabel(rankLine,label){
    rankLine.appendChild(badge);
   }
  }
- if(otherChoices.length&&typeof document.createElement==="function"&&
+ // Keep the compact bar strictly three data areas + the sword:
+ // additional candidates are already represented in the full PvP analysis.
+ // Preserve the optional +N comparison via the expanded analysis UI instead
+ // of squeezing it between RG and the attacks action.
+ if(false&&otherChoices.length&&typeof document.createElement==="function"&&
     typeof rankLine.appendChild==="function"){
   const more=document.createElement("button");
   more.type="button";more.className="psRankMore";
