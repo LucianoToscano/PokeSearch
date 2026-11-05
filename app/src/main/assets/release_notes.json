@@ -1551,6 +1551,29 @@
           "A instalação silenciosa sem confirmação do Android não é suportada. Teste físico no Samsung permanece pendente."
         ]
       }
+    },
+    {
+      "id": "lt238-pvp-rank-explorers-20261105",
+      "minVersionCode": 54442,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT238 — Exploradores de Rankings PvP",
+      "sections": {
+        "novidades": [
+          "Toque em Rank Classe para abrir as 4.096 combinações de IVs daquela forma e liga, com nível, PC e eficiência.",
+          "Toque em Rank Geral para consultar a classificação das espécies/formas da liga, incluindo análise das Megaformas disponíveis."
+        ],
+        "melhorias": [
+          "Lista paginada com acesso ao Top 1 e à posição dos IVs selecionados, com detalhes de Ataque, Defesa e HP.",
+          "As tabelas usam snapshots locais do PvPoke, sem novas chamadas à PoGoCoordinates e sem alterar resultados de busca.",
+          "Disponível no mesmo card de análise PvP nas duas Pokébolas."
+        ],
+        "correcoes": [
+          "Separação explícita de Rank Classe dos IVs e Rank Geral das espécies, sem confundir com filtros Top N."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico dos novos botões e rolagem no Samsung continua necessário após a instalação."
+        ]
+      }
     }
   ]
 }
