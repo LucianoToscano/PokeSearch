@@ -111,14 +111,15 @@
   table.insertAdjacentHTML("beforebegin",controls);
   const names=self.formNames||[];
   if(state.kind==="class"&&names.length&&self.ownedIv&&typeof window!=="undefined"){
-   const comparison=forms(window.POKESEARCH_PVP_IV_DATA,engine,state.league,self.ownedIv,names);
-   if(comparison.length){
-    const rows=comparison.map(x=>'<div>'+safe(x.name)+' · <b>#'+x.rank+
+   // Lazy: no 4096-IV computation for other forms before user requests it.
+   const comparison=self.formsExpanded?
+    forms(window.POKESEARCH_PVP_IV_DATA,engine,state.league,self.ownedIv,names):[];
+   const rows=comparison.map(x=>'<div>'+safe(x.name)+' · <b>#'+x.rank+
      '</b> · '+x.efficiency+'% · Nv. '+x.level+' · PC '+x.cp+
      (x.mega?' · projeção Mega':'')+'</div>').join("");
-    table.insertAdjacentHTML("afterend",'<details class="lt240Forms"><summary>Normal × Mega × Evoluções · '+
-     comparison.length+'</summary>'+rows+'</details>');
-   }
+   table.insertAdjacentHTML("afterend",'<div class="lt240Forms">'+
+    '<button type="button" data-lt240="forms">Normal × Mega × Evoluções '+(self.formsExpanded?'▴':'▾')+'</button>'+
+    (self.formsExpanded?(rows||'Não há formas adicionais verificadas.'):'')+'</div>');
   }
   if(state.kind==="overall"&&meta){
    const items=(list)=>list.map(p=>safe(String(p[0]).replace(/_/g," "))+
@@ -148,6 +149,11 @@
    };
    view.addEventListener("click",event=>{
     if(event.target.closest?.('button[data-lt240="search"]')){event.stopPropagation();action();}
+    else if(event.target.closest?.('button[data-lt240="forms"]')){
+     event.stopPropagation();
+     const current=engine.getState?.();
+     if(current){current.formsExpanded=!current.formsExpanded;engine.redraw?.();}
+    }
     else if(engine.getState?.()?.kind==="overall"){
      const tr=event.target.closest?.("tr[data-ps-row]");
      if(tr){engine.getState().overallDetailRank=Number(tr.dataset.psRow);engine.redraw?.();}
