@@ -7,7 +7,7 @@ const native=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearcho
 const code=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(code);new vm.Script(code);
 assert.ok(native.includes("DETAIL_DP=200"),"card 200dp width");
 assert.ok(native.includes("detailHeight=125"),"adaptive native start height unchanged");
-assert.ok(native.includes("Math.min(520,available)"),"full information can expand");
+assert.ok(native.includes("Math.min(available,heightDp+2)"),"full information can expand");
 assert.ok(html.includes("#major{justify-content:flex-start;justify-items:start}"),"IV PC Nv align left");
 assert.ok(html.includes("#major{grid-template-columns:65px 30px 24px;"),"stat widths unchanged");
 assert.ok(html.includes("#major .statTile{height:23px;min-height:23px;max-height:23px;"),"stat heights unchanged");
