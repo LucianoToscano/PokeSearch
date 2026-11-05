@@ -6769,6 +6769,7 @@ window.pvpEvolutionDetails=function(index){
   iv:String(card.iv||""),
   cp:String(card.cp??""),
   ivUnavailable:missingIv,
+  familyForms:pvpVerifiedCalculatorFamily(card),
   // Rank threshold belongs to this overlay's confirmed GL/UL search,
   // not to the IV rank of the unevolved Pokémon.
   searchLeague:typeof mode==="string"&&(mode==="gl"||mode==="ul")?mode:null,
@@ -6807,6 +6808,51 @@ window.pvpEvolutionDetails=function(index){
  return output;
 };
 
+/* LT249: Calculator can browse the whole verified family independently
+   of Top-N filtering, whether "include previous evolutions" is enabled, and
+   regardless of where the encounter was found. PvP rankings remain separate. */
+const pvpFamilyReverse=new Map();
+for(const [before,after] of PVP_EVO_LINKS){
+ const key=speciesKey(after);
+ if(!pvpFamilyReverse.has(key))pvpFamilyReverse.set(key,[]);
+ pvpFamilyReverse.get(key).push(before);
+}
+function pvpVerifiedCalculatorFamily(card){
+ if(!card||!PVP_IV_GAME_MASTER||!Array.isArray(PVP_IV_GAME_MASTER.pokemon))
+  return [];
+ const key=safePvpSpeciesKey(card);
+ if(!key||!ivSpeciesByName.get(key))return [];
+ // Do not claim a costume can evolve or mix a Shadow/regional form's stats
+ // with normal families. Species without normal identity keep their own row.
+ if(key.includes("(")||cosmeticPvpIdentity(card)){
+  const found=PVP_IV_GAME_MASTER.pokemon.find(x=>speciesKey(x[1])===key);
+  return found?[found[1]]:[];
+ }
+ const queue=[key],seen=new Set([key]);
+ const names=new Map(PVP_IV_GAME_MASTER.pokemon.filter(x=>
+  Array.isArray(x)&&x.length>=5&&
+  [x[2],x[3],x[4]].every(v=>Number.isFinite(v)&&v>0))
+   .map(x=>[speciesKey(x[1]),x[1]]));
+ while(queue.length&&seen.size<40){
+  const next=queue.shift();
+  const related=[...(pvpEvolutionGraph.get(next)||[]),
+   ...(pvpFamilyReverse.get(next)||[])];
+  for(const name of related){
+   const n=speciesKey(name);
+   if(seen.has(n)||!names.has(n))continue;
+   seen.add(n);queue.push(n);
+  }
+ }
+ const normal=[...seen].filter(k=>names.has(k)).map(k=>names.get(k));
+ const megas=[];
+ for(const member of normal){
+  for(const form of megaFormsByBase.get(speciesKey(member))||[]){
+   const exact=String(form.name||"");
+   if(names.has(speciesKey(exact))&&!megas.includes(exact))megas.push(exact);
+  }
+ }
+ return [...normal,...megas].slice(0,36);
+}
 // Country code comes ONLY from an explicit country suffix in a site location,
 // never inferred from GPS, state, region, coordinates or the phone locale.
 let locationCountryNames=null;
