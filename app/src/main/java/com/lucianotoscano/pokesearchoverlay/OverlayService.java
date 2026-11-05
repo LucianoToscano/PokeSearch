@@ -4167,6 +4167,48 @@ public class OverlayService extends Service {
             }
         });}
 
+        // LT239: only the local detail WebView invokes these opt-in, user-tap
+        // ranking exports. No capture coordinates, login tokens or provider calls.
+        @JavascriptInterface public void copyPvpRanking(String text){
+            handler.post(()->{
+                boolean ok=false;
+                try{
+                    if(text!=null && !text.isEmpty() && text.length()<=300000 &&
+                       text.indexOf('\0')<0 && detailRoot!=null &&
+                       detailRoot.getVisibility()==View.VISIBLE){
+                        ClipboardManager clipboard=(ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                        if(clipboard!=null){
+                            clipboard.setPrimaryClip(
+                                ClipData.newPlainText("PokeSearch Ranking PvP",text));
+                            ok=true;
+                        }
+                    }
+                }catch(Exception e){recordFailure("copiar classificação PvP",e);}
+                js(detailPanel,detailLoaded,
+                    "window.PokeSearchRankExplorer?.feedback("+ok+",'copy')");
+            });
+        }
+        @JavascriptInterface public void sharePvpRanking(String text){
+            handler.post(()->{
+                boolean ok=false;
+                try{
+                    if(text!=null && !text.isEmpty() && text.length()<=16000 &&
+                       text.indexOf('\0')<0 && detailRoot!=null &&
+                       detailRoot.getVisibility()==View.VISIBLE){
+                        Intent send=new Intent(Intent.ACTION_SEND);
+                        send.setType("text/plain");
+                        send.putExtra(Intent.EXTRA_TEXT,text);
+                        Intent chooser=Intent.createChooser(send,"Compartilhar ranking PvP");
+                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(chooser);
+                        ok=true;
+                    }
+                }catch(Exception e){recordFailure("compartilhar classificação PvP",e);}
+                js(detailPanel,detailLoaded,
+                    "window.PokeSearchRankExplorer?.feedback("+ok+",'share')");
+            });
+        }
+
         @JavascriptInterface public void prepareCaptureShare(int sourceIndex){
             handler.post(()->OverlayService.this.prepareCaptureShare(sourceIndex));
         }
