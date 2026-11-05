@@ -1519,3 +1519,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **APK QA2** `PokeSearch-LT197-QA2-0.01.97-54403.apk` de 29.254.823 bytes, versionCode `54403`, versionName `0.01.97`, SHA-256 `6910167b409bf8351a419b9d3a4a8fefd96f856388109ba515a4e4f6a0f92857`. APK Signature Scheme v2 **true**, certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, ZIP interno e `SHA256SUMS` conferidos.
 - [Drive QA2 APK + relatórios](https://drive.google.com/file/d/1AWtzgKmoOOv4k3nX2V4vC68E1JdNzMrW/view), 26.913.421 bytes, SHA-256 `ef8ed4687d1575810105318f0dea4d417f36f6894e1b42f63e43ce151f7c0cdc` (ZIP íntegro), pasta PokeSearch_App com permissão compartilhada.
 - A LT197 **não foi mesclada à main e não é atualização pública/OTA**: LT196 permanece latest. Não há confirmação em captura de tela ao vivo após a correção; precisa de novo teste no Samsung e inspeção do diagnóstico `A`.
+
+
+## LT238 — Exploradores de Rank Classe e Rank Geral (05/11/2026)
+
+- Branch de desenvolvimento: `feature/lt238-clickable-pvp-rank-explorers-20261105`. Status inicial: código em QA, não confundir com release enviada ao app.
+- Botões `Rank Classe #` e `Rank Geral #` clicáveis dentro da Análise PvP, incluindo formas Mega e evoluções. Rank Classe: 4.096 IVs paginados, A/D/S, nível, PC, eficiência e detalhe ATK/DEF/HP. Rank Geral: lista das espécies/formas GL/UL/ML na ordem do snapshot PvPoke, com realce da espécie escolhida.
+- Implementação: `app/src/main/assets/pvp_rank_explorer.js`, `detail.html`; inclui apenas snapshots locais `pvpoke-iv-gamemaster.js` e `pvpoke-overall-ranks.js` já empacotados. `scripts/build_ota_pack.py` foi habilitado a incluir o novo asset em pacote OTA assinado. Sem nova API, credenciais ou mudança nos filtros.
+- A janela de ranking abre dentro do card arrastável existente, com lista rolável própria; não foi adicionada janela Android independente. O card inteiro continua reposicionável.
+- Testes: `app/tests/lt238-clickable-rank-explorers.test.js` e suíte geral. Pendente aprovação CI, instalação física em Samsung, verificação P1/P2 e publicação em novo versionCode monotônico com assinatura permanente.
+- Registro técnico: [LT238_RANK_EXPLORERS_IV_GERAL_20261105.md](LT238_RANK_EXPLORERS_IV_GERAL_20261105.md). O texto de QA não é prova de merge, APK nem atualização distribuída.
