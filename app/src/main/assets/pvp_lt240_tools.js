@@ -134,22 +134,23 @@
    view.lt240Bound=true;
    const action=()=>{
     const input=view.querySelector("#lt240Query");
-    if(!input||!state)return;
-    state.searchQuery=input.value;
-    const found=search(state.rows,state.kind,input.value);
+    const current=engine.getState?.();
+    if(!input||!current)return;
+    current.searchQuery=input.value;
+    const found=search(current.rows,current.kind,input.value);
     if(found){
-     state.status="Encontrado: "+found.reason;
+     current.status="Encontrado: "+found.reason;
      if(typeof engine.goToRank==="function")engine.goToRank(found.rank);
     }else{
-     state.status="Não encontrado. Use IV A/D/S, #rank ou eficiência.";
+     current.status="Não encontrado. Use IV A/D/S, #rank ou eficiência.";
      if(typeof engine.redraw==="function")engine.redraw();
     }
    };
    view.addEventListener("click",event=>{
     if(event.target.closest?.('button[data-lt240="search"]')){event.stopPropagation();action();}
-    else if(state?.kind==="overall"){
+    else if(engine.getState?.()?.kind==="overall"){
      const tr=event.target.closest?.("tr[data-ps-row]");
-     if(tr){state.overallDetailRank=Number(tr.dataset.psRow);engine.redraw?.();}
+     if(tr){engine.getState().overallDetailRank=Number(tr.dataset.psRow);engine.redraw?.();}
     }
    });
    view.addEventListener("keydown",event=>{
