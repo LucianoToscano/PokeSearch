@@ -4710,6 +4710,34 @@ body.result-window:not(.visual-results-tiles) .spriteStage::after {
   content:none!important;
   display:none!important;
 }
+
+/* LT254 — SINGLE TOOLBAR OWNER (Samsung overlay regression):
+ * Popup WebView shares .controls-window with the real toolbar, and later
+ * orientation/popup-above CSS re-enables #quickMenuList with display:grid!
+ * A SECOND native window then paints cloned toolbar icons behind popup glass.
+ * Three ID selectors intentionally override all older display:grid rules.
+ * Only the toolbar WebView paints the ribbon. Popup paints ONLY #choices. */
+body.popup-window.controls-window #shell #menu{
+  height:0!important;min-height:0!important;max-height:0!important;
+  padding:0!important;margin:0!important;overflow:visible!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;
+}
+body.popup-window.controls-window #shell #menu #quickMenuList,
+body.popup-window.controls-window #shell #menu #quickHead,
+body.popup-window.controls-window #shell #menu #controls{
+  display:none!important;visibility:hidden!important;pointer-events:none!important;
+  height:0!important;min-height:0!important;max-height:0!important;
+}
+body.popup-window.controls-window #shell #gear,
+body.popup-window.controls-window #shell #resultHeader,
+body.popup-window.controls-window #shell #spawns,
+body.popup-window.controls-window #shell #empty,
+body.popup-window.controls-window #shell #collapse{
+  display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+body.popup-window.controls-window #shell #menu #choices{
+  visibility:visible!important;pointer-events:auto!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
