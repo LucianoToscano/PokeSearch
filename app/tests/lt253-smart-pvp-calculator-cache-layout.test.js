@@ -87,7 +87,7 @@ const master={moves:[{moveId:"TACKLE",power:3,energyGain:2},
 assert.deepEqual(attacks.moveStats(master,"TACKLE"),{power:3,energyGain:2});
 assert.deepEqual(attacks.moveStats(master,"HYPER_BEAM"),{power:150,energyCost:80});
 assert.deepEqual(attacks.moveStats(master,"UNKNOWN"),{});
-assert.ok(detail.includes("Capturados: "));
+assert.ok(detail.includes("recomendados ≠ capturados"));
 assert.ok(detail.includes("recomendação não é ataque capturado"));
 assert.ok(detail.includes('move.localeVerified!==false'));
 // No account data, coords or extra network request in the derived-rank cache.
