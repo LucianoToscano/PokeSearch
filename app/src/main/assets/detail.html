@@ -1704,10 +1704,6 @@ window.showDetails=(c,mode,watched)=>{
  // A/D/S requires three verified attributes. If the source exposes only a
  // legitimate IV percentage, show ONLY that percentage, never invented IVs.
  const ivStyle=showPct?' style="--ps-iv-color:'+ivVisual.color+'"':"";
- const metricAttr=kind=>' role="button" tabindex="0" class="psMetricTap"'+
-  ' title="'+(kind==="iv"?"Abrir tabela de 4.096 combinações IV":kind==="cp"?
-  "Comparar PC atual e projetado por liga":"Comparar nível atual e projetado por liga")+'"'+
-  ' onclick="openDetailMetric(\''+kind+'\')" onkeydown="detailMetricKey(event,\''+kind+'\')"';
  const statTile=(label,value,kind)=>'<div class="statTile psMetricTap"'+
   ' role="button" tabindex="0" title="'+(kind==="cp"?"Comparar PC por liga":"Comparar níveis por liga")+'"'+
   ' onclick="openDetailMetric(\''+kind+'\')" onkeydown="detailMetricKey(event,\''+kind+'\')">'+
