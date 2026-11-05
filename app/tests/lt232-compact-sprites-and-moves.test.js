@@ -48,7 +48,7 @@ assert.equal(localized.charged[1].type,"dark");
 assert.equal(moves.localizedMoves(localized,[{proto:"OTHER",moveId:2,type:1}],{}).fast.name,"—", "missing official translation cannot become guessed English");
 assert.match(detail,/Ataques Recomendados:/);
 assert.match(detail,/row\("Ágil",recommendation\.fast\)/);
-assert.match(detail,/row\("Carregado 1",recommendation\.charged\[0\]\)/);
+assert.match(detail,/map\(\(m,i\)=>row\("Carregado "\+\(i\+1\),m\)\)/);
 assert.match(detail,/row\("Carregado 2",recommendation\.charged\[1\]\)/);
 assert.match(detail,/💠 Ataque Legado/);
 assert.match(detail,/font-size:8px;vertical-align:baseline/);
