@@ -1347,7 +1347,8 @@ function renderRankOneMoves(){
  // PvPoke does not simulate Mega GBL usage. Use its base species learnset,
  // clearly labelled, never claim that the Mega was PvPoke recommended.
  const species=isMega?featured.replace(/^mega\s+/i,"")
-  .replace(/\s*\(mega\)\s*/i,"").trim():featured;
+  .replace(/\s*\(mega(?: [XY])?\)\s*/i,"")
+  .replace(/\s+[XY]$/i,"").trim():featured;
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";btn.textContent="⚔️";
  btn.title="Consultar golpes: ⚔️ contém legado / 🗡 sem legado após verificação";
@@ -1806,7 +1807,10 @@ function psCpVariants(){
  for(const raw of names){
   let norm=psCpNormalize(raw);
   if(!norm)continue;
-  if(/\bmega\b/i.test(String(raw))&&!norm.endsWith("_mega"))norm+="_mega";
+  if(/^mega\s+/i.test(String(raw))){
+   norm=/_([xy])$/.test(norm)?
+    norm.replace(/_([xy])$/,"_mega_$1"):norm+"_mega";
+  }
   const row=byId.get(norm)||byId.get(norm.replace(/_mega$/,"")+"_mega");
   if(!row||ids.has(row[0]))continue;
   if(!row.slice(2,5).every(x=>Number.isFinite(x)&&x>0))continue;
