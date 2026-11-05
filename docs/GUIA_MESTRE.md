@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT240 OFICIAL — 0.02.40 / versionCode 54444 — 05/11/2026
+
+- **Estado comprovado:** release oficial estável [v0.02.40-54444](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.40-54444), publicada em 2026-11-05T05:41:36Z, `draft=false`, `prerelease=false`, atual em `releases/latest`.
+- **Código/merge:** [PR #215](https://github.com/LucianoToscano/PokeSearch/pull/215) mesclada com SHA `14c790e840120dec7f05c53b32aa70e54c59eb55`; solicitação oficial `release/official-request.json` SHA `04cc3eff94cd9947be10d4e675a85876ee055d41` para `0.02.40 / 54444 / label 51244`, anterior LT239 v0.02.39-54443.
+- **Recursos entregues:** pesquisa direta IV/#rank/% no explorador; comparação dos mesmos IVs entre Normal/Mega/evoluções verificadas; destaque Top 1–5 e prioridade nas notificações do usuário já autorizadas (sem canal novo); Rank Geral por função (Abertura/Finalização/Troca/Carregadores) com consulta sob demanda de golpes e confrontos; estilos responsivos para P/M/G e cache de IV limitado a 12 espécies/ligas; mesma base de código para as Pokébolas 1/2.
+- **Fontes e limites:** snapshots de IV e Geral offline ainda são de **19/10/2026**, e os dados de categorias/golpes de **03/11/2026** em consulta sob demanda. Não declarar atualização integral automática offline nem elegibilidade de Mega na Liga GO.
+- **Testes:** Node QA, regressão LT169, QA core LT211, compilação Java LT62, OTA LT173, beta privado assinado todos `success` no commit da PR. Teste novo `app/tests/lt240-pvp-advanced-radar.test.js` cobre IV, Mega, fonte e lógica P1/P2. QA físico Samsung **pendente**, não afirmar instalação remota.
+- **Publicação oficial:** [GitHub Actions #41975318002](https://github.com/LucianoToscano/PokeSearch/actions/runs/41975318002), `completed/success`, testes, build assinado protegido, `Validate APK and signer`, publicação e verificação de SHA com `success`.
+- **APK:** [PokeSearch-v0.02.40-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.40-54444/PokeSearch-v0.02.40-LT.apk), 28.140.411 bytes, SHA-256 público `2eade56796c20a7323c3bd61439172d7a64d3e9e370b7373f3ec66e612dc96b2`, asset `uploaded`. Artefato de CI `PokeSearch-v0.02.40-54444-Signed-Verified` #13390844650, 25.962.404 bytes, ZIP SHA-256 `280f1d3cc38e6c9d51df5b96d6e100041b83fe4ad6df1a4b1a87dd4253cf2e02`.
+- **Distribuição:** disponível ao atualizador LT237+ por `releases/latest`; instalação requer confirmação do Android.
+- **Documento detalhado:** [LT240_RADAR_PVP_AVANCADO_20261105.md](LT240_RADAR_PVP_AVANCADO_20261105.md). Qualquer registro anterior `LT240 — desenvolvimento` é histórico e fica superado por este.
+
 ## LT240 — Radar PvP avançado (05/11/2026, desenvolvimento)
 
 - Base: LT239 · 0.02.39 · 54443, mantendo 4.096 IVs, comparação, CSV e compartilhamento sem regressões. LT240 proposta: 0.02.40 / 54444 / label 51244.
