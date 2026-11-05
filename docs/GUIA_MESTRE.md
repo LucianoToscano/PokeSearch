@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT234 QA — Pokébola 2 sem gate VIP/Premium (04/11/2026)
+
+**Estado:** código em revisão na branch `fix/lt234-p2-free-no-vip-20261104`, base `eac2e15706e7d64712912905faefb3bca248d54d` (LT233 documental). **Sem APK novo, sem merge e sem release desta etapa.** A última versão pública continua **LT233 / 0.02.33 / 54437** até consulta contrária ao GitHub.
+
+**Mudanças propostas e codificadas em QA:** botão P2 sem rótulo Premium; ativação direta da P2 sem login/licença Google, compra ou lease remoto; removidas verificações de VIP em `MainActivity` e `OverlayService` (inclusive timers de revogação e parada no logout Premium). `PremiumAccess.permitted` deixa explícito que P1 e P2 podem iniciar gratuitamente, mantendo recursos administrativos Premium separados. Request code de permissão Android da P2 separado (`103`) do da P1 (`101`) para evitar iniciar Pokébola errada. Preservados `prefs`/`prefs_secondary`, seleção de contas/treinadores, proteção global `AppAvailability`, integridade, API/quotas, sprites, PvP e Doce Raro.
+
+**Testes atualizados:** contratos legados LT134 e LT139; novo `app/tests/lt234-secondary-free-activation.test.js`, cobrindo ativação sem VIP, isolamento P1/P2, logout e retorno da permissão. **CI e Samsung: ainda não homologados neste registro.** PR/merge, testes com SHA, assinatura, versão, GitHub Release e Drive só devem ser preenchidos após evidências reais e autorização de publicação.
+
+**Relatório técnico:** [LT234_P2_ATIVACAO_SEM_VIP_QA_20261104.md](LT234_P2_ATIVACAO_SEM_VIP_QA_20261104.md).
+
 ## LT233 OFICIAL — 0.02.33 / versionCode 54437 — Halloween, sprites, PvP, coordenadas (03/11/2026)
 
 **ESTADO EXATO (confirmado em 03/11/2026):** GitHub `releases/latest` retornou a release pública estável [v0.02.33-54437](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.33-54437), publicada em **2026-11-03T15:01:26Z**, draft=false e prerelease=false. Esta é a versão disponível pelo canal oficial OTA do aplicativo; a instalação no Samsung e o resultado visual em aparelho **não foram comprovados nesta etapa**. Não confundir versão publicada com versão instalada.
