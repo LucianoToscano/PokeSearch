@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT251 — seletor de evolução PC/Nível legível (05/11/2026; desenvolvimento)
+
+- Após LT250, a faixa PvP e o zero foram corrigidos, mas o print do Oddish ainda expôs **Forma = “B...”** no simulador em vez de Bellossom, devido ao grid 3 colunas da LT249.
+- Corrigido só o CSS do simulador em `app/src/main/assets/detail.html`: a linha Forma ocupa a largura inteira; Nível e número ficam na linha seguinte, setas de 30px, seletor 34px/fonte 12px, textos e controles maiores. Painel rolável com limite responsivo `min(68vh,430px)`.
+- Não tocar no cálculo, espécie, evolução/mega documentada, CP-alvo, IVs, rank Classe, RG, golpes, filtros, local, P1/P2 ou contador vazio. **LT250 permanece preservada integralmente.**
+- Teste `app/tests/lt251-readable-cp-selector-oddish.test.js`, documentação [LT251_SIMULADOR_EVOLUCOES_LEGIVEL_20261105.md](LT251_SIMULADOR_EVOLUCOES_LEGIVEL_20261105.md).
+- Candidata **LT251 / 0.02.51 / versionCode 54455 / label 51255**. Requer seis checks verdes, merge, assinatura, release pública e digest conferido antes de afirmar publicação. Inspeção física Samsung P/M/G ainda pendente.
+
 ## LT250 — 3 divisões legíveis e 0 de resultados vazio (05/11/2026; desenvolvimento)
 
 - **Erro comprovado:** após LT249 o cartão tinha dois círculos 🔵, texto pequeno, uma faixa/fundo único obscurecendo as três divisões e o 0 vazio deixou de aparecer. Causa do 🔵 duplicado: CSS legado `#rankLine[data-league]::before` continuava desenhando um círculo mesmo após o botão `[🔵 GL IV #1]` passar a incluí-lo.
