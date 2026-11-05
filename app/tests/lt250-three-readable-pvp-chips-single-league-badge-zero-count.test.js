@@ -25,7 +25,7 @@ assert.ok(detail.includes('nameChip.title+=" · "+otherChoices.length+'),
 assert.ok(detail.includes('iv.textContent=leagueIcon+" "+label+" IV #"+best.rank'));
 assert.ok(detail.includes('nameChip.onclick=event=>openPvpAnalysisForSpecies(event,nameChip)'));
 assert.ok(detail.includes('badge.onclick=event=>openPvpRankExplorer(event,badge)'));
-assert.ok(detail.includes('btn.onclick=async()=>'),"⚔️/🗡 remains independent");
+assert.ok(detail.includes('btn.onclick=async()=>'),"⚔️/⚡ remains independent");
 for(const badge of ['gl:"🔵"','ul:"🟡"','ml:"🟣"'])assert.ok(detail.includes(badge));
 assert.ok(detail.includes('emblem.src="mega_evolution_icon.svg"'));
 // Zero must remain visible when the provider reports no cards. If the
