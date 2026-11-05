@@ -31,3 +31,20 @@
 - O código deste documento é candidato em PR. **Não é prova de publicação**. Testes automatizados e renderizações headless não comprovam interações multitouch, permissão de overlay, fonte real de sprites ou instalação sobre a LT252.
 - O PokeSearch não busca dados de treinador nem altera o site para simular classificações; recomendações dependem dos snapshots PvPoke já integrados.
 - Registrar aqui o SHA final de merge, URLs de workflows, SHA-256 do APK e versão oficial **apenas depois que existirem**.
+
+## Evidências de CI verificadas para o código de 05/11/2026
+
+Revisão de código testada: `56aa09050973cafc1a7659c7dbab367e867d5aed`.
+
+| Verificação | Resultado | Evidência |
+| --- | --- | --- |
+| Regressão Node LT169 completa (inclui teste LT253) | **success** | [Actions #42033366306](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366306) |
+| PokeSearch Node QA | **success** | [Actions #42033366071](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366071) |
+| QA core Android / JS | **success** | [Actions #42033366261](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366261) |
+| Compilação Java Android sem APK | **success** | [Actions #42033366199](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366199) |
+| Validação OTA/assinatura Android | **success** | [Actions #42033366088](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366088) |
+| Chromium screenshot smoke, 200/240/300 px | **success** | [Actions #42033366196](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366196), [artefato #13417087131](https://github.com/LucianoToscano/PokeSearch/actions/runs/42033366196/artifacts/13417087131) |
+
+O novo teste `lt253-integrated-privacy-pvp-smart-ui.test.js` foi executado pela regressão completa com mensagem de aprovação. Medições visuais sem overflow horizontal: largura 200 px — seletor 94 px e slider **98 px**; largura 240 px — seletor 134 px e slider **138 px**; largura 300 px — seletor 194 px e slider **198 px**. As três versões têm `scrollWidth === clientWidth` e conteúdo vertical rolável.
+
+**Pendente de homologação física:** abrir as duas Pokébolas no Samsung, executar P/M/G, conferir cliques, rolagem, ícones, sprites, sobreposição e troca da LT252; registrar imagem real e consentimento de publicação. A build beta usa assinatura de teste isolada e **não substitui a assinatura permanente**. Este registro não autoriza publicar automaticamente a LT253.
