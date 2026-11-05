@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "enabled": false,
+  "version": "0.02.37",
+  "code": 54441,
+  "label": 51241,
+  "previous_tag": "v0.02.37-54441",
+  "qa_max_code": 54441,
+  "release_notes": "Solicitação desativada: LT237 já publicada e verificada. Preencher a próxima versão autorizada antes de habilitar."
+}
