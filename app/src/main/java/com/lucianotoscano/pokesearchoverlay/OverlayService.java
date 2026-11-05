@@ -1132,7 +1132,7 @@ public class OverlayService extends Service {
                 (confirmedSubmittedFiltersGeneration==requestGeneration&&
                  submittedSearchGeneration==requestGeneration&&
                  !searchInProgress&&!resultsStale&&
-                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
+                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+","+smartPvpAlertLimit()+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(popupPanel,popupLoaded,data);
@@ -3275,11 +3275,16 @@ public class OverlayService extends Service {
     // LT240: only source-confirmed PvP league results may receive a Top badge.
     // We reuse the existing opt-in general/favorite notification channels:
     // no additional noisy notification, API request or cooldown.
+    /** LT253: user opt-in per P1/P2 overlay, default OFF. */
+    private int smartPvpAlertLimit(){
+        int limit=overlayPrefs().getInt("smartPvpAlertLimitV1",0);
+        return limit==1||limit==5||limit==10||limit==50?limit:0;
+    }
     private int verifiedTopPvpRank(JSONObject card,boolean leagueConfirmed){
         if(card==null||!leagueConfirmed||!("gl".equals(mode)||"ul".equals(mode))||
            !verifiedTargetCriteria(card))return 0;
         String value=card.optString("rank","").replace("#","").trim();
-        if(!value.matches("[1-5]"))return 0;
+        if(!value.matches("(?:[1-9]|[1-4][0-9]|50)"))return 0;
         return Integer.parseInt(value);
     }
     private String encounterAlertTitle(JSONObject card){
@@ -3382,6 +3387,7 @@ public class OverlayService extends Service {
         java.util.LinkedHashMap<String,String> pendingFavoriteSpecies=new java.util.LinkedHashMap<>();
         java.util.Set<String> wanted=WatchAlerts.watched(this);
         long now=System.currentTimeMillis();
+        final int smartRankLimit=smartPvpAlertLimit();
         recentSpawnExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
         successfullyNotifiedGeneralSpawns.entrySet().removeIf(entry->entry.getValue()<=now);
         recentFavoriteAlertExpiries.entrySet().removeIf(entry->entry.getValue()<=now);
@@ -3407,6 +3413,9 @@ public class OverlayService extends Service {
                 (currentTopRank==0||candidateTopRank<currentTopRank);
             if((firstNew.isEmpty()||higherPriority) &&
                 successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
+                (smartRankLimit==0||!leagueConfirmed||
+                    !("gl".equals(mode)||"ul".equals(mode))||
+                    (candidateTopRank>=1&&candidateTopRank<=smartRankLimit)) &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
                 verifiedTargetCriteria(c)){
                 firstNew=c.optString("name","Pokémon");
@@ -5218,6 +5227,11 @@ public class OverlayService extends Service {
                     "preferência salva; libere as notificações no Android":label),
                 android.widget.Toast.LENGTH_SHORT).show();
         }
+        @JavascriptInterface public void setSmartPvpAlertLimit(int value){handler.post(()->{
+            if(value!=0&&value!=1&&value!=5&&value!=10&&value!=50)return;
+            overlayPrefs().edit().putInt("smartPvpAlertLimitV1",value).apply();
+            update();
+        });}
         @JavascriptInterface public void setAlertMode(String value){handler.post(()->{
             if(!"on".equals(value)&&!"silent".equals(value)&&!"off".equals(value))return;
             alertsMode=value;alerts=!"off".equals(value);
