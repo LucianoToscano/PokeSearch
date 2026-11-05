@@ -1033,6 +1033,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  min-width:0!important;font-size:8.5px!important;line-height:1.2!important;white-space:normal!important}
 #movesPopover .psMoveLegend{font-size:8.5px!important;line-height:1.25!important;margin:2px 0!important}
 #movesPopover .psMoveTitle{font-size:10.5px!important;margin-bottom:3px!important}
+
+/* LT254: Mega is a form/ranking projection, never a separate charged attack. */
+#movesPopover .psMegaMoveIcon{display:inline-block!important;width:12px!important;
+ height:12px!important;vertical-align:-1px!important;margin-right:4px!important}
+#movesPopover .psMegaMoveContext{font-size:9px!important;line-height:1.25!important;
+ color:#c2ddd1!important;overflow-wrap:anywhere!important;margin:3px 0 5px!important}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1626,7 +1632,8 @@ function renderRankOneMoves(){
  const prior=psVerifiedMoveIcons.get(statusKey);
  btn.textContent=prior?.icon||"⚡";
  btn.title=prior?.title||
-  "Consultar golpes; ícone neutro até verificar legado e recomendação";
+  (isMega?"Consultar recomendação PvP da Megaedição; golpes aprendidos na forma normal":
+   "Consultar golpes; ícone neutro até verificar legado e recomendação");
  btn.setAttribute("aria-label",btn.title);
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
@@ -1647,8 +1654,8 @@ function renderRankOneMoves(){
    const shown=String(currentCardMoves||"").trim();
    popover.innerHTML=isMega?
     '<div class="psMoveTitle">Megaedição indisponível</div>'+
-    '<div class="psMoveLegend">Sem recomendação Mega verificada. '+
-    'Os golpes pertencem à mesma espécie, mas o conjunto ideal da Mega pode mudar.</div>':
+    '<div class="psMoveLegend">Mega Evolução não aprende golpes exclusivos. '+
+    'Os golpes são do '+h(species)+' normal; recomendação Mega não verificada.</div>':
     '<div class="psMoveTitle">Sem recomendação PvPoke</div>'+
     (shown?'<div class="psMoveRow"><span class="psMoveLabel">Capturado:</span>'+
       '<span class="psMoveName">'+h(shown)+'</span></div>':
@@ -1723,10 +1730,15 @@ function renderRankOneMoves(){
    psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
   }
   popover.innerHTML='<div class="psMoveTitle">'+
-   (isMega?'Megaedição · Ataques recomendados':'Ataques Recomendados:')+
-   '</div>'+fastRow+chargedRows+
+   (isMega?'<img class="psMegaMoveIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">'+
+    'Mega '+h(species)+' · PvP':'Golpes PvP recomendados')+
+   '</div>'+
+   (isMega?'<div class="psMoveLegend psMegaMoveContext">'+
+    'Mesmos golpes do '+h(species)+' normal · avaliação Megaedição.</div>':"")+
+   fastRow+chargedRows+
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
-    (isMega?' · Mega ≠ GBL':' · recomendados ≠ capturados')+'</div>'+
+    (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
+      ' · recomendados ≠ capturados')+'</div>'+
    (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado/Elite confirmado</div>':
     complete?'<div class="psMoveLegend">⚡ Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">Status de legado não verificado</div>');
