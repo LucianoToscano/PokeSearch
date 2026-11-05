@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT254 — menu único e golpes Mega esclarecidos (05/11/2026, EM QA, não publicada)
+
+- **Base oficial mantida:** LT253 `0.02.53/54457`. Candidata em [PR #233](https://github.com/LucianoToscano/PokeSearch/pull/233), branch `fix/lt254-compact-calculator-moves-20261105` (**rascunho, sem merge**).
+- **Sete novas capturas Samsung:** menu da barra aparece repetido ao abrir Modos, Filtros e Localização, inclusive consulta de cooldown; cartão de Mega Sableye usa expressão que confunde golpes normais com uma suposta categoria de ataques Mega.
+- **Causa dos menus duplicados:** dois WebViews `dock.html?controls=1` e `dock.html?controls=1&popup=1`. CSS posterior `body.controls-window.visual-menu-horizontal #quickMenuList{display:grid!important}` vencera a regra que escondia a barra na WebView popup. O bloco CSS final **SINGLE TOOLBAR OWNER** oculta a barra secundária com três IDs sem afetar `#choices`, suas ações nem a posição dos menus.
+- **Golpes Mega:** `detail.html` preserva `lookupMega` de snapshot Megaedição (não os rankings normais) e explica que os golpes são aprendidos pela forma base. O título passa a `[Mega] Mega Sableye · PvP` com `Mesmos golpes do Sableye normal · avaliação Megaedição`. Não há golpe exclusivo da Mega ou MT extra inventados; ícone ⚔️ apenas após legado confirmado.
+- **QA:** [LT254_QA_CALCULADORA_GOLPES_COMPACTOS_20261105.md](LT254_QA_CALCULADORA_GOLPES_COMPACTOS_20261105.md); testes `lt254-popup-single-owner-mega-attacks.test.js`, `lt254-mega-edition-attacks-separated.test.js`, headless real dock popup em quatro cenários e telas P/M/G. Primeiros sete gates verdes do commit `6b8c243afb12fde9de04e2dad9157ad05afaba94`, incluindo [capturas de popup #42045581024](https://github.com/LucianoToscano/PokeSearch/actions/runs/42045581024).
+- **Bloqueio obrigatório:** inspecionar de fato no Samsung P/M/G, P1/P2, menus aberto acima/abaixo, modo H/V, movimento/click, opacity e ataques Mega; não lançar APK oficial ou solicitar `release/official-request.json` enquanto isso não estiver validado.
+
+
 ## LT254 — distinção de ataques Megaedição e UI compacta (05/11/2026 — QA, NÃO PUBLICADO)
 
 - Branch `fix/lt254-compact-calculator-moves-20261105`, [PR #233 (draft)](https://github.com/LucianoToscano/PokeSearch/pull/233). **Nunca duplicar versionCode 54457, que pertence à LT253 estável**; não há merge, APK oficial ou OTA LT254.
