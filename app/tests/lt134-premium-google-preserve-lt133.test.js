@@ -13,6 +13,8 @@ const stats=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/Firebas
 const chat=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/CommunityScrapbookOnline.java");
 const capture=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/CaptureChatCard.java");
 const sprite=read("app/src/main/assets/sprite_offline.js");
+const toggle=ui.slice(ui.indexOf("private void toggleSecondaryOverlay(){"),ui.indexOf("private void logoutPremiumAccount("));
+const premiumLogout=ui.slice(ui.indexOf("private void logoutPremiumAccount("),ui.indexOf("/** Account detail uses"));
 const checks=[
  ["LT133 chat remains in MainActivity",ui.includes("CommunityScrapbookOnline")&&ui.includes("communityHomePanel")],
  ["LT133 compact capture-card implementation preserved",capture.includes("class CaptureChatCard")],
@@ -46,18 +48,24 @@ const checks=[
    ui.includes('stopService(new Intent(this,OverlayService.class));')&&
    ui.includes('stopService(new Intent(this,SecondaryOverlayService.class));')&&
    ui.includes('applyAppAvailability(AppAvailability.cached(this))')],
- ["Running overlays poll remote administrator policy, with no Premium required for P1",
+ ["Both overlays use the same app-availability guard without VIP lease",
    overlay.includes('if(!AppAvailability.isAllowed(this)){stopSelf();return;}')&&
    overlay.includes('AppAvailability.refresh(OverlayService.this,state->')&&
-   access.includes('if(!secondary||!controlled())return true;')],
+   !overlay.includes('PremiumAccess.permitted(')&&
+   !overlay.includes('PremiumAccess.verify(')&&
+   access.includes('static synchronized boolean permitted(boolean secondary)')&&
+   access.includes('// LT234: ativação de P1/P2 não depende de conta Google ou licença Premium.')],
  ["P1 remains free without server verification",!ui.includes("if(PremiumAccess.controlled()&&!PremiumAccess.permitted(false))")&&
-   ui.includes("private void startOverlay()")&&
-   access.includes("if(!secondary||!controlled())return true;")],
- ["P2 gate, login and redemption on protected QA",ui.includes("PremiumGoogleLogin.isGoogleSignedIn(this)")&&
-  ui.includes("PremiumPurchaseDialog.show(this")],
- ["Only P2 server lease checked before overlay WebView",overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled()&&!PremiumAccess.permitted(true))")&&
-  overlay.indexOf("PremiumAccess.permitted(true)")<overlay.indexOf("newWebsite();")&&
-  overlay.includes("if(isSecondaryOverlay()&&PremiumAccess.controlled())")],
+   ui.includes("private void startOverlay()")],
+ ["P2 toggles freely without Premium login, purchase or verification",
+   toggle.includes('startSecondaryOverlayAuthorized();')&&
+   !toggle.includes('PremiumAccess.')&&
+   !toggle.includes('PremiumGoogleLogin.')&&
+   !toggle.includes('PremiumPurchaseDialog.')],
+ ["P2 starts without a Premium lease and preserves its secondary service",
+   ui.includes('new Intent(this,SecondaryOverlayService.class)')&&
+   !ui.includes('if(PremiumAccess.controlled()&&!PremiumAccess.permitted(true))return;')&&
+   !overlay.includes('if(isSecondaryOverlay()&&PremiumAccess.controlled())')],
  ["Shared OverlayService continues both Pokeballs",overlay.includes("isSecondaryOverlay()")],
  ["Premium user can sign out or switch account from Home, even with active P2",
    ui.includes('"Conta Premium  ·  Gerenciar / Sair"')&&
@@ -69,18 +77,16 @@ const checks=[
    ui.includes('PremiumAccess.releaseDevice(this,')&&
    ui.includes('PremiumAccess.sessionInfo(this,')&&
    ui.includes('"Transferir Premium para outro aparelho"')&&
-   ui.includes('stopService(new Intent(this,SecondaryOverlayService.class));')&&
+   !premiumLogout.includes('stopService(new Intent(this,SecondaryOverlayService.class));')&&
    ui.includes('PremiumAccess.invalidateLease();')&&
-   ui.includes('PremiumGoogleLogin.signOut(this,')&&
-   ui.includes('A Pokébola 1 continua gratuita.')],
- ["One active P2 installation per Google account and explicit handover",
+   ui.includes('PremiumGoogleLogin.signOut(this,')],
+ ["Optional Premium account transfer remains available independently of P2",
    access.includes('payload.put("deviceId",deviceId(context))')&&
    access.includes('call(context,"transferPremiumDevice",data,callback)')&&
    access.includes('static synchronized boolean deviceConflict()')&&
-   ui.includes('promptPremiumDeviceTransfer(this::startSecondaryOverlayAuthorized)')&&
    ui.includes('setPositiveButton("Usar neste aparelho"')&&
    dialog.includes('promptPremiumDeviceTransfer(()->')&&
-   overlay.includes('handler.postDelayed(this,45000L)')],
+   !toggle.includes('promptPremiumDeviceTransfer(')],
  ["Compact Premium dialog is a bounded dark popup, not a full-screen page",
    dialog.includes('new AlertDialog.Builder(activity).setView(scroller).create()')&&
    dialog.includes('getDisplayMetrics().heightPixels*0.80f')&&
