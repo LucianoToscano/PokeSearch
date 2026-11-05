@@ -35,9 +35,6 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
    second badge/column. No :has dependency or forced flex-basis on tiny cards. */
 .psMegaMark{display:inline-block;width:11px;height:11px;max-width:11px;max-height:11px;vertical-align:-2px;object-fit:contain;margin:0}
 .evoLine .evoWho .evoMark{display:inline;white-space:nowrap}
-.evoLine .evoSummary{white-space:normal;align-items:flex-start}
-.evoLine .evoWho{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
-.evoLine .evoStatsRow{display:flex;align-items:center;flex-wrap:wrap;gap:3px 7px;min-width:0;overflow:visible}
 .evoLine .evoMegaTop{flex:0 0 auto}
 @media(max-width:320px){.psMegaMark{width:10px;height:10px;max-width:10px;max-height:10px}.evoLine .evoStatsRow{gap:3px 5px}}
 /* LT240: compact verified Top PvP opportunities, never implied eligibility. */
@@ -563,13 +560,13 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine.isMega{border-left:2px solid #aa93dc;padding-left:5px;background:#a88ed80c;border-radius:3px}
 .evoLine .evoMegaTop{flex:0 0 auto;border:1px solid #b89ef25a;border-radius:5px;
  background:#a28fda20;color:#e9d7ff;font-size:8px;font-weight:800;padding:1px 3px;white-space:nowrap}
-.evoLine .evoSummary{display:flex;align-items:baseline;gap:5px;min-width:0;white-space:nowrap}
-.evoLine .evoWho{min-width:0;flex:1 1 auto;font-size:10px;overflow:hidden;text-overflow:ellipsis;color:#f5f8fc}
+.evoLine .evoSummary{display:flex;align-items:flex-start;gap:4px;min-width:0;white-space:normal}
+.evoLine .evoWho{min-width:0;flex:1 1 auto;font-size:10px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;color:#f5f8fc}
 .evoLine .evoWho b{font-weight:800}
 .evoLine .evoWho .evoMark{font-size:9px;color:#adc6db;font-weight:600}
 .evoLine .evoCp,.evoLine .evoLevel{flex:0 0 auto;font-size:9px;color:#c4d0dd;font-weight:600;white-space:nowrap}
 .evoLine .evoPct{flex:0 0 auto;font-size:10px;color:var(--ps-rank-percent-color,#c4d0dd);font-weight:800;white-space:nowrap}
-.evoLine .evoStatsRow{display:flex;gap:12px;justify-content:flex-start;align-items:baseline;padding:2px 4px 0;min-width:0}
+.evoLine .evoStatsRow{display:flex;flex-wrap:wrap;gap:3px 7px;justify-content:flex-start;align-items:center;padding:2px 4px 0;min-width:0;overflow:visible}
 .evoLine .evoMeta{display:flex;align-items:baseline;flex-wrap:wrap;margin-top:3px;color:#c4d0dd;font-size:9px;line-height:1.3}
 .evoLine .evoRankRow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:4px;row-gap:2px;padding-inline:4px;text-align:center;justify-items:center}
 .evoLine .evoClass{color:#e0e8f3;font-weight:700;white-space:nowrap}
