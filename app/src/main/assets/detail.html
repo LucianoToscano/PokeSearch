@@ -1420,6 +1420,7 @@ function setRankLineLabel(rankLine,label){
    if(e?.referenceOnly===true)add(e,e.name,"reference");
  }
  if(!candidates.length)return false;
+ if(typeof rankLine.querySelector==="function")closePvpRankAlternates();
  // LT245: a strong IV spread is necessary; among Top 50 (or the chosen
  // stricter search limit), a VERIFIED overall rank determines which species
  // deserves the main card. Never elevate a weak IV #4000 just for a good RG.
@@ -1545,6 +1546,19 @@ window.showEvolutionDetails=payload=>{
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
+  // LT245: put verified species meta rankings ahead when IV spreads are good.
+  // Mega previews and costume reference rows retain independent semantics.
+  const quality=x=>Number.isInteger(Number(x?.rank))&&
+    Number(x.rank)>=1&&Number(x.rank)<=50&&x?.eligible!==false;
+  const general=x=>x?.referenceOnly===true?Infinity:
+    Number.isInteger(Number(x?.overallRank))&&Number(x.overallRank)>0?
+    Number(x.overallRank):Infinity;
+  entries.sort((a,b)=>{
+   const aq=quality(a),bq=quality(b);
+   if(aq!==bq)return aq?-1:1;
+   if(aq&&bq&&general(a)!==general(b))return general(a)-general(b);
+   return (Number(a?.rank)||4097)-(Number(b?.rank)||4097);
+  });
   // Costume references are projected by the calculator, but are not an
   // assertion that an event Pokémon can evolve. Keep both result types visible.
   const references=payload.includePreviousEvolutions!==false&&Array.isArray(league.comparisons)?
