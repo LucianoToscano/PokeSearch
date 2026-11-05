@@ -44,8 +44,11 @@ const projected=gl({rank:14,overallRank:37},[],[
 ]);
 assert.equal(obj.update(projected),true);
 assert.equal(line.children[0].textContent,"🔵 GL IV #1");
-assert.equal(line.children[1].textContent,"↳ Mega Sableye");
+assert.equal(line.children[1].textContent,"Sableye");
 assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
+assert.equal(line.children[1].children[0].src,"mega_evolution_icon.svg","Mega emblem precedes species text");
+assert.equal(line.children[1].children[1].textContent,"Sableye","compact label omits Mega prefix");
+assert.equal(line.children[1].dataset.psName,"Mega Sableye","canonical species identity preserved");
 assert.equal(line.children.length,3,"Mega projection uses one inline species chip plus neutral RG placeholder");
 assert.equal(line.children[2].textContent,"RG —");
 assert.equal(line.children.some(x=>x.textContent.startsWith("RG #")),false,
@@ -73,7 +76,7 @@ assert.ok(!line.children.some(x=>x.textContent==="RG #808"),
 const raw=f(document,{},"", "Sableye",open,()=>{},()=>{});
 assert.equal(raw.update({...projected,searchLeague:"",searchRankLimit:null}),true,
  "Mega GL rank1 must also be shown outside GL mode");
-assert.equal(line.children[1].textContent,"↳ Mega Sableye");
+assert.equal(line.children[1].textContent,"Sableye");
 assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
 assert.ok(inline.includes('const isMega=/^mega\\s+/i.test(featured)'));
 assert.ok(inline.includes('btn.textContent=hasLegacy?"⚔️":"🗡"'));
