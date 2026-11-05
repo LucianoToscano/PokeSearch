@@ -1952,6 +1952,30 @@
           "A inspeção física P/M/G no Samsung e a confirmação de instalação continuam necessárias; screenshots Chromium e testes de CI não substituem homologação em dispositivo real."
         ]
       }
+    },
+    {
+      "id": "lt254-samsung-menus-mega-rank-class-20261105",
+      "minVersionCode": 54458,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT254 — Menus, Mega e Rank Classe corrigidos",
+      "sections": {
+        "novidades": [
+          "Explorador de Rank Classe identifica a espécie e mostra os IVs selecionados no título secundário, por exemplo Ursaluna · GL · 0/14/15 · #2."
+        ],
+        "melhorias": [
+          "Calculadora PvP A/B compactada, mantendo campos de IV, seletor de forma, barra de nível e alvos 500/1500/2500 acessíveis em P/M/G.",
+          "Recomendações de golpes alinhadas em Ágil, C1 e C2, sem duplicar os ataques capturados. O símbolo ⚡ é neutro; ⚔️ requer status de legado confirmado."
+        ],
+        "correcoes": [
+          "Corrigida a duplicação de ícones da barra no popup secundário de Modo, Filtro e Localização, incluindo janelas abertas acima da barra. Barra permanece exclusiva da WebView principal.",
+          "Mega Evolução diferencia recomendação estratégica Megaedição de golpes aprendidos pela forma normal; não atribui golpes exclusivos à Mega nem inventa status de legado.",
+          "Rank Classe de Ursaluna não reutiliza a rolagem anterior de Ursaring; posição e IV selecionados são realçados na lista correta e ao mudar de espécie/liga.",
+          "Comparação da calculadora apresenta a diferença PC como B − A; dados 0%/100% ficam recolhidos por padrão para economizar espaço."
+        ],
+        "emDesenvolvimento": [
+          "Testes automatizados e capturas P/M/G aprovados, mas instalação e inspeção visual física nas duas Pokébolas Samsung continuam não comprovadas. O Android exige confirmação do usuário para instalar a atualização."
+        ]
+      }
     }
   ]
 }
