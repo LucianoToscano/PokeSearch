@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.48",
-  "code": 54452,
-  "label": 51252,
-  "previous_tag": "v0.02.47-54451",
-  "qa_max_code": 54451,
-  "release_notes": "LT248: corrigido o ícone dos golpes recomendados que voltava de 🗡 (sem legado) para ⚔️ depois de fechar/reabrir o card, preservando o status verificado por liga e espécie. Pokémon sem recomendação PvPoke (ex.: Litwick) agora mostram um painel compacto com 'Ver N golpes possíveis' recolhido por padrão, sem anunciar golpes possíveis como um conjunto recomendado. Novo importador local no Home aceita apenas o catálogo JSON PGS sanitizado, mostra modelos Pokémon, permite escolher IV%, IV exatos A/D/S, nível e espécies em grupos de até 50, com prévia e aplicação explicitamente direcionada à Pokébola 1 ou 2. Critérios não mapeados como Shiny por treinador, intervalo IV individual não exato, gênero, forma ou tamanho são bloqueados em vez de descartados silenciosamente; raides e pesquisas não são convertidos em buscas de encontros. Sem importação de dados de conta/PGSharp .dat bruto, localização ou alertas automáticos. Mantidas todas as correções LT247, login, filtros, assinatura e OTA. Instalação exige aprovação Android; QA visual físico Samsung P1/P2 P/M/G pendente."
+  "version": "0.02.49",
+  "code": 54453,
+  "label": 51253,
+  "previous_tag": "v0.02.48-54452",
+  "qa_max_code": 54452,
+  "release_notes": "LT249: corrigido o falso GL Top #1 (o número do filtro não é o Rank Classe real), mostrando o IV mais próximo calculado e RG confirmado da evolução quando nenhum candidato é Top #1; para Machop 0/15/15 o destaque mostra Machoke IV #2/RG #500 sem afirmar que corresponde ao filtro Top 1. Faixa PvP de uma linha e quatro ações independentes: [🔵 GL IV #N] abre Rank Classe, [↳ Evolução] abre e destaca Análise PvP, [RG #N] abre Rank Geral, ⚔️/🗡 abre golpes com estado de legado verificado. Cores automáticas 🔵 GL, 🟡 UL, 🟣 ML e ícone autêntico de Mega quando existir projeção; sem RG fictício de Mega ou permissão presumida na GBL. Calculadora PC/Nv. usa a família evolutiva completa do grafo oficial e Game Master, independente do filtro: Teddiursa → Ursaring → Ursaluna (sem Mega), formas Mega somente onde existem, seleção por setas, níveis ±0,5 e campo PC-alvo para calcular nível matematicamente possível até nível 50; sem custos de Doces/Poeira não verificados. Corrigido o '0' desprendido abaixo da segunda Pokébola vazia sem remover a opção de contador numérico dentro do ícone. Preserva LT248, duas Pokébolas e configurações. Validação automatizada Node/Java/OTA/beta aprovada; ainda é necessária validação visual manual P/M/G Samsung e confirmação de instalação pelo Android."
 }
