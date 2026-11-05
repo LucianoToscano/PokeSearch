@@ -4710,6 +4710,17 @@ body.result-window:not(.visual-results-tiles) .spriteStage::after {
   content:none!important;
   display:none!important;
 }
+
+/* LT253: verified PvP alert tiers inside the original compact bell menu. */
+body.controls-window #choices.alertsMini .ps253AlertRow{display:flex;align-items:center;
+ gap:3px;padding:3px 4px;max-width:100%;overflow:hidden}
+body.controls-window #choices.alertsMini .ps253AlertRow span{font:700 9px Roboto,Arial,sans-serif;
+ flex:1 1 auto;min-width:0;white-space:nowrap;color:#cad9e5}
+body.controls-window #choices.alertsMini .ps253AlertRow button{flex:0 0 auto;min-width:27px;
+ min-height:25px;padding:2px 3px;border:1px solid #ffffff40;border-radius:5px;
+ color:#dcecff;background:#ffffff14;font:700 9px Roboto,Arial,sans-serif}
+body.controls-window #choices.alertsMini .ps253AlertRow button.chosen{border-color:#9cdfbd;
+ background:#44755d6b;color:#dcffe9}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4887,6 +4898,7 @@ let locationEnabled=false,locationCoords="",locationRadius=0,locationVerified=fa
 let showResultText=false;
 let notificationPermissionGranted=false,watchAlertsEnabled=true;
 let favoriteAlertMode="on",generalCustomTone=false,favoriteCustomTone=false,individualToneCount=0;
+let smartPvpAlertLimit=0; // user opt-in, OFF by default
 let resultDisplayHeightDp=0;
 // Every optional Pokémon detail starts hidden. The native saved preferences
 // remain authoritative once a user explicitly enables an individual field.
@@ -7405,7 +7417,7 @@ function releaseUiTimers(){
  if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
 }
 window.addEventListener("pagehide",releaseUiTimers);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false,smartRankLimit=0)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
  cards=Array.isArray(a)?a.slice(0,10):[]; // max 10 per overlay, even for DOM source
@@ -7475,6 +7487,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  generalCustomTone=!!hasGeneralTone;
  favoriteCustomTone=!!hasFavoriteTone;
  individualToneCount=Math.max(0,Number(individualTones)||0);
+ smartPvpAlertLimit=[0,1,5,10,50].includes(Number(smartRankLimit))?Number(smartRankLimit):0;
  if(pendingAlertChoice.general===alertMode)pendingAlertChoice.general=null;
  if(pendingAlertChoice.favorites===favoriteAlertMode)pendingAlertChoice.favorites=null;
  if(controlsWindow&&menuPreferences&&typeof menuPreferences==="object"){
@@ -8282,6 +8295,22 @@ function renderAlertsChoices(){
  };
  section("Novos Pokémon","general",alertMode,generalCustomTone);
  section("Pokémon Favoritos","favorites",favoriteAlertMode,favoriteCustomTone);
+ // LT253: compact opt-in tier inside the existing notifications window.
+ const pvp=document.createElement("div");pvp.className="ps253AlertRow";
+ const title=document.createElement("span");title.textContent="Top PvP (GL/UL)";
+ title.title="Somente posições de Rank confirmadas na busca da liga. Megas projetadas não disparam alertas.";
+ pvp.appendChild(title);
+ for(const limit of [0,1,5,10,50]){
+  const button=document.createElement("button");button.type="button";
+  button.textContent=limit?"#"+limit:"OFF";
+  button.className=limit===smartPvpAlertLimit?"chosen":"";
+  button.title=limit?"Avisar novos Pokémon até Rank #"+limit+
+   " somente com notificações gerais ativas":"Sem filtro adicional Top PvP";
+  button.setAttribute("aria-pressed",String(limit===smartPvpAlertLimit));
+  button.onclick=()=>{if(Native.setSmartPvpAlertLimit)Native.setSmartPvpAlertLimit(limit);};
+  pvp.appendChild(button);
+ }
+ panel.appendChild(pvp);
  // Feature remains implemented in MainActivity, just absent from public UI.
  if(SHOW_INDIVIDUAL_FAVORITE_TONES)
   uxOption(panel,"Som de cada Pokémon favorito",
