@@ -46,7 +46,8 @@ assert.equal(obj.update(projected),true);
 assert.equal(line.children[0].textContent,"🔵 GL IV #1");
 assert.equal(line.children[1].textContent,"↳ Mega Sableye");
 assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
-assert.equal(line.children.length,2,"Mega projection uses one inline species chip");
+assert.equal(line.children.length,3,"Mega projection uses one inline species chip plus neutral RG placeholder");
+assert.equal(line.children[2].textContent,"RG —");
 assert.equal(line.children.some(x=>x.textContent.startsWith("RG #")),false,
  "mathematical Mega projection cannot claim an ordinary RG");
 assert.ok(renderCalls>0);
@@ -64,7 +65,8 @@ line.children[0].onclick({});
 line.children[2].onclick({});
 assert.deepEqual(actions,[{kind:"class",name:"Lampent",rank:1,league:"gl"},
  {kind:"overall",name:"Lampent",rank:519,league:"gl"}]);
-assert.equal(line.children.find(x=>x.className==="psRankMore")?.textContent,"+1");
+assert.equal(line.children.find(x=>x.className==="psRankMore"),undefined,
+ "extra forms are inside Análise PvP rather than a fifth chip");
 assert.equal(line.children[0].title.includes("4.096"),true);
 assert.ok(!line.children.some(x=>x.textContent==="RG #808"),
  "other species belongs in the +N explorer");
