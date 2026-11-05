@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT237 — Atualizações automáticas no Wi-Fi (04/11/2026, QA)
+
+**Status: código em branch, sem merge/publicação/instalação confirmados neste registro.** A versão pública estável continua **LT233 (0.02.33 / 54437)** até confirmação posterior em GitHub `releases/latest`. A LT236 (Pokébola 2 sem VIP e rankings Mega) já foi mesclada em main, porém ainda não está em APK público. A candidata cumulativa LT237 / `0.02.37` / `54441` requer build e release oficial assinada. Nunca confundir código da branch/PR com atualização recebida pelo app.
+
+- **Branch:** `feature/lt237-updates-automatic-wifi-20261104`. `GitHubUpdateCenter`: consulta ao GitHub Releases aprovada e periódica, pré-download em rede não tarifada habilitado por padrão, cancelamento ao perder Wi-Fi, verificação SHA-256/assinatura/pacote/versão e cache privado com limpeza de APKs antigos; UI exibe `pronta para instalar` e aviso nativo dedicado. `MainActivity`: chave `Baixar atualizações automaticamente no Wi-Fi`. `AndroidManifest`: `ACCESS_NETWORK_STATE`.
+- **Limite Android:** instalação de APK exige ação de confirmação oficial do usuário; não há instalação silenciosa e nem alterações na assinatura. P1/P2 preservadas, sem mudança de suas preferências ou permissões de jogo.
+- **QA preparado:** `app/tests/lt237-automatic-app-updates.test.js`, compilação Android e regressões da PR ainda devem ser comprovadas por CI. **Nenhum APK LT237 foi criado, assinado, publicado ou testado no Samsung neste registro.**
+- **Manual:** [LT237_ATUALIZACAO_AUTOMATICA_WIFI_20261104.md](LT237_ATUALIZACAO_AUTOMATICA_WIFI_20261104.md).
+
 ## LT236 — Integração concluída, distribuição oficial pendente (04/11/2026)
 
 **Estado operacional auditado: MERGE CONCLUÍDO / RELEASE AINDA NÃO PUBLICADA.** O código principal do PokeSearch já contém os dois ajustes pedidos. A última versão estável disponibilizada pelo atualizador continua **LT233 / `0.02.33` / `54437`**, tag `v0.02.33-54437`, até publicação verificável de nova release. **Não afirmar envio ao app enquanto `releases/latest` continuar LT233.**
