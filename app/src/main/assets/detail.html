@@ -1496,6 +1496,7 @@ function setRankLineLabel(rankLine,label){
  text.textContent=label;rankLine.appendChild(text);
 }
 
+ let forcedMegaPreview=false;
  if(activeRankLeague!=="gl"&&activeRankLeague!=="ul"){
   // Other search modes still deserve a compact GL/UL badge when a verified
   // Top #1 opportunity (including a separate Mega preview) exists.
@@ -1504,6 +1505,7 @@ function setRankLineLabel(rankLine,label){
    (Array.isArray(x.megas)?x.megas:[]).some(m=>
     m?.megaProjection===true&&Number(m.rank)===1));
   if(!highlight)return false;
+  forcedMegaPreview=true;
   activeRankLeague=highlight.league;
  }
  const league=payload.leagues.find(x=>x?.league===activeRankLeague);
@@ -1540,7 +1542,9 @@ function setRankLineLabel(rankLine,label){
  // LT245: a strong IV spread is necessary; among Top 50 (or the chosen
  // stricter search limit), a VERIFIED overall rank determines which species
  // deserves the main card. Never elevate a weak IV #4000 just for a good RG.
- const inSearch=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
+ const allWithinFilter=limit===null?candidates:candidates.filter(x=>x.rank<=limit);
+ const inSearch=forcedMegaPreview?
+  allWithinFilter.filter(x=>x.kind==="mega"&&x.rank===1):allWithinFilter;
  const qualityLimit=limit===null?50:limit;
  const excellent=inSearch.filter(x=>x.kind!=="reference"&&x.kind!=="mega"&&
    x.rank<=qualityLimit);
