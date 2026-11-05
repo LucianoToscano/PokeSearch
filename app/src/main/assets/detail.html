@@ -31,6 +31,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
+/* LT238: click targets remain visible before explorer JS first opens. */
+#evoBody .psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+#evoBody .psRankOpen:focus-visible{outline:2px solid #9bd5ff;border-radius:3px}
+#evoBody .psRankOpen.evoClass{color:#a8ddff}
+#evoBody .psRankOpen.evoOverall{color:#dce7f1}
 /* LT238: make the existing compact verified rank label discoverable. */
 #rankLine:not([hidden]){cursor:pointer;text-underline-offset:2px}
 #rankLine:not([hidden]):hover .psRankLabel{text-decoration:underline}
