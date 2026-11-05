@@ -48,11 +48,11 @@ const display=()=>new Function("document","activeRankLeague",
  script.slice(a,b)+"return updateVisiblePvPRank;")({
  getElementById(id){assert.equal(id,"rankLine");return badge;}}, "gl");
 assert.equal(display()(ordinary),true);
-assert.equal(badge.textContent,"GL · Rank Classe: #5 · ↳ Noivern");
+assert.equal(badge.textContent,"GL · IV #5 · Noivern");
 assert.ok(badge.title.includes("Noibat atual: #1600"));
 badge.hidden=true;
 assert.equal(display()(costume),true);
-assert.equal(badge.textContent,"GL · Rank Classe: #5 · ↳ Noivern");
+assert.equal(badge.textContent,"GL · IV #5 · Noivern");
 assert.ok(badge.title.includes("não confirma"));
 badge.hidden=true;
 const notInLimit=build(noibat,"gl",4);
