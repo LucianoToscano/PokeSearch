@@ -96,7 +96,9 @@ async function run(){
   await first.onclick();
   assert.equal(req.normal,0,"Mega card must never call regular rankings");
   assert.equal(req.mega,1);
-  assert.ok(pop.innerHTML.includes("Megaedição · Ataques recomendados"));
+  assert.ok(pop.innerHTML.includes("Mega Sableye · PvP"));
+  assert.ok(pop.innerHTML.includes("Mesmos golpes do Sableye normal"),
+    "Mega Edition should explain this is a base-learned moveset");
   assert.ok(pop.innerHTML.includes("Clarão Deslumbrante"));
   assert.ok(!pop.innerHTML.includes("Gema Poderosa"));
   await first.onclick();
