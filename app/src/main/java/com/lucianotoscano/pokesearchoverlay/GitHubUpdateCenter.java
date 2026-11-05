@@ -171,7 +171,14 @@ public final class GitHubUpdateCenter {
         lastCheck=now;
         IO.execute(()->{
             Release r=checkRemote();cached=r;
-            if(r!=null&&eligible(activity,r))prefetchOrNotify(activity.getApplicationContext(),r);
+            if(r!=null&&eligible(activity,r)){
+                java.lang.ref.WeakReference<MainActivity> ref=new java.lang.ref.WeakReference<>(activity);
+                prefetchOrNotify(activity.getApplicationContext(),r,()->{
+                    MainActivity live=ref.get();
+                    if(live!=null&&!live.isFinishing()&&!live.isDestroyed())
+                        live.onGithubUpdateLoaded(r);
+                });
+            }
             MAIN.post(()->{if(!activity.isFinishing()&&!activity.isDestroyed())
                 activity.onGithubUpdateLoaded(r);});
         });
@@ -350,7 +357,7 @@ public final class GitHubUpdateCenter {
                 old.delete();
         }
     }
-    private static void prefetchOrNotify(Context context,Release release){
+    private static void prefetchOrNotify(Context context,Release release,Runnable onReady){
         if(!autoDownloadEnabled(context)||!onUnmeteredNetwork(context)){
             notifyIfNew(context,release,false);return;
         }
@@ -362,6 +369,7 @@ public final class GitHubUpdateCenter {
                 ready=true;
             }catch(Exception ignored){}finally{DOWNLOADING.set(false);}
             notifyIfNew(context,release,ready);
+            if(ready&&onReady!=null)MAIN.post(onReady);
         });
     }
     private static void download(Context context,Release release,AtomicBoolean cancel,Progress cb){
