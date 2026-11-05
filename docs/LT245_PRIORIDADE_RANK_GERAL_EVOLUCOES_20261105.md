@@ -19,3 +19,17 @@ O screenshot Litwick `0/15/14` demonstrou duas evoluções com GL IV #1: Chandel
 - Os dados de ranking geral offline são snapshots locais; não afirmar classificação mundial instantânea nem atualização integral sem verificar a fonte.
 
 **Status desta seção:** em desenvolvimento; adicionar evidências reais depois de CI, merge e publicação.
+
+## Evidências oficiais de integração e publicação — 05/11/2026
+
+- **PR #221:** [LT245 RG prioritário](https://github.com/LucianoToscano/PokeSearch/pull/221) mesclada na `main`, SHA `450f7bea20a9b912e43e22e74d7a5ebcf4821044`. Último commit do branch validado: `dd86850b3f2a0436195c663d0ac900f4c4399d9f`.
+- **QA da revisão:** `PokeSearch Node QA` #41992018110, `LT169 regressão completa` #41992017973, `QA core LT211` #41992017910, `LT62 Android Java compile` #41992018417, `LT173 OTA assinado` #41992017946 e `Secure beta APK private test` #41992017995 terminaram `completed/success`. Novo teste `lt245-general-rank-priority-alternates.test.js` cobre os casos Litwick/Lampent/Chandelure, RG ausente, IV fraco/RG forte, Top N, referências Mega e alternativos clicáveis.
+- **Pedido assinado oficial:** `release/official-request.json`, commit `eccac19a06816acc7e74c6437cf8815fb2b3132e`, `version 0.02.45`, `versionCode 54449`, `label 51249`, `previous_tag v0.02.44-54448`.
+- **GitHub Actions permanente:** [workflow #41992371701](https://github.com/LucianoToscano/PokeSearch/actions/runs/41992371701), `completed/success`. Jobs `preflight` e `publish` aprovados; etapas `Build signed protected release`, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash` todas `success`.
+- **Release estável pública:** [v0.02.45-54449](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.45-54449), publicada em `2026-11-05T08:13:26Z`, `draft=false`, `prerelease=false`, source commit `eccac19a06816acc7e74c6437cf8815fb2b3132e`. Versão verificada como `releases/latest`.
+- **APK:** [PokeSearch-v0.02.45-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.45-54449/PokeSearch-v0.02.45-LT.apk), **28.151.231 bytes**, SHA-256 `179624b08b0bb867c09f4fbfa9e7b3260387364f6710c9e27bfa8b2db9ccbdf7`, asset `uploaded`. A verificação pública foi concluída no workflow.
+- **Artefato CI:** `PokeSearch-v0.02.45-54449-Signed-Verified`, ID `13397994032`, ZIP **25.974.038 bytes**, SHA-256 `3a004bb58b38d5f0cb20b49c65550c73e9530929e90701bc566372f9053c6afc`. Digest do ZIP difere do digest do APK publicado.
+- **Canal de atualização:** o aplicativo LT237+ consulta `releases/latest`, portanto pode detectar e baixar a LT245; o Android exige confirmação humana para instalação. **Sem evidência de instalação física no Samsung ou testes manuais P1/P2/P/M/G.**
+- **Limite dos dados:** a priorização RG usa ranking offline já instalado, não uma medição ao vivo; não afirmar atualização integral do snapshot PvPoke. Fórmulas IV/CP e notificações mantidas.
+
+A seção de desenvolvimento acima é histórica e está superada por estas evidências de release concluída.
