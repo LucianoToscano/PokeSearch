@@ -34,7 +34,9 @@ for(const script of detail.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)
  new vm.Script(script[1]);
 assert.ok(detail.includes('recommendation.availableOnly===true'));
 assert.ok(detail.includes('Sem recomendação PvPoke'));
-assert.ok(detail.includes('Golpes possíveis · sem recomendação'));
+assert.ok(detail.includes('Sem conjunto PvP recomendado'));
+assert.ok(detail.includes('psAvailableMoveDetails'),"possible-move pools are closed by default");
+assert.ok(detail.includes('psVerifiedMoveIcons'),"verified sword does not reset when card rerenders");
 assert.ok(detail.includes("currentCardMoves"),"captured moves remain visible with no remote source");
 assert.ok(dock.includes('engine?.bundledExactForArt?.(card,art)'));
 assert.ok(dock.includes('const nativeArt=window.PokeSearchOfflineSprite?.bundledExactForArt?.(c,art)'));
