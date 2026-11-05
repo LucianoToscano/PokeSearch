@@ -32,10 +32,10 @@ assert.equal(explorer.getIvRows(gm,"Not A Known Species","gl"),null);
 assert.equal(explorer.getIvRows(gm,"Sableye","unknown"),null);
 // Every verified Mega form must be resolvable by its displayed name.
 const megaEntries=gm.pokemon.filter(([id,name])=>
- /^(.+)_mega(?:_[xy])?$/.test(id)&&/^.+ \\(Mega(?: [XY])?\\)$/.test(name));
+ /^(.+)_mega(?:_[xy])?$/.test(id)&&/^.+ \(Mega(?: [XY])?\)$/.test(name));
 assert.ok(megaEntries.length>=60);
 for(const [,name] of megaEntries){
- const shown=name.replace(/^(.+) \\(Mega(?: ([XY]))?\\)$/,(_,base,variant)=>
+ const shown=name.replace(/^(.+) \(Mega(?: ([XY]))?\)$/,(_,base,variant)=>
   "Mega "+base+(variant?" "+variant:""));
  assert.equal(explorer.getIvRows(gm,shown,"gl")?.length,4096,
   "explorer must cover "+shown);
