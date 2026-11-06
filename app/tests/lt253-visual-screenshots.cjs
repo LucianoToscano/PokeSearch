@@ -416,7 +416,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     return {ok:before&&!panel.hidden&&
       row.getAttribute("aria-expanded")==="true"&&
       panel.textContent.includes("Seismitoad")&&
-      panel.textContent.includes("não ranking universal")&&
+      panel.title.includes("não é ranking universal")&&
+      !panel.querySelector("details.psRaidSource")&&
       row.getBoundingClientRect().top<coords.getBoundingClientRect().top&&
       panel.scrollWidth<=panel.clientWidth+3&&
       root.scrollWidth<=root.clientWidth+3,
