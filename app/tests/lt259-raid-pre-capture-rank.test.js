@@ -67,6 +67,16 @@ async function run(){
   ["Tympole","Palpitoad","Seismitoad"]);
  assert.deepEqual(raid.buildCandidates({name:"Tympole",costume_id:19},["Seismitoad"]).map(x=>x.name),
   ["Tympole"],"costume cannot assert that evolution is permitted");
+ const gm={pokemon:[
+  ["tympole","Tympole",98,78,137],
+  ["palpitoad","Palpitoad",128,109,181],
+  ["seismitoad","Seismitoad",188,150,233]
+ ]};
+ assert.deepEqual(raid.offlineAttack({name:"Tympole"},["Tympole","Palpitoad","Seismitoad"],gm),
+  {name:"Seismitoad",attack:188},"offline preview prioritizes valid evolution");
+ assert.deepEqual(raid.offlineAttack({name:"Tympole",costume:"Halloween"},["Seismitoad"],gm),
+  {name:"Tympole",attack:98},"costume forbids inferred evolutions");
+ assert.equal(raid.buildCandidates({name:"Tympole",costume:"None"},["Seismitoad"]).length,2);
  assert.equal(raid.grade(2),"Destaque");
  assert.equal(raid.grade(80),"Situacional");
  const captured={name:"Tympole",number:"#535",iv:"15/15/15"};
