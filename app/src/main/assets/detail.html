@@ -2428,7 +2428,7 @@ window.showEvolutionDetails=payload=>{
  let html="",count=0,ownCount=0;
  const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="" aria-hidden="true"> Grande Liga',
  ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="" aria-hidden="true"> Ultra Liga',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="" aria-hidden="true"> Liga Master'};
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="" aria-hidden="true"> Liga Mestra'};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
