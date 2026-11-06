@@ -1861,6 +1861,9 @@ function renderRaidPreview(){
     ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
    '';
    panel.setAttribute?.("data-ps-source",String(result.source||"Fonte de referência"));
+   // Policy stays machine-readable, not another long expandable block.
+   panel.setAttribute?.("data-ps-criteria",
+    "Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha.");
  }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
@@ -2282,9 +2285,9 @@ function renderRankOneMoves(){
    fastRow+chargedRows+
    '';
   popover.title="Fonte: "+String(recommendation.source||"PvPoke")+
-   " · recomendações não são golpes capturados."+
-   (isMega?" Mega não garante elegibilidade na Liga GO.":"")+
-   (hasLegacy?" Elite/legado marcado ao lado do golpe.":"");
+   " · recomendados ≠ capturados."+
+   (isMega?" Mega não tem golpes exclusivos nem garante GBL.":"")+
+   (hasLegacy?" Golpe legado/Elite confirmado e marcado ao lado do nome.":"");
   popover.setAttribute?.("aria-label",popover.title);
   resizeEvolutionPanel();
  };
