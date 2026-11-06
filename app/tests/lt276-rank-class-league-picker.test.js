@@ -16,9 +16,14 @@ const rankings=["gl","ul","ml"].map(league=>{
  assert.ok(owned.cp>0&&owned.level>=1&&owned.efficiency);
  return owned;
 });
-assert.notEqual(rankings[0].cp,rankings[1].cp,"GL/UL CP must be recalculated");
-assert.notEqual(rankings[1].cp,rankings[2].cp,"UL/ML CP must be recalculated");
+// Low-CP species can legitimately have the SAME CP in UL and ML at level 50.
+// Test independent rank computation and the league cap on a higher-attack IV.
 assert.notEqual(rankings[0].rank,rankings[2].rank,"no reuse of GL rank in ML");
+const maxAttack=["gl","ul","ml"].map(league=>
+ engine.getIvRows(gm,"Grimer",league).find(r=>r.iv==="15/15/15"));
+assert.ok(maxAttack[0].cp<=1500&&maxAttack[1].cp<=2500);
+assert.ok(maxAttack[1].cp>=maxAttack[0].cp&&maxAttack[2].cp>=maxAttack[1].cp);
+assert.ok(["gl","ul","ml"].every(league=>engine.getIvRows(gm,"Grimer",league)[0].rank===1));
 assert.equal(engine.getIvRows(gm,"Unconfirmed Pokemon","gl"),null);
 assert.equal(typeof engine.switchClassLeague,"function");
 assert.equal(typeof engine.switchOverallLeague,"function");
