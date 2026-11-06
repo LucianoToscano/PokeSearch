@@ -28,3 +28,8 @@ Os seis arquivos vêm dos uploads do usuário. A correção de transparência se
 - Teste dedicado `app/tests/lt268-six-clean-badges.test.js` verifica seis hashes, 320×320, alfa, ausência de glow e preservação dos controles. Regressões históricas foram atualizadas somente nas expectativas de imagens mostradas pelo cartão.
 - OTA assinado já aceita `ui-icons/*.png` e `detail.html`; não ampliar permissões.
 - Solicitação da versão LT268 0.02.68 / code 54472 foi preparada. **PR, CI, merge, publicação, assinatura e QA física Samsung precisam de verificação separada; não alegar conclusão antecipada.**
+
+## Primeira execução CI da PR #255 e correção
+- Os gates visual P/M/G, fonte PvE, Node QA e preflight passaram no head `958559a`.
+- Regressão Node e QA core apontaram **quatro testes históricos** ainda atrelados aos filenames LT262/LT265 e regex nova com barra duplicada; os recursos históricos originais não mudaram.
+- Ajuste altera somente as expectativas do cartão para os seis nomes LT268 e corrige a extração segura do script; novas execuções CI são obrigatórias antes do merge.

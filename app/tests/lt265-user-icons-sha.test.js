@@ -27,9 +27,9 @@ for(const [name,sha] of Object.entries(checks)){
 assert.ok(detail.includes('label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png"'),
  "Fast Elite and Charged Elite are distinct and never guessed");
 assert.ok(detail.includes('PS_LEAGUE_BORDERED'));
-assert.ok(detail.includes('srcset="ui-icons/league-gl-bordered-lt265.png 1x"'));
-assert.ok(detail.includes('srcset="ui-icons/league-ul-bordered-lt265.png 1x"'));
-assert.ok(detail.includes('srcset="ui-icons/league-ml-bordered-lt265.png 1x"'));
+assert.ok(detail.includes('srcset="ui-icons/ps-gl-lt268.png 1x"'));
+assert.ok(detail.includes('srcset="ui-icons/ps-ul-lt268.png 1x"'));
+assert.ok(detail.includes('srcset="ui-icons/ps-ml-lt268.png 1x"'));
 assert.ok(detail.includes('ui-icons/ps-cup-lt268.png'));
 assert.ok(!detail.includes('>💠<'),"Diamonds no longer label special moves");
 assert.ok(detail.includes('row.elite?psMtIconHtml("elite"):""'),

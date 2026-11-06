@@ -32,7 +32,7 @@ for(const old of ["rank-geral-lt267.png","league-gl-bordered-lt265.png","raid-ba
  assert.ok(fs.existsSync(path.join(root,"ui-icons",old)),"legacy resource preserved: "+old);
  assert.ok(!html.includes("ui-icons/"+old),"historical icon not used in current card");
 }
-const js=html.match(/<script>([\\s\\S]*?)<\\/script>/)?.[1];assert.ok(js);new vm.Script(js);
+const start=html.indexOf("<script>"),end=html.indexOf("</script>",start);assert.ok(start>=0&&end>start);new vm.Script(html.slice(start+8,end));
 const notes=JSON.parse(fs.readFileSync(path.join(root,"release_notes.json"),"utf8"));
 assert.ok(notes.releases.some(x=>x.minVersionCode===54472),"LT268 release notes included");
 const req=JSON.parse(fs.readFileSync(path.join(__dirname,"../../release/official-request.json"),"utf8"));
