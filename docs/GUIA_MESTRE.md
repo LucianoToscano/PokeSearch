@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT255 — seletor de evoluções offline (05/11/2026; PR #234)
+
+- **Defeito real LT254:** calculadora do Teddiursa `0/14/15`, PC `478`, Nv. `14` apresentava apenas a forma base no `select`, mesmo com Ursaring/Ursaluna visíveis na análise PvP. Código original `psCpVariants()` dependia do contexto PvP assíncrono, que pode estar incompleto ou não disponível no momento do toque.
+- **Correção em [PR #234](https://github.com/LucianoToscano/PokeSearch/pull/234):** `pvp_family_catalog.js` espelha exatamente as **463** arestas `PVP_EVO_LINKS` já presentes na WebView de resultados e cruza nomes com Game Master offline; não inventa família para sombras, costumes e regiões. `detail.html` combina dados PvP + catálogo local, disponibiliza três botões dentro do mesmo menu para Teddiursa / Ursaring / Ursaluna, além do seletor/setas. Famílias maiores usam lista inline recolhível; mantém IV A/B, nível e PC-alvo. Sem menu flutuante novo, sem API/conta ou acesso adicional.
+- **OTA:** `pvp_family_catalog.js` listado em `scripts/build_ota_pack.py`, preservando o mecanismo de assinatura e as duas Pokébolas independentes.
+- **QA automatizado concluído:** seis verificações verdes para o commit de testes `7915716105c910577dacb6efbfe3023c35f00225`: [regressão Node #42152786322](https://github.com/LucianoToscano/PokeSearch/actions/runs/42152786322), [Node QA #42152786286](https://github.com/LucianoToscano/PokeSearch/actions/runs/42152786286), [QA core #42152786285](https://github.com/LucianoToscano/PokeSearch/actions/runs/42152786285), [Android Java #42152786291](https://github.com/LucianoToscano/PokeSearch/actions/runs/42152786291), [OTA #42152786287](https://github.com/LucianoToscano/PokeSearch/actions/runs/42152786287) e [capturas Playwright P/M/G #42152786335](https://github.com/LucianoToscano/PokeSearch/actions/runs/42152786335). Evidências no [documento detalhado](LT255_SIMULADOR_EVOLUCOES_OFFLINE_QA_20261105.md).
+- **Release atual:** LT254 `0.02.54/54458` ainda é a última oficial. Se nova LT255 for publicada, subir monotonicamente para `0.02.55/54459` com certificado permanente, após validar `releases/latest`. Não afirmar que a LT255 já foi instalada no Samsung; QA físico de P1/P2 ainda não observado.
+
+
 ## LT254 — merge e publicação OFICIAL verificados (05/11/2026)
 
 - **Autorização explícita do usuário:** fazer merge, registrar no Arquivo Mestre e enviar atualização ao app. Revisão [PR #233](https://github.com/LucianoToscano/PokeSearch/pull/233) foi mesclada em `main`, merge commit `c532a2ccca3159dc8d2c3ee163168654c0286697`. Sem sobrescrever a release LT253 `v0.02.53-54457`.
