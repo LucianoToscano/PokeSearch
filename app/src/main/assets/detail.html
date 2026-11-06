@@ -2180,10 +2180,9 @@ function setRankLineLabel(rankLine,label){
     typeof document.createElement==="function"){
   rankLine.replaceChildren();
   // [🔵 GL IV #N] is ONE accessible class-ranking button.
-  const leagueIcon={gl:"🔵",ul:"🟡",ml:"🟣"}[activeRankLeague]||"🔵";
   const iv=document.createElement("button");
   iv.type="button";iv.className="psCompactIv psRankOpen psLeagueIv";
-  iv.textContent=leagueIcon+" "+label+" IV #"+best.rank;
+  iv.textContent=label+" IV #"+best.rank;
   iv.title="Rank Classe #"+best.rank+" de "+best.name+" · 4.096 IVs";
   if(unverifiedTop)iv.title+=" · Top #"+limit+" não confirmado";
   iv.setAttribute?.("aria-label",iv.title);
@@ -2282,7 +2281,7 @@ window.showEvolutionDetails=payload=>{
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:"🔵 Grande Liga",ul:"🟡 Ultra Liga",ml:"🟣 Liga Master"};
+ const labels={gl:psLeagueIconHtml("gl")+" Grande Liga",ul:psLeagueIconHtml("ul")+" Ultra Liga",ml:psLeagueIconHtml("ml")+" Liga Master"};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
@@ -2342,12 +2341,12 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">'+
-   ({gl:"🔵",ul:"🟡",ml:"🟣"}[x.league]||"🔔")+' '+
+   (psLeagueIconHtml(x.league)||"🔔")+' '+
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="ui-icons/mega-symbol.png" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+'<button type="button" class="psRaidAnalysisLink" '+
-  'onclick="toggleRaidDetails()">🏆 Ver avaliação de Raides (PvE) neste cartão</button>'+html;
+  'onclick="toggleRaidDetails()">Ver avaliação de Raides (PvE) neste cartão</button>'+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
  document.getElementById("evoLabel").textContent=payload.ivUnavailable?
@@ -2699,8 +2698,8 @@ function updatePvpCpSimulator(){
    '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
    '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div>':'')+
   '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🔵 GL 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>🟡 UL 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>'+psLeagueIconHtml("gl")+' GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span>'+psLeagueIconHtml("ul")+' UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
   '</span><strong>'+label(target)+'</strong></div>'+
   '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+
