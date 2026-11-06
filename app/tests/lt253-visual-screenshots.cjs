@@ -223,8 +223,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const badge=eBox&&cardBox&&nBox&&fBox?{
      src:evol.getAttribute("src"),tag:evol.tagName,span:eBox.width,
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
-     clearOfFlag:!((eBox.left<fBox.right+1)&&(eBox.right>fBox.left-1)&&
-      (eBox.top<fBox.bottom+1)&&(eBox.bottom>fBox.top-1)),
+     // The flags are triangles: enforce actual geometric separation from
+     // their sloping right edge, not merely overlap of transparent image boxes.
+     triangleGap:eBox.left-((fBox.left+fBox.right)/2+
+      (fBox.width/2)*Math.max(0,Math.min(1,
+       (fBox.bottom-Math.max(fBox.top,eBox.top))/fBox.height))),
      belowRank:eBox.top>=nBox.bottom+2,
      flagCenterDiff:Math.abs((fBox.left+fBox.right-cardBox.left-cardBox.right)/2),
      flagSrc:flag.getAttribute("src")
@@ -242,12 +245,13 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
     rail270.badge?.src==="ui-icons/ps-evolution-lt272.png"&&
-    // LT274: retain the original 13px/15px image with a 5px inset.
-    // Bounding-box intersections with a triangular flag's transparent corner
-    // are acceptable; the flag itself stays centered at its original size.
+    // LT275: same-sized artwork shifted into the bottom-right FREE corner.
+    // Reject the LT274 +5px inset that visibly overlaid the triangle.
     rail270.badge?.tag==="IMG"&&
     rail270.badge?.span>=13&&rail270.badge?.span<=15&&
-    rail270.badge?.right>=4&&rail270.badge?.bottom>=4&&
+    rail270.badge?.right>=1&&rail270.badge?.right<=3&&
+    rail270.badge?.bottom>=1&&rail270.badge?.bottom<=3&&
+    rail270.badge?.triangleGap>=-1&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
     rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png",
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
