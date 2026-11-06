@@ -29,6 +29,9 @@ SKIP = {
     # LT57: arte oficial com hash SHA256 fixado em testes e no menu.
     "app/src/main/assets/result-icons/modes/StarGL.png",
     "app/src/main/assets/result-icons/modes/StarUL.png",
+    # LT262: keep user-provided GL/UL art byte-exact across optimization runs.
+    "app/src/main/assets/result-icons/modes/GLBadgeLT262.png",
+    "app/src/main/assets/result-icons/modes/ULBadgeLT262.png",
     "app/src/main/assets/result-icons/modes/StarIVRaw.png",
 }
 # Os 9 arquivos oficiais deste diretório têm SHA imutável no teste LT57.

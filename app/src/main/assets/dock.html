@@ -4846,11 +4846,12 @@ function getModeMenuIcon(searchMode,shinyActive,settings=searchSettings){
  const rankLabel=Number.isInteger(topN)&&topN>=1&&topN<=50?"#"+topN:"";
  const badge=(family==="gl"||family==="ul")?rankLabel:baseFamily==="cup"?"CUP":"";
  const backgroundConfirmed=!!(settings&&settings.backgroundOnly===true&&settings.backgroundVerified===true);
- // These seven ORIGINAL transparent PNGs are ONLY for the Modos toolbar.
+ // Keep original mode art intact. LT262 swaps only GL/UL for the supplied badges,
+ // sharing the existing sizes, overlay widgets, ranks and all other mode images.
  const starCount=modePercentStarCount(settings.percentMin,settings.percentMax);
  const modePath={
   hundo:"3Star.png",nundo:"0Star.png",
-  gl:"StarGL.png",ul:"StarUL.png",
+  gl:"GLBadgeLT262.png",ul:"ULBadgeLT262.png",
   custom:"StarIVRaw.png",percent:starCount<0?"StarIVRaw.png":starCount+"Star.png",none:"iv-unfiltered.svg"
  };
  const legacyFallback={
