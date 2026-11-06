@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.61",
-  "code": 54465,
-  "label": 51265,
-  "previous_tag": "v0.02.60-54464",
-  "qa_max_code": 54464,
-  "release_notes": "PokeSearch LT261: filtro Sort inteligente e livre. Ao adicionar/localizar coordenadas válidas pela primeira transição OFF→ON, Sort muda automaticamente para Distance (nearest); ao apagar/desativar localização ON→OFF, Sort muda para Despawn (longest). Depois de cada transição o jogador pode escolher manualmente CP, IV%, Level, Despawn e Distance sem bloqueio; a escolha permanece em alteração apenas de coordenadas/raio, reaplicação, reinício e atualização do card, até nova transição ON/OFF. Uma remoção repetida sem localização preserva qualquer ordenação manual válida. Distância é permitida quando há localização e coordenadas validadas no Android, sem aguardar a confirmação do resultado remoto; entrada inválida não muda filtros. Mantém Pokémon, IVs, clima, CP, Level, tamanho, gênero e todos os outros filtros, sem compartilhar estado entre as duas Pokébolas. PR #241 merge fd6bf758541a4dbd1c2953a1bfa4fe3c8b15b4df, seis gates GitHub Actions aprovados (Node completo, core, Java, visual P/M/G, OTA). As correções de Shellos/Sea da LT260 continuam. Teste físico Samsung ainda não observado, instalação deve ser confirmada pelo Android."
+  "version": "0.02.62",
+  "code": 54466,
+  "label": 51266,
+  "previous_tag": "v0.02.61-54465",
+  "qa_max_code": 54465,
+  "release_notes": "PokeSearch LT262: ícones visuais dos modos Grande Liga (GL) e Ultra Liga (UL) trocados pelas duas imagens PNG circulares transparentes fornecidas pelo usuário (GL esfera azul com faixa vermelha diagonal, UL esfera escura com duas faixas amarelas). Dimensões de tela e estilos de botões mantidos integralmente, inclusive modo compacto, P/M/G, as duas Pokébolas, selos de rank e filtros PvP. Os arquivos originais StarGL.png e StarUL.png permanecem no APK para usos históricos e no chat. Os dois PNGs otimizados (96×96) são carregados localmente, sem internet, nos indicadores de modo e cabeçalhos; a release confere por SHA-256 os novos arquivos dentro do APK assinado. PR #242 mesclada em 50472943356fbc8904b5a288bff73bb55e9725f9 após sete gates CI aprovados: regressão Node, QA core, Java, visual P/M/G, OTA e preflight. Correções da LT261 preservadas. Validação física Samsung ainda não observada, instalação mediante confirmação do Android."
 }
