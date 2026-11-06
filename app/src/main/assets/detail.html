@@ -1597,14 +1597,25 @@ function toggleRaidDetails(){
 function loadRaidBeforeCapture(card){
  const rank=window.PokeSearchRaidRank;
  const button=document.getElementById("raidRow");
- if(!button||typeof rank?.assess!=="function")return;
+ if(!button)return;
  const token=++psRaidToken,identity=detailIdentity;
- psRaidReport=null;psRaidExpanded=false;renderRaidPreview();
+ // Show the Raid action BEFORE loading any asynchronous source, regardless
+ // of whether a PvP rank is available for this species.
+ psRaidReport={verified:false,reason:"Consultando avaliação de Raides..."};
+ psRaidExpanded=false;psRaidAttackPreview=null;
+ renderRaidPreview();
  const gm=window.POKESEARCH_PVP_IV_DATA;
  const related=window.PokeSearchPvpFamilyCatalog?.family?.(card.name,gm)||[];
- psRaidAttackPreview=rank.offlineAttack?.(card,related,gm)||null;
+ if(typeof rank?.assess!=="function"){
+  psRaidReport={verified:false,reason:"Módulo PvE indisponível nesta instalação"};
+  renderRaidPreview();
+  return;
+ }
+ try{
+  psRaidAttackPreview=rank.offlineAttack?.(card,related,gm)||null;
+ }catch(_){psRaidAttackPreview=null;}
  renderRaidPreview();
- Promise.resolve(rank.assess(card,related)).then(result=>{
+ Promise.resolve().then(()=>rank.assess(card,related)).then(result=>{
   if(token!==psRaidToken||identity!==detailIdentity)return;
   psRaidReport=result;renderRaidPreview();
  }).catch(()=>{
@@ -2923,7 +2934,7 @@ window.showDetails=(c,mode,watched)=>{
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
- if(changed)loadRaidBeforeCapture(c);
+ if(changed||document.getElementById("raidRow")?.hidden)loadRaidBeforeCapture(c);
  resizeEvolutionPanel();
  if(changed)panel.scrollTop=0;
  else requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,
