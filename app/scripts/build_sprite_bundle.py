@@ -200,6 +200,21 @@ COSTUME_FILES.update({
     "costumes/pm423.fWEST_SEA.s.icon.png": ("pm423.fWEST_SEA.s.icon.png", "b2a32696a03694df48b8885d749537e3c8b65628"),
 })
 
+# LT267: Diwali Pikachu + four Squawkabilly plumages, all normal/Shiny,
+# pinned to immutable go-exact-sprites.tsv Git blob SHA-1 evidence.
+COSTUME_FILES.update({
+    "costumes/pm25.fDIWALI_2024.icon.png": ("pm25.fDIWALI_2024.icon.png", "bab5c62cd39aba25fe92fe8f549bb87a9b44f6f4"),
+    "costumes/pm25.fDIWALI_2024.s.icon.png": ("pm25.fDIWALI_2024.s.icon.png", "c17c973f00df92fc5ad03cbb8ced2e1b746dd296"),
+    "costumes/pm931.fBLUE.icon.png": ("pm931.fBLUE.icon.png", "041f59c1aefd4a1e76bf988b65aa2536abbf1a2d"),
+    "costumes/pm931.fBLUE.s.icon.png": ("pm931.fBLUE.s.icon.png", "a76dc0a90c6d917a24d618c89ae0c6909686bb66"),
+    "costumes/pm931.fGREEN.icon.png": ("pm931.fGREEN.icon.png", "408e9e185dad4f4fc1f399d6b59dd5d9e92fbddb"),
+    "costumes/pm931.fGREEN.s.icon.png": ("pm931.fGREEN.s.icon.png", "e31f95bfdb1b1cfe526ea633249ac4ac33236220"),
+    "costumes/pm931.fWHITE.icon.png": ("pm931.fWHITE.icon.png", "a0cb82f86bbdc48145c7c0cbc43f23c8e592b1b6"),
+    "costumes/pm931.fWHITE.s.icon.png": ("pm931.fWHITE.s.icon.png", "63e784457419d3c1f212a907d3ec2c5f96b4a555"),
+    "costumes/pm931.fYELLOW.icon.png": ("pm931.fYELLOW.icon.png", "345be949373cc1896dff05b4a4ccb6eca2349548"),
+    "costumes/pm931.fYELLOW.s.icon.png": ("pm931.fYELLOW.s.icon.png", "c6d3c0e60e234959a9eccb9e2ec47166cce12eae"),
+})
+
 # Halloween 2024 Rowlet/Froakie costumes returned in GO Halloween 2026 Part II.
 # Verified against immutable PokeMiners git blobs; NOT plain 656/722 art.
 COSTUME_FILES.update({
