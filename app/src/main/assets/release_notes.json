@@ -2304,7 +2304,7 @@
         ]
       }
     },
-{
+    {
       "id": "pokesearch-lt268-six-icon-cleanup-no-glow-20261106",
       "minVersionCode": 54472,
       "date": "06/11/2026",
@@ -2327,7 +2327,7 @@
         ]
       }
     },
-{
+    {
       "id": "pokesearch-lt269-ptbr-canonical-offline-move-ids-20261106",
       "minVersionCode": 54473,
       "date": "06/11/2026",
@@ -2350,7 +2350,7 @@
         ]
       }
     },
-{
+    {
       "id": "pokesearch-lt270-five-pvp-shortcuts-general-league-switch-20261106",
       "minVersionCode": 54474,
       "date": "06/11/2026",
@@ -2374,7 +2374,7 @@
         ]
       }
     },
-{
+    {
       "id": "pokesearch-lt271-raid-league-overall-actions-20261106",
       "minVersionCode": 54475,
       "date": "06/11/2026",
@@ -2394,6 +2394,27 @@
         ],
         "emDesenvolvimento": [
           "Homologar toques e atualização no Samsung real; os testes CI não comprovam instalação física."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-lt272-evolution-marker-bottom-right-20261106",
+      "minVersionCode": 54476,
+      "date": "06/11/2026",
+      "title": "LT272 — Ícone de evolução discreto no canto inferior direito",
+      "sections": {
+        "novidades": [
+          "Indicador de evolução original branco/verde substitui o símbolo ↳ nos cartões de Raides, GL, UL, ML e Rank Geral quando o resultado é de uma evolução."
+        ],
+        "melhorias": [
+          "Símbolo menor no canto inferior direito com margem interna; posição #rank liberada e bandeira central preservada no tamanho original."
+        ],
+        "correcoes": [
+          "O indicador se atualiza ao trocar a liga no Rank Geral, sem esconder, redimensionar ou mover as bandeiras.",
+          "Mantidas cinco entradas LT271 e recomendações de golpes específicas de GL/UL/ML."
+        ],
+        "emDesenvolvimento": [
+          "Testes físicos Samsung, acessibilidade em todos os tamanhos de overlay e confirmação de instalação ainda necessários."
         ]
       }
     }

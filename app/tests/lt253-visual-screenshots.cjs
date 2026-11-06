@@ -216,7 +216,18 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     activeRankLeague="gl";window.psRankContext=payload;
     const ok=psRenderFiveRankRail(payload),rail=document.getElementById("rankLine");
     const b=Array.from(rail.querySelectorAll("button"));
-    return {ok,count:b.length,labels:b.slice(0,5).map(x=>x.querySelector(".psRailNumber")?.textContent),
+    const evol=b[1]?.querySelector(".psRailEvolve"),flag=b[1]?.querySelector(".psRailIcon");
+    const number=b[1]?.querySelector(".psRailNumber"),cardBox=b[1]?.getBoundingClientRect();
+    const eBox=evol?.getBoundingClientRect(),fBox=flag?.getBoundingClientRect();
+    const nBox=number?.getBoundingClientRect();
+    const badge=eBox&&cardBox&&nBox&&fBox?{
+     src:evol.getAttribute("src"),tag:evol.tagName,span:eBox.width,
+     right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
+     belowRank:eBox.top>=nBox.bottom+2,
+     flagCenterDiff:Math.abs((fBox.left+fBox.right-cardBox.left-cardBox.right)/2),
+     flagSrc:flag.getAttribute("src")
+    }:null;
+    return {ok,badge,count:b.length,labels:b.slice(0,5).map(x=>x.querySelector(".psRailNumber")?.textContent),
      names:b.slice(0,5).map(x=>x.dataset.psName),
      evolves:!!b[1]?.querySelector(".psRailEvolve"),
      icons:b.slice(0,5).map(x=>x.querySelector(".psRailIcon")?.getAttribute("src")||""),
@@ -227,7 +238,12 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.width<=rail270.client+2&&
     JSON.stringify(rail270.labels)==='["—","#12","#5","#1","#142"]'&&
     rail270.names[1]==="Ursaluna"&&
-    rail270.icons.every(x=>x.includes("lt268.png")),
+    rail270.icons.every(x=>x.includes("lt268.png"))&&
+    rail270.badge?.src==="ui-icons/ps-evolution-lt272.png"&&
+    rail270.badge?.tag==="IMG"&&rail270.badge?.span<=16&&
+    rail270.badge?.right>=4&&rail270.badge?.bottom>=4&&
+    rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
+    rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png",
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
    const overall270=await page.evaluate(()=>{
