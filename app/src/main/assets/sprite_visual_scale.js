@@ -23,7 +23,7 @@ function measure(img){
 }
 function factor(img){
  const occupancy=measure(img);
- return occupancy==null?1:Math.round(clamp(.78/occupancy,.76,1.06)*1000)/1000;
+ return occupancy==null?1:Math.round(clamp(.78/occupancy,.76,2.2)*1000)/1000;
 }
 function apply(img){
  if(!img?.style?.setProperty)return 1;
