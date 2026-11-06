@@ -1897,3 +1897,12 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - A janela de ranking abre dentro do card arrastável existente, com lista rolável própria; não foi adicionada janela Android independente. O card inteiro continua reposicionável.
 - Testes: `app/tests/lt238-clickable-rank-explorers.test.js` e suíte geral. Pendente aprovação CI, instalação física em Samsung, verificação P1/P2 e publicação em novo versionCode monotônico com assinatura permanente.
 - Registro técnico: [LT238_RANK_EXPLORERS_IV_GERAL_20261105.md](LT238_RANK_EXPLORERS_IV_GERAL_20261105.md). O texto de QA não é prova de merge, APK nem atualização distribuída.
+
+
+## 06/11/2026 — Empates reais no Rank Classe (Ursaluna GL) — QA isolado
+
+- Solicitação aprovada: mostrar 0/14/14 e 0/14/15 de Ursaluna GL como **#1 (empate)** quando produto de atributos efetivos é matematicamente igual, sem concluir empate só pela eficiência arredondada de 100,00%.
+- Branch: `fix/iv-ranking-ties-20261106`. Código: `app/src/main/assets/pvp_rank_explorer.js`, `detail.html`; teste: `app/tests/pvp-iv-exact-ties.test.js`. Registro detalhado: [QA_EMPATES_REAIS_RANK_IV_20261106.md](QA_EMPATES_REAIS_RANK_IV_20261106.md).
+- Mantido o rank **ordinal original** para selecionar/paginar/filtrar/exportar o número interno, enquanto `sharedRank` e `tieCount` registram empate real para exibição. O chip compacto usa `#1=`, o painel informa `#1 (empate)`; o CSV mantém ordinal e anota empate em coluna separada.
+- Verificação do Game Master: ambos têm ATK 123.61452693739005, DEF 99.19684260407844, HP 148 e produto 1814801.2742835125 no nível 14,5 (PC 1497 e 1500).
+- **Status de distribuição:** alterações em branch de QA; sem confirmação de testes completos CI, validação física, merge, APK assinado ou OTA. Não anunciar como atualização pública até homologar.

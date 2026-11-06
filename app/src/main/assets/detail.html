@@ -1624,12 +1624,24 @@ function openPvpAnalysisForSpecies(event,button){
  resizeEvolutionPanel();
  return true;
 }
+// Show real rank ties without reinterpreting rounded efficiency or changing API rank.
+function psDisplayClassRank(name,league,iv,ordinal){
+ const fallback={label:"#"+ordinal,compact:"#"+ordinal,top:ordinal===1,tied:false};
+ if(!Number.isInteger(ordinal)||ordinal<1||ordinal>2)return fallback;
+ const info=window.PokeSearchRankExplorer?.presentationForIv?.(
+  window.POKESEARCH_PVP_IV_DATA,name,league,iv,ordinal);
+ if(!info)return fallback;
+ return {label:info.label,compact:"#"+info.rank+(info.tied?"=":""),
+  top:info.rank===1,tied:info.tied};
+}
 function evolutionRow(x,first){
  const psLeague=String(window.psRankRenderLeague||"gl");
  if(!x||typeof x!=="object")return "";
  const rank=Number(x.rank),overall=Number(x.overallRank);
  const hasClass=Number.isInteger(rank)&&rank>=1&&rank<=4096;
  const hasOverall=Number.isInteger(overall)&&overall>=1;
+ const displayClass=hasClass?psDisplayClassRank(String(x.name||""),psLeague,
+  window.psRankContext?.iv,rank):null;
  if(!hasClass&&!hasOverall)return "";
  const name=String(x.name||"").slice(0,90);
  const isReference=x.referenceOnly===true;
@@ -1645,7 +1657,7 @@ function evolutionRow(x,first){
  const ranks=[hasClass?
   '<button type="button" class="evoClass psRankOpen" data-ps-kind="class" data-ps-name="'+
    h(name)+'" data-ps-league="'+h(psLeague)+'" data-ps-rank="'+rank+
-   '" title="Abrir as 4.096 combinações de IVs" onclick="openPvpRankExplorer(event,this)">Rank Classe: #'+rank+'</button>':
+   '" title="Abrir as 4.096 combinações de IVs" onclick="openPvpRankExplorer(event,this)">Rank Classe: '+h(displayClass.label)+'</button>':
   '<span class="evoClass">Rank Classe: —</span>'];
  if(hasOverall)ranks.push('<button type="button" class="evoOverall psRankOpen" data-ps-kind="overall" data-ps-name="'+
    h(name)+'" data-ps-league="'+h(psLeague)+'" data-ps-rank="'+overall+
@@ -1657,13 +1669,13 @@ function evolutionRow(x,first){
  return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
   '" class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+(isMega?' isMega':'')+
-  (hasClass&&rank===1&&x.eligible!==false?' best':'')+
+  (hasClass&&displayClass.top&&x.eligible!==false?' best':'')+
   '"><div class="evoSummary">'+
   '<span class="evoWho"><span class="evoMark">'+(first?'Atual':isMega?'<img src="mega_evolution_icon.svg" class="psMegaMark" alt="" aria-hidden="true">':'↳')+'</span> <b>'+h(name)+'</b>'+
   (isReference?'<button type="button" class="evoInfoBtn" '+(isMega?'data-mega-projection="true" ':'')+'aria-label="'+(isMega?'Informações sobre projeção da forma Mega':'Informações sobre rank de evolução projetado')+'" aria-expanded="false" onclick="togglePvpReferenceInfo(event,this)">ⓘ</button>':'')+'</span>'+
   '</div>'+
   '<div class="evoStatsRow">'+stats.join("")+
-  (isMega&&hasClass&&rank===1?'<span class="evoMegaTop">TOP 1 MEGA</span>':"")+
+  (isMega&&hasClass&&displayClass.top?'<span class="evoMegaTop">TOP 1 MEGA</span>':"")+
   (hasClass&&pct?'<span class="evoPct" title="Eficiência relativa de IVs"'+
    (window.PokeSearchIVDisplay?.colorForEfficiency?.(pct)?
     ' style="--ps-rank-percent-color:'+window.PokeSearchIVDisplay.colorForEfficiency(pct)+'"':"")+
@@ -1975,6 +1987,7 @@ function setRankLineLabel(rankLine,label){
  }
  currentRankSpecies=best.name;
  const isMega=best.kind==="mega";
+ const shownRank=psDisplayClassRank(best.name,activeRankLeague,payload.iv,best.rank);
  // LT247: exactly one compact row: [GL IV #1] [↳ Form] [RG #N] [⚔/🗡].
  // All are independent controls except the name, which truncates locally
  // rather than forcing the sword onto another row.
@@ -1983,7 +1996,7 @@ function setRankLineLabel(rankLine,label){
      isMega?"Mega "+best.name:best.name);
  const hasVerifiedOverall=best.kind!=="reference"&&!isMega&&
    Number.isInteger(best.overallRank)&&best.overallRank>=1;
- const compactName=label+" · IV #"+best.rank+" · "+scope+
+ const compactName=label+" · IV "+shownRank.compact+" · "+scope+
    (hasVerifiedOverall?" · RG #"+best.overallRank:"");
  if(rankLine.dataset)rankLine.dataset.topVerified=unverifiedTop?"false":"true";
  // Legacy DOM and QA stubs still have a safe text-only summary.
@@ -1996,8 +2009,8 @@ function setRankLineLabel(rankLine,label){
   const leagueIcon={gl:"🔵",ul:"🟡",ml:"🟣"}[activeRankLeague]||"🔵";
   const iv=document.createElement("button");
   iv.type="button";iv.className="psCompactIv psRankOpen psLeagueIv";
-  iv.textContent=leagueIcon+" "+label+" IV #"+best.rank;
-  iv.title="Rank Classe #"+best.rank+" de "+best.name+" · 4.096 IVs";
+  iv.textContent=leagueIcon+" "+label+" IV "+shownRank.compact;
+  iv.title="Rank Classe "+shownRank.label+" de "+best.name+" · 4.096 IVs";
   if(unverifiedTop)iv.title+=" · Top #"+limit+" não confirmado";
   iv.setAttribute?.("aria-label",iv.title);
   iv.dataset.psKind="class";iv.dataset.psName=best.name;
