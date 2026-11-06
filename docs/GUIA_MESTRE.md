@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT262 — Ícones GL/UL do usuário (06/11/2026 · QA)
+
+- Pedido: substituir **somente** os ícones dos modos GL e UL com as duas imagens enviadas (GL azul com faixa vermelha; UL preta com faixas amarelas), mantendo o mesmo tamanho/alinhamento do modo em ambas as Pokébolas, sem alterar a Liga Mestre, IVs, Rank, cards PvP ou chat.
+- Assets aprovados e adicionados à branch `feature/lt262-gl-ul-icons-20261106`: `result-icons/modes/GLBadgeLT262.png` (PNG transparente 96×96, SHA-256 `be6de24bb4f01a6e13456dfb77ed81e878d5d6065393aaca08f87c5547234cbb`) e `ULBadgeLT262.png` (96×96, SHA-256 `3328b59cc0bc730d3df9e13f2b053c5df248438402d016e13dbab08f15fe4220`). `dock.html` usa estes PNGs apenas no `modePath`; CSS existente é mantido. Originais `StarGL.png/StarUL.png` continuam intactos, inclusive no chat.
+- Arquivos protegidos de otimização; workflow de release exige que o APK assinado contenha os dois com SHA-256 exato. Teste: `app/tests/lt262-user-gl-ul-mode-icons.test.js`. [Auditoria](LT262_ICONES_GL_UL_IMAGENS_USUARIO_20261106.md).
+- **Status:** branch QA, sem merge/APK/OTA até a homologação da suíte completa, testes visuais e release. LT261 · 0.02.61/54465 é a última publicação oficial comprovada até essa etapa. Teste físico P1/P2 Samsung não observado.
+
 ## LT261 — Ordenação automática no liga/desliga da Localização (06/11/2026 · RELEASE OFICIAL)
 
 - Regra: **OFF→ON** da localização validada define `Sort=Distance (nearest)`; **ON→OFF** define `Sort=Despawn (longest)`. A ordenação automática vale **apenas na troca de estado**; qualquer escolha manual posterior (CP, IV, nível, Despawn ou Distância) permanece até uma nova troca OFF↔ON. Alterar apenas raio/coordenadas, Reaplicar igual, Limpar repetido e reiniciar não apagam preferência manual. Coordenadas inválidas não alteram configurações.
