@@ -2480,6 +2480,28 @@
           "Teste físico Samsung da nova versão após instalação continua necessário."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt276-rank-class-league-picker-20261106",
+      "minVersionCode": 54480,
+      "date": "06/11/2026",
+      "title": "LT276 — Escolher GL, UL ou ML no Rank Classe",
+      "sections": {
+        "novidades": [
+          "No painel Rank Classe aberto pelo IV, escolha Grande Liga, Ultra Liga ou Liga Mestra sem voltar ao cartão."
+        ],
+        "melhorias": [
+          "Os 4.096 IVs, rank, nível, PC e eficiência são recalculados para a liga escolhida, mantendo o mesmo Pokémon e IV capturado.",
+          "O seletor de liga tem botões grandes e compactos, igual ao Rank Geral, e lembra a última liga escolhida para o mesmo Pokémon."
+        ],
+        "correcoes": [
+          "Rank Classe não fica mais preso à Grande Liga quando aberto a partir do campo IV.",
+          "O Rank Geral, as cinco bandeiras, os ícones de evolução e as duas Pokébolas permanecem independentes."
+        ],
+        "emDesenvolvimento": [
+          "Validação de toque no Samsung físico P1/P2 após atualização."
+        ]
+      }
     }
   ]
 }
