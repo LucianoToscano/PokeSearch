@@ -4262,28 +4262,37 @@ public class OverlayService extends Service {
         @JavascriptInterface public void confirmCaptureShare(int sourceIndex){
             handler.post(()->OverlayService.this.confirmCaptureShare(sourceIndex));
         }
-        // LT260: when the user clears coordinates, Distance is no longer
-        // reproducible by the API. Persist ONLY the restored sort, preserving
-        // Pokémon/IV/PvP, Weather, CP, Level, size and all other filters.
-        private boolean restoreDespawnWhenLocationCleared(){
+        // LT261: choose the default sort ONLY when location changes OFF↔ON.
+        // Adding valid coordinates => nearest first; removing them => Despawn.
+        // A manual CP/IV/Level/etc. choice remains until the NEXT OFF↔ON.
+        // Never reset the manual sort on the same-state Apply, radius edit,
+        // coordinate change, page refresh or application restart.
+        private boolean persistLocationToggleSort(boolean enabled,boolean repairInvalidDistance){
+            final String wanted=enabled?"Distance (nearest)":"Despawn (longest)";
             try{
                 JSONObject filters=new JSONObject(extraFiltersJson);
-                if(!"Distance (nearest)".equals(filters.optString("sortBy","")))
-                    return false;
-                filters.put("sortBy","Despawn (longest)");
+                String current=filters.optString("sortBy","");
+                if(repairInvalidDistance&&!"Distance (nearest)".equals(current))
+                    return false; // Repeated clear preserves valid manual choices.
+                boolean changed=!wanted.equals(current);
+                // Restore sortBy from any pending "clear" key to ensure the
+                // default reaches BOTH the API and React source after refresh.
                 JSONArray previous=filters.optJSONArray("clearExtraKeys");
-                if(previous!=null){
-                    JSONArray retained=new JSONArray();
-                    for(int i=0;i<previous.length();i++){
-                        String key=previous.optString(i,"");
-                        if(!"sortBy".equals(key))retained.put(key);
-                    }
-                    filters.put("clearExtraKeys",retained);
+                JSONArray retained=new JSONArray();
+                boolean pendingClear=false;
+                if(previous!=null)for(int i=0;i<previous.length();i++){
+                    String key=previous.optString(i,"");
+                    if("sortBy".equals(key))pendingClear=true;
+                    else retained.put(key);
                 }
+                if(!changed&&!pendingClear)return false;
+                filters.put("sortBy",wanted);
+                if(previous!=null)filters.put("clearExtraKeys",retained);
                 extraFiltersJson=filters.toString();
                 overlayPrefs().edit().putString("extraFiltersJson",extraFiltersJson).apply();
                 BugReport.log(OverlayService.this,"FILTER_SORT",
-                    "Distância sem localização restaurada para Despawn; demais filtros preservados");
+                    enabled?"Localização ativada → Distância (automático; edição manual livre)":
+                    "Localização removida → Despawn (automático; edição manual livre)");
                 return true;
             }catch(org.json.JSONException ignored){
                 return false;
@@ -4297,12 +4306,16 @@ public class OverlayService extends Service {
                 diagnosticError("📍 Cole latitude,longitude válidas e escolha raio de 0 a 1000km.");
                 update();return;
             }
-            // Fix immediately on Remove, not only after restarting the app.
-            // Repeated Remove must repair previously persisted Distance too.
-            final boolean restoredSort=!enabled&&restoreDespawnWhenLocationCleared();
+            // Automatic defaults are a ONE-TIME consequence of an actual
+            // location OFF↔ON transition, not a permanent sort lock.
+            // Coordinates/radius updates while already ON keep user sorting.
+            final boolean toggled=locationEnabled!=enabled;
+            final boolean sortChanged=toggled?
+                persistLocationToggleSort(enabled,false):
+                (!enabled&&persistLocationToggleSort(false,true));
             if(locationEnabled==enabled&&
                 (!enabled||(locationCoords.equals(valid)&&locationRadius==radius))){
-                if(restoredSort){
+                if(sortChanged){
                     replaceActiveFilterSearch();
                     resultsStale=count()>0;
                 }
@@ -4838,7 +4851,7 @@ public class OverlayService extends Service {
                 // Distance order with location OFF cannot block unrelated
                 // Gender/Size/Weather/PC edits from reaching the API.
                 if("Distance (nearest)".equals(updated.optString("sortBy"))&&
-                        !(locationEnabled&&locationVerified)){
+                        (!locationEnabled||extractCoordinates(locationCoords).isEmpty())){
                     updated.put("sortBy","Despawn (longest)");
                     clears.remove("sortBy");
                     android.widget.Toast.makeText(OverlayService.this,
