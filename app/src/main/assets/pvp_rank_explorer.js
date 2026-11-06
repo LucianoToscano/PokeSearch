@@ -181,7 +181,9 @@
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
    iv:opts.iv,overall,railKey:opts.railKey||"",
-   // All Rank Geral entrypoints receive a real league selector, not only the shortcut.
+   // LT276: both Rank Classe (4096 IVs) and Rank Geral have a league picker.
+   // Class keeps the same selected species/IV; each league recalculates its
+   // own rank/CP/level/efficiency from the pinned Game Master (not the GL rank).
    leagueOptions:kind==="overall"?["gl","ul","ml"].map(league=>{
     const fromShortcut=Array.isArray(opts.leagueOptions)?
      opts.leagueOptions.find(x=>x?.league===league):null;
@@ -190,7 +192,9 @@
     const exact=rowsForLeague.find(x=>n(x.name)===n(species));
     return {league,name:species,rank:exact?.rank||null,
      evolves:fromShortcut?.evolves===true};
-   }):[],
+   }):["gl","ul","ml"].map(league=>({
+    league,name,available:!!getIvRows(gm,name,league)?.length
+   })),
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -207,6 +211,19 @@
    close();return true;
   }
   return open(opts);
+ }
+ function switchClassLeague(league){
+  if(!state||state.kind!=="class"||!LIGAS[league])return false;
+  if(league===state.league){draw();return true;}
+  const target=state.leagueOptions.find(x=>x.league===league);
+  if(!target?.available)return false;
+  const opts={kind:"class",league,name:state.name,iv:state.iv,
+   forms:state.forms,gm:state.gm,overall:state.overall,railKey:state.railKey};
+  // Reopen only when valid data exist: recompute the selected IV and reset
+  // page, filter and comparisons; never carry an unrelated league's rank.
+  if(!open(opts))return false;
+  if(typeof window!=="undefined")window.psRailClassSelectedLeague=league;
+  return true;
  }
  function switchOverallLeague(league){
   if(!state||state.kind!=="overall"||!LIGAS[league])return false;
@@ -311,7 +328,10 @@
      const control=evt.target.closest?.("select[data-ps-filter]");
      if(control&&state&&setFilter(state,Number(control.value)))draw();
      const picker=evt.target.closest?.("select[data-ps-league-choice]");
-     if(picker&&state?.kind==="overall")switchOverallLeague(picker.value);
+     if(picker&&state){
+      if(state.kind==="class")switchClassLeague(picker.value);
+      else switchOverallLeague(picker.value);
+     }
     });
     view.addEventListener("click",evt=>{
      const b=evt.target.closest?.("button[data-ps-act]");
@@ -324,7 +344,11 @@
        if(menu){menu.hidden=!menu.hidden;b.setAttribute("aria-expanded",String(!menu.hidden));}
        return;
       }
-      if(action==="league-pick"){switchOverallLeague(b.dataset.league);return;}
+      if(action==="league-pick"){
+       if(state.kind==="class")switchClassLeague(b.dataset.league);
+       else switchOverallLeague(b.dataset.league);
+       return;
+      }
       if(action==="filter-pick"){
        if(setFilter(state,Number(b.dataset.filter)))draw();
        return;
@@ -444,17 +468,17 @@
      markup+'</tr>'+details;
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
-  const leagueChooser=s.kind==="overall"&&s.leagueOptions.length?
+  const leagueChooser=s.leagueOptions.length?
    '<div class="psrLeagueSwitch"><span class="psrLeagueSwitchLabel">Liga</span>'+
    '<div class="psrLeaguePicker"><button type="button" data-ps-act="league-menu" aria-expanded="false"'+
-   ' aria-controls="psrLeagueOptions" aria-label="Escolher liga do Rank Geral">'+safe(LIGAS[s.league])+' ▾</button></div>'+
+   ' aria-controls="psrLeagueOptions" aria-label="Escolher liga do '+(s.kind==="class"?"Rank Classe":"Rank Geral")+'">'+safe(LIGAS[s.league])+' ▾</button></div>'+
    '<select id="psrLeague" data-ps-league-choice aria-label="Liga (compatibilidade)" hidden tabindex="-1">'+
    s.leagueOptions.map(x=>'<option value="'+safe(x.league)+'"'+
      (x.league===s.league?' selected':'')+'>'+safe(LIGAS[x.league])+'</option>').join('')+
    '</select></div>'+
    '<div id="psrLeagueOptions" class="psrOptionMenu" role="group" aria-label="Ligas disponíveis" hidden>'+
    s.leagueOptions.map(x=>'<button type="button" data-ps-act="league-pick" data-league="'+safe(x.league)+'"'+
-    (getOverallRows(s.overall,x.league)?.length?'':' disabled')+
+    ((s.kind==="class"?x.available:!!getOverallRows(s.overall,x.league)?.length)?'':' disabled')+
     ' aria-pressed="'+(s.league===x.league)+'">'+safe(LIGAS[x.league])+'</button>').join('')+'</div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
@@ -515,7 +539,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,switchOverallLeague,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,switchOverallLeague,switchClassLeague,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
