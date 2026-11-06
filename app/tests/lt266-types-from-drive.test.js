@@ -30,9 +30,10 @@ const icons=ctx.PokeSearchTypeIcons;
 assert.deepEqual(Object.keys(icons).sort(),keys,"All 18 exact API type enums");
 for(const type of keys){
  const p="ui-icons/type-"+type+"-lt266.png";
+ // Original LT266 kept byte-for-byte in source archive, not packed twice into APK.
  assert.equal(icons[type],"ui-icons/type-"+type+"-lt267.png","Revised type icon displayed");
  // LT266 original still exists and its exact SHA remains protected for rollback.
- const raw=fs.readFileSync(path.join(base,p));
+ const raw=fs.readFileSync(path.join(__dirname,"../../docs/legacy-assets/lt266-types",path.basename(p)));
  assert.equal(raw.subarray(0,8).toString("hex"),"89504e470d0a1a0a",type+" valid PNG");
  assert.equal(raw.readUInt32BE(16),1024,type+" width remains original");
  assert.equal(raw.readUInt32BE(20),1024,type+" height remains original");
