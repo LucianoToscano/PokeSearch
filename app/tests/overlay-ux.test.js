@@ -1110,8 +1110,8 @@ test("Authenticated profile cannot inherit previous trainer link",
  main.includes('Buscas comuns sem login · Shiny exige treinador vinculado'));
 
 
-test("UL uses user's StarUL art only in Modos, never Cup or result sprites",
- dock.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
+test("GL and UL use supplied LT262 icons only in Modos, never Cup or PvP result bases",
+ dock.includes('gl:"GLBadgeLT262.png",ul:"ULBadgeLT262.png"')&&
  dock.includes('gl:"gl-triangle.png",ul:"ul-triangle.png"')&&
  dock.includes('ul:{normal:"ultra-league.png",shiny:"ultra-league-shiny.png"')&&
  dock.includes('cup:{normal:"cup-league.png"')&&
