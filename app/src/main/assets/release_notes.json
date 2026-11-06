@@ -2441,6 +2441,26 @@
           "Confirmar operação visual no Samsung, posição e atualização física após instalação."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt274-compact-rank-evolution-proportions-20261106",
+      "minVersionCode": 54478,
+      "date": "06/11/2026",
+      "title": "LT274 — Cartões compactos e ícone de evolução legível",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "Os cinco cartões de Raides, GL, UL, ML e Rank Geral recuperam a altura compacta original.",
+          "O ícone branco e verde de evolução volta ao tamanho legível no canto inferior direito, com margem interna."
+        ],
+        "correcoes": [
+          "Corrigido o aumento indevido da caixa dos rankings e a redução excessiva do ícone de evolução na LT273.",
+          "Preservadas as bandeiras de ligas centralizadas e com tamanho original, os números de rank e os atalhos de avaliação."
+        ],
+        "emDesenvolvimento": [
+          "Validação física no Samsung e confirmação da instalação pelo Android ainda pendentes."
+        ]
+      }
     }
   ]
 }
