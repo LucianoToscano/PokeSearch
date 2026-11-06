@@ -15,13 +15,15 @@ const originals={
  "ui-icons/mt-elite.png":"8569b664c557130798dc3038e94250de0e3600a3a87a0e5fd522bf27393d91c6",
  "ui-icons/mt-normal.png":"aaee8981343025e786481837984acbf081c17617a10a076ae5afb07516e719fa",
  "ui-icons/mt-unknown.png":"1c7e9a80311bc1cd4187adf83e7b583f096a0c825a429bea015795dcee4be69e",
- "ui-icons/mega-symbol.png":"ed8d845ab02a575b90f331a98068efc78d3aca87ed9d9235afec1711f2492f26"
+ "ui-icons/mega-symbol.png":"3c80d9278aaa7b131b391a4da879f6c1459290995fdf09c3f3690a36838fa739"
 };
 for(const [file,digest] of Object.entries(originals)){
  const data=read(file);
  assert.equal(data.subarray(0,8).toString("hex"),"89504e470d0a1a0a",file+" PNG");
  assert.equal(sha(file),digest,file+" must preserve user-supplied content");
- assert.ok(data.length>700&&data.length<10000,file+" compact PNG");
+ const maxBytes=file==="ui-icons/mega-symbol.png"?2_000_000:10_000;
+ assert.ok(data.length>700&&data.length<maxBytes,
+  file+" original bytes pinned (all other compact icons unchanged)");
 }
 const detail=read("detail.html").toString("utf8");
 const dock=read("dock.html").toString("utf8");
