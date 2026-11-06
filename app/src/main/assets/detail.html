@@ -2534,84 +2534,149 @@ function psRailChoices(payload){
  }
  return out;
 }
+
+/* LT271: one evaluation at a time; actions are anchored to selected league. */
+function psCloseLeagueAssessment(){
+ if(!evolutionExpanded)return false;
+ if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("none");
+ const section=document.getElementById("evolutions");
+ if(section)section.hidden=true;
+ resizeEvolutionPanel();return true;
+}
+function psFocusLeagueBlocks(league){
+ const body=document.getElementById("evoBody");
+ if(!body)return false;
+ let seen=false;
+ for(const block of body.querySelectorAll?.(".psLeagueAnalysis")||[]){
+  const match=block.dataset?.psLeague===league;
+  block.hidden=!match;if(match)seen=true;
+ }
+ const empty=document.getElementById("psLeagueEmpty");
+ if(empty)empty.hidden=seen;
+ const names={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
+ const title=document.getElementById("psLeagueTitle");
+ if(title)title.textContent="Avaliação PvP · "+(names[league]||"");
+ return seen;
+}
+function psToggleLeagueAssessment(league){
+ if(!["gl","ul","ml"].includes(league)||!window.psRankContext)return false;
+ const section=document.getElementById("evolutions"),body=document.getElementById("evoBody");
+ if(!section||!body)return false;
+ if(evolutionExpanded&&psSelectedEvaluationLeague===league)
+  return psCloseLeagueAssessment();
+ if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("pvp");
+ evolutionExpanded=true;psSelectedEvaluationLeague=league;
+ psActiveAnalysisKey=league;activeRankLeague=league;
+ const choice=psRailChoices(window.psRankContext)?.[league]?.classChoice;
+ currentRankSpecies=choice?.name||window.psRankContext.name||watchName;
+ section.hidden=false;body.hidden=false;
+ const toggle=document.getElementById("evoToggle");
+ toggle?.setAttribute?.("aria-expanded","true");
+ const chevron=document.getElementById("evoChevron");
+ if(chevron)chevron.textContent="▴";
+ const rail=document.getElementById("rankLine");
+ if(rail){
+  rail.dataset.league=league;
+  for(const b of rail.querySelectorAll?.(".psRailLeague")||[])
+   b.dataset.active=String(b.dataset.psLeague===league);
+ }
+ psFocusLeagueBlocks(league);
+ renderRankOneMoves();
+ resizeEvolutionPanel();return true;
+}
+function psUpdateRaidShortcut(){
+ const b=document.getElementById("rankLine")?.querySelector?.(".psRailRaid");
+ if(!b)return false;
+ const best=psRaidReport?.verified?psRaidReport.best:null;
+ const rank=Number(best?.rank);
+ const good=Number.isInteger(rank)&&rank>0&&rank<=10000;
+ const num=b.querySelector?.(".psRailNumber");
+ if(num)num.textContent=good?"#"+rank:"—";
+ const name=String(best?.name||watchName||"");
+ b.title=good?"Raides · #"+rank+" "+String(best?.typePt||"")+" · "+name+
+  (best?.projected?" · ↳ evolução ou outra forma":""):
+  "Raides · avaliação ainda não confirmada · toque para consultar";
+ b.setAttribute?.("aria-label",b.title);
+ b.dataset.psRank=good?String(rank):"";
+ b.dataset.psEvolve=best?.projected?"true":"false";
+ const mark=b.querySelector?.(".psRailEvolve");
+ if(mark)mark.remove();
+ if(best?.projected&&good){
+  const arrow=document.createElement("span");arrow.className="psRailEvolve";
+  arrow.textContent="↳";arrow.setAttribute?.("aria-hidden","true");
+  b.appendChild(arrow);
+ }
+ return true;
+}
 function psRenderFiveRankRail(payload){
  const rail=document.getElementById("rankLine");
- if(!rail||typeof rail.replaceChildren!=="function"||
-  typeof document.createElement!=="function")return false;
- const choices=psRailChoices(payload);
- if(!Object.values(choices).some(x=>x.classChoice||x.overallChoice)){
-  rail.hidden=true;rail.replaceChildren();return false;
- }
- const leagueNames={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
- const icons={gl:"ps-gl-lt268.png",ul:"ps-ul-lt268.png",
-  ml:"ps-ml-lt268.png",overall:"ps-overall-lt268.png"};
- const selected=["gl","ul","ml"].includes(activeRankLeague)?activeRankLeague:
-  ["gl","ul","ml"].find(l=>choices[l].classChoice)||"gl";
- activeRankLeague=selected;
- currentRankSpecies=choices[selected]?.classChoice?.name||payload?.name||"";
+ if(!rail||typeof rail.replaceChildren!=="function"||typeof document.createElement!=="function")return false;
+ const ranks=psRailChoices(payload);
+ const names={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
+ const icons={raid:"ps-raid-lt268.png",gl:"ps-gl-lt268.png",
+  ul:"ps-ul-lt268.png",ml:"ps-ml-lt268.png",overall:"ps-overall-lt268.png"};
+ const requested=psSelectedEvaluationLeague||activeRankLeague||"gl";
+ const selected=["gl","ul","ml"].includes(requested)?requested:"gl";
  const options=["gl","ul","ml"].map(league=>{
-  const x=choices[league].overallChoice;
-  return {league,name:x?.name||payload?.name||"",
-   rank:x?.overallRank||null,evolves:x?.evolves===true};
+  const row=ranks[league].overallChoice;
+  return {league,name:row?.name||payload?.name||watchName||"",
+   rank:row?.overallRank||null,evolves:row?.evolves===true};
  });
  window.psRailOverallChoices=options;
- const general=options.find(x=>x.league===selected&&x.rank!==null)||
-  options.find(x=>x.rank!==null)||options.find(x=>x.league===selected);
- rail.replaceChildren();rail.dataset.rankRail="five";
- rail.dataset.league=selected;rail.dataset.topVerified="true";rail.hidden=false;
- const make=(kind,league,choice)=>{
-  const button=document.createElement("button");button.type="button";
-  button.className="psRailButton "+(kind==="overall"?"psRailGeneral":"psRailLeague");
-  button.dataset.psRail=kind==="overall"?"overall":league;
-  const img=document.createElement("img");img.className="psRailIcon";
-  img.src="ui-icons/"+icons[kind==="overall"?"overall":league];img.alt="";
-  img.setAttribute?.("aria-hidden","true");button.appendChild(img);
-  const num=choice?.rank;
+ const overallLeague=window.psRailOverallSelectedLeague||selected;
+ const general=options.find(x=>x.league===overallLeague)||options[0];
+ const add=(kind,league,item)=>{
+  const b=document.createElement("button");b.type="button";
+  b.className="psRailButton "+(kind==="raid"?"psRailRaid":kind==="overall"?"psRailGeneral":"psRailLeague");
+  b.dataset.psRail=kind==="raid"?"raid":kind==="overall"?"overall":league;
   const number=document.createElement("span");number.className="psRailNumber";
-  number.textContent=Number.isInteger(num)&&num>=1?"#"+num:"—";
-  button.appendChild(number);
-  const species=choice?.name||payload?.name||"";
-  const evolves=choice?.evolves===true;
-  button.title=(kind==="overall"?"Rank Geral PvP":"Rank Classe IV")+
-   " · "+leagueNames[league]+" · "+species+
-   (num?" · #"+num:" · rank não verificado")+
-   (evolves?" · ↳ rank da forma evoluída, não do Pokémon atual":"");
-  button.setAttribute?.("aria-label",button.title);
-  if(evolves){
-   const mark=document.createElement("span");mark.className="psRailEvolve";
-   mark.textContent="↳";mark.setAttribute?.("aria-hidden","true");
-   button.appendChild(mark);
+  const rank=kind==="overall"?item?.rank:item?.rank;
+  number.textContent=Number.isInteger(rank)&&rank>=1?"#"+rank:"—";
+  b.appendChild(number);
+  const icon=document.createElement("img");icon.className="psRailIcon";
+  icon.src="ui-icons/"+icons[kind==="raid"?"raid":kind==="overall"?"overall":league];
+  icon.alt="";icon.setAttribute?.("aria-hidden","true");b.appendChild(icon);
+  b.dataset.psKind=kind==="overall"?"overall":"class";
+  b.dataset.psLeague=league||selected;
+  b.dataset.psName=item?.name||payload?.name||watchName||"";
+  if(Number.isInteger(rank)&&rank>=1)b.dataset.psRank=String(rank);
+  if(item?.evolves){
+   const arrow=document.createElement("span");arrow.className="psRailEvolve";
+   arrow.textContent="↳";arrow.setAttribute?.("aria-hidden","true");b.appendChild(arrow);
   }
-  button.dataset.psKind=kind==="overall"?"overall":"class";
-  button.dataset.psLeague=league;button.dataset.psName=species;
-  if(Number.isInteger(num)&&num>=1)button.dataset.psRank=String(num);
-  if(kind==="overall"){
-   button.dataset.psRailOverall="true";
-   button.dataset.rgVisible=num?"#"+num:"—";
-   button.disabled=!window.POKESEARCH_PVPOKE_OVERALL?.[league]?.length;
-  }else button.disabled=!(Number.isInteger(num)&&num>=1);
-  if(!button.disabled)button.onclick=event=>{
-   if(kind!=="overall"){
-    activeRankLeague=league;currentRankSpecies=species;rail.dataset.league=league;
-    for(const other of rail.querySelectorAll?.(".psRailLeague")||[])
-     other.dataset.active=String(other.dataset.psLeague===league);
-    renderRankOneMoves();
-   }
-   return openPvpRankExplorer(event,button);
-  };
-  return button;
+  const title=kind==="raid"?"Raides · tocar para abrir":
+   (kind==="overall"?"Rank Geral PvP · ":"Avaliação PvP · ")+names[league]+
+   " · "+b.dataset.psName+(rank?" · #"+rank:" · sem rank verificado")+
+   (item?.evolves?" · ↳ pertence à evolução":"");
+  b.title=title;b.setAttribute?.("aria-label",title);
+  if(kind==="raid"){
+   b.onclick=()=>toggleRaidDetails();
+  }else if(kind==="overall"){
+   b.dataset.psRailOverall="true";
+   b.dataset.rgVisible=rank?"#"+rank:"—";
+   const available=["gl","ul","ml"].filter(l=>Array.isArray(window.POKESEARCH_PVPOKE_OVERALL?.[l])&&
+    window.POKESEARCH_PVPOKE_OVERALL[l].length);
+   b.disabled=available.length===0;
+   if(!b.disabled)b.onclick=event=>{
+    if(!available.includes(b.dataset.psLeague))b.dataset.psLeague=available[0];
+    return openPvpRankExplorer(event,b);
+   };
+  }else{
+   b.dataset.active=String(league===selected&&evolutionExpanded);
+   b.disabled=!payload?.leagues?.some?.(entry=>entry?.league===league);
+   if(!b.disabled)b.onclick=()=>psToggleLeagueAssessment(league);
+  }
+  rail.appendChild(b);
+  return b;
  };
- for(const league of ["gl","ul","ml"]){
-  const b=make("class",league,choices[league].classChoice);
-  b.dataset.active=String(league===selected);rail.appendChild(b);
- }
- rail.appendChild(make("overall",general.league,general));
- rail.title=["gl","ul","ml"].map(x=>{
-  const v=choices[x].classChoice;
-  return x.toUpperCase()+" "+(v?"#"+v.rank+(v.evolves?" ↳ "+v.name:""):"—");
- }).join(" · ");
- renderRankOneMoves();resizeEvolutionPanel();
- return true;
+ rail.replaceChildren();
+ rail.dataset.rankRail="five";rail.dataset.league=selected;
+ rail.hidden=false;
+ add("raid",null,null);
+ for(const league of ["gl","ul","ml"])add("class",league,ranks[league].classChoice);
+ add("overall",general.league,general);
+ psUpdateRaidShortcut();
+ resizeEvolutionPanel();return true;
 }
 
 window.showEvolutionDetails=payload=>{
