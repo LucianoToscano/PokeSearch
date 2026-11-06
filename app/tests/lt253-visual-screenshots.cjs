@@ -291,6 +291,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    const megaMoves=await page.evaluate(async()=>{
     let wrongBase=0,megaCalls=0;
     currentRankSpecies="Mega Sableye";
+    evolutionExpanded=true;psSelectedEvaluationLeague="gl";activeRankLeague="gl";
+    document.getElementById("evolutions").hidden=false;
     const rank=document.getElementById("rankLine");
     rank.dataset.league="gl";rank.textContent="🔵 GL IV #1 ↳ Sableye";
     window.psRankContext={leagues:[{league:"gl",megas:[
@@ -306,7 +308,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
       }}
     };
     renderRankOneMoves();
-    const action=rank.querySelector(".psMovesAction");
+    const action=document.querySelector("#psLeagueMoves .psMovesAction");
     if(!action)return {ok:false,why:"missing Mega action"};
     await action.onclick();
     const pop=document.getElementById("movesPopover"),html=pop.innerHTML;
