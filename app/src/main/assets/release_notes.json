@@ -2174,6 +2174,32 @@
           "Os sete gates automatizados passaram. A instalação e a inspeção visual no Samsung, nas duas Pokébolas, ainda precisam de confirmação física."
         ]
       }
+    },
+    {
+      "id": "lt263-visual-badges-pvp-raids-mt-mega-20261106",
+      "minVersionCode": 54467,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT263 — Bandeiras PvP, Raides, MTs e Mega",
+      "sections": {
+        "novidades": [
+          "Os indicadores de GL, UL e Liga Mestra no cartão PvP usam bandeiras PNG no lugar dos círculos coloridos.",
+          "A medalha de Raides substitui o troféu nas avaliações PvE; a análise e os seus dados continuam acessíveis pelo mesmo botão.",
+          "Os golpes recomendados mostram novos ícones de MT Elite, MT Normal ou MT cinza (quando faltam dados para confirmar), sem alterar a avaliação dos ataques.",
+          "O símbolo de Mega Evolução aparece nos cartões, nos destaques e no comparador das formas Mega."
+        ],
+        "melhorias": [
+          "Todas as artes são locais, compactas e transparentes, preservando as dimensões atuais dos cartões e das ações P/M/G.",
+          "Os novos círculos GL/UL do menu Modos continuam exclusivos dos modos; ícones das duas Pokébolas flutuantes e dos resultados permanecem inalterados.",
+          "Estados verificados dos golpes não mudam depois do toque; nenhum golpe legado é presumido quando a fonte é inconclusiva."
+        ],
+        "correcoes": [
+          "Compatibilidade dos cartões e menus preservada com verificações Node, Java, testes visuais P/M/G e validações do módulo de Raides.",
+          "A geração oficial verifica dentro do APK a integridade SHA-256 de 11 PNGs (incluindo os dois novos ícones do menu Modos)."
+        ],
+        "emDesenvolvimento": [
+          "Validar instalação e funcionamento físico no Samsung em ambas as Pokébolas após a atualização oficial."
+        ]
+      }
     }
   ]
 }
