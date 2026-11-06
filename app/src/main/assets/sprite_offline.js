@@ -2264,11 +2264,11 @@
   // verified local asset of the SAME variant as the only fallback.
   const sourceExact=card?.imageFromSite===true&&/^https:\/\//i.test(image)&&
     !/\s/.test(image)&&image.length<=1600;
-  // A source-verified, bundled East Sea or West Sea icon must be preferred
-  // over a possibly lazy/expired website image. Both WebViews share this file.
-  // Never convert East into default West, or normal into Shiny.
+  // The nondefault East Sea form needs its own bundled asset even when
+  // the site supplies a lazy/expired artwork URL. Default West Sea already
+  // has a validated offline Dex sprite and existing provider-first behavior.
   if(goArt?.offline&&(dexOf(card)===422||dexOf(card)===423)&&
-     /(?:EAST|WEST)SEA/.test(nameKey(card?.form))){
+     /EASTSEA/.test(nameKey(card?.form))){
    return goArt;
   }
   if(sourceExact){
