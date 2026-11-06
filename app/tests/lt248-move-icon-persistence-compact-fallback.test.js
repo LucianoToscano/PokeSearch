@@ -66,7 +66,7 @@ async function test(){
  await first.onclick();assert.equal(pop.hidden,true);
  render();
  assert.equal(line.children.at(-1).textContent,"🗡️","verified icon survives rerender and collapse");
- assert.ok(line.children.at(-1).title.includes("sem golpe legado"));
+ assert.ok(line.children.at(-1).title.includes("sem golpes legados"));
  identity="card-B";card="Litwick";line.textContent="GL IV #1 Atual";
  render();const litwick=line.children.at(-1);
  assert.equal(litwick.textContent,"⚔︎","unranked species must start neutral");
