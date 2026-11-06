@@ -14,3 +14,10 @@ Fotografia enviada pelo usuário após instalar a LT274: Wooloo com ícone de ev
 - Rodar testes Node, Android Java, PvE, OTA e screenshots reais do HTML empacotado em tamanhos P/M/G.
 - Testar painel real no Samsung P1 e P2 após instalação. CI Chrome não prova a mesma renderização física.
 - Publicar release apenas após CI de PR aprovada, merge e workflow oficial permanente; o maior código estável anterior é LT274 `0.02.74/54478`.
+
+## Publicação final confirmada
+- PR #268 mesclada; fonte incorporada à main em `20ca811f2b2f54fae3dd61298648259862296f43`.
+- Workflow oficial #42305617402 concluiu `success`; assinatura permanente e hash validados.
+- Release pública estável [v0.02.75-54479](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.75-54479) publicada em 06/11/2026 às 22:36:15 UTC.
+- APK `PokeSearch-v0.02.75-LT.apk` 33.612.890 bytes, SHA-256 `b63cefa27d84bd74bc5747935f40e3f5732b084609ada31fb9d858dfb054b881`.
+- A publicação não comprova instalação no Samsung; solicitar foto real após atualização se necessário para homologação.
