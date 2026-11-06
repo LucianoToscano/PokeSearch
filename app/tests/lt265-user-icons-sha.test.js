@@ -35,9 +35,7 @@ assert.ok(detail.includes('row.elite?psMtIconHtml("elite"):""'),
  "PvE rows with no verified Elite source never receive an Elite badge");
 // Captured card keeps original move IDs for canonical form-specific special move annotation.
 const translator=require("../src/main/assets/pve_moves_ptbr.js");
-const mock={};
-new Function("window",fs.readFileSync(path.join(root,"pokemon_card_presentation.js"),"utf8"))(mock);
-const draw=mock.PokeSearchCardPresentation;
+const draw=require("../src/main/assets/pokemon_card_presentation.js");
 const result=draw.moves("PECK_FAST / FLY",{number:"#16"},{base:{"16":[["normal"],["PECK_FAST"]]}});
 assert.ok(result.includes("PECK_FAST"),"Without a browser translation helper, original source remains visible");
 assert.ok(result.includes('class="pkLegacy"'),"Special metadata is independent of translated text");
