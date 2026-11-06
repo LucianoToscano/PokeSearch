@@ -1176,7 +1176,7 @@ test("Mode PNGs retain legacy vector fallback and 17px display only",()=>{
  dock.includes('position:absolute!important;top:50%!important;left:50%!important')&&
  dock.includes('background:transparent!important;border:0!important;box-shadow:none!important');
 });
-test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
+test("Modos uses original 0–3 stars and new GL/UL art at identical sizes",()=>{
  const vm=require("node:vm");
  const start=dock.indexOf("const RESULT_ICONS=Object.freeze("),end=dock.indexOf("let locationEnabled=",start);
  if(start<0||end<start)return false;
@@ -1539,7 +1539,7 @@ test("RESULT-RESTORE GL/UL still preserve result effects; UL now uses correct Ul
 });
 test("Mode emblems preserve historical fallback artwork without Cup alias",()=>{
  const fn=dock.split("function getModeMenuIcon(")[1]?.split("function getResultIcon(")[0]||"";
- return fn.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
+ return fn.includes('gl:"GLBadgeLT262.png",ul:"ULBadgeLT262.png"')&&
   fn.includes('fallbackPath:legacyFallback[family]')&&
   fn.includes('"file:///android_asset/result-icons/base/"+baseName')&&
   !fn.includes('base-cup.png');
@@ -3007,7 +3007,7 @@ test("LT62 one-pass Shiny + location share verified Search with no reset",()=>{
   dock.includes('clear.onclick=disable')&&
   !dock.includes('fieldRow.append(field,paste,toggle)');
 });
-test("LT57/LT212-DRIVE-ICON-01 exact GL/UL and transparent IV artwork verified",()=>{
+test("LT57/LT212 original GL/UL/IV files remain intact while LT262 changes mode paths",()=>{
  const crypto=require("node:crypto");
  const icons={
   "StarGL.png":"cdca6c1b159e7a3da45758d073bf88d4fe05798e9343e4ef4056e77ccb8df575",
@@ -3018,7 +3018,7 @@ test("LT57/LT212-DRIVE-ICON-01 exact GL/UL and transparent IV artwork verified",
   const file=fs.readFileSync(path.join(root,"assets/result-icons/modes",name));
   return file.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))&&
    crypto.createHash("sha256").update(file).digest("hex")===expected;
- })&&dock.includes('gl:"StarGL.png",ul:"StarUL.png"')&&
+ })&&dock.includes('gl:"GLBadgeLT262.png",ul:"ULBadgeLT262.png"')&&
  dock.includes('custom:"StarIVRaw.png"');
 });
 test("LT57-DRIVE-ICON-02 Raw IV text follows A D H and updates on changes",()=>{
