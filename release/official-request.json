@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.54",
-  "code": 54458,
-  "label": 51258,
-  "previous_tag": "v0.02.53-54457",
-  "qa_max_code": 54457,
-  "release_notes": "PokeSearch LT254 — Correções solicitadas dos menus, Mega, calculadora e Rank Classe. Menus Modo, Filtro e Localização deixam de desenhar a barra de ícones duplicada na WebView secundária; a barra principal mantém posição, transparência e arraste. Mega Evolução mostra o símbolo e diferencia a recomendação estratégica PvP Megaedição dos golpes aprendidos na forma normal, sem inventar ataques exclusivos e mantendo o status de legado somente com fonte confirmada. Calculadora IV A/B mais compacta, controles acessíveis, diferença de PC identificada como B − A, alvos 500/1500/2500 e dados opcionais recolhidos. Golpes Ágil, C1 e C2 alinhados, sem duplicar ataques capturados. O Rank Classe identifica a espécie e seu IV, corrigindo rolagem retida na troca Ursaring #1 ↔ Ursaluna #2 (GL 0/14/15). Base LT253 preservada, mesmo código nas duas Pokébolas, preferências independentes e tema compacto P/M/G. PR #233 mesclada após seis gates de QA automatizados aprovados, incluindo regressões Node, core, Java, contrato OTA e capturas visuais. A instalação e a inspeção física Samsung das duas Pokébolas não foram comprovadas; o Android exige confirmação do usuário para instalar."
+  "version": "0.02.55",
+  "code": 54459,
+  "label": 51259,
+  "previous_tag": "v0.02.54-54458",
+  "qa_max_code": 54458,
+  "release_notes": "LT255: corrigida a impossibilidade de trocar de evolução na Calculadora PvP observada no Teddiursa 0/14/15 PC 478 Nv.14. As famílias normais verificadas passam a estar disponíveis diretamente pelo catálogo offline de evoluções já usado pelo PokeSearch (463 vínculos idênticos a PVP_EVO_LINKS), independentemente da resposta assíncrona do ranking. Botões tocáveis permitem escolher Teddiursa, Ursaring e Ursaluna; seletor e setas permanecem ativos. Famílias maiores têm escolhas em lista interna recolhível, sem criar outro menu flutuante. A forma ativa é destacada, PC e PS são recalculados instantaneamente e IV A/B, nível e PC-alvo permanecem preservados. Evita atribuir evoluções normais indevidas a sombras, variantes e fantasias, não consulta APIs e não consome quota de coordenadas. A LT254, as duas Pokébolas independentes e design compacto P/M/G são preservados. Código integrado pela PR #234; seis verificações CI verdes, incluindo testes Node, Java, OTA e Playwright P/M/G da troca real entre Teddiursa, Ursaring e Ursaluna sem payload PvP. As verificações automáticas não comprovam instalação ou teste físico Samsung; a atualização exige confirmação do Android."
 }
