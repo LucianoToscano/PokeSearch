@@ -4,6 +4,8 @@ on:
     paths:
       - 'app/src/main/assets/pve_raid_rank.js'
       - 'app/src/main/assets/detail.html'
+      - 'app/src/main/assets/pokemon_type_icons.js'
+      - 'app/src/main/assets/ui-icons/type-*-lt266.png'
       - 'app/tests/lt259-raid-pre-capture-rank.test.js'
       - '.github/workflows/lt259-pve-source-smoke.yml'
   workflow_dispatch:
