@@ -1257,6 +1257,18 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psRankAlternates .psCompactOverall[data-rg-visible]::after{
  content:attr(data-rg-visible);display:inline-block;font:750 9px/1.1 Roboto,Arial,sans-serif}
 #rankLine .psCompactOverall:disabled[data-rg-visible]::before{opacity:.55}
+/* LT270 — five compact rank shortcuts; does not affect Pokéballs or Modos. */
+#rankLine[data-rank-rail="five"]{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;gap:3px!important;min-height:37px!important;height:37px!important;overflow:visible!important;width:100%!important}
+#rankLine[data-rank-rail="five"] .psRailButton,#rankLine[data-rank-rail="five"] .psMovesAction{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;position:relative!important;gap:2px!important;min-width:0!important;max-width:none!important;width:100%!important;height:34px!important;min-height:34px!important;margin:0!important;padding:2px!important;border:1px solid #bdd1e58f!important;border-radius:7px!important;background:#293c539a!important;box-shadow:none!important;color:#f5f9ff!important;font:800 11px/1 Roboto,Arial,sans-serif!important;white-space:nowrap!important;overflow:hidden!important;touch-action:manipulation!important}
+#rankLine[data-rank-rail="five"] .psRailButton[data-active="true"]{border-color:#c8edff!important;background:#345a7ca6!important}
+#rankLine[data-rank-rail="five"] .psRailButton:disabled{opacity:.52!important}
+#rankLine[data-rank-rail="five"] .psRailIcon{display:block;width:19px;height:19px;flex:0 0 19px;object-fit:contain;filter:none!important}
+#rankLine[data-rank-rail="five"] .psRailNumber{font:800 11px/1 Roboto,Arial,sans-serif;font-variant-numeric:tabular-nums}
+#rankLine[data-rank-rail="five"] .psRailEvolve{position:absolute;right:0;top:0;padding:1px 2px;color:#ffe1a0;background:#3a2f20e8;border-radius:0 6px 0 4px;font:850 9px/1 Roboto,Arial,sans-serif}
+#rankLine[data-rank-rail="five"] .psMovesAction{font-size:20px!important}
+#rankLine[data-rank-rail="five"] .psMovesAction[data-ps-verified="false"]{opacity:.75!important;color:#b3bdcb!important}
+#rankLine[data-rank-rail="five"] button:focus-visible{outline:2px solid #e4f2ff!important;outline-offset:1px}
+@media(max-width:345px){#rankLine[data-rank-rail="five"]{gap:2px!important}#rankLine[data-rank-rail="five"] .psRailIcon{width:17px;height:17px;flex-basis:17px}#rankLine[data-rank-rail="five"] .psRailNumber{font-size:10px!important}}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1917,13 +1929,16 @@ function openPvpRankExplorer(event,button){
  if(!engine||typeof engine.open!=="function")return false;
  const action=typeof engine.toggle==="function"?engine.toggle.bind(engine):engine.open.bind(engine);
  if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
+ const railOverall=data.psRailOverall==="true";
  return action({
   kind:data.psKind==="overall"?"overall":"class",
   name:data.psName||window.psRankContext.name,
   league:data.psLeague||"gl",
   iv:window.psRankContext.iv,
   rank:Number(data.psRank)||null,
-  forms:pvpFormsForLeague(data.psLeague||"gl")
+  forms:pvpFormsForLeague(data.psLeague||"gl"),
+  ...(railOverall?{leagueOptions:window.psRailOverallChoices||[],
+   railKey:"rail-overall|"+detailIdentity}:{})
  });
 }
 /* LT249: [↳ form] opens the EXISTING analysis and focuses its row.
@@ -2029,7 +2044,7 @@ function renderRankOneMoves(){
   },true);
   popover.psMovesToggleBound=true;
  }
- const hasRank=/(?:Rank Classe:|IV) #\d+/.test(rankLine.textContent||"");
+ const hasRank=rankLine.dataset?.rankRail==="five"||/(?:Rank Classe:|IV) #\d+/.test(rankLine.textContent||"");
  const megaTop=window.psRankContext?.leagues?.some?.(x=>x?.league===activeRankLeague&&
    x?.megas?.some?.(m=>m?.megaProjection===true&&Number(m.rank)===1));
  if(!hasRank&&!megaTop)return;
@@ -2043,6 +2058,7 @@ function renderRankOneMoves(){
   .replace(/\s+[XY]$/i,"").trim():featured;
  const statusKey=league+"|"+(isMega?"mega":"normal")+"|"+String(species).toLowerCase().trim();
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
+ rankLine.querySelector?.(".psMovesAction")?.remove?.();
  const btn=document.createElement("button");btn.type="button";
  const prior=psVerifiedMoveIcons.get(statusKey);
  // The badge must be known BEFORE the user taps. Never change it on click.
@@ -2450,11 +2466,126 @@ function setRankLineLabel(rankLine,label){
  if(typeof renderRankOneMoves==="function")renderRankOneMoves();
  return true;
 }
+
+/* LT270 — only verified eligible forms in five shortcuts.
+ * Mega and costume references stay accessible in the complete PvP panel. */
+function psRailChoices(payload){
+ const out={};
+ for(const league of ["gl","ul","ml"]){
+  const data=(payload?.leagues||[]).find(x=>x?.league===league)||{};
+  const candidates=[];
+  const add=(x,name,kind)=>{
+   if(!x||x.referenceOnly===true||x.megaProjection===true||x.eligible===false)return;
+   const raw=Number(x.rank),overall=Number(x.overallRank);
+   const rank=Number.isInteger(raw)&&raw>=1&&raw<=4096?raw:null;
+   const rg=Number.isInteger(overall)&&overall>=1?overall:null;
+   if(rank===null&&rg===null)return;
+   candidates.push({name:String(name||payload?.name||"").slice(0,100),
+    rank,overallRank:rg,evolves:kind==="evolution",kind});
+  };
+  add(data.own,payload?.name,"current");
+  if(payload?.includePreviousEvolutions!==false)
+   for(const x of Array.isArray(data.evolutions)?data.evolutions.slice(0,36):[])
+    add(x,x?.name,"evolution");
+  const ranks=candidates.filter(x=>x.rank!==null).sort((a,b)=>a.rank-b.rank||
+    (a.kind==="current"?-1:b.kind==="current"?1:0));
+  const general=candidates.filter(x=>x.overallRank!==null).sort((a,b)=>{
+   const aq=a.rank!==null&&a.rank<=50,bq=b.rank!==null&&b.rank<=50;
+   return (aq===bq?0:aq?-1:1)||a.overallRank-b.overallRank||
+    (a.kind==="current"?-1:b.kind==="current"?1:0);
+  });
+  out[league]={classChoice:ranks[0]||null,overallChoice:general[0]||null};
+ }
+ return out;
+}
+function psRenderFiveRankRail(payload){
+ const rail=document.getElementById("rankLine");
+ if(!rail||typeof rail.replaceChildren!=="function"||
+  typeof document.createElement!=="function")return false;
+ const choices=psRailChoices(payload);
+ if(!Object.values(choices).some(x=>x.classChoice||x.overallChoice)){
+  rail.hidden=true;rail.replaceChildren();return false;
+ }
+ const leagueNames={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
+ const icons={gl:"ps-gl-lt268.png",ul:"ps-ul-lt268.png",
+  ml:"ps-ml-lt268.png",overall:"ps-overall-lt268.png"};
+ const selected=["gl","ul","ml"].includes(activeRankLeague)?activeRankLeague:
+  ["gl","ul","ml"].find(l=>choices[l].classChoice)||"gl";
+ activeRankLeague=selected;
+ currentRankSpecies=choices[selected]?.classChoice?.name||payload?.name||"";
+ const options=["gl","ul","ml"].map(league=>{
+  const x=choices[league].overallChoice;
+  return {league,name:x?.name||payload?.name||"",
+   rank:x?.overallRank||null,evolves:x?.evolves===true};
+ });
+ window.psRailOverallChoices=options;
+ const general=options.find(x=>x.league===selected&&x.rank!==null)||
+  options.find(x=>x.rank!==null)||options.find(x=>x.league===selected);
+ rail.replaceChildren();rail.dataset.rankRail="five";
+ rail.dataset.league=selected;rail.dataset.topVerified="true";rail.hidden=false;
+ const make=(kind,league,choice)=>{
+  const button=document.createElement("button");button.type="button";
+  button.className="psRailButton "+(kind==="overall"?"psRailGeneral":"psRailLeague");
+  button.dataset.psRail=kind==="overall"?"overall":league;
+  const img=document.createElement("img");img.className="psRailIcon";
+  img.src="ui-icons/"+icons[kind==="overall"?"overall":league];img.alt="";
+  img.setAttribute?.("aria-hidden","true");button.appendChild(img);
+  const num=choice?.rank;
+  const number=document.createElement("span");number.className="psRailNumber";
+  number.textContent=Number.isInteger(num)&&num>=1?"#"+num:"—";
+  button.appendChild(number);
+  const species=choice?.name||payload?.name||"";
+  const evolves=choice?.evolves===true;
+  button.title=(kind==="overall"?"Rank Geral PvP":"Rank Classe IV")+
+   " · "+leagueNames[league]+" · "+species+
+   (num?" · #"+num:" · rank não verificado")+
+   (evolves?" · ↳ rank da forma evoluída, não do Pokémon atual":"");
+  button.setAttribute?.("aria-label",button.title);
+  if(evolves){
+   const mark=document.createElement("span");mark.className="psRailEvolve";
+   mark.textContent="↳";mark.setAttribute?.("aria-hidden","true");
+   button.appendChild(mark);
+  }
+  button.dataset.psKind=kind==="overall"?"overall":"class";
+  button.dataset.psLeague=league;button.dataset.psName=species;
+  if(Number.isInteger(num)&&num>=1)button.dataset.psRank=String(num);
+  if(kind==="overall"){
+   button.dataset.psRailOverall="true";
+   button.dataset.rgVisible=num?"#"+num:"—";
+   button.disabled=!window.POKESEARCH_PVPOKE_OVERALL?.[league]?.length;
+  }else button.disabled=!(Number.isInteger(num)&&num>=1);
+  if(!button.disabled)button.onclick=event=>{
+   if(kind!=="overall"){
+    activeRankLeague=league;currentRankSpecies=species;rail.dataset.league=league;
+    for(const other of rail.querySelectorAll?.(".psRailLeague")||[])
+     other.dataset.active=String(other.dataset.psLeague===league);
+    renderRankOneMoves();
+   }
+   return openPvpRankExplorer(event,button);
+  };
+  return button;
+ };
+ for(const league of ["gl","ul","ml"]){
+  const b=make("class",league,choices[league].classChoice);
+  b.dataset.active=String(league===selected);rail.appendChild(b);
+ }
+ rail.appendChild(make("overall",general.league,general));
+ rail.title=["gl","ul","ml"].map(x=>{
+  const v=choices[x].classChoice;
+  return x.toUpperCase()+" "+(v?"#"+v.rank+(v.evolves?" ↳ "+v.name:""):"—");
+ }).join(" · ");
+ renderRankOneMoves();resizeEvolutionPanel();
+ return true;
+}
+
 window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  window.psRankContext=payload;
- updateVisiblePvPRank(payload);
+ // Real Android WebViews use five independent shortcuts; text-only legacy DOMs remain safe.
+ const liveRail=document.getElementById("rankLine");
+ if(liveRail?.ownerDocument?.defaultView)psRenderFiveRankRail(payload);
+ else updateVisiblePvPRank(payload);
  if(metricKind)renderDetailMetric();
  // Compact rank label is also an entrypoint, without intercepting move buttons.
  const quickRank=document.getElementById("rankLine");

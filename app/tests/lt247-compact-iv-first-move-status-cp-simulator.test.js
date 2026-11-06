@@ -82,7 +82,10 @@ assert.ok(inline.includes('const isMega=/^mega\\s+/i.test(featured)'));
 assert.ok(inline.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'));
 assert.ok(inline.includes("'Mega '+h(species)+' · PvP'"));
 assert.ok(inline.includes("Mesmos golpes do "),"a Mega Edition uses learnable base-form moves");
-assert.ok(inline.includes('const hasRank=/(?:Rank Classe:|IV) #\\d+/'));
+assert.ok(inline.includes('const hasRank=rankLine.dataset?.rankRail==="five"||')&&
+ inline.includes('/(?:Rank Classe:|IV) #\\d+/.test(rankLine.textContent||"")')&&
+ inline.includes('if(!Object.values(choices).some(x=>x.classChoice||x.overallChoice))'),
+ "No move action unless a verified old rank or source-backed new five rail exists");;
 const gm=fs.readFileSync(path.join(base,"pvpoke-iv-gamemaster.js"),"utf8");
 const win={};new Function("window",gm)(win);
 const cpStart=inline.indexOf("/* LT244: zero-cost contextual stats actions.");

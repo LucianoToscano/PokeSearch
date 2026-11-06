@@ -2349,6 +2349,30 @@
           "Teste físico de instalação, atualização automática e legibilidade P/M/G continua pendente."
         ]
       }
+    },
+{
+      "id": "pokesearch-lt270-five-pvp-shortcuts-general-league-switch-20261106",
+      "minVersionCode": 54474,
+      "date": "06/11/2026",
+      "title": "LT270 — cinco atalhos, Rank Geral por liga",
+      "sections": {
+        "novidades": [
+          "Cinco botões iguais para GL, UL, ML, Rank Geral e Ataques recomendados. Cada um abre a análise existente.",
+          "Rank Geral oferece seletor de Grande Liga, Ultra Liga e Liga Mestra na própria tabela.",
+          "O indicador ↳ sinaliza rank da forma evoluída, sem atribuí-lo ao Pokémon capturado."
+        ],
+        "melhorias": [
+          "Cabeçalho do Rank Geral destaca liga e nome real da forma.",
+          "Atalhos de tamanho simétrico, com bordas legíveis e imagens sem brilho artificial."
+        ],
+        "correcoes": [
+          "Rank Classe IV e Rank Geral continuam separados, com — quando o número não foi confirmado.",
+          "Megas e fantasias de referência não recebem classificação jogável por engano; Pokébolas e modos intactos."
+        ],
+        "emDesenvolvimento": [
+          "Inspeção física no Samsung, temas claro/escuro, rolagem P/M/G e atualização pelo aplicativo ainda pendentes."
+        ]
+      }
     }
   ]
 }

@@ -70,7 +70,7 @@
  const PAGE_SIZE=10;
  const FILTER_LIMITS=[10,50,100,0]; // 0 = full ranking
  let state=null,view=null,openKey="",lastDrawState=null;
- const clickKey=opts=>[opts?.kind==="overall"?"overall":"class",
+ const clickKey=opts=>opts?.railKey||[opts?.kind==="overall"?"overall":"class",
   n(opts?.name||""),String(opts?.league||""),Number(opts?.rank)||0].join("|");
  function pageForRank(rows,rank){
   const index=rows.findIndex(r=>r.rank===rank);
@@ -180,6 +180,9 @@
   const selectedRank=selected?.rank??(Number.isInteger(candidateRank)&&candidateRank>=1&&
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
+   iv:opts.iv,overall,railKey:opts.railKey||"",
+   leagueOptions:kind==="overall"&&Array.isArray(opts.leagueOptions)?
+    opts.leagueOptions.filter(x=>LIGAS[x?.league]).slice(0,3):[],
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -197,6 +200,33 @@
   }
   return open(opts);
  }
+ function switchOverallLeague(league){
+  if(!state||state.kind!=="overall"||!LIGAS[league])return false;
+  const target=state.leagueOptions.find(x=>x.league===league);
+  if(!target)return false;
+  const opts={kind:"overall",league,name:target.name||state.name,
+   rank:target.rank||null,iv:state.iv,forms:state.forms,
+   gm:state.gm,overall:state.overall,leagueOptions:state.leagueOptions,
+   railKey:state.railKey};
+  const badge=document.getElementById("rankLine")?.querySelector?.(".psRailGeneral");
+  if(badge){
+   badge.dataset.psLeague=league;badge.dataset.psName=opts.name;
+   badge.dataset.psRank=target.rank?String(target.rank):"";
+   badge.dataset.rgVisible=target.rank?"#"+target.rank:"—";
+   const n=badge.querySelector?.(".psRailNumber");
+   if(n)n.textContent=target.rank?"#"+target.rank:"—";
+   badge.querySelector?.(".psRailEvolve")?.remove?.();
+   if(target.evolves){
+    const mark=document.createElement("span");mark.className="psRailEvolve";
+    mark.textContent="↳";mark.setAttribute?.("aria-hidden","true");
+    badge.appendChild(mark);
+   }
+   badge.title="Rank Geral · "+LIGAS[league]+" · "+opts.name+
+    (target.rank?" · #"+target.rank:" · posição não verificada");
+   badge.setAttribute?.("aria-label",badge.title);
+  }
+  return open(opts);
+ }
  function close(){
   if(view)view.hidden=true;
   state=null;openKey="";
@@ -210,7 +240,11 @@
    "#psRankExplorer[hidden]{display:none!important}",
    "#psRankExplorer{margin:5px 0;padding:7px;border:1px solid #ffffff45;border-radius:10px;background:rgba(28,34,46,.91);color:#f3f5fa;font:10px/1.35 Roboto,Arial,sans-serif;max-width:100%;overflow:hidden}",
    "#psRankExplorer .psrHead{display:flex;align-items:center;justify-content:space-between;gap:5px}",
-   "#psRankExplorer .psrTitle{min-width:0;font-size:11px;font-weight:900}",
+   "#psRankExplorer .psrTitle{min-width:0;flex:1 1 auto;font-size:11.5px;font-weight:900;line-height:1.25;overflow-wrap:anywhere}",
+   "#psRankExplorer .psrHead{align-items:flex-start}",
+   "#psRankExplorer .psrLeagueSwitch{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:4px 0;padding:5px 6px;background:#ffffff12;border:1px solid #ffffff30;border-radius:7px}",
+   "#psRankExplorer .psrLeagueSwitch label{font-size:10px;color:#dce8f5;font-weight:750}",
+   "#psRankExplorer .psrLeagueSwitch select{flex:1 1 auto;max-width:none;min-width:125px}",
    "#psRankExplorer button,#psRankExplorer select{font:inherit;color:inherit;background:#ffffff18;border:1px solid #ffffff3b;border-radius:6px;padding:5px;min-height:27px;max-width:100%}",
    "#psRankExplorer button:focus-visible,#psRankExplorer select:focus-visible,#psRankExplorer tr:focus-visible{outline:2px solid #a9e5c8;outline-offset:1px}",
    "#psRankExplorer button:disabled{opacity:.38}",
@@ -254,6 +288,8 @@
     view.addEventListener("change",evt=>{
      const control=evt.target.closest?.("select[data-ps-filter]");
      if(control&&state&&setFilter(state,Number(control.value)))draw();
+     const picker=evt.target.closest?.("select[data-ps-league-choice]");
+     if(picker&&state?.kind==="overall")switchOverallLeague(picker.value);
     });
     view.addEventListener("click",evt=>{
      const b=evt.target.closest?.("button[data-ps-act]");
@@ -376,16 +412,22 @@
      markup+'</tr>'+details;
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
+  const leagueChooser=s.kind==="overall"&&s.leagueOptions.length?
+   '<div class="psrLeagueSwitch"><label for="psrLeague">Liga</label>'+
+   '<select id="psrLeague" data-ps-league-choice aria-label="Escolher liga do Rank Geral">'+
+   s.leagueOptions.map(x=>'<option value="'+safe(x.league)+'"'+
+    (x.league===s.league?' selected':'')+'>'+safe(LIGAS[x.league])+'</option>').join('')+
+   '</select></div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
   view.innerHTML='<div class="psrHead"><div class="psrTitle">'+
    (s.kind==="class"?"Rank Classe · "+safe(s.name):
-    "Rank Geral · "+safe(s.name))+
+    "Rank Geral · "+safe(LIGAS[s.league]))+
    '</div><button type="button" data-ps-act="close" aria-label="Fechar classificação">✕</button></div>'+
-   '<div class="psrSub">'+safe(LIGAS[s.league])+
+   '<div class="psrSub">'+(s.kind==="overall"?safe(s.name):safe(LIGAS[s.league]))+
    (actualIv?' · IV '+safe(actualIv.iv):"")+
    (s.selectedRank?' · '+(s.kind==="class"?"Classe IV ":"Rank Geral ")+
-      '#'+s.selectedRank:"")+'</div>'+
+      '#'+s.selectedRank:"")+'</div>'+leagueChooser+
    (s.kind==="class"?
      '<div class="psrScopeNote">Posição entre 4.096 IVs de '+safe(s.name)+
      ' — não é o Rank Geral da Grande Liga.</div>':"")+
@@ -433,7 +475,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,switchOverallLeague,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
