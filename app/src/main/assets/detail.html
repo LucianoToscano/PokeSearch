@@ -1815,6 +1815,7 @@ function renderRaidPreview(){
  }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
+ if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
 }
 function toggleRaidDetails(){
@@ -2060,6 +2061,15 @@ function renderRankOneMoves(){
  };
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
+ const leagueSlot=document.getElementById("psLeagueMoves");
+ const moveHost=leagueSlot||rankLine; // legacy isolated tests retain fallback
+ rankLine.querySelector?.(".psMovesAction")?.remove?.();
+ if(leagueSlot){
+  leagueSlot.querySelector?.(".psMovesAction")?.remove?.();
+  if(!evolutionExpanded||!["gl","ul","ml"].includes(activeRankLeague)){
+   popover.hidden=true;popover.textContent="";return;
+  }
+ }
  popover.hidden=true;popover.textContent="";
  // <details> opens after click, so resize after the native toggle event.
  // Attach once per WebView; both Pokébolas share this asset independently.
@@ -2083,7 +2093,7 @@ function renderRankOneMoves(){
   .replace(/\s+[XY]$/i,"").trim():featured;
  const statusKey=league+"|"+(isMega?"mega":"normal")+"|"+String(species).toLowerCase().trim();
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
- rankLine.querySelector?.(".psMovesAction")?.remove?.();
+ moveHost.querySelector?.(".psMovesAction")?.remove?.();
  const btn=document.createElement("button");btn.type="button";
  const prior=psVerifiedMoveIcons.get(statusKey);
  // The badge must be known BEFORE the user taps. Never change it on click.
@@ -2118,7 +2128,8 @@ function renderRankOneMoves(){
  btn.onclick=async()=>{
   actionOpened=true;
   const show=popover.hidden;
-  if(show&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("moves");
+  if(show&&typeof psCloseOtherPanels==="function")
+   psCloseOtherPanels(leagueSlot?"pvp":"moves");
   popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
   popover.scrollTop=0;
@@ -2228,7 +2239,7 @@ function renderRankOneMoves(){
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
- rankLine.appendChild(btn);
+ moveHost.appendChild(btn);
 }
 
 /* LT245: small, on-demand list of the other forms; all actions stay local.
