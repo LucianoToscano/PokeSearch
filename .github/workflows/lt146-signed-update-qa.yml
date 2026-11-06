@@ -202,7 +202,7 @@ jobs:
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
           # LT267 adds exactly 10 pinned GO sprites: Pikachu Diwali and
           # Squawkabilly Blue/Green/White/Yellow, normal and Shiny.
-          assert len(report['costumes'])==124  # 106 earlier + 8 LT260 Sea + 10 LT267
+          assert len(report['costumes'])==128  # 124 pinned PokeMiners + 4 immutable LT144 event images
           import hashlib
           exact_new=["pm25.fDIWALI_2024.icon.png","pm25.fDIWALI_2024.s.icon.png"]
           for color in ("BLUE","GREEN","WHITE","YELLOW"):
@@ -218,6 +218,21 @@ jobs:
               assert key in report['costumes'], "Missing exact LT260 Sea sprite "+key
               assert (root/key).is_file(), "Missing bundled Sea sprite "+key
               assert hashlib.sha256((root/key).read_bytes()).hexdigest()==report['costumes'][key], "Sea SHA256 changed "+key
+          # Four additional LT144 event PNGs are recovered only from an
+          # immutable, hash-verified signed APK when the CDN changes.
+          exact_lt144={
+              "pm41.fHALLOWEEN_2026_01.icon.png":"93dace15fb8136fda77c22114ea56063982cf24d7ff1d4066bd7e6c05a6e43c4",
+              "pm41.fHALLOWEEN_2026_01.s.icon.png":"56086b8520c662a0d3bd57267482e3e08b2de1f32c74a984db642fb340cb8ce2",
+              "pm94.cFALL_2023_NOEVOLVE.icon.png":"522c5edd70a0c55e33e8257859a9469e23f153953805bcdf9d05e9e66e45341d",
+              "pm94.cFALL_2023_NOEVOLVE.s.icon.png":"caf3161f54a325adee3ed2e995099519dc8e65586ec604d6bceb9c69ce97b79d"
+          }
+          assert len(exact_lt144)==4
+          for filename,digest in exact_lt144.items():
+              key="costumes/"+filename
+              assert key in report['costumes'], "Missing verified LT144 event "+key
+              assert (root/key).is_file(), "Missing bundled LT144 event "+key
+              assert report['costumes'][key]==digest, "LT144 manifest digest changed "+key
+              assert hashlib.sha256((root/key).read_bytes()).hexdigest()==digest, "LT144 image bytes changed "+key
           for filename in exact_new:
               key="costumes/"+filename
               assert key in report['costumes'], "Missing exact Diwali/Squawk asset "+key

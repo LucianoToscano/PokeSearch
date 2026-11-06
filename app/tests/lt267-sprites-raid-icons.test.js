@@ -66,11 +66,17 @@ const qaWorkflow=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt
 const pinnedCostumeKeys=[...builder.matchAll(/"costumes\/([^"]+)"\s*:\s*\(/g)].map(m=>m[1]);
 assert.equal(new Set(pinnedCostumeKeys).size,124,
  "Immutable sprite builder specifies 106 previous + 8 Sea + 10 Diwali/Squawk costumes");
-assert.ok(qaWorkflow.includes("assert len(report['costumes'])==124"),
- "Signed QA must account for 124 pinned costumes with no omissions");
+const lt144EventCount=[...builder.matchAll(/"pm(?:41|94)\.[^"]+\.png":\s*"[a-f0-9]{64}"/g)].length;
+assert.equal(lt144EventCount,4,"Four extra LT144 SHA256-pinned event costumes");
+assert.ok(qaWorkflow.includes("assert len(report['costumes'])==128"),
+ "Signed QA must account for 124 PokeMiners and four exact LT144 event assets");
 assert.ok(qaWorkflow.includes("for dex in (422,423)") &&
  qaWorkflow.includes('for sea in ("EAST","WEST")'),
  "Exact East/West Sea normal/shiny assets required for both species");
+for(const name of ["pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png",
+"pm94.cFALL_2023_NOEVOLVE.icon.png","pm94.cFALL_2023_NOEVOLVE.s.icon.png"]){
+ assert.ok(qaWorkflow.includes('"'+name+'":'),"Immutable LT144 event required by signed QA: "+name);
+}
 assert.ok(qaWorkflow.includes('assert hashlib.sha256((root/key).read_bytes()).hexdigest()==report[\'costumes\'][key]'),
  "Signed QA must verify each exact Diwali/Squawk sprite against manifest SHA256");
 assert.ok(qaWorkflow.includes("for color in (\"BLUE\",\"GREEN\",\"WHITE\",\"YELLOW\")"),
