@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT272 — MARCADOR DE EVOLUÇÃO NO CANTO INFERIOR DIREITO (06/11/2026)
+
+- **Mudança visual solicitada:** substituir o `↳` que ocupava espaço ao lado de `#rank` pelo **ícone original branco/verde enviado pelo usuário**, em PNG transparente de 128×128, sem fundo preto. `ui-icons/ps-evolution-lt272.png`, SHA-256 `67a26f134fbe41a38d75bd4a0e13de526379a029dc904a7cd0e26701c7c78aa5`. Fonte original entregue no chat, recortada e otimizada, sem mudar desenho.
+- **Geometria:** canto inferior direito `right:5px; bottom:5px` dentro do botão, ícone 15×15 CSS px (13×13 no viewport estreito), ~1 mm de afastamento visual da borda; nenhum toque no contorno. `#rank` permanece na linha superior e bandeiras centrais originais **não são reposicionadas nem reduzidas**. Marcador não intercepta toques.
+- **Aplicação:** Raides projetadas, GL, UL, ML e Rank Geral com `evolves` confirmado, inclusive ao trocar liga no explorador RG. Sem emblema se não houver evolução; apenas dados verificados. As duas Pokébolas, Modos, golpes por liga, fontes e mecanismo OTA não foram modificados.
+- **Validação prevista:** contrato Node com SHA do PNG e sem seta, screenshot P/M/G verificando pelo DOM margem direita/inferior, distância vertical do rank, bandeira centralizada e sem cortes. Teste físico Samsung ainda pendente; não anunciar APK até CI, assinatura e publicação confirmadas.
+- **Versionamento solicitado ao CI:** LT272 `0.02.72` / `versionCode 54476`; rollback LT271 `v0.02.71-54475`.
+
+
 ## LT270 — RELEASE OFICIAL, CINCO ÍCONES PvP E QA APROVADAS (06/11/2026)
 
 - **Release estável verificada:** LT270 `0.02.70` / `versionCode 54474` / [tag v0.02.70-54474](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.70-54474); publicação `2026-11-06T18:40:49Z` (15h40 Brasília), `draft=false`, `prerelease=false`. APK [PokeSearch-v0.02.70-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.70-54474/PokeSearch-v0.02.70-LT.apk), **33.606.774 bytes**, SHA-256 **`3e883e605061a82e87418952978babf87418b1e5a8355016dfee6f4afa366bab`**, asset `uploaded`. Limite de 35.000.000 bytes preservado.
