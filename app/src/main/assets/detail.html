@@ -1334,25 +1334,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  justify-self:center!important;align-self:center!important;line-height:1!important;margin:0!important}
 #movesPopover .psMoveLegacy .psEliteScroll{width:14px!important;height:13px!important;object-fit:contain!important}
 #movesPopover .psMoveStats{grid-column:2 / -1!important}
-#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{top:auto!important;left:auto!important;
- right:4px!important;bottom:3px!important;width:11px!important;height:11px!important;
- min-width:11px!important;min-height:11px!important;max-width:11px!important;max-height:11px!important}
-@media(max-width:345px){#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
- right:3px!important;bottom:3px!important;width:9px!important;height:9px!important;
- min-width:9px!important;min-height:9px!important;max-width:9px!important;max-height:9px!important}}
+/* LT274: preserve LT272 marker 15px (13px narrow) at 5px from both borders. */
 #info{margin-top:4px!important;margin-bottom:4px!important}
 
-/* LT273 Samsung P/M/G: reserve a lower-right shelf for the evolution mark,
-   without changing the original centered, same-size league flags. */
-#rankLine[data-rank-rail="five"]{height:56px!important;min-height:56px!important}
-#rankLine[data-rank-rail="five"] .psRailButton{
- height:54px!important;min-height:54px!important;
- justify-content:flex-start!important;align-items:center!important;
- padding-top:2px!important;
-}
-#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
- right:4px!important;bottom:3px!important;
-}
+/* LT274: preserve compact LT271 rail (47px) and badges (45px).
+   Never enlarge the card to fit the evolution marker; flags stay 23px. */
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
