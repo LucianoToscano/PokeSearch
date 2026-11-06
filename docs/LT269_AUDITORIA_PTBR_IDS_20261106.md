@@ -27,3 +27,5 @@ Teste novo `app/tests/lt269-ptbr-offline-go-ids.test.js` cobra as 10 correspond�
 
 ## CI: contrato histórico de versão compatível com nova release
 O gate core sinalizou que o teste histórico LT268 exigia `req.code===54472` mesmo depois da solicitação LT269. O teste foi corrigido para exigir **versionCode pelo menos 54472 e incremento exato de 1 em relação à tag anterior**, preservando a verificação de versão sem bloquear upgrades válidos.
+
+- A primeira tentativa de generalizar o contrato incluiu barras duplas no literal regex JS, identificadas pelo gate Node completo. Corrigido para classe de ponto `[.]` e dígitos `[0-9]`, mantendo validação de formato e monotonicidade, sem relaxar a regra.
