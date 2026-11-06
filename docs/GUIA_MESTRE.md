@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT274 — CORREÇÃO DE PROPORÇÃO E APK PUBLICADO (06/11/2026)
+
+- **Status oficial:** LT274 `0.02.74` / `versionCode 54478` publicada em 06/11/2026 às 22:08:19 UTC (19:08:19 Brasília), release estável `v0.02.74-54478` [GitHub](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.74-54478), APK `PokeSearch-v0.02.74-LT.apk` **33.612.474 bytes**, SHA-256 `36282053c702e1fef96e4b2d52aae7efc1f9b70a958bfb4da14af04fd49bcb04`, asset `uploaded`.
+- **Correção conforme captura aprovada:** eliminadas regras LT273 que aumentaram os cinco cartões de 45 para 54px e diminuíram o ícone de evolução de 15 para 11px (9px no estreito). Restaurados **cartões 45px**, trilho **47px**, marcador branco/verde **15px** ou **13px** no estreito, margem inferior/direita **5px** e bandeiras **23px centralizadas**. Sem retirar bandeiras nem deslocar `#rank`; atalhos Raides/GL/UL/ML/Rank Geral preservados.
+- **PR #265:** [correção visual integrada](https://github.com/LucianoToscano/PokeSearch/pull/265), commit merge `9d2daeb00cfbe7f580cd4d1f425795e62cbb7e8d`; QA P/M/G, Node, Java/Android, PvE e OTA aprovadas. **PR #267:** [corrigido teste histórico que fixava code=54477](https://github.com/LucianoToscano/PokeSearch/pull/267), merge `b037eb62ea17305b2cca5ebb931218b9db7ac371`; revisão de versão respeita monotonicidade no preflight.
+- **Publicação:** [workflow #42301884325](https://github.com/LucianoToscano/PokeSearch/actions/runs/42301884325) `preflight=success`, `publish=success`; Node/OTA, geração de assets, R8, verificação de assinatura, publicação e digest bem-sucedidos. Solicitação em main `e4848aee528eaac8d89c30a68e26a68862e77766`. Tentativa anterior [#42301133161](https://github.com/LucianoToscano/PokeSearch/actions/runs/42301133161) falhou no teste fixado em 54477 e **não** publicou APK.
+- **Ainda pendente:** testar toque e aparência no Samsung físico (Pokébolas P1/P2), confirmar atualização/instalação pelo Android; a publicação do APK não é prova de instalação. Rollback LT273 `v0.02.73-54477`.
+- **Auditoria específica:** [LT274 proporções de ícone](LT274_CORRECAO_PROPORCOES_ICONE_EVOLUCAO_20261106.md).
+
 ## LT273 — CONTROLES COMPACTOS, NAVEGAÇÃO E EVOLUÇÃO (06/11/2026)
 
 - **Objetivo:** sanar pontos marcados #2EFF2C (remover botões de exportação e explicações longas), #EB3BE5 (alinhamento), #FF7D1A (seletor de liga inoperante), #9933FF (mover Golpes capturados/Local para antes de Pegar Coordenadas), #0028B8 (cabeçalho único da liga), e reposicionar ícone de evolução sem tocar bandeira ou bordas.
