@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.59",
-  "code": 54463,
-  "label": 51263,
-  "previous_tag": "v0.02.58-54462",
-  "qa_max_code": 54462,
-  "release_notes": "PokeSearch LT259: novo botão 🏆 Raides no cartão de Pokémon antes de Pegar Coordenadas, mostrando a relevância do atacante em Raides por tipo, posição da espécie/forma, evolução projetada e golpes, inclusive necessidade de MT de Elite. A nova avaliação também está acessível no painel já existente de Análise PvP, sem janela flutuante. Fonte pública de referência S-Tier-Devs/pogo-db-api (dataset de 2026, não rankings oficiais atualizados por chefe); se a fonte não confirmar um rank, o app exibe apenas a prévia offline de Ataque-base, sem inventar classificação. Diferencia Rank Raides de Rank IV Classe e Rank Geral PvP. Mantém o visual compacto P/M/G, duas Pokébolas independentes, versões anteriores, favs, sem acesso adicional à API PoGoCoordinates nem revelação de coordenadas. PR #239 mesclada em 2107629cd1c63a4becdb5203934eee73614cb412 após sete workflows aprovados, incluindo teste da fonte pública real e screenshots P/M/G. Teste físico Samsung P1/P2 não comprovado. A instalação depende de confirmação do Android."
+  "version": "0.02.60",
+  "code": 54464,
+  "label": 51264,
+  "previous_tag": "v0.02.59-54463",
+  "qa_max_code": 54463,
+  "release_notes": "PokeSearch LT260: correção offline das sprites de Shellos #422 e Gastrodon #423 East Sea/West Sea, normais e Shiny, preservando a forma exata sem trocar as cores. Oito artes GO autenticadas pelos Git blobs SHA-1 pré-registrados, empacotadas e verificadas como PNGs no APK oficial antes da publicação. Ao limpar a Localização da busca, a ordenação Distância (Distance nearest) volta imediatamente para Despawn (longest), inclusive em limpeza repetida; mudança persistida e sincronizada nos menus, preservando todos os demais filtros e duas Pokébolas. O botão 🏆 Raides não desaparece quando a fonte do ranking PvE não está disponível ou não existe rank GL: mostra status neutro e não inventa classificações. PR #240 mesclada em de9e2ab7923234463deff40a9d59ec34ac8ea08f após sete gates automatizados verdes (Node completo, Java, screenshots P/M/G, OTA e fontes). QA físico no Samsung e instalação real não observados. Atualização requer confirmação do Android."
 }
