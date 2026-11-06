@@ -12,3 +12,6 @@ O usuário forneceu capturas do cartão congestionado e pediu cinco atalhos com 
 
 ## Validação e publicação
 Base de partida: LT269 `v0.02.69-54473`, release pública SHA-256 `799d3e52b729be6ce62228bb0d1cd775278dbc344eaec477a1100d7851a24942`. LT270 solicitada `0.02.70` / `54474` somente após Node, QA, Java, visual P/M/G, PvE, OTA e preflight aprovados. A assinatura e a publicação devem ser verificadas separadamente. Não declarar teste físico Samsung ou instalação automática sem prova.
+
+## CI revisão após PR #258
+Os gates Node completo e core identificaram somente dois testes históricos (LT231 e LT247) esperando um literal `const hasRank=` sem o prefixo da nova faixa. Os novos contratos exigem explicitamente o regex anterior **e** que a nova faixa seja renderizada apenas quando há um Rank Classe ou Geral real. A lógica de combate, os status de golpes e o fallback antigo foram preservados; verificações não foram removidas.
