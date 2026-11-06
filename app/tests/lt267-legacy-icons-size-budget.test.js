@@ -19,7 +19,15 @@ for(const name of names){
  assert.ok(fs.existsSync(path.join(base,current)),"Current revised art shipped");
 }
 assert.ok(workflow.includes('assert "assets/ui-icons/"+filename not in names'),"APK must not carry legacy duplicate");
+assert.ok(workflow.includes("import sys,zipfile,hashlib,os"),"APK verifier imports OS for archive verification");
 assert.ok(workflow.includes('test "$(stat -c %s "$APK")" -lt 35000000'),
  "The original 35 MB size safety guard remains strict");
 assert.ok(oldSize>5000000,"Measured multi-megabyte waste removed from shipping assets");
+const signedQa=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt146-signed-update-qa.yml"),"utf8");
+assert.ok(signedQa.includes("LT267 QA: 18 transparent local types and exact pinned digests PASS"),
+  "signed QA must validate local LT267 PNGs and pinned SHA256");
+assert.ok(signedQa.includes("image.readUInt32BE(16)!==512"),
+  "signed QA must reject wrong-size or missing LT267 PNGs");
+assert.ok(!signedQa.includes("data:image/png;base64,iVBORw0KGgo"),
+  "signed QA must not expect old inline Base64 icons");
 console.log("LT267 APK size PASS: archived 18 originals with exact SHA, removed "+oldSize+" unused bytes, 35MB guard intact");

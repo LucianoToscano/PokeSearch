@@ -141,7 +141,7 @@ jobs:
           unzip -t "$APK" >/dev/null
           # Abort before publication unless Halloween costume PNGs are truly inside the APK.
           python3 - "$APK" <<'PYSCRIPT'
-          import sys,zipfile,hashlib
+          import sys,zipfile,hashlib,os
           expected=[
             "pm656.cFALL_2024.icon.png","pm656.cFALL_2024.s.icon.png",
             "pm722.cFALL_2024.icon.png","pm722.cFALL_2024.s.icon.png",
