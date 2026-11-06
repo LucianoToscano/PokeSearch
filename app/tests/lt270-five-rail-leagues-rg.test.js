@@ -84,6 +84,10 @@ assert.equal(crypto.createHash("sha256").update(art).digest("hex"),
  "67a26f134fbe41a38d75bd4a0e13de526379a029dc904a7cd0e26701c7c78aa5");
 assert.match(html,/right:3px!important;bottom:3px!important/);
 assert.match(html,/width:11px!important;height:11px!important/);
+assert.match(html,/#rankLine\[data-rank-rail="five"\]\.psRailButton\{[\s\S]*?height:54px!important;/,
+ "Five badges retain a separate vertical safe zone for evolution marker");
+assert.match(html,/justify-content:flex-start!important;padding-top:3px!important/,
+ "Rank+flag stay above the marker, horizontally centered");
 assert.ok(explorer.includes('mark.src="ui-icons/ps-evolution-lt272.png"'));
 assert.ok(html.indexOf('<div id="info"></div>')>html.indexOf('id="evoBody"'),"Golpes/Local placed after expanded PvP");
 assert.ok(html.includes('id="psLeagueFlag"')&&html.includes('title.dataset.league=league'));
