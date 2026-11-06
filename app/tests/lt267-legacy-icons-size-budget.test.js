@@ -19,6 +19,7 @@ for(const name of names){
  assert.ok(fs.existsSync(path.join(base,current)),"Current revised art shipped");
 }
 assert.ok(workflow.includes('assert "assets/ui-icons/"+filename not in names'),"APK must not carry legacy duplicate");
+assert.ok(workflow.includes("import sys,zipfile,hashlib,os"),"APK verifier imports OS for archive verification");
 assert.ok(workflow.includes('test "$(stat -c %s "$APK")" -lt 35000000'),
  "The original 35 MB size safety guard remains strict");
 assert.ok(oldSize>5000000,"Measured multi-megabyte waste removed from shipping assets");
