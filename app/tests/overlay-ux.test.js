@@ -2647,7 +2647,7 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
  if(!window.showEvolutionDetails(detail))return false;
  const body=node("evoBody"),section=node("evolutions");
  if(section.hidden||!body.hidden||!body.innerHTML.includes("Grande Liga")||
-   !body.innerHTML.includes("Ultra Liga")||!body.innerHTML.includes("Liga Master")||
+   !body.innerHTML.includes("Ultra Liga")||!body.innerHTML.includes("Liga Mestra")||
    !body.innerHTML.includes("Não elegível no nível atual")||
    !body.innerHTML.includes("&lt;img")||body.innerHTML.includes("<img src=x")||
    !body.innerHTML.includes("PC 1497")||!body.innerHTML.includes("Nv. 29,0"))return false;

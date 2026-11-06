@@ -1177,6 +1177,63 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  display:none!important;min-height:0!important;height:0!important;
  margin:0!important;padding:0!important;border:0!important
 }
+/* LT265 — compact and legible, no solid blocks or new overlay windows.
+   Flag borders are brightened by CSS, preserving asset hashes and sizes. */
+#rankLine .psLeagueIv::before,.psLeagueFlag,
+#evoBody .psLeagueFlag,#psCpSimResult .psLeagueFlag{
+ filter:drop-shadow(0 0 1px #f5fbff) drop-shadow(0 0 .55px #f5fbff)!important
+}
+#raidPanel{margin:2px 0 4px;padding:5px 7px;border-radius:7px;
+ font:500 10px/1.25 Roboto,Arial,sans-serif}
+#raidPanel .psRaidHead{margin:0 0 3px;font-size:10.5px}
+#raidPanel .psRaidRow{padding:4px 0;gap:2px 5px;
+ grid-template-columns:minmax(0,1fr) auto;align-items:baseline}
+#raidPanel .psRaidRow .psRaidName{font-weight:650;min-width:0;
+ white-space:normal;overflow-wrap:anywhere}
+#raidPanel .psRaidRow strong{font-size:10px}
+#raidPanel .psRaidMoves{display:flex;align-items:center;gap:3px;
+ flex-wrap:wrap;font-size:9.3px;line-height:1.25;color:#d6e5f3}
+#raidPanel .psRaidMoveNames{min-width:0;overflow-wrap:anywhere}
+#raidPanel .psRaidMoveSep{color:#8b9dad}
+#raidPanel .psRaidMoveState{width:18px!important;height:13px!important;
+ vertical-align:-3px;margin:0!important;filter:drop-shadow(0 0 .7px #cedcf8)}
+#raidPanel .psRaidMore,#raidPanel .psRaidSource{margin-top:3px;
+ border-top:1px solid #b9ced028;padding-top:4px}
+#raidPanel .psRaidMore>summary,#raidPanel .psRaidSource>summary{
+ color:#b6d9f4;font-size:9.5px;cursor:pointer;list-style:revert;
+ min-height:22px;line-height:20px}
+#raidPanel .psRaidNote{margin:3px 0;color:#a9b8cb;
+ font-size:9px;line-height:1.3}
+#psMetricPanel .psCpSimTitle{margin:1px 0 5px!important;
+ color:#e8f3ff;font-size:10.5px!important}
+#psMetricPanel .psCpAdvanced{margin:5px 0 4px;
+ border:1px solid #abc8de42;border-radius:6px;padding:4px 6px}
+#psMetricPanel .psCpAdvanced summary,#psMetricPanel .psCpSimExtra summary,
+#psMetricPanel .psMetricFoot summary,#psMetricPanel .psCpSimFoot summary{
+ min-height:22px;color:#aee2ff;cursor:pointer;font-size:9.5px;
+ font-weight:650;line-height:21px}
+#psMetricPanel .psCpIvHelp{color:#b9cfe0;font-size:9px;margin-top:3px}
+#psMetricPanel .psCpIvComparison{margin:4px 0!important}
+#psMetricPanel .psCpSimResultRow{padding:2px 0!important;line-height:1.2}
+#psMetricPanel .psCpSimFoot{margin:2px 0!important}
+#psMetricPanel .psCpPresets{margin:3px 0!important}
+#psMetricPanel .psCpPresets button{min-height:28px!important}
+#movesPopover .psMoveLegend{font-size:9px;line-height:1.25}
+#movesPopover .psRaidMoveState{width:18px!important;height:13px!important}
+/* LT265: user-supplied bordered badges, exact source hashes retained.
+ * Images remain 13px in the ranking and never replace floating Pokéballs. */
+#rankLine .psLeagueIv[data-ps-league="gl"]::before{
+ background-image:url("ui-icons/league-gl-bordered-lt265.png")!important}
+#rankLine .psLeagueIv[data-ps-league="ul"]::before{
+ background-image:url("ui-icons/league-ul-bordered-lt265.png")!important}
+#rankLine .psLeagueIv[data-ps-league="ml"]::before{
+ background-image:url("ui-icons/league-ml-bordered-lt265.png")!important}
+#rankLine .psLeagueIv[data-ps-league="cup"]::before{
+ background-image:url("ui-icons/league-cup-bordered-lt265.png")!important}
+#movesPopover .psMoveLegacy{display:inline-flex;align-items:center;
+ flex:0 0 21px;width:21px;height:15px;vertical-align:middle}
+#movesPopover .psEliteScroll{width:21px;height:14px;display:block;
+ object-fit:contain;filter:drop-shadow(0 0 .65px #b8eeff)}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1239,6 +1296,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_insights.js"></script>
 <script src="pvp_rank_moves.js"></script>
+<script src="pve_moves_ptbr.js"></script>
 <script src="pve_raid_rank.js"></script>
 <script src="pvp_rank_advanced_ui.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
@@ -1580,8 +1638,15 @@ const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","
 const PS_LEAGUE_ICONS=Object.freeze({
  gl:"ui-icons/league-gl-flag.png",ul:"ui-icons/league-ul-flag.png",
  ml:"ui-icons/league-ml-flag.png"});
+const PS_LEAGUE_BORDERED=Object.freeze({
+ gl:"ui-icons/league-gl-bordered-lt265.png",
+ ul:"ui-icons/league-ul-bordered-lt265.png",
+ ml:"ui-icons/league-ml-bordered-lt265.png",
+ cup:"ui-icons/league-cup-bordered-lt265.png"});
 const psLeagueIconHtml=(league,cls="psLeagueFlag")=>
- PS_LEAGUE_ICONS[league]?'<img class="'+cls+'" src="'+PS_LEAGUE_ICONS[league]+'" alt="" aria-hidden="true">':"";
+ PS_LEAGUE_ICONS[league]?'<img class="'+cls+'" src="'+PS_LEAGUE_ICONS[league]+
+ '" srcset="'+(PS_LEAGUE_BORDERED[league]||PS_LEAGUE_ICONS[league])+
+ ' 1x" alt="" aria-hidden="true">':"";
 const psMtIconHtml=(kind,cls="psRaidMoveState")=>{
  const file={elite:"mt-elite.png",normal:"mt-normal.png",unknown:"mt-unknown.png"}[kind]||"mt-unknown.png";
  return '<img class="'+cls+'" src="ui-icons/'+file+'" alt="" aria-hidden="true">';
@@ -1589,24 +1654,59 @@ const psMtIconHtml=(kind,cls="psRaidMoveState")=>{
 const psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡️"?"normal":"unknown";
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
 let psRaidReport=null,psRaidExpanded=false,psRaidToken=0,psRaidAttackPreview=null;
+/* LT265: a single open main panel makes the Samsung overlay compact.
+ * Do not change the underlying PvP, PvE, calculator or per-ball data. */
+function psCloseOtherPanels(keep){
+ if(keep!=="raid"&&psRaidExpanded){
+  psRaidExpanded=false;
+  const p=document.getElementById("raidPanel"),b=document.getElementById("raidRow");
+  if(p)p.hidden=true;
+  b?.setAttribute?.("aria-expanded","false");
+ }
+ if(keep!=="pvp"&&evolutionExpanded){
+  evolutionExpanded=false;psActiveAnalysisKey="";
+  const p=document.getElementById("evoBody"),b=document.getElementById("evoToggle"),
+   chevron=document.getElementById("evoChevron");
+  if(p)p.hidden=true;
+  if(chevron)chevron.textContent="▾";
+  b?.setAttribute?.("aria-expanded","false");
+ }
+ if(keep!=="calc"&&metricKind){
+  metricKind="";
+  document.querySelector?.("#panel")?.classList?.remove?.("metricOpen");
+  const p=document.getElementById("psMetricPanel");
+  if(p){p.hidden=true;p.innerHTML="";}
+ }
+ if(keep!=="moves"){
+  const p=document.getElementById("movesPopover");
+  if(p)p.hidden=true;
+ }
+ if(keep!=="rank")window.PokeSearchRankExplorer?.close?.();
+ if(keep!=="alternates"&&typeof closePvpRankAlternates==="function")closePvpRankAlternates();
+}
 /* Raid results rank the SPECIES by attack type, not these encounter IVs.
  * This is an async, read-only public-data check and cannot reveal coordinates. */
+/* LT265: one-line-first PvE result; translated moves from pinned GO pt-BR.
+ * Full provenance and projected evolutions remain available on demand. */
 function renderRaidPreview(){
  const button=document.getElementById("raidRow"),panel=document.getElementById("raidPanel");
  if(!button||!panel)return;
  const result=psRaidReport;
  const best=result?.verified?result.best:null;
+ const translator=window.PokeSearchMovePtBR;
+ const localized=(id,fast)=>{
+  const value=translator?.name?.(id,fast)||String(id||"").replace(/_/g," ");
+  return h(value);
+ };
  if(!best){
   const attack=psRaidAttackPreview;
   button.textContent="Raides · "+(attack?
    "ATQ base "+attack.attack+" ↳ "+attack.name+" · rank pendente":
    (result?.reason||"Aguardando dados..."));
   if(button.dataset)button.dataset.grade="unknown";
-  panel.innerHTML='<div class="psRaidNote">'+
-    h(result?.reason||"Aguardando resposta do ranking PvE.")+
-    (attack?'<div>Prévia offline: Ataque-base '+h(attack.attack)+
-      ' · '+h(attack.name)+'. Não basta para provar que é um bom counter.</div>':"")+
-    '</div>';
+  panel.innerHTML='<div class="psRaidNote">'+h(result?.reason||"Fonte indisponível")+
+   (attack?'<div>ATQ base: '+h(attack.attack)+' · '+h(attack.name)+
+     ' (não comprova destaque em Raides)</div>':"")+'</div>';
  }else{
   const good=best.rank<=20,useful=best.rank<=50;
   if(button.dataset)button.dataset.grade=good?"elite":useful?"useful":"unknown";
@@ -1614,18 +1714,26 @@ function renderRaidPreview(){
    best.rank<=100?"Situacional":"Sem destaque")+" · #"+
    best.rank+" "+best.typePt+(best.projected?" ↳ "+best.name:"");
   const rows=(result.rows||[]).slice(0,8);
-  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/raid-badge.png" alt="">Atacantes por tipo (PvE)</div>'+
-   rows.map(row=>'<div class="psRaidRow"><span>'+h(row.name)+
-    (row.projected?" · evolução/forma projetada":" · atual")+
-    (row.variant==="mega"?" · Mega":"")+'</span><strong>#'+row.rank+
-    ' '+h(row.typePt)+'</strong><span class="psRaidMoves">'+
-    h(row.fast.replace(/_/g," "))+' + '+h(row.charged.replace(/_/g," "))+
-    (row.elite?" · "+psMtIconHtml("elite")+" exige MT de Elite":" · "+psMtIconHtml("normal")+" sem Elite nesta fonte")+
-    '</span></div>').join("")+
-   '<div class="psRaidNote">'+h(result.source)+
-   '. Referência por ER e tipo, não ranking universal nem contra um chefe específico. '+
-   'Nível 50 e IV 15/15/15 de comparação: os IVs deste encontro não mudam o rank da espécie. '+
-   'A evolução, Mega e golpes ainda exigem disponibilidade no jogo.</div>';
+  const moveLabel=row=>'<span class="psRaidMoveNames">'+
+    '<span title="Ataque Ágil">Ágil: '+localized(row.fast,true)+'</span>'+
+    '<span class="psRaidMoveSep" aria-hidden="true"> · </span>'+
+    '<span title="Ataque Carregado">Carregado: '+localized(row.charged,false)+'</span>'+
+    '</span>'+(row.elite?psMtIconHtml("elite"):"");
+  const rowHtml=row=>'<div class="psRaidRow"><span class="psRaidName" title="'+
+    (row.projected?"Projeção da evolução ou forma, não garante disponibilidade":"Espécie atual")+
+    '">'+(row.projected?"↳ ":"")+h(row.name)+
+    (row.variant==="mega"?" · Mega":"")+
+    '</span><strong>#'+row.rank+' '+h(row.typePt)+'</strong>'+
+    '<span class="psRaidMoves">'+moveLabel(row)+'</span></div>';
+  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/raid-badge.png" alt="">Atacantes por tipo</div>'+
+   rows.slice(0,3).map(rowHtml).join("")+
+   (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
+    ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
+   '<details class="psRaidSource"><summary>Fonte e critérios</summary><div class="psRaidNote">'+
+    h(result.source||"Fonte de referência")+
+    ' · Rank por tipo e desempenho PvE, não ranking universal, não por IV nem contra um chefe específico. '+
+    'Dados de referência: nível 50 e IV 15/15/15; a forma, Mega e golpes dependem do jogo.'+
+    '</div></details>';
  }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
@@ -1634,7 +1742,9 @@ function renderRaidPreview(){
 function toggleRaidDetails(){
  const button=document.getElementById("raidRow"),panel=document.getElementById("raidPanel");
  if(!button||!panel)return false;
- psRaidExpanded=!psRaidExpanded;
+ const next=!psRaidExpanded;
+ if(next&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("raid");
+ psRaidExpanded=next;
  if(!psRaidReport)psRaidReport={verified:false,reason:"Consultando ranking externo..."};
  renderRaidPreview();
  return true;
@@ -1644,6 +1754,17 @@ function loadRaidBeforeCapture(card){
  const button=document.getElementById("raidRow");
  if(!button)return;
  const token=++psRaidToken,identity=detailIdentity;
+ // The same verified GO pt-BR catalogue used for PvP move names.
+ // The token prevents a slow locale reply from touching another encounter.
+ Promise.resolve().then(()=>window.PokeSearchMovePtBR?.ensure?.()).then(()=>{
+  if(token!==psRaidToken||identity!==detailIdentity)return;
+  if(psRaidReport?.verified)renderRaidPreview();
+  if(card.moves&&window.PokeSearchCardPresentation?.moves){
+   const item=document.getElementById("psCapturedMoveNames");
+   if(item)item.innerHTML=window.PokeSearchCardPresentation.moves(
+    card.moves,card,window.PokeSearchCardMetaData);
+  }
+ }).catch(()=>{/* Offline verified PT-BR subset remains usable. */});
  // Show the Raid action BEFORE loading any asynchronous source, regardless
  // of whether a PvP rank is available for this species.
  psRaidReport={verified:false,reason:"Consultando avaliação de Raides..."};
@@ -1692,6 +1813,7 @@ function resizeEvolutionPanel(){
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");
  if(section.hidden)return;
+ if(!evolutionExpanded&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("pvp");
  evolutionExpanded=!evolutionExpanded;
  if(!evolutionExpanded)psActiveAnalysisKey="";
  document.getElementById("evoBody").hidden=!evolutionExpanded;
@@ -1753,6 +1875,7 @@ function openPvpRankExplorer(event,button){
  const data=button.dataset||{},engine=window.PokeSearchRankExplorer;
  if(!engine||typeof engine.open!=="function")return false;
  const action=typeof engine.toggle==="function"?engine.toggle.bind(engine):engine.open.bind(engine);
+ if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
  return action({
   kind:data.psKind==="overall"?"overall":"class",
   name:data.psName||window.psRankContext.name,
@@ -1912,7 +2035,9 @@ function renderRankOneMoves(){
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
   actionOpened=true;
-  const show=popover.hidden;popover.hidden=!show;
+  const show=popover.hidden;
+  if(show&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("moves");
+  popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
   popover.scrollTop=0;
   const identity=detailIdentity;
@@ -1963,7 +2088,10 @@ function renderRankOneMoves(){
    return '<div class="psMoveRow"><span class="psMoveLabel" title="'+
      h(/^C[12]$/.test(label)?"Carregado "+label.slice(1):label)+'">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
-     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+
+     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">'+
+      '<img class="psEliteScroll" src="ui-icons/'+
+       (label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png")+
+       '" alt="" aria-hidden="true"></span>':"")+
      (metrics.length?'<span class="psMoveStats">'+h(metrics.join(" · "))+'</span>':"")+'</div>';
   };
   if(recommendation.availableOnly===true){ 
@@ -1986,7 +2114,7 @@ function renderRankOneMoves(){
      ' golpes possíveis</summary><div class="psAvailableMoveList">'+
      fast.map(x=>row("Ágil",x)).join("")+
      charged.map(x=>row("Carregado",x)).join("")+
-     (hasLegacy?'<div class="psMoveLegend">💠 Alguns golpes podem ser legados / Elite</div>':"")+
+     (hasLegacy?'<div class="psMoveLegend">Golpes legados/Elite marcados acima</div>':"")+
      '</div></details>';
    }
    resizeEvolutionPanel();return;
@@ -2012,7 +2140,7 @@ function renderRankOneMoves(){
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
     (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
       ' · recomendados ≠ capturados')+'</div>'+
-   (hasLegacy?'<div class="psMoveLegend">'+psMtIconHtml("elite")+' Golpe legado/Elite confirmado</div>':
+   (hasLegacy?'<div class="psMoveLegend" title="Golpe legado/Elite confirmado">Legado/Elite indicado ao lado do golpe</div>':
     complete?'<div class="psMoveLegend">'+psMtIconHtml("normal")+' Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">'+psMtIconHtml("unknown")+' Status de legado não verificado</div>');
   resizeEvolutionPanel();
@@ -2298,9 +2426,9 @@ window.showEvolutionDetails=payload=>{
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt="" aria-hidden="true"> Grande Liga',
- ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt="" aria-hidden="true"> Ultra Liga',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" alt="" aria-hidden="true"> Liga Master'};
+ const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="" aria-hidden="true"> Grande Liga',
+ ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="" aria-hidden="true"> Ultra Liga',
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="" aria-hidden="true"> Liga Mestra'};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
@@ -2360,9 +2488,9 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">'+
-   ({gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt="">',
- ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt="">',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" alt="">'}[x.league]||"🔔")+' '+
+   ({gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="">',
+ ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="">',
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="">'}[x.league]||"🔔")+' '+
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="ui-icons/mega-symbol.png" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
@@ -2582,7 +2710,7 @@ function psCpControls(){
    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+
    psCpFormText(row,forms)+'</button>').join("");
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Normal / evoluções / Mega · mesmos IVs</div>'+
+  '<div class="psCpSimTitle" title="Normal / evoluções / Mega · mesmos IVs">Escolha a forma e o nível</div>'+
   '<div class="psCpSimFields">'+
   '<div class="psCpFormField"><span class="psCpFormFieldLabel">Forma · '+forms.length+'</span>'+
   '<div class="psCpFormStepper">'+
@@ -2608,27 +2736,28 @@ function psCpControls(){
   '<button type="button" onclick="stepPvpCpLevel(0.5)" aria-label="Aumentar meio nível">+</button>'+
   '</div></label>'+
   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
+  '<details class="psCpAdvanced" ontoggle="resizeEvolutionPanel()"><summary>Comparar IVs (opcional)</summary>'+
+  '<div class="psCpIvHelp">A: captura ou editado · B: outro IV</div>'+
   '<div class="psCpIvComparison">'+
   '<div class="psCpIvGroup"><b>IV A</b>'+
   psCpIvFields("A",psCpCustomIv||psCpIv()||[0,0,0])+
   '<button type="button" onclick="psCpResetIv()" title="Restaurar IV capturado" aria-label="Restaurar IV capturado">↶</button></div>'+
   '<div class="psCpIvGroup"><b>IV B</b>'+
-  psCpIvFields("B",psCpCompareIv)+'</div></div>'+
+  psCpIvFields("B",psCpCompareIv)+'</div></div></details>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
   '<div class="psCpTargetRow"><label>PC-alvo '+
   '<input id="psCpTargetCp" type="number" min="10" max="10000" step="1"'+
   ' value="'+psCpTargetCp+'" oninput="updatePvpCpSimulator()" '+
   ' aria-label="PC desejado"></label>'+
   '<button type="button" onclick="psCpApplyTarget()"'+
-  ' title="Calcular o maior nível dentro do PC desejado">Calcular nível</button></div>'+
+  ' title="Calcular o maior nível dentro do PC desejado">Encontrar nível</button></div>'+
   '<div class="psCpPresets" aria-label="Limites de PC">'+
   '<button type="button" onclick="psCpSetPreset(500)">500</button>'+
   '<button type="button" onclick="psCpSetPreset(1500)">1500</button>'+
   '<button type="button" onclick="psCpSetPreset(2500)">2500</button></div>'+
-  '<div class="psCpSimFoot">Projeção offline · Mega não garante entrada na GBL.'+
-  '<details><summary>Notas da simulação</summary>'+
-  'Projeção matemática com IVs editáveis e Game Master offline. Não confirma '+
-  'disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</details></div></div>';
+  '<div class="psCpSimFoot"><details ontoggle="resizeEvolutionPanel()"><summary>Como funciona?</summary>'+
+  'PC e PS são projeções com Game Master offline. '+
+  'Não confirma disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</details></div></div>';
 }
 function psCpPickForm(value){
  const forms=psCpVariants(),sel=document.getElementById("psCpForm");
@@ -2715,12 +2844,13 @@ function updatePvpCpSimulator(){
  const signed=delta>0?"+"+delta:String(delta);
  root.innerHTML='<div class="psCpSimResultRow"><span>IV A '+h(iv.join("/"))+
   '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
-  (compared?'<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
+  (compared?'<details class="psCpSimExtra" ontoggle="resizeEvolutionPanel()"><summary>Resultado IV B · comparar</summary>'+
+   '<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
    '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
-   '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div>':'')+
+   '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div></details>':'')+
   '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
   '</span><strong>'+label(target)+'</strong></div>'+
   '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+
@@ -2760,7 +2890,8 @@ function renderDetailMetric(){
   psCpControls()+
   (rows?'<details class="psCpPvpProjections"><summary>Projeções PvP por liga</summary>'+rows+'</details>':
    '<div class="psMetricEmpty">Projeções por liga indisponíveis.</div>')+
-  '<div class="psMetricFoot">PC e Nv. das ligas são projeções dos mesmos IVs, não os atributos atuais nem promessa de elegibilidade PvP.</div>';
+  '<details class="psMetricFoot" ontoggle="resizeEvolutionPanel()"><summary>Sobre os cálculos</summary>'+
+  'PC e nível projetados com os mesmos IVs, não os atributos atuais. Isso não confirma elegibilidade na Liga GO.</details>';
  panel.hidden=false;
   document.querySelector?.("#panel")?.classList?.add?.("metricOpen");
   if(typeof panel.querySelector==="function"&&panel.querySelector("#psCpSimResult"))
@@ -2771,6 +2902,7 @@ function renderDetailMetric(){
 function openDetailMetric(kind){
  if(kind==="iv"){
   if(!metricCard?.ivValid)return false;
+  if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
   const context=window.psRankContext,league=activeRankLeague||"gl";
   const name=String(context?.name||metricCard.name||"");
   return window.PokeSearchRankExplorer?.open?.({
@@ -2780,6 +2912,7 @@ function openDetailMetric(kind){
  }
  if(kind!=="cp"&&kind!=="level")return false;
  if(metricKind===kind){closeDetailMetric();return true;}
+ if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("calc");
  metricKind=kind;
  return renderDetailMetric();
 }
@@ -2992,7 +3125,7 @@ window.showDetails=(c,mode,watched)=>{
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
-  (c.moves?'<span class="infoLabel">Golpes:</span><span class="infoValue">'+movesHtml+'</span>':"")+
+  (c.moves?'<span class="infoLabel">Golpes:</span><span id="psCapturedMoveNames" class="infoValue">'+movesHtml+'</span>':"")+
   item("Distância",c.distance)+
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';

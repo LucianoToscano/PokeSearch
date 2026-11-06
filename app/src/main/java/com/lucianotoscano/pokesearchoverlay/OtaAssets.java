@@ -58,7 +58,7 @@ final class OtaAssets {
             "dock.html","detail.html","sprite_offline.js","sprite_visual_scale.js",
             "visual_editor.js","pokemon_card_presentation.js","pvpoke-overall-ranks.js",
             "pvpoke-iv-gamemaster.js","pvp_rank_explorer.js",
-            "pvp_rank_insights.js","pvp_rank_advanced_ui.js","pvp_rank_moves.js","pve_raid_rank.js",
+            "pvp_rank_insights.js","pvp_rank_advanced_ui.js","pvp_rank_moves.js","pve_moves_ptbr.js","pve_raid_rank.js",
             "pvp_family_catalog.js",
             "mega_evolution_icon.svg",
             "probe.js","release_notes.json","pokemon_catalog.json");
