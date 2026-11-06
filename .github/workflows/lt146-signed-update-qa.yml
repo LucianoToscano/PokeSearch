@@ -100,10 +100,30 @@ jobs:
           python3 -m py_compile app/scripts/build_sprite_bundle.py app/scripts/fetch_form_sprites.py app/scripts/fetch_all_verified_varieties.py app/scripts/build_pokemon_card_metadata.py
           python3 app/scripts/build_pokemon_card_metadata.py
           node - <<'NODE'
-          const fs=require('fs'),vm=require('vm'),src=fs.readFileSync('app/src/main/assets/pokemon_type_icons.js','utf8');
+          // LT267: PNGs are local offline files, not Base64 in the JS heap.
+          // Check all exact types, transparent dimensions, and official SHA-256
+          // without weakening the historic signed-APK asset integrity gate.
+          const fs=require('fs'),vm=require('vm'),path=require('path'),crypto=require('crypto');
+          const root='app/src/main/assets',src=fs.readFileSync(path.join(root,'pokemon_type_icons.js'),'utf8');
           const ctx={};vm.runInNewContext(src,ctx);const icons=ctx.PokeSearchTypeIcons;
-          if(Object.keys(icons).length!==18||Object.values(icons).some(src=>!src.startsWith('data:image/png;base64,iVBORw0KGgo')))
-           throw Error('Drive Pokémon type icons not packaged');
+          const expected=['normal','fire','water','electric','grass','ice','fighting','poison',
+            'ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+          if(!icons||Object.keys(icons).length!==18||
+             expected.some(t=>!Object.prototype.hasOwnProperty.call(icons,t)))
+            throw Error('Missing Pokémon type enum/icon');
+          const official=fs.readFileSync('.github/workflows/pokesearch-official-release.yml','utf8');
+          for(const type of expected){
+            const name='type-'+type+'-lt267.png',rel='ui-icons/'+name;
+            if(icons[type]!==rel)throw Error('Incorrect live type icon path '+type);
+            const image=fs.readFileSync(path.join(root,rel));
+            if(image.subarray(0,8).toString('hex')!=='89504e470d0a1a0a'||
+               image.readUInt32BE(16)!==512||image.readUInt32BE(20)!==512||image[25]!==6)
+              throw Error('Invalid transparent LT267 PNG '+type);
+            const digest=crypto.createHash('sha256').update(image).digest('hex');
+            if(!official.includes('"'+name+'": "'+digest+'"'))
+              throw Error('LT267 type SHA256 is not pinned in official APK gate: '+type);
+          }
+          console.log('LT267 QA: 18 transparent local types and exact pinned digests PASS');
           NODE
           node --check functions/index.js
           node --check functions/scripts/reconcile-once.js

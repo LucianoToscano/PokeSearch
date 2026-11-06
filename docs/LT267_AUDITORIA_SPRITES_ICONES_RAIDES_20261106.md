@@ -38,3 +38,9 @@ Branch de QA. Não afirmar merge/release física até confirmação de CI, links
 - A tentativa oficial [#42238275812](https://github.com/LucianoToscano/PokeSearch/actions/runs/42238275812) não publicou release: a validação final retornou código 1 após verificar todos os PNGs e antes de gerar o artefato. O limite existente `test "$(stat -c %s "$APK")" -lt 35000000` é o bloqueio mais provável, pois 18 PNGs antigos de cerca de 5,7 MB ainda ocupavam o APK.
 - Correção conservadora: mover os 18 PNGs antigos LT266 sem modificar conteúdo para `docs/legacy-assets/lt266-types/` e deixar somente os atuais LT267 no APK. SHA-256, 1024×1024 e canal alfa dos originais continuam verificados; novo gate garante que não aparecem duplicados no APK. O limite de 35 MB **não muda**.
 - O rollback oficial LT266 contém os recursos LT266. Os novos PNGs LT267 permanecem hash-pinned no APK novo. Antes da conclusão da nova CI/publicação, não afirmar que o tamanho passou nem que APK foi lançada.
+
+## Diagnóstico da segunda falha e correção conservadora (06/11/2026)
+- Workflow oficial #42240094259: falha objetiva `NameError: name 'os' is not defined` na verificação Python de recursos antigos arquivados. O compilador finalizou o APK antes desse erro; não há evidência de publicação. Código corrigido para importar o módulo, mantendo o gate de 35MB e verificações de assinatura e hashes.
+- QA assinado #42240094362: `Drive Pokémon type icons not packaged`. Um teste antigo procurava 18 dados Base64 no `pokemon_type_icons.js`, substituídos desde LT266 por imagens locais. O teste não foi removido: passou a validar todos os 18 enums, caminhos, dimensões, PNG RGBA e SHA-256 exigido pelo workflow oficial.
+- Regressão `lt267-legacy-icons-size-budget.test.js` impede retorno do teste obsoleto.
+- Confirmação CI/merge/APK LT267 ainda precisa ser atualizada após novos resultados reais.
