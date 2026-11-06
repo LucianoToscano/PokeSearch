@@ -73,7 +73,7 @@ final class OtaAssets {
     static String webUrl(String asset){ return PREFIX+asset; }
     private static boolean patchable(String name){
         return PATCHABLE.contains(name)||name.matches(
-            "(?:pokemon-sprites/(?:base|shiny|forms|costumes)|result-icons/(?:base|modes)|weather-icons(?:/v2)?)/[A-Za-z0-9_.-]{1,150}\\.png");
+            "(?:pokemon-sprites/(?:base|shiny|forms|costumes)|result-icons/(?:base|modes)|ui-icons|weather-icons(?:/v2)?)/[A-Za-z0-9_.-]{1,150}\\.png");
     }
     private static String releaseAsset(String name){
         return name.indexOf('/')<0?name:
