@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT276 — SELETOR DE LIGA NO RANK CLASSE E PUBLICAÇÃO (06/11/2026)
+
+- **Pedido ilustrado:** Grimer 10/15/14, clique no IV abre apenas Rank Classe Grande Liga. Agora o painel `Rank Classe` dispõe dos botões GL/UL/ML iguais aos do `Rank Geral`, mantendo Pokémon e IV, mas recalculando por liga os 4.096 IVs, rank/PC/nível/eficiência no snapshot local. Escolha da liga persiste até trocar de encontro; resultados não confirmados não são inventados. Não alterados Rank Geral, cinco bandeiras, marcador LT275, ataques ou duas Pokébolas.
+- **Código/PR:** [PR #269](https://github.com/LucianoToscano/PokeSearch/pull/269) integrada na main (`c3e0ed57b9738bbeae6d3609a6db7f5e7e2f5b43`). Arquivos: `app/src/main/assets/pvp_rank_explorer.js`, `detail.html`, testes Node e screenshots P/M/G, notas de atualização. Documentação específica: [LT276](LT276_SELETOR_LIGA_RANK_CLASSE_20261106.md).
+- **QA:** testes Node/PvP/Android Java/PvE/OTA/screenshot P/M/G passaram no head `65a5cffca08f4954ff51c0a6f1dfb3013aa4cd65`. Fluxo visual do cartão IV seleciona UL/ML para Grimer e compara com `getIvRows` (4096 IVs), com retorno à última liga ao reabrir.
+- **Release oficial:** LT276 `0.02.76` · `versionCode 54480`, [v0.02.76-54480](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.76-54480), publicada em **06/11/2026 23:16:11 UTC** (20:16:11 Brasília); `PokeSearch-v0.02.76-LT.apk` **33.613.430 bytes**, SHA-256 **`2d84e9853be265a74a089113b4b9e35887a0f0ea8eca2067907e2d44c499fb40`**, estável (`draft=false`, `prerelease=false`), asset `uploaded`.
+- **Publicação protegida:** [workflow oficial #42310328593](https://github.com/LucianoToscano/PokeSearch/actions/runs/42310328593), preflight, Node/OTA, build, assinatura, publicação e SHA verificados. Solicitação da release na main: `62bb8ca99912f9ae4192aaaa0352a290a5f76dd9`. Rollback: LT275 `v0.02.75-54479`.
+- **PENDENTE:** teste físico Samsung da instalação e dos toques P1/P2. CI/browser não é homologação do dispositivo.
+
 ## LT275 — CORREÇÃO DE COLISÃO DO ÍCONE E PUBLICAÇÃO OFICIAL (06/11/2026)
 
 - **Origem:** foto real do Samsung com Wooloo após LT274 mostrou marcadores brancos/verdes cobrindo visualmente bandeiras de GL/UL e Raides. LT274 havia corrigido dimensões, mas não a colisão.
