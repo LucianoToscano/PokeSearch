@@ -49,3 +49,9 @@ Branch de QA. Não afirmar merge/release física até confirmação de CI, links
 - Na [QA assinada #42254494322](https://github.com/LucianoToscano/PokeSearch/actions/runs/42254494322), o código que confere tipos locais RGBA e SHA-256 passou. O build de sprites gerou 1.025 bases e 1.025 shiny, mas a asserção fixa `len(report['costumes'])==106` falhou após o acréscimo de dez imagens LT267 verificadas por Git blob PokeMiners.
 - Correção: exigir **116** costumes (106 anteriores mais 10) e validar separadamente presença, arquivo físico e SHA-256 contra o manifesto para Pikachu Diwali 2024 (normal/Shiny) e Squawkabilly BLUE/GREEN/WHITE/YELLOW (normal/Shiny). Não baixar sprites genéricos, não permitir formas falsas, não enfraquecer as verificações.
 - QA assinada deve rodar novamente na `main` após o merge; testes físicos no Samsung continuam pendentes.
+
+## Contagem corrigida pelo inventário real, sem afrouxar QA
+- A execução assinada [#42255782001](https://github.com/LucianoToscano/PokeSearch/actions/runs/42255782001) confirmou que a correção intermediária de 116 ainda falhava, na linha do total de costumes. A origem não era um erro de sprites: `COSTUME_FILES` define 124 entradas distintas.
+- Composição histórica verificável: 106 arquivos de trajes originais + 8 Shellos/Gastrodon Mar Leste/Oeste (LT260) + 10 Pikachu Diwali/Squawkabilly normais e Shiny (LT267) = **124**.
+- Novo gate QA exige exatamente 124 registros e também valida presença e SHA-256 de cada um dos 18 sprites especiais (8 Mar + 10 LT267), sem relaxar assinatura, limite de APK nem permitir formas genéricas. Teste Node conta as 124 chaves pinadas no script construtor para impedir novas divergências.
+- A APK pública LT267 é independente dessa correção de QA: já foi publicada pelo workflow oficial #42254494312 com assinatura e SHA-256 verificados. É necessário observar o próximo teste assinado antes de declarar QA concluída.

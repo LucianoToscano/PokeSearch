@@ -202,12 +202,22 @@ jobs:
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
           # LT267 adds exactly 10 pinned GO sprites: Pikachu Diwali and
           # Squawkabilly Blue/Green/White/Yellow, normal and Shiny.
-          assert len(report['costumes'])==116  # 106 previously verified + 10 exact
+          assert len(report['costumes'])==124  # 106 earlier + 8 LT260 Sea + 10 LT267
           import hashlib
           exact_new=["pm25.fDIWALI_2024.icon.png","pm25.fDIWALI_2024.s.icon.png"]
           for color in ("BLUE","GREEN","WHITE","YELLOW"):
               exact_new += [f"pm931.f{color}.icon.png",f"pm931.f{color}.s.icon.png"]
           assert len(exact_new)==10 and len(set(exact_new))==10
+          exact_sea=[]
+          for dex in (422,423):
+              for sea in ("EAST","WEST"):
+                  exact_sea += [f"pm{dex}.f{sea}_SEA.icon.png",f"pm{dex}.f{sea}_SEA.s.icon.png"]
+          assert len(exact_sea)==8 and len(set(exact_sea))==8
+          for filename in exact_sea:
+              key="costumes/"+filename
+              assert key in report['costumes'], "Missing exact LT260 Sea sprite "+key
+              assert (root/key).is_file(), "Missing bundled Sea sprite "+key
+              assert hashlib.sha256((root/key).read_bytes()).hexdigest()==report['costumes'][key], "Sea SHA256 changed "+key
           for filename in exact_new:
               key="costumes/"+filename
               assert key in report['costumes'], "Missing exact Diwali/Squawk asset "+key
