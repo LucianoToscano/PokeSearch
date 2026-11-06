@@ -9,7 +9,7 @@ const native=fs.readFileSync(path.join(root,
  "java/com/lucianotoscano/pokesearchoverlay/OtaAssets.java"),"utf8");
 const overlay=fs.readFileSync(path.join(root,
  "java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
-const pack=fs.readFileSync(path.join(__dirname,"../../../scripts/build_ota_pack.py"),"utf8");
+const pack=fs.readFileSync(path.join(__dirname,"../../scripts/build_ota_pack.py"),"utf8");
 assert.ok(pack.includes('"pvp_family_catalog.js"'));
 assert.ok(native.includes('"pvp_family_catalog.js"'),
  "signed OTA runtime must permit every signed calculator asset");
