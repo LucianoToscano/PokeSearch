@@ -1239,6 +1239,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_insights.js"></script>
 <script src="pvp_rank_moves.js"></script>
+<script src="pve_moves_ptbr.js"></script>
 <script src="pve_raid_rank.js"></script>
 <script src="pvp_rank_advanced_ui.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
@@ -1589,24 +1590,59 @@ const psMtIconHtml=(kind,cls="psRaidMoveState")=>{
 const psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡️"?"normal":"unknown";
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
 let psRaidReport=null,psRaidExpanded=false,psRaidToken=0,psRaidAttackPreview=null;
+/* LT265: a single open main panel makes the Samsung overlay compact.
+ * Do not change the underlying PvP, PvE, calculator or per-ball data. */
+function psCloseOtherPanels(keep){
+ if(keep!=="raid"&&psRaidExpanded){
+  psRaidExpanded=false;
+  const p=document.getElementById("raidPanel"),b=document.getElementById("raidRow");
+  if(p)p.hidden=true;
+  b?.setAttribute?.("aria-expanded","false");
+ }
+ if(keep!=="pvp"&&evolutionExpanded){
+  evolutionExpanded=false;psActiveAnalysisKey="";
+  const p=document.getElementById("evoBody"),b=document.getElementById("evoToggle"),
+   chevron=document.getElementById("evoChevron");
+  if(p)p.hidden=true;
+  if(chevron)chevron.textContent="▾";
+  b?.setAttribute?.("aria-expanded","false");
+ }
+ if(keep!=="calc"&&metricKind){
+  metricKind="";
+  document.querySelector?.("#panel")?.classList?.remove?.("metricOpen");
+  const p=document.getElementById("psMetricPanel");
+  if(p){p.hidden=true;p.innerHTML="";}
+ }
+ if(keep!=="moves"){
+  const p=document.getElementById("movesPopover");
+  if(p)p.hidden=true;
+ }
+ if(keep!=="rank")window.PokeSearchRankExplorer?.close?.();
+ if(keep!=="alternates"&&typeof closePvpRankAlternates==="function")closePvpRankAlternates();
+}
 /* Raid results rank the SPECIES by attack type, not these encounter IVs.
  * This is an async, read-only public-data check and cannot reveal coordinates. */
+/* LT265: one-line-first PvE result; translated moves from pinned GO pt-BR.
+ * Full provenance and projected evolutions remain available on demand. */
 function renderRaidPreview(){
  const button=document.getElementById("raidRow"),panel=document.getElementById("raidPanel");
  if(!button||!panel)return;
  const result=psRaidReport;
  const best=result?.verified?result.best:null;
+ const translator=window.PokeSearchMovePtBR;
+ const localized=(id,fast)=>{
+  const value=translator?.name?.(id,fast)||String(id||"").replace(/_/g," ");
+  return h(value);
+ };
  if(!best){
   const attack=psRaidAttackPreview;
   button.textContent="Raides · "+(attack?
    "ATQ base "+attack.attack+" ↳ "+attack.name+" · rank pendente":
    (result?.reason||"Aguardando dados..."));
   if(button.dataset)button.dataset.grade="unknown";
-  panel.innerHTML='<div class="psRaidNote">'+
-    h(result?.reason||"Aguardando resposta do ranking PvE.")+
-    (attack?'<div>Prévia offline: Ataque-base '+h(attack.attack)+
-      ' · '+h(attack.name)+'. Não basta para provar que é um bom counter.</div>':"")+
-    '</div>';
+  panel.innerHTML='<div class="psRaidNote">'+h(result?.reason||"Fonte indisponível")+
+   (attack?'<div>ATQ base: '+h(attack.attack)+' · '+h(attack.name)+
+     ' (não comprova destaque em Raides)</div>':"")+'</div>';
  }else{
   const good=best.rank<=20,useful=best.rank<=50;
   if(button.dataset)button.dataset.grade=good?"elite":useful?"useful":"unknown";
@@ -1614,18 +1650,26 @@ function renderRaidPreview(){
    best.rank<=100?"Situacional":"Sem destaque")+" · #"+
    best.rank+" "+best.typePt+(best.projected?" ↳ "+best.name:"");
   const rows=(result.rows||[]).slice(0,8);
-  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/raid-badge.png" alt="">Atacantes por tipo (PvE)</div>'+
-   rows.map(row=>'<div class="psRaidRow"><span>'+h(row.name)+
-    (row.projected?" · evolução/forma projetada":" · atual")+
-    (row.variant==="mega"?" · Mega":"")+'</span><strong>#'+row.rank+
-    ' '+h(row.typePt)+'</strong><span class="psRaidMoves">'+
-    h(row.fast.replace(/_/g," "))+' + '+h(row.charged.replace(/_/g," "))+
-    (row.elite?" · "+psMtIconHtml("elite")+" exige MT de Elite":" · "+psMtIconHtml("normal")+" sem Elite nesta fonte")+
-    '</span></div>').join("")+
-   '<div class="psRaidNote">'+h(result.source)+
-   '. Referência por ER e tipo, não ranking universal nem contra um chefe específico. '+
-   'Nível 50 e IV 15/15/15 de comparação: os IVs deste encontro não mudam o rank da espécie. '+
-   'A evolução, Mega e golpes ainda exigem disponibilidade no jogo.</div>';
+  const moveLabel=row=>'<span class="psRaidMoveNames">'+
+    '<span title="Ataque Ágil">Ágil: '+localized(row.fast,true)+'</span>'+
+    '<span class="psRaidMoveSep" aria-hidden="true"> · </span>'+
+    '<span title="Ataque Carregado">Carregado: '+localized(row.charged,false)+'</span>'+
+    '</span>'+psMtIconHtml(row.elite?"elite":"normal");
+  const rowHtml=row=>'<div class="psRaidRow"><span class="psRaidName" title="'+
+    (row.projected?"Projeção da evolução ou forma, não garante disponibilidade":"Espécie atual")+
+    '">'+(row.projected?"↳ ":"")+h(row.name)+
+    (row.variant==="mega"?" · Mega":"")+
+    '</span><strong>#'+row.rank+' '+h(row.typePt)+'</strong>'+
+    '<span class="psRaidMoves">'+moveLabel(row)+'</span></div>';
+  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/raid-badge.png" alt="">Atacantes por tipo</div>'+
+   rows.slice(0,3).map(rowHtml).join("")+
+   (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
+    ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
+   '<details class="psRaidSource"><summary>Fonte e critérios</summary><div class="psRaidNote">'+
+    h(result.source||"Fonte de referência")+
+    ' · Rank por tipo e desempenho PvE, não por IV nem contra um chefe específico. '+
+    'Dados de referência: nível 50 e IV 15/15/15; a forma, Mega e golpes dependem do jogo.'+
+    '</div></details>';
  }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
@@ -1634,7 +1678,9 @@ function renderRaidPreview(){
 function toggleRaidDetails(){
  const button=document.getElementById("raidRow"),panel=document.getElementById("raidPanel");
  if(!button||!panel)return false;
- psRaidExpanded=!psRaidExpanded;
+ const next=!psRaidExpanded;
+ if(next&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("raid");
+ psRaidExpanded=next;
  if(!psRaidReport)psRaidReport={verified:false,reason:"Consultando ranking externo..."};
  renderRaidPreview();
  return true;
@@ -1644,6 +1690,17 @@ function loadRaidBeforeCapture(card){
  const button=document.getElementById("raidRow");
  if(!button)return;
  const token=++psRaidToken,identity=detailIdentity;
+ // The same verified GO pt-BR catalogue used for PvP move names.
+ // The token prevents a slow locale reply from touching another encounter.
+ Promise.resolve().then(()=>window.PokeSearchMovePtBR?.ensure?.()).then(()=>{
+  if(token!==psRaidToken||identity!==detailIdentity)return;
+  if(psRaidReport?.verified)renderRaidPreview();
+  if(card.moves&&window.PokeSearchCardPresentation?.moves){
+   const item=document.getElementById("psCapturedMoveNames");
+   if(item)item.innerHTML=window.PokeSearchCardPresentation.moves(
+    card.moves,card,window.PokeSearchCardMetaData);
+  }
+ }).catch(()=>{/* Offline verified PT-BR subset remains usable. */});
  // Show the Raid action BEFORE loading any asynchronous source, regardless
  // of whether a PvP rank is available for this species.
  psRaidReport={verified:false,reason:"Consultando avaliação de Raides..."};
@@ -1692,6 +1749,7 @@ function resizeEvolutionPanel(){
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");
  if(section.hidden)return;
+ if(!evolutionExpanded&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("pvp");
  evolutionExpanded=!evolutionExpanded;
  if(!evolutionExpanded)psActiveAnalysisKey="";
  document.getElementById("evoBody").hidden=!evolutionExpanded;
@@ -1753,6 +1811,7 @@ function openPvpRankExplorer(event,button){
  const data=button.dataset||{},engine=window.PokeSearchRankExplorer;
  if(!engine||typeof engine.open!=="function")return false;
  const action=typeof engine.toggle==="function"?engine.toggle.bind(engine):engine.open.bind(engine);
+ if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
  return action({
   kind:data.psKind==="overall"?"overall":"class",
   name:data.psName||window.psRankContext.name,
@@ -1912,7 +1971,9 @@ function renderRankOneMoves(){
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
   actionOpened=true;
-  const show=popover.hidden;popover.hidden=!show;
+  const show=popover.hidden;
+  if(show&&typeof psCloseOtherPanels==="function")psCloseOtherPanels("moves");
+  popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
   popover.scrollTop=0;
   const identity=detailIdentity;
@@ -2771,6 +2832,7 @@ function renderDetailMetric(){
 function openDetailMetric(kind){
  if(kind==="iv"){
   if(!metricCard?.ivValid)return false;
+  if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
   const context=window.psRankContext,league=activeRankLeague||"gl";
   const name=String(context?.name||metricCard.name||"");
   return window.PokeSearchRankExplorer?.open?.({
@@ -2780,6 +2842,7 @@ function openDetailMetric(kind){
  }
  if(kind!=="cp"&&kind!=="level")return false;
  if(metricKind===kind){closeDetailMetric();return true;}
+ if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("calc");
  metricKind=kind;
  return renderDetailMetric();
 }
@@ -2992,7 +3055,7 @@ window.showDetails=(c,mode,watched)=>{
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
-  (c.moves?'<span class="infoLabel">Golpes:</span><span class="infoValue">'+movesHtml+'</span>':"")+
+  (c.moves?'<span class="infoLabel">Golpes:</span><span id="psCapturedMoveNames" class="infoValue">'+movesHtml+'</span>':"")+
   item("Distância",c.distance)+
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
