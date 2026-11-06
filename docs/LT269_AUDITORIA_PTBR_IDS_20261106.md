@@ -24,3 +24,6 @@ Somente `app/src/main/assets/pve_moves_ptbr.js` e testes, notas de release e sol
 Teste novo `app/tests/lt269-ptbr-offline-go-ids.test.js` cobra as 10 correspondências, moveId documentado, parsing Ágil/Carregado, desconhecido neutro, vínculo por ID no card e histórico de versão. Regressões Node, Java, visual P/M/G, OTA, PvE, build e assinatura devem ser confirmadas na CI, além da release e SHA-256 após aprovação.
 
 **QA física Samsung não executada.** LT268 publicada segue rollback. Não afirmar versão LT269 publicada antes de evidência do GitHub.
+
+## CI: contrato histórico de versão compatível com nova release
+O gate core sinalizou que o teste histórico LT268 exigia `req.code===54472` mesmo depois da solicitação LT269. O teste foi corrigido para exigir **versionCode pelo menos 54472 e incremento exato de 1 em relação à tag anterior**, preservando a verificação de versão sem bloquear upgrades válidos.
