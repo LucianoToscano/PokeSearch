@@ -423,7 +423,9 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     return {ok:before&&!panel.hidden&&
       row.getAttribute("aria-expanded")==="true"&&
       panel.textContent.includes("Seismitoad")&&
-      panel.textContent.includes("não ranking universal")&&
+      panel.dataset.psSource==="Fonte PvE simulada"&&
+      panel.getAttribute("data-ps-criteria")?.includes("a fonte não valida a melhor segunda escolha")&&
+      !panel.textContent.includes("Fonte e critérios")&&
       row.getBoundingClientRect().top<coords.getBoundingClientRect().top&&
       panel.scrollWidth<=panel.clientWidth+3&&
       root.scrollWidth<=root.clientWidth+3,
