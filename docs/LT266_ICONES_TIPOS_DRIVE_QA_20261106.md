@@ -27,3 +27,7 @@ Data: 06/11/2026 · Base publicada confirmada: LT265 0.02.65 (54469).
 3. Auditar o mapa PT-BR Fletchling/Talonflame/Pidgey/Pidgeot via IDs do catálogo versionado; não traduzir IDs desconhecidos.
 4. Conferir scroll sem cortes, fechamento das janelas, A/B, Mega, PC/PS e limites de ligas em Samsung.
 5. Nunca confundir Rank Classe IV com Rank Geral; PvE por tipo não significa counters vivos para um chefe.
+
+## Falha e correção do primeiro workflow de publicação
+
+O workflow oficial #42220773155 falhou no teste preexistente `lt146-update-version-notification.test.js`: as notas de release exigem ordem crescente por `minVersionCode`, mas o novo registro 54470 fora colocado no início. A correção reposicionou somente o registro LT266 ao final, sem mudar as verificações. O primeiro workflow não produziu APK oficial; verificar a repetição pelo novo commit e não declarar release antes da conclusão.

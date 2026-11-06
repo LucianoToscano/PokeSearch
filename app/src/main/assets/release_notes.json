@@ -2,29 +2,6 @@
   "schema": "pokesearch-release-notes-v1",
   "releases": [
     {
-      "id": "pokesearch-v266-types-drive-20261106",
-      "minVersionCode": 54470,
-      "date": "06/11/2026",
-      "title": "PokeSearch LT266 — 18 ícones dos tipos Pokémon",
-      "sections": {
-        "novidades": [
-          "Os 18 tipos Pokémon agora utilizam os novos ícones de alta resolução fornecidos no Drive, com transparência original."
-        ],
-        "melhorias": [
-          "Imagens offline do aplicativo, sem depender do Drive nem de conexão para exibição.",
-          "Carregamento dos ícones por caminhos locais, sem longas imagens Base64 no JavaScript.",
-          "Todos os 18 PNGs protegidos por integridade SHA-256 no APK oficial."
-        ],
-        "correcoes": [
-          "Atualização visual de todos os tipos mantendo categorias, nomes, IVs, PvP, Raides, duas Pokébolas e layout compacto."
-        ],
-        "emDesenvolvimento": [
-          "Teste físico no Samsung de nitidez em P/M/G e alternância das duas Pokébolas.",
-          "Conferir nomes de golpes novos contra a fonte PT-BR versionada sem traduções inventadas."
-        ]
-      }
-    },
-    {
       "id": "release-notes-ui-20261022",
       "minVersionCode": 54250,
       "date": "22/10/2026",
@@ -2274,6 +2251,29 @@
         "emDesenvolvimento": [
           "A tradução offline cobre golpes frequentes, com catálogo PT-BR online para ampliar a cobertura; ataques novos sem tradução confirmada ficam neutros.",
           "Instalação e usabilidade reais nas duas Pokébolas do Samsung continuam para conferência do usuário."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-v266-types-drive-20261106",
+      "minVersionCode": 54470,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT266 — 18 ícones dos tipos Pokémon",
+      "sections": {
+        "novidades": [
+          "Os 18 tipos Pokémon agora utilizam os novos ícones de alta resolução fornecidos no Drive, com transparência original."
+        ],
+        "melhorias": [
+          "Imagens offline do aplicativo, sem depender do Drive nem de conexão para exibição.",
+          "Carregamento dos ícones por caminhos locais, sem longas imagens Base64 no JavaScript.",
+          "Todos os 18 PNGs protegidos por integridade SHA-256 no APK oficial."
+        ],
+        "correcoes": [
+          "Atualização visual de todos os tipos mantendo categorias, nomes, IVs, PvP, Raides, duas Pokébolas e layout compacto."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico no Samsung de nitidez em P/M/G e alternância das duas Pokébolas.",
+          "Conferir nomes de golpes novos contra a fonte PT-BR versionada sem traduções inventadas."
         ]
       }
     }
