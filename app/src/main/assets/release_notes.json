@@ -2461,6 +2461,25 @@
           "Validação física no Samsung e confirmação da instalação pelo Android ainda pendentes."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt275-fix-evolution-flag-overlap-20261106",
+      "minVersionCode": 54479,
+      "date": "06/11/2026",
+      "title": "LT275 — Evolução sem cobrir as bandeiras",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "Ícone de evolução reposicionado no canto inferior direito dos cinco cartões de rank, sem cobrir a bandeira da liga."
+        ],
+        "correcoes": [
+          "Corrigida a sobreposição visível na foto do Samsung com Wooloo: marcador branco/verde estava sobre a bandeira preta/amarela e a roxa.",
+          "Preservadas a altura compacta de 45 px, a linha de 47 px, o tamanho de 23 px das bandeiras centralizadas e os atalhos de Raides/GL/UL/ML/Rank Geral."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico Samsung da nova versão após instalação continua necessário."
+        ]
+      }
     }
   ]
 }
