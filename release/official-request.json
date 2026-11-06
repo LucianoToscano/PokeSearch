@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.63",
-  "code": 54467,
-  "label": 51267,
-  "previous_tag": "v0.02.62-54466",
-  "qa_max_code": 54466,
-  "release_notes": "PokeSearch LT263: substituição de símbolos de classificação nos cartões e na análise PvP por PNGs transparentes fornecidos pelo usuário, mantendo rigorosamente os tamanhos atuais (11–17 px), o layout P/M/G, cliques e as duas Pokébolas. Grande Liga: bandeira azul com faixa vermelha; Ultra Liga: bandeira preta com duas faixas amarelas; Mestre: bandeira roxa com faixas rosas; Raides: medalha de Raid no lugar do troféu. Ataques: ⚔️ estado verificado COM golpe legado/Elite, 🗡️ estado verificado SEM ataque legado, ⚔︎ cinza quando faltam dados — nunca presumir ausência de legado. Ícone Mega substituído apenas na apresentação PvP compatível. Os dois emblemas circulares GL/UL da LT262 continuam EXCLUSIVOS do menu Modos; não alterar artes nem lógica de Pokébolas, bases de resultados, favoritos, coordenadas ou API. PR #243 mesclada em 77bd89e25a19c2d750e283b5d0c83c060548bc90 após 8 gates CI aprovados: Node QA, regressões Node, Java, visual P/M/G, OTA, fonte PvE, core e preflight oficial. Onze ícones com SHA-256 conferidos no APK e protegidos na distribuição assinada. Samsung físico P1/P2 ainda não validado, instalar sobre LT262 confirmando atualização Android."
+  "version": "0.02.64",
+  "code": 54468,
+  "label": 51268,
+  "previous_tag": "v0.02.63-54467",
+  "qa_max_code": 54467,
+  "release_notes": "PokeSearch LT264: correção do espaço vazio de ~32 px em cartões sem Rank Classe PvP verificável (exemplo: Squawkabilly azul), entre IV/PC/Nível e o botão Raides. Causa: seletor #rankLine[data-league] definido depois do CSS [hidden] forçava display:flex mesmo com data-league vazio; override final mais específico esconde a faixa por completo (display:none, altura/margens/padding zero) e remove data-league quando não há rank confirmado. O Rank Classe passa a explicar claramente que #1 é somente entre 4.096 combinações IV da mesma espécie/forma, NÃO Rank Geral da Grande Liga. Fonte Game Master reproduzida: Mareep 15/15/15 GL Classe IV #1 Nv50 PC1120; Sandshrew 15/15/15 GL Classe IV #1 Nv50 PC1426; Squawkabilly 15/15/15 GL Classe IV #927 Nv26,5 PC1494. Esses números não significam que os respectivos Pokémon são os melhores da liga. Preservadas as duas Pokébolas, resultados P/M/G, avisos, navegação do explorador, bandeiras, botão Raides, golpes legado Elite/Normal/cinza, Mega e localização. PR #244 integrada em e29db1863afdb27a3691039cae2ffd6d94c1f1c0 após sete verificações verdes (Node completa/QA/core, Java, P/M/G, OTA, Raides). Teste físico Samsung ainda não observado; instalação Android somente com confirmação."
 }
