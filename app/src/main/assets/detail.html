@@ -1119,6 +1119,31 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  background:#2e5f866e!important;border-color:#7eb9e4a0!important;font-weight:750!important}
 #psMetricPanel .psCpFormStepper .psCpFormList button:focus-visible,
 #psMetricPanel .psCpFormMenu>summary:focus-visible{outline:2px solid #dfb368!important}
+/* LT259: PvE is a separate, narrow row; never a fourth squeezed PvP chip. */
+#raidRow{box-sizing:border-box;display:block;width:100%;min-height:27px;margin:3px 0;
+ padding:4px 8px;border:1px solid #edc87981;border-radius:7px;
+ background:#28291f88;color:#ffe5a3;text-align:left;
+ font:700 10.5px/1.3 Roboto,Arial,sans-serif;
+ white-space:normal;overflow-wrap:anywhere;touch-action:manipulation}
+#raidRow[hidden],#raidPanel[hidden]{display:none!important}
+#raidRow[data-grade="elite"]{border-color:#f1c46b;background:#57472265}
+#raidRow[data-grade="useful"]{border-color:#a9bdca80;color:#e5effd}
+#raidRow[data-grade="unknown"]{border-color:#8190a04d;color:#a4b4c6}
+#raidPanel{box-sizing:border-box;margin:3px 0 5px;padding:7px 8px;
+ border:1px solid #e0bb754b;border-radius:8px;background:#1c242cb8;
+ color:#e7eef6;font:10.5px/1.4 Roboto,Arial,sans-serif;
+ overflow:visible;overflow-wrap:anywhere}
+#raidPanel .psRaidHead{font-weight:750;color:#f6d994;margin:2px 0 5px}
+#raidPanel .psRaidRow{display:grid;grid-template-columns:minmax(0,1fr) auto;
+ gap:3px 7px;align-items:start;border-top:1px solid #a3b4c427;padding:5px 0}
+#raidPanel .psRaidRow strong{color:#f5dfa2;white-space:nowrap}
+#raidPanel .psRaidMoves{grid-column:1/-1;color:#bfcfe0;font-size:9.5px}
+#raidPanel .psRaidNote{color:#b7c5cf;margin:4px 0;font-size:9px;line-height:1.35}
+#evoBody .psRaidAnalysisLink{display:block;width:100%;box-sizing:border-box;
+ margin:4px 0 6px;padding:6px 8px;text-align:left;
+ font:700 10px/1.3 Roboto,Arial,sans-serif;color:#ffe1a1;
+ background:#b18d351c;border:1px solid #d6b76f62;border-radius:5px;
+ touch-action:manipulation}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1140,7 +1165,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  </div>
  <div id="major"></div>
  <section id="psMetricPanel" hidden role="region" aria-label="Projeções de PC e Nível"></section>
- <div id="rankLine" class="rankLineSafe" hidden></div><div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div><div id="movesPopover" hidden role="status" class="psMovesCompact"></div><div id="info"></div>
+ <div id="rankLine" class="rankLineSafe" hidden></div>
+ <button id="raidRow" type="button" hidden data-grade="unknown" aria-expanded="false"
+  aria-controls="raidPanel" onclick="toggleRaidDetails()">🏆 Raides · verificando...</button>
+ <section id="raidPanel" hidden role="region" aria-label="Análise de atacantes em Raides"></section>
+ <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div><div id="movesPopover" hidden role="status" class="psMovesCompact"></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -1177,6 +1206,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_insights.js"></script>
 <script src="pvp_rank_moves.js"></script>
+<script src="pve_raid_rank.js"></script>
 <script src="pvp_rank_advanced_ui.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
 <script>
 let watchName="",currentIndex=-1,expiresAt=0,ticking=null,currentCoords="";
@@ -1513,6 +1543,68 @@ window.coordsResult=function(coords,message,restriction){
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
+let psRaidReport=null,psRaidExpanded=false,psRaidToken=0;
+/* Raid results rank the SPECIES by attack type, not these encounter IVs.
+ * This is an async, read-only public-data check and cannot reveal coordinates. */
+function renderRaidPreview(){
+ const button=document.getElementById("raidRow"),panel=document.getElementById("raidPanel");
+ if(!button||!panel)return;
+ const result=psRaidReport;
+ const best=result?.verified?result.best:null;
+ if(!best){
+  button.textContent="🏆 Raides · "+(result?.reason||"Aguardando dados...");
+  button.dataset.grade="unknown";
+  panel.innerHTML='<div class="psRaidNote">'+
+    h(result?.reason||"Aguardando resposta do ranking PvE.")+'</div>';
+ }else{
+  const good=best.rank<=20,useful=best.rank<=50;
+  button.dataset.grade=good?"elite":useful?"useful":"unknown";
+  button.textContent="🏆 Raides · "+(good?"Destaque":useful?"Bom":
+   best.rank<=100?"Situacional":"Sem destaque")+" · #"+
+   best.rank+" "+best.typePt+(best.projected?" ↳ "+best.name:"");
+  const rows=(result.rows||[]).slice(0,8);
+  panel.innerHTML='<div class="psRaidHead">🏆 Atacantes por tipo (PvE)</div>'+
+   rows.map(row=>'<div class="psRaidRow"><span>'+h(row.name)+
+    (row.projected?" · evolução/forma projetada":" · atual")+
+    (row.variant==="mega"?" · Mega":"")+'</span><strong>#'+row.rank+
+    ' '+h(row.typePt)+'</strong><span class="psRaidMoves">'+
+    h(row.fast.replace(/_/g," "))+' + '+h(row.charged.replace(/_/g," "))+
+    (row.elite?" · ⚔️ exige MT de Elite":" · 🗡️ sem Elite nesta fonte")+
+    '</span></div>').join("")+
+   '<div class="psRaidNote">'+h(result.source)+
+   '. Referência por ER e tipo, não ranking universal nem contra um chefe específico. '+
+   'Nível 50 e IV 15/15/15 de comparação: os IVs deste encontro não mudam o rank da espécie. '+
+   'A evolução, Mega e golpes ainda exigem disponibilidade no jogo.</div>';
+ }
+ button.hidden=false;panel.hidden=!psRaidExpanded;
+ button.setAttribute("aria-expanded",String(psRaidExpanded));
+ if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
+}
+function toggleRaidDetails(){
+ const button=document.getElementById("raidRow"),panel=document.getElementById("raidPanel");
+ if(!button||!panel)return false;
+ psRaidExpanded=!psRaidExpanded;
+ if(!psRaidReport)psRaidReport={verified:false,reason:"Consultando ranking externo..."};
+ renderRaidPreview();
+ return true;
+}
+function loadRaidBeforeCapture(card){
+ const rank=window.PokeSearchRaidRank;
+ const button=document.getElementById("raidRow");
+ if(!button||typeof rank?.assess!=="function")return;
+ const token=++psRaidToken,identity=detailIdentity;
+ psRaidReport=null;psRaidExpanded=false;renderRaidPreview();
+ const gm=window.POKESEARCH_PVP_IV_DATA;
+ const related=window.PokeSearchPvpFamilyCatalog?.family?.(card.name,gm)||[];
+ Promise.resolve(rank.assess(card,related)).then(result=>{
+  if(token!==psRaidToken||identity!==detailIdentity)return;
+  psRaidReport=result;renderRaidPreview();
+ }).catch(()=>{
+  if(token!==psRaidToken||identity!==detailIdentity)return;
+  psRaidReport={verified:false,reason:"Fonte PvE indisponível"};
+  renderRaidPreview();
+ });
+}
 let psActiveAnalysisKey="";
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
@@ -2198,7 +2290,8 @@ window.showEvolutionDetails=payload=>{
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="mega_evolution_icon.svg" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
- html=topHtml+html;
+ html=topHtml+'<button type="button" class="psRaidAnalysisLink" '+
+  'onclick="toggleRaidDetails()">🏆 Ver avaliação de Raides (PvE) neste cartão</button>'+html;
  if(body.innerHTML!==html)body.innerHTML=html;
  outer.hidden=false;
  document.getElementById("evoLabel").textContent=payload.ivUnavailable?
@@ -2649,6 +2742,10 @@ window.showDetails=(c,mode,watched)=>{
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
   document.getElementById("evoBody").innerHTML="";
+  psRaidToken++;psRaidReport=null;psRaidExpanded=false;
+  const raidButton=document.getElementById("raidRow"),raidPanel=document.getElementById("raidPanel");
+  if(raidButton){raidButton.hidden=true;raidButton.setAttribute?.("aria-expanded","false");}
+  if(raidPanel){raidPanel.hidden=true;raidPanel.innerHTML="";}
  }
  watchName=String(c.name||"");window.watchFeedback(!!watched);
  currentIndex=Number(c.sourceIndex);
@@ -2818,6 +2915,7 @@ window.showDetails=(c,mode,watched)=>{
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
+ if(changed)loadRaidBeforeCapture(c);
  resizeEvolutionPanel();
  if(changed)panel.scrollTop=0;
  else requestAnimationFrame(()=>{panel.scrollTop=Math.min(keepScroll,
