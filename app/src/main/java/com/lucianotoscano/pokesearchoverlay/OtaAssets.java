@@ -59,6 +59,7 @@ final class OtaAssets {
             "visual_editor.js","pokemon_card_presentation.js","pvpoke-overall-ranks.js",
             "pvpoke-iv-gamemaster.js","pvp_rank_explorer.js",
             "pvp_rank_insights.js","pvp_rank_advanced_ui.js","pvp_rank_moves.js",
+            "pvp_family_catalog.js",
             "mega_evolution_icon.svg",
             "probe.js","release_notes.json","pokemon_catalog.json");
         PATCHABLE=Collections.unmodifiableSet(paths);
@@ -135,8 +136,16 @@ final class OtaAssets {
                 try(InputStream local=content){ original=read(local,MAX_FILE); }
                 String translated=new String(original,StandardCharsets.UTF_8)
                     .replace("file:///android_asset/",PREFIX);
-                return new WebResourceResponse(mime,"UTF-8",
+                WebResourceResponse response=new WebResourceResponse(mime,"UTF-8",
                     new ByteArrayInputStream(translated.getBytes(StandardCharsets.UTF_8)));
+                // Asset URLs are stable across APK upgrades. Never let WebView
+                // reuse an old detail.html or JavaScript after installing LT256.
+                java.util.Map<String,String> headers=new java.util.HashMap<>();
+                headers.put("Cache-Control","no-store, no-cache, must-revalidate, max-age=0");
+                headers.put("Pragma","no-cache");
+                headers.put("Expires","0");
+                response.setResponseHeaders(headers);
+                return response;
             }
             return new WebResourceResponse(mime,
                 mime.startsWith("image/")?null:"UTF-8",content);

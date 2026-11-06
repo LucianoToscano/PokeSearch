@@ -2022,6 +2022,9 @@ public class OverlayService extends Service {
         detailPanel=new WebView(this);
         detailPanel.setBackgroundColor(Color.TRANSPARENT);
         detailPanel.getSettings().setJavaScriptEnabled(true);
+        // Versioned APK assets are local, but a persistent Chromium cache can
+        // keep the previous calculator UI after a signed app update.
+        detailPanel.getSettings().setCacheMode(android.webkit.WebSettings.LOAD_NO_CACHE);
         detailPanel.getSettings().setAllowContentAccess(false);
         detailPanel.getSettings().setAllowFileAccessFromFileURLs(false);
         detailPanel.getSettings().setAllowUniversalAccessFromFileURLs(false);
