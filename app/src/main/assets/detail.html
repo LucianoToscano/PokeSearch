@@ -2256,7 +2256,7 @@ function psCpOrderFamily(rows){
  const links=window.PokeSearchPvpFamilyCatalog?.links||[];
  if(rows.length<2||!links.length)return rows;
  const name=row=>String(row[1]||"").toLowerCase().trim();
- const normal=rows.filter(row=>!/\\(mega(?: [xy])?\\)/i.test(row[1]));
+ const normal=rows.filter(row=>!/\(mega(?: [xy])?\)/i.test(row[1]));
  const key=new Map(normal.map(row=>[name(row),row]));
  const indegree=new Map(normal.map(row=>[name(row),0])),children=new Map();
  for(const edge of links){
@@ -2279,9 +2279,9 @@ function psCpOrderFamily(rows){
   }
  }
  const level=row=>{
-  const label=name(row),isMega=/\\(mega(?: [xy])?\\)/i.test(label);
+  const label=name(row),isMega=/\(mega(?: [xy])?\)/i.test(label);
   if(isMega){
-   const base=label.replace(/\\s*\\(mega(?: [xy])?\\)/i,"");
+   const base=label.replace(/\s*\(mega(?: [xy])?\)/i,"");
    return 100+(depth.get(base)||0);
   }
   return depth.has(label)?depth.get(label):50;
@@ -2289,7 +2289,7 @@ function psCpOrderFamily(rows){
  return rows.slice().sort((a,b)=>level(a)-level(b));
 }
 function psCpMegaForm(row){
- return /\\(mega(?: [xy])?\\)/i.test(String(row?.[1]||""));
+ return /\(mega(?: [xy])?\)/i.test(String(row?.[1]||""));
 }
 function psCpFormText(row,forms){
  const name=String(row?.[1]||"");
