@@ -2298,6 +2298,11 @@
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
   }
+  // LT267: prefer the exact pinned Pokémon GO icon for known plumage and
+  // Diwali costumes to generic PokeAPI form art. The real site image above
+  // remains first; unknown variants never receive another colour.
+  if(goArt?.offline&&(dexOf(card)===931||
+     (dexOf(card)===25&&/DIWALI_2024/.test(goArt.src))))return goArt;
   if(costumeArt)return costumeArt;
   if(seasonalArt)return seasonalArt;
   if(westSeaArt)return westSeaArt;
