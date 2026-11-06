@@ -1144,6 +1144,31 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  font:700 10px/1.3 Roboto,Arial,sans-serif;color:#ffe1a1;
  background:#b18d351c;border:1px solid #d6b76f62;border-radius:5px;
  touch-action:manipulation}
+
+/* LT262: exact user-supplied art, compact card only; no Pokéball changes. */
+.psLeagueFlag{display:inline-block!important;width:13px!important;height:13px!important;
+ object-fit:contain!important;vertical-align:-2px!important;margin-right:2px!important;
+ pointer-events:none!important}
+#rankLine .psLeagueIv{gap:3px!important}
+#rankLine .psLeagueIv::before{content:"";display:inline-block;width:13px;height:13px;
+ flex:0 0 13px;background-size:contain;background-position:center;background-repeat:no-repeat}
+#rankLine .psLeagueIv[data-ps-league="gl"]::before{background-image:url("ui-icons/league-gl-flag.png")}
+#rankLine .psLeagueIv[data-ps-league="ul"]::before{background-image:url("ui-icons/league-ul-flag.png")}
+#rankLine .psLeagueIv[data-ps-league="ml"]::before{background-image:url("ui-icons/league-ml-flag.png")}
+#rankLine .psMovesAction{font-size:0!important;line-height:0!important;text-shadow:none!important;
+ -webkit-text-fill-color:transparent!important}
+#rankLine .psMovesAction::before{content:"";display:inline-block;width:17px;height:16px;
+ background:url("ui-icons/mt-unknown.png") center / contain no-repeat;pointer-events:none}
+#rankLine .psMovesAction[data-ps-mt="elite"]::before{background-image:url("ui-icons/mt-elite.png")}
+#rankLine .psMovesAction[data-ps-mt="normal"]::before{background-image:url("ui-icons/mt-normal.png")}
+#rankLine .psMovesAction[data-ps-mt="unknown"]::before{background-image:url("ui-icons/mt-unknown.png")}
+#raidRow::before,#evoBody .psRaidAnalysisLink::before{content:"";display:inline-block;
+ width:16px;height:16px;margin-right:5px;vertical-align:-4px;
+ background:url("ui-icons/raid-badge.png") center / contain no-repeat}
+.psRaidBadge{display:inline-block;width:16px!important;height:16px!important;
+ object-fit:contain;vertical-align:-4px;margin-right:4px}
+.psRaidMoveState{display:inline-block;width:15px!important;height:11px!important;
+ object-fit:contain;vertical-align:-2px;margin-right:3px}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1542,6 +1567,18 @@ window.coordsResult=function(coords,message,restriction){
  resizeEvolutionPanel();
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* LT262: fixed local icons, not derived from Pokémon or API names. */
+const PS_LEAGUE_ICONS=Object.freeze({
+ gl:"ui-icons/league-gl-flag.png",ul:"ui-icons/league-ul-flag.png",
+ ml:"ui-icons/league-ml-flag.png"});
+const psLeagueIconHtml=(league,cls="psLeagueFlag")=>
+ PS_LEAGUE_ICONS[league]?'<img class="'+cls+'" src="'+PS_LEAGUE_ICONS[league]+'" alt="" aria-hidden="true">':"";
+const psMtIconHtml=(kind,cls="psRaidMoveState")=>{
+ const file={elite:"mt-elite.png",normal:"mt-normal.png",unknown:"mt-unknown.png"}[kind]||"mt-unknown.png";
+ return '<img class="'+cls+'" src="ui-icons/'+file+'" alt="" aria-hidden="true">';
+};
+const psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡️"?"normal":"unknown";
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
 let psRaidReport=null,psRaidExpanded=false,psRaidToken=0,psRaidAttackPreview=null;
 /* Raid results rank the SPECIES by attack type, not these encounter IVs.
@@ -1781,7 +1818,7 @@ function evolutionRow(x,first){
   (isReference?' isReference':'')+(isMega?' isMega':'')+
   (hasClass&&rank===1&&x.eligible!==false?' best':'')+
   '"><div class="evoSummary">'+
-  '<span class="evoWho"><span class="evoMark">'+(first?'Atual':isMega?'<img src="mega_evolution_icon.svg" class="psMegaMark" alt="" aria-hidden="true">':'↳')+'</span> <b>'+h(name)+'</b>'+
+  '<span class="evoWho"><span class="evoMark">'+(first?'Atual':isMega?'<img src="ui-icons/mega-symbol.png" class="psMegaMark" alt="" aria-hidden="true">':'↳')+'</span> <b>'+h(name)+'</b>'+
   (isReference?'<button type="button" class="evoInfoBtn" '+(isMega?'data-mega-projection="true" ':'')+'aria-label="'+(isMega?'Informações sobre projeção da forma Mega':'Informações sobre rank de evolução projetado')+'" aria-expanded="false" onclick="togglePvpReferenceInfo(event,this)">ⓘ</button>':'')+'</span>'+
   '</div>'+
   '<div class="evoStatsRow">'+stats.join("")+
@@ -1950,7 +1987,7 @@ function renderRankOneMoves(){
    // The clicked panel only displays the independently checked moves.
   }
   popover.innerHTML='<div class="psMoveTitle">'+
-   (isMega?'<img class="psMegaMoveIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">'+
+   (isMega?'<img class="psMegaMoveIcon" src="ui-icons/mega-symbol.png" alt="" aria-hidden="true">'+
     'Mega '+h(species)+' · PvP':'Golpes PvP recomendados')+
    '</div>'+
    (isMega?'<div class="psMoveLegend psMegaMoveContext">'+
@@ -2165,7 +2202,7 @@ function setRankLineLabel(rankLine,label){
   nameChip.onclick=event=>openPvpAnalysisForSpecies(event,nameChip);
   if(isMega){
    const emblem=document.createElement("img");
-   emblem.src="mega_evolution_icon.svg";emblem.alt="";
+   emblem.src="ui-icons/mega-symbol.png";emblem.alt="";
    emblem.className="psCompactMegaEmblem";
    emblem.setAttribute?.("aria-hidden","true");
    nameChip.appendChild(emblem);
@@ -2307,7 +2344,7 @@ window.showEvolutionDetails=payload=>{
   notices.map(x=>'<span class="psTopPvpTag">'+
    ({gl:"🔵",ul:"🟡",ml:"🟣"}[x.league]||"🔔")+' '+
    h(x.league.toUpperCase())+' #'+x.rank+' '+
-   (x.mega?'<img class="psTopMegaIcon" src="mega_evolution_icon.svg" alt="Mega Evolução"> ':'')+
+   (x.mega?'<img class="psTopMegaIcon" src="ui-icons/mega-symbol.png" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+'<button type="button" class="psRaidAnalysisLink" '+
   'onclick="toggleRaidDetails()">🏆 Ver avaliação de Raides (PvE) neste cartão</button>'+html;
@@ -2451,7 +2488,7 @@ function psCpFormText(row,forms){
  const hasMega=!mega&&forms.some(x=>
   String(x[1]||"").toLowerCase().startsWith(name.toLowerCase()+" (mega"));
  return '<span class="psCpFormName'+(mega?' psCpMegaText':'')+'">'+
-  (mega?'<img class="psCpMegaIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">':"")+
+  (mega?'<img class="psCpMegaIcon" src="ui-icons/mega-symbol.png" alt="" aria-hidden="true">':"")+
   h(name+(hasMega?" (Normal)":""))+'</span>';
 }
 function psCpIv(){
