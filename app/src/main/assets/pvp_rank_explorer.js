@@ -228,8 +228,10 @@
    if(number)number.textContent=target.rank?"#"+target.rank:"—";
    badge.querySelector?.(".psRailEvolve")?.remove?.();
    if(target.evolves){
-    const mark=document.createElement("span");mark.className="psRailEvolve";
-    mark.textContent="↳";mark.setAttribute?.("aria-hidden","true");
+    const mark=document.createElement("img");mark.className="psRailEvolve";
+    mark.src="ui-icons/ps-evolution-lt272.png";mark.alt="";
+    mark.setAttribute?.("aria-hidden","true");
+    mark.setAttribute?.("draggable","false");
     badge.appendChild(mark);
    }
    badge.title="Rank Geral · "+LIGAS[league]+" · "+opts.name+

@@ -1288,6 +1288,32 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psLeagueClose{width:25px;height:25px;color:#eff7ff;font-size:16px;border-radius:6px;background:#ffffff18;border:1px solid #ffffff45}
 #evolutions .psTopPvP,#evolutions .psRaidAnalysisLink{display:none!important}
 #evolutions #movesPopover{margin:4px 0}
+
+/* LT272 — original transparent evolution badge, safely inset at lower right.
+   Number stays ABOVE the original centered league/raid flag; no flag resizing. */
+#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+ position:absolute!important;top:auto!important;left:auto!important;
+ right:5px!important;bottom:5px!important;
+ width:15px!important;height:15px!important;min-width:15px!important;
+ max-width:15px!important;min-height:15px!important;max-height:15px!important;
+ padding:0!important;margin:0!important;border:0!important;
+ border-radius:0!important;background:transparent!important;box-shadow:none!important;
+ object-fit:contain!important;object-position:center!important;filter:none!important;
+ pointer-events:none!important;z-index:2!important;opacity:1!important;
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailNumber{
+ position:relative!important;z-index:1!important;
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailIcon{
+ position:relative!important;z-index:1!important;
+}
+/* Keep >=4px from border even for smaller cards; badge never enters rank line. */
+@media(max-width:345px){
+ #rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+  right:5px!important;bottom:5px!important;width:13px!important;height:13px!important;
+  min-width:13px!important;min-height:13px!important;max-width:13px!important;max-height:13px!important;
+ }
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -2585,6 +2611,14 @@ function psToggleLeagueAssessment(league){
  renderRankOneMoves();
  resizeEvolutionPanel();return true;
 }
+/* The original submitted artwork is stored offline; no arrows or label text. */
+function psMakeEvolutionBadge(){
+ const img=document.createElement("img");img.className="psRailEvolve";
+ img.src="ui-icons/ps-evolution-lt272.png";
+ img.alt="";img.setAttribute?.("aria-hidden","true");
+ img.setAttribute?.("draggable","false");
+ return img;
+}
 function psUpdateRaidShortcut(){
  const b=document.getElementById("rankLine")?.querySelector?.(".psRailRaid");
  if(!b)return false;
@@ -2603,9 +2637,7 @@ function psUpdateRaidShortcut(){
  const mark=b.querySelector?.(".psRailEvolve");
  if(mark)mark.remove();
  if(best?.projected&&good){
-  const arrow=document.createElement("span");arrow.className="psRailEvolve";
-  arrow.textContent="↳";arrow.setAttribute?.("aria-hidden","true");
-  b.appendChild(arrow);
+  b.appendChild(psMakeEvolutionBadge());
  }
  return true;
 }
@@ -2642,8 +2674,7 @@ function psRenderFiveRankRail(payload){
   b.dataset.psName=item?.name||payload?.name||watchName||"";
   if(Number.isInteger(rank)&&rank>=1)b.dataset.psRank=String(rank);
   if(item?.evolves){
-   const arrow=document.createElement("span");arrow.className="psRailEvolve";
-   arrow.textContent="↳";arrow.setAttribute?.("aria-hidden","true");b.appendChild(arrow);
+   b.appendChild(psMakeEvolutionBadge());
   }
   const title=kind==="raid"?"Raides · tocar para abrir":
    (kind==="overall"?"Rank Geral PvP · ":"Avaliação PvP · ")+names[league]+
