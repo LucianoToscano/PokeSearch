@@ -80,7 +80,7 @@ async function run(){
  const prev=requestCount;
  const repeated=await raid.assess({...captured,iv:"0/14/15"},["Seismitoad"]);
  assert.equal(repeated.verified,true);
- assert.equal(repeated.best.rank,2);
+ assert.equal(repeated.best.rank,1,"Seismitoad is #1 Water in this pinned mock");
  assert.equal(requestCount,prev,"cache does not refetch shared public JSON");
  const noForm=await raid.assess({name:"Unrecognized",number:"#535"},[]);
  assert.equal(noForm.verified,false,"cannot assign a rank to an unidentified form");
