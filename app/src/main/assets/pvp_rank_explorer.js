@@ -216,6 +216,7 @@
    "#psRankExplorer button:disabled{opacity:.38}",
    "#psRankExplorer select{background:#303a4b;min-width:72px;max-width:96px}",
    "#psRankExplorer .psrSub{font-size:9px;color:#c3cdda;margin:3px 0 5px;overflow-wrap:anywhere}",
+   "#psRankExplorer .psrScopeNote{font-size:9px;line-height:1.3;color:#eccb93;margin:0 0 5px;overflow-wrap:anywhere}",
    "#psRankExplorer .psrControls{display:flex;align-items:center;justify-content:space-between;gap:3px;flex-wrap:wrap;margin:4px 0}",
    "#psRankExplorer .psrRows{max-height:min(38vh,260px);overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:thin}",
    "#psRankExplorer table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:9px;font-variant-numeric:tabular-nums}",
@@ -383,7 +384,11 @@
    '</div><button type="button" data-ps-act="close" aria-label="Fechar classificação">✕</button></div>'+
    '<div class="psrSub">'+safe(LIGAS[s.league])+
    (actualIv?' · IV '+safe(actualIv.iv):"")+
-   (s.selectedRank?' · #'+s.selectedRank:"")+'</div>'+
+   (s.selectedRank?' · '+(s.kind==="class"?"Classe IV ":"Rank Geral ")+
+      '#'+s.selectedRank:"")+'</div>'+
+   (s.kind==="class"?
+     '<div class="psrScopeNote">Posição entre 4.096 IVs de '+safe(s.name)+
+     ' — não é o Rank Geral da Grande Liga.</div>':"")+
    '<div class="psrControls"><button type="button" data-ps-act="top">#1 Topo</button>'+
    '<button type="button" data-ps-act="selected"'+(s.selectedRank?'':' disabled')+'>'+select+'</button>'+
    '<label for="psrFilter">Top</label><select id="psrFilter" data-ps-filter aria-label="Filtrar classificação">'+

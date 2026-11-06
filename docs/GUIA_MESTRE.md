@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT264 — Corrigir vazio no cartão PvP e explicar Rank Classe (06/11/2026 · QA)
+
+- **Evidência Samsung:** Squawkabilly 15/15/15 sem faixa PvP legível, mas com 32 px vazios antes de Raides; Mareep e Sandshrew 15/15/15 com IV Classe #1 aparentavam ser o #1 geral da Grande Liga.
+- **Correção técnica:** em `detail.html`, `#rankLine[data-league]` usava `display:flex!important;min-height:32px` **após** a regra `[hidden]`, reexibindo uma linha sem conteúdo quando `data-league=""`. Nova regra final `#rankLine[data-league][hidden]` zera altura/margem e oculta, e o script remove o atributo `data-league` quando não há ranking verificado. Mantido o layout das duas Pokébolas, GL/UL/ML e Raides.
+- **Escopo matemático:** cálculos Game Master conferidos: Mareep 15/15/15 = Rank Classe #1 de Mareep, PC 1120 Nv.50; Sandshrew 15/15/15 = Rank Classe #1 de Sandshrew, PC 1426 Nv.50; nenhum desses dados é Rank Geral #1 da GBL. Squawkabilly 15/15/15 = Rank Classe **#927**, PC 1494 Nv.26,5. `pvp_rank_explorer.js` agora avisa **"Posição entre 4.096 IVs da espécie — não Rank Geral da liga"**, sem alterar ranking original.
+- **QA:** `app/tests/lt264-hidden-iv-class-scope.test.js` com fonte GM real, CSS e avisos; [auditoria LT264](LT264_ESPACO_VAZIO_RANK_CLASSE_QA_20261106.md). Branch `fix/lt264-hidden-rank-no-space-class-scope-20261106`. **Pendente CI completo, merge e APK assinado**; LT263 `0.02.63/54467` permanece oficial até aprovação. Teste físico Samsung P1/P2 ainda não observado.
+
 ## LT263 — Bandeiras PvP, Raides, MTs e Mega (06/11/2026 · RELEASE OFICIAL)
 
 - **Origem:** PR [#243](https://github.com/LucianoToscano/PokeSearch/pull/243) mesclada em `main` (commit `77bd89e25a19c2d750e283b5d0c83c060548bc90`) depois de **8 verificações CI bem-sucedidas**, incluindo Node, Android Java, testes visuais P/M/G e OTA. Arquivos registrados: `detail.html`, `OtaAssets.java`, `scripts/build_ota_pack.py`, `.github/workflows/pokesearch-official-release.yml`, 11 PNGs e testes de regressão.
