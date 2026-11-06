@@ -4262,6 +4262,33 @@ public class OverlayService extends Service {
         @JavascriptInterface public void confirmCaptureShare(int sourceIndex){
             handler.post(()->OverlayService.this.confirmCaptureShare(sourceIndex));
         }
+        // LT260: when the user clears coordinates, Distance is no longer
+        // reproducible by the API. Persist ONLY the restored sort, preserving
+        // Pokémon/IV/PvP, Weather, CP, Level, size and all other filters.
+        private boolean restoreDespawnWhenLocationCleared(){
+            try{
+                JSONObject filters=new JSONObject(extraFiltersJson);
+                if(!"Distance (nearest)".equals(filters.optString("sortBy","")))
+                    return false;
+                filters.put("sortBy","Despawn (longest)");
+                JSONArray previous=filters.optJSONArray("clearExtraKeys");
+                if(previous!=null){
+                    JSONArray retained=new JSONArray();
+                    for(int i=0;i<previous.length();i++){
+                        String key=previous.optString(i,"");
+                        if(!"sortBy".equals(key))retained.put(key);
+                    }
+                    filters.put("clearExtraKeys",retained);
+                }
+                extraFiltersJson=filters.toString();
+                overlayPrefs().edit().putString("extraFiltersJson",extraFiltersJson).apply();
+                BugReport.log(OverlayService.this,"FILTER_SORT",
+                    "Distância sem localização restaurada para Despawn; demais filtros preservados");
+                return true;
+            }catch(org.json.JSONException ignored){
+                return false;
+            }
+        }
         @JavascriptInterface public void setLocation(boolean enabled,String coords,int radius){handler.post(()->{
             // Validate BEFORE mutating even the confirmed-state flag. An invalid
             // clipboard or hand-typed coordinate must not discard a proven filter.
@@ -4270,8 +4297,15 @@ public class OverlayService extends Service {
                 diagnosticError("📍 Cole latitude,longitude válidas e escolha raio de 0 a 1000km.");
                 update();return;
             }
+            // Fix immediately on Remove, not only after restarting the app.
+            // Repeated Remove must repair previously persisted Distance too.
+            final boolean restoredSort=!enabled&&restoreDespawnWhenLocationCleared();
             if(locationEnabled==enabled&&
                 (!enabled||(locationCoords.equals(valid)&&locationRadius==radius))){
+                if(restoredSort){
+                    replaceActiveFilterSearch();
+                    resultsStale=count()>0;
+                }
                 // Clicking ✓ is an explicit retry even with UNCHANGED coords.
                 // A local nextScheduledSearchAtMs must not permanently block
                 // Apply after a failed attempt. refresh(true) already enforces
