@@ -204,6 +204,49 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     "compact Mega emblem before unclipped name "+sz.name+" "+JSON.stringify(mega));
    await page.evaluate(()=>{document.getElementById("panel").scrollTop=0;});
    await page.screenshot({path:path.join(output,sz.name+"-mega-rank.png")});
+   // LT270: actual shipping HTML with five badges and a real RG league change.
+   const rail270=await page.evaluate(()=>{
+    const payload={name:"Teddiursa",iv:"0/14/15",
+     leagues:[
+      {league:"gl",own:{rank:200,overallRank:500},
+       evolutions:[{name:"Ursaluna",rank:12,overallRank:142,eligible:true}]},
+      {league:"ul",own:{rank:5,overallRank:220},evolutions:[]},
+      {league:"ml",own:{rank:1,overallRank:311},evolutions:[]}
+     ]};
+    activeRankLeague="gl";window.psRankContext=payload;
+    const ok=psRenderFiveRankRail(payload),rail=document.getElementById("rankLine");
+    const b=Array.from(rail.querySelectorAll("button"));
+    return {ok,count:b.length,labels:b.slice(0,4).map(x=>x.querySelector(".psRailNumber")?.textContent),
+     names:b.slice(0,4).map(x=>x.dataset.psName),
+     evolves:!!b[0]?.querySelector(".psRailEvolve"),
+     icons:b.slice(0,4).map(x=>x.querySelector(".psRailIcon")?.getAttribute("src")||""),
+     width:rail.scrollWidth,client:rail.clientWidth,
+     clipped:b.some(x=>x.getBoundingClientRect().right>rail.getBoundingClientRect().right+1)};
+   });
+   assert.ok(rail270.ok&&rail270.count===5&&rail270.evolves&&!rail270.clipped&&
+    rail270.width<=rail270.client+2&&
+    JSON.stringify(rail270.labels)==='["#12","#5","#1","#142"]'&&
+    rail270.names[0]==="Ursaluna"&&
+    rail270.icons.every(x=>x.includes("lt268.png")),
+    "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
+   await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
+   const overall270=await page.evaluate(()=>{
+    const general=document.querySelector("#rankLine .psRailGeneral");
+    if(!general||general.disabled)return {ok:false,reason:"RG disabled"};
+    general.click();
+    const chooser=document.querySelector("#psRankExplorer select[data-ps-league-choice]");
+    if(!chooser)return {ok:false,reason:"missing selector"};
+    chooser.value="ul";chooser.dispatchEvent(new Event("change",{bubbles:true}));
+    const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
+    const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
+    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge==="#220",
+     title,species,badge};
+   });
+   assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
+    sz.name+" "+JSON.stringify(overall270));
+   await page.screenshot({path:path.join(output,sz.name+"-lt270-rg-ul.png")});
+   await page.evaluate(()=>window.PokeSearchRankExplorer?.close?.());
    // LT254: run actual attack-card renderer on the same shipping detail HTML.
    const moves=await page.evaluate(async()=>{
     document.querySelector("#psMetricPanel").hidden=true;
