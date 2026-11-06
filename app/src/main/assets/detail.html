@@ -3267,7 +3267,9 @@ function openDetailMetric(kind){
  if(kind==="iv"){
   if(!metricCard?.ivValid)return false;
   if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
-  const context=window.psRankContext,league=activeRankLeague||"gl";
+  // LT276: remember the last league chosen inside Rank Classe for this card.
+  const context=window.psRankContext,league=window.psRailClassSelectedLeague||
+   activeRankLeague||"gl";
   const name=String(context?.name||metricCard.name||"");
   return window.PokeSearchRankExplorer?.open?.({
    kind:"class",name,league,iv:context?.iv||metricCard.iv,
@@ -3305,7 +3307,7 @@ window.showDetails=(c,mode,watched)=>{
   window.PokeSearchRankExplorer?.close();
   window.psRankContext=null;
   detailIdentity=nextIdentity;evolutionExpanded=false;psActiveAnalysisKey="";psSelectedEvaluationLeague="";
-   window.psRailOverallSelectedLeague="";
+   window.psRailOverallSelectedLeague="";window.psRailClassSelectedLeague="";
   coordsRequestSeq++;
   clearCoordsRate();
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");

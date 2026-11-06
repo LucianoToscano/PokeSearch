@@ -288,6 +288,49 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     sz.name+" "+JSON.stringify(overall270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-rg-ul.png")});
    await page.evaluate(()=>window.PokeSearchRankExplorer?.close?.());
+   // LT276: actual IV-tile Rank Classe selector with all three leagues P/M/G.
+   const class276=await page.evaluate(()=>{
+    const saved={card:metricCard,context:window.psRankContext,
+     league:activeRankLeague,classLeague:window.psRailClassSelectedLeague};
+    try{
+     metricCard={name:"Grimer",iv:"10/15/14",ivValid:true,cp:871,level:23};
+     window.psRankContext={name:"Grimer",iv:"10/15/14",leagues:[]};
+     activeRankLeague="gl";window.psRailClassSelectedLeague="";
+     if(openDetailMetric("iv")!==true)return {ok:false,stage:"open"};
+     const get=()=>({title:document.querySelector("#psRankExplorer .psrTitle")?.textContent||"",
+      sub:document.querySelector("#psRankExplorer .psrSub")?.textContent||"",
+      rank:document.querySelector("#psRankExplorer tr.psrSelected")?.dataset.psRow||""});
+     const first=get(),picker=document.querySelector('#psRankExplorer button[data-ps-act="league-menu"]');
+     picker?.click();
+     const menu=document.querySelector("#psrLeagueOptions");
+     const choices=Array.from(menu?.querySelectorAll('button[data-ps-act="league-pick"]')||[]);
+     if(!menu||menu.hidden||choices.length!==3||choices.some(x=>x.disabled))
+      return {ok:false,stage:"picker",first,choices:choices.map(x=>x.dataset.league)};
+     const selected={};
+     for(const league of ["ul","ml"]){
+      if(league==="ml")document.querySelector('#psRankExplorer button[data-ps-act="league-menu"]')?.click();
+      document.querySelector('#psrLeagueOptions button[data-ps-act="league-pick"][data-league="'+league+'"]')?.click();
+      const actual=get(),expected=window.PokeSearchRankExplorer.getIvRows(
+       window.POKESEARCH_PVP_IV_DATA,"Grimer",league)?.find(x=>x.iv==="10/15/14");
+      selected[league]={actual,expected:expected?.rank,
+       ok:!!expected&&actual.title==="Rank Classe · Grimer"&&
+        actual.rank===String(expected.rank)&&
+        actual.sub.includes(league==="ul"?"Ultra Liga":"Liga Mestra")&&
+        actual.sub.includes("Classe IV #"+expected.rank)};
+     }
+     window.PokeSearchRankExplorer.close();
+     const reopened=openDetailMetric("iv")===true;
+     const persists=get().sub.includes("Liga Mestra");
+     return {ok:first.sub.includes("Grande Liga")&&
+      selected.ul.ok&&selected.ml.ok&&reopened&&persists,
+      first,selected,reopened,persists};
+    }finally{
+     window.PokeSearchRankExplorer?.close?.();
+     metricCard=saved.card;window.psRankContext=saved.context;
+     activeRankLeague=saved.league;window.psRailClassSelectedLeague=saved.classLeague;
+    }
+   });
+   assert.ok(class276.ok,"LT276 IV tile Class GL/UL/ML on "+sz.name+" "+JSON.stringify(class276));
    // LT254: run actual attack-card renderer on the same shipping detail HTML.
    const moves=await page.evaluate(async()=>{
     document.querySelector("#psMetricPanel").hidden=true;
