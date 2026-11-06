@@ -27,7 +27,7 @@ assert.ok(detail.includes("Os golpes são do '+h(species)+' normal; recomendaç�
 assert.ok(detail.includes("Mesmos golpes do '+h(species)+' normal · avaliação Megaedição."));
 assert.ok(detail.includes('Mega não tem golpes exclusivos nem garante GBL'));
 assert.ok(detail.includes('src="mega_evolution_icon.svg"'));
-assert.ok(detail.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'),"legacy-only crossed swords, neutral lightning");
+assert.ok(detail.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'),"source-verified legacy icon before a tap");
 assert.ok(detail.includes('currentCardMoves'),'captured moves remain independently represented');
 const native=fs.readFileSync(path.join(__dirname,
   "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
