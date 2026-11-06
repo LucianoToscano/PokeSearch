@@ -1314,6 +1314,27 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   min-width:13px!important;min-height:13px!important;max-width:13px!important;max-height:13px!important;
  }
 }
+
+/* LT273: league flag, league title, attacks and close on a single line. */
+#psLeagueHead{display:grid!important;grid-template-columns:19px minmax(0,1fr) 28px 27px!important;gap:4px!important;align-items:center!important;min-height:30px!important;padding:1px 1px 3px!important}
+#psLeagueFlag{display:block!important;width:18px!important;height:18px!important;object-fit:contain!important;justify-self:center!important}
+#psLeagueTitle{min-width:0!important;font-size:11px!important;line-height:1.2!important;font-weight:850!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#psLeagueTitle[data-league="gl"]{color:#68b7ff!important}#psLeagueTitle[data-league="ul"]{color:#ffd17c!important}#psLeagueTitle[data-league="ml"]{color:#cda9ff!important}
+#psLeagueMoves{min-width:0!important;width:28px!important;height:27px!important;justify-self:center!important;align-self:center!important}
+#psLeagueMoves .psMovesAction{box-sizing:border-box!important;width:26px!important;height:25px!important;min-height:25px!important;margin:0!important}
+#psLeagueClose{box-sizing:border-box!important;width:26px!important;height:26px!important;min-width:26px!important;justify-self:end!important;align-self:center!important;margin:0!important;padding:0!important}
+#evolutions #evoBody .evoLeague{display:none!important}#evolutions #evoBody{padding-top:2px!important}
+#info{min-width:0!important;margin-top:3px!important}
+/* Elite status belongs next to its own move, not on a lower-right stray line. */
+#movesPopover .psMoveRow{display:grid!important;grid-template-columns:34px minmax(0,1fr) 18px!important;grid-template-rows:auto auto!important;gap:0 4px!important;align-items:center!important;min-height:24px!important;overflow:visible!important}
+#movesPopover .psMoveLabel{grid-column:1!important;grid-row:1!important;flex:none!important;white-space:nowrap!important}
+#movesPopover .psMoveName{grid-column:2!important;grid-row:1!important;min-width:0!important;overflow-wrap:anywhere!important;white-space:normal!important}
+#movesPopover .psMoveLegacy{grid-column:3!important;grid-row:1!important;flex:none!important;width:18px!important;height:15px!important;justify-self:center!important;align-self:center!important;margin:0!important}
+#movesPopover .psEliteScroll{width:18px!important;height:14px!important;object-fit:contain!important}
+#movesPopover .psMoveStats{grid-column:2/4!important;grid-row:2!important;min-width:0!important;padding-left:0!important}
+/* LT272: shift mark lower/right and shrink it, preserving centered flag. */
+#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{top:auto!important;left:auto!important;right:3px!important;bottom:3px!important;width:11px!important;height:11px!important;min-width:11px!important;min-height:11px!important;max-width:11px!important;max-height:11px!important;pointer-events:none!important}
+@media(max-width:345px){#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{right:3px!important;bottom:3px!important;width:9px!important;height:9px!important;min-width:9px!important;min-height:9px!important;max-width:9px!important;max-height:9px!important}}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1339,17 +1360,18 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button id="raidRow" type="button" hidden data-grade="unknown" aria-expanded="false"
   aria-controls="raidPanel" onclick="toggleRaidDetails()">Raides · verificando...</button>
  <section id="raidPanel" hidden role="region" aria-label="Análise de atacantes em Raides"></section>
- <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div><div id="info"></div>
+ <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
   </button>
-  <div id="psLeagueHead"><strong id="psLeagueTitle">Avaliação PvP</strong>
+  <div id="psLeagueHead"><img id="psLeagueFlag" src="ui-icons/ps-gl-lt268.png" alt="" aria-hidden="true"><strong id="psLeagueTitle" data-league="gl">Grande Liga</strong>
    <div id="psLeagueMoves" aria-label="Ataques recomendados da liga"></div>
    <button id="psLeagueClose" type="button" onclick="psCloseLeagueAssessment()" aria-label="Fechar avaliação">×</button></div>
   <div id="movesPopover" hidden role="status" class="psMovesCompact"></div>
   <div id="evoBody" hidden></div>
  </section>
+ <div id="info"></div>
 
  <div id="coordRow">
     <button id="coords" onclick="requestCoordsUi()" title="Pegar e copiar coordenadas">⌖ Pegar Coordenadas</button>
@@ -2582,7 +2604,8 @@ function psFocusLeagueBlocks(league){
  if(empty)empty.hidden=seen;
  const names={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
  const title=document.getElementById("psLeagueTitle");
- if(title)title.textContent="Avaliação PvP · "+(names[league]||"");
+ if(title){title.textContent=names[league]||"Liga";title.dataset.league=league;}
+ const flag=document.getElementById("psLeagueFlag");if(flag)flag.src="ui-icons/ps-"+league+"-lt268.png";
  return seen;
 }
 function psToggleLeagueAssessment(league){
