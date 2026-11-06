@@ -1177,6 +1177,49 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  display:none!important;min-height:0!important;height:0!important;
  margin:0!important;padding:0!important;border:0!important
 }
+/* LT265 — compact and legible, no solid blocks or new overlay windows.
+   Flag borders are brightened by CSS, preserving asset hashes and sizes. */
+#rankLine .psLeagueIv::before,.psLeagueFlag,
+#evoBody .psLeagueFlag,#psCpSimResult .psLeagueFlag{
+ filter:drop-shadow(0 0 1px #f5fbff) drop-shadow(0 0 .55px #f5fbff)!important
+}
+#raidPanel{margin:2px 0 4px;padding:5px 7px;border-radius:7px;
+ font:500 10px/1.25 Roboto,Arial,sans-serif}
+#raidPanel .psRaidHead{margin:0 0 3px;font-size:10.5px}
+#raidPanel .psRaidRow{padding:4px 0;gap:2px 5px;
+ grid-template-columns:minmax(0,1fr) auto;align-items:baseline}
+#raidPanel .psRaidRow .psRaidName{font-weight:650;min-width:0;
+ white-space:normal;overflow-wrap:anywhere}
+#raidPanel .psRaidRow strong{font-size:10px}
+#raidPanel .psRaidMoves{display:flex;align-items:center;gap:3px;
+ flex-wrap:wrap;font-size:9.3px;line-height:1.25;color:#d6e5f3}
+#raidPanel .psRaidMoveNames{min-width:0;overflow-wrap:anywhere}
+#raidPanel .psRaidMoveSep{color:#8b9dad}
+#raidPanel .psRaidMoveState{width:18px!important;height:13px!important;
+ vertical-align:-3px;margin:0!important;filter:drop-shadow(0 0 .7px #cedcf8)}
+#raidPanel .psRaidMore,#raidPanel .psRaidSource{margin-top:3px;
+ border-top:1px solid #b9ced028;padding-top:4px}
+#raidPanel .psRaidMore>summary,#raidPanel .psRaidSource>summary{
+ color:#b6d9f4;font-size:9.5px;cursor:pointer;list-style:revert;
+ min-height:22px;line-height:20px}
+#raidPanel .psRaidNote{margin:3px 0;color:#a9b8cb;
+ font-size:9px;line-height:1.3}
+#psMetricPanel .psCpSimTitle{margin:1px 0 5px!important;
+ color:#e8f3ff;font-size:10.5px!important}
+#psMetricPanel .psCpAdvanced{margin:5px 0 4px;
+ border:1px solid #abc8de42;border-radius:6px;padding:4px 6px}
+#psMetricPanel .psCpAdvanced summary,#psMetricPanel .psCpSimExtra summary,
+#psMetricPanel .psMetricFoot summary,#psMetricPanel .psCpSimFoot summary{
+ min-height:22px;color:#aee2ff;cursor:pointer;font-size:9.5px;
+ font-weight:650;line-height:21px}
+#psMetricPanel .psCpIvHelp{color:#b9cfe0;font-size:9px;margin-top:3px}
+#psMetricPanel .psCpIvComparison{margin:4px 0!important}
+#psMetricPanel .psCpSimResultRow{padding:2px 0!important;line-height:1.2}
+#psMetricPanel .psCpSimFoot{margin:2px 0!important}
+#psMetricPanel .psCpPresets{margin:3px 0!important}
+#psMetricPanel .psCpPresets button{min-height:28px!important}
+#movesPopover .psMoveLegend{font-size:9px;line-height:1.25}
+#movesPopover .psRaidMoveState{width:18px!important;height:13px!important}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -2643,7 +2686,7 @@ function psCpControls(){
    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+
    psCpFormText(row,forms)+'</button>').join("");
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Normal / evoluções / Mega · mesmos IVs</div>'+
+  '<div class="psCpSimTitle">Escolha a forma e o nível</div>'+
   '<div class="psCpSimFields">'+
   '<div class="psCpFormField"><span class="psCpFormFieldLabel">Forma · '+forms.length+'</span>'+
   '<div class="psCpFormStepper">'+
@@ -2669,27 +2712,28 @@ function psCpControls(){
   '<button type="button" onclick="stepPvpCpLevel(0.5)" aria-label="Aumentar meio nível">+</button>'+
   '</div></label>'+
   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
+  '<details class="psCpAdvanced" ontoggle="resizeEvolutionPanel()"><summary>Comparar IVs (opcional)</summary>'+
+  '<div class="psCpIvHelp">A: captura ou editado · B: outro IV</div>'+
   '<div class="psCpIvComparison">'+
   '<div class="psCpIvGroup"><b>IV A</b>'+
   psCpIvFields("A",psCpCustomIv||psCpIv()||[0,0,0])+
   '<button type="button" onclick="psCpResetIv()" title="Restaurar IV capturado" aria-label="Restaurar IV capturado">↶</button></div>'+
   '<div class="psCpIvGroup"><b>IV B</b>'+
-  psCpIvFields("B",psCpCompareIv)+'</div></div>'+
+  psCpIvFields("B",psCpCompareIv)+'</div></div></details>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
   '<div class="psCpTargetRow"><label>PC-alvo '+
   '<input id="psCpTargetCp" type="number" min="10" max="10000" step="1"'+
   ' value="'+psCpTargetCp+'" oninput="updatePvpCpSimulator()" '+
   ' aria-label="PC desejado"></label>'+
   '<button type="button" onclick="psCpApplyTarget()"'+
-  ' title="Calcular o maior nível dentro do PC desejado">Calcular nível</button></div>'+
+  ' title="Calcular o maior nível dentro do PC desejado">Encontrar nível</button></div>'+
   '<div class="psCpPresets" aria-label="Limites de PC">'+
   '<button type="button" onclick="psCpSetPreset(500)">500</button>'+
   '<button type="button" onclick="psCpSetPreset(1500)">1500</button>'+
   '<button type="button" onclick="psCpSetPreset(2500)">2500</button></div>'+
-  '<div class="psCpSimFoot">Projeção offline · Mega não garante entrada na GBL.'+
-  '<details><summary>Notas da simulação</summary>'+
-  'Projeção matemática com IVs editáveis e Game Master offline. Não confirma '+
-  'disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</details></div></div>';
+  '<div class="psCpSimFoot"><details ontoggle="resizeEvolutionPanel()"><summary>Como funciona?</summary>'+
+  'PC e PS são projeções com Game Master offline. Mega pode não ser permitida na Liga GO. '+
+  'Não estima custos nem garante evolução.</details></div></div>';
 }
 function psCpPickForm(value){
  const forms=psCpVariants(),sel=document.getElementById("psCpForm");
@@ -2776,9 +2820,10 @@ function updatePvpCpSimulator(){
  const signed=delta>0?"+"+delta:String(delta);
  root.innerHTML='<div class="psCpSimResultRow"><span>IV A '+h(iv.join("/"))+
   '</span><strong>PC '+current.cp+' · PS '+current.hp+'</strong></div>'+
-  (compared?'<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
+  (compared?'<details class="psCpSimExtra" ontoggle="resizeEvolutionPanel()"><summary>Resultado IV B · comparar</summary>'+
+   '<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
    '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
-   '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div>':'')+
+   '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div></details>':'')+
   '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
@@ -2821,7 +2866,8 @@ function renderDetailMetric(){
   psCpControls()+
   (rows?'<details class="psCpPvpProjections"><summary>Projeções PvP por liga</summary>'+rows+'</details>':
    '<div class="psMetricEmpty">Projeções por liga indisponíveis.</div>')+
-  '<div class="psMetricFoot">PC e Nv. das ligas são projeções dos mesmos IVs, não os atributos atuais nem promessa de elegibilidade PvP.</div>';
+  '<details class="psMetricFoot" ontoggle="resizeEvolutionPanel()"><summary>Sobre os cálculos</summary>'+
+  'PC e nível projetados com os mesmos IVs. Isso não confirma elegibilidade na Liga GO.</details>';
  panel.hidden=false;
   document.querySelector?.("#panel")?.classList?.add?.("metricOpen");
   if(typeof panel.querySelector==="function"&&panel.querySelector("#psCpSimResult"))
