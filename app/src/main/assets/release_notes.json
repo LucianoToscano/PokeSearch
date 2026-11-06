@@ -2373,6 +2373,29 @@
           "Inspeção física no Samsung, temas claro/escuro, rolagem P/M/G e atualização pelo aplicativo ainda pendentes."
         ]
       }
+    },
+{
+      "id": "pokesearch-lt271-raid-league-overall-actions-20261106",
+      "minVersionCode": 54475,
+      "date": "06/11/2026",
+      "title": "LT271 — Raides e ligas separadas, ataques dentro da avaliação",
+      "sections": {
+        "novidades": [
+          "Cinco atalhos: Raides, GL, UL, ML e Rank Geral, com a posição sobre cada ícone.",
+          "O atalho de Ataques Recomendados aparece somente dentro da avaliação PvP da liga escolhida, usando o conjunto de golpes específico dessa liga."
+        ],
+        "melhorias": [
+          "Raides e Análise PvP não ocupam espaço inicial: abrir e retrair os painéis pelos ícones.",
+          "Seletor GL/UL/ML no Rank Geral disponível independentemente de onde a tabela foi aberta."
+        ],
+        "correcoes": [
+          "Rank Classe e Rank Geral permanecem independentes, sem inventar números quando a origem não confirma.",
+          "As duas Pokébolas, menu Modos, fontes de PvP/Raides e os PNGs oficiais anteriores permanecem intactos."
+        ],
+        "emDesenvolvimento": [
+          "Homologar toques e atualização no Samsung real; os testes CI não comprovam instalação física."
+        ]
+      }
     }
   ]
 }
