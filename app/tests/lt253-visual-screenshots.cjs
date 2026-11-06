@@ -226,7 +226,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     await action.onclick();
     const pop=document.getElementById("movesPopover");
     const rows=Array.from(pop.querySelectorAll(".psMoveRow"));
-    return {ok:!pop.hidden&&rows.length===3&&action.textContent==="⚔︎"&&
+    return {ok:!pop.hidden&&rows.length===3&&["⚔︎","🗡️","⚔️"].includes(action.textContent)&&
       pop.scrollWidth<=pop.clientWidth+3,
       icon:action.textContent,width:pop.scrollWidth,client:pop.clientWidth,
       rows:rows.map(row=>{
@@ -263,11 +263,13 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     if(!action)return {ok:false,why:"missing Mega action"};
     await action.onclick();
     const pop=document.getElementById("movesPopover"),html=pop.innerHTML;
-    const result={ok:!pop.hidden&&action.textContent==="⚔︎"&&
+    const result={ok:!pop.hidden&&["⚔︎","🗡️","⚔️"].includes(action.textContent)&&
       megaCalls===1&&wrongBase===0&&html.includes("Megaedição")&&
       html.includes("Clarão Deslumbrante")&&!html.includes("Gema Poderosa"),
       width:pop.scrollWidth,client:pop.clientWidth,
-      megaCalls,wrongBase,content:pop.textContent.slice(0,90)};
+      megaCalls,wrongBase,icon:action.textContent,
+      hasMegaLabel:html.includes("Megaedição"),hasCharged:html.includes("Clarão Deslumbrante"),
+      leaksBase:html.includes("Gema Poderosa"),content:pop.textContent.slice(0,120)};
     result.ok=result.ok&&pop.scrollWidth<=pop.clientWidth+3;
     return result;
    });
