@@ -1039,6 +1039,26 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  height:12px!important;vertical-align:-1px!important;margin-right:4px!important}
 #movesPopover .psMegaMoveContext{font-size:9px!important;line-height:1.25!important;
  color:#c2ddd1!important;overflow-wrap:anywhere!important;margin:3px 0 5px!important}
+
+/* LT255: form switching stays inside the existing glass calculator, not
+ * an extra floating window or an unreliable Android native select menu. */
+#psMetricPanel .psCpFamilyQuick{grid-column:1/-1!important;box-sizing:border-box!important;
+ min-width:0!important;width:100%!important;display:flex!important;
+ gap:3px!important;margin:1px 0 3px!important;flex-wrap:wrap!important}
+#psMetricPanel .psCpFamilyQuick button{box-sizing:border-box!important;min-width:0!important;
+ flex:1 1 0!important;min-height:26px!important;height:auto!important;
+ max-width:100%!important;padding:4px 3px!important;border-radius:5px!important;
+ font-size:9.5px!important;line-height:1.15!important;overflow-wrap:anywhere!important;
+ white-space:normal!important;color:#c4dcf5!important;border:1px solid #8ba6c05a!important;
+ background:#ffffff0b!important}
+#psMetricPanel .psCpFamilyQuick button[aria-pressed="true"]{background:#3b77ab57!important;
+ border-color:#8fc7ff!important;color:#e9f7ff!important;font-weight:750!important}
+#psMetricPanel details.psCpFamilyExtended{display:block!important;max-width:100%!important}
+#psMetricPanel details.psCpFamilyExtended>summary{font-size:10px!important;line-height:1.4!important;
+ cursor:pointer!important;color:#b3dbff!important}
+#psMetricPanel .psCpFamilyChoices{display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important;
+ margin-top:4px!important;max-height:115px!important;overflow-y:auto!important}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1093,6 +1113,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 </div>
 <script src="pvpoke-overall-ranks.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
+<script src="pvp_family_catalog.js"></script>
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_insights.js"></script>
 <script src="pvp_rank_moves.js"></script>
@@ -2135,7 +2156,20 @@ function psCpVariants(){
  if(!master||!Array.isArray(master.pokemon)||!Array.isArray(master.cpms)||
     master.cpms.length<99)return [];
  const source=window.psRankContext||{};
+ // The verified CP simulator must not depend on a complete asynchronous
+ // rank response. Derive a read-only fallback from the pinned evolution graph.
+ const normalForm=String(metricCard?.form||"").trim().toLowerCase();
+ const costume=String(metricCard?.costume||"").trim().toLowerCase();
+ const costumeId=String(metricCard?.costumeId??"").trim().toLowerCase();
+ const none=value=>!value||value==="none"||value==="normal"||value==="0"||
+  value==="false"||value==="default";
+ const normalIdentity=!metricCard?.isCostume&&!metricCard?.isShadow&&
+  none(costume)&&none(costumeId)&&none(String(metricCard?.region||"").toLowerCase())&&
+  none(normalForm);
+ const offlineFamily=normalIdentity?
+  (window.PokeSearchPvpFamilyCatalog?.family?.(metricCard?.name,master)||[]):[];
  const names=[metricCard?.name,source.name,
+  ...offlineFamily,
   ...(Array.isArray(source.familyForms)?source.familyForms.slice(0,36):[])];
  for(const league of source.leagues||[]){
   if(league?.own)names.push(source.name);
@@ -2228,6 +2262,18 @@ function psCpControls(){
  const l=Number(metricCard?.level);
  if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
   psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
+ const quick=forms.length<=1?"":forms.length<=4?
+  '<div class="psCpFamilyQuick" role="group" aria-label="Trocar evolução">'+
+   forms.map(x=>'<button type="button" data-pscp-form="'+h(String(x[0]))+
+    '" aria-pressed="'+(x[0]===psCpTargetSpecies?'true':'false')+
+    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+h(String(x[1]))+'</button>').join("")+
+  '</div>':
+  '<details class="psCpFamilyQuick psCpFamilyExtended"><summary>Escolher entre '+
+   forms.length+' formas</summary><div class="psCpFamilyChoices">'+
+   forms.map(x=>'<button type="button" data-pscp-form="'+h(String(x[0]))+
+    '" aria-pressed="'+(x[0]===psCpTargetSpecies?'true':'false')+
+    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+h(String(x[1]))+'</button>').join("")+
+   '</div></details>';
  return '<div class="psCpSimulator">'+
   '<div class="psCpSimTitle">Normal / evoluções / Mega · mesmos IVs</div>'+
   '<div class="psCpSimFields"><label>Forma'+
@@ -2238,6 +2284,7 @@ function psCpControls(){
     (x[0]===psCpTargetSpecies?' selected':'')+'>'+h(String(x[1]))+'</option>').join("")+
   '</select><button type="button" onclick="stepPvpCpForm(1)"'+
   ' aria-label="Próxima forma" title="Próxima forma">›</button></div></label>'+
+  quick+
   '<label>Nível <div class="psCpLevelStepper">'+
   '<button type="button" onclick="stepPvpCpLevel(-0.5)" aria-label="Reduzir meio nível">−</button>'+
   '<input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
@@ -2267,14 +2314,21 @@ function psCpControls(){
   'Projeção matemática com IVs editáveis e Game Master offline. Não confirma '+
   'disponibilidade de evolução, Mega na GBL ou custos de Doces/Poeira.</details></div></div>';
 }
+function psCpPickForm(value){
+ const forms=psCpVariants(),sel=document.getElementById("psCpForm");
+ if(!sel||!forms.length)return false;
+ const next=forms.find(x=>String(x[0])===String(value||""));
+ if(!next)return false;
+ sel.value=String(next[0]);psCpTargetSpecies=sel.value;
+ return updatePvpCpSimulator();
+}
 function stepPvpCpForm(delta){
  const forms=psCpVariants(),sel=document.getElementById("psCpForm");
- if(!forms.length||!sel)return false;
+ if(forms.length<2||!sel)return false;
  const current=String(sel.value||psCpTargetSpecies);
  const index=Math.max(0,forms.findIndex(x=>String(x[0])===current));
  const next=(index+(delta<0?-1:1)+forms.length)%forms.length;
- sel.value=String(forms[next][0]);psCpTargetSpecies=sel.value;
- return updatePvpCpSimulator();
+ return psCpPickForm(String(forms[next][0]));
 }
 function stepPvpCpLevel(delta){
  const input=document.getElementById("psCpLevel");
@@ -2316,6 +2370,13 @@ function updatePvpCpSimulator(){
  const row=forms.find(x=>x[0]===key)||forms[0];
  if(!row){root.textContent="Atributos-base indisponíveis.";return false;}
  psCpTargetSpecies=String(row[0]);
+ if(selection&&selection.value!==psCpTargetSpecies)
+  selection.value=psCpTargetSpecies;
+ if(typeof document.querySelectorAll==="function"){
+  for(const button of document.querySelectorAll(".psCpFamilyQuick button[data-pscp-form]")){
+   button.setAttribute?.("aria-pressed",String(button.dataset.pscpForm===psCpTargetSpecies));
+  }
+ }
  const iv=psCpInputIv("psCpIvA",psCpCustomIv||psCpIv());
  const compare=psCpInputIv("psCpIvB",psCpCompareIv);
  if(!iv||!compare){
@@ -2564,7 +2625,9 @@ window.showDetails=(c,mode,watched)=>{
   '<div class="statHeading">'+h(label)+'</div><div class="statValue">'+
   h(value===null||value===undefined||value===""?"—":value)+'</div></div>';
  metricCard={name:String(c.name||""),cp:c.cp,level:c.level,ivValid:showRaw,
-  iv:showRaw?ivDisplay.raw:""};
+  iv:showRaw?ivDisplay.raw:"",form:c.form||"",costume:c.costume||"",
+  costumeId:c.costume_id||c.costumeId||0,region:c.region||"",
+  isCostume:c.isCostume===true,isShadow:c.isShadow===true};
  document.getElementById("major").innerHTML='<div class="statTile ivTile psMetricTap"'+ivStyle+
   (showRaw?' role="button" tabindex="0" title="Abrir tabela de IVs" onclick="openDetailMetric(\'iv\')" onkeydown="detailMetricKey(event,\'iv\')"':'')+'><div class="statHeading">IV</div>'+
   (showPct?'<span class="ivPercent" title="'+(ivSourcePercent?.valid?

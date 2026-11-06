@@ -83,6 +83,51 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    });
    assert.ok(bottom.lastVisible,"last calculator line reachable "+sz.name+
     " "+JSON.stringify(bottom));
+   // LT255 actual tap regression: no PvP response, yet the Teddiursa family
+   // must be browsable entirely offline at all three compact sizes.
+   const tedReady=await page.evaluate(()=>{
+    metricCard={name:"Teddiursa",iv:"0/14/15",ivValid:true,cp:478,level:14,
+     costumeId:"0",form:"NORMAL",isCostume:false};
+    window.psRankContext=null;
+    psCpTargetSpecies="";psCpTargetLevel=14;psCpCustomIv=null;
+    psCpCompareIv=[15,15,15];metricKind="cp";
+    return renderDetailMetric();
+   });
+   assert.equal(tedReady,true,"Teddiursa calculator opens without online PvP payload "+sz.name);
+   const buttons=page.locator("#psMetricPanel .psCpFamilyQuick button");
+   assert.deepEqual(await buttons.allTextContents(),["Teddiursa","Ursaring","Ursaluna"],
+    "all normal family evolutions have direct touch buttons "+sz.name);
+   const initialCp=await page.locator("#psCpSimResult").innerText();
+   assert.ok(initialCp.includes("PC 478"),"real screenshot Teddiursa level 14 "+sz.name);
+   await page.locator('#psMetricPanel [data-pscp-form="ursaring"]').click();
+   let state=await page.evaluate(()=>({
+    value:document.getElementById("psCpForm").value,
+    current:document.querySelector("#psCpSimResult").textContent,
+    pressed:document.querySelector('.psCpFamilyQuick [data-pscp-form="ursaring"]')
+     ?.getAttribute("aria-pressed"),
+    iv:document.getElementById("psCpIvAA").value+"/"+
+       document.getElementById("psCpIvAD").value+"/"+
+       document.getElementById("psCpIvAS").value,
+    scrollWidth:document.getElementById("psMetricPanel").scrollWidth,
+    width:document.getElementById("psMetricPanel").clientWidth
+   }));
+   assert.ok(state.value==="ursaring"&&state.pressed==="true"&&
+    state.iv==="0/14/15"&&!state.current.includes("PC 478")&&
+    state.scrollWidth<=state.width+3,
+    "tap Ursaring keeps IV and recalculates without overflow "+sz.name+" "+JSON.stringify(state));
+   await page.locator("#psMetricPanel .psCpFormStepper button").last().click();
+   state=await page.evaluate(()=>({
+    value:document.getElementById("psCpForm").value,
+    pressed:document.querySelector('.psCpFamilyQuick [data-pscp-form="ursaluna"]')
+      ?.getAttribute("aria-pressed"),
+    iv:document.getElementById("psCpIvBA").value+"/"+
+       document.getElementById("psCpIvBD").value+"/"+
+       document.getElementById("psCpIvBS").value
+   }));
+   assert.deepEqual(state,{value:"ursaluna",pressed:"true",iv:"15/15/15"},
+    "arrow Ursaring to Ursaluna preserves comparison IVs "+sz.name);
+   await page.screenshot({path:path.join(output,sz.name+"-teddiursa-ursaluna-switch.png")});
+   console.log("LT255 family-switch PASS",sz.name,state);
    // Render the ACTUAL compact Mega chip and inspect icon ordering.
    const mega=await page.evaluate(()=>{
     const payload={name:"Sableye",iv:"0/15/12",cp:"257",sourceIndex:1,
