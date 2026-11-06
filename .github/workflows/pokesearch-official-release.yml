@@ -209,6 +209,41 @@ jobs:
               data=apk.read(key)
               assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
               assert hashlib.sha256(data).hexdigest()==digest, "Unexpected icon bytes "+key
+            # LT267: new revised 512px originals from user's ZIP, plus transparent RG icon.
+            revised_types={
+              "type-bug-lt267.png": "46e288f551b868a690f785d066b1d3aad8025dd17a48eea53f9f3d7518d14b04",
+              "type-dark-lt267.png": "0755ee588d0a0d69ee91ab477e4782b194d740ed82f75748a3518a5bb77df1bb",
+              "type-dragon-lt267.png": "bf8c699376d111886d1c12ab804bec82009569f961a251f03f543b08f0ebf75a",
+              "type-electric-lt267.png": "6b56d31df37de6aa7d67dcaf53fdf99923caa8cb0669880e7a2aca033dc5640f",
+              "type-fairy-lt267.png": "94009db22e2fad571ab772bea0a8a6c1ab7e11d7d5642056136b043bd1b80feb",
+              "type-fighting-lt267.png": "469d8dd96b1e0a846fca6361814031372c76c5ae621225b5477a5447df723f79",
+              "type-fire-lt267.png": "9163817b80016d78d9ff0e3a5f4dd7b277e1aa2910a7ce6597d72e5c83aca45d",
+              "type-flying-lt267.png": "06aa82f00f9a005a140cf73ddec2c232320a2fd5b85c80b4bceba973d5041fde",
+              "type-ghost-lt267.png": "50c6f30e9fe3e2a92f9e3a67c22745a1626649ccbc609f8bd1da62df7c208bc1",
+              "type-grass-lt267.png": "c0ad206920374f8586401f24d0380592aa1c9087679dbc79d8477ffe8ac16d66",
+              "type-ground-lt267.png": "761894ed9a7751c0f6a431e6dfdcaf2225641e74eb59319dd2f04ff47dc276a2",
+              "type-ice-lt267.png": "c3b9436c807dbb89ce4653e7912374d30169271c019a008261616341f6c63b52",
+              "type-normal-lt267.png": "8f57b951853a9dbe87bb9eee9b713755a35452c7dd7a65d965c1f704606ab302",
+              "type-poison-lt267.png": "2813a7d459e0a53b2f7e4d7eaca9ba4626fa4734bf5f5bb8173586bc3c44f008",
+              "type-psychic-lt267.png": "6e111db243fd604fb67387cd47e235c283488723b6e6b937a2fc3aafe53fee7f",
+              "type-rock-lt267.png": "66f77628e838faa7927127543d7f414c35e6f19b269c18c046128ddb8e7b5fb5",
+              "type-steel-lt267.png": "82a39aea7eee9d4d327c9ffba8c0bb9addabb8bc5d65feb118bd538ff4c244b2",
+              "type-water-lt267.png": "ec2f7c337757ddfa7da4eb4fe2a0751fe67a73771be00761bfb1ac638f310ebb"
+            }
+            for filename,digest in revised_types.items():
+              key="assets/ui-icons/"+filename
+              assert key in names, "Missing revised LT267 type "+key
+              image=apk.read(key)
+              assert image.startswith(bytes([137,80,78,71,13,10,26,10])), "Invalid revised type PNG"
+              assert image[16:24]==bytes.fromhex("0000020000000200"), "Wrong 512px dimensions"
+              assert image[25]==6, "Revised type must keep RGBA alpha"
+              assert hashlib.sha256(image).hexdigest()==digest, "Revised type changed "+key
+            rank_icon="assets/ui-icons/rank-geral-lt267.png"
+            assert rank_icon in names, "Missing custom Rank Geral icon"
+            rank_data=apk.read(rank_icon)
+            assert rank_data[16:24]==bytes.fromhex("000000a0000000a0"), "Rank Geral dimensions"
+            assert rank_data[25]==6, "Rank Geral must have RGBA alpha"
+            assert hashlib.sha256(rank_data).hexdigest()=="2dcf9cc037adfadaee1edff2d13c9ec08d8454e0dae5020baeef56c1cf3b82bd", "Rank Geral bytes changed"
             # LT266: exact, transparent high-resolution originals supplied by the user.
             type_icons={
               "type-normal-lt266.png": "7c3e8db6a036882144635569731b4ff1bd1069244ebd511abf85acc7387c97c1",

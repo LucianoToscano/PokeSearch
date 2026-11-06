@@ -1240,6 +1240,21 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  flex:0 0 21px;width:21px;height:15px;vertical-align:middle}
 #movesPopover .psEliteScroll{width:21px;height:14px;display:block;
  object-fit:contain;filter:drop-shadow(0 0 .65px #b8eeff)}
+/* LT267: the Rank Geral badge replaces its visible "RG" letters with a
+   compact user emblem, without changing textContent, click targets or ARIA.
+   Pseudo-elements do not consume the extra 11px that previously clipped Mega names. */
+#rankLine .psCompactOverall[data-rg-visible],
+#psRankAlternates .psCompactOverall[data-rg-visible]{
+ font-size:0!important;align-items:center!important;gap:2px!important;
+ padding:1px 2px!important}
+#rankLine .psCompactOverall[data-rg-visible]::before,
+#psRankAlternates .psCompactOverall[data-rg-visible]::before{
+ content:"";display:inline-block;flex:none;width:11px;height:11px;
+ background:url("ui-icons/rank-geral-lt267.png") center/contain no-repeat}
+#rankLine .psCompactOverall[data-rg-visible]::after,
+#psRankAlternates .psCompactOverall[data-rg-visible]::after{
+ content:attr(data-rg-visible);display:inline-block;font:750 9px/1.1 Roboto,Arial,sans-serif}
+#rankLine .psCompactOverall:disabled[data-rg-visible]::before{opacity:.55}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -2202,6 +2217,7 @@ function togglePvpRankAlternates(event,button,choices,league){
    const b=document.createElement("button");b.type="button";
    b.className=kind==="overall"?"psCompactOverall":"psCompactIv";
    b.textContent=text;b.title=title;
+   if(kind==="overall")b.dataset.rgVisible="#"+n;
    b.dataset.psKind=kind;b.dataset.psName=choice.name;
    b.dataset.psLeague=league;b.dataset.psRank=String(n);
    b.onclick=e=>openPvpRankExplorer(e,b);
@@ -2392,6 +2408,7 @@ function setRankLineLabel(rankLine,label){
   const badge=document.createElement("button");
   badge.type="button";badge.className="psCompactOverall psRankOpen";
   badge.textContent=hasVerifiedOverall?"RG #"+best.overallRank:"RG —";
+  badge.dataset.rgVisible=hasVerifiedOverall?"#"+best.overallRank:"—";
   badge.title=hasVerifiedOverall?
    "Rank Geral PvPoke "+best.name+" · abrir tabela de espécies":
    "Rank Geral não verificado para esta forma/liga";
