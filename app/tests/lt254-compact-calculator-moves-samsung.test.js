@@ -15,8 +15,8 @@ assert.ok(css.includes("grid-template-columns:40px minmax(0,1fr) 10px!important"
  "recommended move names must have their own non-wrapping label column");
 assert.ok(html.includes('row("C"+(i+1),m)'),
  "abbreviate Carregado 1/2 rather than splitting long titles");
-assert.ok(script.includes('btn.textContent=prior?.icon||"⚡"'));
-assert.ok(script.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'));
+assert.ok(script.includes('btn.textContent=prior?.icon||"⚔︎"'));
+assert.ok(script.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'));
 assert.ok(script.includes('if(complete){'));
 assert.ok(script.includes('move.status==="elite"||move.status==="legacy"'),
  "a confirmed legacy move remains necessary for crossed swords");
