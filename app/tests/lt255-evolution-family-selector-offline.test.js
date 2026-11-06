@@ -48,8 +48,12 @@ const test=new Function("document","window","h","activeRankLeague",
 test.set({name:"Teddiursa",iv:"0/14/15",cp:478,level:14,form:"NORMAL",costumeId:"0",ivValid:true});
 assert.deepEqual(test.variants().map(x=>x[1]),["Teddiursa","Ursaring","Ursaluna"]);
 const controls=test.controls();
-for(const name of ["Teddiursa","Ursaring","Ursaluna"])
- assert.ok(controls.includes('>'+name+'</button>'),"direct tap button "+name);
+for(const [key,name] of [["teddiursa","Teddiursa"],["ursaring","Ursaring"],["ursaluna","Ursaluna"]]){
+ assert.ok(controls.includes('data-pscp-form="'+key+'"'),"dropdown choice "+name);
+ assert.ok(controls.includes('>'+name+'</span></button>'),"visible label "+name);
+}
+assert.ok(controls.includes('id="psCpFormMenu"'));
+assert.ok(!controls.includes('psCpFamilyQuick'),"only one dropdown, not duplicated chips");
 assert.ok(test.update());
 const baseResult=fields.psCpSimResult.innerHTML;
 assert.match(baseResult,/IV A 0\/14\/15/);

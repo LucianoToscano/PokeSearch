@@ -46,7 +46,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const panel=document.getElementById("panel"),
      inner=document.getElementById("psMetricPanel");
     const width=window.innerWidth;
-    const selectors=["#psCpForm","#psCpLevel","#psCpTargetCp",
+    const selectors=["#psCpFormMenu > summary","#psCpLevel","#psCpTargetCp",
       ".psCpIvInputs input",".psCpPresets button","#psCpSimResult"];
     const bad=[];
     for(const selector of selectors)
@@ -58,7 +58,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     return {bad,scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,
      sliderWidth:document.querySelector("#psCpLevel").getBoundingClientRect().width,
      minIvInputWidth:Math.min(...Array.from(document.querySelectorAll(".psCpIvInputs input"),e=>e.getBoundingClientRect().width)),
-     formWidth:document.querySelector("#psCpForm").getBoundingClientRect().width,
+     formWidth:document.querySelector("#psCpFormMenu > summary").getBoundingClientRect().width,
      internalMax:getComputedStyle(inner).maxHeight,
      nativeResizes:window.__nativeResizes.length};
    });
@@ -94,17 +94,18 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     return renderDetailMetric();
    });
    assert.equal(tedReady,true,"Teddiursa calculator opens without online PvP payload "+sz.name);
-   const buttons=page.locator("#psMetricPanel .psCpFamilyQuick button");
+   const buttons=page.locator("#psMetricPanel .psCpFormList button");
    assert.deepEqual(await buttons.allTextContents(),["Teddiursa","Ursaring","Ursaluna"],
-    "all normal family evolutions have direct touch buttons "+sz.name);
+    "all normal family evolutions appear in one dropdown "+sz.name);
+   await page.locator("#psCpFormMenu > summary").click();
    const initialCp=await page.locator("#psCpSimResult").innerText();
    assert.ok(initialCp.includes("PC 478"),"real screenshot Teddiursa level 14 "+sz.name);
    await page.locator('#psMetricPanel [data-pscp-form="ursaring"]').click();
    let state=await page.evaluate(()=>({
     value:document.getElementById("psCpForm").value,
     current:document.querySelector("#psCpSimResult").textContent,
-    pressed:document.querySelector('.psCpFamilyQuick [data-pscp-form="ursaring"]')
-     ?.getAttribute("aria-pressed"),
+    pressed:document.querySelector('.psCpFormList [data-pscp-form="ursaring"]')
+     ?.getAttribute("aria-selected"),
     iv:document.getElementById("psCpIvAA").value+"/"+
        document.getElementById("psCpIvAD").value+"/"+
        document.getElementById("psCpIvAS").value,
@@ -115,11 +116,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     state.iv==="0/14/15"&&!state.current.includes("PC 478")&&
     state.scrollWidth<=state.width+3,
     "tap Ursaring keeps IV and recalculates without overflow "+sz.name+" "+JSON.stringify(state));
-   await page.locator("#psMetricPanel .psCpFormStepper button").last().click();
+   await page.locator("#psMetricPanel .psCpFormStepper > button").last().click();
    state=await page.evaluate(()=>({
     value:document.getElementById("psCpForm").value,
-    pressed:document.querySelector('.psCpFamilyQuick [data-pscp-form="ursaluna"]')
-      ?.getAttribute("aria-pressed"),
+    pressed:document.querySelector('.psCpFormList [data-pscp-form="ursaluna"]')
+      ?.getAttribute("aria-selected"),
     iv:document.getElementById("psCpIvBA").value+"/"+
        document.getElementById("psCpIvBD").value+"/"+
        document.getElementById("psCpIvBS").value
@@ -128,6 +129,57 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     "arrow Ursaring to Ursaluna preserves comparison IVs "+sz.name);
    await page.screenshot({path:path.join(output,sz.name+"-teddiursa-ursaluna-switch.png")});
    console.log("LT255 family-switch PASS",sz.name,state);
+   // LT257: same user reference — Gastly, Haunter, Gengar Normal, Mega Gengar.
+   const gastly=await page.evaluate(()=>{
+    metricCard={name:"Gastly",iv:"0/10/10",ivValid:true,cp:471,level:14.5,
+     form:"NORMAL",costumeId:"0",isCostume:false};
+    window.psRankContext=null;psCpTargetSpecies="";psCpTargetLevel=14.5;
+    psCpCustomIv=null;psCpCompareIv=[15,15,15];metricKind="cp";
+    return renderDetailMetric();
+   });
+   assert.equal(gastly,true,"Gastly calculator opens "+sz.name);
+   assert.deepEqual(await page.locator("#psCpFormMenu .psCpFormList button").allTextContents(),
+    ["Gastly","Haunter","Gengar (Normal)","Gengar (Mega)"],
+    "canonical family order and names "+sz.name);
+   await page.locator("#psCpFormMenu > summary").click();
+   assert.equal(await page.locator("#psCpFormMenu .psCpMegaIcon").count(),1,
+    "exactly one verified Mega emblem in the expanded menu "+sz.name);
+   const dimensions=await page.evaluate(()=>{
+    const list=document.querySelector(".psCpFormList"),
+     panel=document.getElementById("psMetricPanel");
+    return {width:list.scrollWidth,client:list.clientWidth,
+     scroll:panel.scrollWidth,panelWidth:panel.clientWidth,
+     listHeight:list.getBoundingClientRect().height};
+   });
+   assert.ok(dimensions.width<=dimensions.client+2&&
+    dimensions.scroll<=dimensions.panelWidth+3&&dimensions.listHeight<=173,
+    "expanded dropdown not clipped P/M/G "+sz.name+" "+JSON.stringify(dimensions));
+   await page.screenshot({path:path.join(output,sz.name+"-gastly-family-mega-dropdown.png")});
+   const gastlyCp=await page.locator("#psCpSimResult").innerText();
+   await page.locator('#psCpFormMenu [data-pscp-form="gengar"]').click();
+   const gengarCp=await page.locator("#psCpSimResult").innerText();
+   await page.locator("#psCpFormMenu > summary").click();
+   await page.locator('#psCpFormMenu [data-pscp-form="gengar_mega"]').click();
+   const result=await page.evaluate(()=>({
+    selected:document.getElementById("psCpForm").value,
+    label:document.getElementById("psCpFormLabel").textContent,
+    hasIcon:!!document.querySelector("#psCpFormLabel .psCpMegaIcon"),
+    closed:!document.getElementById("psCpFormMenu").open,
+    cp:document.getElementById("psCpSimResult").textContent,
+    ivA:document.getElementById("psCpIvAA").value+"/"+
+      document.getElementById("psCpIvAD").value+"/"+
+      document.getElementById("psCpIvAS").value,
+    ivB:document.getElementById("psCpIvBA").value+"/"+
+      document.getElementById("psCpIvBD").value+"/"+
+      document.getElementById("psCpIvBS").value
+   }));
+   assert.ok(result.selected==="gengar_mega"&&result.label==="Gengar (Mega)"&&
+     result.hasIcon&&result.closed&&result.ivA==="0/10/10"&&
+     result.ivB==="15/15/15"&&gastlyCp!==gengarCp&&gengarCp!==result.cp,
+    "form selection updates actual PC/PS, not just display "+sz.name+" "+JSON.stringify(result));
+   await page.screenshot({path:path.join(output,sz.name+"-mega-gengar-selected.png")});
+   console.log("LT257 Gastly→Gengar Mega dropdown PASS",sz.name);
+
    // Render the ACTUAL compact Mega chip and inspect icon ordering.
    const mega=await page.evaluate(()=>{
     const payload={name:"Sableye",iv:"0/15/12",cp:"257",sourceIndex:1,
