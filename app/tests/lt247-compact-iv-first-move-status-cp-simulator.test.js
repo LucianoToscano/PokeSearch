@@ -43,10 +43,10 @@ const projected=gl({rank:14,overallRank:37},[],[
  {name:"Mega Sableye",rank:1,referenceOnly:true,megaProjection:true,eligible:null}
 ]);
 assert.equal(obj.update(projected),true);
-assert.equal(line.children[0].textContent,"🔵 GL IV #1");
+assert.equal(line.children[0].textContent,"GL IV #1");
 assert.equal(line.children[1].textContent,"Sableye");
-assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
-assert.equal(line.children[1].children[0].src,"mega_evolution_icon.svg","Mega emblem precedes species text");
+assert.ok(line.children[1].children.some(x=>x.src==="ui-icons/mega-symbol.png"),"exact Mega artwork in species chip");
+assert.equal(line.children[1].children[0].src,"ui-icons/mega-symbol.png","Mega emblem precedes species text");
 assert.equal(line.children[1].children[1].textContent,"Sableye","compact label omits Mega prefix");
 assert.equal(line.children[1].dataset.psName,"Mega Sableye","canonical species identity preserved");
 assert.equal(line.children.length,3,"Mega projection uses one inline species chip plus neutral RG placeholder");
@@ -63,7 +63,7 @@ const both={name:"Litwick",searchLeague:"gl",searchRankLimit:1,leagues:[
 ]};
 assert.equal(fGl.update(both),true);
 assert.deepEqual(line.children.slice(0,3).map(x=>x.textContent),
- ["🔵 GL IV #1","↳ Lampent","RG #519"]);
+ ["GL IV #1","↳ Lampent","RG #519"]);
 line.children[0].onclick({});
 line.children[2].onclick({});
 assert.deepEqual(actions,[{kind:"class",name:"Lampent",rank:1,league:"gl"},
@@ -77,7 +77,7 @@ const raw=f(document,{},"", "Sableye",open,()=>{},()=>{});
 assert.equal(raw.update({...projected,searchLeague:"",searchRankLimit:null}),true,
  "Mega GL rank1 must also be shown outside GL mode");
 assert.equal(line.children[1].textContent,"Sableye");
-assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
+assert.ok(line.children[1].children.some(x=>x.src==="ui-icons/mega-symbol.png"),"exact Mega artwork in species chip");
 assert.ok(inline.includes('const isMega=/^mega\\s+/i.test(featured)'));
 assert.ok(inline.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'));
 assert.ok(inline.includes("'Mega '+h(species)+' · PvP'"));
