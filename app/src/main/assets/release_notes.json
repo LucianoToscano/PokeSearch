@@ -2100,6 +2100,32 @@
           "Os testes de navegador e a integração com a fonte passaram; instalação e teste físico de toque no Samsung nas duas Pokébolas ainda não observados."
         ]
       }
+    },
+    {
+      "id": "lt260-shellos-sea-location-sort-raid-20261106",
+      "minVersionCode": 54464,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT260 — Shellos East Sea, localização e Raides",
+      "sections": {
+        "novidades": [
+          "Shellos e Gastrodon East Sea têm sprites próprias incluídas no APK, sem dependência de imagem remota; também incluem West Sea e variantes Shiny verificadas.",
+          "Ao apagar a localização, a ordenação Distância muda automaticamente para Despawn, preservando os demais filtros de busca."
+        ],
+        "melhorias": [
+          "A troca da ordenação é gravada nas preferências do app e reaparece corretamente no menu de Filtros sem precisar reiniciar.",
+          "Botão 🏆 Raides aparece mesmo quando não existe rank PvP ou a fonte PvE está indisponível, exibindo status em vez de desaparecer.",
+          "As duas Pokébolas e o cartão de detalhes compartilham resolução de sprites de formas exatas; mantidos layout compacto P/M/G e modo sem localização."
+        ],
+        "correcoes": [
+          "Removida a dependência de imagem remota do Shellos East Sea, sem usar a cor/forma West Sea por engano.",
+          "Corrigida a ordenação por distância mantida indevidamente após limpar coordenadas, inclusive ao usar Limpar mais de uma vez.",
+          "Corrigido botão de Raides oculto quando seu módulo não carregava; a avaliação inválida nunca vira rank fictício."
+        ],
+        "emDesenvolvimento": [
+          "Os testes de regressão e visual P/M/G passaram; conferir visualmente a arte do Shellos e a alteração de filtros nas duas Pokébolas do Samsung após instalar.",
+          "A fonte PvE segue como ranking de referência por tipo, não como counter atualizado para um chefe específico."
+        ]
+      }
     }
   ]
 }
