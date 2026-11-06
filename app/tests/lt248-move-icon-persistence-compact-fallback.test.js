@@ -62,7 +62,8 @@ async function test(){
  await first.onclick();
  assert.equal(pop.hidden,false);
  assert.equal(first.textContent,"🗡️","click never changes the verified badge");
- assert.ok(pop.innerHTML.includes("Sem golpes legados recomendados"));
+ assert.ok(pop.title.includes("recomendados ≠ capturados"),"Verified source distinction retained in accessible title");
+ assert.ok(!pop.innerHTML.includes("Fonte: "),"No verbose source footer in compact move panel");
  await first.onclick();assert.equal(pop.hidden,true);
  render();
  assert.equal(line.children.at(-1).textContent,"🗡️","verified icon survives rerender and collapse");

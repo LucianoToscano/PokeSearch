@@ -65,11 +65,13 @@ const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 new vm.Script(script);
 new vm.Script(get("pvp_rank_explorer.js"));
 for(const token of ['data-ps-filter','data-ps-row','data-ps-act="selected"',
- 'data-ps-act="compare"','data-ps-act="copy"','data-ps-act="share"',
- 'data-ps-act="csv"','window.resizeEvolutionPanel()',
+ 'data-ps-act="compare"','data-ps-act="league-menu"','data-ps-act="league-pick"',
+ 'data-ps-act="filter-menu"','data-ps-act="filter-pick"','window.resizeEvolutionPanel()',
  'view.addEventListener("keydown"','role="status"','aria-pressed=']){
  assert.ok(get("pvp_rank_explorer.js").includes(token),"missing explorer UI/accessibility "+token);
 }
+assert.ok(!get("pvp_rank_explorer.js").includes('class="psrControls psrActions"'),
+ "Export buttons removed from the compact UI while safe Android export bridge remains usable");
 for(const token of ['@JavascriptInterface public void copyPvpRanking(String text)',
  '@JavascriptInterface public void sharePvpRanking(String text)',
  'Intent.ACTION_SEND','Intent.createChooser(send,"Compartilhar ranking PvP")',

@@ -41,7 +41,7 @@ assert.ok(html.includes('if(keep!=="moves")'));
 assert.ok(html.includes('rows.slice(0,3).map(rowHtml).join("")'));
 assert.ok(html.includes('class="psRaidMore"'));
 assert.ok(!html.includes('<summary>Fonte e critérios</summary>'));
-assert.ok(html.includes('panel.setAttribute?.("data-ps-source",String(result.source')), "Preserve source for QA");
+assert.ok(html.includes('panel.setAttribute?.("data-ps-source",String(result.source'), "Preserve source for QA");
 assert.ok(html.includes('PokeSearchMovePtBR?.ensure?.()'));
 assert.ok(html.includes('token!==psRaidToken||identity!==detailIdentity'));
 assert.ok(html.includes('row.elite?psMtIconHtml("elite"):""'),"Non-Elite must not get colorful Elite scroll");

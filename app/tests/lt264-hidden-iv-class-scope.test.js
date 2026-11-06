@@ -43,7 +43,7 @@ assert.ok(detail.includes("Rank Classe IV #"),
  "compact chip must say Class and not imply all-Pokemon rank");
 assert.ok(explorerText.includes("Posição entre 4.096 IVs de "),
  "ranking explorer must explain the species-only scope");
-assert.ok(explorerText.includes("não é o Rank Geral da Grande Liga"),
+assert.ok(explorerText.includes("' — não é o Rank Geral da '+safe(LIGAS[s.league])"),
  "explorer must explicitly distinguish species from GBL ranking");
 assert.ok(explorerText.includes("s.kind===\"class\"?"),
  "only class ranking should get the species-IV disclaimer");
