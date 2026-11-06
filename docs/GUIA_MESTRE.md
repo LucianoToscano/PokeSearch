@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT275 — CORREÇÃO DE COLISÃO DO ÍCONE E PUBLICAÇÃO OFICIAL (06/11/2026)
+
+- **Origem:** foto real do Samsung com Wooloo após LT274 mostrou marcadores brancos/verdes cobrindo visualmente bandeiras de GL/UL e Raides. LT274 havia corrigido dimensões, mas não a colisão.
+- **Correção:** [PR #268](https://github.com/LucianoToscano/PokeSearch/pull/268), merge `20ca811f2b2f54fae3dd61298648259862296f43`: marcador no canto inferior direito com offset 2px/1px (até 345px: 1px/1px), dimensões 15px (estreito: 13px); bandeiras mantidas centralizadas horizontalmente com imagem deslocada 4px para cima. **Cinco cartões 45px, barra 47px, bandeiras 23px, #rank inalterado**, e funções de Raides/GL/UL/ML/RG preservadas. As duas Pokébolas compartilham o mesmo HTML.
+- **Regressão:** screenshots do HTML real em P/M/G [workflow #42305374698](https://github.com/LucianoToscano/PokeSearch/actions/runs/42305374698) passaram agora verificando a folga geométrica à lateral inclinada da bandeira, insets e centralização horizontal; Node, Java, OTA e PvE também concluíram com sucesso na mesma revisão.
+- **Publicação confirmada:** [LT275 v0.02.75-54479](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.75-54479), publicada em **06/11/2026 às 22:36:15 UTC** (19:36:15 Brasília), APK `PokeSearch-v0.02.75-LT.apk` **33.612.890 bytes**, SHA-256 `b63cefa27d84bd74bc5747935f40e3f5732b084609ada31fb9d858dfb054b881`. Asset `uploaded`; release `draft=false/prerelease=false`.
+- **Build oficial:** [#42305617402](https://github.com/LucianoToscano/PokeSearch/actions/runs/42305617402) `preflight=success`, `publish=success`; build assinado protegido, APK/assinatura e hash aprovados. Solicitação oficial `2ce44c08cb7b980e2473b4e87d6127f6147691e0`. Rollback LT274 `v0.02.74-54478` preservado.
+- **PENDENTE:** validação visual pós-instalação no Samsung físico, ambas as Pokébolas e confirmação de atualização no Android. CI não é prova de instalação nem substitui foto de aceitação. Documento: [LT275 colisão](LT275_CORRECAO_COLISAO_ICONE_EVOLUCAO_20261106.md).
+
 ## LT274 — CORREÇÃO DE PROPORÇÃO E APK PUBLICADO (06/11/2026)
 
 - **Status oficial:** LT274 `0.02.74` / `versionCode 54478` publicada em 06/11/2026 às 22:08:19 UTC (19:08:19 Brasília), release estável `v0.02.74-54478` [GitHub](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.74-54478), APK `PokeSearch-v0.02.74-LT.apk` **33.612.474 bytes**, SHA-256 `36282053c702e1fef96e4b2d52aae7efc1f9b70a958bfb4da14af04fd49bcb04`, asset `uploaded`.
