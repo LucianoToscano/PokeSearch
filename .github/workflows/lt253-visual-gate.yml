@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'app/src/main/assets/detail.html'
+      - 'app/src/main/assets/pokemon_type_icons.js'
+      - 'app/src/main/assets/ui-icons/type-*-lt266.png'
       - 'app/src/main/assets/dock.html'
       - 'app/src/main/assets/pvp_rank_insights.js'
       - 'app/src/main/assets/pvp_rank_advanced_ui.js'
