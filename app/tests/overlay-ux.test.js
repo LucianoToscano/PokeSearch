@@ -2623,13 +2623,13 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
  const node=id=>elements[id]||(elements[id]={
   hidden:false,innerHTML:"",textContent:"",style:{},src:"",
   removeAttribute(){},setAttribute(n,v){this[n]=v;},getBoundingClientRect(){return {height:255}},
-  scrollHeight:410
+  scrollHeight:410,dataset:{},querySelectorAll(){return []}
  });
  const document={getElementById:node};
  const window={},heights=[];
  const Native={resizeDetail:n=>heights.push(n)};
  const ctx=new Function("document","window","Native","requestAnimationFrame","setInterval","clearInterval",
-  script+"return {toggleEvolutionDetails};"
+  script+"return {toggleEvolutionDetails,psToggleLeagueAssessment,psCloseLeagueAssessment};"
  )(document,window,Native,fn=>fn(),()=>1,()=>{});
  const card={name:"Swablu",iv:"0/14/15",ivPercent:64,sourceIndex:5,cp:293,level:15};
  window.showDetails(card,"gl",false);
@@ -2646,15 +2646,16 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
  ]};
  if(!window.showEvolutionDetails(detail))return false;
  const body=node("evoBody"),section=node("evolutions");
- if(section.hidden||!body.hidden||!body.innerHTML.includes("Grande Liga")||
+ if(!section.hidden||!body.hidden||!body.innerHTML.includes("Grande Liga")||
    !body.innerHTML.includes("Ultra Liga")||!body.innerHTML.includes("Liga Mestra")||
    !body.innerHTML.includes("Não elegível no nível atual")||
    !body.innerHTML.includes("&lt;img")||body.innerHTML.includes("<img src=x")||
    !body.innerHTML.includes("PC 1497")||!body.innerHTML.includes("Nv. 29,0"))return false;
- ctx.toggleEvolutionDetails();
- if(body.hidden||node("evoToggle")["aria-expanded"]!=="true")return false;
- ctx.toggleEvolutionDetails();
- if(!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
+ if(!ctx.psToggleLeagueAssessment("gl"))return false;
+ if(section.hidden||body.hidden||node("evoToggle")["aria-expanded"]!=="true"||
+  node("psLeagueTitle").textContent!=="Avaliação PvP · Grande Liga")return false;
+ if(!ctx.psCloseLeagueAssessment())return false;
+ if(!section.hidden||!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
  // For the SAME Pokémon, no verified ranks must remove the entire tab,
  // not leave a "Sem dados" header or an empty expanded panel.
  const empty={...detail,leagues:["gl","ul","ml"].map(league=>
