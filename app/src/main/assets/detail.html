@@ -1030,6 +1030,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  min-height:26px!important;line-height:1.35!important;padding:4px 0!important}
 #panel.needsScroll{overflow-y:auto!important;touch-action:pan-y!important;
  -webkit-overflow-scrolling:touch;scrollbar-width:thin!important}
+#rankLine .psMovesAction[data-ps-verified="false"]{color:#aab4c4!important;
+ opacity:.72!important}
 #movesPopover .psMoveRow{display:grid!important;grid-template-columns:40px minmax(0,1fr) 10px!important;
  align-items:center!important;gap:1px 3px!important;flex-wrap:nowrap!important;
  padding:2px 0!important;min-height:0!important}
@@ -1725,6 +1727,7 @@ function renderRankOneMoves(){
    "Ver golpes · status legado ainda não verificado");
  btn.setAttribute("aria-label",btn.title);
  btn.setAttribute?.("data-ps-verified",prior?"true":"false");
+ let actionOpened=false;
  if(!prior&&typeof window.PokeSearchPvpRankMoves?.getStatus==="function"){
   const originalIdentity=detailIdentity;
   Promise.resolve(window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega))
@@ -1734,6 +1737,9 @@ function renderRankOneMoves(){
     if(!status?.verified)return;
     const checked={icon:status.icon,title:status.title};
     psVerifiedMoveIcons.set(statusKey,checked);
+    // A tap cannot trigger or visibly change the badge afterward.
+    // Cache the verdict for the next render if the user already tapped.
+    if(actionOpened)return;
     btn.textContent=checked.icon;btn.title=checked.title;
     btn.setAttribute?.("aria-label",checked.title);
     btn.setAttribute?.("data-ps-verified","true");
@@ -1741,6 +1747,7 @@ function renderRankOneMoves(){
  }
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
+  actionOpened=true;
   const show=popover.hidden;popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
   popover.scrollTop=0;
