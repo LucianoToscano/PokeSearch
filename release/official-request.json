@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.62",
-  "code": 54466,
-  "label": 51266,
-  "previous_tag": "v0.02.61-54465",
-  "qa_max_code": 54465,
-  "release_notes": "PokeSearch LT262: ícones visuais dos modos Grande Liga (GL) e Ultra Liga (UL) trocados pelas duas imagens PNG circulares transparentes fornecidas pelo usuário (GL esfera azul com faixa vermelha diagonal, UL esfera escura com duas faixas amarelas). Dimensões de tela e estilos de botões mantidos integralmente, inclusive modo compacto, P/M/G, as duas Pokébolas, selos de rank e filtros PvP. Os arquivos originais StarGL.png e StarUL.png permanecem no APK para usos históricos e no chat. Os dois PNGs otimizados (96×96) são carregados localmente, sem internet, nos indicadores de modo e cabeçalhos; a release confere por SHA-256 os novos arquivos dentro do APK assinado. PR #242 mesclada em 50472943356fbc8904b5a288bff73bb55e9725f9 após sete gates CI aprovados: regressão Node, QA core, Java, visual P/M/G, OTA e preflight. Correções da LT261 preservadas. Validação física Samsung ainda não observada, instalação mediante confirmação do Android."
+  "version": "0.02.63",
+  "code": 54467,
+  "label": 51267,
+  "previous_tag": "v0.02.62-54466",
+  "qa_max_code": 54466,
+  "release_notes": "PokeSearch LT263: substituição de símbolos de classificação nos cartões e na análise PvP por PNGs transparentes fornecidos pelo usuário, mantendo rigorosamente os tamanhos atuais (11–17 px), o layout P/M/G, cliques e as duas Pokébolas. Grande Liga: bandeira azul com faixa vermelha; Ultra Liga: bandeira preta com duas faixas amarelas; Mestre: bandeira roxa com faixas rosas; Raides: medalha de Raid no lugar do troféu. Ataques: ⚔️ estado verificado COM golpe legado/Elite, 🗡️ estado verificado SEM ataque legado, ⚔︎ cinza quando faltam dados — nunca presumir ausência de legado. Ícone Mega substituído apenas na apresentação PvP compatível. Os dois emblemas circulares GL/UL da LT262 continuam EXCLUSIVOS do menu Modos; não alterar artes nem lógica de Pokébolas, bases de resultados, favoritos, coordenadas ou API. PR #243 mesclada em 77bd89e25a19c2d750e283b5d0c83c060548bc90 após 8 gates CI aprovados: Node QA, regressões Node, Java, visual P/M/G, OTA, fonte PvE, core e preflight oficial. Onze ícones com SHA-256 conferidos no APK e protegidos na distribuição assinada. Samsung físico P1/P2 ainda não validado, instalar sobre LT262 confirmando atualização Android."
 }
