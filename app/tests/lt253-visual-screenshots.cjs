@@ -58,7 +58,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     return {bad,scrollHeight:panel.scrollHeight,clientHeight:panel.clientHeight,
      sliderWidth:document.querySelector("#psCpLevel").getBoundingClientRect().width,
      minIvInputWidth:Math.min(...Array.from(document.querySelectorAll(".psCpIvInputs input"),e=>e.getBoundingClientRect().width)),
-     formWidth:document.querySelector("#psCpForm").getBoundingClientRect().width,
+     formWidth:document.querySelector("#psCpFormMenu > summary").getBoundingClientRect().width,
      internalMax:getComputedStyle(inner).maxHeight,
      nativeResizes:window.__nativeResizes.length};
    });
