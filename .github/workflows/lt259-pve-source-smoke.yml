@@ -1,0 +1,45 @@
+name: LT259 raid reference source and schema gate
+on:
+  pull_request:
+    paths:
+      - 'app/src/main/assets/pve_raid_rank.js'
+      - 'app/src/main/assets/detail.html'
+      - 'app/tests/lt259-raid-pre-capture-rank.test.js'
+      - '.github/workflows/lt259-pve-source-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  raid-data-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Deterministic raid engine and card contract
+        run: node app/tests/lt259-raid-pre-capture-rank.test.js
+      - name: Live reference source schema (no accounts, tokens, or coordinates)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=https://s-tier-devs.github.io/pogo-db-api/api
+          curl -fsSL --max-time 24 --retry 2 "$BASE/pokemon/index.json" -o "$RUNNER_TEMP/pokemon-index.json"
+          curl -fsSL --max-time 24 --retry 2 "$BASE/pokemon/535.json" -o "$RUNNER_TEMP/pokemon-535.json"
+          curl -fsSL --max-time 24 --retry 2 "$BASE/rankings/water.json" -o "$RUNNER_TEMP/rank-water.json"
+          node - "$RUNNER_TEMP" <<'NODE'
+          const fs=require('node:fs'),path=require('node:path');
+          const base=process.argv[2];
+          const load=n=>JSON.parse(fs.readFileSync(path.join(base,n),'utf8'));
+          const index=load('pokemon-index.json');
+          const entry=Array.isArray(index)&&index.find(x=>x.dexNr===535&&x.name==='Tympole');
+          if(!entry)throw Error('Missing Tympole in source index');
+          const p=load('pokemon-535.json');
+          if(p.dexNr!==535||p.name!=='Tympole')throw Error('Unexpected raid species shape');
+          const rank=load('rank-water.json');
+          if(rank?.type?.name!=='Water'||!Array.isArray(rank.rankings)||rank.rankings.length<20)
+           throw Error('No ranking rows for Water');
+          if(!rank.rankings.some(x=>Number.isInteger(x.dexNr)&&Number(x.er)>0))
+           throw Error('Ranking entries invalid');
+          console.log('Raid source reached with valid Pokémon index and Water ranking JSON');
+          NODE
