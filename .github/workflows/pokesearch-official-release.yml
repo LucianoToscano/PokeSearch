@@ -141,7 +141,7 @@ jobs:
           unzip -t "$APK" >/dev/null
           # Abort before publication unless Halloween costume PNGs are truly inside the APK.
           python3 - "$APK" <<'PYSCRIPT'
-          import sys,zipfile
+          import sys,zipfile,hashlib
           expected=[
             "pm656.cFALL_2024.icon.png","pm656.cFALL_2024.s.icon.png",
             "pm722.cFALL_2024.icon.png","pm722.cFALL_2024.s.icon.png",
@@ -159,7 +159,19 @@ jobs:
               data=apk.read(key)
               assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
               assert len(data)>500, "Empty sprite "+key
-          print("Official packaged Halloween + East/West Sea variants: 12 checked")
+            # LT262: the user-supplied GL/UL PNGs must be in the signed APK.
+            # Preserve the exact approved bytes (not just filenames).
+            league_icons={
+              "GLBadgeLT262.png": "be6de24bb4f01a6e13456dfb77ed81e878d5d6065393aaca08f87c5547234cbb",
+              "ULBadgeLT262.png": "3328b59cc0bc730d3df9e13f2b053c5df248438402d016e13dbab08f15fe4220"
+            }
+            for filename,digest in league_icons.items():
+              key="assets/result-icons/modes/"+filename
+              assert key in names, "Missing requested league mode icon "+key
+              data=apk.read(key)
+              assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
+              assert hashlib.sha256(data).hexdigest()==digest, "Changed mode image "+key
+          print("Official Sea/Halloween sprites (12) + GL/UL user emblems (2) checked")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
