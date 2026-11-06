@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT267 — Correção de sprites Diwali/Squawk e novos ícones (06/11/2026 · QA)
+- **Origem:** capturas Samsung do usuário com LC 500 sem ícone, Mega Beedrill duplicado em Raides, Pikachu Diwali #25 e Squawkabilly #931 (Green e outras cores) sem sprite confiável.
+- **Código:** ícone LC passa a usar bandeira Copa LT265; Mega recebe PNG novo do usuário (SHA256 `3c80d9278aaa7b131b391a4da879f6c1459290995fdf09c3f3690a36838fa739`) e Shadow recebe ícone novo (SHA256 `62cdf7dd642c2077204c8275fe82ff99e645b3a5f36780c44ce2d234ebb14559`) só com `isShadow` verdadeiro. Raides exibe ícone Mega + nome prefixado, ícone do tipo e Rank por tipo, sem indicar counter atual nem Rank Geral.
+- **Sprites:** 10 PNGs oficiais de Pikachu Diwali 2024 e das quatro plumagens Squawkabilly normal/Shiny vinculados ao pacote assinado pelos hashes Git blob presentes no `go-exact-sprites.tsv`. Site oficial com imagem validada permanece prioritário; sem aproximação falsa. Silhuetas pequenas ganham zoom limitado, sem mudar pixels.
+- **Raides:** a fonte S-Tier-Devs (ago/2026) oferece somente o par Ágil + Carregado mais efetivo por ranking, sem segunda melhor opção verificada.
+- **Estado:** branch QA `feature/lt267-sprites-raid-icons-20261106`; **não declarar CI, merge, publicação nem teste físico até evidência**. Base LT266 [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.66-54470) segue estável, SHA256 `218e07e37945216021724429acd9b64a971a1e108688ec15bd5d079615555abf`.
+- **Registro:** [auditoria LT267](LT267_AUDITORIA_SPRITES_ICONES_RAIDES_20261106.md) · [prompt de continuidade](PROMPT_NOVO_CHAT_LT267_20261106.md).
+
 ## LT266 — Ícones dos 18 tipos do Drive (06/11/2026 · PR #246 MESCLADA / RELEASE SOLICITADA)
 - **Fonte verificada:** 18 PNGs fornecidos no Drive, todos 1024×1024 RGBA, integrados sem transformação em `ui-icons/type-<tipo>-lt266.png`. O mapa `pokemon_type_icons.js` agora aponta para recursos locais e deixa de incluir 18 strings Base64; API e tipos originais preservados.
 - **Controles de integridade:** `app/tests/lt266-types-from-drive.test.js` verifica 18 imagens, sha256, transparência, cartão Pidgey Normal/Voador, integração WebView/OTA; workflow oficial exige os mesmos hashes no APK assinado. Originais antigos disponíveis no histórico do Git.
