@@ -11,3 +11,6 @@ Conferir CI completo (Node, Java, visual, OTA, PvE) antes de merge. Após, solic
 
 ## Complemento ao terminar LT267
 Verificar 18 PNG_512 do ZIP revisado e `rank-geral-lt267.png` em `ui-icons`; antigos LT266 devem ficar intocados. Confirmar hashes novos no APK assinado, regressões Node, Java, WebView P/M/G, PvE, OTA. A imagem RG não modifica algoritmo, apenas aparece nos botões de RG. Publicar LT267 apenas após CI e arquivo mestre atualizado. Não inventar second charged de Raides sem fonte.
+
+## Resultado verificado e próxima etapa
+PR #247 mesclada em e0e96bbce1dfc9b1acb6e4990f48b2dd70de9c9d; PR #248 mesclada em c9fd24498da2ecb82b7092cb2fc7f39568b64f47 após 8 gates CI verdes. Novas 18 artes revisadas em ui-icons/type-<enum>-lt267.png, emblema RG ui-icons/rank-geral-lt267.png. A release LT267 0.02.67/code 54471 foi solicitada; verificar workflow official, releases/latest, tamanho e digest antes de afirmar publicação. Atualizar Guia Mestre e auditoria pós-release. Não pressupor teste físico Samsung nem segundo golpe carregado com fonte não verificada.

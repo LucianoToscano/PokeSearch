@@ -27,3 +27,9 @@ Branch de QA. Não afirmar merge/release física até confirmação de CI, links
 - Novo ícone Rank Geral triangular do usuário recebe somente remoção do fundo preto e redimensionamento transparente 160×160; ícone utilizado nas etiquetas RG da linha e nas alternativas, nunca na classificação IV.
 - Teste `lt267-revised-types-rank-general.test.js` valida SHA-256 dos 19 recursos, transparência, dimensões, trilha OTA/assinatura, acessibilidade RG e distinção de ranks.
 - CI, PR, merge e APK permanecem pendentes até evidência do GitHub. Inspeção física Samsung não executada.
+
+## Verificação CI e merge das PRs
+- PR #247: https://github.com/LucianoToscano/PokeSearch/pull/247, merge `e0e96bbce1dfc9b1acb6e4990f48b2dd70de9c9d`.
+- PR #248: https://github.com/LucianoToscano/PokeSearch/pull/248, merge `c9fd24498da2ecb82b7092cb2fc7f39568b64f47`, head QA `09dce8e30626682ec41c8c72722fbb01357c72e2`.
+- Oito gates verdes no head final: regressões Node completas e Node QA, core, Java, visual WebView P/M/G, fonte PvE, OTA e preflight. Falhas preliminares de sintaxe no mapa de tipo e dependência de função no teste isolado RG foram corrigidas; o RG passou a pseudo-elemento CSS compacto para evitar recorte real de nome Mega no teste visual. Todas as verificações históricas mantidas.
+- Release LT267 solicitada, **não afirmar APK/assinatura/publicação até retorno do workflow e digest real**. Teste físico no Samsung pendente.

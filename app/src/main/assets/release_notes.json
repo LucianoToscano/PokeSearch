@@ -2276,6 +2276,33 @@
           "Conferir nomes de golpes novos contra a fonte PT-BR versionada sem traduções inventadas."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt267-final-art-sprites-raids-20261106",
+      "minVersionCode": 54471,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT267 — Sprites, ícones revisados e Raides compactos",
+      "sections": {
+        "novidades": [
+          "Os 18 ícones dos tipos usam a versão revisada PNG 512×512 do ZIP fornecido; originais LT266 preservados.",
+          "Rank Geral tem símbolo próprio nos botões RG, sem alterar Rank Classe IV.",
+          "Símbolos novos de Mega e Sombroso aparecem conforme estado comprovado."
+        ],
+        "melhorias": [
+          "Correções de Pikachu Diwali 2024 e quatro cores de Squawkabilly, incluindo as variações Shiny, com sprite exato e prioridade para a arte do site.",
+          "Raides: Mega Beedrill identificado sem Mega duplicado, ícone de tipo e posição por tipo separados.",
+          "LC 500 utiliza a bandeira de Copa verificada; layout compacto P/M/G sem recorte do nome da Mega.",
+          "Os arquivos visuais ficam disponíveis offline e passam por SHA-256 estrito no APK."
+        ],
+        "correcoes": [
+          "Os ataques de Raides permanecem 1 Ágil e 1 Carregado por combinação fundamentada, sem inventar segundo Carregado.",
+          "Sem mudanças de IDs técnicos, regras de Shiny, favoritos, atualização, cálculos de IV ou classificações PvP/PvE."
+        ],
+        "emDesenvolvimento": [
+          "Validar fisicamente no Samsung as duas Pokébolas, ícones e sprites em P/M/G, alternância de painéis e scroll.",
+          "Conferir novos ataques PT-BR apenas com fonte verificada."
+        ]
+      }
     }
   ]
 }

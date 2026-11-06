@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.66",
-  "code": 54470,
-  "label": 51270,
-  "previous_tag": "v0.02.65-54469",
-  "qa_max_code": 54469,
-  "release_notes": "PokeSearch LT266: substituição dos 18 ícones dos tipos Pokémon pelas 18 artes originais PNG RGBA 1024×1024 fornecidas no Google Drive. Recursos locais offline com caminhos relativos em pokemon_type_icons.js substituem 18 imagens Base64, sem mudar IDs da API ou algoritmos. Novos testes validam todos os tipos, transparência, resolução, SHA-256 de cada PNG e Pidgey Normal/Voador. O fluxo de APK oficial confere os 18 hashes dentro do APK assinado; o pacote OTA aceita os PNGs. CI da PR #246 aprovada: regressão Node completa, Node QA, core, Java, visual WebView P/M/G, PvE, OTA e preflight oficial. Duas Pokébolas, favoritos, localização e sort, PVPRank Classe/Geral, Raides, Mega, calculadora, golpes e bandeiras LT265 preservados. Teste físico Samsung P1/P2 ainda pendente. A ordem cronológica das notas foi validada pelo gate LT146 sem alterar o histórico."
+  "version": "0.02.67",
+  "code": 54471,
+  "label": 51271,
+  "previous_tag": "v0.02.66-54470",
+  "qa_max_code": 54470,
+  "release_notes": "PokeSearch LT267: 18 ícones de tipos revisados do ZIP do usuário, PNGs locais 512×512 sem recodificar e hashes SHA-256 imutáveis; os originais LT266 permanecem. Ícone próprio do Rank Geral RG com posição compacta que não corta o nome da Mega. Ícone da Copa para LC, novos símbolos Mega/Sombroso, prioridade à sprite exata do site e 10 PNGs assinados Pikachu Diwali 2024 e Squawkabilly Blue/Green/White/Yellow normais/Shiny. Raides exibe Mega Beedrill sem duplicação e ícone do tipo com rank # por tipo; só uma combinação Ágil+Carregado comprovada, sem inventar segundo carregado. PR #247 e PR #248 mescladas; 8 gates Node, Java, visual P/M/G, PvE, OTA e preflight verdes no head da PR #248. Preservados favoritos, duas Pokébolas, ordenação automática, fontes e cálculos de rank PvP/PvE, assinatura e OTA. Testes físicos no Samsung ainda pendentes."
 }
