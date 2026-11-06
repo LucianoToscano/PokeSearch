@@ -1,6 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT262 — Ícones GL/UL, bandeiras PvP, Raides, MTs e Mega (06/11/2026 · QA)
+## LT263 — Bandeiras PvP, Raides, MTs e Mega (06/11/2026 · MERGE VALIDADO / PUBLICAÇÃO SOLICITADA)
+
+- **Origem:** PR [#243](https://github.com/LucianoToscano/PokeSearch/pull/243) mesclada em `main` (commit `77bd89e25a19c2d750e283b5d0c83c060548bc90`) depois de **8 verificações CI bem-sucedidas**, incluindo Node, Android Java, testes visuais P/M/G e OTA. Arquivos registrados: `detail.html`, `OtaAssets.java`, `scripts/build_ota_pack.py`, `.github/workflows/pokesearch-official-release.yml`, 11 PNGs e testes de regressão.
+- **Escopo:** no cartão PvP, GL/UL/ML usam bandeiras; na avaliação PvE, a medalha Raides substitui 🏆; nos golpes, indicadores MT Elite/Normal/Cinza indicam situação verificada/pendente sem falsear legado; Mega usa símbolo PNG do usuário. Os dois emblemas circulares GL/UL são **apenas do menu Modos** e as **duas Pokébolas** e a barra de resultados não mudam.
+- **Distribuição:** próximo APK assinado planejado `v0.02.63-54467` (LT263), mantendo a assinatura permanente, validando todos os PNGs SHA-256 dentro do APK e disponibilizando atualização via GitHub Releases após validação. **Não declarar publicado antes da confirmação do release e hash.** Atualizações de recursos OTA permanecem condicionadas à assinatura; o APK oficial continua o caminho de instalação verificado.
+- **Evidências:** `app/tests/lt262-visual-icon-contract.test.js`, `app/tests/lt262-user-gl-ul-mode-icons.test.js`, demais testes de PvP alterados, `docs/LT262_ICONES_GL_UL_IMAGENS_USUARIO_20261106.md`. Inspeção física Samsung/P1/P2 ainda não comprovada.
+
+## LT262 — Ícones GL/UL, bandeiras PvP, Raides, MTs e Mega (06/11/2026 · PR #243 MESCLADA / CI VERDE)
 
 - **Modos apenas:** as imagens circulares GL azul/vermelho e UL preto/amarelo substituem apenas os ícones do menu **Modos** usando `getModeMenuIcon` e `result-icons/modes/GLBadgeLT262.png`, `ULBadgeLT262.png` em 96×96 transparentes. `getResultIcon`, bases dos resultados e botões das duas Pokébolas não foram alterados, permanecendo os respectivos controles, badges e animações.
 - **Cartões:** `detail.html` renderiza bandeiras GL/UL/ML nas posições dos antigos emojis 🔵🟡🟣 (rank Classe, análise, CP e destaques), a nova medalha de Raides no lugar de 🏆, MT Elite/Normal/Cinza nos três estados verificados antes do toque e o símbolo Mega no lugar do SVG anterior. A bandeira Cup fica disponível como recurso sem criar modo não solicitado. As imagens usam tamanho de interface CSS 11–17 px e não mudam a estrutura P/M/G nem os cliques.
