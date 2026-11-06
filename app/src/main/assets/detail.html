@@ -2159,9 +2159,13 @@ function psCpVariants(){
  // The verified CP simulator must not depend on a complete asynchronous
  // rank response. Derive a read-only fallback from the pinned evolution graph.
  const normalForm=String(metricCard?.form||"").trim().toLowerCase();
+ const costume=String(metricCard?.costume||"").trim().toLowerCase();
+ const costumeId=String(metricCard?.costumeId??"").trim().toLowerCase();
+ const none=value=>!value||value==="none"||value==="normal"||value==="0"||
+  value==="false"||value==="default";
  const normalIdentity=!metricCard?.isCostume&&!metricCard?.isShadow&&
-  !metricCard?.costume&&!metricCard?.costumeId&&!metricCard?.region&&
-  (!normalForm||normalForm==="normal"||normalForm==="default"||normalForm==="none");
+  none(costume)&&none(costumeId)&&none(String(metricCard?.region||"").toLowerCase())&&
+  none(normalForm);
  const offlineFamily=normalIdentity?
   (window.PokeSearchPvpFamilyCatalog?.family?.(metricCard?.name,master)||[]):[];
  const names=[metricCard?.name,source.name,
