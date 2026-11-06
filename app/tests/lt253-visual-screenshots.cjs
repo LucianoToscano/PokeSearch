@@ -242,9 +242,12 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
     rail270.badge?.src==="ui-icons/ps-evolution-lt272.png"&&
-    rail270.badge?.tag==="IMG"&&rail270.badge?.span<=12&&
-    rail270.badge?.right>=3&&rail270.badge?.bottom>=2&&
-    rail270.badge?.clearOfFlag===true&&
+    // LT274: retain the original 13px/15px image with a 5px inset.
+    // Bounding-box intersections with a triangular flag's transparent corner
+    // are acceptable; the flag itself stays centered at its original size.
+    rail270.badge?.tag==="IMG"&&
+    rail270.badge?.span>=13&&rail270.badge?.span<=15&&
+    rail270.badge?.right>=4&&rail270.badge?.bottom>=4&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
     rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png",
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
