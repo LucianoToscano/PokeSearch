@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.74",
-  "code": 54478,
-  "label": 51278,
-  "previous_tag": "v0.02.73-54477",
-  "qa_max_code": 54477,
-  "release_notes": "PokeSearch LT274: corrigidas as proporções dos cinco cartões de Raides, Grande Liga, Ultra Liga, Liga Mestra e Rank Geral. Restaurados cartões compactos (45px), linha de rank 47px, ícone original branco e verde de evolução com 15px (13px em telas estreitas) e distância de 5px das bordas. Mantidas bandeiras centralizadas no tamanho original, os números de rank, todas as funções de toque, golpes recomendados por liga e mudanças válidas da LT273. Testes automatizados de Node, Android/Java, OTA, PvE e screenshots P/M/G aprovados na PR #265; teste físico Samsung e instalação continuam pendentes. O gate de versão histórico foi corrigido na PR #267, aprovada em CI; a verificação de monotonicidade oficial segue ativa."
+  "version": "0.02.75",
+  "code": 54479,
+  "label": 51279,
+  "previous_tag": "v0.02.74-54478",
+  "qa_max_code": 54478,
+  "release_notes": "PokeSearch LT275: corrigida a sobreposição do marcador de evolução sobre as bandeiras Raides/GL/UL observada em print real do Samsung após LT274. O ícone original branco/verde foi deslocado para o canto inferior direito, e a bandeira central foi ajustada verticalmente em 4px para dar folga real; foram preservados tamanho das bandeiras (23px), centralização horizontal, cinco cartões compactos (45px), linha de rank (47px), número # na parte superior, tamanho do ícone (15px ou 13px em larguras estreitas) e ações de cada avaliação. Contrato de teste P/M/G agora exige distância à borda diagonal da bandeira e rejeita a colisão que o teste anterior aceitava. PR #268 e demais testes automatizados Node, Android/Java, OTA, PvE e visual aprovados. Teste físico final no Samsung P1/P2 continua pendente após instalação."
 }
