@@ -11,8 +11,8 @@ const optimizer=fs.readFileSync(path.join(__dirname,"../../scripts/optimize_apk_
 const workflow=fs.readFileSync(path.join(__dirname,
  "../../.github/workflows/pokesearch-official-release.yml"),"utf8");
 const expected={
- GLBadgeLT262.png:"be6de24bb4f01a6e13456dfb77ed81e878d5d6065393aaca08f87c5547234cbb",
- ULBadgeLT262.png:"3328b59cc0bc730d3df9e13f2b053c5df248438402d016e13dbab08f15fe4220"
+ "GLBadgeLT262.png":"be6de24bb4f01a6e13456dfb77ed81e878d5d6065393aaca08f87c5547234cbb",
+ "ULBadgeLT262.png":"3328b59cc0bc730d3df9e13f2b053c5df248438402d016e13dbab08f15fe4220"
 };
 for(const [name,hash] of Object.entries(expected)){
  const bytes=fs.readFileSync(path.join(root,"result-icons/modes",name));
