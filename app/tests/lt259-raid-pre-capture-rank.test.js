@@ -58,10 +58,10 @@ const fetched=async(url,options)=>{
  requestCount++;if(!Object.hasOwn(docs,name))return {ok:false,status:404};
  return {ok:true,headers:{get:()=>null},text:async()=>JSON.stringify(docs[name])};
 };
-const exports={};
+const mod={exports:{}};
 new Function("window","module","fetch","AbortController",raidJs)(
- {},{exports},fetched,undefined);
-const raid=exports;
+ {},mod,fetched,undefined);
+const raid=mod.exports;
 async function run(){
  assert.deepEqual(raid.buildCandidates({name:"Tympole",costume_id:0},["Tympole","Palpitoad","Seismitoad"]).map(x=>x.name),
   ["Tympole","Palpitoad","Seismitoad"]);
