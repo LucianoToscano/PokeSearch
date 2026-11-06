@@ -1196,7 +1196,7 @@ test("Modos chooses exact Drive PNGs across 0–3 stars and GL/UL",()=>{
   [51,64,"1Star.png"],[67,80,"2Star.png"],[82,98,"3Star.png"],[82,100,"3Star.png"]
  ];
  return raw0.path.endsWith("/0Star.png")&&raw100.path.endsWith("/3Star.png")&&
-   rawOther.path.endsWith("/StarIVRaw.png")&&gl.path.endsWith("/StarGL.png")&&gl.ivBadge==="#1"&&
+   rawOther.path.endsWith("/StarIVRaw.png")&&gl.path.endsWith("/GLBadgeLT262.png")&&gl.ivBadge==="#1"&&
    ul.path.endsWith("/StarUL.png")&&ul.ivBadge==="#12"&&
    cases.every(([min,max,file])=>{
      const icon=get("percent",{percentMin:min,percentMax:max});
