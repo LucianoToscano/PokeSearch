@@ -478,7 +478,7 @@
    '</select></div>'+
    '<div id="psrLeagueOptions" class="psrOptionMenu" role="group" aria-label="Ligas disponíveis" hidden>'+
    s.leagueOptions.map(x=>'<button type="button" data-ps-act="league-pick" data-league="'+safe(x.league)+'"'+
-    (s.kind==="class"?x.available:getOverallRows(s.overall,x.league)?.length?'true':false)?'': ' disabled')+
+    (Boolean(s.kind==="class"?x.available:getOverallRows(s.overall,x.league)?.length)?'':' disabled')+
     ' aria-pressed="'+(s.league===x.league)+'">'+safe(LIGAS[x.league])+'</button>').join('')+'</div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
