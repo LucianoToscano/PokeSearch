@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT258 — ATUALIZAÇÃO OFICIAL VERIFICADA (06/11/2026)
+
+- **Origem:** solicitação para corrigir o raio nos ataques (exibir a necessidade de legado antes do clique) e desbloquear a rolagem da lista de golpes possíveis, mantendo as duas Pokébolas.
+- **Merge:** [PR #238](https://github.com/LucianoToscano/PokeSearch/pull/238) mesclada na `main` no commit `fd0d056540f5a17385c1cca72d48bf1e9fe50d73`. Código em `detail.html` e `pvp_rank_moves.js`: pré-verificação de golpes para ⚔️ com legado, 🗡️ sem legado confirmado e símbolo cinza neutro se sem conjunto recomendado; o toque abre o painel sem alterar o ícone, com fallback assíncrono neutro. Scroll único no cartão, sem limites internos concorrentes (178/130 px).
+- **QA automático:** seis workflows PASS no head da PR `cf04c50af03456821c5bc6508ebf4ee077f29d15` (Node, regressão, core, Java, OTA e visual P/M/G). Detalhes em [auditoria LT258](LT258_PRE_CLICK_ATAQUES_SCROLL_QA_20261106.md). Testes físicos Samsung P1/P2 não comprovados.
+- **Notas oficiais:** `app/src/main/assets/release_notes.json`, `minVersionCode=54462`; solicitação `release/official-request.json` com versão `0.02.58` / code `54462` / label `51262`, anterior `v0.02.57-54461`, acionada no commit `35f9d7607d72dd08c103f41f3820b63715811b37`.
+- **Assinatura e publicação confirmadas:** [GitHub Actions oficial #42180859265](https://github.com/LucianoToscano/PokeSearch/actions/runs/42180859265) `preflight=success`, `publish=success`, com compilação Gradle release, assinatura v2 permanente, versão/pacote e hash validados, criação do Release e verificação final do asset. [Releases/latest **v0.02.58-54462**](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.58-54462) pública, estável, `draft=false`, `prerelease=false`, publicada em `2026-11-06T07:29:02Z`. APK [PokeSearch-v0.02.58-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.58-54462/PokeSearch-v0.02.58-LT.apk), **28.408.631 bytes**, SHA-256 `334da168a4050de3cbf4e79b0ce8d514fa02e849835f4965b23279bcfdc83525`, asset `uploaded`. O PokeSearch consulta `releases/latest`; atualização detectável pelo app, conforme rede/WorkManager/permissões. O Android exige confirmação de instalação; **nenhuma instalação física foi observada**. Preservar LT257 para rollback.
+
 ## LT258 — ícones de golpes antes do clique e rolagem da lista (06/11/2026 · QA isolado)
 
 - Origem: print Samsung do Scorbunny (GL IV #1) mostrou ícone ⚡ genérico e lista de golpes possíveis que não rolava até o fim. O usuário explicitou que o símbolo deve revelar a necessidade de golpe legado **antes** do toque, sem mudar por causa do clique.
