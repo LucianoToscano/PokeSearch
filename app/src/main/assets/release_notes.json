@@ -2200,6 +2200,31 @@
           "Validar instalação e funcionamento físico no Samsung em ambas as Pokébolas após a atualização oficial."
         ]
       }
+    },
+    {
+      "id": "lt264-blank-pvp-rank-species-iv-scope-20261106",
+      "minVersionCode": 54468,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT264 — Sem espaço vazio e Rank Classe esclarecido",
+      "sections": {
+        "novidades": [
+          "Rank Classe do PvP agora esclarece que o #1 compara 4.096 IVs da mesma espécie, e não todos os Pokémon da Grande Liga.",
+          "Cartões sem ranking PvP verificado não deixam mais uma faixa vazia entre os IVs e Raides."
+        ],
+        "melhorias": [
+          "No explorador, o subtítulo identifica Classe IV #N e mostra a diferença para o Rank Geral das espécies.",
+          "O cabeçalho mantém o mesmo tamanho, a mesma ordem de ações e as bandeiras das ligas e seus atalhos.",
+          "Mareep e Sandshrew 15/15/15 preservam Classe IV #1 corretamente porque não alcançam 1.500 PC no nível 50; isso não implica Rank Geral #1."
+        ],
+        "correcoes": [
+          "Eliminada a altura mínima de 32 pixels da faixa de ranking quando ela está oculta; corrigida a regra CSS que reexibia indevidamente o espaço.",
+          "Atributos de liga vazios são removidos quando não há fonte para verificar IV Rank, inclusive em Squawkabilly.",
+          "Regras de Raides, MT Elite/normal/cinza, ícones Mega, GL/UL nos Modos e as duas Pokébolas não foram alteradas."
+        ],
+        "emDesenvolvimento": [
+          "Os testes automatizados passaram; verificar no Samsung a ausência da faixa vazia e a legenda do Rank Classe nas duas Pokébolas."
+        ]
+      }
     }
   ]
 }
