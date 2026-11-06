@@ -1556,7 +1556,7 @@ function renderRaidPreview(){
   button.textContent="🏆 Raides · "+(attack?
    "ATQ base "+attack.attack+" ↳ "+attack.name+" · rank pendente":
    (result?.reason||"Aguardando dados..."));
-  button.dataset.grade="unknown";
+  if(button.dataset)button.dataset.grade="unknown";
   panel.innerHTML='<div class="psRaidNote">'+
     h(result?.reason||"Aguardando resposta do ranking PvE.")+
     (attack?'<div>Prévia offline: Ataque-base '+h(attack.attack)+
@@ -1564,7 +1564,7 @@ function renderRaidPreview(){
     '</div>';
  }else{
   const good=best.rank<=20,useful=best.rank<=50;
-  button.dataset.grade=good?"elite":useful?"useful":"unknown";
+  if(button.dataset)button.dataset.grade=good?"elite":useful?"useful":"unknown";
   button.textContent="🏆 Raides · "+(good?"Destaque":useful?"Bom":
    best.rank<=100?"Situacional":"Sem destaque")+" · #"+
    best.rank+" "+best.typePt+(best.projected?" ↳ "+best.name:"");
