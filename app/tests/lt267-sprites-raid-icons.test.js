@@ -49,7 +49,7 @@ assert.equal(art.resolve({name:"Pikachu",number:"#25",form:"Invalid",costume_id:
 const html=read("detail.html");
 const match=html.match(/<script>([\s\S]*?)<\/script>/);
 assert.ok(match);new vm.Script(match[1]);
-assert.ok(html.includes('src="ui-icons/league-cup-bordered-lt265.png"'));
+assert.ok(html.includes('src="ui-icons/ps-cup-lt268.png"'));
 assert.ok(!html.includes("⚪ LC 500"));
 assert.ok(html.includes("const raidDisplayName=row=>"));
 assert.ok(html.includes('window.PokeSearchTypeIcons?.[row.type]'));

@@ -28,7 +28,7 @@ assert.ok(script.includes('<details class="psCpSimExtra"><summary>Comparar 0% e 
 assert.ok(script.includes("const delta=compared?compared.cp-current.cp:0"),
  "B minus A is positive when compared spread has higher CP");
 assert.ok(script.includes('Diferença B − A'));
-assert.ok(script.includes('src="ui-icons/league-cup-bordered-lt265.png"')&&script.includes('ui-icons/league-gl-flag.png')&&script.includes('ui-icons/league-ul-flag.png'));
+assert.ok(script.includes('src="ui-icons/ps-cup-lt268.png"')&&script.includes('ui-icons/ps-gl-lt268.png')&&script.includes('ui-icons/ps-ul-lt268.png'));
 assert.ok(html.includes('class="psMetricFoot"')||script.includes('psMetricFoot'),
  "PvP projection disclaimer must remain visible");
 

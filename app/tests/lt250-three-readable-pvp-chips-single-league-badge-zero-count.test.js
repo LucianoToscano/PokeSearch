@@ -26,7 +26,7 @@ assert.ok(detail.includes('iv.textContent=label+" IV #"+best.rank'));
 assert.ok(detail.includes('nameChip.onclick=event=>openPvpAnalysisForSpecies(event,nameChip)'));
 assert.ok(detail.includes('badge.onclick=event=>openPvpRankExplorer(event,badge)'));
 assert.ok(detail.includes('btn.onclick=async()=>'),"⚔️/⚡ remains independent");
-for(const badge of ['gl:"ui-icons/league-gl-flag.png"','ul:"ui-icons/league-ul-flag.png"','ml:"ui-icons/league-ml-flag.png"'])assert.ok(detail.includes(badge));
+for(const badge of ['gl:"ui-icons/ps-gl-lt268.png"','ul:"ui-icons/ps-ul-lt268.png"','ml:"ui-icons/ps-ml-lt268.png"'])assert.ok(detail.includes(badge));
 assert.ok(detail.includes('emblem.src="ui-icons/mega-symbol.png"'));
 // Zero must remain visible when the provider reports no cards. If the
 // numeric badge is enabled, it appears ON the Pokébola; if disabled, under

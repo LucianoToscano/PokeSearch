@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.67",
-  "code": 54471,
-  "label": 51271,
-  "previous_tag": "v0.02.66-54470",
-  "qa_max_code": 54470,
-  "release_notes": "PokeSearch LT267: 18 ícones de tipos revisados do ZIP do usuário, PNGs locais 512×512 sem recodificar e hashes SHA-256 imutáveis; os originais LT266 permanecem. Ícone próprio do Rank Geral RG com posição compacta que não corta o nome da Mega. Ícone da Copa para LC, novos símbolos Mega/Sombroso, prioridade à sprite exata do site e 10 PNGs assinados Pikachu Diwali 2024 e Squawkabilly Blue/Green/White/Yellow normais/Shiny. Raides exibe Mega Beedrill sem duplicação e ícone do tipo com rank # por tipo; só uma combinação Ágil+Carregado comprovada, sem inventar segundo carregado. PR #247 e PR #248 mescladas; 8 gates Node, Java, visual P/M/G, PvE, OTA e preflight verdes no head da PR #248. Preservados favoritos, duas Pokébolas, ordenação automática, fontes e cálculos de rank PvP/PvE, assinatura e OTA. Testes físicos no Samsung ainda pendentes."
+  "version": "0.02.68",
+  "code": 54472,
+  "label": 51272,
+  "previous_tag": "v0.02.67-54471",
+  "qa_max_code": 54471,
+  "release_notes": "PokeSearch LT268: seis ícones oficiais fornecidos pelo usuário foram substituídos apenas nos cartões/painéis de análise: Grande Liga, Ultra Liga, Liga Mestra, Copa, Rank Geral e Raides. O Rank Geral usa o triângulo multicolorido correto; Raides usa o emblema laranja. PNG RGBA 320×320 compactos com transparência limpa e sem brilho externo nem filtro de sombra. Nenhum ícone dos menus Modos ou das duas Pokébolas foi alterado. Integridade SHA-256 dos seis novos arquivos exigida no APK assinado, mantendo recursos históricos e rollback LT267. Layout compacto, pontuações PvP/PvE, IVs, sprites, alertas, login e OTA preservados. Homologação física Samsung ainda pendente."
 }

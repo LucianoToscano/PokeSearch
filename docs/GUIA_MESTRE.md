@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT268 — Seis ícones corrigidos, RG multicolorido e nenhum halo (06/11/2026 · QA/RELEASE PENDENTES)
+- Substituição estritamente visual no cartão e painéis (não em Pokébolas nem menus Modos): GL azul/vermelho, UL preto/amarelo, ML roxo/rosa, Copa vermelho/branco, RG triângulo multicolorido e Raides brasão laranja. Originais LT262/LT265/LT267 preservados; seis novos PNG 320×320 RGBA com brilho externo removido, SHA-256 obrigatório e recursos disponíveis para OTA assinado.
+- Versão solicitada LT268 0.02.68 / code 54472, partindo da oficial LT267 0.02.67 / 54471. Conferir PR, 8 gates, assinatura, nova release e hash real antes de chamar publicada; inspeção física Samsung P1/P2 ainda pendente.
+- [Auditoria LT268](LT268_SEIS_ICONES_SEM_BRILHO_20261106.md).
+
 ## LT267 — RELEASE OFICIAL E QA ASSINADA APROVADA (06/11/2026)
 
 - **Versão pública verificada:** LT267 · `0.02.67` · `versionCode 54471` · tag [`v0.02.67-54471`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.67-54471), publicada em **2026-11-06T16:43:51Z** (`draft=false`, `prerelease=false`). APK [`PokeSearch-v0.02.67-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.67-54471/PokeSearch-v0.02.67-LT.apk), **33.059.748 bytes**, `state=uploaded`, SHA-256 **`a25c9a6b56408d532359b516066ff5c571d6c958ffb1e9d7be230c300f6c3250`**.

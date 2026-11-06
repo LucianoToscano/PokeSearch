@@ -2303,6 +2303,29 @@
           "Conferir novos ataques PT-BR apenas com fonte verificada."
         ]
       }
+    },
+{
+      "id": "pokesearch-lt268-six-icon-cleanup-no-glow-20261106",
+      "minVersionCode": 54472,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT268 — seis ícones corrigidos, sem brilho",
+      "sections": {
+        "novidades": [
+          "Bandeiras da Grande, Ultra, Mestra e Copa substituídas nos cartões de análise pelos seis novos PNGs fornecidos.",
+          "Rank Geral volta a usar o triângulo multicolorido correto; Raides apresenta o emblema laranja específico."
+        ],
+        "melhorias": [
+          "Brilho externo removido sem modificar as formas ou as faixas das imagens, com transparência e bordas limpas em PNG 320×320.",
+          "Tamanhos compactos dos chips e resultados preservados; recursos disponíveis offline e em OTA assinado."
+        ],
+        "correcoes": [
+          "Ícones das duas Pokébolas e dos menus Modos não foram alterados.",
+          "Cálculos IV/PvP/PvE, ordenação, filtros, sprites e fontes de dados permanecem inalterados."
+        ],
+        "emDesenvolvimento": [
+          "Conferir no Samsung as seis imagens em P/M/G, com fundo claro/escuro, e as duas Pokébolas."
+        ]
+      }
     }
   ]
 }

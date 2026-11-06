@@ -90,7 +90,7 @@ assert.equal(fAuto(ml),true);
 assert.equal(line.children[0].textContent,"ML IV #1");
 assert.equal(line.children[1].textContent,"Atual");
 assert.equal(line.children[2].textContent,"RG #240");
-for(const file of ["league-gl-flag.png","league-ul-flag.png","league-ml-flag.png"])
+for(const file of ["ps-gl-lt268.png","ps-ul-lt268.png","ps-ml-lt268.png"])
  assert.ok(detail.includes('src="ui-icons/'+file+'"'),"correct badge for PvP league");
 assert.ok(detail.includes('src="ui-icons/mega-symbol.png"'));
 // CP/level simulator operates independent of the PvP filter and uses

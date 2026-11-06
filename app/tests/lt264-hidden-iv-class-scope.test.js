@@ -48,7 +48,7 @@ assert.ok(explorerText.includes("não é o Rank Geral da Grande Liga"),
 assert.ok(explorerText.includes("s.kind===\"class\"?"),
  "only class ranking should get the species-IV disclaimer");
 assert.ok(!detail.includes('button.textContent="🏆 Raid'));
-assert.ok(detail.includes("ui-icons/raid-badge.png"));
+assert.ok(detail.includes("ui-icons/ps-raid-lt268.png"));
 assert.ok(detail.includes("ui-icons/mt-unknown.png"));
 new vm.Script(detail.match(/<script>([\s\S]*?)<\/script>/)?.[1]);
 new vm.Script(explorerText);
