@@ -1728,8 +1728,8 @@ function renderRaidPreview(){
   const raidDisplayName=row=>{
    const name=String(row.name||"");
    if(row.variant!=="mega")return name;
-   const suffix=/\\(Mega(?:\\s+([XY]))?\\)\\s*$/i.exec(name)?.[1]||"";
-   const base=name.replace(/\\s*\\(Mega(?:\\s+[XY])?\\)\\s*$/i,"").replace(/^Mega\\s+/i,"");
+   const suffix=/\(Mega(?:\s+([XY]))?\)\s*$/i.exec(name)?.[1]||"";
+   const base=name.replace(/\s*\(Mega(?:\s+[XY])?\)\s*$/i,"").replace(/^Mega\s+/i,"");
    return "Mega "+base+(suffix?" "+suffix:"");
   };
   const raidStatusIcon=row=>row.variant==="mega"?
