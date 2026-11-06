@@ -24,7 +24,7 @@ ALLOWED = {
 ASSET_PREFIX = "app/src/main/assets/"
 ICON = re.compile(
     r"^(?:pokemon-sprites/(?:base|shiny|forms|costumes)|"
-    r"result-icons/(?:base|modes)|weather-icons(?:/v2)?)/"
+    r"result-icons/(?:base|modes)|ui-icons|weather-icons(?:/v2)?)/"
     r"[A-Za-z0-9_.-]{1,150}\.png$"
 )
 def allowed(name):
