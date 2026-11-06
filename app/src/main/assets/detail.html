@@ -2062,7 +2062,7 @@ function renderRankOneMoves(){
  };
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
- const leagueSlot=document.getElementById("psLeagueMoves");
+ const leagueSlot=document.querySelector?.("#psLeagueMoves")||null;
  const moveHost=leagueSlot||rankLine; // legacy isolated tests retain fallback
  rankLine.querySelector?.(".psMovesAction")?.remove?.();
  if(leagueSlot){
@@ -2577,7 +2577,7 @@ function psToggleLeagueAssessment(league){
  if(chevron)chevron.textContent="▴";
  const rail=document.getElementById("rankLine");
  if(rail){
-  rail.dataset.league=league;
+  if(rail.dataset)rail.dataset.league=league;
   for(const b of rail.querySelectorAll?.(".psRailLeague")||[])
    b.dataset.active=String(b.dataset.psLeague===league);
  }
@@ -2733,7 +2733,7 @@ window.showEvolutionDetails=payload=>{
   const rows=[...megas,...entries,...references].map(e=>evolutionRow(e,false)).filter(Boolean);
   const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
   if(!rows.length&&!own)continue;
-  html+='<div class="psLeagueAnalysis" data-ps-league="'+h(league.league)+'">'+
+  html+='<div class="psLeagueAnalysis" data-ps-league="'+league.league+'">'+
    '<div class="evoLeague '+league.league+'">'+labels[league.league]+'</div>'+
    own+rows.join("")+'</div>';
   count+=rows.length;
