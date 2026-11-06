@@ -234,7 +234,7 @@ jobs:
               key="assets/ui-icons/"+filename
               assert key in names, "Missing revised LT267 type "+key
               image=apk.read(key)
-              assert image.startswith(b"\\x89PNG\\r\\n\\x1a\\n"), "Invalid revised type PNG"
+              assert image.startswith(bytes([137,80,78,71,13,10,26,10])), "Invalid revised type PNG"
               assert image[16:24]==bytes.fromhex("0000020000000200"), "Wrong 512px dimensions"
               assert image[25]==6, "Revised type must keep RGBA alpha"
               assert hashlib.sha256(image).hexdigest()==digest, "Revised type changed "+key
