@@ -20,5 +20,6 @@
 
 ## Proteções e testes
 - `app/tests/lt264-hidden-iv-class-scope.test.js`: cálculo com a mesma fonte Game Master do APK para as 3 espécies; CSS posterior e remoção de atributo; avisos de escopo; sintaxe dos scripts e preservação do ícone de Raides.
-- Testar também Node completo, Java, P/M/G, OTA e regressões de Raides/MT/ícones antes de merge.
-- **Limitação:** testes automatizados não substituem captura física Samsung de P1/P2 em LT264. Sem confirmação de instalação ou publicação até workflow oficial assinado e release pública.
+- **Testes concluídos:** Node completo, Node QA, Core, compilação Java, visual P/M/G, OTA e referência de Raides passaram (7 gates CI) na PR #244. [Merge oficial #244](https://github.com/LucianoToscano/PokeSearch/pull/244) realizado em `e29db1863afdb27a3691039cae2ffd6d94c1f1c0`.
+- **APK oficialmente publicado:** [GitHub Actions #42208975901](https://github.com/LucianoToscano/PokeSearch/actions/runs/42208975901), `preflight=success` / `publish=success`, build e assinatura permanente v2 verificados. [Release LT264 · v0.02.64-54468](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.64-54468) publicada em `2026-11-06T11:19:28Z`; instalador [PokeSearch-v0.02.64-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.64-54468/PokeSearch-v0.02.64-LT.apk), 28.623.915 bytes, SHA-256 `5da28a383071dab0857aece1dd8dada21b19b16b1de24c344812a621c7d4fd62`.
+- **Limitação:** a publicação e o conteúdo do APK foram verificados por CI, mas nenhum teste físico Samsung de P1/P2 em LT264 foi observado. O usuário precisa confirmar instalação pelo Android e verificar que o espaço vazio desapareceu. LT263 preservada como rollback.
