@@ -62,4 +62,11 @@ assert.equal(sha("ui-icons/shadow-symbol-lt267.png"),"62cdf7dd642c2077204c8275fe
 for(const file of ["mega-symbol.png","shadow-symbol-lt267.png"])
  assert.ok(workflow.includes('"'+file+'": "'+sha("ui-icons/"+file)+'"'),file+" SHA pinned in signed APK");
 assert.ok(read("sprite_visual_scale.js").includes("clamp(.78/occupancy,.76,2.2)"),"small silhouette zoom bounded");
+const qaWorkflow=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt146-signed-update-qa.yml"),"utf8");
+assert.ok(qaWorkflow.includes("assert len(report['costumes'])==116"),
+ "Signed QA must account for exactly 106 original plus 10 approved LT267 costumes");
+assert.ok(qaWorkflow.includes('assert hashlib.sha256((root/key).read_bytes()).hexdigest()==report[\'costumes\'][key]'),
+ "Signed QA must verify each exact Diwali/Squawk sprite against manifest SHA256");
+assert.ok(qaWorkflow.includes("for color in (\"BLUE\",\"GREEN\",\"WHITE\",\"YELLOW\")"),
+ "All four Squawk colours, including Shiny, must be covered by QA");
 console.log("LT267 PASS: pinned 10 source sprites, four Squawk colours & shiny, Diwali, site first, 2 user icons, Cup and Raid labels");
