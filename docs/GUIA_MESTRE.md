@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT259 — Ranking de Raides antes da captura (06/11/2026 · candidata de QA)
+
+- Pedido: avaliação simples e rápida de utilidade do Pokémon em Raides antes de pegar coordenadas, com rank por tipo e visão de evoluções/Mega, também acessível no painel existente de Análise PvP. **Não confundir** rank PvE de espécie com Rank IV Classe ou Rank Geral GBL.
+- Implementação na branch `feature/lt259-raid-pre-capture-20261106`: novo `pve_raid_rank.js` consulta índice, dados da espécie e ranking por tipo de fonte pública estática, usa cache e valida dex/forma; `detail.html` inclui botão/painel `🏆 Raides` antes das coordenadas e link no painel de evoluções sem criar flutuante. Exibir rank da **espécie por tipo**, golpes/Elite e melhor evolução/forma com indicação explícita de projeção; status desconhecido não vira rank fictício.
+- Fonte: [S-Tier-Devs/pogo-db-api](https://github.com/S-Tier-Devs/pogo-db-api), metodologia ER/DPS/TDO; a última atualização observada do repositório foi em agosto de 2026. **Não afirmar rankings atuais ao vivo**, counters de chefes, nem elegibilidade de evoluções fantasias/Shadow/Mega a partir desses dados. Fallback offline exibe Ataque-base como prévia, jamais como rank PvE.
+- OTA: `OtaAssets.java` e `scripts/build_ota_pack.py` incluem o novo asset na allowlist de pacote assinado. Testes de simulação `app/tests/lt259-raid-pre-capture-rank.test.js` passaram no harness JS. **7 gates completos CI verdes** no head `f2cb15877291c131eadd8ee3e939a851fc09b321`, inclusive [fonte JSON real #42183248976](https://github.com/LucianoToscano/PokeSearch/actions/runs/42183248976), [visual P/M/G #42183248784](https://github.com/LucianoToscano/PokeSearch/actions/runs/42183248784) com screenshot do botão Raides expandido e [Node/Java/OTA](LT259_RAIDES_RANK_PRE_CAPTURA_QA_20261106.md). Android físico Samsung P1/P2 ainda pendente. [Detalhes](LT259_RAIDES_RANK_PRE_CAPTURA_QA_20261106.md).
+- **Status:** branch/PR em revisão, sem merge oficial, APK, OTA ou release. LT258 `0.02.58/54462` permanece oficialmente publicada, mantendo rollback.
+
 ## LT258 — ATUALIZAÇÃO OFICIAL VERIFICADA (06/11/2026)
 
 - **Origem:** solicitação para corrigir o raio nos ataques (exibir a necessidade de legado antes do clique) e desbloquear a rolagem da lista de golpes possíveis, mantendo as duas Pokébolas.

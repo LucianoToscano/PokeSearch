@@ -2074,6 +2074,32 @@
           "Automação, compilação Android e screenshots P/M/G passaram; a instalação e a rolagem física no Samsung nas duas Pokébolas ainda precisam de verificação. A atualização requer confirmação do Android."
         ]
       }
+    },
+    {
+      "id": "lt259-pve-raid-rank-pre-capture-20261106",
+      "minVersionCode": 54463,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT259 — Avaliação de Raides antes da captura",
+      "sections": {
+        "novidades": [
+          "Indicador 🏆 Raides aparece no cartão antes de pegar coordenadas, apontando a utilidade PvE por tipo da espécie/forma e sua melhor evolução verificada.",
+          "Na Análise PvP existe um novo atalho para a avaliação de Raides, sem criar janelas flutuantes."
+        ],
+        "melhorias": [
+          "Detalhes com rank por tipo, forma/evolução, melhor conjunto de golpes disponível na fonte e indicação de uso de MT de Elite.",
+          "Quando a fonte externa não puder confirmar posição, exibe apenas a prévia offline de Ataque-base da família, sem afirmar que um Pokémon está no Top Raides.",
+          "Classificações de Raides por espécie independentes dos IVs de GL/UL/ML e do rank PvP; não consome acessos de coordenadas, login ou dados do treinador."
+        ],
+        "correcoes": [
+          "Rótulo de evolução projetada e mega separado do Pokémon realmente capturado. Fantasias não recebem garantia implícita de evolução.",
+          "Resultado externo tardio de outro Pokémon não pode substituir o cartão atual; respeita cache limitado e duas Pokébolas.",
+          "Rolagem do painel de Raides fica no cartão, preservando a rolagem única de golpes da LT258."
+        ],
+        "emDesenvolvimento": [
+          "A base de rankings utilizada é uma referência pública de agosto de 2026, não simulação atual de counters de chefe; validar fonte e dados periodicamente.",
+          "Os testes de navegador e a integração com a fonte passaram; instalação e teste físico de toque no Samsung nas duas Pokébolas ainda não observados."
+        ]
+      }
     }
   ]
 }
