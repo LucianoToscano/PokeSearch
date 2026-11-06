@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.60",
-  "code": 54464,
-  "label": 51264,
-  "previous_tag": "v0.02.59-54463",
-  "qa_max_code": 54463,
-  "release_notes": "PokeSearch LT260: correção offline das sprites de Shellos #422 e Gastrodon #423 East Sea/West Sea, normais e Shiny, preservando a forma exata sem trocar as cores. Oito artes GO autenticadas pelos Git blobs SHA-1 pré-registrados, empacotadas e verificadas como PNGs no APK oficial antes da publicação. Ao limpar a Localização da busca, a ordenação Distância (Distance nearest) volta imediatamente para Despawn (longest), inclusive em limpeza repetida; mudança persistida e sincronizada nos menus, preservando todos os demais filtros e duas Pokébolas. O botão 🏆 Raides não desaparece quando a fonte do ranking PvE não está disponível ou não existe rank GL: mostra status neutro e não inventa classificações. PR #240 mesclada em de9e2ab7923234463deff40a9d59ec34ac8ea08f após sete gates automatizados verdes (Node completo, Java, screenshots P/M/G, OTA e fontes). QA físico no Samsung e instalação real não observados. Atualização requer confirmação do Android."
+  "version": "0.02.61",
+  "code": 54465,
+  "label": 51265,
+  "previous_tag": "v0.02.60-54464",
+  "qa_max_code": 54464,
+  "release_notes": "PokeSearch LT261: filtro Sort inteligente e livre. Ao adicionar/localizar coordenadas válidas pela primeira transição OFF→ON, Sort muda automaticamente para Distance (nearest); ao apagar/desativar localização ON→OFF, Sort muda para Despawn (longest). Depois de cada transição o jogador pode escolher manualmente CP, IV%, Level, Despawn e Distance sem bloqueio; a escolha permanece em alteração apenas de coordenadas/raio, reaplicação, reinício e atualização do card, até nova transição ON/OFF. Uma remoção repetida sem localização preserva qualquer ordenação manual válida. Distância é permitida quando há localização e coordenadas validadas no Android, sem aguardar a confirmação do resultado remoto; entrada inválida não muda filtros. Mantém Pokémon, IVs, clima, CP, Level, tamanho, gênero e todos os outros filtros, sem compartilhar estado entre as duas Pokébolas. PR #241 merge fd6bf758541a4dbd1c2953a1bfa4fe3c8b15b4df, seis gates GitHub Actions aprovados (Node completo, core, Java, visual P/M/G, OTA). As correções de Shellos/Sea da LT260 continuam. Teste físico Samsung ainda não observado, instalação deve ser confirmada pelo Android."
 }
