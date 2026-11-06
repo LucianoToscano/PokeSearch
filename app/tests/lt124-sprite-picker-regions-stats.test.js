@@ -15,12 +15,14 @@ check("exact Galarian Zen and Standard Darmanitan variants",()=>{
   assert.ok(art.original.endsWith("/"+id+".png"),form);
  }
 });
-check("Squawkabilly white/yellow/blue alternate names have correct shiny variety",()=>{
- for(const [form,id] of [["White",10262],["Squawkabilly White",10262],["Yellow",10261],["Blue",10260]]){
+check("Squawkabilly all four colours and their alternate labels preserve exact GO Shiny art",()=>{
+ for(const [form,color] of [["White","WHITE"],["Squawkabilly White","WHITE"],
+  ["Yellow","YELLOW"],["Blue","BLUE"],["Green Plumage","GREEN"]]){
   const art=sprites.resolve({number:"#931",name:"Squawkabilly",form,shiny:true,image:""});
+  const file="pm931.f"+color+".s.icon.png";
   assert.equal(art.officialForm,true,form);
-  assert.equal(art.src,"file:///android_asset/pokemon-sprites/forms/variety-"+id+"-shiny.png",form);
-  assert.ok(art.original.endsWith("/shiny/"+id+".png"),form);
+  assert.equal(art.src,"file:///android_asset/pokemon-sprites/costumes/"+file,form);
+  assert.ok(art.original.endsWith("/"+file),form);
  }
 });
 check("GO 2026 Goggles and 2019 Copy now use exact offline icons",()=>{
