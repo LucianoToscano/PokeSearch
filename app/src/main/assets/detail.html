@@ -1543,7 +1543,7 @@ window.coordsResult=function(coords,message,restriction){
 };
 const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
-let psRaidReport=null,psRaidExpanded=false,psRaidToken=0;
+let psRaidReport=null,psRaidExpanded=false,psRaidToken=0,psRaidAttackPreview=null;
 /* Raid results rank the SPECIES by attack type, not these encounter IVs.
  * This is an async, read-only public-data check and cannot reveal coordinates. */
 function renderRaidPreview(){
@@ -1552,10 +1552,16 @@ function renderRaidPreview(){
  const result=psRaidReport;
  const best=result?.verified?result.best:null;
  if(!best){
-  button.textContent="🏆 Raides · "+(result?.reason||"Aguardando dados...");
+  const attack=psRaidAttackPreview;
+  button.textContent="🏆 Raides · "+(attack?
+   "ATQ base "+attack.attack+" ↳ "+attack.name+" · rank pendente":
+   (result?.reason||"Aguardando dados..."));
   button.dataset.grade="unknown";
   panel.innerHTML='<div class="psRaidNote">'+
-    h(result?.reason||"Aguardando resposta do ranking PvE.")+'</div>';
+    h(result?.reason||"Aguardando resposta do ranking PvE.")+
+    (attack?'<div>Prévia offline: Ataque-base '+h(attack.attack)+
+      ' · '+h(attack.name)+'. Não basta para provar que é um bom counter.</div>':"")+
+    '</div>';
  }else{
   const good=best.rank<=20,useful=best.rank<=50;
   button.dataset.grade=good?"elite":useful?"useful":"unknown";
@@ -1596,6 +1602,8 @@ function loadRaidBeforeCapture(card){
  psRaidReport=null;psRaidExpanded=false;renderRaidPreview();
  const gm=window.POKESEARCH_PVP_IV_DATA;
  const related=window.PokeSearchPvpFamilyCatalog?.family?.(card.name,gm)||[];
+ psRaidAttackPreview=rank.offlineAttack?.(card,related,gm)||null;
+ renderRaidPreview();
  Promise.resolve(rank.assess(card,related)).then(result=>{
   if(token!==psRaidToken||identity!==detailIdentity)return;
   psRaidReport=result;renderRaidPreview();
@@ -2742,7 +2750,7 @@ window.showDetails=(c,mode,watched)=>{
   document.getElementById("evolutions").hidden=true;
   document.getElementById("evoBody").hidden=true;
   document.getElementById("evoBody").innerHTML="";
-  psRaidToken++;psRaidReport=null;psRaidExpanded=false;
+  psRaidToken++;psRaidReport=null;psRaidExpanded=false;psRaidAttackPreview=null;
   const raidButton=document.getElementById("raidRow"),raidPanel=document.getElementById("raidPanel");
   if(raidButton){raidButton.hidden=true;raidButton.setAttribute?.("aria-expanded","false");}
   if(raidPanel){raidPanel.hidden=true;raidPanel.innerHTML="";}
