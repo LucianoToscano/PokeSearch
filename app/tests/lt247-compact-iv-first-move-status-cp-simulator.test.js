@@ -79,7 +79,7 @@ assert.equal(raw.update({...projected,searchLeague:"",searchRankLimit:null}),tru
 assert.equal(line.children[1].textContent,"Sableye");
 assert.ok(line.children[1].children.some(x=>x.src==="mega_evolution_icon.svg"),"exact Mega artwork in species chip");
 assert.ok(inline.includes('const isMega=/^mega\\s+/i.test(featured)'));
-assert.ok(inline.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'));
+assert.ok(inline.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'));
 assert.ok(inline.includes("'Mega '+h(species)+' · PvP'"));
 assert.ok(inline.includes("Mesmos golpes do "),"a Mega Edition uses learnable base-form moves");
 assert.ok(inline.includes('const hasRank=/(?:Rank Classe:|IV) #\\d+/'));
