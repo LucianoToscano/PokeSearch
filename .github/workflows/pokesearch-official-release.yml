@@ -182,7 +182,14 @@ jobs:
               "mt-elite.png": "8569b664c557130798dc3038e94250de0e3600a3a87a0e5fd522bf27393d91c6",
               "mt-normal.png": "aaee8981343025e786481837984acbf081c17617a10a076ae5afb07516e719fa",
               "mt-unknown.png": "1c7e9a80311bc1cd4187adf83e7b583f096a0c825a429bea015795dcee4be69e",
-              "mega-symbol.png": "ed8d845ab02a575b90f331a98068efc78d3aca87ed9d9235afec1711f2492f26"
+              "mega-symbol.png": "ed8d845ab02a575b90f331a98068efc78d3aca87ed9d9235afec1711f2492f26",
+              # LT265: uploaded user scrolls and bordered, transparent league badges.
+              "mt-carregada-elite-lt265.png": "1862fa4d03ad560c62b54f315aac9b88fd33ab29c94e61d78c47df030da60d38",
+              "mt-agil-elite-lt265.png": "7439896d33dd28ee62c389015c0094a7ac34c459d6af4a3e47ad5c88c98fd595",
+              "league-gl-bordered-lt265.png": "fc3c1bbf45be5d6c934d761bd1369641fafb8bf0b009500a1748833e93d0c05b",
+              "league-ul-bordered-lt265.png": "89bb9c0db2e3a10602797f747046f379de267120b119181f3a2b4f4b3682bdda",
+              "league-ml-bordered-lt265.png": "470aa8ab0e54d48481d8cbecdaba3590fa929d35e45d910d411765595f8f413d",
+              "league-cup-bordered-lt265.png": "a7fa6b7a626adef27e808deff83985ebfddfd43050280b8c0d5bdfbb20bbc6e7"
             }
             for filename,digest in ui_icons.items():
               key="assets/ui-icons/"+filename
@@ -190,7 +197,7 @@ jobs:
               data=apk.read(key)
               assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
               assert hashlib.sha256(data).hexdigest()==digest, "Unexpected icon bytes "+key
-          print("Official Sea/Halloween sprites (12) + GL/UL mode emblems (2) + card badges (9) checked")
+          print("Official Sea/Halloween sprites (12) + GL/UL mode emblems (2) + card badges (15) checked")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
