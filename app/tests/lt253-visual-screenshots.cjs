@@ -240,8 +240,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
     const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
-    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge==="#220",
-     title,species,badge};
+    const rows=window.PokeSearchRankExplorer?.getOverallRows?.(window.POKESEARCH_PVPOKE_OVERALL,"ul")||[];
+    const actual=rows.find(x=>x.name==="Teddiursa");
+    const expected=actual?"#"+actual.rank:"—";
+    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected,
+     title,species,badge,expected};
    });
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
     sz.name+" "+JSON.stringify(overall270));

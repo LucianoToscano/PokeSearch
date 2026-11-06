@@ -94,7 +94,7 @@ for(const [card,evolved] of examples){
  assert.ok(markup.includes("PC "));
  assert.ok(!markup.includes("Elegibilidade não verificada"),
    "reference must never claim costume evolution eligibility");
- assert.equal(node("evolutions").hidden,false);
+ assert.equal(node("evolutions").hidden,true,"reference rankings cannot open a panel on their own");
  assert.equal(node("evoLabel").textContent,"Análise PvP · 3 avaliações");
  // Disabling previous evolutions suppresses only comparison rows.
  assert.equal(show({...payload,includePreviousEvolutions:false}),true);

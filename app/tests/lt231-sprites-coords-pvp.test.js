@@ -42,8 +42,10 @@ assert.ok(detail.includes('const hasRank=rankLine.dataset?.rankRail==="five"||')
  'Move action must be gated by a verified rank or the new five-control rail');
 assert.ok(detail.includes('const hasAny=')===false ||
  detail.includes('psRailChoices(payload)'),"New rank rail must be source-derived");
-assert.ok(detail.includes('if(!Object.values(choices).some(x=>x.classChoice||x.overallChoice))'),
- "Five-control rail requires a real verified class or general position");
+assert.ok(detail.includes('const rank=Number.isInteger(raw)&&raw>=1&&raw<=4096?raw:null;')&&
+ detail.includes('number.textContent=Number.isInteger(rank)&&rank>=1?"#"+rank:"—";')&&
+ detail.includes('b.disabled=!payload?.leagues?.some?.(entry=>entry?.league===league)'),
+ "Unverified IV rank stays — and absent league never opens as confirmed");
 assert.match(detail,/currentRankSpecies=best\.name/);
 assert.match(detail,/pvp_rank_moves\.js/);
 // A verified PvPoke snapshot must classify Elite and Legacy separately.
