@@ -1816,6 +1816,7 @@ function renderRaidPreview(){
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
  if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
+ if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
 }
 function toggleRaidDetails(){
@@ -2732,7 +2733,9 @@ window.showEvolutionDetails=payload=>{
   const rows=[...megas,...entries,...references].map(e=>evolutionRow(e,false)).filter(Boolean);
   const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
   if(!rows.length&&!own)continue;
-  html+='<div class="evoLeague '+league.league+'">'+labels[league.league]+'</div>'+own+rows.join("");
+  html+='<div class="psLeagueAnalysis" data-ps-league="'+h(league.league)+'">'+
+   '<div class="evoLeague '+league.league+'">'+labels[league.league]+'</div>'+
+   own+rows.join("")+'</div>';
   count+=rows.length;
   if(own)ownCount++;
  }
@@ -2772,7 +2775,9 @@ window.showEvolutionDetails=payload=>{
  html=topHtml+'<button type="button" class="psRaidAnalysisLink" '+
   'onclick="toggleRaidDetails()">Ver avaliação de Raides (PvE) neste cartão</button>'+html;
  if(body.innerHTML!==html)body.innerHTML=html;
- outer.hidden=false;
+ outer.hidden=!evolutionExpanded;
+ if(evolutionExpanded&&psSelectedEvaluationLeague)
+  psFocusLeagueBlocks(psSelectedEvaluationLeague);
  document.getElementById("evoLabel").textContent=payload.ivUnavailable?
   "Análise PvP · Ranks gerais":
   count?"Análise PvP · "+count+" avaliações":
@@ -3216,6 +3221,7 @@ window.showDetails=(c,mode,watched)=>{
   window.PokeSearchRankExplorer?.close();
   window.psRankContext=null;
   detailIdentity=nextIdentity;evolutionExpanded=false;psActiveAnalysisKey="";psSelectedEvaluationLeague="";
+   window.psRailOverallSelectedLeague="";
   coordsRequestSeq++;
   clearCoordsRate();
   coordsNote="";coordsPending=false;currentCoords=String(c.coords||"");
@@ -3398,6 +3404,13 @@ window.showDetails=(c,mode,watched)=>{
  currentCardMoves=window.currentCardMoves;
  currentRankSpecies=String(c.name||"");
  if(verifiedIvRank)renderRankOneMoves();
+ // Initial visible Raid shortcut, while verified PvP league data may still load.
+ const liveRail=document.getElementById("rankLine");
+ if(liveRail?.ownerDocument?.defaultView){
+  const context=window.psRankContext&&evoIdentity(window.psRankContext)===detailIdentity?
+   window.psRankContext:{name:String(c.name||""),leagues:[]};
+  psRenderFiveRankRail(context);
+ }
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
