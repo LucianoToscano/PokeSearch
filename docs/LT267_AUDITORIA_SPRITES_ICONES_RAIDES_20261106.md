@@ -44,3 +44,8 @@ Branch de QA. Não afirmar merge/release física até confirmação de CI, links
 - QA assinado #42240094362: `Drive Pokémon type icons not packaged`. Um teste antigo procurava 18 dados Base64 no `pokemon_type_icons.js`, substituídos desde LT266 por imagens locais. O teste não foi removido: passou a validar todos os 18 enums, caminhos, dimensões, PNG RGBA e SHA-256 exigido pelo workflow oficial.
 - Regressão `lt267-legacy-icons-size-budget.test.js` impede retorno do teste obsoleto.
 - Confirmação CI/merge/APK LT267 ainda precisa ser atualizada após novos resultados reais.
+
+## QA de sprites: nova contagem fundamentada
+- Na [QA assinada #42254494322](https://github.com/LucianoToscano/PokeSearch/actions/runs/42254494322), o código que confere tipos locais RGBA e SHA-256 passou. O build de sprites gerou 1.025 bases e 1.025 shiny, mas a asserção fixa `len(report['costumes'])==106` falhou após o acréscimo de dez imagens LT267 verificadas por Git blob PokeMiners.
+- Correção: exigir **116** costumes (106 anteriores mais 10) e validar separadamente presença, arquivo físico e SHA-256 contra o manifesto para Pikachu Diwali 2024 (normal/Shiny) e Squawkabilly BLUE/GREEN/WHITE/YELLOW (normal/Shiny). Não baixar sprites genéricos, não permitir formas falsas, não enfraquecer as verificações.
+- QA assinada deve rodar novamente na `main` após o merge; testes físicos no Samsung continuam pendentes.
