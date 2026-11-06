@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.55",
-  "code": 54459,
-  "label": 51259,
-  "previous_tag": "v0.02.54-54458",
-  "qa_max_code": 54458,
-  "release_notes": "LT255: corrigida a impossibilidade de trocar de evolução na Calculadora PvP observada no Teddiursa 0/14/15 PC 478 Nv.14. As famílias normais verificadas passam a estar disponíveis diretamente pelo catálogo offline de evoluções já usado pelo PokeSearch (463 vínculos idênticos a PVP_EVO_LINKS), independentemente da resposta assíncrona do ranking. Botões tocáveis permitem escolher Teddiursa, Ursaring e Ursaluna; seletor e setas permanecem ativos. Famílias maiores têm escolhas em lista interna recolhível, sem criar outro menu flutuante. A forma ativa é destacada, PC e PS são recalculados instantaneamente e IV A/B, nível e PC-alvo permanecem preservados. Evita atribuir evoluções normais indevidas a sombras, variantes e fantasias, não consulta APIs e não consome quota de coordenadas. A LT254, as duas Pokébolas independentes e design compacto P/M/G são preservados. Código integrado pela PR #234; seis verificações CI verdes, incluindo testes Node, Java, OTA e Playwright P/M/G da troca real entre Teddiursa, Ursaring e Ursaluna sem payload PvP. As verificações automáticas não comprovam instalação ou teste físico Samsung; a atualização exige confirmação do Android."
+  "version": "0.02.56",
+  "code": 54460,
+  "label": 51260,
+  "previous_tag": "v0.02.55-54459",
+  "qa_max_code": 54459,
+  "release_notes": "PokeSearch LT256: reforça o carregamento da calculadora de evoluções após atualização. Corrigido o descompasso da allowlist criptográfica: o catálogo offline de evoluções pvp_family_catalog.js agora é permitido no carregador OTA assinado, assim como no builder; HTML/JS do detalhe passam a usar Cache-Control no-store e WebView de detalhes não reutiliza cache antigo, evitando exibir interface de versões passadas. A identificação de formas não confunde região geográfica de captura com Alola/Galar/Hisui/Paldea; label 'Forma · N' indica as opções efetivamente verificadas. Mantém botões de Teddiursa/Ursaring/Ursaluna, setas, seletor e cálculo de PC/PS, IV A/B, nível, PC-alvo, duas Pokébolas independentes e design compacto. PR #235 integrada após seis verificações automatizadas aprovadas (Node, regressões, Java, OTA e screenshots P/M/G). As capturas anteriores podem ser de versão antiga instalada, e este release não comprova instalação nem toque físico no Samsung; a instalação exige confirmação do Android."
 }
