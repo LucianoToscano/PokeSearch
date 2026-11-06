@@ -1220,6 +1220,20 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpPresets button{min-height:28px!important}
 #movesPopover .psMoveLegend{font-size:9px;line-height:1.25}
 #movesPopover .psRaidMoveState{width:18px!important;height:13px!important}
+/* LT265: user-supplied bordered badges, exact source hashes retained.
+ * Images remain 13px in the ranking and never replace floating Pokéballs. */
+#rankLine .psLeagueIv[data-ps-league="gl"]::before{
+ background-image:url("ui-icons/league-gl-bordered-lt265.png")!important}
+#rankLine .psLeagueIv[data-ps-league="ul"]::before{
+ background-image:url("ui-icons/league-ul-bordered-lt265.png")!important}
+#rankLine .psLeagueIv[data-ps-league="ml"]::before{
+ background-image:url("ui-icons/league-ml-bordered-lt265.png")!important}
+#rankLine .psLeagueIv[data-ps-league="cup"]::before{
+ background-image:url("ui-icons/league-cup-bordered-lt265.png")!important}
+#movesPopover .psMoveLegacy{display:inline-flex;align-items:center;
+ flex:0 0 21px;width:21px;height:15px;vertical-align:middle}
+#movesPopover .psEliteScroll{width:21px;height:14px;display:block;
+ object-fit:contain;filter:drop-shadow(0 0 .65px #b8eeff)}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1624,8 +1638,15 @@ const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","
 const PS_LEAGUE_ICONS=Object.freeze({
  gl:"ui-icons/league-gl-flag.png",ul:"ui-icons/league-ul-flag.png",
  ml:"ui-icons/league-ml-flag.png"});
+const PS_LEAGUE_BORDERED=Object.freeze({
+ gl:"ui-icons/league-gl-bordered-lt265.png",
+ ul:"ui-icons/league-ul-bordered-lt265.png",
+ ml:"ui-icons/league-ml-bordered-lt265.png",
+ cup:"ui-icons/league-cup-bordered-lt265.png"});
 const psLeagueIconHtml=(league,cls="psLeagueFlag")=>
- PS_LEAGUE_ICONS[league]?'<img class="'+cls+'" src="'+PS_LEAGUE_ICONS[league]+'" alt="" aria-hidden="true">':"";
+ PS_LEAGUE_ICONS[league]?'<img class="'+cls+'" src="'+PS_LEAGUE_ICONS[league]+
+ '" srcset="'+(PS_LEAGUE_BORDERED[league]||PS_LEAGUE_ICONS[league])+
+ ' 1x" alt="" aria-hidden="true">':"";
 const psMtIconHtml=(kind,cls="psRaidMoveState")=>{
  const file={elite:"mt-elite.png",normal:"mt-normal.png",unknown:"mt-unknown.png"}[kind]||"mt-unknown.png";
  return '<img class="'+cls+'" src="ui-icons/'+file+'" alt="" aria-hidden="true">';
@@ -1697,7 +1718,7 @@ function renderRaidPreview(){
     '<span title="Ataque Ágil">Ágil: '+localized(row.fast,true)+'</span>'+
     '<span class="psRaidMoveSep" aria-hidden="true"> · </span>'+
     '<span title="Ataque Carregado">Carregado: '+localized(row.charged,false)+'</span>'+
-    '</span>'+psMtIconHtml(row.elite?"elite":"normal");
+    '</span>'+(row.elite?psMtIconHtml("elite"):"");
   const rowHtml=row=>'<div class="psRaidRow"><span class="psRaidName" title="'+
     (row.projected?"Projeção da evolução ou forma, não garante disponibilidade":"Espécie atual")+
     '">'+(row.projected?"↳ ":"")+h(row.name)+
@@ -2067,7 +2088,10 @@ function renderRankOneMoves(){
    return '<div class="psMoveRow"><span class="psMoveLabel" title="'+
      h(/^C[12]$/.test(label)?"Carregado "+label.slice(1):label)+'">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
-     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">💠</span>':"")+
+     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">'+
+      '<img class="psEliteScroll" src="ui-icons/'+
+       (label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png")+
+       '" alt="" aria-hidden="true"></span>':"")+
      (metrics.length?'<span class="psMoveStats">'+h(metrics.join(" · "))+'</span>':"")+'</div>';
   };
   if(recommendation.availableOnly===true){ 
@@ -2090,7 +2114,7 @@ function renderRankOneMoves(){
      ' golpes possíveis</summary><div class="psAvailableMoveList">'+
      fast.map(x=>row("Ágil",x)).join("")+
      charged.map(x=>row("Carregado",x)).join("")+
-     (hasLegacy?'<div class="psMoveLegend">💠 Alguns golpes podem ser legados / Elite</div>':"")+
+     (hasLegacy?'<div class="psMoveLegend">Golpes legados/Elite marcados acima</div>':"")+
      '</div></details>';
    }
    resizeEvolutionPanel();return;
@@ -2116,7 +2140,7 @@ function renderRankOneMoves(){
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
     (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
       ' · recomendados ≠ capturados')+'</div>'+
-   (hasLegacy?'<div class="psMoveLegend">'+psMtIconHtml("elite")+' Golpe legado/Elite confirmado</div>':
+   (hasLegacy?'<div class="psMoveLegend">Legado/Elite indicado ao lado do golpe</div>':
     complete?'<div class="psMoveLegend">'+psMtIconHtml("normal")+' Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">'+psMtIconHtml("unknown")+' Status de legado não verificado</div>');
   resizeEvolutionPanel();
@@ -2402,9 +2426,9 @@ window.showEvolutionDetails=payload=>{
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt="" aria-hidden="true"> Grande Liga',
- ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt="" aria-hidden="true"> Ultra Liga',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" alt="" aria-hidden="true"> Liga Master'};
+ const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="" aria-hidden="true"> Grande Liga',
+ ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="" aria-hidden="true"> Ultra Liga',
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="" aria-hidden="true"> Liga Master'};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
@@ -2464,9 +2488,9 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">'+
-   ({gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt="">',
- ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt="">',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" alt="">'}[x.league]||"🔔")+' '+
+   ({gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="">',
+ ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="">',
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="">'}[x.league]||"🔔")+' '+
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="ui-icons/mega-symbol.png" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
@@ -2825,8 +2849,8 @@ function updatePvpCpSimulator(){
    '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
    '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div></details>':'')+
   '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
   '</span><strong>'+label(target)+'</strong></div>'+
   '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+
