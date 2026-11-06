@@ -43,7 +43,12 @@ assert.ok(html.includes('class="psRaidMore"'));
 assert.ok(html.includes('class="psRaidSource"'));
 assert.ok(html.includes('PokeSearchMovePtBR?.ensure?.()'));
 assert.ok(html.includes('token!==psRaidToken||identity!==detailIdentity'));
-assert.ok(html.includes('psMtIconHtml(row.elite?"elite":"normal")'));
+assert.ok(html.includes('row.elite?psMtIconHtml("elite"):""'),"Non-Elite must not get colorful Elite scroll");
+for(const file of ["mt-agil-elite-lt265.png","mt-carregada-elite-lt265.png",
+ "league-gl-bordered-lt265.png","league-ul-bordered-lt265.png",
+ "league-ml-bordered-lt265.png","league-cup-bordered-lt265.png"]){
+ assert.ok(html.includes(file),"User icon present in cards: "+file);
+}
 assert.ok(!html.includes('h(row.fast.replace(/_/g," "))'));
 // Calculadora: advanced comparison collapsed by default, math unchanged.
 assert.ok(html.includes('<details class="psCpAdvanced"'));
