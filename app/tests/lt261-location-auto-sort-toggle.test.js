@@ -44,6 +44,10 @@ assert.ok(dock.includes('if(previouslyEnabled!==locationEnabled&&modeDraft)'));
 assert.ok(dock.includes('modeDraft.sortBy=searchSettings.sortBy;'));
 assert.ok(dock.includes('!(locationEnabled&&locationCoords.trim())'),
  "Allow manually selecting Distance with valid location while verification is pending");
+assert.ok(dock.includes('if(modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationCoords.trim()))'),
+ "Filters Apply cannot silently reset Distance while the new location is awaiting verification");
+assert.equal((dock.match(/\!\(locationEnabled&&locationCoords\.trim\(\)\)/g)||[]).length,2,
+ "Both choice and Apply guards must agree when location is valid");
 assert.ok(secondary.includes("extends OverlayService"),"P1 and P2 use the same location sort policy");
 for(const m of dock.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))
  new vm.Script(m[1]);
