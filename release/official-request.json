@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.64",
-  "code": 54468,
-  "label": 51268,
-  "previous_tag": "v0.02.63-54467",
-  "qa_max_code": 54467,
-  "release_notes": "PokeSearch LT264: correção do espaço vazio de ~32 px em cartões sem Rank Classe PvP verificável (exemplo: Squawkabilly azul), entre IV/PC/Nível e o botão Raides. Causa: seletor #rankLine[data-league] definido depois do CSS [hidden] forçava display:flex mesmo com data-league vazio; override final mais específico esconde a faixa por completo (display:none, altura/margens/padding zero) e remove data-league quando não há rank confirmado. O Rank Classe passa a explicar claramente que #1 é somente entre 4.096 combinações IV da mesma espécie/forma, NÃO Rank Geral da Grande Liga. Fonte Game Master reproduzida: Mareep 15/15/15 GL Classe IV #1 Nv50 PC1120; Sandshrew 15/15/15 GL Classe IV #1 Nv50 PC1426; Squawkabilly 15/15/15 GL Classe IV #927 Nv26,5 PC1494. Esses números não significam que os respectivos Pokémon são os melhores da liga. Preservadas as duas Pokébolas, resultados P/M/G, avisos, navegação do explorador, bandeiras, botão Raides, golpes legado Elite/Normal/cinza, Mega e localização. PR #244 integrada em e29db1863afdb27a3691039cae2ffd6d94c1f1c0 após sete verificações verdes (Node completa/QA/core, Java, P/M/G, OTA, Raides). Teste físico Samsung ainda não observado; instalação Android somente com confirmação."
+  "version": "0.02.65",
+  "code": 54469,
+  "label": 51269,
+  "previous_tag": "v0.02.64-54468",
+  "qa_max_code": 54468,
+  "release_notes": "PokeSearch LT265: reorganização avançada do cartão mantendo design compacto/vidro sem empobrecer funções. Novos pergaminhos MT Ágil Elite e MT Carregada Elite fornecidos pelo usuário substituem 💠 junto aos ataques legados/Elite comprovados. Quatro novas bandeiras PvP GL/UL/ML/Copa com borda branca e transparência asseguram contraste sem alterar tamanhos nem ícones das Pokébolas/Modos. Todos os seis PNGs passam por SHA-256 imutável no APK/OTA. Golpes PvE por tipo e nomes dos ataques capturados usam fonte GO PT-BR versionada WatWowMap (mesma usada pelo módulo PvP), mapeada por IDs, cache e subconjunto offline; golpes não identificados ficam neutros, sem tradução falsa. Raides exibe Top 3 inicialmente e demais classificações e notas de ER/IV/fonte sob detalhes; classificação é por tipo, não rank universal ou counter específico. Abrir um painel Raides/PvP/Golpes/Rank/Calculadora fecha os outros sem perder dados. Calculadora oferece forma+nível, PC/PS, alvo e presets 500/1500/2500 com comparação IV A/B avançada e ajuda sob expansão, preservando matemática e acesso a Megas. Liga Mestra e Potencializado traduzidos na interface, enums API mantidos. PR #245 mesclada em a1408736cfec8b4a4b614a4c887b5c9dae89bb30, oito gates CI verdes (Node Full incluindo dois testes novos, Node QA, core, Java, visual P/M/G, OTA, PvE e preflight oficial). Documentos no Guia Mestre, LT265_AUDITORIA_PTBR_COMPACTACAO e PROMPT_NOVO_CHAT_LT265. Teste físico P1/P2 Samsung ainda não comprovado, instalação precisa de confirmação Android."
 }
