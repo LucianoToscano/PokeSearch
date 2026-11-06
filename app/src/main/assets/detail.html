@@ -2140,7 +2140,7 @@ function renderRankOneMoves(){
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
     (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
       ' · recomendados ≠ capturados')+'</div>'+
-   (hasLegacy?'<div class="psMoveLegend">Legado/Elite indicado ao lado do golpe</div>':
+   (hasLegacy?'<div class="psMoveLegend" title="Golpe legado/Elite confirmado">Legado/Elite indicado ao lado do golpe</div>':
     complete?'<div class="psMoveLegend">'+psMtIconHtml("normal")+' Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">'+psMtIconHtml("unknown")+' Status de legado não verificado</div>');
   resizeEvolutionPanel();
@@ -2710,7 +2710,7 @@ function psCpControls(){
    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+
    psCpFormText(row,forms)+'</button>').join("");
  return '<div class="psCpSimulator">'+
-  '<div class="psCpSimTitle">Escolha a forma e o nível</div>'+
+  '<div class="psCpSimTitle" title="Normal / evoluções / Mega · mesmos IVs">Escolha a forma e o nível</div>'+
   '<div class="psCpSimFields">'+
   '<div class="psCpFormField"><span class="psCpFormFieldLabel">Forma · '+forms.length+'</span>'+
   '<div class="psCpFormStepper">'+
@@ -2891,7 +2891,7 @@ function renderDetailMetric(){
   (rows?'<details class="psCpPvpProjections"><summary>Projeções PvP por liga</summary>'+rows+'</details>':
    '<div class="psMetricEmpty">Projeções por liga indisponíveis.</div>')+
   '<details class="psMetricFoot" ontoggle="resizeEvolutionPanel()"><summary>Sobre os cálculos</summary>'+
-  'PC e nível projetados com os mesmos IVs. Isso não confirma elegibilidade na Liga GO.</details>';
+  'PC e nível projetados com os mesmos IVs, não os atributos atuais. Isso não confirma elegibilidade na Liga GO.</details>';
  panel.hidden=false;
   document.querySelector?.("#panel")?.classList?.add?.("metricOpen");
   if(typeof panel.querySelector==="function"&&panel.querySelector("#psCpSimResult"))
