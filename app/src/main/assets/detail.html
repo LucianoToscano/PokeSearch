@@ -1314,6 +1314,45 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   min-width:13px!important;min-height:13px!important;max-width:13px!important;max-height:13px!important;
  }
 }
+
+/* LT273 — a single league heading, aligned moves/X, captured moves beneath drawers. */
+#psLeagueHead{display:flex!important;align-items:center!important;gap:5px!important;min-height:30px!important}
+#psLeagueTitle{display:inline-flex!important;align-items:center!important;gap:5px!important;
+ flex:1 1 auto!important;min-width:0!important;white-space:nowrap!important;font:800 12px/1.2 Roboto,Arial,sans-serif!important}
+#psLeagueTitle .psLeagueFlag{width:17px!important;height:17px!important;flex:0 0 17px!important;margin:0!important}
+#psLeagueTitle .psLeague-gl{color:#69bcff}#psLeagueTitle .psLeague-ul{color:#ffd17f}
+#psLeagueTitle .psLeague-ml{color:#dfafff}
+#psLeagueMoves{display:inline-flex!important;flex:0 0 29px!important;align-items:center!important;
+ justify-content:center!important;width:29px!important;min-width:29px!important;margin-left:auto!important}
+#psLeagueMoves .psMovesAction{display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;width:27px!important;min-width:27px!important;
+ height:27px!important;min-height:27px!important;margin:0!important;padding:2px!important}
+#psLeagueClose{flex:0 0 27px!important;width:27px!important;height:27px!important;margin:0!important;padding:0!important}
+#evolutions .psLeagueAnalysis>.evoLeague{display:none!important}
+#movesPopover .psMoveRow{grid-template-columns:40px minmax(0,1fr) 16px!important}
+#movesPopover .psMoveLegacy{grid-column:3!important;grid-row:1!important;
+ justify-self:center!important;align-self:center!important;line-height:1!important;margin:0!important}
+#movesPopover .psMoveLegacy .psEliteScroll{width:14px!important;height:13px!important;object-fit:contain!important}
+#movesPopover .psMoveStats{grid-column:2 / -1!important}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{top:auto!important;left:auto!important;
+ right:4px!important;bottom:3px!important;width:11px!important;height:11px!important;
+ min-width:11px!important;min-height:11px!important;max-width:11px!important;max-height:11px!important}
+@media(max-width:345px){#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+ right:3px!important;bottom:3px!important;width:9px!important;height:9px!important;
+ min-width:9px!important;min-height:9px!important;max-width:9px!important;max-height:9px!important}}
+#info{margin-top:4px!important;margin-bottom:4px!important}
+
+/* LT273 Samsung P/M/G: reserve a lower-right shelf for the evolution mark,
+   without changing the original centered, same-size league flags. */
+#rankLine[data-rank-rail="five"]{height:56px!important;min-height:56px!important}
+#rankLine[data-rank-rail="five"] .psRailButton{
+ height:54px!important;min-height:54px!important;
+ justify-content:flex-start!important;align-items:center!important;
+ padding-top:2px!important;
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+ right:4px!important;bottom:3px!important;
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1339,7 +1378,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button id="raidRow" type="button" hidden data-grade="unknown" aria-expanded="false"
   aria-controls="raidPanel" onclick="toggleRaidDetails()">Raides · verificando...</button>
  <section id="raidPanel" hidden role="region" aria-label="Análise de atacantes em Raides"></section>
- <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div><div id="info"></div>
+ <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
@@ -1350,6 +1389,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   <div id="movesPopover" hidden role="status" class="psMovesCompact"></div>
   <div id="evoBody" hidden></div>
  </section>
+ <div id="info"></div>
 
  <div id="coordRow">
     <button id="coords" onclick="requestCoordsUi()" title="Pegar e copiar coordenadas">⌖ Pegar Coordenadas</button>
@@ -1831,13 +1871,11 @@ function renderRaidPreview(){
    rows.slice(0,3).map(rowHtml).join("")+
    (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
     ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
-   '<details class="psRaidSource"><summary>Fonte e critérios</summary><div class="psRaidNote">'+
-    h(result.source||"Fonte de referência")+
-    ' · Rank por tipo e desempenho PvE, não ranking universal, não por IV nem contra um chefe específico. '+
-    'A fonte fornece somente o par de maior desempenho: 1 ataque Ágil e 1 Carregado. '+
-    'Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha. '+
-    'Dados de referência: nível 50 e IV 15/15/15; a forma, Mega e golpes dependem do jogo.'+
-    '</div></details>';
+   '';
+   panel.setAttribute?.("data-ps-source",String(result.source||"Fonte de referência"));
+   // Policy stays machine-readable, not another long expandable block.
+   panel.setAttribute?.("data-ps-criteria",
+    "Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha.");
  }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
@@ -2257,12 +2295,12 @@ function renderRankOneMoves(){
    (isMega?'<div class="psMoveLegend psMegaMoveContext">'+
     'Mesmos golpes do '+h(species)+' normal · avaliação Megaedição.</div>':"")+
    fastRow+chargedRows+
-   '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
-    (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
-      ' · recomendados ≠ capturados')+'</div>'+
-   (hasLegacy?'<div class="psMoveLegend" title="Golpe legado/Elite confirmado">Legado/Elite indicado ao lado do golpe</div>':
-    complete?'<div class="psMoveLegend">'+psMtIconHtml("normal")+' Sem golpes legados recomendados</div>':
-    '<div class="psMoveLegend">'+psMtIconHtml("unknown")+' Status de legado não verificado</div>');
+   '';
+  popover.title="Fonte: "+String(recommendation.source||"PvPoke")+
+   " · recomendados ≠ capturados."+
+   (isMega?" Mega não tem golpes exclusivos nem garante GBL.":"")+
+   (hasLegacy?" Golpe legado/Elite confirmado e marcado ao lado do nome.":"");
+  popover.setAttribute?.("aria-label",popover.title);
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
@@ -2582,7 +2620,12 @@ function psFocusLeagueBlocks(league){
  if(empty)empty.hidden=seen;
  const names={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
  const title=document.getElementById("psLeagueTitle");
- if(title)title.textContent="Avaliação PvP · "+(names[league]||"");
+ if(title){
+  const icons={gl:"ps-gl-lt268.png",ul:"ps-ul-lt268.png",ml:"ps-ml-lt268.png"};
+  title.innerHTML='<img class="psLeagueFlag" src="ui-icons/'+icons[league]+
+   '" alt="" aria-hidden="true"><span class="psLeagueTitleText psLeague-'+league+'">'+names[league]+'</span>';
+  title.setAttribute?.("aria-label",names[league]||"Liga");
+ }
  return seen;
 }
 function psToggleLeagueAssessment(league){
