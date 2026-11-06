@@ -317,6 +317,42 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     document.querySelector("#psRankExplorer")?.scrollIntoView({block:"nearest"});
    });
    await page.screenshot({path:path.join(output,sz.name+"-ursaluna-class-selected.png")});
+   // LT259: actual shipping card under a deterministic public-data fixture.
+   // Raid badge is visible BEFORE coordinates, and expansion stays inline.
+   const raid=await page.evaluate(async()=>{
+    window.PokeSearchRankExplorer?.close?.();
+    if(typeof closeDetailMetric==="function")closeDetailMetric();
+    window.PokeSearchRaidRank={
+     offlineAttack:()=>({name:"Seismitoad",attack:188}),
+     assess:async()=>({verified:true,best:{rank:6,name:"Seismitoad",
+       typePt:"Água",type:"water",projected:true},
+       rows:[{name:"Seismitoad",rank:6,typePt:"Água",variant:"normal",
+         projected:true,fast:"MUD_SHOT_FAST",charged:"HYDRO_PUMP",elite:false}],
+       source:"Fonte PvE simulada",note:"IV independente"})
+    };
+    window.showDetails({number:"#535",name:"Tympole",sourceIndex:991,
+      iv:"15/15/15",cp:407,level:17,despawn:"03:00",
+      moves:"Mud Shot / Water Pulse",location:"Test City"}, "gl",false);
+    for(let i=0;i<8;i++)await Promise.resolve();
+    const row=document.getElementById("raidRow"),panel=document.getElementById("raidPanel"),
+      coords=document.getElementById("coordRow");
+    const before=!row.hidden&&row.textContent.includes("#6 Água")&&panel.hidden;
+    row.click();
+    const root=document.getElementById("panel");
+    root.scrollTop=root.scrollHeight;
+    return {ok:before&&!panel.hidden&&
+      row.getAttribute("aria-expanded")==="true"&&
+      panel.textContent.includes("Seismitoad")&&
+      panel.textContent.includes("não ranking universal")&&
+      row.getBoundingClientRect().top<coords.getBoundingClientRect().top&&
+      panel.scrollWidth<=panel.clientWidth+3&&
+      root.scrollWidth<=root.clientWidth+3,
+      label:row.textContent,panelWidth:panel.scrollWidth,
+      clientWidth:panel.clientWidth,content:panel.textContent.slice(0,110)};
+   });
+   assert.ok(raid.ok,"LT259 pre-capture Raid badge and inline expansion P/M/G "+
+    sz.name+" "+JSON.stringify(raid));
+   await page.screenshot({path:path.join(output,sz.name+"-raid-pre-capture.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,
