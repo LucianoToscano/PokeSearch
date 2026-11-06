@@ -1976,6 +1976,31 @@
           "Testes automatizados e capturas P/M/G aprovados, mas instalação e inspeção visual física nas duas Pokébolas Samsung continuam não comprovadas. O Android exige confirmação do usuário para instalar a atualização."
         ]
       }
+    },
+    {
+      "id": "lt255-teddiursa-family-switch-offline-20261105",
+      "minVersionCode": 54459,
+      "date": "05/11/2026",
+      "title": "PokeSearch LT255 — Evoluções selecionáveis na calculadora PvP",
+      "sections": {
+        "novidades": [
+          "Botões diretos de evolução dentro da calculadora: Teddiursa, Ursaring e Ursaluna podem ser escolhidos sem depender da atualização da Análise PvP.",
+          "Famílias com muitas formas usam uma lista compacta recolhível; o seletor atual e as setas continuam disponíveis."
+        ],
+        "melhorias": [
+          "Catálogo offline usa as mesmas 463 ligações de evolução já verificadas no PokeSearch e o Game Master existente; a troca funciona mesmo antes de chegar a análise PvP.",
+          "Alterar forma recalcula PC e PS, mantendo IV A/B, nível e PC-alvo; botões mostram a forma ativa.",
+          "O mesmo comportamento é compartilhado pelas duas Pokébolas, mantendo configurações separadas e visual compacto P/M/G."
+        ],
+        "correcoes": [
+          "Corrigida a impossibilidade de selecionar Ursaring/Ursaluna no simulador aberto a partir de Teddiursa 0/14/15, PC 478, Nv. 14.",
+          "Prevenidas opções de família normal presumidas para fantasias, formas regionais e Pokémon Sombrosos.",
+          "Nenhuma consulta extra à API ou gasto de revelação de coordenadas para calcular as evoluções."
+        ],
+        "emDesenvolvimento": [
+          "Testes de regressão e capturas visuais P/M/G automatizados foram executados; a validação de toque e instalação diretamente no Samsung real ainda depende de inspeção do usuário."
+        ]
+      }
     }
   ]
 }
