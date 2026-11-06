@@ -2001,6 +2001,29 @@
           "Testes de regressão e capturas visuais P/M/G automatizados foram executados; a validação de toque e instalação diretamente no Samsung real ainda depende de inspeção do usuário."
         ]
       }
+    },
+    {
+      "id": "lt256-webview-asset-cache-family-20261106",
+      "minVersionCode": 54460,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT256 — Evoluções e carregamento atualizado",
+      "sections": {
+        "novidades": [
+          "A calculadora mostra a quantidade de formas disponíveis junto ao seletor, por exemplo 'Forma · 3' para Teddiursa, Ursaring e Ursaluna."
+        ],
+        "melhorias": [
+          "A WebView de detalhes carrega os recursos locais atuais sem reutilizar páginas JavaScript em cache de instalações anteriores.",
+          "O carregador de recursos assinados permite o catálogo offline de evoluções, mantendo validação criptográfica e as duas Pokébolas independentes."
+        ],
+        "correcoes": [
+          "Corrigida incompatibilidade entre a lista de recursos OTA assinados e o catálogo de evoluções incluído na LT255.",
+          "A região geográfica de captura não é mais confundida com uma forma regional de Pokémon, evitando ocultar evoluções normais por engano.",
+          "Mantidos os campos IV A/B, o nível, as setas e o seletor da calculadora em cartões compactos."
+        ],
+        "emDesenvolvimento": [
+          "A interface anterior continua indicando possível versão antiga instalada. Confirme o número da versão no Android e teste Teddiursa/Ursaring/Ursaluna diretamente no Samsung; testes automatizados não comprovam a instalação física."
+        ]
+      }
     }
   ]
 }
