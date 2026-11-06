@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.73",
-  "code": 54477,
-  "label": 51277,
-  "previous_tag": "v0.02.72-54476",
-  "qa_max_code": 54476,
-  "release_notes": "PokeSearch LT273: revisada a interface de Rankings PvP e Raides no Samsung. Topo do Rank Classe/Geral alinhado em uma única linha (#1 Topo, Minha posição/Meu IV, Todos/Top) com menus próprios no WebView para liga GL/UL/ML e filtro; removidos os botões Copiar/Compartilhar/CSV. Cabeçalho da avaliação PvP agora exibe apenas o ícone oficial e nome colorido da liga, junto ao botão de Ataques específicos daquela liga e ao X. Golpes capturados e Local ficam sob os painéis e imediatamente antes de Pegar Coordenadas. Removidos parágrafos de Fonte e critérios de Raides e rodapé verboso dos Golpes, preservando fontes verificadas em metadados. Ícone original de evolução movido para a direita e abaixo sem encostar na borda nem sobrepor a bandeira. Duas Pokébolas, menu Modos, IVs, Megas, filtros, sprites e OTA preservados. Teste físico Samsung ainda pendente."
+  "version": "0.02.74",
+  "code": 54478,
+  "label": 51278,
+  "previous_tag": "v0.02.73-54477",
+  "qa_max_code": 54477,
+  "release_notes": "LT274: seletor GL/UL/ML dentro do Rank Classe, em menus WebView próprios, com recálculo dos 4.096 IVs da mesma espécie e forma para a liga selecionada. Preserva o IV capturado, PC, nível, eficiência, comparação de IVs e separação do Rank Geral. Os painéis e menus compactos LT273, cinco ícones, bandeiras centralizadas, ataques por liga, Raides, sprites, duas Pokébolas, localização, alertas e atualização integrada permanecem intactos. Testes físicos Samsung e sincronização com Drive ainda pendentes."
 }

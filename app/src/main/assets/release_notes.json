@@ -2441,6 +2441,27 @@
           "Confirmar operação visual no Samsung, posição e atualização física após instalação."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt274-class-league-picker-20261106",
+      "minVersionCode": 54478,
+      "date": "06/11/2026",
+      "title": "LT274 — escolha da liga dentro do Rank Classe",
+      "sections": {
+        "novidades": [
+          "Rank Classe permite trocar diretamente entre Grande Liga, Ultra Liga e Liga Mestra no mesmo painel."
+        ],
+        "melhorias": [
+          "Recalcula PC, nível, eficiência e posição usando os 4.096 IVs da mesma espécie e forma em cada liga.",
+          "Mantém o IV capturado e compara opções sem confundir Rank Classe com Rank Geral."
+        ],
+        "correcoes": [
+          "A seleção agora funciona por opções tocáveis do próprio WebView, inclusive nos cartões P/M/G."
+        ],
+        "emDesenvolvimento": [
+          "Validação física no Samsung e sincronização opcional da APK no Drive ainda precisam de comprovação."
+        ]
+      }
     }
   ]
 }

@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT274 — Rank Classe com seleção de liga (06/11/2026, preparação)
+
+A partir da LT273 oficial, detectou-se lacuna em pedido anterior: o Rank Classe não tinha seletor GL/UL/ML na própria janela. LT274 implementa seleção por botões WebView, recálculo verificado dos 4.096 IVs da mesma espécie, mantendo IV capturado, comparador e separação Rank Geral. Artefato oficial só após CI verde e QA; Samsung/Drive pendentes.
+
+
 ## LT273 — CONTROLES COMPACTOS, NAVEGAÇÃO E EVOLUÇÃO (06/11/2026)
 
 - **Objetivo:** sanar pontos marcados #2EFF2C (remover botões de exportação e explicações longas), #EB3BE5 (alinhamento), #FF7D1A (seletor de liga inoperante), #9933FF (mover Golpes capturados/Local para antes de Pegar Coordenadas), #0028B8 (cabeçalho único da liga), e reposicionar ícone de evolução sem tocar bandeira ou bordas.
