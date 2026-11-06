@@ -1853,17 +1853,12 @@ function renderRaidPreview(){
    rows.slice(0,3).map(rowHtml).join("")+
    (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
     ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
-   '<details class="psRaidSource"><summary>Fonte e critérios</summary><div class="psRaidNote">'+
-    h(result.source||"Fonte de referência")+
-    ' · Rank por tipo e desempenho PvE, não ranking universal, não por IV nem contra um chefe específico. '+
-    'A fonte fornece somente o par de maior desempenho: 1 ataque Ágil e 1 Carregado. '+
-    'Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha. '+
-    'Dados de referência: nível 50 e IV 15/15/15; a forma, Mega e golpes dependem do jogo.'+
-    '</div></details>';
+   '';
+   panel.title=String(result.source||"Fonte de referência")+
+    " · Rank PvE por tipo; não é ranking universal nem counter de um chefe específico; somente 1 par Ágil/Carregado.";
  }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
- if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
  if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
 }
@@ -2278,13 +2273,12 @@ function renderRankOneMoves(){
    '</div>'+
    (isMega?'<div class="psMoveLegend psMegaMoveContext">'+
     'Mesmos golpes do '+h(species)+' normal · avaliação Megaedição.</div>':"")+
-   fastRow+chargedRows+
-   '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
-    (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
-      ' · recomendados ≠ capturados')+'</div>'+
-   (hasLegacy?'<div class="psMoveLegend" title="Golpe legado/Elite confirmado">Legado/Elite indicado ao lado do golpe</div>':
-    complete?'<div class="psMoveLegend">'+psMtIconHtml("normal")+' Sem golpes legados recomendados</div>':
-    '<div class="psMoveLegend">'+psMtIconHtml("unknown")+' Status de legado não verificado</div>');
+   fastRow+chargedRows;
+  // Keep provenance and Elite interpretation accessible without extra rows.
+  popover.title="Fonte: "+String(recommendation.source||"PvPoke")+
+   (isMega?" · Megaedição":" · recomendados ≠ capturados")+
+   (hasLegacy?" · MT Elite indicada ao lado do ataque":
+    complete?" · sem golpes legados recomendados":" · legado não confirmado");
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
