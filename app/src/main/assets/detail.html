@@ -2982,8 +2982,8 @@ window.showDetails=(c,mode,watched)=>{
  rankLine.textContent=rankText;
  rankLine.hidden=!verifiedIvRank;
  rankLine.title=verifiedIvRank?
-  "Rank Classe IV #"+ivValue+" de "+String(c.name||"Pokémon")+
-  ": comparação entre os IVs desta espécie/forma, NÃO é Rank Geral da Grande Liga.":"";
+  "Ranking dos IVs: Rank Classe #"+ivValue+" de "+String(c.name||"Pokémon")+
+  ", comparação entre 4.096 IVs desta espécie/forma, NÃO é Rank Geral da liga.":"";
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
  window.currentCardMoves=String(c.moves||"");
  currentCardMoves=window.currentCardMoves;
