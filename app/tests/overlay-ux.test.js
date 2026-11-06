@@ -2653,7 +2653,8 @@ test("RANK-EVO-DETAIL-02 card expands and escapes all visible evolution values",
    !body.innerHTML.includes("PC 1497")||!body.innerHTML.includes("Nv. 29,0"))return false;
  if(!ctx.psToggleLeagueAssessment("gl"))return false;
  if(section.hidden||body.hidden||node("evoToggle")["aria-expanded"]!=="true"||
-  node("psLeagueTitle").textContent!=="Avaliação PvP · Grande Liga")return false;
+  node("psLeagueTitle").textContent!=="Grande Liga"||
+  node("psLeagueFlag").src!=="ui-icons/ps-gl-lt268.png")return false;
  if(!ctx.psCloseLeagueAssessment())return false;
  if(!section.hidden||!body.hidden||node("evoToggle")["aria-expanded"]!=="false")return false;
  // For the SAME Pokémon, no verified ranks must remove the entire tab,

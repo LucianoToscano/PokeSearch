@@ -62,7 +62,8 @@ async function test(){
  await first.onclick();
  assert.equal(pop.hidden,false);
  assert.equal(first.textContent,"🗡️","click never changes the verified badge");
- assert.ok(pop.innerHTML.includes("Sem golpes legados recomendados"));
+ assert.ok(pop.title.includes("sem golpes legados recomendados"),
+  "Legacy status preserved in accessible source, not a cluttered footer");
  await first.onclick();assert.equal(pop.hidden,true);
  render();
  assert.equal(line.children.at(-1).textContent,"🗡️","verified icon survives rerender and collapse");
@@ -83,7 +84,10 @@ async function test(){
  await Promise.resolve();await Promise.resolve();
  assert.equal(greninja.textContent,"⚔️","legacy badge must appear before tap");
  await greninja.onclick();assert.equal(greninja.textContent,"⚔️");
- assert.ok(pop.innerHTML.includes("Golpe legado/Elite confirmado"));
+ assert.ok(pop.innerHTML.includes('class="psMoveLegacy"')&&
+  pop.innerHTML.includes("mt-carregada-elite-lt265.png"),
+  "Elite mark stays adjacent to the verified charged move");
+ assert.ok(pop.title.includes("MT Elite indicada ao lado do ataque"));
  render();assert.ok(line.children.at(-1).title.includes("legado/Elite"));
  identity="card-D";card="Unknown";line.textContent="GL IV #1 Atual";
  render();const unknown=line.children.at(-1);await unknown.onclick();

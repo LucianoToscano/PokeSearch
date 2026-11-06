@@ -51,7 +51,9 @@ assert.match(detail,/row\("Ágil",recommendation\.fast\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("C"\+\(i\+1\),m\)\)/);
 assert.match(detail,/map\(\(m,i\)=>row\("C"\+\(i\+1\),m\)\)/,
  "the same indexed renderer covers C1 and C2");
-assert.ok(detail.includes('psMtIconHtml("elite")')&&detail.includes("Golpe legado/Elite confirmado"));
+assert.ok(detail.includes('psMtIconHtml("elite")')&&
+ detail.includes('psMoveLegacy')&&detail.includes('mt-carregada-elite-lt265.png'),
+ "Verified Elite status remains attached to its specific charged move, not a global footer");
 assert.match(detail,/font-size:8px;vertical-align:baseline/);
 assert.match(detail,/ghost:"#b7a2ff"/);
 assert.match(detail,/water:"#67b8ff"/);

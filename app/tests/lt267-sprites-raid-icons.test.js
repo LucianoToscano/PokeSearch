@@ -53,7 +53,9 @@ assert.ok(html.includes('src="ui-icons/ps-cup-lt268.png"'));
 assert.ok(!html.includes("⚪ LC 500"));
 assert.ok(html.includes("const raidDisplayName=row=>"));
 assert.ok(html.includes('window.PokeSearchTypeIcons?.[row.type]'));
-assert.ok(html.includes("Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha."));
+assert.ok(html.includes('panel.title=String(result.source')&&
+ html.includes('somente 1 par Ágil/Carregado'),
+ "PvE provenance and single verified pair retained without long visible criteria");
 assert.ok(html.includes('id="psShadowSymbol"'));
 assert.ok(html.includes("c.isShadow===true||c.shadow===true"));
 const sha=file=>crypto.createHash("sha256").update(fs.readFileSync(path.join(root,file))).digest("hex");

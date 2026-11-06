@@ -25,7 +25,10 @@ assert.match(detail,/isMega&&recommendation\.megaRecommendation!==true/);
 assert.ok(detail.includes('Mega Evolução não aprende golpes exclusivos'));
 assert.ok(detail.includes("Os golpes são do '+h(species)+' normal; recomendação Mega não verificada."));
 assert.ok(detail.includes("Mesmos golpes do '+h(species)+' normal · avaliação Megaedição."));
-assert.ok(detail.includes('Mega não tem golpes exclusivos nem garante GBL'));
+assert.ok(detail.includes('recommendation.megaRecommendation!==true')&&
+ detail.includes('isMega?" · Megaedição"')&&
+ detail.includes("Mega Evolução não aprende golpes exclusivos"),
+ "Mega Edition retains distinct source and cannot mislead about GBL eligibility");
 assert.ok(detail.includes('src="ui-icons/mega-symbol.png"'));
 assert.ok(detail.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'),"source-verified legacy icon before a tap");
 assert.ok(detail.includes('currentCardMoves'),'captured moves remain independently represented');
