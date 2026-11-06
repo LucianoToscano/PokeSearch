@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT258 — ícones de golpes antes do clique e rolagem da lista (06/11/2026 · QA isolado)
+
+- Origem: print Samsung do Scorbunny (GL IV #1) mostrou ícone ⚡ genérico e lista de golpes possíveis que não rolava até o fim. O usuário explicitou que o símbolo deve revelar a necessidade de golpe legado **antes** do toque, sem mudar por causa do clique.
+- Implementação em `fix/lt258-moves-icons-scroll-20261106`: `pvp_rank_moves.js` verifica antecipadamente os IDs recomendados e o status legado/Elite do snapshot PvPoke fixado, sem login/PoGoCoordinates; `detail.html` exibe ⚔️ para conjunto recomendado com legado/Elite, 🗡️ para confirmado sem legado e ⚔︎ neutro/cinza quando não for possível comprovar, inclusive espécie sem conjunto PvP recomendado. O clique apenas abre a lista e congela o glifo atual; respostas tardias são armazenadas para o próximo redesenho.
+- O único scroll vertical de golpes agora é o do `#panel`, sem o duplo limite interno de 178/130 px; o `toggle` dos golpes possíveis recalcula a altura do Android. Mantém menus e três chips independentes, P/M/G e P1/P2.
+- Evidência: [auditoria LT258](LT258_PRE_CLICK_ATAQUES_SCROLL_QA_20261106.md), regressão `app/tests/lt258-preverified-swords-scroll.test.js` e `app/tests/lt248-move-icon-persistence-compact-fallback.test.js`, ambas executadas e aprovadas em harness isolado. Seis gates GitHub Actions **verdes** na revisão `aee732d665b6ee8a9baefbbecd7e7bd4fc714b2b`, incluindo [visual P/M/G #42172233851](https://github.com/LucianoToscano/PokeSearch/actions/runs/42172233851), Node QA, regressão completa, Java, QA core e política OTA; QA físico Samsung P1/P2 ainda **pendente**.
+- **Sem merge e sem publicação oficial** enquanto não houver QA completo, APK assinado e OTA comprovada. LT257 permanece a última publicação comprovada neste ponto da branch.
+
 ## LT257 — seletor único de evoluções e Megas (06/11/2026; release OFICIAL confirmada)
 
 - **Pedido explícito:** adaptar a calculadora da PokeSearch ao seletor de referência que lista `Gastly`, `Haunter`, `Gengar (Normal)`, `Gengar (Mega)`, mantendo IV/PC/Nível e indicador Mega. Nenhuma janela flutuante extra.

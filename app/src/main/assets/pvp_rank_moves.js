@@ -1,7 +1,7 @@
-/* LT231 PvP moves: read-only, on-demand, source-pinned PvPoke public snapshots.
+/* LT258 PvP moves: read-only, source-pinned PvPoke public snapshots.
    Rankings supply the recommended move IDs; gamemaster supplies Elite/Legacy
    flags. No unverified guess, PoGoCoordinates call, cookie, token, or backend.
-   Network is used ONLY when user taps ⚔️ and never retries an HTTP failure. */
+   Badge metadata is checked automatically when a detail card opens; full\n   localized moves load when the user taps. No credentials or background service. */
 (function(root,factory){
  "use strict";
  const api=factory();
@@ -179,6 +179,30 @@
    return localized;
   }catch(_){return null;}
  }
+ // LT258: verify the badge in advance using ONLY ranked move IDs and
+ // the pinned gamemaster. No PT-BR translation download or click is needed.
+ // Neutral when the species is unranked, the source fails or any status is unknown.
+ async function getStatus(league,name,mega=false){
+  const cap=caps[league],id=mega?megaSpeciesId(name):speciesId(name);
+  if(!cap||!id)return null;
+  try{
+   const path=(mega?"rankings/mega/overall/":"rankings/all/overall/")+
+    "rankings-"+cap+".json";
+   const [rankings,master]=await Promise.all([
+    getJson(path),getJson("gamemaster.json")]);
+   const recommended=fromData(rankings,master,league,id);
+   if(!recommended)return null;
+   const moves=[recommended.fast,...(recommended.charged||[])].filter(Boolean);
+   if(moves.length<2||moves.some(m=>
+      !["normal","elite","legacy"].includes(m.status)))return null;
+   const legacy=moves.some(m=>m.status==="elite"||m.status==="legacy");
+   return {verified:true,legacy,icon:legacy?"⚔️":"🗡️",
+    title:legacy?"⚔️ Recomendação PvP contém golpe legado/Elite":
+     "🗡️ Recomendação PvP sem golpes legados",
+    source:mega?source+" · Mega Edition":source};
+  }catch(_){return null;}
+ }
+
  async function lookup(league,name){
   const cap=caps[league];if(!cap||!name)return null;
   try{
@@ -222,5 +246,5 @@
   }catch(_){return null;}
  }
 
- return Object.freeze({lookup,lookupMega,megaSpeciesId,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
+ return Object.freeze({lookup,lookupMega,getStatus,megaSpeciesId,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
 });

@@ -1020,7 +1020,18 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpSimFoot{margin:3px 0!important;font-size:9px!important;line-height:1.3!important}
 #psMetricPanel .psCpSimFoot details{margin-top:2px}
 #psMetricPanel .psCpSimFoot summary{cursor:pointer;color:#afcfe5}
-#movesPopover:not([hidden]){max-height:178px!important;overflow-y:auto!important}
+/* LT258: only the outer card scrolls. Nested 130/178px scroll areas could
+   trap touches on Samsung WebView and hide the final charged attacks. */
+#movesPopover:not([hidden]){max-height:none!important;overflow:visible!important;
+ touch-action:auto!important;overscroll-behavior:auto!important}
+#movesPopover .psAvailableMoveList{max-height:none!important;overflow:visible!important;
+ touch-action:auto!important;overscroll-behavior:auto!important}
+#movesPopover .psAvailableMoveDetails>summary{cursor:pointer;touch-action:manipulation!important;
+ min-height:26px!important;line-height:1.35!important;padding:4px 0!important}
+#panel.needsScroll{overflow-y:auto!important;touch-action:pan-y!important;
+ -webkit-overflow-scrolling:touch;scrollbar-width:thin!important}
+#rankLine .psMovesAction[data-ps-verified="false"]{color:#aab4c4!important;
+ opacity:.72!important}
 #movesPopover .psMoveRow{display:grid!important;grid-template-columns:40px minmax(0,1fr) 10px!important;
  align-items:center!important;gap:1px 3px!important;flex-wrap:nowrap!important;
  padding:2px 0!important;min-height:0!important}
@@ -1684,6 +1695,14 @@ function renderRankOneMoves(){
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
  popover.hidden=true;popover.textContent="";
+ // <details> opens after click, so resize after the native toggle event.
+ // Attach once per WebView; both Pokébolas share this asset independently.
+ if(!popover.psMovesToggleBound&&typeof popover.addEventListener==="function"){
+  popover.addEventListener("toggle",event=>{
+   if(event.target?.matches?.(".psAvailableMoveDetails"))resizeEvolutionPanel();
+  },true);
+  popover.psMovesToggleBound=true;
+ }
  const hasRank=/(?:Rank Classe:|IV) #\d+/.test(rankLine.textContent||"");
  const megaTop=window.psRankContext?.leagues?.some?.(x=>x?.league===activeRankLeague&&
    x?.megas?.some?.(m=>m?.megaProjection===true&&Number(m.rank)===1));
@@ -1700,15 +1719,38 @@ function renderRankOneMoves(){
  if(typeof document.createElement!=="function"||typeof rankLine.appendChild!=="function")return;
  const btn=document.createElement("button");btn.type="button";
  const prior=psVerifiedMoveIcons.get(statusKey);
- btn.textContent=prior?.icon||"⚡";
+ // The badge must be known BEFORE the user taps. Never change it on click.
+ // Unverified results get a neutral monochrome sword, not an assumed legacy verdict.
+ btn.textContent=prior?.icon||"⚔︎";
  btn.title=prior?.title||
-  (isMega?"Consultar recomendação PvP da Megaedição; golpes aprendidos na forma normal":
-   "Consultar golpes; ícone neutro até verificar legado e recomendação");
+  (isMega?"Ver golpes da Megaedição · status legado não verificado":
+   "Ver golpes · status legado ainda não verificado");
  btn.setAttribute("aria-label",btn.title);
+ btn.setAttribute?.("data-ps-verified",prior?"true":"false");
+ let actionOpened=false;
+ if(!prior&&typeof window.PokeSearchPvpRankMoves?.getStatus==="function"){
+  const originalIdentity=detailIdentity;
+  Promise.resolve(window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega))
+   .then(status=>{
+    if(detailIdentity!==originalIdentity||btn.isConnected===false)return;
+    // Do not present fallback move pools as PvP recommendations.
+    if(!status?.verified)return;
+    const checked={icon:status.icon,title:status.title};
+    psVerifiedMoveIcons.set(statusKey,checked);
+    // A tap cannot trigger or visibly change the badge afterward.
+    // Cache the verdict for the next render if the user already tapped.
+    if(actionOpened)return;
+    btn.textContent=checked.icon;btn.title=checked.title;
+    btn.setAttribute?.("aria-label",checked.title);
+    btn.setAttribute?.("data-ps-verified","true");
+   }).catch(()=>{/* Badge stays neutral if the pinned source cannot be verified. */});
+ }
  btn.style.cssText="border:0;background:transparent;color:inherit;font-size:11px;line-height:1;padding:0 2px;cursor:pointer";
  btn.onclick=async()=>{
+  actionOpened=true;
   const show=popover.hidden;popover.hidden=!show;
   if(!show){resizeEvolutionPanel();return;}
+  popover.scrollTop=0;
   const identity=detailIdentity;
   popover.textContent="Consultando golpes PvP...";
   resizeEvolutionPanel();
@@ -1793,11 +1835,8 @@ function renderRankOneMoves(){
   const complete=verified.length>=2&&verified.every(m=>
    m.status==="normal"||m.status==="elite"||m.status==="legacy");
   if(complete){
-   btn.textContent=hasLegacy?"⚔️":"⚡";
-   btn.title=hasLegacy?"⚔️ Conjunto recomendado exige pelo menos um golpe legado":
-    "⚡ Consultar conjunto PvP confirmado sem golpe legado";
-   btn.setAttribute?.("aria-label",btn.title);
-   psVerifiedMoveIcons.set(statusKey,{icon:btn.textContent,title:btn.title});
+   // No icon mutations on click: pre-verification owns the badge.
+   // The clicked panel only displays the independently checked moves.
   }
   popover.innerHTML='<div class="psMoveTitle">'+
    (isMega?'<img class="psMegaMoveIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">'+
@@ -1810,7 +1849,7 @@ function renderRankOneMoves(){
     (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
       ' · recomendados ≠ capturados')+'</div>'+
    (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado/Elite confirmado</div>':
-    complete?'<div class="psMoveLegend">⚡ Sem golpes legados recomendados</div>':
+    complete?'<div class="psMoveLegend">🗡️ Sem golpes legados recomendados</div>':
     '<div class="psMoveLegend">Status de legado não verificado</div>');
   resizeEvolutionPanel();
  };
