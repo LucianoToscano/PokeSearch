@@ -2024,6 +2024,31 @@
           "A interface anterior continua indicando possível versão antiga instalada. Confirme o número da versão no Android e teste Teddiursa/Ursaring/Ursaluna diretamente no Samsung; testes automatizados não comprovam a instalação física."
         ]
       }
+    },
+    {
+      "id": "lt257-evolution-mega-single-dropdown-20261106",
+      "minVersionCode": 54461,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT257 — Lista de evoluções e Megas na calculadora",
+      "sections": {
+        "novidades": [
+          "Seletor único de evoluções na calculadora PvP, com todas as formas conhecidas em uma lista expansível e compacta.",
+          "Gastly → Haunter → Gengar (Normal) → Gengar (Mega), incluindo símbolo Mega antes do nome. Também suporta Mega X/Y e outras famílias verificadas."
+        ],
+        "melhorias": [
+          "Mudança de forma recalcula imediatamente PC e PS com Game Master offline, mantendo IV A/B, nível e PC-alvo.",
+          "Setas laterais, ordenação evolutiva e destaque da escolha permanecem sincronizados; lista fecha após selecionar.",
+          "Sem chips duplicados nem nova janela flutuante, mantendo visual de vidro e compatibilidade P/M/G e duas Pokébolas."
+        ],
+        "correcoes": [
+          "Mega Evolução identificada separadamente da forma normal, sem tratar Mega como ataque carregado ou alterar a disponibilidade de golpes.",
+          "Lista longa com altura limitada e rolagem própria para evitar cortes nos cartões compactos.",
+          "Setas ficam alinhadas ao cabeçalho da lista, inclusive quando a lista está expandida."
+        ],
+        "emDesenvolvimento": [
+          "Testes Node/Java/OTA e capturas Chromium P/M/G realizados; instalação e verificação física das duas Pokébolas no Samsung ainda não comprovadas."
+        ]
+      }
     }
   ]
 }
