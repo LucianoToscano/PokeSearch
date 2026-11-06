@@ -46,7 +46,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const panel=document.getElementById("panel"),
      inner=document.getElementById("psMetricPanel");
     const width=window.innerWidth;
-    const selectors=["#psCpForm","#psCpLevel","#psCpTargetCp",
+    const selectors=["#psCpFormMenu > summary","#psCpLevel","#psCpTargetCp",
       ".psCpIvInputs input",".psCpPresets button","#psCpSimResult"];
     const bad=[];
     for(const selector of selectors)
