@@ -36,7 +36,7 @@ assert.match(ui,/id="psCpFormMenu"/);
 assert.match(ui,/psCpFormList/);
 assert.match(ui,/Gengar \(Normal\)/);
 assert.match(ui,/Gengar \(Mega\)/);
-assert.match(ui,/src="mega_evolution_icon.svg"/);
+assert.match(ui,/src="ui-icons\/mega-symbol\.png"/);
 assert.ok(!ui.includes("psCpFamilyQuick"),"no duplicated quick row");
 assert.ok(ui.indexOf('data-pscp-form="gengar"')<ui.indexOf('data-pscp-form="gengar_mega"'),
  "normal Gengar precedes its Mega");

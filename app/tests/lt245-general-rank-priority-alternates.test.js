@@ -47,7 +47,7 @@ const classButton=line.children.find(x=>x.className==="psCompactIv psRankOpen ps
 const primary=line.children.find(x=>x.className==="psCompactOverall psRankOpen");
 const more=line.children.find(x=>x.className==="psRankMore");
 assert.equal(primary.textContent,"RG #519");
-assert.equal(classButton.textContent,"🔵 GL IV #1");
+assert.equal(classButton.textContent,"GL IV #1");
 assert.equal(more,undefined,"no fifth chip: alternatives are reached through Análise PvP");
 assert.equal(line.attrs["data-alternatives"],"1");
 assert.equal(primary.dataset.psName,"Lampent");
@@ -128,6 +128,6 @@ assert.equal(moduleObj.update(teddi),true);
 assert.equal(line.children.find(x=>x.className==="psCompactSpecies").textContent,"↳ Ursaluna");
 assert.equal(line.children.find(x=>x.className==="psCompactOverall psRankOpen").textContent,"RG #163",
  "Ursaluna verified RG must appear on compact card, not only expanded analysis");
-assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv").textContent,"🔵 GL IV #1");
+assert.equal(line.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv").textContent,"GL IV #1");
 assert.equal(line.attrs["data-alternatives"],"1","extra forms are found in the PvP analysis, not a fifth chip");
 console.log("LT245: RG first among good IVs, class fallback, strict Top filter, +N comparison, P1/P2 PASS");

@@ -66,7 +66,7 @@ const sample={name:"Teddiursa",searchLeague:"gl",searchRankLimit:1,
 };
 assert.equal(f(sample),true);
 assert.deepEqual(line.children.slice(0,3).map(x=>x.textContent),
- ["🔵 GL IV #1","↳ Ursaluna","RG #163"]);
+ ["GL IV #1","↳ Ursaluna","RG #163"]);
 line.children[0].onclick({});
 line.children[1].onclick({});
 line.children[2].onclick({});
@@ -87,11 +87,12 @@ const ml={...sample,searchLeague:null,searchRankLimit:null,leagues:[
  {league:"ul",own:{rank:79},evolutions:[]},
  {league:"ml",own:{rank:1,overallRank:240},evolutions:[]}]};
 assert.equal(fAuto(ml),true);
-assert.equal(line.children[0].textContent,"🟣 ML IV #1");
+assert.equal(line.children[0].textContent,"ML IV #1");
 assert.equal(line.children[1].textContent,"Atual");
 assert.equal(line.children[2].textContent,"RG #240");
-assert.ok(detail.includes('gl:"🔵 Grande Liga",ul:"🟡 Ultra Liga",ml:"🟣 Liga Master"'));
-assert.ok(detail.includes('src="mega_evolution_icon.svg"'));
+for(const file of ["league-gl-flag.png","league-ul-flag.png","league-ml-flag.png"])
+ assert.ok(detail.includes('src="ui-icons/'+file+'"'),"correct badge for PvP league");
+assert.ok(detail.includes('src="ui-icons/mega-symbol.png"'));
 // CP/level simulator operates independent of the PvP filter and uses
 // full trusted family payload to navigate Teddiursa, Ursaring, Ursaluna.
 const begin=script.indexOf("/* LT244: zero-cost contextual stats actions.");

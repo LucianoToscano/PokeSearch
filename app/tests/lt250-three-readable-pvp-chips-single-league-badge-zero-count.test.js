@@ -22,12 +22,12 @@ assert.ok(detail.includes('badge.disabled=true;badge.setAttribute?.("aria-disabl
 assert.ok(!detail.includes('rankLine.appendChild(more);'),"do not add a fifth +N button to the strip");
 assert.ok(detail.includes('nameChip.title+=" · "+otherChoices.length+'),
  "other candidates remain in existing PvP analysis");
-assert.ok(detail.includes('iv.textContent=leagueIcon+" "+label+" IV #"+best.rank'));
+assert.ok(detail.includes('iv.textContent=label+" IV #"+best.rank'));
 assert.ok(detail.includes('nameChip.onclick=event=>openPvpAnalysisForSpecies(event,nameChip)'));
 assert.ok(detail.includes('badge.onclick=event=>openPvpRankExplorer(event,badge)'));
 assert.ok(detail.includes('btn.onclick=async()=>'),"⚔️/⚡ remains independent");
-for(const badge of ['gl:"🔵"','ul:"🟡"','ml:"🟣"'])assert.ok(detail.includes(badge));
-assert.ok(detail.includes('emblem.src="mega_evolution_icon.svg"'));
+for(const badge of ['gl:"ui-icons/league-gl-flag.png"','ul:"ui-icons/league-ul-flag.png"','ml:"ui-icons/league-ml-flag.png"'])assert.ok(detail.includes(badge));
+assert.ok(detail.includes('emblem.src="ui-icons/mega-symbol.png"'));
 // Zero must remain visible when the provider reports no cards. If the
 // numeric badge is enabled, it appears ON the Pokébola; if disabled, under
 // the icon, never two copies or an invisible absolute-positioned number.

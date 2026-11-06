@@ -51,7 +51,7 @@ assert.equal(display()(ordinary),true);
 assert.ok(badge.textContent.startsWith("GL · IV #5 · ↳ Noivern"),
  "legacy text-only DOM retains the IV #5 scope for the Noivern evolution");
 assert.ok(badge.textContent.includes("RG #792"),"verified general rank stays visible");
-assert.ok(script.includes('iv.textContent=leagueIcon+" "+label+" IV #"+best.rank'),"IV explorer remains independently accessible");
+assert.ok(script.includes('iv.textContent=label+" IV #"+best.rank'),"IV explorer remains independently accessible");
 assert.ok(badge.title.includes("Noibat atual: #1600"));
 badge.hidden=true;
 assert.equal(display()(costume),true);

@@ -162,8 +162,8 @@ jobs:
             # LT262: the user-supplied GL/UL PNGs must be in the signed APK.
             # Preserve the exact approved bytes (not just filenames).
             league_icons={
-              "GLBadgeLT262.png": "be6de24bb4f01a6e13456dfb77ed81e878d5d6065393aaca08f87c5547234cbb",
-              "ULBadgeLT262.png": "3328b59cc0bc730d3df9e13f2b053c5df248438402d016e13dbab08f15fe4220"
+              "GLBadgeLT262.png": "e8c54075550edd0c54e5df66720b6db40faf344e03a69072ae34521fcc9138bf",
+              "ULBadgeLT262.png": "25e7d4cc49585210df25d2acb0d14e78830ad10d04a5ec07e511994b92dad1fe"
             }
             for filename,digest in league_icons.items():
               key="assets/result-icons/modes/"+filename
@@ -171,7 +171,26 @@ jobs:
               data=apk.read(key)
               assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
               assert hashlib.sha256(data).hexdigest()==digest, "Changed mode image "+key
-          print("Official Sea/Halloween sprites (12) + GL/UL user emblems (2) checked")
+            # LT262: new icons are scoped to rank/MT/Raid/Mega cards and the
+            # existing Modos GL/UL badges. PNG hashes pin the exact user art.
+            ui_icons={
+              "league-gl-flag.png": "3f19907174fc273b242eb379773cfcf51f43f9d3a2418e0f28d64c93947c33ad",
+              "league-ul-flag.png": "7e5869d09c616db93bc2cca29f3edeec9aba731364b30733d1e59407626719f4",
+              "league-ml-flag.png": "7b3eebe07a8ea8640b0454afecb62b76bc708cee848c7e239de4475d0ed8f859",
+              "league-cup-flag.png": "4ffdd290a519cdf2fa68622f0fbca2d42f42819601dc36fe08de09bcc6d010ea",
+              "raid-badge.png": "a9761e07ed670b1ed702cfabd6d1d032f94eebeeca06ff96e5295cfdbebefdef",
+              "mt-elite.png": "8569b664c557130798dc3038e94250de0e3600a3a87a0e5fd522bf27393d91c6",
+              "mt-normal.png": "aaee8981343025e786481837984acbf081c17617a10a076ae5afb07516e719fa",
+              "mt-unknown.png": "1c7e9a80311bc1cd4187adf83e7b583f096a0c825a429bea015795dcee4be69e",
+              "mega-symbol.png": "ed8d845ab02a575b90f331a98068efc78d3aca87ed9d9235afec1711f2492f26"
+            }
+            for filename,digest in ui_icons.items():
+              key="assets/ui-icons/"+filename
+              assert key in names, "Missing requested user icon "+key
+              data=apk.read(key)
+              assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
+              assert hashlib.sha256(data).hexdigest()==digest, "Unexpected icon bytes "+key
+          print("Official Sea/Halloween sprites (12) + GL/UL mode emblems (2) + card badges (9) checked")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt

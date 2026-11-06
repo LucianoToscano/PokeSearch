@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT262 — Ícones GL/UL, bandeiras PvP, Raides, MTs e Mega (06/11/2026 · QA)
+
+- **Modos apenas:** as imagens circulares GL azul/vermelho e UL preto/amarelo substituem apenas os ícones do menu **Modos** usando `getModeMenuIcon` e `result-icons/modes/GLBadgeLT262.png`, `ULBadgeLT262.png` em 96×96 transparentes. `getResultIcon`, bases dos resultados e botões das duas Pokébolas não foram alterados, permanecendo os respectivos controles, badges e animações.
+- **Cartões:** `detail.html` renderiza bandeiras GL/UL/ML nas posições dos antigos emojis 🔵🟡🟣 (rank Classe, análise, CP e destaques), a nova medalha de Raides no lugar de 🏆, MT Elite/Normal/Cinza nos três estados verificados antes do toque e o símbolo Mega no lugar do SVG anterior. A bandeira Cup fica disponível como recurso sem criar modo não solicitado. As imagens usam tamanho de interface CSS 11–17 px e não mudam a estrutura P/M/G nem os cliques.
+- **Entrega de assets:** onze PNGs hash-pinned em `app/src/main/assets/result-icons/modes/` (2) e `app/src/main/assets/ui-icons/` (9). `OtaAssets.java` e `scripts/build_ota_pack.py` permitem a subpasta `ui-icons` nos recursos OTA assinados. O workflow de publicação oficial exige cada PNG e SHA-256 exato no APK final, sem impedir rollback.
+- **Testes:** `app/tests/lt262-user-gl-ul-mode-icons.test.js`, `app/tests/lt262-visual-icon-contract.test.js` e contratos de Mega/PvP anteriores ajustados. Auditoria: [LT262_ICONES_GL_UL_IMAGENS_USUARIO_20261106.md](LT262_ICONES_GL_UL_IMAGENS_USUARIO_20261106.md). **Estado QA**: não publicar nem anunciar atualização até PR mesclada, CI verde e APK assinado comprovado.
+
 ## LT262 — Ícones GL/UL do usuário (06/11/2026 · RELEASE OFICIAL)
 
 - Pedido: substituir **somente** os ícones dos modos GL e UL com as duas imagens enviadas (GL azul com faixa vermelha; UL preta com faixas amarelas), mantendo o mesmo tamanho/alinhamento do modo em ambas as Pokébolas, sem alterar a Liga Mestre, IVs, Rank, cards PvP ou chat.

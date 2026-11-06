@@ -39,13 +39,13 @@ const hook=new Function("document","window","activeRankLeague","pvpFormsForLeagu
  document,window,"gl",()=>[],explorer,()=>{});
 const ctx=window.psRankContext;
 assert.equal(hook(ctx),true);
-assert.equal(rankLine.children[0].textContent,"🔵 GL IV #1","League and IV form a single clickable button");
+assert.equal(rankLine.children[0].textContent,"GL IV #1","League and IV form a single clickable button");
 assert.equal(rankLine.children[1].textContent,"↳ Houndstone");
 const badge=rankLine.children.find(x=>x.className==="psCompactOverall psRankOpen");
 assert.ok(badge,"valid PvPoke species RG is a separate button");
 assert.equal(badge.textContent,"RG #653");
 const classButton=rankLine.children.find(x=>x.className==="psCompactIv psRankOpen psLeagueIv");
-assert.ok(classButton&&classButton.textContent==="🔵 GL IV #1","IV ranking remains independently clickable");
+assert.ok(classButton&&classButton.textContent==="GL IV #1","IV ranking remains independently clickable");
 assert.equal(badge.dataset.psKind,"overall");
 assert.equal(badge.dataset.psName,"Houndstone");
 assert.equal(badge.dataset.psLeague,"gl");

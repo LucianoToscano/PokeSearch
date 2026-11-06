@@ -23,7 +23,7 @@ assert.equal(gitBlob,"d156e4b3eb88822376155778182744d4a94cd203",
 assert.ok(!svg.includes("<script")&&!svg.includes("<foreignObject"),"no active SVG content");
 assert.ok(svg.length<15000);
 assert.ok(!detail.includes("isMega?'◈'"),"old ambiguous glyph removed");
-assert.ok(detail.includes("isMega?'<img src=\"mega_evolution_icon.svg\""));
+assert.ok(detail.includes("isMega?'<img src=\"ui-icons/mega-symbol.png\""));
 assert.ok(detail.includes('class="evoMegaTop">TOP 1 MEGA</span>'));
 assert.ok(!detail.includes('class="evoMegaTop"><img'),"no duplicate icon in badge");
 assert.ok(detail.includes('TOP 1 MEGA'));
@@ -43,12 +43,12 @@ assert.ok(start>=0&&end>start);
 const row=new Function("window","h",detail.slice(start,end)+"return evolutionRow;")(
  {psRankRenderLeague:"gl",PokeSearchIVDisplay:{colorForEfficiency:()=>"#eee"}},s=>String(s));
 const megaRow=row({name:"Mega Sableye",rank:1,megaProjection:true,referenceOnly:true,cp:1499,level:30,statProductPct:"100,00"},false);
-assert.ok(megaRow.includes("mega_evolution_icon.svg"));
+assert.ok(megaRow.includes("ui-icons/mega-symbol.png"));
 assert.ok(megaRow.includes("TOP 1 MEGA"));
-assert.equal((megaRow.match(/mega_evolution_icon\.svg/g)||[]).length,1,"exactly one inline Mega icon");
+assert.equal((megaRow.match(/ui-icons\/mega-symbol\.png/g)||[]).length,1,"exactly one inline Mega icon");
 assert.ok(megaRow.indexOf("evoStatsRow")<megaRow.indexOf("evoMegaTop"),"badge goes in existing statistics row, not beside name");
 assert.ok(megaRow.includes('isMega'));
 const baseRow=row({name:"Sableye",rank:14,cp:1493,level:50,statProductPct:"99,01"},true);
-assert.ok(!baseRow.includes("mega_evolution_icon.svg"),"normal species should never acquire Mega badge");
+assert.ok(!baseRow.includes("ui-icons/mega-symbol.png"),"normal species should never acquire Mega badge");
 assert.ok(!baseRow.includes("TOP 1 MEGA"));
 console.log("LT241/LT242: authentic Pokemon GO image, compact inline mark, one badge, no truncated name, OTA/P1/P2 PASS");
