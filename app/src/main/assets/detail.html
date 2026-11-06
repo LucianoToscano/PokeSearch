@@ -2480,8 +2480,8 @@ function updatePvpCpSimulator(){
  psCpTargetSpecies=String(row[0]);
  if(selection&&selection.value!==psCpTargetSpecies)
   selection.value=psCpTargetSpecies;
- const label=document.getElementById("psCpFormLabel");
- if(label)label.innerHTML=psCpFormText(row,forms);
+ const activeFormLabel=document.getElementById("psCpFormLabel");
+ if(activeFormLabel)activeFormLabel.innerHTML=psCpFormText(row,forms);
  if(typeof document.querySelectorAll==="function"){
   for(const button of document.querySelectorAll(".psCpFormList button[data-pscp-form]")){
    button.setAttribute?.("aria-selected",String(button.dataset.pscpForm===psCpTargetSpecies));
