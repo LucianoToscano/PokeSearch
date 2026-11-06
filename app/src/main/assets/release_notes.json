@@ -2151,6 +2151,29 @@
           "Validação de código e visual P/M/G aprovada em CI; confirmar as transições ON/OFF no Android Samsung após instalar a atualização."
         ]
       }
+    },
+    {
+      "id": "lt262-gl-ul-user-mode-icons-20261106",
+      "minVersionCode": 54466,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT262 — Novos ícones Grande Liga e Ultra Liga",
+      "sections": {
+        "novidades": [
+          "Os modos GL e UL exibem os novos emblemas enviados pelo usuário: GL azul com faixa vermelha e UL preto com duas faixas amarelas.",
+          "Os ícones circulares mantêm fundo transparente, mesmo alinhamento e tamanho compacto dos outros modos."
+        ],
+        "melhorias": [
+          "Imagens otimizadas para o WebView Android sem ampliar botões nem alterar o layout P/M/G.",
+          "Os mesmos PNGs aparecem nos controles e no indicador de modo das duas Pokébolas, preservando os selos de rank."
+        ],
+        "correcoes": [
+          "Substituição isolada das artes GL/UL; demais modos, ícones históricos de IV, sprites dos resultados, bases PvP e chat seguem sem mudanças.",
+          "A release assinada verifica a presença e a integridade SHA-256 dos dois novos PNGs dentro do APK."
+        ],
+        "emDesenvolvimento": [
+          "Os sete gates automatizados passaram. A instalação e a inspeção visual no Samsung, nas duas Pokébolas, ainda precisam de confirmação física."
+        ]
+      }
     }
   ]
 }
