@@ -6,6 +6,6 @@
 (function(root){"use strict";
  const types=["normal","fire","water","electric","grass","ice","fighting","poison","ground","flying","psychic","bug","rock","ghost","dragon","dark","steel","fairy"];
  const icons={};
- for(const name of types)icons[name]="ui-icons/"type-"+name+"-lt267.png";
+ for(const name of types)icons[name]="ui-icons/type-"+name+"-lt267.png";
  root.PokeSearchTypeIcons=Object.freeze(icons);
 })(typeof window!=="undefined"?window:globalThis);
