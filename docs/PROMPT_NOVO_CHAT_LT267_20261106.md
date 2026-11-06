@@ -1,16 +1,12 @@
-# PokeSearch — continuar após LT267
+# PokeSearch — continuidade vigente após LT267
 
-Repositório https://github.com/LucianoToscano/PokeSearch
-Leia docs/GUIA_MESTRE.md e docs/LT267_AUDITORIA_SPRITES_ICONES_RAIDES_20261106.md.
+A LT267 foi **publicada e validada**. Este documento histórico substitui as instruções obsoletas que tratavam a LT266 como release atual.
 
-Base inicial comprovada LT266 (0.02.66/versionCode 54470). Branch LT267 feature/lt267-sprites-raid-icons-20261106, verificar PR, CI, merge e releases/latest.
-Corrigido ícone da LC para a Copa de LT265, imagem Mega original substitui mega-symbol.png, nova imagem Sombroso exibida só para Shadow comprovado. Raides mostra "Mega Beedrill" e tipo ilustrado por PNG da LT266, Rank # por tipo. A fonte PvE possui somente um Ágil e um Carregado; não criar segunda recomendação sem dados adicionais.
-Sprites 10 exatos (Diwali Pikachu e Squawkabilly Blue/Green/White/Yellow normais e Shiny) integrados via hashes Git blob PokeMiners c2a686... preservando URL da API do site como prioridade. Sem fallback falso.
-Revisar em Samsung ambas Pokébolas, modo P/M/G, transparência, cálculos IV A/B, PC, PS e limites de liga, rolagem até coordenadas, close de painéis e tradução de ataques. Não presumir tests físicos.
-Conferir CI completo (Node, Java, visual, OTA, PvE) antes de merge. Após, solicitar versão LT267 0.02.67 code 54471 label 51271, confirmar assinatura permanente, tag pública, SHA-256, e atualizar Guia Mestre e auditoria pós-release. Preservar rollback LT266, login opcional e dados PvP/PvE separados.
+Use o [PROMPT_NOVO_CHAT_LT268_20261106.md](PROMPT_NOVO_CHAT_LT268_20261106.md) como texto de execução para iniciar a próxima revisão.
 
-## Complemento ao terminar LT267
-Verificar 18 PNG_512 do ZIP revisado e `rank-geral-lt267.png` em `ui-icons`; antigos LT266 devem ficar intocados. Confirmar hashes novos no APK assinado, regressões Node, Java, WebView P/M/G, PvE, OTA. A imagem RG não modifica algoritmo, apenas aparece nos botões de RG. Publicar LT267 apenas após CI e arquivo mestre atualizado. Não inventar second charged de Raides sem fonte.
-
-## Resultado verificado e próxima etapa
-PR #247 mesclada em e0e96bbce1dfc9b1acb6e4990f48b2dd70de9c9d; PR #248 mesclada em c9fd24498da2ecb82b7092cb2fc7f39568b64f47 após 8 gates CI verdes. Novas 18 artes revisadas em ui-icons/type-<enum>-lt267.png, emblema RG ui-icons/rank-geral-lt267.png. A release LT267 0.02.67/code 54471 foi solicitada; verificar workflow official, releases/latest, tamanho e digest antes de afirmar publicação. Atualizar Guia Mestre e auditoria pós-release. Não pressupor teste físico Samsung nem segundo golpe carregado com fonte não verificada.
+- LT267 · 0.02.67 · versionCode 54471
+- Release: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.67-54471
+- SHA-256 oficial: `a25c9a6b56408d532359b516066ff5c571d6c958ffb1e9d7be230c300f6c3250`
+- QA assinada: https://github.com/LucianoToscano/PokeSearch/actions/runs/42257888047 — success
+- Último código/QA de referência: `1d4ae1d856a1d3951e452314e7d4c05970c8d01a`
+- Testes físicos Samsung/instalação efetiva/Drive continuam sem comprovação.

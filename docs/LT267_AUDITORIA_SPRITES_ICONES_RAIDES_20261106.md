@@ -60,3 +60,16 @@ Branch de QA. Não afirmar merge/release física até confirmação de CI, links
 - O [workflow #42256849422](https://github.com/LucianoToscano/PokeSearch/actions/runs/42256849422) voltou a falhar na linha da contagem. A auditoria do código completo revelou que `build_sprite_bundle.py` adiciona, além dos **124** `COSTUME_FILES` PokeMiners, **4 `verified_event_pngs`** LT144 (Zubat Halloween 2026 e Gengar 2023, normais/Shiny) recuperados exclusivamente da APK assinada LT144 quando necessário. Esses arquivos são inseridos em `costume_hashes`, portanto o manifesto contém **128**, não 124.
 - A QA exige **128** e valida a presença, integridade do manifesto e SHA-256 dos quatro sprites LT144, além dos oito Shellos/Gastrodon LT260 e dez Pikachu Diwali/Squawkabilly LT267. Teste Node valida a soma 124+4.
 - A release pública LT267 de 33.059.748 bytes e SHA256 `a25c9a6b56408d532359b516066ff5c571d6c958ffb1e9d7be230c300f6c3250` já está publicada; este patch afeta só QA e documentação, não altera APK nem assinatura. Requer nova execução da QA assinada para confirmação final.
+
+## Encerramento comprovado — 06/11/2026
+
+Este documento preserva cronologicamente falhas e correções intermediárias. O estado **final**, que substitui as indicações antigas de "QA pendente", é:
+
+- [Release LT267](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.67-54471) pública e estável: APK 33.059.748 bytes, SHA-256 `a25c9a6b56408d532359b516066ff5c571d6c958ffb1e9d7be230c300f6c3250`.
+- [Publicação oficial #42254494312](https://github.com/LucianoToscano/PokeSearch/actions/runs/42254494312): preflight e publish aprovados; assinatura permanente, hashes de PNGs e verificação da release pública concluídos.
+- [PRs #247 a #253](https://github.com/LucianoToscano/PokeSearch/pulls?q=is%3Apr+is%3Amerged+LT267) mescladas. O commit pós-publicação `1d4ae1d856a1d3951e452314e7d4c05970c8d01a` altera apenas validação/documentação.
+- [QA assinada #42257888047](https://github.com/LucianoToscano/PokeSearch/actions/runs/42257888047) **success**: catálogo GO, 1.025 normais, 1.025 shiny, 128 sprites de evento, Java, Node, build assinado QA, certificado/R8, manifesto e artefato.
+- Os 128 ícones de evento correspondem a 124 `COSTUME_FILES` + 4 `verified_event_pngs` LT144. A exigência estrita da QA permanece ativa.
+- Não foram executados testes físicos no Samsung nem confirmada atualização instalada/Drive sincronizado. Próxima revisão planejada: LT268, após inspeção real e verificação das fontes PT-BR.
+
+Veja também [auditoria final pós-release](LT267_AUDITORIA_FINAL_POS_RELEASE_20261106.md) e [prompt novo chat LT268](PROMPT_NOVO_CHAT_LT268_20261106.md).
