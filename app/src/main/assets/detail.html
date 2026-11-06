@@ -1059,6 +1059,52 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpFamilyChoices{display:grid!important;
  grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px!important;
  margin-top:4px!important;max-height:115px!important;overflow-y:auto!important}
+
+/* LT257: one dropdown inside the existing calculator, like the referenced
+ * evolution selector. It expands in-flow, cannot be cropped by overlay edges,
+ * and shows the actual Mega emblem before the form name. */
+#psMetricPanel .psCpSimFields>.psCpFormField{display:block!important;grid-column:1/-1!important;
+ min-width:0!important;max-width:100%!important}
+#psMetricPanel .psCpFormFieldLabel{display:block!important;font-size:9.5px!important;
+ margin:0 0 3px!important;color:#bbd4e4!important}
+#psMetricPanel .psCpFormStepper>select#psCpForm{display:none!important}
+#psMetricPanel .psCpFormStepper .psCpFormMenu{position:relative!important;
+ display:block!important;flex:1 1 auto!important;width:0!important;
+ min-width:0!important;max-width:100%!important}
+#psMetricPanel .psCpFormMenu>summary{box-sizing:border-box!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ min-height:28px!important;padding:3px 7px!important;gap:4px!important;
+ font-size:11px!important;line-height:1.25!important;color:#e8f6ff!important;
+ background:#253951!important;border:1px solid #7491a9b0!important;
+ border-radius:6px!important;cursor:pointer!important;list-style:none!important}
+#psMetricPanel .psCpFormMenu>summary::-webkit-details-marker{display:none!important}
+#psMetricPanel .psCpFormMenu[open]>summary{border-color:#9bcbf2!important;border-radius:6px 6px 0 0!important}
+#psMetricPanel #psCpFormLabel{min-width:0!important;flex:1 1 auto!important;
+ display:block!important;overflow:hidden!important}
+#psMetricPanel .psCpFormName{display:inline-flex!important;align-items:center!important;
+ vertical-align:middle!important;gap:4px!important;max-width:100%!important;
+ min-width:0!important;overflow-wrap:anywhere!important}
+#psMetricPanel .psCpMegaText{color:#ffc2e6!important}
+#psMetricPanel .psCpMegaIcon{display:inline-block!important;flex:0 0 14px!important;
+ width:14px!important;height:14px!important;max-width:14px!important;object-fit:contain!important}
+#psMetricPanel .psCpFormChevron{flex:0 0 auto!important;color:#c8d8e8!important;font-size:15px!important}
+#psMetricPanel .psCpFormList{box-sizing:border-box!important;display:flex!important;
+ flex-direction:column!important;gap:1px!important;min-width:0!important;
+ width:100%!important;max-height:170px!important;overflow-y:auto!important;
+ border:1px solid #7491a9b0!important;border-top:none!important;
+ border-radius:0 0 6px 6px!important;padding:2px!important;
+ background:#142a3af5!important;scrollbar-width:thin!important}
+#psMetricPanel .psCpFormStepper .psCpFormList button{display:flex!important;box-sizing:border-box!important;
+ align-items:center!important;justify-content:flex-start!important;text-align:left!important;
+ gap:4px!important;flex:0 0 auto!important;width:100%!important;max-width:100%!important;
+ min-height:30px!important;height:auto!important;padding:5px 7px!important;
+ margin:0!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ border:1px solid transparent!important;border-radius:4px!important;
+ font-size:10.5px!important;line-height:1.25!important;color:#eff7ff!important;background:transparent!important}
+#psMetricPanel .psCpFormStepper .psCpFormList button[aria-selected="true"]{
+ background:#2e5f866e!important;border-color:#7eb9e4a0!important;font-weight:750!important}
+#psMetricPanel .psCpFormStepper .psCpFormList button:focus-visible,
+#psMetricPanel .psCpFormMenu>summary:focus-visible{outline:2px solid #dfb368!important}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -2201,7 +2247,58 @@ function psCpVariants(){
   if(!row.slice(2,5).every(x=>Number.isFinite(x)&&x>0))continue;
   result.push(row);ids.add(row[0]);if(result.length>=18)break;
  }
- return result;
+ return psCpOrderFamily(result);
+}
+// Sort visible forms by real evolution links, independent of the first
+// captured stage: Gastly → Haunter → Gengar (Normal) → Gengar (Mega).
+// The catalogue supplies identity/order only, never invented stats.
+function psCpOrderFamily(rows){
+ const links=window.PokeSearchPvpFamilyCatalog?.links||[];
+ if(rows.length<2||!links.length)return rows;
+ const name=row=>String(row[1]||"").toLowerCase().trim();
+ const normal=rows.filter(row=>!/\\(mega(?: [xy])?\\)/i.test(row[1]));
+ const key=new Map(normal.map(row=>[name(row),row]));
+ const indegree=new Map(normal.map(row=>[name(row),0])),children=new Map();
+ for(const edge of links){
+  const from=String(edge[0]||"").toLowerCase().trim();
+  const to=String(edge[1]||"").toLowerCase().trim();
+  if(!key.has(from)||!key.has(to)||from===to)continue;
+  if(!children.has(from))children.set(from,[]);
+  if(children.get(from).includes(to))continue;
+  children.get(from).push(to);
+  indegree.set(to,indegree.get(to)+1);
+ }
+ const roots=normal.map(name).filter(k=>indegree.get(k)===0);
+ const queue=roots.slice(),depth=new Map(roots.map(k=>[k,0]));
+ while(queue.length){
+  const k=queue.shift();
+  for(const next of children.get(k)||[]){
+   depth.set(next,Math.max(depth.get(next)||0,(depth.get(k)||0)+1));
+   indegree.set(next,indegree.get(next)-1);
+   if(indegree.get(next)===0)queue.push(next);
+  }
+ }
+ const level=row=>{
+  const label=name(row),isMega=/\\(mega(?: [xy])?\\)/i.test(label);
+  if(isMega){
+   const base=label.replace(/\\s*\\(mega(?: [xy])?\\)/i,"");
+   return 100+(depth.get(base)||0);
+  }
+  return depth.has(label)?depth.get(label):50;
+ };
+ return rows.slice().sort((a,b)=>level(a)-level(b));
+}
+function psCpMegaForm(row){
+ return /\\(mega(?: [xy])?\\)/i.test(String(row?.[1]||""));
+}
+function psCpFormText(row,forms){
+ const name=String(row?.[1]||"");
+ const mega=psCpMegaForm(row);
+ const hasMega=!mega&&forms.some(x=>
+  String(x[1]||"").toLowerCase().startsWith(name.toLowerCase()+" (mega"));
+ return '<span class="psCpFormName'+(mega?' psCpMegaText':'')+'">'+
+  (mega?'<img class="psCpMegaIcon" src="mega_evolution_icon.svg" alt="" aria-hidden="true">':"")+
+  h(name+(hasMega?" (Normal)":""))+'</span>';
 }
 function psCpIv(){
  const raw=String(metricCard?.iv||"");
@@ -2267,29 +2364,32 @@ function psCpControls(){
  const l=Number(metricCard?.level);
  if(!Number.isFinite(psCpTargetLevel)||psCpTargetLevel<1||psCpTargetLevel>50)
   psCpTargetLevel=Number.isFinite(l)&&l>=1&&l<=50?Math.round(l*2)/2:20;
- const quick=forms.length<=1?"":forms.length<=4?
-  '<div class="psCpFamilyQuick" role="group" aria-label="Trocar evolução">'+
-   forms.map(x=>'<button type="button" data-pscp-form="'+h(String(x[0]))+
-    '" aria-pressed="'+(x[0]===psCpTargetSpecies?'true':'false')+
-    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+h(String(x[1]))+'</button>').join("")+
-  '</div>':
-  '<details class="psCpFamilyQuick psCpFamilyExtended"><summary>Escolher entre '+
-   forms.length+' formas</summary><div class="psCpFamilyChoices">'+
-   forms.map(x=>'<button type="button" data-pscp-form="'+h(String(x[0]))+
-    '" aria-pressed="'+(x[0]===psCpTargetSpecies?'true':'false')+
-    '" onclick="psCpPickForm(this.dataset.pscpForm)">'+h(String(x[1]))+'</button>').join("")+
-   '</div></details>';
+ const options=forms.map(row=>
+  '<button type="button" role="option" aria-selected="'+
+   (row[0]===psCpTargetSpecies?"true":"false")+
+   '" data-pscp-form="'+h(String(row[0]))+
+   '" onclick="psCpPickForm(this.dataset.pscpForm)">'+
+   psCpFormText(row,forms)+'</button>').join("");
  return '<div class="psCpSimulator">'+
   '<div class="psCpSimTitle">Normal / evoluções / Mega · mesmos IVs</div>'+
-  '<div class="psCpSimFields"><label>Forma · '+forms.length+
-  '<div class="psCpFormStepper"><button type="button" onclick="stepPvpCpForm(-1)"'+
-  ' aria-label="Forma anterior" title="Forma anterior">‹</button>'+
-  '<select id="psCpForm" aria-label="Selecionar evolução ou Mega" onchange="updatePvpCpSimulator()">'+
+  '<div class="psCpSimFields">'+
+  '<div class="psCpFormField"><span class="psCpFormFieldLabel">Forma · '+forms.length+'</span>'+
+  '<div class="psCpFormStepper">'+
+  '<button type="button" onclick="stepPvpCpForm(-1)" aria-label="Forma anterior">‹</button>'+
+  '<details id="psCpFormMenu" class="psCpFormMenu" ontoggle="resizeEvolutionPanel()">'+
+  '<summary aria-label="Abrir lista de evoluções e Megas" id="psCpFormSummary">'+
+   '<span id="psCpFormLabel">'+psCpFormText(preferred,forms)+'</span>'+
+   '<span class="psCpFormChevron" aria-hidden="true">⌄</span></summary>'+
+  '<div class="psCpFormList" role="listbox" aria-label="Evoluções e Mega">'+
+   options+'</div></details>'+
+  // Keep the exact select ID as a hidden state adapter for A/B math,
+  // keyboard/native testing and shared arrows, never a second visible menu.
+  '<select id="psCpForm" tabindex="-1" aria-hidden="true" onchange="updatePvpCpSimulator()">'+
    forms.map(x=>'<option value="'+h(String(x[0]))+'"'+
     (x[0]===psCpTargetSpecies?' selected':'')+'>'+h(String(x[1]))+'</option>').join("")+
-  '</select><button type="button" onclick="stepPvpCpForm(1)"'+
-  ' aria-label="Próxima forma" title="Próxima forma">›</button></div></label>'+
-  quick+
+  '</select>'+
+  '<button type="button" onclick="stepPvpCpForm(1)" aria-label="Próxima forma">›</button>'+
+  '</div></div>'+
   '<label>Nível <div class="psCpLevelStepper">'+
   '<button type="button" onclick="stepPvpCpLevel(-0.5)" aria-label="Reduzir meio nível">−</button>'+
   '<input id="psCpLevel" type="range" min="1" max="50" step="0.5"'+
@@ -2325,7 +2425,10 @@ function psCpPickForm(value){
  const next=forms.find(x=>String(x[0])===String(value||""));
  if(!next)return false;
  sel.value=String(next[0]);psCpTargetSpecies=sel.value;
- return updatePvpCpSimulator();
+ const ok=updatePvpCpSimulator();
+ const menu=document.getElementById("psCpFormMenu");
+ if(menu)menu.open=false;
+ return ok;
 }
 function stepPvpCpForm(delta){
  const forms=psCpVariants(),sel=document.getElementById("psCpForm");
@@ -2377,9 +2480,11 @@ function updatePvpCpSimulator(){
  psCpTargetSpecies=String(row[0]);
  if(selection&&selection.value!==psCpTargetSpecies)
   selection.value=psCpTargetSpecies;
+ const label=document.getElementById("psCpFormLabel");
+ if(label)label.innerHTML=psCpFormText(row,forms);
  if(typeof document.querySelectorAll==="function"){
-  for(const button of document.querySelectorAll(".psCpFamilyQuick button[data-pscp-form]")){
-   button.setAttribute?.("aria-pressed",String(button.dataset.pscpForm===psCpTargetSpecies));
+  for(const button of document.querySelectorAll(".psCpFormList button[data-pscp-form]")){
+   button.setAttribute?.("aria-selected",String(button.dataset.pscpForm===psCpTargetSpecies));
   }
  }
  const iv=psCpInputIv("psCpIvA",psCpCustomIv||psCpIv());
