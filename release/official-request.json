@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.56",
-  "code": 54460,
-  "label": 51260,
-  "previous_tag": "v0.02.55-54459",
-  "qa_max_code": 54459,
-  "release_notes": "PokeSearch LT256: reforça o carregamento da calculadora de evoluções após atualização. Corrigido o descompasso da allowlist criptográfica: o catálogo offline de evoluções pvp_family_catalog.js agora é permitido no carregador OTA assinado, assim como no builder; HTML/JS do detalhe passam a usar Cache-Control no-store e WebView de detalhes não reutiliza cache antigo, evitando exibir interface de versões passadas. A identificação de formas não confunde região geográfica de captura com Alola/Galar/Hisui/Paldea; label 'Forma · N' indica as opções efetivamente verificadas. Mantém botões de Teddiursa/Ursaring/Ursaluna, setas, seletor e cálculo de PC/PS, IV A/B, nível, PC-alvo, duas Pokébolas independentes e design compacto. PR #235 integrada após seis verificações automatizadas aprovadas (Node, regressões, Java, OTA e screenshots P/M/G). As capturas anteriores podem ser de versão antiga instalada, e este release não comprova instalação nem toque físico no Samsung; a instalação exige confirmação do Android."
+  "version": "0.02.57",
+  "code": 54461,
+  "label": 51261,
+  "previous_tag": "v0.02.56-54460",
+  "qa_max_code": 54460,
+  "release_notes": "PokeSearch LT257: seletor único de evoluções e Megas na calculadora PvP. Agora a lista suspensa interna reúne Gastly, Haunter, Gengar (Normal) e Gengar (Mega), com o ícone oficial de Mega Evolução antes do nome, e Mega X/Y separadas onde existentes. Eliminados botões repetidos embaixo do campo, mantendo setas laterais alinhadas mesmo com lista aberta, opções ordenadas pela família evolutiva e barra interna para famílias longas sem cortes nos cartões P/M/G. Ao tocar em qualquer opção, a lista retrai, o nome é destacado e PC/PS são recalculados offline com o Game Master atual, preservando IVs A/B, nível e PC-alvo. Sem menus flutuantes adicionais, sem requisições novas à API, sem inventar golpes Mega, mantendo as duas Pokébolas e as correções LT256. PR #236 mesclada após seis gates CI automáticos aprovados e inspeção de screenshots Chromium P/M/G, incluindo Gastly→Gengar Normal→Mega; testes físicos de instalação Samsung P1/P2 não observados e instalação exige confirmação do Android."
 }
