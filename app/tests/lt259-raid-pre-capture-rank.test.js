@@ -17,8 +17,8 @@ assert.ok(html.includes('class="psRaidAnalysisLink"'),
  "Raid link must live inside existing PvP analysis");
 assert.ok(html.includes("token!==psRaidToken||identity!==detailIdentity"),
  "stale responses must never overwrite another card");
-assert.ok(html.includes('if(changed)loadRaidBeforeCapture(c)'),
- "pre-capture assessment runs on card opening, not on coordinates");
+assert.ok(html.includes('if(changed||document.getElementById("raidRow")?.hidden)loadRaidBeforeCapture(c)'),
+ "pre-capture assessment starts on card opening and retries missing badges without tapping coordinates");
 assert.ok(!raidJs.includes("coords")||raidJs.includes("No capture-coordinate lookup"));
 assert.ok(java.includes('"pve_raid_rank.js"'));
 assert.ok(builder.includes('"pve_raid_rank.js"'));

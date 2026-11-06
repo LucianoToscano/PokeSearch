@@ -186,6 +186,20 @@ COSTUME_FILES.update({
     "costumes/pm94.fCOSTUME_2020.s.icon.png": ("pm94.fCOSTUME_2020.s.icon.png", "404b4259bae47346e6abab069eeb118229c7f807"),
 })
 
+# LT260: verified GO forms of Shellos/Gastrodon East and West Sea,
+# pinned to the exact existing go-exact-sprites.tsv Git object SHA-1.
+# The East Sea art MUST NOT silently resolve as default West Sea artwork.
+COSTUME_FILES.update({
+    "costumes/pm422.fEAST_SEA.icon.png": ("pm422.fEAST_SEA.icon.png", "2d0b5f2fb323ea8f8ae040b1762df166820bb129"),
+    "costumes/pm422.fEAST_SEA.s.icon.png": ("pm422.fEAST_SEA.s.icon.png", "cf1c39c55fa1f513204e99fb91287b7ecf240ff5"),
+    "costumes/pm422.fWEST_SEA.icon.png": ("pm422.fWEST_SEA.icon.png", "78e75f5295c77677295df47645bdeecb9b8d69df"),
+    "costumes/pm422.fWEST_SEA.s.icon.png": ("pm422.fWEST_SEA.s.icon.png", "9afaa33556beaeace54e0569d02f622d910a9ec6"),
+    "costumes/pm423.fEAST_SEA.icon.png": ("pm423.fEAST_SEA.icon.png", "d4376342271db7476271f8977f6ed18770d00313"),
+    "costumes/pm423.fEAST_SEA.s.icon.png": ("pm423.fEAST_SEA.s.icon.png", "c39df8ff2c839e86ef3a7e10e1beddc6e6205a00"),
+    "costumes/pm423.fWEST_SEA.icon.png": ("pm423.fWEST_SEA.icon.png", "75f4a72632758d172ce5decd98b3202f4577d441"),
+    "costumes/pm423.fWEST_SEA.s.icon.png": ("pm423.fWEST_SEA.s.icon.png", "b2a32696a03694df48b8885d749537e3c8b65628"),
+})
+
 # Halloween 2024 Rowlet/Froakie costumes returned in GO Halloween 2026 Part II.
 # Verified against immutable PokeMiners git blobs; NOT plain 656/722 art.
 COSTUME_FILES.update({

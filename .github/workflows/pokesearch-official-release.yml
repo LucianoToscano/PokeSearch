@@ -144,7 +144,12 @@ jobs:
           import sys,zipfile
           expected=[
             "pm656.cFALL_2024.icon.png","pm656.cFALL_2024.s.icon.png",
-            "pm722.cFALL_2024.icon.png","pm722.cFALL_2024.s.icon.png"
+            "pm722.cFALL_2024.icon.png","pm722.cFALL_2024.s.icon.png",
+            # LT260: all exact Sea form variants MUST ship in the signed APK.
+            "pm422.fEAST_SEA.icon.png","pm422.fEAST_SEA.s.icon.png",
+            "pm422.fWEST_SEA.icon.png","pm422.fWEST_SEA.s.icon.png",
+            "pm423.fEAST_SEA.icon.png","pm423.fEAST_SEA.s.icon.png",
+            "pm423.fWEST_SEA.icon.png","pm423.fWEST_SEA.s.icon.png"
           ]
           with zipfile.ZipFile(sys.argv[1]) as apk:
             names=set(apk.namelist())
@@ -154,7 +159,7 @@ jobs:
               data=apk.read(key)
               assert data[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid PNG "+key
               assert len(data)>500, "Empty sprite "+key
-          print("Official packaged Halloween variants: 4 checked")
+          print("Official packaged Halloween + East/West Sea variants: 12 checked")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt

@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT260 — Sprite Shellos e Distância → Despawn (06/11/2026 · candidata em QA)
+
+- Evidência do Samsung: sprite de Shellos East Sea #422 ausente na lista/pequena no card. Pedido: ao apagar o centro de Localização, recuperar **Sort = Despawn (longest)** sem apagar filtros de Pokémon/IV, PC, nível, tamanho, sexo e clima. Botão 🏆 Raides também não aparecia em card anterior.
+- Fonte na branch `fix/lt260-shellos-location-sort-raid-20261106`: `sprite_offline.js` resolve East Sea com arte do APK e não confunde West Sea/Shiny; `build_sprite_bundle.py` inclui oito sprites de Shellos/Gastrodon East/West normais/Shiny com SHA Git blob preexistentes em `go-exact-sprites.tsv`. Release oficial verifica os oito PNGs reais no APK além dos quatro costumes Halloween.
+- `OverlayService.Bridge.setLocation(false)` muda imediatamente a ordenação `Distance (nearest)` inválida para `Despawn (longest)`, mesmo num Limpar repetido, e persiste somente o sort em `extraFiltersJson`. `dock.html` reconcilia menu atual e rascunho quando a localização está OFF; outros filtros preservados.
+- `detail.html` mostra botão Raides antes de consulta remota e mesmo sem rank PvP; em falha de módulo exibe status neutro ao invés de esconder o botão.
+- Testes em `app/tests/lt260-shellos-location-sort-raid.test.js` e regressão `lt161-shellos-gastrodon-west-sea-sprites.test.js` passaram no harness JS isolado. [Auditoria LT260](LT260_SHELLOS_LOCALIZACAO_RAIDES_QA_20261106.md). **CI integral, screenshots e publicação ainda por homologar; nenhuma instalação física do Samsung confirmada.** A LT259 (`0.02.59/54463`) segue como versão pública até liberação oficial.
+
 ## LT259 — Ranking de Raides antes da captura (06/11/2026 · RELEASE OFICIAL)
 
 - Pedido: avaliação simples e rápida de utilidade do Pokémon em Raides antes de pegar coordenadas, com rank por tipo e visão de evoluções/Mega, também acessível no painel existente de Análise PvP. **Não confundir** rank PvE de espécie com Rank IV Classe ou Rank Geral GBL.

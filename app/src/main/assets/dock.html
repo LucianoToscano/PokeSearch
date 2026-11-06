@@ -7520,6 +7520,14 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
   }
   if(!searchSettings.sortBy)searchSettings.sortBy="Despawn (longest)";
  }
+ // LT260: reconcile the native update even when the filters popup retained
+ // an unsaved Distance draft while the location editor was open.
+ if(!locationEnabled){
+  if(searchSettings.sortBy==="Distance (nearest)")
+   searchSettings.sortBy="Despawn (longest)";
+  if(modeDraft?.sortBy==="Distance (nearest)")
+   modeDraft.sortBy="Despawn (longest)";
+ }
  // Compatibility with the original single-Pokémon filter stored before SITE-POKEMON-01.
  if(config&&!Array.isArray(config.pokemonSelections)&&typeof config.pokemon==="string"&&config.pokemon.trim())
   searchSettings.pokemonSelections=[config.pokemon.trim()];
