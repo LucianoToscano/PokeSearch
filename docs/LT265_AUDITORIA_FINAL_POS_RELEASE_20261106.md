@@ -33,6 +33,12 @@ Data 06/11/2026 · Código **0.02.65 / versionCode 54469** · Release `v0.02.65-
 4. **Espécies e nomes oficiais dos Pokémon:** nomes próprios como Fletchling/Pidgey/Talonflame são os mesmos usados em muitos clientes PT-BR e não devem ser traduzidos por aproximação. Formas e apelidos retornados pela API devem manter identidade.
 5. **Termos da fonte:** `GBL`, `ER`, `PvE` e nome da fonte `S-Tier-Devs/pogo-db-api` são termos técnicos. O texto longo explicativo foi movido para seção de ajuda. Caso substituídos, manter descrição precisa.
 
+## Revisão extra pós-release — comparação binária da tag
+
+- Refetch independente da **tag publicada `v0.02.65-54469`** versus `main` verificou os mesmos Git blob SHAs para nove recursos do programa: `detail.html`, `pve_moves_ptbr.js`, `pokemon_card_presentation.js`, `dock.html`, `OtaAssets.java`, workflow oficial, dois novos testes e `release/official-request.json`. Não foram encontrados desvios de código depois da assinatura.
+- Comparação binária adicional de **todos os seis PNGs LT265** na tag versus `main` (Git blob SHA) também passou: GL `575eeb432789f05365a1b6a73c773bb2cdece56d`; UL `64cc2bbbdf8153c927cb17c3ff4ac286689b1e3d`; ML `446174aecb646913e80dc808aa2f5adef189e242`; Copa `f084f17a80e739c46db2f57fffecf36d3a1a3c17`; MT Carregada Elite `581889e81ff341547f08402d811c23abc4729866`; MT Ágil Elite `5a94d3b6182a177780589c52acd3bb15b2ceff1a`. Esses arquivos estão protegidos adicionalmente por hashes SHA-256 explícitos no build oficial, já aprovado.
+- A segunda auditoria não exige nova build: os dois documentos de auditoria e o prompt de continuação, acrescentados ou refinados após a tag, **não alteram código nem assinatura**.
+
 ## Verificação adicional antes de novo release
 
 - Não se encontraram novas alterações nas fórmulas `psCpAt`, `psCpLeagueCeiling` nem nos cálculos PvP/PvE; os testes históricos que falhavam por mudança de *texto* passaram sem enfraquecer suas garantias: notas de Mega, classe, no-rank universal e estado confirmado de Elite foram mantidas.
