@@ -2225,6 +2225,34 @@
           "Os testes automatizados passaram; verificar no Samsung a ausência da faixa vazia e a legenda do Rank Classe nas duas Pokébolas."
         ]
       }
+    },
+    {
+      "id": "lt265-ptbr-pve-elite-icons-single-panel-calculator-20261106",
+      "minVersionCode": 54469,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT265 — Raides e golpes PT-BR, painéis compactos, ícones e calculadora",
+      "sections": {
+        "novidades": [
+          "Golpes de Raides e capturados aparecem em português BR quando confirmados pelo catálogo oficial Pokémon GO vinculado ao identificador real. Fonte versionada, cache e fallback offline.",
+          "Bandeiras GL, UL, ML e Copa com borda branca; golpes legados/Elite mostram os pergaminhos próprios para MT Ágil ou Carregada no lugar do símbolo 💠.",
+          "Abrir Raides, Análise PvP, Golpes, classificação ou Calculadora fecha automaticamente o painel anterior, preservando os dados."
+        ],
+        "melhorias": [
+          "Painel de Raides mostra os três atacantes por tipo prioritários; outras classificações, fonte e critérios ficam disponíveis em seções recolhidas, sem repetição.",
+          "Calculadora mantém forma, nível, PC/PS e atalhos 500/1500/2500; comparação IV A/B, diferença e critérios continuam disponíveis, recolhidos por padrão.",
+          "Liga Mestra e clima Potencializado traduzidos, sem alterar enums recebidos/enviados à API.",
+          "Ícones preservam tamanho atual e não modificam os ícones das duas Pokébolas nem os modos circulares GL/UL."
+        ],
+        "correcoes": [
+          "Os seis PNGs novos fornecidos pelo usuário são exigidos com SHA-256 exato no APK assinado; garantidos também pelo OTA.",
+          "Golpes sem identificação PT-BR comprovada não recebem tradução inventada; status MT Elite só aparece com confirmação e os dados IV e rank seguem intactos.",
+          "Menus grandes não se acumulam sobre o cartão; notas extensas e comparação avançada não bloqueiam leitura inicial."
+        ],
+        "emDesenvolvimento": [
+          "A tradução offline cobre golpes frequentes, com catálogo PT-BR online para ampliar a cobertura; ataques novos sem tradução confirmada ficam neutros.",
+          "Instalação e usabilidade reais nas duas Pokébolas do Samsung continuam para conferência do usuário."
+        ]
+      }
     }
   ]
 }
