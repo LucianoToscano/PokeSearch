@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT266 — Ícones dos 18 tipos do Drive (06/11/2026 · IMPLEMENTAÇÃO EM QA)
+- **Fonte verificada:** 18 PNGs fornecidos no Drive, todos 1024×1024 RGBA, integrados sem transformação em `ui-icons/type-<tipo>-lt266.png`. O mapa `pokemon_type_icons.js` agora aponta para recursos locais e deixa de incluir 18 strings Base64; API e tipos originais preservados.
+- **Controles de integridade:** `app/tests/lt266-types-from-drive.test.js` verifica 18 imagens, sha256, transparência, cartão Pidgey Normal/Voador, integração WebView/OTA; workflow oficial exige os mesmos hashes no APK assinado. Originais antigos disponíveis no histórico do Git.
+- **Estado de release:** LT265 permanece a última versão **comprovada** no início desta revisão. CI/PR/merge/assinatura/publicação LT266 e homologação física ainda precisam de evidência; não presumir conclusão.
+- **Auditoria:** [LT266_ICONES_TIPOS_DRIVE_QA_20261106.md](LT266_ICONES_TIPOS_DRIVE_QA_20261106.md). [Prompt](PROMPT_NOVO_CHAT_LT266_20261106.md). Pendem inspeção no Samsung dos novos tipos P/M/G, tradução em Fletchling/Talonflame/Pidgey/Pidgeot, rolagem/painéis/calculadora.
+
 ## LT265 — Raides PT-BR, indicadores Elite distintos, painéis compactos e calculadora intuitiva (06/11/2026 · RELEASE OFICIAL)
 
 - **Origem:** prints reais Samsung com Fletchling/Pidgey: Raides extensos, PECK FAST + FLY em inglês, 💠 ilegível nos golpes e ícones de liga pouco contrastados sobre fundo preto. Pedida organização sem remover funcionalidades, tradução de golpes como Pokémon GO Brasil, menu exclusivo (Raides/PvP/Calculadora/Golpes), calculadora avançada recolhida, nova auditoria e prompt de continuidade.
