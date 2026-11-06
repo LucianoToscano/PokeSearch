@@ -44,8 +44,11 @@
   if(!current)return [];
   // Cosmetic identities are not sufficient evidence that future evolutions
   // can be performed. Show the currently captured species only.
-  const special=card?.isCostume===true||!!card?.costume_id||!!card?.costume||
-   !!card?.costumeId||!!form&&!/^(normal|standard)$/i.test(form);
+  const flag=v=>v!==undefined&&v!==null&&v!==false&&v!==0&&
+   !/^(?:|none|normal|default|false|0)$/i.test(String(v).trim());
+  const special=card?.isCostume===true||flag(card?.costume_id)||
+   flag(card?.costume)||flag(card?.costumeId)||
+   !!form&&!/^(normal|standard|none)$/i.test(form);
   const choices=[current],seen=new Set([normalize(current.name)+"|"+current.variant]);
   if(!special&&Array.isArray(related)){
    for(const label of related){
@@ -122,6 +125,18 @@
   return rank<=20?"Destaque":rank<=50?"Bom atacante":
    rank<=100?"Situacional":"Fora do Top 100";
  }
+ function offlineAttack(card,related,gm){
+  if(!gm||!Array.isArray(gm.pokemon))return null;
+  const desired=buildCandidates(card,related);
+  if(!desired.length)return null;
+  const allowed=new Set(desired.filter(x=>x.variant!=="mega")
+   .map(x=>normalize(x.name)));
+  const values=gm.pokemon.filter(x=>Array.isArray(x)&&
+   allowed.has(normalize(x[1]))&&Number.isFinite(Number(x[2]))&&Number(x[2])>0)
+   .map(x=>({name:String(x[1]),attack:Number(x[2])}))
+   .sort((a,b)=>b.attack-a.attack);
+  return values[0]||null;
+ }
  async function assess(card,related=[]){
   const number=dex(card?.number||card?.dex||card?.pokemon_id);
   const requested=buildCandidates(card,related);
@@ -174,6 +189,6 @@
     note:"Rank por tipo baseado em ER, nível 50 e IV 15/15/15 de referência; não é rank dos IVs capturados nem ranking de counter para um chefe."};
   }catch(_){return {verified:false,reason:"Fonte de Raides indisponível (sem rank estimado)"};}
  }
- return Object.freeze({assess,buildCandidates,exactRow,nameMap,grade,types,
+ return Object.freeze({assess,offlineAttack,buildCandidates,exactRow,nameMap,grade,types,
   SOURCE,normalize,typeName});
 });
