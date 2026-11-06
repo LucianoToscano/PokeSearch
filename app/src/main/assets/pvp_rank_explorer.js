@@ -284,6 +284,16 @@
    "#psRankExplorer .psrActions button{flex:1 1 auto;white-space:nowrap}",
    "#psRankExplorer .psrStatus{color:#aadfc0;min-height:12px;margin-top:3px;font-size:9px}",
    "#psRankExplorer .psrFooter{margin:4px 0 0;font-size:8px;color:#a8b4c5;overflow-wrap:anywhere}",
+   "#psRankExplorer .psrToolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:4px;align-items:stretch;flex-wrap:nowrap}",
+   "#psRankExplorer .psrToolbar>button{width:100%;min-width:0;min-height:29px;padding:3px 2px;white-space:normal;line-height:1.15;font-size:9px}",
+   "#psRankExplorer .psrFilterGroup{display:flex;align-items:center;gap:3px;min-width:0;padding:2px 3px;border:1px solid #ffffff3b;border-radius:6px;background:#ffffff0b}",
+   "#psRankExplorer .psrFilterGroup label{font-size:9px;white-space:nowrap;color:#dce7f3}",
+   "#psRankExplorer .psrFilterGroup select{min-width:0;width:100%;max-width:none;flex:1 1 0;height:25px;min-height:25px;padding:1px 2px;font-size:9px}",
+   "#psRankExplorer .psrLeagueSwitch{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px;align-items:center;padding:4px 5px;margin:3px 0}",
+   "#psRankExplorer .psrLeagueChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;min-width:0}",
+   "#psRankExplorer .psrLeagueChoices button{width:100%;min-width:0;min-height:28px;padding:3px 1px;font-size:9px;font-weight:750;white-space:nowrap}",
+   "#psRankExplorer .psrLeagueChoices button[aria-pressed=true]{border-color:#9ed6ff;background:#3a536e;color:#f1f9ff}",
+   "#psRankExplorer .psrLeagueChoices button:disabled{opacity:.4}",
    "#evoBody button.psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}"
   ].join("\n");
   document.head.appendChild(css);
@@ -305,6 +315,10 @@
      if(picker&&state?.kind==="overall")switchOverallLeague(picker.value);
     });
     view.addEventListener("click",evt=>{
+     const leagueBtn=evt.target.closest?.("button[data-ps-league-choice]");
+     if(leagueBtn&&state?.kind==="overall"){
+      evt.stopPropagation();switchOverallLeague(leagueBtn.dataset.psLeagueChoice);return;
+     }
      const b=evt.target.closest?.("button[data-ps-act]");
      if(b){
       evt.stopPropagation();
@@ -426,11 +440,13 @@
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
   const leagueChooser=s.kind==="overall"&&s.leagueOptions.length?
-   '<div class="psrLeagueSwitch"><label for="psrLeague">Liga</label>'+
-   '<select id="psrLeague" data-ps-league-choice aria-label="Escolher liga do Rank Geral">'+
-   s.leagueOptions.map(x=>'<option value="'+safe(x.league)+'"'+
-    (x.league===s.league?' selected':'')+'>'+safe(LIGAS[x.league])+'</option>').join('')+
-   '</select></div>':"";
+   '<div class="psrLeagueSwitch"><span class="psrLeagueLabel">Liga</span>'+
+   '<div class="psrLeagueChoices" role="group" aria-label="Escolher liga do Rank Geral">'+
+   s.leagueOptions.map(x=>'<button type="button" data-ps-league-choice="'+safe(x.league)+
+    '" aria-label="'+safe(LIGAS[x.league])+'" aria-pressed="'+(x.league===s.league?'true':'false')+
+    '"'+(getOverallRows(s.overall,x.league)?.length?'':' disabled')+'>'+
+    x.league.toUpperCase()+'</button>').join('')+
+   '</div></div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
   view.innerHTML='<div class="psrHead"><div class="psrTitle">'+
@@ -443,12 +459,12 @@
       '#'+s.selectedRank:"")+'</div>'+leagueChooser+
    (s.kind==="class"?
      '<div class="psrScopeNote">Posição entre 4.096 IVs de '+safe(s.name)+
-     ' — não é o Rank Geral da Grande Liga.</div>':"")+
-   '<div class="psrControls"><button type="button" data-ps-act="top">#1 Topo</button>'+
+     ' — não é o Rank Geral da '+safe(LIGAS[s.league])+'.</div>':"")+
+   '<div class="psrControls psrToolbar"><button type="button" data-ps-act="top">#1 Topo</button>'+
    '<button type="button" data-ps-act="selected"'+(s.selectedRank?'':' disabled')+'>'+select+'</button>'+
-   '<label for="psrFilter">Top</label><select id="psrFilter" data-ps-filter aria-label="Filtrar classificação">'+
+   '<div class="psrFilterGroup"><label for="psrFilter">Top</label><select id="psrFilter" data-ps-filter aria-label="Filtrar classificação">'+
    FILTER_LIMITS.map(n=>'<option value="'+n+'"'+(s.filter===n?' selected':'')+'>'+
-    (n?n:"Todos")+'</option>').join("")+'</select></div>'+
+    (n?n:"Todos")+'</option>').join("")+'</select></div></div>'+
    '<div class="psrRows" role="region" aria-label="Linhas da classificação" tabindex="0">'+
    '<table><thead><tr>'+cells+'</tr></thead><tbody>'+body+'</tbody></table></div>'+
    '<div class="psrControls"><button type="button" data-ps-act="prev"'+(s.page===0?' disabled':'')+
@@ -456,9 +472,6 @@
    ' · '+(from+1)+'–'+Math.min(from+PAGE_SIZE,rows.length)+' / '+rows.length+'</span>'+
    '<button type="button" data-ps-act="next"'+(s.page===maxPage-1?' disabled':'')+'>›</button></div>'+
    comparisonHtml(s)+
-   '<div class="psrControls psrActions"><button type="button" data-ps-act="copy">Copiar</button>'+
-   '<button type="button" data-ps-act="share">Compartilhar</button>'+
-   '<button type="button" data-ps-act="csv" title="Copiar CSV do filtro, com todas as linhas filtradas">CSV</button></div>'+
    '<div class="psrStatus" role="status" aria-live="polite">'+safe(s.status)+'</div>'+
    '<div class="psrFooter">PvPoke snapshot '+safe(s.sourceDate)+
    (s.kind==="class"?' · Nv. máximo 50, sem melhor amigo':' · Posição da espécie, não dos IVs')+
