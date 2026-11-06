@@ -2126,6 +2126,31 @@
           "A fonte PvE segue como ranking de referência por tipo, não como counter atualizado para um chefe específico."
         ]
       }
+    },
+    {
+      "id": "lt261-location-sort-first-toggle-20261106",
+      "minVersionCode": 54465,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT261 — Ordenação automática ao ligar e remover localização",
+      "sections": {
+        "novidades": [
+          "Ao ativar uma localização válida, a ordenação passa automaticamente a Distância (mais próximos).",
+          "Ao apagar/desativar a localização, o padrão muda automaticamente para Despawn."
+        ],
+        "melhorias": [
+          "A troca automática ocorre apenas na mudança ON/OFF. Depois, você pode selecionar CP, IV%, Nível, Despawn ou Distância manualmente sem o aplicativo desfazer sua escolha.",
+          "Trocar coordenadas ou raio com a localização já ativada, reaplicar a mesma localização ou reiniciar mantém a escolha manual, até a próxima troca real ON/OFF.",
+          "Distância fica disponível assim que as coordenadas válidas são aplicadas, sem precisar esperar a confirmação assíncrona do site. A checagem da localização real continua protegida."
+        ],
+        "correcoes": [
+          "Filtros de Pokémon, IV, PC, Nível, clima, tamanho e sexo são preservados; apenas Sort muda no momento da transição.",
+          "Menu de filtros sincroniza imediatamente com a seleção automática e não mantém rascunho de ordenação antigo.",
+          "Repetir Limpar sem localização ativa não redefine uma ordenação manual válida. O comportamento é independente nas duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Validação de código e visual P/M/G aprovada em CI; confirmar as transições ON/OFF no Android Samsung após instalar a atualização."
+        ]
+      }
     }
   ]
 }
