@@ -216,17 +216,17 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     activeRankLeague="gl";window.psRankContext=payload;
     const ok=psRenderFiveRankRail(payload),rail=document.getElementById("rankLine");
     const b=Array.from(rail.querySelectorAll("button"));
-    return {ok,count:b.length,labels:b.slice(0,4).map(x=>x.querySelector(".psRailNumber")?.textContent),
-     names:b.slice(0,4).map(x=>x.dataset.psName),
-     evolves:!!b[0]?.querySelector(".psRailEvolve"),
-     icons:b.slice(0,4).map(x=>x.querySelector(".psRailIcon")?.getAttribute("src")||""),
+    return {ok,count:b.length,labels:b.slice(0,5).map(x=>x.querySelector(".psRailNumber")?.textContent),
+     names:b.slice(0,5).map(x=>x.dataset.psName),
+     evolves:!!b[1]?.querySelector(".psRailEvolve"),
+     icons:b.slice(0,5).map(x=>x.querySelector(".psRailIcon")?.getAttribute("src")||""),
      width:rail.scrollWidth,client:rail.clientWidth,
      clipped:b.some(x=>x.getBoundingClientRect().right>rail.getBoundingClientRect().right+1)};
    });
    assert.ok(rail270.ok&&rail270.count===5&&rail270.evolves&&!rail270.clipped&&
     rail270.width<=rail270.client+2&&
-    JSON.stringify(rail270.labels)==='["#12","#5","#1","#142"]'&&
-    rail270.names[0]==="Ursaluna"&&
+    JSON.stringify(rail270.labels)==='["—","#12","#5","#1","#142"]'&&
+    rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png")),
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
@@ -240,8 +240,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
     const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
-    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge==="#220",
-     title,species,badge};
+    const rows=window.PokeSearchRankExplorer?.getOverallRows?.(window.POKESEARCH_PVPOKE_OVERALL,"ul")||[];
+    const actual=rows.find(x=>x.name==="Teddiursa");
+    const expected=actual?"#"+actual.rank:"—";
+    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected,
+     title,species,badge,expected};
    });
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
     sz.name+" "+JSON.stringify(overall270));
@@ -251,7 +254,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    const moves=await page.evaluate(async()=>{
     document.querySelector("#psMetricPanel").hidden=true;
     document.querySelector("#panel").classList.remove("metricOpen");
-    document.getElementById("evolutions").hidden=true;
+    document.getElementById("evolutions").hidden=false;
+    evolutionExpanded=true;psSelectedEvaluationLeague="gl";activeRankLeague="gl";
     const rank=document.getElementById("rankLine");
     rank.hidden=false;rank.dataset.league="gl";rank.textContent="GL IV #1";
     currentRankSpecies="Bulbasaur";currentCardMoves="Tackle / Power Whip";
@@ -264,7 +268,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
       {name:"Bomba de Sementes",status:"normal",type:"grass",stats:{power:55,energyCost:40}}
      ]})};
     renderRankOneMoves();
-    const action=rank.querySelector(".psMovesAction");
+    const action=document.querySelector("#psLeagueMoves .psMovesAction");
     if(!action)return {ok:false,why:"missing action"};
     await action.onclick();
     const pop=document.getElementById("movesPopover");
@@ -287,6 +291,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    const megaMoves=await page.evaluate(async()=>{
     let wrongBase=0,megaCalls=0;
     currentRankSpecies="Mega Sableye";
+    evolutionExpanded=true;psSelectedEvaluationLeague="gl";activeRankLeague="gl";
+    document.getElementById("evolutions").hidden=false;
     const rank=document.getElementById("rankLine");
     rank.dataset.league="gl";rank.textContent="🔵 GL IV #1 ↳ Sableye";
     window.psRankContext={leagues:[{league:"gl",megas:[
@@ -302,7 +308,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
       }}
     };
     renderRankOneMoves();
-    const action=rank.querySelector(".psMovesAction");
+    const action=document.querySelector("#psLeagueMoves .psMovesAction");
     if(!action)return {ok:false,why:"missing Mega action"};
     await action.onclick();
     const pop=document.getElementById("movesPopover"),html=pop.innerHTML;

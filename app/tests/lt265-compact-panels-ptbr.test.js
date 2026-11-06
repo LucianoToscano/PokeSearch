@@ -30,7 +30,7 @@ assert.ok(presenter.includes("eligible.has(moveId(original))"),
 // EXCLUSIVE panels: Raid, PvP, calculator and move details must not stack.
 for(const marker of ['function psCloseOtherPanels(keep){',
  'psCloseOtherPanels("raid")','psCloseOtherPanels("pvp")',
- 'psCloseOtherPanels("calc")','psCloseOtherPanels("moves")',
+ 'psCloseOtherPanels("calc")','psCloseOtherPanels(leagueSlot?"pvp":"moves")',
  'psCloseOtherPanels("rank")'])
  assert.ok(html.includes(marker),marker);
 assert.ok(html.includes('if(keep!=="raid"&&psRaidExpanded)'));

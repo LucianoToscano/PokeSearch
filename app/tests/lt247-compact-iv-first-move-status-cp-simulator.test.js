@@ -84,8 +84,9 @@ assert.ok(inline.includes("'Mega '+h(species)+' · PvP'"));
 assert.ok(inline.includes("Mesmos golpes do "),"a Mega Edition uses learnable base-form moves");
 assert.ok(inline.includes('const hasRank=rankLine.dataset?.rankRail==="five"||')&&
  inline.includes('/(?:Rank Classe:|IV) #\\d+/.test(rankLine.textContent||"")')&&
- inline.includes('if(!Object.values(choices).some(x=>x.classChoice||x.overallChoice))'),
- "No move action unless a verified old rank or source-backed new five rail exists");;
+ inline.includes('if(!evolutionExpanded||!["gl","ul","ml"].includes(activeRankLeague))')&&
+ inline.includes('const statusKey=league+"|"'),
+ "No recommended attacks button in a closed league or from another league's source");;
 const gm=fs.readFileSync(path.join(base,"pvpoke-iv-gamemaster.js"),"utf8");
 const win={};new Function("window",gm)(win);
 const cpStart=inline.indexOf("/* LT244: zero-cost contextual stats actions.");

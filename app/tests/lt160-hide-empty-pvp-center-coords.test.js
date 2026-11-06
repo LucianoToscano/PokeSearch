@@ -48,10 +48,10 @@ const verified={id:"zubat-41",leagues:[
  {league:"ul",own:null,evolutions:[]},
  {league:"ml",own:null,evolutions:[]}]};
 assert.equal(handler(verified),true,"a real rank still renders normally");
-assert.equal(node("evolutions").hidden,false,"verified rows are visible");
+assert.equal(node("evolutions").hidden,true,"verified rankings stay collapsed until selected by league icon");
 assert.ok(node("evoBody").innerHTML.includes("Verified rank"));
 assert.equal(handler({...empty,id:"different-pokemon"}),false,"stale payload ignored");
-assert.equal(node("evolutions").hidden,false,"stale callback cannot clear a valid result");
+assert.equal(node("evolutions").hidden,true,"stale callback cannot reopen a league evaluation");
 assert.equal(handler(empty),false,"empty updated payload hides prior rank");
 assert.equal(node("evolutions").hidden,true);
 assert.equal(node("evoBody").innerHTML,"");

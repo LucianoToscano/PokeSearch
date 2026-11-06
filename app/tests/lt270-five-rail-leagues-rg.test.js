@@ -39,26 +39,28 @@ function node(name=""){
 }
 const rail=node("div"),doc={getElementById:id=>id==="rankLine"?rail:null,createElement:node};
 const win={POKESEARCH_PVPOKE_OVERALL:{gl:[[1,"Ursaluna",142]],ul:[[1,"Teddiursa",220]],ml:[[1,"Teddiursa",311]]}};
-const events=[];
+const calls=[];
 const render=new Function("document","window","activeRankLeague","currentRankSpecies",
- "renderRankOneMoves","resizeEvolutionPanel","openPvpRankExplorer",
+ "resizeEvolutionPanel","toggleRaidDetails","openPvpRankExplorer",
+ "let psRaidReport=null,watchName='Teddiursa',psSelectedEvaluationLeague='',"+
+ "evolutionExpanded=false,psActiveAnalysisKey='';\n"+
  snippet+"return psRenderFiveRankRail;")(
- doc,win,"gl","",()=>{rail.children=rail.children.filter(x=>x.className!=="psMovesAction");
-  const sword=node("button");sword.className="psMovesAction";sword.textContent="⚔︎";rail.appendChild(sword)},()=>{},
- (event,button)=>{events.push([button.dataset.psKind,button.dataset.psLeague,button.dataset.psName]);return true});
+ doc,win,"gl","",()=>{},()=>{calls.push("raid");return true;},
+ (event,button)=>{calls.push("overall:"+button.dataset.psLeague);return true});
 assert.equal(render(payload),true);
-assert.equal(rail.children.length,5);
-assert.equal(rail.children[0].children[1].textContent,"#12");
-assert.equal(rail.children[0].children[2].textContent,"↳");
-assert.equal(rail.children[1].children[1].textContent,"#5");
-assert.equal(rail.children[2].children[1].textContent,"#1");
-assert.equal(rail.children[3].children[1].textContent,"#142");
-assert.equal(rail.children[3].dataset.psRailOverall,"true");
-assert.equal(win.psRailOverallChoices.length,3);
+assert.equal(rail.children.length,5,"Five shortcuts, no global attacks action");
+assert.deepEqual(rail.children.map(x=>x.dataset.psRail),["raid","gl","ul","ml","overall"]);
+assert.deepEqual(rail.children.map(x=>x.querySelector(".psRailNumber")?.textContent),
+ ["—","#12","#5","#1","#142"]);
+assert.equal(rail.children[1].querySelector(".psRailEvolve").textContent,"↳");
+assert.equal(rail.children[1].dataset.psName,"Ursaluna");
+assert.equal(rail.children[4].dataset.psRailOverall,"true");
+assert.ok(rail.children.every(x=>x.querySelector(".psRailIcon")?.src.includes("-lt268.png")));
+assert.equal(rail.querySelector(".psMovesAction"),null,"Attacks MUST NOT be on initial rail");
 assert.equal(win.psRailOverallChoices[1].rank,220);
-rail.children[1].onclick({});
-rail.children[3].onclick({});
-assert.deepEqual(events,[["class","ul","Teddiursa"],["overall","gl","Ursaluna"]]);
+rail.children[0].onclick({});
+rail.children[4].onclick({});
+assert.deepEqual(calls,["raid","overall:gl"]);
 assert.ok(explorer.includes("function switchOverallLeague(league){"));
 assert.ok(explorer.includes("data-ps-league-choice"));
 assert.ok(explorer.includes('"Rank Geral · "+safe(LIGAS[s.league])'));
@@ -66,5 +68,5 @@ assert.ok(explorer.includes("opts?.railKey||"));
 const dock=fs.readFileSync(path.join(root,"dock.html"),"utf8");
 assert.ok(!dock.includes("psRailChoices"),"Pokeballs and Modos are independent");
 const req=JSON.parse(fs.readFileSync(path.join(__dirname,"../../release/official-request.json"),"utf8"));
-assert.equal(req.code,54474);
-console.log("LT270 PASS: GL/UL/ML/RG/attacks, verified 5-button geometry, evolution, General league selector");
+assert.equal(req.code,54475);
+console.log("LT271 PASS: raid + GL/UL/ML/RG shortcuts, attacks only nested in league, version gate");

@@ -181,8 +181,16 @@
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
    iv:opts.iv,overall,railKey:opts.railKey||"",
-   leagueOptions:kind==="overall"&&Array.isArray(opts.leagueOptions)?
-    opts.leagueOptions.filter(x=>LIGAS[x?.league]).slice(0,3):[],
+   // All Rank Geral entrypoints receive a real league selector, not only the shortcut.
+   leagueOptions:kind==="overall"?["gl","ul","ml"].map(league=>{
+    const fromShortcut=Array.isArray(opts.leagueOptions)?
+     opts.leagueOptions.find(x=>x?.league===league):null;
+    const species=String(fromShortcut?.name||name);
+    const rowsForLeague=getOverallRows(overall,league)||[];
+    const exact=rowsForLeague.find(x=>n(x.name)===n(species));
+    return {league,name:species,rank:exact?.rank||null,
+     evolves:fromShortcut?.evolves===true};
+   }):[],
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -203,18 +211,21 @@
  function switchOverallLeague(league){
   if(!state||state.kind!=="overall"||!LIGAS[league])return false;
   const target=state.leagueOptions.find(x=>x.league===league);
-  if(!target)return false;
+  if(!target||!getOverallRows(state.overall,league)?.length)return false;
   const opts={kind:"overall",league,name:target.name||state.name,
    rank:target.rank||null,iv:state.iv,forms:state.forms,
    gm:state.gm,overall:state.overall,leagueOptions:state.leagueOptions,
    railKey:state.railKey};
+  // Keep the previous table/badge unchanged if the new source is unavailable.
+  if(!open(opts))return false;
+  if(typeof window!=="undefined")window.psRailOverallSelectedLeague=league;
   const badge=document.getElementById("rankLine")?.querySelector?.(".psRailGeneral");
   if(badge){
    badge.dataset.psLeague=league;badge.dataset.psName=opts.name;
    badge.dataset.psRank=target.rank?String(target.rank):"";
    badge.dataset.rgVisible=target.rank?"#"+target.rank:"—";
-   const n=badge.querySelector?.(".psRailNumber");
-   if(n)n.textContent=target.rank?"#"+target.rank:"—";
+   const number=badge.querySelector?.(".psRailNumber");
+   if(number)number.textContent=target.rank?"#"+target.rank:"—";
    badge.querySelector?.(".psRailEvolve")?.remove?.();
    if(target.evolves){
     const mark=document.createElement("span");mark.className="psRailEvolve";
@@ -225,7 +236,7 @@
     (target.rank?" · #"+target.rank:" · posição não verificada");
    badge.setAttribute?.("aria-label",badge.title);
   }
-  return open(opts);
+  return true;
  }
  function close(){
   if(view)view.hidden=true;

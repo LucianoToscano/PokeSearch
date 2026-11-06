@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.70",
-  "code": 54474,
-  "label": 51274,
-  "previous_tag": "v0.02.69-54473",
-  "qa_max_code": 54473,
-  "release_notes": "LT270 PokeSearch: cartões com cinco atalhos GL, UL, ML, Rank Geral e Ataques recomendados, usando os quatro ícones originais LT268. Cada botão mostra uma classificação independente; ↳ indica forma evoluída. Rank Geral com seletor de liga GL/UL/ML e cabeçalho correto que identifica a liga e a espécie sem confundir Rank Classe IV com posição geral PvPoke. Botões proporcionais, sem halos e com painéis exclusivos, preservando rankings, ataques, Mega de referência, calculadora, sprites, tradução PT-BR LT269, fontes verificáveis, filtros, favoritos, atualizador integrado, as duas Pokébolas e todos os ícones do menu Modos. Teste físico Samsung permanece pendente."
+  "version": "0.02.71",
+  "code": 54475,
+  "label": 51275,
+  "previous_tag": "v0.02.70-54474",
+  "qa_max_code": 54474,
+  "release_notes": "PokeSearch LT271: cartões com cinco ícones na ordem Raides, GL, UL, ML e Rank Geral, cada um com seu #rank sobre o ícone. Raides apresenta sua classificação somente quando o emblema é tocado; antigas faixas permanentes de Raides e Análise PvP removidas da tela inicial. GL, UL e ML abrem apenas a avaliação da liga correspondente, com o botão de Ataques Recomendados dentro da avaliação, usando a espécie/evolução e o snapshot de golpes corretos para a liga. Ataques deixa de existir na faixa inicial. Rank Geral permanece independente e ganha seletor de liga funcional em todos os pontos de entrada (GL/UL/ML), preservando as classificações verificadas. Sem alteração dos ícones de Pokébolas ou menu Modos; cálculos, golpes legados/Elite, sprites, filtros e OTA mantidos. QA física Samsung pendente."
 }
