@@ -1,9 +1,9 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT266 — Ícones dos 18 tipos do Drive (06/11/2026 · IMPLEMENTAÇÃO EM QA)
+## LT266 — Ícones dos 18 tipos do Drive (06/11/2026 · PR #246 MESCLADA / RELEASE SOLICITADA)
 - **Fonte verificada:** 18 PNGs fornecidos no Drive, todos 1024×1024 RGBA, integrados sem transformação em `ui-icons/type-<tipo>-lt266.png`. O mapa `pokemon_type_icons.js` agora aponta para recursos locais e deixa de incluir 18 strings Base64; API e tipos originais preservados.
 - **Controles de integridade:** `app/tests/lt266-types-from-drive.test.js` verifica 18 imagens, sha256, transparência, cartão Pidgey Normal/Voador, integração WebView/OTA; workflow oficial exige os mesmos hashes no APK assinado. Originais antigos disponíveis no histórico do Git.
-- **Estado de release:** LT265 permanece a última versão **comprovada** no início desta revisão. CI/PR/merge/assinatura/publicação LT266 e homologação física ainda precisam de evidência; não presumir conclusão.
+- **CI/merge comprovados:** [PR #246](https://github.com/LucianoToscano/PokeSearch/pull/246) mesclada em `b83b3ddd346a5ca72a74e727fe125a5fe2066b6e`, após **8 gates CI verdes** (Node completo, Node QA, core, Java, visual P/M/G, PvE, OTA e preflight) no head `6f111a7f42a3c7e111af121565a15ec2f2f2a0bc`. **Publicação LT266 solicitada** por `release/official-request.json` (0.02.66/code 54470); SHA-256 de APK/publicação só após workflow oficial terminar. Teste físico Samsung continua pendente.
 - **Auditoria:** [LT266_ICONES_TIPOS_DRIVE_QA_20261106.md](LT266_ICONES_TIPOS_DRIVE_QA_20261106.md). [Prompt](PROMPT_NOVO_CHAT_LT266_20261106.md). Pendem inspeção no Samsung dos novos tipos P/M/G, tradução em Fletchling/Talonflame/Pidgey/Pidgeot, rolagem/painéis/calculadora.
 
 ## LT265 — Raides PT-BR, indicadores Elite distintos, painéis compactos e calculadora intuitiva (06/11/2026 · RELEASE OFICIAL)

@@ -17,8 +17,8 @@ Data: 06/11/2026 · Base publicada confirmada: LT265 0.02.65 (54469).
 ## Estado de validação
 - Conferência de versão pública LT265: confirmada por `releases/latest` antes das alterações.
 - Inspeção fonte em GitHub e PNGs do Drive: confirmadas.
-- Testes Node/Java, regressão visual P/M/G, PvE, OTA e CI da branch: **pendentes até resultados reais**.
-- PR/merge, publicação LT266, assinatura e SHA-256 da futura APK: **não afirmados até evidência pública**.
+- Oito gates da PR #246 no head `6f111a7f42a3c7e111af121565a15ec2f2f2a0bc`: **success**, incluindo Node completo, Node QA, core, compilação Java, visual HTML WebView P/M/G (workflow #42220354142), referência PvE (workflow #42220354125), OTA (workflow #42220354176), preflight de release. Os gates foram executados, não simulados.
+- [PR #246](https://github.com/LucianoToscano/PokeSearch/pull/246) **mesclada** em `b83b3ddd346a5ca72a74e727fe125a5fe2066b6e`. Release solicitada em `release/official-request.json`; **APK assinada, publicação e SHA-256 ainda aguardam confirmação pública**.
 - Teste físico no Samsung, rolagem, painéis e calculadora: **não executado remotamente**.
 
 ## Riscos e próximos testes

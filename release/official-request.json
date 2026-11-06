@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.65",
-  "code": 54469,
-  "label": 51269,
-  "previous_tag": "v0.02.64-54468",
-  "qa_max_code": 54468,
-  "release_notes": "PokeSearch LT265: reorganização avançada do cartão mantendo design compacto/vidro sem empobrecer funções. Novos pergaminhos MT Ágil Elite e MT Carregada Elite fornecidos pelo usuário substituem 💠 junto aos ataques legados/Elite comprovados. Quatro novas bandeiras PvP GL/UL/ML/Copa com borda branca e transparência asseguram contraste sem alterar tamanhos nem ícones das Pokébolas/Modos. Todos os seis PNGs passam por SHA-256 imutável no APK/OTA. Golpes PvE por tipo e nomes dos ataques capturados usam fonte GO PT-BR versionada WatWowMap (mesma usada pelo módulo PvP), mapeada por IDs, cache e subconjunto offline; golpes não identificados ficam neutros, sem tradução falsa. Raides exibe Top 3 inicialmente e demais classificações e notas de ER/IV/fonte sob detalhes; classificação é por tipo, não rank universal ou counter específico. Abrir um painel Raides/PvP/Golpes/Rank/Calculadora fecha os outros sem perder dados. Calculadora oferece forma+nível, PC/PS, alvo e presets 500/1500/2500 com comparação IV A/B avançada e ajuda sob expansão, preservando matemática e acesso a Megas. Liga Mestra e Potencializado traduzidos na interface, enums API mantidos. PR #245 mesclada em a1408736cfec8b4a4b614a4c887b5c9dae89bb30, oito gates CI verdes (Node Full incluindo dois testes novos, Node QA, core, Java, visual P/M/G, OTA, PvE e preflight oficial). Documentos no Guia Mestre, LT265_AUDITORIA_PTBR_COMPACTACAO e PROMPT_NOVO_CHAT_LT265. Teste físico P1/P2 Samsung ainda não comprovado, instalação precisa de confirmação Android."
+  "version": "0.02.66",
+  "code": 54470,
+  "label": 51270,
+  "previous_tag": "v0.02.65-54469",
+  "qa_max_code": 54469,
+  "release_notes": "PokeSearch LT266: substituição dos 18 ícones dos tipos Pokémon pelas 18 artes originais PNG RGBA 1024×1024 fornecidas no Google Drive. Recursos locais offline com caminhos relativos em pokemon_type_icons.js substituem 18 imagens Base64, sem mudar IDs da API ou algoritmos. Novos testes validam todos os tipos, transparência, resolução, SHA-256 de cada PNG e Pidgey Normal/Voador. O fluxo de APK oficial confere os 18 hashes dentro do APK assinado; o pacote OTA aceita os PNGs. CI da PR #246 aprovada: regressão Node completa, Node QA, core, Java, visual WebView P/M/G, PvE, OTA e preflight oficial. Duas Pokébolas, favoritos, localização e sort, PVPRank Classe/Geral, Raides, Mega, calculadora, golpes e bandeiras LT265 preservados. Teste físico Samsung P1/P2 ainda pendente."
 }
