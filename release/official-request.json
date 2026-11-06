@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.69",
-  "code": 54473,
-  "label": 51273,
-  "previous_tag": "v0.02.68-54472",
-  "qa_max_code": 54472,
-  "release_notes": "PokeSearch LT269: traduções de golpes offline corrigidas exclusivamente pela fonte canônica versionada de Pokémon GO em português BR (WatWowMap pogo-data-api commit 31a3bcdc). Cinco nomes divergentes agora seguem os moveIds oficiais: AIR_SLASH_FAST, THUNDER_SHOCK_FAST, DRAGON_BREATH_FAST, WATER_GUN_FAST e DRAGON_TAIL_FAST. Cinco IDs adicionais têm nomes PT-BR verificados offline: GUST_FAST, INCINERATE_FAST, FLAME_CHARGE, FEATHER_DANCE e HURRICANE. Fletchling, Talonflame, Pidgey e Pidgeot podem exibir esses nomes sem conexão quando o moveId da origem coincidir. Nenhum moveset recomendado foi alterado nem inferido. Preservados Rank Classe/Geral, status Elite e legado por ID original, seis ícones LT268, duas Pokébolas, menus Modos, filtros, sprites, OTA, assinatura e rollback. Testes físicos Samsung continuam pendentes."
+  "version": "0.02.70",
+  "code": 54474,
+  "label": 51274,
+  "previous_tag": "v0.02.69-54473",
+  "qa_max_code": 54473,
+  "release_notes": "LT270 PokeSearch: cartões com cinco atalhos GL, UL, ML, Rank Geral e Ataques recomendados, usando os quatro ícones originais LT268. Cada botão mostra uma classificação independente; ↳ indica forma evoluída. Rank Geral com seletor de liga GL/UL/ML e cabeçalho correto que identifica a liga e a espécie sem confundir Rank Classe IV com posição geral PvPoke. Botões proporcionais, sem halos e com painéis exclusivos, preservando rankings, ataques, Mega de referência, calculadora, sprites, tradução PT-BR LT269, fontes verificáveis, filtros, favoritos, atualizador integrado, as duas Pokébolas e todos os ícones do menu Modos. Teste físico Samsung permanece pendente."
 }
