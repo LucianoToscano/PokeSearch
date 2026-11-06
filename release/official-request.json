@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.57",
-  "code": 54461,
-  "label": 51261,
-  "previous_tag": "v0.02.56-54460",
-  "qa_max_code": 54460,
-  "release_notes": "PokeSearch LT257: seletor único de evoluções e Megas na calculadora PvP. Agora a lista suspensa interna reúne Gastly, Haunter, Gengar (Normal) e Gengar (Mega), com o ícone oficial de Mega Evolução antes do nome, e Mega X/Y separadas onde existentes. Eliminados botões repetidos embaixo do campo, mantendo setas laterais alinhadas mesmo com lista aberta, opções ordenadas pela família evolutiva e barra interna para famílias longas sem cortes nos cartões P/M/G. Ao tocar em qualquer opção, a lista retrai, o nome é destacado e PC/PS são recalculados offline com o Game Master atual, preservando IVs A/B, nível e PC-alvo. Sem menus flutuantes adicionais, sem requisições novas à API, sem inventar golpes Mega, mantendo as duas Pokébolas e as correções LT256. PR #236 mesclada após seis gates CI automáticos aprovados e inspeção de screenshots Chromium P/M/G, incluindo Gastly→Gengar Normal→Mega; testes físicos de instalação Samsung P1/P2 não observados e instalação exige confirmação do Android."
+  "version": "0.02.58",
+  "code": 54462,
+  "label": 51262,
+  "previous_tag": "v0.02.57-54461",
+  "qa_max_code": 54461,
+  "release_notes": "PokeSearch LT258: indicadores de ataques PvP antes do toque (⚔️ quando a recomendação confirmada contém legado/Elite, 🗡️ quando não contém; símbolo neutro e cinza se ainda não foi possível comprovar). O botão apenas abre os golpes e não altera o ícone. A lista recolhível de golpes possíveis passa a rolar no próprio cartão, eliminando duas rolagens internas que impediam chegar aos carregados finais. Conservados os chips de IV Classe, Pokémon e Rank Geral, a Megaedição separada dos golpes, as duas Pokébolas, o layout compacto P/M/G e a correção LT257. Merge da PR #238 (fd0d056540f5a17385c1cca72d48bf1e9fe50d73) com seis gates automatizados aprovados, incluindo regressão Node, Java, OTA e screenshots P/M/G; validação física Samsung P1/P2 não observada. Instalação depende de confirmação do Android."
 }
