@@ -1192,7 +1192,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <section id="psMetricPanel" hidden role="region" aria-label="Projeções de PC e Nível"></section>
  <div id="rankLine" class="rankLineSafe" hidden></div>
  <button id="raidRow" type="button" hidden data-grade="unknown" aria-expanded="false"
-  aria-controls="raidPanel" onclick="toggleRaidDetails()">🏆 Raides · verificando...</button>
+  aria-controls="raidPanel" onclick="toggleRaidDetails()">Raides · verificando...</button>
  <section id="raidPanel" hidden role="region" aria-label="Análise de atacantes em Raides"></section>
  <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div><div id="movesPopover" hidden role="status" class="psMovesCompact"></div><div id="info"></div>
  <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
@@ -1590,7 +1590,7 @@ function renderRaidPreview(){
  const best=result?.verified?result.best:null;
  if(!best){
   const attack=psRaidAttackPreview;
-  button.textContent="🏆 Raides · "+(attack?
+  button.textContent="Raides · "+(attack?
    "ATQ base "+attack.attack+" ↳ "+attack.name+" · rank pendente":
    (result?.reason||"Aguardando dados..."));
   if(button.dataset)button.dataset.grade="unknown";
@@ -1602,17 +1602,17 @@ function renderRaidPreview(){
  }else{
   const good=best.rank<=20,useful=best.rank<=50;
   if(button.dataset)button.dataset.grade=good?"elite":useful?"useful":"unknown";
-  button.textContent="🏆 Raides · "+(good?"Destaque":useful?"Bom":
+  button.textContent="Raides · "+(good?"Destaque":useful?"Bom":
    best.rank<=100?"Situacional":"Sem destaque")+" · #"+
    best.rank+" "+best.typePt+(best.projected?" ↳ "+best.name:"");
   const rows=(result.rows||[]).slice(0,8);
-  panel.innerHTML='<div class="psRaidHead">🏆 Atacantes por tipo (PvE)</div>'+
+  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/raid-badge.png" alt="">Atacantes por tipo (PvE)</div>'+
    rows.map(row=>'<div class="psRaidRow"><span>'+h(row.name)+
     (row.projected?" · evolução/forma projetada":" · atual")+
     (row.variant==="mega"?" · Mega":"")+'</span><strong>#'+row.rank+
     ' '+h(row.typePt)+'</strong><span class="psRaidMoves">'+
     h(row.fast.replace(/_/g," "))+' + '+h(row.charged.replace(/_/g," "))+
-    (row.elite?" · ⚔️ exige MT de Elite":" · 🗡️ sem Elite nesta fonte")+
+    (row.elite?" · "+psMtIconHtml("elite")+" exige MT de Elite":" · "+psMtIconHtml("normal")+" sem Elite nesta fonte")+
     '</span></div>').join("")+
    '<div class="psRaidNote">'+h(result.source)+
    '. Referência por ER e tipo, não ranking universal nem contra um chefe específico. '+
