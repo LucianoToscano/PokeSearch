@@ -4,8 +4,8 @@ Você é a IA responsável por continuar a manutenção REAL do aplicativo Andro
 
 ## O que temos e o que não mudar
 - AppId `com.lucianotoscano.pokesearch`, namespace de OverlayService `com.lucianotoscano.pokesearchoverlay`, Android JDK17/Gradle8, duas Pokébolas independentes, Dock WebView e cartões `detail.html`; versões públicas oficiais assinadas v2 em GitHub Releases e atualizador via `releases/latest`; histórico no **docs/GUIA_MESTRE.md**.
-- Última versão anterior à LT265: **LT264, versão 0.02.64, versionCode 54468**, tag `v0.02.64-54468`.
-- O objetivo da **LT265, versão desejada 0.02.65, versionCode 54469** é reduzir espaços, trazer nomes de golpes PT-BR e manter menus exclusivos e imagens refinadas. **Confirme primeiro no GitHub Releases qual é a última versão efetivamente publicada**, e use essa como base real; não presuma que a LT265 tenha sido lançada até verificar `releases/latest`.
+- **Versão oficial publicada e verificada ao concluir esta conversa:** **LT265 · 0.02.65 · versionCode 54469**, tag [`v0.02.65-54469`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.65-54469), APK [PokeSearch-v0.02.65-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.65-54469/PokeSearch-v0.02.65-LT.apk), 28.638.433 bytes, SHA-256 `15e06bbdccea97c1daf98177c4862b21baa04ac8d37bd74a776b517e88d89c19`, publicada em 06/11/2026 às 12:23:13 UTC. [Workflow oficial #42216873644](https://github.com/LucianoToscano/PokeSearch/actions/runs/42216873644) `preflight=success`, `publish=success`. [PR #245](https://github.com/LucianoToscano/PokeSearch/pull/245) foi mesclada em `a1408736cfec8b4a4b614a4c887b5c9dae89bb30`, com 8 gates CI verdes. A versão anterior LT264 `0.02.64/54468` segue para rollback. **Não houve comprovação de instalação e teste físico no Samsung P1/P2.**
+- A LT265 já foi **publicada oficialmente**, com compactação de Raides e calculadora, ataques PT-BR verificáveis e imagens refinadas; **confirme novamente `releases/latest` no novo chat** para não trabalhar sobre uma versão ultrapassada. A próxima versão é LT266 somente se houver novos pedidos/correções após homologação.
 - Fonte IV/PvP: PvPoke snapshot/Game Master e ranking geral de espécies. *Rank Classe IV #1* compara os 4.096 IVs da mesma espécie, *Rank Geral* compara espécies. Nunca misture nem invente disponibilidade de Mega na Liga GO.
 - Raides: `pve_raid_rank.js` usa `S-Tier-Devs/pogo-db-api` referência publicada em ago/2026, ranking **por tipo**, não por chefe atual nem ranking universal. Prever Mega/evoluções não significa captura ou evolução permitida.
 - Fonte de golpes PvP: `pvp_rank_moves.js` com PvPoke e WatWowMap `pogo-data-api` commit `31a3bcdc2e412f315c4be2bb593807f45cb9bd9b`, nomes oficiais `translations/pt-br/moves.json`. Status ⚔️ legado/Elite apenas verificado, 🗡️ normal verificado, ⚔︎ cinza desconhecido. Ícones de Elite devem distinguir MT Ágil e Carregado.
@@ -18,6 +18,8 @@ Você é a IA responsável por continuar a manutenção REAL do aplicativo Andro
 - `dock.html` apresenta “Potencializado” para `Boosted` (valor API permanece em inglês). “Liga Mestra” substitui “Liga Master” no cartão.
 - OTA: `OtaAssets.java` e `scripts/build_ota_pack.py` incluem o novo `pve_moves_ptbr.js`. Novo workflow de APK exige as seis artes e checks originais.
 - Testes `app/tests/lt265-compact-panels-ptbr.test.js`, `app/tests/lt265-user-icons-sha.test.js`.
+
+A segunda auditoria pós-release está em [LT265_AUDITORIA_FINAL_POS_RELEASE_20261106.md](LT265_AUDITORIA_FINAL_POS_RELEASE_20261106.md), com tradução pendente, fontes e riscos. O Guia Mestre tem evidências da publicação oficial.
 
 ## Próximas ações e critérios de aceite
 1. **Auditar a LT265 publicada ou PR de QA** no GitHub: conferir `git main`, releases/latest, último commit do Guia Mestre, logs de CI, hashes do APK. Verificar se `0.02.65/54469` está realmente em produção antes de afirmar. Se o último workflow falhou, corrigir na branch.
