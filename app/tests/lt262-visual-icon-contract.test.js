@@ -60,9 +60,9 @@ assert.ok(detail.includes('psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡�
 assert.ok(detail.includes('#rankLine .psMovesAction{font-size:0!important'),
  "keep original semantic text while only replacing visual emoji art");
 assert.ok(detail.includes('onclick="toggleRaidDetails()">Raides'));
-assert.ok(detail.includes('psLeagueIconHtml("gl")'));
-assert.ok(detail.includes('psLeagueIconHtml("ul")'));
-assert.ok(detail.includes('psLeagueIconHtml("ml")'));
+assert.ok(detail.includes('src="ui-icons/league-gl-flag.png"'));
+assert.ok(detail.includes('src="ui-icons/league-ul-flag.png"'));
+assert.ok(detail.includes('src="ui-icons/league-ml-flag.png"'));
 assert.ok(!detail.includes('button.textContent="🏆 Raides'),"no legacy trophy in Raid badge");
 assert.ok(!detail.includes("const leagueIcon={gl:"));
 const inline=detail.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(inline);new vm.Script(inline);
