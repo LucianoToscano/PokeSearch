@@ -31,3 +31,11 @@ Data: 06/11/2026 · Base publicada confirmada: LT265 0.02.65 (54469).
 ## Falha e correção do primeiro workflow de publicação
 
 O workflow oficial #42220773155 falhou no teste preexistente `lt146-update-version-notification.test.js`: as notas de release exigem ordem crescente por `minVersionCode`, mas o novo registro 54470 fora colocado no início. A correção reposicionou somente o registro LT266 ao final, sem mudar as verificações. O primeiro workflow não produziu APK oficial; verificar a repetição pelo novo commit e não declarar release antes da conclusão.
+
+## Confirmação final pós-publicação
+
+- [Workflow oficial #42221094365](https://github.com/LucianoToscano/PokeSearch/actions/runs/42221094365): `preflight=success`, `publish=success`; etapas `Build signed protected release`, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash` concluídas com sucesso.
+- [Release LT266](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.66-54470): estável, publicada em 2026-11-06T12:56:18Z, APK de 34.180.555 bytes, SHA-256 `218e07e37945216021724429acd9b64a971a1e108688ec15bd5d079615555abf`.
+- Auditoria independente do GitHub comparou as pastas `app/src/main/assets/ui-icons` da tag LT266 e da `main`: **18 imagens presentes nos dois refs; 18 Git blob SHAs idênticos**; soma dos 18 originais 5.802.585 bytes.
+- Originais mantidos sem reamostragem; atenção ao tamanho final e consumo de memória em aparelhos limitados. Sem evidência de teste físico Samsung e sem sincronização de retorno para Drive (apenas origem de leitura).
+- [Auditoria extra](LT266_AUDITORIA_FINAL_POS_RELEASE_20261106.md) documenta as verificações independentes e pendências.
