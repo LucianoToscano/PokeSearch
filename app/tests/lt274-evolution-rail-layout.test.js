@@ -27,4 +27,14 @@ assert.match(evo, /width:13px!important;height:13px!important/); // narrow viewp
 assert.doesNotMatch(evo, /width:(?:9|11)px!important;height:(?:9|11)px!important/, 'badge must not shrink again');
 assert.doesNotMatch(evo, /height:(?:54|56)px!important;min-height:(?:54|56)px!important/, 'card must not grow again');
 
-console.log('LT274: compact five-rank cards, original-sized evolution mark and flag preserved.');
+// LT275: final override MUST move the marker out of the triangular flag's
+// sloping edge, while leaving card and flags the same size.
+const lt275 = rail.slice(rail.indexOf('/* LT275 —'));
+assert.ok(lt275.length > 450, 'LT275 collision guard must be in the shipping CSS');
+assert.match(lt275, /translateY\(-4px\)!important/, 'center flag lifted, never rescaled');
+assert.match(lt275, /right:2px!important;bottom:1px!important/);
+assert.match(lt275, /right:1px!important;bottom:1px!important/);
+assert.match(lt275, /width:15px!important;height:15px!important/);
+assert.match(lt275, /width:13px!important;height:13px!important/);
+assert.doesNotMatch(lt275, /height:5[46]px!important/, 'rank card height cannot grow');
+console.log('LT275: compact cards, preserved flags and evolution icon with corner clearance.');
