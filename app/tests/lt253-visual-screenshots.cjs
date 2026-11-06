@@ -284,6 +284,37 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     sz.name+" "+JSON.stringify(overall270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-rg-ul.png")});
    await page.evaluate(()=>window.PokeSearchRankExplorer?.close?.());
+   // LT274: Rank Classe also switches leagues via a real WebView tap.
+   // Rank Classe is the 4096 IVs of ONE species; Rank Geral is not modified.
+   const class274=await page.evaluate(()=>{
+    const engine=window.PokeSearchRankExplorer;
+    const gm=window.POKESEARCH_PVP_IV_DATA;
+    if(!engine?.open({kind:"class",name:"Sableye",league:"gl",iv:"0/15/12"}))
+     return {ok:false,reason:"Rank Classe unavailable"};
+    const picker=document.querySelector('#psRankExplorer button[data-ps-act="league-menu"]');
+    if(!picker)return {ok:false,reason:"Class league picker missing"};
+    picker.click();
+    const menu=document.querySelector("#psrLeagueOptions");
+    if(!menu||menu.hidden)return {ok:false,reason:"Class league menu did not open"};
+    const button=menu.querySelector('button[data-ps-act="league-pick"][data-league="ul"]');
+    if(!button||button.disabled)return {ok:false,reason:"UL missing or disabled"};
+    button.click();
+    const expected=engine.getIvRows(gm,"Sableye","ul")?.find(x=>x.iv==="0/15/12");
+    const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
+    const sub=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const selected=document.querySelector("#psRankExplorer tr.psrSelected")?.textContent||"";
+    const controls=document.querySelector("#psRankExplorer .psrTopControls");
+    const y=Array.from(controls?.children||[],x=>x.getBoundingClientRect().top);
+    return {ok:!!expected&&title.includes("Rank Classe")&&title.includes("Sableye")&&
+      sub.includes("Ultra Liga")&&sub.includes("0/15/12")&&
+      selected.includes("#"+expected.rank)&&
+      y.length===3&&Math.max(...y)-Math.min(...y)<2,
+     title,sub,selectedRank:expected?.rank,selected:selected.slice(0,95)};
+   });
+   assert.ok(class274.ok,"LT274 class league GL->UL preserves own IV "+sz.name+
+      " "+JSON.stringify(class274));
+   await page.screenshot({path:path.join(output,sz.name+"-lt274-class-ul.png")});
+   await page.evaluate(()=>window.PokeSearchRankExplorer?.close?.());
    // LT254: run actual attack-card renderer on the same shipping detail HTML.
    const moves=await page.evaluate(async()=>{
     document.querySelector("#psMetricPanel").hidden=true;

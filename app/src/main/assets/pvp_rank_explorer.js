@@ -190,7 +190,9 @@
     const exact=rowsForLeague.find(x=>n(x.name)===n(species));
     return {league,name:species,rank:exact?.rank||null,
      evolves:fromShortcut?.evolves===true};
-   }):[],
+   }):["gl","ul","ml"].map(league=>({
+    league,name,available:!!getIvRows(gm,name,league)
+   })),
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -239,6 +241,24 @@
    badge.setAttribute?.("aria-label",badge.title);
   }
   return true;
+ }
+ // LT274: a Rank Classe table is 4,096 IV spreads for ONE exact species/form.
+ // Switching leagues keeps that identity and the capture IV, recomputing its
+ // level/CP/efficiency against the selected league; never reuse Rank Geral.
+ function switchClassLeague(league){
+  if(!state||state.kind!=="class"||!LIGAS[league])return false;
+  if(league===state.league){draw();return true;}
+  const target=state.leagueOptions.find(x=>x.league===league);
+  if(!target?.available||!getIvRows(state.gm,state.name,league)?.length)return false;
+  const context=typeof window!=="undefined"?window.psRankContext:null;
+  const chosen=context?.leagues?.find?.(x=>x?.league===league);
+  const projected=chosen?[{name:context.name},
+    ...(chosen.own?[{name:context.name}]:[]),
+    ...(Array.isArray(chosen.evolutions)?chosen.evolutions:[]),
+    ...(Array.isArray(chosen.megas)?chosen.megas:[]),
+    ...(Array.isArray(chosen.comparisons)?chosen.comparisons:[])].slice(0,36):state.forms;
+  return open({kind:"class",name:state.name,iv:state.iv,league,
+   gm:state.gm,overall:state.overall,forms:projected,railKey:state.railKey});
  }
  function close(){
   if(view)view.hidden=true;
@@ -311,7 +331,8 @@
      const control=evt.target.closest?.("select[data-ps-filter]");
      if(control&&state&&setFilter(state,Number(control.value)))draw();
      const picker=evt.target.closest?.("select[data-ps-league-choice]");
-     if(picker&&state?.kind==="overall")switchOverallLeague(picker.value);
+     if(picker&&state)
+      (state.kind==="overall"?switchOverallLeague:switchClassLeague)(picker.value);
     });
     view.addEventListener("click",evt=>{
      const b=evt.target.closest?.("button[data-ps-act]");
@@ -324,7 +345,10 @@
        if(menu){menu.hidden=!menu.hidden;b.setAttribute("aria-expanded",String(!menu.hidden));}
        return;
       }
-      if(action==="league-pick"){switchOverallLeague(b.dataset.league);return;}
+      if(action==="league-pick"){
+       (state.kind==="overall"?switchOverallLeague:switchClassLeague)(b.dataset.league);
+       return;
+      }
       if(action==="filter-pick"){
        if(setFilter(state,Number(b.dataset.filter)))draw();
        return;
@@ -444,17 +468,17 @@
      markup+'</tr>'+details;
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
-  const leagueChooser=s.kind==="overall"&&s.leagueOptions.length?
+  const leagueChooser=s.leagueOptions.length?
    '<div class="psrLeagueSwitch"><span class="psrLeagueSwitchLabel">Liga</span>'+
    '<div class="psrLeaguePicker"><button type="button" data-ps-act="league-menu" aria-expanded="false"'+
-   ' aria-controls="psrLeagueOptions" aria-label="Escolher liga do Rank Geral">'+safe(LIGAS[s.league])+' ▾</button></div>'+
+   ' aria-controls="psrLeagueOptions" aria-label="Escolher liga do '+(s.kind==="class"?"Rank Classe":"Rank Geral")+'">'+safe(LIGAS[s.league])+' ▾</button></div>'+
    '<select id="psrLeague" data-ps-league-choice aria-label="Liga (compatibilidade)" hidden tabindex="-1">'+
    s.leagueOptions.map(x=>'<option value="'+safe(x.league)+'"'+
      (x.league===s.league?' selected':'')+'>'+safe(LIGAS[x.league])+'</option>').join('')+
    '</select></div>'+
    '<div id="psrLeagueOptions" class="psrOptionMenu" role="group" aria-label="Ligas disponíveis" hidden>'+
    s.leagueOptions.map(x=>'<button type="button" data-ps-act="league-pick" data-league="'+safe(x.league)+'"'+
-    (getOverallRows(s.overall,x.league)?.length?'':' disabled')+
+    (Boolean(s.kind==="class"?x.available:getOverallRows(s.overall,x.league)?.length)?'':' disabled')+
     ' aria-pressed="'+(s.league===x.league)+'">'+safe(LIGAS[x.league])+'</button>').join('')+'</div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
@@ -515,7 +539,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,switchOverallLeague,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,switchOverallLeague,switchClassLeague,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });

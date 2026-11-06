@@ -81,7 +81,7 @@ assert.ok(explorer.includes("opts?.railKey||"));
 const dock=fs.readFileSync(path.join(root,"dock.html"),"utf8");
 assert.ok(!dock.includes("psRailChoices"),"Pokeballs and Modos are independent");
 const req=JSON.parse(fs.readFileSync(path.join(__dirname,"../../release/official-request.json"),"utf8"));
-assert.equal(req.code,54477);
+assert.equal(req.code,54478);
 const crypto=require("node:crypto");
 const art=fs.readFileSync(path.join(root,"ui-icons/ps-evolution-lt272.png"));
 assert.ok(art.subarray(0,8).equals(Buffer.from("89504e470d0a1a0a","hex")));
