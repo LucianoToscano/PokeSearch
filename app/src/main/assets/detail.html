@@ -1342,12 +1342,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 
 /* LT275 — Samsung photographic regression: the former 5px inset made the
    white/green evolution art cover the triangular league flag at narrow widths.
-   Move the *same* artwork into the truly free bottom-right corner. Move the
-   number/flag group up only 2px, without changing flag dimensions or x-center.
+   Move the same artwork into the bottom-right corner and move only the
+   unchanged flag image 4px upward to free that corner; #rank remains in place.
    All five badges and both Pokeballs share this CSS. */
-#rankLine[data-rank-rail="five"] .psRailButton .psRailNumber,
 #rankLine[data-rank-rail="five"] .psRailButton .psRailIcon{
- transform:translateY(-2px)!important;
+ transform:translateY(-4px)!important;
 }
 #rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
  right:2px!important;bottom:1px!important;
