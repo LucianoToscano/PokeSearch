@@ -109,7 +109,7 @@ try{
  assert.ok(explorerEl.innerHTML.includes('data-ps-owned="true"'),"owned row visible and marked");
  assert.ok(explorerEl.innerHTML.includes('value="10"'),"filter UI exists");
  assert.ok(explorerEl.innerHTML.includes('data-ps-act="compare"'),"compare action present");
- assert.ok(explorerEl.innerHTML.includes('data-ps-act="csv"'),"CSV action present");
+ assert.ok(!explorerEl.innerHTML.includes('data-ps-act="csv"'),"no export controls in the compact ranking UI");
  assert.equal(typeof callbacks.click,"function");
  assert.equal(typeof callbacks.change,"function");
  // Native actions are only invoked by explicit click handlers.

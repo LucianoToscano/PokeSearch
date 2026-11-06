@@ -84,7 +84,7 @@ async function test(){
  await Promise.resolve();await Promise.resolve();
  assert.equal(greninja.textContent,"⚔️","legacy badge must appear before tap");
  await greninja.onclick();assert.equal(greninja.textContent,"⚔️");
- assert.ok(pop.innerHTML.includes("Golpe legado/Elite confirmado"));
+ assert.ok(pop.title.includes("Golpe legado/Elite confirmado"),"verified legacy metadata accessible without footer");
  render();assert.ok(line.children.at(-1).title.includes("legado/Elite"));
  identity="card-D";card="Unknown";line.textContent="GL IV #1 Atual";
  render();const unknown=line.children.at(-1);await unknown.onclick();
