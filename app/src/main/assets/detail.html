@@ -1149,7 +1149,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .psLeagueFlag{display:inline-block!important;width:13px!important;height:13px!important;
  object-fit:contain!important;vertical-align:-2px!important;margin-right:2px!important;
  pointer-events:none!important}
-#rankLine .psLeagueIv{gap:3px!important}
+#rankLine .psLeagueIv{gap:2px!important}
+#rankLine .psLeagueIv::before{width:11px!important;height:11px!important;flex:0 0 11px!important}
 #rankLine .psLeagueIv::before{content:"";display:inline-block;width:13px;height:13px;
  flex:0 0 13px;background-size:contain;background-position:center;background-repeat:no-repeat}
 #rankLine .psLeagueIv[data-ps-league="gl"]::before{background-image:url("ui-icons/league-gl-flag.png")}
@@ -1840,6 +1841,12 @@ let currentRankSpecies="",currentCardMoves="";
 // collapsed, rerendered or reopened for the same form and league.
 const psVerifiedMoveIcons=new Map();
 function renderRankOneMoves(){
+ // Self-contained for legacy WebViews and isolated QA renderers.
+ const psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡️"?"normal":"unknown";
+ const psMtIconHtml=(kind)=>{
+  const file={elite:"mt-elite.png",normal:"mt-normal.png",unknown:"mt-unknown.png"}[kind]||"mt-unknown.png";
+  return '<img class="psRaidMoveState" src="ui-icons/'+file+'" alt="" aria-hidden="true">';
+ };
  const rankLine=document.getElementById("rankLine"),popover=document.getElementById("movesPopover");
  if(!rankLine||!popover)return;
  popover.hidden=true;popover.textContent="";
@@ -2283,7 +2290,9 @@ window.showEvolutionDetails=payload=>{
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:psLeagueIconHtml("gl")+" Grande Liga",ul:psLeagueIconHtml("ul")+" Ultra Liga",ml:psLeagueIconHtml("ml")+" Liga Master"};
+ const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt="" aria-hidden="true"> Grande Liga',
+ ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt="" aria-hidden="true"> Ultra Liga',
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" alt="" aria-hidden="true"> Liga Master'};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
@@ -2343,7 +2352,9 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">'+
-   (psLeagueIconHtml(x.league)||"🔔")+' '+
+   ({gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt="">',
+ ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt="">',
+ ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" alt="">'}[x.league]||"🔔")+' '+
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="ui-icons/mega-symbol.png" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
@@ -2700,8 +2711,8 @@ function updatePvpCpSimulator(){
    '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
    '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div>':'')+
   '<div class="psCpSimResultRow"><span>⚪ LC 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>'+psLeagueIconHtml("gl")+' GL 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span>'+psLeagueIconHtml("ul")+' UL 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
   '</span><strong>'+label(target)+'</strong></div>'+
   '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+
