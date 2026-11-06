@@ -238,6 +238,24 @@ jobs:
               assert image[16:24]==bytes.fromhex("0000020000000200"), "Wrong 512px dimensions"
               assert image[25]==6, "Revised type must keep RGBA alpha"
               assert hashlib.sha256(image).hexdigest()==digest, "Revised type changed "+key
+            # LT268: six independently SHA-256 pinned glow-free user badges.
+            # Older LT262/LT265/LT267 signed resources remain byte-identical.
+            clean_badges={
+              "ps-gl-lt268.png": "f8e3d8c282806e4dcad90100763722c6cb1866ec253c1de600a9bbf66f91603c",
+              "ps-ul-lt268.png": "2b2dba41fa49632b035fe0debf9136dea78d79fe37a3bed56b98a3516cef9e90",
+              "ps-ml-lt268.png": "4994287c9061ecfbd3119990d7bdca7de2a0a69139c18f1216a7d8d539fcd606",
+              "ps-cup-lt268.png": "55379064c3e3646dedfd7936f85b6a109769ef910175027b4e8d67b010cf5a32",
+              "ps-overall-lt268.png": "2a7ceb2d32a345470fbd6bd763e2dd4ca65251040a4a1bbf292a161746bbcb87",
+              "ps-raid-lt268.png": "989c5530516a33e60cfad6de6ca649e35fd7a3c3a50ebbe0a54946ef4fa612fa",
+            }
+            for filename,digest in clean_badges.items():
+              key="assets/ui-icons/"+filename
+              assert key in names, "Missing LT268 analysis-only badge "+key
+              image=apk.read(key)
+              assert image[:8]==bytes([137,80,78,71,13,10,26,10]), "Invalid LT268 badge PNG"
+              assert image[16:24]==bytes.fromhex("0000014000000140"), "Expected 320x320 LT268 badge"
+              assert image[25]==6, "LT268 PNG must remain RGBA"
+              assert hashlib.sha256(image).hexdigest()==digest, "Wrong LT268 asset "+filename
             rank_icon="assets/ui-icons/rank-geral-lt267.png"
             assert rank_icon in names, "Missing custom Rank Geral icon"
             rank_data=apk.read(rank_icon)

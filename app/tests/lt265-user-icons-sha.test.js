@@ -21,7 +21,8 @@ for(const [name,sha] of Object.entries(checks)){
  assert.ok(png.length>900&&png.length<2500,"Compact lossless PNG within budget");
  assert.ok(workflow.includes('"'+name+'": "'+sha+'"'),
   "Signed APK gate checks exact new asset");
- assert.ok(detail.includes(name),"Card renders new icon "+name);
+ if(name.startsWith("league-")) assert.ok(!detail.includes(name),"Historical LT265 art no longer displayed");
+ else assert.ok(detail.includes(name),"Elite scroll still displayed");
 }
 assert.ok(detail.includes('label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png"'),
  "Fast Elite and Charged Elite are distinct and never guessed");
@@ -29,7 +30,7 @@ assert.ok(detail.includes('PS_LEAGUE_BORDERED'));
 assert.ok(detail.includes('srcset="ui-icons/league-gl-bordered-lt265.png 1x"'));
 assert.ok(detail.includes('srcset="ui-icons/league-ul-bordered-lt265.png 1x"'));
 assert.ok(detail.includes('srcset="ui-icons/league-ml-bordered-lt265.png 1x"'));
-assert.ok(detail.includes('ui-icons/league-cup-bordered-lt265.png'));
+assert.ok(detail.includes('ui-icons/ps-cup-lt268.png'));
 assert.ok(!detail.includes('>💠<'),"Diamonds no longer label special moves");
 assert.ok(detail.includes('row.elite?psMtIconHtml("elite"):""'),
  "PvE rows with no verified Elite source never receive an Elite badge");

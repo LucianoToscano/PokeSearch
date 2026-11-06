@@ -43,11 +43,11 @@ assert.ok(menu.includes('gl:"GLBadgeLT262.png",ul:"ULBadgeLT262.png"'),
 assert.ok(result.includes("RESULT_BASE_ICONS"),"the actual Pokéball/result header must retain base icons");
 assert.ok(!result.includes("GLBadgeLT262.png")&&!result.includes("ULBadgeLT262.png"),
  "Do not place mode badges on the floating Pokéballs");
-for(const [league,file] of [["gl","league-gl-flag.png"],["ul","league-ul-flag.png"],["ml","league-ml-flag.png"]]){
+for(const [league,file] of [["gl","ps-gl-lt268.png"],["ul","ps-ul-lt268.png"],["ml","ps-ml-lt268.png"]]){
  assert.ok(detail.includes(league+':"ui-icons/'+file+'"'));
  assert.ok(detail.includes('.psLeagueIv[data-ps-league="'+league+'"]::before'));
 }
-for(const img of ["raid-badge.png","mt-elite.png","mt-normal.png","mt-unknown.png","mega-symbol.png"])
+for(const img of ["ps-raid-lt268.png","mt-elite.png","mt-normal.png","mt-unknown.png","mega-symbol.png"])
  assert.ok(detail.includes("ui-icons/"+img),img+" must appear in detail view");
 assert.ok(!detail.includes('src="mega_evolution_icon.svg"'),
  "replace Mega symbol only in card");
@@ -62,9 +62,9 @@ assert.ok(detail.includes('psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡�
 assert.ok(detail.includes('#rankLine .psMovesAction{font-size:0!important'),
  "keep original semantic text while only replacing visual emoji art");
 assert.ok(detail.includes('onclick="toggleRaidDetails()">Raides'));
-assert.ok(detail.includes('src="ui-icons/league-gl-flag.png"'));
-assert.ok(detail.includes('src="ui-icons/league-ul-flag.png"'));
-assert.ok(detail.includes('src="ui-icons/league-ml-flag.png"'));
+assert.ok(detail.includes('src="ui-icons/ps-gl-lt268.png"'));
+assert.ok(detail.includes('src="ui-icons/ps-ul-lt268.png"'));
+assert.ok(detail.includes('src="ui-icons/ps-ml-lt268.png"'));
 assert.ok(!detail.includes('button.textContent="🏆 Raides'),"no legacy trophy in Raid badge");
 assert.ok(!detail.includes("const leagueIcon={gl:"));
 const inline=detail.match(/<script>([\s\S]*?)<\/script>/)?.[1];assert.ok(inline);new vm.Script(inline);

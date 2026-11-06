@@ -1159,9 +1159,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #rankLine .psLeagueIv::before{width:11px!important;height:11px!important;flex:0 0 11px!important}
 #rankLine .psLeagueIv::before{content:"";display:inline-block;width:13px;height:13px;
  flex:0 0 13px;background-size:contain;background-position:center;background-repeat:no-repeat}
-#rankLine .psLeagueIv[data-ps-league="gl"]::before{background-image:url("ui-icons/league-gl-flag.png")}
-#rankLine .psLeagueIv[data-ps-league="ul"]::before{background-image:url("ui-icons/league-ul-flag.png")}
-#rankLine .psLeagueIv[data-ps-league="ml"]::before{background-image:url("ui-icons/league-ml-flag.png")}
+#rankLine .psLeagueIv[data-ps-league="gl"]::before{background-image:url("ui-icons/ps-gl-lt268.png")}
+#rankLine .psLeagueIv[data-ps-league="ul"]::before{background-image:url("ui-icons/ps-ul-lt268.png")}
+#rankLine .psLeagueIv[data-ps-league="ml"]::before{background-image:url("ui-icons/ps-ml-lt268.png")}
 #rankLine .psMovesAction{font-size:0!important;line-height:0!important;text-shadow:none!important;
  -webkit-text-fill-color:transparent!important}
 #rankLine .psMovesAction::before{content:"";display:inline-block;width:17px;height:16px;
@@ -1171,7 +1171,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #rankLine .psMovesAction[data-ps-mt="unknown"]::before{background-image:url("ui-icons/mt-unknown.png")}
 #raidRow::before,#evoBody .psRaidAnalysisLink::before{content:"";display:inline-block;
  width:16px;height:16px;margin-right:5px;vertical-align:-4px;
- background:url("ui-icons/raid-badge.png") center / contain no-repeat}
+ background:url("ui-icons/ps-raid-lt268.png") center / contain no-repeat}
 .psRaidBadge{display:inline-block;width:16px!important;height:16px!important;
  object-fit:contain;vertical-align:-4px;margin-right:4px}
 .psRaidMoveState{display:inline-block;width:15px!important;height:11px!important;
@@ -1183,11 +1183,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  display:none!important;min-height:0!important;height:0!important;
  margin:0!important;padding:0!important;border:0!important
 }
-/* LT265 — compact and legible, no solid blocks or new overlay windows.
-   Flag borders are brightened by CSS, preserving asset hashes and sizes. */
+/* LT268 — six cleaned, contrast-safe icons; deliberately no CSS halos.
+   Preserve existing chip dimensions, two Pokeballs and Modos assets. */
 #rankLine .psLeagueIv::before,.psLeagueFlag,
 #evoBody .psLeagueFlag,#psCpSimResult .psLeagueFlag{
- filter:drop-shadow(0 0 1px #f5fbff) drop-shadow(0 0 .55px #f5fbff)!important
+ filter:none!important
 }
 #raidPanel{margin:2px 0 4px;padding:5px 7px;border-radius:7px;
  font:500 10px/1.25 Roboto,Arial,sans-serif}
@@ -1229,17 +1229,19 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* LT265: user-supplied bordered badges, exact source hashes retained.
  * Images remain 13px in the ranking and never replace floating Pokéballs. */
 #rankLine .psLeagueIv[data-ps-league="gl"]::before{
- background-image:url("ui-icons/league-gl-bordered-lt265.png")!important}
+ background-image:url("ui-icons/ps-gl-lt268.png")!important}
 #rankLine .psLeagueIv[data-ps-league="ul"]::before{
- background-image:url("ui-icons/league-ul-bordered-lt265.png")!important}
+ background-image:url("ui-icons/ps-ul-lt268.png")!important}
 #rankLine .psLeagueIv[data-ps-league="ml"]::before{
- background-image:url("ui-icons/league-ml-bordered-lt265.png")!important}
+ background-image:url("ui-icons/ps-ml-lt268.png")!important}
 #rankLine .psLeagueIv[data-ps-league="cup"]::before{
- background-image:url("ui-icons/league-cup-bordered-lt265.png")!important}
+ background-image:url("ui-icons/ps-cup-lt268.png")!important}
 #movesPopover .psMoveLegacy{display:inline-flex;align-items:center;
  flex:0 0 21px;width:21px;height:15px;vertical-align:middle}
 #movesPopover .psEliteScroll{width:21px;height:14px;display:block;
  object-fit:contain;filter:drop-shadow(0 0 .65px #b8eeff)}
+/* LT268: the correct multicolour Rank Geral triangle replaces the old RG art.
+   LT267 kept as an immutable historical APK asset. */
 /* LT267: the Rank Geral badge replaces its visible "RG" letters with a
    compact user emblem, without changing textContent, click targets or ARIA.
    Pseudo-elements do not consume the extra 11px that previously clipped Mega names. */
@@ -1250,7 +1252,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #rankLine .psCompactOverall[data-rg-visible]::before,
 #psRankAlternates .psCompactOverall[data-rg-visible]::before{
  content:"";display:inline-block;flex:none;width:11px;height:11px;
- background:url("ui-icons/rank-geral-lt267.png") center/contain no-repeat}
+ background:url("ui-icons/ps-overall-lt268.png") center/contain no-repeat}
 #rankLine .psCompactOverall[data-rg-visible]::after,
 #psRankAlternates .psCompactOverall[data-rg-visible]::after{
  content:attr(data-rg-visible);display:inline-block;font:750 9px/1.1 Roboto,Arial,sans-serif}
@@ -1657,13 +1659,13 @@ const h=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","
 
 /* LT262: fixed local icons, not derived from Pokémon or API names. */
 const PS_LEAGUE_ICONS=Object.freeze({
- gl:"ui-icons/league-gl-flag.png",ul:"ui-icons/league-ul-flag.png",
- ml:"ui-icons/league-ml-flag.png"});
+ gl:"ui-icons/ps-gl-lt268.png",ul:"ui-icons/ps-ul-lt268.png",
+ ml:"ui-icons/ps-ml-lt268.png"});
 const PS_LEAGUE_BORDERED=Object.freeze({
- gl:"ui-icons/league-gl-bordered-lt265.png",
- ul:"ui-icons/league-ul-bordered-lt265.png",
- ml:"ui-icons/league-ml-bordered-lt265.png",
- cup:"ui-icons/league-cup-bordered-lt265.png"});
+ gl:"ui-icons/ps-gl-lt268.png",
+ ul:"ui-icons/ps-ul-lt268.png",
+ ml:"ui-icons/ps-ml-lt268.png",
+ cup:"ui-icons/ps-cup-lt268.png"});
 const psLeagueIconHtml=(league,cls="psLeagueFlag")=>
  PS_LEAGUE_ICONS[league]?'<img class="'+cls+'" src="'+PS_LEAGUE_ICONS[league]+
  '" srcset="'+(PS_LEAGUE_BORDERED[league]||PS_LEAGUE_ICONS[league])+
@@ -1762,7 +1764,7 @@ function renderRaidPreview(){
     '</span><strong class="psRaidTypeRank">'+raidTypeIcon(row)+'#'+row.rank+
     ' '+h(row.typePt)+'</strong>'+
     '<span class="psRaidMoves">'+moveLabel(row)+'</span></div>';
-  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/raid-badge.png" alt="">Atacantes por tipo</div>'+
+  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/ps-raid-lt268.png" alt="">Atacantes por tipo</div>'+
    rows.slice(0,3).map(rowHtml).join("")+
    (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
     ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
@@ -2467,9 +2469,9 @@ window.showEvolutionDetails=payload=>{
  }
  const outer=document.getElementById("evolutions"),body=document.getElementById("evoBody");
  let html="",count=0,ownCount=0;
- const labels={gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="" aria-hidden="true"> Grande Liga',
- ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="" aria-hidden="true"> Ultra Liga',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="" aria-hidden="true"> Liga Mestra'};
+ const labels={gl:'<img class="psLeagueFlag" src="ui-icons/ps-gl-lt268.png" srcset="ui-icons/ps-gl-lt268.png 1x" alt="" aria-hidden="true"> Grande Liga',
+ ul:'<img class="psLeagueFlag" src="ui-icons/ps-ul-lt268.png" srcset="ui-icons/ps-ul-lt268.png 1x" alt="" aria-hidden="true"> Ultra Liga',
+ ml:'<img class="psLeagueFlag" src="ui-icons/ps-ml-lt268.png" srcset="ui-icons/ps-ml-lt268.png 1x" alt="" aria-hidden="true"> Liga Mestra'};
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
@@ -2529,9 +2531,9 @@ window.showEvolutionDetails=payload=>{
  }).slice(0,5);
  const topHtml=notices.length?'<div class="psTopPvP" aria-label="Oportunidades PvP">'+
   notices.map(x=>'<span class="psTopPvpTag">'+
-   ({gl:'<img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt="">',
- ul:'<img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt="">',
- ml:'<img class="psLeagueFlag" src="ui-icons/league-ml-flag.png" srcset="ui-icons/league-ml-bordered-lt265.png 1x" alt="">'}[x.league]||"🔔")+' '+
+   ({gl:'<img class="psLeagueFlag" src="ui-icons/ps-gl-lt268.png" srcset="ui-icons/ps-gl-lt268.png 1x" alt="">',
+ ul:'<img class="psLeagueFlag" src="ui-icons/ps-ul-lt268.png" srcset="ui-icons/ps-ul-lt268.png 1x" alt="">',
+ ml:'<img class="psLeagueFlag" src="ui-icons/ps-ml-lt268.png" srcset="ui-icons/ps-ml-lt268.png 1x" alt="">'}[x.league]||"🔔")+' '+
    h(x.league.toUpperCase())+' #'+x.rank+' '+
    (x.mega?'<img class="psTopMegaIcon" src="ui-icons/mega-symbol.png" alt="Mega Evolução"> ':'')+
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
@@ -2889,9 +2891,9 @@ function updatePvpCpSimulator(){
    '<div class="psCpSimResultRow"><span>IV B '+h(compare.join("/"))+
    '</span><strong>PC '+compared.cp+' · PS '+compared.hp+'</strong></div>'+
    '<div class="psCpSimResultRow"><span>Diferença B − A</span><strong>ΔPC '+signed+'</strong></div></details>':'')+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-cup-bordered-lt265.png" alt="" aria-hidden="true"> LC 500</span><strong>'+label(little)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-gl-flag.png" srcset="ui-icons/league-gl-bordered-lt265.png 1x" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
-  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/league-ul-flag.png" srcset="ui-icons/league-ul-bordered-lt265.png 1x" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/ps-cup-lt268.png" alt="" aria-hidden="true"> LC 500</span><strong>'+label(little)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/ps-gl-lt268.png" srcset="ui-icons/ps-gl-lt268.png 1x" alt=""> GL 1500</span><strong>'+label(gl)+'</strong></div>'+
+  '<div class="psCpSimResultRow"><span><img class="psLeagueFlag" src="ui-icons/ps-ul-lt268.png" srcset="ui-icons/ps-ul-lt268.png 1x" alt=""> UL 2500</span><strong>'+label(ul)+'</strong></div>'+
   '<div class="psCpSimResultRow"><span>PC-alvo '+psCpTargetCp+
   '</span><strong>'+label(target)+'</strong></div>'+
   '<details class="psCpSimExtra"><summary>Comparar 0% e 100% ▾</summary>'+

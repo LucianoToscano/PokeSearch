@@ -45,8 +45,8 @@ assert.ok(html.includes('PokeSearchMovePtBR?.ensure?.()'));
 assert.ok(html.includes('token!==psRaidToken||identity!==detailIdentity'));
 assert.ok(html.includes('row.elite?psMtIconHtml("elite"):""'),"Non-Elite must not get colorful Elite scroll");
 for(const file of ["mt-agil-elite-lt265.png","mt-carregada-elite-lt265.png",
- "league-gl-bordered-lt265.png","league-ul-bordered-lt265.png",
- "league-ml-bordered-lt265.png","league-cup-bordered-lt265.png"]){
+ "ps-gl-lt268.png","ps-ul-lt268.png",
+ "ps-ml-lt268.png","ps-cup-lt268.png"]){
  assert.ok(html.includes(file),"User icon present in cards: "+file);
 }
 assert.ok(!html.includes('h(row.fast.replace(/_/g," "))'));
@@ -61,8 +61,8 @@ assert.ok(html.includes('function psCpLeagueCeiling(row,ivs,limit){'));
 assert.ok(html.includes('psCpIvFields("A"'));
 assert.ok(html.includes('psCpIvFields("B"'));
 assert.ok(html.includes('psRaidMoveNames'));
-assert.ok(html.includes('filter:drop-shadow(0 0 1px #f5fbff)'));
-assert.ok(html.includes("ui-icons/raid-badge.png"));
+assert.ok(html.includes('filter:none!important'));
+assert.ok(html.includes("ui-icons/ps-raid-lt268.png"));
 assert.ok(html.includes("ui-icons/mt-elite.png"));
 assert.ok(html.includes("ui-icons/mt-normal.png"));
 assert.ok(html.includes('window.PokeSearchRankExplorer?.close?.()'));
