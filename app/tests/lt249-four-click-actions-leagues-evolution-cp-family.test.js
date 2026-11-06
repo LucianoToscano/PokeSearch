@@ -90,7 +90,8 @@ assert.equal(fAuto(ml),true);
 assert.equal(line.children[0].textContent,"ML IV #1");
 assert.equal(line.children[1].textContent,"Atual");
 assert.equal(line.children[2].textContent,"RG #240");
-assert.ok(detail.includes('gl:psLeagueIconHtml("gl")+" Grande Liga",ul:psLeagueIconHtml("ul")+" Ultra Liga",ml:psLeagueIconHtml("ml")+" Liga Master"'));
+for(const file of ["league-gl-flag.png","league-ul-flag.png","league-ml-flag.png"])
+ assert.ok(detail.includes('src="ui-icons/'+file+'"'),"correct badge for PvP league");
 assert.ok(detail.includes('src="ui-icons/mega-symbol.png"'));
 // CP/level simulator operates independent of the PvP filter and uses
 // full trusted family payload to navigate Teddiursa, Ursaring, Ursaluna.
