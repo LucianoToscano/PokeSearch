@@ -2417,6 +2417,30 @@
           "Testes físicos Samsung, acessibilidade em todos os tamanhos de overlay e confirmação de instalação ainda necessários."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt273-compact-rank-controls-20261106",
+      "minVersionCode": 54477,
+      "date": "06/11/2026",
+      "title": "LT273 — Controles de ranking alinhados e menus funcionais",
+      "sections": {
+        "novidades": [
+          "Seleção de liga no Rank Geral por botões do próprio aplicativo, sem depender do menu nativo do Android.",
+          "Linha compacta Topo / Meu IV ou Minha posição / Todos, com filtro por menu próprio."
+        ],
+        "melhorias": [
+          "Cabeçalho único com bandeira colorida, golpes por liga e X alinhados.",
+          "Golpes capturados e Local aparecem abaixo dos painéis, antes de Pegar Coordenadas.",
+          "Ícone de evolução pequeno no canto direito abaixo da bandeira, sem encostar na borda."
+        ],
+        "correcoes": [
+          "Botões Copiar/Compartilhar/CSV e textos explicativos extensos removidos dos painéis marcados.",
+          "Fontes PvPoke/PvE e indicação de ataques Elite permanecem verificáveis nos dados."
+        ],
+        "emDesenvolvimento": [
+          "Confirmar operação visual no Samsung, posição e atualização física após instalação."
+        ]
+      }
     }
   ]
 }

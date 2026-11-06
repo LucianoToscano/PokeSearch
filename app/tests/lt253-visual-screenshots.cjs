@@ -223,6 +223,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const badge=eBox&&cardBox&&nBox&&fBox?{
      src:evol.getAttribute("src"),tag:evol.tagName,span:eBox.width,
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
+     clearOfFlag:eBox.left>=fBox.right+0.5,
      belowRank:eBox.top>=nBox.bottom+2,
      flagCenterDiff:Math.abs((fBox.left+fBox.right-cardBox.left-cardBox.right)/2),
      flagSrc:flag.getAttribute("src")
@@ -240,8 +241,9 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
     rail270.badge?.src==="ui-icons/ps-evolution-lt272.png"&&
-    rail270.badge?.tag==="IMG"&&rail270.badge?.span<=16&&
-    rail270.badge?.right>=4&&rail270.badge?.bottom>=4&&
+    rail270.badge?.tag==="IMG"&&rail270.badge?.span<=12&&
+    rail270.badge?.right>=3&&rail270.badge?.bottom>=2&&
+    rail270.badge?.clearOfFlag===true&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
     rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png",
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
@@ -250,16 +252,28 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const general=document.querySelector("#rankLine .psRailGeneral");
     if(!general||general.disabled)return {ok:false,reason:"RG disabled"};
     general.click();
-    const chooser=document.querySelector("#psRankExplorer select[data-ps-league-choice]");
-    if(!chooser)return {ok:false,reason:"missing selector"};
-    chooser.value="ul";chooser.dispatchEvent(new Event("change",{bubbles:true}));
+    const picker=document.querySelector('#psRankExplorer button[data-ps-act="league-menu"]');
+    if(!picker)return {ok:false,reason:"missing native-free selector"};
+    picker.click();
+    const menu=document.querySelector("#psrLeagueOptions");
+    if(!menu||menu.hidden)return {ok:false,reason:"league options not opened"};
+    const choose=menu.querySelector('button[data-ps-act="league-pick"][data-league="ul"]');
+    if(!choose||choose.disabled)return {ok:false,reason:"UL option missing"};
+    choose.click();
     const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
     const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
     const rows=window.PokeSearchRankExplorer?.getOverallRows?.(window.POKESEARCH_PVPOKE_OVERALL,"ul")||[];
     const actual=rows.find(x=>x.name==="Teddiursa");
     const expected=actual?"#"+actual.rank:"—";
-    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected,
+    const aligned=(()=>{
+     const controls=document.querySelector("#psRankExplorer .psrTopControls");
+     if(!controls||controls.children.length!==3)return false;
+     const tops=Array.from(controls.children).map(n=>n.getBoundingClientRect().top);
+     return Math.max(...tops)-Math.min(...tops)<2;
+    })();
+    const hiddenExports=!document.querySelector("#psRankExplorer .psrActions");
+    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected&&aligned&&hiddenExports,
      title,species,badge,expected};
    });
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+

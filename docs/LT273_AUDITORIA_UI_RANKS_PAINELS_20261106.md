@@ -1,0 +1,8 @@
+# Auditoria LT273 — revisão dos cartões e painéis
+
+- **Objetivo:** sanar pontos marcados #2EFF2C (remover botões de exportação e explicações longas), #EB3BE5 (alinhamento), #FF7D1A (seletor de liga inoperante), #9933FF (mover Golpes capturados/Local para antes de Pegar Coordenadas), #0028B8 (cabeçalho único da liga), e reposicionar ícone de evolução sem tocar bandeira ou bordas.
+- **Implementação:** `detail.html`: `#info` após `#evolutions` (o explorador é inserido entre ambos); cabeçalho com bandeira LT268, nome de liga colorido e ações ataque/X na mesma linha; linha duplicada de liga visualmente suprimida; source notes PvE/PvP fora da interface, com a fonte preservada em metadados e engine; ícone de evolução original LT272 reduzido para 11px (9px P) no canto inferior direito (4px/3px). Não alterar a bandeira central.
+- **Explorador `pvp_rank_explorer.js`:** seleção de liga `GL/UL/ML` e filtro `Todos/Top 10/50/100` em menus WebView próprios; `select` legado oculto preservado para integração; controles `#1 Topo / Meu IV ou Minha posição / Todos` em grade de três colunas; botões Copiar/Compartilhar/CSV retirados do layout (motor de ranking e comparação intactos). Informação de Rank Classe sobre 4096 IVs continua contextual pela liga selecionada.
+- **Regressões:** verificar Node, QA Android/Java, PvE, OTA, screenshots reais do Chromium/WebView P/M/G, seletor de liga por toque, posicionamento de símbolo sem sobreposição, fonte em metadados, sem exportação visual. Nenhum teste físico Samsung declarado.
+- **Versionamento a publicar só após CI verde:** LT273 `0.02.73` / `versionCode 54477`; rollback LT272 `v0.02.72-54476`.
+
