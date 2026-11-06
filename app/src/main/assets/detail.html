@@ -1875,6 +1875,7 @@ function renderRankOneMoves(){
    "Ver golpes · status legado ainda não verificado");
  btn.setAttribute("aria-label",btn.title);
  btn.setAttribute?.("data-ps-verified",prior?"true":"false");
+ btn.setAttribute?.("data-ps-mt",psMtKind(prior?.icon));
  let actionOpened=false;
  if(!prior&&typeof window.PokeSearchPvpRankMoves?.getStatus==="function"){
   const originalIdentity=detailIdentity;
@@ -1889,6 +1890,7 @@ function renderRankOneMoves(){
     // Cache the verdict for the next render if the user already tapped.
     if(actionOpened)return;
     btn.textContent=checked.icon;btn.title=checked.title;
+    btn.setAttribute?.("data-ps-mt",psMtKind(checked.icon));
     btn.setAttribute?.("aria-label",checked.title);
     btn.setAttribute?.("data-ps-verified","true");
    }).catch(()=>{/* Badge stays neutral if the pinned source cannot be verified. */});
@@ -1996,9 +1998,9 @@ function renderRankOneMoves(){
    '<div class="psMoveLegend">Fonte: '+h(recommendation.source||"PvPoke")+
     (isMega?' · Mega não tem golpes exclusivos nem garante GBL':
       ' · recomendados ≠ capturados')+'</div>'+
-   (hasLegacy?'<div class="psMoveLegend">💠 Golpe legado/Elite confirmado</div>':
-    complete?'<div class="psMoveLegend">🗡️ Sem golpes legados recomendados</div>':
-    '<div class="psMoveLegend">Status de legado não verificado</div>');
+   (hasLegacy?'<div class="psMoveLegend">'+psMtIconHtml("elite")+' Golpe legado/Elite confirmado</div>':
+    complete?'<div class="psMoveLegend">'+psMtIconHtml("normal")+' Sem golpes legados recomendados</div>':
+    '<div class="psMoveLegend">'+psMtIconHtml("unknown")+' Status de legado não verificado</div>');
   resizeEvolutionPanel();
  };
  btn.className="psMovesAction";
