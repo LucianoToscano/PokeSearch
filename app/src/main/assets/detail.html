@@ -1068,6 +1068,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpFormFieldLabel{display:block!important;font-size:9.5px!important;
  margin:0 0 3px!important;color:#bbd4e4!important}
 #psMetricPanel .psCpFormStepper>select#psCpForm{display:none!important}
+/* Keep both arrows beside the collapsed SUMMARY row, not vertically centered
+ * beside the entire expanded form list (observed in P/M/G screenshots). */
+#psMetricPanel .psCpFormStepper>button{align-self:flex-start!important;margin-top:0!important}
 #psMetricPanel .psCpFormStepper .psCpFormMenu{position:relative!important;
  display:block!important;flex:1 1 auto!important;width:0!important;
  min-width:0!important;max-width:100%!important}
