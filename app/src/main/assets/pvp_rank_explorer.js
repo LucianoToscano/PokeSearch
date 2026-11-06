@@ -52,13 +52,37 @@
   if(!result.length)return null;
   const maximum=result[0].product;
   result.forEach((r,i)=>{
+   // Keep the original, unique ordinal to preserve selection, pagination and API contracts.
    r.rank=i+1;
    r.efficiency=(Math.min(10000,Math.round(r.product/maximum*10000))/100).toFixed(2).replace(".",",");
   });
+  // Display a shared competitive position ONLY for equal, unrounded stat products.
+  // Equal formatted efficiency (e.g. 100,00%) alone is NOT proof of a tie.
+  for(let start=0;start<result.length;){
+   let end=start+1;
+   while(end<result.length&&result[end].product===result[start].product)end++;
+   for(let j=start;j<end;j++){
+    result[j].sharedRank=start+1;
+    result[j].tieCount=end-start;
+   }
+   start=end;
+  }
   cache.set(cacheKey,result);
   // LT240: bound memory on 4 GB devices; new comparisons may cover many forms.
   while(cache.size>12)cache.delete(cache.keys().next().value);
   return result;
+ }
+ const rankTag=r=>"#"+(r.sharedRank??r.rank)+(r.tieCount>1?"=":"");
+ const rankLabel=r=>"#"+(r.sharedRank??r.rank)+(r.tieCount>1?" (empate)":"");
+ // Used by the detailed and compact card without changing the server's ordinal rank.
+ function presentationForIv(gm,name,league,iv,ordinal){
+  const rows=getIvRows(gm,name,league);
+  const target=ivIndex(iv);
+  if(!rows||target<0)return null;
+  const found=rows.find(r=>r.index===target);
+  if(!found||Number(found.rank)!==Number(ordinal))return null;
+  return {rank:found.sharedRank,ordinal:found.rank,tied:found.tieCount>1,
+   label:rankLabel(found),count:found.tieCount};
  }
  function getOverallRows(snapshot,league){
   if(!snapshot||!LIGAS[league]||!Array.isArray(snapshot[league]))return null;
@@ -115,13 +139,13 @@
  function filteredCsv(s){
   const filtered=visibleRows(s);
   const head=s.kind==="class"?
-   ["Rank","IVs A/D/S","Nível","PC","Eficiência IV (%)","ATK","DEF","HP"]:
+   ["Rank","IVs A/D/S","Nível","PC","Eficiência IV (%)","ATK","DEF","HP","Empate real"]:
    ["Rank Geral","Pokémon / forma"];
   const out=[head.map(csvCell).join(";")];
   for(const r of filtered){
    const values=s.kind==="class"?
     [r.rank,r.iv,levelString(r.level),r.cp,r.efficiency,
-     statString(r.atk),statString(r.def),r.hp]:
+     statString(r.atk),statString(r.def),r.hp,r.tieCount>1?rankLabel(r):""]:
     [r.rank,r.name];
    out.push(values.map(csvCell).join(";"));
   }
@@ -133,11 +157,11 @@
    "Fonte: PvPoke (snapshot "+s.sourceDate+")"];
   if(s.kind==="class"){
    const owned=s.rows.find(r=>r.index===s.selectedIv);
-   if(owned)lines.push("Meu IV: #"+owned.rank+" · "+owned.iv+
+   if(owned)lines.push("Meu IV: "+rankLabel(owned)+" · "+owned.iv+
     " · "+owned.efficiency+"% · PC "+owned.cp+" · Nv. "+levelString(owned.level));
    const selections=comparedRows(s);
    for(const r of selections)
-    lines.push("Comparar: #"+r.rank+" · "+r.iv+" · "+r.efficiency+
+    lines.push("Comparar: "+rankLabel(r)+" · "+r.iv+" · "+r.efficiency+
      "% · Nv. "+levelString(r.level)+" · PC "+r.cp+
      " · ATK "+statString(r.atk)+" · DEF "+statString(r.def)+" · HP "+r.hp);
    if(selections.length===2)
@@ -152,7 +176,7 @@
   lines.push("Classificação exibida (página "+(s.page+1)+"):");
   for(const r of showing.slice(from,from+PAGE_SIZE)){
    lines.push(s.kind==="class"?
-    "#"+r.rank+" · "+r.iv+" · Nv. "+levelString(r.level)+" · PC "+r.cp+
+    rankLabel(r)+" · "+r.iv+" · Nv. "+levelString(r.level)+" · PC "+r.cp+
       " · "+r.efficiency+"%":
     "#"+r.rank+" · "+r.name);
   }
@@ -326,7 +350,7 @@
   if(s.kind!=="class")return "";
   const rows=comparedRows(s);
   const html=rows.map((r,i)=>'<div class="psrCompRow">'+
-   '<b>'+(i+1)+'. #'+r.rank+' · '+safe(r.iv)+'</b> · '+r.efficiency+
+   '<b>'+(i+1)+'. '+rankLabel(r)+' · '+safe(r.iv)+'</b> · '+r.efficiency+
    '% · PC '+r.cp+' · Nv. '+levelString(r.level)+
    '<div>ATK '+statString(r.atk)+' · DEF '+statString(r.def)+' · HP '+r.hp+'</div></div>').join("");
   const diff=rows.length===2?
@@ -360,7 +384,7 @@
    const marked=s.compared.includes(r.rank);
    const markup=s.kind==="class"?
     '<td><button type="button" class="psrTap" data-ps-act="expand" data-rank="'+r.rank+
-     '" aria-expanded="'+(s.expandedRank===r.rank)+'" title="Detalhar atributos">#'+r.rank+'</button></td>'+
+     '" aria-expanded="'+(s.expandedRank===r.rank)+'" title="'+(r.tieCount>1?'Empate real de produto de atributos · ':'')+'Detalhar atributos">'+rankTag(r)+'</button></td>'+
     '<td><button type="button" class="psrTap" data-ps-act="compare" data-rank="'+r.rank+
      '" aria-pressed="'+marked+'" title="Adicionar ou remover da comparação">'+safe(r.iv)+'</button></td>'+
     '<td>'+levelString(r.level)+'</td><td>'+r.cp+'</td><td>'+r.efficiency+'%</td>':
@@ -371,7 +395,7 @@
     levelString(r.level)+' · PC '+r.cp+'</div></td></tr>':"";
    return '<tr data-ps-row="'+r.rank+'" tabindex="0"'+(selected?' data-ps-owned="true"':'')+
     ' class="'+(selected?'psrSelected ':'')+(marked?'psrCompared':'')+
-    '" aria-label="'+safe(s.kind==="class"?"Rank "+r.rank+", IV "+r.iv:"Rank "+r.rank+", "+r.name)+'">'+
+    '" aria-label="'+safe(s.kind==="class"?"Rank "+rankLabel(r)+", IV "+r.iv:"Rank "+r.rank+", "+r.name)+'">'+
      markup+'</tr>'+details;
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
@@ -383,7 +407,8 @@
    '</div><button type="button" data-ps-act="close" aria-label="Fechar classificação">✕</button></div>'+
    '<div class="psrSub">'+safe(LIGAS[s.league])+
    (actualIv?' · IV '+safe(actualIv.iv):"")+
-   (s.selectedRank?' · #'+s.selectedRank:"")+'</div>'+
+   (s.selectedRank?' · '+(actualIv?rankLabel(actualIv):"#"+s.selectedRank):"")+
+   (s.kind==="class"?' · = empate real':"")+'</div>'+
    '<div class="psrControls"><button type="button" data-ps-act="top">#1 Topo</button>'+
    '<button type="button" data-ps-act="selected"'+(s.selectedRank?'':' disabled')+'>'+select+'</button>'+
    '<label for="psrFilter">Top</label><select id="psrFilter" data-ps-filter aria-label="Filtrar classificação">'+
@@ -428,7 +453,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,getIvRows,getOverallRows,ivIndex,megaName,presentationForIv,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
