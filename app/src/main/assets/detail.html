@@ -2466,11 +2466,126 @@ function setRankLineLabel(rankLine,label){
  if(typeof renderRankOneMoves==="function")renderRankOneMoves();
  return true;
 }
+
+/* LT270 — only verified eligible forms in five shortcuts.
+ * Mega and costume references stay accessible in the complete PvP panel. */
+function psRailChoices(payload){
+ const out={};
+ for(const league of ["gl","ul","ml"]){
+  const data=(payload?.leagues||[]).find(x=>x?.league===league)||{};
+  const candidates=[];
+  const add=(x,name,kind)=>{
+   if(!x||x.referenceOnly===true||x.megaProjection===true||x.eligible===false)return;
+   const raw=Number(x.rank),overall=Number(x.overallRank);
+   const rank=Number.isInteger(raw)&&raw>=1&&raw<=4096?raw:null;
+   const rg=Number.isInteger(overall)&&overall>=1?overall:null;
+   if(rank===null&&rg===null)return;
+   candidates.push({name:String(name||payload?.name||"").slice(0,100),
+    rank,overallRank:rg,evolves:kind==="evolution",kind});
+  };
+  add(data.own,payload?.name,"current");
+  if(payload?.includePreviousEvolutions!==false)
+   for(const x of Array.isArray(data.evolutions)?data.evolutions.slice(0,36):[])
+    add(x,x?.name,"evolution");
+  const ranks=candidates.filter(x=>x.rank!==null).sort((a,b)=>a.rank-b.rank||
+    (a.kind==="current"?-1:b.kind==="current"?1:0));
+  const general=candidates.filter(x=>x.overallRank!==null).sort((a,b)=>{
+   const aq=a.rank!==null&&a.rank<=50,bq=b.rank!==null&&b.rank<=50;
+   return (aq===bq?0:aq?-1:1)||a.overallRank-b.overallRank||
+    (a.kind==="current"?-1:b.kind==="current"?1:0);
+  });
+  out[league]={classChoice:ranks[0]||null,overallChoice:general[0]||null};
+ }
+ return out;
+}
+function psRenderFiveRankRail(payload){
+ const rail=document.getElementById("rankLine");
+ if(!rail||typeof rail.replaceChildren!=="function"||
+  typeof document.createElement!=="function")return false;
+ const choices=psRailChoices(payload);
+ if(!Object.values(choices).some(x=>x.classChoice||x.overallChoice)){
+  rail.hidden=true;rail.replaceChildren();return false;
+ }
+ const leagueNames={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
+ const icons={gl:"ps-gl-lt268.png",ul:"ps-ul-lt268.png",
+  ml:"ps-ml-lt268.png",overall:"ps-overall-lt268.png"};
+ const selected=["gl","ul","ml"].includes(activeRankLeague)?activeRankLeague:
+  ["gl","ul","ml"].find(l=>choices[l].classChoice)||"gl";
+ activeRankLeague=selected;
+ currentRankSpecies=choices[selected]?.classChoice?.name||payload?.name||"";
+ const options=["gl","ul","ml"].map(league=>{
+  const x=choices[league].overallChoice;
+  return {league,name:x?.name||payload?.name||"",
+   rank:x?.overallRank||null,evolves:x?.evolves===true};
+ });
+ window.psRailOverallChoices=options;
+ const general=options.find(x=>x.league===selected&&x.rank!==null)||
+  options.find(x=>x.rank!==null)||options.find(x=>x.league===selected);
+ rail.replaceChildren();rail.dataset.rankRail="five";
+ rail.dataset.league=selected;rail.dataset.topVerified="true";rail.hidden=false;
+ const make=(kind,league,choice)=>{
+  const button=document.createElement("button");button.type="button";
+  button.className="psRailButton "+(kind==="overall"?"psRailGeneral":"psRailLeague");
+  button.dataset.psRail=kind==="overall"?"overall":league;
+  const img=document.createElement("img");img.className="psRailIcon";
+  img.src="ui-icons/"+icons[kind==="overall"?"overall":league];img.alt="";
+  img.setAttribute?.("aria-hidden","true");button.appendChild(img);
+  const num=choice?.rank;
+  const number=document.createElement("span");number.className="psRailNumber";
+  number.textContent=Number.isInteger(num)&&num>=1?"#"+num:"—";
+  button.appendChild(number);
+  const species=choice?.name||payload?.name||"";
+  const evolves=choice?.evolves===true;
+  button.title=(kind==="overall"?"Rank Geral PvP":"Rank Classe IV")+
+   " · "+leagueNames[league]+" · "+species+
+   (num?" · #"+num:" · rank não verificado")+
+   (evolves?" · ↳ rank da forma evoluída, não do Pokémon atual":"");
+  button.setAttribute?.("aria-label",button.title);
+  if(evolves){
+   const mark=document.createElement("span");mark.className="psRailEvolve";
+   mark.textContent="↳";mark.setAttribute?.("aria-hidden","true");
+   button.appendChild(mark);
+  }
+  button.dataset.psKind=kind==="overall"?"overall":"class";
+  button.dataset.psLeague=league;button.dataset.psName=species;
+  if(Number.isInteger(num)&&num>=1)button.dataset.psRank=String(num);
+  if(kind==="overall"){
+   button.dataset.psRailOverall="true";
+   button.dataset.rgVisible=num?"#"+num:"—";
+   button.disabled=!window.POKESEARCH_PVPOKE_OVERALL?.[league]?.length;
+  }else button.disabled=!(Number.isInteger(num)&&num>=1);
+  if(!button.disabled)button.onclick=event=>{
+   if(kind!=="overall"){
+    activeRankLeague=league;currentRankSpecies=species;rail.dataset.league=league;
+    for(const other of rail.querySelectorAll?.(".psRailLeague")||[])
+     other.dataset.active=String(other.dataset.psLeague===league);
+    renderRankOneMoves();
+   }
+   return openPvpRankExplorer(event,button);
+  };
+  return button;
+ };
+ for(const league of ["gl","ul","ml"]){
+  const b=make("class",league,choices[league].classChoice);
+  b.dataset.active=String(league===selected);rail.appendChild(b);
+ }
+ rail.appendChild(make("overall",general.league,general));
+ rail.title=["gl","ul","ml"].map(x=>{
+  const v=choices[x].classChoice;
+  return x.toUpperCase()+" "+(v?"#"+v.rank+(v.evolves?" ↳ "+v.name:""):"—");
+ }).join(" · ");
+ renderRankOneMoves();resizeEvolutionPanel();
+ return true;
+}
+
 window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  window.psRankContext=payload;
- updateVisiblePvPRank(payload);
+ // Real Android WebViews use five independent shortcuts; text-only legacy DOMs remain safe.
+ const liveRail=document.getElementById("rankLine");
+ if(liveRail?.ownerDocument?.defaultView)psRenderFiveRankRail(payload);
+ else updateVisiblePvPRank(payload);
  if(metricKind)renderDetailMetric();
  // Compact rank label is also an entrypoint, without intercepting move buttons.
  const quickRank=document.getElementById("rankLine");
