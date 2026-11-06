@@ -8434,7 +8434,7 @@ function renderFiltersChoices(){
  apply.onclick=()=>{
   // DISTANCE is defined by the provider only with center and radius; do
   // not silently accept a sort that the site cannot reproduce.
-  if(modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationVerified)){
+  if(modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationCoords.trim())){
    // Stale Distance sort is not a reason to reject new Sexo/Tamanho/PC.
    // Preserve all other draft filters, reset only this unavailable sort.
    modeDraft.sortBy="Despawn (longest)";
