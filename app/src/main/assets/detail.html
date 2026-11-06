@@ -2161,11 +2161,16 @@ function psCpVariants(){
  const normalForm=String(metricCard?.form||"").trim().toLowerCase();
  const costume=String(metricCard?.costume||"").trim().toLowerCase();
  const costumeId=String(metricCard?.costumeId??"").trim().toLowerCase();
+ const region=String(metricCard?.region||"").trim().toLowerCase();
+ const speciesName=String(metricCard?.name||"").trim().toLowerCase();
  const none=value=>!value||value==="none"||value==="normal"||value==="0"||
   value==="false"||value==="default";
+ // "region" may also describe the *encounter location*, not its battle form.
+ // Reject explicit Alolan/Galarian/etc labels, not ordinary spawn geography.
+ const regional=/^(alola|alolan|galar|galarian|hisui|hisuian|paldea|paldean)$/i.test(region);
  const normalIdentity=!metricCard?.isCostume&&!metricCard?.isShadow&&
-  none(costume)&&none(costumeId)&&none(String(metricCard?.region||"").toLowerCase())&&
-  none(normalForm);
+  none(costume)&&none(costumeId)&&!regional&&
+  (none(normalForm)||normalForm===speciesName);
  const offlineFamily=normalIdentity?
   (window.PokeSearchPvpFamilyCatalog?.family?.(metricCard?.name,master)||[]):[];
  const names=[metricCard?.name,source.name,
@@ -2276,7 +2281,7 @@ function psCpControls(){
    '</div></details>';
  return '<div class="psCpSimulator">'+
   '<div class="psCpSimTitle">Normal / evoluções / Mega · mesmos IVs</div>'+
-  '<div class="psCpSimFields"><label>Forma'+
+  '<div class="psCpSimFields"><label>Forma · '+forms.length+
   '<div class="psCpFormStepper"><button type="button" onclick="stepPvpCpForm(-1)"'+
   ' aria-label="Forma anterior" title="Forma anterior">‹</button>'+
   '<select id="psCpForm" aria-label="Selecionar evolução ou Mega" onchange="updatePvpCpSimulator()">'+
