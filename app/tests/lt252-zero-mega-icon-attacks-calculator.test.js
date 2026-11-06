@@ -21,9 +21,9 @@ assert.ok(inline.includes('nameChip.appendChild(speciesLabel);'));
 assert.ok(detail.includes('#rankLine .psCompactSpeciesName{display:block'));
 assert.ok(inline.includes('nameChip.dataset.psName=best.name'),
   "canonical Mega identity stays intact for detail and rank actions");
-// 3) A crossed-swords legacy recommendation icon is not shown before data verification.
-assert.ok(inline.includes('btn.textContent=prior?.icon||"⚡"'));
-assert.ok(inline.includes('btn.textContent=hasLegacy?"⚔️":"⚡"'));
+// 3) Pre-verification sets sword badges without click; unknown remains monochrome.
+assert.ok(inline.includes('btn.textContent=prior?.icon||"⚔︎"'));
+assert.ok(inline.includes('window.PokeSearchPvpRankMoves.getStatus(league,featured,isMega)'));
 assert.ok(inline.includes('if(complete){'),"verified move status gates the legacy switch");
 assert.ok(inline.includes('const legacy=(move.status==="elite"||move.status==="legacy")&&move.localeVerified!==false'));
 // 4) Simulator uses the existing card's one visible scrollbar; no nested height cutoff.
