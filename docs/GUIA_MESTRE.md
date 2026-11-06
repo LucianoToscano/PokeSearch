@@ -1,11 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT262 — Ícones GL/UL do usuário (06/11/2026 · QA)
+## LT262 — Ícones GL/UL do usuário (06/11/2026 · RELEASE OFICIAL)
 
 - Pedido: substituir **somente** os ícones dos modos GL e UL com as duas imagens enviadas (GL azul com faixa vermelha; UL preta com faixas amarelas), mantendo o mesmo tamanho/alinhamento do modo em ambas as Pokébolas, sem alterar a Liga Mestre, IVs, Rank, cards PvP ou chat.
 - Assets aprovados e adicionados à branch `feature/lt262-gl-ul-icons-20261106`: `result-icons/modes/GLBadgeLT262.png` (PNG transparente 96×96, SHA-256 `be6de24bb4f01a6e13456dfb77ed81e878d5d6065393aaca08f87c5547234cbb`) e `ULBadgeLT262.png` (96×96, SHA-256 `3328b59cc0bc730d3df9e13f2b053c5df248438402d016e13dbab08f15fe4220`). `dock.html` usa estes PNGs apenas no `modePath`; CSS existente é mantido. Originais `StarGL.png/StarUL.png` continuam intactos, inclusive no chat.
 - Arquivos protegidos de otimização; workflow de release exige que o APK assinado contenha os dois com SHA-256 exato. Teste: `app/tests/lt262-user-gl-ul-mode-icons.test.js`. [Auditoria](LT262_ICONES_GL_UL_IMAGENS_USUARIO_20261106.md).
-- **Status:** branch QA, sem merge/APK/OTA até a homologação da suíte completa, testes visuais e release. LT261 · 0.02.61/54465 é a última publicação oficial comprovada até essa etapa. Teste físico P1/P2 Samsung não observado.
+- **Escopo confirmado:** novos PNGs exclusivos do botão **Modos** (`getModeMenuIcon`, `quickModeImage`); Pokébolas de resultados/dock e seus ícones `getResultIcon` (`dockModeIcon`, `bubbleModeIcon`, `resultModeIcon`) permanecem com artes originais. `StarGL.png`, `StarUL.png` e badges do chat permanecem intactos.
+- **QA e merge:** [PR #242](https://github.com/LucianoToscano/PokeSearch/pull/242) mesclada em `main` no commit `50472943356fbc8904b5a288bff73bb55e9725f9`; **sete verificações aprovadas** no head `5c1ff3e9be0b660d59514d412b06bf4005b45063`, incluindo regressão Node completa, Node QA, core, Java, OTA, visual P/M/G e preflight da release.
+- **APK oficial LT262:** solicitação `release/official-request.json`, versão `0.02.62`, `versionCode 54466`, `label 51266`, anterior `v0.02.61-54465`. [Workflow oficial #42193970707](https://github.com/LucianoToscano/PokeSearch/actions/runs/42193970707) com **preflight=success**, **publish=success**, assinatura permanente Android v2 e verificação de conteúdo com os dois ícones hash-pinned dentro do APK. [Release pública `v0.02.62-54466`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.62-54466) publicada em `2026-11-06T09:21:57Z`, `draft=false`, `prerelease=false`. APK [PokeSearch-v0.02.62-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.62-54466/PokeSearch-v0.02.62-LT.apk), **28.612.164 bytes**, SHA-256 `cd84ef82b4eb62cecde15766c5e6bdd0f457b2ab9545bfec175fc9fd35cc38f1`; disponibilizado em `releases/latest`, instalável mediante confirmação do Android. **Instalação física Samsung/P1/P2 não observada**. LT261 continua para rollback.
 
 ## LT261 — Ordenação automática no liga/desliga da Localização (06/11/2026 · RELEASE OFICIAL)
 
