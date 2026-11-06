@@ -22,7 +22,10 @@ Captura do Scorbunny GL IV #1 exibia símbolo **⚡** no quarto controle (ao lad
 - JavaScript de `detail.html` e `pvp_rank_moves.js`: sintaxe verificada.
 - `app/tests/lt258-preverified-swords-scroll.test.js`: executado em harness JavaScript isolado usando fontes simuladas com golpes normais, legados, Mega e espécie sem rank. Resultado **PASS**: `🗡️`/ `⚔️` corretos, neutro para não verificado, sem mudança por clique, gesto centralizado no cartão.
 - `app/tests/lt248-move-icon-persistence-compact-fallback.test.js`: executado com mocks de WebView e status antecipado. Resultado **PASS**.
-- Contratos antigos de testes que exigiam o raio `⚡` foram adequados à nova regra, incluindo a inspeção visual automatizada P/M/G; **execução integral de CI e captura real Android ainda pendentes**.
+- Contratos antigos de testes que exigiam o raio `⚡` foram adequados à nova regra, incluindo a inspeção visual automatizada P/M/G.
+- **Seis verificações GitHub Actions aprovadas** na revisão de código `aee732d665b6ee8a9baefbbecd7e7bd4fc714b2b`: Node QA, regressão Node completa, QA core LT211, compilação Java LT62, auditoria OTA LT173 e [capturas visuais LT253 P/M/G (run #42172233851)](https://github.com/LucianoToscano/PokeSearch/actions/runs/42172233851).
+- A primeira tentativa visual detectou uma expectativa desatualizada do ícone no caso Mega Sableye G. O teste foi ajustado para aceitar o estado neutro ou os dois estados previamente confirmados, sem flexibilizar as verificações de golpes da Mega nem permitir o raio antigo. A segunda tentativa terminou com sucesso.
+- **Captura física no Android Samsung ainda pendente**, inclusive o caso de Scorbunny com 4 golpes na P1/P2.
 
 ## Condição para a atualização oficial
 Branch/PR de desenvolvimento ainda não é APK distribuído. Antes de merge/OTA, executar a suíte completa, inspeção visual real com lista de 4 ou mais golpes e rolagem até o fim no Samsung, tanto na P1 quanto na P2, compilar e assinar com certificado permanente, publicar evidências e registrar versão monotônica conforme Arquivo Mestre. Não anunciar envio ao aplicativo antes dessas evidências.
