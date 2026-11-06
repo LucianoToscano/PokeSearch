@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT257 — seletor único de evoluções e Megas (06/11/2026; em homologação)
+
+- **Pedido explícito:** adaptar a calculadora da PokeSearch ao seletor de referência que lista `Gastly`, `Haunter`, `Gengar (Normal)`, `Gengar (Mega)`, mantendo IV/PC/Nível e indicador Mega. Nenhuma janela flutuante extra.
+- **Implementação [PR #236](https://github.com/LucianoToscano/PokeSearch/pull/236):** `detail.html` usa um único `<details>` com opções alinhadas e símbolo Mega SVG antes do nome; o `select#psCpForm` permanece oculto somente como estado do motor de cálculo. A lista fecha na seleção, setas usam a mesma escolha, PC/PS é recalculado offline e IV A/B, nível e PC-alvo permanecem. Ordenação derivada das arestas reais do catálogo; Mega X/Y suportadas.
+- **Capturas e testes:** [regressão LT257](../app/tests/lt257-evolution-mega-single-dropdown.test.js), [testes visuais P/M/G](../app/tests/lt253-visual-screenshots.cjs), [auditoria LT257](LT257_SELETOR_EVOLUCOES_MEGAS_QA_20261106.md). O primeiro conjunto completo de seis gates passou no commit `c5244641c6fece95f87221e28b483af75b4d4065`, com [capturas PNG inspecionadas #13479415808](https://github.com/LucianoToscano/PokeSearch/actions/runs/42166765225/artifacts/13479415808). Os PNGs revelaram setas desalinhadas ao abrir; o CSS foi ajustado, com **novos gates necessários**.
+- **Versão planejada:** `LT257 0.02.57 / versionCode 54461 / label 51261`, com notas em `app/src/main/assets/release_notes.json`. Até merge, workflow oficial e asset SHA-256 confirmados, **LT256 v0.02.56-54460 é a última release oficial**. Não afirmar instalação física na Pokébola P1/P2 sem teste no Samsung.
+
+
 ## LT256 — atualização da WebView e catálogo de evoluções (06/11/2026)
 
 - **Origem do relato:** prints Samsung do Teddiursa `0/14/15`, PC 888, Nv.26, em que dropdown e setas ficam presos em Teddiursa. O print não mostra os três botões de evolução já incluídos na LT255, portanto **não é possível concluir se o usuário instalou a LT255** ou se HTML/JS/cache/dados ainda estão antigos. Evitar afirmar que o problema físico foi resolvido sem inspecionar a versão instalada.
