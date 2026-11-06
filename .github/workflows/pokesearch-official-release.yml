@@ -149,7 +149,18 @@ jobs:
             "pm422.fEAST_SEA.icon.png","pm422.fEAST_SEA.s.icon.png",
             "pm422.fWEST_SEA.icon.png","pm422.fWEST_SEA.s.icon.png",
             "pm423.fEAST_SEA.icon.png","pm423.fEAST_SEA.s.icon.png",
-            "pm423.fWEST_SEA.icon.png","pm423.fWEST_SEA.s.icon.png"
+            "pm423.fWEST_SEA.icon.png","pm423.fWEST_SEA.s.icon.png",
+            # LT267: exact Diwali and all four Squawkabilly plumages normal/Shiny.
+            "pm25.fDIWALI_2024.icon.png",
+            "pm25.fDIWALI_2024.s.icon.png",
+            "pm931.fBLUE.icon.png",
+            "pm931.fBLUE.s.icon.png",
+            "pm931.fGREEN.icon.png",
+            "pm931.fGREEN.s.icon.png",
+            "pm931.fWHITE.icon.png",
+            "pm931.fWHITE.s.icon.png",
+            "pm931.fYELLOW.icon.png",
+            "pm931.fYELLOW.s.icon.png"
           ]
           with zipfile.ZipFile(sys.argv[1]) as apk:
             names=set(apk.namelist())
@@ -182,7 +193,8 @@ jobs:
               "mt-elite.png": "8569b664c557130798dc3038e94250de0e3600a3a87a0e5fd522bf27393d91c6",
               "mt-normal.png": "aaee8981343025e786481837984acbf081c17617a10a076ae5afb07516e719fa",
               "mt-unknown.png": "1c7e9a80311bc1cd4187adf83e7b583f096a0c825a429bea015795dcee4be69e",
-              "mega-symbol.png": "ed8d845ab02a575b90f331a98068efc78d3aca87ed9d9235afec1711f2492f26",
+              "mega-symbol.png": "3c80d9278aaa7b131b391a4da879f6c1459290995fdf09c3f3690a36838fa739",
+              "shadow-symbol-lt267.png": "62cdf7dd642c2077204c8275fe82ff99e645b3a5f36780c44ce2d234ebb14559",
               # LT265: uploaded user scrolls and bordered, transparent league badges.
               "mt-carregada-elite-lt265.png": "1862fa4d03ad560c62b54f315aac9b88fd33ab29c94e61d78c47df030da60d38",
               "mt-agil-elite-lt265.png": "7439896d33dd28ee62c389015c0094a7ac34c459d6af4a3e47ad5c88c98fd595",
