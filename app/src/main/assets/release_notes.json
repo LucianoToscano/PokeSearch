@@ -2326,6 +2326,29 @@
           "Conferir no Samsung as seis imagens em P/M/G, com fundo claro/escuro, e as duas Pokébolas."
         ]
       }
+    },
+{
+      "id": "pokesearch-lt269-ptbr-canonical-offline-move-ids-20261106",
+      "minVersionCode": 54473,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT269 — Golpes offline com português BR verificado",
+      "sections": {
+        "novidades": [
+          "Dez identificadores de golpes relevantes para Pidgey, Pidgeot, Fletchling e Talonflame têm nomes offline validados contra a fonte PT-BR já usada pelo aplicativo."
+        ],
+        "melhorias": [
+          "Cinco nomes divergentes da referência versionada foram corrigidos; cinco novos nomes oficiais foram incluídos no fallback offline para locais com rede indisponível.",
+          "A mesma referência Pokémon GO continua vinculada ao proto/moveId original e às traduções consultadas com a conexão ativa."
+        ],
+        "correcoes": [
+          "Nenhum golpe recomendado, status MT Elite, regra de legado, Rank Classe/Geral, cálculo IV/PC ou permissão foi alterado.",
+          "IDs desconhecidos continuam sem tradução confirmada, preservando as duas Pokébolas e a LT268 como opção de rollback."
+        ],
+        "emDesenvolvimento": [
+          "Conferir as traduções em telas reais do Samsung e os demais nomes novos com fonte versionada.",
+          "Teste físico de instalação, atualização automática e legibilidade P/M/G continua pendente."
+        ]
+      }
     }
   ]
 }
