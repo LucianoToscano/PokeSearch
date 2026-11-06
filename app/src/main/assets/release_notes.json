@@ -2417,6 +2417,30 @@
           "Testes físicos Samsung, acessibilidade em todos os tamanhos de overlay e confirmação de instalação ainda necessários."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt273-rank-panels-compact-and-correct-20261106",
+      "minVersionCode": 54477,
+      "date": "06/11/2026",
+      "title": "LT273 — Painéis e rankings mais compactos e alinhados",
+      "sections": {
+        "novidades": [
+          "Seletor Rank Geral agora tem três botões GL, UL e ML tocáveis, sem depender do menu nativo do Android."
+        ],
+        "melhorias": [
+          "Título PvP usa a bandeira e a liga colorida na mesma linha que Ataques e fechar, sem duplicar a liga.",
+          "Golpes capturados e Local ficam abaixo dos painéis abertos, logo antes de Pegar Coordenadas.",
+          "Topo, Meu IV/Minha posição e o filtro Top ficam alinhados na mesma linha, sem controles de exportação extras.",
+          "Marcador de evolução menor e mais no canto, com afastamento da bandeira e bordas."
+        ],
+        "correcoes": [
+          "Fonte PvE/PvP permanece rastreável sem textos extensos ocupando o cartão.",
+          "MT Elite/Legado aparece ao lado do golpe correspondente, não solta no canto inferior."
+        ],
+        "emDesenvolvimento": [
+          "Teste manual no Samsung, toque/rolagem com fundos claros/escuros e confirmação de OTA após instalação ainda pendentes."
+        ]
+      }
     }
   ]
 }

@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.72",
-  "code": 54476,
-  "label": 51276,
-  "previous_tag": "v0.02.71-54475",
-  "qa_max_code": 54475,
-  "release_notes": "PokeSearch LT272: indicador ↳ das evoluções substituído pelo ícone original enviado pelo usuário (rostos brancos e seta verde), pequeno e transparente, fixado no canto inferior direito com aproximadamente 1 mm de margem interna. Os números #rank ficam acima, separados do marcador; as bandeiras e brasões originais de Raides/GL/UL/ML/Rank Geral continuam centralizados, do mesmo tamanho. Ícone aparece somente quando o rank confirmado corresponde à evolução/forma projetada, inclusive Raides e troca de liga no Rank Geral. Mantém os cinco atalhos LT271, golpes específicos por liga e todas as duas Pokébolas, filtros, fontes e OTA. QA física Samsung ainda pendente."
+  "version": "0.02.73",
+  "code": 54477,
+  "label": 51277,
+  "previous_tag": "v0.02.72-54476",
+  "qa_max_code": 54476,
+  "release_notes": "LT273: painel Rank Geral com seletores GL/UL/ML que respondem ao toque no Android e controles de Topo/Minha posição/Top alinhados. Removedos os botões redundantes Copiar/Compartilhar/CSV dos exploradores, blocos longos Fonte e critérios das Raides e legenda repetitiva de origem nos golpes PvP. Fonte versionada preservada nos dados, na documentação e em títulos acessíveis. Golpes capturados e Local movidos para baixo dos painéis Raides/Rank Classe/Rank Geral/PvP, acima de Pegar Coordenadas. PvP apresenta apenas ícone e nome colorido da liga junto de Ataques Recomendados e X, sem título duplicado; símbolos de MT Elite ficam junto ao golpe. Ícone de evolução menor e mais no canto inferior direito, sem encostar na borda nem na bandeira. Preservados dois overlays Pokébola, Modos, filtros, rankings e ataques por liga. Teste físico Samsung e instalação ainda pendentes."
 }

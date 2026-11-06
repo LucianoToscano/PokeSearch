@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT273 — PAINÉIS COMPACTOS E SELETOR DE LIGA FUNCIONAL (06/11/2026)
+
+- **Base:** LT272 `0.02.72`, `versionCode 54476`, [APK pública assinada](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.72-54476) (33.611.186 bytes, SHA-256 `5a011c12bc86edc070dd698f6790c90ad2649440e66378be51e66874db2bde24`); PR #261 merge `90d27b19754549b85fb0c886410c188872d4418f`. **LT273 é proposta** `0.02.73`/`54477` até que a publicação oficial seja verificada.
+- **Detalhes:** faixa dos cinco atalhos LT271 intocada; no painel PvP uma única linha com **bandeira GL/UL/ML + nome colorido + golpes recomendados + X**, sem título duplicado. Capturados `Golpes` e `Local` ficam **depois dos painéis Raides, PvP, Rank Classe/Rank Geral**, antes de `Pegar Coordenadas`. Símbolo MT Elite alinhado à linha de cada golpe, não como ícone solto.
+- **Rank Geral:** substituído `select` nativo problemático por três botões `GL | UL | ML` de toque real, atualizando cabeçalho, espécie e posição via snapshot; se não houver tabela verificada, a opção fica indisponível. Em Rank Classe e Rank Geral, `#1 Topo | Meu IV/Minha posição | Top [Todos]` alinhados sem quebra; ações de exportação **Copiar, Compartilhar, CSV** removidas da interface, rotinas/contratos nativos preservados.
+- **Raides/ataques:** longos `Fonte e critérios` e `Fonte PvPoke` removidos do cartão, mas proveniência continua em `title`, na documentação, snapshots e testes. Não adicionar falsos segundos ataques nem counters específicos.
+- **Evolução:** ícone original LT272 branco/verde reduzido de 15 para **11 CSS px** (9 em largura estreita), `right:3px; bottom:3px`; manter bandeiras originais centralizadas, rank acima, sem sobreposição ou toque na borda. Validar P/M/G, sobretudo telas estreitas.
+- **Preservação obrigatória:** ambas as Pokébolas e Modos, favoritos, localização, filtros, sprites, ataques por liga, calculadora A/B PC/PS, Elite/legado, rank independente, PvE com fonte, atualização OTA e assinatura permanente.
+- **Validação e pendências:** CI Node completo, Java, visual P/M/G, PvE, OTA e assinatura; testes físicos Samsung e envio da APK ao Drive **não comprovados**. Rollback LT272 disponível.
+
+
 ## LT272 — MARCADOR DE EVOLUÇÃO NO CANTO INFERIOR DIREITO (06/11/2026)
 
 - **Mudança visual solicitada:** substituir o `↳` que ocupava espaço ao lado de `#rank` pelo **ícone original branco/verde enviado pelo usuário**, em PNG transparente de 128×128, sem fundo preto. `ui-icons/ps-evolution-lt272.png`, SHA-256 `67a26f134fbe41a38d75bd4a0e13de526379a029dc904a7cd0e26701c7c78aa5`. Fonte original entregue no chat, recortada e otimizada, sem mudar desenho.
