@@ -25,3 +25,14 @@ Requisito do usuário: adaptar o seletor da calculadora para o exemplo que lista
 ## Versão proposta
 
 **LT257 · 0.02.57 · versionCode 54461 · label 51261** se for efetivamente autorizada e publicada em sequência. LT256 continua intacta no histórico.
+
+## Publicação oficial comprovada (06/11/2026)
+
+- **Merge:** [PR #236](https://github.com/LucianoToscano/PokeSearch/pull/236) integrada à `main` em `b06acfb260aadec63406fe1335bfcde1f72d526c`.
+- **Últimos seis gates aprovados no commit `7b6d472614b644693d805313025f5b4e9981026e`:** [Node QA #42167183769](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183769), [Node regressão completa #42167183718](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183718), [QA core #42167183481](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183481), [Java #42167183574](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183574), [OTA/Android #42167183545](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183545) e [visual P/M/G #42167183626](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183626). [Screenshots finais #13479231711](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167183626/artifacts/13479231711), abertos e inspecionados: lista legível em P200, M240 e G320, setas alinhadas ao topo e emblema Mega correto.
+- **Publicação acionada:** `release/official-request.json` commit `798d048c15b9e08fcf09c26e31a81938649ec87b`, versão `0.02.57`, `versionCode 54461`, label `51261`, anterior `v0.02.56-54460`.
+- **Workflow protegido oficial:** [#42167451978](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167451978) `completed/success` com assinatura Android v2 permanente, compilação e integridade aprovadas; nenhuma chave privada exposta.
+- **Release latest pública:** [v0.02.57-54461](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.57-54461), publicada em `2026-11-06T05:20:36Z`, estável. [APK PokeSearch-v0.02.57-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.57-54461/PokeSearch-v0.02.57-LT.apk) 28.407.143 bytes, SHA-256 `c6499bea20cff5ea807ef1018fc7117231a76b93be9e5ef46116ff28c914c9d7`, estado `uploaded`. [Artefato assinado verificado #13480225928](https://github.com/LucianoToscano/PokeSearch/actions/runs/42167451978/artifacts/13480225928).
+- **Atualização no aplicativo:** via consulta a `releases/latest`; pré-download condicionado à rede/agenda e instalação com confirmação Android. **Não há evidência de instalação no Samsung em nenhuma das duas Pokébolas.** Validação física P1/P2 permanece necessária; a LT256 não foi sobrescrita no histórico.
+
+A fase de release foi concluída. As referências anteriores a PR draft/pipeline pendente registram o estado anterior à publicação.
