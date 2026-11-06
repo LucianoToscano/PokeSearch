@@ -12,7 +12,7 @@ const row=new Function("window","h",html.slice(start,end)+"return evolutionRow;"
  value=>String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;"));
 const mega=row({name:"Mega Charizard X",rank:1,megaProjection:true,referenceOnly:true,
  level:20.5,cp:1499,statProductPct:"100,00"},false);
-assert.equal((mega.match(/mega_evolution_icon\.svg/g)||[]).length,1);
+assert.equal((mega.match(/ui-icons\/mega-symbol\.png/g)||[]).length,1);
 assert.ok(mega.includes("Mega Charizard X"));
 assert.ok(mega.includes('evoSummary'));
 assert.ok(mega.includes('evoStatsRow'));
@@ -22,7 +22,7 @@ assert.ok(mega.indexOf("100,00%")>mega.indexOf("evoStatsRow"));
 assert.ok(!mega.slice(mega.indexOf("evoSummary"),mega.indexOf("evoStatsRow")).includes("evoMegaTop"),
  "badge must not squeeze name in same flex row");
 const base=row({name:"Charizard",rank:14,cp:1498,level:25,statProductPct:"99,00"},true);
-assert.ok(!base.includes("mega_evolution_icon.svg"));
+assert.ok(!base.includes("ui-icons/mega-symbol.png"));
 assert.ok(!base.includes("TOP 1 MEGA"));
 const style=html.match(/<style>([\s\S]*?)<\/style>/)?.[1]||html;
 assert.ok(/\.evoLine \.evoWho\{[^}]*white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere/.test(html),
