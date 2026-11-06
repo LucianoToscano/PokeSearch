@@ -56,13 +56,16 @@
   if(!raw)return "";
   const entry=meta(card,data);
   const eligible=new Set(Array.isArray(entry?.[1])?entry[1]:[]);
-  return raw.split(/\s+\/\s+/).slice(0,3).map(part=>{
+  const translator=(typeof window!=="undefined"?window.PokeSearchMovePtBR:
+   globalThis.PokeSearchMovePtBR);
+  return raw.split(/\s+\/\s+/).slice(0,3).map((part,i)=>{
    const original=part.trim().replace(/\s*\*$/,"");
-   // Never trust an unverified "*" supplied as plain card text.
-   // Mark only moves proven by the pinned, form-specific metadata.
+   // Preserve the canonical source identity for legacy/Elite verification.
    const marked=eligible.has(moveId(original));
+   const localized=translator?.isVerified?.(original,i===0)?
+     translator.name(original,i===0):original;
    return '<span class="pkMove"'+(marked?' title="Golpe especial: MT de Elite ou legado"':'')+'>'+
-    esc(original)+(marked?'<sup class="pkLegacy">*</sup>':"")+'</span>';
+    esc(localized)+(marked?'<sup class="pkLegacy">*</sup>':"")+'</span>';
   }).join(" <span class=\"moveSlash\">/</span> ");
  }
  let locationCountryNames=null;
