@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.58",
-  "code": 54462,
-  "label": 51262,
-  "previous_tag": "v0.02.57-54461",
-  "qa_max_code": 54461,
-  "release_notes": "PokeSearch LT258: indicadores de ataques PvP antes do toque (⚔️ quando a recomendação confirmada contém legado/Elite, 🗡️ quando não contém; símbolo neutro e cinza se ainda não foi possível comprovar). O botão apenas abre os golpes e não altera o ícone. A lista recolhível de golpes possíveis passa a rolar no próprio cartão, eliminando duas rolagens internas que impediam chegar aos carregados finais. Conservados os chips de IV Classe, Pokémon e Rank Geral, a Megaedição separada dos golpes, as duas Pokébolas, o layout compacto P/M/G e a correção LT257. Merge da PR #238 (fd0d056540f5a17385c1cca72d48bf1e9fe50d73) com seis gates automatizados aprovados, incluindo regressão Node, Java, OTA e screenshots P/M/G; validação física Samsung P1/P2 não observada. Instalação depende de confirmação do Android."
+  "version": "0.02.59",
+  "code": 54463,
+  "label": 51263,
+  "previous_tag": "v0.02.58-54462",
+  "qa_max_code": 54462,
+  "release_notes": "PokeSearch LT259: novo botão 🏆 Raides no cartão de Pokémon antes de Pegar Coordenadas, mostrando a relevância do atacante em Raides por tipo, posição da espécie/forma, evolução projetada e golpes, inclusive necessidade de MT de Elite. A nova avaliação também está acessível no painel já existente de Análise PvP, sem janela flutuante. Fonte pública de referência S-Tier-Devs/pogo-db-api (dataset de 2026, não rankings oficiais atualizados por chefe); se a fonte não confirmar um rank, o app exibe apenas a prévia offline de Ataque-base, sem inventar classificação. Diferencia Rank Raides de Rank IV Classe e Rank Geral PvP. Mantém o visual compacto P/M/G, duas Pokébolas independentes, versões anteriores, favs, sem acesso adicional à API PoGoCoordinates nem revelação de coordenadas. PR #239 mesclada em 2107629cd1c63a4becdb5203934eee73614cb412 após sete workflows aprovados, incluindo teste da fonte pública real e screenshots P/M/G. Teste físico Samsung P1/P2 não comprovado. A instalação depende de confirmação do Android."
 }
