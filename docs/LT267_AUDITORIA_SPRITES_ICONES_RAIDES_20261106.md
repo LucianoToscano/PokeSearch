@@ -20,3 +20,10 @@ Troca de Mega PNG aumenta o APK e a textura decodificada; sem teste físico P1/P
 
 ## Estado de validação
 Branch de QA. Não afirmar merge/release física até confirmação de CI, links e SHA-256 oficiais. LT266 deve continuar como rollback.
+
+## Complemento — 18 tipos revisados e ícone Rank Geral
+- Usuário forneceu ZIP revisado com versões 256/512/1024/2048; foram escolhidos 18 originais PNG_512 (512×512 RGBA), sem reamostragem adicional, total cerca de 2 MB.
+- Originais LT266 mantidos, novos arquivos `ui-icons/type-<tipo>-lt267.png`; a API conserva os 18 enums técnicos.
+- Novo ícone Rank Geral triangular do usuário recebe somente remoção do fundo preto e redimensionamento transparente 160×160; ícone utilizado nas etiquetas RG da linha e nas alternativas, nunca na classificação IV.
+- Teste `lt267-revised-types-rank-general.test.js` valida SHA-256 dos 19 recursos, transparência, dimensões, trilha OTA/assinatura, acessibilidade RG e distinção de ranks.
+- CI, PR, merge e APK permanecem pendentes até evidência do GitHub. Inspeção física Samsung não executada.

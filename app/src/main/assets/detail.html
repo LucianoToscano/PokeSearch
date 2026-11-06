@@ -724,6 +724,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psMetricRow strong{font-size:10px}
 #psMetricPanel .psMetricFoot{font-size:9px;color:#b6c6d6;margin-top:4px}
 
+/* LT267: RG has its own verified Rank Geral emblem, without changing chip action. */
+#rankLine .psOverallIcon,#psRankAlternates .psOverallIcon{
+ display:inline-block;width:11px;height:11px;min-width:11px;
+ object-fit:contain;vertical-align:middle;margin-right:2px;
+ pointer-events:none;image-rendering:auto}
+#rankLine .psCompactOverall:disabled .psOverallIcon{opacity:.55}
 /* LT245: RG is primary; Class IV and +N are independent compact controls. */
 #rankLine .psCompactIv,#rankLine .psRankMore,
 #psRankAlternates .psCompactIv,#psRankAlternates .psCompactOverall{
@@ -2175,6 +2181,16 @@ function renderRankOneMoves(){
 
 /* LT245: small, on-demand list of the other forms; all actions stay local.
    A choice's IV and RG are opened independently, and a missing RG stays —. */
+function psAddRankGeralIcon(button){
+ if(!button||typeof document.createElement!=="function")return;
+ const icon=document.createElement("img");
+ icon.src="ui-icons/rank-geral-lt267.png";
+ icon.className="psOverallIcon";
+ icon.alt="";
+ icon.setAttribute?.("aria-hidden","true");
+ if(typeof button.prepend==="function")button.prepend(icon);
+ else button.appendChild?.(icon);
+}
 function closePvpRankAlternates(){
  const panel=document.getElementById("psRankAlternates");
  if(!panel)return;
@@ -2202,6 +2218,7 @@ function togglePvpRankAlternates(event,button,choices,league){
    const b=document.createElement("button");b.type="button";
    b.className=kind==="overall"?"psCompactOverall":"psCompactIv";
    b.textContent=text;b.title=title;
+   if(kind==="overall")psAddRankGeralIcon(b);
    b.dataset.psKind=kind;b.dataset.psName=choice.name;
    b.dataset.psLeague=league;b.dataset.psRank=String(n);
    b.onclick=e=>openPvpRankExplorer(e,b);
@@ -2392,6 +2409,7 @@ function setRankLineLabel(rankLine,label){
   const badge=document.createElement("button");
   badge.type="button";badge.className="psCompactOverall psRankOpen";
   badge.textContent=hasVerifiedOverall?"RG #"+best.overallRank:"RG —";
+  psAddRankGeralIcon(badge);
   badge.title=hasVerifiedOverall?
    "Rank Geral PvPoke "+best.name+" · abrir tabela de espécies":
    "Rank Geral não verificado para esta forma/liga";

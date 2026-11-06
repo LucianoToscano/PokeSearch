@@ -30,7 +30,8 @@ const icons=ctx.PokeSearchTypeIcons;
 assert.deepEqual(Object.keys(icons).sort(),keys,"All 18 exact API type enums");
 for(const type of keys){
  const p="ui-icons/type-"+type+"-lt266.png";
- assert.equal(icons[type],p,"New file replaces old type icon");
+ assert.equal(icons[type],"ui-icons/type-"+type+"-lt267.png","Revised type icon displayed");
+ // LT266 original still exists and its exact SHA remains protected for rollback.
  const raw=fs.readFileSync(path.join(base,p));
  assert.equal(raw.subarray(0,8).toString("hex"),"89504e470d0a1a0a",type+" valid PNG");
  assert.equal(raw.readUInt32BE(16),1024,type+" width remains original");
@@ -47,8 +48,8 @@ for(const type of keys)assert.ok(workflow.includes('"type-'+type+'-lt266.png": "
 const presenter=require("../src/main/assets/pokemon_card_presentation.js");
 globalThis.PokeSearchTypeIcons=Object.fromEntries(keys.map(x=>[x,icons[x]]));
 const pidgey=presenter.types({number:"#16"},{base:{16:[["normal","flying"],[]]}});
-assert.ok(pidgey.includes('src="ui-icons/type-normal-lt266.png"'));
-assert.ok(pidgey.includes('src="ui-icons/type-flying-lt266.png"'));
+assert.ok(pidgey.includes('src="ui-icons/type-normal-lt267.png"'));
+assert.ok(pidgey.includes('src="ui-icons/type-flying-lt267.png"'));
 assert.ok(pidgey.includes("Tipo Normal")&&pidgey.includes("Tipo Voador"),
  "Type localized labels and both slots retained");
 const scripts=fs.readFileSync(path.join(base,"detail.html"),"utf8");

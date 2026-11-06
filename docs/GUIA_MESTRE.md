@@ -1,10 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT267 — Correção de sprites Diwali/Squawk e novos ícones (06/11/2026 · QA)
+## LT267 — Sprites, tipos revisados, Rank Geral e símbolos (06/11/2026 · QA)
 - **Origem:** capturas Samsung do usuário com LC 500 sem ícone, Mega Beedrill duplicado em Raides, Pikachu Diwali #25 e Squawkabilly #931 (Green e outras cores) sem sprite confiável.
 - **Código:** ícone LC passa a usar bandeira Copa LT265; Mega recebe PNG novo do usuário (SHA256 `3c80d9278aaa7b131b391a4da879f6c1459290995fdf09c3f3690a36838fa739`) e Shadow recebe ícone novo (SHA256 `62cdf7dd642c2077204c8275fe82ff99e645b3a5f36780c44ce2d234ebb14559`) só com `isShadow` verdadeiro. Raides exibe ícone Mega + nome prefixado, ícone do tipo e Rank por tipo, sem indicar counter atual nem Rank Geral.
 - **Sprites:** 10 PNGs oficiais de Pikachu Diwali 2024 e das quatro plumagens Squawkabilly normal/Shiny vinculados ao pacote assinado pelos hashes Git blob presentes no `go-exact-sprites.tsv`. Site oficial com imagem validada permanece prioritário; sem aproximação falsa. Silhuetas pequenas ganham zoom limitado, sem mudar pixels.
 - **Raides:** a fonte S-Tier-Devs (ago/2026) oferece somente o par Ágil + Carregado mais efetivo por ranking, sem segunda melhor opção verificada.
+- **Complemento visual LT267:** 18 PNGs 512×512 RGBA originais do arquivo do usuário `18_ICONES_TIPOS_POKEMON_GO_REVISADOS_06-11-2026.zip` integrados por caminhos `ui-icons/type-<enum>-lt267.png`, sem recodificar. O conjunto LT266 permanece intacto no histórico/asset. Ícone exclusivo do **Rank Geral** agora acompanha o chip RG e alternativas, sem alterar o botão, rank ou elegibilidade. O triângulo enviado recebeu apenas máscara de transparência do fundo preto e ajuste para 160×160. Hashes SHA-256 dos 19 novos PNGs são exigidos pelo workflow oficial.
+- **Validação:** testes e CI de PR pendentes; não declarar merge/publicação antes da execução. P/M/G e PvE acionados ao alterar ícones. Testes físicos Samsung ainda pendentes.
 - **Estado:** branch QA `feature/lt267-sprites-raid-icons-20261106`; **não declarar CI, merge, publicação nem teste físico até evidência**. Base LT266 [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.66-54470) segue estável, SHA256 `218e07e37945216021724429acd9b64a971a1e108688ec15bd5d079615555abf`.
 - **Registro:** [auditoria LT267](LT267_AUDITORIA_SPRITES_ICONES_RAIDES_20261106.md) · [prompt de continuidade](PROMPT_NOVO_CHAT_LT267_20261106.md).
 
