@@ -2049,6 +2049,31 @@
           "Testes Node/Java/OTA e capturas Chromium P/M/G realizados; instalação e verificação física das duas Pokébolas no Samsung ainda não comprovadas."
         ]
       }
+    },
+    {
+      "id": "lt258-attack-badges-precheck-moves-scroll-20261106",
+      "minVersionCode": 54462,
+      "date": "06/11/2026",
+      "title": "PokeSearch LT258 — Ataques legados antes do toque e rolagem corrigida",
+      "sections": {
+        "novidades": [
+          "O botão de ataques identifica automaticamente ⚔️ quando o conjunto PvP recomendado contém golpe legado/Elite e 🗡️ quando a recomendação confirmada não exige legado, antes de abrir a lista.",
+          "Quando não há recomendação validada ou a consulta ainda não terminou, o símbolo fica neutro/cinza para evitar informação enganosa."
+        ],
+        "melhorias": [
+          "Tocar no botão abre os detalhes sem trocar o símbolo; status é memorizado por liga e forma, inclusive Megaedição, sem custo de revelação de coordenadas.",
+          "O painel de golpes possíveis mantém a lista recolhida inicialmente e passa a acompanhar a rolagem vertical única do cartão.",
+          "Preservadas as três áreas IV / Pokémon / Rank Geral e o botão de golpes, com layout compacto P/M/G nas duas Pokébolas."
+        ],
+        "correcoes": [
+          "Removidos os símbolos de raio que não distinguiam recomendações comuns de golpes legados/Elite.",
+          "Corrigido o travamento causado por duas áreas de rolagem sobrepostas ao expandir os golpes possíveis; o cartão recalcula a altura após abrir ou recolher a lista.",
+          "Mega continua separada da lista de ataques carregados, sem atribuir golpes exclusivos à Megaevolução."
+        ],
+        "emDesenvolvimento": [
+          "Automação, compilação Android e screenshots P/M/G passaram; a instalação e a rolagem física no Samsung nas duas Pokébolas ainda precisam de verificação. A atualização requer confirmação do Android."
+        ]
+      }
     }
   ]
 }
