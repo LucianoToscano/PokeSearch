@@ -83,7 +83,7 @@ async function run(){
   assert.equal(btn.textContent,"⚔︎","neutral while the pinned data is loading");
   await Promise.resolve();await Promise.resolve();
   // A network/cache response can settle over several microtasks.
-  await new Promise(resolve=>setImmediate(resolve));
+  for(let pending=0;pending<30;pending++)await Promise.resolve();
   assert.equal(btn.textContent,"🗡️","must become verified BEFORE tap");
   assert.equal(opened,0,"opening card must not open localized move details");
   await btn.onclick();assert.equal(btn.textContent,"🗡️");
