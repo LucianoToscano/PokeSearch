@@ -220,7 +220,9 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const number=b[1]?.querySelector(".psRailNumber"),cardBox=b[1]?.getBoundingClientRect();
     const eBox=evol?.getBoundingClientRect(),fBox=flag?.getBoundingClientRect();
     const nBox=number?.getBoundingClientRect();
-    const badge=eBox&&cardBox&&nBox&&fBox?{
+    const overlap=eBox&&fBox?eBox.left<fBox.right&&eBox.right>fBox.left&&
+     eBox.top<fBox.bottom&&eBox.bottom>fBox.top:false;
+    const badge=eBox&&cardBox&&nBox&&fBox?{overlap,
      src:evol.getAttribute("src"),tag:evol.tagName,span:eBox.width,
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
      belowRank:eBox.top>=nBox.bottom+2,
@@ -240,8 +242,9 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
     rail270.badge?.src==="ui-icons/ps-evolution-lt272.png"&&
-    rail270.badge?.tag==="IMG"&&rail270.badge?.span<=16&&
-    rail270.badge?.right>=4&&rail270.badge?.bottom>=4&&
+    rail270.badge?.tag==="IMG"&&rail270.badge?.span<=12&&
+    rail270.badge?.right>=2&&rail270.badge?.bottom>=2&&
+    !rail270.badge?.overlap&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
     rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png",
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
@@ -250,17 +253,22 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const general=document.querySelector("#rankLine .psRailGeneral");
     if(!general||general.disabled)return {ok:false,reason:"RG disabled"};
     general.click();
-    const chooser=document.querySelector("#psRankExplorer select[data-ps-league-choice]");
-    if(!chooser)return {ok:false,reason:"missing selector"};
-    chooser.value="ul";chooser.dispatchEvent(new Event("change",{bubbles:true}));
+    const chooser=document.querySelector('#psRankExplorer button[data-ps-league-choice="ul"]');
+    if(!chooser)return {ok:false,reason:"missing UL button"};
+    chooser.click();
     const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
     const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
     const rows=window.PokeSearchRankExplorer?.getOverallRows?.(window.POKESEARCH_PVPOKE_OVERALL,"ul")||[];
     const actual=rows.find(x=>x.name==="Teddiursa");
     const expected=actual?"#"+actual.rank:"—";
-    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected,
-     title,species,badge,expected};
+    const buttons=[...document.querySelectorAll("#psRankExplorer .psrToolbar>button")];
+    const filters=document.querySelector("#psRankExplorer .psrFilterGroup");
+    const aligned=buttons.length===2&&filters&&
+     Math.abs(buttons[0].getBoundingClientRect().top-filters.getBoundingClientRect().top)<2;
+    const noExtraExports=!document.querySelector("#psRankExplorer .psrActions");
+    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&
+     badge===expected&&aligned&&noExtraExports,title,species,badge,expected,aligned,noExtraExports};
    });
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
     sz.name+" "+JSON.stringify(overall270));

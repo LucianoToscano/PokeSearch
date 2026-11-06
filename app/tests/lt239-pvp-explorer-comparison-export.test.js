@@ -65,8 +65,8 @@ const script=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 new vm.Script(script);
 new vm.Script(get("pvp_rank_explorer.js"));
 for(const token of ['data-ps-filter','data-ps-row','data-ps-act="selected"',
- 'data-ps-act="compare"','data-ps-act="copy"','data-ps-act="share"',
- 'data-ps-act="csv"','window.resizeEvolutionPanel()',
+ 'data-ps-act="compare"','psrFilterGroup','psrToolbar',
+ 'psrLeagueChoices','window.resizeEvolutionPanel()',
  'view.addEventListener("keydown"','role="status"','aria-pressed=']){
  assert.ok(get("pvp_rank_explorer.js").includes(token),"missing explorer UI/accessibility "+token);
 }
@@ -107,7 +107,9 @@ try{
  assert.ok(explorerEl.innerHTML.includes('data-ps-owned="true"'),"owned row visible and marked");
  assert.ok(explorerEl.innerHTML.includes('value="10"'),"filter UI exists");
  assert.ok(explorerEl.innerHTML.includes('data-ps-act="compare"'),"compare action present");
- assert.ok(explorerEl.innerHTML.includes('data-ps-act="csv"'),"CSV action present");
+ assert.ok(!explorerEl.innerHTML.includes('data-ps-act="csv"'),"CSV export button removed as requested");
+ assert.ok(!explorerEl.innerHTML.includes('data-ps-act="copy"'),"Copy export button removed");
+ assert.ok(!explorerEl.innerHTML.includes('data-ps-act="share"'),"Share export button removed");
  assert.equal(typeof callbacks.click,"function");
  assert.equal(typeof callbacks.change,"function");
  // Native actions are only invoked by explicit click handlers.
