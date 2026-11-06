@@ -223,7 +223,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const badge=eBox&&cardBox&&nBox&&fBox?{
      src:evol.getAttribute("src"),tag:evol.tagName,span:eBox.width,
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
-     clearOfFlag:eBox.left>=fBox.right+0.5,
+     clearOfFlag:!((eBox.left<fBox.right+1)&&(eBox.right>fBox.left-1)&&
+      (eBox.top<fBox.bottom+1)&&(eBox.bottom>fBox.top-1)),
      belowRank:eBox.top>=nBox.bottom+2,
      flagCenterDiff:Math.abs((fBox.left+fBox.right-cardBox.left-cardBox.right)/2),
      flagSrc:flag.getAttribute("src")
