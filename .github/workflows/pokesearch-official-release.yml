@@ -265,14 +265,19 @@ jobs:
               "type-steel-lt266.png": "9317b660180461e71f730c5c5a196103a9e8f422ff0e5839ff933d96a8466fd8",
               "type-fairy-lt266.png": "ebeb5bfb874550bc52e9b5db5a3d65e3d3083f2af71f55bf991ea35edf2f50e1"
             }
+            # LT266 originals are still SHA256-pinned in the source archive.
+            # They are not used by the current UI and MUST NOT be shipped twice.
+            # This preserves a real rollback artifact without increasing APK size.
             for filename,digest in type_icons.items():
-              key="assets/ui-icons/"+filename
-              assert key in names, "Missing LT266 Pokemon type icon "+key
-              image=apk.read(key)
-              assert image.startswith(b"\x89PNG\r\n\x1a\n"), "Invalid LT266 PNG "+key
-              assert image[16:24]==bytes.fromhex("0000040000000400"), "Wrong LT266 PNG dimensions "+key
-              assert image[25]==6, "LT266 icon must have RGBA alpha "+key
-              assert hashlib.sha256(image).hexdigest()==digest, "Changed LT266 user type icon "+key
+              archived="docs/legacy-assets/lt266-types/"+filename
+              assert os.path.isfile(archived), "Missing archived LT266 type "+archived
+              with open(archived,"rb") as source:
+                image=source.read()
+              assert image.startswith(bytes([137,80,78,71,13,10,26,10])), "Invalid LT266 PNG "+archived
+              assert image[16:24]==bytes.fromhex("0000040000000400"), "Wrong LT266 PNG dimensions "+archived
+              assert image[25]==6, "LT266 icon must have RGBA alpha "+archived
+              assert hashlib.sha256(image).hexdigest()==digest, "Changed archived LT266 user type icon "+archived
+              assert "assets/ui-icons/"+filename not in names, "Legacy LT266 image duplicated inside APK"
           print("Official Sea/Halloween sprites (12) + GL/UL mode emblems (2) + card badges (15) checked")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt

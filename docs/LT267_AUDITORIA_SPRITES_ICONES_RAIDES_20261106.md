@@ -33,3 +33,8 @@ Branch de QA. Não afirmar merge/release física até confirmação de CI, links
 - PR #248: https://github.com/LucianoToscano/PokeSearch/pull/248, merge `c9fd24498da2ecb82b7092cb2fc7f39568b64f47`, head QA `09dce8e30626682ec41c8c72722fbb01357c72e2`.
 - Oito gates verdes no head final: regressões Node completas e Node QA, core, Java, visual WebView P/M/G, fonte PvE, OTA e preflight. Falhas preliminares de sintaxe no mapa de tipo e dependência de função no teste isolado RG foram corrigidas; o RG passou a pseudo-elemento CSS compacto para evitar recorte real de nome Mega no teste visual. Todas as verificações históricas mantidas.
 - Release LT267 solicitada, **não afirmar APK/assinatura/publicação até retorno do workflow e digest real**. Teste físico no Samsung pendente.
+
+## Limite de APK e preservação de rollback
+- A tentativa oficial [#42238275812](https://github.com/LucianoToscano/PokeSearch/actions/runs/42238275812) não publicou release: a validação final retornou código 1 após verificar todos os PNGs e antes de gerar o artefato. O limite existente `test "$(stat -c %s "$APK")" -lt 35000000` é o bloqueio mais provável, pois 18 PNGs antigos de cerca de 5,7 MB ainda ocupavam o APK.
+- Correção conservadora: mover os 18 PNGs antigos LT266 sem modificar conteúdo para `docs/legacy-assets/lt266-types/` e deixar somente os atuais LT267 no APK. SHA-256, 1024×1024 e canal alfa dos originais continuam verificados; novo gate garante que não aparecem duplicados no APK. O limite de 35 MB **não muda**.
+- O rollback oficial LT266 contém os recursos LT266. Os novos PNGs LT267 permanecem hash-pinned no APK novo. Antes da conclusão da nova CI/publicação, não afirmar que o tamanho passou nem que APK foi lançada.
