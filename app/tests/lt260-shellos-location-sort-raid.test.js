@@ -59,14 +59,14 @@ const paired=all.map(name=>{
 });
 assert.equal(paired.length,8);
 const java=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
-const beginning=java.indexOf("private boolean restoreDespawnWhenLocationCleared()");
+const beginning=java.indexOf("private boolean persistLocationToggleSort(boolean enabled,boolean repairInvalidDistance)");
 const ending=java.indexOf("@JavascriptInterface public void setLocation(",beginning);
 assert.ok(beginning>=0&&ending>beginning);
 const policyBody=java.slice(beginning,ending);
 for(const contract of [
  'new JSONObject(extraFiltersJson)',
  '"Distance (nearest)"',
- 'filters.put("sortBy","Despawn (longest)")',
+ 'filters.put("sortBy",wanted)',
  'filters.optJSONArray("clearExtraKeys")',
  'extraFiltersJson=filters.toString()',
  'putString("extraFiltersJson",extraFiltersJson)'
@@ -74,9 +74,12 @@ for(const contract of [
 assert.ok(!policyBody.includes('filters=new JSONObject()'),
  "must preserve other filter fields instead of replacing the JSON object");
 const setter=java.slice(ending,ending+2500);
-assert.ok(setter.includes('final boolean restoredSort=!enabled&&restoreDespawnWhenLocationCleared();'),
- "remove action must fix the order immediately, including idempotent remove");
-assert.ok(setter.indexOf('restoreDespawnWhenLocationCleared()')<
+assert.ok(setter.includes('final boolean toggled=locationEnabled!=enabled;'));
+assert.ok(setter.includes('persistLocationToggleSort(enabled,false)'),
+ "location transition must apply the automatic default");
+assert.ok(setter.includes('(!enabled&&persistLocationToggleSort(false,true))'),
+ "repeated remove only repairs stale invalid Distance, not a manual sort");
+assert.ok(setter.indexOf('persistLocationToggleSort(enabled,false)')<
  setter.indexOf('if(locationEnabled==enabled&&'),"correct before early return");
 const dock=read("app/src/main/assets/dock.html");
 assert.ok(dock.includes('if(!locationEnabled){\n  if(searchSettings.sortBy==="Distance (nearest)")'));

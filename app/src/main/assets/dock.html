@@ -5695,7 +5695,7 @@ function renderExtraFilters(panel,make){
    button.onclick=()=>{
     // Do not let an unavailable geo sort block unrelated filter choices.
     if(key==="sortBy"&&value==="Distance (nearest)"&&
-       !(locationEnabled&&locationVerified)){
+       !(locationEnabled&&locationCoords.trim())){
      modeDraft.sortBy="Despawn (longest)";
      if(Native.filterDistanceNotice)Native.filterDistanceNotice();
      renderFiltersChoices();return;
@@ -7509,6 +7509,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
   {...resultDisplayOptions,despawn:!!timers,iv:!!textVisible};
  // Legacy listLimit is ignored by RESULT window: it capped results at 8 rows.
  if(!resultWindow)document.documentElement.style.setProperty("--list-limit",Math.max(110,Number(listLimit)||330)+"px");
+ const previouslyEnabled=locationEnabled;
  locationEnabled=!!locEnabled;locationCoords=String(locCoords||"");locationRadius=Number(locRadius)||0;
  locationVerified=!!verifiedLocation&&locationEnabled;
  if(config&&typeof config==="object"){
@@ -7520,8 +7521,12 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
   }
   if(!searchSettings.sortBy)searchSettings.sortBy="Despawn (longest)";
  }
- // LT260: reconcile the native update even when the filters popup retained
- // an unsaved Distance draft while the location editor was open.
+ // LT261: the native side applies Distance on OFF→ON, Despawn on ON→OFF.
+ // Update the open filters draft only on an actual toggle; any subsequent
+ // manual CP/IV/Level/Despawn choice is respected until another toggle.
+ if(previouslyEnabled!==locationEnabled&&modeDraft)
+  modeDraft.sortBy=searchSettings.sortBy;
+ // LT260 fallback: an invalid Distance saved without location cannot survive.
  if(!locationEnabled){
   if(searchSettings.sortBy==="Distance (nearest)")
    searchSettings.sortBy="Despawn (longest)";
@@ -8429,7 +8434,7 @@ function renderFiltersChoices(){
  apply.onclick=()=>{
   // DISTANCE is defined by the provider only with center and radius; do
   // not silently accept a sort that the site cannot reproduce.
-  if(modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationVerified)){
+  if(modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationCoords.trim())){
    // Stale Distance sort is not a reason to reject new Sexo/Tamanho/PC.
    // Preserve all other draft filters, reset only this unavailable sort.
    modeDraft.sortBy="Despawn (longest)";

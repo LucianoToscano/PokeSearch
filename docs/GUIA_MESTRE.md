@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT261 — Ordenação automática no liga/desliga da Localização (06/11/2026 · QA)
+
+- Regra: **OFF→ON** da localização validada define `Sort=Distance (nearest)`; **ON→OFF** define `Sort=Despawn (longest)`. A ordenação automática vale **apenas na troca de estado**; qualquer escolha manual posterior (CP, IV, nível, Despawn ou Distância) permanece até uma nova troca OFF↔ON. Alterar apenas raio/coordenadas, Reaplicar igual, Limpar repetido e reiniciar não apagam preferência manual. Coordenadas inválidas não alteram configurações.
+- Código: `OverlayService.Bridge.persistLocationToggleSort` atualiza apenas `sortBy` e seu marcador `clearExtraKeys`, preservando todos os demais filtros; `setLocation` detecta a transição, persiste e dispara busca. `dock.html` sincroniza a escolha automática no menu na mudança real e libera Distância desde que coordenadas válidas estejam habilitadas, sem depender da confirmação assíncrona do servidor.
+- P1/P2 compartilham a implementação nativa e mantêm preferências/estado das buscas próprios. Regressões: `lt261-location-auto-sort-toggle.test.js` e `lt260-shellos-location-sort-raid.test.js`. Auditoria: [LT261_LOCALIZACAO_SORT_AUTOMATICO_20261106.md](LT261_LOCALIZACAO_SORT_AUTOMATICO_20261106.md).
+- **Status:** alterações em branch QA, ainda não mescladas nem distribuídas. LT260 · 0.02.60/54464 permanece última publicação comprovada. Exigir CI, merge, APK oficial assinado, release/latest e confirmação física da instalação antes de anunciá-la no aparelho.
+
 ## LT260 — Sprite Shellos e Distância → Despawn (06/11/2026 · RELEASE OFICIAL)
 
 - Evidência do Samsung: sprite de Shellos East Sea #422 ausente na lista/pequena no card. Pedido: ao apagar o centro de Localização, recuperar **Sort = Despawn (longest)** sem apagar filtros de Pokémon/IV, PC, nível, tamanho, sexo e clima. Botão 🏆 Raides também não aparecia em card anterior.

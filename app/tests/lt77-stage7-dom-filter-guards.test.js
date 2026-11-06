@@ -5,8 +5,12 @@ const dock=fs.readFileSync(path.join(root,"assets/dock.html"),"utf8");
 const service=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
 const probe=fs.readFileSync(path.join(root,"assets/probe.js"),"utf8");
 let pass=0;function check(name,fn){fn();pass++;console.log("PASS LT77 Stage7 "+name);}
-check("Distance sort requires verified radius in UI",()=>{
- assert.ok(dock.includes('modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationVerified)'));
+check("Distance sort requires a valid active location and does not wait for asynchronous site verification",()=>{
+ assert.ok(dock.includes('modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationCoords.trim())'));
+ assert.ok(service.includes('if(enabled&&(valid.isEmpty()||radius<0||radius>1000))'),
+  "Native must still reject invalid coordinates and radii");
+ // Location badge stays pending until verified, while Sort may default to Distance.
+ assert.ok(dock.includes("const geoConfirmed=locationEnabled&&locationVerified;"));
  // LT109: stale Distance sort MUST NOT block Tamanho/Sexo/PC. The
  // explicit Distance option shows contextual location feedback instead.
  assert.ok(dock.includes('if(Native.filterDistanceNotice)Native.filterDistanceNotice();'));
