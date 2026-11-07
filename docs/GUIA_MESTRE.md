@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT299 — AJUSTE EXATO DOS ÍCONES DE TIPOS NOS CARDS (07/11/2026)
+
+- **Evidência física do usuário:** prints no Samsung dos cartões **Slowpoke** (Água/Psíquico) e **Chikorita** (Planta) após LT298. Os ícones ficaram visualmente grandes e o ícone de tipo único era maior que cada ícone individual do conjunto de dois. Pedido: igualar o tamanho, centralizar o tipo único, impor separação de **2 px** entre dois tipos e diminuir a caixa em **1 px de cada lado**.
+- **Correção CSS localizada:** `app/src/main/assets/detail.html` fixa ambos os cenários em **16 × 16 CSS px**, com `flex:0 0 16px` sem crescimento/encolhimento, incluindo `:only-child`. `.psTypeIconSet` usa `gap:2px` e `justify-content:center`; coluna de tipos reduzida de `minmax(36px,42px)` para `minmax(34px,40px)`. A caixa padrão é **40px**, redução total de 2px (1px por lado), e mantém altura 23px. Os componentes `IV/PC/Nv.`, animações, efetividade defensiva, botões, locais e resultados não foram alterados. O CSS é compartilhado por P1/P2.
+- **Teste visual:** `app/tests/lt253-visual-screenshots.cjs` mede no navegador real a caixa de 40px, cada sprite de tipo 16×16px, separação 2px, centros alinhados e dimensões P/M/G, usando um tipo e dois tipos. O teste físico Samsung ainda é independente da validação automatizada.
+- **Fluxo:** branch `fix/lt299-uniform-type-icons-2px-gap-20261107`; adicionar a URL/SHA da PR, gates CI e evidência da publicação LT299 somente depois de verificados. Última base publicada antes desta correção: **LT298 0.02.98 (54502)**.
+
+
 ## LT298 — DETALHAMENTO DOS ATAQUES, MT NORMAL/ELITE E ATRIBUTOS PvP/PvE (07/11/2026)
 
 - **Pedido autorizado:** aplicar no PokeSearch a referência visual do PokeGenie para o clique em Ataques, com nomes de golpes somente na cor de seu tipo, ícones Ágil/Carregado normal ou Elite, detalhes `Poder • Energia/Custo` para Liga GO e `Dmg • CD • DPS • Energia` para raides; fazer merge, registrar aqui e publicar no atualizador oficial do aplicativo.
