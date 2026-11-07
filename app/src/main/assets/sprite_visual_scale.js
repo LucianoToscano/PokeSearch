@@ -118,7 +118,7 @@ function applyResultTile(img,verifiedReference){
   if(!measured)return;
   // Base/reference artwork can differ from the site: keep conservative cap.
   // Full zoom/centering is allowed exclusively for pinned exact costume art.
-  const shift=cardSize*(exactGo?.34:.12);
+  const shift=cardSize*(exactGo?0.34:0.12);
   const limited={...measured,zoom:clamp(measured.zoom,.80,exactGo?4.25:1.8),
    x:clamp(measured.x,-shift,shift),
    y:clamp(measured.y,-shift,shift)};
