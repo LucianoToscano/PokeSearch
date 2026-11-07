@@ -19,3 +19,11 @@ Nas capturas físicas Samsung, Medicham #308 com A/D/S 5/15/14 mostra seção `A
 ## Fontes externas do tipo do golpe
 - Psycho Cut: https://db.pokemongohub.net/move/226 (Psíquico).
 - Dynamic Punch: https://db.pokemongohub.net/move/246 (Lutador).
+
+## Publicação confirmada — 07/11/2026
+- [PR #275](https://github.com/LucianoToscano/PokeSearch/pull/275) merge squash `02b1d7b9e2440958fc1b31853ff38b6695c6021d`.
+- CI completo de Node, PvP, Java Android, interface visual P/M/G, OTA e QA de compilação passou no head do PR.
+- [Workflow oficial #42334977146](https://github.com/LucianoToscano/PokeSearch/actions/runs/42334977146): preflight=success, publish=success, verificação de assinatura permanente/versionCode/SHA-256 aprovada.
+- [Release estável LT282](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.82-54486): 07/11/2026 às 03:43:05 UTC, `v0.02.82-54486`.
+- APK `PokeSearch-v0.02.82-LT.apk` com **33.815.704 bytes**; SHA-256 **`0f093c7cfc12b5cf8870d4b6cd2eca012efaf7bcadd6ee29d02ce039ec61c185`**; asset state `uploaded`.
+- **Pendente exclusivamente após release:** aceitar em dispositivo Samsung P1/P2 a cor individual de ataques e rolagem completa da lista; instalação requer confirmação do Android.
