@@ -21,3 +21,9 @@ Em `app/src/main/assets/detail.html`, `window.showEvolutionDetails` aplicava `en
 
 ## Samsung pendente
 Testar em P1/P2 e GL/UL/ML com Cyndaquil e Charmander. A ordem correta no painel deverá ser observável sem alterar os valores de Rank Classe, Rank Geral, PC, nível ou a escolha do melhor candidato no ícone compacto.
+
+## Publicação e rastreabilidade final
+- [PR #285](https://github.com/LucianoToscano/PokeSearch/pull/285) mesclada por squash `926675128b7ce4a775bf8d693770c3b32b66ef38`; head final testado `6e96146d2b6da1be3c0ab3d5b517238224ec6d8e`. Oito gates aplicáveis `success`, incluindo teste novo da ordem das três etapas, correções LT235/LT245, Android, Java, OTA, visual e beta privado. Build genérico `skipped` por política.
+- [Workflow oficial #42351220398](https://github.com/LucianoToscano/PokeSearch/actions/runs/42351220398): `completed/success`; `preflight/success`, `publish/success`, `Build signed protected release/success`, `Validate APK and signer/success`, `Verify public release and hash/success`.
+- [Release pública LT291](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.91-54495) estável: `v0.02.91-54495`, publicada em 07/11/2026 07:29:28 UTC, APK `PokeSearch-v0.02.91-LT.apk`, 33.936.674 bytes, SHA-256 `9003fcaadbf55d0134c18ea842b17ab32fd5c5bd736d89a434f88b23e8957ef9`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.91-54495/PokeSearch-v0.02.91-LT.apk). Solicitação SHA `a401f3d56a7b7b9dac098f9c03ffb461b9fe7169`.
+- **Homologação física Samsung ainda pendente**: a sequência visível e os valores associados precisam ser confirmados após instalar LT291, nas duas Pokébolas e em GL/UL/ML. A aprovação CI não é observação de funcionamento no aparelho.
