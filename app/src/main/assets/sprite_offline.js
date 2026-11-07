@@ -2391,6 +2391,33 @@
   // Preserve provider URLs, data images and unknown special forms untouched.
   return {src:image,original:image,offline:false};
  }
- return Object.freeze({resolve,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
+ /* LT296: only rank family identities proven by the independent Dex table
+  * may receive bundled species sprites. Never replace an unknown costume,
+  * colour, regional or Shadow variant with a misleading base sprite. */
+ function rankSprite(rawName){
+  let name=String(rawName||"").trim(),form="";
+  if(!name||name.length>90)return "";
+  const megaPrefix=/^Mega\s+(.+?)(?:\s+([XY]))?$/i.exec(name);
+  const megaSuffix=/^(.+?)\s+\(Mega(?:\s+([XY]))?\)$/i.exec(name);
+  if(megaPrefix||megaSuffix){
+   const mega=megaPrefix||megaSuffix;
+   name=mega[1];form="Mega"+(mega[2]||"");
+  }else{
+   const extra=/^(.+?)\s+\(([^)]+)\)$/.exec(name);
+   if(extra){
+    if(!/^(?:Sandy|Trash|Plant|East Sea|West Sea|Alolan|Galarian|Hisuian)$/i.test(extra[2]))
+     return "";
+    name=extra[1];form=extra[2];
+   }
+  }
+  const identity=nameKey(name);
+  const ids=Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===identity);
+  if(ids.length!==1)return "";
+  const art=resolve({number:Number(ids[0]),name,form,shiny:false});
+  // Unknown variants cannot silently inherit a base Pokemon illustration.
+  return art?.src&&/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(art.src)?
+   art.src:"";
+ }
+ return Object.freeze({resolve,rankSprite,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
   verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm,exactWestSeaForm});
 });
