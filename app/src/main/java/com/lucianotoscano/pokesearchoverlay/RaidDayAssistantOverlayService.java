@@ -1277,7 +1277,9 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "Vamos conferir os passes de hoje?",
                 "As etapas da véspera não serão marcadas como concluídas.");
             addTwo("Ir ao evento",()->navigateEdu("E08","DAY_CHANGED_TO_EVENT"),
-                "Ver ajuda",()->{eduHelpOpen=true;updateStep();});
+                "Agora não",()->{
+                    paused=true;persist("PAUSED");updateStep();
+                });
             return;
         }
         String warning=currentPhaseNote(step);
