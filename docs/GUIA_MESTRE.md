@@ -4,7 +4,7 @@
 
 - **Origem:** captura real Samsung pós-LT280 (Wurmple #265): o usuário pediu remover o fundo/borda dos golpes e substituir `/` por `|`.
 - **Implementação candidata:** `pokemon_card_presentation.js` mantém 18 tipos por golpe verificado, nomes PT-BR e marcação legado/Elite; o separador visual vira `|`. `detail.html` remove apenas padding, fundo e borda dos spans dos golpes, sem alterar os outros cartões. Fallback de renderização também usa `|`.
-- **Versão planejada:** LT281 `0.02.81` / `54485`, atualização assinada pelo fluxo oficial somente após merge e CI. **Não anunciar APK publicado antes da conferência da release, workflow, assinatura e hash.**
+- **Publicação oficial confirmada:** [PR #274](https://github.com/LucianoToscano/PokeSearch/pull/274) mesclada via squash `5176475bbfb2007555fe5c29f25acbbe7b3a5e05`; [workflow #42333232466](https://github.com/LucianoToscano/PokeSearch/actions/runs/42333232466) com preflight e publish `success`. [Release LT281](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.81-54485) estável (`0.02.81`, versionCode `54485`) publicada em 07/11/2026 03:19:40 UTC. APK `PokeSearch-v0.02.81-LT.apk`: 33.814.976 bytes, SHA-256 `b3ece2180d2795cf8c78d9235213f3f1517f47e9dc76c1b47024304fe5d3d32c`, asset `uploaded`, certificado permanente e APK validados pelo workflow. Teste físico LT281 Samsung P1/P2 ainda pendente.
 - **Preservar:** sprites, formas Burmy/Wormadam, ranks GL/UL/ML, Rank Geral/Raides, cinco bandeiras, duas Pokébolas, favoritos, filtros, localização e OTA.
 - **Aceitação pendente:** verificar texto sem chips e separador vertical em Samsung P1/P2, incluindo tipos verificados, sem tipo confirmado e golpe legado.
 - **Auditoria:** [LT281](LT281_GOLPES_TEXTO_SEM_FUNDO_20261107.md).
