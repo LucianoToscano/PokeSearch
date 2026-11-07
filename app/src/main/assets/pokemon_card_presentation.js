@@ -81,7 +81,7 @@
     (color?' data-move-type="'+type+'" style="--ps-move-type:'+color+'"':'')+
     (marked?' title="Golpe especial: MT de Elite ou legado"':'')+'>'+
     esc(localized)+(marked?'<sup class="pkLegacy">*</sup>':"")+'</span>';
-  }).join(" <span class=\"moveSlash\">/</span> ");
+  }).join(" <span class=\"moveSlash\">|</span> ");
  }
  let locationCountryNames=null;
  function locationCountryFlag(location){
