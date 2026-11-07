@@ -45,7 +45,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 /**
  * A dedicated, opt-in MANUAL helper for the "Dia de Reides / Bug dos Passes"
  * tutorial in the video supplied by the user. It does not spoof locations,
@@ -82,6 +83,9 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean demoToday=false,eduWantsReal=false,eduSettingsOpen=false;
     private boolean eduHelpOpen=false,eduCaptureQuestion=false,eduMovePanel=false,eduRecordingExtraRaid=false;
     private String eduNote="";
+    // Subperguntas por etapa: nunca concluir só por chegada, espera ou OCR.
+    private String eduDialogueState="";
+    private boolean eduIntroAccepted=false;
     private LinearLayout eduWelcome,eduSettings,eduActions,eduMiniActions,eduMainCard;
     private TextView eduHeader,eduBadge,eduSpeech,eduSubline,eduSettingsClose;
     private TextView eduPrepQuestion,eduPrepCaption;
@@ -279,6 +283,40 @@ public final class RaidDayAssistantOverlayService extends Service {
             repeatedCycles=Math.max(0,Math.min(100,item.cycleCount));
             paused=item.paused;finished=item.finished;active=item.active;
         }
+        // Se o jogo fechar entre chegar à região e carregar o mapa,
+        // retomar a mesma pergunta, sem pular a confirmação humana.
+        eduDialogueState="";
+        String identity=sessionKey+":"+plan.step(index).id;
+        if(active&&!finished&&identity.equals(prefs.getString("edu_dialogue_identity","")))
+            eduDialogueState=prefs.getString("edu_dialogue_state","");
+    }
+    private void setEduDialogueState(String state){
+        eduDialogueState=state==null?"":state;
+        if(training||!active||prefs==null)return;
+        prefs.edit().putString("edu_dialogue_state",eduDialogueState)
+            .putString("edu_dialogue_identity",
+                sessionKey+":"+plan.step(index).id).apply();
+    }
+    private String eduEventWhen(){
+        LocalDate date=training&&demoToday?
+            RaidDayEventClock.todayBrasilia(eventClock):preparation.eventDate();
+        if(date==null)return "data ainda não informada";
+        DateTimeFormatter dateOnly=DateTimeFormatter.ofPattern("dd/MM/yyyy",
+            Locale.forLanguageTag("pt-BR"));
+        long begin=RaidDaySchedule.start(this);
+        long end=RaidDaySchedule.finish(this);
+        if(!training&&RaidDaySchedule.valid(begin,end)){
+            java.time.ZonedDateTime start=Instant.ofEpochMilli(begin)
+                .atZone(RaidDayEventClock.BRASILIA);
+            if(start.toLocalDate().equals(date)){
+                return start.format(DateTimeFormatter.ofPattern(
+                    "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")))+
+                    " (horário informado por você, não verificado)";
+            }
+        }
+        return date.format(dateOnly)+(training?
+            " (evento fictício, sem horário definido)":
+            " (horário não informado)");
     }
     private void appendEvent(String type){
         appendEvent(type,plan.step(index).id);
@@ -299,10 +337,11 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void beginRealSession(){
         if(active||training||!preparation.isComplete()||!riskAccepted)return;
-        if(!RaidDayEventClock.todayBrasilia(eventClock)
-                .isEqual(preparation.eventDate().minusDays(1))){
-            eduNote="Para iniciar o roteiro real pela véspera, a data em Brasília "+
-                "precisa ser D−1. Use Simular hoje para aprender sem executar.";
+        LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
+        LocalDate date=preparation.eventDate();
+        if(date==null||(!today.equals(date.minusDays(1))&&!today.equals(date))){
+            eduNote="O roteiro real só começa na véspera (D−1) "+
+                "ou no próprio dia do evento (D). Use Simular hoje para treinar.";
             updateStep();
             return;
         }
@@ -317,14 +356,18 @@ public final class RaidDayAssistantOverlayService extends Service {
             prefs.edit().putInt("sessionGeneration",generation).apply();
             sessionKey=eventKey+"#"+generation;
         }
-        index=0;repeatedCycles=0;paused=false;finished=false;active=true;
-        appendEvent("STARTED");
+        index=today.equals(date)?plan.indexOf("E08"):0;
+        if(index<0)index=0;
+        repeatedCycles=0;paused=false;finished=false;active=true;
+        setEduDialogueState("");
+        appendEvent(today.equals(date)?"STARTED_DAY_D":"STARTED");
         reactAvatar(RaidDayAvatarFrames.WAVE);
         updateStep();
     }
     private void beginTraining(){
         if(!demoToday&&(!riskAccepted||!preparation.isComplete()))return;
         training=true;active=false;index=0;repeatedCycles=0;
+        eduDialogueState="";
         paused=false;finished=false;endPending=false;
         eduCaptureQuestion=false;eduRecordingExtraRaid=false;
         eduHelpOpen=false;eduSettingsOpen=false;
@@ -983,6 +1026,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduNote=currentPhaseNote(current);updateStep();return;
         }
         String from=current.id;
+        setEduDialogueState("");
         if(index<plan.size()-1)index++;else finished=true;
         eduHelpOpen=false;eduNote="";eduCaptureQuestion=false;
         eduRecordingExtraRaid=false;
@@ -995,6 +1039,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         int next=plan.indexOf(destination);
         if(next<0)return;
         String from=plan.step(index).id;
+        setEduDialogueState("");
         if("CYCLE_REPEATED".equals(type))repeatedCycles++;
         index=next;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
         eduRecordingExtraRaid=false;
@@ -1031,10 +1076,25 @@ public final class RaidDayAssistantOverlayService extends Service {
         advanceEdu("STEP_CONFIRMED");
     }
     private void showEduWelcome(){
-        setTalk("Oi! Eu sou o Edu. Quer aprender o roteiro como se o evento fosse HOJE?",
-            "Simulação fictícia, sem passes extras. O método é relato da comunidade e pode violar as regras do jogo.");
-        addTwo("▶ Simular hoje",()->startDemoToday(),
-               "Evento real",()->{eduWantsReal=true;eduNote="";updateStep();});
+        if(!eduIntroAccepted){
+            setTalk("Olá! Meu nome é Edu. Serei seu treinador hoje! "+
+                "Vou te ensinar, passo a passo, o tutorial comunitário "+
+                "“Bug dos Passes”. Está pronto?",
+                eduNote.isEmpty()?"Uma resposta por vez. Nada será feito no jogo.":eduNote);
+            addTwo("Sim, vamos lá",()->{
+                eduIntroAccepted=true;eduNote="";updateStep();
+            },"Agora não",()->{
+                eduNote="Tudo bem! Quando quiser começar, toque em Sim.";
+                updateStep();
+            });
+            return;
+        }
+        setTalk("Ótimo! Quer simular um evento acontecendo hoje ou "+
+            "acompanhar um evento real?",
+            "A simulação é fictícia e não concede passes. "+
+            "O método comunitário não é garantido e pode violar os termos do jogo.");
+        addTwo("Simular hoje",()->startDemoToday(),
+            "Evento real",()->{eduWantsReal=true;eduNote="";updateStep();});
     }
     private void showEduRisk(){
         setTalk("Edu: antes de começar, um aviso rápido.",
@@ -1048,18 +1108,21 @@ public final class RaidDayAssistantOverlayService extends Service {
         },"Sair",()->{eduWantsReal=false;updateStep();});
     }
     private void showEduReady(){
-        setTalk("Edu: tudo pronto! O roteiro começa pela véspera, no Havaí.",
-            "Dia: "+preparation.displayDate()+
-            " • Confira a hora da preparação no tutorial. "+
-            "Não temos horário oficial verificado.");
         LocalDate day=preparation.eventDate();
-        if(day!=null&&RaidDayEventClock.todayBrasilia(eventClock)
-            .equals(day.minusDays(1))){
-            addTwo("✓ Começar",()->beginRealSession(),"Treinar",()->{
+        LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
+        boolean eve=day!=null&&today.equals(day.minusDays(1));
+        boolean eventDay=day!=null&&today.equals(day);
+        setTalk(eventDay?
+            "Hoje é o dia do evento! Vamos conferir seus passes antes de continuar.":
+            "Tudo pronto! Na véspera, vamos começar conferindo seu Passe Diário.",
+            "Evento: "+eduEventWhen()+" · Brasília. "+
+            "A data e o horário dependem da informação do jogador.");
+        if(eve||eventDay){
+            addTwo("Começar",()->beginRealSession(),"Treinar",()->{
                 demoToday=true;beginTraining();
             });
         }else{
-            addTwo("▶ Simular hoje",()->startDemoToday(),
+            addTwo("Simular hoje",()->startDemoToday(),
                 "Mudar data",()->{
                     preparation.beginEditing();preparation.save(prefs);updateStep();
                 });
