@@ -24,4 +24,10 @@ O usuário mostrou screenshots Samsung em que **o detalhe do Pokémon exibe a im
 - **Samsung físico pendente:** comparar Resultados e Card para Bulbasaur, Squirtle, Raticate, Grimer, Eevee, Charmander, Shellos East/West, Burmy Sandy e Gengar com fantasia; rodar P1/P2 e rede lenta, validar após voltar da tela inicial e bloquear/desbloquear. A aprovação CI não comprova que toda imagem remota foi recebida.
 
 ## Status
-Candidata LT287, base estável LT286 `0.02.86` / versionCode `54490`. Não declarar publicação antes do workflow e asset SHA verificados.
+LT287 publicada e verificada pelo workflow oficial; base anterior estável LT286 `0.02.86` / versionCode `54490`. Homologação física ainda pendente.
+
+## Evidências finais da publicação
+- [PR #281](https://github.com/LucianoToscano/PokeSearch/pull/281) mesclada por squash `39844007d8cfd251c6ec0f47428e73ebd7e05627`; head do QA `26656061f54eac372fce703763b1982ef869a462`, sete gates obrigatórios `success` (Node, regressão, Android, Java, OTA, visual e APK beta). Build genérico em PR ignorado por política.
+- [Workflow permanente #42344635747](https://github.com/LucianoToscano/PokeSearch/actions/runs/42344635747): `completed/success`, `preflight/success`, `publish/success`, com `Build signed protected release`, `Validate APK and signer` e `Verify public release and hash` aprovados.
+- [Release pública estável LT287](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.87-54491): `v0.02.87-54491`, publicada em 07/11/2026 05:57:25 UTC; `PokeSearch-v0.02.87-LT.apk` com 33.822.056 bytes, SHA-256 `f8158ccc58a49fe100b7ffe37daa3fb07acd78d35f0fa347ff47d40128cfa57d`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.87-54491/PokeSearch-v0.02.87-LT.apk). Solicitação no SHA `f9401e8f695e0bfb9cfb27d874428c574ee2661b`.
+- **Teste físico ainda não realizado:** a mudança de fonte de imagens visa reproduzir a exibição dos cards, mas não é prova de que a miniatura já carregou no Samsung; validar P1/P2 e eventuais bloqueios de rede/provedor. O Android ainda exige confirmação da instalação.
