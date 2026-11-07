@@ -6505,7 +6505,11 @@ function attachSpriteFeedback(){
       // The provider URL itself never changes. The resolver guarantees exact
       // form/costume/shiny identity; unverified variants yield no reference.
       let exactReference="";
-      if(img.dataset)img.dataset.psExactGoGeometry="0";
+      let verifiedEvent=false;
+      if(img.dataset){
+       img.dataset.psExactGoGeometry="0";
+       img.dataset.psSourceMeasured="0";
+      }
       try{
        const engine=window.PokeSearchOfflineSprite;
        if(sourceCard?.imageFromSite===true&&engine?.resolve){
@@ -6516,10 +6520,22 @@ function attachSpriteFeedback(){
          const packaged=go&&engine?.bundledGoCostumeSource?.(go);
          if(exactReference&&packaged&&img.dataset)
           img.dataset.psExactGoGeometry="1";
+         // New costumes/forms: attempt exact URL pixel geometry only when
+         // the site has verified THIS encounter image. Regular sprites that
+         // already fit are never blindly enlarged.
+         const eventName=String(sourceCard.form||sourceCard.costume||"");
+         verifiedEvent=Boolean(
+          eventName&&!/^(?:normal|default|none)$/i.test(eventName)||
+          (sourceCard.costume_id!=null&&Number(sourceCard.costume_id)>0)||
+          /(?:\.c[A-Z0-9_]+\.|\.f[A-Z0-9_]+\.|costume|anniversary|event|party)/i.test(String(art.src||""))
+         );
         }
        }
       }catch(_){}
       window.PokeSearchSpriteScale?.applyResultTile?.(img,exactReference);
+      window.PokeSearchSpriteScale?.enhanceProviderTile?.(
+       img,sourceCard?.imageFromSite===true?sourceCard.imageAlphaBounds:null,
+       verifiedEvent);
      }
     }
    }
