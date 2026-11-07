@@ -497,7 +497,7 @@ public class MainActivity extends Activity {
 
         // Pass icon selected by the user: independent raid guide launcher.
         raidAssistantControl=new ImageButton(this);
-        raidAssistantControl.setImageBitmap(RaidAssistantOverlayServiceIcon.load(this));
+        raidAssistantControl.setImageBitmap(RaidAssistantOverlayService.loadArtwork(this));
         raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
         raidAssistantControl.setContentDescription("Ativar Assistente de Reides");
