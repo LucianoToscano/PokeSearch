@@ -71,7 +71,7 @@ assert.match(manifest,/RaidDayScreenCaptureService/);
 assert.match(manifest,/android:foregroundServiceType="mediaProjection"/);
 assert.match(workflows,/pull_request:/);
 assert.match(workflows,/github\.event\.pull_request\.number == 300/);
-assert.match(workflows,/POKE_TEST_VERSION_CODE: '54508'/);
+assert.match(workflows,/POKE_TEST_VERSION_CODE: '54509'/);
 assert.match(workflows,/POKE_TEST_PUBLIC_VERSION: '0\.03\.04'/);
 assert.match(workflows,/actions\/upload-artifact@v4/);
 assert.doesNotMatch(workflows,/gh release create|git push|pulls\/300\/merge/);
