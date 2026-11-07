@@ -79,7 +79,8 @@
           "naoAconteceu": "Sem Passe Diário? Não registre uma reide; avance ao caminho de revisão e evento.",
           "retornoSeguro": "Revisar a confirmação do passe e o horário do evento.",
           "local": "newzealand",
-          "opcional": false
+          "opcional": false,
+          "semPassePara": "E08"
         },
         {
           "id": "E04",
@@ -124,7 +125,8 @@
           "naoAconteceu": "Nenhum passe novo confirmado. A próxima etapa permite encerrar a repetição.",
           "retornoSeguro": "Revisar a mochila e seguir à decisão de ciclo.",
           "local": null,
-          "opcional": false
+          "opcional": false,
+          "semPassePara": "E08"
         },
         {
           "id": "E07",
@@ -172,7 +174,8 @@
           "naoAconteceu": "Se não houver passe ou optar por não fazer a etapa, continue para E10.",
           "retornoSeguro": "Voltar ao contexto da etapa E08, sem contar passe.",
           "local": "kiribati",
-          "opcional": true
+          "opcional": true,
+          "pularPara": "E10"
         },
         {
           "id": "E10",
