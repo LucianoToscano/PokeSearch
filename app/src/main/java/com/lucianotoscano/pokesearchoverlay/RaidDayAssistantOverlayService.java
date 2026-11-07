@@ -768,8 +768,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         addSettingsButton(exit,()->{
             if(training)leaveTraining();
             else if(!active){eduWantsReal=false;eduSettingsOpen=false;updateStep();}
-            else{endPending=true;eduNote="Confirme o encerramento para preservar o histórico.";
-                updateStep();}
+            else{
+                endPending=true;
+                eduSettingsOpen=false;
+                eduNote="Confirme o encerramento para preservar o histórico.";
+                updateStep();
+            }
         });
         eduSettingsClose=button("✓ Voltar à conversa");
         addSettingsButton(eduSettingsClose,()->{
@@ -822,6 +826,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             updateStep();return;
         }
         // O painel e a bolha desaparecem ANTES do diálogo do sistema.
+        eduSettingsOpen=false;
         setVisible(false);
         if(bubble!=null)bubble.setVisibility(View.GONE);
         Intent intent=new Intent(this,RaidDayCaptureConsentActivity.class)
@@ -988,9 +993,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         },"Sair",()->{eduWantsReal=false;updateStep();});
     }
     private void showEduReady(){
-        setTalk("Edu: tudo pronto! O roteiro começa na véspera, pelo Havaí.",
-            "Data informada: "+preparation.displayDate()+
-            " • Horário oficial não verificado");
+        setTalk("Edu: tudo pronto! O roteiro começa pela véspera, no Havaí.",
+            "Dia: "+preparation.displayDate()+
+            " • Confira a hora da preparação no tutorial. "+
+            "Não temos horário oficial verificado.");
         LocalDate day=preparation.eventDate();
         if(day!=null&&RaidDayEventClock.todayBrasilia(eventClock)
             .equals(day.minusDays(1))){
