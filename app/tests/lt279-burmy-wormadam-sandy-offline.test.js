@@ -30,8 +30,9 @@ for(const [dex,name] of [[412,"Burmy"],[413,"Wormadam"]]){
    assert.equal(sprites.resolve({...card,form:form+"_FORM"}).src,local+file);
    assert.equal(sprites.resolve({...card,image:"https://example.test/exact.png",
      imageFromSite:true}).src,local+file,"site lazy image cannot hide confirmed offline art");
-   assert.match(manifest,new RegExp("^"+file.replace(/\\./g,"\\.")+
-     "\\t[a-f0-9]{40}$","m"),file+" verified upstream Git blob");
+   assert.ok(manifest.split("\n").some(line=>line.startsWith(file+"\t")&&
+     /^[a-f0-9]{40}$/.test(line.slice(file.length+1))),
+     file+" verified upstream Git blob");
    assert.ok(builder.includes('"costumes/'+file+'"'),"build packs "+file);
    assert.ok(workflow.includes('"'+file+'"'),"signed APK gate requires "+file);
    assert.ok(spriteCode.includes('"'+file+'"'),"browser knows the local file "+file);
