@@ -21,3 +21,11 @@ Após a LT294, o Charmander no cabeçalho do card continuou visualmente menor do
 - Novo teste `lt295-detail-card-alpha-per-evolution-moves.test.js`: verifica meta 85–90% no cabeçalho de 30dp, canvas/nativo CORS, rejeição de callback repetido, HTML da ligação de cada espécie/liga e execução de lookup distinta para Charmeleon, Charizard e a Mega, sem misturar respostas. Tarefas prévias LT145 atualizadas.
 - Gates obrigatórios: Node QA completo, Java Android, OTA, visual P/M/G e beta privado. Merge e APK assinado apenas depois de aprovados.
 - **Homologação física Samsung pendente:** comparar card Charmander com antes; abrir ícones de Charmander, Charmeleon e Charizard nas ligas GL/UL/ML e verificar nomes/cores/MT na espécie correta, ambas as Pokébolas. Não afirmar correção visual definitiva sem print atualizado.
+
+## Publicação oficial LT295 concluída — verificação
+
+- PR #289 mesclada em `main`, squash `3d952d740cd369fbcbfc7aaa971fb71d15adcb4c`. Oito verificações aplicáveis `success` na revisão `dc9a4ba7ce0c3ba8892f6e45382e7a432cfe802b`.
+- [Workflow oficial #42362673941](https://github.com/LucianoToscano/PokeSearch/actions/runs/42362673941) **completed/success**; `preflight` e `publish` concluídos com sucesso.
+- [Release estável LT295](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.95-54499) publicada em **07/11/2026 10:12:49 UTC**. Versão `0.02.95`, `versionCode 54499`.
+- [APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.95-54499/PokeSearch-v0.02.95-LT.apk): `PokeSearch-v0.02.95-LT.apk`, **33.944.352 bytes**, SHA-256 `43ece5b3b8af779010ea6cf420183474025acc46675fd75b35913fd87e58097c`.
+- **Teste real no Samsung ainda pendente:** confirmar visualmente o tamanho da sprite no card e os ícones de Ataques por espécie/forma nas duas Pokébolas. O print anterior foi feito antes desta atualização, portanto não comprova o resultado novo.
