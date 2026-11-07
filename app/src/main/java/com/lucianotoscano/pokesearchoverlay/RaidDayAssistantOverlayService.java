@@ -420,6 +420,136 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(avatarSprites!=null && avatarMotion)
             handler.post(avatarTicker);
     }
+
+    /** Primeira entrega de preparação inteligente: sem evento remoto verificado. */
+    private void createPreparationUi(){
+        preparationSection=new LinearLayout(this);
+        preparationSection.setOrientation(LinearLayout.VERTICAL);
+        preparationSection.setPadding(dp(5),dp(6),dp(5),dp(5));
+        prepTitle=text("",13,Color.WHITE,true);
+        preparationSection.addView(prepTitle,new LinearLayout.LayoutParams(-1,-2));
+        prepStatus=text("",11,Color.rgb(185,209,229),false);
+        LinearLayout.LayoutParams statusLp=new LinearLayout.LayoutParams(-1,-2);
+        statusLp.topMargin=dp(6);
+        preparationSection.addView(prepStatus,statusLp);
+        preparationChoices=new LinearLayout(this);
+        preparationChoices.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams optionsLp=new LinearLayout.LayoutParams(-1,-2);
+        optionsLp.topMargin=dp(7);
+        preparationSection.addView(preparationChoices,optionsLp);
+
+        LinearLayout buttons=new LinearLayout(this);
+        LinearLayout.LayoutParams rowLp=new LinearLayout.LayoutParams(-1,dp(38));
+        rowLp.topMargin=dp(8);
+        prepBack=button("← Voltar");
+        prepBack.setOnClickListener(v->{
+            preparation.setQuestion(preparation.question()-1);
+            preparation.save(prefs);
+            renderPreparation();
+        });
+        buttons.addView(prepBack,new LinearLayout.LayoutParams(0,-1,1));
+        prepNext=button("Próximo →");
+        LinearLayout.LayoutParams nextLp=new LinearLayout.LayoutParams(0,-1,1);
+        nextLp.leftMargin=dp(6);
+        buttons.addView(prepNext,nextLp);
+        prepNext.setOnClickListener(v->{
+            if(!preparation.currentAnswered()){
+                prepStatus.setText("Selecione uma resposta antes de continuar.");
+                reactAvatar(RaidDayAvatarFrames.QUESTION);
+                return;
+            }
+            if(preparation.question()<RaidDayPreparation.COUNT-1){
+                preparation.setQuestion(preparation.question()+1);
+                preparation.save(prefs);
+                renderPreparation();
+                return;
+            }
+            if(!preparation.allAnswered())return;
+            preparation.markComplete();
+            preparation.save(prefs);
+            String chosenEvent=preparation.eventKey();
+            if(!eventKey.equals(chosenEvent)){
+                eventKey=chosenEvent;
+                prefs.edit().putString("eventKey",eventKey)
+                    .putInt("sessionGeneration",1).apply();
+                sessionKey=eventKey+"#1";
+                restoreJournal();
+            }
+            riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+                prefs.getString("riskAcceptance",""));
+            reactAvatar(RaidDayAvatarFrames.WAVE);
+            updateStep();
+        });
+        preparationSection.addView(buttons,rowLp);
+        panel.addView(preparationSection,new LinearLayout.LayoutParams(-1,-2));
+        renderPreparation();
+    }
+    private void dateButton(LinearLayout row,String label,int days){
+        TextView button=button(label);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(38),1);
+        lp.leftMargin=dp(2);
+        row.addView(button,lp);
+        button.setOnClickListener(v->{
+            preparation.shiftDate(days,eventClock);
+            preparation.save(prefs);
+            renderPreparation();
+        });
+    }
+    private void renderPreparation(){
+        if(preparationChoices==null||prepTitle==null)return;
+        int q=preparation.question();
+        prepTitle.setText("Preparação "+(q+1)+"/"+
+            RaidDayPreparation.COUNT+" · "+RaidDayPreparation.QUESTIONS[q]);
+        preparationChoices.removeAllViews();
+        if(q==0){
+            prepStatus.setText("Data informada manualmente. Não equivale à programação oficial.\n"+
+                "Selecionada: "+preparation.displayDate()+" · horário de Brasília.");
+            LinearLayout dates=new LinearLayout(this);
+            dates.setGravity(Gravity.CENTER_VERTICAL);
+            dateButton(dates,"−7d",-7);
+            dateButton(dates,"−1d",-1);
+            dateButton(dates,"+1d",1);
+            dateButton(dates,"+7d",7);
+            preparationChoices.addView(dates,new LinearLayout.LayoutParams(-1,dp(42)));
+        }else{
+            String selected=preparation.answer(q);
+            prepStatus.setText(q==7?
+                "O acompanhamento visual ainda não foi implementado. "+
+                "Mesmo escolhendo híbrido, esta versão funciona manualmente.":
+                "Informação declarada pelo jogador · selecione uma opção:");
+            for(String option:RaidDayPreparation.OPTIONS[q]){
+                final String value=option;
+                TextView choice=button((option.equals(selected)?"✓ ":"  ")+option);
+                choice.setGravity(Gravity.CENTER_VERTICAL);
+                choice.setContentDescription("Responder: "+option);
+                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(38));
+                p.topMargin=dp(5);
+                preparationChoices.addView(choice,p);
+                if(option.equals(selected))
+                    choice.setTextColor(Color.rgb(118,235,195));
+                choice.setOnClickListener(v->{
+                    preparation.choose(value);
+                    preparation.save(prefs);
+                    renderPreparation();
+                });
+            }
+        }
+        prepBack.setAlpha(q==0?.45f:1f);
+        prepNext.setText(q==RaidDayPreparation.COUNT-1?
+            "Concluir preparação ✓":"Próximo →");
+        if(visible)placePanel();
+    }
+    private void updateEventClock(){
+        if(clockText==null)return;
+        Instant now=eventClock.instant();
+        clockText.setText(RaidDayEventClock.summary(now)+
+            "\n"+(preparation.isComplete()?
+                RaidDayEventClock.describeDay(preparation.eventDate(),now):
+                "Escolha um evento para calcular D-1 e D.")+
+            (RaidDayEventClock.automaticTimeEnabled(this)?"":
+                "\nAtenção: hora automática do Android está desativada."));
+    }
+
     private void createPanel(){
         panel=new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -467,6 +597,13 @@ public final class RaidDayAssistantOverlayService extends Service {
             avatarSizeButtons[i].setTextColor(i==avatarSizeIndex?
                 Color.rgb(118,235,195):Color.WHITE);
 
+        clockText=text("",10,Color.rgb(169,200,221),false);
+        clockText.setLineSpacing(dp(1),1f);
+        LinearLayout.LayoutParams clockLp=new LinearLayout.LayoutParams(-1,-2);
+        clockLp.topMargin=dp(5);
+        panel.addView(clockText,clockLp);
+        createPreparationUi();
+
 
         riskSection=new LinearLayout(this);
         riskSection.setOrientation(LinearLayout.VERTICAL);
@@ -502,6 +639,19 @@ public final class RaidDayAssistantOverlayService extends Service {
             11,Color.rgb(211,222,235),false);
         startInfo.setPadding(0,dp(7),0,dp(7));
         startSection.addView(startInfo);
+        summaryText=text("",11,Color.rgb(210,227,240),false);
+        summaryText.setLineSpacing(dp(2),1f);
+        startSection.addView(summaryText,new LinearLayout.LayoutParams(-1,-2));
+        TextView changeEvent=button("Editar perguntas / evento");
+        LinearLayout.LayoutParams changeLp=new LinearLayout.LayoutParams(-1,dp(36));
+        changeLp.topMargin=dp(5);
+        startSection.addView(changeEvent,changeLp);
+        changeEvent.setOnClickListener(v->{
+            if(active||training)return;
+            preparation.beginEditing();
+            preparation.save(prefs);
+            renderPreparation();updateStep();
+        });
         startButton=button(getString(R.string.raid_day_manual_start));
         startSection.addView(startButton,new LinearLayout.LayoutParams(-1,dp(38)));
         trainButton=button(getString(R.string.raid_day_training_start));
