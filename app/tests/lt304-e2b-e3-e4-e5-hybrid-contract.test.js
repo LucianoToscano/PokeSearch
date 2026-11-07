@@ -29,7 +29,7 @@ assert.match(settings,/Você confirma|você confirma/);
 assert.match(recovery,/lastConfirmed\(/);
 assert.match(recovery,/RAID_WIN/);
 assert.match(recovery,/RAID_CAUGHT/);
-assert.match(service,/RaidDayRecovery\.guide/);
+assert.match(service,/RaidDayRecovery\.lastConfirmed/);
 assert.match(service,/RaidDayRecovery\.stats/);
 for(const val of ["RAID_LOBBY","RAID_BATTLE","RAID_WIN","RAID_LOSS",
    "RAID_LEFT","RAID_REWARDS","RAID_ENCOUNTER","RAID_CAUGHT","RAID_FLED"]){
@@ -56,11 +56,11 @@ assert.match(consent,/createScreenCaptureIntent\(\)/);
 assert.match(consent,/setPositiveButton\("Autorizar leitura"/);
 assert.match(consent,/Nenhuma captura ou texto OCR é/);
 assert.match(consent,/RaidDayScreenCaptureService\.class/);
-assert.match(service,/visualAccept\.setOnClickListener/);
+assert.match(service,/visualAccept\.setOnClickListener/);\nassert.match(service,/setVisible\(false\)/);\nassert.match(service,/bubble\.setVisibility\(View\.GONE\)/);
 assert.match(service,/visualReject\.setOnClickListener/);
 assert.match(service,/VISUAL_REJECTED/);
 assert.match(service,/VISUAL_SUGGESTION_ACCEPTED_/);
-assert.match(service,/A etapa NÃO avançou automaticamente/);
+assert.match(service,/A etapa não avançou automaticamente/);
 assert.match(service,/stopService\(new Intent\(this,RaidDayScreenCaptureService\.class\)\)/);
 assert.match(manifest,/RaidDayReminderReceiver/);
 assert.match(manifest,/RaidDayEventSettingsActivity/);
