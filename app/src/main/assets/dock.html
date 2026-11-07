@@ -6499,7 +6499,22 @@ function attachSpriteFeedback(){
     done=true;stage.classList.remove("failed");stage.classList.add("loaded");
     if(typeof window!=="undefined"){
      window.PokeSearchSpriteScale?.apply?.(img); // legacy detail unchanged
-     if(resultWindow)window.PokeSearchSpriteScale?.applyResultTile?.(img);
+     if(resultWindow){
+      // LT288: use the same precise, already bundled artwork as a geometry
+      // reference when the visible PoGoCoordinates image is canvas-tainted.
+      // The provider URL itself never changes. The resolver guarantees exact
+      // form/costume/shiny identity; unverified variants yield no reference.
+      let exactReference="";
+      try{
+       const engine=window.PokeSearchOfflineSprite;
+       if(sourceCard?.imageFromSite===true&&engine?.resolve){
+        const art=engine.resolve(sourceCard);
+        if(art?.providerExact===true&&/^https:\/\//.test(String(art.src||"")))
+         exactReference=engine?.bundledExactForArt?.(sourceCard,art)||"";
+       }
+      }catch(_){}
+      window.PokeSearchSpriteScale?.applyResultTile?.(img,exactReference);
+     }
     }
    }
    else failed();

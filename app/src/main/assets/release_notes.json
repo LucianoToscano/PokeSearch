@@ -2742,6 +2742,28 @@
           "Homologar fisicamente no Samsung P1/P2 a lista com até dez resultados, alternância card/lista, rede lenta e retomada após tela bloqueada."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt288-uniform-result-sprites-20261107",
+      "minVersionCode": 54492,
+      "date": "07/11/2026",
+      "title": "LT288 — Proporção uniforme das sprites nos Resultados",
+      "sections": {
+        "novidades": [
+          "Corrigida a diferença de proporção das novas sprites vindas dos cards PoGoCoordinates: quando não é possível medir a transparência da imagem remota, a lista usa uma referência local verificada para ajustar o tamanho visual."
+        ],
+        "melhorias": [
+          "O enquadramento das miniaturas respeita os tamanhos P/M/G e não altera a imagem, forma, Shiny ou vestimenta fornecida pelo site.",
+          "O ajuste fica limitado ao espaço de cada miniatura e não interfere no tamanho dos cards detalhados nem no posicionamento das Pokébolas."
+        ],
+        "correcoes": [
+          "Eliminada a diferença entre sprites que permitiam análise de transparência e sprites HTTPS exibidas sem permissão de leitura do canvas.",
+          "Se não existir referência exata, a imagem continua visível com escala conservadora em vez de utilizar um Pokémon errado."
+        ],
+        "emDesenvolvimento": [
+          "Validar visualmente no Samsung P1/P2 a proporção, posição e nitidez em P/M/G, comparando espécies grandes e pequenas, em especial Snorlax, Totodile, Meowth, Torchic, Pikachu e Cyndaquil."
+        ]
+      }
     }
   ]
 }
