@@ -20,7 +20,7 @@ assert.match(scaler,/function enhanceProviderTile\(img,cardBounds,verifiedEvent,
 assert.match(scaler,/if\(verifiedProvider&&nativeSourceGeometry\(img,src,applyMeasured,tryCors\)\)/);
 assert.match(scaler,/const fit=geometryFit\(bounds,cardSize\*RESULT_IMAGE_BOX,SOURCE_MEASURED_MAX_ZOOM\)/);
 assert.match(scaler,/setResultTileFit\(img,fit\);/);
-assert.match(scaler,/root\.PokeSearchSpriteScale=Object\.freeze\(\{.*onNativeBounds\}\)/);
+assert.match(scaler,/root\.PokeSearchSpriteScale=Object\.freeze\(\{.*onNativeBounds,applyDetail,resetDetail,onDetailNativeBounds\}\)/);
 assert.match(java,/class VerifiedSpriteGeometry/);
 for(const host of ["pogocoordinates.com","raw.githubusercontent.com","cdn.jsdelivr.net"])
  assert.ok(java.includes('"'+host+'"'),"native restricts source hosts "+host);
