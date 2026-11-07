@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT278 — NÚMEROS DE RANK 1 PIXEL ACIMA E RELEASE OFICIAL (06/11/2026)
+
+- **Pedido e evidência:** captura real Samsung/Growlithe mostrou números `#50/#1/#12/#694/#747` perto demais das bandeiras. Corrigido o espaçamento **somente** em `#rankLine[data-rank-rail="five"] .psRailButton .psRailNumber` com `transform:translateY(-1px)!important`, para os cinco cards Raides, GL, UL, ML e Rank Geral, nas duas Pokébolas.
+- **Não mudou:** bandeiras centralizadas de 23px com ajuste LT275 `translateY(-4px)`, ícone de evolução e margem, cartões 45px/trilho 47px, ações e dados do ranking, PvE, seleção de ligas, localização, ordem inversa LT277, fundos ou tamanho de qualquer item.
+- **Código:** [PR #271](https://github.com/LucianoToscano/PokeSearch/pull/271), squash merge `bdcba48ce758d62e4febee9c4000f10a724483bf`. Testes `lt274-evolution-rail-layout.test.js` fixam deslocamento de rank `-1px`, ícone `-4px` e dimensões; screenshots reais P/M/G `lt253-visual-screenshots.cjs` medem as transformações dos cinco números e cinco bandeiras por `DOMMatrixReadOnly`. QA Node/PvE/Android Java/OTA/visual aprovado no commit `99ea79a2a38bc9b456184437e029bbd678138d87`.
+- **Publicação oficial:** [LT278 v0.02.78-54482](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.78-54482), em **07/11/2026 01:57:03 UTC** (06/11/2026 22:57:03 Brasília), estável (`draft=false`, `prerelease=false`). APK assinado `PokeSearch-v0.02.78-LT.apk`, **33.615.230 bytes**, SHA-256 `8946101f6d525bd8022b7052e1e617700abf1b1f752d6d23198d6ddd23362e9c`; asset `uploaded`.
+- **CI release:** [workflow #42326470427](https://github.com/LucianoToscano/PokeSearch/actions/runs/42326470427); preflight, compilação protegida, validação da assinatura, publicação e hash realizados com sucesso. Solicitação `a57d6e46bd47c1980a2d7fa2a228dc83eb1c1013`; rollback LT277 `v0.02.77-54481`.
+- **Ainda pendente:** verificar visualmente o deslocamento de 1 px no Samsung físico após instalação; a verificação via Chromium não prova como será cada densidade de tela. Auditoria: [LT278 números 1px](LT278_NUMEROS_RANK_1PX_ACIMA_20261106.md).
+
 ## LT277 — ORDENAÇÃO INVERSA NA API E PT-BR PUBLICADAS (06/11/2026)
 
 - **Feedback e evidência:** no print Samsung o menu Ordenar exibia `Despawn (longest)`, `CP (highest)`, `IV % (highest)`, `Level (highest)`, `Distance (nearest)`. O usuário reportou testes de `POST /search` usando `-CP`, `-IV`, `-LEVEL`, `-DSP`, `-DISTANCE`; `-CP` teve ordenação ascendente observada. `-IV` *não* é crescente rigoroso (Eevee teve IV 48,9%, 26,7%, 62,2%, 86,7%, 44,4%); teto `iv_percent_max` é o filtro confiável. Não extrapolar para `/map/lookup`, que rejeita prefixo `-`. Testes externos são **relatados pelo usuário**, não certificados pelo CI em sessão autenticada da API.
