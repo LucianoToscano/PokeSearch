@@ -369,12 +369,19 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
         actual.sub.includes("Grimer")&&
         actual.sub.includes("Classe IV #"+expected.rank)};
      }
-     window.PokeSearchRankExplorer.close();
-     const reopened=openDetailMetric("iv")===true;
+     // LT299: tapping the same IV cell after changing leagues must CLOSE;
+     // tapping it once more must REOPEN the user's chosen league.
+     const secondTap=openDetailMetric("iv")===true;
+     const collapsed=document.querySelector("#psRankExplorer")?.hidden===true;
+     const thirdTap=openDetailMetric("iv")===true;
+     const reopened=document.querySelector("#psRankExplorer")?.hidden===false;
      const persists=get().title.includes("Liga Mestra");
+     const fourthTap=openDetailMetric("iv")===true;
+     const collapsedAgain=document.querySelector("#psRankExplorer")?.hidden===true;
      return {ok:first.title.includes("Grande Liga")&&
-      selected.ul.ok&&selected.ml.ok&&reopened&&persists,
-      first,selected,reopened,persists};
+      selected.ul.ok&&selected.ml.ok&&secondTap&&collapsed&&thirdTap&&
+      reopened&&persists&&fourthTap&&collapsedAgain,
+      first,selected,secondTap,collapsed,thirdTap,reopened,persists,fourthTap,collapsedAgain};
     }finally{
      window.PokeSearchRankExplorer?.close?.();
      metricCard=saved.card;window.psRankContext=saved.context;
@@ -582,6 +589,39 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    assert.ok(typing297.ok,"LT297 type badge and defensive panel visual contract "+
     sz.name+" "+JSON.stringify(typing297));
    await page.screenshot({path:path.join(output,sz.name+"-lt297-type-panel.png")});
+   // LT299: physical CSS-pixel contract for mono/dual types on P/M/G.
+   const typeGeometry299=await page.evaluate(()=>{
+    const show=(number,name,sourceIndex)=>
+     window.showDetails({number,name,sourceIndex,iv:"0/15/14",cp:600,
+      level:22,moves:"Scratch / Ember",location:"Singapore"},"gl",false);
+    const geometry=()=>{
+     const tile=document.getElementById("psTypeTap");
+     const icons=[...tile.querySelectorAll("img")].map(img=>img.getBoundingClientRect());
+     const box=tile.getBoundingClientRect();
+     return {box:{x:box.x,width:box.width},
+      icons:icons.map(rect=>({x:rect.x,width:rect.width,height:rect.height,
+       center:rect.x+rect.width/2}))};
+    };
+    show("#255","Torchic",2991);
+    const solo=geometry();
+    show("#16","Pidgey",2992);
+    const duo=geometry();
+    const gap=duo.icons.length===2?duo.icons[1].x-
+     (duo.icons[0].x+duo.icons[0].width):null;
+    const center=solo.icons.length===1?
+     Math.abs(solo.icons[0].center-(solo.box.x+solo.box.width/2)):99;
+    const dualCenter=duo.icons.length===2?
+     Math.abs((duo.icons[0].x+duo.icons[1].x+duo.icons[1].width)/2-
+      (duo.box.x+duo.box.width/2)):99;
+    return {ok:solo.box.width===40&&duo.box.width===40&&
+     solo.icons.length===1&&duo.icons.length===2&&
+     [...solo.icons,...duo.icons].every(i=>i.width===16&&i.height===16)&&
+     Math.abs(gap-2)<.01&&center<.01&&dualCenter<.01,
+     solo,duo,gap,center,dualCenter};
+   });
+   assert.ok(typeGeometry299.ok,"LT299 icon geometry P/M/G "+
+    sz.name+" "+JSON.stringify(typeGeometry299));
+   await page.screenshot({path:path.join(output,sz.name+"-lt299-dual-types.png")});
    // LT298: real click and measurements on the shipping card WebView.
    const attack298=await page.evaluate(()=>{
     window.showDetails({number:"#255",name:"Torchic",sourceIndex:1998,
@@ -593,8 +633,10 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     btn.click();
     const first=section.textContent||"";
     const actual=first.includes("Arranhão")&&first.includes("Ataque Selvagem")&&
+     !first.includes("Recomendação PvPoke")&&
+     !first.includes("não recomendação de PvPoke")&&
      first.includes("Dmg 90 • CD 2,50 • DPS 36,0 • Energia 50")&&
-     first.includes("PvP: Poder 100 • Custo 45")&&
+     !first.includes("Poder 100")&&!first.includes("Custo 45")&&
      btn.getAttribute("aria-expanded")==="true"&&!section.hidden;
     const icons=section.querySelectorAll(".psMoveMtIcon img");
     const positioned=section.scrollWidth<=section.clientWidth+2;
@@ -610,7 +652,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const normalIcon=window.PokeSearchMovePanel?.mtBadge?.(true,"normal")||"";
     return {ok:actual&&icons.length===2&&positioned&&closed&&noLeak&&
       eliteIcon.includes("mt-carregada-elite-lt265.png")&&
-      normalIcon.includes("mt-agil-normal-lt298.svg"),
+      normalIcon.includes("mt-normal.png"),
       actual,icons:icons.length,positioned,closed,noLeak,first:first.slice(0,190)};
    });
    assert.ok(attack298.ok,"LT298 captured move details and four MT categories "+

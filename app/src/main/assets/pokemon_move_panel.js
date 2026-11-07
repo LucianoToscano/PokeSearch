@@ -7,8 +7,10 @@
 const esc=x=>String(x??"").replace(/[&<>"']/g,k=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[k]));
 const COLOUR=Object.freeze({normal:"#bec9d5",fighting:"#ff9a82",flying:"#a2b9ff",poison:"#cda0fa",ground:"#e0ba86",rock:"#dcc78c",bug:"#b5da70",ghost:"#b7a2ff",steel:"#bad2e4",fire:"#ff9d68",water:"#67b8ff",grass:"#7de79a",electric:"#ffe77a",psychic:"#ff9ebc",ice:"#8ceafa",dragon:"#aeabff",dark:"#cbb0a5",fairy:"#ff9ed5"});
 const files=Object.freeze({
- normalFast:"mt-agil-normal-lt298.svg",
- normalCharged:"mt-carregada-normal-lt298.svg",
+ // Reuse established PokeSearch normal MT artwork rather than invented
+ // lightning/star pictograms; the Ágil/C1/C2 slot identifies move category.
+ normalFast:"mt-normal.png",
+ normalCharged:"mt-normal.png",
  eliteFast:"mt-agil-elite-lt265.png",
  eliteCharged:"mt-carregada-elite-lt265.png",
  unknown:"mt-unknown.png"
@@ -35,7 +37,7 @@ function metricsFor(move,fast){
 function pveStats(move,fast){
  const m=metricsFor(move,fast);
  const string=root?.PokeSearchMoveMetrics?.pveLine?.(m)||"";
- return string?'<div class="psMovePveStats" title="Dados de combate em raides, não da Liga GO">Raides: '+esc(string)+'</div>':"";
+ return string?'<div class="psMovePveStats" title="Dano, duração e energia em raides">'+esc(string)+'</div>':"";
 }
 function pvpStats(move,fast){
  const stats=typeof move==="object"&&move?.stats?move.stats:null;
@@ -48,10 +50,11 @@ function pvpStats(move,fast){
  const out=[];
  if(nPower!==null)out.push("Poder "+nPower);
  if(nEnergy!==null&&nEnergy>0)out.push((fast?"Energia +":"Custo ")+nEnergy);
- return out.length?'<div class="psMovePvpStats">PvP: '+esc(out.join(" • "))+'</div>':"";
+ return out.length?'<div class="psMovePvpStats" title="Poder e energia em PvP">'+esc(out.join(" • "))+'</div>':"";
 }
 function recommendationMetrics(move,fast){
- return '<div class="psMoveNumbers">'+pvpStats(move,fast)+pveStats(move,fast)+'</div>';
+ // The recommendation is for PvP; never concatenate raid values under it.
+ return '<div class="psMoveNumbers">'+pvpStats(move,fast)+'</div>';
 }
 // Card's current moves are NOT automatically the PvPoke recommendations.
 // The card metadata combines Elite and legacy IDs; it cannot prove Elite
@@ -72,14 +75,11 @@ function captured(raw,card,metadata){
   return '<div class="psMoveDetailItem"><div class="psMoveHeaderLine">'+
    '<span class="psMoveSlot">'+esc(label)+':</span>'+
    '<b class="psMoveTypedName" style="color:'+color+'">'+esc(translated)+'</b>'+
-   mtBadge(fast,status)+'</div>'+pvpStats(info?{id:info.id}:null,fast)+
-   pveStats(info?{id:info.id}:null,fast)+
+   mtBadge(fast,status)+'</div>'+pveStats(info?{id:info.id}:null,fast)+
    (!info?'<div class="psMoveUnavailable">Valores não confirmados para este golpe</div>':"")+
    '</div>';
  }).join("");
- return '<div class="psMoveTitle">Golpes capturados · '+esc(card?.name||"Pokémon")+'</div>'+
-  '<div class="psMoveNote">Estatísticas do golpe atual, não recomendação de PvPoke.</div>'+
-  sections+'<div class="psMoveNote">MT de Elite só é identificada quando a fonte confirma; legado sem confirmação fica cinza.</div>';
+ return '<div class="psMoveTitle">Detalhes dos golpes · '+esc(card?.name||"Pokémon")+'</div>'+sections;
 }
 return Object.freeze({mtBadge,metricsFor,pvpStats,pveStats,recommendationMetrics,captured});
 });
