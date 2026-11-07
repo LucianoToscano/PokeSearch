@@ -40,17 +40,17 @@ assert.match(clock,/NÃO verificado/);
 assert.match(clock,/if\(configuredDay==null\)return DayState\.UNKNOWN/);
 assert.doesNotMatch(clock,/ZoneOffset\.ofHours|setTimeZone\(/);
 
-assert.match(prep,/public static final int COUNT=8/);
+assert.match(prep,/public static final int COUNT=7/);
 assert.match(arrays,/name="raid_day_preparation_questions"/);
-assert.equal((arrays.match(/<item>/g)||[]).length,8+5+3+2);
+assert.equal((arrays.match(/<item>/g)||[]).length,7+3+2);
 for(const term of [
   "Passe Diário guardado do dia anterior","Já coletou o Passe Diário de hoje",
   "Já realizou alguma reide hoje","Já começou o roteiro",
-  "aviso ou restrição ativa","Híbrido (autorização por sessão)","Não sei","Outro local"
+  "aviso ou restrição ativa","Híbrido (autorização por sessão)","Não sei"
 ])assert.ok(arrays.includes(term),term);
 assert.match(prep,/RaidDayPreparation load\(Context context,/);
 assert.match(prep,/R\.array\.raid_day_preparation_questions/);
-assert.match(prep,/R\.array\.raid_day_preparation_locations/);
+assert.doesNotMatch(prep,/R\.array\.raid_day_preparation_locations/);
 assert.match(prep,/String eventKey\(\)/);
 assert.match(prep,/prefs\.getBoolean\(KEY\+"completed",false\)/);
 assert.match(prep,/prefs\.getInt\(KEY\+"question",0\)/);
@@ -70,13 +70,15 @@ assert.match(service,/preparation\.markComplete\(\)/);
 assert.match(service,/preparation\.save\(prefs\)/);
 assert.match(service,/preparation\.eventKey\(\)/);
 assert.match(service,/riskAccepted=\(plan\.riskVersion\+":"\+eventKey\)\.equals/);
-assert.match(service,/preparationSection\.setVisibility\(needsPreparation\?/);
+assert.match(service,/preparationSection\.setVisibility\(View\.VISIBLE\)/);
 assert.match(service,/updateEventClock\(\)/);
-assert.match(service,/describeDay\(preparation\.eventDate\(\),now\)/);
-assert.match(service,/automaticTimeEnabled\(this\)/);
+assert.match(service,/RaidDayEventClock\.format\(eventClock\.instant\(\)/);
+assert.match(service,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
 assert.match(service,/if\(active\|\|training\|\|!preparation\.isComplete\(\)\|\|!riskAccepted\)return/);
 assert.match(service,/DayState\.AFTER_DAY/);
-assert.match(service,/Híbrido|preparation\.answer/);
+assert.match(service,/currentPhaseNote\(/);
+assert.match(service,/startDemoToday\(/);
+assert.match(service,/preparation\.choose\(option\)/);
 assert.match(strings,/raid_day_risk_message/);
 assert.match(manifest,/android:name="\.RaidDayAssistantOverlayService"/);
 assert.doesNotMatch(service,/startActivity\(new Intent\(Settings\.ACTION_MANAGE_OVERLAY_PERMISSION/);
