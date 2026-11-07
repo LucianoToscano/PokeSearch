@@ -39,6 +39,9 @@ import android.widget.TextView;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * A dedicated, opt-in MANUAL helper for the "Dia de Reides / Bug dos Passes"
@@ -67,8 +70,17 @@ public final class RaidDayAssistantOverlayService extends Service {
     private TextView copyButton,repeatButton,cycleText,skipButton;
     private TextView riskContinue,riskExit,startButton,trainButton,trainingExit;
     private TextView notHappenedButton,helpButton,endButton;
-    private LinearLayout cycleActions,guideContent,riskSection,startSection;
+    private LinearLayout cycleActions,guideContent,riskSection,startSection,preparationSection,preparationChoices;
     private ProgressBar progressBar;
+    private TextView prepTitle,prepStatus,clockText,summaryText,prepBack,prepNext;
+    private RaidDayPreparation preparation;
+    private final Clock eventClock=Clock.systemUTC();
+    private final Runnable clockPulse=new Runnable(){
+        @Override public void run(){
+            if(clockText!=null)updateEventClock();
+            handler.postDelayed(this,60000L);
+        }
+    };
     private boolean paused=false,finished=false,visible=false,dragging=false;
     private boolean active=false,training=false,riskAccepted=false,endPending=false;
     private RaidDayGuidePlan plan;
@@ -151,6 +163,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             stopSelf();return;
         }
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
+        preparation=RaidDayPreparation.load(prefs,eventClock);
         try{
             plan=RaidDayGuidePlan.load(this);
             journal=RaidDayDatabase.get(this);
@@ -194,6 +207,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             createBubble();
             createPanel();
             updateStep();
+            handler.post(clockPulse);
             running=true;
         }catch(RuntimeException error){
             stopSelf();
@@ -252,7 +266,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         journal.events().add(event);
     }
     private void beginRealSession(){
-        if(active||training)return;
+        if(active||training||!preparation.isComplete()||!riskAccepted)return;
+        if(RaidDayEventClock.state(preparation.eventDate(),eventClock.instant())==
+            RaidDayEventClock.DayState.AFTER_DAY){
+            Toast.makeText(this,"A data informada já passou. Edite o evento ou use o Modo Treino.",
+                Toast.LENGTH_LONG).show();
+            return;
+        }
         if(journal.events().count(sessionKey)>0){
             int generation=Math.max(1,prefs.getInt("sessionGeneration",1))+1;
             prefs.edit().putInt("sessionGeneration",generation).apply();
@@ -264,7 +284,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         updateStep();
     }
     private void beginTraining(){
-        if(!riskAccepted)return;
+        if(!riskAccepted||!preparation.isComplete())return;
         training=true;active=false;index=0;repeatedCycles=0;
         paused=false;finished=false;endPending=false;
         reactAvatar(RaidDayAvatarFrames.WAVE);
