@@ -9,7 +9,7 @@ new vm.Script(scaler);
 assert.match(scaler,/function applyResultTile\(img,verifiedReference\)/);
 assert.match(scaler,/const reference=new Image\(\)/);
 assert.match(scaler,/img\.isConnected===false/);
-assert.match(scaler,/clamp\(measured\.zoom,\.80,1\.8\)/);
+assert.match(scaler,/clamp\(measured\.zoom,\.80,exactGo\?4\.25:1\.8\)/);
 assert.match(dock,/sourceCard\?\.imageFromSite===true&&engine\?\.resolve/);
 assert.match(dock,/art\?\.providerExact===true&&\/\^https:/);
 assert.match(dock,/engine\?\.bundledExactForArt\?\.\(sourceCard,art\)/);
