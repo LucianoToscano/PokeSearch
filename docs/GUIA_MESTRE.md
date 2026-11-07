@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT304 EDU — ROTEIRO EM BALÕES, RESPOSTAS REAIS E CONTINUIDADE GUIADA (07/11/2026)
+
+- **Solicitação:** Edu se apresenta como treinador (“Olá! Meu nome é Edu... Está pronto?”), pergunta **Sim/Não**, depois oferece **Simular hoje** ou **Evento real**; guia **um diálogo por vez**, sem lista estática, painel gigante, menus na tela ou avanço por espera/chegada não confirmada.
+- **Implementação candidata na PR #302:** `RaidDayAssistantOverlayService.java` usa perguntas condicionais de passe guardado, Havaí (chegada → reiniciar e aguardar carregamento), Nova Zelândia (chegada → passe confirmado), reide (vitória/derrota/saída + captura separada), retorno ao Havaí, novo passe, repetição, dia D, Kiribati opcional, múltiplas reides e resumo. As coordenadas de cada região são **tocáveis para copiar**; copiar não altera GPS.
+- **Dias distintos:** sessão real pode começar na **véspera D−1** (E01) ou no **dia D** (E08), sem fingir que a véspera ocorreu naquele dia. Horários são mostrados apenas quando já informados e coerentes com a data selecionada, **não** como confirmação oficial. No treino, data fictícia é hoje em Brasília e nenhum resultado real é salvo.
+- **Retomada segura:** perguntas intermediárias reais (por exemplo, “Já chegou?” antes de “O mapa carregou?”) guardadas por chave de sessão/etapa; avanço crítico apenas com clique manual. Sem passe, “Não tenho”/“Vou conferir” não confirma o passe e encaminha ao aviso ou saída apropriada. OCR local permanece somente sugestão e requer consentimento.
+- **Visual preservado da mesma PR:** balões brancos opacos estilo quadrinhos, moldura glass discreta, tamanho G=100 pixels físicos padrão, configurações ocultas até segurar sprite ~1,2 s, toque curto abre/recolhe, arraste move. Sem interferir em P1/P2, Doce Raro, login opcional, cap 10, HTTP 429/Retry-After ou assinatura.
+- **Documento detalhado:** [`LT304_EDU_CONVERSA_GUIADA_PASSES_HAVAI_NZ_D_20261107.md`](LT304_EDU_CONVERSA_GUIADA_PASSES_HAVAI_NZ_D_20261107.md). Testes de regressão LT304 adicionados; **compilação/CI da revisão e homologação física Samsung ainda a confirmar**. PR em draft; sem merge e sem Release, preservando LT304 oficial 0.03.04/54510.
+
+
 ## LT304 — EDU · BALÕES BRANCOS DE QUADRINHOS E CONFIGURAÇÕES OCULTAS (07/11/2026)
 
 - **Pedido do proprietário:** conversa principal do Edu em **balão branco opaco**, borda fina, cauda discreta de quadrinhos e texto escuro; preservar o visual minimalista/glass apenas na moldura e respostas compactas. Não misturar ajustes ao roteiro nem exibir o botão `⋯`.
