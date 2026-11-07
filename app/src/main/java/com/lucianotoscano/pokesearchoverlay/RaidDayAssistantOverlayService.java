@@ -1267,6 +1267,19 @@ public final class RaidDayAssistantOverlayService extends Service {
             });
             return;
         }
+        // Ao virar a data do evento, uma sessão iniciada na véspera
+        // não pode ficar bloqueada em E02–E07. A mudança é MANUAL.
+        // O histórico anterior é preservado e nenhum passe é presumido.
+        if(!training&&"D-1".equals(step.phase)&&
+            RaidDayEventClock.todayBrasilia(eventClock).equals(
+                preparation.eventDate())){
+            setTalk("Chegou o dia do evento! Ontem era a véspera. "+
+                "Vamos conferir os passes de hoje?",
+                "As etapas da véspera não serão marcadas como concluídas.");
+            addTwo("Ir ao evento",()->navigateEdu("E08","DAY_CHANGED_TO_EVENT"),
+                "Ver ajuda",()->{eduHelpOpen=true;updateStep();});
+            return;
+        }
         String warning=currentPhaseNote(step);
         if(!warning.isEmpty()){
             setTalk("Edu: "+warning,"Para aprender sem alterar sua sessão, use o treino.");
