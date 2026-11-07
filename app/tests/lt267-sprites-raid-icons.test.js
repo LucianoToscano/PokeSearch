@@ -64,12 +64,12 @@ for(const file of ["mega-symbol.png","shadow-symbol-lt267.png"])
 assert.ok(read("sprite_visual_scale.js").includes("clamp(.78/occupancy,.76,2.2)"),"small silhouette zoom bounded");
 const qaWorkflow=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt146-signed-update-qa.yml"),"utf8");
 const pinnedCostumeKeys=[...builder.matchAll(/"costumes\/([^"]+)"\s*:\s*\(/g)].map(m=>m[1]);
-assert.equal(new Set(pinnedCostumeKeys).size,136,
- "Immutable sprite builder specifies 106 previous + 8 Sea + 10 Diwali/Squawk + 12 Burmy/Wormadam costumes");
+assert.equal(new Set(pinnedCostumeKeys).size,140,
+ "LT289: original 136 exact GO sprites plus four Singapore Anniversary gender/Shiny variants");
 const lt144EventCount=[...builder.matchAll(/"pm(?:41|94)\.[^"]+\.png":\s*"[a-f0-9]{64}"/g)].length;
 assert.equal(lt144EventCount,4,"Four extra LT144 SHA256-pinned event costumes");
-assert.ok(qaWorkflow.includes("assert len(report['costumes'])==140"),
- "Signed QA must account for 136 PokeMiners and four exact LT144 event assets");
+assert.ok(qaWorkflow.includes("assert len(report['costumes'])==144"),
+ "Signed QA must account for 140 PokeMiners and four exact LT144 event assets");
 assert.ok(qaWorkflow.includes("for dex in (422,423)") &&
  qaWorkflow.includes('for sea in ("EAST","WEST")'),
  "Exact East/West Sea normal/shiny assets required for both species");
