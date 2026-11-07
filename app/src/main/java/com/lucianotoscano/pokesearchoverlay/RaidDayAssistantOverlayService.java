@@ -70,7 +70,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private TextView copyButton,repeatButton,cycleText,skipButton;
     private TextView riskContinue,riskExit,startButton,trainButton,trainingExit;
     private TextView notHappenedButton,helpButton,endButton;
-    private LinearLayout cycleActions,guideContent,riskSection,startSection,preparationSection,preparationChoices;
+    private LinearLayout cycleActions,guideContent,riskSection,startSection,preparationSection,preparationChoices,raidRecordActions;
     private ProgressBar progressBar;
     private TextView prepTitle,prepStatus,clockText,summaryText,prepBack,prepNext;
     private TextView eventWindowText;
@@ -820,6 +820,42 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams eLp=new LinearLayout.LayoutParams(0,-1,1);
         eLp.leftMargin=dp(4);
         fallbackActions.addView(endButton,eLp);
+        raidRecordActions=new LinearLayout(this);
+        raidRecordActions.setOrientation(LinearLayout.VERTICAL);
+        TextView raidHeading=text("Resultado da reide (informação sua):",
+            11,Color.rgb(180,209,223),false);
+        raidRecordActions.addView(raidHeading);
+        String[][] states={
+            {"Lobby","RAID_LOBBY"},{"Batalha","RAID_BATTLE"},{"Vitória","RAID_WIN"},
+            {"Derrota","RAID_LOSS"},{"Saiu","RAID_LEFT"},{"Recompensas","RAID_REWARDS"},
+            {"Encontro","RAID_ENCOUNTER"},{"Capturou","RAID_CAUGHT"},{"Fugiu","RAID_FLED"}
+        };
+        for(int j=0;j<3;j++){
+            LinearLayout row=new LinearLayout(this);
+            LinearLayout.LayoutParams rowLp=new LinearLayout.LayoutParams(-1,dp(34));
+            rowLp.topMargin=dp(5);
+            raidRecordActions.addView(row,rowLp);
+            for(int i=0;i<3;i++){
+                String label=states[j*3+i][0];
+                String type=states[j*3+i][1];
+                TextView result=button(label);
+                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-1,1);
+                if(i>0)lp.leftMargin=dp(4);
+                row.addView(result,lp);
+                result.setOnClickListener(v->{
+                    if(paused||finished)return;
+                    persist(type);
+                    reactAvatar(type.equals("RAID_WIN")||type.equals("RAID_CAUGHT")?
+                        RaidDayAvatarFrames.OK:RaidDayAvatarFrames.QUESTION);
+                    statusText.setText("Registrado pelo jogador: "+label+
+                        ". Isso não comprova passes ou recompensas extras.");
+                });
+            }
+        }
+        LinearLayout.LayoutParams raidLp=new LinearLayout.LayoutParams(-1,-2);
+        raidLp.topMargin=dp(6);
+        guideContent.addView(raidRecordActions,raidLp);
+
         notHappenedButton.setOnClickListener(v->{
             if(paused||finished)return;
             persist("NOT_OBSERVED");
@@ -829,8 +865,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         helpButton.setOnClickListener(v->{
             if(finished)return;
             reactAvatar(RaidDayAvatarFrames.QUESTION);
-            statusText.setText("Você está em "+plan.step(index).id+
-                ". "+plan.step(index).safeReturn);
+            statusText.setText(RaidDayRecovery.guide(
+                journal.events().all(sessionKey),plan.step(index).id,
+                plan.step(index).safeReturn));
         });
         endButton.setOnClickListener(v->{
             if(training){leaveTraining();return;}
@@ -905,9 +942,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         titleText.setText(finished?"Roteiro finalizado":
             current.id+" — "+current.title);
         instructionText.setText(finished?
-            "Registro encerrado. Ciclos não significam passes recebidos. "+
-            "A confirmação manual não comprova recompensa do jogo.":
+            "Roteiro encerrado.\n"+RaidDayRecovery.stats(
+                journal.events().all(sessionKey)):
             current.instruction);
+        raidRecordActions.setVisibility(!finished&&
+            ("E04".equals(current.id)||"E10".equals(current.id))?
+            View.VISIBLE:View.GONE);
         statusText.setText(paused?"Pausado · toque em ▶ para retomar":
             training?"Modo Treino · nenhuma ação é salva":
             getString(R.string.raid_day_no_screen_access));
