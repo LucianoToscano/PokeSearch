@@ -6,7 +6,8 @@ const service=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearch
 const probe=fs.readFileSync(path.join(root,"assets/probe.js"),"utf8");
 let pass=0;function check(name,fn){fn();pass++;console.log("PASS LT77 Stage7 "+name);}
 check("Distance sort requires a valid active location and does not wait for asynchronous site verification",()=>{
- assert.ok(dock.includes('modeDraft.sortBy==="Distance (nearest)"&&!(locationEnabled&&locationCoords.trim())'));
+ assert.ok(dock.includes('modeDraft.sortBy==="Distance (nearest)"||')&&
+  dock.includes('modeDraft.sortBy==="Distance (farthest)")&&!(locationEnabled&&locationCoords.trim()))'));
  assert.ok(service.includes('if(enabled&&(valid.isEmpty()||radius<0||radius>1000))'),
   "Native must still reject invalid coordinates and radii");
  // Location badge stays pending until verified, while Sort may default to Distance.
