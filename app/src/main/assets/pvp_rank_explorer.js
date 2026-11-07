@@ -296,13 +296,14 @@
    const number=badge.querySelector?.(".psRailNumber");
    if(number)number.textContent=exact?.rank?"#"+exact.rank:"—";
    badge.querySelector?.(".psRailEvolve")?.remove?.();
-   if(target.evolves){
-    const mark=document.createElement("img");mark.className="psRailEvolve";
-    mark.src="ui-icons/ps-evolution-lt272.png";mark.alt="";
-    mark.setAttribute?.("aria-hidden","true");
-    mark.setAttribute?.("draggable","false");
-    badge.appendChild(mark);
-   }
+   const context=typeof window!=="undefined"?window:{};
+   const original=context.psRankContext?.name||"";
+   const verifiedChoice=context.psRailOverallChoices?.find?.(x=>
+    x.league===league&&n(x.name)===n(opts.name));
+   const canEvolve=target.evolves===true||verifiedChoice?.evolves===true;
+   const evo=context.PokeSearchEvolutionBadge?.(original,opts.name,canEvolve);
+   if(evo)badge.appendChild(evo);
+   badge.dataset.psEvolutionSteps=evo?.dataset?.steps||"0";
    badge.title="Rank Geral · "+LIGAS[league]+" · "+opts.name+
     (exact?.rank?" · #"+exact.rank:" · posição não verificada");
    badge.setAttribute?.("aria-label",badge.title);
