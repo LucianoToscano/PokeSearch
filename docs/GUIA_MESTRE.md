@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+## LT305 — EDU · CONVERSAS EM BALÕES, RETOMADA D−1/D (CANDIDATA AUTORIZADA EM 07/11/2026)
+
+- **Autorização explícita do proprietário neste chat:** continuar, fazer merge e publicar atualização oficial após verificação dos testes. Base confirmada: LT304 `0.03.04` / code `54510`, `main` `bc4453a2fa0fae068b49c43857cfa978da0dbd79` antes do merge, PR [#302](https://github.com/LucianoToscano/PokeSearch/pull/302). Próxima versão proposta: **LT305 / 0.03.05 / code 54511 / label 51309** (sujeita ao fluxo de publicação e à versão `latest` no momento do pedido).
+- **Visual do Edu:** balão branco opaco em formato de quadrinhos, texto escuro e cauda discreta. A moldura exterior permanece glass sutil. Configurações ausentes da conversa; segurar sprite por 1,2 s abre os mesmos ajustes ocultos, tocar abre/recolhe, arrastar posiciona. G=100 pixels físicos como padrão; preferências salvas P/M/G preservadas.
+- **Fluxo conversacional:** apresentação do Edu com Sim/Agora não, Simular hoje/Evento real; entrada real solicita **só data do evento** sem apagar antigas respostas; véspera E01 exige confirmação do passe no inventário, Havaí E02 confirma **chegada e, em outra pergunta, mapa carregado**, Nova Zelândia E03 tem coordenada copiável e confirmação de passe, E04 vitória/derrota/saída + captura separada, E05 Havaí novamente, E06/E07 conferir passe e repetir/seguir. E08–E11 representam evento, Kiribati opcional, reides e resumo.
+- **Correção antes do merge:** sessão iniciada em D−1 que alcançar D não pode ficar presa em etapa antiga; aparece decisão manual **Ir ao evento** ou **Agora não**, sem declarar passos anteriores concluídos nem inferir passes. Treino fictício continua sem gravação de eventos reais. Coordenadas apenas copiam; não há mudança de GPS pelo aplicativo.
+- **Testes e entrega:** novas verificações de regressão LT304; notas embarcadas em `app/src/main/assets/release_notes.json` para **54511**; seguir Node QA, LT169, LT211, LT62, LT173 e workflow oficial permanente após merge. **QA físico Samsung e calibração OCR PT/EN permanecem pendentes**, mesmo se CI e publicação terminarem em SUCCESS. Não anunciar APK, digest ou instalador antes de verificar GitHub Actions/Release.
+- **Segurança/invariantes:** manter applicationId, signer v2 original, duas Pokébolas, Doce Raro, filtros/favoritos/ranks/sprites, busca sem login, limite 10, 429/Retry-After e canal OTA. Tutorial comunitário não garante passes e pode violar os Termos do Pokémon GO.
+
 ## LT304 EDU — ROTEIRO EM BALÕES, RESPOSTAS REAIS E CONTINUIDADE GUIADA (07/11/2026)
 
 - **Solicitação:** Edu se apresenta como treinador (“Olá! Meu nome é Edu... Está pronto?”), pergunta **Sim/Não**, depois oferece **Simular hoje** ou **Evento real**; guia **um diálogo por vez**, sem lista estática, painel gigante, menus na tela ou avanço por espera/chegada não confirmada.
