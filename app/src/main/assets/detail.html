@@ -3025,7 +3025,7 @@ function psMakeEvolutionBadge(count){
  }
  return mark;
 }
-window.PokeSearchEvolutionBadge=(from,to,allowed=true)=>{
+if(typeof window!=="undefined")window.PokeSearchEvolutionBadge=(from,to,allowed=true)=>{
  const count=allowed?psEvolutionStepCount(from,to):null;
  return count?psMakeEvolutionBadge(count):null;
 };
