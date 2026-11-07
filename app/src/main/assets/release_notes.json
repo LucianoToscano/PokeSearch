@@ -2832,6 +2832,29 @@
           "Validar no Samsung P1/P2 Cyndaquil, Charmander, Bulbasaur, Eevee e famílias ramificadas em GL/UL/ML, com ranks e coordenadas preservados."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt292-full-evolution-chain-audit-20261107",
+      "minVersionCode": 54496,
+      "date": "07/11/2026",
+      "title": "LT292 — Auditoria completa da ordem das evoluções",
+      "sections": {
+        "novidades": [
+          "Auditoria automatizada das 463 ligações evolutivas do catálogo offline, incluindo Charmander → Charmeleon → Charizard e famílias ramificadas.",
+          "Sequência evolutiva verificada também para Pokémon Sombrosos na Análise PvP."
+        ],
+        "melhorias": [
+          "A sequência natural é preservada no painel de evoluções, nas projeções de PC/Nível por liga e nas opções do explorador PvP.",
+          "Até 14 projeções por liga no comparador, incluindo cadeias ramificadas com mais de oito formas."
+        ],
+        "correcoes": [
+          "Evoluções finais deixam de aparecer antes das intermediárias nas listas complementares, inclusive para famílias Sombrosas.",
+          "Formas regionais, fantasias e identidades desconhecidas continuam sem evoluções inferidas."
+        ],
+        "emDesenvolvimento": [
+          "Confirmar no Samsung P1/P2 Charmander, Cyndaquil, Sombrosos, Eevee e ramos alternativos em GL/UL/ML; preservar Rank Classe, Rank Geral, PC e IV."
+        ]
+      }
     }
   ]
 }

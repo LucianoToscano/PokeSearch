@@ -55,7 +55,7 @@ assert.deepEqual(sort("Cyndaquil",null),[]);
 // keep separate rank-driven recommendations untouched.
 assert.match(detail,/const orderedEntries=window\.PokeSearchPvpFamilyCatalog\?\.orderEvolutionRows\?\.\(/);
 assert.match(detail,/payload\.rankSpecies\|\|payload\.name,entries\)\|\|entries/);
-assert.match(detail,/const rows=\[\.\.\.orderedEntries,\.\.\.references,\.\.\.megas\]/);
+assert.match(detail,/const rows=\[\.\.\.orderedEntries,\.\.\.orderedReferences,\.\.\.megas\]/);
 assert.doesNotMatch(detail,/entries\.sort\(\(a,b\)=>/);
 assert.ok(detail.includes("evolutionRow(e,false)"));
 assert.match(detail,/const ranks=candidates\.filter\(x=>x\.rank!==null\)\.sort/);

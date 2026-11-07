@@ -2122,10 +2122,14 @@ if(typeof document!=="undefined"&&typeof document.addEventListener==="function")
 function pvpFormsForLeague(league){
  const context=window.psRankContext||{};
  const l=(context.leagues||[]).find(x=>x?.league===league)||{};
- return [{name:context.rankSpecies||context.name},...(l.own?[{name:context.rankSpecies||context.name}]:[]),
-   ...(Array.isArray(l.evolutions)?l.evolutions:[]),
-   ...(Array.isArray(l.megas)?l.megas:[]),
-   ...(Array.isArray(l.comparisons)?l.comparisons:[])].slice(0,36);
+ const name=context.rankSpecies||context.name;
+ const evolutions=Array.isArray(l.evolutions)?l.evolutions:[];
+ const references=Array.isArray(l.comparisons)?l.comparisons:[];
+ const order=window.PokeSearchPvpFamilyCatalog?.orderEvolutionRows;
+ const stages=order?.(name,evolutions)||evolutions;
+ const comparisonStages=order?.(name,references)||references;
+ return [{name},...(l.own?[{name}]:[]),...stages,
+   ...comparisonStages,...(Array.isArray(l.megas)?l.megas:[])].slice(0,36);
 }
 function openPvpRankExplorer(event,button){
  if(event){event.preventDefault();event.stopPropagation();}
@@ -2920,7 +2924,9 @@ window.showEvolutionDetails=payload=>{
   const megas=Array.isArray(league.megas)?
    league.megas.filter(e=>e?.megaProjection===true):[];
   window.psRankRenderLeague=league.league;
-  const rows=[...orderedEntries,...references,...megas].map(e=>evolutionRow(e,false)).filter(Boolean);
+  const orderedReferences=window.PokeSearchPvpFamilyCatalog?.orderEvolutionRows?.(
+   payload.rankSpecies||payload.name,references)||references;
+  const rows=[...orderedEntries,...orderedReferences,...megas].map(e=>evolutionRow(e,false)).filter(Boolean);
   const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
   if(!rows.length&&!own)continue;
   html+='<div class="psLeagueAnalysis" data-ps-league="'+league.league+'">'+
@@ -3389,9 +3395,12 @@ function renderDetailMetric(){
  let rows="";
  for(const league of leagues){
   if(!league||!headings[league.league])continue;
+  // Projection list uses verified evolutionary stages, not IV ranking.
+  const available=Array.isArray(league.evolutions)?league.evolutions:[];
+  const ordered=window.PokeSearchPvpFamilyCatalog?.orderEvolutionRows?.(
+   context.rankSpecies||context.name,available)||available;
   const entries=[...(league.own?[{...league.own,name:context.name}]:[]),
-   ...(Array.isArray(league.evolutions)?league.evolutions:[]),
-   ...(Array.isArray(league.megas)?league.megas:[])].slice(0,8);
+   ...ordered,...(Array.isArray(league.megas)?league.megas:[])].slice(0,14);
   for(const x of entries){
    const cp=Number(x?.cp),level=Number(x?.level);
    if(!Number.isFinite(cp)||cp<10||cp>10000||
