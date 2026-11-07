@@ -55,7 +55,7 @@ jobs:
           grep -Eq '^Verified using v2 scheme.*: true$' sign.txt
           ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' sign.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
           test "$ACTUAL" = "$EXPECTED_CERT"
-      - name: Distribute public APK without ChatGPT Library or Release API
+      - name: Distribute public APK without temporary chat attachments or Release API
         shell: bash
         run: |
           set -euo pipefail
@@ -85,4 +85,4 @@ jobs:
           git push origin HEAD:refs/heads/downloads/lt139
           git ls-remote --exit-code --heads origin refs/heads/downloads/lt139
           curl -fsSI --retry 4 --retry-delay 2 "https://raw.githubusercontent.com/$GITHUB_REPOSITORY/downloads/lt139/$APK" | tee "$RUNNER_TEMP/public-head.txt"
-          echo "Public APK delivered without GitHub sign-in and without Netlify/ChatGPT Library."
+          echo "Public APK delivered without GitHub sign-in and without Netlify or temporary chat attachments."

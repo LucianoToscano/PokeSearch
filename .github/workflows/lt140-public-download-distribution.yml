@@ -55,7 +55,7 @@ jobs:
           grep -Eq '^Verified using v2 scheme.*: true$' sign.txt
           ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' sign.txt | awk '{print $NF}' | tr '[:upper:]' '[:lower:]')"
           test "$ACTUAL" = "$EXPECTED_CERT"
-      - name: Distribute public APK without ChatGPT Library or Release API
+      - name: Distribute public APK without temporary chat attachments or Release API
         shell: bash
         run: |
           set -euo pipefail
@@ -90,4 +90,4 @@ jobs:
           grep -Fqx "$EXPECTED  $APK" "$RUNNER_TEMP/github-published-sha.txt"
           echo "PASS: public LT140 GitHub distribution SHA verified by authenticated repository API."
           echo "Note: public raw CDN can cache a 404 briefly after a new branch push."
-          echo "Public APK delivered without GitHub sign-in and without Netlify/ChatGPT Library."
+          echo "Public APK delivered without GitHub sign-in and without Netlify or temporary chat attachments."

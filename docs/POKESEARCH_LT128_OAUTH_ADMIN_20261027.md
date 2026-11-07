@@ -43,7 +43,7 @@ Conferidos os dados técnicos:
 
 ## Distribuição obrigatória
 
-Seguir `AGENTS.md` e Issue #84: GitHub Actions artifact **primeiro**, verificando existência, assinatura, tamanho/CRC e SHA-256. `Library file not found` do ChatGPT não é falha do APK e não será resolvido apenas reenviando sandbox.
+Seguir `AGENTS.md` e Issue #84: GitHub Actions artifact **primeiro**, verificando existência, assinatura, tamanho/CRC e SHA-256. `Library file not found` em anexo temporário de conversa não é falha do APK e não será resolvido apenas reenviando sandbox.
 
 
 ## Controle de mudança

@@ -30,7 +30,7 @@
 
 ## 2. Primeiros passos ao trocar de conta ou de IA
 
-A nova conta do ChatGPT NÃO herda automaticamente conexão com GitHub, Google Drive, estado de ferramentas, credenciais, histórico da conversa ou permissões. O proprietário precisa conectar/autorizar GitHub e Google Drive nessa conta ou disponibilizar checkout/ZIP atualizado. Não solicitar senhas, chaves ou tokens na conversa. Acesso público de leitura ao GitHub não equivale a permissão de escrever, mesclar ou publicar.
+Uma nova conta ou sessão de assistência NÃO herda automaticamente conexão com GitHub, Google Drive, estado de ferramentas, credenciais, histórico da conversa ou permissões. O proprietário precisa conectar/autorizar GitHub e Google Drive nessa conta ou disponibilizar checkout/ZIP atualizado. Não solicitar senhas, chaves ou tokens na conversa. Acesso público de leitura ao GitHub não equivale a permissão de escrever, mesclar ou publicar.
 
 1. Abrir o repositório GitHub e confirmar o nome exato: LucianoToscano/PokeSearch, branch padrão main.
 2. Ler, nessa ordem, AGENTS.md, esta página, docs/GUIA_MESTRE.md, LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md, README.md e documentos da versão atual.
@@ -232,7 +232,7 @@ Modelo conciso de registro:
 
 ## 12. Diagnóstico de falhas e sinais de alerta
 
-- **404 em arquivo/ZIP do ChatGPT (Library file not found):** não repetir links temporários; preferir GitHub Release/Actions/Drive verificados, como orienta o protocolo oficial.
+- **404 em arquivo/ZIP de anexo temporário (Library file not found):** não repetir links temporários; preferir GitHub Release/Actions/Drive verificados, como orienta o protocolo oficial.
 - **PR aberta mas não mesclada:** não anunciar merge; conferir estado no GitHub.
 - **Build SUCCESS mas sem release:** ainda não enviado ao app; conferir estágio Release to all app users e latest.
 - **Release com draft ou prerelease:** o atualizador não oferece.
@@ -242,7 +242,7 @@ Modelo conciso de registro:
 - **CI falha por script legado:** examinar logs e escopo; não declarar que todo o build está quebrado sem correlação.
 - **Conta 2/Doce Raro sem login:** verificar perfis WebView isolados; site no Chrome não prova sessão da WebView interna. Não tratar cooldown de coleta como HTTP 429.
 - **Sprite ausente ou pequena:** inspecionar fontes/CORS/cache/área alfa e fallback; conferir P1/P2, fundo ON/OFF e P/M/G no aparelho.
-- **Mudança de conta ChatGPT/IA:** a nova IA só pode ler repos públicos; não herda Drive/Push, segredos CI, histórico ou capacidades. Pedir permissões específicas ao proprietário, não credenciais no chat.
+- **Mudança de conta ou sessão de assistência:** a nova IA só pode ler repos públicos; não herda Drive/Push, segredos CI, histórico ou capacidades. Pedir permissões específicas ao proprietário, não credenciais no chat.
 - **Rollback:** não sobrescrever tag ou APK já publicado. Preparar hotfix com novo code mais alto e origem/QA identificados; referência e APK antigo ficam disponíveis para auditoria. Não recomendar downgrade sem estudo de compatibilidade.
 
 ## 13. Checklist final antes de responder ao proprietário

@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## GOVERNANÇA — COMUNICAÇÃO PÚBLICA NEUTRA E CONTINUIDADE TÉCNICA (07/11/2026; PR #293 ABERTA)
+
+- **Pedido e decisão do proprietário:** consolidar a identidade própria do **PokeSearch**, retirando menções desnecessárias a nomes de assistentes/modelos de IA da interface e da comunicação pública. A preferência é evitar rótulos que atribuam a autoria do aplicativo a uma ferramenta, **sem negar a colaboração usada no processo** e sem comprometer manutenção, QA, instruções para futuros colaboradores, auditorias ou histórico técnico.
+- **Implementação preparada em branch, NÃO oficial:** [PR #293 — padronizar rótulos públicos e mensagens de distribuição](https://github.com/LucianoToscano/PokeSearch/pull/293), branch `docs/ui-neutral-labels-20261107`. Alterações textuais pontuais em **9 arquivos**, preservando lógica Android, comandos dos workflows, assinatura, APIs, versionName/versionCode, duas Pokébolas, filtros, favoritos, login e publicação. Não assumir que a PR foi mesclada nem que um APK/OTA incorporou as mudanças.
+- **App:** `app/src/main/assets/visual_editor.js`: título de exportação alterado de referência ao assistente para **“Exportar configuração visual”**; estrutura e conteúdo JSON de importação/exportação permanecem intactos. O novo rótulo só aparece no APK após merge, compilação, release e instalação autorizados.
+- **Documentação e operação:** `AGENTS.md`, `README.md`, `docs/GUIA_MESTRE.md`, `docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md`, `docs/PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md` e `docs/POKESEARCH_LT128_OAUTH_ADMIN_20261027.md`: texto de apresentação e referências ao fornecedor substituídos pontualmente por linguagem neutra sobre **contas/sessões de assistência** e **anexos temporários**, sem perder o significado operacional. Os nomes originais dos arquivos foram preservados para não quebrar referências.
+- **Automação:** `.github/workflows/lt139-public-download-distribution.yml` e `.github/workflows/lt140-public-download-distribution.yml`: somente títulos de etapas e mensagens informativas de distribuição padronizados; não alterar gatilhos, shell, autenticação, verificação de certificados, entrega e checksums.
+- **Issue associada:** [#84](https://github.com/LucianoToscano/PokeSearch/issues/84) teve o **título** ajustado para “Erro recorrente `Library file not found` em anexos temporários de APK/ZIP”. A issue segue **aberta**, com seu corpo, comentários e evidências históricos preservados. O incidente continua caracterizado como falha do canal de anexos, não necessariamente falha do APK. Priorizar artefato verificado no GitHub Actions e, para entrega persistente, Release autorizado; preservar SHA-256, assinatura, integridade e teste físico.
+- **Regras para futuras edições:** manter linguagem pública centrada em **PokeSearch**, funcionalidades, autoria do projeto e documentação técnica. Não remover `AGENTS.md`, Guia Mestre, protocolos, prompts de continuidade, nomes técnicos de APIs/dependências, licenças, créditos/atribuições obrigatórios, instruções para agentes ou registros de incidentes. Nunca falsificar autoria/proveniência nem reescrever histórico de Git/PRs/issues/releases para ocultar trabalho anterior; o histórico antigo pode permanecer visível.
+- **Critérios de aceite e pendências:** revisar diff e CI da PR #293; como a `main` pode avançar, reconciliar sua HEAD antes de merge; verificar no app o rótulo de exportação e o JSON intacto; validar ambos os overlays quando aplicável; **merge, build e release/OTA dependem de autorização separada do proprietário**. Até então, registrar como *mudança preparada, não publicada*. O backup histórico integral não deve ser truncado, reescrito ou apagado.
+
 ## LT295 — ATAQUES DE CADA EVOLUÇÃO E SPRITE DO CARD (07/11/2026)
 
 - **Solicitação e causa:** o ícone ⚔ no cabeçalho da Análise PvP podia representar a espécie mais bem ranqueada em `currentRankSpecies`, não necessariamente a capturada. Essa ambiguidade foi apontada em print do Samsung. O cabeçalho do Card possuía sprite independente de 30dp com alvo legado de 78% e zoom máximo 2,2×, mesmo depois de a LT294 normalizar os Resultados.
@@ -823,7 +834,7 @@ Roteiro técnico e regressões: [LT231_SPRITES_COORDS_GOLPES_QA_20261103.md](LT2
 - Repositório único: [LucianoToscano/PokeSearch](https://github.com/LucianoToscano/PokeSearch), branch principal main. Leia primeiro AGENTS.md, este Guia Mestre, manual operacional e LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md. O backup histórico docs/GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md não deve ser sobrescrito ou truncado.
 - Em **02/11/2026**, a versão estável verificada era **LT227 / 0.02.27 / code 54434**, [Release v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434) e [workflow #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) SUCCESS. APK PokeSearch-v0.02.27-LT.apk, 28.080.679 bytes, SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6; SOURCE_COMMIT 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f. A main pode estar à frente do SOURCE_COMMIT do APK.
 - **Não perpetuar LT227 como "a versão mais recente"**: a nova IA deve consultar AGORA releases/latest, commits/main, runs e PRs, e conferir o maior versionCode estável/QA já instalado antes de reservar um novo.
-- A nova conta ChatGPT não herda conectores, permissões, histórico completo, acesso ao Drive nem secrets do GitHub. O proprietário deve autorizá-los pelo GitHub/Google Drive; a IA não pede senhas, cookies, tokens, JWT ou keystore na conversa. Repositório público não garante direitos de escrita/merge/release.
+- Uma nova conta ou sessão de assistência não herda conectores, permissões, histórico completo, acesso ao Drive nem secrets do GitHub. O proprietário deve autorizá-los pelo GitHub/Google Drive; a IA não pede senhas, cookies, tokens, JWT ou keystore na conversa. Repositório público não garante direitos de escrita/merge/release.
 
 ### Localização dos componentes reais
 
@@ -854,7 +865,7 @@ Roteiro técnico e regressões: [LT231_SPRITES_COORDS_GOLPES_QA_20261103.md](LT2
 - **Tentar um build local sem release:** gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug; exige SDK/JDK configurados e não produz APK com certificado de distribuição.
 - **Checar APK real no runner:** unzip -t, sha256sum, Android SDK aapt dump badging, apksigner verify --verbose --print-certs, comparar certificado, code e nome. Nunca marcar sem conferir.
 - **Logs/status:** outcomes distintos "código corrigido", "PR aberta", "PR merged", "Node QA PASS", "APK compilado", "APK assinado", "Release latest", "Drive enviado", "instalado Samsung". Cada afirmação precisa de link de evidência; em caso de acesso insuficiente, declarar PENDENTE.
-- **Problemas conhecidos:** 404 "Library file not found" é problema de entrega ChatGPT, não prova de APK inválido. Usar [protocolo de distribuição](PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md); não insistir em links sandbox inexistentes. Sem sessão GitHub/Drive na nova conta, não declarar operações externas.
+- **Problemas conhecidos:** 404 "Library file not found" é problema de entrega por anexos temporários, não prova de APK inválido. Usar [protocolo de distribuição](PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md); não insistir em links sandbox inexistentes. Sem sessão GitHub/Drive na nova conta, não declarar operações externas.
 - **Manual completo (leitura obrigatória):** [MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md](MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Essa página contém operações, exemplos, critérios de aceite, diagnóstico de falhas, guarda de versão, significado de OTA, espelho Drive e texto pronto para passagem entre contas. **Toda IA que assumir deve começar aqui**.
 
 ---
@@ -1694,7 +1705,7 @@ Após o primeiro teste físico LT175 no Samsung, o proprietário confirmou ícon
 - **Reações:** ❤️, 👍, 🎉, até uma por UID/mensagem em `chat/reactions`; tocar novamente desfaz, outro emoji substitui. Contagem em tempo real com UI compacta, sem autoscroll, sons ou notificações.
 - **Segurança:** rules versionadas e modelo de produção acrescentam somente `chat.reactions`, preservando `stats` integralmente. **Não publicado em Firebase produção**: antes de usar reações é necessário mesclar este nó às Rules do RTDB ao lado de messages/avatars, mantendo contadores online/instalações já ativos.
 - **Testes:** `app/tests/lt129-capture-share-reactions.test.js`, CI Android/Node assinado. Prova de funcionamento Samsung/API/DOM/diferentes contas ainda pendente.
-- Detalhes e regras: [POKESEARCH_LT129_CAPTURE_SHARE_REACTIONS_20261027.md](POKESEARCH_LT129_CAPTURE_SHARE_REACTIONS_20261027.md). Entregar GitHub artifact primeiro, nunca só link ChatGPT `sandbox`.
+- Detalhes e regras: [POKESEARCH_LT129_CAPTURE_SHARE_REACTIONS_20261027.md](POKESEARCH_LT129_CAPTURE_SHARE_REACTIONS_20261027.md). Entregar GitHub artifact primeiro, nunca só link temporário `sandbox`.
 
 
 ### LT128 — QA final assinada e auditada (27/10/2026)
@@ -1732,11 +1743,11 @@ Após o primeiro teste físico LT175 no Samsung, o proprietário confirmou ícon
 
 ## ALERTA PERMANENTE — Falha recorrente de entrega `Library file not found` (27/10/2026)
 
-- O usuário relatou e demonstrou repetidas vezes o toast **`Library file not found`** ao acessar anexos de APK/ZIP entregues pelo ChatGPT no Android. Classificação: **falha de distribuição de arquivos pelo ChatGPT (não confundir com Gradle/assinatura)**.
+- O usuário relatou e demonstrou repetidas vezes o toast **`Library file not found`** ao acessar anexos de APK/ZIP entregues por anexos temporários de conversa no Android. Classificação: **falha de distribuição de anexos temporários de conversa (não confundir com Gradle/assinatura)**.
 - **Regra mandatória em `AGENTS.md` #9** e procedimento completo em [PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md](PROTOCOLO_ENTREGA_APK_SEM_LIBRARY_NOT_FOUND.md).
-- **NUNCA** fornecer link `sandbox:` como único download nem declarar o APK disponível ao usuário apenas com a existência do arquivo no container. Primeiro fornecer URL verificada de **GitHub Actions artifact**, indicar login/expiração; link interno opcional. Em caso de falha no ChatGPT, direcionar imediatamente ao GitHub sem recompilar.
+- **NUNCA** fornecer link `sandbox:` como único download nem declarar o APK disponível ao usuário apenas com a existência do arquivo no container. Primeiro fornecer URL verificada de **GitHub Actions artifact**, indicar login/expiração; link interno opcional. Em caso de falha nos anexos temporários, direcionar imediatamente ao GitHub sem recompilar.
 - Conferir SHA-256, bytes, arquivo ZIP (CRC), certificado, SOURCE_COMMIT, versionCode e limite de 199 MB; não criar Release estável ou fazer merge sem autorização específica.
-- LT126 referência: [QA artifact #12708327476](https://github.com/LucianoToscano/PokeSearch/actions/runs/40446596976/artifacts/12708327476), SHA-256 APK `ba9e8b0ce32111567233646c31250b659e91985fb5d9da0d01d83d23a0c9bd0b`. Artifact GitHub existe no checkpoint consultado e é uma alternativa ao link defeituoso do ChatGPT. Isso não garante que o serviço externo nunca falhe.
+- LT126 referência: [QA artifact #12708327476](https://github.com/LucianoToscano/PokeSearch/actions/runs/40446596976/artifacts/12708327476), SHA-256 APK `ba9e8b0ce32111567233646c31250b659e91985fb5d9da0d01d83d23a0c9bd0b`. Artifact GitHub existe no checkpoint consultado e é uma alternativa ao link temporário defeituoso. Isso não garante que o serviço externo nunca falhe.
 
 
 ## LT126 — Chat Firebase + primeiro catálogo GO WatWowMap (27/10/2026)
