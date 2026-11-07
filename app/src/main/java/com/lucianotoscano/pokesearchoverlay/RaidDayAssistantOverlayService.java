@@ -790,12 +790,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduHeader.setContentDescription("Edu · arraste este identificador para mover o assistente");
         nameChip.addView(eduHeader,new LinearLayout.LayoutParams(-2,-1));
         eduBadge=text("",10,Color.rgb(127,219,189),false);
-        LinearLayout.LayoutParams smallBadge=new LinearLayout.LayoutParams(-2,-1);
+        eduBadge.setSingleLine(true);
+        eduBadge.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams smallBadge=
+            new LinearLayout.LayoutParams(0,-1,1);
         smallBadge.leftMargin=dp(6);
         nameChip.addView(eduBadge,smallBadge);
-        header.addView(nameChip,new LinearLayout.LayoutParams(-2,dp(31)));
-        View headerSpace=new View(this);
-        header.addView(headerSpace,new LinearLayout.LayoutParams(0,dp(31),1));
+        header.addView(nameChip,new LinearLayout.LayoutParams(0,dp(31),1));
         TextView close=button("×");
         close.setBackground(surface(Color.argb(166,32,44,60),
             Color.argb(105,200,215,230),22));
