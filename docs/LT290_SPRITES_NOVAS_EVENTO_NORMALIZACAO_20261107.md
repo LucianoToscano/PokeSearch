@@ -22,3 +22,9 @@ LT289 dependia de assets GO já empacotados como referência para grandes margen
 
 ## Limitação
 Se a página original e a medição auxiliar não puderem ler a transparência da imagem, LT290 mantém o fallback seguro; não inventa um zoom usando o nome de um Pokémon que poderia cortar uma fantasia diferente.
+
+## Integração e publicação oficial verificadas
+- [PR #284](https://github.com/LucianoToscano/PokeSearch/pull/284) mesclada por squash `caf072b4484c369aa0a89f1e3f0f52dc39e881c3`. Commit testado `ec0dac917646a8a74890c0fb3ef3d7d3403d7705` com sete gates `success` (Node, LT169, Android, Java, OTA, visual, beta privado); build genérico da PR `skipped` por política.
+- [Workflow permanente #42350034300](https://github.com/LucianoToscano/PokeSearch/actions/runs/42350034300): `completed/success`, `preflight=success`, `publish=success`; build protegido, assinatura do APK e digest público validados.
+- [Release estável LT290](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.90-54494): `v0.02.90-54494`, publicada em 07/11/2026 07:12:58 UTC; `draft=false`, `prerelease=false`; APK `PokeSearch-v0.02.90-LT.apk`, 33.935.994 bytes, SHA-256 `71b9c498bd786bc718739f7179ae1dc432490aa6cc2290e12a6232aff8c86770`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.90-54494/PokeSearch-v0.02.90-LT.apk). Solicitação SHA `badf71b95b2b2193cce3aaa9aff1afaae265c7b8`.
+- **PENDENTE:** confirmar fisicamente no Samsung P1/P2 se o card do PoGoCoordinates e a nova lista têm silhuetas proporcionais sem ultrapassar a caixa de P/M/G. Falhas de CORS continuam com fallback conservador, sem inventar uma escala.
