@@ -276,19 +276,16 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const general=document.querySelector("#rankLine .psRailGeneral");
     if(!general||general.disabled)return {ok:false,reason:"RG disabled"};
     general.click();
-    const picker=document.querySelector('#psRankExplorer button[data-ps-act="league-menu"]');
-    if(!picker)return {ok:false,reason:"missing native-free selector"};
-    picker.click();
-    const menu=document.querySelector("#psrLeagueOptions");
-    if(!menu||menu.hidden)return {ok:false,reason:"league options not opened"};
-    const choose=menu.querySelector('button[data-ps-act="league-pick"][data-league="ul"]');
-    if(!choose||choose.disabled)return {ok:false,reason:"UL option missing"};
+    const initial=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const selectedSpecies=initial.split(" · ")[0];
+    const choose=document.querySelector('#psRankExplorer .psrLeagueIcons button[data-ps-act="league-pick"][data-league="ul"]');
+    if(!choose||choose.disabled)return {ok:false,reason:"UL icon missing"};
     choose.click();
     const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
     const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
     const rows=window.PokeSearchRankExplorer?.getOverallRows?.(window.POKESEARCH_PVPOKE_OVERALL,"ul")||[];
-    const actual=rows.find(x=>x.name==="Teddiursa");
+    const actual=rows.find(x=>x.name===selectedSpecies);
     const expected=actual?"#"+actual.rank:"—";
     const aligned=(()=>{
      const controls=document.querySelector("#psRankExplorer .psrTopControls");
@@ -297,8 +294,10 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      return Math.max(...tops)-Math.min(...tops)<2;
     })();
     const hiddenExports=!document.querySelector("#psRankExplorer .psrActions");
-    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected&&aligned&&hiddenExports,
-     title,species,badge,expected};
+    const icons=document.querySelectorAll("#psRankExplorer .psrLeagueIconButton");
+    return {ok:title==="Rank Geral"&&species.includes(selectedSpecies)&&
+     species.includes("Ultra Liga")&&badge===expected&&aligned&&hiddenExports&&icons.length===4,
+     title,species,badge,expected,selectedSpecies,iconCount:icons.length};
    });
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
     sz.name+" "+JSON.stringify(overall270));
@@ -329,15 +328,15 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
       const actual=get(),expected=window.PokeSearchRankExplorer.getIvRows(
        window.POKESEARCH_PVP_IV_DATA,"Grimer",league)?.find(x=>x.iv==="10/15/14");
       selected[league]={actual,expected:expected?.rank,
-       ok:!!expected&&actual.title==="Rank Classe · Grimer"&&
+       ok:!!expected&&actual.title===(league==="ul"?"Rank Classe · Ultra Liga":"Rank Classe · Liga Mestra")&&
         actual.rank===String(expected.rank)&&
-        actual.sub.includes(league==="ul"?"Ultra Liga":"Liga Mestra")&&
+        actual.sub.includes("Grimer")&&
         actual.sub.includes("Classe IV #"+expected.rank)};
      }
      window.PokeSearchRankExplorer.close();
      const reopened=openDetailMetric("iv")===true;
-     const persists=get().sub.includes("Liga Mestra");
-     return {ok:first.sub.includes("Grande Liga")&&
+     const persists=get().title.includes("Liga Mestra");
+     return {ok:first.title.includes("Grande Liga")&&
       selected.ul.ok&&selected.ml.ok&&reopened&&persists,
       first,selected,reopened,persists};
     }finally{
