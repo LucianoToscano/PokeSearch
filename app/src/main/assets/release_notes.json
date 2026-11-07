@@ -2565,6 +2565,29 @@
           "Validação de instalação e imagem real no Samsung P1/P2 ainda pendente."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt280-verified-form-ranks-colored-moves-20261106",
+      "minVersionCode": 54484,
+      "date": "06/11/2026",
+      "title": "LT280 — Rank de formas e golpes coloridos",
+      "sections": {
+        "novidades": [
+          "Os golpes no cartão mostram cores correspondentes ao tipo verdadeiro do ataque, como no Pokémon GO/PokéGenie, mantendo a leitura compacta."
+        ],
+        "melhorias": [
+          "Burmy Planta, Areia e Lixo consulta a identidade PvP correta, mantendo o sprite da forma capturada.",
+          "Wormadam consulta cada forma independentemente, preservando tipos e estatísticas distintos.",
+          "O Rank Classe aberto pelo IV usa a mesma forma confirmada que gerou os rankings do cartão."
+        ],
+        "correcoes": [
+          "Resolvida a ausência do Rank Classe de Burmy Sandy causada pela diferença entre nome de exibição e nome PvPoke.",
+          "Golpes com tipo não confirmado permanecem neutros; vestimentas não alteram o cálculo e formas regionais/sombrosas não herdam rank incorreto."
+        ],
+        "emDesenvolvimento": [
+          "Verificar no Samsung a instalação, as cores dos golpes e o Rank Classe das três capas, além de homologar o comportamento da API ao vivo."
+        ]
+      }
     }
   ]
 }

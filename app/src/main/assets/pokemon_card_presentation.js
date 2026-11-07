@@ -15,6 +15,15 @@
   rock:["Pedra","⬟"],ghost:["Fantasma","☾"],dragon:["Dragão","❖"],
   dark:["Sombrio","☽"],steel:["Aço","⬡"],fairy:["Fada","✧"]
  };
+ // GO/PokéGenie-inspired type palette; same 18 Pokémon GO move types.
+ // Color is determined by the verified MOVE ID, never by the Pokémon type.
+ const TYPE_COLORS=Object.freeze({
+  normal:"#a8a77a",fire:"#ee8130",water:"#6390f0",electric:"#f7d02c",
+  grass:"#7ac74c",ice:"#96d9d6",fighting:"#c22e28",poison:"#a33ea1",
+  ground:"#e2bf65",flying:"#a98ff3",psychic:"#f95587",bug:"#a6b91a",
+  rock:"#b6a136",ghost:"#735797",dragon:"#6f35fc",dark:"#705746",
+  steel:"#b7b7ce",fairy:"#d685ad"
+ });
  const clean=s=>String(s==null?"":s).toLowerCase().normalize("NFD")
   .replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"");
  const moveId=s=>String(s==null?"":s).toUpperCase().trim()
@@ -64,7 +73,13 @@
    const marked=eligible.has(moveId(original));
    const localized=translator?.isVerified?.(original,i===0)?
      translator.name(original,i===0):original;
-   return '<span class="pkMove"'+(marked?' title="Golpe especial: MT de Elite ou legado"':'')+'>'+
+   const type=translator?.type?.(original,i===0)||null;
+   const color=type&&Object.prototype.hasOwnProperty.call(TYPE_COLORS,type)?
+    TYPE_COLORS[type]:null;
+   // Only our fixed palette enters the style attribute. Unknown stays neutral.
+   return '<span class="pkMove'+(color?' pkMoveTyped':'')+'"'+
+    (color?' data-move-type="'+type+'" style="--ps-move-type:'+color+'"':'')+
+    (marked?' title="Golpe especial: MT de Elite ou legado"':'')+'>'+
     esc(localized)+(marked?'<sup class="pkLegacy">*</sup>':"")+'</span>';
   }).join(" <span class=\"moveSlash\">/</span> ");
  }

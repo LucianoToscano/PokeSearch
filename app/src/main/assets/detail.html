@@ -93,6 +93,15 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
 .pkGender.genderless{color:#fff}
 .pkTypeImg{display:block;width:11px;height:11px;object-fit:contain;flex:none}
+/* LT280: compact type-colored move chips, not full-size opaque buttons.
+   Each color is backed by the move's verified GO type, unknown stays neutral. */
+#psCapturedMoveNames .pkMove{display:inline;padding:1px 3px;
+ border-radius:4px;line-height:1.6;box-decoration-break:clone;
+ -webkit-box-decoration-break:clone;white-space:normal}
+#psCapturedMoveNames .pkMoveTyped{color:var(--ps-move-type,#eaf0f6);
+ background:color-mix(in srgb,var(--ps-move-type) 14%,transparent);
+ border:1px solid color-mix(in srgb,var(--ps-move-type) 50%,transparent);
+ font-weight:750}
 .pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
 .moveSlash{opacity:.65}
 #timer{flex:0 0 auto;font-weight:900;font-size:11px;padding:4px 5px;
@@ -2024,7 +2033,7 @@ if(typeof document!=="undefined"&&typeof document.addEventListener==="function")
 function pvpFormsForLeague(league){
  const context=window.psRankContext||{};
  const l=(context.leagues||[]).find(x=>x?.league===league)||{};
- return [{name:context.name},...(l.own?[{name:context.name}]:[]),
+ return [{name:context.rankSpecies||context.name},...(l.own?[{name:context.rankSpecies||context.name}]:[]),
    ...(Array.isArray(l.evolutions)?l.evolutions:[]),
    ...(Array.isArray(l.megas)?l.megas:[]),
    ...(Array.isArray(l.comparisons)?l.comparisons:[])].slice(0,36);
@@ -2600,7 +2609,7 @@ function psRailChoices(payload){
    candidates.push({name:String(name||payload?.name||"").slice(0,100),
     rank,overallRank:rg,evolves:kind==="evolution",kind});
   };
-  add(data.own,payload?.name,"current");
+  add(data.own,payload?.rankSpecies||payload?.name,"current");
   if(payload?.includePreviousEvolutions!==false)
    for(const x of Array.isArray(data.evolutions)?data.evolutions.slice(0,36):[])
     add(x,x?.name,"evolution");
@@ -2654,7 +2663,7 @@ function psToggleLeagueAssessment(league){
  evolutionExpanded=true;psSelectedEvaluationLeague=league;
  psActiveAnalysisKey=league;activeRankLeague=league;
  const choice=psRailChoices(window.psRankContext)?.[league]?.classChoice;
- currentRankSpecies=choice?.name||window.psRankContext.name||watchName;
+ currentRankSpecies=choice?.name||window.psRankContext.rankSpecies||window.psRankContext.name||watchName;
  section.hidden=false;body.hidden=false;
  const toggle=document.getElementById("evoToggle");
  toggle?.setAttribute?.("aria-expanded","true");
@@ -3276,7 +3285,7 @@ function openDetailMetric(kind){
   // LT276: remember the last league chosen inside Rank Classe for this card.
   const context=window.psRankContext,league=window.psRailClassSelectedLeague||
    activeRankLeague||"gl";
-  const name=String(context?.name||metricCard.name||"");
+  const name=String(context?.rankSpecies||context?.name||metricCard.name||"");
   return window.PokeSearchRankExplorer?.open?.({
    kind:"class",name,league,iv:context?.iv||metricCard.iv,
    forms:pvpFormsForLeague(league)

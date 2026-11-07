@@ -6644,6 +6644,23 @@ function safePvpSpeciesKey(card){
  const flags=[card.region,card.variant,card.isShadow===true?"shadow":"",
   card.isPurified===true?"purified":""].map(speciesKey).join(" ");
  const dangerous=/(alola|galar|hisui|paldea|mega|primal|shadow|purified|origin|therian|gmax|gigantamax)/.test(flags);
+ // LT280: the source sends #412 Sandy or BURMY_SANDY, while the pinned
+ // PvPoke GM stores "Burmy (Sandy)" (not generic "Burmy"). Match *only*
+ // one exact, independently Dex-verified cloak. Wormadam has different types
+ // and even different stats for Trash; NEVER reuse a generic Burmy/Wormadam.
+ const dex=Number(String(card.number??card.dex??"").replace("#",""));
+ const family=dex===412?"burmy":dex===413?"wormadam":"";
+ if(family&&(key===family||key.startsWith(family+" ("))){
+  if(dangerous)return null;
+  if(window.PokeSearchOfflineSprite?.verifiedSpeciesIdentity?.(card)!==true)return null;
+  const match=key.match(/ \((plant|sandy|trash)\)$/);
+  const normalized=String(form||match?.[1]||"").replace(/[^a-z0-9]/g,"");
+  const cloak=normalized.replace(/^(?:burmy|wormadam)/,"")
+    .replace(/(?:cloak|form)$/,"");
+  if(!["plant","sandy","trash"].includes(cloak))return null;
+  if(match&&match[1]!==cloak)return null; // conflicting form identity
+  return family+" ("+cloak+")";
+ }
  // A correctly represented named variant (e.g. Vulpix (Alolan))
  // resolves through its OWN gamemaster entry, never Vulpix base.
  if(dangerous&&!/( \((?:alolan|galarian|hisuian|paldean|shadow|purified|mega|primal)\))/.test(key))return null;
@@ -6928,6 +6945,10 @@ window.pvpEvolutionDetails=function(index){
  const output={
   sourceIndex:Number(card.sourceIndex??-1),
   name:String(card.name||"").slice(0,100),
+  // Battle-stat identity is separate from the visible encounter/sprite label.
+  // The detail Rank Classe table must look up the same verified form key.
+  rankSpecies:(ivSpeciesByName.get(safePvpSpeciesKey(card))?
+   PVP_IV_GAME_MASTER.pokemon.find(x=>speciesKey(x[1])===safePvpSpeciesKey(card))?.[1]:"")||"",
   iv:String(card.iv||""),
   cp:String(card.cp??""),
   ivUnavailable:missingIv,

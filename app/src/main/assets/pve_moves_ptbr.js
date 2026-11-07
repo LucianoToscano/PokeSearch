@@ -35,8 +35,78 @@
   SKY_ATTACK:"Ataque do Céu",ICE_BEAM:"Raio Congelante",
   SOLAR_BEAM:"Raio Solar",OUTRAGE:"Ultraje",EARTHQUAKE:"Terremoto"
  });
+ // LT280: type IDs come from the SAME pinned GO moves.json used by
+ // PvPoke's verified recommended attacks. Only confirmed types are colored;
+ // never color a move from the Pokémon's own type or from its form.
+ const TYPE_IDS=Object.freeze({1:"normal",2:"fighting",3:"flying",4:"poison",5:"ground",
+  6:"rock",7:"bug",8:"ghost",9:"steel",10:"fire",11:"water",12:"grass",
+  13:"electric",14:"psychic",15:"ice",16:"dragon",17:"dark",18:"fairy"});
+ const OFFLINE_MOVE_TYPES=Object.freeze({
+  PECK_FAST:"flying",
+  FLY:"flying",
+  FIRE_SPIN_FAST:"fire",
+  FIRE_BLAST:"fire",
+  EMBER_FAST:"fire",
+  HEAT_WAVE:"fire",
+  QUICK_ATTACK_FAST:"normal",
+  SWIFT:"normal",
+  AIR_SLASH_FAST:"flying",
+  BRAVE_BIRD:"flying",
+  WING_ATTACK_FAST:"flying",
+  TWISTER:"dragon",
+  AERIAL_ACE:"flying",
+  THUNDER_SHOCK_FAST:"electric",
+  THUNDERBOLT:"electric",
+  THUNDER:"electric",
+  MUD_SHOT_FAST:"ground",
+  WATER_PULSE:"water",
+  RAZOR_LEAF_FAST:"grass",
+  BITE_FAST:"dark",
+  TACKLE_FAST:"normal",
+  SCRATCH_FAST:"normal",
+  COUNTER_FAST:"fighting",
+  DRAGON_BREATH_FAST:"dragon",
+  HYDRO_CANNON:"water",
+  SURF:"water",
+  FRENZY_PLANT:"grass",
+  SHADOW_BALL:"ghost",
+  WATER_GUN_FAST:"water",
+  VINE_WHIP_FAST:"grass",
+  DRAGON_TAIL_FAST:"dragon",
+  ROCK_THROW_FAST:"rock",
+  SHADOW_CLAW_FAST:"ghost",
+  CONFUSION_FAST:"psychic",
+  POISON_JAB_FAST:"poison",
+  LEAF_BLADE:"grass",
+  BODY_SLAM:"normal",
+  GUST_FAST:"flying",
+  INCINERATE_FAST:"fire",
+  FLAME_CHARGE:"fire",
+  FEATHER_DANCE:"flying",
+  HURRICANE:"flying",
+  SKY_ATTACK:"flying",
+  ICE_BEAM:"ice",
+  SOLAR_BEAM:"grass",
+  OUTRAGE:"dragon",
+  EARTHQUAKE:"ground",
+  FLAMETHROWER:"fire",
+  STRUGGLE_BUG_FAST:"bug",
+  CRUNCH:"dark",
+  DARK_PULSE:"dark",
+  IRON_HEAD:"steel",
+  MOONBLAST:"fairy",
+  CLOSE_COMBAT:"fighting",
+  SLUDGE_BOMB:"poison",
+  ROCK_SLIDE:"rock",
+  PSYCHIC:"psychic"
+ });
+ const cleanName=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .toLowerCase().replace(/[^a-z0-9]+/g,"");
+ const OFFLINE_NAMES=Object.freeze({lancachamas:"fire",insistencia:"bug",
+  flamethrower:"fire",strugglebug:"bug",mordida:"dark",pancadacorporal:"normal",
+  brasa:"fire",investida:"normal"});
  const normalize=value=>String(value||"").trim().toUpperCase().replace(/[^A-Z0-9]+/g,"_").replace(/^_|_$/g,"");
- let remote=null,pending=null;
+ let remote=null,remoteTypes=null,remoteNames=null,pending=null;
  const key=(value,fast)=>{
   let k=normalize(value);
   if(fast&&!k.endsWith("_FAST"))k+="_FAST";
@@ -50,6 +120,14 @@
   // An unknown ID is displayed explicitly, not an invented localized move.
   "Golpe sem tradução";
  const isVerified=(value,fast=false)=>!!lookup(value,fast);
+ const type=(value,fast=false)=>{
+  const proto=key(value,fast),raw=String(value||"");
+  const t=remoteTypes?.get(proto)||OFFLINE_MOVE_TYPES[proto]||
+   remoteNames?.get(cleanName(raw))||OFFLINE_NAMES[cleanName(raw)]||
+   // An original _FAST or localized name may be supplied without suffix.
+   remoteTypes?.get(normalize(raw))||OFFLINE_MOVE_TYPES[normalize(raw)];
+  return Object.values(TYPE_IDS).includes(t)?t:null;
+ };
  const pair=value=>{
   const p=String(value||"").split(/\s*\/\s*/);
   return p.length===2?name(p[0],true)+" / "+name(p[1],false):
@@ -78,19 +156,22 @@
   ]).then(([catalog,translation])=>{
    if(!Array.isArray(catalog)||!translation||typeof translation!=="object")
     throw Error("Catálogo incompleto");
-   const dict=new Map();
+   const dict=new Map(),byId=new Map(),byName=new Map();
    for(const item of catalog){
     const proto=typeof item?.proto==="string"?normalize(item.proto):"";
     const n=Number(item?.moveId);
     const word=Number.isInteger(n)?translation["move_"+n]:null;
-    if(proto&&typeof word==="string"&&word.trim().length>1&&word.length<120)
+    if(proto&&typeof word==="string"&&word.trim().length>1&&word.length<120){
      dict.set(proto,word.trim());
+     const t=Number.isInteger(item.type)?TYPE_IDS[item.type]:null;
+     if(t){byId.set(proto,t);byName.set(cleanName(word),t);}
+    }
    }
    if(dict.size<50)throw Error("Fonte parcial");
-   remote=dict;return true;
+   remote=dict;remoteTypes=byId;remoteNames=byName;return true;
   }).catch(()=>false).finally(()=>{pending=null;});
   return pending;
  };
- return Object.freeze({name,pair,isVerified,ensure,key,offlineCount:Object.keys(OFFLINE).length,
+ return Object.freeze({name,pair,isVerified,type,ensure,key,offlineCount:Object.keys(OFFLINE).length,
   source:"WatWowMap/pogo-data-api · GO pt-BR · commit 31a3bcdc"});
 });
