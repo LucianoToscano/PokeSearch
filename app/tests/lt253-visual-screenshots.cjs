@@ -284,8 +284,9 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.badge?.span===5&&rail270.badge?.height===7&&
     rail270.badge?.cardHeight===39&&rail270.badge?.rowHeight===41&&
     rail270.badge?.flagSize===19&&
-    rail270.badge?.right>=2.8&&rail270.badge?.right<=3.2&&
-    rail270.badge?.bottom>=2.8&&rail270.badge?.bottom<=3.2&&
+    // The physical CSS border contributes ~1px to the measured inset.
+    rail270.badge?.right>=2.9&&rail270.badge?.right<=4.1&&
+    rail270.badge?.bottom>=2.9&&rail270.badge?.bottom<=4.1&&
     rail270.badge?.arrows?.length===2&&
     rail270.badge?.arrows?.every(a=>a.width===3&&a.height===3&&
      parseFloat(a.stroke)>=.7&&parseFloat(a.stroke)<=1.1&&
