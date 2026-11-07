@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.81",
-  "code": 54485,
-  "label": 51285,
-  "previous_tag": "v0.02.80-54484",
-  "qa_max_code": 54484,
-  "release_notes": "PokeSearch LT281: ajuste visual solicitado após teste físico Samsung LT280. Os golpes capturados mostram apenas texto colorido segundo o tipo VERIFICADO de cada ataque, sem chips, fundo colorido, moldura ou espaçamento extra. O separador entre golpes rápidos e carregados mudou de / para |, incluindo fallback sem o módulo de apresentação. Permanecem 18 cores de tipos, nomes PT-BR confirmados, indicador de legado/Elite, ranks GL/UL/ML, Burmy/Wormadam, cinco cartões, sprites, duas Pokébolas, localização, filtros, OTA e assinatura. Teste físico Samsung P1/P2 da LT281 ainda necessário."
+  "version": "0.02.82",
+  "code": 54486,
+  "label": 51286,
+  "previous_tag": "v0.02.81-54485",
+  "qa_max_code": 54485,
+  "release_notes": "PokeSearch LT282: após teste físico Samsung Medicham, corrige a avaliação de Raides. Golpes Ágil e Carregado mostram SOMENTE nomes com texto colorido pelo tipo verdadeiro verificado do ataque, usando a mesma paleta dos 18 tipos do cartão principal; sem fundo, borda, chip ou cor inventada quando o tipo for desconhecido. O botão Ver mais classificações agora aciona o recálculo do tamanho da janela quando a lista abre ou fecha, liberando rolagem até o fim do conteúdo em telas limitadas. Mantidos rankings exatos, números, traduções PT-BR, IVs, cinco cartões, sprites, filtros, localização, duas Pokébolas, OTA e assinatura. Exige validação física Samsung P1/P2 da LT282."
 }

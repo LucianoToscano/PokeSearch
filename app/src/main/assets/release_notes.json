@@ -2608,6 +2608,26 @@
           "Confirmar visualmente no Samsung P1/P2 os golpes normais, desconhecidos e legados após instalar a LT281."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt282-raid-move-text-colors-scroll-20261107",
+      "minVersionCode": 54486,
+      "date": "07/11/2026",
+      "title": "LT282 — Golpes coloridos em Raides e rolagem das classificações",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "Na avaliação de Raides, os nomes dos ataques Ágil e Carregado usam a mesma paleta de 18 tipos verificados do cartão principal, somente na cor das letras.",
+          "Ao tocar em Ver mais classificações, o cartão recalcula a altura e habilita a rolagem para alcançar todos os itens, inclusive em telas menores."
+        ],
+        "correcoes": [
+          "Não são criados chips, fundos ou contornos coloridos nos golpes de Raides; nomes sem tipo verificado permanecem neutros.",
+          "A expansão e a contração da lista atualizam o tamanho da WebView e do overlay sem modificar rankings, IVs, sprites, filtros nem duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Validar visualmente no Samsung as cores de ataques Psíquico/Lutador e a rolagem até o fim da lista em P1/P2."
+        ]
+      }
     }
   ]
 }
