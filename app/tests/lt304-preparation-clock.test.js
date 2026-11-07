@@ -46,7 +46,7 @@ assert.equal((arrays.match(/<item>/g)||[]).length,8+5+3+2);
 for(const term of [
   "Passe Diário guardado do dia anterior","Já coletou o Passe Diário de hoje",
   "Já realizou alguma reide hoje","Já começou o roteiro",
-  "aviso ou restrição ativa","Híbrido (planejado)","Não sei","Outro local"
+  "aviso ou restrição ativa","Híbrido (autorização por sessão)","Não sei","Outro local"
 ])assert.ok(arrays.includes(term),term);
 assert.match(prep,/RaidDayPreparation load\(Context context,/);
 assert.match(prep,/R\.array\.raid_day_preparation_questions/);
