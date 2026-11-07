@@ -98,15 +98,17 @@ check("LT62 followup: PC and Level are minimum/maximum pairs with no steppers",(
  assert.ok(!dock.includes('make("button","extraStep"'));
 });
 check("LT62 followup: display-only translations preserve English site values",()=>{
- for(const p of ['"Despawn (longest)":"Despawn"','"CP (highest)":"CP"',
- '"IV % (highest)":"IV %"','"Level (highest)":"Nível"',
- '"Distance (nearest)":"Distância"','"Any":"Qualquer"',
+ for(const p of ['"Despawn (longest)":"Tempo restante (maior)"','"CP (highest)":"PC (maior)"',
+ '"IV % (highest)":"IV % (maior)"','"Level (highest)":"Nível (maior)"',
+ '"Distance (nearest)":"Distância (mais perto)"','"Any":"Qualquer"',
  '"Sunny":"Ensolarado/Limpo"','"Rainy":"Chuvoso"',
  '"Partly Cloudy":"Parcialmente nublado"','"Cloudy":"Nublado"',
  '"Windy":"Ventando"','"Snow":"Neve"','"Fog":"Névoa"'])
   assert.ok(dock.includes(p),p);
  assert.ok(dock.includes('btn.onclick=()=>{modeDraft[key]=value;'));
  assert.ok(dock.includes('btn.textContent=(modeDraft[key]===value?"✓ ":"")+filterDisplayLabel(key,value);'));
+ assert.ok(dock.includes('const button=make("button","extraOptionItem",filterDisplayLabel(key,value));'),
+  "Main lateral Sort list must show translated labels, not the English wire values");
 });
 check("LT62 followup: Apply Clear Cancel are icon-only SVG buttons",()=>{
  for(const p of ['Aplicar filtros','Limpar filtros','Cancelar alterações',
