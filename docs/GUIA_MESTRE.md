@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT304 — EDU · INTERFACE POR CONVERSA E SIMULAÇÃO HOJE (07/11/2026)
+
+- **Nome do assistente alterado para EDU** (na Home: “Edu · Assistente do Dia de Reides”). Feedback físico do Samsung mostrou janela gigante, grade de botões, ajustes misturados ao tutorial, quatro fusos exibidos sempre e bloqueio da autorização `MediaProjection`; preservar as três capturas de 07/11 como requisitos de regressão.
+- **UX substituta na PR #300 draft:** mini treinador pixel-art mantido; painel de conversa compacto **máximo 286dp largura e ~43% da altura/285dp**, cabeçalho “Edu” arrastável com posição salva, uma fala do treinador + no máximo 2/3 escolhas contextuais, menu **⋯** isolando P/M/G, animação, calendário/lembretes e captura visual; sem grades ou relatórios constantes na tela principal.
+- **Simulação hoje:** botão `Simular hoje`, usa data atual em Brasília como **evento fictício**, label visível `SIMULAÇÃO HOJE`, é Modo Treino sem eventos reais; o roteiro percorre 11 etapas em ordem e nunca promete passes. No real, respeitar D−1/D. Roteiro continua data-driven em `roteiro_bug_passes.json` com `falaEdu`, `ajudaEdu` e `periodo`.
+- **Sem cidades de começo:** remover da preparação a pergunta "Onde pretende jogar?" (de 8 para 7 perguntas com migração local das respostas anteriores). Havaí → Nova Zelândia → Havaí → dia do evento → Kiribati opcional são **pontos do relato, não opções de início**; local de jogo só importa na etapa E08/E10.
+- **Fix autorização Android:** antes de abrir `RaidDayCaptureConsentActivity`, remover a janela Edu e esconder o personagem. `ACTION_CONSENT_DONE` restaura só a bolha recolhida ao terminar/cancelar a autorização. Nunca deixar overlay tocar o botão Autorizar do Android.
+- **Reides simplificadas:** na E04, "Venci / Perdi / Saí" e pergunta separada de captura; na E10, "Registrar reide / Seguir", permitindo várias sem 9 botões simultâneos. A captura permanece opcional/consentida e sem avanço automático.
+- **QA2 privado:** LT304 0.03.04 com **versionCode 54509** superior ao QA1 54508, assinatura permanente preservada. **Não mesclar nem publicar** sem autorização; CI e teste físico Samsung obrigatórios. Plano e checklist: `docs/LT304_EDU_REDESIGN_BALAO_SIMULACAO_HOJE_20261107.md`. LT303 54507 permanece oficial.
+
+
 ## LT304 — E2B/E3/E4/E5 CANDIDATAS E APK QA PRIVADA (07/11/2026)
 
 - **Desenvolvimento somente PR #300 (draft):** calendário manual, lembretes locais opcionais e inexactos, diagnósticos e resultados da reide separados, captura consentida por sessão via MediaProjection/ML Kit, sugestões conservadoras de tela PT/EN (três quadros) que exigem confirmação/rejeição humana; sem avanço automático, teleporte, acesso ao servidor ou garantia de passes. Catálogo oficial de eventos ainda não integrado; datas/horários que o jogador digitar são **não verificados**.
