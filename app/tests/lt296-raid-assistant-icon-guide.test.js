@@ -1,0 +1,36 @@
+"use strict";
+// LT296 (candidate): the user-selected pass icon starts an independent MANUAL
+// assistant. This test intentionally does not claim screen recognition or extra passes.
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const base=path.join(__dirname,"../src/main");
+const read=p=>fs.readFileSync(path.join(base,p),"utf8");
+const home=read("java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
+const service=read("java/com/lucianotoscano/pokesearchoverlay/RaidAssistantOverlayService.java");
+const manifest=read("AndroidManifest.xml");
+const icon=read("assets/raid_assistant_icon.b64").trim();
+const bytes=Buffer.from(icon,"base64");
+assert.equal(bytes.subarray(0,8).toString("hex"),"89504e470d0a1a0a","PNG signature");
+assert.equal(bytes.readUInt32BE(16),96,"optimized source width");
+assert.equal(bytes.readUInt32BE(20),96,"optimized source height");
+assert.match(manifest,/android:name="\.RaidAssistantOverlayService"/);
+assert.match(home,/controls\.addView\(raidAssistantControl,guideLp\)/);
+assert.match(home,/RaidAssistantOverlayService\.loadArtwork\(this\)/);
+assert.match(home,/toggleRaidAssistantOverlay\(\)/);
+assert.match(home,/stopService\(new Intent\(this,RaidAssistantOverlayService\.class\)\)/);
+assert.match(home,/if\(req==104&&Settings\.canDrawOverlays\(this\)\)toggleRaidAssistantOverlay\(\)/);
+assert.match(service,/BUBBLE_DP=45/);
+assert.match(service,/WindowManager\.LayoutParams\.TYPE_APPLICATION_OVERLAY/);
+assert.match(service,/onTouchListener|setOnTouchListener/);
+assert.match(service,/setVisible\(!visible\)/);
+assert.match(service,/prefs\.edit\(\)\.putInt\("step",index\)/);
+assert.match(service,/getBoolean\("finished",false\)/);
+assert.match(service,/getBoolean\("paused",false\)/);
+assert.match(service,/Manual · não lê tela nem altera o jogo/);
+assert.match(service,/não é garantido/);
+assert.doesNotMatch(service,/MediaProjectionManager|AccessibilityService|PGSharp|poke\.nianticlabs|https?:\/\//);
+assert.match(manifest,/android:name="\.OverlayService"/);
+assert.match(manifest,/android:name="\.SecondaryOverlayService"/);
+assert.match(manifest,/android:name="\.RareCandyOverlayService"/);
+console.log("LT296 activation candidate: PNG, independent draggable overlay, manual progression, state persistence and old overlays PASS");

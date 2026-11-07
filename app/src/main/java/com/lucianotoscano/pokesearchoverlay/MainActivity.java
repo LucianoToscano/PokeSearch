@@ -124,6 +124,7 @@ public class MainActivity extends Activity {
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl;
     private ImageButton rareCandyControl;
+    private ImageButton raidAssistantControl;
     private TextView sessionHint;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
@@ -212,6 +213,7 @@ public class MainActivity extends Activity {
             stopService(new Intent(this,OverlayService.class));
             stopService(new Intent(this,SecondaryOverlayService.class));
             stopService(new Intent(this,RareCandyOverlayService.class));
+            stopService(new Intent(this,RaidAssistantOverlayService.class));
             refreshHomeOverlay();
             if(availabilityDialog==null||!availabilityDialog.isShowing()){
                 availabilityDialog=new AlertDialog.Builder(this)
@@ -455,7 +457,7 @@ public class MainActivity extends Activity {
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
         // Reserve the four native 34dp action targets (plus 5dp margins).
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(28)-d(38)-d(6)-(d(34)*4+d(5)*3)-d(3);
+            -d(28)-d(38)-d(6)-(d(34)*5+d(5)*4)-d(3);
         int wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
@@ -492,6 +494,19 @@ public class MainActivity extends Activity {
         candyLp.leftMargin=d(5);
         controls.addView(rareCandyControl,candyLp);
         rareCandyControl.setOnClickListener(v->toggleRareCandyOverlay());
+
+        // Pass icon selected by the user: independent raid guide launcher.
+        raidAssistantControl=new ImageButton(this);
+        raidAssistantControl.setImageBitmap(RaidAssistantOverlayService.loadArtwork(this));
+        raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
+        raidAssistantControl.setContentDescription("Ativar Assistente de Reides");
+        raidAssistantControl.setBackground(homeSurface(
+            homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+        LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(34),d(34));
+        guideLp.leftMargin=d(5);
+        controls.addView(raidAssistantControl,guideLp);
+        raidAssistantControl.setOnClickListener(v->toggleRaidAssistantOverlay());
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
@@ -1796,6 +1811,27 @@ public class MainActivity extends Activity {
         }
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,600);
     }
+    private void toggleRaidAssistantOverlay(){
+        if(!AppAvailability.isAllowed(this)){
+            applyAppAvailability(AppAvailability.cached(this));return;
+        }
+        if(RaidAssistantOverlayService.isRunning()){
+            stopService(new Intent(this,RaidAssistantOverlayService.class));
+            Toast.makeText(this,"Assistente de Reides desativado",Toast.LENGTH_SHORT).show();
+        }else{
+            if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
+                startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:"+getPackageName())),104);
+                return;
+            }
+            Intent guide=new Intent(this,RaidAssistantOverlayService.class);
+            if(Build.VERSION.SDK_INT>=26)startForegroundService(guide);
+            else startService(guide);
+            Toast.makeText(this,"Assistente de Reides ativado · modo manual",
+                Toast.LENGTH_SHORT).show();
+        }
+        if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,600);
+    }
     private void toggleSecondaryOverlay(){
         if(!AppAvailability.isAllowed(this)){
             applyAppAvailability(AppAvailability.cached(this));return;
@@ -2013,6 +2049,15 @@ public class MainActivity extends Activity {
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
     }
     private void refreshHomeOverlay(){
+        if(raidAssistantControl!=null){
+            boolean active=RaidAssistantOverlayService.isRunning();
+            raidAssistantControl.setBackground(homeSurface(
+                active?Color.rgb(18,94,82):
+                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),
+                10,0));
+            raidAssistantControl.setContentDescription(active?
+                "Desativar Assistente de Reides":"Ativar Assistente de Reides");
+        }
         if(rareCandyControl!=null){
             boolean active=RareCandyOverlayService.isRunning();
             rareCandyControl.setBackground(homeSurface(
@@ -3638,6 +3683,7 @@ public class MainActivity extends Activity {
         }
         if(req==101&&Settings.canDrawOverlays(this))startOverlay();
         if(req==103&&Settings.canDrawOverlays(this))startSecondaryOverlayAuthorized();
+        if(req==104&&Settings.canDrawOverlays(this))toggleRaidAssistantOverlay();
         if(req==303){
             if(result==RESULT_OK&&data!=null&&data.getData()!=null)
                 readHomeDataBackup(data.getData());
