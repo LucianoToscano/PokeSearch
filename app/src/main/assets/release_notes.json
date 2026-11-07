@@ -2628,6 +2628,30 @@
           "Validar visualmente no Samsung as cores de ataques Psíquico/Lutador e a rolagem até o fim da lista em P1/P2."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt283-compact-expand-verified-pvp-fast-20261107",
+      "minVersionCode": 54487,
+      "date": "07/11/2026",
+      "title": "LT283 — Janelas inteligentes e rankings confiáveis",
+      "sections": {
+        "novidades": [
+          "Indicador discreto de confirmação para rankings de Raides, sem confundir colocação da espécie com IV do encontro."
+        ],
+        "melhorias": [
+          "Painéis expansíveis compartilham recálculo de altura e rolagem; eventos repetidos são agrupados para deixar a interface mais fluida.",
+          "A família PvP e a forma canônica usam índices locais preparados uma única vez, preservando as distinções verificadas entre espécies e formas.",
+          "Trocar de painel também recolhe a ajuda PvP, mantendo o cartão compacto."
+        ],
+        "correcoes": [
+          "Fonte PvE pendente ou indisponível é identificada como não confirmada, nunca como ranking ruim.",
+          "As duas Pokébolas usam os mesmos scripts, sem compartilhar estados de busca, favoritos privados ou posição."
+        ],
+        "emDesenvolvimento": [
+          "Homologar no Samsung as transições de painéis e a rolagem P1/P2; comparar resultados de formas especiais e performance real.",
+          "Comparador avançado de IV, presets de Eventos, assistente de golpes, diagnóstico e OTA seguem no roteiro de etapas posteriores."
+        ]
+      }
     }
   ]
 }
