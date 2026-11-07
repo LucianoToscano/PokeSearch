@@ -667,7 +667,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
     }
     private void setTalk(String speech,String caption){
-        eduSpeech.setText(speech);
+        // O cabeçalho já identifica o treinador; evita repetir "Edu:" no balão.
+        String message=speech==null?"":speech.trim();
+        if(message.startsWith("Edu: "))message=message.substring(5);
+        eduSpeech.setText(message);
         eduSubline.setText(caption);
         eduSubline.setVisibility(caption==null||caption.isEmpty()?
             View.GONE:View.VISIBLE);
