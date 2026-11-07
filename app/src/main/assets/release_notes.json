@@ -3009,7 +3009,8 @@
         ],
         "correcoes": [
           "Removida a diferença de tamanho entre ícones simples e duplos no cartão, inclusive em formatos P/M/G e nas duas Pokébolas.",
-          "Removidos avisos repetidos sobre diferenças entre golpes capturados e PvPoke, e as linhas duplicadas PvP/Raides que confundiam a leitura."
+          "Removidos avisos repetidos sobre diferenças entre golpes capturados e PvPoke, e as linhas duplicadas PvP/Raides que confundiam a leitura.",
+          "O botão IV agora fecha a aba Rank Classe ao segundo toque e reabre ao terceiro, mesmo após trocar entre Grande, Ultra e Liga Mestra; o Rank Geral não é afetado."
         ],
         "emDesenvolvimento": [
           "Conferir o visual físico no Samsung dos cartões Slowpoke (2 tipos) e Chikorita (1 tipo) após a instalação."
