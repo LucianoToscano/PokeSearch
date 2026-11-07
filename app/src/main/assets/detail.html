@@ -2001,6 +2001,7 @@ let psSelectedEvaluationLeague="";
  * Do not change the underlying PvP, PvE, calculator or per-ball data. */
 function psCloseOtherPanels(keep){
  if(keep!=="types")psCloseTypeEffectPanel();
+ if(keep!=="captured")psCloseCapturedMovesPanel();
  if(keep!=="raid"&&psRaidExpanded){
   psRaidExpanded=false;
   const p=document.getElementById("raidPanel"),b=document.getElementById("raidRow");
@@ -2395,7 +2396,24 @@ function evolutionRow(x,first){
 // ⚔️ is intentionally tiny and shown only for a VERIFIED class #1.
 // PvP recommended attacks must come from the source-pinned PvPoke rankings;
 // Elite/legacy status must come from the corresponding gamemaster species.
-let currentRankSpecies="",currentCardMoves="";
+let currentRankSpecies="",currentCardMoves="",psCapturedCard=null;
+function psCloseCapturedMovesPanel(){
+ const section=document.getElementById("psCapturedMovesPanel");
+ if(section)section.hidden=true;
+ document.getElementById("psCapturedMovesAction")?.setAttribute?.("aria-expanded","false");
+}
+function toggleCapturedMoves(){
+ const section=document.getElementById("psCapturedMovesPanel");
+ const button=document.getElementById("psCapturedMovesAction");
+ if(!section||!button||!currentCardMoves)return false;
+ if(!section.hidden){psCloseCapturedMovesPanel();resizeEvolutionPanel();return true;}
+ psCloseOtherPanels("captured");
+ section.innerHTML=window.PokeSearchMovePanel?.captured?.(
+  currentCardMoves,psCapturedCard,window.PokeSearchCardMetaData)||
+  '<div class="psMoveTitle">Dados dos golpes não confirmados</div>';
+ section.hidden=false;button.setAttribute("aria-expanded","true");
+ resizeEvolutionPanel();return true;
+}
 // LT248: keep the verified move label consistent when the panel is
 // collapsed, rerendered or reopened for the same form and league.
 const psVerifiedMoveIcons=new Map();
@@ -3639,6 +3657,7 @@ window.showDetails=(c,mode,watched)=>{
  const changed=detailIdentity!==nextIdentity;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
+  psCloseCapturedMovesPanel();psCapturedCard=null;
   psCloseTypeEffectPanel();psTypeEffectKey="";psTypeEffectData=null;
   psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
    Math.round(Number(c.level)*2)/2:20;
@@ -3859,6 +3878,7 @@ window.showDetails=(c,mode,watched)=>{
  const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"").replace(/\s+\/\s+/g," | ");
  window.currentCardMoves=String(c.moves||"");
  currentCardMoves=window.currentCardMoves;
+ psCapturedCard=c;
  currentRankSpecies=String(c.name||"");
  if(verifiedIvRank)renderRankOneMoves();
  // Initial visible Raid shortcut, while verified PvP league data may still load.
@@ -3871,7 +3891,10 @@ window.showDetails=(c,mode,watched)=>{
  const locationFlag=presenter?.locationCountryFlag(c.location)||"";
  const locationText=String(c.location||"");
  document.getElementById("info").innerHTML=
-  (c.moves?'<span class="infoLabel">Golpes:</span><span id="psCapturedMoveNames" class="infoValue">'+movesHtml+'</span>':"")+
+  (c.moves?'<span class="infoLabel">Golpes:</span><button type="button" id="psCapturedMovesAction"'+
+   ' aria-label="Abrir detalhes dos golpes capturados" aria-controls="psCapturedMovesPanel"'+
+   ' aria-expanded="false" onclick="toggleCapturedMoves()"><span id="psCapturedMoveNames" class="infoValue">'+
+   movesHtml+'</span></button>':"")+
   item("Distância",c.distance)+
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
