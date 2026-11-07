@@ -11,7 +11,12 @@ assert.ok(compact.includes("#major .statTile{height:21px;min-height:21px;max-hei
 assert.ok(compact.includes("#major .ivTile .ivTypes{display:inline-flex;"),"type icons on top left");
 assert.ok(compact.includes("#major .ivTile .ivPercent{top:1px;right:3px;"),"100 percent top right");
 assert.ok(compact.includes("#major .ivTile .ivTypes .pkTypeImg{width:9px;height:9px;"),"original png tiny");
-assert.ok(js.includes("document.getElementById(\"types\").innerHTML+'</span>'"),"types are rendered inside IV cell");
+// LT297 replaces the historic 9px IV-inline icons with a separate,
+// centered clickable type tile; the percentage and A/D/S stay in IV.
+assert.ok(js.includes('const typeIcons=document.getElementById("types").innerHTML')&&
+ js.includes('id="psTypeTap" type="button"')&&
+ detail.includes('#major .ivTile .ivTypes{display:none!important}'),
+ "types are now a separate touchable tile, not overlaid on IV");
 assert.ok(js.includes('document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite"'),"Gengar detail conditional");
 assert.ok(compact.includes("#artColumn.gengarSprite #img{transform:scale(.78);"),"only Gengar detail art shrinks");
 assert.ok(dock.includes("dexNumber===94?0.67:0.86"),"Gengar in list is 22% smaller");
@@ -20,4 +25,4 @@ assert.ok(detail.includes("#major .statValue.red{color:#ff9bb0}"),"keep raw IV o
 assert.ok(detail.includes("#headerActions #timer.pulse .timerClock"),"clock remains independent");
 assert.ok(detail.includes("id=\"evolutions\" hidden"),"evolution section preserved");
 assert.ok(detail.includes("#coordRow #coords:not(.hasCoords):not(.isPending){"),"coords button preserved");
-console.log("LT145 QA15: type icons in IV box, half-size stat footprint and Gengar-only normalization PASS");
+console.log("LT145 QA15/297: original compact Gengar rules retained; type icons moved to own button, IV unchanged PASS");
