@@ -91,8 +91,9 @@ assert.equal(e.props["--tile-alpha-zoom"],String(providerZoom));
 e=environment(bigPixels);
 const broad={url:site,left:7,right:90,top:6,bottom:89};
 assert.equal(e.scale.enhanceProviderTile(e.img,broad,false),true);
-assert.equal(e.props["--tile-alpha-zoom"],"1",
- "standard well-filled sprites retain fixed P/M/G size with no forced magnification");
+const normalZoom=Number(e.props["--tile-alpha-zoom"]);
+assert.ok(Math.abs(normalZoom*.88*(84/96)-.87)<.01,
+ "even ordinary sprites with 87.5% raw alpha occupy 87% of the actual tile");
 
 e=environment();
 assert.equal(e.scale.enhanceProviderTile(e.img,null,false),false);

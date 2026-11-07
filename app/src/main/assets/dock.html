@@ -6535,6 +6535,17 @@ function attachSpriteFeedback(){
          );
         }
        }
+       // LT294: non-DOM forms sometimes render a pinned, species-validated
+       // PokeMiners sprite directly. These exact immutable GO URLs are also
+       // safe to measure via the same bounded native reader if the canvas is
+       // blocked. Never allow an arbitrary API/image field or a guessed form.
+       if(!verifiedProvider&&sourceCard&&engine?.goExactIcon){
+        const pinned=engine.goExactIcon(sourceCard);
+        const shownUrl=String(img.currentSrc||img.src||"");
+        verifiedProvider=Boolean(pinned?.goExact===true&&
+         shownUrl===String(pinned.src||"")&&
+         /^https:\/\/(?:raw\.githubusercontent\.com\/PokeMiners\/pogo_assets\/|cdn\.jsdelivr\.net\/gh\/PokeMiners\/pogo_assets@)/i.test(shownUrl));
+       }
       }catch(_){}
       window.PokeSearchSpriteScale?.applyResultTile?.(img,exactReference);
       window.PokeSearchSpriteScale?.enhanceProviderTile?.(
