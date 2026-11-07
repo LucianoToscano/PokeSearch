@@ -3128,7 +3128,8 @@ function psCpRenderRankCompare(row,iv,compare){
   '<div class="psCpRankLine"><b>Liga</b><b>IV A</b><b>IV B</b></div>'+
   results.map(x=>x.verified?
    '<div class="psCpRankLine"><span class="psCpRankLeague">'+
-   h(x.league.toUpperCase())+'</span>'+cell(x.a,x.better==="a")+
+   h(x.league.toUpperCase())+(Number.isInteger(x.overallRank)?
+   '<small>RG #'+x.overallRank+'</small>':"")+'</span>'+cell(x.a,x.better==="a")+
    cell(x.b,x.better==="b")+'</div>':
    '<div class="psCpRankLine"><span class="psCpRankLeague">'+
    h(x.league.toUpperCase())+'</span><span>—</span><span>Não confirmado</span></div>'
