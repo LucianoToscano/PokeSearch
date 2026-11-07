@@ -1463,7 +1463,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   aria-controls="raidPanel" onclick="toggleRaidDetails()">Raides · verificando...</button>
  <section id="raidPanel" hidden role="region" aria-label="Análise de atacantes em Raides"></section>
  <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div>
- <section id="evolutions" class="psPerEvoMoves" hidden aria-label="Avaliação de evoluções PvP">
+ <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
   </button>
@@ -3007,6 +3007,8 @@ window.showEvolutionDetails=payload=>{
   body.innerHTML=html;
   window.PokeSearchEvolutionMoves?.restore?.();
  }
+ // Header shortcut is hidden ONLY when attack icons exist beside species.
+ outer.classList?.toggle?.("psPerEvoMoves",!!body.querySelector?.(".evoMovesAction"));
  outer.hidden=!evolutionExpanded;
  if(evolutionExpanded&&psSelectedEvaluationLeague)
   psFocusLeagueBlocks(psSelectedEvaluationLeague);
