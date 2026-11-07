@@ -85,3 +85,12 @@ assert.match(lt302,/left:50%!important;right:auto!important;transform:translateX
 assert.match(lt302,/\.psRailButton\.psRailRaid \.psRailEvolve\{\s*right:1px!important/);
 assert.ok(rail.indexOf('/* LT302: delicate')>rail.indexOf('/* LT301 Samsung refinement'));
 console.log('LT302: delicate, closer 3px arrows and safe raid-flag separation.');
+
+const lt303=rail.slice(rail.indexOf('/* LT303: every chevron moved exactly 1 CSS px left'));
+assert.ok(lt303.startsWith('/* LT303: every chevron moved exactly 1 CSS px left'));
+assert.match(lt303,/right:4px!important;bottom:3px!important/);
+assert.match(lt303,/\.psRailButton\.psRailRaid \.psRailEvolve\{\s*right:2px!important/);
+assert.match(lt303,/width:3px!important;height:3px!important;flex:0 0 3px!important/);
+assert.match(lt303,/border-top:\.8px solid #e7fbff!important/);
+assert.match(lt303,/left:50%!important;right:auto!important;transform:translateX\(-50%\)!important/);
+console.log('LT303: all evolution arrows shifted 1px left, flags and arrow art unchanged.');
