@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT304 — E2B/E3/E4/E5 CANDIDATAS E APK QA PRIVADA (07/11/2026)
+
+- **Desenvolvimento somente PR #300 (draft):** calendário manual, lembretes locais opcionais e inexactos, diagnósticos e resultados da reide separados, captura consentida por sessão via MediaProjection/ML Kit, sugestões conservadoras de tela PT/EN (três quadros) que exigem confirmação/rejeição humana; sem avanço automático, teleporte, acesso ao servidor ou garantia de passes. Catálogo oficial de eventos ainda não integrado; datas/horários que o jogador digitar são **não verificados**.
+- **Build QA para Samsung autorizado:** workflow isolado `.github/workflows/lt304-dia-reides-signed-qa.yml` sobre PR #300, sem merge/Release/OTA; versionName `0.03.04`, versionCode `54508`, aplicação original e verificação do certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Só apresentar artefato após verificação de CI, SHA, APK, assinatura e metadados reais. `docs/LT304_E2B_E3_E4_E5_APK_TESTE_20261107.md` documenta classes, limites e pendências.
+- **Não afirmar homologação E2B–E5:** detector OCR é experimental e precisa de capturas reais PT/EN e avaliação de falso positivo; teste físico Samsung (janelas, notificação, calendário, MediaProjection, overlays simultâneos, consumo e upgrades) ainda pendente. Respeitar termos do jogo, sem localização falsa automatizada. **LT303 segue oficial; não mesclar/publicar sem aprovação.**
+
 ## LT304 — ASSISTENTE DO DIA DE REIDES (V2, EM DESENVOLVIMENTO) (07/11/2026)
 
 - **Identidade correta:** **Assistente do Dia de Reides**, subtítulo **Tutorial “Bug dos Passes”**. Padrão português “Reides”, não “Raides”. A **especificação v2** em `docs/LT304_ESPECIFICACAO_V2_ASSISTENTE_DIA_DE_REIDES.md` **substitui o prompt LT304 v1**. Partes do tutorial = **E01 a E11**; fases de desenvolvimento = **Entregas E1 a E5**.
