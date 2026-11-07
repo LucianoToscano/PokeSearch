@@ -1901,11 +1901,65 @@ const psMtIconHtml=(kind,cls="psRaidMoveState")=>{
 };
 const psMtKind=icon=>icon==="⚔️"?"elite":icon==="🗡️"?"normal":"unknown";
 let detailIdentity="",evolutionExpanded=false,activeRankLeague="";
+let psTypeEffectData=null,psTypeEffectKey="";
+function psCloseTypeEffectPanel(){
+ const box=document.getElementById("psTypeEffectPanel");
+ if(box)box.hidden=true;
+ document.getElementById("psTypeTap")?.setAttribute?.("aria-expanded","false");
+}
+function psTypeEffectMultiplier(exponent){
+ if(exponent===0)return "1";
+ const factor=Math.pow(1.6,exponent);
+ // 1.60, 2.56, 0.625, 0.391 or 0.244 using GO, not core games.
+ return (exponent<0?factor.toFixed(3):factor.toFixed(2)).replace(".",",");
+}
+function psTypeEffectGroup(title,kind,items){
+ if(!items?.length)return "";
+ const presenter=window.PokeSearchCardPresentation;
+ const grouped=new Map();
+ for(const item of items){
+  if(!grouped.has(item.exponent))grouped.set(item.exponent,[]);
+  grouped.get(item.exponent).push(item);
+ }
+ return '<section class="psTypeGroup '+kind+'" aria-label="'+h(title)+'">'+
+  '<div class="psTypeGroupTitle">'+h(title)+'</div>'+
+  [...grouped].map(([exponent,rows])=>
+   '<div class="psTypeBand"><div class="psTypeMultiplier">'+
+   psTypeEffectMultiplier(exponent)+'x de dano</div><div class="psTypeChips">'+
+   rows.map(item=>{
+    const color=presenter?.moveTypeColor?.(item.type)||"#c5d0da";
+    const src=window.PokeSearchTypeIcons?.[item.type]||"";
+    return '<span class="psTypeChip" style="--ps-type-chip-color:'+color+
+     '" title="Dano recebido de golpes '+h(item.name)+'">'+
+     (src?'<img class="pkTypeImg" src="'+h(src)+'" alt="">':"")+
+     h(item.name)+'</span>';
+   }).join("")+'</div></div>').join("")+'</section>';
+}
+function psToggleTypeEffectiveness(){
+ const box=document.getElementById("psTypeEffectPanel");
+ if(!box||!psTypeEffectData)return false;
+ if(!box.hidden){psCloseTypeEffectPanel();resizeEvolutionPanel();return true;}
+ psCloseOtherPanels("types");
+ const match=psTypeEffectData;
+ box.innerHTML='<button type="button" class="psTypePanelHeader"'+
+  ' onclick="psToggleTypeEffectiveness()" aria-label="Fechar eficácia do tipo">'+
+  'Eficácia do Tipo<span class="psTypeChevron" aria-hidden="true">▴</span></button>'+
+  '<div class="psTypeCaption">Dano recebido por '+h(watchName)+
+  ' · efeito defensivo dos tipos, sem clima ou outros modificadores</div>'+
+  psTypeEffectGroup("Fraqueza","weak",match.weaknesses)+
+  psTypeEffectGroup("Resistência","resist",match.resistances)+
+  psTypeEffectGroup("Normais","neutral",match.neutral);
+ box.hidden=false;
+ document.getElementById("psTypeTap")?.setAttribute?.("aria-expanded","true");
+ resizeEvolutionPanel();return true;
+}
+
 let psRaidReport=null,psRaidExpanded=false,psRaidToken=0,psRaidAttackPreview=null;
 let psSelectedEvaluationLeague="";
 /* LT265: a single open main panel makes the Samsung overlay compact.
  * Do not change the underlying PvP, PvE, calculator or per-ball data. */
 function psCloseOtherPanels(keep){
+ if(keep!=="types")psCloseTypeEffectPanel();
  if(keep!=="raid"&&psRaidExpanded){
   psRaidExpanded=false;
   const p=document.getElementById("raidPanel"),b=document.getElementById("raidRow");
@@ -3544,6 +3598,7 @@ window.showDetails=(c,mode,watched)=>{
  const changed=detailIdentity!==nextIdentity;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
+  psCloseTypeEffectPanel();psTypeEffectKey="";psTypeEffectData=null;
   psCpTargetLevel=Number.isFinite(Number(c.level))&&Number(c.level)>=1&&Number(c.level)<=50?
    Math.round(Number(c.level)*2)/2:20;
   psCpTargetSpecies="";
@@ -3591,6 +3646,12 @@ window.showDetails=(c,mode,watched)=>{
  document.getElementById("psShadowSymbol").hidden=!(c.isShadow===true||c.shadow===true);
  const presenter=window.PokeSearchCardPresentation,metadata=window.PokeSearchCardMetaData;
  document.getElementById("types").innerHTML=presenter?.types(c,metadata)||"";
+ const verifiedTypes=presenter?.typeKeys?.(c,metadata)||[];
+ const nextTypeKey=verifiedTypes.join("|");
+ const typeChanged=nextTypeKey!==psTypeEffectKey;
+ psTypeEffectKey=nextTypeKey;
+ psTypeEffectData=presenter?.typeEffectiveness?.(verifiedTypes)||null;
+ if(typeChanged)psCloseTypeEffectPanel();
  const gender=presenter?.gender(c.gender)||"";
  document.getElementById("dexGender").innerHTML=
   [h(c.number),gender].filter(Boolean).join(" · ");
