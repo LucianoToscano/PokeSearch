@@ -935,7 +935,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         if("CYCLE_REPEATED".equals(type))repeatedCycles++;
         index=next;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
         persist(type,from);
-        reactAvatar(RaidDayAvatarFrames.WAVE);
+        reactAvatar("NO_PASS".equals(type)?RaidDayAvatarFrames.ALERT:
+            RaidDayAvatarFrames.WAVE);
         updateStep();
     }
     private void recordEduOutcome(String type){
@@ -1027,7 +1028,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             return;
         }
         if(eduHelpOpen){
-            setTalk("Edu: "+step.help,"Volte à conversa quando estiver pronto.");
+            setTalk("Edu: "+step.help,
+                training?"Treino sem histórico":
+                    RaidDayRecovery.lastConfirmed(journal.events().all(sessionKey)));
             addChoice(eduActions,"✓ Entendi",()->{
                 eduHelpOpen=false;eduNote="";updateStep();
             });
