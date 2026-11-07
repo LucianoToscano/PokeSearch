@@ -500,7 +500,7 @@ public class MainActivity extends Activity {
         raidAssistantControl.setImageBitmap(RaidDayAssistantOverlayService.loadArtwork(this));
         raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
-        raidAssistantControl.setContentDescription("Ativar Assistente do Dia de Raides");
+        raidAssistantControl.setContentDescription("Ativar Assistente do Dia de Reides");
         raidAssistantControl.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(34),d(34));
@@ -1817,7 +1817,7 @@ public class MainActivity extends Activity {
         }
         if(RaidDayAssistantOverlayService.isRunning()){
             stopService(new Intent(this,RaidDayAssistantOverlayService.class));
-            Toast.makeText(this,"Assistente do Dia de Raides desativado",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"Assistente do Dia de Reides desativado",Toast.LENGTH_SHORT).show();
         }else{
             if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
                 startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -1827,7 +1827,7 @@ public class MainActivity extends Activity {
             Intent guide=new Intent(this,RaidDayAssistantOverlayService.class);
             if(Build.VERSION.SDK_INT>=26)startForegroundService(guide);
             else startService(guide);
-            Toast.makeText(this,"Assistente do Dia de Raides ativado · modo manual",
+            Toast.makeText(this,"Assistente do Dia de Reides ativado · modo manual",
                 Toast.LENGTH_SHORT).show();
         }
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,600);
@@ -2056,7 +2056,7 @@ public class MainActivity extends Activity {
                 homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),
                 10,0));
             raidAssistantControl.setContentDescription(active?
-                "Desativar Assistente do Dia de Raides":"Ativar Assistente do Dia de Raides");
+                "Desativar Assistente do Dia de Reides":"Ativar Assistente do Dia de Reides");
         }
         if(rareCandyControl!=null){
             boolean active=RareCandyOverlayService.isRunning();
