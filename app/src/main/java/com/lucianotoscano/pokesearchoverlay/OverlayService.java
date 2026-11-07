@@ -455,6 +455,13 @@ public class OverlayService extends Service {
             .putLong(API_RATE_BACKOFF_PREF,Math.max(old,now+wait)).apply();
         scheduleProviderRateLimitResume();
     }
+    // LT277: inverse sorting is observed only on POST /search, never in the
+    // site's dropdown / DOM mode. Keep this strict for both Pokeballs.
+    private static boolean isInvertedWildSort(String value){
+        return "Despawn (shortest)".equals(value)||
+            "CP (lowest)".equals(value)||"IV % (lowest)".equals(value)||
+            "Level (lowest)".equals(value)||"Distance (farthest)".equals(value);
+    }
     private boolean authorizedApiQaSelected(){
         return overlayPrefs().getBoolean("authorizedApiQaOptIn",true);
     }
@@ -512,6 +519,17 @@ public class OverlayService extends Service {
                     String reason=response.optString("reason","api-unavailable");
                     if(reason.length()>50)reason="api-unavailable";
                     if(allowDomAfterApiFailure(reason)){
+                        // A DOM fallback cannot reproduce negative /search sort.
+                        // Never pretend results are correctly sorted.
+                        String requestedSort=new JSONObject(extraFiltersJson)
+                            .optString("sortBy","");
+                        if(isInvertedWildSort(requestedSort)){
+                            searchInProgress=false;
+                            searchFailure("⚠ Busca inversa não confirmada",
+                                "Fonte API indisponível. Ordenação inversa não existe no site; "+
+                                "mantidos os resultados anteriores, sem trocar critérios.");
+                            return;
+                        }
                         // A single active generation uses exactly one verified
                         // source at a time; never merge unverified API and DOM rows.
                         searchPhase="searching";
@@ -2531,6 +2549,16 @@ public class OverlayService extends Service {
             }
             return;
         }
+        if(!authorizedApiQaSelected()){
+            try{
+                if(isInvertedWildSort(new JSONObject(extraFiltersJson).optString("sortBy",""))){
+                    searchFailure("⚠ Ordenação inversa exige API",
+                        "Ative a fonte API ou selecione ordenação normal; "+
+                        "o site não oferece estas opções. Nenhuma pesquisa foi simulada.");
+                    return;
+                }
+            }catch(org.json.JSONException ignored){}
+        }
         if(!loaded||website==null){
             // onPageFinished will trigger the pending refresh automatically.
             status("Carregando o site. Aguarde alguns segundos...");
@@ -4273,7 +4301,8 @@ public class OverlayService extends Service {
                 JSONObject filters=new JSONObject(extraFiltersJson);
                 String current=filters.optString("sortBy","");
                 if(repairInvalidDistance&&!"Distance (nearest)".equals(current))
-                    return false; // Repeated clear preserves valid manual choices.
+                    if(!"Distance (farthest)".equals(current))return false;
+                // Repeated clear preserves valid manual choices.
                 boolean changed=!wanted.equals(current);
                 // Restore sortBy from any pending "clear" key to ensure the
                 // default reaches BOTH the API and React source after refresh.
@@ -4482,7 +4511,9 @@ public class OverlayService extends Service {
                     String[] keys={"sortBy","weather","size","gender"};
                     String[][] values={
                         {"Despawn (longest)","CP (highest)","IV % (highest)",
-                            "Level (highest)","Distance (nearest)"},
+                            "Level (highest)","Distance (nearest)",
+                            "Despawn (shortest)","CP (lowest)","IV % (lowest)",
+                            "Level (lowest)","Distance (farthest)"},
                         {"Any","Boosted","Sunny","Rainy","Partly Cloudy","Cloudy",
                             "Windy","Snow","Fog"},
                         {"XXS","XS","S","M","L","XL","XXL"},
@@ -4838,7 +4869,15 @@ public class OverlayService extends Service {
                         !value.isEmpty()&&!value.matches("[0-9]{1,5}"))return;
                     if((key.equals("levelMin")||key.equals("levelMax"))&&
                         !value.isEmpty()&&!value.matches("[0-9]{1,2}(\\.[0-9])?"))return;
-                    if(key.equals("sortBy")&&value.isEmpty())value="Despawn (longest)";
+                    if(key.equals("sortBy")){
+                        if(value.isEmpty())value="Despawn (longest)";
+                        if(isInvertedWildSort(value)&&!authorizedApiQaSelected()){
+                            android.widget.Toast.makeText(OverlayService.this,
+                                "Ordenação inversa disponível apenas na busca API.",
+                                android.widget.Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                    }
                     if(value.isEmpty()&&!updated.optString(key,"").isEmpty())clears.add(key);
                     if(!value.isEmpty())clears.remove(key);
                     updated.put(key,value);
@@ -4850,7 +4889,8 @@ public class OverlayService extends Service {
                 // Defensive guard for migrations/older menus: a stale
                 // Distance order with location OFF cannot block unrelated
                 // Gender/Size/Weather/PC edits from reaching the API.
-                if("Distance (nearest)".equals(updated.optString("sortBy"))&&
+                if(("Distance (nearest)".equals(updated.optString("sortBy"))||
+                    "Distance (farthest)".equals(updated.optString("sortBy")))&&
                         (!locationEnabled||extractCoordinates(locationCoords).isEmpty())){
                     updated.put("sortBy","Despawn (longest)");
                     clears.remove("sortBy");
