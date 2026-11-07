@@ -260,12 +260,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         index=0;repeatedCycles=0;paused=false;finished=false;active=true;
         appendEvent("STARTED");
+        reactAvatar(RaidDayAvatarFrames.WAVE);
         updateStep();
     }
     private void beginTraining(){
         if(!riskAccepted)return;
         training=true;active=false;index=0;repeatedCycles=0;
         paused=false;finished=false;endPending=false;
+        reactAvatar(RaidDayAvatarFrames.WAVE);
         updateStep();
     }
     private void leaveTraining(){
@@ -546,7 +548,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(index>0){
                 String from=plan.step(index).id;
                 index--;finished=false;endPending=false;
-                persist("BACK",from);updateStep();
+                persist("BACK",from);
+                reactAvatar(RaidDayAvatarFrames.QUESTION);updateStep();
             }
         });
         confirmButton=button(getString(R.string.raid_day_confirm));
@@ -564,6 +567,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             else finished=true;
             endPending=false;
             persist(finished?"FINISHED":"STEP_CONFIRMED",confirmedStep);
+            reactAvatar(RaidDayAvatarFrames.OK);
             updateStep();
         });
         pauseButton=button("Ⅱ");
@@ -573,7 +577,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         actions.addView(pauseButton,pauseP);
         pauseButton.setOnClickListener(v->{
             paused=!paused;endPending=false;
-            persist(paused?"PAUSED":"RESUMED");updateStep();
+            persist(paused?"PAUSED":"RESUMED");
+            reactAvatar(paused?RaidDayAvatarFrames.QUESTION:
+                RaidDayAvatarFrames.WAVE);
+            updateStep();
         });
         cycleActions=new LinearLayout(this);
         LinearLayout.LayoutParams cycleActionsLp=new LinearLayout.LayoutParams(-1,dp(36));
@@ -590,7 +597,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             String from=plan.step(index).id;
             repeatedCycles++;
             index=plan.indexOf(plan.step(index).repeatTo);
-            endPending=false;persist("CYCLE_REPEATED",from);updateStep();
+            endPending=false;persist("CYCLE_REPEATED",from);
+            reactAvatar(RaidDayAvatarFrames.RUN_0);updateStep();
         });
         skipButton=button(getString(R.string.raid_day_no_pass));
         LinearLayout.LayoutParams skipLp=new LinearLayout.LayoutParams(0,-1,1);
@@ -602,12 +610,14 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(!step.skipTo.isEmpty()){
                 index=plan.indexOf(step.skipTo);
                 endPending=false;
-                persist("OPTIONAL_SKIPPED",step.id);updateStep();return;
+                persist("OPTIONAL_SKIPPED",step.id);
+                reactAvatar(RaidDayAvatarFrames.WAVE);updateStep();return;
             }
             if(step.noPassTo.isEmpty())return;
             index=plan.indexOf(step.noPassTo);
             endPending=false;
-            persist("NO_PASS",step.id);updateStep();
+            persist("NO_PASS",step.id);
+            reactAvatar(RaidDayAvatarFrames.ALERT);updateStep();
         });
         LinearLayout fallbackActions=new LinearLayout(this);
         LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-1,dp(36));
@@ -627,10 +637,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         notHappenedButton.setOnClickListener(v->{
             if(paused||finished)return;
             persist("NOT_OBSERVED");
+            reactAvatar(RaidDayAvatarFrames.ALERT);
             statusText.setText("Não confirmado. "+plan.step(index).onNotHappened);
         });
         helpButton.setOnClickListener(v->{
             if(finished)return;
+            reactAvatar(RaidDayAvatarFrames.QUESTION);
             statusText.setText("Você está em "+plan.step(index).id+
                 ". "+plan.step(index).safeReturn);
         });
@@ -639,6 +651,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(!active)return;
             if(!endPending){
                 endPending=true;
+                reactAvatar(RaidDayAvatarFrames.QUESTION);
                 endButton.setText("Confirmar fim");
                 statusText.setText("Confirmar encerra esta sessão, sem apagar o histórico.");
                 return;
