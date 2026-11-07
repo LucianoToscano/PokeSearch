@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.92",
-  "code": 54496,
-  "label": 51296,
-  "previous_tag": "v0.02.91-54495",
-  "qa_max_code": 54495,
-  "release_notes": "PokeSearch LT292: auditoria integral das ordens evolutivas para todas as 463 ligações evolutivas cadastradas no catálogo offline (790 nomes distintos, 327 raízes, 441 pontos de origem com evoluções, sem ciclos ou links duplicados). Novo teste exaustivo confirma que nenhuma evolução final é mostrada antes da intermediária, incluindo Charmander → Charmeleon → Charizard, Cyndaquil → Quilava → Typhlosion, Eevee e famílias ramificadas. Também corrige a ordenação das projeções de Pokémon Sombrosos, reconhecendo especificamente o sufixo (Shadow) e exigindo a mesma variante durante a cadeia, sem supor a evolução de fantasias, formas regionais ou identidades desconhecidas. Na interface, a sequência natural é preservada no painel expandido da Análise PvP, nas referências de fantasia marcadas como projeções, no seletor de formas do explorador de ranking e nas projeções de PC/Nível da Calculadora PvP, agora com limite de até 14 opções para cadeias extensas. A escolha do melhor Pokémon por Rank Classe/Rank Geral continua separada e inalterada, assim como valores de IV, eficiência, PC e nível por espécie. Preservados 2 Pokébolas independentes, sprites corretos, golpes, coordenadas, alertas, filtros, favoritos, OTA e assinatura permanente. Oito gates obrigatórios da PR #286 aprovados (Node regressão completa, lógica Android, Java, OTA, visual, Raides, APK beta). Teste físico Samsung ainda pendente."
+  "version": "0.02.93",
+  "code": 54497,
+  "label": 51297,
+  "previous_tag": "v0.02.92-54496",
+  "qa_max_code": 54496,
+  "release_notes": "PokeSearch LT293: corrigidas as miniaturas de eventos que continuavam minúsculas nos Resultados, especialmente Charmander com chapéu nas duas Pokébolas. O erro persistia porque os PNGs de origem do PoGoCoordinates eram exibidos corretamente mas suas margens transparentes não podiam ser medidas pelo canvas WebView bloqueado por CORS; as versões LT288–LT290 mantinham zoom neutro nesses casos. Um decodificador Android nativo e assíncrono, com URL de imagem exata já validada no card do site, calcula somente o contorno alfa 96×96, sem modificar a arte/URL exibida nem fazer buscas extras na API. A leitura usa HTTPS e hosts permitidos, sem cookies, credenciais, coordenadas ou redirecionamentos, com limites de tamanho, tempo, memória, duas threads e cache. O Resultado só é ajustado se a silhueta real ocupar menos de 80% do quadrado, preservando as proporções normais de Psyduck, Snorlax, Treecko, Mudkip, Pikachu etc. A identidade da URL e token é conferida também no callback para evitar modificações em linhas antigas ou trocadas. Quando o serviço remoto não permite leitura, mantém o fallback seguro e não inventa zoom nem outra fantasia. Preservados P/M/G, caixas com ou sem bordas, dados, IV, ranks, golpes, cards detalhados, sprites especiais, filtros, favoritos, OTA e duas Pokébolas independentes. PR #287 aprovada por sete gates (Node completa, Java, Android core, OTA, visual, beta privado), teste físico Samsung pendente."
 }
