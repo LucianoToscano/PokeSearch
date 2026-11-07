@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT303 — SETAS EVOLUTIVAS 1 PIXEL PARA A ESQUERDA (07/11/2026)
+
+- **Solicitação:** após a LT302 publicada, usuário pediu deslocar **a seta 1 pixel para a esquerda**. O deslocamento é aplicado de forma uniforme às caixas Raides/GL/UL/ML/Rank Geral; não alterar cores, altura, tamanho, bordas, distância entre as duas setas ou bandeiras centralizadas.
+- **CSS:** em `app/src/main/assets/detail.html`, o offset `right` do conjunto `.psRailEvolve` aumenta de `3px` para `4px` (inclusive em telas estreitas); a exceção da caixa `.psRailRaid .psRailEvolve` passa de `right:1px` para `right:2px`. `bottom:3px` inalterado; cada seta segue 3×3 CSS px, traço 0,8px, `gap:0`, conjunto 5×7px; logos de 19px continuam perfeitamente centrados e sem edição de sprites. Preservar 0,1 ou 2 setas, nunca truncar 3 para 2.
+- **QA:** `lt274-evolution-rail-layout.test.js` valida o delta CSS e `lt253-visual-screenshots.cjs` mede o deslocamento nos tamanhos P/M/G, inclusive cenário Charmander→Charizard em Raides sem interseção do marcador com a bandeira. Manter os testes de regressão Node, Android, OTA e beta.
+- **Fluxo:** branch `fix/lt303-shift-evolution-arrows-left-1px-20261107`; merge, publicação, checksum e versão devem ser registrados **apenas depois de confirmados**. Última versão oficial anterior LT302 `0.03.02` (`54506`).
+
+
 ## LT302 — SETAS MAIS DELICADAS, PRÓXIMAS E SEM INVADIR RAIDE (07/11/2026)
 
 - **Evidência física:** após LT301, print do Charmander #4 no Samsung ainda mostra os dois chevrons de evolução separados em excesso e o indicador projetado no cartão de Raides visualmente próximo/sobreposto ao brasão. O usuário enviou referência de dois chevrons pequenos e sutis e pediu corrigir no aplicativo.
