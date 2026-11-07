@@ -63,6 +63,13 @@ assert.match(overlay,/start\.toLocalDate\(\)\.equals\(date\)/,
 assert.match(overlay,/horário não informado/);
 assert.match(overlay,/evento fictício, sem horário definido/);
 assert.match(overlay,/STARTED_DAY_D/);
+assert.match(overlay,/DAY_CHANGED_TO_EVENT/,
+  "Ao chegar o dia D, a sessão da véspera deve oferecer retorno manual para E08");
+assert.match(overlay,/navigateEdu\("E08","DAY_CHANGED_TO_EVENT"\)/);
+assert.match(overlay,/As etapas da véspera não serão marcadas como concluídas\./);
+assert.match(overlay,/paused=true;persist\("PAUSED"\);updateStep\(\);/,
+  "A pessoa pode adiar a transição sem perder histórico");
+
 assert.match(overlay,/plan\.indexOf\("E08"\)/,
   "Início no dia D precisa começar na E08, sem retroceder para D−1");
 assert.match(overlay,/today\.equals\(date\.minusDays\(1\)\)/);
