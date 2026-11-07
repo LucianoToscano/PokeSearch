@@ -44,3 +44,13 @@ As duas execuções anteriores que falharam `lt304-raid-assistant-icon-guide.tes
 
 ## Governança final
 A PR #300 deve permanecer **draft/open**. Não mesclar/publicar sem autorização expressa e sem teste físico Samsung; preservar LT303 como versão estável.
+
+## Incremento E1 — Personagem mini flutuante da spritesheet original (07/11/2026)
+- Arte fornecida pelo usuário: `Spritesheet de Treinador Pixel Art.png` (60 poses); atlas otimizado com **12 quadros 64×64 transparentes**, em `app/src/main/assets/raid_day_avatar_atlas.png` (**8.336 bytes**; SHA-256 `ce23c403277703dfff67625b33aa911ef66eb7b4764c87bd9b0a8556cf066fd9`). Conteúdo do PNG verificado por Git blob SHA-1 `a62d2bb432ce13bdf107473c4150afd6850aabe4`, idêntico ao material preparado. As imagens fornecidas não são criadas automaticamente por OCR nem extraídas do jogo.
+- Código `RaidDayAvatarFrames.java`: 12 quadros (idle, caminhada, corrida, gesto, dúvida, alerta, confirmação) sem interpolação; fallback para o ícone do passe em caso de falha do atlas.
+- Serviço `RaidDayAssistantOverlayService.java`: após ativar pelo **Passe na Home**, o balão flutuante mostra **personagem animado**. Tamanho de imagem configurável **P=50 px, M=75 px (padrão), G=100 px**, com **alvo de toque >=48 dp**. Salva tamanho, posição e ativação da animação em preferências; caminhar enquanto arrasta, gesto ao abrir, OK ao confirmar, aviso em “Não aconteceu” e dúvida no “Me perdi”. Nenhuma reação visual conta como etapa confirmada.
+- Painel compacto passou a ter seletor P/M/G, botão **Animação ✓/×** e ScrollView limitado à altura da tela para evitar corte em posições extremas/landscape, mantendo `FLAG_NOT_FOCUSABLE` e opacidade anterior.
+- Teste `app/tests/lt304-trainer-avatar-overlay.test.js` verifica hash, dimensões, 12 poses, callbacks, persistência, fallback, controles e independência de P1/P2/Doce Raro.
+- **QA de código:** commit `e59388c06eb336c2a69156843b6a9bccf83ccce6` concluiu com sucesso **Node QA, regressão LT169, Android Core LT211, Java LT62 e OTA LT173**. Fluxos APK genérico/beta `skipped` conforme política; não são APKs disponibilizadas.
+- **Pendente obrigatório:** teste físico no Samsung: legibilidade dos três tamanhos, gestos, toque/arraste, pausa e desligamento de animação, janela no modo paisagem, alto contraste em fundos claros/escuros, consumo de bateria e coexistência dos três overlays anteriores. A sprite-base foi reduzida e quantizada; conferir fidelidade visual no tamanho máximo.
+- **NÃO houve merge nem nova versão oficial.** A alteração é candidata da PR #300, sujeita à autorização e homologação.
