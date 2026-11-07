@@ -521,8 +521,10 @@ public class OverlayService extends Service {
                     if(allowDomAfterApiFailure(reason)){
                         // A DOM fallback cannot reproduce negative /search sort.
                         // Never pretend results are correctly sorted.
-                        String requestedSort=new JSONObject(extraFiltersJson)
-                            .optString("sortBy","");
+                        String requestedSort="";
+                        try{
+                            requestedSort=new JSONObject(extraFiltersJson).optString("sortBy","");
+                        }catch(org.json.JSONException ignored){}
                         if(isInvertedWildSort(requestedSort)){
                             searchInProgress=false;
                             searchFailure("⚠ Busca inversa não confirmada",
