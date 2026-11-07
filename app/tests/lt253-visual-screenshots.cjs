@@ -229,7 +229,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
      arrows:[...evol.querySelectorAll(".psRailChevron")].map(arrow=>{
       const box=arrow.getBoundingClientRect(),sty=getComputedStyle(arrow);
-      return {width:box.width,height:box.height,stroke:sty.borderTopWidth,
+      return {width:parseFloat(sty.width),height:parseFloat(sty.height),
+       stroke:sty.borderTopWidth,
        safeRight:cardBox.right-box.right,safeBottom:cardBox.bottom-box.bottom};
      }),
      // The flags are triangles: enforce actual geometric separation from
