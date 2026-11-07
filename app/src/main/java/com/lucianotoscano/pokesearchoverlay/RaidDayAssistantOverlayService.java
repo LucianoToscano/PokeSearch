@@ -77,6 +77,34 @@ public final class RaidDayAssistantOverlayService extends Service {
     private long lastConfirmAt=0L;
     private int touchSlop;
     private Bitmap artwork;
+    private RaidDayAvatarFrames avatarSprites;
+    private ImageView avatarView;
+    private TextView[] avatarSizeButtons;
+    private TextView avatarMotionButton;
+    private int avatarSizeIndex=1,avatarAnimationTick=0,avatarReactionFrame=-1;
+    private long avatarReactionUntil=0L;
+    private boolean avatarMotion=true;
+    private final Runnable avatarTicker=new Runnable(){
+        @Override public void run(){
+            if(avatarSprites==null||avatarView==null||!avatarMotion)return;
+            int frame;
+            long now=SystemClock.elapsedRealtime();
+            if(dragging){
+                frame=RaidDayAvatarFrames.WALK_0+
+                    (avatarAnimationTick%4);
+            }else if(now<avatarReactionUntil && avatarReactionFrame>=0){
+                frame=avatarReactionFrame;
+            }else if(paused){
+                frame=RaidDayAvatarFrames.IDLE_B;
+            }else{
+                frame=(avatarAnimationTick%2==0)?
+                    RaidDayAvatarFrames.IDLE_A:RaidDayAvatarFrames.IDLE_B;
+            }
+            avatarView.setImageDrawable(avatarSprites.frame(frame));
+            avatarAnimationTick++;
+            handler.postDelayed(this,dragging?180L:450L);
+        }
+    };
 
     private int dp(int v){return Math.round(v*getResources().getDisplayMetrics().density);}
     private GradientDrawable surface(int fill,int border,int radius){
@@ -135,6 +163,11 @@ public final class RaidDayAssistantOverlayService extends Service {
                 Toast.LENGTH_LONG).show();
             stopSelf();return;
         }
+        avatarSizeIndex=RaidDayAvatarFrames.SIZES_PX[0]==
+            prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,75)?0:
+            prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,75)==100?2:1;
+        avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
+        avatarSprites=RaidDayAvatarFrames.load(this);
         touchSlop=ViewConfiguration.get(this).getScaledTouchSlop();
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(wm==null){stopSelf();return;}
@@ -237,15 +270,63 @@ public final class RaidDayAssistantOverlayService extends Service {
         training=false;restoreJournal();updateStep();
     }
 
+    private void reactAvatar(int frame){
+        if(avatarSprites==null||!avatarMotion)return;
+        avatarReactionFrame=frame;
+        avatarReactionUntil=SystemClock.elapsedRealtime()+1250L;
+        if(avatarView!=null)avatarView.setImageDrawable(avatarSprites.frame(frame));
+    }
+    private void updateAvatarSize(){
+        if(avatarView==null||bubbleParams==null||wm==null)return;
+        int art=avatarSprites!=null?
+            RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]:dp(ART_DP);
+        avatarView.setLayoutParams(new FrameLayout.LayoutParams(
+            art,art,Gravity.CENTER));
+        int target=Math.max(dp(BUBBLE_DP),art+dp(6));
+        bubbleParams.width=target;bubbleParams.height=target;
+        int maxX=Math.max(0,getResources().getDisplayMetrics().widthPixels-target);
+        int maxY=Math.max(0,getResources().getDisplayMetrics().heightPixels-target);
+        bubbleParams.x=Math.max(0,Math.min(maxX,bubbleParams.x));
+        bubbleParams.y=Math.max(0,Math.min(maxY,bubbleParams.y));
+        try{wm.updateViewLayout(bubble,bubbleParams);}
+        catch(IllegalArgumentException ignored){}
+        prefs.edit().putInt("x",bubbleParams.x).putInt("y",bubbleParams.y)
+            .putInt(RaidDayAvatarFrames.PREF_SIZE,
+                RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]).apply();
+        if(avatarSizeButtons!=null){
+            for(int i=0;i<avatarSizeButtons.length;i++){
+                avatarSizeButtons[i].setTextColor(i==avatarSizeIndex?
+                    Color.rgb(118,235,195):Color.WHITE);
+            }
+        }
+        if(visible)placePanel();
+    }
+    private void setAvatarMotion(boolean enabled){
+        avatarMotion=enabled;
+        prefs.edit().putBoolean(RaidDayAvatarFrames.PREF_MOTION,enabled).apply();
+        handler.removeCallbacks(avatarTicker);
+        if(avatarView!=null&&avatarSprites!=null){
+            if(enabled)handler.post(avatarTicker);
+            else avatarView.setImageDrawable(avatarSprites.frame(
+                RaidDayAvatarFrames.IDLE_A));
+        }
+        if(avatarMotionButton!=null)
+            avatarMotionButton.setText(enabled?"Animação ✓":"Animação ×");
+    }
     private void createBubble(){
         bubble=new FrameLayout(this);
         bubble.setBackgroundColor(Color.TRANSPARENT);
-        ImageView image=new ImageView(this);
-        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        image.setContentDescription("Assistente do Dia de Reides");
-        if(artwork!=null)image.setImageBitmap(artwork);
-        else image.setImageResource(R.drawable.ic_notification);
-        bubble.addView(image,new FrameLayout.LayoutParams(dp(ART_DP),dp(ART_DP),Gravity.CENTER));
+        avatarView=new ImageView(this);
+        avatarView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        avatarView.setContentDescription("Personagem interativo do Assistente do Dia de Reides");
+        if(avatarSprites!=null)
+            avatarView.setImageDrawable(avatarSprites.frame(RaidDayAvatarFrames.IDLE_A));
+        else if(artwork!=null)avatarView.setImageBitmap(artwork);
+        else avatarView.setImageResource(R.drawable.ic_notification);
+        int artSize=avatarSprites!=null?
+            RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]:dp(ART_DP);
+        bubble.addView(avatarView,new FrameLayout.LayoutParams(
+            artSize,artSize,Gravity.CENTER));
         View grip=new View(this);
         grip.setClickable(true);
         grip.setContentDescription(
@@ -256,8 +337,11 @@ public final class RaidDayAssistantOverlayService extends Service {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,PixelFormat.TRANSLUCENT);
         bubbleParams.gravity=Gravity.TOP|Gravity.LEFT;
-        int maxX=Math.max(0,getResources().getDisplayMetrics().widthPixels-dp(BUBBLE_DP));
-        int maxY=Math.max(0,getResources().getDisplayMetrics().heightPixels-dp(BUBBLE_DP));
+        int touchSize=Math.max(dp(BUBBLE_DP),artSize+dp(6));
+        bubbleParams.width=touchSize;
+        bubbleParams.height=touchSize;
+        int maxX=Math.max(0,getResources().getDisplayMetrics().widthPixels-touchSize);
+        int maxY=Math.max(0,getResources().getDisplayMetrics().heightPixels-touchSize);
         bubbleParams.x=Math.max(0,Math.min(maxX,prefs.getInt("x",dp(80))));
         bubbleParams.y=Math.max(0,Math.min(maxY,prefs.getInt("y",dp(310))));
         grip.setOnTouchListener(new View.OnTouchListener(){
@@ -284,8 +368,12 @@ public final class RaidDayAssistantOverlayService extends Service {
                             dragging=true;handler.removeCallbacks(longPress);
                         }
                         if(dragging){
-                            bubbleParams.x=Math.max(0,Math.min(maxX,startX+Math.round(dx)));
-                            bubbleParams.y=Math.max(0,Math.min(maxY,startY+Math.round(dy)));
+                            bubbleParams.x=Math.max(0,Math.min(
+                                getResources().getDisplayMetrics().widthPixels-
+                                bubbleParams.width,startX+Math.round(dx)));
+                            bubbleParams.y=Math.max(0,Math.min(
+                                getResources().getDisplayMetrics().heightPixels-
+                                bubbleParams.height,startY+Math.round(dy)));
                             wm.updateViewLayout(bubble,bubbleParams);
                             if(visible)placePanel();
                         }
@@ -296,6 +384,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                         if(dragging){
                             prefs.edit().putInt("x",bubbleParams.x).putInt("y",bubbleParams.y).apply();
                         }else if(!held&&event.getActionMasked()==MotionEvent.ACTION_UP){
+                            reactAvatar(RaidDayAvatarFrames.WAVE);
                             setVisible(!visible);
                         }
                         dragging=false;return true;
@@ -304,6 +393,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             }
         });
         wm.addView(bubble,bubbleParams);
+        if(avatarSprites!=null && avatarMotion)
+            handler.post(avatarTicker);
     }
     private void createPanel(){
         panel=new LinearLayout(this);
@@ -592,7 +683,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         int sw=getResources().getDisplayMetrics().widthPixels;
         int sh=getResources().getDisplayMetrics().heightPixels;
         int width=dp(272);
-        int preferred=bubbleParams.x+dp(BUBBLE_DP)+dp(4);
+        int preferred=bubbleParams.x+bubbleParams.width+dp(4);
         panelParams.x=preferred+width<=sw?preferred:
             Math.max(0,bubbleParams.x-width-dp(4));
         panelParams.x=Math.max(0,Math.min(sw-width,panelParams.x));
@@ -627,6 +718,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         visible=false;
         if(artwork!=null){artwork.recycle();artwork=null;}
+        if(avatarSprites!=null){avatarSprites.release();avatarSprites=null;}
         super.onDestroy();
     }
 }
