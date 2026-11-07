@@ -164,8 +164,9 @@ function enhanceProviderTile(img,cardBounds,verifiedEvent,verifiedProvider=false
   setResultTileFit(img,fit);
   return true;
  };
+ if(cardBounds&&cardBounds.url!==src)return false; // Never accept stale card geometry.
  if(img.dataset?.psSourceMeasured==="1")return true;
- if(cardBounds&&cardBounds.url===src&&applyMeasured(cardBounds))return true;
+ if(cardBounds&&applyMeasured(cardBounds))return true;
  // Only a card-scoped, provider-exact URL is eligible for the native decoder.
  // This also handles ordinary-looking species whose event metadata is absent,
  // such as the tiny Charmander in Samsung LT292 screenshots.
