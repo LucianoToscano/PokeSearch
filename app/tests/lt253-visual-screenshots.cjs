@@ -626,8 +626,10 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     btn.click();
     const first=section.textContent||"";
     const actual=first.includes("Arranhão")&&first.includes("Ataque Selvagem")&&
+     !first.includes("Recomendação PvPoke")&&
+     !first.includes("não recomendação de PvPoke")&&
      first.includes("Dmg 90 • CD 2,50 • DPS 36,0 • Energia 50")&&
-     first.includes("PvP: Poder 100 • Custo 45")&&
+     !first.includes("Poder 100")&&!first.includes("Custo 45")&&
      btn.getAttribute("aria-expanded")==="true"&&!section.hidden;
     const icons=section.querySelectorAll(".psMoveMtIcon img");
     const positioned=section.scrollWidth<=section.clientWidth+2;
@@ -643,7 +645,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const normalIcon=window.PokeSearchMovePanel?.mtBadge?.(true,"normal")||"";
     return {ok:actual&&icons.length===2&&positioned&&closed&&noLeak&&
       eliteIcon.includes("mt-carregada-elite-lt265.png")&&
-      normalIcon.includes("mt-agil-normal-lt298.svg"),
+      normalIcon.includes("mt-normal.png"),
       actual,icons:icons.length,positioned,closed,noLeak,first:first.slice(0,190)};
    });
    assert.ok(attack298.ok,"LT298 captured move details and four MT categories "+
