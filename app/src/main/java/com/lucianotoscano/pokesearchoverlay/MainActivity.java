@@ -213,7 +213,7 @@ public class MainActivity extends Activity {
             stopService(new Intent(this,OverlayService.class));
             stopService(new Intent(this,SecondaryOverlayService.class));
             stopService(new Intent(this,RareCandyOverlayService.class));
-            stopService(new Intent(this,RaidAssistantOverlayService.class));
+            stopService(new Intent(this,RaidDayAssistantOverlayService.class));
             refreshHomeOverlay();
             if(availabilityDialog==null||!availabilityDialog.isShowing()){
                 availabilityDialog=new AlertDialog.Builder(this)
@@ -497,10 +497,10 @@ public class MainActivity extends Activity {
 
         // Independent, user-selected Pass icon for the MANUAL raid guide.
         raidAssistantControl=new ImageButton(this);
-        raidAssistantControl.setImageBitmap(RaidAssistantOverlayService.loadArtwork(this));
+        raidAssistantControl.setImageBitmap(RaidDayAssistantOverlayService.loadArtwork(this));
         raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
-        raidAssistantControl.setContentDescription("Ativar Assistente de Reides");
+        raidAssistantControl.setContentDescription("Ativar Assistente do Dia de Raides");
         raidAssistantControl.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
         LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(34),d(34));
@@ -1815,19 +1815,19 @@ public class MainActivity extends Activity {
         if(!AppAvailability.isAllowed(this)){
             applyAppAvailability(AppAvailability.cached(this));return;
         }
-        if(RaidAssistantOverlayService.isRunning()){
-            stopService(new Intent(this,RaidAssistantOverlayService.class));
-            Toast.makeText(this,"Assistente de Reides desativado",Toast.LENGTH_SHORT).show();
+        if(RaidDayAssistantOverlayService.isRunning()){
+            stopService(new Intent(this,RaidDayAssistantOverlayService.class));
+            Toast.makeText(this,"Assistente do Dia de Raides desativado",Toast.LENGTH_SHORT).show();
         }else{
             if(Build.VERSION.SDK_INT>=23&&!Settings.canDrawOverlays(this)){
                 startActivityForResult(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:"+getPackageName())),104);
                 return;
             }
-            Intent guide=new Intent(this,RaidAssistantOverlayService.class);
+            Intent guide=new Intent(this,RaidDayAssistantOverlayService.class);
             if(Build.VERSION.SDK_INT>=26)startForegroundService(guide);
             else startService(guide);
-            Toast.makeText(this,"Assistente de Reides ativado · modo manual",
+            Toast.makeText(this,"Assistente do Dia de Raides ativado · modo manual",
                 Toast.LENGTH_SHORT).show();
         }
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,600);
@@ -2050,13 +2050,13 @@ public class MainActivity extends Activity {
     }
     private void refreshHomeOverlay(){
         if(raidAssistantControl!=null){
-            boolean active=RaidAssistantOverlayService.isRunning();
+            boolean active=RaidDayAssistantOverlayService.isRunning();
             raidAssistantControl.setBackground(homeSurface(
                 active?Color.rgb(18,94,82):
                 homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),
                 10,0));
             raidAssistantControl.setContentDescription(active?
-                "Desativar Assistente de Reides":"Ativar Assistente de Reides");
+                "Desativar Assistente do Dia de Raides":"Ativar Assistente do Dia de Raides");
         }
         if(rareCandyControl!=null){
             boolean active=RareCandyOverlayService.isRunning();
