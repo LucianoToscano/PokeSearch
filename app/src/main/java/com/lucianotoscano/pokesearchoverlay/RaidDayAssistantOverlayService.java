@@ -312,7 +312,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             Color.argb(110,205,215,232),13));
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView heading=text("Assistente do Dia de Reides",13,Color.WHITE,true);
+        TextView heading=text(getString(R.string.raid_day_title),13,Color.WHITE,true);
         header.addView(heading,new LinearLayout.LayoutParams(0,dp(29),1));
         TextView close=button("×");
         close.setContentDescription("Recolher assistente");
@@ -325,21 +325,16 @@ public final class RaidDayAssistantOverlayService extends Service {
         riskSection.setPadding(dp(6),dp(5),dp(6),dp(5));
         riskSection.setBackground(surface(Color.argb(170,73,46,31),
             Color.argb(100,249,182,119),9));
-        TextView riskHeading=text("Antes de começar · aviso de risco",13,Color.WHITE,true);
+        TextView riskHeading=text(getString(R.string.raid_day_risk_title),13,Color.WHITE,true);
         riskSection.addView(riskHeading);
-        TextView riskInfo=text(
-            "Este tutorial é um relato da comunidade, não é garantido. "+
-            "O método envolve localização falsificada e pode violar os Termos "+
-            "do Pokémon GO, com risco de aviso, restrição ou banimento. "+
-            "O PokeSearch não altera localização, não controla o jogo e "+
-            "não promete passes extras. A decisão é sua.",
+        TextView riskInfo=text(getString(R.string.raid_day_risk_message),
             11,Color.rgb(248,223,200),false);
         riskInfo.setPadding(0,dp(6),0,dp(7));
         riskSection.addView(riskInfo);
         LinearLayout riskActions=new LinearLayout(this);
-        riskContinue=button("Entendi, continuar");
+        riskContinue=button(getString(R.string.raid_day_risk_agree));
         riskActions.addView(riskContinue,new LinearLayout.LayoutParams(0,dp(39),1));
-        riskExit=button("Sair");
+        riskExit=button(getString(R.string.raid_day_risk_exit));
         LinearLayout.LayoutParams exitLp=new LinearLayout.LayoutParams(dp(64),dp(39));
         exitLp.leftMargin=dp(6);
         riskActions.addView(riskExit,exitLp);
@@ -355,16 +350,13 @@ public final class RaidDayAssistantOverlayService extends Service {
 
         startSection=new LinearLayout(this);
         startSection.setOrientation(LinearLayout.VERTICAL);
-        TextView startInfo=text(
-            "Roteiro manual de 11 etapas. A escolha de evento, "+
-            "o relógio de Brasília e a leitura visual são entregas futuras. "+
-            "Nenhum horário ou passe foi verificado.",
+        TextView startInfo=text(getString(R.string.raid_day_manual_disclaimer),
             11,Color.rgb(211,222,235),false);
         startInfo.setPadding(0,dp(7),0,dp(7));
         startSection.addView(startInfo);
-        startButton=button("✓ Iniciar roteiro manual");
+        startButton=button(getString(R.string.raid_day_manual_start));
         startSection.addView(startButton,new LinearLayout.LayoutParams(-1,dp(38)));
-        trainButton=button("▶ Modo Treino · sem histórico");
+        trainButton=button(getString(R.string.raid_day_training_start));
         LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,dp(38));
         tp.topMargin=dp(7);
         startSection.addView(trainButton,tp);
@@ -401,7 +393,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         guideContent.addView(statusText,st);
         // Only steps that mention a locality expose that exact coordinate,
         // copied upon an explicit user tap. No external-app interaction.
-        copyButton=button("📋 Copiar coordenadas");
+        copyButton=button(getString(R.string.raid_day_copy_coords));
         LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(-1,dp(33));
         copyLp.topMargin=dp(7);
         guideContent.addView(copyButton,copyLp);
@@ -427,7 +419,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         back.setOnClickListener(v->{
             if(index>0){index--;finished=false;persist("BACK");updateStep();}
         });
-        confirmButton=button("✓ Confirmar");
+        confirmButton=button(getString(R.string.raid_day_confirm));
         LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,-1,1);
         cp.leftMargin=dp(6);
         actions.addView(confirmButton,cp);
@@ -453,7 +445,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams cycleActionsLp=new LinearLayout.LayoutParams(-1,dp(36));
         cycleActionsLp.topMargin=dp(6);
         guideContent.addView(cycleActions,cycleActionsLp);
-        repeatButton=button("↻ Repetir ciclo");
+        repeatButton=button(getString(R.string.raid_day_cycle_repeat));
         cycleActions.addView(repeatButton,new LinearLayout.LayoutParams(0,-1,1));
         repeatButton.setOnClickListener(v->{
             if(paused||finished||index!=STEP_E07)return;
@@ -465,7 +457,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             index=STEP_E02;
             persist("CYCLE_REPEATED");updateStep();
         });
-        skipButton=button("Sem passe → evento");
+        skipButton=button(getString(R.string.raid_day_no_pass));
         LinearLayout.LayoutParams skipLp=new LinearLayout.LayoutParams(0,-1,1);
         skipLp.leftMargin=dp(6);
         cycleActions.addView(skipButton,skipLp);
@@ -481,14 +473,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-1,dp(36));
         fallbackLp.topMargin=dp(6);
         guideContent.addView(fallbackActions,fallbackLp);
-        notHappenedButton=button("Não aconteceu");
+        notHappenedButton=button(getString(R.string.raid_day_not_happened));
         fallbackActions.addView(notHappenedButton,
             new LinearLayout.LayoutParams(0,-1,1));
-        helpButton=button("Me perdi");
+        helpButton=button(getString(R.string.raid_day_help));
         LinearLayout.LayoutParams hLp=new LinearLayout.LayoutParams(0,-1,1);
         hLp.leftMargin=dp(4);
         fallbackActions.addView(helpButton,hLp);
-        endButton=button("Encerrar");
+        endButton=button(getString(R.string.raid_day_end));
         LinearLayout.LayoutParams eLp=new LinearLayout.LayoutParams(0,-1,1);
         eLp.leftMargin=dp(4);
         fallbackActions.addView(endButton,eLp);
@@ -524,6 +516,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,PixelFormat.TRANSLUCENT);
         panelParams.gravity=Gravity.TOP|Gravity.LEFT;
+        // Android 12+ pode bloquear toques em outro app quando a janela
+        // sobreposta obscurece excessivamente a tela.
+        panelParams.alpha=.79f;
         placePanelCoordinates();
     }
     /** Grava eventos reais antes de mostrar a próxima etapa. */
@@ -552,7 +547,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             current.instruction);
         statusText.setText(paused?"Pausado · toque em ▶ para retomar":
             training?"Modo Treino · nenhuma ação é salva":
-            "Manual · não lê tela nem altera o jogo");
+            getString(R.string.raid_day_no_screen_access));
         copyButton.setVisibility(!finished&&!plan.coords(index).isEmpty()?
             View.VISIBLE:View.GONE);
         cycleText.setText("Ciclos repetidos: "+repeatedCycles+
