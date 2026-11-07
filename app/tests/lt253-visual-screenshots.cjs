@@ -278,16 +278,19 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     JSON.stringify(rail270.labels)==='["—","#12","#5","#1","#142"]'&&
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
-    // LT301: thinner 4px arrows, 5px safe margins and all flags precisely centered.
+    // LT302: delicate 3px strokes, zero gap, 3px corner clearance.
     rail270.badge?.tag==="SPAN"&&
     rail270.badge?.chevrons===2&&rail270.badge?.steps==="2"&&
-    rail270.badge?.span===6&&rail270.badge?.height===11&&
+    rail270.badge?.span===5&&rail270.badge?.height===7&&
     rail270.badge?.cardHeight===39&&rail270.badge?.rowHeight===41&&
     rail270.badge?.flagSize===19&&
-    rail270.badge?.right>=5.8&&rail270.badge?.right<=6.2&&
-    rail270.badge?.bottom>=5.8&&rail270.badge?.bottom<=6.2&&
+    // The physical CSS border contributes ~1px to the measured inset.
+    rail270.badge?.right>=2.9&&rail270.badge?.right<=4.1&&
+    rail270.badge?.bottom>=2.9&&rail270.badge?.bottom<=4.1&&
     rail270.badge?.arrows?.length===2&&
-    rail270.badge?.arrows?.every(a=>a.width===4&&a.height===4&&a.stroke==="1px"&&a.safeRight>=4&&a.safeBottom>=4)&&
+    rail270.badge?.arrows?.every(a=>a.width===3&&a.height===3&&
+     parseFloat(a.stroke)>=.7&&parseFloat(a.stroke)<=1.1&&
+     a.safeRight>=2&&a.safeBottom>=2)&&
     rail270.badge?.triangleGap>=-1&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<.3&&
     rail270.flagCenters.every(v=>v<.3)&&
@@ -300,6 +303,31 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.flagShift.length===5&&rail270.flagShift.every(y=>y===0),
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
+   // LT302: explicitly render a projected raid case (Charmander→Charizard)
+   // and reject any overlap with the centrally placed raid flag.
+   const raid302=await page.evaluate(()=>{
+    const oldWatch=watchName,oldReport=psRaidReport;
+    watchName="Charmander";
+    psRaidReport={verified:true,best:{rank:39,name:"Charizard",
+     projected:true,typePt:"Fogo"}};
+    psUpdateRaidShortcut();
+    const card=document.querySelector("#rankLine .psRailRaid");
+    const mark=card?.querySelector(".psRailEvolve");
+    const logo=card?.querySelector(".psRailIcon");
+    const cb=card?.getBoundingClientRect(),mb=mark?.getBoundingClientRect(),
+     lb=logo?.getBoundingClientRect();
+    const result={ok:!!cb&&!!mb&&!!lb&&
+      mark.dataset.steps==="2"&&mark.children.length===2&&
+      mb.left>=lb.right+.5&&
+      Math.abs((lb.left+lb.right-cb.left-cb.right)/2)<.3&&
+      cb.right-mb.right>=2&&cb.bottom-mb.bottom>=2,
+      gap:mb&&lb?mb.left-lb.right:null,marker:mb?{x:mb.x,y:mb.y,w:mb.width,h:mb.height}:null,
+      logo:lb?{x:lb.x,y:lb.y,w:lb.width,h:lb.height}:null};
+    watchName=oldWatch;psRaidReport=oldReport;psUpdateRaidShortcut();
+    return result;
+   });
+   assert.ok(raid302.ok,"LT302 projected Raid icon must not collide P/M/G "+
+    sz.name+" "+JSON.stringify(raid302));
    const overall270=await page.evaluate(()=>{
     const general=document.querySelector("#rankLine .psRailGeneral");
     if(!general||general.disabled)return {ok:false,reason:"RG disabled"};

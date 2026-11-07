@@ -3064,6 +3064,27 @@
           "Conferência física no Samsung e nas duas Pokébolas após atualização oficial."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt302-delicate-evolution-arrows-raid-clearance-20261107",
+      "minVersionCode": 54506,
+      "date": "07/11/2026",
+      "title": "LT302 — Setas delicadas sem sobrepor Raides",
+      "sections": {
+        "novidades": [
+          "Setas evolutivas menores e mais sutis, com 0, 1 ou 2 marcas conforme a evolução verificada."
+        ],
+        "melhorias": [
+          "Chevrons com 3 × 3 px e traço de 0,8 px, sem intervalo vertical extra; grupo 5 × 7 px com espaço de 3 px no canto.",
+          "Bandeiras Raides, GL, UL, ML e Rank Geral continuam centralizadas, separadas da área das setas."
+        ],
+        "correcoes": [
+          "Corrigida a aparência de duas setas muito afastadas e reduzido o risco de sobreposição do indicador sobre o símbolo de Raides."
+        ],
+        "emDesenvolvimento": [
+          "Validar no Samsung após instalar a versão oficial, incluindo as duas Pokébolas."
+        ]
+      }
     }
   ]
 }
