@@ -73,10 +73,16 @@
     '" alt="" aria-hidden="true">':"";
    const legacyNote=m.status==="legacy"?
     '<small class="evoMoveLegacy">Legado · MT não confirmada</small>':"";
-   return '<div class="evoMoveItem"><span>'+esc(label)+':</span> '+
+   const fast=label==="Ágil";
+   const verified=valid&&["normal","elite","legacy"].includes(m.status);
+   // Normal fast/charged have distinct neutral icons; Elite retains exact
+   // user-provided image. Grey means unverified, never "has no Elite".
+   const badge=root.PokeSearchMovePanel?.mtBadge?.(fast,verified?m.status:"unknown")||
+    (mtSymbol?'<span aria-label="MT de Elite identificada">'+mtSymbol+'</span>':legacyNote);
+   const numbers=valid?root.PokeSearchMovePanel?.recommendationMetrics?.(m,fast)||"":"";
+   return '<div class="evoMoveDetailGroup"><div class="evoMoveItem"><span>'+esc(label)+':</span> '+
     '<strong style="color:'+shade+'">'+(valid?esc(m.name):"Não confirmado")+'</strong>'+
-    (mtSymbol?'<span aria-label="MT de Elite identificada" title="MT de Elite identificada">'+mtSymbol+'</span>':legacyNote)+
-    '</div>';
+    badge+'</div>'+numbers+'</div>';
   }
   return title+projection+'<div class="evoMoveCaution">Recomendação PvPoke · não são os golpes capturados</div>'+
    line("Ágil",data.fast)+data.charged.slice(0,2).map((move,i)=>line("C"+(i+1),move)).join("");
