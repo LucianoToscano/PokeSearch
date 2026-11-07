@@ -1537,7 +1537,12 @@ public final class RaidDayAssistantOverlayService extends Service {
             renderPreparation();
         }else if(!riskAccepted){showEduRisk();}
         else{showEduReady();}
-        if(visible)placePanel();
+        if(visible){
+            // Centraliza novamente após a fala alterar a altura do balão.
+            panelScroll.post(()->{
+                if(visible){placePanelCoordinates();placePanel();}
+            });
+        }
     }
     private void placePanelCoordinates(){
         int width=eduPanelWidth;
@@ -1575,7 +1580,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             updateStep();
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);
-            panelScroll.post(this::placePanel);
+            panelScroll.post(()->{
+                if(visible){placePanelCoordinates();placePanel();}
+            });
         }else{
             // Ao reabrir com toque curto, sempre voltar à conversa principal.
             eduSettingsOpen=false;
