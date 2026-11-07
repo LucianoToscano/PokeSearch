@@ -191,6 +191,12 @@ body.controls-window.visual-light-menu #choices:not(.visualPanel) .extraNumberRo
 .spriteStage .sprite{width:100%;height:100%;max-width:100%;max-height:100%;aspect-ratio:1/1;object-fit:contain;object-position:center}
 .spriteFallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#bfcbd5;opacity:.65;pointer-events:none;font-size:10px;font-weight:650;letter-spacing:-.3px}
 .spriteStage.loaded .spriteFallback{display:none}
+/* LT286: Android WebView can paint the broken-image glyph before the error
+ * event or during a retry. Draw the verified sprite ONLY after load reports
+ * valid decoded dimensions. Until then show the exact Dex fallback, not a
+ * misleading blank tile or browser's broken-image icon. */
+.spriteStage:not(.loaded) .sprite{visibility:hidden!important}
+.spriteStage.loaded .sprite{visibility:visible!important}
 .spriteStage.failed .sprite{display:none}
 .fallback{font-size:20px}
 #empty{display:block;width:var(--dock);height:18px;line-height:18px;text-align:center;color:#dce1e9b8;font-size:12px;overflow:hidden;background:transparent;border:0;padding:0}
@@ -6431,18 +6437,27 @@ function attachSpriteFeedback(){
   }
   const spriteState=img.dataset||(img.dataset={}); // legacy WebView QA stubs
   if(spriteState.psSpriteManaged==="1"){
-   // A real native asset may become available after the initial 12s error.
-   // Re-probe only the exact card, never a substituted form or other Pokémon.
-   if(stage.classList.contains("failed")&&!spriteState.psSpriteRecovered){
+   // LT286: an already-managed <img> can fail on Samsung before the local
+   // WebView asset becomes available. Retry only the SAME verified exact art
+   // (including when its src has not changed), twice with a bounded gap.
+   // The parent uses the Dex fallback while the new bytes are decoding.
+   if(stage.classList.contains("failed")&&img.isConnected!==false){
     const item=stage.closest?.(".spawn");
     const ix=Number(item?.getAttribute("data-index")??-1);
     const card=ix>=0&&ix<cards.length?cards[ix]:null;
     const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
     const art=card&&engine?.resolve(card);
     const exact=card&&engine?.bundledExactForArt?.(card,art)||"";
-    if(exact&&img.getAttribute("src")!==exact){
-     spriteState.psSpriteRecovered="1";
-     stage.classList.remove("failed");
+    const tries=Math.max(0,Number(spriteState.psExactRetryCount||0));
+    const last=Number(spriteState.psExactRetryAt||0),now=Date.now();
+    if(exact&&tries<2&&now-last>=2500){
+     spriteState.psExactRetryCount=String(tries+1);
+     spriteState.psExactRetryAt=String(now);
+     spriteState.psSpriteRecovered="1"; // preserve previous audit contract
+     stage.classList.remove("failed");stage.classList.remove("loaded");
+     // Reset even an identical src to retry a failed WebView decode. The
+     // old load/error listeners remain bound to this image and this row only.
+     img.removeAttribute("src");
      img.src=exact;
     }
    }
