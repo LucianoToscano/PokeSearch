@@ -336,7 +336,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         journal.events().add(event);
     }
     private void beginRealSession(){
-        if(active||training||!preparation.isComplete()||!riskAccepted)return;
+        if(active||training||!eduDateConfirmed()||!riskAccepted)return;
         LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
         LocalDate date=preparation.eventDate();
         if(date==null||(!today.equals(date.minusDays(1))&&!today.equals(date))){
@@ -549,11 +549,19 @@ public final class RaidDayAssistantOverlayService extends Service {
             renderPreparation();
         });
     }
+    private boolean eduDateConfirmed(){
+        if(preparation==null||preparation.eventDate()==null)return false;
+        return preparation.isComplete()||preparation.eventKey().equals(
+            prefs.getString("edu_event_date_confirmed_key",""));
+    }
     private void completePreparation(){
-        if(!preparation.allAnswered())return;
+        // Fluxo simples: a data é suficiente para iniciar a conversa.
+        // As outras seis respostas legadas permanecem salvas, se existirem.
+        if(preparation.eventDate()==null)return;
         preparation.markComplete();
         preparation.save(prefs);
         String chosenEvent=preparation.eventKey();
+        prefs.edit().putString("edu_event_date_confirmed_key",chosenEvent).apply();
         if(!eventKey.equals(chosenEvent)){
             RaidDaySchedule.clearWindow(this);
             eventKey=chosenEvent;
@@ -617,6 +625,10 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void nextPreparation(){
         if(!preparation.currentAnswered())return;
+        if(preparation.question()==0){
+            completePreparation(); // Sem seis perguntas de configuração no tutorial.
+            return;
+        }
         if(preparation.question()<RaidDayPreparation.COUNT-1){
             preparation.setQuestion(preparation.question()+1);
             preparation.save(prefs);
@@ -1124,6 +1136,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         }else{
             addTwo("Simular hoje",()->startDemoToday(),
                 "Mudar data",()->{
+                    prefs.edit().remove("edu_event_date_confirmed_key").apply();
                     preparation.beginEditing();preparation.save(prefs);updateStep();
                 });
         }
@@ -1420,10 +1433,11 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(finished)showEduFinished();else showEduGuide();
         }else if(!eduWantsReal){
             showEduWelcome();
-        }else if(!preparation.isComplete()){
+        }else if(!eduDateConfirmed()){
             eduMainCard.setVisibility(View.GONE);
             eduActions.setVisibility(View.GONE);
             preparationSection.setVisibility(View.VISIBLE);
+            preparation.setQuestion(0); // A conversa começa somente pela data.
             renderPreparation();
         }else if(!riskAccepted){showEduRisk();}
         else{showEduReady();}
