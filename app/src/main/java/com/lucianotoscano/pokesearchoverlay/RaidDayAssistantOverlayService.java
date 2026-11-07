@@ -1545,17 +1545,23 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
     }
     private void placePanelCoordinates(){
-        int width=eduPanelWidth;
         int sw=getResources().getDisplayMetrics().widthPixels;
         int sh=getResources().getDisplayMetrics().heightPixels;
-        int gap=dp(5);
-        int left=bubbleParams.x-width-gap;
-        int right=bubbleParams.x+bubbleParams.width+gap;
-        // A janela acompanha o treinador. Não herda o antigo painel gigante
-        // que podia ser arrastado para longe do avatar.
-        int docking=left>=0?left:
-            right+width<=sw?right:Math.max(0,Math.min(sw-width,left));
-        panelParams.x=Math.max(0,Math.min(Math.max(0,sw-width),docking));
+        int gap=dp(6);
+        int leftSpace=Math.max(0,bubbleParams.x-gap);
+        int rightSpace=Math.max(0,sw-
+            (bubbleParams.x+bubbleParams.width+gap));
+        boolean dockLeft=leftSpace>=rightSpace;
+        // Em celulares estreitos, encolher a fala para caber AO LADO do Edu:
+        // nunca desenhar balão sobre sua sprite.
+        eduPanelWidth=Math.min(dp(286),Math.max(dp(132),
+            Math.max(leftSpace,rightSpace)));
+        panelParams.width=eduPanelWidth;
+        int docking=dockLeft?
+            bubbleParams.x-gap-eduPanelWidth:
+            bubbleParams.x+bubbleParams.width+gap;
+        panelParams.x=Math.max(0,Math.min(
+            Math.max(0,sw-eduPanelWidth),docking));
         int measured=panelScroll==null?dp(175):
             Math.max(dp(125),panelScroll.getHeight());
         panelParams.y=Math.max(0,Math.min(Math.max(0,sh-measured),
