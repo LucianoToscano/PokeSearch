@@ -302,6 +302,42 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
     sz.name+" "+JSON.stringify(overall270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-rg-ul.png")});
+   // LT296: real browser taps for exact family sprites and all four leagues.
+   const family296=await page.evaluate(()=>{
+    const ex=window.PokeSearchRankExplorer,snapshot=window.POKESEARCH_PVPOKE_OVERALL;
+    if(!ex?.open?.({kind:"overall",name:"Squirtle",league:"gl"}))
+     return {ok:false,stage:"open Squirtle"};
+    const family=()=>[...document.querySelectorAll("#psRankExplorer .psrFamilyButton")];
+    const names=family().map(b=>b.dataset.psName);
+    if(!["Squirtle","Wartortle","Blastoise"].every(name=>names.includes(name)))
+     return {ok:false,stage:"missing family",names};
+    const blastoise=family().find(b=>b.dataset.psName==="Blastoise");
+    if(!blastoise?.querySelector("img"))
+     return {ok:false,stage:"missing verified Blastoise sprite",names};
+    blastoise.click();
+    const chosen=family().find(b=>b.getAttribute("aria-pressed")==="true")?.dataset.psName;
+    const first=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const currentGL=ex.getOverallRows(snapshot,"gl")?.find(r=>r.name==="Blastoise");
+    if(!first.includes("Blastoise")||
+       !first.includes(currentGL?"#"+currentGL.rank:"Não ranqueado")||
+       chosen!=="Blastoise")
+     return {ok:false,stage:"species rank mixing",chosen,first};
+    const lc=document.querySelector('#psRankExplorer .psrLeagueIconButton[data-league="lc"]');
+    if(!lc||lc.disabled)return {ok:false,stage:"LC icon unavailable"};
+    lc.click();
+    const second=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const currentLC=ex.getOverallRows(snapshot,"lc")?.find(r=>r.name==="Blastoise");
+    const stillChosen=family().find(b=>b.getAttribute("aria-pressed")==="true")?.dataset.psName;
+    const heading=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
+    return {ok:heading==="Rank Geral"&&stillChosen==="Blastoise"&&
+     second.includes("Copa Pequena")&&
+     second.includes(currentLC?"#"+currentLC.rank:"Não ranqueado"),
+     chosen,stillChosen,first,second,heading,names};
+   });
+   assert.ok(family296.ok,"LT296 exact family sprites and Little Cup selection "+
+    sz.name+" "+JSON.stringify(family296));
+   await page.screenshot({path:path.join(output,sz.name+"-lt296-family-lc.png")});
+
    await page.evaluate(()=>window.PokeSearchRankExplorer?.close?.());
    // LT276: actual IV-tile Rank Classe selector with all three leagues P/M/G.
    const class276=await page.evaluate(()=>{
