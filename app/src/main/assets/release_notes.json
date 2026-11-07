@@ -2698,6 +2698,28 @@
           "Recomendações por adversário ou chefe específico, eventos atuais de golpes e custos de MT não são inferidos; demais funcionalidades seguem no roadmap #277."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt286-samsung-broken-sprite-retry-20261107",
+      "minVersionCode": 54490,
+      "date": "07/11/2026",
+      "title": "LT286 — Sprites legíveis nas duas Pokébolas",
+      "sections": {
+        "novidades": [
+          "Enquanto uma sprite carrega, a lista mostra o número da Pokédex no espaço reservado, sem exibir o ícone de imagem quebrada do Android."
+        ],
+        "melhorias": [
+          "Recuperação de imagens verificadas por identidade com até duas novas tentativas em caso de falha, incluindo quando o arquivo exato anterior precisa ser recarregado.",
+          "Mantidos o tamanho, a posição e o aspecto das sprites corretas, em ambas as Pokébolas independentes."
+        ],
+        "correcoes": [
+          "As imagens não aparecem como carregadas antes de serem decodificadas; imagens com falha permanecem discretas até recuperar a sprite correta.",
+          "Pokémon com forma, vestimenta ou variante não confirmada continuam sem substituição enganosa por espécie base."
+        ],
+        "emDesenvolvimento": [
+          "Homologar fisicamente no Samsung os dez resultados, alternância entre P1 e P2, retomada da tela e sprites regionais/vestimentas com rede lenta."
+        ]
+      }
     }
   ]
 }
