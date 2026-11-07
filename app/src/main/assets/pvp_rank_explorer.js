@@ -371,7 +371,21 @@
     "#psRankExplorer .psrOptionMenu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:4px 0;padding:4px;background:#172d3bf2;border:1px solid #8bb0c15e;border-radius:7px}",
     "#psRankExplorer .psrOptionMenu button{box-sizing:border-box;width:100%;max-width:none;min-width:0;min-height:31px;padding:4px 3px;white-space:normal;text-align:center}",
     "#psRankExplorer .psrOptionMenu button[aria-pressed=true]{border-color:#addcff;background:#4476977a;font-weight:800}",
-   "#evoBody button.psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}"
+   "#evoBody button.psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}",
+   "#psRankExplorer .psrHead{display:flex!important;align-items:center!important;justify-content:center!important;min-height:28px!important;text-align:center!important}",
+   "#psRankExplorer .psrTitle{display:inline-flex!important;justify-content:center!important;align-items:center!important;gap:6px!important;flex:1 1 auto!important;font-size:12px!important}",
+   "#psRankExplorer .psrHeaderIcon{width:20px;height:20px;object-fit:contain;flex:0 0 20px}",
+   "#psRankExplorer .psrLeagueIcons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:5px 0;align-items:center}",
+   "#psRankExplorer .psrLeagueIconButton{height:39px!important;padding:3px!important;background:#ffffff08!important;display:flex;align-items:center;justify-content:center;position:relative}",
+   "#psRankExplorer .psrLeagueIconButton[aria-pressed=true]{border-color:#99d6ff!important;background:#5688a147!important;box-shadow:inset 0 0 0 1px #83c9f37a}",
+   "#psRankExplorer .psrLeagueIconButton img{height:29px;width:29px;object-fit:contain}",
+   "#psRankExplorer .psrFamily{display:flex;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:2px 0 6px;margin:2px 0 3px;touch-action:pan-x}",
+   "#psRankExplorer .psrFamilyButton{box-sizing:border-box;flex:0 0 49px!important;width:49px!important;min-height:59px!important;padding:2px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#ffffff09!important}",
+   "#psRankExplorer .psrFamilyButton[aria-pressed=true]{background:#537da54d!important;border-color:#91cfff!important;box-shadow:inset 0 0 0 1px #98d6ff8c}",
+   "#psRankExplorer .psrFamilyButton img{height:38px;width:38px;object-fit:contain;pointer-events:none}",
+   "#psRankExplorer .psrFamilyButton .psrFamilyRank{font:750 9px/1.1 Roboto,Arial,sans-serif;color:#e0e8f3}",
+   "#psRankExplorer .psrMissingSprite{font:700 8px/1.1 Roboto,Arial,sans-serif;color:#bac9d9;overflow:hidden;max-height:37px;max-width:42px;overflow-wrap:anywhere}",
+   "#psRankExplorer .psrTableSprite{width:19px;height:19px;vertical-align:middle;object-fit:contain;margin-right:4px}"
   ].join("\n");
   document.head.appendChild(css);
  }
