@@ -78,8 +78,10 @@
   if(!data||data.availableOnly===true||!data.fast||
      !Array.isArray(data.charged)||!data.charged.length)return;
   const moves=[data.fast,...data.charged.slice(0,2)];
-  if(moves.some(m=>!["normal","elite","legacy"].includes(m?.status)))return;
-  const mt=moves.some(m=>m.status==="elite"||m.status==="legacy")?"elite":"normal";
+  // Legacy means a historical move, but DOES NOT prove an Elite TM
+  // is obtainable. Leave the icon grey until Elite/normal is confirmed.
+  if(moves.some(m=>!["normal","elite"].includes(m?.status)))return;
+  const mt=moves.some(m=>m.status==="elite")?"elite":"normal";
   btn.dataset.psMt=mt;
   btn.title=btn.title+" · status do conjunto confirmado";
  }
