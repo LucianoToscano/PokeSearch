@@ -246,5 +246,99 @@ function applyResultTile(img,verifiedReference){
  reference.src=data;
  return null;
 }
-root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile,enhanceProviderTile,onNativeBounds});
+
+/* LT295: compact detail card has its OWN 30px sprite, separate from the
+ * Results P/M/G boxes. Older legacy apply() targeted 78% of PNG occupancy
+ * with a 2.2x cap, so even an exact Charmander on a provider card was tiny.
+ * Use the same measured opaque silhouette rule as Result cards, with a
+ * dedicated native callback to this independently owned detail WebView.
+ * Keep all pixel bytes, source URLs, species, costume and shiny unchanged.
+ */
+const DETAIL_VISIBLE_TARGET=.87;
+const pendingDetailBounds=new Map();
+let detailSeq=0;
+function detailGeometryFit(bounds,box){
+ if(!bounds||typeof bounds!=="object"||!(box>=8))return null;
+ const keys=["left","right","top","bottom"];
+ if(keys.some(k=>!Number.isInteger(bounds[k])||bounds[k]<0||bounds[k]>=SAMPLE))
+  return null;
+ const {left,right,top,bottom}=bounds;
+ if(right-left<3||bottom-top<3)return null;
+ const occupancy=Math.max((right-left+1)/SAMPLE,(bottom-top+1)/SAMPLE);
+ if(!(occupancy>0))return null;
+ // Here the img spans the whole 30px detail column, unlike 88%-wide
+ // Result artwork. No shared zoom state or modification of the card grid.
+ const zoom=Math.round(clamp(DETAIL_VISIBLE_TARGET/occupancy,.80,SOURCE_MEASURED_MAX_ZOOM)*1000)/1000;
+ const cx=(left+right+1)/(2*SAMPLE);
+ const cy=(top+bottom+1)/(2*SAMPLE);
+ return {zoom,
+  x:Math.round((.5-cx)*zoom*box*100)/100,
+  y:Math.round((.5-cy)*zoom*box*100)/100,
+  occupancy};
+}
+function setDetailFit(img,fit){
+ if(!img?.style?.setProperty)return;
+ img.style.setProperty("--ps-alpha-scale",fit?String(fit.zoom):"1");
+ img.style.setProperty("--ps-detail-x",fit?fit.x+"px":"0px");
+ img.style.setProperty("--ps-detail-y",fit?fit.y+"px":"0px");
+}
+function resetDetail(img){
+ if(!img)return;
+ for(const [token,entry] of pendingDetailBounds){
+  if(entry.img===img)pendingDetailBounds.delete(token);
+ }
+ if(img.dataset){img.dataset.psDetailProbeUrl="";img.dataset.psDetailMeasured="";}
+ setDetailFit(img,null);
+}
+function onDetailNativeBounds(token,url,bounds){
+ const key=String(token||"");
+ const pending=pendingDetailBounds.get(key);
+ if(!pending)return false;
+ pendingDetailBounds.delete(key);
+ const img=pending.img;
+ if(img?.isConnected===false||
+    String(img?.currentSrc||img?.src||"")!==pending.url||
+    String(url)!==pending.url||
+    img?.dataset?.psDetailProbeUrl!==pending.url)return false;
+ const fit=detailGeometryFit(bounds,pending.size);
+ if(!fit)return false;
+ setDetailFit(img,fit);
+ if(img.dataset)img.dataset.psDetailMeasured=pending.url;
+ return true;
+}
+function applyDetail(img,cardBounds,verifiedSource=false){
+ if(!img?.style?.setProperty||Number(img.naturalWidth)<8)return false;
+ const url=String(img.currentSrc||img.src||"");
+ const size=Number(img.clientWidth)||30;
+ if(img.dataset?.psDetailMeasured===url||img.dataset?.psDetailProbeUrl===url)
+  return true;
+ // Images locally decoded by Android/WebView may already be canvas-readable.
+ // Use the actual DISPLAYED image, never a proxy or a different Pokémon.
+ const measured=visibleBounds(img);
+ const bounds=measured||(cardBounds?.url===url?cardBounds:null);
+ const fit=detailGeometryFit(bounds,size);
+ if(fit){
+  setDetailFit(img,fit);
+  if(img.dataset)img.dataset.psDetailMeasured=url;
+  return true;
+ }
+ setDetailFit(img,null);
+ if(!verifiedSource||!/^https:\/\//i.test(url))return false;
+ const bridge=root.Native;
+ if(typeof bridge?.requestDetailSpriteSilhouette!=="function")return false;
+ if(img.dataset?.psDetailProbeUrl===url)return true;
+ if(detailSeq>=999999999)detailSeq=0;
+ const token="psd"+(++detailSeq);
+ if(pendingDetailBounds.size>=16)pendingDetailBounds.clear();
+ pendingDetailBounds.set(token,{img,url,size});
+ try{
+  if(bridge.requestDetailSpriteSilhouette(url,token)!==true){
+   pendingDetailBounds.delete(token);
+   return false;
+  }
+  if(img.dataset)img.dataset.psDetailProbeUrl=url;
+  return true;
+ }catch(_){pendingDetailBounds.delete(token);return false;}
+}
+root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile,enhanceProviderTile,onNativeBounds,applyDetail,resetDetail,onDetailNativeBounds});
 })(window);

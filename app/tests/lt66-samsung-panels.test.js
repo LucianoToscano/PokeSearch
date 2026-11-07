@@ -80,7 +80,9 @@ check("K native card can grow above former 310dp limit",()=>{
 });
 check("L scroll position preserved on re-render and PvP recalculation",()=>{
  assert.ok(detail.includes("const keepScroll=panel.scrollTop"));
- assert.ok(detail.includes("if(body.innerHTML!==html)body.innerHTML=html"));
+ assert.ok(detail.includes("if(body.innerHTML!==html){")&&
+  detail.includes("window.PokeSearchEvolutionMoves?.restore?.()"),
+  "PvP rerender preserves scroll and restored per-evolution move details");
  assert.ok(detail.includes("if(changed)panel.scrollTop=0"));
  assert.ok(detail.includes("Math.max(0,panel.scrollHeight-panel.clientHeight)"));
 });

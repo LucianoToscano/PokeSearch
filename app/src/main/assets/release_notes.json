@@ -2901,6 +2901,29 @@
           "Confirmar visualmente no Samsung, em ambas as Pokébolas e P/M/G, com/sem bordas: Charmander, Bulbasaur, Treecko, Snorlax, Torchic e fantasias. Imagens inacessíveis podem manter o fallback conservador."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt295-card-sprite-and-evolution-specific-pvp-attacks-20261107",
+      "minVersionCode": 54499,
+      "date": "07/11/2026",
+      "title": "LT295 — Sprites do card e ataques de cada evolução",
+      "sections": {
+        "novidades": [
+          "A Análise PvP oferece um ícone discreto de ataques ao lado de cada Pokémon, com recomendações próprias daquela espécie e liga; o antigo botão isolado no cabeçalho deixa de aparecer.",
+          "Ao tocar o ícone, os ataques Ágil/C1/C2 são exibidos logo abaixo da evolução correspondente, em português brasileiro e nas cores dos tipos verificadas pela fonte PvPoke."
+        ],
+        "melhorias": [
+          "A sprite do cabeçalho do card usa a mesma meta de ocupação visual de 87% da arte opaca, em seus 30dp, preservando a identidade original, margens e dados.",
+          "Miniaturas com margem transparente que não podem ser medidas no canvas podem aproveitar a geometria nativa da URL exata, em callback isolado para o WebView do card."
+        ],
+        "correcoes": [
+          "Eliminada a ambiguidade do antigo ícone de ataques associado à espécie escolhida pelo ranking, que nem sempre era o Pokémon capturado.",
+          "Uma única evolução exibe ataques por vez; consultas atrasadas não aplicam respostas a outra espécie e referências teóricas mostram aviso de elegibilidade."
+        ],
+        "emDesenvolvimento": [
+          "Conferir no Samsung os cards Charmander/Pikachu com eventos, as duas Pokébolas e recomendações de Charmander → Charmeleon → Charizard em GL/UL/ML. Golpes legados sem comprovação de MT permanecem cinza."
+        ]
+      }
     }
   ]
 }

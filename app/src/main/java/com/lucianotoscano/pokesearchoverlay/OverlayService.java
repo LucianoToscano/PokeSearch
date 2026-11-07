@@ -4177,6 +4177,26 @@ public class OverlayService extends Service {
                     js(resultPanel,resultLoaded,response);
                 }));
         }
+        /**
+         * LT295: read the same trusted HTTPS sprite for the 30dp detail
+         * header. Result and detail are independent WebViews; the callback
+         * MUST return to the requesting detail panel, not resultPanel.
+         * VerifiedSpriteGeometry supplies HTTPS/host/byte/time/cache limits.
+         */
+        @JavascriptInterface public boolean requestDetailSpriteSilhouette(
+                String sourceUrl,String requestToken){
+            if(stopped||requestToken==null||
+               !requestToken.matches("psd[1-9][0-9]{0,8}"))return false;
+            return VerifiedSpriteGeometry.request(OverlayService.this,
+                sourceUrl,bounds->handler.post(()->{
+                    if(stopped||detailPanel==null||!detailLoaded)return;
+                    String response="window.PokeSearchSpriteScale?.onDetailNativeBounds?.("+
+                        JSONObject.quote(requestToken)+","+
+                        JSONObject.quote(sourceUrl)+","+
+                        (bounds==null?"null":bounds)+");";
+                    js(detailPanel,detailLoaded,response);
+                }));
+        }
         // The result list and detail card run in separate Android WebViews. On
         // some devices their file:// image load fails even though the bundled
         // sprite exists. Only an exact Dex-verified base (normal or shiny) may
