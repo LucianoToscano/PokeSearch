@@ -76,7 +76,7 @@ assert.ok(detail.includes("const nativeFallback=()=>"));
 assert.ok(probe.includes("imageFromSite:siteImageExact"));
 assert.ok(probe.includes("image:siteImageUrl"));
 assert.doesNotMatch(dock,/crossorigin="anonymous"/);
-assert.ok(dock.includes("window.PokeSearchSpriteScale?.applyResultTile?.(img)"));
+assert.ok(dock.includes("window.PokeSearchSpriteScale?.applyResultTile?.(img,exactReference)"));
 assert.ok(dock.includes("Sprite indisponível para a forma exata"));
 assert.ok(dock.includes("if(resultWindow)document.getElementById(\"spawns\").innerHTML=cards.map"));
 console.log("LT287 PASS: verified PoGoCoordinates image first, detail-native fallback, signed local HTTPS/legacy URI, safe unknown forms and no forced CORS");
