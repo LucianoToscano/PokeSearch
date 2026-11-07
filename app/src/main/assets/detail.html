@@ -979,6 +979,27 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpRankValue.psCpRankBetter strong{color:#8ce3b1}
 #psMetricPanel .psCpRankNote{margin-top:4px;color:#b7c6d7;font-size:8px;line-height:1.4}
 
+
+/* LT285: concise, optional TM guidance; no type-color backgrounds or chips. */
+#movesPopover .psMovesTmAdvice{margin:4px 0 1px;border-top:1px solid #b8cee42d;
+ padding:3px 0 0;background:transparent}
+#movesPopover .psMovesTmAdvice>summary{color:#bad8f2;font:650 9px/1.35 Roboto,Arial,sans-serif;
+ min-height:20px;cursor:pointer;white-space:normal}
+#movesPopover .psMovesTmRow{display:grid;grid-template-columns:25px minmax(0,1fr);
+ gap:3px;margin:2px 0;padding:1px 0;color:#dce4ee;font:9px/1.3 Roboto,Arial,sans-serif}
+#movesPopover .psMovesTmRow>b{font-weight:750;color:#c0d5e7}
+#movesPopover .psMovesTmRow[data-ps-tm="elite"] span{color:#f2d68e}
+#movesPopover .psMovesTmRow[data-ps-tm="unknown"] span,
+#movesPopover .psMovesTmRow[data-ps-tm="legacy"] span{color:#b7c2ce}
+#movesPopover .psMovesTmNote{font:8.5px/1.34 Roboto,Arial,sans-serif;
+ color:#b5c4d2;margin:4px 0 2px;overflow-wrap:anywhere}
+#raidPanel .psRaidTmInfo{margin-top:4px;border-top:1px solid #b9ced028;
+ padding-top:3px;background:transparent}
+#raidPanel .psRaidTmInfo>summary{font:650 9px/1.3 Roboto,Arial,sans-serif;
+ color:#c3d9ed;min-height:19px;cursor:pointer}
+#raidPanel .psRaidTmInfo>div{font:9px/1.35 Roboto,Arial,sans-serif;
+ color:#b8c9d7;overflow-wrap:anywhere;padding:2px 0}
+
 /* LT253: A/B IV editor and CP presets within the same glass card. */
 #psMetricPanel .psCpIvComparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:7px 0}
 #psMetricPanel .psCpIvGroup{min-width:0;border:1px solid #a6c0da48;border-radius:7px;background:#ffffff09;padding:5px}
@@ -1924,6 +1945,14 @@ function renderRaidPreview(){
    rows.slice(0,3).map(rowHtml).join("")+
    (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
     ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
+
+   // MT Elite from this PvE dataset is attached to the COMBINATION.
+   // Do not claim which attack, or that an unmarked pair is MT-normal.
+   '<details class="psRaidTmInfo"><summary>MT nos golpes de Raides</summary>'+
+   '<div>O ranking compara conjuntos Ágil | Carregado por tipo, não o chefe atual. '+
+   'O selo de Elite marca o conjunto na fonte PvE, mas não identifica qual golpe exige MT Elite. '+
+   'Sem selo = disponibilidade de MT não confirmada, não prova de MT comum. '+
+   'Confira no jogo; golpes recomendados para PvP usam outra fonte.</div></details>'+
    '';
    panel.setAttribute?.("data-ps-source",String(result.source||"Fonte de referência"));
    // Policy stays machine-readable, not another long expandable block.
@@ -2362,6 +2391,16 @@ function renderRankOneMoves(){
    }
    resizeEvolutionPanel();return;
   }
+
+  // LT285: the PvP moveset is ranked; obtaining each move is a separate
+  // source-verified question. The list is collapsed until explicitly opened.
+  const tmPlan=window.PokeSearchPvpRankMoves?.tmPlan?.(recommendation);
+  const tmAdvice=tmPlan?.verified?
+   '<details class="psMovesTmAdvice" ontoggle="resizeEvolutionPanel()">'+
+   '<summary>'+h(tmPlan.summary)+'</summary>'+
+   tmPlan.rows.map(x=>'<div class="psMovesTmRow" data-ps-tm="'+h(x.status)+'">'+
+    '<b>'+h(x.slot)+'</b><span>'+h(x.name)+' · '+h(x.guidance)+'</span></div>').join("")+
+   '<div class="psMovesTmNote">'+h(tmPlan.caution)+'</div></details>':"";
   const fastRow=row("Ágil",recommendation.fast);
   const chargedRows=(recommendation.charged||[]).slice(0,2)
     .map((m,i)=>row("C"+(i+1),m)).join("");
@@ -2379,8 +2418,7 @@ function renderRankOneMoves(){
    '</div>'+
    (isMega?'<div class="psMoveLegend psMegaMoveContext">'+
     'Mesmos golpes do '+h(species)+' normal · avaliação Megaedição.</div>':"")+
-   fastRow+chargedRows+
-   '';
+   fastRow+chargedRows+tmAdvice;
   popover.title="Fonte: "+String(recommendation.source||"PvPoke")+
    " · recomendados ≠ capturados."+
    (isMega?" Mega não tem golpes exclusivos nem garante GBL.":"")+
