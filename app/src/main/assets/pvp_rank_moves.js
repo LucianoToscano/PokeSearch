@@ -219,6 +219,48 @@
   }catch(_){return null;}
  }
 
+
+ /* LT285: move-specific TM advice is read-only and source-scoped.
+  * PvPoke gamemaster membership verifies only a historical move category;
+  * it does NOT establish today's in-game TM pool or guaranteed acquisition.
+  * "legacy" must NEVER be treated as confirmed Elite availability.
+  * A fallback list of learnable attacks is not a recommendation.
+  */
+ function tmPlan(data){
+  if(!data||data.availableOnly===true||data.recommended===false||
+     !data.fast||!Array.isArray(data.charged)||!data.charged.length)return null;
+  const inputs=[{slot:"Ágil",fast:true,move:data.fast},
+   ...data.charged.slice(0,2).map((move,i)=>({
+    slot:"C"+(i+1),fast:false,move
+   }))];
+  if(inputs.length<2||inputs.some(x=>typeof x.move?.id!=="string"||
+      !/^[A-Z][A-Z0-9_]{1,90}$/.test(x.move.id)))return null;
+  const allowed=new Set(["normal","elite","legacy","unknown"]);
+  const rows=inputs.map(({slot,fast,move})=>{
+   const status=allowed.has(move.status)?move.status:"unknown";
+   const category=fast?"Ágil":"Carregada";
+   const guidance=status==="normal"?"MT "+category+" comum · sem garantia":
+    status==="elite"?"MT "+category+" de Elite indicada na fonte":
+    status==="legacy"?"Legado · obtenção por MT Elite não confirmada":
+    "Obtenção não confirmada";
+   const named=move.localeVerified===true&&typeof move.name==="string"&&
+    move.name.trim().length>1&&move.name.trim().length<=120;
+   return {slot,moveId:move.id,
+    name:named?move.name.trim():"Nome PT-BR não confirmado",
+    status,guidance};
+  });
+  const hasElite=rows.some(x=>x.status==="elite");
+  const hasLegacy=rows.some(x=>x.status==="legacy");
+  const hasUnknown=rows.some(x=>x.status==="unknown");
+  const summary=hasUnknown?"MT: dados incompletos":
+   hasLegacy?"MT: legado · confira disponibilidade":
+   hasElite?"MT: Elite indicada":
+   "MT: golpes comuns na fonte";
+  return {verified:true,source:String(data.source||source),rows,
+   hasElite,hasLegacy,hasUnknown,summary,
+   caution:"A fonte de referência não confirma eventos nem a disponibilidade atual no jogo. MTs comuns sorteiam golpes; a MT Elite indicada não garante que o golpe ainda esteja disponível. Legado não é sinônimo de MT Elite."};
+ }
+
  const rankingCategories=Object.freeze({overall:"Geral",leads:"Abertura",
   closers:"Finalização",switches:"Troca",chargers:"Carregadores"});
  // LT240: explicit, read-only ranking categories pinned to the same source.
@@ -246,5 +288,5 @@
   }catch(_){return null;}
  }
 
- return Object.freeze({lookup,lookupMega,getStatus,megaSpeciesId,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
+ return Object.freeze({lookup,lookupMega,getStatus,tmPlan,megaSpeciesId,fromData,fromAvailable,localizedMoves,moveStats,speciesId,source,commit,categoryRows,rankingCategories});
 });
