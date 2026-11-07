@@ -54,8 +54,6 @@ public final class RaidDayAssistantOverlayService extends Service {
     public static boolean isRunning(){return running;}
 
     // Os textos e a ordem E01–E11 vêm do JSON validado, não de arrays Java.
-    private static final int STEP_E02=1, STEP_E03=2, STEP_E06=5;
-    private static final int STEP_E07=6, STEP_E08=7, STEP_E09=8;
 
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
@@ -448,13 +446,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         repeatButton=button(getString(R.string.raid_day_cycle_repeat));
         cycleActions.addView(repeatButton,new LinearLayout.LayoutParams(0,-1,1));
         repeatButton.setOnClickListener(v->{
-            if(paused||finished||index!=STEP_E07)return;
+            if(paused||finished||plan.step(index).repeatTo.isEmpty())return;
             if(repeatedCycles>=100){
                 statusText.setText("Limite de repetições salvas neste roteiro");
                 return;
             }
             repeatedCycles++;
-            index=STEP_E02;
+            index=plan.indexOf(plan.step(index).repeatTo);
             persist("CYCLE_REPEATED");updateStep();
         });
         skipButton=button(getString(R.string.raid_day_no_pass));
@@ -463,11 +461,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         cycleActions.addView(skipButton,skipLp);
         skipButton.setOnClickListener(v->{
             if(paused||finished)return;
-            if(index==STEP_E09){
-                index=9;persist("OPTIONAL_SKIPPED");updateStep();return;
+            RaidDayGuidePlan.Step step=plan.step(index);
+            if(!step.skipTo.isEmpty()){
+                index=plan.indexOf(step.skipTo);
+                persist("OPTIONAL_SKIPPED");updateStep();return;
             }
-            if(index!=STEP_E03&&index!=STEP_E06&&index!=STEP_E07)return;
-            index=STEP_E08;persist("NO_PASS");updateStep();
+            if(step.noPassTo.isEmpty())return;
+            index=plan.indexOf(step.noPassTo);
+            persist("NO_PASS");updateStep();
         });
         LinearLayout fallbackActions=new LinearLayout(this);
         LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-1,dp(36));
@@ -552,9 +553,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             View.VISIBLE:View.GONE);
         cycleText.setText("Ciclos repetidos: "+repeatedCycles+
             " · não representa passes");
-        boolean check=!finished&&index==STEP_E07;
-        boolean noPass=!finished&&(index==STEP_E03||index==STEP_E06);
-        boolean optional=!finished&&index==STEP_E09;
+        boolean check=!finished&&!current.repeatTo.isEmpty();
+        boolean noPass=!finished&&!current.noPassTo.isEmpty();
+        boolean optional=!finished&&!current.skipTo.isEmpty();
         cycleActions.setVisibility(check||noPass||optional?
             View.VISIBLE:View.GONE);
         repeatButton.setVisibility(check?View.VISIBLE:View.GONE);
