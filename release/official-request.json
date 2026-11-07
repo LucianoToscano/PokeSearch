@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.91",
-  "code": 54495,
-  "label": 51295,
-  "previous_tag": "v0.02.90-54494",
-  "qa_max_code": 54494,
-  "release_notes": "PokeSearch LT291: corrigida a ordem das evoluções no painel expandido de Análise PvP. Antes as evoluções eram ordenadas por qualidade de Rank Classe e Rank Geral, fazendo Cyndaquil → Typhlosion → Quilava. Agora a sequência visual segue as arestas de evolução verificadas pelo catálogo offline, apresentando Cyndaquil → Quilava → Typhlosion independentemente dos valores de ranking. A versão mantém o Pokémon atual primeiro, depois evoluções comuns na distância correta, projeções de outras formas e prévias Mega identificadas por último. Ramos equivalentes conservam a ordem anterior e espécies/costumes sem cadeia verificada não recebem uma evolução inventada. Rank Classe, Rank Geral, IV%, PC, nível e estatísticas permanecem associados à espécie correta sem recálculo. Os ícones compactos de recomendação PvP continuam selecionando os melhores rankings; somente a sequência de exibição no painel foi alterada. Preservados sprites, formas, vestimentas, duas Pokébolas independentes, card de detalhes, golpes, localização, filtros, favoritos, OTA e assinatura permanente. Oito gates aplicáveis da PR #285 aprovados, incluindo Node regressão total, Java, Android, OTA, visual P/M/G, referência de Raides e APK beta privado; homologação física Samsung P1/P2 ainda pendente."
+  "version": "0.02.92",
+  "code": 54496,
+  "label": 51296,
+  "previous_tag": "v0.02.91-54495",
+  "qa_max_code": 54495,
+  "release_notes": "PokeSearch LT292: auditoria integral das ordens evolutivas para todas as 463 ligações evolutivas cadastradas no catálogo offline (790 nomes distintos, 327 raízes, 441 pontos de origem com evoluções, sem ciclos ou links duplicados). Novo teste exaustivo confirma que nenhuma evolução final é mostrada antes da intermediária, incluindo Charmander → Charmeleon → Charizard, Cyndaquil → Quilava → Typhlosion, Eevee e famílias ramificadas. Também corrige a ordenação das projeções de Pokémon Sombrosos, reconhecendo especificamente o sufixo (Shadow) e exigindo a mesma variante durante a cadeia, sem supor a evolução de fantasias, formas regionais ou identidades desconhecidas. Na interface, a sequência natural é preservada no painel expandido da Análise PvP, nas referências de fantasia marcadas como projeções, no seletor de formas do explorador de ranking e nas projeções de PC/Nível da Calculadora PvP, agora com limite de até 14 opções para cadeias extensas. A escolha do melhor Pokémon por Rank Classe/Rank Geral continua separada e inalterada, assim como valores de IV, eficiência, PC e nível por espécie. Preservados 2 Pokébolas independentes, sprites corretos, golpes, coordenadas, alertas, filtros, favoritos, OTA e assinatura permanente. Oito gates obrigatórios da PR #286 aprovados (Node regressão completa, lógica Android, Java, OTA, visual, Raides, APK beta). Teste físico Samsung ainda pendente."
 }
