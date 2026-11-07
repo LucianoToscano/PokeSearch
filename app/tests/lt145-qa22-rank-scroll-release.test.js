@@ -21,7 +21,8 @@ assert.ok(code.includes("fallback.textContent="),
  "brief species initials replace the blank sprite when exact art is unavailable");
 assert.ok(html.includes('window.PokeSearchSpriteScale?.applyDetail?.('),"alpha-normalized sprite");
 assert.ok(html.includes('#artColumn.gengarSprite.gengarHalloween #img'),"costume Gengar retained");
-assert.ok(html.includes('class="ivTypes"'),"types present in IV");
+assert.ok(html.includes('id="psTypeTap"')&&html.includes('class="psTypeIconSet"'),
+ "LT297: type icons moved to their own centered box without removing IV");
 assert.ok(html.includes('<span class="despawnLabel">Despawn</span>'),"timer remains");
 assert.ok(java.includes('DETAIL_DP=200'),"original width preserved");
 assert.ok(html.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"coords CTA red");

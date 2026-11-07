@@ -42,15 +42,66 @@
   }
   return data?.base?.[dex]||null;
  }
+ // Identical verified species/form source for both the type icons and
+ // the defensive effectiveness panel. Unknown form != default/base form.
+ function typeKeys(card,data){
+  const list=meta(card,data)?.[0];
+  if(!Array.isArray(list)||list.length<1||list.length>2||
+     new Set(list).size!==list.length||
+     list.some(t=>!Object.prototype.hasOwnProperty.call(TYPES,t)))return [];
+  return list.slice();
+ }
  function types(card,data){
-  const entry=meta(card,data);
-  const list=entry?.[0];
-  if(!Array.isArray(list)||list.length<1||list.length>2)return "";
-  return list.filter(t=>Object.prototype.hasOwnProperty.call(TYPES,t))
-   .map(t=>{const src=(typeof window!=="undefined"?window.PokeSearchTypeIcons:globalThis.PokeSearchTypeIcons)?.[t];
-     if(!src)return "";
-     return '<img class="pkTypeImg" alt="Tipo '+TYPES[t][0]+'" title="'+TYPES[t][0]+'" src="'+src+'">';
-   }).join("");
+  return typeKeys(card,data).map(t=>{
+   const src=(typeof window!=="undefined"?window.PokeSearchTypeIcons:globalThis.PokeSearchTypeIcons)?.[t];
+   if(!src)return "";
+   return '<img class="pkTypeImg" alt="Tipo '+TYPES[t][0]+'" title="'+TYPES[t][0]+'" src="'+src+'">';
+  }).join("");
+ }
+ // GO defensive type chart, not the main-series damage percentages:
+ // 1.6^n where weakness=+1, resistance=-1, legacy immunity=-2.
+ // Example: Normal vs Ghost attacks = 1.6^-2 = 0.390625 (not zero).
+ // Each of the 18 incoming move types is processed once for one/two
+ // independently verified defending types, including neutral cancellations.
+ const TYPE_DEFENSE=Object.freeze({
+  normal:{weak:["fighting"],resist:[],immune:["ghost"]},
+  fire:{weak:["water","ground","rock"],resist:["fire","grass","ice","bug","steel","fairy"]},
+  water:{weak:["electric","grass"],resist:["fire","water","ice","steel"]},
+  electric:{weak:["ground"],resist:["electric","flying","steel"]},
+  grass:{weak:["fire","ice","poison","flying","bug"],resist:["water","electric","grass","ground"]},
+  ice:{weak:["fire","fighting","rock","steel"],resist:["ice"]},
+  fighting:{weak:["flying","psychic","fairy"],resist:["bug","rock","dark"]},
+  poison:{weak:["ground","psychic"],resist:["grass","fighting","poison","bug","fairy"]},
+  ground:{weak:["water","grass","ice"],resist:["poison","rock"],immune:["electric"]},
+  flying:{weak:["electric","ice","rock"],resist:["grass","fighting","bug"],immune:["ground"]},
+  psychic:{weak:["bug","ghost","dark"],resist:["fighting","psychic"]},
+  bug:{weak:["fire","flying","rock"],resist:["fighting","grass","ground"]},
+  rock:{weak:["water","grass","fighting","ground","steel"],resist:["normal","fire","poison","flying"]},
+  ghost:{weak:["ghost","dark"],resist:["poison","bug"],immune:["normal","fighting"]},
+  dragon:{weak:["ice","dragon","fairy"],resist:["fire","water","grass","electric"]},
+  dark:{weak:["fighting","bug","fairy"],resist:["ghost","dark"],immune:["psychic"]},
+  steel:{weak:["fire","fighting","ground"],resist:["normal","grass","ice","flying","psychic","bug","rock","dragon","steel","fairy"],immune:["poison"]},
+  fairy:{weak:["poison","steel"],resist:["fighting","bug","dark"],immune:["dragon"]}
+ });
+ function typeEffectiveness(defendingTypes){
+  if(!Array.isArray(defendingTypes)||defendingTypes.length<1||
+     defendingTypes.length>2||new Set(defendingTypes).size!==defendingTypes.length||
+     defendingTypes.some(t=>!Object.prototype.hasOwnProperty.call(TYPE_DEFENSE,t)))
+   return null;
+  const all=Object.keys(TYPES).map(type=>{
+   let exponent=0;
+   for(const defender of defendingTypes){
+    const row=TYPE_DEFENSE[defender];
+    exponent+=row.weak.includes(type)?1:row.resist.includes(type)?-1:
+     row.immune?.includes(type)?-2:0;
+   }
+   return {type,name:TYPES[type][0],exponent,
+    multiplier:Number(Math.pow(1.6,exponent).toFixed(9))};
+  });
+  return {types:defendingTypes.slice(),
+   weaknesses:all.filter(x=>x.exponent>0).sort((a,b)=>b.exponent-a.exponent),
+   resistances:all.filter(x=>x.exponent<0).sort((a,b)=>a.exponent-b.exponent),
+   neutral:all.filter(x=>x.exponent===0)};
  }
  function gender(value){
   const s=String(value||"").trim().toLowerCase();
@@ -135,6 +186,6 @@
   if(seconds<=900)return "warning";
   return "good";
  }
- return Object.freeze({esc,types,gender,moves,locationCountryFlag,despawnTone,meta,
+ return Object.freeze({esc,types,typeKeys,typeEffectiveness,gender,moves,locationCountryFlag,despawnTone,meta,
   moveTypeColor:type=>Object.prototype.hasOwnProperty.call(TYPE_COLORS,type)?TYPE_COLORS[type]:null});
 });
