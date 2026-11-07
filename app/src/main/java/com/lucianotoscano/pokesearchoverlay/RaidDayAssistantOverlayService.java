@@ -653,6 +653,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             @Override public boolean onTouch(View view,MotionEvent event){
                 switch(event.getActionMasked()){
                     case MotionEvent.ACTION_DOWN:
+                        panelScroll.requestDisallowInterceptTouchEvent(true);
                         originX=event.getRawX();originY=event.getRawY();
                         panelX=panelParams.x;panelY=panelParams.y;
                         moved=false;return true;
@@ -673,6 +674,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                         return true;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
+                        panelScroll.requestDisallowInterceptTouchEvent(false);
                         if(moved)prefs.edit().putInt("edu_panel_x",panelParams.x)
                             .putInt("edu_panel_y",panelParams.y).apply();
                         return true;
@@ -681,6 +683,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             }
         };
         eduHeader.setOnTouchListener(move);
+        header.setOnTouchListener(move);
         panel.addView(header);
         eduBadge=text("",10,Color.rgb(127,219,189),true);
         LinearLayout.LayoutParams badgeLp=new LinearLayout.LayoutParams(-1,-2);
@@ -1075,7 +1078,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                 addTwo("✓ Concluí",()->advanceEdu("STEP_CONFIRMED"),
                     "Ainda não",()->{
                         persist("NOT_OBSERVED");
-                        eduNote=step.ajudaEdu;
+                        eduNote=step.help;
                         reactAvatar(RaidDayAvatarFrames.QUESTION);
                         updateStep();
                     });
