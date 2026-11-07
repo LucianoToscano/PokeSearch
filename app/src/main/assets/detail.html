@@ -3767,7 +3767,7 @@ window.showDetails=(c,mode,watched)=>{
  // A/D/S requires three verified attributes. If the source exposes only a
  // legitimate IV percentage, show ONLY that percentage, never invented IVs.
  const ivStyle=showPct?' style="--ps-iv-color:'+ivVisual.color+'"':"";
- const statTile=(label,value,kind)=>'<div class="statTile psMetricTap"'+
+ const statTile=(label,value,kind)=>'<div class="statTile psMetricTap '+(kind==="cp"?"psCpTile":"psLevelTile")+'"'+
   ' role="button" tabindex="0" title="'+(kind==="cp"?"Comparar PC por liga":"Comparar níveis por liga")+'"'+
   ' onclick="openDetailMetric(\''+kind+'\')" onkeydown="detailMetricKey(event,\''+kind+'\')">'+
   '<div class="statHeading">'+h(label)+'</div><div class="statValue">'+
@@ -3776,13 +3776,20 @@ window.showDetails=(c,mode,watched)=>{
   iv:showRaw?ivDisplay.raw:"",form:c.form||"",costume:c.costume||"",
   costumeId:c.costume_id||c.costumeId||0,region:c.region||"",
   isCostume:c.isCostume===true,isShadow:c.isShadow===true};
- document.getElementById("major").innerHTML='<div class="statTile ivTile psMetricTap"'+ivStyle+
+ const typeIcons=document.getElementById("types").innerHTML;
+ const typeAvailable=!!(psTypeEffectData&&typeIcons);
+ document.getElementById("major").innerHTML='<button id="psTypeTap" type="button" class="statTile psTypeTile"'+
+  (typeAvailable?' aria-label="Ver eficácia do tipo de '+h(c.name||"Pokémon")+'"'+
+   ' aria-controls="psTypeEffectPanel" aria-expanded="false" onclick="psToggleTypeEffectiveness()"':
+   ' disabled aria-label="Tipagem não confirmada para esta forma"')+
+  '><span class="psTypeIconSet">'+(typeAvailable?typeIcons:
+   '<span class="psTypePlaceholder" aria-hidden="true">—</span>')+
+  '</span></button><div class="statTile ivTile psMetricTap"'+ivStyle+
   (showRaw?' role="button" tabindex="0" title="Abrir tabela de IVs" onclick="openDetailMetric(\'iv\')" onkeydown="detailMetricKey(event,\'iv\')"':'')+'><div class="statHeading">IV</div>'+
   (showPct?'<span class="ivPercent" title="'+(ivSourcePercent?.valid?
    'IV% informado pela fonte; A/D/S não disponíveis':
    ivDisplay.derived?'Percentual calculado a partir do IV A/D/S':'Percentual de IV confirmado')+
    '">'+h(ivVisual.percent)+'%</span>':"")+
-  '<span class="ivTypes" aria-label="Tipos do Pokémon">'+document.getElementById("types").innerHTML+'</span>'+
   '<div class="statValue red">'+h(showRaw?ivDisplay.raw:"—")+'</div></div>'+
   statTile("PC",c.cp,"cp")+statTile("Nv.",c.level,"level");
  const rankLine=document.getElementById("rankLine");
