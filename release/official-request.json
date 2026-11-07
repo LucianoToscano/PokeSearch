@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.78",
-  "code": 54482,
-  "label": 51282,
-  "previous_tag": "v0.02.77-54481",
-  "qa_max_code": 54481,
-  "release_notes": "PokeSearch LT278: corrigido o espaçamento solicitado após captura real do Samsung Growlithe. Todos os números #rank (Raides, Grande Liga, Ultra Liga, Liga Mestra e Rank Geral) foram deslocados EXATAMENTE 1 px para cima no cartão, sem mover bandeiras, sem alterar centralização, tamanhos e sprites das bandeiras, sem alterar ícone de evolução, altura dos cards 45px ou barra 47px. As duas Pokébolas usam o mesmo CSS. Preservadas funções, cálculo de rankings, golpes, filtros, ordenação inversa e atualização automática da LT277. PR #271 mesclada; regressões Node, Android/Java, OTA, PvE e screenshots P/M/G passaram. Homologação visual final no Samsung após instalação permanece pendente."
+  "version": "0.02.79",
+  "code": 54483,
+  "label": 51283,
+  "previous_tag": "v0.02.78-54482",
+  "qa_max_code": 54482,
+  "release_notes": "PokeSearch LT279: corrigidos os sprites ausentes do Burmy Forma Areia (Sandy), confirmado por screenshot real do Samsung mostrando BU/Sandy e #412 sem imagem. O resolvedor reconhece as três capas de Burmy (Planta, Areia, Lixo) e as três de Wormadam, cada uma normal e Brilhante, com identificação estrita por Pokédex. Doze PNGs de Pokémon GO foram incluídos offline e verificados individualmente pelo Git blob SHA-1 do manifesto imutável, além de checagem de presença/PNG/hash no APK assinado. Em cartões e resultados prioriza a arte exata local em vez de uma URL do site que pode falhar. Ranks exibidos como — permanecem não confirmados até existir dado verificável; nenhuma classificação foi fabricada. Preservadas duas Pokébolas, cinco ranks, filtros, PvP/PvE, ordenação e a correção visual LT278. PR #272 mesclada, QA Node/Android Java/OTA aprovado; validação no Samsung após instalar segue pendente."
 }
