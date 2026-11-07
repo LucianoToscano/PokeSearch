@@ -42,7 +42,7 @@ test("distance sorting alone requires coordinates but no other filters do",()=>{
  assert.equal(x.sort,"DISTANCE");assert.equal(x.center_lat,-5.8123);assert.equal(x.radius_km,15);
 });
 test("cascade only warns about location when Distance is chosen, never rejects other applies",()=>{
- assert.match(dock,/key==="sortBy"&&value==="Distance \(nearest\)"/);
+ assert.match(dock,/key==="sortBy"&&\(value==="Distance \(nearest\)"\|\|value==="Distance \(farthest\)"\)/);
  const filterMenu=dock.split("function renderFiltersChoices(){")[1].split("function renderInfoChoices(){")[0];
  const apply=filterMenu.split("apply.onclick=()=>{")[1].split("clear.onclick=",1)[0];
  assert.match(apply,/modeDraft.sortBy="Despawn \(longest\)"/);
@@ -54,7 +54,8 @@ test("native patch preserves the requested sizes/sex, silently stale-geo-safe an
  const native=service.split("@JavascriptInterface public void patchSearchFilters(")[1].split("@JavascriptInterface public void setPokemonSelections(",1)[0];
  for(const key of ["sizeSelections","genderSelections","cpMin","cpMax","levelMin","levelMax","weather","sortBy"])
   assert.ok(native.includes('"'+key+'"'),key);
- assert.match(native,/if\("Distance \(nearest\)"\.equals\(updated\.optString\("sortBy"\)\)/);
+ assert.match(native,/if\(\("Distance \(nearest\)"\.equals\(updated\.optString\("sortBy"\)\)\|\|/);
+ assert.ok(native.includes('"Distance (farthest)".equals(updated.optString("sortBy"))'));
  assert.match(native,/updated.put\("sortBy","Despawn \(longest\)"\)/);
  assert.match(native,/updated.put\(key,cleaned\)/);
  assert.match(native,/\.putString\("extraFiltersJson",serialized\)/);
