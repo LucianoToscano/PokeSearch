@@ -82,5 +82,6 @@ assert.match(lt302,/width:3px!important;height:3px!important;flex:0 0 3px!import
 assert.match(lt302,/border-top:\.8px solid #e7fbff!important/);
 assert.match(lt302,/border-left:\.8px solid #e7fbff!important/);
 assert.match(lt302,/left:50%!important;right:auto!important;transform:translateX\(-50%\)!important/);
+assert.match(lt302,/\.psRailButton\.psRailRaid \.psRailEvolve\{\s*right:1px!important/);
 assert.ok(rail.indexOf('/* LT302: delicate')>rail.indexOf('/* LT301 Samsung refinement'));
 console.log('LT302: delicate, closer 3px arrows and safe raid-flag separation.');
