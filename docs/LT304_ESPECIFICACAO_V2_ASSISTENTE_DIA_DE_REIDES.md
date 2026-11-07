@@ -24,6 +24,14 @@ Guia/manual de anotações, **não** motor de teleporte, toque ou automação. O
 ## 3. Identidade visual
 Nome **Assistente do Dia de Reides**; subtítulo *Tutorial “Bug dos Passes”*. Ícone provisório de Passe de Reide laranja/azul informado pelo usuário, mantendo independência de P1/P2/Doce Raro. Arte visual 45 dp; **alvo de toque >=48dp**. Toque abre/recolhe, arraste move, posição salva, janela glass compacta, texto legível. `TYPE_APPLICATION_OVERLAY` não-focável, com opacidade e comportamento de toques que não violem bloqueio Android 12+. Botões por etapa: ✓ Confirmar, Não aconteceu, Voltar, Pausar, Me perdi, Repetir ciclo quando cabível e Encerrar. Verificar no Samsung.
 
+## 3.1 Personagem pixel-art flutuante — complemento autorizado
+- O **ícone do Passe de Reide laranja/azul continua como ativador na Home**. Quando ativado, o balão do assistente exibe um **mini treinador animado**, extraído da spritesheet enviada pelo usuário em 07/11/2026; não cria outro serviço ou quarta bolha duplicada.
+- Tamanhos configuráveis **P = 50, M = 75, G = 100 pixels físicos** para a imagem do personagem (diferentes de dp); padrão M. O alvo de toque do balão permanece no mínimo **48dp**, independentemente da arte.
+- Movimento visual em idle e ao arrastar (caminhar); reações temporárias ao abrir o guia, confirmar, detectar uma dúvida manual, registrar que algo não aconteceu ou repetir ciclo. Animação tem botão de ligar/desligar e nunca avança o roteiro.
+- Progresso do tutorial, posição, tamanho e preferência de movimento persistem separadamente. O avatar jamais analisa a tela por conta própria; o acompanhamento híbrido exige E4 e E5.
+- Utilizar arte transparente e filtragem de pixels sem interpolação, respeitando a aparência original e sem carregar imagens por rede. A atlas inicial contém **12 quadros selecionados** das 60 poses recebidas; ampliar para bicicleta, descanso e outras expressões só após testes visuais.
+- Em telas de altura limitada, o painel permite percorrer seus controles em área limitada, para não sair do campo visível. Não sobrepor elementos fixos das outras Pokébolas nem do Doce Raro.
+
 ## 4. Roteiro como dados
 Arquivo `app/src/main/assets/roteiro_bug_passes.json` (ou equivalente) com id, nome, versão, fonte, URL, data da verificação, confiança, pré-condições, confirmação, saída para falha, retorno seguro e coordenadas de referência.
 Variante inicial: **EduhunterPlay — vídeo 28/10/2026**, fonte https://youtu.be/S0cTvtaMim0. Outras fontes (Reddit e tutoriais ingleses) são variantes distintas, não mesclar regras.
