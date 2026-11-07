@@ -37,4 +37,12 @@ assert.match(lt275, /right:1px!important;bottom:1px!important/);
 assert.match(lt275, /width:15px!important;height:15px!important/);
 assert.match(lt275, /width:13px!important;height:13px!important/);
 assert.doesNotMatch(lt275, /height:5[46]px!important/, 'rank card height cannot grow');
+// LT278: exact 1px movement only for #rank numbers, all five positions.
+// Do not globally translate the card, flags, or white/green evolution mark.
+const lt278 = rail.slice(rail.indexOf('/* LT278 —'));
+assert.ok(lt278.startsWith('/* LT278 —'));
+assert.match(lt278, /\.psRailButton \.psRailNumber\{\s*transform:translateY\(-1px\)!important;\s*\}/);
+assert.match(lt278, /\.psRailButton \.psRailIcon\{\s*transform:translateY\(-4px\)!important;\s*\}/);
+assert.doesNotMatch(lt278, /\.psRailButton\{\s*transform:/, 'card must remain fixed');
+assert.doesNotMatch(lt278, /height:5[46]px!important/, 'rank card must stay 45px');
 console.log('LT275: compact cards, preserved flags and evolution icon with corner clearance.');
