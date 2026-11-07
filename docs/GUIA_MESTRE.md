@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT281 — GOLPES SOMENTE TEXTO COLORIDO E SEPARADOR | (07/11/2026)
+
+- **Origem:** captura real Samsung pós-LT280 (Wurmple #265): o usuário pediu remover o fundo/borda dos golpes e substituir `/` por `|`.
+- **Implementação candidata:** `pokemon_card_presentation.js` mantém 18 tipos por golpe verificado, nomes PT-BR e marcação legado/Elite; o separador visual vira `|`. `detail.html` remove apenas padding, fundo e borda dos spans dos golpes, sem alterar os outros cartões. Fallback de renderização também usa `|`.
+- **Versão planejada:** LT281 `0.02.81` / `54485`, atualização assinada pelo fluxo oficial somente após merge e CI. **Não anunciar APK publicado antes da conferência da release, workflow, assinatura e hash.**
+- **Preservar:** sprites, formas Burmy/Wormadam, ranks GL/UL/ML, Rank Geral/Raides, cinco bandeiras, duas Pokébolas, favoritos, filtros, localização e OTA.
+- **Aceitação pendente:** verificar texto sem chips e separador vertical em Samsung P1/P2, incluindo tipos verificados, sem tipo confirmado e golpe legado.
+- **Auditoria:** [LT281](LT281_GOLPES_TEXTO_SEM_FUNDO_20261107.md).
+
 ## LT280 — RANK EXATO DAS FORMAS E GOLPES COLORIDOS (06/11/2026)
 
 - **Origem:** prints reais Samsung: Burmy #412 Sandy com sprite faltando previamente e cinco ranks "—"; golpes em cor neutra. A correção de sprites (LT279) foi separada do reconhecimento de formas nos ranks (LT280).

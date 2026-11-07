@@ -2588,6 +2588,26 @@
           "Verificar no Samsung a instalação, as cores dos golpes e o Rank Classe das três capas, além de homologar o comportamento da API ao vivo."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt281-move-text-only-pipe-20261107",
+      "minVersionCode": 54485,
+      "date": "07/11/2026",
+      "title": "LT281 — Golpes sem fundo e separador vertical",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "No cartão, os golpes são exibidos apenas com a cor do texto correspondente ao tipo verificado, sem fundo ou contorno colorido.",
+          "O separador dos golpes foi trocado de / para |, mantendo a leitura compacta."
+        ],
+        "correcoes": [
+          "Removidos os chips e o espaçamento extra sem alterar os 18 tipos, a tradução dos nomes nem a indicação de MT Elite/legado.",
+          "Preservados ranks, cinco bandeiras, sprites, interface e comportamento independente das duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Confirmar visualmente no Samsung P1/P2 os golpes normais, desconhecidos e legados após instalar a LT281."
+        ]
+      }
     }
   ]
 }

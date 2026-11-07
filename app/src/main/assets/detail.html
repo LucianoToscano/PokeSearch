@@ -93,14 +93,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
 .pkGender.genderless{color:#fff}
 .pkTypeImg{display:block;width:11px;height:11px;object-fit:contain;flex:none}
-/* LT280: compact type-colored move chips, not full-size opaque buttons.
-   Each color is backed by the move's verified GO type, unknown stays neutral. */
-#psCapturedMoveNames .pkMove{display:inline;padding:1px 3px;
- border-radius:4px;line-height:1.6;box-decoration-break:clone;
- -webkit-box-decoration-break:clone;white-space:normal}
+/* LT281: only the verified move TYPE colors the text; no chip, border or fill. */
+#psCapturedMoveNames .pkMove{display:inline;padding:0;line-height:inherit;
+ border:0;border-radius:0;background:transparent;box-shadow:none;
+ white-space:normal}
 #psCapturedMoveNames .pkMoveTyped{color:var(--ps-move-type,#eaf0f6);
- background:color-mix(in srgb,var(--ps-move-type) 14%,transparent);
- border:1px solid color-mix(in srgb,var(--ps-move-type) 50%,transparent);
  font-weight:750}
 .pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
 .moveSlash{opacity:.65}
@@ -3500,7 +3497,7 @@ window.showDetails=(c,mode,watched)=>{
  rankLine.title=verifiedIvRank?
   "Ranking dos IVs: Rank Classe #"+ivValue+" de "+String(c.name||"Pokémon")+
   ", comparação entre 4.096 IVs desta espécie/forma, NÃO é Rank Geral da liga.":"";
- const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"");
+ const movesHtml=presenter?.moves(c.moves,c,metadata)||h(c.moves||"").replace(/\s+\/\s+/g," | ");
  window.currentCardMoves=String(c.moves||"");
  currentCardMoves=window.currentCardMoves;
  currentRankSpecies=String(c.name||"");

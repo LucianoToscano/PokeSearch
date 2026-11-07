@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.80",
-  "code": 54484,
-  "label": 51284,
-  "previous_tag": "v0.02.79-54483",
-  "qa_max_code": 54483,
-  "release_notes": "PokeSearch LT280: corrige Rank Classe de Burmy Forma Areia (Sandy), Planta e Lixo, mapeando a forma recebida do PoGoCoordinates para a identidade EXATA do PvPoke: Burmy (Sandy), (Plant), (Trash), em GL/UL/ML. Wormadam igualmente consulta cada capa separada, preservando a diferença real de estatísticas (Wormadam Trash ≠ Sandy), sem derivar falsos resultados do nome base. Para Pokémon de evento, mantém sprite e nome originais; a classificação usa somente forma validada pela Pokédex e pelo Game Master. Ao tocar no IV abre o Rank Classe da mesma forma. No cartão, os golpes rápidos e carregados recebem cores discretas pelo TIPO VERIFICADO do ataque, como no Pokémon GO/PokéGenie; usa o catálogo oficial PT-BR de moves do commit fixo e um conjunto offline verificado. Tipo não identificado fica neutro. Ranks Geral/Raides independentes, bandeiras/ícones e atualização preservados. PR #273 mesclada e 7 suites CI Node, Android/Java, PvP, OTA e interface visual aprovadas. Teste físico Samsung P1/P2 pós-instalação pendente."
+  "version": "0.02.81",
+  "code": 54485,
+  "label": 51285,
+  "previous_tag": "v0.02.80-54484",
+  "qa_max_code": 54484,
+  "release_notes": "PokeSearch LT281: ajuste visual solicitado após teste físico Samsung LT280. Os golpes capturados mostram apenas texto colorido segundo o tipo VERIFICADO de cada ataque, sem chips, fundo colorido, moldura ou espaçamento extra. O separador entre golpes rápidos e carregados mudou de / para |, incluindo fallback sem o módulo de apresentação. Permanecem 18 cores de tipos, nomes PT-BR confirmados, indicador de legado/Elite, ranks GL/UL/ML, Burmy/Wormadam, cinco cartões, sprites, duas Pokébolas, localização, filtros, OTA e assinatura. Teste físico Samsung P1/P2 da LT281 ainda necessário."
 }
