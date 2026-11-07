@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.03",
-  "code": 54507,
-  "label": 51307,
-  "previous_tag": "v0.03.02-54506",
-  "qa_max_code": 54506,
-  "release_notes": "PokeSearch LT303 — ajuste de posição milimétrico solicitado após LT302: deslocar exatamente 1 CSS pixel para a esquerda o indicador de evolução nos cinco cartões de Raides, Grande Liga, Ultra Liga, Liga Mestra e Rank Geral. No layout existente o offset `right` dos marcadores passou de 3 para 4 CSS px; em Raides a exceção passou de 1 para 2 CSS px, preservando distância da bandeira centralizada. Sem alterar `bottom:3px`, tamanho 3×3px, espessura 0,8px, agrupamento 5×7px, espaçamento entre duas setas igual a zero, ou contagem correta de 0/1/2 etapas. Cinco caixas de 39px e logos de 19px mantidos; nenhuma mudança nas estatísticas IV, raides, tipagem, evoluções, ataques, fontes API, sprites, filtros, coordenadas, permissões, assinatura, duas Pokébolas e atualizador. Testes visuais Playwright P/M/G confirmaram margem +1px e ausência de sobreposição com a bandeira de Raides no exemplo projetado Charmander→Charizard. Oito verificações de CI passaram antes do merge, incluindo Node QA, LT169, LT211 Android core, LT62 Java, LT173 OTA, LT259 raids, LT253 visual P/M/G e beta isolada. PR #299 integrada por squash dd0fd63a024598e0ed98a603258f233a308db6d4. Instalação física no Samsung exige confirmação Android."
+  "version": "0.03.04",
+  "code": 54510,
+  "label": 51308,
+  "previous_tag": "v0.03.03-54507",
+  "qa_max_code": 54509,
+  "release_notes": "PokeSearch LT304 — Edu, Assistente do Dia de Reides. Nova interface de balões de conversa com mini treinador flutuante e tamanho G (100 pixels) como padrão, preservando escolhas P/M/G salvas. Painel compacto, arrastável pelo cabeçalho, ajustes no menu separado e respostas contextualizadas para cada etapa. Inclui Modo Treino “Simular hoje”, roteiro de 11 etapas com véspera (D−1) e dia do evento (D), perguntas iniciais, histórico de retomada, registro manual de resultados de reides, lembretes locais opcionais e abertura do calendário Android. A leitura visual experimental depende de autorização por sessão; os balões se recolhem antes do diálogo do Android, e OCR local apenas sugere telas que o jogador confirma. Não altera localização, não automatiza o Pokémon GO, não garante passes ou recompensas. Eventos sem programação oficial verificada são identificados. As duas Pokébolas, o Doce Raro, a busca sem login, o limite de dez resultados, o tratamento de 429/Retry-After e a assinatura permanente foram preservados. PR #300 integrada por squash 9c391c4a0c8b92ff8735640b9539fa1d6f714289. Suítes Node QA, regressão LT169, lógica LT211, compilação Java LT62, OTA LT173 e APK QA assinada aprovadas. Teste físico no Samsung do novo Edu e calibração OCR com capturas reais permanecem pendentes."
 }
