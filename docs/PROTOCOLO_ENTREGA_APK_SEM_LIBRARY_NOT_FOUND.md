@@ -1,16 +1,16 @@
-# Protocolo obrigatório — entrega de APK sem dependência do ChatGPT
+# Protocolo obrigatório — entrega de APK sem dependência de anexos temporários de conversa
 
 **Criado:** 27/10/2026 — reincidência demonstrada por captura Android com toast `Library file not found`.
 
 ## Natureza e severidade
 
-O erro `Library file not found` aparece ao abrir um arquivo/anexo do ChatGPT. Ele não é, por si, erro de compilação, ausência no repositório, invalidade do APK nem problema de Android. Pode ocorrer mesmo quando o APK está íntegro no container de geração; não é possível garantir ou corrigir a disponibilidade do link interno de outra interface somente mudando o PokeSearch. **Tratar como problema recorrente de distribuição (bloqueador de entrega), nunca pedir para o usuário repetir tentativas do mesmo link.**
+O erro `Library file not found` aparece ao abrir um arquivo/anexo temporário da plataforma de conversa. Ele não é, por si, erro de compilação, ausência no repositório, invalidade do APK nem problema de Android. Pode ocorrer mesmo quando o APK está íntegro no container de geração; não é possível garantir ou corrigir a disponibilidade do link interno de outra interface somente mudando o PokeSearch. **Tratar como problema recorrente de distribuição (bloqueador de entrega), nunca pedir para o usuário repetir tentativas do mesmo link.**
 
 ## Ordem obrigatória de publicação QA
 
 1. Conferir GitHub Actions **SUCCESS** na branch/commit exato; verificar se o artifact existe, não expirou e tem tamanho plausível.
 2. O primeiro link de resposta é sempre o **GitHub Actions artifact verificado**, com link da execução e indicação de que poderá exigir login no GitHub e que tem validade limitada. Não trocar por uma URL imaginada de CDN. Se a publicação persistente for necessária, solicitar/usar autorização específica para um GitHub Release; não criar release oficial silenciosamente.
-3. Publicar como fallback, quando verificado no container da conversa atual, um link `sandbox:/mnt/data/arquivo`. A existência local não garante que a entrega ChatGPT funcione no cliente Android; não afirmar sucesso da experiência de download.
+3. Publicar como fallback, quando verificado no container da conversa atual, um link `sandbox:/mnt/data/arquivo`. A existência local não garante que a entrega por anexos temporários funcione no cliente Android; não afirmar sucesso da experiência de download.
 4. Registrar no mesmo texto: `versionName`, `versionCode`, `SOURCE_COMMIT`, SHA-256 do APK, tamanho em bytes, certificado v2, hash do ZIP e limite ZIP inferior a 199 MB.
 5. ZIP deve conter exatamente o APK identificado + checksums/relatórios; abrir com zipfile e conferir CRC/hash após extração; não reutilizar link de outra sessão sem confirmar arquivo.
 6. Em falha no link interno, **usar o artefato GitHub já existente**. Não recompilar para tentar corrigir o toast. Caso o artifact esteja expirado, gerar artefato novo sem mudar o binário e registrar digest idêntico, se houver permissão e infraestrutura para isso.
@@ -30,6 +30,6 @@ O erro `Library file not found` aparece ao abrir um arquivo/anexo do ChatGPT. El
 
 ## Critérios de aceite e retrospectiva
 
-- CI: **binário válido** ≠ **download pelo ChatGPT válido** ≠ **teste físico no Samsung**.
-- Solução preventiva viável: redundância GitHub + sandbox opcional e evidência dos bytes, com prioridade ao canal menos sujeito a essa falha. Não há como assegurar que o erro da própria plataforma ChatGPT nunca volte a surgir.
+- CI: **binário válido** ≠ **download por anexo temporário válido** ≠ **teste físico no Samsung**.
+- Solução preventiva viável: redundância GitHub + sandbox opcional e evidência dos bytes, com prioridade ao canal menos sujeito a essa falha. Não há como assegurar que o erro da própria plataforma de anexos temporários nunca volte a surgir.
 - Manter rastreabilidade em GitHub Issue permanente para reincidências; não repetir o ciclo `Library file not found` → gerar novo arquivo `sandbox` → mesmo erro.
