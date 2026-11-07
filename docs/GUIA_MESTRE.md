@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT283 — JANELAS INTELIGENTES, PvP MAIS RÁPIDO E RAIDES CONFIRMADOS (07/11/2026)
+
+- **Origem:** melhorias autorizadas após LT282, com escopo seguro em etapas. [PR #276](https://github.com/LucianoToscano/PokeSearch/pull/276) mesclada por squash `be6b29aee55e8b534454bc5555b46b3f9380540f`; HEAD da solicitação oficial `2eb1a196f0987cc76014906ee2f132c62865577d`.
+- **Interface:** resize do cartão agrupado por frame; abrir/fechar `<details>` de Raides/PvP/calculadora preserva scroll nativo, sem listeners repetidos; ajuda PvP recolhida ao mudar seção.
+- **Dados:** Raides mostram ✓ discreto somente quando ranking da espécie está verificado, com indicador de confirmação e motivo da indisponibilidade; nunca equivale a rank de IV. `dock.html` indexa nomes canônicos/famílias PvP uma vez, preserva formas exatas e falha de maneira conservadora com identidade ambígua.
+- **QA automatizado:** oito workflows relevantes do head `3fc82f21b5ff277ad3d95ec725eee93587aabb49` concluíram `success`: Node QA, regressão Node completa, QA core LT211, Java Android LT62, OTA LT173, visual P/M/G LT253, referência PvE LT259 e beta privado assinado. Teste novo `lt283-smart-panels-pvp-confidence.test.js`. O workflow genérico de build em PR foi `skipped`, não substituindo o build oficial.
+- **Publicação oficial verificada:** [workflow #42339368036](https://github.com/LucianoToscano/PokeSearch/actions/runs/42339368036) `preflight=success`, `publish=success`, verificação de assinatura e SHA do asset na própria execução. [Release LT283 · 0.02.83 · versionCode 54487](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.83-54487), estável, publicada em **07/11/2026 04:42:53 UTC**. APK `PokeSearch-v0.02.83-LT.apk` com **33.816.856 bytes**, SHA-256 `1ebbdcb1844f842c4f33516af34da6f5de5f78c69951ec00aeb4feeb1f21ac14`, asset `uploaded`. Certificado oficial SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` verificado no build, Gradle/R8 e ZIP do APK testados. Não instalar sem confirmação do Android.
+- **Preservado:** duas Pokébolas P1/P2 independentes, GL/UL/ML, cinco cartões, sprites exatos, formas, golpes PT-BR só no texto, localização, favoritos, notificações, OTA e assinatura. **Ainda pendente:** QA físico Samsung da LT283 (P1/P2, rolagem e alternância, Burmy/Wormadam, status de Raides) e medição real de desempenho; CI não prova instalação no aparelho.
+- **Próximas etapas:** [Issue #277](https://github.com/LucianoToscano/PokeSearch/issues/277) para comparador avançado, assistente de golpes, presets, eventos, diagnóstico e atualizador. Não declarar essas funções concluídas na LT283. Rollback para [LT282](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.82-54486).
+
 ## LT282 — ATAQUES DE RAID COLORIDOS SOMENTE NO TEXTO E EXPANSÃO ROLÁVEL (07/11/2026)
 
 - **Origem:** capturas físicas Samsung Medicham #308: avaliação Raides abre, mas golpes ágil/carregado estão em texto neutro; após `Ver mais 3 classificações` o cartão mantém tamanho antigo e esconde os últimos itens ao tentar descer.
