@@ -69,7 +69,10 @@ assert.match(home,/toggleRaidAssistantOverlay\(\)/);
 assert.match(service,/TYPE_APPLICATION_OVERLAY/);
 assert.match(service,/FLAG_NOT_FOCUSABLE/);
 assert.match(service,/setOnTouchListener/);
-assert.match(service,/setVisible\(!visible\)/);
+// O toque curto abre/recolhe diálogo e nunca reapresenta o menu oculto.
+assert.match(service,/boolean open=!visible/);
+assert.match(service,/eduSettingsOpen=false;\s*setVisible\(open\)/);
+assert.match(service,/grip\.performLongClick\(\)/);
 assert.match(service,/plan\.step\(index\)/);
 assert.match(service,/plan\.coords\(index\)/);
 assert.doesNotMatch(service,/private static final String\[\] (?:TITLES|INSTRUCTIONS|COORDS)/);
