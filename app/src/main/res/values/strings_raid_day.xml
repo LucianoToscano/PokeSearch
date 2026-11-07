@@ -8,7 +8,7 @@
     <string name="raid_day_risk_exit">Sair</string>
     <string name="raid_day_manual_start">✓ Iniciar roteiro manual</string>
     <string name="raid_day_training_start">▶ Modo Treino · sem histórico</string>
-    <string name="raid_day_manual_disclaimer">Roteiro manual de 11 etapas. A escolha de evento, o relógio de Brasília e a leitura visual são entregas futuras. Nenhum horário ou passe foi verificado.</string>
+    <string name="raid_day_manual_disclaimer">Roteiro manual de 11 etapas. Data, local e passes são informações do jogador; nenhum horário oficial foi verificado. O acompanhamento visual ainda não está disponível.</string>
     <string name="raid_day_confirm">✓ Confirmar</string>
     <string name="raid_day_not_happened">Não aconteceu</string>
     <string name="raid_day_help">Me perdi</string>
