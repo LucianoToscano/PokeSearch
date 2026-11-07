@@ -7024,14 +7024,20 @@ function pvpVerifiedCalculatorFamily(card){
   return [];
  const key=safePvpSpeciesKey(card);
  if(!key||!ivSpeciesByName.get(key))return [];
+ // The runtime uses the prebuilt LT283 index. Headless old-contract tests
+ // extract this function alone, so retain equivalent local fallback there.
+ const names=typeof pvpVerifiedNames!=="undefined"?pvpVerifiedNames:
+  new Map(PVP_IV_GAME_MASTER.pokemon.filter(x=>
+   Array.isArray(x)&&x.length>=5&&
+   [x[2],x[3],x[4]].every(v=>Number.isFinite(v)&&v>0))
+    .map(x=>[speciesKey(x[1]),x[1]]));
  // Do not claim a costume can evolve or mix a Shadow/regional form's stats
  // with normal families. Species without normal identity keep their own row.
  if(key.includes("(")||cosmeticPvpIdentity(card)){
-  const exact=pvpVerifiedNames.get(key);
+  const exact=names.get(key);
   return exact?[exact]:[];
  }
  const queue=[key],seen=new Set([key]);
- const names=pvpVerifiedNames;
  while(queue.length&&seen.size<40){
   const next=queue.shift();
   const related=[...(pvpEvolutionGraph.get(next)||[]),
