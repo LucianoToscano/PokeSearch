@@ -163,7 +163,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             stopSelf();return;
         }
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
-        preparation=RaidDayPreparation.load(prefs,eventClock);
+        preparation=RaidDayPreparation.load(this,prefs,eventClock);
         try{
             plan=RaidDayGuidePlan.load(this);
             journal=RaidDayDatabase.get(this);
@@ -499,7 +499,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(preparationChoices==null||prepTitle==null)return;
         int q=preparation.question();
         prepTitle.setText("Preparação "+(q+1)+"/"+
-            RaidDayPreparation.COUNT+" · "+RaidDayPreparation.QUESTIONS[q]);
+            RaidDayPreparation.COUNT+" · "+preparation.questionText(q));
         preparationChoices.removeAllViews();
         if(q==0){
             prepStatus.setText("Data informada manualmente. Não equivale à programação oficial.\n"+
@@ -517,7 +517,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "O acompanhamento visual ainda não foi implementado. "+
                 "Mesmo escolhendo híbrido, esta versão funciona manualmente.":
                 "Informação declarada pelo jogador · selecione uma opção:");
-            for(String option:RaidDayPreparation.OPTIONS[q]){
+            for(String option:preparation.optionsFor(q)){
                 final String value=option;
                 TextView choice=button((option.equals(selected)?"✓ ":"  ")+option);
                 choice.setGravity(Gravity.CENTER_VERTICAL);
