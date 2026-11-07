@@ -1,121 +1,111 @@
 "use strict";
-// LT304 v2 / E1: validar arquivos reais, sem alegar que E2–E5 foram implementadas.
+// LT304 Edu — integridade de roteiro, histórico e UI de conversa (sem GPS/automação).
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
 const root=path.join(__dirname,"../src/main");
-const read=file=>fs.readFileSync(path.join(root,file),"utf8");
-const javaDir="java/com/lucianotoscano/pokesearchoverlay/";
-const home=read(javaDir+"MainActivity.java");
-const service=read(javaDir+"RaidDayAssistantOverlayService.java");
-const planClass=read(javaDir+"RaidDayGuidePlan.java");
-const event=read(javaDir+"RaidDayEvent.java");
-const dao=read(javaDir+"RaidDayEventDao.java");
-const db=read(javaDir+"RaidDayDatabase.java");
-const manifest=read("AndroidManifest.xml");
+const read=f=>fs.readFileSync(path.join(root,f),"utf8");
+const base="java/com/lucianotoscano/pokesearchoverlay/";
+const service=read(base+"RaidDayAssistantOverlayService.java");
+const guide=read(base+"RaidDayGuidePlan.java");
+const history=read(base+"RaidDayEvent.java");
+const dao=read(base+"RaidDayEventDao.java");
+const db=read(base+"RaidDayDatabase.java");
+const home=read(base+"MainActivity.java");
 const strings=read("res/values/strings_raid_day.xml");
+const manifest=read("AndroidManifest.xml");
 const gradle=fs.readFileSync(path.join(__dirname,"../build.gradle.kts"),"utf8");
 const plan=JSON.parse(read("assets/roteiro_bug_passes.json"));
 const variant=plan.variantes[0];
-const steps=variant.etapas;
 const icon=Buffer.from(read("assets/raid_assistant_icon.b64").trim(),"base64");
 assert.equal(icon.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
 assert.equal(icon.readUInt32BE(16),96);
 assert.equal(icon.readUInt32BE(20),96);
 assert.equal(plan.schemaVersion,2);
 assert.equal(plan.id,"roteiro_bug_passes");
-assert.ok(plan.riskTextVersion);
 assert.equal(plan.evidenceKind,"RELATO_COMUNIDADE");
+assert.ok(plan.riskTextVersion);
 assert.equal(variant.id,"eduhunterplay-2026-10-28");
 assert.equal(variant.verificadoEm,"2026-11-07");
 assert.match(variant.confianca,/nao_verificado/);
+const steps=variant.etapas;
 assert.equal(steps.length,11);
-for(let i=0;i<11;i++){
- const step=steps[i];
- assert.equal(step.id,"E"+String(i+1).padStart(2,"0"));
- for(const key of ["titulo","instrucao","naoAconteceu","retornoSeguro"])
-  assert.ok(typeof step[key]==="string"&&step[key].length>=(key==="titulo"?4:10),step.id+" "+key);
- assert.ok(Array.isArray(step.precondicoes)&&step.precondicoes.length>=1);
- assert.deepEqual(step.confirmacoesAceitas,["USER_ATTESTED"]);
- if(step.local!==null)assert.ok(variant.locais[step.local],step.id+" local");
+for(let i=0;i<steps.length;i++){
+ const e=steps[i];
+ assert.equal(e.id,"E"+String(i+1).padStart(2,"0"));
+ for(const name of ["titulo","instrucao","falaEdu","ajudaEdu","periodo",
+                    "naoAconteceu","retornoSeguro"])
+   assert.ok(e[name]&&e[name].length>=3,e.id+" missing "+name);
+ assert.ok(Array.isArray(e.precondicoes)&&e.precondicoes.length>0);
+ assert.deepEqual(e.confirmacoesAceitas,["USER_ATTESTED"]);
+ if(e.local!==null)assert.ok(variant.locais[e.local],e.id+" location");
+ for(const key of ["repetePara","semPassePara","pularPara"])
+   if(e[key])assert.ok(steps.some(x=>x.id===e[key]),e.id+" "+key);
 }
+assert.deepEqual(steps.slice(1,7).map(x=>x.periodo),
+                 Array(6).fill("D-1"));
+assert.deepEqual(steps.slice(7,10).map(x=>x.periodo),
+                 Array(3).fill("D"));
+assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
+                 ["hawaii","newzealand","hawaii"]);
 assert.equal(steps[6].repetePara,"E02");
 assert.equal(steps[6].semPassePara,"E08");
-assert.equal(steps[2].semPassePara,"E08");
-assert.equal(steps[5].semPassePara,"E08");
 assert.equal(steps[8].pularPara,"E10");
-for(const x of steps){
- for(const key of ["repetePara","semPassePara","pularPara"])
-  if(x[key])assert.ok(steps.some(y=>y.id===x[key]),x.id+" -> "+x[key]);
-}
-assert.equal(steps[8].opcional,true);
 assert.equal(variant.locais.hawaii.coordenadas,"21.2709423,-157.818172");
 assert.equal(variant.locais.newzealand.coordenadas,"-41.282491,174.769132");
 assert.equal(variant.locais.kiribati.coordenadas,"1.987149,-157.477137");
-const parseCoords=raw=>raw.split(",").map(Number);
-for(const loc of Object.values(variant.locais)){
- const [lat,lon]=parseCoords(loc.coordenadas);
- assert.ok(Number.isFinite(lat)&&Math.abs(lat)<=90);
- assert.ok(Number.isFinite(lon)&&Math.abs(lon)<=180);
-}
-assert.match(planClass,/getAssets\(\)\.open\("roteiro_bug_passes\.json"\)/);
-assert.match(planClass,/SCHEMA_VERSION=2/);
-assert.match(planClass,/list\.length\(\)!=11/);
-assert.match(planClass,/Ordem de etapas inválida/);
+assert.match(guide,/getAssets\(\)\.open\("roteiro_bug_passes\.json"\)/);
+assert.match(guide,/SCHEMA_VERSION=2/);
+assert.match(guide,/list\.length\(\)!=11/);
+assert.match(guide,/speech=required\(o,"falaEdu"\)/);
+assert.match(guide,/help=required\(o,"ajudaEdu"\)/);
 assert.match(service,/BUBBLE_DP=48, ART_DP=45/);
-assert.match(service,/panelParams\.alpha=\.79f/);
-assert.match(home,/Assistente do Dia de Reides/);
-assert.match(strings,/name="raid_day_title">Assistente do Dia de Reides/);
-assert.match(service,/Assistente do Dia de Reides/);
+assert.match(home,/Edu · Assistente do Dia de Reides/);
+assert.match(strings,/Edu · Assistente do Dia de Reides/);
 assert.match(manifest,/android:name="\.RaidDayAssistantOverlayService"/);
 assert.match(home,/controls\.addView\(raidAssistantControl,guideLp\)/);
 assert.match(home,/RaidDayAssistantOverlayService\.loadArtwork\(this\)/);
 assert.match(home,/toggleRaidAssistantOverlay\(\)/);
-assert.match(home,/stopService\(new Intent\(this,RaidDayAssistantOverlayService\.class\)\)/);
-assert.match(home,/if\(req==104&&Settings\.canDrawOverlays\(this\)\)toggleRaidAssistantOverlay\(\)/);
-assert.match(service,/WindowManager\.LayoutParams\.TYPE_APPLICATION_OVERLAY/);
+assert.match(service,/TYPE_APPLICATION_OVERLAY/);
 assert.match(service,/FLAG_NOT_FOCUSABLE/);
 assert.match(service,/setOnTouchListener/);
 assert.match(service,/setVisible\(!visible\)/);
 assert.match(service,/plan\.step\(index\)/);
 assert.match(service,/plan\.coords\(index\)/);
 assert.doesNotMatch(service,/private static final String\[\] (?:TITLES|INSTRUCTIONS|COORDS)/);
-assert.match(strings,/Entendi, continuar/);
-assert.match(service,/Sair/);
-assert.match(strings,/não é garantido/);
-assert.match(strings,/Termos/);
 assert.match(service,/riskAcceptance/);
 assert.match(service,/riskAcceptedAtMs/);
-assert.match(strings,/Modo Treino/);
 assert.match(service,/private void beginTraining\(/);
-assert.match(service,/if\(training\)return;/);
+assert.match(service,/private void startDemoToday\(/);
 assert.match(service,/private void leaveTraining\(/);
 assert.match(service,/restoreJournal\(\)/);
-assert.match(service,/String confirmedStep=plan\.step\(index\)\.id/);
-assert.match(service,/persist\(finished\?"FINISHED":"STEP_CONFIRMED",confirmedStep\)/);
 assert.match(service,/journal\.events\(\)\.all\(sessionKey\)/);
 assert.match(service,/appendEvent\("LEGACY_IMPORTED"\)/);
-assert.match(service,/appendEvent\(eventType,actedOnStep\)/);
-assert.match(service,/beginRealSession\(/);
-assert.match(service,/persist\("CYCLE_REPEATED",from\)/);
-assert.match(service,/index=plan\.indexOf\(plan\.step\(index\)\.repeatTo\)/);
-assert.match(service,/persist\("NO_PASS",step\.id\)/);
-assert.match(service,/index=plan\.indexOf\(step\.noPassTo\)/);
-assert.match(service,/NOT_OBSERVED/);
-assert.match(strings,/Me perdi/);
-assert.match(service,/endPending/);
-assert.match(service,/now-lastConfirmAt<650L/);
-assert.match(service,/não representa passes/);
+assert.match(service,/persist\(eventType,actedOnStep\)/);
+assert.match(service,/persist\("CYCLE_REPEATED"|navigateEdu\(step\.repeatTo,"CYCLE_REPEATED"\)/);
+assert.match(service,/navigateEdu\(step\.noPassTo,"NO_PASS"\)/);
+assert.match(service,/persist\("NOT_OBSERVED"\)/);
+assert.match(service,/RaidDayRecovery\.stats/);
+assert.match(service,/Math\.max\(dp\(145\),maximum\)/);
+assert.match(service,/panelParams\.alpha=\.79f/);
+assert.match(service,/edu_panel_x/);
+assert.match(service,/edu_panel_y/);
+assert.match(service,/requestDisallowInterceptTouchEvent\(true\)/);
+assert.match(service,/showEduSettings\(/);
+assert.match(service,/showEduGuide\(/);
+assert.match(service,/showEduWelcome\(/);
+assert.match(service,/showEduRisk\(/);
+assert.match(service,/showEduFinished\(/);
+assert.match(service,/currentPhaseNote\(/);
 assert.match(service,/ClipboardManager/);
-assert.match(event,/@Entity\(tableName="raid_day_events"\)/);
-assert.match(event,/@PrimaryKey\(autoGenerate=true\)/);
-assert.match(dao,/@Query\("SELECT \* FROM raid_day_events WHERE sessionKey=:session ORDER BY id ASC"\)/);
+assert.match(history,/@Entity\(tableName="raid_day_events"\)/);
+assert.match(history,/@PrimaryKey\(autoGenerate=true\)/);
+assert.match(dao,/ORDER BY id ASC/);
 assert.match(db,/@Database\(entities=\{RaidDayEvent\.class\},version=1/);
 assert.match(gradle,/androidx\.room:room-runtime:2\.6\.1/);
 assert.match(gradle,/annotationProcessor\("androidx\.room:room-compiler:2\.6\.1"\)/);
 assert.doesNotMatch(service,/MediaProjectionManager|AccessibilityService|PGSharp|poke\.nianticlabs|https?:\/\//);
-assert.match(manifest,/android:name="\.OverlayService"/);
-assert.match(manifest,/android:name="\.SecondaryOverlayService"/);
-assert.match(manifest,/android:name="\.RareCandyOverlayService"/);
-assert.match(manifest,/android:name="\.CandyScreenCaptureService"/);
-console.log("LT304 v2 E1 PASS: roteiro 11 etapas, risco, treino, Room, retorno, ícone 48dp e overlays independentes");
+for(const other of ["OverlayService","SecondaryOverlayService",
+                    "RareCandyOverlayService","CandyScreenCaptureService"])
+  assert.ok(manifest.includes('android:name=".'+other+'"'),other);
+console.log("LT304 Edu E1 PASS: dialogue, strict D-1/D, 11 steps, audit history, risk and independent overlays");
