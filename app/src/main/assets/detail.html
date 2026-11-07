@@ -962,6 +962,23 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psMetricPanel .psCpSimResultRow strong{white-space:normal!important;overflow-wrap:anywhere!important;text-align:right!important}
 #psMetricPanel .psCpTargetRow{flex-wrap:wrap!important}
 
+
+/* LT284: verified A/B Class comparison inside existing glass calculator.
+   No nested scrollbars, new windows, extra background chips or inferred ranks. */
+#psMetricPanel .psCpRankCompare{margin:5px 0 2px;padding-top:5px;
+ border-top:1px solid #ffffff2c;font:9px/1.27 Roboto,Arial,sans-serif}
+#psMetricPanel .psCpRankTitle{font-weight:750;color:#dceeff;margin-bottom:3px}
+#psMetricPanel .psCpRankLine{display:grid;
+ grid-template-columns:38px repeat(2,minmax(0,1fr));gap:4px;align-items:start;
+ padding:4px 0;border-bottom:1px solid #ffffff16}
+#psMetricPanel .psCpRankLine .psCpRankLeague{font-weight:800;color:#c0d9f4}
+#psMetricPanel .psCpRankLine .psCpRankLeague small{display:block;font:600 8px Roboto,Arial,sans-serif;color:#b2c4d7}
+#psMetricPanel .psCpRankValue{min-width:0;overflow-wrap:anywhere;color:#dbe4ef}
+#psMetricPanel .psCpRankValue strong{display:block;font-size:10px;font-weight:800}
+#psMetricPanel .psCpRankValue small{display:block;color:#b4c5d6;font-size:8px}
+#psMetricPanel .psCpRankValue.psCpRankBetter strong{color:#8ce3b1}
+#psMetricPanel .psCpRankNote{margin-top:4px;color:#b7c6d7;font-size:8px;line-height:1.4}
+
 /* LT253: A/B IV editor and CP presets within the same glass card. */
 #psMetricPanel .psCpIvComparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:7px 0}
 #psMetricPanel .psCpIvGroup{min-width:0;border:1px solid #a6c0da48;border-radius:7px;background:#ffffff09;padding:5px}
@@ -3083,6 +3100,56 @@ function psCpIvFields(key,values){
   'id="psCpIv'+key+k+'" aria-label="IV '+key+' '+k+'" value="'+Number(values[i])+
   '" onchange="updatePvpCpSimulator()"></label>').join("")+'</div>';
 }
+
+/* LT284: display only proven exact-form IV Class positions. Do not imply
+ * battle wins, ability to evolve, Elite move availability or power-up costs. */
+function psCpRenderRankCompare(row,iv,compare){
+ const view=document.getElementById("psCpRankCompare");
+ const advanced=document.getElementById("psCpAdvanced");
+ if(!view||!advanced?.open)return false; // 4096-row work is on demand only.
+ const explorer=window.PokeSearchRankExplorer;
+ const gm=window.POKESEARCH_PVP_IV_DATA;
+ const results=row&&iv&&compare?explorer?.compareIv?.(
+  gm,String(row[1]||""),iv.join("/"),compare.join("/"),
+  window.POKESEARCH_PVPOKE_OVERALL):null;
+ if(!results){
+  view.textContent="Ranks não confirmados para esta forma ou estes IVs.";
+  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
+  return false;
+ }
+ const cell=(value,better)=>{
+  if(!value)return '<span class="psCpRankValue">—</span>';
+  return '<span class="psCpRankValue'+(better?' psCpRankBetter':'')+'">'+
+   '<strong>#'+value.rank+' · '+h(value.efficiency)+'%</strong>'+
+   '<small>PC '+value.cp+' · Nv. '+h(String(value.level).replace(".",","))+'</small></span>';
+ };
+ view.innerHTML='<div class="psCpRankTitle">Rank Classe · '+h(String(row[1]))+
+  ' · A × B</div>'+
+  '<div class="psCpRankLine"><b>Liga</b><b>IV A</b><b>IV B</b></div>'+
+  results.map(x=>x.verified?
+   '<div class="psCpRankLine"><span class="psCpRankLeague">'+
+   h(x.league.toUpperCase())+(Number.isInteger(x.overallRank)?
+   '<small>RG #'+x.overallRank+'</small>':"")+'</span>'+cell(x.a,x.better==="a")+
+   cell(x.b,x.better==="b")+'</div>':
+   '<div class="psCpRankLine"><span class="psCpRankLeague">'+
+   h(x.league.toUpperCase())+'</span><span>—</span><span>Não confirmado</span></div>'
+  ).join("")+
+  '<div class="psCpRankNote">Verde: maior produto de atributos da mesma forma. '+
+  'Rank Classe compara IVs, não desempenho entre espécies. '+
+  'RG aparece somente com identidade confirmada. Custos de Doces/Poeira e Mega não são inferidos.</div>';
+ view.setAttribute?.("data-ps-source","PvPoke Game Master offline");
+ if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
+ return true;
+}
+function psCpRankToggle(node){
+ if(!node?.open)return false;
+ const forms=psCpVariants();
+ const key=String(document.getElementById("psCpForm")?.value||psCpTargetSpecies);
+ const row=forms.find(x=>String(x[0])===key)||forms[0];
+ return psCpRenderRankCompare(row,
+  psCpInputIv("psCpIvA",psCpCustomIv||psCpIv()),
+  psCpInputIv("psCpIvB",psCpCompareIv));
+}
 function psCpSetPreset(cp){
  if(![500,1500,2500].includes(cp))return false;
  psCpTargetCp=cp;
@@ -3158,14 +3225,15 @@ function psCpControls(){
   '<button type="button" onclick="stepPvpCpLevel(0.5)" aria-label="Aumentar meio nível">+</button>'+
   '</div></label>'+
   '<strong id="psCpLevelValue">'+psCpTargetLevel.toFixed(1).replace(".",",")+'</strong></div>'+
-  '<details class="psCpAdvanced" ontoggle="resizeEvolutionPanel()"><summary>Comparar IVs (opcional)</summary>'+
+  '<details class="psCpAdvanced" id="psCpAdvanced" ontoggle="psCpRankToggle(this)"><summary>Comparar IVs (opcional)</summary>'+
   '<div class="psCpIvHelp">A: captura ou editado · B: outro IV</div>'+
   '<div class="psCpIvComparison">'+
   '<div class="psCpIvGroup"><b>IV A</b>'+
   psCpIvFields("A",psCpCustomIv||psCpIv()||[0,0,0])+
   '<button type="button" onclick="psCpResetIv()" title="Restaurar IV capturado" aria-label="Restaurar IV capturado">↶</button></div>'+
   '<div class="psCpIvGroup"><b>IV B</b>'+
-  psCpIvFields("B",psCpCompareIv)+'</div></div></details>'+
+  psCpIvFields("B",psCpCompareIv)+'</div></div>'+
+  '<div id="psCpRankCompare" class="psCpRankCompare" aria-live="polite"></div></details>'+
   '<div id="psCpSimResult" aria-live="polite"></div>'+
   '<div class="psCpTargetRow"><label>PC-alvo '+
   '<input id="psCpTargetCp" type="number" min="10" max="10000" step="1"'+
@@ -3255,6 +3323,7 @@ function updatePvpCpSimulator(){
   root.textContent="IV A/B: informe números inteiros de 0 a 15.";return false;
  }
  psCpCustomIv=iv;psCpCompareIv=compare;
+ psCpRenderRankCompare(row,iv,compare);
  const current=psCpAt(row,iv,psCpTargetLevel),zero=psCpAt(row,[0,0,0],psCpTargetLevel),
   perfect=psCpAt(row,[15,15,15],psCpTargetLevel);
  const little=psCpLeagueCeiling(row,iv,500),gl=psCpLeagueCeiling(row,iv,1500),ul=psCpLeagueCeiling(row,iv,2500),

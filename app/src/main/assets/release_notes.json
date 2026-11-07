@@ -2652,6 +2652,28 @@
           "Comparador avançado de IV, presets de Eventos, assistente de golpes, diagnóstico e OTA seguem no roteiro de etapas posteriores."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt284-iv-a-b-pvp-class-comparison-20261107",
+      "minVersionCode": 54488,
+      "date": "07/11/2026",
+      "title": "LT284 — Comparador de IVs por liga",
+      "sections": {
+        "novidades": [
+          "Na calculadora, Comparar IVs agora apresenta Rank Classe, eficiência de atributos, PC e nível de IV A e IV B nas três ligas, usando a fonte PvPoke local e a mesma classificação do explorador."
+        ],
+        "melhorias": [
+          "O comparativo calcula somente quando expandido, aproveita cache local e mantém a escolha da forma exata, sem afetar a busca ou os resultados das duas Pokébolas.",
+          "Marca discretamente o maior produto de atributos e explica que Rank Classe não é o Rank Geral das espécies."
+        ],
+        "correcoes": [
+          "Formas e IVs sem dados verificados não recebem classificação inventada; os cálculos de custos, Mega e golpes não são presumidos."
+        ],
+        "emDesenvolvimento": [
+          "Homologar em Samsung P1/P2, incluindo 0/15/15 versus 15/15/15, Burmy e Wormadam, rolagem ao abrir e recolher e desempenho físico.",
+          "Orientação geral de uso PvP/Raides, golpes Elite, presets/eventos e diagnóstico de API seguem no roadmap #277."
+        ]
+      }
     }
   ]
 }

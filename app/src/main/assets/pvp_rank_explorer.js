@@ -60,6 +60,39 @@
   while(cache.size>12)cache.delete(cache.keys().next().value);
   return result;
  }
+
+ // LT284: compare two hypothetical IVs with the EXACT same pinned 4096-row
+ // Class ranking used by the interactive explorer, not an inferred formula.
+ // A/B is ephemeral and never edits the capture, account or provider search.
+ function compareIv(gm,name,ivA,ivB,overall){
+  const ai=ivIndex(ivA),bi=ivIndex(ivB);
+  if(ai<0||bi<0||!String(name||"").trim())return null;
+  const out=[];
+  for(const league of ["gl","ul","ml"]){
+   const rows=getIvRows(gm,name,league);
+   if(!rows){
+    out.push({league,verified:false,overallRank:null});
+    continue;
+   }
+   const a=rows.find(x=>x.index===ai),b=rows.find(x=>x.index===bi);
+   if(!a||!b){
+    out.push({league,verified:false,overallRank:null});
+    continue;
+   }
+   // Rank Geral belongs to the species/form, not the IV: exact unique match only.
+   const matches=(getOverallRows(overall,league)||[]).filter(
+    x=>n(x.name)===n(megaName(name)));
+   const overallRank=matches.length===1?matches[0].rank:null;
+   const pick=x=>({rank:x.rank,efficiency:x.efficiency,cp:x.cp,
+    level:x.level,iv:x.iv});
+   const diff=a.product-b.product;
+   const tolerance=1e-10*Math.max(1,Math.abs(a.product),Math.abs(b.product));
+   out.push({league,verified:true,a:pick(a),b:pick(b),
+    better:Math.abs(diff)<=tolerance?"empate":diff>0?"a":"b",
+    overallRank});
+  }
+  return out.some(x=>x.verified)?out:null;
+ }
  function getOverallRows(snapshot,league){
   if(!snapshot||!LIGAS[league]||!Array.isArray(snapshot[league]))return null;
   return snapshot[league].filter(e=>Array.isArray(e)&&typeof e[1]==="string"&&
@@ -539,7 +572,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,switchOverallLeague,switchClassLeague,getIvRows,getOverallRows,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,switchOverallLeague,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
