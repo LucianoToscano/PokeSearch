@@ -20,6 +20,9 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.ColorFilter;
+import android.graphics.Rect;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -90,6 +93,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private TextView eduHeader,eduBadge,eduSpeech,eduSubline,eduSettingsClose;
     private TextView eduPrepQuestion,eduPrepCaption;
     private int eduPanelWidth=0;
+    private EduSpeechDrawable eduSpeechBackground;
 
     private TextView visualStatus,visualToggle,visualAccept,visualReject;
     private LinearLayout visualActions;
@@ -167,7 +171,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         b.setGravity(Gravity.CENTER);
         b.setMinHeight(dp(35));
         b.setPadding(dp(7),dp(3),dp(7),dp(3));
-        b.setBackground(surface(Color.rgb(247,248,249),Color.rgb(157,168,177),9));
+        b.setBackground(surface(Color.rgb(253,253,253),Color.rgb(183,191,199),22));
+        b.setElevation(dp(2));
         b.setClickable(true);
         return b;
     }
@@ -417,7 +422,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                     Color.rgb(118,235,195):Color.WHITE);
             }
         }
-        if(visible)placePanel();
+        if(visible){
+            placePanelCoordinates();
+            placePanel();
+        }
     }
     private void setAvatarMotion(boolean enabled){
         avatarMotion=enabled;
@@ -498,7 +506,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                                 getResources().getDisplayMetrics().heightPixels-
                                 bubbleParams.height,startY+Math.round(dy)));
                             wm.updateViewLayout(bubble,bubbleParams);
-                            if(visible)placePanel();
+                            if(visible){
+                                placePanelCoordinates();
+                                placePanel();
+                            }
                         }
                         return true;
                     case MotionEvent.ACTION_CANCEL:
@@ -687,24 +698,111 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduSubline.setVisibility(caption==null||caption.isEmpty()?
             View.GONE:View.VISIBLE);
     }
+
+    /**
+     * Um único contorno branco de quadrinhos. A cauda faz parte do MESMO path
+     * da fala, e aponta horizontalmente ao avatar, sem outra caixa ao redor.
+     */
+    private final class EduSpeechDrawable extends Drawable {
+        private final Paint fill=new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint edge=new Paint(Paint.ANTI_ALIAS_FLAG);
+        private boolean pointerRight=true;
+        EduSpeechDrawable(){
+            fill.setColor(Color.WHITE);
+            fill.setStyle(Paint.Style.FILL);
+            edge.setColor(Color.rgb(166,175,184));
+            edge.setStyle(Paint.Style.STROKE);
+            edge.setStrokeWidth(Math.max(1f,dp(1)));
+            edge.setStrokeJoin(Paint.Join.ROUND);
+        }
+        void setPointerRight(boolean right){
+            if(pointerRight!=right){pointerRight=right;invalidateSelf();}
+        }
+        boolean pointsRight(){return pointerRight;}
+        @Override public void draw(Canvas canvas){
+            Rect bounds=getBounds();
+            float l=bounds.left+dp(1),t=bounds.top+dp(1);
+            float r=bounds.right-dp(1),bottom=bounds.bottom-dp(1);
+            float tip=dp(15),rad=dp(15),half=dp(8);
+            float bodyLeft=pointerRight?l:l+tip;
+            float bodyRight=pointerRight?r-tip:r;
+            float cy=(t+bottom)/2f;
+            Path shape=new Path();
+            shape.moveTo(bodyLeft+rad,t);
+            shape.lineTo(bodyRight-rad,t);
+            shape.quadTo(bodyRight,t,bodyRight,t+rad);
+            if(pointerRight){
+                shape.lineTo(bodyRight,cy-half);
+                shape.lineTo(r,cy);
+                shape.lineTo(bodyRight,cy+half);
+            }
+            shape.lineTo(bodyRight,bottom-rad);
+            shape.quadTo(bodyRight,bottom,bodyRight-rad,bottom);
+            shape.lineTo(bodyLeft+rad,bottom);
+            shape.quadTo(bodyLeft,bottom,bodyLeft,bottom-rad);
+            if(!pointerRight){
+                shape.lineTo(bodyLeft,cy+half);
+                shape.lineTo(l,cy);
+                shape.lineTo(bodyLeft,cy-half);
+            }
+            shape.lineTo(bodyLeft,t+rad);
+            shape.quadTo(bodyLeft,t,bodyLeft+rad,t);
+            shape.close();
+            canvas.drawPath(shape,fill);
+            canvas.drawPath(shape,edge);
+        }
+        @Override public void setAlpha(int alpha){
+            fill.setAlpha(alpha);edge.setAlpha(alpha);invalidateSelf();
+        }
+        @Override public void setColorFilter(ColorFilter filter){
+            fill.setColorFilter(filter);edge.setColorFilter(filter);invalidateSelf();
+        }
+        @Override public int getOpacity(){return PixelFormat.TRANSLUCENT;}
+    }
+    private void pointSpeechAtEdu(){
+        if(eduSpeechBackground==null||eduMainCard==null||
+            panelParams==null||bubbleParams==null)return;
+        boolean pointsRight=panelParams.x+eduPanelWidth/2<
+            bubbleParams.x+bubbleParams.width/2;
+        if(eduSpeechBackground.pointsRight()!=pointsRight){
+            eduSpeechBackground.setPointerRight(pointsRight);
+            eduMainCard.setPadding(dp(pointsRight?12:27),dp(11),
+                dp(pointsRight?27:12),dp(11));
+        }
+    }
     private void createPanel(){
         panel=new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(11),dp(8),dp(11),dp(10));
-        // Moldura translúcida discreta; a mensagem fica no balão branco.
-        panel.setBackground(surface(Color.argb(145,23,32,42),
-            Color.argb(70,196,213,228),15));
+        panel.setPadding(dp(2),dp(2),dp(2),dp(5));
+        // Sem caixa glass envolvendo fala e respostas. O jogo fica visível.
+        panel.setBackgroundColor(Color.TRANSPARENT);
         eduPanelWidth=Math.min(dp(286),
             getResources().getDisplayMetrics().widthPixels-dp(22));
 
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        eduHeader=text("Edu",16,Color.WHITE,true);
-        eduHeader.setContentDescription("Edu · segure e arraste este cabeçalho para mover a conversa");
-        header.addView(eduHeader,new LinearLayout.LayoutParams(0,dp(34),1));
+        LinearLayout nameChip=new LinearLayout(this);
+        nameChip.setGravity(Gravity.CENTER_VERTICAL);
+        nameChip.setPadding(dp(9),0,dp(9),0);
+        nameChip.setBackground(surface(Color.argb(162,28,40,55),
+            Color.argb(90,190,205,222),19));
+        eduHeader=text("Edu",13,Color.WHITE,true);
+        eduHeader.setContentDescription("Edu · arraste este identificador para mover o assistente");
+        nameChip.addView(eduHeader,new LinearLayout.LayoutParams(-2,-1));
+        eduBadge=text("",10,Color.rgb(127,219,189),false);
+        LinearLayout.LayoutParams smallBadge=new LinearLayout.LayoutParams(-2,-1);
+        smallBadge.leftMargin=dp(6);
+        nameChip.addView(eduBadge,smallBadge);
+        header.addView(nameChip,new LinearLayout.LayoutParams(-2,dp(31)));
+        View headerSpace=new View(this);
+        header.addView(headerSpace,new LinearLayout.LayoutParams(0,dp(31),1));
         TextView close=button("×");
+        close.setBackground(surface(Color.argb(166,32,44,60),
+            Color.argb(105,200,215,230),22));
+        close.setTextColor(Color.WHITE);
+        close.setTextSize(17);
         close.setContentDescription("Recolher conversa do Edu");
-        LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(37),dp(33));
+        LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(33),dp(33));
         closeP.leftMargin=dp(5);
         header.addView(close,closeP);
         close.setOnClickListener(v->{
@@ -713,53 +811,53 @@ public final class RaidDayAssistantOverlayService extends Service {
         });
         View.OnTouchListener move=new View.OnTouchListener(){
             float originX,originY;
-            int panelX,panelY;
+            int avatarX,avatarY;
             boolean moved;
             @Override public boolean onTouch(View view,MotionEvent event){
                 switch(event.getActionMasked()){
                     case MotionEvent.ACTION_DOWN:
                         panelScroll.requestDisallowInterceptTouchEvent(true);
                         originX=event.getRawX();originY=event.getRawY();
-                        panelX=panelParams.x;panelY=panelParams.y;
+                        avatarX=bubbleParams.x;avatarY=bubbleParams.y;
                         moved=false;return true;
                     case MotionEvent.ACTION_MOVE:
                         float dx=event.getRawX()-originX,dy=event.getRawY()-originY;
                         if(!moved&&Math.hypot(dx,dy)>touchSlop)moved=true;
                         if(moved){
+                            // Arrastar o cabeçalho move também a sprite:
+                            // balão e treinador nunca ficam visualmente separados.
                             int sw=getResources().getDisplayMetrics().widthPixels;
                             int sh=getResources().getDisplayMetrics().heightPixels;
-                            panelParams.x=Math.max(0,Math.min(
-                                sw-eduPanelWidth,panelX+Math.round(dx)));
-                            int height=Math.max(dp(80),panelScroll.getHeight());
-                            panelParams.y=Math.max(0,Math.min(
-                                Math.max(0,sh-height),panelY+Math.round(dy)));
-                            try{wm.updateViewLayout(panelScroll,panelParams);}
+                            bubbleParams.x=Math.max(0,Math.min(
+                                sw-bubbleParams.width,avatarX+Math.round(dx)));
+                            bubbleParams.y=Math.max(0,Math.min(
+                                sh-bubbleParams.height,avatarY+Math.round(dy)));
+                            try{wm.updateViewLayout(bubble,bubbleParams);}
                             catch(IllegalArgumentException ignored){}
+                            placePanelCoordinates();
+                            placePanel();
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
                         panelScroll.requestDisallowInterceptTouchEvent(false);
-                        if(moved)prefs.edit().putInt("edu_panel_x",panelParams.x)
-                            .putInt("edu_panel_y",panelParams.y).apply();
+                        if(moved)prefs.edit().putInt("x",bubbleParams.x)
+                            .putInt("y",bubbleParams.y).apply();
                         return true;
                 }
                 return false;
             }
         };
         eduHeader.setOnTouchListener(move);
+        nameChip.setOnTouchListener(move);
         header.setOnTouchListener(move);
         panel.addView(header);
-        eduBadge=text("",10,Color.rgb(127,219,189),true);
-        LinearLayout.LayoutParams badgeLp=new LinearLayout.LayoutParams(-1,-2);
-        badgeLp.topMargin=dp(2);
-        panel.addView(eduBadge,badgeLp);
 
         eduMainCard=new LinearLayout(this);
         eduMainCard.setOrientation(LinearLayout.VERTICAL);
-        eduMainCard.setPadding(dp(11),dp(9),dp(11),dp(9));
-        eduMainCard.setBackground(surface(Color.rgb(253,253,253),
-            Color.rgb(128,136,145),13));
+        eduMainCard.setPadding(dp(12),dp(11),dp(27),dp(11));
+        eduSpeechBackground=new EduSpeechDrawable();
+        eduMainCard.setBackground(eduSpeechBackground);
         eduMainCard.setElevation(dp(2));
         LinearLayout.LayoutParams speechLp=new LinearLayout.LayoutParams(-1,-2);
         speechLp.topMargin=dp(8);
@@ -772,44 +870,19 @@ public final class RaidDayAssistantOverlayService extends Service {
         subLp.topMargin=dp(7);
         eduMainCard.addView(eduSubline,subLp);
 
-        // Pequena cauda de quadrinhos conectada ao balão do Edu.
-        View speechTail=new View(this){
-            private final Paint white=new Paint(Paint.ANTI_ALIAS_FLAG);
-            private final Paint line=new Paint(Paint.ANTI_ALIAS_FLAG);
-            @Override protected void onDraw(Canvas canvas){
-                super.onDraw(canvas);
-                float w=getWidth(),h=getHeight();
-                Path triangle=new Path();
-                triangle.moveTo(1f,0f);
-                triangle.lineTo(w-1f,0f);
-                triangle.lineTo(dp(5),h-1f);
-                triangle.close();
-                white.setStyle(Paint.Style.FILL);
-                white.setColor(Color.rgb(253,253,253));
-                canvas.drawPath(triangle,white);
-                Path outline=new Path();
-                outline.moveTo(1f,0f);
-                outline.lineTo(dp(5),h-1f);
-                outline.lineTo(w-1f,0f);
-                line.setStyle(Paint.Style.STROKE);
-                line.setStrokeWidth(dp(1));
-                line.setColor(Color.rgb(128,136,145));
-                canvas.drawPath(outline,line);
-            }
-        };
-        LinearLayout.LayoutParams tailParams=new LinearLayout.LayoutParams(dp(17),dp(11));
-        tailParams.leftMargin=dp(22);
-        tailParams.topMargin=-dp(2);
-        panel.addView(speechTail,tailParams);
+        // A cauda lateral é desenhada pelo próprio EduSpeechDrawable:
+        // não existe segundo triângulo solto nem balão dentro de painel.
 
         createPreparationUi();
         eduActions=new LinearLayout(this);
         eduActions.setOrientation(LinearLayout.VERTICAL);
-        panel.addView(eduActions);
+        LinearLayout.LayoutParams answersLp=new LinearLayout.LayoutParams(-1,-2);
+        answersLp.topMargin=dp(14); // respostas flutuantes e independentes da fala
+        panel.addView(eduActions,answersLp);
         eduMiniActions=new LinearLayout(this);
         eduMiniActions.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams mini=new LinearLayout.LayoutParams(-1,dp(35));
-        mini.topMargin=dp(7);
+        mini.topMargin=dp(10);
         panel.addView(eduMiniActions,mini);
 
         eduSettings=new LinearLayout(this);
@@ -1092,7 +1165,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             setTalk("Olá! Meu nome é Edu. Serei seu treinador hoje! "+
                 "Vou te ensinar, passo a passo, o tutorial comunitário "+
                 "“Bug dos Passes”. Está pronto?",
-                eduNote.isEmpty()?"Uma resposta por vez. Nada será feito no jogo.":eduNote);
+                eduNote.isEmpty()?"":eduNote);
             addTwo("Sim, vamos lá",()->{
                 eduIntroAccepted=true;eduNote="";updateStep();
             },"Agora não",()->{
@@ -1147,6 +1220,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduActions.setVisibility(View.GONE);
         eduMiniActions.setVisibility(View.GONE);
         eduSettings.setVisibility(View.VISIBLE);
+        panel.setBackground(surface(Color.argb(217,25,36,49),
+            Color.argb(90,185,204,226),14));
+        panel.setPadding(dp(9),dp(8),dp(9),dp(9));
         visualToggle.setText(RaidDayScreenCaptureService.isActive()?
             "⏹ Parar leitura visual":"👁 Autorizar leitura de tela");
         if(!eduNote.isEmpty()){
@@ -1437,6 +1513,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(eduSpeech==null)return;
         eduActions.removeAllViews();
         eduMiniActions.removeAllViews();
+        panel.setBackgroundColor(Color.TRANSPARENT);
+        panel.setPadding(dp(2),dp(2),dp(2),dp(5));
         eduSettings.setVisibility(View.GONE);
         eduMainCard.setVisibility(View.VISIBLE);
         preparationSection.setVisibility(View.GONE);
@@ -1452,6 +1530,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduMainCard.setVisibility(View.GONE);
             eduActions.setVisibility(View.GONE);
             preparationSection.setVisibility(View.VISIBLE);
+            panel.setBackground(surface(Color.argb(217,25,36,49),
+                Color.argb(90,185,204,226),14));
+            panel.setPadding(dp(9),dp(8),dp(9),dp(9));
             preparation.setQuestion(0); // A conversa começa somente pela data.
             renderPreparation();
         }else if(!riskAccepted){showEduRisk();}
@@ -1462,13 +1543,19 @@ public final class RaidDayAssistantOverlayService extends Service {
         int width=eduPanelWidth;
         int sw=getResources().getDisplayMetrics().widthPixels;
         int sh=getResources().getDisplayMetrics().heightPixels;
-        int preferred=bubbleParams.x+bubbleParams.width+dp(5);
-        int fallback=preferred+width<sw?preferred:
-            Math.max(0,bubbleParams.x-width-dp(5));
-        panelParams.x=Math.max(0,Math.min(Math.max(0,sw-width),
-            prefs.getInt("edu_panel_x",fallback)));
-        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-dp(125)),
-            prefs.getInt("edu_panel_y",bubbleParams.y)));
+        int gap=dp(5);
+        int left=bubbleParams.x-width-gap;
+        int right=bubbleParams.x+bubbleParams.width+gap;
+        // A janela acompanha o treinador. Não herda o antigo painel gigante
+        // que podia ser arrastado para longe do avatar.
+        int docking=left>=0?left:
+            right+width<=sw?right:Math.max(0,Math.min(sw-width,left));
+        panelParams.x=Math.max(0,Math.min(Math.max(0,sw-width),docking));
+        int measured=panelScroll==null?dp(175):
+            Math.max(dp(125),panelScroll.getHeight());
+        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-measured),
+            bubbleParams.y+bubbleParams.height/2-measured/2));
+        pointSpeechAtEdu();
     }
     private void placePanel(){
         if(!visible||panelScroll==null||panelParams==null)return;
@@ -1477,6 +1564,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         int height=Math.max(dp(90),panelScroll.getHeight());
         panelParams.x=Math.max(0,Math.min(sw-eduPanelWidth,panelParams.x));
         panelParams.y=Math.max(0,Math.min(Math.max(0,sh-height),panelParams.y));
+        pointSpeechAtEdu();
         try{wm.updateViewLayout(panelScroll,panelParams);}
         catch(IllegalArgumentException ignored){}
     }
