@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT302 — SETAS MAIS DELICADAS, PRÓXIMAS E SEM INVADIR RAIDE (07/11/2026)
+
+- **Evidência física:** após LT301, print do Charmander #4 no Samsung ainda mostra os dois chevrons de evolução separados em excesso e o indicador projetado no cartão de Raides visualmente próximo/sobreposto ao brasão. O usuário enviou referência de dois chevrons pequenos e sutis e pediu corrigir no aplicativo.
+- **Correção CSS localizada:** `app/src/main/assets/detail.html`, seletor final do `#rankLine[data-rank-rail="five"]`, muda marcas de 4×4 para **3×3 px**, bordas de 1 para **0,8 CSS px**, remove espaço extra entre marcas (`gap:0`), altera grupo de 6×11 para **5×7 px**, afastado **3 px** da borda direita/inferior. Os ícones das cinco caixas continuam centralizados horizontalmente em `left:50%;transform:translateX(-50%)` e com 19×19px, números e cartões de 39px preservados. Nenhum ícone externo com marca d'água foi incorporado; o desenho é puro CSS.
+- **Sem alteração de cálculo:** quantidade continua 0, 1 ou 2 evoluções, determinada pelo grafo direcional verificado; não indicar evolução para a mesma espécie ou uma forma cujo caminho não foi confirmado; o marcador não interfere em dados, toque ou ranking. A regra é compartilhada pelas duas Pokébolas.
+- **QA:** reforçar teste `lt274` para o override final e `lt253` Playwright nos tamanhos P/M/G medindo setas e testando especificamente o cartão de Raides com Charmander→Charizard, sem sobreposição ao ícone da bandeira, preservando seu alinhamento. Rodar regressões Node, Android, OTA, referência PvE e compilação beta isolada. Publicação permanente somente após todos os gates.
+- **Estado:** branch `fix/lt302-delicate-evolution-chevrons-raid-clearance-20261107`; PR, squash, versão e checksum devem ser incluídos aqui depois de confirmados. Base oficial anterior LT301 `0.03.01` (`54505`).
+
+
 ## LT301 — SETAS DE EVOLUÇÃO FINAS E BANDEIRAS CENTRALIZADAS (07/11/2026)
 
 - **Problema evidenciado fisicamente:** screenshot de Treecko #252 após a LT300 com os indicadores de evolução muito grandes, encostando no canto inferior direito das cinco caixas; o usuário confirmou o objetivo **0, 1 ou 2 evoluções**, não três, e exigiu bandeiras centralizadas independentemente do marcador.
