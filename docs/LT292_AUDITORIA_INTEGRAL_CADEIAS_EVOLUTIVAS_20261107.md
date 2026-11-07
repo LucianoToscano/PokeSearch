@@ -21,3 +21,9 @@ O catálogo offline `pvp_family_catalog.js`, espelho exato de `PVP_EVO_LINKS` do
 
 ## Publicação
 Somente registrar publicação final após PR, merges, workflow assinado, SHA-256 e release pública confirmados. Não alterar fontes, links de sprite, coordenadas, permissões, login ou rankings.
+
+## Integração e publicação oficial conferidas
+- [PR #286](https://github.com/LucianoToscano/PokeSearch/pull/286) mesclada por squash `6684a50cb6cbc206d617898e30402b7c65ba8700`, commit QA `115c76b49944b34e93acb14e1476654e58af7a53`. Oito verificações aplicáveis `success`, incluindo teste novo exaustivo e beta privado. Nenhuma alteração nos valores dos rankings.
+- [Workflow permanente #42352941685](https://github.com/LucianoToscano/PokeSearch/actions/runs/42352941685) `completed/success`. Passaram `preflight`, `Build signed protected release`, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash`.
+- [Release estável LT292](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.92-54496), publicada em **07/11/2026 às 07:54:07 UTC**: `v0.02.92-54496`, `draft=false`, `prerelease=false`, APK `PokeSearch-v0.02.92-LT.apk`, **33.937.314 bytes**, SHA-256 `1d7b9ffd3e421e9970d08508952233fe8ccd1fcbd3116754669aaf96d4678bd2`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.92-54496/PokeSearch-v0.02.92-LT.apk); solicitação SHA `f5dde6186272063032d876ad0a822a1984143b54`.
+- **Pendência física:** validar sequência visual e IV/PC/ranks no Samsung em ambas as Pokébolas. A verificação de 463 arestas se refere ao catálogo cadastrado, não garante que novas evoluções ausentes do snapshot já estejam incluídas.
