@@ -2,6 +2,13 @@
 (function(root){
 "use strict";
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+// LT294: one visible-art rule for 100% / Rank #1, with/without boxes, P/M/G.
+// Target 87% of the slot's longest opaque dimension, not PNG dimensions.
+const RESULT_VISIBLE_TARGET=.87;
+const RESULT_IMAGE_BOX=.88;
+// Extra transparent margins may legitimately need more than 7x, but only
+// after measuring the actual displayed artwork (never a guessed reference).
+const SOURCE_MEASURED_MAX_ZOOM=24;
 function measure(img){
  const w=Number(img?.naturalWidth)||0,h=Number(img?.naturalHeight)||0;
  if(w<8||h<8||typeof document==="undefined")return null;
@@ -71,7 +78,7 @@ function tileFit(img,box,maxZoom=2.85){
  if(!(occupancy>0))return null;
  // Image box already measures 88% of the card. Result silhouette should be
  // ~87% (inside requested 85–90%), with no crop; cap unusual tiny art.
- const zoom=Math.round(clamp(.87/(.88*occupancy),.80,maxZoom)*1000)/1000;
+ const zoom=Math.round(clamp(RESULT_VISIBLE_TARGET/(RESULT_IMAGE_BOX*occupancy),.80,maxZoom)*1000)/1000;
  const imageBox=Number(box)||Number(img?.clientWidth)||0;
  const cx=(bounds.left+bounds.right+1)/(2*SAMPLE);
  const cy=(bounds.top+bounds.bottom+1)/(2*SAMPLE);
@@ -95,7 +102,7 @@ function geometryFit(bounds,imageBox,maxZoom=7){
  if(right-left<3||bottom-top<3)return null;
  const occupancy=Math.max((right-left+1)/SAMPLE,(bottom-top+1)/SAMPLE);
  if(!(occupancy>0))return null;
- const zoom=Math.round(clamp(.87/(.88*occupancy),.8,maxZoom)*1000)/1000;
+ const zoom=Math.round(clamp(RESULT_VISIBLE_TARGET/(RESULT_IMAGE_BOX*occupancy),.8,maxZoom)*1000)/1000;
  return {zoom,
   x:Math.round((.5-(left+right+1)/(2*SAMPLE))*zoom*imageBox*100)/100,
   y:Math.round((.5-(top+bottom+1)/(2*SAMPLE))*zoom*imageBox*100)/100,
@@ -149,14 +156,15 @@ function enhanceProviderTile(img,cardBounds,verifiedEvent,verifiedProvider=false
  if(cardSize<8)return false;
  const src=String(img.currentSrc||img.src||"");
  const applyMeasured=bounds=>{
-  const fit=geometryFit(bounds,cardSize*.88,7);
+  const fit=geometryFit(bounds,cardSize*RESULT_IMAGE_BOX,SOURCE_MEASURED_MAX_ZOOM);
   if(!fit)return false;
   if(img.dataset)img.dataset.psSourceMeasured="1";
-  // Already-large sprites are left at their normal fixed P/M/G dimensions.
-  if(fit.occupancy<.80)setResultTileFit(img,fit);
-  else setResultTileFit(img,null);
+  // Measured 80% source occupancy is only 70.4% of the whole tile.
+  // Normalize EVERY known contour to 87%, including well-filled originals.
+  setResultTileFit(img,fit);
   return true;
  };
+ if(img.dataset?.psSourceMeasured==="1")return true;
  if(cardBounds&&cardBounds.url===src&&applyMeasured(cardBounds))return true;
  // Only a card-scoped, provider-exact URL is eligible for the native decoder.
  // This also handles ordinary-looking species whose event metadata is absent,
@@ -199,10 +207,13 @@ function applyResultTile(img,verifiedReference){
  if(!img?.style?.setProperty)return null;
  const tile=img.closest?.(".spriteStage");
  const cardSize=Number(tile?.clientWidth)||0;
- const artworkBox=cardSize*.88;
- const fit=tileFit(img,artworkBox);
+ const artworkBox=cardSize*RESULT_IMAGE_BOX;
+ const fit=tileFit(img,artworkBox,SOURCE_MEASURED_MAX_ZOOM);
  setResultTileFit(img,fit);
- if(fit)return fit;
+ if(fit){
+  if(img.dataset)img.dataset.psSourceMeasured="1";
+  return fit;
+ }
  const data=String(verifiedReference||"");
  if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{24,400000}$/.test(data)||
     typeof Image!=="function"||cardSize<8)return null;
