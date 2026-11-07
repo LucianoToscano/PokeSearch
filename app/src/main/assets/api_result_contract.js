@@ -54,7 +54,14 @@
     "CP (highest)":"CP","CP":"CP",
     "IV % (highest)":"IV","IV":"IV",
     "Level (highest)":"LEVEL","LEVEL":"LEVEL",
-    "Distance (nearest)":"DISTANCE","DISTANCE":"DISTANCE"
+    "Distance (nearest)":"DISTANCE","DISTANCE":"DISTANCE",
+    // LT277: observed POST /search values from provider testing. The minus
+    // prefix is NOT part of the site's React dropdown or /map/lookup.
+    "Despawn (shortest)":"-DSP","-DSP":"-DSP",
+    "CP (lowest)":"-CP","-CP":"-CP",
+    "IV % (lowest)":"-IV","-IV":"-IV",
+    "Level (lowest)":"-LEVEL","-LEVEL":"-LEVEL",
+    "Distance (farthest)":"-DISTANCE","-DISTANCE":"-DISTANCE"
   });
   var WEATHERS=Object.freeze({
     "Sunny":1,"Rainy":2,"Partly Cloudy":3,
@@ -168,7 +175,8 @@
       var geo=parseLocation(c);
       var sortKey=c.sortBy||"Despawn (longest)",sort=SORTS[sortKey];
       if(!sort)throw Error("Unsupported sort");
-      if(sort==="DISTANCE"&&geo[0]===null)throw Error("Distance requires verified radius");
+      if((sort==="DISTANCE"||sort==="-DISTANCE")&&geo[0]===null)
+       throw Error("Distance requires verified radius");
       var weather=clean(c.weather||"Any",64),weatherId=null,boosted=null;
       if(weather==="Boosted")boosted=true;
       else if(weather!=="Any"&&weather!==""){
