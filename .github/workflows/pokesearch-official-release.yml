@@ -145,6 +145,19 @@ jobs:
           expected=[
             "pm656.cFALL_2024.icon.png","pm656.cFALL_2024.s.icon.png",
             "pm722.cFALL_2024.icon.png","pm722.cFALL_2024.s.icon.png",
+            # LT279: Burmy/Wormadam six exact cloaks, normal + Shiny.
+            "pm412.fBURMY_PLANT.icon.png",
+            "pm412.fBURMY_PLANT.s.icon.png",
+            "pm412.fBURMY_SANDY.icon.png",
+            "pm412.fBURMY_SANDY.s.icon.png",
+            "pm412.fBURMY_TRASH.icon.png",
+            "pm412.fBURMY_TRASH.s.icon.png",
+            "pm413.fWORMADAM_PLANT.icon.png",
+            "pm413.fWORMADAM_PLANT.s.icon.png",
+            "pm413.fWORMADAM_SANDY.icon.png",
+            "pm413.fWORMADAM_SANDY.s.icon.png",
+            "pm413.fWORMADAM_TRASH.icon.png",
+            "pm413.fWORMADAM_TRASH.s.icon.png",
             # LT260: all exact Sea form variants MUST ship in the signed APK.
             "pm422.fEAST_SEA.icon.png","pm422.fEAST_SEA.s.icon.png",
             "pm422.fWEST_SEA.icon.png","pm422.fWEST_SEA.s.icon.png",
