@@ -319,57 +319,113 @@ public final class RaidDayAssistantOverlayService extends Service {
         close.setOnClickListener(v->setVisible(false));
         header.addView(close,new LinearLayout.LayoutParams(dp(31),dp(29)));
         panel.addView(header);
+
+        riskSection=new LinearLayout(this);
+        riskSection.setOrientation(LinearLayout.VERTICAL);
+        riskSection.setPadding(dp(6),dp(5),dp(6),dp(5));
+        riskSection.setBackground(surface(Color.argb(170,73,46,31),
+            Color.argb(100,249,182,119),9));
+        TextView riskHeading=text("Antes de começar · aviso de risco",13,Color.WHITE,true);
+        riskSection.addView(riskHeading);
+        TextView riskInfo=text(
+            "Este tutorial é um relato da comunidade, não é garantido. "+
+            "O método envolve localização falsificada e pode violar os Termos "+
+            "do Pokémon GO, com risco de aviso, restrição ou banimento. "+
+            "O PokeSearch não altera localização, não controla o jogo e "+
+            "não promete passes extras. A decisão é sua.",
+            11,Color.rgb(248,223,200),false);
+        riskInfo.setPadding(0,dp(6),0,dp(7));
+        riskSection.addView(riskInfo);
+        LinearLayout riskActions=new LinearLayout(this);
+        riskContinue=button("Entendi, continuar");
+        riskActions.addView(riskContinue,new LinearLayout.LayoutParams(0,dp(39),1));
+        riskExit=button("Sair");
+        LinearLayout.LayoutParams exitLp=new LinearLayout.LayoutParams(dp(64),dp(39));
+        exitLp.leftMargin=dp(6);
+        riskActions.addView(riskExit,exitLp);
+        riskSection.addView(riskActions);
+        riskContinue.setOnClickListener(v->{
+            riskAccepted=true;
+            prefs.edit().putString("riskAcceptance",plan.riskVersion+":"+eventKey)
+                .putLong("riskAcceptedAtMs",System.currentTimeMillis()).apply();
+            updateStep();
+        });
+        riskExit.setOnClickListener(v->stopSelf());
+        panel.addView(riskSection,new LinearLayout.LayoutParams(-1,-2));
+
+        startSection=new LinearLayout(this);
+        startSection.setOrientation(LinearLayout.VERTICAL);
+        TextView startInfo=text(
+            "Roteiro manual de 11 etapas. A escolha de evento, "+
+            "o relógio de Brasília e a leitura visual são entregas futuras. "+
+            "Nenhum horário ou passe foi verificado.",
+            11,Color.rgb(211,222,235),false);
+        startInfo.setPadding(0,dp(7),0,dp(7));
+        startSection.addView(startInfo);
+        startButton=button("✓ Iniciar roteiro manual");
+        startSection.addView(startButton,new LinearLayout.LayoutParams(-1,dp(38)));
+        trainButton=button("▶ Modo Treino · sem histórico");
+        LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,dp(38));
+        tp.topMargin=dp(7);
+        startSection.addView(trainButton,tp);
+        startButton.setOnClickListener(v->beginRealSession());
+        trainButton.setOnClickListener(v->beginTraining());
+        panel.addView(startSection,new LinearLayout.LayoutParams(-1,-2));
+
+        guideContent=new LinearLayout(this);
+        guideContent.setOrientation(LinearLayout.VERTICAL);
+        panel.addView(guideContent,new LinearLayout.LayoutParams(-1,-2));
         progressText=text("",10,Color.rgb(177,204,224),false);
         LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(-1,dp(24));
-        panel.addView(progressText,pp);
+        guideContent.addView(progressText,pp);
         progressBar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
         progressBar.setMax(TITLES.length);
         progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(
             Color.rgb(103,212,175)));
         progressBar.setProgressBackgroundTintList(
             android.content.res.ColorStateList.valueOf(Color.rgb(63,75,88)));
-        panel.addView(progressBar,new LinearLayout.LayoutParams(-1,dp(4)));
+        guideContent.addView(progressBar,new LinearLayout.LayoutParams(-1,dp(4)));
         titleText=text("",14,Color.WHITE,true);
         LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(-1,-2);
         titleParams.topMargin=dp(10);
-        panel.addView(titleText,titleParams);
+        guideContent.addView(titleText,titleParams);
         instructionText=text("",12,Color.rgb(219,227,235),false);
         instructionText.setLineSpacing(dp(2),1f);
         LinearLayout.LayoutParams instr=new LinearLayout.LayoutParams(-1,-2);
         instr.topMargin=dp(5);
-        panel.addView(instructionText,instr);
+        guideContent.addView(instructionText,instr);
         statusText=text("Tutorial dos Passes · confirmação manual",10,
             Color.rgb(174,195,214),false);
         LinearLayout.LayoutParams st=new LinearLayout.LayoutParams(-1,-2);
         st.topMargin=dp(8);
-        panel.addView(statusText,st);
+        guideContent.addView(statusText,st);
         // Only steps that mention a locality expose that exact coordinate,
         // copied upon an explicit user tap. No external-app interaction.
         copyButton=button("📋 Copiar coordenadas");
         LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(-1,dp(33));
         copyLp.topMargin=dp(7);
-        panel.addView(copyButton,copyLp);
+        guideContent.addView(copyButton,copyLp);
         copyButton.setOnClickListener(v->{
-            if(finished||COORDS[index].isEmpty())return;
+            if(finished||plan.coords(index).isEmpty())return;
             ClipboardManager cb=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
             if(cb==null)return;
-            cb.setPrimaryClip(ClipData.newPlainText("Local do roteiro",COORDS[index]));
+            cb.setPrimaryClip(ClipData.newPlainText("Local do roteiro",plan.coords(index)));
             Toast.makeText(this,"Coordenadas copiadas · confira antes de usar",
                 Toast.LENGTH_SHORT).show();
         });
         cycleText=text("",10,Color.rgb(177,204,224),false);
         LinearLayout.LayoutParams cycleLp=new LinearLayout.LayoutParams(-1,-2);
         cycleLp.topMargin=dp(5);
-        panel.addView(cycleText,cycleLp);
+        guideContent.addView(cycleText,cycleLp);
         LinearLayout actions=new LinearLayout(this);
         LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,dp(37));
         ap.topMargin=dp(10);
-        panel.addView(actions,ap);
+        guideContent.addView(actions,ap);
         TextView back=button("←");
         back.setContentDescription("Voltar uma etapa");
         actions.addView(back,new LinearLayout.LayoutParams(dp(36),-1));
         back.setOnClickListener(v->{
-            if(index>0){index--;finished=false;persist();updateStep();}
+            if(index>0){index--;finished=false;persist("BACK");updateStep();}
         });
         confirmButton=button("✓ Confirmar");
         LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,-1,1);
@@ -380,10 +436,10 @@ public final class RaidDayAssistantOverlayService extends Service {
             long now=SystemClock.elapsedRealtime();
             if(now-lastConfirmAt<650L)return; // no accidental double-step
             lastConfirmAt=now;
-            if(finished){index=0;finished=false;repeatedCycles=0;}
-            else if(index<TITLES.length-1)index++;
+            if(finished)return; // não reiniciar, nem apagar, pelo botão Confirmar
+            if(index<plan.size()-1)index++;
             else finished=true;
-            persist();updateStep();
+            persist(finished?"FINISHED":"STEP_CONFIRMED");updateStep();
         });
         pauseButton=button("Ⅱ");
         pauseButton.setContentDescription("Pausar ou retomar guia");
@@ -391,32 +447,78 @@ public final class RaidDayAssistantOverlayService extends Service {
         pauseP.leftMargin=dp(6);
         actions.addView(pauseButton,pauseP);
         pauseButton.setOnClickListener(v->{
-            paused=!paused;persist();updateStep();
+            paused=!paused;persist(paused?"PAUSED":"RESUMED");updateStep();
         });
         cycleActions=new LinearLayout(this);
         LinearLayout.LayoutParams cycleActionsLp=new LinearLayout.LayoutParams(-1,dp(36));
         cycleActionsLp.topMargin=dp(6);
-        panel.addView(cycleActions,cycleActionsLp);
+        guideContent.addView(cycleActions,cycleActionsLp);
         repeatButton=button("↻ Repetir ciclo");
         cycleActions.addView(repeatButton,new LinearLayout.LayoutParams(0,-1,1));
         repeatButton.setOnClickListener(v->{
-            if(paused||finished||index!=STEP_CHECK)return;
+            if(paused||finished||index!=STEP_E07)return;
             if(repeatedCycles>=100){
                 statusText.setText("Limite de repetições salvas neste roteiro");
                 return;
             }
             repeatedCycles++;
-            index=STEP_NZ;
-            persist();updateStep();
+            index=STEP_E02;
+            persist("CYCLE_REPEATED");updateStep();
         });
         skipButton=button("Sem passe → evento");
         LinearLayout.LayoutParams skipLp=new LinearLayout.LayoutParams(0,-1,1);
         skipLp.leftMargin=dp(6);
         cycleActions.addView(skipButton,skipLp);
         skipButton.setOnClickListener(v->{
-            if(paused||finished||(index!=STEP_CHECK&&index!=STEP_NZ_RAID))return;
-            index=7;persist();updateStep();
+            if(paused||finished)return;
+            if(index==STEP_E09){
+                index=9;persist("OPTIONAL_SKIPPED");updateStep();return;
+            }
+            if(index!=STEP_E03&&index!=STEP_E06&&index!=STEP_E07)return;
+            index=STEP_E08;persist("NO_PASS");updateStep();
         });
+        LinearLayout fallbackActions=new LinearLayout(this);
+        LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-1,dp(36));
+        fallbackLp.topMargin=dp(6);
+        guideContent.addView(fallbackActions,fallbackLp);
+        notHappenedButton=button("Não aconteceu");
+        fallbackActions.addView(notHappenedButton,
+            new LinearLayout.LayoutParams(0,-1,1));
+        helpButton=button("Me perdi");
+        LinearLayout.LayoutParams hLp=new LinearLayout.LayoutParams(0,-1,1);
+        hLp.leftMargin=dp(4);
+        fallbackActions.addView(helpButton,hLp);
+        endButton=button("Encerrar");
+        LinearLayout.LayoutParams eLp=new LinearLayout.LayoutParams(0,-1,1);
+        eLp.leftMargin=dp(4);
+        fallbackActions.addView(endButton,eLp);
+        notHappenedButton.setOnClickListener(v->{
+            if(paused||finished)return;
+            persist("NOT_OBSERVED");
+            statusText.setText("Não confirmado. "+plan.step(index).onNotHappened);
+        });
+        helpButton.setOnClickListener(v->{
+            if(finished)return;
+            statusText.setText("Você está em "+plan.step(index).id+
+                ". "+plan.step(index).safeReturn);
+        });
+        endButton.setOnClickListener(v->{
+            if(training){leaveTraining();return;}
+            if(!active)return;
+            if(!endPending){
+                endPending=true;
+                endButton.setText("Confirmar fim");
+                statusText.setText("Confirmar encerra esta sessão, sem apagar o histórico.");
+                return;
+            }
+            endPending=false;active=false;finished=true;
+            persist("ENDED");updateStep();
+        });
+        trainingExit=button("Sair do Modo Treino (não salvar)");
+        LinearLayout.LayoutParams trainingLp=new LinearLayout.LayoutParams(-1,dp(36));
+        trainingLp.topMargin=dp(6);
+        guideContent.addView(trainingExit,trainingLp);
+        trainingExit.setOnClickListener(v->leaveTraining());
         panelParams=new WindowManager.LayoutParams(
             dp(272),-2,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
