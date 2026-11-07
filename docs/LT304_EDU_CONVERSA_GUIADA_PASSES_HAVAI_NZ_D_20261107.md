@@ -31,4 +31,4 @@ A experiência deve parecer diálogo de quadrinhos: Edu se apresenta como treina
 - [ ] Teste de regressão completo dos overlays P1/P2 e Doce Raro.
 - [ ] Não marcar físico ou novo APK como concluído sem evidência; **sem merge/publicação não autorizados**.
 
-**Observação:** a preparação real pré-existente ainda faz sete perguntas antes da etapa E01; será avaliada com as capturas do Samsung para decidir como simplificá-la, sem perder respostas anteriores. A nova apresentação e o início de sessão não dependem de uma lista de cidades.
+**Preparação simplificada nesta revisão:** o modo real agora solicita **apenas a data do evento** antes do aviso de risco e da conversa E01. As seis respostas auxiliares anteriores, quando já existentes, continuam preservadas nas preferências, mas não bloqueiam o jogador nem aparecem em sequência. Data/horário oficial não são inventados; o horário só aparece se foi informado manualmente em agenda do evento. O roteiro não exige escolher uma cidade inicial.
