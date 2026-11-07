@@ -80,6 +80,63 @@ function tileFit(img,box,maxZoom=2.85){
    y:Math.round((.5-cy)*zoom*imageBox*100)/100,
    occupancy};
 }
+
+/* LT290: exact-provider silhouette measurements, not guessed costume sizes.
+ * A verified PoGoCoordinates card may supply alpha bounds read on its own
+ * page. If CORS blocked it there, optionally probe the same already-loaded
+ * event URL once with anonymous CORS. Never replace the visible image.
+ * Only low-occupancy art gets a larger fit; standard sprites remain unchanged.
+ */
+function geometryFit(bounds,imageBox,maxZoom=7){
+ if(!bounds||typeof bounds!=="object")return null;
+ const keys=["left","right","top","bottom"];
+ if(keys.some(k=>!Number.isInteger(bounds[k])||bounds[k]<0||bounds[k]>=SAMPLE))return null;
+ const {left,right,top,bottom}=bounds;
+ if(right-left<3||bottom-top<3)return null;
+ const occupancy=Math.max((right-left+1)/SAMPLE,(bottom-top+1)/SAMPLE);
+ if(!(occupancy>0))return null;
+ const zoom=Math.round(clamp(.87/(.88*occupancy),.8,maxZoom)*1000)/1000;
+ return {zoom,
+  x:Math.round((.5-(left+right+1)/(2*SAMPLE))*zoom*imageBox*100)/100,
+  y:Math.round((.5-(top+bottom+1)/(2*SAMPLE))*zoom*imageBox*100)/100,
+  occupancy};
+}
+function enhanceProviderTile(img,cardBounds,verifiedEvent){
+ if(!img?.style?.setProperty||Number(img.naturalWidth)<8)return false;
+ const tile=img.closest?.(".spriteStage");
+ const cardSize=Number(tile?.clientWidth)||0;
+ if(cardSize<8)return false;
+ const src=String(img.currentSrc||img.src||"");
+ const applyMeasured=bounds=>{
+  const fit=geometryFit(bounds,cardSize*.88,7);
+  if(!fit)return false;
+  if(img.dataset)img.dataset.psSourceMeasured="1";
+  // Already-large sprites are left at their normal fixed P/M/G dimensions.
+  if(fit.occupancy<.80)setResultTileFit(img,fit);
+  else setResultTileFit(img,null);
+  return true;
+ };
+ if(cardBounds&&cardBounds.url===src&&applyMeasured(cardBounds))return true;
+ // The page couldn't read an external image? Retry canvas measurement with
+ // CORS on a SEPARATE offscreen Image of this exact vetted event URL.
+ // The working provider <img> never receives crossorigin or a new src.
+ if(!verifiedEvent||!/^https:\/\//i.test(src)||typeof Image!=="function")return false;
+ const state=img.dataset||{};
+ if(state.psEventProbeUrl===src)return false; // one request maximum per tile
+ state.psEventProbeUrl=src;
+ const source=new Image();
+ source.crossOrigin="anonymous";
+ source.onload=()=>{
+  if(img.isConnected===false||String(img.currentSrc||img.src||"")!==src||
+     Number(img.naturalWidth)<8)return;
+  const visible=visibleBounds(source); // only succeeds if CORS allows pixels
+  if(visible)applyMeasured(visible);
+ };
+ source.onerror=()=>{}; // No unsafe zoom on missing/unreadable images.
+ source.src=src;
+ return true;
+}
+
 function setResultTileFit(img,fit){
  img.style.setProperty("--tile-alpha-zoom",fit?String(fit.zoom):"1");
  img.style.setProperty("--tile-alpha-x",fit?fit.x+"px":"0px");
@@ -107,6 +164,7 @@ function applyResultTile(img,verifiedReference){
  const reference=new Image();
  reference.onload=()=>{
   if(img.isConnected===false||String(img.currentSrc||img.src||"")!==expected||
+     img.dataset?.psSourceMeasured==="1"||
      Number(img.naturalWidth)<8||Number(reference.naturalWidth)<8)return;
   // LT289: the older 1.8 cap left costumes like Singapore 2026 Pikachu
   // tiny inside a 256px image with generous transparent padding. Raise it
@@ -128,5 +186,5 @@ function applyResultTile(img,verifiedReference){
  reference.src=data;
  return null;
 }
-root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile});
+root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile,enhanceProviderTile});
 })(window);

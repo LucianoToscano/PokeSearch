@@ -1069,6 +1069,42 @@ function nextLabelValue(root,label){
  }
  return "";
 }
+
+/* LT290: read the visible artwork bounds inside the ORIGINAL verified encounter
+ * card, while the PoGoCoordinates WebView still owns that page. Cross-origin
+ * images may be tainted; failure is a safe null and never blocks searches.
+ * No new image URL, request, API or authentication access is introduced.
+ */
+function exactCardSpriteAlphaBounds(img,url){
+ if(!img||String(img.tagName||"").toUpperCase()!=="IMG"||
+    !url||typeof document==="undefined"||
+    typeof document.createElement!=="function")return null;
+ const w=Number(img.naturalWidth)||0,h=Number(img.naturalHeight)||0;
+ if(w<8||h<8||w>4096||h>4096)return null;
+ let current="";
+ try{current=new URL(String(img.currentSrc||img.src||""),location.href).href;}
+ catch(_){return null;}
+ if(current!==url)return null;
+ try{
+  const c=document.createElement("canvas"),size=96;
+  c.width=size;c.height=size;
+  const context=c.getContext("2d",{willReadFrequently:true});
+  if(!context)return null;
+  const dw=size*w/Math.max(w,h),dh=size*h/Math.max(w,h);
+  context.clearRect(0,0,size,size);
+  context.drawImage(img,(size-dw)/2,(size-dh)/2,dw,dh);
+  const bytes=context.getImageData(0,0,size,size).data;
+  let left=size,right=-1,top=size,bottom=-1,count=0;
+  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+   if(bytes[(y*size+x)*4+3]<38)continue;
+   left=Math.min(left,x);right=Math.max(right,x);
+   top=Math.min(top,y);bottom=Math.max(bottom,y);count++;
+  }
+  if(count<22||right-left<3||bottom-top<3)return null;
+  return {url,left,right,top,bottom};
+ }catch(_){return null;}
+}
+
 function parseCard(box,sourceIndex){
  const body=text(box),lines=body.split(/\n+/).map(clean).filter(Boolean);
  const ivMatch=body.match(/(\d{1,3}(?:[.,]\d{1,8})?)\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
@@ -1183,6 +1219,8 @@ function parseCard(box,sourceIndex){
  const image=candidate(candidateNodes);
  const siteImageUrl=image?candidateImageUrl(image):"";
  const siteImageExact=!!image&&!!siteImageUrl;
+ const imageAlphaBounds=siteImageExact?
+   exactCardSpriteAlphaBounds(image,siteImageUrl):null;
  const rankMatch=body.match(/\b(?:PvP\s*)?(?:Rank|Ranking|Rk)\s*#?\s*(\d+)\b/i);
  // Species-specific IV rank is NOT the Top-N search filter and is not
  // PvPoke's cross-species performance rank. Require a labeled card value.
@@ -1197,7 +1235,7 @@ function parseCard(box,sourceIndex){
  const isShiny=/✨/.test(title);
  return {
   sourceIndex,name:title.replace(/✨/g,"").trim(),image:siteImageUrl,
-  imageFromSite:siteImageExact,
+  imageFromSite:siteImageExact,imageAlphaBounds,
   number:(meta.match(/#\d{1,4}/)||[])[0]||"",
   gender:/\bFemale\b|♀/i.test(meta)?"♀":/\bMale\b|♂/i.test(meta)?"♂":"",
   size:size,moves:move,location:place,distance,despawn:(desp.match(/\d{1,2}:\d{2}/)||[])[0]||"",
