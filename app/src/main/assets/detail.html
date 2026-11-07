@@ -1632,6 +1632,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
  width:19px!important;height:19px!important;object-fit:contain!important;
 }
+/* P size: raid flag has a wider silhouette. Shift ONLY the raid chevrons
+   2 CSS pixels outward while leaving a genuine 2px physical corner inset. */
+#rankLine[data-rank-rail="five"] .psRailButton.psRailRaid .psRailEvolve{
+ right:1px!important;
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
