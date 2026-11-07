@@ -26,6 +26,7 @@ public final class RaidDayGuidePlan {
 
     public static final class Step {
         public final String id,title,instruction,locationRef,onNotHappened,safeReturn;
+        public final String speech,help,phase;
         public final String repeatTo,noPassTo,skipTo;
         public final boolean optional;
         public final List<String> preconditions, confirmations;
@@ -36,6 +37,12 @@ public final class RaidDayGuidePlan {
             locationRef=o.isNull("local")?"":o.optString("local","");
             onNotHappened=required(o,"naoAconteceu");
             safeReturn=required(o,"retornoSeguro");
+            speech=required(o,"falaEdu");
+            help=required(o,"ajudaEdu");
+            phase=required(o,"periodo");
+            if(!("preparacao".equals(phase)||"D-1".equals(phase)||
+                    "D".equals(phase)||"fim".equals(phase)))
+                throw new JSONException("Fase desconhecida: "+phase);
             optional=o.optBoolean("opcional",false);
             repeatTo=o.optString("repetePara","");
             noPassTo=o.optString("semPassePara","");
