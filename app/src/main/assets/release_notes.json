@@ -3053,7 +3053,8 @@
         ],
         "melhorias": [
           "Cada seta usa traço de 1 px e marca de 4 × 4 px, com margem de 5 px das bordas dos cinco cartões de rankings e raides.",
-          "Todas as bandeiras de GL, UL, ML, Rank Geral e Raides ficam centralizadas horizontalmente, independentemente do indicador de evolução."
+          "Todas as bandeiras de GL, UL, ML, Rank Geral e Raides ficam centralizadas horizontalmente, independentemente do indicador de evolução.",
+          "As bandeiras permanecem legíveis com 19 px, centralizadas inclusive nos cartões P mais estreitos, sem sobrepor as setas."
         ],
         "correcoes": [
           "Setas não encostam mais nas bordas e não ocupam o espaço da bandeira; nenhuma seta aparece sem evolução confirmada.",
