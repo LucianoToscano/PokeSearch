@@ -5516,8 +5516,8 @@ function makeWeatherIcon(value){
 }
 /* Display-only translations: never submit localized values to PoGoCoordinates. */
 const FILTER_DISPLAY_LABELS=Object.freeze({
- sortBy:Object.freeze({"Despawn (longest)":"Despawn","CP (highest)":"CP",
-  "IV % (highest)":"IV %","Level (highest)":"Nível","Distance (nearest)":"Distância"}),
+ sortBy:Object.freeze({"Despawn (longest)":"Tempo restante (maior)","CP (highest)":"PC (maior)",
+  "IV % (highest)":"IV % (maior)","Level (highest)":"Nível (maior)","Distance (nearest)":"Distância (mais perto)"}),
  weather:Object.freeze({"Any":"Qualquer","Boosted":"Potencializado",
   "Sunny":"Ensolarado/Limpo","Rainy":"Chuvoso",
   "Partly Cloudy":"Parcialmente nublado","Cloudy":"Nublado",
@@ -5688,7 +5688,7 @@ function renderExtraFilters(panel,make){
   list.setAttribute("role","radiogroup");list.setAttribute("aria-label",label);
   const saved=String(modeDraft[key]||(key==="sortBy"?official[0]:"Any"));
   for(const value of official){
-   const button=make("button","extraOptionItem",key==="sortBy"?value:filterDisplayLabel(key,value));
+   const button=make("button","extraOptionItem",filterDisplayLabel(key,value));
    button.type="button";button.setAttribute("role","radio");
    button.setAttribute("aria-checked",String(saved===value));
    button.classList.toggle("chosen",saved===value);
