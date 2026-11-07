@@ -33,6 +33,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
@@ -59,6 +60,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private WindowManager wm;
     private FrameLayout bubble;
     private LinearLayout panel;
+    private ScrollView panelScroll;
     private WindowManager.LayoutParams bubbleParams,panelParams;
     private SharedPreferences prefs;
     private TextView progressText,titleText,instructionText,statusText,confirmButton,pauseButton;
@@ -411,6 +413,38 @@ public final class RaidDayAssistantOverlayService extends Service {
         close.setOnClickListener(v->setVisible(false));
         header.addView(close,new LinearLayout.LayoutParams(dp(31),dp(29)));
         panel.addView(header);
+        // O Passe continua na Home; o treinador animado vive no balão flutuante.
+        LinearLayout avatarControls=new LinearLayout(this);
+        avatarControls.setGravity(Gravity.CENTER_VERTICAL);
+        avatarControls.setPadding(0,dp(5),0,dp(3));
+        avatarSizeButtons=new TextView[3];
+        String[] sizeLabels={"P","M","G"};
+        for(int i=0;i<avatarSizeButtons.length;i++){
+            final int choiceIndex=i;
+            TextView choice=button(sizeLabels[i]);
+            choice.setContentDescription("Personagem "+sizeLabels[i]+": "+
+                RaidDayAvatarFrames.SIZES_PX[i]+" pixels");
+            avatarSizeButtons[i]=choice;
+            LinearLayout.LayoutParams sizeLp=new LinearLayout.LayoutParams(dp(39),dp(35));
+            if(i>0)sizeLp.leftMargin=dp(5);
+            avatarControls.addView(choice,sizeLp);
+            choice.setOnClickListener(v->{
+                avatarSizeIndex=choiceIndex;
+                updateAvatarSize();
+                reactAvatar(RaidDayAvatarFrames.WAVE);
+            });
+        }
+        avatarMotionButton=button(avatarMotion?"Animação ✓":"Animação ×");
+        avatarMotionButton.setContentDescription("Ativar ou desativar movimento do personagem");
+        LinearLayout.LayoutParams motionLp=new LinearLayout.LayoutParams(0,dp(35),1f);
+        motionLp.leftMargin=dp(6);
+        avatarControls.addView(avatarMotionButton,motionLp);
+        avatarMotionButton.setOnClickListener(v->setAvatarMotion(!avatarMotion));
+        panel.addView(avatarControls);
+        for(int i=0;i<avatarSizeButtons.length;i++)
+            avatarSizeButtons[i].setTextColor(i==avatarSizeIndex?
+                Color.rgb(118,235,195):Color.WHITE);
+
 
         riskSection=new LinearLayout(this);
         riskSection.setOrientation(LinearLayout.VERTICAL);
@@ -617,6 +651,16 @@ public final class RaidDayAssistantOverlayService extends Service {
         trainingLp.topMargin=dp(6);
         guideContent.addView(trainingExit,trainingLp);
         trainingExit.setOnClickListener(v->leaveTraining());
+        panelScroll=new ScrollView(this){
+            @Override protected void onMeasure(int widthMeasureSpec,int heightMeasureSpec){
+                int maximum=Math.max(dp(90),
+                    getResources().getDisplayMetrics().heightPixels-dp(24));
+                super.onMeasure(widthMeasureSpec,
+                    View.MeasureSpec.makeMeasureSpec(maximum,View.MeasureSpec.AT_MOST));
+            }
+        };
+        panelScroll.setVerticalScrollBarEnabled(false);
+        panelScroll.addView(panel,new ScrollView.LayoutParams(-1,-2));
         panelParams=new WindowManager.LayoutParams(
             dp(272),-2,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
@@ -687,12 +731,15 @@ public final class RaidDayAssistantOverlayService extends Service {
         panelParams.x=preferred+width<=sw?preferred:
             Math.max(0,bubbleParams.x-width-dp(4));
         panelParams.x=Math.max(0,Math.min(sw-width,panelParams.x));
-        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-dp(355)),bubbleParams.y-dp(12)));
+        int panelHeight=panelScroll!=null&&panelScroll.getHeight()>0?
+            panelScroll.getHeight():dp(330);
+        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-panelHeight-dp(8)),
+            bubbleParams.y-dp(12)));
     }
     private void placePanel(){
         if(!visible||panel==null||panelParams==null)return;
         placePanelCoordinates();
-        try{wm.updateViewLayout(panel,panelParams);}
+        try{wm.updateViewLayout(panelScroll,panelParams);}
         catch(IllegalArgumentException ignored){}
     }
     private void setVisible(boolean show){
@@ -700,9 +747,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         visible=show;
         if(show){
             placePanelCoordinates();
-            wm.addView(panel,panelParams);
+            wm.addView(panelScroll,panelParams);
+            panelScroll.post(this::placePanel);
         }else{
-            try{wm.removeView(panel);}catch(IllegalArgumentException ignored){}
+            try{wm.removeView(panelScroll);}catch(IllegalArgumentException ignored){}
         }
     }
     @Override public void onDestroy(){
@@ -710,7 +758,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         handler.removeCallbacksAndMessages(null);
         if(wm!=null){
             if(panel!=null&&visible){
-                try{wm.removeView(panel);}catch(IllegalArgumentException ignored){}
+                try{wm.removeView(panelScroll);}catch(IllegalArgumentException ignored){}
             }
             if(bubble!=null){
                 try{wm.removeView(bubble);}catch(IllegalArgumentException ignored){}
