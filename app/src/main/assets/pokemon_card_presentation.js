@@ -37,8 +37,16 @@
    const found=data?.forms?.[dex+":"+form];
    if(found)return found;
    // Costume descriptions are cosmetic but not proof of a new type.
+   // Official Pokémon GO PokéXciting! Singapore 2026: Pikachu #25 has
+   // a distinct blue COSTUME, not a battle-stat-changing form. The source
+   // exposes it as "Anniversary 2026 Singapore 01". Verify BOTH Dex and
+   // species before reusing the pinned Electric base typing; never borrow
+   // a type for an unrelated or unverified regional/battle form.
+   const singapore2026Costume=dex===25&&clean(card?.name)==="pikachu"&&
+    /^anniversary2026singapore0?1$/.test(form);
    if(!["normal","default","standard","base","regular","none"].includes(form)&&
-      !/(?:costume|halloween|fall20\d\d|hat|cap)/.test(form))return null;
+      !/(?:costume|halloween|fall20\d\d|hat|cap)/.test(form)&&
+      !singapore2026Costume)return null;
   }
   return data?.base?.[dex]||null;
  }
