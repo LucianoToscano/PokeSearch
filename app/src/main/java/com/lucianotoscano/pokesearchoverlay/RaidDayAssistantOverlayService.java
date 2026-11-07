@@ -74,6 +74,16 @@ public final class RaidDayAssistantOverlayService extends Service {
     private ProgressBar progressBar;
     private TextView prepTitle,prepStatus,clockText,summaryText,prepBack,prepNext;
     private TextView eventWindowText;
+    // Edu: interface de conversa, isolada das opções avançadas.
+    static final String ACTION_CONSENT_DONE="com.lucianotoscano.pokesearch.EDU_CONSENT_DONE";
+    private boolean demoToday=false,eduWantsReal=false,eduSettingsOpen=false;
+    private boolean eduHelpOpen=false,eduCaptureQuestion=false,eduMovePanel=false;
+    private String eduNote="";
+    private LinearLayout eduWelcome,eduSettings,eduActions,eduMiniActions,eduMainCard;
+    private TextView eduHeader,eduBadge,eduSpeech,eduSubline,eduSettingsClose;
+    private TextView eduPrepQuestion,eduPrepCaption;
+    private int eduPanelWidth=0;
+
     private TextView visualStatus,visualToggle,visualAccept,visualReject;
     private LinearLayout visualActions;
     private String visualCandidate="";
@@ -229,6 +239,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(intent!=null&&ACTION_STOP.equals(intent.getAction())){
             stopSelf();return START_NOT_STICKY;
         }
+        if(intent!=null&&ACTION_CONSENT_DONE.equals(intent.getAction())){
+            if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+            // A janela permanece recolhida para não obstruir o diálogo do Android.
+            updateStep();
+            return START_NOT_STICKY;
+        }
         return START_NOT_STICKY;
     }
     /**
@@ -279,6 +295,13 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void beginRealSession(){
         if(active||training||!preparation.isComplete()||!riskAccepted)return;
+        if(!RaidDayEventClock.todayBrasilia(eventClock)
+                .isEqual(preparation.eventDate().minusDays(1))){
+            eduNote="Para iniciar o roteiro real pela véspera, a data em Brasília "+
+                "precisa ser D−1. Use Simular hoje para aprender sem executar.";
+            updateStep();
+            return;
+        }
         if(RaidDayEventClock.state(preparation.eventDate(),eventClock.instant())==
             RaidDayEventClock.DayState.AFTER_DAY){
             Toast.makeText(this,"A data informada já passou. Edite o evento ou use o Modo Treino.",
@@ -296,14 +319,24 @@ public final class RaidDayAssistantOverlayService extends Service {
         updateStep();
     }
     private void beginTraining(){
-        if(!riskAccepted||!preparation.isComplete())return;
+        if(!demoToday&&(!riskAccepted||!preparation.isComplete()))return;
         training=true;active=false;index=0;repeatedCycles=0;
         paused=false;finished=false;endPending=false;
+        eduCaptureQuestion=false;eduHelpOpen=false;eduSettingsOpen=false;
         reactAvatar(RaidDayAvatarFrames.WAVE);
         updateStep();
     }
+    private void startDemoToday(){
+        // Usa a data atual de Brasília apenas neste TREINO, nunca como evento oficial.
+        demoToday=true;
+        eduWantsReal=false;
+        eduNote="";
+        beginTraining(); // Modo Treino não grava eventos reais.
+    }
     private void leaveTraining(){
-        training=false;restoreJournal();updateStep();
+        training=false;demoToday=false;eduWantsReal=false;
+        eduSettingsOpen=false;eduHelpOpen=false;eduCaptureQuestion=false;
+        restoreJournal();updateStep();
     }
 
     private void reactAvatar(int frame){
