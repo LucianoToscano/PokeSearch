@@ -227,6 +227,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      rowHeight:rail.getBoundingClientRect().height,
      flagSize:fBox.width,
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
+     arrows:[...evol.querySelectorAll(".psRailChevron")].map(arrow=>{
+      const box=arrow.getBoundingClientRect(),sty=getComputedStyle(arrow);
+      return {width:box.width,height:box.height,stroke:sty.borderTopWidth,
+       safeRight:cardBox.right-box.right,safeBottom:cardBox.bottom-box.bottom};
+     }),
      // The flags are triangles: enforce actual geometric separation from
      // their sloping right edge, not merely overlap of transparent image boxes.
      triangleGap:eBox.left-((fBox.left+fBox.right)/2+
@@ -240,6 +245,16 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      names:b.slice(0,5).map(x=>x.dataset.psName),
      evolves:!!b[1]?.querySelector(".psRailEvolve"),
      icons:b.slice(0,5).map(x=>x.querySelector(".psRailIcon")?.getAttribute("src")||""),
+     flagCenters:b.map(card=>{
+      const box=card.getBoundingClientRect(),flag=card.querySelector(".psRailIcon")?.getBoundingClientRect();
+      return flag?Math.abs((flag.left+flag.right-box.left-box.right)/2):999;
+     }),
+     evolutionExamples:{
+      zero:window.PokeSearchEvolutionBadge("Cyndaquil","Cyndaquil"),
+      one:window.PokeSearchEvolutionBadge("Cyndaquil","Quilava")?.children?.length,
+      two:window.PokeSearchEvolutionBadge("Cyndaquil","Typhlosion")?.children?.length,
+      unsupported:psMakeEvolutionBadge(3)
+     },
      width:rail.scrollWidth,client:rail.clientWidth,
      // LT278: numerical text must shift 1 CSS pixel up, independently of
      // unchanged flag translation (-4px). Inspect all five rank cards.
@@ -262,19 +277,26 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     JSON.stringify(rail270.labels)==='["—","#12","#5","#1","#142"]'&&
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
-    // LT300: 39px badge, 21px original flag, 2 stacked upward chevrons.
+    // LT301: thinner 4px arrows, 5px safe margins and all flags precisely centered.
     rail270.badge?.tag==="SPAN"&&
     rail270.badge?.chevrons===2&&rail270.badge?.steps==="2"&&
-    rail270.badge?.span===9&&rail270.badge?.height===18&&
+    rail270.badge?.span===7&&rail270.badge?.height===12&&
     rail270.badge?.cardHeight===39&&rail270.badge?.rowHeight===41&&
     rail270.badge?.flagSize===21&&
-    rail270.badge?.right>=1&&rail270.badge?.right<=3&&
-    rail270.badge?.bottom>=1&&rail270.badge?.bottom<=3&&
+    rail270.badge?.right>=4.9&&rail270.badge?.right<=5.1&&
+    rail270.badge?.bottom>=4.9&&rail270.badge?.bottom<=5.1&&
+    rail270.badge?.arrows?.length===2&&
+    rail270.badge?.arrows?.every(a=>a.width===4&&a.height===4&&a.stroke==="1px"&&a.safeRight>=4&&a.safeBottom>=4)&&
     rail270.badge?.triangleGap>=-1&&
-    rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
+    rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<.3&&
+    rail270.flagCenters.every(v=>v<.3)&&
+    rail270.evolutionExamples.zero===null&&
+    rail270.evolutionExamples.one===1&&
+    rail270.evolutionExamples.two===2&&
+    rail270.evolutionExamples.unsupported===null&&
     rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png"&&
     rail270.numberShift.length===5&&rail270.numberShift.every(y=>y===-1)&&
-    rail270.flagShift.length===5&&rail270.flagShift.every(y=>y===-2),
+    rail270.flagShift.length===5&&rail270.flagShift.every(y=>y===0),
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
    const overall270=await page.evaluate(()=>{
