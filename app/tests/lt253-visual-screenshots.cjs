@@ -237,6 +237,20 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      evolves:!!b[1]?.querySelector(".psRailEvolve"),
      icons:b.slice(0,5).map(x=>x.querySelector(".psRailIcon")?.getAttribute("src")||""),
      width:rail.scrollWidth,client:rail.clientWidth,
+     // LT278: numerical text must shift 1 CSS pixel up, independently of
+     // unchanged flag translation (-4px). Inspect all five rank cards.
+     numberShift:b.map(x=>{
+      const n=x.querySelector(".psRailNumber");
+      if(!n)return null;
+      const transform=getComputedStyle(n).transform;
+      return transform==="none"?0:Number(new DOMMatrixReadOnly(transform).m42.toFixed(2));
+     }),
+     flagShift:b.map(x=>{
+      const n=x.querySelector(".psRailIcon");
+      if(!n)return null;
+      const transform=getComputedStyle(n).transform;
+      return transform==="none"?0:Number(new DOMMatrixReadOnly(transform).m42.toFixed(2));
+     }),
      clipped:b.some(x=>x.getBoundingClientRect().right>rail.getBoundingClientRect().right+1)};
    });
    assert.ok(rail270.ok&&rail270.count===5&&rail270.evolves&&!rail270.clipped&&
@@ -253,7 +267,9 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     rail270.badge?.bottom>=1&&rail270.badge?.bottom<=3&&
     rail270.badge?.triangleGap>=-1&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
-    rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png",
+    rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png"&&
+    rail270.numberShift.length===5&&rail270.numberShift.every(y=>y===-1)&&
+    rail270.flagShift.length===5&&rail270.flagShift.every(y=>y===-4),
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
    const overall270=await page.evaluate(()=>{
