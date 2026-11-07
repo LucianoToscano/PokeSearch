@@ -11,7 +11,8 @@ assert.match(code,/transform:translate\(var\(--tile-alpha-x,0px\),var\(--tile-al
 assert.match(code,/scale\(var\(--tile-alpha-zoom,1\)\)!important/);
 assert.match(code,/object-fit:contain!important;object-position:center center!important/);
 assert.match(code,/width:var\(--result-art-size,21\.12px\)!important/);
-assert.match(dock,/if\(resultWindow\)window\.PokeSearchSpriteScale\?\.applyResultTile\?\.\(img\)/);
+assert.match(dock,/window\.PokeSearchSpriteScale\?\.applyResultTile\?\.\(img,exactReference\)/);
+assert.match(dock,/sourceCard\?\.imageFromSite===true&&engine\?\.resolve/);
 assert.match(dock,/const verifiedSiteArt=c\.imageFromSite===true&&art\.providerExact===true/);
 assert.match(dock,/const imageUrl=verifiedSiteArt\?art\.src:\(nativeArt\|\|art\.src\)/);
 assert.doesNotMatch(dock,/crossorigin="anonymous"/,
