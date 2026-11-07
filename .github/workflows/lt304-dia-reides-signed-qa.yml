@@ -24,7 +24,6 @@ jobs:
       POKE_TEST_PUBLIC_VERSION: '0.03.04'
       POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
       POKE_CONTROLLED_DISTRIBUTION: 'true'
-      POKE_TEST_SIGNING_REQUIRED: 'true'
       POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
       POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
       POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
@@ -70,7 +69,6 @@ jobs:
           printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lt304-qa.p12"
           chmod 600 "$RUNNER_TEMP/lt304-qa.p12"
           echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt304-qa.p12" >> "$GITHUB_ENV"
-          echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/lt304-qa.p12" >> "$GITHUB_ENV"
           CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt304-qa.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
           test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
       - name: Assemble signed test APK with original application ID
