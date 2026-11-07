@@ -2787,6 +2787,29 @@
           "Homologação física Samsung P1/P2: Pikachu Singapore 2026, Ralts, Torchic, Chikorita, rede lenta, variações shiny/gênero e tamanhos P/M/G."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt290-provider-event-alpha-bounds-20261107",
+      "minVersionCode": 54494,
+      "date": "07/11/2026",
+      "title": "LT290 — Corrigir tamanho das novas sprites de evento",
+      "sections": {
+        "novidades": [
+          "Resultados usam a área visível da imagem exata comprovada pelo PoGoCoordinates para ajustar fantasias e imagens novas que apareciam minúsculas.",
+          "Quando a própria página consegue ler a imagem, o ajuste ocorre sem baixar outra sprite e sem depender do catálogo local."
+        ],
+        "melhorias": [
+          "Se a medição original estiver bloqueada por CORS, o app pode tentar medir separadamente a mesma URL de evento validada, sem alterar a imagem exibida.",
+          "A escala maior é aplicada apenas quando a silhueta está realmente pequena; Pokémon comuns com tamanho adequado permanecem como estão."
+        ],
+        "correcoes": [
+          "Evita que somente algumas espécies novas fiquem pequenas demais devido a margens transparentes e ao limite conservador da referência local.",
+          "Protege contra imagens expiradas, retornos atrasados e variantes não verificadas, preservando as duas Pokébolas e P/M/G."
+        ],
+        "emDesenvolvimento": [
+          "Homologação Samsung: Charmander com chapéu, Pikachu Anniversary Singapore 01 e demais sprites apontadas pelo usuário, nas duas listas e três tamanhos."
+        ]
+      }
     }
   ]
 }
