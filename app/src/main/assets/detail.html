@@ -1206,6 +1206,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #raidPanel .psRaidMoves{display:flex;align-items:center;gap:3px;
  flex-wrap:wrap;font-size:9.3px;line-height:1.25;color:#d6e5f3}
 #raidPanel .psRaidMoveNames{min-width:0;overflow-wrap:anywhere}
+/* LT282: moves only: show the verified attack-type COLOR ON TEXT, never chips. */
+#raidPanel .psRaidMoveText{color:var(--ps-move-type,inherit);font-weight:700;
+ background:transparent;border:0;padding:0;box-shadow:none}
 #raidPanel .psRaidMoveSep{color:#8b9dad}
 #raidPanel .psRaidMoveState{width:18px!important;height:13px!important;
  vertical-align:-3px;margin:0!important;filter:drop-shadow(0 0 .7px #cedcf8)}
@@ -1846,6 +1849,14 @@ function renderRaidPreview(){
   const value=translator?.name?.(id,fast)||String(id||"").replace(/_/g," ");
   return h(value);
  };
+ // LT282: use the SAME 18-type palette as captured moves; unknown stays neutral.
+ const coloredRaidMove=(id,fast)=>{
+  const type=translator?.type?.(id,fast)||null;
+  const color=window.PokeSearchCardPresentation?.moveTypeColor?.(type);
+  return '<span class="psRaidMoveText"'+
+   (color?' data-move-type="'+h(type)+'" style="--ps-move-type:'+color+'"':"")+
+   '>'+localized(id,fast)+'</span>';
+ };
  if(!best){
   const attack=psRaidAttackPreview;
   button.textContent="Raides · "+(attack?
@@ -1863,9 +1874,9 @@ function renderRaidPreview(){
    best.rank+" "+best.typePt+(best.projected?" ↳ "+best.name:"");
   const rows=(result.rows||[]).slice(0,8);
   const moveLabel=row=>'<span class="psRaidMoveNames">'+
-    '<span title="Ataque Ágil">Ágil: '+localized(row.fast,true)+'</span>'+
+    '<span title="Ataque Ágil">Ágil: '+coloredRaidMove(row.fast,true)+'</span>'+
     '<span class="psRaidMoveSep" aria-hidden="true"> · </span>'+
-    '<span title="Ataque Carregado">Carregado: '+localized(row.charged,false)+'</span>'+
+    '<span title="Ataque Carregado">Carregado: '+coloredRaidMove(row.charged,false)+'</span>'+
     '</span>'+(row.elite?psMtIconHtml("elite"):"");
   const raidDisplayName=row=>{
    const name=String(row.name||"");
@@ -1899,9 +1910,18 @@ function renderRaidPreview(){
    panel.setAttribute?.("data-ps-criteria",
     "Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha.");
  }
+ // LT282: <details> changes height after initial render. The native window
+ // and WebView scroll must be updated on BOTH expand and collapse. Capture the
+ // non-bubbling "toggle" on the persistent parent (child HTML is regenerated).
+ if(!panel.psRaidMoreToggleBound&&typeof panel.addEventListener==="function"){
+  panel.addEventListener("toggle",event=>{
+   if(event.target?.matches?.(".psRaidMore")&&typeof resizeEvolutionPanel==="function")
+    resizeEvolutionPanel();
+  },true);
+  panel.psRaidMoreToggleBound=true;
+ }
  button.hidden=false;panel.hidden=!psRaidExpanded;
  button.setAttribute("aria-expanded",String(psRaidExpanded));
- if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
  if(typeof psUpdateRaidShortcut==="function")psUpdateRaidShortcut();
  if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
 }
