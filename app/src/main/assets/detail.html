@@ -3778,9 +3778,10 @@ window.showDetails=(c,mode,watched)=>{
   isCostume:c.isCostume===true,isShadow:c.isShadow===true};
  const typeIcons=document.getElementById("types").innerHTML;
  const typeAvailable=!!(psTypeEffectData&&typeIcons);
+ const typeOpen=typeAvailable&&!document.getElementById("psTypeEffectPanel")?.hidden;
  document.getElementById("major").innerHTML='<button id="psTypeTap" type="button" class="statTile psTypeTile"'+
   (typeAvailable?' aria-label="Ver eficácia do tipo de '+h(c.name||"Pokémon")+'"'+
-   ' aria-controls="psTypeEffectPanel" aria-expanded="false" onclick="psToggleTypeEffectiveness()"':
+   ' aria-controls="psTypeEffectPanel" aria-expanded="'+String(typeOpen)+'" onclick="psToggleTypeEffectiveness()"':
    ' disabled aria-label="Tipagem não confirmada para esta forma"')+
   '><span class="psTypeIconSet">'+(typeAvailable?typeIcons:
    '<span class="psTypePlaceholder" aria-hidden="true">—</span>')+
