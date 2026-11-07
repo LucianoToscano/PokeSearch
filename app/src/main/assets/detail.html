@@ -473,9 +473,11 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #captureConfirm{margin-top:2px}
 #captureStatus{margin-top:1px}
 #coordsNumbers{margin-top:1px}
-#artColumn.gengarSprite #img{transform:scale(calc(.78 * var(--ps-alpha-scale,1)));transform-origin:center}
-#artColumn.gengarSprite.gengarHalloween #img{transform:scale(calc(.49 * var(--ps-alpha-scale,1)))}
-#artColumn:not(.gengarSprite) #img{transform:scale(var(--ps-alpha-scale,1))}
+#artColumn.gengarSprite #img{transform:translate(var(--ps-detail-x,0px),var(--ps-detail-y,0px)) scale(calc(.78 * var(--ps-alpha-scale,1)));transform-origin:center}
+#artColumn.gengarSprite.gengarHalloween #img{transform:translate(var(--ps-detail-x,0px),var(--ps-detail-y,0px)) scale(calc(.49 * var(--ps-alpha-scale,1)))}
+/* LT295: only the 30dp card artwork moves; text/grid/actions stay fixed.
+   Match the measured 87% visible-art rule used by the 100%/#1 results. */
+#artColumn:not(.gengarSprite) #img{transform:translate(var(--ps-detail-x,0px),var(--ps-detail-y,0px)) scale(var(--ps-alpha-scale,1));transform-origin:center}
 
 /* QA20: number, sex, size and form belong IMMEDIATELY below Pokémon name.
    QA18's grid-row:2 spanned the action column and created a blank stripe below title.
@@ -3543,6 +3545,7 @@ window.showDetails=(c,mode,watched)=>{
  document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite",isGengar);
  document.getElementById("artColumn")?.classList?.toggle?.("gengarHalloween",halloweenGengar);
  img.onload=null;img.onerror=null;
+ window.PokeSearchSpriteScale?.resetDetail?.(img);
  img.style.display="none";fallback.style.display="flex";img.removeAttribute("src");
  let artAttempt=0,displayed=false,verifiedNativeTried=false,loadGeneration=0;
  // Every new card invalidates callbacks from a previous image request.
@@ -3556,11 +3559,24 @@ window.showDetails=(c,mode,watched)=>{
  const useArt=src=>{
   const generation=++loadGeneration;
   if(!src||!(/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/)/i.test(src)))return;
+  window.PokeSearchSpriteScale?.resetDetail?.(img);
   img.onload=()=>{
    if(generation!==loadGeneration)return;
    if(img.naturalWidth>=8&&img.naturalHeight>=8){
     displayed=true;img.style.display="block";fallback.style.display="none";
-    if(typeof window!=="undefined")window.PokeSearchSpriteScale?.apply?.(img);
+    // LT295: the detail image is a 30dp tile. Legacy apply() targeted
+    // 78% of alpha bounds and capped zoom at 2.2x. Use exact measured
+    // geometry (provider card, same displayed image, native decoder) so a
+    // small Charmander is as legible as larger sprites, without enlarging
+    // the card or altering the result-list layout.
+    const imageUrl=String(img.currentSrc||img.src||"");
+    const fromSite=c.imageFromSite===true&&art.providerExact===true&&
+     imageUrl===String(art.src||"")&&/^https:\/\//i.test(imageUrl);
+    const pinned=window.PokeSearchOfflineSprite?.goExactIcon?.(c);
+    const fromGo=Boolean(pinned?.goExact===true&&imageUrl===String(pinned.src||"")&&
+     /^https:\/\/(?:raw\.githubusercontent\.com\/PokeMiners\/pogo_assets\/|cdn\.jsdelivr\.net\/gh\/PokeMiners\/pogo_assets@)/i.test(imageUrl));
+    window.PokeSearchSpriteScale?.applyDetail?.(
+     img,fromSite?c.imageAlphaBounds:null,fromSite||fromGo);
    }
   };
   img.onerror=()=>{
