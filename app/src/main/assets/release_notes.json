@@ -2507,19 +2507,23 @@
       "id": "pokesearch-lt277-sort-filters-ptbr-20261106",
       "minVersionCode": 54481,
       "date": "06/11/2026",
-      "title": "LT277 — Ordenação em português BR",
+      "title": "LT277 — Ordenar do maior ou do menor (API)",
       "sections": {
-        "novidades": [],
+        "novidades": [
+          "Novo seletor Padrão/Inverso em Ordenar: PC, IV%, Nível, Tempo restante e Distância com opção inversa na fonte API."
+        ],
         "melhorias": [
-          "As opções Ordenar aparecem em português: Tempo restante (maior), PC (maior), IV % (maior), Nível (maior) e Distância (mais perto)."
+          "Opções de ordenação totalmente em português BR, sem alterar o formato dos comandos da API.",
+          "Cinco critérios compactos; a escolha Padrão/Inverso não cria dez itens ocupando a tela."
         ],
         "correcoes": [
-          "A caixa de seleção de ordenação não exibe mais os nomes ingleses do site.",
-          "Os valores técnicos enviados ao provedor permanecem inalterados; não é mostrada uma ordenação crescente global sem suporte confirmado."
+          "A ordenação inversa é enviada como -CP, -IV, -LEVEL, -DSP ou -DISTANCE apenas em buscas API de Pokémon selvagens.",
+          "IV% baixos apresenta aviso: a API pode priorizar valores baixos sem ordenar estritamente; use IV% máximo para limitar a busca.",
+          "Modo DOM não finge suportar a ordenação invertida; uma falha API não provoca troca silenciosa para resultados de outra ordenação.",
+          "Distância inversa e normal exigem localização válida; desligar localização restaura a ordenação padrão."
         ],
         "emDesenvolvimento": [
-          "Pesquisar primeiro os menores em todo o catálogo depende de suporte a ordenação crescente no provedor; os filtros PC máximo, Nível máximo e IV% máximo continuam funcionando.",
-          "Confirmação visual e instalação no Samsung P1/P2 ainda pendentes."
+          "Confirmar a resposta da API ao vivo, especialmente -IV, -LEVEL, -DSP e -DISTANCE, no Samsung P1/P2. Os relatos de testes do usuário não substituem a homologação dentro do aplicativo."
         ]
       }
     }
