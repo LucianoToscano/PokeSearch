@@ -35,12 +35,18 @@ assert.match(overlay,/eduSettingsOpen=true;\s*eduHelpOpen=false;\s*reactAvatar/,
   "O toque prolongado da sprite deve abrir ajustes, sem avançar roteiro");
 assert.match(overlay,/if\(visible\)updateStep\(\);\s*else setVisible\(true\);/,
   "A mesma ação deve funcionar com a conversa aberta ou fechada");
-assert.match(overlay,/eduMainCard\.setBackground\(surface\(Color\.rgb\(253,253,253\)/,
-  "Fala do Edu deve usar balão claro");
+assert.match(overlay,/eduMainCard\.setBackground\(eduSpeechBackground\)/,
+  "Fala do Edu deve ser um único balão com cauda integrada");
 assert.match(overlay,/eduSpeech=text\("",14,Color\.rgb\(28,35,42\),false\)/,
   "Texto do balão deve ser escuro, legível em branco");
-assert.match(overlay,/View speechTail=new View\(this\)/,
-  "Balão precisa ter cauda discreta estilo quadrinhos");
+assert.match(overlay,/private final class EduSpeechDrawable extends Drawable/,
+  "O balão deve desenhar a cauda no próprio contorno");
+assert.match(overlay,/shape\.lineTo\(r,cy\)/,
+  "Cauda lateral direita aponta para o treinador");
+assert.match(overlay,/shape\.lineTo\(l,cy\)/,
+  "Cauda lateral esquerda aponta para o treinador");
+assert.doesNotMatch(overlay,/View speechTail=new View\(this\)/,
+  "Não criar triângulo separado abaixo do balão");
 assert.match(overlay,/eduSettingsOpen=false;\s*try\{wm\.removeView\(panelScroll\);\}/,
   "Reabrir com toque normal deve mostrar conversa, não ajustes");
 
@@ -50,6 +56,29 @@ assert.match(overlay,/\.heightPixels\*\.43f/);
 assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
 assert.match(overlay,/putInt\("edu_panel_x"/);
 assert.match(overlay,/putInt\("edu_panel_y"/);
+assert.match(overlay,/panel\.setBackgroundColor\(Color\.TRANSPARENT\)/,
+  "A conversa deve flutuar sem moldura grande escura");
+assert.doesNotMatch(overlay,/panel\.setBackground\(surface\(Color\.argb\(145,23,32,42\)/,
+  "Fundo antigo de cartão ao redor de todo o diálogo não deve voltar");
+assert.match(overlay,/answersLp\.topMargin=dp\(14\)/,
+  "Respostas flutuam abaixo do balão e não fazem parte dele");
+assert.match(overlay,/b\.setBackground\(surface\(Color\.rgb\(253,253,253\),Color\.rgb\(183,191,199\),22\)\)/,
+  "Botões separados em formato de pílula");
+assert.match(overlay,/nameChip\.setBackground\(surface\(Color\.argb\(162,28,40,55\)/,
+  "Cabeçalho compacto em chip, não painel gigante");
+assert.match(overlay,/void setPointerRight\(boolean right\)/,
+  "Mudar lado da cauda conforme o avatar");
+assert.match(overlay,/boolean pointsRight=panelParams\.x\+eduPanelWidth\/2</,
+  "Cauda deve apontar para a posição atual do treinador");
+assert.match(overlay,/int docking=left>=0\?left:/,
+  "Balão deve ficar ancorado ao lado do treinador, sem herdar posição distante");
+assert.match(overlay,/placePanelCoordinates\(\);\s*placePanel\(\);/,
+  "Movimento do sprite deve reposicionar o balão");
+assert.match(overlay,/bubbleParams\.x=Math\.max\(0,Math\.min\(\s*sw-bubbleParams\.width,avatarX\+/,
+  "Arrastar chip também move o sprite, mantendo fala conectada");
+assert.match(overlay,/eduNote\.isEmpty\(\)\?"":eduNote/,
+  "Apresentação não deve ter legenda extra desnecessária");
+
 assert.match(overlay,/panelParams\.alpha=1f/);
 // Conversa real, com respostas específicas e sem avanços automáticos.
 assert.match(overlay,/Meu nome é Edu\. Serei seu treinador hoje/);
@@ -145,4 +174,4 @@ assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
 for(const s of steps)assert.ok(s.falaEdu.startsWith("Edu: "),s.id);
 assert.doesNotMatch(overlay,/RaidDayEventClock\.summary\(now\)/,
   "The giant 4-region clock must never be shown in tutorial");
-console.log("LT304 Edu PASS: conversa com apresentação e escolhas, E01–E11, passagens e carregamento separados, dia D, coordenadas tocáveis e ajustes ocultos");
+console.log("LT306 Edu PASS: balão de quadrinhos único e solto, ponteiro ao treinador, ações independentes, drag em conjunto e configurações ocultas");
