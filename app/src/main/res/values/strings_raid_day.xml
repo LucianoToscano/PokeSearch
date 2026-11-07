@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="raid_day_title">Assistente do Dia de Reides</string>
+    <string name="raid_day_title">Edu · Assistente do Dia de Reides</string>
     <string name="raid_day_subtitle">Tutorial Bug dos Passes</string>
     <string name="raid_day_risk_title">Antes de começar · aviso de risco</string>
     <string name="raid_day_risk_message">Este tutorial é um relato da comunidade, não é garantido. O método envolve localização falsificada e pode violar os Termos do Pokémon GO, com risco de aviso, restrição ou banimento. O PokeSearch não altera localização, não controla o jogo e não promete passes extras. A decisão é sua.</string>
