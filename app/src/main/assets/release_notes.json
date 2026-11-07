@@ -2878,6 +2878,29 @@
           "Validar no Samsung a proporção real das sprites em P/M/G com e sem bordas. Se a URL exigir cookies ou estiver fora dos hosts de imagem autorizados, o fallback seguro permanece."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt294-universal-87-percent-result-sprites-20261107",
+      "minVersionCode": 54498,
+      "date": "07/11/2026",
+      "title": "LT294 — Tamanho visual uniforme de todos os Pokémon",
+      "sections": {
+        "novidades": [
+          "Uma regra única para todas as sprites dos Resultados 100% e Rank #1: desenho visível ocupando 85–90% do quadrado, meta de 87%, com ou sem bordas e nos tamanhos P/M/G."
+        ],
+        "melhorias": [
+          "Correção baseada no contorno opaco real da mesma sprite: também ajusta Pokémon com transparência moderada e miniaturas de eventos com margens grandes, sem trocar a imagem.",
+          "Imagens com a identidade GO exata e URL oficial fixada também podem ser medidas pelo leitor nativo quando o WebView não permite ler pixels por CORS."
+        ],
+        "correcoes": [
+          "Eliminado o corte antigo que deixava sprites com ocupação acima de 80% do PNG sem correção, embora ocupassem menos de 85% da caixa.",
+          "Removidos limites artificiais de zoom da própria imagem medida (2,85×/7×); continua proibido ampliar sem medir os pixels reais e sem confirmar a identidade da imagem.",
+          "Medições antigas ou de outra URL não alteram o Resultado atual; imagens já medidas não geram novas leituras nativas."
+        ],
+        "emDesenvolvimento": [
+          "Confirmar visualmente no Samsung, em ambas as Pokébolas e P/M/G, com/sem bordas: Charmander, Bulbasaur, Treecko, Snorlax, Torchic e fantasias. Imagens inacessíveis podem manter o fallback conservador."
+        ]
+      }
     }
   ]
 }
