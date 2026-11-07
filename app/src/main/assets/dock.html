@@ -6505,12 +6505,18 @@ function attachSpriteFeedback(){
       // The provider URL itself never changes. The resolver guarantees exact
       // form/costume/shiny identity; unverified variants yield no reference.
       let exactReference="";
+      if(img.dataset)img.dataset.psExactGoGeometry="0";
       try{
        const engine=window.PokeSearchOfflineSprite;
        if(sourceCard?.imageFromSite===true&&engine?.resolve){
         const art=engine.resolve(sourceCard);
-        if(art?.providerExact===true&&/^https:\/\//.test(String(art.src||"")))
+        if(art?.providerExact===true&&/^https:\/\//.test(String(art.src||""))){
          exactReference=engine?.bundledExactForArt?.(sourceCard,art)||"";
+         const go=engine?.goExactIcon?.(sourceCard);
+         const packaged=go&&engine?.bundledGoCostumeSource?.(go);
+         if(exactReference&&packaged&&img.dataset)
+          img.dataset.psExactGoGeometry="1";
+        }
        }
       }catch(_){}
       window.PokeSearchSpriteScale?.applyResultTile?.(img,exactReference);
