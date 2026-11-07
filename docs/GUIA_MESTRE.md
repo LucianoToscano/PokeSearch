@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT304 — CONTINUIDADE DOCUMENTAL E PLANO DE QA FÍSICO SAMSUNG (07/11/2026)
+
+- **Fonte atual reconfirmada no GitHub:** `main` `bc4453a2fa0fae068b49c43857cfa978da0dbd79` em 07/11/2026 (apenas commits documentais posteriores à fonte publicada `e467a1f`), Release/latest `v0.03.04-54510`, APK oficial `PokeSearch-v0.03.04-LT.apk` e workflow de publicação `#42400096648` SUCCESS; PR #300 foi integrada. **Não fazer downgrade nem confundir HEAD da main com o commit do APK.**
+- **Auditoria estática, não física:** código do Edu, consentimento MediaProjection, avatar G=100 pixels físicos e testes LT304 lidos; nenhum novo defeito de interface foi declarado reproduzido no Samsung sem capturas posteriores à Release. QA PT/EN, OCR e sobreposição continuam pendentes.
+- **Desatualização documental identificada:** `LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md` e `AGENTS.md` ainda mencionavam LT227 como versão pública. Correção documental preparada em branch independente, sem mudar código Android, versão, assinatura, merge ou Release.
+- **Plano de validação:** [`docs/LT304_EDU_CHECKLIST_QA_FISICO_SAMSUNG_20261107.md`](LT304_EDU_CHECKLIST_QA_FISICO_SAMSUNG_20261107.md), cenários S01–S12 para balões, animação G, arraste, simulação hoje, preparação, resultados múltiplos, autorização Android sem sobreposição, OCR PT-BR/EN, retomada e convivência P1/P2/Doce Raro. **Todos pendentes; não marcar aprovação sem evidência.**
+- **Governança:** branch/PR de documentação apenas; sem autorização de merge ou nova publicação. Qualquer correção futura de UX exige reprodução no Samsung e regressão automatizada; publicação posterior exige versionCode maior que 54510.
+
+
 ## LT304 OFICIAL — Edu, Assistente do Dia de Reides (publicação verificada em 07/11/2026)
 
 - **Status: publicado oficialmente.** Versão `0.03.04` · código **54510** · label **51308**, tag `v0.03.04-54510`, GitHub Releases `latest`, não draft e não prerelease. **APK oficial:** `PokeSearch-v0.03.04-LT.apk`, 34.032.628 bytes, SHA-256 **`b8b5073e272a958676f068e2eba7ede79762608975f175d9946840bacce375b4`**, certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, esquema v2 validado no pipeline. URL: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.04-54510/PokeSearch-v0.03.04-LT.apk
