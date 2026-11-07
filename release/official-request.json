@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.90",
-  "code": 54494,
-  "label": 51294,
-  "previous_tag": "v0.02.89-54493",
-  "qa_max_code": 54493,
-  "release_notes": "PokeSearch LT290: correção direcionada às miniaturas novas de evento que apareciam muito pequenas nos Resultados, mesmo com a sprite correta nos cards do PoGoCoordinates. O probe de busca tenta medir o contorno opaco do sprite já verificado no próprio card da página de origem e envia somente as coordenadas de uma área 96×96 vinculada à URL exata; falha ou CORS não bloqueia resultados. Na lista flutuante, a medição da arte original pode centralizar e normalizar apenas sprites cuja silhueta ocupa menos de 80% do espaço. Imagens normais com preenchimento adequado não são aumentadas, e a ampliação de até 7× exige contorno exato medido, não multiplicador cego. Se o site não permitir leitura, somente para formas/fantasias/eventos verificados existe uma tentativa auxiliar de medição por CORS da mesma URL, sem trocar o arquivo visível, sem nova pesquisa API e sem novas permissões. Quando a origem continua inacessível, prevalece fallback conservador da LT289. Preservados P/M/G, duas Pokébolas independentes, eventos/vestimentas, Shiny, sprites originais, cards, rankings, filtros, localização, login, OTA e assinatura permanente. Sete gates obrigatórios da PR #284 aprovados, inclusive APK beta privado; teste físico Samsung continua pendente."
+  "version": "0.02.91",
+  "code": 54495,
+  "label": 51295,
+  "previous_tag": "v0.02.90-54494",
+  "qa_max_code": 54494,
+  "release_notes": "PokeSearch LT291: corrigida a ordem das evoluções no painel expandido de Análise PvP. Antes as evoluções eram ordenadas por qualidade de Rank Classe e Rank Geral, fazendo Cyndaquil → Typhlosion → Quilava. Agora a sequência visual segue as arestas de evolução verificadas pelo catálogo offline, apresentando Cyndaquil → Quilava → Typhlosion independentemente dos valores de ranking. A versão mantém o Pokémon atual primeiro, depois evoluções comuns na distância correta, projeções de outras formas e prévias Mega identificadas por último. Ramos equivalentes conservam a ordem anterior e espécies/costumes sem cadeia verificada não recebem uma evolução inventada. Rank Classe, Rank Geral, IV%, PC, nível e estatísticas permanecem associados à espécie correta sem recálculo. Os ícones compactos de recomendação PvP continuam selecionando os melhores rankings; somente a sequência de exibição no painel foi alterada. Preservados sprites, formas, vestimentas, duas Pokébolas independentes, card de detalhes, golpes, localização, filtros, favoritos, OTA e assinatura permanente. Oito gates aplicáveis da PR #285 aprovados, incluindo Node regressão total, Java, Android, OTA, visual P/M/G, referência de Raides e APK beta privado; homologação física Samsung P1/P2 ainda pendente."
 }
