@@ -34,7 +34,10 @@ public final class RaidDayEventSettingsActivity extends Activity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
-        date=LocalDate.now(RaidDayEventClock.BRASILIA).plusDays(1);
+        RaidDayPreparation prep=RaidDayPreparation.load(this,prefs,
+            java.time.Clock.systemUTC());
+        date=prep.eventDate()!=null?prep.eventDate():
+            LocalDate.now(RaidDayEventClock.BRASILIA).plusDays(1);
         try{
             long begin=RaidDaySchedule.start(this),end=RaidDaySchedule.finish(this);
             if(RaidDaySchedule.valid(begin,end)){
