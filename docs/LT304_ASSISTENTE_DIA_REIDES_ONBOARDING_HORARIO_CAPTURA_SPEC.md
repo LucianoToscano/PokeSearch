@@ -91,3 +91,32 @@ Pipeline planejado:
 **Critérios de aceite:** nenhum avanço duplo, avanço automático nunca apenas por timer, preservação dos 3 overlays, timezone Brasília independente do fuso do aparelho, sem captura silenciosa e sem alegação de passe confirmado na ausência de evidência.
 
 **Importante:** Não concluir merge ou release LT304 com base apenas nesta especificação. O código atual da PR #300 é o MVP manual; a fase visual e o onboarding seguem pendentes.
+
+
+## 8. Alertas e integração com o calendário do Android (proposta aprovada em conversa)
+
+O Assistente do Dia de Raides terá **dois recursos complementares**, ambos opcionais, configurados depois de escolher um evento e a janela real (ou estimada, com aviso) em horário de Brasília:
+
+### A. Notificações locais do PokeSearch
+- Apresentar painel compacto de preferências: [dia anterior] [1 hora antes] [15 minutos antes] [início do evento] [próximo do encerramento]. Permitir ativar/desativar cada lembrete e alterar antecedência; a escolha inicial deve ser opt-in.
+- Distinguir dois gatilhos: **horário de preparação do roteiro comunitário** e **início oficial do Dia de Raides**. O horário de 22:00 de Brasília do tutorial de outubro **não** deve ser imposto em eventos futuros.
+- Mensagens: `Prepare o roteiro e confira passes`, `O Dia de Raides começa em 15 minutos`, `O evento começou — abra o Assistente e revise a etapa atual`, `A janela está terminando`; acrescentar data/fuso e tipo de horário.
+- Tocar na notificação abre o Assistente do Dia de Raides, **retomando o progresso salvo**. Não iniciar automaticamente uma etapa nem solicitar captura visual sem o toque do usuário.
+- Recalcular/substituir alarmes ao mudar data, hora, evento ou fuso; evitar duplicação, alertas de data passada e alertas de outra sessão.
+- Permissão `POST_NOTIFICATIONS` Android 13+ apenas quando o usuário optar por alertas. Se negada, mostrar `Alertas desativados pelo Android` e manter a possibilidade de usar calendário.
+- Alarmes em segundo plano podem atrasar por Doze, economia de bateria ou permissões de alarme exato do Android. Informar quando um alarme preciso não puder ser garantido e oferecer o calendário como alternativa. Evitar reivindicar pontualidade absoluta sem permissão.
+
+### B. Adicionar ao calendário do celular
+- Botão **📅 Adicionar ao calendário** com pré-visualização antes de abrir o app de calendário: nome do evento, data, hora início/fim, local/zona de referência e antecedência do lembrete.
+- Usar `Intent.ACTION_INSERT` com `CalendarContract.Events.CONTENT_URI`, `EXTRA_EVENT_BEGIN_TIME`, `EXTRA_EVENT_END_TIME`, título e descrição. **O usuário confirma o salvamento no aplicativo de calendário**; não exigir acesso de leitura/escrita à agenda nem inserir compromissos silenciosamente.
+- Oferecer **dois eventos separados**: (1) `PokeSearch — Preparação Dia de Raides` (horário do roteiro **somente quando conhecido/selecionado**) e (2) `Pokémon GO — Início do Dia de Raides` (horário oficial selecionado/verificado). Opcionalmente permitir adicionar `Encerramento do Dia de Raides`.
+- No texto de cada compromisso: nome do evento, horário original em Brasília `America/Sao_Paulo`, horário local convertido, link ou referência da programação quando verificada, aviso de que o tutorial comunitário não garante passes extras.
+- Não preencher horários inexistentes como se fossem oficiais. Quando data/hora forem escolhidas manualmente, indicar **`Horário informado pelo usuário — não verificado`**.
+- O próprio aplicativo de calendário controla seus lembretes, sincronização e permissões; PokeSearch não deve afirmar que o compromisso foi salvo sem uma confirmação observável do usuário.
+- Quando o evento for alterado, oferecer adicionar nova versão ao calendário; não editar/apagar compromissos privados do usuário sem autorização.
+
+### Critérios de aceite e testes
+- Horários em **Brasília** calculados por `java.time.ZoneId.of("America/Sao_Paulo")`, convertidos para instantes para agendar, independente do fuso do telefone. Se fuso não estiver definido ou o evento for passado, mostrar o problema e não agendar.
+- Testar mudança do fuso do aparelho, reinício, atualização de data, modo avião, Doze, permissão negada, notificações desativadas, agenda ausente, repetição de toque, evento cancelado e retomada de sessão.
+- Sem integração com Google Calendar em servidor; somente intent do calendário local e notificações locais, preservando privacidade. Não criar evento ou aviso sem consentimento.
+- **Status deste item:** especificado, **ainda não implementado no APK**. Incluir em fase posterior do desenvolvimento LT304; exigir QA antes de merge/release.
