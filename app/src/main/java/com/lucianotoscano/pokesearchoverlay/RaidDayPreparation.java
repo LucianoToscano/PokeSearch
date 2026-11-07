@@ -1,6 +1,7 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 import android.content.SharedPreferences;
+import android.content.Context;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -16,34 +17,30 @@ public final class RaidDayPreparation {
     private static final DateTimeFormatter BR_DATE=
         DateTimeFormatter.ofPattern("dd/MM/yyyy",Locale.forLanguageTag("pt-BR"));
 
-    public static final String[] QUESTIONS={
-        "Qual é o Dia de Reides?",
-        "Onde você pretende jogar no dia do evento?",
-        "Possui Passe Diário guardado do dia anterior?",
-        "Já coletou o Passe Diário de hoje?",
-        "Já realizou alguma reide hoje?",
-        "Já começou o roteiro ou esteve em outra região?",
-        "Existe algum aviso ou restrição ativa na sua conta?",
-        "Como deseja acompanhar o roteiro?"
-    };
-    public static final String[][] OPTIONS={
-        {}, // Data selecionada por botões, nunca inferida como oficial
-        {"Central Park","Parque Ibirapuera","Pier 39","Honolulu","Outro local"},
-        {"Sim","Não","Não sei"},
-        {"Sim","Não","Não sei"},
-        {"Sim","Não","Não sei"},
-        {"Sim","Não","Não sei"},
-        {"Sim","Não","Não sei"},
-        {"Manual","Híbrido (planejado)"}
-    };
-
+    private final String[] questions;
+    private final String[][] options;
     private final String[] answers=new String[COUNT];
     private boolean complete;
     private int questionIndex;
 
-    private RaidDayPreparation(){}
-    public static RaidDayPreparation load(SharedPreferences prefs,Clock clock){
-        RaidDayPreparation prep=new RaidDayPreparation();
+    private RaidDayPreparation(Context context){
+        questions=context.getResources().getStringArray(
+            R.array.raid_day_preparation_questions);
+        String[] locations=context.getResources().getStringArray(
+            R.array.raid_day_preparation_locations);
+        String[] tri=context.getResources().getStringArray(
+            R.array.raid_day_preparation_yes_no);
+        String[] modes=context.getResources().getStringArray(
+            R.array.raid_day_preparation_modes);
+        if(questions.length!=COUNT||tri.length!=3||modes.length!=2||
+            locations.length!=5)throw new IllegalStateException("Preparação inválida");
+        options=new String[][]{
+            {},locations,tri,tri,tri,tri,tri,modes
+        };
+    }
+    public static RaidDayPreparation load(Context context,
+        SharedPreferences prefs,Clock clock){
+        RaidDayPreparation prep=new RaidDayPreparation(context);
         for(int i=0;i<COUNT;i++)prep.answers[i]=prefs.getString(KEY+"answer_"+i,"");
         if(prep.answers[0].isEmpty())
             prep.answers[0]=RaidDayEventClock.todayBrasilia(clock)
@@ -55,7 +52,7 @@ public final class RaidDayPreparation {
         }
         for(int i=1;i<COUNT;i++){
             boolean known=false;
-            for(String option:OPTIONS[i])
+            for(String option:prep.options[i])
                 if(option.equals(prep.answers[i]))known=true;
             if(!known)prep.answers[i]="";
         }
@@ -64,13 +61,15 @@ public final class RaidDayPreparation {
             prefs.getInt(KEY+"question",0)));
         return prep;
     }
+    public String questionText(int q){return questions[q];}
+    public String[] optionsFor(int q){return options[q];}
     public boolean isComplete(){return complete&&allAnswered();}
     public int question(){return questionIndex;}
     public void setQuestion(int q){questionIndex=Math.max(0,Math.min(COUNT-1,q));}
     public String answer(int q){return answers[q];}
     public void choose(String selected){
         if(questionIndex==0)throw new IllegalStateException("Data usa ajuste por dias");
-        for(String option:OPTIONS[questionIndex]){
+        for(String option:options[questionIndex]){
             if(option.equals(selected)){answers[questionIndex]=selected;return;}
         }
         throw new IllegalArgumentException("Opção não reconhecida");
