@@ -3041,6 +3041,29 @@
           "Conferência física no Samsung e nas duas Pokébolas ainda pendente."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt301-small-evolution-arrows-centered-flags-20261107",
+      "minVersionCode": 54505,
+      "date": "07/11/2026",
+      "title": "LT301 — Setas menores e bandeiras centralizadas",
+      "sections": {
+        "novidades": [
+          "Indicadores de evolução no canto inferior direito agora usam apenas 0, 1 ou 2 setas finas, conforme etapas confirmadas da cadeia evolutiva."
+        ],
+        "melhorias": [
+          "Cada seta usa traço de 1 px e marca de 4 × 4 px, com margem de 5 px das bordas dos cinco cartões de rankings e raides.",
+          "Todas as bandeiras de GL, UL, ML, Rank Geral e Raides ficam centralizadas horizontalmente, independentemente do indicador de evolução.",
+          "As bandeiras permanecem legíveis com 19 px, centralizadas inclusive nos cartões P mais estreitos, sem sobrepor as setas."
+        ],
+        "correcoes": [
+          "Setas não encostam mais nas bordas e não ocupam o espaço da bandeira; nenhuma seta aparece sem evolução confirmada.",
+          "Cadeias acima de duas etapas não são mostradas como se tivessem duas, evitando uma contagem falsa."
+        ],
+        "emDesenvolvimento": [
+          "Conferência física no Samsung e nas duas Pokébolas após atualização oficial."
+        ]
+      }
     }
   ]
 }

@@ -58,4 +58,17 @@ assert.match(lt300,/height:18px!important/);
 assert.match(lt300,/width:6px!important;height:6px!important/);
 assert.match(lt300,/transform:rotate\(45deg\)!important/);
 assert.ok(rail.indexOf('/* LT300: five tighter')>rail.indexOf('/* LT278 —'));
-console.log('LT300: smaller five-card rail, original flags and stacked evolution chevrons.');
+// The shipping LT301 CSS must override earlier historical styles.
+const lt301=rail.slice(rail.indexOf('/* LT301 Samsung refinement'));
+assert.ok(lt301.startsWith('/* LT301 Samsung refinement'));
+assert.match(lt301,/right:5px!important;bottom:5px!important/);
+assert.match(lt301,/width:6px!important;min-width:6px!important;max-width:6px!important/);
+assert.match(lt301,/height:11px!important;min-height:11px!important;max-height:11px!important/);
+assert.match(lt301,/width:4px!important;height:4px!important;flex:0 0 4px!important/);
+assert.match(lt301,/border-top:1px solid #e7fbff!important/);
+assert.match(lt301,/border-left:1px solid #e7fbff!important/);
+assert.match(lt301,/left:50%!important;top:14px!important/);
+assert.match(lt301,/width:19px!important;height:19px!important/);
+assert.match(lt301,/transform:translateX\(-50%\)!important/);
+assert.ok(rail.indexOf('/* LT301 Samsung refinement')>rail.indexOf('/* LT300: five tighter'));
+console.log('LT301: thin 0-2 chevrons with safe margins and centered flags.');

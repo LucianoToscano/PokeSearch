@@ -108,10 +108,20 @@ assert.ok(explorer.includes("context.PokeSearchEvolutionBadge?.(original,opts.na
 assert.match(html,/window.PokeSearchEvolutionBadge=/);
 assert.match(html,/height:39px!important;min-height:39px!important/);
 assert.match(html,/width:21px!important;height:21px!important/);
-// Three chevrons are supported even where current game graph has only two stages.
+// LT301: show 0 / 1 / 2 only. A 3-step response cannot be truncated
+// into a misleading two-step claim.
 const originalSteps=win.PokeSearchPvpFamilyCatalog;
-win.PokeSearchPvpFamilyCatalog={evolutionSteps:(from,to)=>to==="Ursaluna"?3:null};
+win.PokeSearchPvpFamilyCatalog={evolutionSteps:(from,to,max)=>{
+ assert.equal(max,2);
+ return to==="Ursaluna"?3:null;
+}};
 assert.equal(render(payload),true);
-assert.equal(rail.children[1].querySelector(".psRailEvolve").children.length,3);
+assert.equal(rail.children[1].querySelector(".psRailEvolve"),null);
+assert.equal(rail.children[1].dataset.psEvolutionSteps,"0");
 win.PokeSearchPvpFamilyCatalog=originalSteps;
-console.log("LT300 PASS: compact five-rank rail and 0/1/2/3 forward evolution chevrons");
+assert.equal(render(payload),true);
+assert.equal(rail.children[1].querySelector(".psRailEvolve").children.length,2);
+assert.equal(family.evolutionSteps("Cyndaquil","Quilava",2),1);
+assert.equal(family.evolutionSteps("Cyndaquil","Typhlosion",2),2);
+assert.equal(family.evolutionSteps("Cyndaquil","Cyndaquil",2),0);
+console.log("LT301 PASS: five ranks, only 0/1/2 exact evolution steps and no 3-step badge");
