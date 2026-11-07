@@ -54,8 +54,12 @@ assert.match(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/);
 assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\)/);
 assert.match(overlay,/\.heightPixels\*\.43f/);
 assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
-assert.match(overlay,/putInt\("edu_panel_x"/);
-assert.match(overlay,/putInt\("edu_panel_y"/);
+assert.match(overlay,/putInt\("x",bubbleParams\.x\)/,
+  "Arrastar o chip deve salvar a posição do treinador");
+assert.match(overlay,/putInt\("y",bubbleParams\.y\)/,
+  "Arrastar o chip deve salvar a posição vertical do treinador");
+assert.doesNotMatch(overlay,/edu_panel_x|edu_panel_y/,
+  "O balão flutuante não deve herdar as posições antigas do painel gigante");
 assert.match(overlay,/panel\.setBackgroundColor\(Color\.TRANSPARENT\)/,
   "A conversa deve flutuar sem moldura grande escura");
 assert.doesNotMatch(overlay,/panel\.setBackground\(surface\(Color\.argb\(145,23,32,42\)/,
