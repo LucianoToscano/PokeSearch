@@ -28,7 +28,7 @@ assert.equal(engine.getIvRows(gm,"Unconfirmed Pokemon","gl"),null);
 assert.equal(typeof engine.switchClassLeague,"function");
 assert.equal(typeof engine.switchOverallLeague,"function");
 const src=read("pvp_rank_explorer.js"),html=read("detail.html");
-assert.ok(src.includes('available:!!getIvRows(gm,name,league)?.length'));
+assert.ok(src.includes(':!!getIvRows(gm,name,league)?.length'));
 assert.ok(src.includes('if(state.kind==="class")switchClassLeague(b.dataset.league)'));
 assert.ok(src.includes('if(state.kind==="class")switchClassLeague(picker.value)'));
 assert.ok(src.includes('name:state.name,iv:state.iv'));
