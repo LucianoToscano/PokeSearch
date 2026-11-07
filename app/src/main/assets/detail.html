@@ -93,6 +93,15 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .pkGender.male{color:#55afff}.pkGender.female{color:#ff87bb}
 .pkGender.genderless{color:#fff}
 .pkTypeImg{display:block;width:11px;height:11px;object-fit:contain;flex:none}
+/* LT280: compact type-colored move chips, not full-size opaque buttons.
+   Each color is backed by the move's verified GO type, unknown stays neutral. */
+#psCapturedMoveNames .pkMove{display:inline;padding:1px 3px;
+ border-radius:4px;line-height:1.6;box-decoration-break:clone;
+ -webkit-box-decoration-break:clone;white-space:normal}
+#psCapturedMoveNames .pkMoveTyped{color:var(--ps-move-type,#eaf0f6);
+ background:color-mix(in srgb,var(--ps-move-type) 14%,transparent);
+ border:1px solid color-mix(in srgb,var(--ps-move-type) 50%,transparent);
+ font-weight:750}
 .pkLegacy{font-weight:900;color:#f5d87e;margin-left:1px}
 .moveSlash{opacity:.65}
 #timer{flex:0 0 auto;font-weight:900;font-size:11px;padding:4px 5px;
