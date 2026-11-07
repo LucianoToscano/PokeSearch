@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT304 — EDU: BALÕES DE QUADRINHOS E CONFIGURAÇÕES OCULTAS (07/11/2026)
+
+- **Nova solicitação:** apresentar o Edu em balões **brancos de quadrinhos**, com borda fina, texto escuro e cauda discreta direcionada ao personagem; simplificar cabeçalho e botões para reduzir poluição visual.
+- **Menu ⋯ removido da conversa.** Tamanho P/M/G, animação, calendário, captura e pausa ficam ocultos por padrão e são acessíveis ao **segurar a sprite por 900 ms**. Toque curto abre/recolhe apenas a conversa; arraste move a sprite; fechar ou abrir com toque curto não reapresenta ajustes.
+- **Candidata em branch:** `feature/lt304-edu-comic-bubbles-hold-settings-20261107`, implementação isolada em `RaidDayAssistantOverlayService.java`, regressões LT304 ajustadas, documentação em [`docs/LT304_EDU_BALOES_QUADRINHOS_AJUSTES_TOQUE_LONGO_20261107.md`](LT304_EDU_BALOES_QUADRINHOS_AJUSTES_TOQUE_LONGO_20261107.md).
+- **QA automatizado verificado no commit `8b6ac3f8783013d68379ae9278f02b8687dd56c8`:** cinco workflows `success`: [Node QA #42405060857](https://github.com/LucianoToscano/PokeSearch/actions/runs/42405060857), [LT169 #42405060922](https://github.com/LucianoToscano/PokeSearch/actions/runs/42405060922), [LT211 #42405060832](https://github.com/LucianoToscano/PokeSearch/actions/runs/42405060832), [LT62 Java #42405060852](https://github.com/LucianoToscano/PokeSearch/actions/runs/42405060852) e [LT173 OTA #42405060949](https://github.com/LucianoToscano/PokeSearch/actions/runs/42405060949). Builds de APK/QA assinada `skipped` conforme a política. **Ainda não homologado no Samsung físico:** legibilidade, toque prolongado, arraste e OCR. **LT304 54510 permanece oficial; alteração não publicada, instalada nem integrada à `main`.** Preservar assinatura, G=100 px físico, preferências, P1/P2, Doce Raro, roteiro E01–E11 e consentimento da tela.
+
+
 ## LT304 OFICIAL — Edu, Assistente do Dia de Reides (publicação verificada em 07/11/2026)
 
 - **Status: publicado oficialmente.** Versão `0.03.04` · código **54510** · label **51308**, tag `v0.03.04-54510`, GitHub Releases `latest`, não draft e não prerelease. **APK oficial:** `PokeSearch-v0.03.04-LT.apk`, 34.032.628 bytes, SHA-256 **`b8b5073e272a958676f068e2eba7ede79762608975f175d9946840bacce375b4`**, certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, esquema v2 validado no pipeline. URL: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.04-54510/PokeSearch-v0.03.04-LT.apk
