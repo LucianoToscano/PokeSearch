@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT282 — ATAQUES DE RAID COLORIDOS SOMENTE NO TEXTO E EXPANSÃO ROLÁVEL (07/11/2026)
+
+- **Origem:** capturas físicas Samsung Medicham #308: avaliação Raides abre, mas golpes ágil/carregado estão em texto neutro; após `Ver mais 3 classificações` o cartão mantém tamanho antigo e esconde os últimos itens ao tentar descer.
+- **Implementação candidata:** `pokemon_card_presentation.js` expõe apenas leitura da paleta verificada dos 18 tipos; `detail.html` colore individualmente os nomes dos ataques em Raides sem fundo/borda, mantém rótulos Ágil/Carregado neutros e nunca infere tipo a partir do Pokémon. Um listener `toggle` em captura nos `details.psRaidMore` reajusta o overlay e reavalia `needsScroll`, tanto ao abrir quanto ao fechar.
+- **Versão planejada:** LT282 `0.02.82` / `54486`. Merge e release somente após QA; conferir asset, SHA-256 e assinatura antes de anunciar publicação. Duas Pokébolas compartilham o HTML, mantendo dados independentes.
+- **Preservado:** PvP, rankings, nomes PT-BR, golpes capturados LT281, formas/sprites Burmy, favoritos, filtros, localização, OTA.
+- **QA físico pendente:** Medicham Psíquico/Lutador, expansão/rolagem completa e contração em P1/P2.
+- **Auditoria:** [LT282](LT282_RAID_GOLPES_CORES_SCROLL_20261107.md).
+
 ## LT281 — GOLPES SOMENTE TEXTO COLORIDO E SEPARADOR | (07/11/2026)
 
 - **Origem:** captura real Samsung pós-LT280 (Wurmple #265): o usuário pediu remover o fundo/borda dos golpes e substituir `/` por `|`.
