@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.99",
-  "code": 54503,
-  "label": 51303,
-  "previous_tag": "v0.02.98-54502",
-  "qa_max_code": 54502,
-  "release_notes": "PokeSearch LT299 — ajustes de visual e usabilidade após screenshots reais do Samsung. Ícones dos tipos com tamanho fixo de 16×16 px para um ou dois tipos, centralizados, 2 px entre dois ícones, caixa 2 px menor (1 px de cada lado); IV, PC, nível, eficácia do tipo e os dois overlays permanecem intactos. Os painéis de ataques voltam a usar o ícone normal de MT original; removidos os símbolos provisórios de raio e estrela; MT Elite continua com PNG próprio apenas quando verificado, e MT desconhecida permanece cinza. Recomendações da Liga GO mostram somente Poder e Energia gerada/Custo; detalhes dos golpes capturados mostram somente Dmg, CD, DPS e Energia de raides, sem repetir indicadores PvP/Raides por linha nem avisos redundantes do PvPoke. Os números continuam separados internamente pois o mesmo movimento pode ter valores diferentes em PvP e raides. A caixa IV agora fecha o Rank Classe ao segundo toque, inclusive após mudar GL/UL/ML, e reabre ao terceiro toque na liga escolhida, sem interferir em Rank Geral. Merge PR #295 commit 741f027efad8a2d144b6ae3f95e51557675cd78d. Oito gates de regressão aprovados, inclusive visual P/M/G e APK beta isolada. Preservados login, permissões, PoGoCoordinates, localização/coordenadas, sprites, rankings, filtros, alertas e assinatura permanente. Teste físico final no Samsung pendente de instalação e aprovação Android."
+  "version": "0.03.00",
+  "code": 54504,
+  "label": 51304,
+  "previous_tag": "v0.02.99-54503",
+  "qa_max_code": 54503,
+  "release_notes": "PokeSearch LT300 — atualização oficial cumulativa após prints do Samsung e correção no GitHub PR #296 (merge 0ac5c60496ee9924a0736891059f2cda597707d2). Pikachu #25 com fantasia Anniversary 2026 Singapore 01 exibe tipo Elétrico e classificação IV GL/UL/ML do Pikachu-base quando a identidade de espécie é comprovada, preservando sprite especial e sem inventar Rank Geral, evolução de fantasia nem dados de formas desconhecidas. Cinco caixas de rankings Raides/GL/UL/ML/Rank Geral ficaram mais compactas: 45→39 px, fileira 47→41 px, bandeiras 23→21 px. O marcador grande de evolução foi substituído por 1, 2 ou 3 setas brancas pequenas empilhadas, apontando para cima, correspondendo à quantidade de etapas verificadas no grafo evolutivo; nenhuma seta se não requer evolução ou se a origem/forma não é confirmada. Contagem vale para cadeia bifurcada e mudança de liga no Rank Geral, e não garante elegibilidade de qualquer fantasia. Preservados IV, PC, Nível, eficácia do tipo, golpes, filtros, coordenadas, sprites, autenticação, duas Pokébolas, assinatura permanente e sistema de atualização oficial. Oito verificações automáticas aprovadas: Node QA, regressão Node completa, Android core, compilação Java, OTA, referência PvE, visual P/M/G e APK beta assinada isoladamente. A validação física final no Samsung depende da instalação confirmada pelo Android."
 }
