@@ -16,5 +16,8 @@ Screenshot enviada pelo usuário mostra `Burmy`, `#412`, forma `Sandy` e IV `0/1
 - Verificação adicional da release exige que os doze PNG estejam dentro do APK assinado; teste `lt279-burmy-wormadam-sandy-offline.test.js` cobre 3×2×2 variações e impede substituição silenciosa por espécie/forma errada.
 - Preserva IV, golpes, classificações não confirmadas, cincos atalhos, marcadores de evolução, filtros, duas Pokébolas e sistema de atualizações.
 
-## Validação
-Aguardando CI (Node/Android/OTA/visual, PNGs assinados) e teste físico no Samsung. A correção é localizada no *sprite*, não na base PvP. Versão candidata: LT279 `0.02.79 / 54483`, derivada da LT278 `0.02.78 / 54482`.
+## Validação e publicação oficial LT279
+- PR [#272](https://github.com/LucianoToscano/PokeSearch/pull/272) mesclada, pipeline de QA Node/Android/OTA/visual aprovado. Os doze PNG foram exigidos no pacote e conferidos pelos hashes antes da assinatura.
+- Release oficial estável [LT279 0.02.79 · versionCode 54483](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.79-54483), publicada em **07/11/2026 às 02:19:27 UTC**, APK `PokeSearch-v0.02.79-LT.apk`, **33.812.508 bytes**, SHA-256 `7dc9c4c3600c52d36ffd49d88798afb6944c529ef79a17c38cb2b78aaaba8795`.
+- A existência de sprites não prova o resultado de classificação. A melhoria de Rank Classe para Burmy/Wormadam foi tratada **separadamente na PR #273 / LT280**, sem reaproveitar os rankings de formas com atributos diferentes.
+- Pendente validação física no Samsung após instalação P1/P2.
