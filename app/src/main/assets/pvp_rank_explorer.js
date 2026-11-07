@@ -316,7 +316,7 @@
   const exact=(getOverallRows(state.overall,state.league)||[]).find(x=>n(x.name)===n(target));
   return open({kind:"overall",name:target,league:state.league,
    rank:exact?.rank||null,iv:state.iv,forms:state.forms,
-   gm:state.gm,overall:state.overall,railKey:state.railKey});
+   gm:state.gm,overall:state.overall,family:state.family,railKey:state.railKey});
  }
  function close(){
   if(view)view.hidden=true;
