@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="raid_day_preparation_questions">
+        <item>Qual é o Dia de Reides?</item>
+        <item>Onde você pretende jogar no dia do evento?</item>
+        <item>Possui Passe Diário guardado do dia anterior?</item>
+        <item>Já coletou o Passe Diário de hoje?</item>
+        <item>Já realizou alguma reide hoje?</item>
+        <item>Já começou o roteiro ou esteve em outra região?</item>
+        <item>Existe algum aviso ou restrição ativa na sua conta?</item>
+        <item>Como deseja acompanhar o roteiro?</item>
+    </string-array>
+    <string-array name="raid_day_preparation_locations">
+        <item>Central Park</item>
+        <item>Parque Ibirapuera</item>
+        <item>Pier 39</item>
+        <item>Honolulu</item>
+        <item>Outro local</item>
+    </string-array>
+    <string-array name="raid_day_preparation_yes_no">
+        <item>Sim</item>
+        <item>Não</item>
+        <item>Não sei</item>
+    </string-array>
+    <string-array name="raid_day_preparation_modes">
+        <item>Manual</item>
+        <item>Híbrido (planejado)</item>
+    </string-array>
+</resources>
