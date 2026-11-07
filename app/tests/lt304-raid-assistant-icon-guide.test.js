@@ -88,8 +88,12 @@ assert.match(service,/persist\("NOT_OBSERVED"\)/);
 assert.match(service,/RaidDayRecovery\.stats/);
 assert.match(service,/Math\.max\(dp\(145\),maximum\)/);
 assert.match(service,/panelParams\.alpha=1f/);
-assert.match(service,/edu_panel_x/);
-assert.match(service,/edu_panel_y/);
+assert.match(service,/placePanelCoordinates\(\)/,
+  "Balão deve ser ligado ao avatar");
+assert.match(service,/bubbleParams\.x/);
+assert.match(service,/bubbleParams\.y/);
+assert.doesNotMatch(service,/edu_panel_x|edu_panel_y/,
+  "A janela antiga independente não existe mais");
 assert.match(service,/requestDisallowInterceptTouchEvent\(true\)/);
 assert.match(service,/showEduSettings\(/);
 assert.match(service,/showEduGuide\(/);

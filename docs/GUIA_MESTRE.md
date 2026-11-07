@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT306 — EDU SEM CAIXA DUPLA, COM BALÃO APONTADO PARA A SPRITE (07/11/2026, CANDIDATA)
+
+- **Pedido autorizado pelo proprietário:** corrigir screenshot físico Samsung da LT305 que mostrava painel dark enorme, balão branco dentro de outra caixa, cauda apontando para baixo longe do Edu e respostas presas à janela. Implementar e **publicar** atualização, com merge e registro no Arquivo Mestre. Versão candidata **0.03.06 / code 54512 / label 51310**, sucedendo a LT305 oficial (0.03.05/54511).
+- **Implementação em branch `fix/lt306-edu-balao-solto-sem-caixa-20261107`:** conversa sem fundo externo `TRANSPARENT`, balão branco independente `EduSpeechDrawable` desenhado com **um único contorno de quadrinhos** e cauda lateral direita/esquerda integrada conforme avatar. Eliminado triângulo inferior desligado da sprite. Botões de resposta em pílulas brancas **separadas por margem**, sem painel envolvendo ações. Cabeçalho em mini chip Edu/hora com X discreto; saudação inicial sem texto extra dispensável.
+- **Conexão física do diálogo:** em vez de reaproveitar posição antiga do painel, a fala ancora-se ao lado do Edu e acompanha a sprite quando ela se move; arrastar o chip move o treinador junto, evitando uma fala que não pareça dele. Mantém toque curto para abrir/recolher e gesto longo de 1,2 s para menu de ajustes, tamanho G=100 pixels físicos padrão e escolhas P/M/G anteriores.
+- **Compatibilidade e QA:** não mexer no roteiro E01–E11, reconhecimento de tela sem automação, assinatura, P1/P2, Doce Raro, login opcional, cap de 10 resultados, filtros, sprites e HTTP 429. Novos testes estruturais no contrato do Edu, notas embarcadas code 54512. Validação **visual física Samsung continua pendente até screenshot novo**; testes Node e compilação não equivalem a homologação em jogo.
+- **Documento de auditoria:** [LT306_EDU_BALAODIALOGO_SOLTO_SEM_PAINEL_20261107.md](LT306_EDU_BALAODIALOGO_SOLTO_SEM_PAINEL_20261107.md). Este parágrafo registra a candidata; só atualizar para "publicado" mediante commit de merge, workflow oficial SUCCESS e Release/latest+SHA verificadas no GitHub.
+
+
 
 ## LT305 OFICIAL — EDU EM BALÕES DE QUADRINHOS E DIÁLOGO PASSO A PASSO (07/11/2026)
 

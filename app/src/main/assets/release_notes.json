@@ -3162,6 +3162,32 @@
           "O tutorial Bug dos Passes é relato comunitário não garantido e pode violar os Termos do Pokémon GO. PokeSearch não modifica localização nem automatiza o jogo."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt306-edu-fala-solta-sem-caixa-20261107",
+      "minVersionCode": 54512,
+      "date": "07/11/2026",
+      "title": "LT306 — Edu com balão independente do treinador",
+      "sections": {
+        "novidades": [
+          "Edu agora conversa por um único balão branco de quadrinhos, com cauda lateral apontada para o treinador em vez de um painel dentro do outro."
+        ],
+        "melhorias": [
+          "O fundo escuro que envolvia os diálogos foi retirado, deixando o jogo visível ao redor da fala.",
+          "As respostas Sim, vamos lá / Agora não e outras escolhas aparecem em botões arredondados separados, sem outra caixa prendendo a conversa.",
+          "Balão e sprite se posicionam lado a lado; arrastar o treinador ou o identificador do Edu mantém os dois próximos.",
+          "O identificador Edu e o horário ficam em um chip discreto, com botão pequeno para recolher a fala.",
+          "Continuam disponíveis as configurações ocultas ao segurar a sprite por aproximadamente 1,2 segundo e o tamanho G padrão."
+        ],
+        "correcoes": [
+          "Removido o triângulo solto que apontava para baixo, longe do treinador.",
+          "Evita reutilizar a posição da janela gigante antiga ao abrir o novo balão."
+        ],
+        "emDesenvolvimento": [
+          "Validar no Samsung a cauda, o contraste em jogos claros, dimensões, toque e gesto, sobretudo com fontes ampliadas.",
+          "Leitura visual continua opcional e depende da autorização Android; o tutorial comunitário não garante passes, não altera a localização nem automatiza o jogo."
+        ]
+      }
     }
   ]
 }
