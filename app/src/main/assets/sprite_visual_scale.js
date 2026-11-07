@@ -101,7 +101,48 @@ function geometryFit(bounds,imageBox,maxZoom=7){
   y:Math.round((.5-(top+bottom+1)/(2*SAMPLE))*zoom*imageBox*100)/100,
   occupancy};
 }
-function enhanceProviderTile(img,cardBounds,verifiedEvent){
+/* LT293: native reads alpha bounds of the same HTTPS image, without browser
+ * CORS restrictions. The Android side has a strict host allowlist, HTTPS,
+ * byte/dimension/time caps, no cookies, and two bounded background workers.
+ * Per-tile response identity is verified again here to avoid stale results. */
+const pendingNativeBounds=new Map();
+let nativeSeq=0;
+function onNativeBounds(token,url,bounds){
+ const pending=pendingNativeBounds.get(String(token||""));
+ if(!pending)return false;
+ pendingNativeBounds.delete(String(token));
+ const img=pending.img;
+ if(img?.isConnected===false||
+    String(img?.currentSrc||img?.src||"")!==pending.url||
+    String(url)!==pending.url||
+    img?.dataset?.psNativeProbeUrl!==pending.url)return false;
+ if(bounds&&pending.apply(bounds))return true;
+ pending.fallback?.();
+ return false;
+}
+function nativeSourceGeometry(img,url,apply,fallback){
+ const bridge=root.Native;
+ if(typeof bridge?.requestSpriteSilhouette!=="function"||
+    !/^https:\/\//i.test(url)||!img?.style?.setProperty)return false;
+ const state=img.dataset||{};
+ if(state.psNativeProbeUrl===url)return true;
+ if(nativeSeq>=999999999)nativeSeq=0;
+ const token="psg"+(++nativeSeq);
+ if(pendingNativeBounds.size>=32)pendingNativeBounds.clear();
+ pendingNativeBounds.set(token,{img,url,apply,fallback});
+ try{
+  if(bridge.requestSpriteSilhouette(url,token)!==true){
+   pendingNativeBounds.delete(token);
+   return false;
+  }
+  state.psNativeProbeUrl=url;
+  return true;
+ }catch(_){
+  pendingNativeBounds.delete(token);
+  return false;
+ }
+}
+function enhanceProviderTile(img,cardBounds,verifiedEvent,verifiedProvider=false){
  if(!img?.style?.setProperty||Number(img.naturalWidth)<8)return false;
  const tile=img.closest?.(".spriteStage");
  const cardSize=Number(tile?.clientWidth)||0;
@@ -117,24 +158,31 @@ function enhanceProviderTile(img,cardBounds,verifiedEvent){
   return true;
  };
  if(cardBounds&&cardBounds.url===src&&applyMeasured(cardBounds))return true;
- // The page couldn't read an external image? Retry canvas measurement with
- // CORS on a SEPARATE offscreen Image of this exact vetted event URL.
- // The working provider <img> never receives crossorigin or a new src.
- if(!verifiedEvent||!/^https:\/\//i.test(src)||typeof Image!=="function")return false;
- const state=img.dataset||{};
- if(state.psEventProbeUrl===src)return false; // one request maximum per tile
- state.psEventProbeUrl=src;
- const source=new Image();
- source.crossOrigin="anonymous";
- source.onload=()=>{
-  if(img.isConnected===false||String(img.currentSrc||img.src||"")!==src||
-     Number(img.naturalWidth)<8)return;
-  const visible=visibleBounds(source); // only succeeds if CORS allows pixels
-  if(visible)applyMeasured(visible);
+ // Only a card-scoped, provider-exact URL is eligible for the native decoder.
+ // This also handles ordinary-looking species whose event metadata is absent,
+ // such as the tiny Charmander in Samsung LT292 screenshots.
+ const tryCors=()=>{
+  // Keep the LT290 web-only fallback on browsers/older Android versions.
+  if(!verifiedEvent||!/^https:\/\//i.test(src)||typeof Image!=="function")
+   return false;
+  const state=img.dataset||{};
+  if(state.psEventProbeUrl===src)return false;
+  state.psEventProbeUrl=src;
+  const source=new Image();
+  source.crossOrigin="anonymous";
+  source.onload=()=>{
+   if(img.isConnected===false||String(img.currentSrc||img.src||"")!==src||
+      Number(img.naturalWidth)<8)return;
+   const visible=visibleBounds(source);
+   if(visible)applyMeasured(visible);
+  };
+  source.onerror=()=>{};
+  source.src=src;
+  return true;
  };
- source.onerror=()=>{}; // No unsafe zoom on missing/unreadable images.
- source.src=src;
- return true;
+ if(verifiedProvider&&nativeSourceGeometry(img,src,applyMeasured,tryCors))
+  return true;
+ return tryCors();
 }
 
 function setResultTileFit(img,fit){
@@ -186,5 +234,5 @@ function applyResultTile(img,verifiedReference){
  reference.src=data;
  return null;
 }
-root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile,enhanceProviderTile});
+root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile,enhanceProviderTile,onNativeBounds});
 })(window);
