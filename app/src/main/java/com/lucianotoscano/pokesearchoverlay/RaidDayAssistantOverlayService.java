@@ -864,11 +864,21 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void updateStep(){
         if(progressText==null)return;
-        riskSection.setVisibility(!riskAccepted?View.VISIBLE:View.GONE);
-        startSection.setVisibility(riskAccepted&&!active&&!training?
-            View.VISIBLE:View.GONE);
-        boolean guiding=riskAccepted&&(active||training);
+        // Uma pergunta por tela; sessões antigas já iniciadas não são apagadas.
+        boolean needsPreparation=!preparation.isComplete()&&!active&&!training;
+        preparationSection.setVisibility(needsPreparation?View.VISIBLE:View.GONE);
+        boolean needsRisk=!needsPreparation&&!riskAccepted&&!active&&!training;
+        riskSection.setVisibility(needsRisk?View.VISIBLE:View.GONE);
+        boolean canStart=!needsPreparation&&!needsRisk&&riskAccepted&&!active&&!training;
+        startSection.setVisibility(canStart?View.VISIBLE:View.GONE);
+        boolean guiding=active||training;
         guideContent.setVisibility(guiding?View.VISIBLE:View.GONE);
+        if(canStart){
+            summaryText.setText("Respostas do jogador (não verificadas):\n"+
+                preparation.summary()+
+                "\nHorário do evento não confirmado. Sem captura de tela ativa.");
+        }
+        updateEventClock();
         if(!guiding){if(visible)placePanel();return;}
         RaidDayGuidePlan.Step current=plan.step(index);
         progressText.setText(finished?"Resumo concluído":
@@ -929,6 +939,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(panel==null||wm==null||show==visible)return;
         visible=show;
         if(show){
+            updateEventClock();
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);
             panelScroll.post(this::placePanel);
