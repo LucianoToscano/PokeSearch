@@ -67,4 +67,15 @@ public final class RaidDayCaptureConsentActivity extends Activity {
         }
         finish();
     }
+
+    @Override protected void onDestroy(){
+        // Após autorizar, recusar ou sair, libera o mini Edu novamente.
+        // Não reexibir durante uma recriação de atividade do Android.
+        if(!isChangingConfigurations()){
+            Intent restore=new Intent(this,RaidDayAssistantOverlayService.class)
+                .setAction(RaidDayAssistantOverlayService.ACTION_CONSENT_DONE);
+            try{startService(restore);}catch(RuntimeException ignored){}
+        }
+        super.onDestroy();
+    }
 }
