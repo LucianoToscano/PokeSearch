@@ -843,7 +843,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,PixelFormat.TRANSLUCENT);
         panelParams.gravity=Gravity.TOP|Gravity.LEFT;
-        panelParams.alpha=.79f;
+        // O balão branco e a tipografia não devem ficar translúcidos. Apenas a moldura é glass.
+        panelParams.alpha=1f;
         placePanelCoordinates();
     }
     private void addSettingsButton(TextView b,Runnable action){
