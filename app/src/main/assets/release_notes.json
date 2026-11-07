@@ -2720,6 +2720,28 @@
           "Homologar fisicamente no Samsung os dez resultados, alternância entre P1 e P2, retomada da tela e sprites regionais/vestimentas com rede lenta."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt287-provider-sprites-result-card-parity-20261107",
+      "minVersionCode": 54491,
+      "date": "07/11/2026",
+      "title": "LT287 — Sprites dos Resultados iguais aos cards",
+      "sections": {
+        "novidades": [
+          "As miniaturas dos Resultados priorizam a imagem exata validada no card do PoGoCoordinates, como já acontece no detalhe, mantendo sprite real da forma correta."
+        ],
+        "melhorias": [
+          "Em caso de erro ou demora, a lista recupera os mesmos bytes PNG verificados da ponte nativa e reconhece o endereço interno HTTPS do cache de assets Android.",
+          "Imagens de provedores e CDNs deixam de depender de uma exigência adicional de CORS para serem exibidas; o cálculo visual mantém fallback seguro."
+        ],
+        "correcoes": [
+          "Uma imagem que funciona no card não deve falhar na lista só por diferença de prioridade de origem ou pelo formato do endereço local.",
+          "Não há substituição por outra forma, fantasia, Shiny ou espécie ao restaurar sprites."
+        ],
+        "emDesenvolvimento": [
+          "Homologar fisicamente no Samsung P1/P2 a lista com até dez resultados, alternância card/lista, rede lenta e retomada após tela bloqueada."
+        ]
+      }
     }
   ]
 }
