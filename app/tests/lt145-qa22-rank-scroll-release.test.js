@@ -19,7 +19,7 @@ assert.ok(html.includes('#imageFallback::after{content:"";display:none;'),
  "no generic missing-sprite circle in detail");
 assert.ok(code.includes("fallback.textContent="),
  "brief species initials replace the blank sprite when exact art is unavailable");
-assert.ok(html.includes('window.PokeSearchSpriteScale?.apply?.(img)'),"alpha-normalized sprite");
+assert.ok(html.includes('window.PokeSearchSpriteScale?.applyDetail?.('),"alpha-normalized sprite");
 assert.ok(html.includes('#artColumn.gengarSprite.gengarHalloween #img'),"costume Gengar retained");
 assert.ok(html.includes('class="ivTypes"'),"types present in IV");
 assert.ok(html.includes('<span class="despawnLabel">Despawn</span>'),"timer remains");
