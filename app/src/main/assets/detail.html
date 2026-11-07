@@ -2015,7 +2015,7 @@ function resizeEvolutionPanel(){
 }
 // LT283: any expandable section shares the SAME native size/scroll logic.
 // The Raid More listener already handles its own toggle (LT282).
-const psExpandResizeRoot=document.getElementById("panel");
+const psExpandResizeRoot=typeof document==="undefined"?null:document.getElementById("panel");
 if(psExpandResizeRoot?.addEventListener){
  psExpandResizeRoot.addEventListener("toggle",event=>{
   if(event.target?.tagName==="DETAILS"&&
