@@ -41,6 +41,13 @@ for(let i=0;i<11;i++){
 }
 assert.equal(steps[6].repetePara,"E02");
 assert.equal(steps[6].semPassePara,"E08");
+assert.equal(steps[2].semPassePara,"E08");
+assert.equal(steps[5].semPassePara,"E08");
+assert.equal(steps[8].pularPara,"E10");
+for(const x of steps){
+ for(const key of ["repetePara","semPassePara","pularPara"])
+  if(x[key])assert.ok(steps.some(y=>y.id===x[key]),x.id+" -> "+x[key]);
+}
 assert.equal(steps[8].opcional,true);
 assert.equal(variant.locais.hawaii.coordenadas,"21.2709423,-157.818172");
 assert.equal(variant.locais.newzealand.coordenadas,"-41.282491,174.769132");
@@ -89,9 +96,9 @@ assert.match(service,/appendEvent\("LEGACY_IMPORTED"\)/);
 assert.match(service,/appendEvent\(eventType\)/);
 assert.match(service,/beginRealSession\(/);
 assert.match(service,/persist\("CYCLE_REPEATED"\)/);
-assert.match(service,/index=STEP_E02/);
+assert.match(service,/index=plan\.indexOf\(plan\.step\(index\)\.repeatTo\)/);
 assert.match(service,/persist\("NO_PASS"\)/);
-assert.match(service,/index=STEP_E08/);
+assert.match(service,/index=plan\.indexOf\(step\.noPassTo\)/);
 assert.match(service,/NOT_OBSERVED/);
 assert.match(strings,/Me perdi/);
 assert.match(service,/endPending/);
