@@ -57,7 +57,12 @@
   */
  function orderEvolutionRows(currentName,entries){
   const rows=Array.isArray(entries)?entries.slice():[];
-  const key=normalized(currentName);
+  const input=normalized(currentName);
+  // Shadows use the documented species evolution edges but retain the
+  // Shadow battle form throughout. Never assume evolution of costumes,
+  // regional forms, Megas or other unverified modifiers.
+  const shadow=/ \(shadow\)$/.test(input);
+  const key=shadow?input.slice(0,-" (shadow)".length):input;
   if(!key||key.includes("(")||!forward.has(key))return rows;
   const distance=new Map([[key,0]]),queue=[key];
   while(queue.length&&distance.size<60){
@@ -68,9 +73,13 @@
     queue.push(to);
    }
   }
-  return rows.map((row,index)=>({row,index,
-   stage:distance.get(normalized(row?.name))??Infinity}))
-   .sort((a,b)=>a.stage-b.stage||a.index-b.index)
+  return rows.map((row,index)=>{
+   const original=normalized(row?.name);
+   const rowShadow=/ \(shadow\)$/.test(original);
+   const species=rowShadow?original.slice(0,-" (shadow)".length):original;
+   return {row,index,stage:rowShadow===shadow?
+    distance.get(species)??Infinity:Infinity};
+  }).sort((a,b)=>a.stage-b.stage||a.index-b.index)
    .map(({row})=>row);
  }
  return Object.freeze({family,links,orderEvolutionRows});
