@@ -906,7 +906,19 @@ public final class RaidDayAssistantOverlayService extends Service {
         return "";
     }
     private String phaseClock(RaidDayGuidePlan.Step step){
-        if(training)return "Treino • Evento fictício hoje • Sem alterações no jogo";
+        if(training){
+            LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
+            java.time.format.DateTimeFormatter shortDate=
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM",
+                    java.util.Locale.forLanguageTag("pt-BR"));
+            if("D-1".equals(step.phase))
+                return "SIMULAÇÃO • Ontem "+today.minusDays(1).format(shortDate)+
+                    " • Véspera fictícia";
+            if("D".equals(step.phase))
+                return "SIMULAÇÃO • Hoje "+today.format(shortDate)+
+                    " • Dia do evento fictício";
+            return "SIMULAÇÃO HOJE • Não altera o jogo";
+        }
         String now=RaidDayEventClock.format(eventClock.instant(),
             RaidDayEventClock.BRASILIA);
         String zone="";
