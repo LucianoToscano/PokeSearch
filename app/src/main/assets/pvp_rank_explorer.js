@@ -246,7 +246,7 @@
     league,name,rank:(getOverallRows(overall,league)||[]).find(x=>n(x.name)===n(name))?.rank||null,
     available:kind==="overall"?!!getOverallRows(overall,league)?.length:!!getIvRows(gm,name,league)?.length
    })),
-   family:kind==="overall"?orderedFamily(name,gm):[],
+   family:kind==="overall"?(Array.isArray(opts.family)&&opts.family.length?opts.family.slice(0,24):orderedFamily(name,gm)):[],
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -284,7 +284,7 @@
   const exact=(getOverallRows(state.overall,league)||[]).find(x=>n(x.name)===n(state.name));
   const opts={kind:"overall",league,name:state.name,
    rank:exact?.rank||null,iv:state.iv,forms:state.forms,
-   gm:state.gm,overall:state.overall,railKey:state.railKey};
+   gm:state.gm,overall:state.overall,family:state.family,railKey:state.railKey};
   // Keep the previous table/badge unchanged if the new source is unavailable.
   if(!open(opts))return false;
   if(typeof window!=="undefined")window.psRailOverallSelectedLeague=league;
