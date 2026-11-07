@@ -3057,7 +3057,8 @@ function psToggleLeagueAssessment(league){
 /* LT301 — only 0, 1 or 2 VERIFIED evolutionary steps. A third step
  * must not masquerade as two; do not draw a badge for that unsupported path. */
 function psEvolutionStepCount(currentName,targetName){
- return window.PokeSearchPvpFamilyCatalog?.evolutionSteps?.(currentName,targetName,2)??null;
+ const steps=window.PokeSearchPvpFamilyCatalog?.evolutionSteps?.(currentName,targetName,2);
+ return Number.isInteger(steps)&&steps>=0&&steps<=2?steps:null;
 }
 function psMakeEvolutionBadge(count){
  if(!Number.isInteger(count)||count<1||count>2)return null;
