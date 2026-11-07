@@ -353,7 +353,7 @@ function renderVisualEditor(){
  // Keep the JSON source and import function for controlled future use,
  // but do not expose a distracting JSON tab in ordinary operation.
  if(tab==="export"){
-  heading(panel,"Exportar o visual para o ChatGPT");
+  heading(panel,"Exportar configuração visual");
   const textarea=document.createElement("textarea");
   textarea.className="visualJSON";textarea.value=JSON.stringify({schema:"pokesearch-visual-v1",...current},null,2);
   textarea.setAttribute("aria-label","Configuração visual JSON");
