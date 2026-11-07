@@ -40,7 +40,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * A dedicated, opt-in MANUAL helper for the "Dia de Raides / Bug dos Passes"
+ * A dedicated, opt-in MANUAL helper for the "Dia de Reides / Bug dos Passes"
  * tutorial in the video supplied by the user. It does not spoof locations,
  * interact with Pokemon GO, promise passes or validate the alleged exploit.
  * Its small pass-shaped bubble is separate from P1/P2 and Rare Candy.
@@ -142,13 +142,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(wm==null){stopSelf();return;}
         NotificationManager nm=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.createNotificationChannel(new NotificationChannel(
-            CHANNEL,"PokeSearch · Assistente do Dia de Raides",NotificationManager.IMPORTANCE_LOW));
+            CHANNEL,"PokeSearch · Assistente do Dia de Reides",NotificationManager.IMPORTANCE_LOW));
         Intent stop=new Intent(this,RaidDayAssistantOverlayService.class).setAction(ACTION_STOP);
         PendingIntent stopAction=PendingIntent.getService(this,1988,stop,
             PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification note=new Notification.Builder(this,CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("PokeSearch · Assistente do Dia de Raides")
+            .setContentTitle("PokeSearch · Assistente do Dia de Reides")
             .setContentText("Guia manual ativo · toque no ícone flutuante")
             .setOngoing(true)
             .addAction(new Notification.Action.Builder(
@@ -241,14 +241,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         bubble.setBackgroundColor(Color.TRANSPARENT);
         ImageView image=new ImageView(this);
         image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        image.setContentDescription("Assistente do Dia de Raides");
+        image.setContentDescription("Assistente do Dia de Reides");
         if(artwork!=null)image.setImageBitmap(artwork);
         else image.setImageResource(R.drawable.ic_notification);
         bubble.addView(image,new FrameLayout.LayoutParams(dp(ART_DP),dp(ART_DP),Gravity.CENTER));
         View grip=new View(this);
         grip.setClickable(true);
         grip.setContentDescription(
-            "Assistente do Dia de Raides: toque para abrir, segure para ver, arraste para mover");
+            "Assistente do Dia de Reides: toque para abrir, segure para ver, arraste para mover");
         bubble.addView(grip,new FrameLayout.LayoutParams(-1,-1));
         bubbleParams=new WindowManager.LayoutParams(
             dp(BUBBLE_DP),dp(BUBBLE_DP),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -312,7 +312,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             Color.argb(110,205,215,232),13));
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView heading=text("Assistente do Dia de Raides",13,Color.WHITE,true);
+        TextView heading=text("Assistente do Dia de Reides",13,Color.WHITE,true);
         header.addView(heading,new LinearLayout.LayoutParams(0,dp(29),1));
         TextView close=button("×");
         close.setContentDescription("Recolher assistente");
@@ -379,7 +379,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(-1,dp(24));
         guideContent.addView(progressText,pp);
         progressBar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
-        progressBar.setMax(TITLES.length);
+        progressBar.setMax(plan.size());
         progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(
             Color.rgb(103,212,175)));
         progressBar.setProgressBackgroundTintList(
@@ -526,31 +526,53 @@ public final class RaidDayAssistantOverlayService extends Service {
         panelParams.gravity=Gravity.TOP|Gravity.LEFT;
         placePanelCoordinates();
     }
-    private void persist(){
-        prefs.edit().putInt("step",index).putBoolean("finished",finished)
-            .putBoolean("paused",paused).putInt("repeatedCycles",repeatedCycles).apply();
+    /** Grava eventos reais antes de mostrar a próxima etapa. */
+    private void persist(String eventType){
+        if(training)return;
+        appendEvent(eventType);
     }
     private void updateStep(){
         if(progressText==null)return;
-        progressText.setText(finished?"Concluído":
-            "Dia de Raides · passo "+(index+1)+"/"+TITLES.length);
-        progressBar.setProgress(finished?TITLES.length:index);
-        titleText.setText(finished?"Roteiro finalizado":TITLES[index]);
+        riskSection.setVisibility(!riskAccepted?View.VISIBLE:View.GONE);
+        startSection.setVisibility(riskAccepted&&!active&&!training?
+            View.VISIBLE:View.GONE);
+        boolean guiding=riskAccepted&&(active||training);
+        guideContent.setVisibility(guiding?View.VISIBLE:View.GONE);
+        if(!guiding){if(visible)placePanel();return;}
+        RaidDayGuidePlan.Step current=plan.step(index);
+        progressText.setText(finished?"Resumo concluído":
+            (training?"TREINO · ":"")+"Etapa "+current.id+" de E11");
+        progressBar.setMax(plan.size());
+        progressBar.setProgress(finished?plan.size():index);
+        titleText.setText(finished?"Roteiro finalizado":
+            current.id+" — "+current.title);
         instructionText.setText(finished?
-            "Reveja o saldo de passes no próprio jogo. O guia registra ações informadas pelo usuário, não confirma recompensas automaticamente.":
-            INSTRUCTIONS[index]);
+            "Registro encerrado. Ciclos não significam passes recebidos. "+
+            "A confirmação manual não comprova recompensa do jogo.":
+            current.instruction);
         statusText.setText(paused?"Pausado · toque em ▶ para retomar":
+            training?"Modo Treino · nenhuma ação é salva":
             "Manual · não lê tela nem altera o jogo");
-        copyButton.setVisibility(!finished&&!COORDS[index].isEmpty()?View.VISIBLE:View.GONE);
-        cycleText.setText("Ciclos repetidos: "+repeatedCycles+" · não representa passes");
-        boolean check=!finished&&index==STEP_CHECK;
-        boolean noPass=!finished&&index==STEP_NZ_RAID;
-        cycleActions.setVisibility(check||noPass?View.VISIBLE:View.GONE);
+        copyButton.setVisibility(!finished&&!plan.coords(index).isEmpty()?
+            View.VISIBLE:View.GONE);
+        cycleText.setText("Ciclos repetidos: "+repeatedCycles+
+            " · não representa passes");
+        boolean check=!finished&&index==STEP_E07;
+        boolean noPass=!finished&&(index==STEP_E03||index==STEP_E06);
+        boolean optional=!finished&&index==STEP_E09;
+        cycleActions.setVisibility(check||noPass||optional?
+            View.VISIBLE:View.GONE);
         repeatButton.setVisibility(check?View.VISIBLE:View.GONE);
-        skipButton.setVisibility(check||noPass?View.VISIBLE:View.GONE);
-        confirmButton.setText(finished?"↻ Reiniciar":check?"✓ Prosseguir":"✓ Confirmar");
-        confirmButton.setAlpha(paused?.46f:1f);
+        skipButton.setVisibility(check||noPass||optional?
+            View.VISIBLE:View.GONE);
+        skipButton.setText(optional?"Pular Kiribati":"Sem passe → evento");
+        confirmButton.setText(finished?"✓ Concluído":
+            check?"✓ Prosseguir":"✓ Confirmar");
+        confirmButton.setAlpha(paused||finished?.45f:1f);
         pauseButton.setText(paused?"▶":"Ⅱ");
+        trainingExit.setVisibility(training?View.VISIBLE:View.GONE);
+        endButton.setText(training?"Sair do treino":
+            endPending?"Confirmar fim":"Encerrar");
         if(visible)placePanel();
     }
     private void placePanelCoordinates(){
