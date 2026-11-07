@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.76",
-  "code": 54480,
-  "label": 51280,
-  "previous_tag": "v0.02.75-54479",
-  "qa_max_code": 54479,
-  "release_notes": "PokeSearch LT276: o Rank Classe aberto ao tocar no IV do cartão agora oferece um seletor de Grande Liga (GL), Ultra Liga (UL) e Liga Mestra (ML), igual ao seletor do Rank Geral. A troca mantém o mesmo Pokémon e IV capturado, mas recalcula corretamente a classificação dos 4096 IVs, o PC, nível e eficiência individual de cada liga, usando o Game Master local, sem reaproveitar ranks entre ligas. O menu é compacto, com seleção fácil por toque, e lembra a liga escolhida no mesmo Pokémon. As cinco bandeiras e ícones LT275, os ataques e o Rank Geral não foram alterados. PR #269 mesclada e testes Node, Java/Android, OTA, PvE e screenshots P/M/G aprovados; teste físico Samsung P1/P2 e confirmação de instalação continuam pendentes."
+  "version": "0.02.77",
+  "code": 54481,
+  "label": 51281,
+  "previous_tag": "v0.02.76-54480",
+  "qa_max_code": 54480,
+  "release_notes": "PokeSearch LT277: Filtro → Ordenar totalmente traduzido para português BR, com seletor compacto Padrão/Inverso em busca API. Valores diretos POST /search: -CP (PC menor, ascendente observado), -IV (prioriza IV baixos mas NÃO garante ordem crescente), -LEVEL, -DSP e -DISTANCE (relatados como aceitos pelo usuário). IV baixos mostra nota informativa para combinar com IV% máximo. Distância inversa exige localização e raio. O modo DOM não oferece valores que o site não tem, e uma falha da API não alterna silenciosamente para resultados com ordem errada. Mantidos cinco cartões de rank, interface LT275/LT276, duas Pokébolas independentes e todos os demais filtros. PR #270 integrada, oito verificações automatizadas aprovadas incluindo Node/Android Java/OTA/visuais P/M/G e compilação beta assinada. Relatos da API foram fornecidos pelo usuário; confirmação de consulta real e aceitação em Samsung P1/P2 ainda pendentes."
 }
