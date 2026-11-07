@@ -3085,6 +3085,25 @@
           "Validar no Samsung após instalar a versão oficial, incluindo as duas Pokébolas."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt303-evolution-arrows-left-1px-20261107",
+      "minVersionCode": 54507,
+      "date": "07/11/2026",
+      "title": "LT303 — Setas evolutivas 1 px à esquerda",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "Deslocados os indicadores de evolução exatamente 1 pixel CSS para a esquerda em Raides, GL, UL, ML e Rank Geral.",
+          "Mantidas duas setas pequenas bem próximas, com 0/1/2 etapas evolutivas, espessura e bandeiras centralizadas."
+        ],
+        "correcoes": [
+          "Indicador no canto de Raides também se desloca 1 px para a esquerda, sem modificar a bandeira, tamanho ou cálculos de ranking."
+        ],
+        "emDesenvolvimento": [
+          "Verificação visual no Samsung com primeira e segunda Pokébolas após instalar."
+        ]
+      }
     }
   ]
 }
