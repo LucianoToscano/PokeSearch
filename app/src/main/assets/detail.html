@@ -1475,6 +1475,44 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psTypeEffectPanel .psTypeChip .pkTypeImg{width:12px;height:12px;margin-right:3px;object-fit:contain}
 #psTypeEffectPanel .psTypeGroup.weak .psTypeGroupTitle{color:#ff9aa7}
 #psTypeEffectPanel .psTypeGroup.resist .psTypeGroupTitle{color:#9ddcd2}
+
+/* LT298: verified move details; type color on text only, transparent boxes.
+   PvP power/cost and raids Dmg/CD/DPS/Energy are separately labelled. */
+#evoBody .evoMoveDetailGroup{margin:2px 0 5px;min-width:0}
+#evoBody .evoMoveDetailGroup .evoMoveItem{align-items:center}
+#evoBody .evoMoveDetailGroup .psMoveNumbers{margin:1px 0 2px 35px}
+#evoBody .psMovePvpStats,#evoBody .psMovePveStats,
+#movesPopover .psMovePvpStats,#movesPopover .psMovePveStats,
+#psCapturedMovesPanel .psMovePvpStats,#psCapturedMovesPanel .psMovePveStats{
+ font:550 8.5px/1.35 Roboto,Arial,sans-serif;color:#a9c2d7;min-width:0;
+ white-space:normal;overflow-wrap:anywhere;margin:2px 0}
+#evoBody .psMovePveStats,#movesPopover .psMovePveStats,#psCapturedMovesPanel .psMovePveStats{color:#c2cbd4}
+#evoBody .psMoveMtIcon,#movesPopover .psMoveMtIcon,#psCapturedMovesPanel .psMoveMtIcon{
+ display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;
+ min-width:15px;height:16px;flex:0 0 17px;line-height:0}
+#evoBody .psMoveMtIcon img,#movesPopover .psMoveMtIcon img,#psCapturedMovesPanel .psMoveMtIcon img{
+ display:block;width:16px;height:15px;object-fit:contain}
+#movesPopover .psMoveNumbers{grid-column:2/-1!important;min-width:0}
+#movesPopover .psMoveNumbers .psMovePvpStats{margin:0 0 1px!important}
+#movesPopover .psMoveNumbers .psMovePveStats{margin:0 0 2px!important}
+#info #psCapturedMovesAction{appearance:none;-webkit-appearance:none;background:transparent!important;
+ border:0!important;border-radius:3px;color:inherit;font:inherit;line-height:inherit;
+ padding:0;display:inline;text-align:left;cursor:pointer;min-width:0;max-width:100%;white-space:normal}
+#info #psCapturedMovesAction:focus-visible{outline:1px solid #b5ddf4;outline-offset:1px}
+#info #psCapturedMovesAction[aria-expanded=true]{text-decoration:underline;text-decoration-color:#80aacc80;text-underline-offset:3px}
+#info #psCapturedMovesAction .infoValue{display:inline}
+#psCapturedMovesPanel[hidden]{display:none!important}
+#psCapturedMovesPanel{margin:3px 0 4px;border:1px solid #ffffff37;background:#192b3de6;
+ border-radius:8px;padding:5px 6px;box-sizing:border-box;max-width:100%;overflow-wrap:anywhere}
+#psCapturedMovesPanel .psMoveTitle{font:800 10.5px/1.35 Roboto,Arial,sans-serif;color:#e8f3ff;margin-bottom:4px}
+#psCapturedMovesPanel .psMoveNote{font:500 8px/1.35 Roboto,Arial,sans-serif;color:#b9cad8;margin:3px 0}
+#psCapturedMovesPanel .psMoveDetailItem{border-top:1px solid #ffffff26;padding:5px 0 3px;min-width:0}
+#psCapturedMovesPanel .psMoveHeaderLine{display:grid;grid-template-columns:27px minmax(0,1fr) 19px;
+ gap:3px;align-items:center;margin:0 0 3px}
+#psCapturedMovesPanel .psMoveSlot{font-size:9px;color:#dcebf9}
+#psCapturedMovesPanel .psMoveTypedName{font-size:10.5px;line-height:1.2;overflow-wrap:anywhere}
+#psCapturedMovesPanel .psMoveMtIcon{justify-self:center}
+#psCapturedMovesPanel .psMoveUnavailable{font-size:8.5px;color:#b3bdcb}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -1513,6 +1551,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   <div id="evoBody" hidden></div>
  </section>
  <div id="info"></div>
+ <section id="psCapturedMovesPanel" hidden role="region" aria-label="Detalhes dos golpes capturados"></section>
 
  <div id="coordRow">
     <button id="coords" onclick="requestCoordsUi()" title="Pegar e copiar coordenadas">⌖ Pegar Coordenadas</button>
@@ -1537,6 +1576,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  <button onclick="captureShareConfirm()">✓ Sim, compartilhar</button></div>
  <small id="captureStatus" hidden></small>
 </div>
+<script src="pokemon_move_metrics.js"></script>
+<script src="pokemon_move_panel.js"></script>
 <script src="pvpoke-overall-ranks.js"></script>
 <script src="pvpoke-little-ranks.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
