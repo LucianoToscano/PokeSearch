@@ -116,7 +116,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private ImageView avatarView;
     private TextView[] avatarSizeButtons;
     private TextView avatarMotionButton;
-    private int avatarSizeIndex=1,avatarAnimationTick=0,avatarReactionFrame=-1;
+    private int avatarSizeIndex=2,avatarAnimationTick=0,avatarReactionFrame=-1;
     private long avatarReactionUntil=0L;
     private boolean avatarMotion=true;
     private final Runnable avatarTicker=new Runnable(){
@@ -199,9 +199,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                 Toast.LENGTH_LONG).show();
             stopSelf();return;
         }
-        avatarSizeIndex=RaidDayAvatarFrames.SIZES_PX[0]==
-            prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,75)?0:
-            prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,75)==100?2:1;
+        // G (100 pixels) e o tamanho inicial para quem ainda nao escolheu.
+        // Uma preferencia de P/M/G previamente salva continua respeitada.
+        int savedAvatarSize=prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,100);
+        avatarSizeIndex=savedAvatarSize==50?0:savedAvatarSize==75?1:2;
         avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
         avatarSprites=RaidDayAvatarFrames.load(this);
         touchSlop=ViewConfiguration.get(this).getScaledTouchSlop();
