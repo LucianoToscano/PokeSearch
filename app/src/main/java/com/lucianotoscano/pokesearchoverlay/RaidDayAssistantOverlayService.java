@@ -200,11 +200,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
     }
     private void appendEvent(String type){
+        appendEvent(type,plan.step(index).id);
+    }
+    private void appendEvent(String type,String actedOnStep){
         if(training||journal==null)return;
         RaidDayEvent event=new RaidDayEvent();
         event.sessionKey=sessionKey;
         event.type=type;
-        event.stepId=plan.step(index).id;
+        event.stepId=actedOnStep;
         event.occurredAtMs=System.currentTimeMillis();
         event.nextIndex=index;
         event.cycleCount=repeatedCycles;
@@ -415,7 +418,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         back.setContentDescription("Voltar uma etapa");
         actions.addView(back,new LinearLayout.LayoutParams(dp(36),-1));
         back.setOnClickListener(v->{
-            if(index>0){index--;finished=false;persist("BACK");updateStep();}
+            if(index>0){
+                String from=plan.step(index).id;
+                index--;finished=false;endPending=false;
+                persist("BACK",from);updateStep();
+            }
         });
         confirmButton=button(getString(R.string.raid_day_confirm));
         LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,-1,1);
@@ -427,9 +434,12 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(now-lastConfirmAt<650L)return; // no accidental double-step
             lastConfirmAt=now;
             if(finished)return; // não reiniciar, nem apagar, pelo botão Confirmar
+            String confirmedStep=plan.step(index).id;
             if(index<plan.size()-1)index++;
             else finished=true;
-            persist(finished?"FINISHED":"STEP_CONFIRMED");updateStep();
+            endPending=false;
+            persist(finished?"FINISHED":"STEP_CONFIRMED",confirmedStep);
+            updateStep();
         });
         pauseButton=button("Ⅱ");
         pauseButton.setContentDescription("Pausar ou retomar guia");
@@ -437,7 +447,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         pauseP.leftMargin=dp(6);
         actions.addView(pauseButton,pauseP);
         pauseButton.setOnClickListener(v->{
-            paused=!paused;persist(paused?"PAUSED":"RESUMED");updateStep();
+            paused=!paused;endPending=false;
+            persist(paused?"PAUSED":"RESUMED");updateStep();
         });
         cycleActions=new LinearLayout(this);
         LinearLayout.LayoutParams cycleActionsLp=new LinearLayout.LayoutParams(-1,dp(36));
@@ -451,9 +462,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                 statusText.setText("Limite de repetições salvas neste roteiro");
                 return;
             }
+            String from=plan.step(index).id;
             repeatedCycles++;
             index=plan.indexOf(plan.step(index).repeatTo);
-            persist("CYCLE_REPEATED");updateStep();
+            endPending=false;persist("CYCLE_REPEATED",from);updateStep();
         });
         skipButton=button(getString(R.string.raid_day_no_pass));
         LinearLayout.LayoutParams skipLp=new LinearLayout.LayoutParams(0,-1,1);
@@ -464,11 +476,13 @@ public final class RaidDayAssistantOverlayService extends Service {
             RaidDayGuidePlan.Step step=plan.step(index);
             if(!step.skipTo.isEmpty()){
                 index=plan.indexOf(step.skipTo);
-                persist("OPTIONAL_SKIPPED");updateStep();return;
+                endPending=false;
+                persist("OPTIONAL_SKIPPED",step.id);updateStep();return;
             }
             if(step.noPassTo.isEmpty())return;
             index=plan.indexOf(step.noPassTo);
-            persist("NO_PASS");updateStep();
+            endPending=false;
+            persist("NO_PASS",step.id);updateStep();
         });
         LinearLayout fallbackActions=new LinearLayout(this);
         LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-1,dp(36));
@@ -524,8 +538,11 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     /** Grava eventos reais antes de mostrar a próxima etapa. */
     private void persist(String eventType){
+        persist(eventType,plan.step(index).id);
+    }
+    private void persist(String eventType,String actedOnStep){
         if(training)return;
-        appendEvent(eventType);
+        appendEvent(eventType,actedOnStep);
     }
     private void updateStep(){
         if(progressText==null)return;
