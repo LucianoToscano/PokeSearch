@@ -37,7 +37,7 @@ function metricsFor(move,fast){
 function pveStats(move,fast){
  const m=metricsFor(move,fast);
  const string=root?.PokeSearchMoveMetrics?.pveLine?.(m)||"";
- return string?'<div class="psMovePveStats" title="Dados de combate em raides, não da Liga GO">Raides: '+esc(string)+'</div>':"";
+ return string?'<div class="psMovePveStats" title="Dano, duração e energia em raides">'+esc(string)+'</div>':"";
 }
 function pvpStats(move,fast){
  const stats=typeof move==="object"&&move?.stats?move.stats:null;
@@ -50,7 +50,7 @@ function pvpStats(move,fast){
  const out=[];
  if(nPower!==null)out.push("Poder "+nPower);
  if(nEnergy!==null&&nEnergy>0)out.push((fast?"Energia +":"Custo ")+nEnergy);
- return out.length?'<div class="psMovePvpStats">PvP: '+esc(out.join(" • "))+'</div>':"";
+ return out.length?'<div class="psMovePvpStats" title="Poder e energia em PvP">'+esc(out.join(" • "))+'</div>':"";
 }
 function recommendationMetrics(move,fast){
  // The recommendation is for PvP; never concatenate raid values under it.
