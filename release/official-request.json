@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.05",
-  "code": 54511,
-  "label": 51309,
-  "previous_tag": "v0.03.04-54510",
-  "qa_max_code": 54510,
-  "release_notes": "PokeSearch LT305 — Edu conversacional. Balões brancos inspirados em quadrinhos, textos escuros e respostas curtas, sem painel gigante. O Edu se apresenta como treinador e conduz o tutorial comunitário Bug dos Passes uma pergunta por vez. O botão de configurações saiu da conversa: segure a sprite por aproximadamente 1,2 s para abrir os ajustes, mantendo toque curto e arraste. Preparação real simplificada para apenas informar a data, sem descartar preferências antigas; passe é conferido na etapa apropriada. Coordenadas de Havaí, Nova Zelândia e Kiribati podem ser tocadas para copiar, sem alterar GPS. Chegada à região e carregamento do mapa exigem confirmações distintas. Nova sessão no dia do evento inicia em D; sessões da véspera oferecem passagem manual para o dia D, preservando histórico e sem inventar passes. Modo Simular hoje é fictício e não registra reides reais. Preservados duas Pokébolas, Doce Raro, login opcional, limite de 10 resultados, 429/Retry-After, sprites, favoritos, ranks e assinatura permanente. PR #302 integrada por squash 58859a5b65ec2b933540f3652d2cde79456d035b. Testes Node QA, LT169, LT211, Java LT62 e OTA LT173 aprovados. QA visual/funcional físico Samsung e calibração OCR PT-BR/EN ainda pendentes. O método comunitário não é garantido, pode violar os Termos do Pokémon GO e não é automatizado pelo aplicativo. Instalação exige confirmação do Android."
+  "version": "0.03.06",
+  "code": 54512,
+  "label": 51310,
+  "previous_tag": "v0.03.05-54511",
+  "qa_max_code": 54511,
+  "release_notes": "PokeSearch LT306 — Novo visual do Edu aplicado diretamente no aplicativo. A conversa agora flutua sem o painel escuro externo: existe apenas um balão branco de quadrinhos com contorno fino e cauda lateral integrada, orientada para a sprite do treinador. As respostas aparecem abaixo em botões brancos arredondados e independentes, sem caixa envolvendo os controles. Edu e balão ficam próximos ao mover a sprite ou o chip compacto de identificação; a largura se adapta ao espaço da tela para evitar sobreposição com o personagem. Mantém tamanho G como padrão e configurações ocultas por toque prolongado de aproximadamente 1,2 segundo. A saudação inicial ficou mais limpa, sem legenda extra. Preservados roteiro comunitário E01–E11, simulação fictícia, entradas de passes, consentimento da leitura visual, duas Pokébolas, Doce Raro, busca sem login, limite de dez resultados, tratamento HTTP 429/Retry-After, favoritos, sprites e assinatura permanente. PR #304 integrada por squash 6993f98b875f666030df8f199603450336056b22. Testes Node QA, LT169, LT211, Java LT62 e LT173 aprovados. O método Bug dos Passes não garante recompensas, pode violar os termos do Pokémon GO, e PokeSearch não teleporta nem automatiza o jogo. Ainda pendente validação visual física no Samsung, inclusive balão, arraste, ajustes e OCR; testes automatizados não substituem a revisão em aparelho. Instalação exige confirmação do Android."
 }
