@@ -500,7 +500,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                             prefs.edit().putInt("x",bubbleParams.x).putInt("y",bubbleParams.y).apply();
                         }else if(!held&&event.getActionMasked()==MotionEvent.ACTION_UP){
                             reactAvatar(RaidDayAvatarFrames.WAVE);
-                            setVisible(!visible);
+                            boolean open=!visible;
+                            // Toque simples nunca reabre configurações ocultas.
+                            eduSettingsOpen=false;
+                            setVisible(open);
                         }
                         dragging=false;return true;
                 }
@@ -690,7 +693,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(37),dp(33));
         closeP.leftMargin=dp(5);
         header.addView(close,closeP);
-        close.setOnClickListener(v->setVisible(false));
+        close.setOnClickListener(v->{
+            eduSettingsOpen=false;
+            setVisible(false);
+        });
         View.OnTouchListener move=new View.OnTouchListener(){
             float originX,originY;
             int panelX,panelY;
