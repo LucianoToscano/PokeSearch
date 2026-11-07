@@ -747,6 +747,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                                 Math.max(0,sh-height),panelY+Math.round(dy)));
                             try{wm.updateViewLayout(panelScroll,panelParams);}
                             catch(IllegalArgumentException ignored){}
+                            positionEduSpeechTail();
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
@@ -1182,17 +1183,17 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
     }
     private void showEduSettings(){
-        eduMainCard.setVisibility(View.GONE);
+        // Cabeçalho de arraste e botão recolher continuam no balão,
+        // mesmo quando as configurações ocultas estiverem abertas.
+        eduMainCard.setVisibility(View.VISIBLE);
         preparationSection.setVisibility(View.GONE);
         eduActions.setVisibility(View.GONE);
         eduMiniActions.setVisibility(View.GONE);
         eduSettings.setVisibility(View.VISIBLE);
         visualToggle.setText(RaidDayScreenCaptureService.isActive()?
             "⏹ Parar leitura visual":"👁 Autorizar leitura de tela");
-        if(!eduNote.isEmpty()){
-            eduMainCard.setVisibility(View.VISIBLE);
-            setTalk("Edu: "+eduNote,"");
-        }
+        setTalk(eduNote.isEmpty()?"Ajustes do Edu":eduNote,
+            "Segure a sprite para abrir este menu. Volte à conversa quando terminar.");
     }
     /** Um toque nas coordenadas COPIA, mas nunca altera a localização do aparelho. */
     private void addEduCoordinateButton(){
@@ -1489,10 +1490,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         }else if(!eduWantsReal){
             showEduWelcome();
         }else if(!eduDateConfirmed()){
-            eduMainCard.setVisibility(View.GONE);
+            // No modo data, o balão mantém o cabeçalho, o X e a cauda.
+            setTalk("Quando será o evento?",
+                "Informe somente a data. Horários não confirmados não serão inventados.");
             eduActions.setVisibility(View.GONE);
             preparationSection.setVisibility(View.VISIBLE);
-            preparation.setQuestion(0); // A conversa começa somente pela data.
+            preparation.setQuestion(0);
             renderPreparation();
         }else if(!riskAccepted){showEduRisk();}
         else{showEduReady();}
@@ -1510,6 +1513,21 @@ public final class RaidDayAssistantOverlayService extends Service {
         panelParams.y=Math.max(0,Math.min(Math.max(0,sh-dp(125)),
             prefs.getInt("edu_panel_y",bubbleParams.y)));
     }
+    /** Mantém a cauda no lado que olha para a sprite e na altura da cabeça. */
+    private void positionEduSpeechTail(){
+        if(eduSpeechTail==null||bubbleParams==null||panelParams==null)return;
+        boolean avatarLeft=bubbleParams.x+bubbleParams.width/2
+            <=panelParams.x+eduPanelWidth/2;
+        eduTailPointsLeft=avatarLeft;
+        FrameLayout.LayoutParams lp=
+            (FrameLayout.LayoutParams)eduSpeechTail.getLayoutParams();
+        lp.gravity=Gravity.TOP|(avatarLeft?Gravity.LEFT:Gravity.RIGHT);
+        int avatarCenter=bubbleParams.y+bubbleParams.height/2;
+        int wanted=avatarCenter-panelParams.y-dp(13);
+        lp.topMargin=Math.max(dp(12),Math.min(dp(43),wanted));
+        eduSpeechTail.setLayoutParams(lp);
+        eduSpeechTail.invalidate();
+    }
     private void placePanel(){
         if(!visible||panelScroll==null||panelParams==null)return;
         int sw=getResources().getDisplayMetrics().widthPixels;
@@ -1519,6 +1537,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         panelParams.y=Math.max(0,Math.min(Math.max(0,sh-height),panelParams.y));
         try{wm.updateViewLayout(panelScroll,panelParams);}
         catch(IllegalArgumentException ignored){}
+        positionEduSpeechTail();
     }
     private void setVisible(boolean show){
         if(panelScroll==null||wm==null||show==visible)return;
@@ -1527,6 +1546,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             updateStep();
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);
+            positionEduSpeechTail();
             panelScroll.post(this::placePanel);
         }else{
             // Ao reabrir com toque curto, sempre voltar à conversa principal.
