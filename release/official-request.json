@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.88",
-  "code": 54492,
-  "label": 51292,
-  "previous_tag": "v0.02.87-54491",
-  "qa_max_code": 54491,
-  "release_notes": "PokeSearch LT288: ajuste de proporção das sprites dos Resultados, após o relato do Samsung de figuras grandes e pequenas misturadas. Imagens HTTPS comprovadas nos cards do PoGoCoordinates continuam sendo exibidas; se a leitura dos pixels alfa da imagem externa for bloqueada por CORS, a lista usa a imagem PNG local nativa de identidade exata como referência auxiliar de geometria, sem substituir os pixels/URL que o usuário vê. Ampliação da referência limitada a 0,8–1,8 e deslocamentos a até 12% da caixa, evitando crescimento excessivo de Pokémon de arte diferente. Tamanhos P/M/G permanecem 24/32/40dp no Editor Visual e ambas as Pokébolas mantêm estados e configurações independentes. Resultado com forma, fantasia ou Shiny sem referência confirmada recebe apenas tamanho conservador, sem imagem falsa. Mantidos fallback #Dex, recuperação LT286/LT287, sprites originais, cards, ranking, golpes, localização, alertas, favoritos, filtros, OTA e assinatura permanente. Sete gates obrigatórios da PR #282 aprovados, incluindo APK beta; homologação física Samsung P1/P2 ainda pendente."
+  "version": "0.02.89",
+  "code": 54493,
+  "label": 51293,
+  "previous_tag": "v0.02.88-54492",
+  "qa_max_code": 54492,
+  "release_notes": "PokeSearch LT289: refinamento das sprites pequenas nos Resultados, especialmente Pikachu Anniversary 2026 Singapore 01 observado no Samsung. A forma exata agora está empacotada em quatro variantes de gênero/Shiny, com hashes Git blob fixados e validação obrigatória na APK oficial. O resolver reconhece nome completo do evento mesmo com costume_id numérico, sem trocar Pikachu por outra fantasia ou outra região. Quando a imagem do PoGoCoordinates é exibida mas bloqueia leitura de transparência via canvas, a lista pode usar somente o PNG GO exato e assinado como referência para ampliar o contorno até 4,25× e alinhar dentro do tile. Outras sprites continuam com limite conservador de 1,8×; não altera URL ou pixels visíveis do card, dados de busca, IV, PC, golpes, ranking, localização, favoritos, duas Pokébolas independentes, P/M/G, OTA e certificado permanente. PR #283 mesclada após sete verificações obrigatórias aprovadas, incluindo APK beta privado. Homologação física Samsung P1/P2 permanece pendente."
 }
