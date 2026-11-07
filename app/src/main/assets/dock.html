@@ -6506,6 +6506,7 @@ function attachSpriteFeedback(){
       // form/costume/shiny identity; unverified variants yield no reference.
       let exactReference="";
       let verifiedEvent=false;
+      let verifiedProvider=false;
       if(img.dataset){
        img.dataset.psExactGoGeometry="0";
        img.dataset.psSourceMeasured="0";
@@ -6515,6 +6516,9 @@ function attachSpriteFeedback(){
        if(sourceCard?.imageFromSite===true&&engine?.resolve){
         const art=engine.resolve(sourceCard);
         if(art?.providerExact===true&&/^https:\/\//.test(String(art.src||""))){
+         // Native geometry may read ONLY this confirmed and displayed URL,
+         // never a guessed URL or generic base/costume fallback.
+         verifiedProvider=String(img.currentSrc||img.src||"")===String(art.src||"");
          exactReference=engine?.bundledExactForArt?.(sourceCard,art)||"";
          const go=engine?.goExactIcon?.(sourceCard);
          const packaged=go&&engine?.bundledGoCostumeSource?.(go);
@@ -6535,7 +6539,7 @@ function attachSpriteFeedback(){
       window.PokeSearchSpriteScale?.applyResultTile?.(img,exactReference);
       window.PokeSearchSpriteScale?.enhanceProviderTile?.(
        img,sourceCard?.imageFromSite===true?sourceCard.imageAlphaBounds:null,
-       verifiedEvent);
+       verifiedEvent,verifiedProvider);
      }
     }
    }
