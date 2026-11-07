@@ -1139,7 +1139,8 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  border:1px solid #e0bb754b;border-radius:8px;background:#1c242cb8;
  color:#e7eef6;font:10.5px/1.4 Roboto,Arial,sans-serif;
  overflow:visible;overflow-wrap:anywhere}
-#raidPanel .psRaidHead{font-weight:750;color:#f6d994;margin:2px 0 5px}
+#raidPanel .psRaidHead{font-weight:750;color:#f6d994;margin:2px 0 5px;display:flex;align-items:center;gap:4px}
+#raidPanel .psRaidConfidence{margin-left:auto;font:700 9px Roboto,Arial,sans-serif;color:#a5e0bc;line-height:1}
 #raidPanel .psRaidRow{display:grid;grid-template-columns:minmax(0,1fr) auto;
  gap:3px 7px;align-items:start;border-top:1px solid #a3b4c427;padding:5px 0}
 #raidPanel .psRaidRow strong{color:#f5dfa2;white-space:nowrap}
@@ -1834,6 +1835,8 @@ function psCloseOtherPanels(keep){
  }
  if(keep!=="rank")window.PokeSearchRankExplorer?.close?.();
  if(keep!=="alternates"&&typeof closePvpRankAlternates==="function")closePvpRankAlternates();
+ // Close incidental help overlays when switching the main panel.
+ if(typeof closePvpReferenceInfo==="function")closePvpReferenceInfo();
 }
 /* Raid results rank the SPECIES by attack type, not these encounter IVs.
  * This is an async, read-only public-data check and cannot reveal coordinates. */
@@ -1900,7 +1903,7 @@ function renderRaidPreview(){
     '</span><strong class="psRaidTypeRank">'+raidTypeIcon(row)+'#'+row.rank+
     ' '+h(row.typePt)+'</strong>'+
     '<span class="psRaidMoves">'+moveLabel(row)+'</span></div>';
-  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/ps-raid-lt268.png" alt="">Atacantes por tipo</div>'+
+  panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/ps-raid-lt268.png" alt="">Atacantes por tipo<span class="psRaidConfidence" title="Ranking de espécies confirmado pela fonte PvE; não é ranking dos IVs capturados" aria-label="Ranking PvE verificado">✓</span></div>'+
    rows.slice(0,3).map(rowHtml).join("")+
    (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
     ' classificações</summary>'+rows.slice(3).map(rowHtml).join("")+'</details>':"")+
@@ -1910,6 +1913,14 @@ function renderRaidPreview(){
    panel.setAttribute?.("data-ps-criteria",
     "Um segundo Carregado no jogo é opcional; a fonte não valida a melhor segunda escolha.");
  }
+ // LT283: compact confidence status — no extra lines, and never claim an IV
+ // rank from a species Raid ranking. Absence of data is NOT a poor score.
+ const confidence=best&&Number.isInteger(best.rank)&&best.rank>0?"confirmed":"unconfirmed";
+ button.setAttribute?.("data-ps-confidence",confidence);
+ panel.setAttribute?.("data-ps-confidence",confidence);
+ button.title=confidence==="confirmed"?
+  "Ranking PvE verificado para a espécie. Os IVs deste exemplar não foram ranqueados em Raides.":
+  "Ranking PvE não confirmado: "+String(result?.reason||"Fonte em consulta").slice(0,120);
  // LT282: <details> changes height after initial render. The native window
  // and WebView scroll must be updated on BOTH expand and collapse. Capture the
  // non-bubbling "toggle" on the persistent parent (child HTML is regenerated).
@@ -1980,8 +1991,14 @@ let psActiveAnalysisKey="";
 const evoIdentity=c=>JSON.stringify([
  Number(c?.sourceIndex??-1),String(c?.name||""),String(c?.iv||""),String(c?.cp??"")]);
 function resizeEvolutionPanel(){
+ // LT283: collapse bursty resize requests from PvP, Raid, calculator and
+ // expanded <details> into one measurement of the latest DOM layout.
+ if(resizeEvolutionPanel.pending)return;
+ resizeEvolutionPanel.pending=true;
  requestAnimationFrame(()=>{
+  resizeEvolutionPanel.pending=false;
   const panel=document.getElementById("panel");
+  if(!panel)return;
   // Full scrollHeight plus the 2px border and rounding; not a clipped
   // max-height minus six pixels as on previous builds.
   const height=Math.ceil(panel.scrollHeight)+3;
@@ -1995,6 +2012,15 @@ function resizeEvolutionPanel(){
   };
   if(typeof setTimeout==="function")setTimeout(recheck,90);
  });
+}
+// LT283: any expandable section shares the SAME native size/scroll logic.
+// The Raid More listener already handles its own toggle (LT282).
+const psExpandResizeRoot=typeof document==="undefined"?null:document.getElementById("panel");
+if(psExpandResizeRoot?.addEventListener){
+ psExpandResizeRoot.addEventListener("toggle",event=>{
+  if(event.target?.tagName==="DETAILS"&&
+     !event.target.matches?.(".psRaidMore"))resizeEvolutionPanel();
+ },true);
 }
 function toggleEvolutionDetails(){
  const section=document.getElementById("evolutions");

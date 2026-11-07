@@ -6690,14 +6690,29 @@ for(const [source,target] of PVP_EVO_LINKS){
    no best buddy. Based on PvPoke game master species stats and CPMs.
    Distinct from PvPoke's overall species-performance ranking. */
 const PVP_IV_GAME_MASTER=window.POKESEARCH_PVP_IV_DATA||null;
-const ivSpeciesByName=new Map(),speciesIvRanksCache=new Map(),speciesIvMetaCache=new Map();
+const ivSpeciesByName=new Map(),ivSpeciesCanonicalByName=new Map(),speciesIvRanksCache=new Map(),speciesIvMetaCache=new Map();
 if(PVP_IV_GAME_MASTER&&Array.isArray(PVP_IV_GAME_MASTER.pokemon)){
  for(const data of PVP_IV_GAME_MASTER.pokemon){
   const [id,name,atk,def,hp]=data;
   if(!id||!name||![atk,def,hp].every(v=>Number.isInteger(v)&&v>0))continue;
   const key=speciesKey(name);
-  if(ivSpeciesByName.has(key))ivSpeciesByName.set(key,null);
-  else ivSpeciesByName.set(key,[id,atk,def,hp]);
+  if(ivSpeciesByName.has(key)){
+   ivSpeciesByName.set(key,null);
+   ivSpeciesCanonicalByName.set(key,null); // ambiguous source never becomes a rank.
+  }else{
+   ivSpeciesByName.set(key,[id,atk,def,hp]);
+   ivSpeciesCanonicalByName.set(key,name);
+  }
+ }
+}
+// LT283: one immutable-source name index for the PvP family explorer.
+// Build once per WebView rather than filtering the entire Game Master per tap.
+const pvpVerifiedNames=new Map();
+if(Array.isArray(PVP_IV_GAME_MASTER?.pokemon)){
+ for(const data of PVP_IV_GAME_MASTER.pokemon){
+  if(Array.isArray(data)&&data.length>=5&&
+     [data[2],data[3],data[4]].every(v=>Number.isFinite(v)&&v>0))
+   pvpVerifiedNames.set(speciesKey(data[1]),data[1]);
  }
 }
 // LT235: Mega projections use only verified, distinct Game Master base stats.
@@ -6947,8 +6962,7 @@ window.pvpEvolutionDetails=function(index){
   name:String(card.name||"").slice(0,100),
   // Battle-stat identity is separate from the visible encounter/sprite label.
   // The detail Rank Classe table must look up the same verified form key.
-  rankSpecies:(ivSpeciesByName.get(safePvpSpeciesKey(card))?
-   PVP_IV_GAME_MASTER.pokemon.find(x=>speciesKey(x[1])===safePvpSpeciesKey(card))?.[1]:"")||"",
+  rankSpecies:ivSpeciesCanonicalByName.get(safePvpSpeciesKey(card))||"",
   iv:String(card.iv||""),
   cp:String(card.cp??""),
   ivUnavailable:missingIv,
@@ -7010,17 +7024,20 @@ function pvpVerifiedCalculatorFamily(card){
   return [];
  const key=safePvpSpeciesKey(card);
  if(!key||!ivSpeciesByName.get(key))return [];
+ // The runtime uses the prebuilt LT283 index. Headless old-contract tests
+ // extract this function alone, so retain equivalent local fallback there.
+ const names=typeof pvpVerifiedNames!=="undefined"?pvpVerifiedNames:
+  new Map(PVP_IV_GAME_MASTER.pokemon.filter(x=>
+   Array.isArray(x)&&x.length>=5&&
+   [x[2],x[3],x[4]].every(v=>Number.isFinite(v)&&v>0))
+    .map(x=>[speciesKey(x[1]),x[1]]));
  // Do not claim a costume can evolve or mix a Shadow/regional form's stats
  // with normal families. Species without normal identity keep their own row.
  if(key.includes("(")||cosmeticPvpIdentity(card)){
-  const found=PVP_IV_GAME_MASTER.pokemon.find(x=>speciesKey(x[1])===key);
-  return found?[found[1]]:[];
+  const exact=names.get(key);
+  return exact?[exact]:[];
  }
  const queue=[key],seen=new Set([key]);
- const names=new Map(PVP_IV_GAME_MASTER.pokemon.filter(x=>
-  Array.isArray(x)&&x.length>=5&&
-  [x[2],x[3],x[4]].every(v=>Number.isFinite(v)&&v>0))
-   .map(x=>[speciesKey(x[1]),x[1]]));
  while(queue.length&&seen.size<40){
   const next=queue.shift();
   const related=[...(pvpEvolutionGraph.get(next)||[]),
