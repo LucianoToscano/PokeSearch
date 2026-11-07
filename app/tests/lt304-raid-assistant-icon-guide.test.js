@@ -81,7 +81,7 @@ assert.match(service,/private void leaveTraining\(/);
 assert.match(service,/restoreJournal\(\)/);
 assert.match(service,/journal\.events\(\)\.all\(sessionKey\)/);
 assert.match(service,/appendEvent\("LEGACY_IMPORTED"\)/);
-assert.match(service,/persist\(eventType,actedOnStep\)/);
+assert.match(service,/appendEvent\(eventType,actedOnStep\)/);
 assert.match(service,/persist\("CYCLE_REPEATED"|navigateEdu\(step\.repeatTo,"CYCLE_REPEATED"\)/);
 assert.match(service,/navigateEdu\(step\.noPassTo,"NO_PASS"\)/);
 assert.match(service,/persist\("NOT_OBSERVED"\)/);
