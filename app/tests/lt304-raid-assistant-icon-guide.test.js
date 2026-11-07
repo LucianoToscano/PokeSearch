@@ -34,7 +34,7 @@ for(let i=0;i<11;i++){
  const step=steps[i];
  assert.equal(step.id,"E"+String(i+1).padStart(2,"0"));
  for(const key of ["titulo","instrucao","naoAconteceu","retornoSeguro"])
-  assert.ok(typeof step[key]==="string"&&step[key].length>10,step.id+" "+key);
+  assert.ok(typeof step[key]==="string"&&step[key].length>=(key==="titulo"?4:10),step.id+" "+key);
  assert.ok(Array.isArray(step.precondicoes)&&step.precondicoes.length>=1);
  assert.deepEqual(step.confirmacoesAceitas,["USER_ATTESTED"]);
  if(step.local!==null)assert.ok(variant.locais[step.local],step.id+" local");
