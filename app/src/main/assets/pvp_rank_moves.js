@@ -196,7 +196,11 @@
    if(moves.length<2||moves.some(m=>
       !["normal","elite","legacy"].includes(m.status)))return null;
    const legacy=moves.some(m=>m.status==="elite"||m.status==="legacy");
-   return {verified:true,legacy,icon:legacy?"⚔️":"🗡️",
+   // MT status is independent from the legacy flag: a legacy move is NOT
+   // proof that an Elite MT is currently available for that move.
+   const mt=moves.some(m=>m.status==="elite")?"elite":
+    moves.every(m=>m.status==="normal")?"normal":"unknown";
+   return {verified:true,legacy,mt,icon:legacy?"⚔️":"🗡️",
     title:legacy?"⚔️ Recomendação PvP contém golpe legado/Elite":
      "🗡️ Recomendação PvP sem golpes legados",
     source:mega?source+" · Mega Edition":source};
