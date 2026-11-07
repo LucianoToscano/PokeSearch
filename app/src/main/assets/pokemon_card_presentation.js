@@ -135,5 +135,6 @@
   if(seconds<=900)return "warning";
   return "good";
  }
- return Object.freeze({esc,types,gender,moves,locationCountryFlag,despawnTone,meta});
+ return Object.freeze({esc,types,gender,moves,locationCountryFlag,despawnTone,meta,
+  moveTypeColor:type=>Object.prototype.hasOwnProperty.call(TYPE_COLORS,type)?TYPE_COLORS[type]:null});
 });
