@@ -132,7 +132,8 @@ for(const marker of ["Mega Sableye","isMega","TOP 1 MEGA","100,00%","Rank Classe
 assert.ok(!row({...result.leagues[0].own,name:"Sableye"},true).includes("TOP 1 MEGA"),
  "normal form must never inherit the Mega badge");
 assert.ok(detail.includes("league.megas.filter(e=>e?.megaProjection===true)"));
-assert.ok(detail.includes("const rows=[...megas,...entries,...references]"));
+assert.ok(detail.includes("const rows=[...orderedEntries,...references,...megas]"),
+ "Mega projection still rendered, after the ordinary natural evolution chain");
 assert.ok(detail.includes("Mega: projeção matemática dos mesmos IVs"));
 assert.ok(detail.includes("Não confirma que Mega seja permitida na Liga de Batalha GO"));
 const compactBegin=detail.indexOf("function updateVisiblePvPRank(payload){");
