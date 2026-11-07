@@ -99,7 +99,7 @@ public final class RaidAssistantOverlayService extends Service {
         b.setClickable(true);
         return b;
     }
-    private static Bitmap loadArtwork(Service context){
+    public static Bitmap loadArtwork(android.content.Context context){
         try(InputStream stream=context.getAssets().open("raid_assistant_icon.b64")){
             ByteArrayOutputStream out=new ByteArrayOutputStream();
             byte[] buffer=new byte[4096];int n;
