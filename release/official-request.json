@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.98",
-  "code": 54502,
-  "label": 51302,
-  "previous_tag": "v0.02.95-54499",
-  "qa_max_code": 54501,
-  "release_notes": "PokeSearch LT298 — atualização cumulativa LT296–LT298. LT296: Rank Geral com sprites de Pokémon/evoluções selecionáveis e ícones GL/UL/ML/LC; rankings da espécie exata, cabeçalhos centralizados e pré-verificação dos símbolos de MT nas evoluções (legado sem comprovação permanece cinza). LT297: ícones dos tipos maiores em caixa própria ao lado dos IVs preservados, painel de Eficácia do Tipo (Fraqueza, Resistência, Normais) com multiplicadores defensivos reais do Pokémon GO e formas não verificadas neutras. LT298: toque em Golpes capturados abre detalhes do moveset real; toque nos ícones de golpes das evoluções mostra recomendações PvPoke por espécie/liga. Nomes PT-BR coloridos pelo tipo, sem tarja; ícones MT Ágil e MT Carregada normais distintos e PNGs Elite originais preservados. Quando confirmados por fontes pinadas, mostram Poder/Energia/Custo (PvP) e Dmg/CD/DPS/Energia (Raides) em linhas distintas, sem misturar mecânicas nem inventar valores. Novo índice offline verificado de 391 golpes da fonte WatWowMap pinada. Mantidos Pokémon, formas, IVs, PC, rankings, sprites, resultados, localização/coordenadas, alertas, filtros, duas Pokébolas, conta/login e assinatura permanente. Oito verificações automáticas aprovadas na PR #294; teste físico Samsung ainda pendente. Atualização oficial exige confirmação Android e segue Wi-Fi/preferências do usuário. Os nomes dos ataques não recebem fundo sólido e usam somente a cor de seu tipo, preservando o visual glass compacto."
+  "version": "0.02.99",
+  "code": 54503,
+  "label": 51303,
+  "previous_tag": "v0.02.98-54502",
+  "qa_max_code": 54502,
+  "release_notes": "PokeSearch LT299 — ajustes de visual e usabilidade após screenshots reais do Samsung. Ícones dos tipos com tamanho fixo de 16×16 px para um ou dois tipos, centralizados, 2 px entre dois ícones, caixa 2 px menor (1 px de cada lado); IV, PC, nível, eficácia do tipo e os dois overlays permanecem intactos. Os painéis de ataques voltam a usar o ícone normal de MT original; removidos os símbolos provisórios de raio e estrela; MT Elite continua com PNG próprio apenas quando verificado, e MT desconhecida permanece cinza. Recomendações da Liga GO mostram somente Poder e Energia gerada/Custo; detalhes dos golpes capturados mostram somente Dmg, CD, DPS e Energia de raides, sem repetir indicadores PvP/Raides por linha nem avisos redundantes do PvPoke. Os números continuam separados internamente pois o mesmo movimento pode ter valores diferentes em PvP e raides. A caixa IV agora fecha o Rank Classe ao segundo toque, inclusive após mudar GL/UL/ML, e reabre ao terceiro toque na liga escolhida, sem interferir em Rank Geral. Merge PR #295 commit 741f027efad8a2d144b6ae3f95e51557675cd78d. Oito gates de regressão aprovados, inclusive visual P/M/G e APK beta isolada. Preservados login, permissões, PoGoCoordinates, localização/coordenadas, sprites, rankings, filtros, alertas e assinatura permanente. Teste físico final no Samsung pendente de instalação e aprovação Android."
 }
