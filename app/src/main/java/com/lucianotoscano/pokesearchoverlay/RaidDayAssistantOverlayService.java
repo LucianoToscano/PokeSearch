@@ -73,6 +73,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private LinearLayout cycleActions,guideContent,riskSection,startSection,preparationSection,preparationChoices;
     private ProgressBar progressBar;
     private TextView prepTitle,prepStatus,clockText,summaryText,prepBack,prepNext;
+    private TextView eventWindowText;
     private RaidDayPreparation preparation;
     private final Clock eventClock=Clock.systemUTC();
     private final Runnable clockPulse=new Runnable(){
@@ -642,6 +643,21 @@ public final class RaidDayAssistantOverlayService extends Service {
         summaryText=text("",11,Color.rgb(210,227,240),false);
         summaryText.setLineSpacing(dp(2),1f);
         startSection.addView(summaryText,new LinearLayout.LayoutParams(-1,-2));
+        eventWindowText=text("",11,Color.rgb(184,212,223),false);
+        eventWindowText.setPadding(0,dp(5),0,dp(5));
+        startSection.addView(eventWindowText,new LinearLayout.LayoutParams(-1,-2));
+        TextView eventSetup=button("📅 Horários, lembretes e calendário");
+        LinearLayout.LayoutParams setupLp=new LinearLayout.LayoutParams(-1,dp(37));
+        setupLp.topMargin=dp(6);
+        startSection.addView(eventSetup,setupLp);
+        eventSetup.setOnClickListener(v->{
+            Intent config=new Intent(this,RaidDayEventSettingsActivity.class);
+            config.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try{startActivity(config);}
+            catch(RuntimeException error)
+                {Toast.makeText(this,"Não foi possível abrir os horários",
+                    Toast.LENGTH_SHORT).show();}
+        });
         TextView changeEvent=button("Editar perguntas / evento");
         LinearLayout.LayoutParams changeLp=new LinearLayout.LayoutParams(-1,dp(36));
         changeLp.topMargin=dp(5);
@@ -874,6 +890,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         boolean guiding=active||training;
         guideContent.setVisibility(guiding?View.VISIBLE:View.GONE);
         if(canStart){
+            eventWindowText.setText(RaidDaySchedule.status(this));
             summaryText.setText("Respostas do jogador (não verificadas):\n"+
                 preparation.summary()+
                 "\nHorário do evento não confirmado. Sem captura de tela ativa.");
@@ -940,6 +957,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         visible=show;
         if(show){
             updateEventClock();
+            if(eventWindowText!=null)eventWindowText.setText(RaidDaySchedule.status(this));
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);
             panelScroll.post(this::placePanel);
