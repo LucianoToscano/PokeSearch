@@ -4155,6 +4155,28 @@ public class OverlayService extends Service {
         }
     }
     public class Bridge{
+        /**
+         * LT293: a canvas-tainted PoGoCoordinates sprite can be DISPLAYED but
+         * its alpha pixels cannot be measured inside the result WebView.
+         * Read only the exact confirmed HTTPS image on a bounded background
+         * worker. No cookies, search API, alternate artwork or coordinates.
+         * The callback carries only a 96x96 silhouette rectangle and a token;
+         * JS rejects rows that changed before the measurement completed.
+         */
+        @JavascriptInterface public boolean requestSpriteSilhouette(
+                String sourceUrl,String requestToken){
+            if(stopped||requestToken==null||
+               !requestToken.matches("psg[1-9][0-9]{0,8}"))return false;
+            return VerifiedSpriteGeometry.request(OverlayService.this,
+                sourceUrl,bounds->handler.post(()->{
+                    if(stopped||resultPanel==null||!resultLoaded)return;
+                    String response="window.PokeSearchSpriteScale?.onNativeBounds?.("+
+                        JSONObject.quote(requestToken)+","+
+                        JSONObject.quote(sourceUrl)+","+
+                        (bounds==null?"null":bounds)+");";
+                    js(resultPanel,resultLoaded,response);
+                }));
+        }
         // The result list and detail card run in separate Android WebViews. On
         // some devices their file:// image load fails even though the bundled
         // sprite exists. Only an exact Dex-verified base (normal or shiny) may
