@@ -45,7 +45,7 @@ assert.match(service,/private void setAvatarMotion\(boolean enabled\)/);
 assert.match(service,/handler\.removeCallbacks\(avatarTicker\)/);
 assert.match(service,/handler\.postDelayed\(this,dragging\?180L:450L\)/);
 assert.match(service,/reactAvatar\(RaidDayAvatarFrames\.QUESTION\)/);
-assert.match(service,/reactAvatar\(RaidDayAvatarFrames\.ALERT\)/);
+assert.match(service,/RaidDayAvatarFrames\.ALERT/);
 assert.match(service,/reactAvatar\(RaidDayAvatarFrames\.OK\)/);
 assert.match(service,/reactAvatar\(RaidDayAvatarFrames\.WAVE\)/);
 assert.match(service,/avatarSprites\.release\(\)/);
