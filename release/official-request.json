@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.79",
-  "code": 54483,
-  "label": 51283,
-  "previous_tag": "v0.02.78-54482",
-  "qa_max_code": 54482,
-  "release_notes": "PokeSearch LT279: corrigidos os sprites ausentes do Burmy Forma Areia (Sandy), confirmado por screenshot real do Samsung mostrando BU/Sandy e #412 sem imagem. O resolvedor reconhece as três capas de Burmy (Planta, Areia, Lixo) e as três de Wormadam, cada uma normal e Brilhante, com identificação estrita por Pokédex. Doze PNGs de Pokémon GO foram incluídos offline e verificados individualmente pelo Git blob SHA-1 do manifesto imutável, além de checagem de presença/PNG/hash no APK assinado. Em cartões e resultados prioriza a arte exata local em vez de uma URL do site que pode falhar. Ranks exibidos como — permanecem não confirmados até existir dado verificável; nenhuma classificação foi fabricada. Preservadas duas Pokébolas, cinco ranks, filtros, PvP/PvE, ordenação e a correção visual LT278. PR #272 mesclada, QA Node/Android Java/OTA aprovado; validação no Samsung após instalar segue pendente."
+  "version": "0.02.80",
+  "code": 54484,
+  "label": 51284,
+  "previous_tag": "v0.02.79-54483",
+  "qa_max_code": 54483,
+  "release_notes": "PokeSearch LT280: corrige Rank Classe de Burmy Forma Areia (Sandy), Planta e Lixo, mapeando a forma recebida do PoGoCoordinates para a identidade EXATA do PvPoke: Burmy (Sandy), (Plant), (Trash), em GL/UL/ML. Wormadam igualmente consulta cada capa separada, preservando a diferença real de estatísticas (Wormadam Trash ≠ Sandy), sem derivar falsos resultados do nome base. Para Pokémon de evento, mantém sprite e nome originais; a classificação usa somente forma validada pela Pokédex e pelo Game Master. Ao tocar no IV abre o Rank Classe da mesma forma. No cartão, os golpes rápidos e carregados recebem cores discretas pelo TIPO VERIFICADO do ataque, como no Pokémon GO/PokéGenie; usa o catálogo oficial PT-BR de moves do commit fixo e um conjunto offline verificado. Tipo não identificado fica neutro. Ranks Geral/Raides independentes, bandeiras/ícones e atualização preservados. PR #273 mesclada e 7 suites CI Node, Android/Java, PvP, OTA e interface visual aprovadas. Teste físico Samsung P1/P2 pós-instalação pendente."
 }
