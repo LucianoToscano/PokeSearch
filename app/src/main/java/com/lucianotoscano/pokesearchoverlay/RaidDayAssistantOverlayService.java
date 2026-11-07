@@ -1113,7 +1113,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         boolean eve=day!=null&&today.equals(day.minusDays(1));
         boolean eventDay=day!=null&&today.equals(day);
         setTalk(eventDay?
-            "Hoje é o dia do evento! Vamos conferir seus passes antes de continuar.":
+            "Pela data informada, hoje é o dia do evento! Vamos conferir seus passes.":
             "Tudo pronto! Na véspera, vamos começar conferindo seu Passe Diário.",
             "Evento: "+eduEventWhen()+" · Brasília. "+
             "A data e o horário dependem da informação do jogador.");
@@ -1176,7 +1176,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(!arrived){
             setTalk(("travel_pending".equals(eduDialogueState)?
                 "Sem pressa! Confirme a região antes de continuar. ":firstSpeech)+
-                " Já está em "+region+"?",
+                " Você já está no local indicado ("+region+")?",
                 "Toque nas coordenadas para copiar. Edu não altera sua localização.");
             addEduCoordinateButton();
             addTwo("Sim, já estou",()->{
@@ -1202,7 +1202,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         boolean atPass="nz_pass".equals(eduDialogueState)||
             "pass_check".equals(eduDialogueState);
         if(!atPass){
-            setTalk("Agora vamos para a Nova Zelândia. Já está na região indicada?",
+            setTalk("nz_pending".equals(eduDialogueState)?
+                "Sem pressa! Confira a região. Já chegou à Nova Zelândia?":
+                "Agora vamos para a Nova Zelândia. Já está na região indicada?",
                 "Toque nas coordenadas para copiar. Esta é a próxima região do relato.");
             addEduCoordinateButton();
             addTwo("Sim, já estou",()->{
@@ -1227,7 +1229,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             },"Ver resumo",()->navigateEdu("E11","NO_PASS"));
             return;
         }
-        askEduPass("Hoje é o dia do evento: "+eduEventWhen()+
+        askEduPass((training?"Na simulação, hoje é o evento fictício: ":
+                "Pela data informada, hoje seria o dia do evento: ")+eduEventWhen()+
                 ". Você já tem um passe disponível no inventário?",
             "Confira também o horário do evento. O horário informado não "+
                 "é uma programação oficial verificada.",
@@ -1256,6 +1259,12 @@ public final class RaidDayAssistantOverlayService extends Service {
             setTalk("Edu: "+warning,"Para aprender sem alterar sua sessão, use o treino.");
             addTwo("Ver ajuda",()->{eduHelpOpen=true;updateStep();},
                 "Pausar",()->{paused=true;persist("PAUSED");updateStep();});
+            if(index>0)addMini("← Voltar",()->{
+                String from=plan.step(index).id;
+                setEduDialogueState("");
+                index--;eduNote="";eduHelpOpen=false;
+                persist("BACK",from);updateStep();
+            });
             return;
         }
         if(eduHelpOpen){
