@@ -447,7 +447,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const firstBox=first?.getBoundingClientRect(),box=selected?.getBoundingClientRect(),
       holder=list.getBoundingClientRect();
     return {ok:!!selected&&selected.dataset.psRow==="2"&&
-      title.includes("Ursaluna")&&context.includes("0/14/15")&&
+      title.includes("Grande Liga")&&context.includes("Ursaluna")&&context.includes("0/14/15")&&
       !title.includes("Ursaring")&&
       list.scrollTop<15&&
       firstBox?.top>=holder.top-4&&box?.bottom<=holder.bottom+4&&
