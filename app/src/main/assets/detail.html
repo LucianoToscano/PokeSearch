@@ -1597,6 +1597,41 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   height:11px!important;min-height:11px!important;max-height:11px!important;
  }
 }
+
+/* LT302: delicate compact up-chevrons. The 0/1/2 evolution logic stays
+   verified and unchanged. Shrink both strokes and vertical separation.
+   Keep inside the FREE bottom-right corner; flags remain centered. */
+#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+ right:3px!important;bottom:3px!important;left:auto!important;top:auto!important;
+ width:5px!important;min-width:5px!important;max-width:5px!important;
+ height:7px!important;min-height:7px!important;max-height:7px!important;
+ gap:0!important;padding:0!important;margin:0!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:center!important;overflow:visible!important;
+ pointer-events:none!important;background:transparent!important;
+ border:0!important;box-shadow:none!important;
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailChevron{
+ width:3px!important;height:3px!important;flex:0 0 3px!important;
+ border-top:.8px solid #e7fbff!important;
+ border-left:.8px solid #e7fbff!important;
+ border-right:0!important;border-bottom:0!important;
+ transform:rotate(45deg)!important;
+ margin:0!important;padding:0!important;box-sizing:border-box!important;
+ filter:none!important;
+}
+@media(max-width:345px){
+ #rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+  right:3px!important;bottom:3px!important;
+  width:5px!important;min-width:5px!important;max-width:5px!important;
+  height:7px!important;min-height:7px!important;max-height:7px!important;
+ }
+}
+/* Set position of raid icon independently from any corner marker. */
+#rankLine[data-rank-rail="five"] .psRailButton .psRailIcon{
+ left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+ width:19px!important;height:19px!important;object-fit:contain!important;
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
