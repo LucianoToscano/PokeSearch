@@ -1,5 +1,21 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT280 — RANK EXATO DAS FORMAS E GOLPES COLORIDOS (06/11/2026)
+
+- **Origem:** prints reais Samsung: Burmy #412 Sandy com sprite faltando previamente e cinco ranks "—"; golpes em cor neutra. A correção de sprites (LT279) foi separada do reconhecimento de formas nos ranks (LT280).
+- **Correção LT280:** [PR #273](https://github.com/LucianoToscano/PokeSearch/pull/273), squash merge `5f2389c67183e83a6bd4868693a6b7685e8e19e6`; `dock.html` reconhece somente Pokémon com Pokédex validada **Burmy 412** e **Wormadam 413**, mapeia `Sandy`, `BURMY_SANDY`, `Plant`, `Trash` para `Burmy (Sandy)` etc do PvPoke. Cada forma tem sua própria entrada GM: três capas Burmy têm stats iguais, mas Wormadam Trash (127/175/155) difere de Wormadam Sandy/Plant (141/180/155). **Não** usar fallback por nome genérico, regional/Shadow ou vestimenta ambígua. `rankSpecies` verificado alimenta o painel Rank Classe aberto pelo IV, para as 3 ligas sem deslocar sprite/nome do PoGoCoordinates.
+- **Golpes coloridos:** `pve_moves_ptbr.js` agora extrai tipo verificado do move ID com base no mesmo catálogo GO PT-BR já fixado e usa subset offline para Brasa/Lança-chamas (Fogo), Investida (Normal), Insistência (Inseto), Mordida (Sombrio), Pancada Corporal (Normal), entre outros. `pokemon_card_presentation.js` atribui paleta dos 18 tipos por **golpe**, `detail.html` mostra chips pequenos e discretos; golpes de tipo não confirmado permanecem neutros. Não usar tipo do próprio Pokémon para colorir golpes.
+- **QA:** sete checks do PR head `abeb9e5a73acdfa228bb7e0a458b8ba6c6a0eac4` aprovados (Node, regressão PvP, Java Android, OTA, P/M/G visual, fontes PvE). Teste `lt280-form-rank-move-color.test.js` cobre Burmy e Wormadam 3 formas x GL/UL/ML, bloqueios de confusão e cores por ID/alias PT-BR.
+- **Release oficial:** [LT280 · 0.02.80 · versionCode 54484](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.80-54484), publicada em **07/11/2026 às 02:38:31 UTC** (06/11/2026 às 23:38:31 Brasília), release estável e asset `uploaded`. APK `PokeSearch-v0.02.80-LT.apk`, **33.814.852 bytes**, SHA-256 `42744801917fbfb27c2070443e0e1233fdf1a8148e49bb61566368e475d3f5c9`. [Workflow oficial #42329815200](https://github.com/LucianoToscano/PokeSearch/actions/runs/42329815200) `preflight=success`, `publish=success` com assinatura e hash verificados. Solicitação oficial `709ed7e6b2558e9e548979e63e0ca3c95c90da6e`.
+- **Preservados:** duas Pokébolas, menu cinco ranks/correção de 1px LT278, sprites exatos de formas/vestimentas LT279, Raid separado, ordenação inversa, GPS, favoritos, atualização e permissões. Rollback LT279 `v0.02.79-54483`.
+- **Pendente:** instalação e validação real de sprites/ranks/cores e toques no Samsung P1/P2; CI Chromium e teste Node não são prova de homologação física. Auditoria [LT280](LT280_RANK_FORMAS_GOLPES_CORES_20261106.md).
+
+## LT279 — SPRITES EXATOS DE BURMY E WORMADAM (06/11/2026)
+
+- **Fonte/PR:** [PR #272](https://github.com/LucianoToscano/PokeSearch/pull/272), 12 ícones GO exatos de Burmy/Wormadam Plant, Sandy, Trash, normal e Brilhante, auditados por hash Git blob, incluídos e verificados no APK. As duas Pokébolas resolvem a mesma capa offline quando a imagem do site falha; o sprite continua específico da forma indicada por PoGoCoordinates, sem trocar por base inadequada.
+- **Release:** [LT279 · 0.02.79 · 54483](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.79-54483), publicada **07/11/2026 às 02:19:27 UTC**; APK assinado `PokeSearch-v0.02.79-LT.apk`, **33.812.508 bytes**, SHA-256 `7dc9c4c3600c52d36ffd49d88798afb6944c529ef79a17c38cb2b78aaaba8795`. Auditoria [LT279](LT279_BURMY_SANDY_SPRITES_OFFLINE_20261106.md).
+- **Limite:** sprite disponível não garante classe/rank; a identidade exata da forma nos cálculos foi corrigida somente em LT280. Teste físico Samsung ainda pendente.
+
 ## LT278 — NÚMEROS DE RANK 1 PIXEL ACIMA E RELEASE OFICIAL (06/11/2026)
 
 - **Pedido e evidência:** captura real Samsung/Growlithe mostrou números `#50/#1/#12/#694/#747` perto demais das bandeiras. Corrigido o espaçamento **somente** em `#rankLine[data-rank-rail="five"] .psRailButton .psRailNumber` com `transform:translateY(-1px)!important`, para os cinco cards Raides, GL, UL, ML e Rank Geral, nas duas Pokébolas.
