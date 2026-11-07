@@ -6480,13 +6480,18 @@ function attachSpriteFeedback(){
    if(localTried||!sourceCard)return false;
    const engine=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
    if(!engine?.verifiedBase?.(sourceCard))return false;
-   // Preserve imageFromSite first; the exact bundled ordinary species image
-   // becomes the bounded offline fallback only after the remote load stalls.
-   const ordinary=engine.resolve({...sourceCard,imageFromSite:false});
-   const src=String(ordinary?.src||"");
-   if(!/^file:\/\/\/android_asset\/pokemon-sprites\/(?:base|shiny)\/\d{1,4}\.png$/.test(src)||
-       img.getAttribute("src")===src)return false;
-   localTried=true;img.src=src;return true;
+   // LT287: use the SAME native exact base bytes as the working detail
+   // card before trying a local URI. AssetLoader rewrites file:// paths to
+   // https://appassets.androidplatform.net/assets/ in signed HTML/JS;
+   // support BOTH while allowing only proven base/shiny species variants.
+   const native=engine.verifiedBundledData?.(sourceCard)||"";
+   const ordinary=engine.resolve({...sourceCard,image:"",imageFromSite:false});
+   const local=String(ordinary?.src||"");
+   const trustedLocal=/^(?:file:\/\/\/android_asset\/|https:\/\/appassets\.androidplatform\.net\/assets\/)pokemon-sprites\/(?:base|shiny)\/\d{1,4}\.png$/.test(local);
+   const src=native||((trustedLocal&&local)?local:"");
+   if(!src||img.getAttribute("src")===src)return false;
+   localTried=true;stage.classList.remove("loaded");
+   img.src=src;return true;
   };
   const good=()=>img.naturalWidth>=8&&img.naturalHeight>=8;
   const loaded=()=>{
@@ -7421,7 +7426,14 @@ function draw(){
   // provider field formats. Native reads are local, bounded and do not reveal
   // coordinates or trigger network/search requests.
   const nativeArt=window.PokeSearchOfflineSprite?.bundledExactForArt?.(c,art)||"";
-  const imageUrl=nativeArt||art.src,originalUrl=art.original;
+  // LT287: match the working DETAIL card. A provider image admitted by the
+  // PoGoCoordinates card-scoped DOM verifier must be attempted FIRST, not
+  // silently replaced in the results list by a different local rendition.
+  // Exact verified native bytes remain the first error/stall fallback.
+  const verifiedSiteArt=c.imageFromSite===true&&art.providerExact===true&&
+   /^https:\/\//i.test(String(art.src||""));
+  const imageUrl=verifiedSiteArt?art.src:(nativeArt||art.src);
+  const originalUrl=art.original;
   const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
   // Fixed-size art box for everyone; extra reduction only for Minior's
   // unusually full artwork. Never alter its species identity or image URL.
@@ -7438,13 +7450,11 @@ function draw(){
    /halloween|hallowe|costume|fantasia|disfarce|outfit|event/i.test(costumeHint)||
    (c.costume_id!=null&&Number(c.costume_id)>0));
   const effectiveArtFit=halloweenGengar?0.42:artFit;
-  // Allow alpha sampling for public GitHub/jsDelivr sprites with CORS
-  // headers. Keep provider/private art untouched if its origin is unknown.
-  const publicCors=imageUrl.startsWith("https://raw.githubusercontent.com/")||
-   imageUrl.startsWith("https://cdn.jsdelivr.net/");
+  // The working detail card does not force anonymous-CORS on its art.
+  // Forcing it here can reject otherwise displayable PoGoCoordinates,
+  // GitHub or CDN sprites. Alpha sampling already fails safely on taint.
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
-    (publicCors?' crossorigin="anonymous"':'')+
     ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">#'+
     esc(String(dexNumber||"?"))+'</span></span>';

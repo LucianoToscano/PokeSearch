@@ -12,8 +12,10 @@ assert.match(code,/scale\(var\(--tile-alpha-zoom,1\)\)!important/);
 assert.match(code,/object-fit:contain!important;object-position:center center!important/);
 assert.match(code,/width:var\(--result-art-size,21\.12px\)!important/);
 assert.match(dock,/if\(resultWindow\)window\.PokeSearchSpriteScale\?\.applyResultTile\?\.\(img\)/);
-assert.match(dock,/const publicCors=imageUrl\.startsWith\("https:\/\/raw\.githubusercontent\.com\/"\)/);
-assert.match(dock,/crossorigin="anonymous"/);
+assert.match(dock,/const verifiedSiteArt=c\.imageFromSite===true&&art\.providerExact===true/);
+assert.match(dock,/const imageUrl=verifiedSiteArt\?art\.src:\(nativeArt\|\|art\.src\)/);
+assert.doesNotMatch(dock,/crossorigin="anonymous"/,
+ "displaying trusted provider art cannot require cross-origin pixel access");
 assert.match(editor,/P 24×24 dp · M 32×32 dp · G 40×40 dp/);
 assert.match(dock,/const tile=size===55\?40:size===45\?32:24/);
 
