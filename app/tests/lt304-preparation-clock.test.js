@@ -82,4 +82,4 @@ assert.match(service,/preparation\.choose\(option\)/);
 assert.match(strings,/raid_day_risk_message/);
 assert.match(manifest,/android:name="\.RaidDayAssistantOverlayService"/);
 assert.doesNotMatch(service,/startActivity\(new Intent\(Settings\.ACTION_MANAGE_OVERLAY_PERMISSION/);
-console.log("LT304/E2A PASS: preparation 8 questions, stored answers, risk per event, real Brasília/NZ timezone and no invented hours");
+console.log("LT304/E2A PASS: preparation 7 questions, stored answers, risk per event, real Brasília/NZ timezone and no invented hours");
