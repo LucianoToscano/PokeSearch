@@ -62,7 +62,7 @@ function visibleBounds(img){
   return bounds;
  }catch(_){return null;} // Remote CORS: keep original pixels instead of hiding.
 }
-function tileFit(img,box){
+function tileFit(img,box,maxZoom=2.85){
  const bounds=visibleBounds(img);
  if(!bounds)return null;
  const spanX=(bounds.right-bounds.left+1)/SAMPLE;
@@ -71,7 +71,7 @@ function tileFit(img,box){
  if(!(occupancy>0))return null;
  // Image box already measures 88% of the card. Result silhouette should be
  // ~87% (inside requested 85–90%), with no crop; cap unusual tiny art.
- const zoom=Math.round(clamp(.87/(.88*occupancy),.80,2.85)*1000)/1000;
+ const zoom=Math.round(clamp(.87/(.88*occupancy),.80,maxZoom)*1000)/1000;
  const imageBox=Number(box)||Number(img?.clientWidth)||0;
  const cx=(bounds.left+bounds.right+1)/(2*SAMPLE);
  const cy=(bounds.top+bounds.bottom+1)/(2*SAMPLE);
@@ -108,13 +108,20 @@ function applyResultTile(img,verifiedReference){
  reference.onload=()=>{
   if(img.isConnected===false||String(img.currentSrc||img.src||"")!==expected||
      Number(img.naturalWidth)<8||Number(reference.naturalWidth)<8)return;
-  const measured=tileFit(reference,artworkBox);
+  // LT289: the older 1.8 cap left costumes like Singapore 2026 Pikachu
+  // tiny inside a 256px image with generous transparent padding. Raise it
+  // ONLY for a signed APK PNG of the exact GO event/form (same shiny/gender).
+  // The target remains ~87% alpha silhouette; we do NOT multiply all images.
+  const exactGo=img.dataset?.psExactGoGeometry==="1";
+  const maxZoom=exactGo?4.25:2.85;
+  const measured=tileFit(reference,artworkBox,maxZoom);
   if(!measured)return;
-  // A different artwork rendition can have different transparent borders:
-  // do not let a reference push provider pixels beyond the fixed P/M/G tile.
-  const limited={...measured,zoom:clamp(measured.zoom,.80,1.8),
-   x:clamp(measured.x,-cardSize*.12,cardSize*.12),
-   y:clamp(measured.y,-cardSize*.12,cardSize*.12)};
+  // Base/reference artwork can differ from the site: keep conservative cap.
+  // Full zoom/centering is allowed exclusively for pinned exact costume art.
+  const shift=cardSize*(exactGo?0.34:0.12);
+  const limited={...measured,zoom:clamp(measured.zoom,.80,exactGo?4.25:1.8),
+   x:clamp(measured.x,-shift,shift),
+   y:clamp(measured.y,-shift,shift)};
   setResultTileFit(img,limited);
  };
  reference.onerror=()=>{}; // Existing neutral CSS fit stays in use.

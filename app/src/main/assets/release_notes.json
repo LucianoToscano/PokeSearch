@@ -2764,6 +2764,29 @@
           "Validar visualmente no Samsung P1/P2 a proporção, posição e nitidez em P/M/G, comparando espécies grandes e pequenas, em especial Snorlax, Totodile, Meowth, Torchic, Pikachu e Cyndaquil."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt289-exact-sprite-geometry-anniversary-20261107",
+      "minVersionCode": 54493,
+      "date": "07/11/2026",
+      "title": "LT289 — Corrigir Pikachu de evento e miniaturas pequenas",
+      "sections": {
+        "novidades": [
+          "Pikachu Anniversary 2026 Singapore 01 agora tem PNG exato normal/Shiny e masculino/feminino no pacote offline, identificado por nome/formato e hashes fixos.",
+          "Miniaturas de fantasias verificadas conseguem corrigir margens transparentes grandes, sem alterar a imagem exibida pelo PoGoCoordinates."
+        ],
+        "melhorias": [
+          "O ajuste avançado de escala é liberado apenas para a arte exata do evento/forma já presente no APK assinado; demais imagens continuam com limites conservadores.",
+          "O limite visual P/M/G segue inalterado, com centralização proporcional e proteção contra respostas atrasadas."
+        ],
+        "correcoes": [
+          "Removido o bloqueio que impedia identificar o Pikachu Singapore 2026 quando o provedor o classificava como fantasia com ID numérico.",
+          "Contorno muito pequeno dentro do PNG de evento não fica artificialmente minúsculo por causa do antigo limite 1,8."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física Samsung P1/P2: Pikachu Singapore 2026, Ralts, Torchic, Chikorita, rede lenta, variações shiny/gênero e tamanhos P/M/G."
+        ]
+      }
     }
   ]
 }

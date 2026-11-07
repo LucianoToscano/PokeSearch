@@ -163,6 +163,12 @@ jobs:
             "pm422.fWEST_SEA.icon.png","pm422.fWEST_SEA.s.icon.png",
             "pm423.fEAST_SEA.icon.png","pm423.fEAST_SEA.s.icon.png",
             "pm423.fWEST_SEA.icon.png","pm423.fWEST_SEA.s.icon.png",
+            # LT289: verified Singapore Anniversary 2026 Pikachu GO form:
+            # signed normal/Shiny, female/gender-neutral; not a generic Pikachu.
+            "pm25.fANNIVERSARY_2026_SINGAPORE_01.icon.png",
+            "pm25.fANNIVERSARY_2026_SINGAPORE_01.s.icon.png",
+            "pm25.fANNIVERSARY_2026_SINGAPORE_01.g2.icon.png",
+            "pm25.fANNIVERSARY_2026_SINGAPORE_01.g2.s.icon.png",
             # LT267: exact Diwali and all four Squawkabilly plumages normal/Shiny.
             "pm25.fDIWALI_2024.icon.png",
             "pm25.fDIWALI_2024.s.icon.png",
