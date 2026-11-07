@@ -582,6 +582,40 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    assert.ok(typing297.ok,"LT297 type badge and defensive panel visual contract "+
     sz.name+" "+JSON.stringify(typing297));
    await page.screenshot({path:path.join(output,sz.name+"-lt297-type-panel.png")});
+   // LT298: real click and measurements on the shipping card WebView.
+   const attack298=await page.evaluate(()=>{
+    window.showDetails({number:"#255",name:"Torchic",sourceIndex:1998,
+      iv:"0/15/14",cp:697,level:25,despawn:"05:00",
+      moves:"Scratch / Wild Charge",location:"Singapore"},"gl",false);
+    const btn=document.getElementById("psCapturedMovesAction");
+    const section=document.getElementById("psCapturedMovesPanel");
+    if(!btn||!section)return {ok:false,reason:"missing captured-moves click"};
+    btn.click();
+    const first=section.textContent||"";
+    const actual=first.includes("Arranhão")&&first.includes("Ataque Selvagem")&&
+     first.includes("Dmg 90 • CD 2,50 • DPS 36,0 • Energia 50")&&
+     first.includes("PvP: Poder 100 • Custo 45")&&
+     btn.getAttribute("aria-expanded")==="true"&&!section.hidden;
+    const icons=section.querySelectorAll(".psMoveMtIcon img");
+    const positioned=section.scrollWidth<=section.clientWidth+2;
+    btn.click();
+    const closed=section.hidden&&btn.getAttribute("aria-expanded")==="false";
+    btn.click();
+    window.showDetails({number:"#16",name:"Pidgey",sourceIndex:1999,
+      iv:"2/14/12",cp:320,level:14,moves:"Peck / Fly",
+      location:"Singapore"},"gl",false);
+    const noLeak=section.hidden&&document.getElementById("psCapturedMovesAction")
+     ?.getAttribute("aria-expanded")==="false";
+    const eliteIcon=window.PokeSearchMovePanel?.mtBadge?.(false,"elite")||"";
+    const normalIcon=window.PokeSearchMovePanel?.mtBadge?.(true,"normal")||"";
+    return {ok:actual&&icons.length===2&&positioned&&closed&&noLeak&&
+      eliteIcon.includes("mt-carregada-elite-lt265.png")&&
+      normalIcon.includes("mt-agil-normal-lt298.svg"),
+      actual,icons:icons.length,positioned,closed,noLeak,first:first.slice(0,190)};
+   });
+   assert.ok(attack298.ok,"LT298 captured move details and four MT categories "+
+    sz.name+" "+JSON.stringify(attack298));
+   await page.screenshot({path:path.join(output,sz.name+"-lt298-captured-moves.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,

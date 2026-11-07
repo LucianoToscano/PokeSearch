@@ -2924,6 +2924,73 @@
           "Conferir no Samsung os cards Charmander/Pikachu com eventos, as duas Pokébolas e recomendações de Charmander → Charmeleon → Charizard em GL/UL/ML. Golpes legados sem comprovação de MT permanecem cinza."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt296-preload-and-sprite-rank-general-20261107",
+      "minVersionCode": 54500,
+      "date": "07/11/2026",
+      "title": "LT296 — Rank Geral por sprites e quatro ligas",
+      "sections": {
+        "novidades": [
+          "No Rank Geral, sprites selecionáveis das evoluções e quatro ícones de liga: GL, UL, ML e LC.",
+          "Os ícones de MT das evoluções são conferidos antes do toque, sem depender de abrir os ataques."
+        ],
+        "melhorias": [
+          "Títulos de Grande/Ultra/Mestra, Rank Geral e Raides centralizados, com fechamento redundante removido.",
+          "Cada evolução mantém a classificação própria, sem copiar o rank de outra espécie."
+        ],
+        "correcoes": [
+          "A palavra Elite foi substituída pelo símbolo adequado quando a fonte comprova MT Elite; legado desconhecido permanece neutro."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física em ambos os overlays Android pendente."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-lt297-type-effectiveness-iv-split-20261107",
+      "minVersionCode": 54501,
+      "date": "07/11/2026",
+      "title": "LT297 — Tipos separados dos IVs e eficácia do tipo",
+      "sections": {
+        "novidades": [
+          "Os ícones dos tipos agora estão em uma caixa independente, centralizados e maiores, ao lado dos IVs originais.",
+          "Ao tocar nos tipos, surge um painel compacto com Fraqueza, Resistência e Normais e os multiplicadores reais de dano recebido no Pokémon GO."
+        ],
+        "melhorias": [
+          "Calculadas combinações de dois tipos, fraquezas 2,56× e resistências 0,391× sem confundir imunidades da série principal.",
+          "O painel fecha ao mudar o Pokémon ou abrir outro comparativo, mantendo PC, Nível e duas Pokébolas."
+        ],
+        "correcoes": [
+          "Sem tipagem confirmada para fantasias/formas não verificadas, o painel não inventa dados."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física no Samsung pendente."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-lt298-coloured-moves-pvp-pve-metrics-20261107",
+      "minVersionCode": 54502,
+      "date": "07/11/2026",
+      "title": "LT298 — Ataques coloridos, quatro MTs e Dmg/CD/DPS",
+      "sections": {
+        "novidades": [
+          "Ao tocar nos golpes capturados, abre-se um painel compacto com nomes coloridos pelo tipo, MT Ágil/Carregada normal/Elite e dados do golpe atual.",
+          "Cada evolução em GL/UL/ML e o painel de ataques recomendados mostram Poder/Energia/Custo PvP e, separadamente, Dmg/CD/DPS/Energia de Raides quando confirmados."
+        ],
+        "melhorias": [
+          "Dados de golpe públicos e nomes pt-BR fixados no catálogo local, sem consulta extra por clique; números e duração ficam ausentes quando a fonte não confirma.",
+          "Ícones normais Ágil e Carregado distintos, símbolos Elite originais intactos, legado sem confirmação continua cinza."
+        ],
+        "correcoes": [
+          "Painel fecha ao trocar Pokémon ou abrir outra análise; não mistura golpes capturados com recomendações PvP de outras evoluções.",
+          "Barras de IV/PC/Nível e eficácia do tipo da LT297 preservadas nas duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Conferir no Samsung P/M/G os ícones, métricas, scroll e atualização oficial; testes automatizados não substituem teste físico."
+        ]
+      }
     }
   ]
 }

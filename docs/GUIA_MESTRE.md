@@ -1,5 +1,23 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT298 — DETALHAMENTO DOS ATAQUES, MT NORMAL/ELITE E ATRIBUTOS PvP/PvE (07/11/2026)
+
+- **Pedido autorizado:** aplicar no PokeSearch a referência visual do PokeGenie para o clique em Ataques, com nomes de golpes somente na cor de seu tipo, ícones Ágil/Carregado normal ou Elite, detalhes `Poder • Energia/Custo` para Liga GO e `Dmg • CD • DPS • Energia` para raides; fazer merge, registrar aqui e publicar no atualizador oficial do aplicativo.
+- **Implementação em preparação:** `pokemon_move_metrics.js` armazena índice local de 391 golpes com identificações PT-BR verificadas de `WatWowMap/pogo-data-api` commit `31a3bcdc2e412f315c4be2bb593807f45cb9bd9b` (`data/v1/moves.json` + traduções `pt-br/moves.json`). A fonte contém campos independentes de PvE (`power`, `durationMs`, `energyDelta`) e PvP (`pvpPower`, `pvpEnergyDelta`); CD em segundos e DPS = Dmg/CD, não deve ser apresentado como estatística da Liga GO. Não inferir valores de um nome, tipo ou golpe diferente; indeterminado fica sem número.
+- `pokemon_move_panel.js` centraliza atributos, quatro classes de MT (Ágil/Carregado × normal/Elite) e estado cinza para legado/MT não confirmada. Os PNGs Elite originais da LT265 são preservados. Os novos SVGs neutros normais são separados; o tipo do golpe colore **somente o nome**, sem tarja. `pvp_evolution_moves_ui.js` mostra dados da evolução/liga correta, e `detail.html` permite tocar em **Golpes capturados** para abrir seu próprio conjunto, com fechamento ao trocar Pokémon ou abrir outra análise. Os dois fluxos não confundem recomendação PvPoke com golpes atuais.
+- **Entrega/QA:** branch `feat/lt298-move-metrics-pvp-pve-ui-20261107`; testes Node, visual, Android, OTA e beta em execução/pendentes na fase de desenvolvimento. Não afirmar publicação até o workflow oficial confirmar artefato, certificado, SHA e tag. Release planejada LT298 / 0.02.98 / 54502 somente após gates e verificação de `releases/latest`. Validação física no Samsung e nas duas Pokébolas permanece pendente.
+
+## LT297 — TIPOS SEPARADOS DOS IVs E EFICÁCIA DEFENSIVA (07/11/2026)
+
+- **Merge confirmado:** [PR #292](https://github.com/LucianoToscano/PokeSearch/pull/292), squash `5a5a9450ebe9e0010535a753da056a98802c1ea5`. Divisão da caixa de tipos e IV sem alterar A/D/S, PC e nível; ícones maiores e centralizados. Toque na caixa dos tipos abre Fraqueza/Resistência/Normais segundo fórmula Pokémon GO `1.6^expoente`, incluindo 2,56×, 0,391× e cancelamentos em tipos duplos. Formas sem metadado verificado não herdam arbitrariamente a tipagem base. CI da PR aprovado; APK oficial **não publicada como LT297 isolada**.
+- **Fonte/código:** `pokemon_card_presentation.js` usa tipagem por número e forma verificada; `detail.html` compartilha interface P1/P2. Não chamar esta análise de eficácia ofensiva dos golpes: é dano defensivo recebido pelo Pokémon.
+
+## LT296 — RANK GERAL POR EVOLUÇÃO E ÍCONES DE MT ANTECIPADOS (07/11/2026)
+
+- **Merge confirmado:** [PR #291](https://github.com/LucianoToscano/PokeSearch/pull/291), squash `f9196336a76f7d1f717dd2da2e520e5a9f0a7d7a`. Ícones de MT das evoluções pré-verificados antes do toque; Elite confirmado usa sua imagem própria, legado sem comprovação permanece cinza. Cabeçalhos GL/UL/ML, Rank Geral e Raides centralizados e X redundante oculto. Rank Geral ganhou sprites tocáveis de espécies/evoluções e quatro bandeiras GL/UL/ML/LC, sem copiar a posição de uma evolução à outra.
+- **Dados:** Copa Pequena usa snapshot PvPoke Little Cup CP500 pinado, sem confundir Rank Classe dos IVs com posição competitiva da espécie. CI aprovado; APK oficial **não publicada como LT296 isolada**.
+
+
 ## LT295 — ATAQUES DE CADA EVOLUÇÃO E SPRITE DO CARD (07/11/2026)
 
 - **Solicitação e causa:** o ícone ⚔ no cabeçalho da Análise PvP podia representar a espécie mais bem ranqueada em `currentRankSpecies`, não necessariamente a capturada. Essa ambiguidade foi apontada em print do Samsung. O cabeçalho do Card possuía sprite independente de 30dp com alvo legado de 78% e zoom máximo 2,2×, mesmo depois de a LT294 normalizar os Resultados.
