@@ -27,6 +27,23 @@ assert.match(overlay,/String\[\] sizeLabels=\{"P","M","G"\}/);
 assert.match(overlay,/avatarSizeIndex=2/);
 assert.match(overlay,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,100\)/);
 assert.match(overlay,/eduSettings\.setVisibility\(View\.VISIBLE\)/);
+assert.doesNotMatch(overlay,/menu=button\("⋯"\)/,
+  "Configurações não devem aparecer como botão na conversa");
+assert.match(overlay,/handler\.postDelayed\(longPress,1200L\)/,
+  "Segurar a sprite por 1,2 segundo deve abrir ajustes ocultos");
+assert.match(overlay,/eduSettingsOpen=true;\s*eduHelpOpen=false;\s*reactAvatar/,
+  "O toque prolongado da sprite deve abrir ajustes, sem avançar roteiro");
+assert.match(overlay,/if\(visible\)updateStep\(\);\s*else setVisible\(true\);/,
+  "A mesma ação deve funcionar com a conversa aberta ou fechada");
+assert.match(overlay,/eduMainCard\.setBackground\(surface\(Color\.rgb\(253,253,253\)/,
+  "Fala do Edu deve usar balão claro");
+assert.match(overlay,/eduSpeech=text\("",14,Color\.rgb\(28,35,42\),false\)/,
+  "Texto do balão deve ser escuro, legível em branco");
+assert.match(overlay,/View speechTail=new View\(this\)/,
+  "Balão precisa ter cauda discreta estilo quadrinhos");
+assert.match(overlay,/eduSettingsOpen=false;\s*try\{wm\.removeView\(panelScroll\);\}/,
+  "Reabrir com toque normal deve mostrar conversa, não ajustes");
+
 assert.match(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/);
 assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\)/);
 assert.match(overlay,/\.heightPixels\*\.43f/);
@@ -71,4 +88,4 @@ assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
 for(const s of steps)assert.ok(s.falaEdu.startsWith("Edu: "),s.id);
 assert.doesNotMatch(overlay,/RaidDayEventClock\.summary\(now\)/,
   "The giant 4-region clock must never be shown in tutorial");
-console.log("LT304 Edu UX PASS: compact movable conversation, isolated controls, demo today, strict sequence and no blocked Android dialogs");
+console.log("LT304 Edu UX PASS: balões brancos estilo quadrinhos, configurações ocultas via toque longo na sprite, conversa compacta, simulação e permissão livre");
