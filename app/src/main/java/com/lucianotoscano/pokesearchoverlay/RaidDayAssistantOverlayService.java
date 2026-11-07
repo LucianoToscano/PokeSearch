@@ -74,6 +74,16 @@ public final class RaidDayAssistantOverlayService extends Service {
     private ProgressBar progressBar;
     private TextView prepTitle,prepStatus,clockText,summaryText,prepBack,prepNext;
     private TextView eventWindowText;
+    private TextView visualStatus,visualToggle,visualAccept,visualReject;
+    private LinearLayout visualActions;
+    private String visualCandidate="";
+    private long visualSeenAt=0L;
+    private final Runnable visualTicker=new Runnable(){
+        @Override public void run(){
+            updateVisual();
+            handler.postDelayed(this,1600L);
+        }
+    };
     private RaidDayPreparation preparation;
     private final Clock eventClock=Clock.systemUTC();
     private final Runnable clockPulse=new Runnable(){
@@ -209,6 +219,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             createPanel();
             updateStep();
             handler.post(clockPulse);
+            handler.post(visualTicker);
             running=true;
         }catch(RuntimeException error){
             stopSelf();
@@ -705,6 +716,67 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams st=new LinearLayout.LayoutParams(-1,-2);
         st.topMargin=dp(8);
         guideContent.addView(statusText,st);
+        visualStatus=text("Acompanhamento visual desligado",11,
+            Color.rgb(176,210,228),false);
+        LinearLayout.LayoutParams vs=new LinearLayout.LayoutParams(-1,-2);
+        vs.topMargin=dp(7);
+        guideContent.addView(visualStatus,vs);
+        visualToggle=button("Ativar leitura visual (opcional)");
+        LinearLayout.LayoutParams vt=new LinearLayout.LayoutParams(-1,dp(35));
+        vt.topMargin=dp(5);
+        guideContent.addView(visualToggle,vt);
+        visualToggle.setOnClickListener(v->{
+            if(RaidDayScreenCaptureService.isActive()){
+                stopService(new Intent(this,RaidDayScreenCaptureService.class)
+                    .setAction(RaidDayScreenCaptureService.STOP));
+                updateVisual();return;
+            }
+            if(CandyScreenCaptureService.isActive()){
+                visualStatus.setText("O Doce Raro já usa a captura. "+
+                    "Encerre essa sessão antes de autorizar o assistente.");
+                return;
+            }
+            Intent consent=new Intent(this,RaidDayCaptureConsentActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try{startActivity(consent);}
+            catch(RuntimeException failure)
+                {visualStatus.setText("Captura indisponível · continue manualmente");}
+        });
+        visualActions=new LinearLayout(this);
+        LinearLayout.LayoutParams va=new LinearLayout.LayoutParams(-1,dp(36));
+        va.topMargin=dp(5);
+        guideContent.addView(visualActions,va);
+        visualAccept=button("✓ Confirmar tela");
+        visualActions.addView(visualAccept,new LinearLayout.LayoutParams(0,-1,1));
+        visualReject=button("Não era isso");
+        LinearLayout.LayoutParams vr=new LinearLayout.LayoutParams(0,-1,1);
+        vr.leftMargin=dp(5);
+        visualActions.addView(visualReject,vr);
+        visualAccept.setOnClickListener(v->{
+            if(visualCandidate.isEmpty()||training||!active||paused)return;
+            if(System.currentTimeMillis()-visualSeenAt>180000L){
+                visualCandidate="";updateVisual();return;
+            }
+            // Evidência OCR é sugestão. A escolha humana confirma a informação.
+            appendEvent("VISUAL_SUGGESTION_ACCEPTED_"+visualCandidate,
+                plan.step(index).id);
+            appendEvent(visualCandidate,plan.step(index).id);
+            statusText.setText("Você confirmou a tela sugerida: "+visualCandidate+
+                ". A etapa NÃO avançou automaticamente.");
+            reactAvatar(RaidDayAvatarFrames.OK);
+            visualCandidate="";
+            prefs.edit().remove("raid_day_capture_stage")
+                .remove("raid_day_capture_time").apply();
+            updateVisual();
+        });
+        visualReject.setOnClickListener(v->{
+            if(visualCandidate.isEmpty())return;
+            if(!training&&active)appendEvent("VISUAL_REJECTED",plan.step(index).id);
+            visualCandidate="";
+            prefs.edit().remove("raid_day_capture_stage")
+                .remove("raid_day_capture_time").apply();
+            updateVisual();
+        });
         // Only steps that mention a locality expose that exact coordinate,
         // copied upon an explicit user tap. No external-app interaction.
         copyButton=button(getString(R.string.raid_day_copy_coords));
@@ -915,6 +987,30 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(training)return;
         appendEvent(eventType,actedOnStep);
     }
+
+    private void updateVisual(){
+        if(visualStatus==null||visualActions==null)return;
+        SharedPreferences state=prefs;
+        boolean viewing=RaidDayScreenCaptureService.isActive();
+        String label=state.getString("raid_day_capture_stage","");
+        long seen=state.getLong("raid_day_capture_time",0L);
+        if(!viewing||System.currentTimeMillis()-seen>180000L)label="";
+        if(!label.equals(visualCandidate)){
+            visualCandidate=label;visualSeenAt=seen;
+        }
+        visualToggle.setText(viewing?"Parar leitura visual":
+            "Ativar leitura visual (opcional)");
+        String modeStatus=state.getString("raid_day_capture_status",
+            "Acompanhamento visual desligado");
+        if(!visualCandidate.isEmpty())
+            visualStatus.setText("Possível tela: "+visualCandidate+
+                ". Confirme se realmente apareceu no Pokémon GO.");
+        else visualStatus.setText(viewing?modeStatus:
+            "Modo manual · sem captura ativa");
+        visualActions.setVisibility(!visualCandidate.isEmpty()&&!training&&
+            active?View.VISIBLE:View.GONE);
+    }
+
     private void updateStep(){
         if(progressText==null)return;
         // Uma pergunta por tela; sessões antigas já iniciadas não são apagadas.
@@ -971,6 +1067,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         trainingExit.setVisibility(training?View.VISIBLE:View.GONE);
         endButton.setText(training?"Sair do treino":
             endPending?"Confirmar fim":"Encerrar");
+        updateVisual();
         if(visible)placePanel();
     }
     private void placePanelCoordinates(){
@@ -1007,6 +1104,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     @Override public void onDestroy(){
         running=false;
+        if(RaidDayScreenCaptureService.isActive())
+            stopService(new Intent(this,RaidDayScreenCaptureService.class));
         handler.removeCallbacksAndMessages(null);
         if(wm!=null){
             if(panel!=null&&visible){
