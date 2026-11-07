@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.84",
-  "code": 54488,
-  "label": 51288,
-  "previous_tag": "v0.02.83-54487",
-  "qa_max_code": 54487,
-  "release_notes": "PokeSearch LT284: comparador avançado de IVs A/B incorporado à calculadora PvP existente. Ao expandir Comparar IVs, mostra na mesma janela os Ranks Classe verificados, eficiência IV %, PC e nível dos dois conjuntos nas três ligas (Grande, Ultra, Mestre); Rank Geral da espécie aparece apenas se a identidade da forma e a fonte forem confirmadas. O cálculo reutiliza o explorador de 4.096 distribuições e o cache local, não altera IVs reais nem o provedor. Formas sem identificação exata, dados ausentes e IVs inválidos ficam não confirmados. Maior produto de atributos é destacado somente no texto, sem alegar vitórias PvP ou elegibilidade de Mega, custos ou golpes não verificados. Mantidos Raides, PvP, sprites, bandeiras, tradução PT-BR, filtros, localização, favoritos, duas Pokébolas independentes, OTA e assinatura permanente. Oito gates automatizados do PR #278 aprovados; teste físico Samsung P1/P2 ainda pendente."
+  "version": "0.02.85",
+  "code": 54489,
+  "label": 51289,
+  "previous_tag": "v0.02.84-54488",
+  "qa_max_code": 54488,
+  "release_notes": "PokeSearch LT285: assistente de obtenção de golpes com fonte verificada. No painel existente de Golpes PvP recomendados, expandir MT mostra para Ágil, Carregado 1 e 2 se a fonte PvPoke sinaliza MT comum, Elite, legado sem confirmação de obtenção por MT Elite ou informação insuficiente. MT comum é aleatória e Elite indicada no snapshot não confirma disponibilidade atual no jogo. Conjuntos que são apenas listas de golpes possíveis não são anunciados como recomendações. Em Raides, ajuda compacta esclarece que selo Elite vem do conjunto de ataques por tipo, não identifica qual golpe requer Elite e ausência de selo não prova MT comum. Mantidos PT-BR por IDs oficiais verificados, cores somente no texto, classificações, IV, sprites, filtros, favoritos, localização, duas Pokébolas independentes, OTA e assinatura permanente. Oito gates automatizados do PR #279 aprovados; testes físicos Samsung P1/P2 ainda pendentes."
 }
