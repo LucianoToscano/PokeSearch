@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "roteiro_bug_passes",
-  "nome": "Assistente do Dia de Reides",
+  "nome": "Edu — Assistente do Dia de Reides",
   "subtitulo": "Tutorial “Bug dos Passes”",
   "evidenceKind": "RELATO_COMUNIDADE",
   "riskTextVersion": "lt304-v2-risco-1",
@@ -47,7 +47,10 @@
           "naoAconteceu": "Se não conhece seu passe, confira a mochila. Se a data não estiver confirmada, mantenha o roteiro em treinamento.",
           "retornoSeguro": "Voltar à preparação e revisar as condições iniciais.",
           "local": null,
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: vamos conferir tudo antes de começar?",
+          "ajudaEdu": "Primeiro, confira se o Passe Diário e a data do evento estão corretos. Nada será feito automaticamente.",
+          "periodo": "preparacao"
         },
         {
           "id": "E02",
@@ -63,7 +66,10 @@
           "naoAconteceu": "Não foi possível confirmar o carregamento? Aguarde ou revise a preparação.",
           "retornoSeguro": "Reabrir a etapa E02 sem registrar passe.",
           "local": "hawaii",
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: na véspera, o roteiro começa pelo Havaí. Você já concluiu essa parte?",
+          "ajudaEdu": "Esta é a primeira região do relato. O jogo precisa ser conferido manualmente; aguardar um minuto não prova resultado.",
+          "periodo": "D-1"
         },
         {
           "id": "E03",
@@ -80,7 +86,10 @@
           "retornoSeguro": "Revisar a confirmação do passe e o horário do evento.",
           "local": "newzealand",
           "opcional": false,
-          "semPassePara": "E08"
+          "semPassePara": "E08",
+          "falaEdu": "Edu: o próximo ponto é Nova Zelândia. Você viu um Passe Diário gratuito?",
+          "ajudaEdu": "Não comece uma reide esperando um passe que não esteja visível. A ordem do vídeo é Havaí → Nova Zelândia.",
+          "periodo": "D-1"
         },
         {
           "id": "E04",
@@ -95,7 +104,10 @@
           "naoAconteceu": "Se perdeu, abandonou ou a reide não terminou, registre o resultado e não presuma recompensas.",
           "retornoSeguro": "Revisar a reide e retomar somente após saber o desfecho.",
           "local": null,
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: como terminou essa reide?",
+          "ajudaEdu": "Vencer a reide, receber recompensas e capturar o Pokémon são acontecimentos diferentes. Se não souber, marque 'Não sei'.",
+          "periodo": "D-1"
         },
         {
           "id": "E05",
@@ -110,7 +122,10 @@
           "naoAconteceu": "Se a tela não carregou, revise a etapa sem contar passe novo.",
           "retornoSeguro": "Voltar à etapa E05 e revisar carregamento.",
           "local": "hawaii",
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: agora o roteiro retorna ao Havaí. O jogo carregou?",
+          "ajudaEdu": "Siga a sequência apresentada no tutorial, sem considerar um teleporte como confirmado pelo servidor.",
+          "periodo": "D-1"
         },
         {
           "id": "E06",
@@ -126,7 +141,10 @@
           "retornoSeguro": "Revisar a mochila e seguir à decisão de ciclo.",
           "local": null,
           "opcional": false,
-          "semPassePara": "E08"
+          "semPassePara": "E08",
+          "falaEdu": "Edu: apareceu outro Passe Diário?",
+          "ajudaEdu": "Conferir o inventário é mais importante do que contar ciclos. Se não apareceu, podemos parar de repetir.",
+          "periodo": "D-1"
         },
         {
           "id": "E07",
@@ -143,7 +161,10 @@
           "local": null,
           "opcional": false,
           "repetePara": "E02",
-          "semPassePara": "E08"
+          "semPassePara": "E08",
+          "falaEdu": "Edu: quer repetir o ciclo ou seguir ao dia do evento?",
+          "ajudaEdu": "Repetir volta à etapa do Havaí. A contagem mostra ciclos, não passes recebidos.",
+          "periodo": "D-1"
         },
         {
           "id": "E08",
@@ -158,7 +179,10 @@
           "naoAconteceu": "Evento ainda não começou ou terminou? Revise a data; não assuma disponibilidade.",
           "retornoSeguro": "Retomar quando a janela do evento estiver válida.",
           "local": null,
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: chegou o dia do evento. Você conferiu a janela e os passes disponíveis?",
+          "ajudaEdu": "O local para fazer reides só é escolhido nesta etapa. O horário oficial depende do evento e não do vídeo antigo.",
+          "periodo": "D"
         },
         {
           "id": "E09",
@@ -175,7 +199,10 @@
           "retornoSeguro": "Voltar ao contexto da etapa E08, sem contar passe.",
           "local": "kiribati",
           "opcional": true,
-          "pularPara": "E10"
+          "pularPara": "E10",
+          "falaEdu": "Edu: o vídeo também cita Kiribati. Quer conferir essa etapa opcional?",
+          "ajudaEdu": "Essa fase aparece em algumas variantes do relato. Você pode ignorá-la sem perder seu histórico.",
+          "periodo": "D"
         },
         {
           "id": "E10",
@@ -190,7 +217,10 @@
           "naoAconteceu": "Sem passe disponível? Não registre reide ou recompensa. Continue ao resumo.",
           "retornoSeguro": "Rever passes atuais e preparar encerramento.",
           "local": null,
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: voltou ao local do evento? Confira os passes que realmente aparecem.",
+          "ajudaEdu": "Registre reides apenas depois de verificar a participação no Pokémon GO. O assistente não cria passes.",
+          "periodo": "D"
         },
         {
           "id": "E11",
@@ -205,7 +235,10 @@
           "naoAconteceu": "Finalize com situações desconhecidas registradas como não confirmadas.",
           "retornoSeguro": "Voltar ao resumo e revisar informações.",
           "local": null,
-          "opcional": false
+          "opcional": false,
+          "falaEdu": "Edu: pronto! Vamos revisar o que você anotou?",
+          "ajudaEdu": "O resumo separa informações confirmadas por você e sugestões visuais; nenhum ciclo significa recompensa.",
+          "periodo": "fim"
         }
       ]
     }
