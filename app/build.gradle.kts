@@ -5,6 +5,9 @@ plugins { id("com.android.application") }
 // because FirebaseStats initializes the named app using public Android config.
 dependencies {
     implementation("androidx.work:work-runtime:2.10.2")
+    // LT304: histórico local e imutável do Assistente do Dia de Reides.
+    implementation("androidx.room:room-runtime:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
     implementation("androidx.core:core:1.15.0")
     implementation("androidx.webkit:webkit:1.17.1")
     // Offline QR generation from Mercado Pago Pix payload; no third-party service.

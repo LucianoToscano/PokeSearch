@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 2,
+  "id": "roteiro_bug_passes",
+  "nome": "Assistente do Dia de Reides",
+  "subtitulo": "Tutorial “Bug dos Passes”",
+  "evidenceKind": "RELATO_COMUNIDADE",
+  "riskTextVersion": "lt304-v2-risco-1",
+  "variantes": [
+    {
+      "id": "eduhunterplay-2026-10-28",
+      "nome": "EduhunterPlay — vídeo de 28/10/2026",
+      "fonte": "Vídeo compartilhado pelo usuário; roteiro resumido sujeito a confirmação no conteúdo original",
+      "url": "https://youtu.be/S0cTvtaMim0",
+      "publicadoEm": "2026-10-28",
+      "verificadoEm": "2026-11-07",
+      "confianca": "relato_comunitario_nao_verificado",
+      "horario": "D-1 / D; sem horário universal comprovado para eventos futuros",
+      "locais": {
+        "hawaii": {
+          "nome": "Havaí",
+          "coordenadas": "21.2709423,-157.818172",
+          "fuso": "Pacific/Honolulu"
+        },
+        "newzealand": {
+          "nome": "Nova Zelândia",
+          "coordenadas": "-41.282491,174.769132",
+          "fuso": "Pacific/Auckland"
+        },
+        "kiribati": {
+          "nome": "Kiribati (Kiritimati)",
+          "coordenadas": "1.987149,-157.477137",
+          "fuso": "Pacific/Kiritimati"
+        }
+      },
+      "etapas": [
+        {
+          "id": "E01",
+          "titulo": "Preparação",
+          "instrucao": "Confira a programação do evento, os passes existentes e as condições do tutorial. Este roteiro é um relato da comunidade, não uma garantia de passes.",
+          "precondicoes": [
+            "Evento e horário conferidos pelo jogador",
+            "Aviso de risco aceito"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Se não conhece seu passe, confira a mochila. Se a data não estiver confirmada, mantenha o roteiro em treinamento.",
+          "retornoSeguro": "Voltar à preparação e revisar as condições iniciais.",
+          "local": null,
+          "opcional": false
+        },
+        {
+          "id": "E02",
+          "titulo": "Havaí",
+          "instrucao": "O vídeo descreve fechar e reabrir o Pokémon GO após conferir a região do Havaí e aguardar cerca de um minuto. O PokeSearch não modifica a localização.",
+          "precondicoes": [
+            "Véspera D-1 conferida",
+            "Jogo fechado antes da retomada, conforme relato"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Não foi possível confirmar o carregamento? Aguarde ou revise a preparação.",
+          "retornoSeguro": "Reabrir a etapa E02 sem registrar passe.",
+          "local": "hawaii",
+          "opcional": false
+        },
+        {
+          "id": "E03",
+          "titulo": "Nova Zelândia",
+          "instrucao": "O tutorial menciona a Nova Zelândia. Verifique no jogo se existe um Passe Diário gratuito antes de iniciar qualquer reide.",
+          "precondicoes": [
+            "Etapa anterior confirmada",
+            "Passe disponível observado, não presumido"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Sem Passe Diário? Não registre uma reide; avance ao caminho de revisão e evento.",
+          "retornoSeguro": "Revisar a confirmação do passe e o horário do evento.",
+          "local": "newzealand",
+          "opcional": false
+        },
+        {
+          "id": "E04",
+          "titulo": "Resultado da reide",
+          "instrucao": "Registre separadamente: entrou no lobby, iniciou, venceu, perdeu ou abandonou. Ganhar a reide não significa capturar o chefe.",
+          "precondicoes": [
+            "Resultado informado pelo jogador"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Se perdeu, abandonou ou a reide não terminou, registre o resultado e não presuma recompensas.",
+          "retornoSeguro": "Revisar a reide e retomar somente após saber o desfecho.",
+          "local": null,
+          "opcional": false
+        },
+        {
+          "id": "E05",
+          "titulo": "Voltar ao Havaí",
+          "instrucao": "Segundo o vídeo, volte ao Havaí e reinicie o jogo antes de conferir novamente os passes. A mudança de mapa não confirma o fuso do servidor.",
+          "precondicoes": [
+            "Resultado da reide registrado"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Se a tela não carregou, revise a etapa sem contar passe novo.",
+          "retornoSeguro": "Voltar à etapa E05 e revisar carregamento.",
+          "local": "hawaii",
+          "opcional": false
+        },
+        {
+          "id": "E06",
+          "titulo": "Conferência de passe",
+          "instrucao": "Confira se existe realmente um novo Passe Diário. Marque 'Não aconteceu' caso ele não apareça. Não confunda reide concluída com passe obtido.",
+          "precondicoes": [
+            "Estado do passe informado pelo jogador"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Nenhum passe novo confirmado. A próxima etapa permite encerrar a repetição.",
+          "retornoSeguro": "Revisar a mochila e seguir à decisão de ciclo.",
+          "local": null,
+          "opcional": false
+        },
+        {
+          "id": "E07",
+          "titulo": "Decisão de ciclo",
+          "instrucao": "Se observou outro passe, use 'Repetir ciclo' para revisar E02. Se não houve passe, escolha 'Sem passe → evento'. O contador mede ciclos, não recompensas.",
+          "precondicoes": [
+            "Passe visto ou ausência registrada"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Selecione 'Sem passe → evento' para prosseguir sem repetir indefinidamente.",
+          "retornoSeguro": "Rever E06 e escolher uma das saídas.",
+          "local": null,
+          "opcional": false,
+          "repetePara": "E02",
+          "semPassePara": "E08"
+        },
+        {
+          "id": "E08",
+          "titulo": "Dia do evento",
+          "instrucao": "Confira a data D, o horário oficial e quantos passes realmente estão disponíveis. Jogue no local selecionado por você.",
+          "precondicoes": [
+            "Data e janela do evento conferidas"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Evento ainda não começou ou terminou? Revise a data; não assuma disponibilidade.",
+          "retornoSeguro": "Retomar quando a janela do evento estiver válida.",
+          "local": null,
+          "opcional": false
+        },
+        {
+          "id": "E09",
+          "titulo": "Kiribati (opcional)",
+          "instrucao": "O vídeo cita Kiribati em uma etapa opcional. Confira as condições e o resultado no jogo; cerca de um minuto de espera não comprova passe.",
+          "precondicoes": [
+            "Dia do evento conferido",
+            "Etapa opcional escolhida pelo jogador"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Se não houver passe ou optar por não fazer a etapa, continue para E10.",
+          "retornoSeguro": "Voltar ao contexto da etapa E08, sem contar passe.",
+          "local": "kiribati",
+          "opcional": true
+        },
+        {
+          "id": "E10",
+          "titulo": "Retorno ao evento",
+          "instrucao": "Retorne ao local de jogo e confira apenas passes efetivamente disponíveis. Registre cada reide separadamente.",
+          "precondicoes": [
+            "Local de jogo informado"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Sem passe disponível? Não registre reide ou recompensa. Continue ao resumo.",
+          "retornoSeguro": "Rever passes atuais e preparar encerramento.",
+          "local": null,
+          "opcional": false
+        },
+        {
+          "id": "E11",
+          "titulo": "Encerramento",
+          "instrucao": "Revise seu histórico: ciclos, passes observados, reides e capturas informadas. Relatos não são resultados garantidos.",
+          "precondicoes": [
+            "Resumo conferido pelo jogador"
+          ],
+          "confirmacoesAceitas": [
+            "USER_ATTESTED"
+          ],
+          "naoAconteceu": "Finalize com situações desconhecidas registradas como não confirmadas.",
+          "retornoSeguro": "Voltar ao resumo e revisar informações.",
+          "local": null,
+          "opcional": false
+        }
+      ]
+    }
+  ]
+}

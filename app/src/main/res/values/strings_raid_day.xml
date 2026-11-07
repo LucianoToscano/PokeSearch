@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="raid_day_title">Assistente do Dia de Reides</string>
+    <string name="raid_day_subtitle">Tutorial Bug dos Passes</string>
+    <string name="raid_day_risk_title">Antes de começar · aviso de risco</string>
+    <string name="raid_day_risk_message">Este tutorial é um relato da comunidade, não é garantido. O método envolve localização falsificada e pode violar os Termos do Pokémon GO, com risco de aviso, restrição ou banimento. O PokeSearch não altera localização, não controla o jogo e não promete passes extras. A decisão é sua.</string>
+    <string name="raid_day_risk_agree">Entendi, continuar</string>
+    <string name="raid_day_risk_exit">Sair</string>
+    <string name="raid_day_manual_start">✓ Iniciar roteiro manual</string>
+    <string name="raid_day_training_start">▶ Modo Treino · sem histórico</string>
+    <string name="raid_day_manual_disclaimer">Roteiro manual de 11 etapas. A escolha de evento, o relógio de Brasília e a leitura visual são entregas futuras. Nenhum horário ou passe foi verificado.</string>
+    <string name="raid_day_confirm">✓ Confirmar</string>
+    <string name="raid_day_not_happened">Não aconteceu</string>
+    <string name="raid_day_help">Me perdi</string>
+    <string name="raid_day_end">Encerrar</string>
+    <string name="raid_day_copy_coords">Copiar coordenadas</string>
+    <string name="raid_day_cycle_repeat">↻ Repetir ciclo</string>
+    <string name="raid_day_no_pass">Sem passe → evento</string>
+    <string name="raid_day_no_screen_access">Manual · não lê tela nem altera o jogo</string>
+</resources>
