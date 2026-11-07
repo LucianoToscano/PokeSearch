@@ -84,7 +84,7 @@
     '<strong style="color:'+shade+'">'+(valid?esc(m.name):"Não confirmado")+'</strong>'+
     badge+'</div>'+numbers+'</div>';
   }
-  return title+projection+'<div class="evoMoveCaution">Recomendação PvPoke · não são os golpes capturados</div>'+
+  return title+projection+
    line("Ágil",data.fast)+data.charged.slice(0,2).map((move,i)=>line("C"+(i+1),move)).join("");
  }
  function applyStatus(btn,data){
