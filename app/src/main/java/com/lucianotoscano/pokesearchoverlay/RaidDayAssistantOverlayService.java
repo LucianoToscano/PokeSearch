@@ -12,6 +12,9 @@ import android.content.Context;
 import android.widget.Toast;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -156,11 +159,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         return view;
     }
     private TextView button(String label){
-        TextView b=text(label,12,Color.WHITE,true);
+        TextView b=text(label,12,Color.rgb(38,47,56),true);
         b.setGravity(Gravity.CENTER);
         b.setMinHeight(dp(35));
         b.setPadding(dp(7),dp(3),dp(7),dp(3));
-        b.setBackground(surface(Color.argb(222,40,52,66),Color.argb(90,180,203,225),8));
+        b.setBackground(surface(Color.rgb(247,248,249),Color.rgb(157,168,177),9));
         b.setClickable(true);
         return b;
     }
@@ -402,7 +405,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         View grip=new View(this);
         grip.setClickable(true);
         grip.setContentDescription(
-            "Assistente do Dia de Reides: toque para abrir, segure para ver, arraste para mover");
+            "Edu: toque para conversar, segure por um segundo para ajustes, arraste para mover");
         bubble.addView(grip,new FrameLayout.LayoutParams(-1,-1));
         bubbleParams=new WindowManager.LayoutParams(
             dp(BUBBLE_DP),dp(BUBBLE_DP),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -420,10 +423,15 @@ public final class RaidDayAssistantOverlayService extends Service {
             private float downX,downY;
             private int startX,startY;
             private boolean held;
+            // Ajustes ficam fora da conversa: só aparecem ao segurar a sprite.
             private final Runnable longPress=()->{
                 if(!dragging){
                     held=true;
-                    if(!visible)setVisible(true);
+                    eduSettingsOpen=true;
+                    eduHelpOpen=false;
+                    reactAvatar(RaidDayAvatarFrames.QUESTION);
+                    if(visible)updateStep();
+                    else setVisible(true);
                 }
             };
             @Override public boolean onTouch(View v,MotionEvent event){
@@ -432,7 +440,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                         downX=event.getRawX();downY=event.getRawY();
                         startX=bubbleParams.x;startY=bubbleParams.y;
                         held=false;dragging=false;
-                        handler.postDelayed(longPress,500L);
+                        handler.postDelayed(longPress,1200L);
                         return true;
                     case MotionEvent.ACTION_MOVE:
                         float dx=event.getRawX()-downX,dy=event.getRawY()-downY;
@@ -628,8 +636,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         panel=new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(11),dp(8),dp(11),dp(10));
-        panel.setBackground(surface(Color.argb(231,23,32,42),
-            Color.argb(112,196,213,228),15));
+        // Moldura translúcida discreta; a mensagem fica no balão branco.
+        panel.setBackground(surface(Color.argb(145,23,32,42),
+            Color.argb(70,196,213,228),15));
         eduPanelWidth=Math.min(dp(286),
             getResources().getDisplayMetrics().widthPixels-dp(22));
 
@@ -638,19 +647,15 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduHeader=text("Edu",16,Color.WHITE,true);
         eduHeader.setContentDescription("Edu · segure e arraste este cabeçalho para mover a conversa");
         header.addView(eduHeader,new LinearLayout.LayoutParams(0,dp(34),1));
-        TextView menu=button("⋯");
-        menu.setContentDescription("Abrir configurações do Edu");
-        header.addView(menu,new LinearLayout.LayoutParams(dp(40),dp(33)));
-        menu.setOnClickListener(v->{
-            eduSettingsOpen=!eduSettingsOpen;
-            eduHelpOpen=false;updateStep();
-        });
         TextView close=button("×");
         close.setContentDescription("Recolher conversa do Edu");
         LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(37),dp(33));
         closeP.leftMargin=dp(5);
         header.addView(close,closeP);
-        close.setOnClickListener(v->setVisible(false));
+        close.setOnClickListener(v->{
+            eduSettingsOpen=false;
+            setVisible(false);
+        });
         View.OnTouchListener move=new View.OnTouchListener(){
             float originX,originY;
             int panelX,panelY;
@@ -698,18 +703,49 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduMainCard=new LinearLayout(this);
         eduMainCard.setOrientation(LinearLayout.VERTICAL);
         eduMainCard.setPadding(dp(11),dp(9),dp(11),dp(9));
-        eduMainCard.setBackground(surface(Color.argb(219,40,54,65),
-            Color.argb(65,178,203,223),12));
+        eduMainCard.setBackground(surface(Color.rgb(253,253,253),
+            Color.rgb(128,136,145),13));
+        eduMainCard.setElevation(dp(2));
         LinearLayout.LayoutParams speechLp=new LinearLayout.LayoutParams(-1,-2);
         speechLp.topMargin=dp(8);
         panel.addView(eduMainCard,speechLp);
-        eduSpeech=text("",14,Color.WHITE,false);
+        eduSpeech=text("",14,Color.rgb(28,35,42),false);
         eduSpeech.setLineSpacing(dp(1),1f);
         eduMainCard.addView(eduSpeech);
-        eduSubline=text("",10,Color.rgb(172,202,217),false);
+        eduSubline=text("",10,Color.rgb(88,98,107),false);
         LinearLayout.LayoutParams subLp=new LinearLayout.LayoutParams(-1,-2);
         subLp.topMargin=dp(7);
         eduMainCard.addView(eduSubline,subLp);
+
+        // Pequena cauda de quadrinhos conectada ao balão do Edu.
+        View speechTail=new View(this){
+            private final Paint white=new Paint(Paint.ANTI_ALIAS_FLAG);
+            private final Paint line=new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override protected void onDraw(Canvas canvas){
+                super.onDraw(canvas);
+                float w=getWidth(),h=getHeight();
+                Path triangle=new Path();
+                triangle.moveTo(1f,0f);
+                triangle.lineTo(w-1f,0f);
+                triangle.lineTo(dp(5),h-1f);
+                triangle.close();
+                white.setStyle(Paint.Style.FILL);
+                white.setColor(Color.rgb(253,253,253));
+                canvas.drawPath(triangle,white);
+                Path outline=new Path();
+                outline.moveTo(1f,0f);
+                outline.lineTo(dp(5),h-1f);
+                outline.lineTo(w-1f,0f);
+                line.setStyle(Paint.Style.STROKE);
+                line.setStrokeWidth(dp(1));
+                line.setColor(Color.rgb(128,136,145));
+                canvas.drawPath(outline,line);
+            }
+        };
+        LinearLayout.LayoutParams tailParams=new LinearLayout.LayoutParams(dp(17),dp(11));
+        tailParams.leftMargin=dp(22);
+        tailParams.topMargin=-dp(2);
+        panel.addView(speechTail,tailParams);
 
         createPreparationUi();
         eduActions=new LinearLayout(this);
@@ -1224,6 +1260,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             wm.addView(panelScroll,panelParams);
             panelScroll.post(this::placePanel);
         }else{
+            // Ao reabrir com toque curto, sempre voltar à conversa principal.
+            eduSettingsOpen=false;
             try{wm.removeView(panelScroll);}
             catch(IllegalArgumentException ignored){}
         }
