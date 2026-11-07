@@ -281,11 +281,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     // LT301: thinner 4px arrows, 5px safe margins and all flags precisely centered.
     rail270.badge?.tag==="SPAN"&&
     rail270.badge?.chevrons===2&&rail270.badge?.steps==="2"&&
-    rail270.badge?.span===7&&rail270.badge?.height===12&&
+    rail270.badge?.span===6&&rail270.badge?.height===11&&
     rail270.badge?.cardHeight===39&&rail270.badge?.rowHeight===41&&
-    rail270.badge?.flagSize===21&&
-    rail270.badge?.right>=4.9&&rail270.badge?.right<=5.1&&
-    rail270.badge?.bottom>=4.9&&rail270.badge?.bottom<=5.1&&
+    rail270.badge?.flagSize===19&&
+    rail270.badge?.right>=5.8&&rail270.badge?.right<=6.2&&
+    rail270.badge?.bottom>=5.8&&rail270.badge?.bottom<=6.2&&
     rail270.badge?.arrows?.length===2&&
     rail270.badge?.arrows?.every(a=>a.width===4&&a.height===4&&a.stroke==="1px"&&a.safeRight>=4&&a.safeBottom>=4)&&
     rail270.badge?.triangleGap>=-1&&
