@@ -2674,6 +2674,30 @@
           "Orientação geral de uso PvP/Raides, golpes Elite, presets/eventos e diagnóstico de API seguem no roadmap #277."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt285-tm-advice-pvp-raids-20261107",
+      "minVersionCode": 54489,
+      "date": "07/11/2026",
+      "title": "LT285 — Orientação de MT para golpes PvP e Raides",
+      "sections": {
+        "novidades": [
+          "Ao consultar golpes recomendados no PvP, a seção opcional MT para estes golpes indica separadamente Ágil, C1 e C2: MT comum, Elite sinalizada, Legado sem confirmação de Elite ou dados desconhecidos, sempre vinculados à fonte.",
+          "Na avaliação de Raides, uma ajuda compacta explica os golpes do conjunto por tipo e o significado limitado do selo Elite na fonte PvE."
+        ],
+        "melhorias": [
+          "Rótulos e orientações em português brasileiro, sem novos fundos coloridos, sem misturar melhores golpes PvP e Raides nem ocupar espaço quando fechados.",
+          "A orientação usa os IDs reais do Game Master PvPoke e dados já carregados, sem nova API, sem alterar os golpes capturados e sem garantir resultado de MT."
+        ],
+        "correcoes": [
+          "Golpe legado sem prova de disponibilidade por MT Elite não é anunciado como Elite confirmado; golpes não confirmados permanecem neutros.",
+          "Conjuntos sem recomendação PvP verificada não recebem plano de MT recomendado."
+        ],
+        "emDesenvolvimento": [
+          "Homologar no Samsung P1/P2 os casos Greninja Hidro Canhão, Sableye, Mega, dados desconhecidos, abertura/rolagem do painel e Raides.",
+          "Recomendações por adversário ou chefe específico, eventos atuais de golpes e custos de MT não são inferidos; demais funcionalidades seguem no roadmap #277."
+        ]
+      }
     }
   ]
 }
