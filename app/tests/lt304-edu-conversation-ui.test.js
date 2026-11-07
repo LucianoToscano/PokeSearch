@@ -70,8 +70,12 @@ assert.match(overlay,/void setPointerRight\(boolean right\)/,
   "Mudar lado da cauda conforme o avatar");
 assert.match(overlay,/boolean pointsRight=panelParams\.x\+eduPanelWidth\/2</,
   "Cauda deve apontar para a posição atual do treinador");
-assert.match(overlay,/int docking=left>=0\?left:/,
+assert.match(overlay,/int docking=dockLeft\?/,
   "Balão deve ficar ancorado ao lado do treinador, sem herdar posição distante");
+assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\),Math\.max\(dp\(132\)/,
+  "Balão deve adaptar a largura à área ao lado do treinador");
+assert.match(overlay,/panelParams\.width=eduPanelWidth/,
+  "Largura real da janela deve acompanhar a área livre");
 assert.match(overlay,/placePanelCoordinates\(\);\s*placePanel\(\);/,
   "Movimento do sprite deve reposicionar o balão");
 assert.match(overlay,/bubbleParams\.x=Math\.max\(0,Math\.min\(\s*sw-bubbleParams\.width,avatarX\+/,
