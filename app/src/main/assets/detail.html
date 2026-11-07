@@ -569,6 +569,23 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine .evoMegaTop{flex:0 0 auto;border:1px solid #b89ef25a;border-radius:5px;
  background:#a28fda20;color:#e9d7ff;font-size:8px;font-weight:800;padding:1px 3px;white-space:nowrap}
 .evoLine .evoSummary{display:flex;align-items:flex-start;gap:4px;min-width:0;white-space:normal}
+/* LT295: the attack icon belongs to the species named on THIS row.
+   It never implies the current capture has that moveset. */
+#evolutions.psPerEvoMoves #psLeagueMoves{display:none!important}
+.evoLine .evoMovesAction{flex:0 0 21px;width:21px;height:21px;min-width:21px;
+ padding:2px;margin:0 1px 0 auto;border:1px solid #ffffff35;
+ border-radius:5px;background:#ffffff0c;cursor:pointer;touch-action:manipulation;
+ background-image:url("ui-icons/mt-unknown.png");background-position:center;
+ background-size:14px 14px;background-repeat:no-repeat}
+.evoLine .evoMovesAction[data-ps-mt="normal"]{background-image:url("ui-icons/mt-normal.png")}
+.evoLine .evoMovesAction[data-ps-mt="elite"]{background-image:url("ui-icons/mt-elite.png")}
+.evoLine .evoMovesAction[aria-expanded="true"]{border-color:#8ec9ff;background-color:#7fb6ec22}
+.evoLine .evoMoveDetails:not([hidden]){border-top:1px solid #ffffff24;
+ margin:4px 3px 2px;padding:5px 3px 2px;font-size:9px;line-height:1.35}
+.evoMoveTitle{margin-bottom:3px;color:#dbeeff;font-size:10px}
+.evoMoveCaution{color:#aabacc;font-size:8px;margin-bottom:3px}
+.evoMoveItem{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px;margin:3px 0}
+.evoMoveLegacy{color:#efd79c;font-size:8px}
 .evoLine .evoWho{min-width:0;flex:1 1 auto;font-size:10px;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;color:#f5f8fc}
 .evoLine .evoWho b{font-weight:800}
 .evoLine .evoWho .evoMark{font-size:9px;color:#adc6db;font-weight:600}
@@ -1445,7 +1462,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
   aria-controls="raidPanel" onclick="toggleRaidDetails()">Raides · verificando...</button>
  <section id="raidPanel" hidden role="region" aria-label="Análise de atacantes em Raides"></section>
  <div id="psRankAlternates" hidden role="region" aria-label="Outras evoluções PvP"></div>
- <section id="evolutions" hidden aria-label="Avaliação de evoluções PvP">
+ <section id="evolutions" class="psPerEvoMoves" hidden aria-label="Avaliação de evoluções PvP">
   <button id="evoToggle" type="button" aria-expanded="false" onclick="toggleEvolutionDetails()">
    <span id="evoLabel">Evoluções PvP</span><span id="evoChevron">▾</span>
   </button>
@@ -1485,7 +1502,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvp_family_catalog.js"></script>
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_insights.js"></script>
-<script src="pvp_rank_moves.js"></script>
+<script src="pvp_rank_moves.js"></script><script src="pvp_evolution_moves_ui.js"></script>
 <script src="pve_moves_ptbr.js"></script>
 <script src="pve_raid_rank.js"></script>
 <script src="pvp_rank_advanced_ui.js"></script><script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="despawn_visual.js"></script><script src="pokemon_type_icons.js"></script><script src="pokemon_card_metadata.js"></script><script src="pokemon_card_presentation.js"></script><script src="iv_display.js"></script>
@@ -1869,6 +1886,7 @@ function psCloseOtherPanels(keep){
   const p=document.getElementById("psMetricPanel");
   if(p){p.hidden=true;p.innerHTML="";}
  }
+ if(keep!=="pvp")window.PokeSearchEvolutionMoves?.close?.();
  if(keep!=="moves"){
   const p=document.getElementById("movesPopover");
   if(p)p.hidden=true;
@@ -2218,6 +2236,12 @@ function evolutionRow(x,first){
   '"><div class="evoSummary">'+
   '<span class="evoWho"><span class="evoMark">'+(first?'Atual':isMega?'<img src="ui-icons/mega-symbol.png" class="psMegaMark" alt="" aria-hidden="true">':'↳')+'</span> <b>'+h(name)+'</b>'+
   (isReference?'<button type="button" class="evoInfoBtn" '+(isMega?'data-mega-projection="true" ':'')+'aria-label="'+(isMega?'Informações sobre projeção da forma Mega':'Informações sobre rank de evolução projetado')+'" aria-expanded="false" onclick="togglePvpReferenceInfo(event,this)">ⓘ</button>':'')+'</span>'+
+  '<button type="button" class="evoMovesAction" data-ps-name="'+h(name)+
+   '" data-ps-league="'+h(psLeague)+'" data-ps-mega="'+String(isMega)+
+   '" data-ps-reference="'+String(isReference)+
+   '" data-ps-mt="unknown" aria-expanded="false" aria-label="Golpes PvP de '+
+   h(name)+' na liga selecionada" title="Ver golpes PvP: '+h(name)+
+   '" onclick="toggleEvolutionMoves(event,this)"></button>'+
   '</div>'+
   '<div class="evoStatsRow">'+stats.join("")+
   (isMega&&hasClass&&rank===1?'<span class="evoMegaTop">TOP 1 MEGA</span>':"")+
@@ -2226,7 +2250,9 @@ function evolutionRow(x,first){
     ' style="--ps-rank-percent-color:'+window.PokeSearchIVDisplay.colorForEfficiency(pct)+'"':"")+
    '>'+h(pct)+'%</span>':"")+'</div>'+
   '<div class="evoMeta evoRankRow">'+ranks.join("")+'</div>'+
-  (state?'<div class="evoState">'+h(state)+'</div>':"")+'</div>';
+  (state?'<div class="evoState">'+h(state)+'</div>':"")+
+  '<div class="evoMoveDetails" hidden role="region" aria-label="Golpes PvP de '+
+   h(name)+'"></div></div>';
 }
 // Compact rank shown OUTSIDE the collapsed analysis in the search league.
 // The toolbar #1 is only a search threshold; use verified species IV ranks.
@@ -2252,6 +2278,9 @@ function renderRankOneMoves(){
  if(leagueSlot){
   leagueSlot.querySelector?.(".psMovesAction")?.remove?.();
   if(!evolutionExpanded||!["gl","ul","ml"].includes(activeRankLeague)){
+   popover.hidden=true;popover.textContent="";return;
+  }
+  if(document.querySelector?.("#evoBody .evoMovesAction")){
    popover.hidden=true;popover.textContent="";return;
   }
  }
@@ -2887,6 +2916,7 @@ window.showEvolutionDetails=payload=>{
  if(!payload||!Array.isArray(payload.leagues)||payload.leagues.length!==3||
     evoIdentity(payload)!==detailIdentity)return false;
  window.psRankContext=payload;
+ window.PokeSearchEvolutionMoves?.setScope?.(detailIdentity);
  // Real Android WebViews use five independent shortcuts; text-only legacy DOMs remain safe.
  const liveRail=document.getElementById("rankLine");
  if(liveRail?.ownerDocument?.defaultView)psRenderFiveRankRail(payload);
@@ -2972,7 +3002,10 @@ window.showEvolutionDetails=payload=>{
    h(x.name)+(x.mega?' · Mega projetada':x.reference?' · Referência teórica':'')+'</span>').join("")+'</div>':"";
  html=topHtml+'<button type="button" class="psRaidAnalysisLink" '+
   'onclick="toggleRaidDetails()">Ver avaliação de Raides (PvE) neste cartão</button>'+html;
- if(body.innerHTML!==html)body.innerHTML=html;
+ if(body.innerHTML!==html){
+  body.innerHTML=html;
+  window.PokeSearchEvolutionMoves?.restore?.();
+ }
  outer.hidden=!evolutionExpanded;
  if(evolutionExpanded&&psSelectedEvaluationLeague)
   psFocusLeagueBlocks(psSelectedEvaluationLeague);
