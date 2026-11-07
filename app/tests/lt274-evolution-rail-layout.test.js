@@ -74,7 +74,7 @@ assert.ok(rail.indexOf('/* LT301 Samsung refinement')>rail.indexOf('/* LT300: fi
 console.log('LT301: thin 0-2 chevrons with safe margins and centered flags.');
 const lt302=rail.slice(rail.indexOf('/* LT302: delicate compact up-chevrons'));
 assert.ok(lt302.startsWith('/* LT302: delicate compact up-chevrons'));
-assert.match(lt302,/right:3px!important;bottom:3px!important/);
+assert.match(lt302,/right:4px!important;bottom:3px!important/);
 assert.match(lt302,/width:5px!important;min-width:5px!important;max-width:5px!important/);
 assert.match(lt302,/height:7px!important;min-height:7px!important;max-height:7px!important/);
 assert.match(lt302,/gap:0!important/);
@@ -82,7 +82,7 @@ assert.match(lt302,/width:3px!important;height:3px!important;flex:0 0 3px!import
 assert.match(lt302,/border-top:\.8px solid #e7fbff!important/);
 assert.match(lt302,/border-left:\.8px solid #e7fbff!important/);
 assert.match(lt302,/left:50%!important;right:auto!important;transform:translateX\(-50%\)!important/);
-assert.match(lt302,/\.psRailButton\.psRailRaid \.psRailEvolve\{\s*right:1px!important/);
+assert.match(lt302,/\.psRailButton\.psRailRaid \.psRailEvolve\{\s*right:2px!important/);
 assert.ok(rail.indexOf('/* LT302: delicate')>rail.indexOf('/* LT301 Samsung refinement'));
 console.log('LT302: delicate, closer 3px arrows and safe raid-flag separation.');
 
