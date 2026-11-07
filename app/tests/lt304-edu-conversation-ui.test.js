@@ -39,12 +39,33 @@ assert.match(overlay,/eduMainCard\.setBackground\(surface\(Color\.rgb\(253,253,2
   "Fala do Edu deve usar balão claro");
 assert.match(overlay,/eduSpeech=text\("",14,Color\.rgb\(28,35,42\),false\)/,
   "Texto do balão deve ser escuro, legível em branco");
-assert.match(overlay,/View speechTail=new View\(this\)/,
-  "Balão precisa ter cauda discreta estilo quadrinhos");
+assert.match(overlay,/eduSpeechTail=new View\(this\)/,
+  "A cauda deve ser componente lateral do balão, e não uma seta abaixo dos botões");
+assert.match(overlay,/private void positionEduSpeechTail\(\)/,
+  "A ponta deve acompanhar a posição da sprite após arrastar");
+assert.match(overlay,/lp\.gravity=Gravity\.TOP\|\(avatarLeft\?Gravity\.LEFT:Gravity\.RIGHT\)/,
+  "A cauda precisa mudar de lado conforme o treinador");
+assert.match(overlay,/positionEduSpeechTail\(\)/);
+assert.match(overlay,/speechFrame\.addView\(eduMainCard,cardLp\)/);
+assert.match(overlay,/eduMainCard\.addView\(header\)/,
+  "Título e recolher pertencem ao próprio balão, não a uma caixa externa");
+assert.match(overlay,/panel\.setBackgroundColor\(Color\.TRANSPARENT\)/,
+  "Remover moldura escura global por trás de diálogo e botões");
+assert.match(overlay,/panelScroll\.setBackgroundColor\(Color\.TRANSPARENT\)/,
+  "A janela não pode recriar o retângulo de fundo");
+assert.doesNotMatch(overlay,/panel\.setBackground\(surface\(Color\.argb/,
+  "Não restaurar fundo escuro translúcido envolvendo todos os controles");
+assert.match(overlay,/panel\.addView\(eduActions,actionsLp\)/,
+  "As respostas precisam flutuar fora da caixa da fala");
+assert.match(overlay,/actionsLp\.leftMargin=dp\(15\)/);
+assert.match(overlay,/actionsLp\.topMargin=dp\(10\)/);
+assert.match(overlay,/eduMainCard\.setVisibility\(View\.VISIBLE\)/,
+  "O cabeçalho e fechar devem continuar acessíveis em ajustes e preparação");
 assert.match(overlay,/eduSettingsOpen=false;\s*try\{wm\.removeView\(panelScroll\);\}/,
   "Reabrir com toque normal deve mostrar conversa, não ajustes");
 
-assert.match(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/);
+assert.doesNotMatch(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/,
+  "Nunca esconder o balão inteiro durante a preparação e os ajustes");
 assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\)/);
 assert.match(overlay,/\.heightPixels\*\.43f/);
 assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
@@ -145,4 +166,4 @@ assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
 for(const s of steps)assert.ok(s.falaEdu.startsWith("Edu: "),s.id);
 assert.doesNotMatch(overlay,/RaidDayEventClock\.summary\(now\)/,
   "The giant 4-region clock must never be shown in tutorial");
-console.log("LT304 Edu PASS: conversa com apresentação e escolhas, E01–E11, passagens e carregamento separados, dia D, coordenadas tocáveis e ajustes ocultos");
+console.log("LT305 Edu UX PASS: fala ligada ao avatar por cauda lateral, controles flutuantes sem fundo externo, preparação e ajustes acessíveis");
