@@ -25,21 +25,22 @@ assert.equal(stats.lookup("invented",true),null);
 const claw=stats.lookup("SHADOW_CLAW",true);
 assert.equal(claw.id,"SHADOW_CLAW_FAST");
 assert.equal(claw.pvpPower,6);assert.equal(claw.pvpEnergy,8);
-assert.match(display.mtBadge(true,"normal"),/mt-agil-normal-lt298.svg/);
-assert.match(display.mtBadge(false,"normal"),/mt-carregada-normal-lt298.svg/);
+assert.match(display.mtBadge(true,"normal"),/mt-normal.png/);
+assert.match(display.mtBadge(false,"normal"),/mt-normal.png/);
 assert.match(display.mtBadge(true,"elite"),/mt-agil-elite-lt265.png/);
 assert.match(display.mtBadge(false,"elite"),/mt-carregada-elite-lt265.png/);
 assert.match(display.mtBadge(false,"legacy"),/mt-unknown.png/);
 assert.doesNotMatch(display.mtBadge(false,"legacy"),/mt-carregada-elite-lt265.png/);
 const iv=display.recommendationMetrics({id:"SHADOW_CLAW",stats:{power:6,energyGain:8}},true);
-assert.match(iv,/PvP: Poder 6 • Energia \+8/);
-assert.match(iv,/Raides: Dmg 6 • CD 0,50 • DPS 12,0 • Energia \+4/);
+assert.match(iv,/Poder 6 • Energia \+8/);
+assert.doesNotMatch(iv,/Dmg |Raides:|PvP:/);
 const cap=display.captured("Scratch / Wild Charge",
  {number:"#255",name:"Torchic"}, {base:{"255":[["fire"],["WILD_CHARGE"]]}});
-assert.match(cap,/Golpes capturados · Torchic/);
+assert.match(cap,/Detalhes dos golpes · Torchic/);
 assert.match(cap,/Arranhão/);assert.match(cap,/Ataque Selvagem/);
 assert.match(cap,/Dmg 90 • CD 2,50 • DPS 36,0 • Energia 50/);
-assert.match(cap,/mt-agil-normal-lt298.svg/);
+assert.doesNotMatch(cap,/Poder 100|Custo 45|PvP:|não recomendação de PvPoke/);
+assert.match(cap,/mt-normal.png/);
 assert.match(cap,/mt-unknown.png/,"legacy category must remain unconfirmed");
 assert.doesNotMatch(cap,/MT Carregada de Elite indicada/);
 const invalid=display.captured("<script>alert(1)</script> / nonsense",
@@ -50,10 +51,10 @@ const recommended=global.PokeSearchEvolutionMoves.render("Sableye","gl",false,fa
  fast:{id:"SHADOW_CLAW",name:"Garra Sombria",type:"ghost",localeVerified:true,status:"normal",stats:{power:6,energyGain:8}},
  charged:[{id:"WILD_CHARGE",name:"Ataque Selvagem",type:"electric",localeVerified:true,status:"elite",stats:{power:100,energyCost:45}}]
 });
-assert.match(recommended,/mt-agil-normal-lt298.svg/);
+assert.match(recommended,/mt-normal.png/);
 assert.match(recommended,/mt-carregada-elite-lt265.png/);
 assert.match(recommended,/Poder 100 • Custo 45/);
-assert.match(recommended,/Dmg 90 • CD 2,50 • DPS 36,0 • Energia 50/);
+assert.doesNotMatch(recommended,/Dmg |Raides:|não são os golpes capturados/);
 const html=read("detail.html");
 for(const asset of ["pokemon_move_metrics.js","pokemon_move_panel.js"]){
  assert.ok(html.includes('<script src="'+asset+'"></script>'));
@@ -68,7 +69,7 @@ assert.ok(html.includes('onclick="toggleCapturedMoves()"'));
 assert.ok(html.includes('psCloseOtherPanels("captured")'));
 assert.ok(html.includes('psCapturedCard=c;'));
 assert.ok(html.includes('psCloseCapturedMovesPanel();psCapturedCard=null;'));
-assert.ok(html.includes('window.PokeSearchMovePanel?.pveStats?.(move,fast)'));
+assert.ok(html.includes('window.PokeSearchMovePanel?.pvpStats?.(move,fast)'));
 assert.ok(html.includes('psMoveTypedName')&&html.includes('#movesPopover .psMoveNumbers'));
 const ota=read("pokemon_move_panel.js");assert.ok(ota.includes("MT Carregada"));
 const java=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/OtaAssets.java"),"utf8");
@@ -76,4 +77,4 @@ const py=fs.readFileSync(path.join(__dirname,"../../scripts/build_ota_pack.py"),
 for(const asset of ["pokemon_move_metrics.js","pokemon_move_panel.js","pvp_evolution_moves_ui.js",
  "ui-icons/mt-agil-normal-lt298.svg","ui-icons/mt-carregada-normal-lt298.svg"])
  assert.ok(java.includes(asset)&&py.includes(asset),"OTA allowlist "+asset);
-console.log("LT298 PASS: exact PvP/PvE numbers, fast/charged and MT statuses, captured clicks, source-safe UI, OTA");
+console.log("LT298/LT299 PASS: separate battle-mode metrics, original MT icon, captured clicks, source-safe UI, OTA");
