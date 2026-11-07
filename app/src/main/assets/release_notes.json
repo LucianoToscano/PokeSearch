@@ -2526,6 +2526,25 @@
           "Confirmar a resposta da API ao vivo, especialmente -IV, -LEVEL, -DSP e -DISTANCE, no Samsung P1/P2. Os relatos de testes do usuário não substituem a homologação dentro do aplicativo."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt278-rank-labels-one-pixel-20261106",
+      "minVersionCode": 54482,
+      "date": "06/11/2026",
+      "title": "LT278 — Números dos rankings 1 px mais altos",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "Os números #rank de Raides, GL, UL, ML e Rank Geral ficam exatamente 1 pixel acima para separar visualmente o texto das bandeiras."
+        ],
+        "correcoes": [
+          "Preservados tamanho e posição das cinco bandeiras, marcador branco/verde de evolução, altura compacta de 45 px dos cartões, barra de 47 px e suas áreas de toque.",
+          "Ajuste de exibição compartilhado pelas duas Pokébolas, sem modificar cálculos, ordenações ou critérios da API."
+        ],
+        "emDesenvolvimento": [
+          "Conferir a aparência e o espaçamento real dos cinco rankings no Samsung após instalar a versão."
+        ]
+      }
     }
   ]
 }
