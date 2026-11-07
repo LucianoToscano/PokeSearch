@@ -33,7 +33,7 @@ assert.match(overlay,/\.heightPixels\*\.43f/);
 assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
 assert.match(overlay,/putInt\("edu_panel_x"/);
 assert.match(overlay,/putInt\("edu_panel_y"/);
-assert.match(overlay,/panelParams\\.alpha=1f/);
+assert.match(overlay,/panelParams\.alpha=1f/);
 assert.match(overlay,/panel\.setBackgroundColor\(Color\.TRANSPARENT\)/);
 assert.match(overlay,/eduMainCard\.setBackground\(surface\(Color\.WHITE/);
 assert.match(overlay,/class EduSpeechTail extends View/);
