@@ -49,45 +49,13 @@ public final class RaidDayAssistantOverlayService extends Service {
     static final String ACTION_STOP="com.lucianotoscano.pokesearch.RAID_DAY_GUIDE_STOP";
     private static final String CHANNEL="pokesearch_raid_day_guide";
     private static final int NOTIFICATION_ID=1988;
-    private static final int BUBBLE_DP=45;
+    private static final int BUBBLE_DP=48, ART_DP=45;
     private static volatile boolean running;
     public static boolean isRunning(){return running;}
 
-    // Example from the video (30–31 October 2026); dates are historical.
-    // Do not silently treat this sequence as valid for another raid day.
-    private static final int STEP_NZ=3, STEP_NZ_RAID=4, STEP_CHECK=6;
-    private static final String[] TITLES={
-        "Prepare o Dia de Raides",
-        "Véspera · Havaí",
-        "Confira o mapa no Havaí",
-        "Véspera · Nova Zelândia",
-        "Confira e faça uma reide",
-        "Retorne ao Havaí",
-        "Novo passe disponível?",
-        "Dia do evento",
-        "Etapa final · Kiribati",
-        "Retorne ao evento",
-        "Confira seu resultado"
-    };
-    private static final String[] INSTRUCTIONS={
-        "Tutorial conhecido como 'Bug dos Passes'. O vídeo usou 30 e 31/10/2026. Confira a data do evento real, os passes e as regras atuais. O método não é garantido e pode violar regras do jogo.",
-        "No exemplo, na véspera às 22h de Brasília: feche o jogo e confira a região do Havaí. O assistente apenas copia coordenadas; não movimenta o jogo.",
-        "Abra o Pokémon GO no Havaí e aguarde cerca de um minuto, conforme o vídeo. Confirme manualmente que a tela carregou.",
-        "Feche o jogo e confira a região da Nova Zelândia. Reabra apenas quando a etapa anterior estiver concluída.",
-        "Veja se existe um Passe de Reide Diário disponível no jogo. Se existir, conclua uma reide e confirme; sem passe, não registre uma reide inexistente.",
-        "Feche o Pokémon GO, confira novamente o Havaí e reabra. Não confunda mudança de fuso com passe realmente obtido.",
-        "Se você observou outro passe no jogo, use 'Repetir ciclo' para voltar à Nova Zelândia; caso contrário, escolha 'Sem passe → evento'. Não são passes garantidos.",
-        "No exemplo do vídeo, 31/10 era o dia do evento. Verifique onde e quando o evento está acontecendo antes de continuar.",
-        "O vídeo menciona Kiribati apenas quando os passes acabam. Feche o jogo, confira o local, abra e aguarde cerca de um minuto. Isso não garante passe adicional.",
-        "Feche o jogo e retorne à área do evento. Abra o Pokémon GO e utilize somente os passes que estiverem realmente disponíveis.",
-        "Revise os passes e reides que você realmente viu no jogo. Este guia registra somente confirmações manuais e não prova recompensas extras."
-    };
-    private static final String[] COORDS={
-        "", "21.2709423,-157.818172", "",
-        "-41.282491,174.769132", "",
-        "21.2709423,-157.818172", "", "",
-        "1.987149,-157.477137", "", ""
-    };
+    // Os textos e a ordem E01–E11 vêm do JSON validado, não de arrays Java.
+    private static final int STEP_E02=1, STEP_E03=2, STEP_E06=5;
+    private static final int STEP_E07=6, STEP_E08=7, STEP_E09=8;
 
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WindowManager wm;
@@ -97,9 +65,15 @@ public final class RaidDayAssistantOverlayService extends Service {
     private SharedPreferences prefs;
     private TextView progressText,titleText,instructionText,statusText,confirmButton,pauseButton;
     private TextView copyButton,repeatButton,cycleText,skipButton;
-    private LinearLayout cycleActions;
+    private TextView riskContinue,riskExit,startButton,trainButton,trainingExit;
+    private TextView notHappenedButton,helpButton,endButton;
+    private LinearLayout cycleActions,guideContent,riskSection,startSection;
     private ProgressBar progressBar;
     private boolean paused=false,finished=false,visible=false,dragging=false;
+    private boolean active=false,training=false,riskAccepted=false,endPending=false;
+    private RaidDayGuidePlan plan;
+    private RaidDayDatabase journal;
+    private String eventKey="evento_nao_configurado",sessionKey="";
     private int index=0;
     private int repeatedCycles=0;
     private long lastConfirmAt=0L;
@@ -149,10 +123,20 @@ public final class RaidDayAssistantOverlayService extends Service {
             stopSelf();return;
         }
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
-        index=Math.max(0,Math.min(TITLES.length-1,prefs.getInt("step",0)));
-        repeatedCycles=Math.max(0,Math.min(100,prefs.getInt("repeatedCycles",0)));
-        finished=prefs.getBoolean("finished",false);
-        paused=prefs.getBoolean("paused",false);
+        try{
+            plan=RaidDayGuidePlan.load(this);
+            journal=RaidDayDatabase.get(this);
+            eventKey=prefs.getString("eventKey","evento_nao_configurado");
+            int generation=Math.max(1,prefs.getInt("sessionGeneration",1));
+            sessionKey=eventKey+"#"+generation;
+            riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+                prefs.getString("riskAcceptance",""));
+            restoreJournal();
+        }catch(Exception invalid){
+            Toast.makeText(this,"Não foi possível carregar o roteiro do Dia de Reides",
+                Toast.LENGTH_LONG).show();
+            stopSelf();return;
+        }
         touchSlop=ViewConfiguration.get(this).getScaledTouchSlop();
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(wm==null){stopSelf();return;}
@@ -188,6 +172,70 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         return START_NOT_STICKY;
     }
+    /**
+     * Reconstrói o estado a partir do registro Room da sessão real.
+     * O Modo Treino é efêmero e nunca escreve nesses eventos.
+     */
+    private void restoreJournal(){
+        index=0;repeatedCycles=0;paused=false;finished=false;active=false;
+        java.util.List<RaidDayEvent> events=journal.events().all(sessionKey);
+        if(events.isEmpty()){
+            // Migração cautelosa do protótipo LT304 anterior: não apagar o progresso.
+            if(prefs.contains("step")){
+                int old=Math.max(0,Math.min(10,prefs.getInt("step",0)));
+                int[] oldToV2={0,1,1,2,3,4,5,7,8,9,10};
+                index=oldToV2[old];
+                repeatedCycles=Math.max(0,Math.min(100,prefs.getInt("repeatedCycles",0)));
+                finished=prefs.getBoolean("finished",false);
+                paused=prefs.getBoolean("paused",false);
+                active=true;
+                appendEvent("LEGACY_IMPORTED");
+                prefs.edit().remove("step").remove("repeatedCycles")
+                    .remove("finished").remove("paused").apply();
+            }
+            return;
+        }
+        for(RaidDayEvent item:events){
+            index=Math.max(0,Math.min(plan.size()-1,item.nextIndex));
+            repeatedCycles=Math.max(0,Math.min(100,item.cycleCount));
+            paused=item.paused;finished=item.finished;active=item.active;
+        }
+    }
+    private void appendEvent(String type){
+        if(training||journal==null)return;
+        RaidDayEvent event=new RaidDayEvent();
+        event.sessionKey=sessionKey;
+        event.type=type;
+        event.stepId=plan.step(index).id;
+        event.occurredAtMs=System.currentTimeMillis();
+        event.nextIndex=index;
+        event.cycleCount=repeatedCycles;
+        event.paused=paused;
+        event.finished=finished;
+        event.active=active;
+        journal.events().add(event);
+    }
+    private void beginRealSession(){
+        if(active||training)return;
+        if(journal.events().count(sessionKey)>0){
+            int generation=Math.max(1,prefs.getInt("sessionGeneration",1))+1;
+            prefs.edit().putInt("sessionGeneration",generation).apply();
+            sessionKey=eventKey+"#"+generation;
+        }
+        index=0;repeatedCycles=0;paused=false;finished=false;active=true;
+        appendEvent("STARTED");
+        updateStep();
+    }
+    private void beginTraining(){
+        if(!riskAccepted)return;
+        training=true;active=false;index=0;repeatedCycles=0;
+        paused=false;finished=false;endPending=false;
+        updateStep();
+    }
+    private void leaveTraining(){
+        training=false;restoreJournal();updateStep();
+    }
+
     private void createBubble(){
         bubble=new FrameLayout(this);
         bubble.setBackgroundColor(Color.TRANSPARENT);
@@ -196,7 +244,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         image.setContentDescription("Assistente do Dia de Raides");
         if(artwork!=null)image.setImageBitmap(artwork);
         else image.setImageResource(R.drawable.ic_notification);
-        bubble.addView(image,new FrameLayout.LayoutParams(dp(37),dp(37),Gravity.CENTER));
+        bubble.addView(image,new FrameLayout.LayoutParams(dp(ART_DP),dp(ART_DP),Gravity.CENTER));
         View grip=new View(this);
         grip.setClickable(true);
         grip.setContentDescription(
