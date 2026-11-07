@@ -43,6 +43,7 @@ assert.match(service,/Sem passe → evento/);
 assert.match(service,/repeatedCycles/);
 assert.match(service,/ClipboardManager/);
 assert.match(service,/index=STEP_NZ/);
+assert.match(service,/now-lastConfirmAt<650L/);
 assert.match(service,/não representa passes/);
 assert.doesNotMatch(service,/MediaProjectionManager|AccessibilityService|PGSharp|poke\.nianticlabs|https?:\/\//);
 assert.match(manifest,/android:name="\.OverlayService"/);
