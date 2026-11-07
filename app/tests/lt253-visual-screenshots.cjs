@@ -536,6 +536,47 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    assert.ok(raid.ok,"LT259 pre-capture Raid badge and inline expansion P/M/G "+
     sz.name+" "+JSON.stringify(raid));
    await page.screenshot({path:path.join(output,sz.name+"-raid-pre-capture.png")});
+   // LT297 — real detail WebView: compact one/two type icons and
+   // a defensive type effectiveness panel with no stale Pokemon identity.
+   const typing297=await page.evaluate(()=>{
+    const show=(number,name,sourceIndex,form="")=>
+     window.showDetails({number,name,sourceIndex,form,iv:"0/15/14",
+      cp:697,level:25,despawn:"04:30",moves:"Scratch / Ember",
+      location:"Singapore"},"gl",false);
+    const byType=(root,label)=>[...root.querySelectorAll(".psTypeChip")]
+     .some(el=>el.textContent.trim()===label);
+    show("#255","Torchic",1440);
+    const major=document.getElementById("major");
+    const tile=document.getElementById("psTypeTap");
+    const icons=tile?.querySelectorAll("img")?.length;
+    const iv=document.querySelector("#major .ivTile .statValue")?.textContent?.trim();
+    const spans=[...major.children].map(x=>x.getBoundingClientRect());
+    const majorBounds=major.getBoundingClientRect();
+    const fit=spans.length===4&&spans.every(x=>x.width>15&&x.right<=majorBounds.right+2);
+    tile?.click();
+    const panel=document.getElementById("psTypeEffectPanel");
+    const fireOpen=!panel.hidden&&tile?.getAttribute("aria-expanded")==="true"&&
+     panel.textContent.includes("Fraqueza")&&panel.textContent.includes("Resistência")&&
+     panel.textContent.includes("Normais")&&byType(panel,"Água")&&
+     panel.textContent.includes("1,60x de dano");
+    const firstHtml=panel.innerHTML;
+    show("#16","Pidgey",1441);
+    const doubleIcons=document.querySelectorAll("#psTypeTap img").length;
+    const closedPrevious=panel.hidden&&
+     document.getElementById("psTypeTap")?.getAttribute("aria-expanded")==="false";
+    document.getElementById("psTypeTap")?.click();
+    const flyingOpen=!panel.hidden&&byType(panel,"Elétrico")&&
+     byType(panel,"Pedra")&&panel.textContent.includes("Pidgey");
+    show("#255","Torchic",1442,"UNVERIFIED_VARIANT");
+    const disabled=document.getElementById("psTypeTap")?.disabled===true&&panel.hidden;
+    return {ok:icons===1&&iv==="0/15/14"&&fit&&fireOpen&&
+     doubleIcons===2&&closedPrevious&&flyingOpen&&disabled,
+     icons,iv,fit,fireOpen,doubleIcons,closedPrevious,flyingOpen,disabled,
+     firstHtml:firstHtml.slice(0,175)};
+   });
+   assert.ok(typing297.ok,"LT297 type badge and defensive panel visual contract "+
+    sz.name+" "+JSON.stringify(typing297));
+   await page.screenshot({path:path.join(output,sz.name+"-lt297-type-panel.png")});
    assert.deepEqual(errors,[],"no browser runtime errors "+sz.name);
    console.log("LT253 visual "+sz.name+" PASS",
     {width:sz.w,height:sz.h,scroll:top.scrollHeight,
