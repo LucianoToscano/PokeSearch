@@ -2996,17 +2996,20 @@
       "id": "pokesearch-lt299-uniform-type-icons-2px-gap-20261107",
       "minVersionCode": 54503,
       "date": "07/11/2026",
-      "title": "LT299 — Ícones de tipos uniformes no card",
+      "title": "LT299 — Tipos uniformes e golpes mais simples",
       "sections": {
         "novidades": [
-          "Ícones dos tipos do Pokémon passam a ter tamanho idêntico de 16 × 16 px, independentemente de o Pokémon ter um ou dois tipos."
+          "Ícones dos tipos do Pokémon passam a ter tamanho idêntico de 16 × 16 px, independentemente de o Pokémon ter um ou dois tipos.",
+          "Painéis de ataques mostram apenas os números do contexto: Dmg/CD/DPS/Energia nos golpes capturados e Poder/Energia/Custo nas recomendações PvP."
         ],
         "melhorias": [
           "Quando há dois tipos, o espaço entre os ícones é de exatamente 2 px; ícone único permanece centralizado.",
-          "Caixa de tipos ficou 2 px mais estreita (1 px de cada lado), sem modificar a área IV, PC ou Nível."
+          "Caixa de tipos ficou 2 px mais estreita (1 px de cada lado), sem modificar a área IV, PC ou Nível.",
+          "Removidos os símbolos improvisados de raio/estrela; MT normal usa o ícone já conhecido no PokeSearch e MT Elite preserva o PNG específico."
         ],
         "correcoes": [
-          "Removida a diferença de tamanho entre ícones simples e duplos no cartão, inclusive em formatos P/M/G e nas duas Pokébolas."
+          "Removida a diferença de tamanho entre ícones simples e duplos no cartão, inclusive em formatos P/M/G e nas duas Pokébolas.",
+          "Removidos avisos repetidos sobre diferenças entre golpes capturados e PvPoke, e as linhas duplicadas PvP/Raides que confundiam a leitura."
         ],
         "emDesenvolvimento": [
           "Conferir o visual físico no Samsung dos cartões Slowpoke (2 tipos) e Chikorita (1 tipo) após a instalação."
