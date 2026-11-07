@@ -26,6 +26,7 @@ public final class RaidDayGuidePlan {
 
     public static final class Step {
         public final String id,title,instruction,locationRef,onNotHappened,safeReturn;
+        public final String repeatTo,noPassTo,skipTo;
         public final boolean optional;
         public final List<String> preconditions, confirmations;
         Step(JSONObject o)throws JSONException{
@@ -36,6 +37,9 @@ public final class RaidDayGuidePlan {
             onNotHappened=required(o,"naoAconteceu");
             safeReturn=required(o,"retornoSeguro");
             optional=o.optBoolean("opcional",false);
+            repeatTo=o.optString("repetePara","");
+            noPassTo=o.optString("semPassePara","");
+            skipTo=o.optString("pularPara","");
             preconditions=readStrings(o.getJSONArray("precondicoes"));
             confirmations=readStrings(o.getJSONArray("confirmacoesAceitas"));
             if(confirmations.isEmpty())throw new JSONException("Etapa sem confirmação: "+id);
@@ -78,6 +82,12 @@ public final class RaidDayGuidePlan {
             items.add(step);
         }
         steps=Collections.unmodifiableList(items);
+        for(Step step:steps){
+            for(String destination:new String[]{step.repeatTo,step.noPassTo,step.skipTo}){
+                if(!destination.isEmpty()&&indexOf(destination)<0)
+                    throw new JSONException("Destino de etapa inválido: "+destination);
+            }
+        }
     }
     private static String required(JSONObject o,String key)throws JSONException{
         String value=o.getString(key).trim();
