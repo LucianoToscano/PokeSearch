@@ -48,7 +48,7 @@ assert.ok(html.includes('ontoggle="psCpRankToggle(this)"'));
 assert.ok(html.includes('id="psCpRankCompare"'));
 assert.ok(html.includes('psCpRenderRankCompare(row,iv,compare);'));
 assert.ok(html.includes('Rank Classe compara IVs, não desempenho entre espécies.'));
-assert.ok(html.includes('Rank Geral, custos de Doces/Poeira e elegibilidade de Mega não são inferidos.'));
+assert.ok(html.includes('RG aparece somente com identidade confirmada. Custos de Doces/Poeira e Mega não são inferidos.'));
 const begin=script.indexOf("function psCpRenderRankCompare(row,iv,compare){");
 const end=script.indexOf("function psCpRankToggle(node){",begin);
 assert.ok(begin>=0&&end>begin);
