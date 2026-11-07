@@ -12,6 +12,9 @@ import android.content.Context;
 import android.widget.Toast;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
@@ -42,7 +45,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 /**
  * A dedicated, opt-in MANUAL helper for the "Dia de Reides / Bug dos Passes"
  * tutorial in the video supplied by the user. It does not spoof locations,
@@ -79,6 +83,9 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean demoToday=false,eduWantsReal=false,eduSettingsOpen=false;
     private boolean eduHelpOpen=false,eduCaptureQuestion=false,eduMovePanel=false,eduRecordingExtraRaid=false;
     private String eduNote="";
+    // Subperguntas por etapa: nunca concluir só por chegada, espera ou OCR.
+    private String eduDialogueState="";
+    private boolean eduIntroAccepted=false;
     private LinearLayout eduWelcome,eduSettings,eduActions,eduMiniActions,eduMainCard;
     private TextView eduHeader,eduBadge,eduSpeech,eduSubline,eduSettingsClose;
     private TextView eduPrepQuestion,eduPrepCaption;
@@ -156,11 +163,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         return view;
     }
     private TextView button(String label){
-        TextView b=text(label,12,Color.WHITE,true);
+        TextView b=text(label,12,Color.rgb(38,47,56),true);
         b.setGravity(Gravity.CENTER);
         b.setMinHeight(dp(35));
         b.setPadding(dp(7),dp(3),dp(7),dp(3));
-        b.setBackground(surface(Color.argb(222,40,52,66),Color.argb(90,180,203,225),8));
+        b.setBackground(surface(Color.rgb(247,248,249),Color.rgb(157,168,177),9));
         b.setClickable(true);
         return b;
     }
@@ -276,6 +283,40 @@ public final class RaidDayAssistantOverlayService extends Service {
             repeatedCycles=Math.max(0,Math.min(100,item.cycleCount));
             paused=item.paused;finished=item.finished;active=item.active;
         }
+        // Se o jogo fechar entre chegar à região e carregar o mapa,
+        // retomar a mesma pergunta, sem pular a confirmação humana.
+        eduDialogueState="";
+        String identity=sessionKey+":"+plan.step(index).id;
+        if(active&&!finished&&identity.equals(prefs.getString("edu_dialogue_identity","")))
+            eduDialogueState=prefs.getString("edu_dialogue_state","");
+    }
+    private void setEduDialogueState(String state){
+        eduDialogueState=state==null?"":state;
+        if(training||!active||prefs==null)return;
+        prefs.edit().putString("edu_dialogue_state",eduDialogueState)
+            .putString("edu_dialogue_identity",
+                sessionKey+":"+plan.step(index).id).apply();
+    }
+    private String eduEventWhen(){
+        LocalDate date=training&&demoToday?
+            RaidDayEventClock.todayBrasilia(eventClock):preparation.eventDate();
+        if(date==null)return "data ainda não informada";
+        DateTimeFormatter dateOnly=DateTimeFormatter.ofPattern("dd/MM/yyyy",
+            Locale.forLanguageTag("pt-BR"));
+        long begin=RaidDaySchedule.start(this);
+        long end=RaidDaySchedule.finish(this);
+        if(!training&&RaidDaySchedule.valid(begin,end)){
+            java.time.ZonedDateTime start=Instant.ofEpochMilli(begin)
+                .atZone(RaidDayEventClock.BRASILIA);
+            if(start.toLocalDate().equals(date)){
+                return start.format(DateTimeFormatter.ofPattern(
+                    "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")))+
+                    " (horário informado por você, não verificado)";
+            }
+        }
+        return date.format(dateOnly)+(training?
+            " (evento fictício, sem horário definido)":
+            " (horário não informado)");
     }
     private void appendEvent(String type){
         appendEvent(type,plan.step(index).id);
@@ -295,11 +336,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         journal.events().add(event);
     }
     private void beginRealSession(){
-        if(active||training||!preparation.isComplete()||!riskAccepted)return;
-        if(!RaidDayEventClock.todayBrasilia(eventClock)
-                .isEqual(preparation.eventDate().minusDays(1))){
-            eduNote="Para iniciar o roteiro real pela véspera, a data em Brasília "+
-                "precisa ser D−1. Use Simular hoje para aprender sem executar.";
+        if(active||training||!eduDateConfirmed()||!riskAccepted)return;
+        LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
+        LocalDate date=preparation.eventDate();
+        if(date==null||(!today.equals(date.minusDays(1))&&!today.equals(date))){
+            eduNote="O roteiro real só começa na véspera (D−1) "+
+                "ou no próprio dia do evento (D). Use Simular hoje para treinar.";
             updateStep();
             return;
         }
@@ -314,14 +356,18 @@ public final class RaidDayAssistantOverlayService extends Service {
             prefs.edit().putInt("sessionGeneration",generation).apply();
             sessionKey=eventKey+"#"+generation;
         }
-        index=0;repeatedCycles=0;paused=false;finished=false;active=true;
-        appendEvent("STARTED");
+        index=today.equals(date)?plan.indexOf("E08"):0;
+        if(index<0)index=0;
+        repeatedCycles=0;paused=false;finished=false;active=true;
+        setEduDialogueState("");
+        appendEvent(today.equals(date)?"STARTED_DAY_D":"STARTED");
         reactAvatar(RaidDayAvatarFrames.WAVE);
         updateStep();
     }
     private void beginTraining(){
         if(!demoToday&&(!riskAccepted||!preparation.isComplete()))return;
         training=true;active=false;index=0;repeatedCycles=0;
+        eduDialogueState="";
         paused=false;finished=false;endPending=false;
         eduCaptureQuestion=false;eduRecordingExtraRaid=false;
         eduHelpOpen=false;eduSettingsOpen=false;
@@ -402,7 +448,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         View grip=new View(this);
         grip.setClickable(true);
         grip.setContentDescription(
-            "Assistente do Dia de Reides: toque para abrir, segure para ver, arraste para mover");
+            "Edu: toque para conversar, segure por um segundo para ajustes, arraste para mover");
         bubble.addView(grip,new FrameLayout.LayoutParams(-1,-1));
         bubbleParams=new WindowManager.LayoutParams(
             dp(BUBBLE_DP),dp(BUBBLE_DP),WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -420,10 +466,15 @@ public final class RaidDayAssistantOverlayService extends Service {
             private float downX,downY;
             private int startX,startY;
             private boolean held;
+            // Ajustes ficam fora da conversa: só aparecem ao segurar a sprite.
             private final Runnable longPress=()->{
                 if(!dragging){
                     held=true;
-                    if(!visible)setVisible(true);
+                    eduSettingsOpen=true;
+                    eduHelpOpen=false;
+                    reactAvatar(RaidDayAvatarFrames.QUESTION);
+                    if(visible)updateStep();
+                    else setVisible(true);
                 }
             };
             @Override public boolean onTouch(View v,MotionEvent event){
@@ -432,7 +483,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                         downX=event.getRawX();downY=event.getRawY();
                         startX=bubbleParams.x;startY=bubbleParams.y;
                         held=false;dragging=false;
-                        handler.postDelayed(longPress,500L);
+                        handler.postDelayed(longPress,1200L);
                         return true;
                     case MotionEvent.ACTION_MOVE:
                         float dx=event.getRawX()-downX,dy=event.getRawY()-downY;
@@ -498,11 +549,19 @@ public final class RaidDayAssistantOverlayService extends Service {
             renderPreparation();
         });
     }
+    private boolean eduDateConfirmed(){
+        if(preparation==null||preparation.eventDate()==null)return false;
+        return preparation.isComplete()||preparation.eventKey().equals(
+            prefs.getString("edu_event_date_confirmed_key",""));
+    }
     private void completePreparation(){
-        if(!preparation.allAnswered())return;
+        // Fluxo simples: a data é suficiente para iniciar a conversa.
+        // As outras seis respostas legadas permanecem salvas, se existirem.
+        if(preparation.eventDate()==null)return;
         preparation.markComplete();
         preparation.save(prefs);
         String chosenEvent=preparation.eventKey();
+        prefs.edit().putString("edu_event_date_confirmed_key",chosenEvent).apply();
         if(!eventKey.equals(chosenEvent)){
             RaidDaySchedule.clearWindow(this);
             eventKey=chosenEvent;
@@ -566,6 +625,10 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void nextPreparation(){
         if(!preparation.currentAnswered())return;
+        if(preparation.question()==0){
+            completePreparation(); // Sem seis perguntas de configuração no tutorial.
+            return;
+        }
         if(preparation.question()<RaidDayPreparation.COUNT-1){
             preparation.setQuestion(preparation.question()+1);
             preparation.save(prefs);
@@ -628,8 +691,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         panel=new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(11),dp(8),dp(11),dp(10));
-        panel.setBackground(surface(Color.argb(231,23,32,42),
-            Color.argb(112,196,213,228),15));
+        // Moldura translúcida discreta; a mensagem fica no balão branco.
+        panel.setBackground(surface(Color.argb(145,23,32,42),
+            Color.argb(70,196,213,228),15));
         eduPanelWidth=Math.min(dp(286),
             getResources().getDisplayMetrics().widthPixels-dp(22));
 
@@ -638,19 +702,15 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduHeader=text("Edu",16,Color.WHITE,true);
         eduHeader.setContentDescription("Edu · segure e arraste este cabeçalho para mover a conversa");
         header.addView(eduHeader,new LinearLayout.LayoutParams(0,dp(34),1));
-        TextView menu=button("⋯");
-        menu.setContentDescription("Abrir configurações do Edu");
-        header.addView(menu,new LinearLayout.LayoutParams(dp(40),dp(33)));
-        menu.setOnClickListener(v->{
-            eduSettingsOpen=!eduSettingsOpen;
-            eduHelpOpen=false;updateStep();
-        });
         TextView close=button("×");
         close.setContentDescription("Recolher conversa do Edu");
         LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(37),dp(33));
         closeP.leftMargin=dp(5);
         header.addView(close,closeP);
-        close.setOnClickListener(v->setVisible(false));
+        close.setOnClickListener(v->{
+            eduSettingsOpen=false;
+            setVisible(false);
+        });
         View.OnTouchListener move=new View.OnTouchListener(){
             float originX,originY;
             int panelX,panelY;
@@ -698,18 +758,49 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduMainCard=new LinearLayout(this);
         eduMainCard.setOrientation(LinearLayout.VERTICAL);
         eduMainCard.setPadding(dp(11),dp(9),dp(11),dp(9));
-        eduMainCard.setBackground(surface(Color.argb(219,40,54,65),
-            Color.argb(65,178,203,223),12));
+        eduMainCard.setBackground(surface(Color.rgb(253,253,253),
+            Color.rgb(128,136,145),13));
+        eduMainCard.setElevation(dp(2));
         LinearLayout.LayoutParams speechLp=new LinearLayout.LayoutParams(-1,-2);
         speechLp.topMargin=dp(8);
         panel.addView(eduMainCard,speechLp);
-        eduSpeech=text("",14,Color.WHITE,false);
+        eduSpeech=text("",14,Color.rgb(28,35,42),false);
         eduSpeech.setLineSpacing(dp(1),1f);
         eduMainCard.addView(eduSpeech);
-        eduSubline=text("",10,Color.rgb(172,202,217),false);
+        eduSubline=text("",10,Color.rgb(88,98,107),false);
         LinearLayout.LayoutParams subLp=new LinearLayout.LayoutParams(-1,-2);
         subLp.topMargin=dp(7);
         eduMainCard.addView(eduSubline,subLp);
+
+        // Pequena cauda de quadrinhos conectada ao balão do Edu.
+        View speechTail=new View(this){
+            private final Paint white=new Paint(Paint.ANTI_ALIAS_FLAG);
+            private final Paint line=new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override protected void onDraw(Canvas canvas){
+                super.onDraw(canvas);
+                float w=getWidth(),h=getHeight();
+                Path triangle=new Path();
+                triangle.moveTo(1f,0f);
+                triangle.lineTo(w-1f,0f);
+                triangle.lineTo(dp(5),h-1f);
+                triangle.close();
+                white.setStyle(Paint.Style.FILL);
+                white.setColor(Color.rgb(253,253,253));
+                canvas.drawPath(triangle,white);
+                Path outline=new Path();
+                outline.moveTo(1f,0f);
+                outline.lineTo(dp(5),h-1f);
+                outline.lineTo(w-1f,0f);
+                line.setStyle(Paint.Style.STROKE);
+                line.setStrokeWidth(dp(1));
+                line.setColor(Color.rgb(128,136,145));
+                canvas.drawPath(outline,line);
+            }
+        };
+        LinearLayout.LayoutParams tailParams=new LinearLayout.LayoutParams(dp(17),dp(11));
+        tailParams.leftMargin=dp(22);
+        tailParams.topMargin=-dp(2);
+        panel.addView(speechTail,tailParams);
 
         createPreparationUi();
         eduActions=new LinearLayout(this);
@@ -807,7 +898,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,PixelFormat.TRANSLUCENT);
         panelParams.gravity=Gravity.TOP|Gravity.LEFT;
-        panelParams.alpha=.79f;
+        // O balão branco e a tipografia não devem ficar translúcidos. Apenas a moldura é glass.
+        panelParams.alpha=1f;
         placePanelCoordinates();
     }
     private void addSettingsButton(TextView b,Runnable action){
@@ -946,6 +1038,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduNote=currentPhaseNote(current);updateStep();return;
         }
         String from=current.id;
+        setEduDialogueState("");
         if(index<plan.size()-1)index++;else finished=true;
         eduHelpOpen=false;eduNote="";eduCaptureQuestion=false;
         eduRecordingExtraRaid=false;
@@ -958,6 +1051,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         int next=plan.indexOf(destination);
         if(next<0)return;
         String from=plan.step(index).id;
+        setEduDialogueState("");
         if("CYCLE_REPEATED".equals(type))repeatedCycles++;
         index=next;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
         eduRecordingExtraRaid=false;
@@ -994,10 +1088,25 @@ public final class RaidDayAssistantOverlayService extends Service {
         advanceEdu("STEP_CONFIRMED");
     }
     private void showEduWelcome(){
-        setTalk("Oi! Eu sou o Edu. Quer aprender o roteiro como se o evento fosse HOJE?",
-            "Simulação fictícia, sem passes extras. O método é relato da comunidade e pode violar as regras do jogo.");
-        addTwo("▶ Simular hoje",()->startDemoToday(),
-               "Evento real",()->{eduWantsReal=true;eduNote="";updateStep();});
+        if(!eduIntroAccepted){
+            setTalk("Olá! Meu nome é Edu. Serei seu treinador hoje! "+
+                "Vou te ensinar, passo a passo, o tutorial comunitário "+
+                "“Bug dos Passes”. Está pronto?",
+                eduNote.isEmpty()?"Uma resposta por vez. Nada será feito no jogo.":eduNote);
+            addTwo("Sim, vamos lá",()->{
+                eduIntroAccepted=true;eduNote="";updateStep();
+            },"Agora não",()->{
+                eduNote="Tudo bem! Quando quiser começar, toque em Sim.";
+                updateStep();
+            });
+            return;
+        }
+        setTalk("Ótimo! Quer simular um evento acontecendo hoje ou "+
+            "acompanhar um evento real?",
+            "A simulação é fictícia e não concede passes. "+
+            "O método comunitário não é garantido e pode violar os termos do jogo.");
+        addTwo("Simular hoje",()->startDemoToday(),
+            "Evento real",()->{eduWantsReal=true;eduNote="";updateStep();});
     }
     private void showEduRisk(){
         setTalk("Edu: antes de começar, um aviso rápido.",
@@ -1011,19 +1120,23 @@ public final class RaidDayAssistantOverlayService extends Service {
         },"Sair",()->{eduWantsReal=false;updateStep();});
     }
     private void showEduReady(){
-        setTalk("Edu: tudo pronto! O roteiro começa pela véspera, no Havaí.",
-            "Dia: "+preparation.displayDate()+
-            " • Confira a hora da preparação no tutorial. "+
-            "Não temos horário oficial verificado.");
         LocalDate day=preparation.eventDate();
-        if(day!=null&&RaidDayEventClock.todayBrasilia(eventClock)
-            .equals(day.minusDays(1))){
-            addTwo("✓ Começar",()->beginRealSession(),"Treinar",()->{
+        LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
+        boolean eve=day!=null&&today.equals(day.minusDays(1));
+        boolean eventDay=day!=null&&today.equals(day);
+        setTalk(eventDay?
+            "Pela data informada, hoje é o dia do evento! Vamos conferir seus passes.":
+            "Tudo pronto! Na véspera, vamos começar conferindo seu Passe Diário.",
+            "Evento: "+eduEventWhen()+" · Brasília. "+
+            "A data e o horário dependem da informação do jogador.");
+        if(eve||eventDay){
+            addTwo("Começar",()->beginRealSession(),"Treinar",()->{
                 demoToday=true;beginTraining();
             });
         }else{
-            addTwo("▶ Simular hoje",()->startDemoToday(),
+            addTwo("Simular hoje",()->startDemoToday(),
                 "Mudar data",()->{
+                    prefs.edit().remove("edu_event_date_confirmed_key").apply();
                     preparation.beginEditing();preparation.save(prefs);updateStep();
                 });
         }
@@ -1040,6 +1153,102 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduMainCard.setVisibility(View.VISIBLE);
             setTalk("Edu: "+eduNote,"");
         }
+    }
+    /** Um toque nas coordenadas COPIA, mas nunca altera a localização do aparelho. */
+    private void addEduCoordinateButton(){
+        String coords=plan.coords(index);
+        if(coords==null||coords.isEmpty())return;
+        TextView coordinate=button("📋 "+coords);
+        coordinate.setContentDescription("Copiar local: "+coords);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(39));
+        lp.topMargin=dp(6);
+        eduActions.addView(coordinate,lp);
+        coordinate.setOnClickListener(v->copyEduCoordinates());
+    }
+    private void askEduPass(String question,String caption,Runnable onYes,Runnable onNo){
+        if("pass_check".equals(eduDialogueState)){
+            setTalk("Confira a mochila no Pokémon GO. Você encontrou um Passe "+
+                "de Reide Diário gratuito?", "Não vou avançar sem a sua confirmação.");
+        }else if("pass_wait".equals(eduDialogueState)){
+            setTalk("Ainda não tem um passe? Aguarde e confira a mochila. "+
+                "Se conseguir um, guarde sem gastar.",
+                "O tutorial não cria passes. Você pode continuar mais tarde.");
+        }else{
+            setTalk(question,caption);
+        }
+        addThree("Sim, tenho",onYes,"Não tenho",onNo,
+            "Vou conferir",()->{
+                setEduDialogueState("pass_check");
+                reactAvatar(RaidDayAvatarFrames.QUESTION);
+                updateStep();
+            });
+    }
+    private void showEduTravel(String region,String firstSpeech){
+        boolean arrived="travel_reload".equals(eduDialogueState)||
+            "travel_wait".equals(eduDialogueState);
+        if(!arrived){
+            setTalk(("travel_pending".equals(eduDialogueState)?
+                "Sem pressa! Confirme a região antes de continuar. ":firstSpeech)+
+                " Você já está no local indicado ("+region+")?",
+                "Toque nas coordenadas para copiar. Edu não altera sua localização.");
+            addEduCoordinateButton();
+            addTwo("Sim, já estou",()->{
+                setEduDialogueState("travel_reload");
+                reactAvatar(RaidDayAvatarFrames.WAVE);
+                updateStep();
+            },"Ainda não",()->{
+                setEduDialogueState("travel_pending");
+                updateStep();
+            });
+            return;
+        }
+        setTalk("Ótimo! Agora feche e reabra o Pokémon GO. Aguarde cerca de "+
+            "um minuto até o mapa e os Pokémon carregarem. Carregaram?",
+            "travel_wait".equals(eduDialogueState)?
+                "Aguarde o mapa carregar. Não precisa confirmar antes.":"Confirme o carregamento que você realmente viu.");
+        addTwo("Sim, carregaram",()->advanceEdu("MAP_LOADED"),
+            "Ainda não",()->{
+                setEduDialogueState("travel_wait");updateStep();
+            });
+    }
+    private void showEduNewZealand(RaidDayGuidePlan.Step step){
+        boolean atPass="nz_pass".equals(eduDialogueState)||
+            "pass_check".equals(eduDialogueState);
+        if(!atPass){
+            setTalk("nz_pending".equals(eduDialogueState)?
+                "Sem pressa! Confira a região. Já chegou à Nova Zelândia?":
+                "Agora vamos para a Nova Zelândia. Já está na região indicada?",
+                "Toque nas coordenadas para copiar. Esta é a próxima região do relato.");
+            addEduCoordinateButton();
+            addTwo("Sim, já estou",()->{
+                setEduDialogueState("nz_pass");updateStep();
+            },"Ainda não",()->{
+                setEduDialogueState("nz_pending");updateStep();
+            });
+            return;
+        }
+        askEduPass("Confira o Pokémon GO: apareceu um Passe de Reide "+
+            "Diário gratuito?", "Só use um passe que você realmente veja no jogo.",
+            ()->advanceEdu("PASS_CONFIRMED"),
+            ()->navigateEdu(step.noPassTo,"NO_PASS"));
+    }
+    private void showEduEventDay(){
+        if("no_event_pass".equals(eduDialogueState)){
+            setTalk("Sem passe confirmado, não vamos registrar uma reide "+
+                "que não aconteceu. Quer conferir novamente ou encerrar?",
+                "Nenhum passe extra é garantido.");
+            addTwo("Conferir de novo",()->{
+                setEduDialogueState("");updateStep();
+            },"Ver resumo",()->navigateEdu("E11","NO_PASS"));
+            return;
+        }
+        askEduPass((training?"Na simulação, hoje é o evento fictício: ":
+                "Pela data informada, hoje seria o dia do evento: ")+eduEventWhen()+
+                ". Você já tem um passe disponível no inventário?",
+            "Confira também o horário do evento. O horário informado não "+
+                "é uma programação oficial verificada.",
+            ()->advanceEdu("PASS_CONFIRMED"),
+            ()->{setEduDialogueState("no_event_pass");updateStep();});
     }
     private void showEduGuide(){
         RaidDayGuidePlan.Step step=plan.step(index);
@@ -1058,11 +1267,32 @@ public final class RaidDayAssistantOverlayService extends Service {
             });
             return;
         }
+        // Ao virar a data do evento, uma sessão iniciada na véspera
+        // não pode ficar bloqueada em E02–E07. A mudança é MANUAL.
+        // O histórico anterior é preservado e nenhum passe é presumido.
+        if(!training&&"D-1".equals(step.phase)&&
+            RaidDayEventClock.todayBrasilia(eventClock).equals(
+                preparation.eventDate())){
+            setTalk("Chegou o dia do evento! Ontem era a véspera. "+
+                "Vamos conferir os passes de hoje?",
+                "As etapas da véspera não serão marcadas como concluídas.");
+            addTwo("Ir ao evento",()->navigateEdu("E08","DAY_CHANGED_TO_EVENT"),
+                "Agora não",()->{
+                    paused=true;persist("PAUSED");updateStep();
+                });
+            return;
+        }
         String warning=currentPhaseNote(step);
         if(!warning.isEmpty()){
             setTalk("Edu: "+warning,"Para aprender sem alterar sua sessão, use o treino.");
             addTwo("Ver ajuda",()->{eduHelpOpen=true;updateStep();},
                 "Pausar",()->{paused=true;persist("PAUSED");updateStep();});
+            if(index>0)addMini("← Voltar",()->{
+                String from=plan.step(index).id;
+                setEduDialogueState("");
+                index--;eduNote="";eduHelpOpen=false;
+                persist("BACK",from);updateStep();
+            });
             return;
         }
         if(eduHelpOpen){
@@ -1097,39 +1327,75 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "Saí",()->recordEduOutcome("RAID_LEFT"));
             return;
         }
-        setTalk(step.speech,eduNote.isEmpty()?phaseClock(step):eduNote);
         switch(step.id){
+            case "E01":
+                askEduPass("O evento será em "+eduEventWhen()+
+                    ". Na véspera (D−1), guarde no inventário um Passe de "+
+                    "Reide Diário gratuito, sem gastar. Você já tem esse passe?",
+                    training?"Simulação: a véspera fictícia foi ontem. "+
+                        "Nenhum passe real será usado.":
+                        "Se ainda não apareceu, aguarde e confira no jogo.",
+                    ()->advanceEdu("PASS_CONFIRMED"),
+                    ()->{setEduDialogueState("pass_wait");updateStep();});
+                break;
+            case "E02":
+                showEduTravel("Havaí","Ótimo! O primeiro local do relato é o Havaí.");
+                break;
             case "E03":
-                addTwo("Vi um passe",()->advanceEdu("STEP_CONFIRMED"),
-                    "Sem passe",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                showEduNewZealand(step);
                 break;
             case "E04":
+                setTalk("Agora, se existe um passe válido, participe de uma reide. "+
+                    "Como terminou?", "Vitória, captura e recompensas são coisas diferentes.");
                 addThree("Venci",()->recordEduOutcome("RAID_WIN"),
                     "Perdi",()->recordEduOutcome("RAID_LOSS"),
                     "Saí",()->recordEduOutcome("RAID_LEFT"));
                 break;
+            case "E05":
+                showEduTravel("Havaí","Depois da reide, o relato retorna ao Havaí.");
+                break;
             case "E06":
-                addTwo("Sim, apareceu",()->advanceEdu("STEP_CONFIRMED"),
-                    "Não apareceu",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                askEduPass("Agora abra a mochila: apareceu outro Passe Diário "+
+                    "gratuito?", "Só conte um passe que realmente esteja no inventário.",
+                    ()->advanceEdu("PASS_CONFIRMED"),
+                    ()->navigateEdu(step.noPassTo,"NO_PASS"));
                 break;
             case "E07":
-                addTwo("↻ Repetir",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
+                setTalk("Você quer repetir o ciclo a partir do Havaí ou "+
+                    "seguir ao dia do evento?",
+                    "Contamos ciclos realizados, não passes garantidos.");
+                addTwo("Repetir ciclo",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
                     "Ir ao evento",()->navigateEdu(step.noPassTo,"NO_PASS"));
                 break;
+            case "E08":
+                showEduEventDay();
+                break;
             case "E09":
-                addTwo("Concluí",()->advanceEdu("STEP_CONFIRMED"),
-                    "Pular etapa",()->navigateEdu(step.skipTo,"OPTIONAL_SKIPPED"));
+                setTalk("O relato também cita Kiribati (Kiritimati), mas "+
+                    "esta etapa é opcional. Quer conferir ou pular?",
+                    "Se conferir, o relato menciona reabrir o jogo e aguardar "+
+                    "aproximadamente um minuto. Isso não prova um passe.");
+                addEduCoordinateButton();
+                addTwo("Já conferi",()->advanceEdu("STEP_CONFIRMED"),
+                    "Pular",()->navigateEdu(step.skipTo,"OPTIONAL_SKIPPED"));
                 break;
             case "E10":
+                setTalk("Volte ao local onde vai jogar o evento. "+
+                    "Quer registrar o resultado de uma reide?",
+                    "Registre somente reides reais, uma por vez.");
                 addTwo("Registrar reide",()->{
                     eduRecordingExtraRaid=true;eduNote="";updateStep();
                 },"Seguir",()->advanceEdu("STEP_CONFIRMED"));
                 break;
             case "E11":
-                addChoice(eduActions,"✓ Ver resumo",()->advanceEdu("FINISHED"));
+                setTalk("Chegamos ao final! Vamos conferir os ciclos, "+
+                    "passes observados, reides e capturas?",
+                    "O resumo distingue o que você informou; não garante recompensas.");
+                addChoice(eduActions,"Ver resumo",()->advanceEdu("FINISHED"));
                 break;
             default:
-                addTwo("✓ Concluí",()->advanceEdu("STEP_CONFIRMED"),
+                setTalk(step.speech,eduNote.isEmpty()?phaseClock(step):eduNote);
+                addTwo("Concluí",()->advanceEdu("STEP_CONFIRMED"),
                     "Ainda não",()->{
                         persist("NOT_OBSERVED");
                         eduNote=step.help;
@@ -1138,18 +1404,16 @@ public final class RaidDayAssistantOverlayService extends Service {
                     });
                 break;
         }
-        addMini("← Voltar",()->{
-            if(index>0){
-                String from=plan.step(index).id;
-                index--;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
-                persist("BACK",from);updateStep();
-            }
+        if(index>0)addMini("← Voltar",()->{
+            String from=plan.step(index).id;
+            setEduDialogueState("");
+            index--;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
+            persist("BACK",from);updateStep();
         });
         addMini("? Ajuda",()->{
             eduHelpOpen=true;eduNote="";
             reactAvatar(RaidDayAvatarFrames.QUESTION);updateStep();
         });
-        if(!step.locationRef.isEmpty())addMini("Copiar local",()->copyEduCoordinates());
     }
     private void showEduFinished(){
         String stats=training?"O treino terminou; nenhuma ação foi salva.":
@@ -1184,10 +1448,11 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(finished)showEduFinished();else showEduGuide();
         }else if(!eduWantsReal){
             showEduWelcome();
-        }else if(!preparation.isComplete()){
+        }else if(!eduDateConfirmed()){
             eduMainCard.setVisibility(View.GONE);
             eduActions.setVisibility(View.GONE);
             preparationSection.setVisibility(View.VISIBLE);
+            preparation.setQuestion(0); // A conversa começa somente pela data.
             renderPreparation();
         }else if(!riskAccepted){showEduRisk();}
         else{showEduReady();}
@@ -1224,6 +1489,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             wm.addView(panelScroll,panelParams);
             panelScroll.post(this::placePanel);
         }else{
+            // Ao reabrir com toque curto, sempre voltar à conversa principal.
+            eduSettingsOpen=false;
             try{wm.removeView(panelScroll);}
             catch(IllegalArgumentException ignored){}
         }

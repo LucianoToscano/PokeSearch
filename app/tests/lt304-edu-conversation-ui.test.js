@@ -27,13 +27,87 @@ assert.match(overlay,/String\[\] sizeLabels=\{"P","M","G"\}/);
 assert.match(overlay,/avatarSizeIndex=2/);
 assert.match(overlay,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,100\)/);
 assert.match(overlay,/eduSettings\.setVisibility\(View\.VISIBLE\)/);
+assert.doesNotMatch(overlay,/menu=button\("⋯"\)/,
+  "Configurações não devem aparecer como botão na conversa");
+assert.match(overlay,/handler\.postDelayed\(longPress,1200L\)/,
+  "Segurar a sprite por 1,2 segundo deve abrir ajustes ocultos");
+assert.match(overlay,/eduSettingsOpen=true;\s*eduHelpOpen=false;\s*reactAvatar/,
+  "O toque prolongado da sprite deve abrir ajustes, sem avançar roteiro");
+assert.match(overlay,/if\(visible\)updateStep\(\);\s*else setVisible\(true\);/,
+  "A mesma ação deve funcionar com a conversa aberta ou fechada");
+assert.match(overlay,/eduMainCard\.setBackground\(surface\(Color\.rgb\(253,253,253\)/,
+  "Fala do Edu deve usar balão claro");
+assert.match(overlay,/eduSpeech=text\("",14,Color\.rgb\(28,35,42\),false\)/,
+  "Texto do balão deve ser escuro, legível em branco");
+assert.match(overlay,/View speechTail=new View\(this\)/,
+  "Balão precisa ter cauda discreta estilo quadrinhos");
+assert.match(overlay,/eduSettingsOpen=false;\s*try\{wm\.removeView\(panelScroll\);\}/,
+  "Reabrir com toque normal deve mostrar conversa, não ajustes");
+
 assert.match(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/);
 assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\)/);
 assert.match(overlay,/\.heightPixels\*\.43f/);
 assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
 assert.match(overlay,/putInt\("edu_panel_x"/);
 assert.match(overlay,/putInt\("edu_panel_y"/);
-assert.match(overlay,/panelParams\.alpha=\.79f/);
+assert.match(overlay,/panelParams\.alpha=1f/);
+// Conversa real, com respostas específicas e sem avanços automáticos.
+assert.match(overlay,/Meu nome é Edu\. Serei seu treinador hoje/);
+assert.match(overlay,/Está pronto\?/);
+assert.match(overlay,/Sim, vamos lá/);
+assert.match(overlay,/Agora não/);
+assert.match(overlay,/private String eduEventWhen\(\)/);
+assert.match(overlay,/RaidDaySchedule\.valid\(begin,end\)/);
+assert.match(overlay,/start\.toLocalDate\(\)\.equals\(date\)/,
+  "Não atribuir horário de outro evento à data escolhida");
+assert.match(overlay,/horário não informado/);
+assert.match(overlay,/evento fictício, sem horário definido/);
+assert.match(overlay,/STARTED_DAY_D/);
+assert.match(overlay,/DAY_CHANGED_TO_EVENT/,
+  "Ao chegar o dia D, a sessão da véspera deve oferecer retorno manual para E08");
+assert.match(overlay,/navigateEdu\("E08","DAY_CHANGED_TO_EVENT"\)/);
+assert.match(overlay,/As etapas da véspera não serão marcadas como concluídas\./);
+assert.match(overlay,/paused=true;persist\("PAUSED"\);updateStep\(\);/,
+  "A pessoa pode adiar a transição sem perder histórico");
+
+assert.match(overlay,/plan\.indexOf\("E08"\)/,
+  "Início no dia D precisa começar na E08, sem retroceder para D−1");
+assert.match(overlay,/today\.equals\(date\.minusDays\(1\)\)/);
+assert.match(overlay,/today\.equals\(date\)/);
+assert.match(overlay,/private void setEduDialogueState\(String state\)/);
+assert.match(overlay,/putString\("edu_dialogue_identity"/);
+assert.match(overlay,/identity\.equals\(prefs\.getString\("edu_dialogue_identity",""\)\)/,
+  "Pergunta intermediária deve ser recuperada quando voltar ao app");
+assert.match(overlay,/if\(training\|\|!active\|\|prefs==null\)return;/,
+  "Treino nunca salva checkpoint de conversa real");
+assert.match(overlay,/private void addEduCoordinateButton\(\)/);
+assert.match(overlay,/coordinate\.setOnClickListener\(v->copyEduCoordinates\(\)\)/,
+  "Um toque sobre a coordenada deve copiá-la");
+assert.match(overlay,/showEduTravel\("Havaí"/);
+assert.match(overlay,/showEduNewZealand\(step\)/);
+assert.match(overlay,/travel_reload/);
+assert.match(overlay,/travel_wait/);
+assert.match(overlay,/nz_pass/);
+assert.match(overlay,/Sim, já estou/);
+assert.match(overlay,/Sim, carregaram/);
+assert.match(overlay,/Ainda não/);
+assert.match(overlay,/Sim, tenho/);
+assert.match(overlay,/Não tenho/);
+assert.match(overlay,/Vou conferir/);
+assert.match(overlay,/setEduDialogueState\("pass_wait"\)/,
+  "Sem passe na véspera não deve avançar");
+assert.match(overlay,/setEduDialogueState\("no_event_pass"\)/,
+  "Sem passe no dia D exige decisão antes de seguir");
+assert.match(overlay,/navigateEdu\("E11","NO_PASS"\)/,
+  "Sem passe no dia D permite encerrar, sem inventar reide");
+assert.match(overlay,/case "E01":/);
+assert.match(overlay,/case "E02":/);
+assert.match(overlay,/case "E05":/);
+assert.match(overlay,/case "E08":/);
+assert.match(overlay,/case "E09":/);
+assert.match(overlay,/case "E11":/);
+assert.match(overlay,/eduRecordingExtraRaid=true/);
+
 assert.match(overlay,/private void startDemoToday\(/);
 assert.match(overlay,/demoToday=true/);
 assert.match(overlay,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
@@ -52,8 +126,8 @@ assert.match(overlay,/case "E10":/);
 assert.match(overlay,/eduRecordingExtraRaid/);
 assert.match(overlay,/Copiar local/);
 assert.match(overlay,/Sem passe/);
-assert.match(overlay,/Vi um passe/);
-assert.match(overlay,/Não apareceu/);
+assert.match(overlay,/Sim, tenho/);
+assert.match(overlay,/Não tenho/);
 assert.match(overlay,/Registrar reide/);
 assert.match(overlay,/RaidDayRecovery\.lastConfirmed/);
 assert.match(overlay,/bubble\.setVisibility\(View\.GONE\)/);
@@ -71,4 +145,4 @@ assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
 for(const s of steps)assert.ok(s.falaEdu.startsWith("Edu: "),s.id);
 assert.doesNotMatch(overlay,/RaidDayEventClock\.summary\(now\)/,
   "The giant 4-region clock must never be shown in tutorial");
-console.log("LT304 Edu UX PASS: compact movable conversation, isolated controls, demo today, strict sequence and no blocked Android dialogs");
+console.log("LT304 Edu PASS: conversa com apresentação e escolhas, E01–E11, passagens e carregamento separados, dia D, coordenadas tocáveis e ajustes ocultos");

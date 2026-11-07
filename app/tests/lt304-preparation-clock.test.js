@@ -74,7 +74,15 @@ assert.match(service,/preparationSection\.setVisibility\(View\.VISIBLE\)/);
 assert.match(service,/updateEventClock\(\)/);
 assert.match(service,/RaidDayEventClock\.format\(eventClock\.instant\(\)/);
 assert.match(service,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
-assert.match(service,/if\(active\|\|training\|\|!preparation\.isComplete\(\)\|\|!riskAccepted\)return/);
+assert.match(service,/if\(active\|\|training\|\|!eduDateConfirmed\(\)\|\|!riskAccepted\)return/);
+assert.match(service,/private boolean eduDateConfirmed\(\)/);
+assert.match(service,/edu_event_date_confirmed_key/);
+assert.match(service,/preparation\.question\(\)==0\)\{\s*completePreparation\(\)/,
+  "Confirmação da data não deve iniciar seis perguntas desnecessárias");
+assert.match(service,/preparation\.setQuestion\(0\)/,
+  "Preparação simples deve abrir na data do evento");
+assert.match(service,/preparation\.isComplete\(\)\|\|preparation\.eventKey\(\)\.equals/,
+  "Respostas completas já salvas devem continuar aceitas");
 assert.match(service,/DayState\.AFTER_DAY/);
 assert.match(service,/currentPhaseNote\(/);
 assert.match(service,/startDemoToday\(/);
@@ -82,4 +90,4 @@ assert.match(service,/preparation\.choose\(option\)/);
 assert.match(strings,/raid_day_risk_message/);
 assert.match(manifest,/android:name="\.RaidDayAssistantOverlayService"/);
 assert.doesNotMatch(service,/startActivity\(new Intent\(Settings\.ACTION_MANAGE_OVERLAY_PERMISSION/);
-console.log("LT304/E2A PASS: preparation 7 questions, stored answers, risk per event, real Brasília/NZ timezone and no invented hours");
+console.log("LT304 Edu PASS: onboarding de data única com sete respostas legadas preservadas, risco por evento e fusos sem hora inventada");
