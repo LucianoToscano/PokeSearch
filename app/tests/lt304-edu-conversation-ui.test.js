@@ -24,6 +24,8 @@ assert.match(overlay,/setTalk\(/);
 assert.match(overlay,/addTwo\(/);
 assert.match(overlay,/addThree\(/);
 assert.match(overlay,/String\[\] sizeLabels=\{"P","M","G"\}/);
+assert.match(overlay,/avatarSizeIndex=2/);
+assert.match(overlay,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,100\)/);
 assert.match(overlay,/eduSettings\.setVisibility\(View\.VISIBLE\)/);
 assert.match(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/);
 assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\)/);
