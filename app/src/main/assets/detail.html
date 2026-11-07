@@ -2546,14 +2546,19 @@ function renderRankOneMoves(){
    const metrics=[valid(stats.power,500)?"Poder "+stats.power:"",
     valid(stats.energyGain,100)?"Energia +"+stats.energyGain:"",
     valid(stats.energyCost,200)?"Custo "+stats.energyCost:""].filter(Boolean);
+   const fast=label==="Ágil";
+   const badge=window.PokeSearchMovePanel?.mtBadge?.(fast,move.status)||
+    (move.status==="elite"?'<img class="psEliteScroll" src="ui-icons/'+
+     (label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png")+
+     '" alt="" aria-hidden="true">':"");
+   const pvp=window.PokeSearchMovePanel?.pvpStats?.(move,fast)||
+    (metrics.length?'<div class="psMovePvpStats">PvP: '+h(metrics.join(" • "))+'</div>':"");
+   const raid=window.PokeSearchMovePanel?.pveStats?.(move,fast)||"";
    return '<div class="psMoveRow"><span class="psMoveLabel" title="'+
      h(/^C[12]$/.test(label)?"Carregado "+label.slice(1):label)+'">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
-     (legacy?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">'+
-      '<img class="psEliteScroll" src="ui-icons/'+
-       (label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png")+
-       '" alt="" aria-hidden="true"></span>':"")+
-     (metrics.length?'<span class="psMoveStats">'+h(metrics.join(" · "))+'</span>':"")+'</div>';
+     (badge?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">'+badge+'</span>':"")+
+     ((pvp||raid)?'<div class="psMoveStats psMoveNumbers">'+pvp+raid+'</div>':"")+'</div>';
   };
   if(recommendation.availableOnly===true){ 
    btn.title="Consultar golpes possíveis · sem recomendação PvP confirmada";
