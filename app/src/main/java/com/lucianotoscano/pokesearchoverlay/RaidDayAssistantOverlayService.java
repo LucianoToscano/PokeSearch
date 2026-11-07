@@ -481,6 +481,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             preparation.save(prefs);
             String chosenEvent=preparation.eventKey();
             if(!eventKey.equals(chosenEvent)){
+                // Nunca herdar alarmes/janela de um evento anterior.
+                RaidDaySchedule.clearWindow(this);
                 eventKey=chosenEvent;
                 prefs.edit().putString("eventKey",eventKey)
                     .putInt("sessionGeneration",1).apply();
