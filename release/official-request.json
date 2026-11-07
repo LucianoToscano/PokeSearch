@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.04",
-  "code": 54510,
-  "label": 51308,
-  "previous_tag": "v0.03.03-54507",
-  "qa_max_code": 54509,
-  "release_notes": "PokeSearch LT304 — Edu, Assistente do Dia de Reides. Nova interface de balões de conversa com mini treinador flutuante e tamanho G (100 pixels) como padrão, preservando escolhas P/M/G salvas. Painel compacto, arrastável pelo cabeçalho, ajustes no menu separado e respostas contextualizadas para cada etapa. Inclui Modo Treino “Simular hoje”, roteiro de 11 etapas com véspera (D−1) e dia do evento (D), perguntas iniciais, histórico de retomada, registro manual de resultados de reides, lembretes locais opcionais e abertura do calendário Android. A leitura visual experimental depende de autorização por sessão; os balões se recolhem antes do diálogo do Android, e OCR local apenas sugere telas que o jogador confirma. Não altera localização, não automatiza o Pokémon GO, não garante passes ou recompensas. Eventos sem programação oficial verificada são identificados. As duas Pokébolas, o Doce Raro, a busca sem login, o limite de dez resultados, o tratamento de 429/Retry-After e a assinatura permanente foram preservados. PR #300 integrada por squash 9c391c4a0c8b92ff8735640b9539fa1d6f714289. Suítes Node QA, regressão LT169, lógica LT211, compilação Java LT62, OTA LT173 e APK QA assinada aprovadas. Teste físico no Samsung do novo Edu e calibração OCR com capturas reais permanecem pendentes."
+  "version": "0.03.05",
+  "code": 54511,
+  "label": 51309,
+  "previous_tag": "v0.03.04-54510",
+  "qa_max_code": 54510,
+  "release_notes": "PokeSearch LT305 — Edu conversacional. Balões brancos inspirados em quadrinhos, textos escuros e respostas curtas, sem painel gigante. O Edu se apresenta como treinador e conduz o tutorial comunitário Bug dos Passes uma pergunta por vez. O botão de configurações saiu da conversa: segure a sprite por aproximadamente 1,2 s para abrir os ajustes, mantendo toque curto e arraste. Preparação real simplificada para apenas informar a data, sem descartar preferências antigas; passe é conferido na etapa apropriada. Coordenadas de Havaí, Nova Zelândia e Kiribati podem ser tocadas para copiar, sem alterar GPS. Chegada à região e carregamento do mapa exigem confirmações distintas. Nova sessão no dia do evento inicia em D; sessões da véspera oferecem passagem manual para o dia D, preservando histórico e sem inventar passes. Modo Simular hoje é fictício e não registra reides reais. Preservados duas Pokébolas, Doce Raro, login opcional, limite de 10 resultados, 429/Retry-After, sprites, favoritos, ranks e assinatura permanente. PR #302 integrada por squash 58859a5b65ec2b933540f3652d2cde79456d035b. Testes Node QA, LT169, LT211, Java LT62 e OTA LT173 aprovados. QA visual/funcional físico Samsung e calibração OCR PT-BR/EN ainda pendentes. O método comunitário não é garantido, pode violar os Termos do Pokémon GO e não é automatizado pelo aplicativo. Instalação exige confirmação do Android."
 }
