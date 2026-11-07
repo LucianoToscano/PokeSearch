@@ -1,0 +1,115 @@
+name: LT304 Dia de Reides - APK assinada somente para QA
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'docs/LT304_*'
+      - '.github/workflows/lt304-dia-reides-signed-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lt304-qa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  signed-test-only:
+    if: github.repository == 'LucianoToscano/PokeSearch' && github.event_name == 'pull_request' && github.event.pull_request.number == 300 && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    timeout-minutes: 90
+    env:
+      POKE_TEST_VERSION_CODE: '54508'
+      POKE_TEST_VERSION_LABEL: '51304'
+      POKE_TEST_PUBLIC_VERSION: '0.03.04'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_TEST_SIGNING_REQUIRED: 'true'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+      POKE_GOOGLE_WEB_CLIENT_ID: ${{ vars.POKE_GOOGLE_WEB_CLIENT_ID }}
+      POKE_CHAT_GOOGLE_WEB_CLIENT_ID: '1007816617051-abhc4riftns3om8gs0o67ce1s386ue9d.apps.googleusercontent.com'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Validate exact source and Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          node app/tests/lt304-raid-assistant-icon-guide.test.js
+          node app/tests/lt304-trainer-avatar-overlay.test.js
+          node app/tests/lt304-preparation-clock.test.js
+          test -s app/src/main/assets/roteiro_bug_passes.json
+          test -s app/src/main/assets/raid_day_avatar_atlas.png
+      - name: Restore permanent signer only in runner
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Permanent signing secret unavailable"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/lt304-qa.p12"
+          chmod 600 "$RUNNER_TEMP/lt304-qa.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/lt304-qa.p12" >> "$GITHUB_ENV"
+          echo "POKE_TEST_KEYSTORE=$RUNNER_TEMP/lt304-qa.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/lt304-qa.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Assemble signed test APK with original application ID
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 10 --minimum-normal 950
+          gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease --stacktrace
+      - name: Validate signed APK and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p lt304-test
+          APK=app/build/outputs/apk/release/app-release.apk
+          OUT=lt304-test/PokeSearch-LT304-v0.03.04-Dia-de-Reides-QA.apk
+          test -s "$APK"
+          test -s app/build/outputs/mapping/release/mapping.txt
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > lt304-test/PACKAGE-VERSION.txt
+          grep -Fq "name='com.lucianotoscano.pokesearch'" lt304-test/PACKAGE-VERSION.txt
+          grep -Fq "versionCode='54508'" lt304-test/PACKAGE-VERSION.txt
+          grep -Fq "versionName='0.03.04'" lt304-test/PACKAGE-VERSION.txt
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > lt304-test/SIGNING-REPORT.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' lt304-test/SIGNING-REPORT.txt
+          CERT="$(grep 'Signer #1 certificate SHA-256 digest:' lt304-test/SIGNING-REPORT.txt | awk '{print $NF}')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+          cp "$APK" "$OUT"
+          test "$(stat -c %s "$OUT")" -lt 50000000
+          (cd lt304-test && sha256sum *.apk > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          git rev-parse HEAD > lt304-test/SOURCE_COMMIT.txt
+          printf 'QA PRIVADO SOMENTE. PR #300. Sem merge, sem OTA, sem publicacao. Validacao fisica no Samsung pendente.\n' > lt304-test/LEIA-PRIMEIRO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-LT304-Dia-de-Reides-APK-Assinada-QA
+          path: lt304-test/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Erase signer file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/lt304-qa.p12"
