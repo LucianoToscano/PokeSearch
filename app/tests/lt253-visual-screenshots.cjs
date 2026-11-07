@@ -369,12 +369,19 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
         actual.sub.includes("Grimer")&&
         actual.sub.includes("Classe IV #"+expected.rank)};
      }
-     window.PokeSearchRankExplorer.close();
-     const reopened=openDetailMetric("iv")===true;
+     // LT299: tapping the same IV cell after changing leagues must CLOSE;
+     // tapping it once more must REOPEN the user's chosen league.
+     const secondTap=openDetailMetric("iv")===true;
+     const collapsed=document.querySelector("#psRankExplorer")?.hidden===true;
+     const thirdTap=openDetailMetric("iv")===true;
+     const reopened=document.querySelector("#psRankExplorer")?.hidden===false;
      const persists=get().title.includes("Liga Mestra");
+     const fourthTap=openDetailMetric("iv")===true;
+     const collapsedAgain=document.querySelector("#psRankExplorer")?.hidden===true;
      return {ok:first.title.includes("Grande Liga")&&
-      selected.ul.ok&&selected.ml.ok&&reopened&&persists,
-      first,selected,reopened,persists};
+      selected.ul.ok&&selected.ml.ok&&secondTap&&collapsed&&thirdTap&&
+      reopened&&persists&&fourthTap&&collapsedAgain,
+      first,selected,secondTap,collapsed,thirdTap,reopened,persists,fourthTap,collapsedAgain};
     }finally{
      window.PokeSearchRankExplorer?.close?.();
      metricCard=saved.card;window.psRankContext=saved.context;
