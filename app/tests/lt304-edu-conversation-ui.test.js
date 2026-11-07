@@ -50,7 +50,7 @@ assert.match(overlay,/\.heightPixels\*\.43f/);
 assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
 assert.match(overlay,/putInt\("edu_panel_x"/);
 assert.match(overlay,/putInt\("edu_panel_y"/);
-assert.match(overlay,/panelParams\.alpha=\.79f/);
+assert.match(overlay,/panelParams\.alpha=1f/);
 assert.match(overlay,/private void startDemoToday\(/);
 assert.match(overlay,/demoToday=true/);
 assert.match(overlay,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
