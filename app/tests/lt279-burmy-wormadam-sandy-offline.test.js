@@ -12,7 +12,7 @@ const detail=read("detail.html"),dock=read("dock.html");
 const builder=fs.readFileSync(path.join(__dirname,"../scripts/build_sprite_bundle.py"),"utf8");
 const workflow=fs.readFileSync(path.join(__dirname,"../../.github/workflows/pokesearch-official-release.yml"),"utf8");
 const local="file:///android_asset/pokemon-sprites/costumes/";
-const upstream="https://raw.githubusercontent.com/PokeMiners/pogo_assets/";
+const upstream="https://cdn.jsdelivr.net/gh/PokeMiners/pogo_assets@c2a686eb08ace6e890d8fe3d2134c76988db87b5/";
 const expectedNames=[];
 for(const [dex,name] of [[412,"Burmy"],[413,"Wormadam"]]){
  for(const [form,display] of [["PLANT","Plant"],["SANDY","Sandy"],["TRASH","Trash"]]){
