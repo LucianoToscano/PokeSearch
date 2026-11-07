@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT304 — EDU · BALÕES BRANCOS DE QUADRINHOS E CONFIGURAÇÕES OCULTAS (07/11/2026)
+
+- **Pedido do proprietário:** conversa principal do Edu em **balão branco opaco**, borda fina, cauda discreta de quadrinhos e texto escuro; preservar o visual minimalista/glass apenas na moldura e respostas compactas. Não misturar ajustes ao roteiro nem exibir o botão `⋯`.
+- **Implementação candidata em branch/PR:** remover a entrada de configuração visível; **segurar a sprite por ~1,2 s** abre os mesmos ajustes, toque curto continua abrindo/recolhendo conversa, arraste move. Ao recolher, retorna ao modo conversa na próxima abertura. Mantém tamanho inicial **G=100 pixels físicos**, P/M=50/75 e preferências salvas, E01–E11, simulação, MediaProjection e ações manuais. Janela com `alpha=1` para manter balão/texto opacos; a moldura externa usa fundo translúcido.
+- **Regressão acrescentada:** testes LT304 da interface e ícone/avatar verificam a retirada de `⋯`, gesto longo, contraste e opacidade. **QA físico Samsung e resultados finais de CI pendentes** — não afirmar aprovação por inspeção de código.
+- **Documento especializado:** [`docs/LT304_EDU_BALOES_QUADRINHOS_AJUSTES_OCULTOS_20261107.md`](LT304_EDU_BALOES_QUADRINHOS_AJUSTES_OCULTOS_20261107.md). Sem merge, APK ou nova publicação autorizados; LT304 `54510` continua a Release oficial.
+
+
 ## LT304 OFICIAL — Edu, Assistente do Dia de Reides (publicação verificada em 07/11/2026)
 
 - **Status: publicado oficialmente.** Versão `0.03.04` · código **54510** · label **51308**, tag `v0.03.04-54510`, GitHub Releases `latest`, não draft e não prerelease. **APK oficial:** `PokeSearch-v0.03.04-LT.apk`, 34.032.628 bytes, SHA-256 **`b8b5073e272a958676f068e2eba7ede79762608975f175d9946840bacce375b4`**, certificado original SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, esquema v2 validado no pipeline. URL: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.04-54510/PokeSearch-v0.03.04-LT.apk
