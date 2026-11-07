@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.95",
-  "code": 54499,
-  "label": 51299,
-  "previous_tag": "v0.02.94-54498",
-  "qa_max_code": 54498,
-  "release_notes": "PokeSearch LT295: na Análise PvP, o ícone de Ataques aparece agora ao lado do Pokémon atual e de cada uma de suas evoluções, identificado por espécie e liga GL/UL/ML. O ícone único no cabeçalho foi ocultado para não confundir a recomendação da espécie mais bem ranqueada com o Pokémon capturado. Ao tocar no ícone de uma evolução, o painel abre logo abaixo da linha correspondente, com Ágil/C1/C2 e nomes pt-BR/coloridos conforme a fonte PvPoke pinada daquela espécie e liga. Apenas um conjunto de golpes permanece aberto; consultas desatualizadas não alteram outras espécies. O ícone de MT permanece cinza quando não há comprovação, golpes legados não são confundidos com disponibilidade de MT Elite; formas Mega usam avaliação Megaedição, enquanto fantasias e projeções recebem ressalva sem inventar ataques recomendados. A miniatura do cabeçalho do card (30dp) agora usa contorno opaco medido e alvo de 87% visual, separado dos Resultados P/M/G (já padronizados LT294), com centralização e sem substituir os arquivos. Quando CORS impede leitura de pixels, o Android usa o decodificador nativo seguro da mesma URL de imagem exata, retornando somente geometria para o WebView de detalhe; quando não há fonte verificável, preserva fallback neutro. Mantidos rankings, IVs, PC, golpes capturados, coordenadas, sprites originais, duas Pokébolas, filtros, favoritos, alertas, assinatura e OTA. Oito gates da PR #289 aprovados incluindo Node total, Android, Java, OTA, visual e APK beta. Teste físico no Samsung ainda pendente."
+  "version": "0.02.98",
+  "code": 54502,
+  "label": 51302,
+  "previous_tag": "v0.02.95-54499",
+  "qa_max_code": 54501,
+  "release_notes": "PokeSearch LT298 — atualização cumulativa LT296–LT298. LT296: Rank Geral com sprites de Pokémon/evoluções selecionáveis e ícones GL/UL/ML/LC; rankings da espécie exata, cabeçalhos centralizados e pré-verificação dos símbolos de MT nas evoluções (legado sem comprovação permanece cinza). LT297: ícones dos tipos maiores em caixa própria ao lado dos IVs preservados, painel de Eficácia do Tipo (Fraqueza, Resistência, Normais) com multiplicadores defensivos reais do Pokémon GO e formas não verificadas neutras. LT298: toque em Golpes capturados abre detalhes do moveset real; toque nos ícones de golpes das evoluções mostra recomendações PvPoke por espécie/liga. Nomes PT-BR coloridos pelo tipo, sem tarja; ícones MT Ágil e MT Carregada normais distintos e PNGs Elite originais preservados. Quando confirmados por fontes pinadas, mostram Poder/Energia/Custo (PvP) e Dmg/CD/DPS/Energia (Raides) em linhas distintas, sem misturar mecânicas nem inventar valores. Novo índice offline verificado de 391 golpes da fonte WatWowMap pinada. Mantidos Pokémon, formas, IVs, PC, rankings, sprites, resultados, localização/coordenadas, alertas, filtros, duas Pokébolas, conta/login e assinatura permanente. Oito verificações automáticas aprovadas na PR #294; teste físico Samsung ainda pendente. Atualização oficial exige confirmação Android e segue Wi-Fi/preferências do usuário."
 }
