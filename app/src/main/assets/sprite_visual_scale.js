@@ -80,24 +80,46 @@ function tileFit(img,box){
    y:Math.round((.5-cy)*zoom*imageBox*100)/100,
    occupancy};
 }
-function applyResultTile(img){
+function setResultTileFit(img,fit){
+ img.style.setProperty("--tile-alpha-zoom",fit?String(fit.zoom):"1");
+ img.style.setProperty("--tile-alpha-x",fit?fit.x+"px":"0px");
+ img.style.setProperty("--tile-alpha-y",fit?fit.y+"px":"0px");
+}
+// LT288: when PoGoCoordinates supplies an exact sprite that can be displayed
+// but not read in a canvas, measure its same-identity, verified APK PNG in a
+// separate local image. The provider art stays visible; the reference only
+// supplies a bounded fit. No crossorigin attribute or external fetch needed.
+// Never try a generic base image for an unknown form, costume, or shiny.
+function applyResultTile(img,verifiedReference){
  if(!img?.style?.setProperty)return null;
  const tile=img.closest?.(".spriteStage");
  const cardSize=Number(tile?.clientWidth)||0;
  const artworkBox=cardSize*.88;
  const fit=tileFit(img,artworkBox);
- if(!fit){
-  // Security-tainted provider/CDN assets: do not attempt unsafe pixel reads
-  // or scale blindly (which could crop horns, tails and costumes).
-  img.style.setProperty("--tile-alpha-zoom","1");
-  img.style.setProperty("--tile-alpha-x","0px");
-  img.style.setProperty("--tile-alpha-y","0px");
-  return null;
- }
- img.style.setProperty("--tile-alpha-zoom",String(fit.zoom));
- img.style.setProperty("--tile-alpha-x",fit.x+"px");
- img.style.setProperty("--tile-alpha-y",fit.y+"px");
- return fit;
+ setResultTileFit(img,fit);
+ if(fit)return fit;
+ const data=String(verifiedReference||"");
+ if(!/^data:image\/png;base64,[A-Za-z0-9+/=]{24,400000}$/.test(data)||
+    typeof Image!=="function"||cardSize<8)return null;
+ const expected=String(img.currentSrc||img.src||"");
+ // Reference decoder is separate from the visible provider <img> and does not
+ // modify its URL, so the exact image that worked in the detail card remains.
+ const reference=new Image();
+ reference.onload=()=>{
+  if(img.isConnected===false||String(img.currentSrc||img.src||"")!==expected||
+     Number(img.naturalWidth)<8||Number(reference.naturalWidth)<8)return;
+  const measured=tileFit(reference,artworkBox);
+  if(!measured)return;
+  // A different artwork rendition can have different transparent borders:
+  // do not let a reference push provider pixels beyond the fixed P/M/G tile.
+  const limited={...measured,zoom:clamp(measured.zoom,.80,1.8),
+   x:clamp(measured.x,-cardSize*.12,cardSize*.12),
+   y:clamp(measured.y,-cardSize*.12,cardSize*.12)};
+  setResultTileFit(img,limited);
+ };
+ reference.onerror=()=>{}; // Existing neutral CSS fit stays in use.
+ reference.src=data;
+ return null;
 }
 root.PokeSearchSpriteScale=Object.freeze({measure,factor,apply,visibleBounds,tileFit,applyResultTile});
 })(window);
