@@ -15,3 +15,10 @@ Em telas reais Samsung, Burmy #412 Sandy (0/15/15) apresentava — nas ligas por
 - Executar suites Node, PvP, Android Java, OTA e screenshots P/M/G da própria WebView; só efetuar merge/release após aprovar.
 - Falta teste físico Samsung (renderização e golpe recebido pelo site) após instalar.
 - LT279 release oficial prévia: `v0.02.79-54483`. LT280 candidata `0.02.80 / 54484`.
+
+## Publicação final confirmada
+- [PR #273](https://github.com/LucianoToscano/PokeSearch/pull/273) mesclada pelo commit `5f2389c67183e83a6bd4868693a6b7685e8e19e6`. Sete suites automatizadas `success` no commit `abeb9e5a73acdfa228bb7e0a458b8ba6c6a0eac4`.
+- [Workflow oficial #42329815200](https://github.com/LucianoToscano/PokeSearch/actions/runs/42329815200) concluiu preflight, build protegido, assinatura e publicação com `success`.
+- Release pública estável [LT280 · v0.02.80-54484](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.80-54484) publicada **07/11/2026 às 02:38:31 UTC** (06/11 às 23:38:31 Brasília).
+- APK `PokeSearch-v0.02.80-LT.apk` com **33.814.852 bytes**, SHA-256 `42744801917fbfb27c2070443e0e1233fdf1a8148e49bb61566368e475d3f5c9`. Asset `uploaded` na release estável.
+- A publicação não comprova instalação no Samsung. **Pendente:** validar a imagem real Burmy/Wormadam P1/P2, o Rank Classe nas três ligas e cores de golpes Fogo/Inseto/Normal/Sombrio exibidas pelo WebView.
