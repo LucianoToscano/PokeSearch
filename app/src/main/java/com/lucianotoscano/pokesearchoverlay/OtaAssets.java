@@ -56,9 +56,10 @@ final class OtaAssets {
         Set<String> paths=new HashSet<>();
         Collections.addAll(paths,
             "dock.html","detail.html","sprite_offline.js","sprite_visual_scale.js",
-            "visual_editor.js","pokemon_card_presentation.js","pvpoke-overall-ranks.js", "pvpoke-little-ranks.js",
+            "visual_editor.js","pokemon_card_presentation.js", "pokemon_move_metrics.js", "pokemon_move_panel.js",
+            "ui-icons/mt-agil-normal-lt298.svg", "ui-icons/mt-carregada-normal-lt298.svg","pvpoke-overall-ranks.js", "pvpoke-little-ranks.js",
             "pvpoke-iv-gamemaster.js","pvp_rank_explorer.js",
-            "pvp_rank_insights.js","pvp_rank_advanced_ui.js","pvp_rank_moves.js","pve_moves_ptbr.js","pve_raid_rank.js",
+            "pvp_rank_insights.js","pvp_rank_advanced_ui.js","pvp_rank_moves.js","pvp_evolution_moves_ui.js","pve_moves_ptbr.js","pve_raid_rank.js",
             "pvp_family_catalog.js",
             "mega_evolution_icon.svg",
             "probe.js","release_notes.json","pokemon_catalog.json");
