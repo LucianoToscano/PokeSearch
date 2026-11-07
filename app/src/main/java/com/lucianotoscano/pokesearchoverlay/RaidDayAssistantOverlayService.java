@@ -528,8 +528,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         }else{
             String selected=preparation.answer(q);
             prepStatus.setText(q==7?
-                "O acompanhamento visual ainda não foi implementado. "+
-                "Mesmo escolhendo híbrido, esta versão funciona manualmente.":
+                "O acompanhamento visual é opcional e exige sua autorização "+
+                "pelo Android a cada sessão. Ele sugere telas, sem avançar automaticamente.":
                 "Informação declarada pelo jogador · selecione uma opção:");
             for(String option:preparation.optionsFor(q)){
                 final String value=option;
