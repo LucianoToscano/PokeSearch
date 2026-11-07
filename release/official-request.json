@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.83",
-  "code": 54487,
-  "label": 51287,
-  "previous_tag": "v0.02.82-54486",
-  "qa_max_code": 54486,
-  "release_notes": "PokeSearch LT283: atualização incremental após LT282. Cartões expansíveis de Raides/PvP/calculadora usam uma única medição por frame e reajustam rolagem ao abrir/fechar sem criar janelas sobrepostas. Ajuda PvP recolhe ao alternar o painel. Raides mostram confirmação discreta somente para ranking PvE verificado, distinguindo ausência de dados de baixo desempenho e sem confundir ranking da espécie com IV do encontro. Famílias e nomes canônicos de formas PvP passam a consultar índices preparados uma vez na WebView, preservando a recusa de identidade ambígua, sem alterar GM nem ranks. Mantidos GL/UL/ML, cinco bandeiras, cores dos golpes somente no texto, sprites, favoritos, filtros, duas Pokébolas independentes, localização, atualização e assinatura. Oito checks de PR #276 aprovados; homologação física Samsung P1/P2 ainda pendente."
+  "version": "0.02.84",
+  "code": 54488,
+  "label": 51288,
+  "previous_tag": "v0.02.83-54487",
+  "qa_max_code": 54487,
+  "release_notes": "PokeSearch LT284: comparador avançado de IVs A/B incorporado à calculadora PvP existente. Ao expandir Comparar IVs, mostra na mesma janela os Ranks Classe verificados, eficiência IV %, PC e nível dos dois conjuntos nas três ligas (Grande, Ultra, Mestre); Rank Geral da espécie aparece apenas se a identidade da forma e a fonte forem confirmadas. O cálculo reutiliza o explorador de 4.096 distribuições e o cache local, não altera IVs reais nem o provedor. Formas sem identificação exata, dados ausentes e IVs inválidos ficam não confirmados. Maior produto de atributos é destacado somente no texto, sem alegar vitórias PvP ou elegibilidade de Mega, custos ou golpes não verificados. Mantidos Raides, PvP, sprites, bandeiras, tradução PT-BR, filtros, localização, favoritos, duas Pokébolas independentes, OTA e assinatura permanente. Oito gates automatizados do PR #278 aprovados; teste físico Samsung P1/P2 ainda pendente."
 }
