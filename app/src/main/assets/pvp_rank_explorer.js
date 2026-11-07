@@ -7,7 +7,8 @@
  if(root)root.PokeSearchRankExplorer=api;
 })(typeof window!=="undefined"?window:null,function(){
  "use strict";
- const LIGAS={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
+ const LIGAS={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra",lc:"Copa Pequena"};
+ const PVP_LEAGUE_ICONS={gl:"ps-gl-lt268.png",ul:"ps-ul-lt268.png",ml:"ps-ml-lt268.png",lc:"ps-cup-lt268.png"};
  const safe=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
   .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
  const n=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
@@ -22,7 +23,7 @@
  const cache=new Map();
  function getIvRows(gm,name,league){
   if(!gm||!Array.isArray(gm.pokemon)||!Array.isArray(gm.cpms)||
-     gm.cpms.length<99||!LIGAS[league])return null;
+     gm.cpms.length<99||!["gl","ul","ml"].includes(league))return null;
   const key=n(megaName(name)),species=gm.pokemon.filter(p=>p&&n(p[1])===key);
   if(species.length!==1)return null; // Fail closed on ambiguous forms.
   const [id,,baseAtk,baseDef,baseHp]=species[0];
@@ -195,6 +196,30 @@
  function sourceFor(kind,gm,overall){
   return kind==="class"?(gm?.retrieved||"sem data"):overall?.retrieved||"sem data";
  }
+ // Families are only a navigation aid, never evidence that an unknown
+ // event form can evolve. Order verified species by the pinned evolution graph.
+ function orderedFamily(name,gm){
+  const host=typeof window!=="undefined"?window:{};
+  const catalogue=host.PokeSearchPvpFamilyCatalog;
+  const forms=typeof catalogue?.family==="function"?
+   catalogue.family(name,gm,true):[];
+  const values=[...new Set([String(name||""),...forms].filter(Boolean))].slice(0,30);
+  const normal=values.filter(x=>!/\(Mega(?: [XY])?\)$/i.test(x));
+  const megas=values.filter(x=>/\(Mega(?: [XY])?\)$/i.test(x));
+  const links=catalogue?.links||[],present=new Set(normal.map(n));
+  const incoming=new Set(links.filter(([from,to])=>present.has(n(from))&&present.has(n(to)))
+   .map(([,to])=>n(to)));
+  const ordered=[],seen=new Set();
+  const walk=value=>{
+   if(!value||seen.has(n(value)))return;
+   seen.add(n(value));ordered.push(value);
+   for(const [from,to] of links)if(n(from)===n(value)&&present.has(n(to)))
+    walk(normal.find(v=>n(v)===n(to)));
+  };
+  normal.filter(x=>!incoming.has(n(x))).forEach(walk);
+  normal.forEach(walk);
+  return [...ordered,...megas].slice(0,24);
+ }
  function open(opts){
   if(typeof document==="undefined"||!opts||!LIGAS[opts.league])return false;
   const rootWindow=typeof window!=="undefined"?window:{};
@@ -210,24 +235,18 @@
    rows.find(r=>n(r.name)===n(name)&&r.rank===Number(opts.rank))||
     rows.find(r=>n(r.name)===n(name)):null;
   const candidateRank=Number(opts.rank);
-  const selectedRank=selected?.rank??(Number.isInteger(candidateRank)&&candidateRank>=1&&
+  const selectedRank=selected?.rank??(kind==="class"&&Number.isInteger(candidateRank)&&candidateRank>=1&&
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
    iv:opts.iv,overall,railKey:opts.railKey||"",
    // LT276: both Rank Classe (4096 IVs) and Rank Geral have a league picker.
    // Class keeps the same selected species/IV; each league recalculates its
    // own rank/CP/level/efficiency from the pinned Game Master (not the GL rank).
-   leagueOptions:kind==="overall"?["gl","ul","ml"].map(league=>{
-    const fromShortcut=Array.isArray(opts.leagueOptions)?
-     opts.leagueOptions.find(x=>x?.league===league):null;
-    const species=String(fromShortcut?.name||name);
-    const rowsForLeague=getOverallRows(overall,league)||[];
-    const exact=rowsForLeague.find(x=>n(x.name)===n(species));
-    return {league,name:species,rank:exact?.rank||null,
-     evolves:fromShortcut?.evolves===true};
-   }):["gl","ul","ml"].map(league=>({
-    league,name,available:!!getIvRows(gm,name,league)?.length
+   leagueOptions:(kind==="overall"?["gl","ul","ml","lc"]:["gl","ul","ml"]).map(league=>({
+    league,name,rank:(getOverallRows(overall,league)||[]).find(x=>n(x.name)===n(name))?.rank||null,
+    available:kind==="overall"?!!getOverallRows(overall,league)?.length:!!getIvRows(gm,name,league)?.length
    })),
+   family:kind==="overall"?orderedFamily(name,gm):[],
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -262,20 +281,20 @@
   if(!state||state.kind!=="overall"||!LIGAS[league])return false;
   const target=state.leagueOptions.find(x=>x.league===league);
   if(!target||!getOverallRows(state.overall,league)?.length)return false;
-  const opts={kind:"overall",league,name:target.name||state.name,
-   rank:target.rank||null,iv:state.iv,forms:state.forms,
-   gm:state.gm,overall:state.overall,leagueOptions:state.leagueOptions,
-   railKey:state.railKey};
+  const exact=(getOverallRows(state.overall,league)||[]).find(x=>n(x.name)===n(state.name));
+  const opts={kind:"overall",league,name:state.name,
+   rank:exact?.rank||null,iv:state.iv,forms:state.forms,
+   gm:state.gm,overall:state.overall,railKey:state.railKey};
   // Keep the previous table/badge unchanged if the new source is unavailable.
   if(!open(opts))return false;
   if(typeof window!=="undefined")window.psRailOverallSelectedLeague=league;
   const badge=document.getElementById("rankLine")?.querySelector?.(".psRailGeneral");
   if(badge){
    badge.dataset.psLeague=league;badge.dataset.psName=opts.name;
-   badge.dataset.psRank=target.rank?String(target.rank):"";
-   badge.dataset.rgVisible=target.rank?"#"+target.rank:"—";
+   badge.dataset.psRank=exact?.rank?String(exact.rank):"";
+   badge.dataset.rgVisible=exact?.rank?"#"+exact.rank:"—";
    const number=badge.querySelector?.(".psRailNumber");
-   if(number)number.textContent=target.rank?"#"+target.rank:"—";
+   if(number)number.textContent=exact?.rank?"#"+exact.rank:"—";
    badge.querySelector?.(".psRailEvolve")?.remove?.();
    if(target.evolves){
     const mark=document.createElement("img");mark.className="psRailEvolve";
@@ -285,10 +304,19 @@
     badge.appendChild(mark);
    }
    badge.title="Rank Geral · "+LIGAS[league]+" · "+opts.name+
-    (target.rank?" · #"+target.rank:" · posição não verificada");
+    (exact?.rank?" · #"+exact.rank:" · posição não verificada");
    badge.setAttribute?.("aria-label",badge.title);
   }
   return true;
+ }
+ function switchOverallSpecies(name){
+  if(!state||state.kind!=="overall")return false;
+  const target=state.family.find(x=>n(x)===n(name));
+  if(!target)return false;
+  const exact=(getOverallRows(state.overall,state.league)||[]).find(x=>n(x.name)===n(target));
+  return open({kind:"overall",name:target,league:state.league,
+   rank:exact?.rank||null,iv:state.iv,forms:state.forms,
+   gm:state.gm,overall:state.overall,railKey:state.railKey});
  }
  function close(){
   if(view)view.hidden=true;
@@ -572,7 +600,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,switchOverallLeague,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,switchOverallLeague,switchOverallSpecies,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
