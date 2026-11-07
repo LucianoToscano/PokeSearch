@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.82",
-  "code": 54486,
-  "label": 51286,
-  "previous_tag": "v0.02.81-54485",
-  "qa_max_code": 54485,
-  "release_notes": "PokeSearch LT282: após teste físico Samsung Medicham, corrige a avaliação de Raides. Golpes Ágil e Carregado mostram SOMENTE nomes com texto colorido pelo tipo verdadeiro verificado do ataque, usando a mesma paleta dos 18 tipos do cartão principal; sem fundo, borda, chip ou cor inventada quando o tipo for desconhecido. O botão Ver mais classificações agora aciona o recálculo do tamanho da janela quando a lista abre ou fecha, liberando rolagem até o fim do conteúdo em telas limitadas. Mantidos rankings exatos, números, traduções PT-BR, IVs, cinco cartões, sprites, filtros, localização, duas Pokébolas, OTA e assinatura. Exige validação física Samsung P1/P2 da LT282."
+  "version": "0.02.83",
+  "code": 54487,
+  "label": 51287,
+  "previous_tag": "v0.02.82-54486",
+  "qa_max_code": 54486,
+  "release_notes": "PokeSearch LT283: atualização incremental após LT282. Cartões expansíveis de Raides/PvP/calculadora usam uma única medição por frame e reajustam rolagem ao abrir/fechar sem criar janelas sobrepostas. Ajuda PvP recolhe ao alternar o painel. Raides mostram confirmação discreta somente para ranking PvE verificado, distinguindo ausência de dados de baixo desempenho e sem confundir ranking da espécie com IV do encontro. Famílias e nomes canônicos de formas PvP passam a consultar índices preparados uma vez na WebView, preservando a recusa de identidade ambígua, sem alterar GM nem ranks. Mantidos GL/UL/ML, cinco bandeiras, cores dos golpes somente no texto, sprites, favoritos, filtros, duas Pokébolas independentes, localização, atualização e assinatura. Oito checks de PR #276 aprovados; homologação física Samsung P1/P2 ainda pendente."
 }
