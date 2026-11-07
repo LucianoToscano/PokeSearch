@@ -1,6 +1,6 @@
 # PokeSearch — Android Overlay
 
-**Continuidade para outra conta/IA:** [Manual operacional para analisar, corrigir, testar, mesclar, assinar APK, publicar OTA, enviar Drive e registrar o Arquivo Mestre](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Leia antes de qualquer atualização pública; não misturar APK de QA com release oficial.
+**Continuidade técnica:** [Manual operacional para analisar, corrigir, testar, mesclar, assinar APK, publicar OTA, enviar Drive e registrar o Arquivo Mestre](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Leia antes de qualquer atualização pública; não misturar APK de QA com release oficial.
 
 ## Versão oficial publicada — LT227 · 0.02.27 · 54434
 
