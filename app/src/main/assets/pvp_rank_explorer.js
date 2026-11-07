@@ -7,7 +7,8 @@
  if(root)root.PokeSearchRankExplorer=api;
 })(typeof window!=="undefined"?window:null,function(){
  "use strict";
- const LIGAS={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
+ const LIGAS={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra",lc:"Copa Pequena"};
+ const PVP_LEAGUE_ICONS={gl:"ps-gl-lt268.png",ul:"ps-ul-lt268.png",ml:"ps-ml-lt268.png",lc:"ps-cup-lt268.png"};
  const safe=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;")
   .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
  const n=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
@@ -22,7 +23,7 @@
  const cache=new Map();
  function getIvRows(gm,name,league){
   if(!gm||!Array.isArray(gm.pokemon)||!Array.isArray(gm.cpms)||
-     gm.cpms.length<99||!LIGAS[league])return null;
+     gm.cpms.length<99||!["gl","ul","ml"].includes(league))return null;
   const key=n(megaName(name)),species=gm.pokemon.filter(p=>p&&n(p[1])===key);
   if(species.length!==1)return null; // Fail closed on ambiguous forms.
   const [id,,baseAtk,baseDef,baseHp]=species[0];
@@ -195,6 +196,30 @@
  function sourceFor(kind,gm,overall){
   return kind==="class"?(gm?.retrieved||"sem data"):overall?.retrieved||"sem data";
  }
+ // Families are only a navigation aid, never evidence that an unknown
+ // event form can evolve. Order verified species by the pinned evolution graph.
+ function orderedFamily(name,gm){
+  const host=typeof window!=="undefined"?window:{};
+  const catalogue=host.PokeSearchPvpFamilyCatalog;
+  const forms=typeof catalogue?.family==="function"?
+   catalogue.family(name,gm,true):[];
+  const values=[...new Set([String(name||""),...forms].filter(Boolean))].slice(0,30);
+  const normal=values.filter(x=>!/\(Mega(?: [XY])?\)$/i.test(x));
+  const megas=values.filter(x=>/\(Mega(?: [XY])?\)$/i.test(x));
+  const links=catalogue?.links||[],present=new Set(normal.map(n));
+  const incoming=new Set(links.filter(([from,to])=>present.has(n(from))&&present.has(n(to)))
+   .map(([,to])=>n(to)));
+  const ordered=[],seen=new Set();
+  const walk=value=>{
+   if(!value||seen.has(n(value)))return;
+   seen.add(n(value));ordered.push(value);
+   for(const [from,to] of links)if(n(from)===n(value)&&present.has(n(to)))
+    walk(normal.find(v=>n(v)===n(to)));
+  };
+  normal.filter(x=>!incoming.has(n(x))).forEach(walk);
+  normal.forEach(walk);
+  return [...ordered,...megas].slice(0,24);
+ }
  function open(opts){
   if(typeof document==="undefined"||!opts||!LIGAS[opts.league])return false;
   const rootWindow=typeof window!=="undefined"?window:{};
@@ -210,24 +235,18 @@
    rows.find(r=>n(r.name)===n(name)&&r.rank===Number(opts.rank))||
     rows.find(r=>n(r.name)===n(name)):null;
   const candidateRank=Number(opts.rank);
-  const selectedRank=selected?.rank??(Number.isInteger(candidateRank)&&candidateRank>=1&&
+  const selectedRank=selected?.rank??(kind==="class"&&Number.isInteger(candidateRank)&&candidateRank>=1&&
    rows.some(r=>r.rank===candidateRank)?candidateRank:null);
   state={kind,name,league:opts.league,rows,selectedIv,selectedRank,filter:0,
    iv:opts.iv,overall,railKey:opts.railKey||"",
    // LT276: both Rank Classe (4096 IVs) and Rank Geral have a league picker.
    // Class keeps the same selected species/IV; each league recalculates its
    // own rank/CP/level/efficiency from the pinned Game Master (not the GL rank).
-   leagueOptions:kind==="overall"?["gl","ul","ml"].map(league=>{
-    const fromShortcut=Array.isArray(opts.leagueOptions)?
-     opts.leagueOptions.find(x=>x?.league===league):null;
-    const species=String(fromShortcut?.name||name);
-    const rowsForLeague=getOverallRows(overall,league)||[];
-    const exact=rowsForLeague.find(x=>n(x.name)===n(species));
-    return {league,name:species,rank:exact?.rank||null,
-     evolves:fromShortcut?.evolves===true};
-   }):["gl","ul","ml"].map(league=>({
-    league,name,available:!!getIvRows(gm,name,league)?.length
+   leagueOptions:(kind==="overall"?["gl","ul","ml","lc"]:["gl","ul","ml"]).map(league=>({
+    league,name,rank:(getOverallRows(overall,league)||[]).find(x=>n(x.name)===n(name))?.rank||null,
+    available:kind==="overall"?!!getOverallRows(overall,league)?.length:!!getIvRows(gm,name,league)?.length
    })),
+   family:kind==="overall"?(Array.isArray(opts.family)&&opts.family.length?opts.family.slice(0,24):orderedFamily(name,gm)):[],
    forms:Array.isArray(opts.forms)?opts.forms.slice(0,36):[],gm,
    page:pageForRank(rows,selectedRank),compared:[],expandedRank:null,
    scrollSelected:true,resetTableScroll:true,
@@ -262,20 +281,20 @@
   if(!state||state.kind!=="overall"||!LIGAS[league])return false;
   const target=state.leagueOptions.find(x=>x.league===league);
   if(!target||!getOverallRows(state.overall,league)?.length)return false;
-  const opts={kind:"overall",league,name:target.name||state.name,
-   rank:target.rank||null,iv:state.iv,forms:state.forms,
-   gm:state.gm,overall:state.overall,leagueOptions:state.leagueOptions,
-   railKey:state.railKey};
+  const exact=(getOverallRows(state.overall,league)||[]).find(x=>n(x.name)===n(state.name));
+  const opts={kind:"overall",league,name:state.name,
+   rank:exact?.rank||null,iv:state.iv,forms:state.forms,
+   gm:state.gm,overall:state.overall,family:state.family,railKey:state.railKey};
   // Keep the previous table/badge unchanged if the new source is unavailable.
   if(!open(opts))return false;
   if(typeof window!=="undefined")window.psRailOverallSelectedLeague=league;
   const badge=document.getElementById("rankLine")?.querySelector?.(".psRailGeneral");
   if(badge){
    badge.dataset.psLeague=league;badge.dataset.psName=opts.name;
-   badge.dataset.psRank=target.rank?String(target.rank):"";
-   badge.dataset.rgVisible=target.rank?"#"+target.rank:"—";
+   badge.dataset.psRank=exact?.rank?String(exact.rank):"";
+   badge.dataset.rgVisible=exact?.rank?"#"+exact.rank:"—";
    const number=badge.querySelector?.(".psRailNumber");
-   if(number)number.textContent=target.rank?"#"+target.rank:"—";
+   if(number)number.textContent=exact?.rank?"#"+exact.rank:"—";
    badge.querySelector?.(".psRailEvolve")?.remove?.();
    if(target.evolves){
     const mark=document.createElement("img");mark.className="psRailEvolve";
@@ -285,10 +304,19 @@
     badge.appendChild(mark);
    }
    badge.title="Rank Geral · "+LIGAS[league]+" · "+opts.name+
-    (target.rank?" · #"+target.rank:" · posição não verificada");
+    (exact?.rank?" · #"+exact.rank:" · posição não verificada");
    badge.setAttribute?.("aria-label",badge.title);
   }
   return true;
+ }
+ function switchOverallSpecies(name){
+  if(!state||state.kind!=="overall")return false;
+  const target=state.family.find(x=>n(x)===n(name));
+  if(!target)return false;
+  const exact=(getOverallRows(state.overall,state.league)||[]).find(x=>n(x.name)===n(target));
+  return open({kind:"overall",name:target,league:state.league,
+   rank:exact?.rank||null,iv:state.iv,forms:state.forms,
+   gm:state.gm,overall:state.overall,family:state.family,railKey:state.railKey});
  }
  function close(){
   if(view)view.hidden=true;
@@ -343,7 +371,21 @@
     "#psRankExplorer .psrOptionMenu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:4px 0;padding:4px;background:#172d3bf2;border:1px solid #8bb0c15e;border-radius:7px}",
     "#psRankExplorer .psrOptionMenu button{box-sizing:border-box;width:100%;max-width:none;min-width:0;min-height:31px;padding:4px 3px;white-space:normal;text-align:center}",
     "#psRankExplorer .psrOptionMenu button[aria-pressed=true]{border-color:#addcff;background:#4476977a;font-weight:800}",
-   "#evoBody button.psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}"
+   "#evoBody button.psRankOpen{font:inherit;border:0;background:transparent;padding:2px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:2px}",
+   "#psRankExplorer .psrHead{display:flex!important;align-items:center!important;justify-content:center!important;min-height:28px!important;text-align:center!important}",
+   "#psRankExplorer .psrTitle{display:inline-flex!important;justify-content:center!important;align-items:center!important;gap:6px!important;flex:1 1 auto!important;font-size:12px!important}",
+   "#psRankExplorer .psrHeaderIcon{width:20px;height:20px;object-fit:contain;flex:0 0 20px}",
+   "#psRankExplorer .psrLeagueIcons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:5px 0;align-items:center}",
+   "#psRankExplorer .psrLeagueIconButton{height:39px!important;padding:3px!important;background:#ffffff08!important;display:flex;align-items:center;justify-content:center;position:relative}",
+   "#psRankExplorer .psrLeagueIconButton[aria-pressed=true]{border-color:#99d6ff!important;background:#5688a147!important;box-shadow:inset 0 0 0 1px #83c9f37a}",
+   "#psRankExplorer .psrLeagueIconButton img{height:29px;width:29px;object-fit:contain}",
+   "#psRankExplorer .psrFamily{display:flex;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:2px 0 6px;margin:2px 0 3px;touch-action:pan-x}",
+   "#psRankExplorer .psrFamilyButton{box-sizing:border-box;flex:0 0 49px!important;width:49px!important;min-height:59px!important;padding:2px!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#ffffff09!important}",
+   "#psRankExplorer .psrFamilyButton[aria-pressed=true]{background:#537da54d!important;border-color:#91cfff!important;box-shadow:inset 0 0 0 1px #98d6ff8c}",
+   "#psRankExplorer .psrFamilyButton img{height:38px;width:38px;object-fit:contain;pointer-events:none}",
+   "#psRankExplorer .psrFamilyButton .psrFamilyRank{font:750 9px/1.1 Roboto,Arial,sans-serif;color:#e0e8f3}",
+   "#psRankExplorer .psrMissingSprite{font:700 8px/1.1 Roboto,Arial,sans-serif;color:#bac9d9;overflow:hidden;max-height:37px;max-width:42px;overflow-wrap:anywhere}",
+   "#psRankExplorer .psrTableSprite{width:19px;height:19px;vertical-align:middle;object-fit:contain;margin-right:4px}"
   ].join("\n");
   document.head.appendChild(css);
  }
@@ -382,6 +424,7 @@
        else switchOverallLeague(b.dataset.league);
        return;
       }
+      if(action==="family-pick"){switchOverallSpecies(b.dataset.psName);return;}
       if(action==="filter-pick"){
        if(setFilter(state,Number(b.dataset.filter)))draw();
        return;
@@ -481,6 +524,10 @@
   const cells=s.kind==="class"?
    '<th class="psrNum">#</th><th class="psrIv">IVs</th><th class="psrLevel">Nv.</th><th class="psrCp">PC</th><th class="psrEff">Eficiência</th>':
    '<th style="width:17%">#</th><th colspan="4">Pokémon / forma</th>';
+  const spriteFor=name=>{
+   const src=typeof window!=="undefined"?window.PokeSearchOfflineSprite?.rankSprite?.(name):"";
+   return typeof src==="string"&&/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(src)?safe(src):"";
+  };
   const body=subset.map(r=>{
    const selected=r.rank===s.selectedRank;
    const marked=s.compared.includes(r.rank);
@@ -490,7 +537,9 @@
     '<td><button type="button" class="psrTap" data-ps-act="compare" data-rank="'+r.rank+
      '" aria-pressed="'+marked+'" title="Adicionar ou remover da comparação">'+safe(r.iv)+'</button></td>'+
     '<td>'+levelString(r.level)+'</td><td>'+r.cp+'</td><td>'+r.efficiency+'%</td>':
-    '<td>#'+r.rank+'</td><td colspan="4">'+safe(r.name)+'</td>';
+    '<td>#'+r.rank+'</td><td colspan="4">'+
+    (spriteFor(r.name)?'<img class="psrTableSprite" src="'+spriteFor(r.name)+'" alt="">':"")+
+    safe(r.name)+'</td>';
    const details=s.kind==="class"&&s.expandedRank===r.rank?
     '<tr class="psrExpanded"><td colspan="5"><div class="psrExtra">ATK '+statString(r.atk)+
     ' · DEF '+statString(r.def)+' · HP '+r.hp+' · Nível '+
@@ -501,7 +550,15 @@
      markup+'</tr>'+details;
   }).join("");
   const select=s.kind==="class"?"Meu IV":"Minha posição";
-  const leagueChooser=s.leagueOptions.length?
+  const leagueChooser=s.kind==="overall"?
+   '<div class="psrLeagueIcons" role="group" aria-label="Escolher liga">'+
+   s.leagueOptions.map(x=>'<button type="button" class="psrLeagueIconButton" data-ps-act="league-pick"'+
+     ' data-league="'+safe(x.league)+'"'+(x.available?'':' disabled')+
+     ' aria-pressed="'+(s.league===x.league)+'"'+
+     ' aria-label="'+safe(LIGAS[x.league])+'" title="'+safe(LIGAS[x.league])+'">'+
+     '<img src="ui-icons/'+PVP_LEAGUE_ICONS[x.league]+'" alt=""></button>').join('')+
+   '</div>':
+   s.leagueOptions.length?
    '<div class="psrLeagueSwitch"><span class="psrLeagueSwitchLabel">Liga</span>'+
    '<div class="psrLeaguePicker"><button type="button" data-ps-act="league-menu" aria-expanded="false"'+
    ' aria-controls="psrLeagueOptions" aria-label="Escolher liga do '+(s.kind==="class"?"Rank Classe":"Rank Geral")+'">'+safe(LIGAS[s.league])+' ▾</button></div>'+
@@ -513,16 +570,31 @@
    s.leagueOptions.map(x=>'<button type="button" data-ps-act="league-pick" data-league="'+safe(x.league)+'"'+
     ((s.kind==="class"?x.available:!!getOverallRows(s.overall,x.league)?.length)?'':' disabled')+
     ' aria-pressed="'+(s.league===x.league)+'">'+safe(LIGAS[x.league])+'</button>').join('')+'</div>':"";
+  const familyChooser=s.kind==="overall"&&s.family?.length?
+   '<div class="psrFamily" role="group" aria-label="Escolher Pokémon e evolução">'+
+   s.family.map(name=>{
+    const row=(getOverallRows(s.overall,s.league)||[]).find(r=>n(r.name)===n(name));
+    const image=spriteFor(name);
+    return '<button type="button" class="psrFamilyButton" data-ps-act="family-pick"'+
+     ' data-ps-name="'+safe(name)+'" aria-pressed="'+(n(s.name)===n(name))+'"'+
+     ' aria-label="'+safe(name)+' · '+(row?'Rank Geral #'+row.rank:'Sem classificação')+'"'+
+     ' title="'+safe(name)+' · '+(row?'#'+row.rank:'Não ranqueado')+'">'+
+     (image?'<img src="'+image+'" alt="">':
+      '<span class="psrMissingSprite">'+safe(name)+'</span>')+
+     '<span class="psrFamilyRank">'+(row?'#'+row.rank:'—')+'</span></button>';
+   }).join('')+'</div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
   view.innerHTML='<div class="psrHead"><div class="psrTitle">'+
-   (s.kind==="class"?"Rank Classe · "+safe(s.name):
-    "Rank Geral · "+safe(LIGAS[s.league]))+
-   '</div><button type="button" data-ps-act="close" aria-label="Fechar classificação">✕</button></div>'+
-   '<div class="psrSub">'+(s.kind==="overall"?safe(s.name):safe(LIGAS[s.league]))+
+   '<img class="psrHeaderIcon" src="ui-icons/'+
+   (s.kind==="class"?PVP_LEAGUE_ICONS[s.league]:"ps-overall-lt268.png")+
+   '" alt="" aria-hidden="true">'+
+   (s.kind==="class"?"Rank Classe · "+safe(LIGAS[s.league]):"Rank Geral")+
+   '</div></div>'+
+   '<div class="psrSub">'+(s.kind==="overall"?safe(s.name)+" · "+safe(LIGAS[s.league]):safe(s.name))+
    (actualIv?' · IV '+safe(actualIv.iv):"")+
    (s.selectedRank?' · '+(s.kind==="class"?"Classe IV ":"Rank Geral ")+
-      '#'+s.selectedRank:"")+'</div>'+leagueChooser+
+      '#'+s.selectedRank:' · Não ranqueado')+'</div>'+familyChooser+leagueChooser+
    (s.kind==="class"?
      '<div class="psrScopeNote">Posição entre 4.096 IVs de '+safe(s.name)+
      ' — não é o Rank Geral da '+safe(LIGAS[s.league])+'.</div>':"")+
@@ -572,7 +644,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,switchOverallLeague,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,switchOverallLeague,switchOverallSpecies,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });

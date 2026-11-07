@@ -7,7 +7,7 @@
 (function(root){
  "use strict";
  let scope="",opened="",sequence=0;
- const cache=new Map();
+ const cache=new Map(),statusCache=new Map();
  const esc=value=>String(value==null?"":value).replace(/[&<>"']/g,
   c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const leagues={gl:"Grande Liga",ul:"Ultra Liga",ml:"Liga Mestra"};
@@ -25,7 +25,7 @@
  function setScope(value){
   const next=String(value||"");
   if(next===scope)return;
-  scope=next;opened="";sequence++;cache.clear();
+  scope=next;opened="";sequence++;cache.clear();statusCache.clear();
  }
  function close(){
   opened="";sequence++;
@@ -65,10 +65,17 @@
    if(!m)return "";
    const valid=m.localeVerified===true&&m.name&&m.name!=="—";
    const shade=Object.prototype.hasOwnProperty.call(color,m.type)?color[m.type]:color.normal;
-   const legacy=m.status==="elite"?"Elite":m.status==="legacy"?"Legado":"";
+   // An Elite Charged move gets the actual Elite Charged TM symbol.
+   // A historical legacy move is not proof that Elite TM can obtain it.
+   const mtSymbol=m.status==="elite"?
+    '<img class="evoMoveMtIcon" src="ui-icons/'+
+    (label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png")+
+    '" alt="" aria-hidden="true">':"";
+   const legacyNote=m.status==="legacy"?
+    '<small class="evoMoveLegacy">Legado · MT não confirmada</small>':"";
    return '<div class="evoMoveItem"><span>'+esc(label)+':</span> '+
     '<strong style="color:'+shade+'">'+(valid?esc(m.name):"Não confirmado")+'</strong>'+
-    (legacy?' <small class="evoMoveLegacy" title="Status do conjunto; disponibilidade da MT não garantida">'+legacy+'</small>':"")+
+    (mtSymbol?'<span aria-label="MT de Elite identificada" title="MT de Elite identificada">'+mtSymbol+'</span>':legacyNote)+
     '</div>';
   }
   return title+projection+'<div class="evoMoveCaution">Recomendação PvPoke · não são os golpes capturados</div>'+
@@ -84,6 +91,45 @@
   const mt=moves.some(m=>m.status==="elite")?"elite":"normal";
   btn.dataset.psMt=mt;
   btn.title=btn.title+" · status do conjunto confirmado";
+ }
+ // LT296: preload the MT verdict for each exact form/league without opening
+ // its recommendations. Unknown/legacy-only must remain grey, not normal.
+ function syncStatus(key,mt){
+  for(const row of bodyRows()){
+   const btn=row.querySelector?.(".evoMovesAction");
+   if(!btn||keyOf(btn)!==key)continue;
+   btn.dataset.psMt=mt;
+   btn.title=(mt==="elite"?"MT de Elite identificada: ":
+    mt==="normal"?"Golpes sem MT de Elite/legado: ":
+    "Estado da MT ainda não confirmado: ")+String(btn.dataset.psName||"");
+   btn.setAttribute?.("aria-label",btn.title);
+  }
+ }
+ function prime(){
+  const engine=root.PokeSearchPvpRankMoves;
+  if(typeof engine?.getStatus!=="function")return false;
+  const identity=scope;
+  for(const row of bodyRows()){
+   const btn=row.querySelector?.(".evoMovesAction");
+   if(!btn)continue;
+   const key=keyOf(btn);
+   if(statusCache.has(key)){
+    syncStatus(key,statusCache.get(key)?.mt||"unknown");continue;
+   }
+   const name=String(btn.dataset.psName||"").trim();
+   const league=String(btn.dataset.psLeague||"");
+   const mega=btn.dataset.psMega==="true";
+   if(!name||!Object.prototype.hasOwnProperty.call(leagues,league))continue;
+   statusCache.set(key,{mt:"unknown",pending:true});
+   Promise.resolve().then(()=>engine.getStatus(league,name,mega)).then(status=>{
+    if(scope!==identity)return;
+    const mt=status?.verified===true&&["elite","normal"].includes(status.mt)?
+     status.mt:"unknown";
+    statusCache.set(key,{mt,pending:false});
+    syncStatus(key,mt);
+   }).catch(()=>{if(scope===identity)statusCache.set(key,{mt:"unknown",pending:false});});
+  }
+  return true;
  }
  async function open(event,button){
   event?.preventDefault?.();event?.stopPropagation?.();
@@ -122,7 +168,7 @@
    restore();root.resizeEvolutionPanel?.();return false;
   }
  }
- const api=Object.freeze({open,close,restore,setScope,render});
+ const api=Object.freeze({open,close,restore,setScope,prime,render});
  root.PokeSearchEvolutionMoves=api;
  root.toggleEvolutionMoves=open;
 })(typeof window!=="undefined"?window:globalThis);

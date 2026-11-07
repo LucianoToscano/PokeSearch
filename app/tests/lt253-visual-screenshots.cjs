@@ -276,19 +276,16 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const general=document.querySelector("#rankLine .psRailGeneral");
     if(!general||general.disabled)return {ok:false,reason:"RG disabled"};
     general.click();
-    const picker=document.querySelector('#psRankExplorer button[data-ps-act="league-menu"]');
-    if(!picker)return {ok:false,reason:"missing native-free selector"};
-    picker.click();
-    const menu=document.querySelector("#psrLeagueOptions");
-    if(!menu||menu.hidden)return {ok:false,reason:"league options not opened"};
-    const choose=menu.querySelector('button[data-ps-act="league-pick"][data-league="ul"]');
-    if(!choose||choose.disabled)return {ok:false,reason:"UL option missing"};
+    const initial=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const selectedSpecies=initial.split(" · ")[0];
+    const choose=document.querySelector('#psRankExplorer .psrLeagueIcons button[data-ps-act="league-pick"][data-league="ul"]');
+    if(!choose||choose.disabled)return {ok:false,reason:"UL icon missing"};
     choose.click();
     const title=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     const species=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
     const badge=document.querySelector("#rankLine .psRailGeneral .psRailNumber")?.textContent;
     const rows=window.PokeSearchRankExplorer?.getOverallRows?.(window.POKESEARCH_PVPOKE_OVERALL,"ul")||[];
-    const actual=rows.find(x=>x.name==="Teddiursa");
+    const actual=rows.find(x=>x.name===selectedSpecies);
     const expected=actual?"#"+actual.rank:"—";
     const aligned=(()=>{
      const controls=document.querySelector("#psRankExplorer .psrTopControls");
@@ -297,12 +294,50 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      return Math.max(...tops)-Math.min(...tops)<2;
     })();
     const hiddenExports=!document.querySelector("#psRankExplorer .psrActions");
-    return {ok:title.includes("Ultra Liga")&&species.includes("Teddiursa")&&badge===expected&&aligned&&hiddenExports,
-     title,species,badge,expected};
+    const icons=document.querySelectorAll("#psRankExplorer .psrLeagueIconButton");
+    return {ok:title==="Rank Geral"&&species.includes(selectedSpecies)&&
+     species.includes("Ultra Liga")&&badge===expected&&aligned&&hiddenExports&&icons.length===4,
+     title,species,badge,expected,selectedSpecies,iconCount:icons.length};
    });
    assert.ok(overall270.ok,"RG GL/UL/ML selector must switch actual ranking "+
     sz.name+" "+JSON.stringify(overall270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-rg-ul.png")});
+   // LT296: real browser taps for exact family sprites and all four leagues.
+   const family296=await page.evaluate(()=>{
+    const ex=window.PokeSearchRankExplorer,snapshot=window.POKESEARCH_PVPOKE_OVERALL;
+    if(!ex?.open?.({kind:"overall",name:"Squirtle",league:"gl"}))
+     return {ok:false,stage:"open Squirtle"};
+    const family=()=>[...document.querySelectorAll("#psRankExplorer .psrFamilyButton")];
+    const names=family().map(b=>b.dataset.psName);
+    if(!["Squirtle","Wartortle","Blastoise"].every(name=>names.includes(name)))
+     return {ok:false,stage:"missing family",names};
+    const blastoise=family().find(b=>b.dataset.psName==="Blastoise");
+    if(!blastoise?.querySelector("img"))
+     return {ok:false,stage:"missing verified Blastoise sprite",names};
+    blastoise.click();
+    const chosen=family().find(b=>b.getAttribute("aria-pressed")==="true")?.dataset.psName;
+    const first=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const currentGL=ex.getOverallRows(snapshot,"gl")?.find(r=>r.name==="Blastoise");
+    if(!first.includes("Blastoise")||
+       !first.includes(currentGL?"#"+currentGL.rank:"Não ranqueado")||
+       chosen!=="Blastoise")
+     return {ok:false,stage:"species rank mixing",chosen,first};
+    const lc=document.querySelector('#psRankExplorer .psrLeagueIconButton[data-league="lc"]');
+    if(!lc||lc.disabled)return {ok:false,stage:"LC icon unavailable"};
+    lc.click();
+    const second=document.querySelector("#psRankExplorer .psrSub")?.textContent||"";
+    const currentLC=ex.getOverallRows(snapshot,"lc")?.find(r=>r.name==="Blastoise");
+    const stillChosen=family().find(b=>b.getAttribute("aria-pressed")==="true")?.dataset.psName;
+    const heading=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
+    return {ok:heading==="Rank Geral"&&stillChosen==="Blastoise"&&
+     second.includes("Copa Pequena")&&
+     second.includes(currentLC?"#"+currentLC.rank:"Não ranqueado"),
+     chosen,stillChosen,first,second,heading,names};
+   });
+   assert.ok(family296.ok,"LT296 exact family sprites and Little Cup selection "+
+    sz.name+" "+JSON.stringify(family296));
+   await page.screenshot({path:path.join(output,sz.name+"-lt296-family-lc.png")});
+
    await page.evaluate(()=>window.PokeSearchRankExplorer?.close?.());
    // LT276: actual IV-tile Rank Classe selector with all three leagues P/M/G.
    const class276=await page.evaluate(()=>{
@@ -329,15 +364,15 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
       const actual=get(),expected=window.PokeSearchRankExplorer.getIvRows(
        window.POKESEARCH_PVP_IV_DATA,"Grimer",league)?.find(x=>x.iv==="10/15/14");
       selected[league]={actual,expected:expected?.rank,
-       ok:!!expected&&actual.title==="Rank Classe · Grimer"&&
+       ok:!!expected&&actual.title===(league==="ul"?"Rank Classe · Ultra Liga":"Rank Classe · Liga Mestra")&&
         actual.rank===String(expected.rank)&&
-        actual.sub.includes(league==="ul"?"Ultra Liga":"Liga Mestra")&&
+        actual.sub.includes("Grimer")&&
         actual.sub.includes("Classe IV #"+expected.rank)};
      }
      window.PokeSearchRankExplorer.close();
      const reopened=openDetailMetric("iv")===true;
-     const persists=get().sub.includes("Liga Mestra");
-     return {ok:first.sub.includes("Grande Liga")&&
+     const persists=get().title.includes("Liga Mestra");
+     return {ok:first.title.includes("Grande Liga")&&
       selected.ul.ok&&selected.ml.ok&&reopened&&persists,
       first,selected,reopened,persists};
     }finally{
@@ -448,7 +483,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const firstBox=first?.getBoundingClientRect(),box=selected?.getBoundingClientRect(),
       holder=list.getBoundingClientRect();
     return {ok:!!selected&&selected.dataset.psRow==="2"&&
-      title.includes("Ursaluna")&&context.includes("0/14/15")&&
+      title.includes("Grande Liga")&&context.includes("Ursaluna")&&context.includes("0/14/15")&&
       !title.includes("Ursaring")&&
       list.scrollTop<15&&
       firstBox?.top>=holder.top-4&&box?.bottom<=holder.bottom+4&&

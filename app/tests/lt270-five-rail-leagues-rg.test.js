@@ -76,7 +76,7 @@ assert.ok(explorer.includes('data-ps-act="filter-pick"'));
 assert.ok(explorer.includes('psrTopControls')&&explorer.includes('repeat(3,minmax(0,1fr))'));
 assert.ok(!explorer.includes('class="psrControls psrActions"'),"remove old export actions only");
 assert.ok(html.indexOf('id="info"')>html.indexOf('id="evolutions"'),"Captured attacks and location below expanding panels");
-assert.ok(explorer.includes('"Rank Geral · "+safe(LIGAS[s.league])'));
+assert.ok(explorer.includes('s.kind==="class"?"Rank Classe · "+safe(LIGAS[s.league]):"Rank Geral"'));
 assert.ok(explorer.includes("opts?.railKey||"));
 const dock=fs.readFileSync(path.join(root,"dock.html"),"utf8");
 assert.ok(!dock.includes("psRailChoices"),"Pokeballs and Modos are independent");

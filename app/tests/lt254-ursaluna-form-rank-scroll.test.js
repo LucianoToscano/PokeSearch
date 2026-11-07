@@ -33,7 +33,9 @@ new vm.Script(engine);
 assert.match(engine,/const newTable=lastDrawState!==s\|\|s\.resetTableScroll===true/);
 assert.match(engine,/const oldScroll=newTable\?0:/);
 assert.match(engine,/const target=box&&holder\?box\.top-holder\.top\+newList\.scrollTop/);
-assert.ok(engine.includes('s.kind==="class"?"Rank Classe · "+safe(s.name)'));
+// LT296 keeps the exact species in the subtitle, but titles each league using its flag.
+assert.ok(engine.includes('s.kind==="class"?"Rank Classe · "+safe(LIGAS[s.league])'));
+assert.ok(engine.includes('safe(s.name)+" · "+safe(LIGAS[s.league])'));
 assert.ok(engine.includes("actualIv?' · IV '+safe(actualIv.iv)"));
 const detail=fs.readFileSync(path.join(assets,"detail.html"),"utf8");
 assert.ok(detail.includes('data-ps-name="'+String("'")+'+'),"rank class button specifies its own form");
