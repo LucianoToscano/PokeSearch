@@ -21,6 +21,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Base64;
 import android.view.Gravity;
@@ -101,6 +102,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean paused=false,finished=false,visible=false,dragging=false;
     private int index=0;
     private int repeatedCycles=0;
+    private long lastConfirmAt=0L;
     private int touchSlop;
     private Bitmap artwork;
 
@@ -327,6 +329,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         actions.addView(confirmButton,cp);
         confirmButton.setOnClickListener(v->{
             if(paused)return;
+            long now=SystemClock.elapsedRealtime();
+            if(now-lastConfirmAt<650L)return; // no accidental double-step
+            lastConfirmAt=now;
             if(finished){index=0;finished=false;repeatedCycles=0;}
             else if(index<TITLES.length-1)index++;
             else finished=true;
