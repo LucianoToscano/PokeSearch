@@ -1,5 +1,5 @@
 # PokeSearch LT284 — Comparador A/B de IVs na calculadora
-Data: 07/11/2026. Estado inicial: PR de QA, publicação depende de CI e merge.
+Data: 07/11/2026. **Estado final:** publicação oficial verificada, com homologação física ainda pendente; estado inicial em PR QA.
 
 ## Premissas verificadas
 - Base oficial LT283 `0.02.83`, versionCode `54487`. Guia Mestre e issue #277 definem a etapa de comparador de IVs.
@@ -21,3 +21,9 @@ Data: 07/11/2026. Estado inicial: PR de QA, publicação depende de CI e merge.
 
 ## Roadmap
 Esta etapa atende apenas ao comparador A/B por liga e confirmação do dado, não os custos de evolução nem assistente completo de golpes, presets, eventos ou diagnóstico (issue #277).
+
+## Integração e publicação verificadas
+- [PR #278](https://github.com/LucianoToscano/PokeSearch/pull/278) squash merge `8b2dbdfca9fa7eeefe7f2dfb9927eab2ec8d3e73`. Todos os oito gates relevantes no head `32d16ba6945d2a3dde8bd950b7ccdfccb3400a0d` encerrados `success`, incluindo beta APK privado. 
+- [Workflow oficial #42340584959](https://github.com/LucianoToscano/PokeSearch/actions/runs/42340584959): `completed/success`, preflight, build Gradle protegido, assinatura permanente, APK zip válido e SHA-256 do asset conferidos. Certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- [Release LT284](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.84-54488) estável `v0.02.84-54488`, 07/11/2026 às 04:59:41 UTC; APK `PokeSearch-v0.02.84-LT.apk` com 33.818.592 bytes, SHA-256 `f45f6ef44e1740842d84117aea3eeace33cea1ebe0f3748d810ddf3bf2f853ea`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.84-54488/PokeSearch-v0.02.84-LT.apk).
+- **Limites:** confirmação de instalação continua exigida pelo Android; benchmark em dispositivo e aceitação física P1/P2 ainda pendentes. Comparador não fornece custo de Doces/Poeira nem recomendações de ataques sem fonte.
