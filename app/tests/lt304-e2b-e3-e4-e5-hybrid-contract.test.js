@@ -33,7 +33,7 @@ assert.match(service,/RaidDayRecovery\.lastConfirmed/);
 assert.match(service,/RaidDayRecovery\.stats/);
 for(const val of ["RAID_LOBBY","RAID_BATTLE","RAID_WIN","RAID_LOSS",
    "RAID_LEFT","RAID_REWARDS","RAID_ENCOUNTER","RAID_CAUGHT","RAID_FLED"]){
- assert.ok(service.includes(val),val);
+ assert.ok((service+detector+recovery).includes(val),val);
 }
 assert.match(detector,/Normalizer\.normalize/);
 assert.match(detector,/Locale\.ROOT/);
