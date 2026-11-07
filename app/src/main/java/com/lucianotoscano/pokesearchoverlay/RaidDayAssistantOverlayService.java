@@ -1376,13 +1376,11 @@ public final class RaidDayAssistantOverlayService extends Service {
                     });
                 break;
         }
-        addMini("← Voltar",()->{
-            if(index>0){
-                String from=plan.step(index).id;
-                setEduDialogueState("");
-                index--;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
-                persist("BACK",from);updateStep();
-            }
+        if(index>0)addMini("← Voltar",()->{
+            String from=plan.step(index).id;
+            setEduDialogueState("");
+            index--;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
+            persist("BACK",from);updateStep();
         });
         addMini("? Ajuda",()->{
             eduHelpOpen=true;eduNote="";
