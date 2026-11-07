@@ -24,6 +24,6 @@
     </string-array>
     <string-array name="raid_day_preparation_modes">
         <item>Manual</item>
-        <item>Híbrido (planejado)</item>
+        <item>Híbrido (autorização por sessão)</item>
     </string-array>
 </resources>
