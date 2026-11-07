@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.77",
-  "code": 54481,
-  "label": 51281,
-  "previous_tag": "v0.02.76-54480",
-  "qa_max_code": 54480,
-  "release_notes": "PokeSearch LT277: Filtro → Ordenar totalmente traduzido para português BR, com seletor compacto Padrão/Inverso em busca API. Valores diretos POST /search: -CP (PC menor, ascendente observado), -IV (prioriza IV baixos mas NÃO garante ordem crescente), -LEVEL, -DSP e -DISTANCE (relatados como aceitos pelo usuário). IV baixos mostra nota informativa para combinar com IV% máximo. Distância inversa exige localização e raio. O modo DOM não oferece valores que o site não tem, e uma falha da API não alterna silenciosamente para resultados com ordem errada. Mantidos cinco cartões de rank, interface LT275/LT276, duas Pokébolas independentes e todos os demais filtros. PR #270 integrada, oito verificações automatizadas aprovadas incluindo Node/Android Java/OTA/visuais P/M/G e compilação beta assinada. Relatos da API foram fornecidos pelo usuário; confirmação de consulta real e aceitação em Samsung P1/P2 ainda pendentes."
+  "version": "0.02.78",
+  "code": 54482,
+  "label": 51282,
+  "previous_tag": "v0.02.77-54481",
+  "qa_max_code": 54481,
+  "release_notes": "PokeSearch LT278: corrigido o espaçamento solicitado após captura real do Samsung Growlithe. Todos os números #rank (Raides, Grande Liga, Ultra Liga, Liga Mestra e Rank Geral) foram deslocados EXATAMENTE 1 px para cima no cartão, sem mover bandeiras, sem alterar centralização, tamanhos e sprites das bandeiras, sem alterar ícone de evolução, altura dos cards 45px ou barra 47px. As duas Pokébolas usam o mesmo CSS. Preservadas funções, cálculo de rankings, golpes, filtros, ordenação inversa e atualização automática da LT277. PR #271 mesclada; regressões Node, Android/Java, OTA, PvE e screenshots P/M/G passaram. Homologação visual final no Samsung após instalação permanece pendente."
 }
