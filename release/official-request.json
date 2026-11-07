@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.02",
-  "code": 54506,
-  "label": 51306,
-  "previous_tag": "v0.03.01-54505",
-  "qa_max_code": 54505,
-  "release_notes": "PokeSearch LT302 — setas de evolução discretas, próximas e sem cobrir a bandeira de Raides. Após impressão real do Charmander no Samsung, reduzidos os chevrons dos rankings a 3 × 3 CSS px e traço 0,8 CSS px, sem intervalo vertical extra entre duas setas. Grupo compacto 5 × 7 px; máximo de duas setas para 0/1/2 evoluções diretas verificadas, nenhuma seta caso não seja necessária ou não exista comprovação. O marcador da caixa Raides foi posicionado mais para o canto com espaço real até a borda e distância geométrica segura da bandeira centralizada. Teste visual P/M/G com caso projetado Charmander → Charizard confirmou ausência de sobreposição na caixa Raides; as demais bandeiras seguem geometricamente centralizadas. Corrigida discrepância de medição do CSS devido à borda do cartão; números e bandeiras não tiveram dimensões alteradas. Os cinco cartões compactos de 39 px e todas as funções anteriores da LT301 foram preservados: IV, PC, Nível, tipagem, golpes, rankings, sprites e formas de evento, filtros, coordenadas, alertas, autenticação, duas Pokébolas e atualizador. PR #298 integrada em main via squash 1fdbce15e70a0aadca90c4bb20413b218db3ff15; oito gates de CI aprovados (Node QA, regressão LT169, Android core, compilação Java, OTA LT173, fonte de raides LT259, Playwright visual P/M/G e APK beta privada). Publicação permanente com mesma chave e validação de integridade; teste físico final no Samsung depende de instalação/consentimento Android."
+  "version": "0.03.03",
+  "code": 54507,
+  "label": 51307,
+  "previous_tag": "v0.03.02-54506",
+  "qa_max_code": 54506,
+  "release_notes": "PokeSearch LT303 — ajuste de posição milimétrico solicitado após LT302: deslocar exatamente 1 CSS pixel para a esquerda o indicador de evolução nos cinco cartões de Raides, Grande Liga, Ultra Liga, Liga Mestra e Rank Geral. No layout existente o offset `right` dos marcadores passou de 3 para 4 CSS px; em Raides a exceção passou de 1 para 2 CSS px, preservando distância da bandeira centralizada. Sem alterar `bottom:3px`, tamanho 3×3px, espessura 0,8px, agrupamento 5×7px, espaçamento entre duas setas igual a zero, ou contagem correta de 0/1/2 etapas. Cinco caixas de 39px e logos de 19px mantidos; nenhuma mudança nas estatísticas IV, raides, tipagem, evoluções, ataques, fontes API, sprites, filtros, coordenadas, permissões, assinatura, duas Pokébolas e atualizador. Testes visuais Playwright P/M/G confirmaram margem +1px e ausência de sobreposição com a bandeira de Raides no exemplo projetado Charmander→Charizard. Oito verificações de CI passaram antes do merge, incluindo Node QA, LT169, LT211 Android core, LT62 Java, LT173 OTA, LT259 raids, LT253 visual P/M/G e beta isolada. PR #299 integrada por squash dd0fd63a024598e0ed98a603258f233a308db6d4. Instalação física no Samsung exige confirmação Android."
 }
