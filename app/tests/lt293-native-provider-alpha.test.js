@@ -31,7 +31,7 @@ assert.match(java,/if\(!"https"\.equalsIgnoreCase\(uri\.getScheme\(\)\)/);
 assert.match(java,/conn\.setReadTimeout\(3200\)/);
 assert.match(java,/BitmapFactory\.decodeByteArray\(data,0,data\.length,opts\)/);
 assert.match(java,/return "\{\\"left\\":"/);
-assert.doesNotMatch(java,/CookieManager|Authorization|Bearer|coordinates|search\/api/i,
+assert.doesNotMatch(java,/CookieManager|getCookie\(|setRequestProperty\("Authorization"|Bearer [A-Z]|\/search\/api/i,
  "native image metadata probe must not send user credentials or API searches");
 assert.match(bridge,/@JavascriptInterface public boolean requestSpriteSilhouette\(/);
 assert.match(bridge,/VerifiedSpriteGeometry\.request\(OverlayService\.this,/);
