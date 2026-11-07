@@ -1,5 +1,5 @@
 # LT289 — Sprites pequenas de eventos e proporcionalidade dos Resultados
-Data: 07/11/2026. Base oficial LT288 `v0.02.88-54492`.
+Data: 07/11/2026. **Estado final:** LT289 publicada oficialmente, com homologação física Samsung ainda pendente. Base anterior LT288 `v0.02.88-54492`.
 
 ## Evidência
 Captura Samsung: o card do Pikachu #25 indica claramente **Anniversary 2026 Singapore 01** e mostra a sprite correta, enquanto a miniatura na lista flutuante é muito pequena perante Ralts, Torchic e Chikorita. As setas apontam a diferença perceptível. O card detalhado e os dados devem permanecer intactos.
@@ -21,3 +21,9 @@ LT288 tentou medir a silhueta de imagens do PoGoCoordinates usando referência P
 
 ## Publicação
 PR de QA, merge somente após gates, seguida do workflow permanente de assinatura e verificação SHA-256 do APK. Não afirmar correção física definitiva antes do teste no Samsung.
+
+## Integração e publicação oficial verificadas
+- [PR #283](https://github.com/LucianoToscano/PokeSearch/pull/283) mesclada por squash `84025766066661b0aebf5f42e81a2b9222243d75`; QA no head `8320f2649a65f804557d5573b3901b90d6d0679a`. Sete verificações obrigatórias passaram (Node QA, LT169, LT211, LT62, LT173, LT253, APK beta privado). Falhas de contratos de inventário legado em commits de QA anteriores foram corrigidas antes dos sete gates finais. Build genérico em PR `skipped` por política.
+- [Workflow oficial #42347686391](https://github.com/LucianoToscano/PokeSearch/actions/runs/42347686391) encerrou `completed/success`: `preflight=success`, `publish=success`, assets verificados, `Build signed protected release`, `Validate APK and signer` e `Verify public release and hash` aprovados.
+- [Release estável LT289](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.89-54493) `v0.02.89-54493`, publicada em 07/11/2026 às 06:38:27 UTC, `draft=false`, `prerelease=false`, request SHA `3dda45438193fb23472e063553b949cbf8d86f06`. APK `PokeSearch-v0.02.89-LT.apk` com 33.933.806 bytes, SHA-256 `c3ce5f51713b0fb5167d68dad19cdb5e59aeb97a4a2b60cde8feff1b6e371f87` e estado `uploaded`; [baixar APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.89-54493/PokeSearch-v0.02.89-LT.apk).
+- **Limites:** sem homologação física no Samsung: medir visualmente a miniatura do Pikachu Anniversary 2026 Singapore 01 junto de Chikorita e Ralts, P1/P2 e tamanhos P/M/G. Não afirmar que todos os resultados ficam matematicamente idênticos, porque artes oficiais têm silhuetas diferentes. Sem mudanças no card, dados de conta, coordenadas, buscas ou acesso ao provedor.
