@@ -45,7 +45,9 @@ for(let i=0;i<3;i++)assert.equal(payload.leagues[i].own.rank,base.leagues[i].own
  "The event costume uses the base Pokémon's IV stat product");
 const data={base:{"25":[["electric"],[]],"37":[["fire"],[]]},forms:{}};
 assert.deepEqual(presenter.typeKeys(event,data),["electric"]);
+globalThis.PokeSearchTypeIcons={electric:"ui-icons/electric.png"};
 assert.ok(presenter.types(event,data).includes("Tipo Elétrico"));
+delete globalThis.PokeSearchTypeIcons;
 assert.equal(presenter.typeEffectiveness(presenter.typeKeys(event,data)).weaknesses[0].type,"ground");
 assert.deepEqual(presenter.typeKeys({...event,number:"#37"},data),[],
  "Dex mismatch cannot take Pikachu's event exception");
