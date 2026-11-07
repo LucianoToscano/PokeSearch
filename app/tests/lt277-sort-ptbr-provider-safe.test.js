@@ -32,9 +32,37 @@ assert.ok(dock.includes('btn.textContent=(modeDraft[key]===value?"✓ ":"")+filt
  "Secondary sort popup must use translated UI labels");
 assert.ok(dock.includes('const SITE_SINGLE_CHOICES=Object.freeze({'),
  "Original provider sort enum remains independent of the display");
+// User-observed /search inversion with a strict UI → wire allowlist.
+const reverse=[
+ ["Despawn (shortest)","Tempo restante (menor)","-DSP"],
+ ["CP (lowest)","PC (menor)","-CP"],
+ ["IV % (lowest)","IV % (baixos*)","-IV"],
+ ["Level (lowest)","Nível (menor)","-LEVEL"],
+ ["Distance (farthest)","Distância (mais longe)","-DISTANCE"]
+];
+for(const [ui,label,wire] of reverse){
+ assert.equal(display("sortBy",ui),label);
+ const isDistance=wire==="-DISTANCE";
+ const p=api.buildPayload({mode:"raw",attack:0,defense:0,stamina:0,sortBy:ui,
+  ...(isDistance?{locationEnabled:true,locationCoords:"-5.79,-35.21",locationRadius:25}:{})});
+ assert.equal(p.ok,true,JSON.stringify({ui,p}));
+ assert.equal(p.payload.sort,wire);
+ if(isDistance){
+  assert.equal(p.payload.radius_km,25);
+  assert.equal(api.buildPayload({mode:"raw",attack:0,defense:0,stamina:0,
+   sortBy:ui}).ok,false,"inverse distance needs coordinates");
+ }
+}
 assert.equal(api.buildPayload({mode:"raw",attack:0,defense:0,stamina:0,
- sortBy:"CP (lowest)"}).ok,false,
- "Never fabricate global ascending sort support not available in provider");
+ sortBy:"WRONG"}).ok,false);
+assert.ok(dock.includes('className="sortDirectionSwitch"'));
+assert.ok(dock.includes('canUseInvertedSort()'));
+assert.ok(dock.includes('sortOrderNote'));
+const native=fs.readFileSync(path.join(__dirname,
+ "../src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+assert.ok(native.includes("isInvertedWildSort(String value)"));
+assert.ok(native.includes('isInvertedWildSort(value)&&!authorizedApiQaSelected()'));
+assert.ok(native.includes("A DOM fallback cannot reproduce negative /search sort."));
 const bounded=api.buildPayload({mode:"raw",attack:0,defense:0,stamina:0,
  sortBy:"CP (highest)",cpMax:"500",levelMax:"10"});
 assert.equal(bounded.ok,true);
@@ -45,4 +73,4 @@ const pct=api.buildPayload({mode:"percent",sortBy:"IV % (highest)",
 assert.equal(pct.ok,true);
 assert.equal(pct.payload.iv_percent_min,0);
 assert.equal(pct.payload.iv_percent_max,20);
-console.log("LT277 PT-BR sort display + provider-safe wire enums + low-value max filters PASS");
+console.log("LT277 PT-BR normal/inverse sort + guarded API-only -IV/-CP + low filters PASS");
