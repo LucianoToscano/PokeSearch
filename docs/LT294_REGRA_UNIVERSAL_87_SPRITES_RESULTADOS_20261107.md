@@ -31,3 +31,9 @@ O teste lt294-universal-87-percent-sprite-fill.test.js reproduz: Charmander de e
 ## Limites e homologação
 
 A regra 85–90% se aplica quando o contorno é mensurável. Uma URL de imagem bloqueada também ao Android continua com escala conservadora — nunca afirmar 87% medido sem dados reais. Ainda é preciso homologar fisicamente no Samsung ambas as Pokébolas, os tamanhos P/M/G e o modo com/sem caixas, comparando Charmander, Bulbasaur, Snorlax, Treecko e sprites de eventos antes de declarar solução definitiva.
+
+## Publicação e integração final confirmadas
+- [PR #288](https://github.com/LucianoToscano/PokeSearch/pull/288) mesclada por squash `1474ead658f8df8a95963bfb456a5988da3d2882`; head CI `673d82a22ab35c14f85109a27860fb53de316d90`. Sete gates aplicáveis `success`: LT169, Node QA, Android LT211, Java LT62, OTA LT173, visual LT253, beta privada. Build genérico `skipped` pela política.
+- [Workflow oficial #42358535947](https://github.com/LucianoToscano/PokeSearch/actions/runs/42358535947) `completed/success`, preflight e publish `success`, compilação protegida, validação APK/assinante e SHA público aprovados.
+- [Release estável LT294](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.94-54498), publicada em **07/11/2026 às 09:12:51 UTC**, `draft=false`, `prerelease=false`. APK `PokeSearch-v0.02.94-LT.apk`, **33.939.234 bytes**, SHA-256 `e9ba935ee7fc2156835a906f394f4e9277714eef26647e2f5343f154eb6ef218`, [download oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.94-54498/PokeSearch-v0.02.94-LT.apk), request commit `d7966220db24d58b1345e95179e341e6cc2807bb`.
+- **Homologação real Samsung pendente.** A meta de 87% depende de contorno realmente mensurado; quando fonte/cookies/host impedem leitura, prevalece a imagem sem zoom inventado. Conferir 100% e Rank #1, P/M/G, com/sem caixas, costumes e fundo, ambas as Pokébolas; não afirmar sucesso físico sem print pós-instalação.
