@@ -21,6 +21,7 @@
 - [ ] Arrastar sprite e cabeçalho perto de bordas, fechar/reabrir app e conferir persistência.
 - [ ] Autorizar/cancelar leitura visual e confirmar que nenhum balão impede botão Android; após autorização apenas sprite recolhida.
 - [ ] Testar sessões E01–E11, simulação fictícia de hoje, reides extras E10 e coexistência P1/P2/Doce Raro.
-- [ ] Rodar QA Android automatizado e ensaio físico antes de aprovação. **Passagem de CI não substitui Samsung.**
+- [x] Cinco workflows automatizados `success` no commit `8b6ac3f8783013d68379ae9278f02b8687dd56c8`: Node QA #42405060857, LT169 #42405060922, LT211 #42405060832, Java LT62 #42405060852 e OTA LT173 #42405060949; APK/QA assinada `skipped` por política.
+- [ ] **Ensaio físico Samsung ainda pendente antes de homologar.** Passagem de CI não substitui Samsung.
 
 **Governança:** Não fazer merge, criar APK pública nem incrementar versionCode sem aprovação explícita. Em futura publicação, exigir code superior a 54510 e fluxo oficial permanente com a assinatura original.
