@@ -2553,13 +2553,12 @@ function renderRankOneMoves(){
      (label==="Ágil"?"mt-agil-elite-lt265.png":"mt-carregada-elite-lt265.png")+
      '" alt="" aria-hidden="true">':"");
    const pvp=window.PokeSearchMovePanel?.pvpStats?.(move,fast)||
-    (metrics.length?'<div class="psMovePvpStats">PvP: '+h(metrics.join(" • "))+'</div>':"");
-   const raid=window.PokeSearchMovePanel?.pveStats?.(move,fast)||"";
+    (metrics.length?'<div class="psMovePvpStats">'+h(metrics.join(" • "))+'</div>':"");
    return '<div class="psMoveRow"><span class="psMoveLabel" title="'+
      h(/^C[12]$/.test(label)?"Carregado "+label.slice(1):label)+'">'+h(label)+':</span>'+
      '<span class="psMoveName" style="color:'+colours[type]+'">'+h(move.name||"—")+'</span>'+
      (badge?'<span class="psMoveLegacy" title="'+h(tip)+'" aria-label="'+h(tip)+'">'+badge+'</span>':"")+
-     ((pvp||raid)?'<div class="psMoveStats psMoveNumbers">'+pvp+raid+'</div>':"")+'</div>';
+     (pvp?'<div class="psMoveStats psMoveNumbers">'+pvp+'</div>':"")+'</div>';
   };
   if(recommendation.availableOnly===true){ 
    btn.title="Consultar golpes possíveis · sem recomendação PvP confirmada";
