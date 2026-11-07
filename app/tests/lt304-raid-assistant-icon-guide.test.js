@@ -87,7 +87,7 @@ assert.match(service,/navigateEdu\(step\.noPassTo,"NO_PASS"\)/);
 assert.match(service,/persist\("NOT_OBSERVED"\)/);
 assert.match(service,/RaidDayRecovery\.stats/);
 assert.match(service,/Math\.max\(dp\(145\),maximum\)/);
-assert.match(service,/panelParams\\.alpha=1f/);
+assert.match(service,/panelParams\.alpha=1f/);
 assert.match(service,/edu_panel_x/);
 assert.match(service,/edu_panel_y/);
 assert.match(service,/requestDisallowInterceptTouchEvent\(true\)/);
