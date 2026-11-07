@@ -65,6 +65,9 @@
   TACKLE_FAST:"normal",
   SCRATCH_FAST:"normal",
   COUNTER_FAST:"fighting",
+  // LT282: independently confirmed Medicham raid moves, also usable offline.
+  PSYCHO_CUT_FAST:"psychic",
+  DYNAMIC_PUNCH:"fighting",
   DRAGON_BREATH_FAST:"dragon",
   HYDRO_CANNON:"water",
   SURF:"water",
