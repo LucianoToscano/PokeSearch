@@ -50,5 +50,28 @@
   }
   return [...base,...megas].slice(0,36);
  }
- return Object.freeze({family,links});
+ /* LT291: panel order reflects the VERIFIED evolutionary chain, never the
+  * IV rank or general meta rank. Keep original order for branches at the
+  * same stage; unknown forms remain in original order rather than guessing.
+  * This only reorders display rows, and never changes rank calculations.
+  */
+ function orderEvolutionRows(currentName,entries){
+  const rows=Array.isArray(entries)?entries.slice():[];
+  const key=normalized(currentName);
+  if(!key||key.includes("(")||!forward.has(key))return rows;
+  const distance=new Map([[key,0]]),queue=[key];
+  while(queue.length&&distance.size<60){
+   const from=queue.shift();
+   for(const to of forward.get(from)||[]){
+    if(distance.has(to))continue;
+    distance.set(to,distance.get(from)+1);
+    queue.push(to);
+   }
+  }
+  return rows.map((row,index)=>({row,index,
+   stage:distance.get(normalized(row?.name))??Infinity}))
+   .sort((a,b)=>a.stage-b.stage||a.index-b.index)
+   .map(({row})=>row);
+ }
+ return Object.freeze({family,links,orderEvolutionRows});
 });

@@ -2810,6 +2810,28 @@
           "Homologação Samsung: Charmander com chapéu, Pikachu Anniversary Singapore 01 e demais sprites apontadas pelo usuário, nas duas listas e três tamanhos."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt291-natural-evolution-order-20261107",
+      "minVersionCode": 54495,
+      "date": "07/11/2026",
+      "title": "LT291 — Evoluções na ordem correta na Análise PvP",
+      "sections": {
+        "novidades": [
+          "Na Análise PvP, as evoluções aparecem em sequência natural: Cyndaquil → Quilava → Typhlosion, mesmo quando a evolução final tem Rank Classe melhor."
+        ],
+        "melhorias": [
+          "A ordem visual das evoluções deixa de depender de Rank Classe ou Rank Geral; os números e a escolha dos melhores Pokémon continuam inalterados.",
+          "Megaevoluções e projeções de fantasia ficam depois das evoluções comuns; ramificações da mesma etapa preservam a ordem já conhecida."
+        ],
+        "correcoes": [
+          "Corrigido Typhlosion aparecendo antes de Quilava na Grande Liga e situações equivalentes em famílias de três etapas.",
+          "Formas desconhecidas não são ordenadas por uma cadeia inventada."
+        ],
+        "emDesenvolvimento": [
+          "Validar no Samsung P1/P2 Cyndaquil, Charmander, Bulbasaur, Eevee e famílias ramificadas em GL/UL/ML, com ranks e coordenadas preservados."
+        ]
+      }
     }
   ]
 }
