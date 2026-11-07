@@ -20,6 +20,7 @@ assert.match(detail,/class="evoMoveDetails" hidden role="region"/);
 assert.match(detail,/PokeSearchEvolutionMoves\?\.setScope\?\.\(detailIdentity\)/);
 assert.match(detail,/PokeSearchEvolutionMoves\?\.restore\?\.\(\)/);
 assert.match(detail,/#evolutions\.psPerEvoMoves #psLeagueMoves\{display:none!important\}/);
+assert.match(detail,/outer\.classList\?\.toggle\?\.\("psPerEvoMoves",!!body\.querySelector\?\.\(".evoMovesAction"\)\)/);
 assert.match(detail,/PokeSearchSpriteScale\?\.applyDetail\?\.\(/);
 assert.match(detail,/PokeSearchSpriteScale\?\.resetDetail\?\.\(img\)/);
 assert.match(scaler,/const DETAIL_VISIBLE_TARGET=\.87/);
