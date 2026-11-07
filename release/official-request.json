@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.86",
-  "code": 54490,
-  "label": 51290,
-  "previous_tag": "v0.02.85-54489",
-  "qa_max_code": 54489,
-  "release_notes": "PokeSearch LT286: correção dos ícones de imagem quebrada observados nas listas flutuantes do Samsung. Em ambas as Pokébolas, a imagem só é exibida após carregar e decodificar com dimensões válidas; durante falhas, o número da Pokédex continua como indicação discreta no espaço reservado, sem glifo de imagem quebrada do Android. Repetição limitada do carregamento do MESMO sprite exato empacotado/verificado, mesmo quando a URL é igual, com intervalo de 2,5s e no máximo duas tentativas, sem trocar forma, vestimenta, regional ou Shiny. Nenhuma nova requisição ao PoGoCoordinates, alteração de login, filtros, resultados, golpes, classificações, favoritos, localização ou assinatura. Sete verificações obrigatórias da PR #280 aprovadas, inclusive APK beta privado; workflow genérico de APK em PR ignorado por política. Validação física no Samsung P1/P2 permanece pendente."
+  "version": "0.02.87",
+  "code": 54491,
+  "label": 51291,
+  "previous_tag": "v0.02.86-54490",
+  "qa_max_code": 54490,
+  "release_notes": "PokeSearch LT287: correção específica das miniaturas dos Resultados P1/P2 que não apareciam embora o card detalhado estivesse correto. Quando a busca via PoGoCoordinates fornece uma imagem HTTPS verificada para aquele encontro e forma (imageFromSite/providerExact), a lista usa essa mesma imagem em primeiro lugar, como o card. Imagens de GitHub/CDN e do provedor deixam de exigir CORS anônimo extra apenas para exibição, preservando a escala segura caso o canvas fique restrito. Em caso de falha ou demora, o mesmo sprite exato é recuperado com os dados nativos e o fallback local passa a aceitar tanto file:///android_asset/ quanto https://appassets.androidplatform.net/assets/, reconhecendo a reescrita do carregador Android protegido. Preservados estados de identidade, Shiny, vestimentas, espécie, duas Pokébolas independentes, fallback neutro #Dex, limites de tentativas, cards de detalhes, golpes PT-BR, classificações, favoritos, login e assinatura permanente. Sete verificações obrigatórias da PR #281 aprovadas, inclusive APK beta; homologação física Samsung P1/P2 ainda pendente."
 }
