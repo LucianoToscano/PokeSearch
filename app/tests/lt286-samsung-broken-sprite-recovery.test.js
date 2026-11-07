@@ -36,20 +36,21 @@ const engine={resolve(v){assert.equal(v,c);lookups++;return {src:art,original:ar
 const context={document:{querySelectorAll(q){assert.equal(q,".spawn .spriteStage");return [stage];}},
  window:{PokeSearchOfflineSprite:engine},cards:[c],resultWindow:true,
  Date:{now:()=>now},setTimeout:()=>{},console};
-vm.runInNewContext(source+"attachSpriteFeedback();",context);
+const ctx=vm.createContext(context);
+vm.runInContext(source+"attachSpriteFeedback();",ctx);
 assert.equal(attempts,1,"retry identical verified bytes after a real error");
 assert.equal(img.src,art);
 assert.equal(img.dataset.psExactRetryCount,"1");
 assert.equal(img.dataset.psSpriteRecovered,"1");
 assert.equal(states.has("failed"),false);
 states.add("failed");now+=1500;
-vm.runInNewContext("attachSpriteFeedback()",context);
+vm.runInContext("attachSpriteFeedback()",ctx);
 assert.equal(attempts,1,"cooldown prevents immediate repeated asset calls");
 now+=1700;
-vm.runInNewContext("attachSpriteFeedback()",context);
+vm.runInContext("attachSpriteFeedback()",ctx);
 assert.equal(attempts,2,"second retry same verified art after cooldown");
 states.add("failed");now+=5000;
-vm.runInNewContext("attachSpriteFeedback()",context);
+vm.runInContext("attachSpriteFeedback()",ctx);
 assert.equal(attempts,2,"strict two-retry limit per row");
 assert.equal(img.src,art);
 assert.ok(lookups>=2);
