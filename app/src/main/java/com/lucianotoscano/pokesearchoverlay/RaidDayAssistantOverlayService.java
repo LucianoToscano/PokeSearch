@@ -466,554 +466,400 @@ public final class RaidDayAssistantOverlayService extends Service {
             handler.post(avatarTicker);
     }
 
-    /** Primeira entrega de preparação inteligente: sem evento remoto verificado. */
+
+    // EDU: uma conversa por vez. Ajustes não ocupam a tela do tutorial.
     private void createPreparationUi(){
         preparationSection=new LinearLayout(this);
         preparationSection.setOrientation(LinearLayout.VERTICAL);
-        preparationSection.setPadding(dp(5),dp(6),dp(5),dp(5));
-        prepTitle=text("",13,Color.WHITE,true);
-        preparationSection.addView(prepTitle,new LinearLayout.LayoutParams(-1,-2));
-        prepStatus=text("",11,Color.rgb(185,209,229),false);
-        LinearLayout.LayoutParams statusLp=new LinearLayout.LayoutParams(-1,-2);
-        statusLp.topMargin=dp(6);
-        preparationSection.addView(prepStatus,statusLp);
+        eduPrepQuestion=text("",14,Color.WHITE,true);
+        preparationSection.addView(eduPrepQuestion);
+        eduPrepCaption=text("",10,Color.rgb(170,196,212),false);
+        LinearLayout.LayoutParams c=new LinearLayout.LayoutParams(-1,-2);
+        c.topMargin=dp(5);
+        preparationSection.addView(eduPrepCaption,c);
         preparationChoices=new LinearLayout(this);
         preparationChoices.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams optionsLp=new LinearLayout.LayoutParams(-1,-2);
-        optionsLp.topMargin=dp(7);
-        preparationSection.addView(preparationChoices,optionsLp);
-
-        LinearLayout buttons=new LinearLayout(this);
-        LinearLayout.LayoutParams rowLp=new LinearLayout.LayoutParams(-1,dp(38));
-        rowLp.topMargin=dp(8);
-        prepBack=button("← Voltar");
-        prepBack.setOnClickListener(v->{
-            preparation.setQuestion(preparation.question()-1);
-            preparation.save(prefs);
-            renderPreparation();
-        });
-        buttons.addView(prepBack,new LinearLayout.LayoutParams(0,-1,1));
-        prepNext=button("Próximo →");
-        LinearLayout.LayoutParams nextLp=new LinearLayout.LayoutParams(0,-1,1);
-        nextLp.leftMargin=dp(6);
-        buttons.addView(prepNext,nextLp);
-        prepNext.setOnClickListener(v->{
-            if(!preparation.currentAnswered()){
-                prepStatus.setText("Selecione uma resposta antes de continuar.");
-                reactAvatar(RaidDayAvatarFrames.QUESTION);
-                return;
-            }
-            if(preparation.question()<RaidDayPreparation.COUNT-1){
-                preparation.setQuestion(preparation.question()+1);
-                preparation.save(prefs);
-                renderPreparation();
-                return;
-            }
-            if(!preparation.allAnswered())return;
-            preparation.markComplete();
-            preparation.save(prefs);
-            String chosenEvent=preparation.eventKey();
-            if(!eventKey.equals(chosenEvent)){
-                // Nunca herdar alarmes/janela de um evento anterior.
-                RaidDaySchedule.clearWindow(this);
-                eventKey=chosenEvent;
-                prefs.edit().putString("eventKey",eventKey)
-                    .putInt("sessionGeneration",1).apply();
-                sessionKey=eventKey+"#1";
-                restoreJournal();
-            }
-            riskAccepted=(plan.riskVersion+":"+eventKey).equals(
-                prefs.getString("riskAcceptance",""));
-            reactAvatar(RaidDayAvatarFrames.WAVE);
-            updateStep();
-        });
-        preparationSection.addView(buttons,rowLp);
-        panel.addView(preparationSection,new LinearLayout.LayoutParams(-1,-2));
-        renderPreparation();
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);
+        p.topMargin=dp(8);
+        preparationSection.addView(preparationChoices,p);
+        panel.addView(preparationSection);
     }
     private void dateButton(LinearLayout row,String label,int days){
-        TextView button=button(label);
+        TextView b=button(label);
         LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(38),1);
-        lp.leftMargin=dp(2);
-        row.addView(button,lp);
-        button.setOnClickListener(v->{
+        lp.leftMargin=dp(3);
+        row.addView(b,lp);
+        b.setOnClickListener(v->{
             preparation.shiftDate(days,eventClock);
             preparation.save(prefs);
             renderPreparation();
         });
     }
+    private void completePreparation(){
+        if(!preparation.allAnswered())return;
+        preparation.markComplete();
+        preparation.save(prefs);
+        String chosenEvent=preparation.eventKey();
+        if(!eventKey.equals(chosenEvent)){
+            RaidDaySchedule.clearWindow(this);
+            eventKey=chosenEvent;
+            prefs.edit().putString("eventKey",eventKey)
+                .putInt("sessionGeneration",1).apply();
+            sessionKey=eventKey+"#1";
+            restoreJournal();
+        }
+        riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+            prefs.getString("riskAcceptance",""));
+        eduNote="";
+        updateStep();
+    }
     private void renderPreparation(){
-        if(preparationChoices==null||prepTitle==null)return;
+        if(preparationChoices==null)return;
         int q=preparation.question();
-        prepTitle.setText("Preparação "+(q+1)+"/"+
-            RaidDayPreparation.COUNT+" · "+preparation.questionText(q));
+        eduPrepQuestion.setText("Edu: "+preparation.questionText(q));
         preparationChoices.removeAllViews();
         if(q==0){
-            prepStatus.setText("Data informada manualmente. Não equivale à programação oficial.\n"+
-                "Selecionada: "+preparation.displayDate()+" · horário de Brasília.");
-            LinearLayout dates=new LinearLayout(this);
-            dates.setGravity(Gravity.CENTER_VERTICAL);
-            dateButton(dates,"−7d",-7);
-            dateButton(dates,"−1d",-1);
-            dateButton(dates,"+1d",1);
-            dateButton(dates,"+7d",7);
-            preparationChoices.addView(dates,new LinearLayout.LayoutParams(-1,dp(42)));
+            eduPrepCaption.setText("Evento real · data informada por você, sem horário oficial.");
+            TextView chosen=text("Dia: "+preparation.displayDate(),13,
+                Color.rgb(118,235,195),true);
+            preparationChoices.addView(chosen);
+            LinearLayout controls=new LinearLayout(this);
+            dateButton(controls,"−7 dias",-7);
+            dateButton(controls,"−1 dia",-1);
+            dateButton(controls,"+1 dia",1);
+            dateButton(controls,"+7 dias",7);
+            LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(39));
+            cp.topMargin=dp(7);
+            preparationChoices.addView(controls,cp);
+            addChoice(preparationChoices,"✓ Esta é a data",()->nextPreparation());
         }else{
+            eduPrepCaption.setText("Escolha uma resposta para continuar.");
             String selected=preparation.answer(q);
-            prepStatus.setText(q==7?
-                "O acompanhamento visual é opcional e exige sua autorização "+
-                "pelo Android a cada sessão. Ele sugere telas, sem avançar automaticamente.":
-                "Informação declarada pelo jogador · selecione uma opção:");
+            LinearLayout responses=new LinearLayout(this);
+            responses.setGravity(Gravity.CENTER);
             for(String option:preparation.optionsFor(q)){
-                final String value=option;
-                TextView choice=button((option.equals(selected)?"✓ ":"  ")+option);
-                choice.setGravity(Gravity.CENTER_VERTICAL);
-                choice.setContentDescription("Responder: "+option);
-                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(38));
-                p.topMargin=dp(5);
-                preparationChoices.addView(choice,p);
-                if(option.equals(selected))
-                    choice.setTextColor(Color.rgb(118,235,195));
-                choice.setOnClickListener(v->{
-                    preparation.choose(value);
+                TextView b=button((option.equals(selected)?"✓ ":"")+option);
+                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
+                    0,dp(41),1);
+                lp.leftMargin=dp(3);
+                responses.addView(b,lp);
+                b.setOnClickListener(v->{
+                    preparation.choose(option);
                     preparation.save(prefs);
-                    renderPreparation();
+                    nextPreparation();
                 });
             }
+            preparationChoices.addView(responses,
+                new LinearLayout.LayoutParams(-1,dp(42)));
         }
-        prepBack.setAlpha(q==0?.45f:1f);
-        prepNext.setText(q==RaidDayPreparation.COUNT-1?
-            "Concluir preparação ✓":"Próximo →");
+        if(q>0)addChoice(preparationChoices,"← Pergunta anterior",()->{
+            preparation.setQuestion(preparation.question()-1);
+            preparation.save(prefs);
+            renderPreparation();
+        });
         if(visible)placePanel();
     }
-    private void updateEventClock(){
-        if(clockText==null)return;
-        Instant now=eventClock.instant();
-        clockText.setText(RaidDayEventClock.summary(now)+
-            "\n"+(preparation.isComplete()?
-                RaidDayEventClock.describeDay(preparation.eventDate(),now):
-                "Escolha um evento para calcular D-1 e D.")+
-            (RaidDayEventClock.automaticTimeEnabled(this)?"":
-                "\nAtenção: hora automática do Android está desativada."));
+    private void nextPreparation(){
+        if(!preparation.currentAnswered())return;
+        if(preparation.question()<RaidDayPreparation.COUNT-1){
+            preparation.setQuestion(preparation.question()+1);
+            preparation.save(prefs);
+            renderPreparation();
+        }else completePreparation();
     }
-
+    private void updateEventClock(){
+        if(eduBadge==null)return;
+        String now=RaidDayEventClock.format(eventClock.instant(),
+            RaidDayEventClock.BRASILIA);
+        if(demoToday)eduBadge.setText("SIMULAÇÃO HOJE · "+now);
+        else if(active)eduBadge.setText("ETAPA "+(index+1)+"/11 · "+now);
+        else eduBadge.setText("Brasília · "+now);
+    }
+    private void addChoice(LinearLayout target,String label,Runnable onTap){
+        TextView b=button(label);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(39));
+        lp.topMargin=dp(6);
+        target.addView(b,lp);
+        b.setOnClickListener(v->onTap.run());
+    }
+    private void addTwo(String first,Runnable a,String second,Runnable b){
+        LinearLayout row=new LinearLayout(this);
+        LinearLayout.LayoutParams parent=new LinearLayout.LayoutParams(-1,dp(41));
+        parent.topMargin=dp(8);
+        eduActions.addView(row,parent);
+        TextView left=button(first);
+        row.addView(left,new LinearLayout.LayoutParams(0,-1,1));
+        left.setOnClickListener(v->a.run());
+        TextView right=button(second);
+        LinearLayout.LayoutParams rightLp=new LinearLayout.LayoutParams(0,-1,1);
+        rightLp.leftMargin=dp(7);
+        row.addView(right,rightLp);
+        right.setOnClickListener(v->b.run());
+    }
+    private void addThree(String a,Runnable aa,String b,Runnable bb,
+                          String c,Runnable cc){
+        LinearLayout row=new LinearLayout(this);
+        LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(-1,dp(42));
+        rp.topMargin=dp(8);
+        eduActions.addView(row,rp);
+        String[] labels={a,b,c};
+        Runnable[] actions={aa,bb,cc};
+        for(int i=0;i<3;i++){
+            TextView v=button(labels[i]);
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-1,1);
+            if(i>0)lp.leftMargin=dp(4);
+            row.addView(v,lp);
+            final Runnable tap=actions[i];
+            v.setOnClickListener(w->tap.run());
+        }
+    }
+    private void setTalk(String speech,String caption){
+        eduSpeech.setText(speech);
+        eduSubline.setText(caption);
+        eduSubline.setVisibility(caption==null||caption.isEmpty()?
+            View.GONE:View.VISIBLE);
+    }
     private void createPanel(){
         panel=new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
-        panel.setPadding(dp(12),dp(11),dp(12),dp(12));
-        panel.setBackground(surface(Color.argb(236,26,34,45),
-            Color.argb(110,205,215,232),13));
+        panel.setPadding(dp(11),dp(8),dp(11),dp(10));
+        panel.setBackground(surface(Color.argb(231,23,32,42),
+            Color.argb(112,196,213,228),15));
+        eduPanelWidth=Math.min(dp(286),
+            getResources().getDisplayMetrics().widthPixels-dp(22));
+
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        TextView heading=text(getString(R.string.raid_day_title),13,Color.WHITE,true);
-        header.addView(heading,new LinearLayout.LayoutParams(0,dp(29),1));
+        eduHeader=text("Edu",16,Color.WHITE,true);
+        eduHeader.setContentDescription("Edu · segure e arraste este cabeçalho para mover a conversa");
+        header.addView(eduHeader,new LinearLayout.LayoutParams(0,dp(34),1));
+        TextView menu=button("⋯");
+        menu.setContentDescription("Abrir configurações do Edu");
+        header.addView(menu,new LinearLayout.LayoutParams(dp(40),dp(33)));
+        menu.setOnClickListener(v->{
+            eduSettingsOpen=!eduSettingsOpen;
+            eduHelpOpen=false;updateStep();
+        });
         TextView close=button("×");
-        close.setContentDescription("Recolher assistente");
+        close.setContentDescription("Recolher conversa do Edu");
+        LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(37),dp(33));
+        closeP.leftMargin=dp(5);
+        header.addView(close,closeP);
         close.setOnClickListener(v->setVisible(false));
-        header.addView(close,new LinearLayout.LayoutParams(dp(31),dp(29)));
+        View.OnTouchListener move=new View.OnTouchListener(){
+            float originX,originY;
+            int panelX,panelY;
+            boolean moved;
+            @Override public boolean onTouch(View view,MotionEvent event){
+                switch(event.getActionMasked()){
+                    case MotionEvent.ACTION_DOWN:
+                        originX=event.getRawX();originY=event.getRawY();
+                        panelX=panelParams.x;panelY=panelParams.y;
+                        moved=false;return true;
+                    case MotionEvent.ACTION_MOVE:
+                        float dx=event.getRawX()-originX,dy=event.getRawY()-originY;
+                        if(!moved&&Math.hypot(dx,dy)>touchSlop)moved=true;
+                        if(moved){
+                            int sw=getResources().getDisplayMetrics().widthPixels;
+                            int sh=getResources().getDisplayMetrics().heightPixels;
+                            panelParams.x=Math.max(0,Math.min(
+                                sw-eduPanelWidth,panelX+Math.round(dx)));
+                            int height=Math.max(dp(80),panelScroll.getHeight());
+                            panelParams.y=Math.max(0,Math.min(
+                                Math.max(0,sh-height),panelY+Math.round(dy)));
+                            try{wm.updateViewLayout(panelScroll,panelParams);}
+                            catch(IllegalArgumentException ignored){}
+                        }
+                        return true;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if(moved)prefs.edit().putInt("edu_panel_x",panelParams.x)
+                            .putInt("edu_panel_y",panelParams.y).apply();
+                        return true;
+                }
+                return false;
+            }
+        };
+        eduHeader.setOnTouchListener(move);
         panel.addView(header);
-        // O Passe continua na Home; o treinador animado vive no balão flutuante.
-        LinearLayout avatarControls=new LinearLayout(this);
-        avatarControls.setGravity(Gravity.CENTER_VERTICAL);
-        avatarControls.setPadding(0,dp(5),0,dp(3));
+        eduBadge=text("",10,Color.rgb(127,219,189),true);
+        LinearLayout.LayoutParams badgeLp=new LinearLayout.LayoutParams(-1,-2);
+        badgeLp.topMargin=dp(2);
+        panel.addView(eduBadge,badgeLp);
+
+        eduMainCard=new LinearLayout(this);
+        eduMainCard.setOrientation(LinearLayout.VERTICAL);
+        eduMainCard.setPadding(dp(11),dp(9),dp(11),dp(9));
+        eduMainCard.setBackground(surface(Color.argb(219,40,54,65),
+            Color.argb(65,178,203,223),12));
+        LinearLayout.LayoutParams speechLp=new LinearLayout.LayoutParams(-1,-2);
+        speechLp.topMargin=dp(8);
+        panel.addView(eduMainCard,speechLp);
+        eduSpeech=text("",14,Color.WHITE,false);
+        eduSpeech.setLineSpacing(dp(1),1f);
+        eduMainCard.addView(eduSpeech);
+        eduSubline=text("",10,Color.rgb(172,202,217),false);
+        LinearLayout.LayoutParams subLp=new LinearLayout.LayoutParams(-1,-2);
+        subLp.topMargin=dp(7);
+        eduMainCard.addView(eduSubline,subLp);
+
+        createPreparationUi();
+        eduActions=new LinearLayout(this);
+        eduActions.setOrientation(LinearLayout.VERTICAL);
+        panel.addView(eduActions);
+        eduMiniActions=new LinearLayout(this);
+        eduMiniActions.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams mini=new LinearLayout.LayoutParams(-1,dp(35));
+        mini.topMargin=dp(7);
+        panel.addView(eduMiniActions,mini);
+
+        eduSettings=new LinearLayout(this);
+        eduSettings.setOrientation(LinearLayout.VERTICAL);
+        panel.addView(eduSettings);
+        TextView settingsCaption=text("Ajustes do Edu",12,Color.WHITE,true);
+        eduSettings.addView(settingsCaption);
+        LinearLayout sizes=new LinearLayout(this);
         avatarSizeButtons=new TextView[3];
         String[] sizeLabels={"P","M","G"};
-        for(int i=0;i<avatarSizeButtons.length;i++){
-            final int choiceIndex=i;
-            TextView choice=button(sizeLabels[i]);
-            choice.setContentDescription("Personagem "+sizeLabels[i]+": "+
+        for(int i=0;i<3;i++){
+            final int choice=i;
+            TextView b=button(sizeLabels[i]);
+            b.setContentDescription("Tamanho do Edu: "+
                 RaidDayAvatarFrames.SIZES_PX[i]+" pixels");
-            avatarSizeButtons[i]=choice;
-            LinearLayout.LayoutParams sizeLp=new LinearLayout.LayoutParams(dp(39),dp(35));
-            if(i>0)sizeLp.leftMargin=dp(5);
-            avatarControls.addView(choice,sizeLp);
-            choice.setOnClickListener(v->{
-                avatarSizeIndex=choiceIndex;
+            avatarSizeButtons[i]=b;
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(38),1);
+            if(i>0)p.leftMargin=dp(5);
+            sizes.addView(b,p);
+            b.setOnClickListener(v->{
+                avatarSizeIndex=choice;
                 updateAvatarSize();
-                reactAvatar(RaidDayAvatarFrames.WAVE);
             });
         }
+        LinearLayout.LayoutParams sizesLp=new LinearLayout.LayoutParams(-1,dp(39));
+        sizesLp.topMargin=dp(6);
+        eduSettings.addView(sizes,sizesLp);
         avatarMotionButton=button(avatarMotion?"Animação ✓":"Animação ×");
-        avatarMotionButton.setContentDescription("Ativar ou desativar movimento do personagem");
-        LinearLayout.LayoutParams motionLp=new LinearLayout.LayoutParams(0,dp(35),1f);
-        motionLp.leftMargin=dp(6);
-        avatarControls.addView(avatarMotionButton,motionLp);
-        avatarMotionButton.setOnClickListener(v->setAvatarMotion(!avatarMotion));
-        panel.addView(avatarControls);
-        for(int i=0;i<avatarSizeButtons.length;i++)
-            avatarSizeButtons[i].setTextColor(i==avatarSizeIndex?
-                Color.rgb(118,235,195):Color.WHITE);
-
-        clockText=text("",10,Color.rgb(169,200,221),false);
-        clockText.setLineSpacing(dp(1),1f);
-        LinearLayout.LayoutParams clockLp=new LinearLayout.LayoutParams(-1,-2);
-        clockLp.topMargin=dp(5);
-        panel.addView(clockText,clockLp);
-        createPreparationUi();
-
-
-        riskSection=new LinearLayout(this);
-        riskSection.setOrientation(LinearLayout.VERTICAL);
-        riskSection.setPadding(dp(6),dp(5),dp(6),dp(5));
-        riskSection.setBackground(surface(Color.argb(170,73,46,31),
-            Color.argb(100,249,182,119),9));
-        TextView riskHeading=text(getString(R.string.raid_day_risk_title),13,Color.WHITE,true);
-        riskSection.addView(riskHeading);
-        TextView riskInfo=text(getString(R.string.raid_day_risk_message),
-            11,Color.rgb(248,223,200),false);
-        riskInfo.setPadding(0,dp(6),0,dp(7));
-        riskSection.addView(riskInfo);
-        LinearLayout riskActions=new LinearLayout(this);
-        riskContinue=button(getString(R.string.raid_day_risk_agree));
-        riskActions.addView(riskContinue,new LinearLayout.LayoutParams(0,dp(39),1));
-        riskExit=button(getString(R.string.raid_day_risk_exit));
-        LinearLayout.LayoutParams exitLp=new LinearLayout.LayoutParams(dp(64),dp(39));
-        exitLp.leftMargin=dp(6);
-        riskActions.addView(riskExit,exitLp);
-        riskSection.addView(riskActions);
-        riskContinue.setOnClickListener(v->{
-            riskAccepted=true;
-            prefs.edit().putString("riskAcceptance",plan.riskVersion+":"+eventKey)
-                .putLong("riskAcceptedAtMs",System.currentTimeMillis()).apply();
-            updateStep();
-        });
-        riskExit.setOnClickListener(v->stopSelf());
-        panel.addView(riskSection,new LinearLayout.LayoutParams(-1,-2));
-
-        startSection=new LinearLayout(this);
-        startSection.setOrientation(LinearLayout.VERTICAL);
-        TextView startInfo=text(getString(R.string.raid_day_manual_disclaimer),
-            11,Color.rgb(211,222,235),false);
-        startInfo.setPadding(0,dp(7),0,dp(7));
-        startSection.addView(startInfo);
-        summaryText=text("",11,Color.rgb(210,227,240),false);
-        summaryText.setLineSpacing(dp(2),1f);
-        startSection.addView(summaryText,new LinearLayout.LayoutParams(-1,-2));
-        eventWindowText=text("",11,Color.rgb(184,212,223),false);
-        eventWindowText.setPadding(0,dp(5),0,dp(5));
-        startSection.addView(eventWindowText,new LinearLayout.LayoutParams(-1,-2));
-        TextView eventSetup=button("📅 Horários, lembretes e calendário");
-        LinearLayout.LayoutParams setupLp=new LinearLayout.LayoutParams(-1,dp(37));
-        setupLp.topMargin=dp(6);
-        startSection.addView(eventSetup,setupLp);
-        eventSetup.setOnClickListener(v->{
-            Intent config=new Intent(this,RaidDayEventSettingsActivity.class);
-            config.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try{startActivity(config);}
-            catch(RuntimeException error)
-                {Toast.makeText(this,"Não foi possível abrir os horários",
-                    Toast.LENGTH_SHORT).show();}
-        });
-        TextView changeEvent=button("Editar perguntas / evento");
-        LinearLayout.LayoutParams changeLp=new LinearLayout.LayoutParams(-1,dp(36));
-        changeLp.topMargin=dp(5);
-        startSection.addView(changeEvent,changeLp);
-        changeEvent.setOnClickListener(v->{
-            if(active||training)return;
-            preparation.beginEditing();
-            preparation.save(prefs);
-            renderPreparation();updateStep();
-        });
-        startButton=button(getString(R.string.raid_day_manual_start));
-        startSection.addView(startButton,new LinearLayout.LayoutParams(-1,dp(38)));
-        trainButton=button(getString(R.string.raid_day_training_start));
-        LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,dp(38));
-        tp.topMargin=dp(7);
-        startSection.addView(trainButton,tp);
-        startButton.setOnClickListener(v->beginRealSession());
-        trainButton.setOnClickListener(v->beginTraining());
-        panel.addView(startSection,new LinearLayout.LayoutParams(-1,-2));
-
-        guideContent=new LinearLayout(this);
-        guideContent.setOrientation(LinearLayout.VERTICAL);
-        panel.addView(guideContent,new LinearLayout.LayoutParams(-1,-2));
-        progressText=text("",10,Color.rgb(177,204,224),false);
-        LinearLayout.LayoutParams pp=new LinearLayout.LayoutParams(-1,dp(24));
-        guideContent.addView(progressText,pp);
-        progressBar=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);
-        progressBar.setMax(plan.size());
-        progressBar.setProgressTintList(android.content.res.ColorStateList.valueOf(
-            Color.rgb(103,212,175)));
-        progressBar.setProgressBackgroundTintList(
-            android.content.res.ColorStateList.valueOf(Color.rgb(63,75,88)));
-        guideContent.addView(progressBar,new LinearLayout.LayoutParams(-1,dp(4)));
-        titleText=text("",14,Color.WHITE,true);
-        LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(-1,-2);
-        titleParams.topMargin=dp(10);
-        guideContent.addView(titleText,titleParams);
-        instructionText=text("",12,Color.rgb(219,227,235),false);
-        instructionText.setLineSpacing(dp(2),1f);
-        LinearLayout.LayoutParams instr=new LinearLayout.LayoutParams(-1,-2);
-        instr.topMargin=dp(5);
-        guideContent.addView(instructionText,instr);
-        statusText=text("Tutorial dos Passes · confirmação manual",10,
-            Color.rgb(174,195,214),false);
-        LinearLayout.LayoutParams st=new LinearLayout.LayoutParams(-1,-2);
-        st.topMargin=dp(8);
-        guideContent.addView(statusText,st);
-        visualStatus=text("Acompanhamento visual desligado",11,
-            Color.rgb(176,210,228),false);
-        LinearLayout.LayoutParams vs=new LinearLayout.LayoutParams(-1,-2);
-        vs.topMargin=dp(7);
-        guideContent.addView(visualStatus,vs);
-        visualToggle=button("Ativar leitura visual (opcional)");
-        LinearLayout.LayoutParams vt=new LinearLayout.LayoutParams(-1,dp(35));
-        vt.topMargin=dp(5);
-        guideContent.addView(visualToggle,vt);
-        visualToggle.setOnClickListener(v->{
-            if(RaidDayScreenCaptureService.isActive()){
-                stopService(new Intent(this,RaidDayScreenCaptureService.class)
-                    .setAction(RaidDayScreenCaptureService.STOP));
-                updateVisual();return;
+        addSettingsButton(avatarMotionButton,()->setAvatarMotion(!avatarMotion));
+        TextView schedule=button("📅 Evento, lembretes e calendário");
+        addSettingsButton(schedule,()->{
+            setVisible(false);
+            Intent intent=new Intent(this,RaidDayEventSettingsActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try{startActivity(intent);}
+            catch(RuntimeException error){
+                eduNote="Não foi possível abrir o calendário.";
+                setVisible(true);
             }
-            if(CandyScreenCaptureService.isActive()){
-                visualStatus.setText("O Doce Raro já usa a captura. "+
-                    "Encerre essa sessão antes de autorizar o assistente.");
-                return;
-            }
-            Intent consent=new Intent(this,RaidDayCaptureConsentActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try{startActivity(consent);}
-            catch(RuntimeException failure)
-                {visualStatus.setText("Captura indisponível · continue manualmente");}
         });
-        visualActions=new LinearLayout(this);
-        LinearLayout.LayoutParams va=new LinearLayout.LayoutParams(-1,dp(36));
-        va.topMargin=dp(5);
-        guideContent.addView(visualActions,va);
-        visualAccept=button("✓ Confirmar tela");
-        visualActions.addView(visualAccept,new LinearLayout.LayoutParams(0,-1,1));
+        visualToggle=button("Autorizar leitura de tela");
+        addSettingsButton(visualToggle,()->toggleEduVision());
+        TextView pause=button("Pausar / retomar roteiro");
+        addSettingsButton(pause,()->{
+            if(active||training){
+                paused=!paused;persist(paused?"PAUSED":"RESUMED");updateStep();
+            }
+        });
+        TextView exit=button("Sair do treino / voltar ao início");
+        addSettingsButton(exit,()->{
+            if(training)leaveTraining();
+            else if(!active){eduWantsReal=false;eduSettingsOpen=false;updateStep();}
+            else{endPending=true;eduNote="Confirme o encerramento para preservar o histórico.";
+                updateStep();}
+        });
+        eduSettingsClose=button("✓ Voltar à conversa");
+        addSettingsButton(eduSettingsClose,()->{
+            eduSettingsOpen=false;updateStep();
+        });
+
+        visualAccept=button("Sim, é essa tela");
         visualReject=button("Não era isso");
-        LinearLayout.LayoutParams vr=new LinearLayout.LayoutParams(0,-1,1);
-        vr.leftMargin=dp(5);
-        visualActions.addView(visualReject,vr);
-        visualAccept.setOnClickListener(v->{
-            if(visualCandidate.isEmpty()||training||!active||paused)return;
-            if(System.currentTimeMillis()-visualSeenAt>180000L){
-                visualCandidate="";updateVisual();return;
-            }
-            // Evidência OCR é sugestão. A escolha humana confirma a informação.
-            appendEvent("VISUAL_SUGGESTION_ACCEPTED_"+visualCandidate,
-                plan.step(index).id);
-            appendEvent(visualCandidate,plan.step(index).id);
-            statusText.setText("Você confirmou a tela sugerida: "+visualCandidate+
-                ". A etapa NÃO avançou automaticamente.");
-            reactAvatar(RaidDayAvatarFrames.OK);
-            visualCandidate="";
-            prefs.edit().remove("raid_day_capture_stage")
-                .remove("raid_day_capture_time").apply();
-            updateVisual();
-        });
-        visualReject.setOnClickListener(v->{
-            if(visualCandidate.isEmpty())return;
-            if(!training&&active)appendEvent("VISUAL_REJECTED",plan.step(index).id);
-            visualCandidate="";
-            prefs.edit().remove("raid_day_capture_stage")
-                .remove("raid_day_capture_time").apply();
-            updateVisual();
-        });
-        // Only steps that mention a locality expose that exact coordinate,
-        // copied upon an explicit user tap. No external-app interaction.
-        copyButton=button(getString(R.string.raid_day_copy_coords));
-        LinearLayout.LayoutParams copyLp=new LinearLayout.LayoutParams(-1,dp(33));
-        copyLp.topMargin=dp(7);
-        guideContent.addView(copyButton,copyLp);
-        copyButton.setOnClickListener(v->{
-            if(finished||plan.coords(index).isEmpty())return;
-            ClipboardManager cb=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
-            if(cb==null)return;
-            cb.setPrimaryClip(ClipData.newPlainText("Local do roteiro",plan.coords(index)));
-            Toast.makeText(this,"Coordenadas copiadas · confira antes de usar",
-                Toast.LENGTH_SHORT).show();
-        });
-        cycleText=text("",10,Color.rgb(177,204,224),false);
-        LinearLayout.LayoutParams cycleLp=new LinearLayout.LayoutParams(-1,-2);
-        cycleLp.topMargin=dp(5);
-        guideContent.addView(cycleText,cycleLp);
-        LinearLayout actions=new LinearLayout(this);
-        LinearLayout.LayoutParams ap=new LinearLayout.LayoutParams(-1,dp(37));
-        ap.topMargin=dp(10);
-        guideContent.addView(actions,ap);
-        TextView back=button("←");
-        back.setContentDescription("Voltar uma etapa");
-        actions.addView(back,new LinearLayout.LayoutParams(dp(36),-1));
-        back.setOnClickListener(v->{
-            if(index>0){
-                String from=plan.step(index).id;
-                index--;finished=false;endPending=false;
-                persist("BACK",from);
-                reactAvatar(RaidDayAvatarFrames.QUESTION);updateStep();
-            }
-        });
-        confirmButton=button(getString(R.string.raid_day_confirm));
-        LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,-1,1);
-        cp.leftMargin=dp(6);
-        actions.addView(confirmButton,cp);
-        confirmButton.setOnClickListener(v->{
-            if(paused)return;
-            long now=SystemClock.elapsedRealtime();
-            if(now-lastConfirmAt<650L)return; // no accidental double-step
-            lastConfirmAt=now;
-            if(finished)return; // não reiniciar, nem apagar, pelo botão Confirmar
-            String confirmedStep=plan.step(index).id;
-            if(index<plan.size()-1)index++;
-            else finished=true;
-            endPending=false;
-            persist(finished?"FINISHED":"STEP_CONFIRMED",confirmedStep);
-            reactAvatar(RaidDayAvatarFrames.OK);
-            updateStep();
-        });
-        pauseButton=button("Ⅱ");
-        pauseButton.setContentDescription("Pausar ou retomar guia");
-        LinearLayout.LayoutParams pauseP=new LinearLayout.LayoutParams(dp(40),-1);
-        pauseP.leftMargin=dp(6);
-        actions.addView(pauseButton,pauseP);
-        pauseButton.setOnClickListener(v->{
-            paused=!paused;endPending=false;
-            persist(paused?"PAUSED":"RESUMED");
-            reactAvatar(paused?RaidDayAvatarFrames.QUESTION:
-                RaidDayAvatarFrames.WAVE);
-            updateStep();
-        });
-        cycleActions=new LinearLayout(this);
-        LinearLayout.LayoutParams cycleActionsLp=new LinearLayout.LayoutParams(-1,dp(36));
-        cycleActionsLp.topMargin=dp(6);
-        guideContent.addView(cycleActions,cycleActionsLp);
-        repeatButton=button(getString(R.string.raid_day_cycle_repeat));
-        cycleActions.addView(repeatButton,new LinearLayout.LayoutParams(0,-1,1));
-        repeatButton.setOnClickListener(v->{
-            if(paused||finished||plan.step(index).repeatTo.isEmpty())return;
-            if(repeatedCycles>=100){
-                statusText.setText("Limite de repetições salvas neste roteiro");
-                return;
-            }
-            String from=plan.step(index).id;
-            repeatedCycles++;
-            index=plan.indexOf(plan.step(index).repeatTo);
-            endPending=false;persist("CYCLE_REPEATED",from);
-            reactAvatar(RaidDayAvatarFrames.RUN_0);updateStep();
-        });
-        skipButton=button(getString(R.string.raid_day_no_pass));
-        LinearLayout.LayoutParams skipLp=new LinearLayout.LayoutParams(0,-1,1);
-        skipLp.leftMargin=dp(6);
-        cycleActions.addView(skipButton,skipLp);
-        skipButton.setOnClickListener(v->{
-            if(paused||finished)return;
-            RaidDayGuidePlan.Step step=plan.step(index);
-            if(!step.skipTo.isEmpty()){
-                index=plan.indexOf(step.skipTo);
-                endPending=false;
-                persist("OPTIONAL_SKIPPED",step.id);
-                reactAvatar(RaidDayAvatarFrames.WAVE);updateStep();return;
-            }
-            if(step.noPassTo.isEmpty())return;
-            index=plan.indexOf(step.noPassTo);
-            endPending=false;
-            persist("NO_PASS",step.id);
-            reactAvatar(RaidDayAvatarFrames.ALERT);updateStep();
-        });
-        LinearLayout fallbackActions=new LinearLayout(this);
-        LinearLayout.LayoutParams fallbackLp=new LinearLayout.LayoutParams(-1,dp(36));
-        fallbackLp.topMargin=dp(6);
-        guideContent.addView(fallbackActions,fallbackLp);
-        notHappenedButton=button(getString(R.string.raid_day_not_happened));
-        fallbackActions.addView(notHappenedButton,
-            new LinearLayout.LayoutParams(0,-1,1));
-        helpButton=button(getString(R.string.raid_day_help));
-        LinearLayout.LayoutParams hLp=new LinearLayout.LayoutParams(0,-1,1);
-        hLp.leftMargin=dp(4);
-        fallbackActions.addView(helpButton,hLp);
-        endButton=button(getString(R.string.raid_day_end));
-        LinearLayout.LayoutParams eLp=new LinearLayout.LayoutParams(0,-1,1);
-        eLp.leftMargin=dp(4);
-        fallbackActions.addView(endButton,eLp);
-        raidRecordActions=new LinearLayout(this);
-        raidRecordActions.setOrientation(LinearLayout.VERTICAL);
-        TextView raidHeading=text("Resultado da reide (informação sua):",
-            11,Color.rgb(180,209,223),false);
-        raidRecordActions.addView(raidHeading);
-        String[][] states={
-            {"Lobby","RAID_LOBBY"},{"Batalha","RAID_BATTLE"},{"Vitória","RAID_WIN"},
-            {"Derrota","RAID_LOSS"},{"Saiu","RAID_LEFT"},{"Recompensas","RAID_REWARDS"},
-            {"Encontro","RAID_ENCOUNTER"},{"Capturou","RAID_CAUGHT"},{"Fugiu","RAID_FLED"}
-        };
-        for(int j=0;j<3;j++){
-            LinearLayout row=new LinearLayout(this);
-            LinearLayout.LayoutParams rowLp=new LinearLayout.LayoutParams(-1,dp(34));
-            rowLp.topMargin=dp(5);
-            raidRecordActions.addView(row,rowLp);
-            for(int i=0;i<3;i++){
-                String label=states[j*3+i][0];
-                String type=states[j*3+i][1];
-                TextView result=button(label);
-                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-1,1);
-                if(i>0)lp.leftMargin=dp(4);
-                row.addView(result,lp);
-                result.setOnClickListener(v->{
-                    if(paused||finished)return;
-                    persist(type);
-                    reactAvatar(type.equals("RAID_WIN")||type.equals("RAID_CAUGHT")?
-                        RaidDayAvatarFrames.OK:RaidDayAvatarFrames.QUESTION);
-                    statusText.setText("Registrado pelo jogador: "+label+
-                        ". Isso não comprova passes ou recompensas extras.");
-                });
-            }
-        }
-        LinearLayout.LayoutParams raidLp=new LinearLayout.LayoutParams(-1,-2);
-        raidLp.topMargin=dp(6);
-        guideContent.addView(raidRecordActions,raidLp);
+        visualAccept.setOnClickListener(v->confirmEduVision());
+        visualReject.setOnClickListener(v->rejectEduVision());
 
-        notHappenedButton.setOnClickListener(v->{
-            if(paused||finished)return;
-            persist("NOT_OBSERVED");
-            reactAvatar(RaidDayAvatarFrames.ALERT);
-            statusText.setText("Não confirmado. "+plan.step(index).onNotHappened);
-        });
-        helpButton.setOnClickListener(v->{
-            if(finished)return;
-            reactAvatar(RaidDayAvatarFrames.QUESTION);
-            statusText.setText(RaidDayRecovery.guide(
-                journal.events().all(sessionKey),plan.step(index).id,
-                plan.step(index).safeReturn));
-        });
-        endButton.setOnClickListener(v->{
-            if(training){leaveTraining();return;}
-            if(!active)return;
-            if(!endPending){
-                endPending=true;
-                reactAvatar(RaidDayAvatarFrames.QUESTION);
-                endButton.setText("Confirmar fim");
-                statusText.setText("Confirmar encerra esta sessão, sem apagar o histórico.");
-                return;
-            }
-            endPending=false;active=false;finished=true;
-            persist("ENDED");updateStep();
-        });
-        trainingExit=button("Sair do Modo Treino (não salvar)");
-        LinearLayout.LayoutParams trainingLp=new LinearLayout.LayoutParams(-1,dp(36));
-        trainingLp.topMargin=dp(6);
-        guideContent.addView(trainingExit,trainingLp);
-        trainingExit.setOnClickListener(v->leaveTraining());
         panelScroll=new ScrollView(this){
-            @Override protected void onMeasure(int widthMeasureSpec,int heightMeasureSpec){
-                int maximum=Math.max(dp(90),
-                    getResources().getDisplayMetrics().heightPixels-dp(24));
-                super.onMeasure(widthMeasureSpec,
-                    View.MeasureSpec.makeMeasureSpec(maximum,View.MeasureSpec.AT_MOST));
+            @Override protected void onMeasure(int w,int h){
+                int maximum=Math.min(dp(285),
+                    (int)(getResources().getDisplayMetrics().heightPixels*.43f));
+                super.onMeasure(w,View.MeasureSpec.makeMeasureSpec(
+                    Math.max(dp(145),maximum),View.MeasureSpec.AT_MOST));
             }
         };
+        panelScroll.setFillViewport(false);
         panelScroll.setVerticalScrollBarEnabled(false);
         panelScroll.addView(panel,new ScrollView.LayoutParams(-1,-2));
         panelParams=new WindowManager.LayoutParams(
-            dp(272),-2,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            eduPanelWidth,-2,WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,PixelFormat.TRANSLUCENT);
         panelParams.gravity=Gravity.TOP|Gravity.LEFT;
-        // Android 12+ pode bloquear toques em outro app quando a janela
-        // sobreposta obscurece excessivamente a tela.
         panelParams.alpha=.79f;
         placePanelCoordinates();
     }
+    private void addSettingsButton(TextView b,Runnable action){
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(38));
+        p.topMargin=dp(6);
+        eduSettings.addView(b,p);
+        b.setOnClickListener(v->action.run());
+    }
+    private void toggleEduVision(){
+        if(RaidDayScreenCaptureService.isActive()){
+            stopService(new Intent(this,RaidDayScreenCaptureService.class)
+                .setAction(RaidDayScreenCaptureService.STOP));
+            eduNote="Acompanhamento visual encerrado. Você pode continuar manualmente.";
+            updateStep();return;
+        }
+        if(training){
+            eduNote="Na simulação, a leitura de tela fica desligada.";
+            updateStep();return;
+        }
+        if(CandyScreenCaptureService.isActive()){
+            eduNote="A captura do Doce Raro está ativa. Encerre aquela sessão primeiro.";
+            updateStep();return;
+        }
+        // O painel e a bolha desaparecem ANTES do diálogo do sistema.
+        setVisible(false);
+        if(bubble!=null)bubble.setVisibility(View.GONE);
+        Intent intent=new Intent(this,RaidDayCaptureConsentActivity.class)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try{startActivity(intent);}
+        catch(RuntimeException error){
+            if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+            eduNote="O Android não abriu a autorização. Continue manualmente.";
+        }
+    }
+    private void confirmEduVision(){
+        if(training||!active||paused||visualCandidate.isEmpty())return;
+        if(System.currentTimeMillis()-visualSeenAt>180000L){
+            visualCandidate="";updateStep();return;
+        }
+        appendEvent("VISUAL_SUGGESTION_ACCEPTED_"+visualCandidate,
+            plan.step(index).id);
+        appendEvent(visualCandidate,plan.step(index).id);
+        eduNote="Você confirmou a tela. A etapa não avançou automaticamente.";
+        visualCandidate="";
+        prefs.edit().remove("raid_day_capture_stage")
+            .remove("raid_day_capture_time").apply();
+        reactAvatar(RaidDayAvatarFrames.OK);
+        updateStep();
+    }
+    private void rejectEduVision(){
+        if(visualCandidate.isEmpty())return;
+        if(!training&&active)appendEvent("VISUAL_REJECTED",plan.step(index).id);
+        visualCandidate="";
+        prefs.edit().remove("raid_day_capture_stage")
+            .remove("raid_day_capture_time").apply();
+        eduNote="Certo! Vamos continuar com o que você observar no jogo.";
+        updateStep();
+    }
+    private void copyEduCoordinates(){
+        String coords=plan.coords(index);
+        if(coords==null||coords.isEmpty())return;
+        ClipboardManager cb=(ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+        if(cb==null)return;
+        cb.setPrimaryClip(ClipData.newPlainText("Coordenadas citadas no roteiro",coords));
+        Toast.makeText(this,"Coordenadas copiadas",Toast.LENGTH_SHORT).show();
+    }
+
     /** Grava eventos reais antes de mostrar a próxima etapa. */
     private void persist(String eventType){
         persist(eventType,plan.step(index).id);
