@@ -1,12 +1,14 @@
-# LEIA PRIMEIRO — PokeSearch LT227 (02/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT305 Edu (07/11/2026)
 
 **LEITURA OBRIGATÓRIA DE CONTINUIDADE:** [manual completo de GitHub, CI, build, APK assinado, merge, OTA, Drive, Arquivo Mestre e recuperação](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Verifique o estado remoto antes de agir e preserve o protocolo de consentimento. Este documento não transfere acesso, secrets nem permissões entre contas.
 
 **Fonte oficial:** https://github.com/LucianoToscano/PokeSearch
 
-**Estado público verificado:** LT227, versão 0.02.27, code 54434. GitHub Releases/latest aponta para [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk): 28.080.679 bytes, SHA-256 1b6733a3caa43384a40510590c2340de9870172803878c62f13b3055983766b6. SOURCE_COMMIT 9ddefe74d7cdf9fb0c67f636385cdcdbbd5f403f. Workflow oficial #41433915635 SUCCESS. LT215 é estável histórica; LT226 foi QA (0.02.26/54433).
+**Estado oficial verificado em 07/11/2026:** **LT305 — 0.03.05 — versionCode 54511 — label 51309**, [Release/latest v0.03.05-54511](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.05-54511), APK `PokeSearch-v0.03.05-LT.apk` (34.033.264 bytes, SHA-256 `9d20b6dbe607a13a442d41d8c7e4aca6c717ff5be0632226a08f9a0ce687754d`). GitHub Actions oficial [#42407546825](https://github.com/LucianoToscano/PokeSearch/actions/runs/42407546825) **completed/success**; fonte de publicação `7cb70daec956b8f6991cea7d200fab6a6c4468a5`; PR #302 mesclada por squash `58859a5b65ec2b933540f3652d2cde79456d035b`. Certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, v2 validado no workflow. LT304, QA1/QA2 e LT227 são **históricos**, nunca restaurar versões antigas como base.
 
-**Novidades LT227:** sprites P/M/G nos resultados com escala da área alfa visível, moldura opcional e Sem fundo sem sombras/bordas, preservando duas Pokébolas, preferências independentes e os filtros. É um hotfix incremental, não um projeto novo.
+**Prioridade atual:** validação física do **Edu — Assistente do Dia de Reides** no Samsung: balões brancos de quadrinhos, personagem G=100 pixels físicos, toque longo de 1,2 s para configurações ocultas, arraste, conversa com passe, coordenadas tocáveis e separação D−1/D. A LT305 está publicada, **mas Samsung/OCR PT-BR/EN ainda NÃO foram homologados**. Leia [Guia Mestre](docs/GUIA_MESTRE.md) e os registros especializados [balões](docs/LT304_EDU_BALOES_QUADRINHOS_AJUSTES_OCULTOS_20261107.md) e [conversa](docs/LT304_EDU_CONVERSA_GUIADA_PASSES_HAVAI_NZ_D_20261107.md). Não anunciar instalação automática.
+
+**Histórico — novidades da LT227 (não é base atual):** sprites P/M/G nos resultados com escala da área alfa visível, moldura opcional e Sem fundo sem sombras/bordas, preservando duas Pokébolas, preferências independentes e os filtros. É um hotfix incremental, não um projeto novo.
 
 **IMPORTANTE:** este arquivo pode ser posterior ao commit de fonte do APK. Antes de auditar, verificar o HEAD, Release/latest e versão do pacote ZIP realmente recebido. Não afirmar QA Samsung, sessão real de API ou instalação sem evidências. Atualizações estáveis e assinatura só com autorização explícita do dono. Não publicar credenciais.
 
