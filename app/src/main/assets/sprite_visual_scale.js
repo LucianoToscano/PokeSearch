@@ -287,7 +287,7 @@ function resetDetail(img){
  for(const [token,entry] of pendingDetailBounds){
   if(entry.img===img)pendingDetailBounds.delete(token);
  }
- if(img.dataset)img.dataset.psDetailProbeUrl="";
+ if(img.dataset){img.dataset.psDetailProbeUrl="";img.dataset.psDetailMeasured="";}
  setDetailFit(img,null);
 }
 function onDetailNativeBounds(token,url,bounds){
@@ -303,18 +303,25 @@ function onDetailNativeBounds(token,url,bounds){
  const fit=detailGeometryFit(bounds,pending.size);
  if(!fit)return false;
  setDetailFit(img,fit);
+ if(img.dataset)img.dataset.psDetailMeasured=pending.url;
  return true;
 }
 function applyDetail(img,cardBounds,verifiedSource=false){
  if(!img?.style?.setProperty||Number(img.naturalWidth)<8)return false;
  const url=String(img.currentSrc||img.src||"");
  const size=Number(img.clientWidth)||30;
+ if(img.dataset?.psDetailMeasured===url||img.dataset?.psDetailProbeUrl===url)
+  return true;
  // Images locally decoded by Android/WebView may already be canvas-readable.
  // Use the actual DISPLAYED image, never a proxy or a different Pokémon.
  const measured=visibleBounds(img);
  const bounds=measured||(cardBounds?.url===url?cardBounds:null);
  const fit=detailGeometryFit(bounds,size);
- if(fit){setDetailFit(img,fit);return true;}
+ if(fit){
+  setDetailFit(img,fit);
+  if(img.dataset)img.dataset.psDetailMeasured=url;
+  return true;
+ }
  setDetailFit(img,null);
  if(!verifiedSource||!/^https:\/\//i.test(url))return false;
  const bridge=root.Native;
