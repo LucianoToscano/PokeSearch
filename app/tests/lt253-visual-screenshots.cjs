@@ -539,6 +539,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    // LT297 — real detail WebView: compact one/two type icons and
    // a defensive type effectiveness panel with no stale Pokemon identity.
    const typing297=await page.evaluate(()=>{
+    // This read-only fixture replicates the APK-generated metadata absent
+    // from a raw checkout's file:// visual gate. Never guess forms in app.
+    if(!window.PokeSearchCardMetaData)
+     window.PokeSearchCardMetaData={base:{
+      255:[["fire"],[]],16:[["normal","flying"],[]]},forms:{}};
     const show=(number,name,sourceIndex,form="")=>
      window.showDetails({number,name,sourceIndex,form,iv:"0/15/14",
       cp:697,level:25,despawn:"04:30",moves:"Scratch / Ember",
