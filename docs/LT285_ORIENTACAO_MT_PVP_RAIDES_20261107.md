@@ -1,5 +1,5 @@
 # PokeSearch LT285 — Assistente de MT para PvP e Raides
-Data: 07/11/2026. Estado inicial: PR de QA, não equivale a APK publicado.
+Data: 07/11/2026. **Estado final:** release oficial assinada publicada e verificada; teste físico Samsung permanece pendente. Inicialmente era PR QA.
 
 ## Referência e fontes
 - Base oficial LT284 `v0.02.84-54488`. Solicitação do usuário: continuar as melhorias aprovadas, etapa de golpes/MT/legado no roadmap [#277](https://github.com/LucianoToscano/PokeSearch/issues/277).
@@ -21,3 +21,9 @@ Data: 07/11/2026. Estado inicial: PR de QA, não equivale a APK publicado.
 
 ## Próximas etapas
 Ainda faltam recomendações de golpes adaptadas ao chefe específico, atualização oficial em tempo real de eventos/MT, custo de fortalecimento verificável, presets, modo Eventos, API/429 e OTA; acompanhar [#277](https://github.com/LucianoToscano/PokeSearch/issues/277).
+
+## Evidência final: merge, assinatura e publicação
+- [PR #279](https://github.com/LucianoToscano/PokeSearch/pull/279) mesclada em `53970e8b8d7dc3a7bc6ccb8a054b63e70cbf801f` após oito workflows no SHA `5f1d0735d114f3a64c724a251e823a970e7b460f` com `success` (Node, regressão, Android, OTA, visual, PvE, beta APK).
+- [Workflow oficial #42342238520](https://github.com/LucianoToscano/PokeSearch/actions/runs/42342238520): `completed/success`, `preflight`, `publish`, build protegido, verificação Android de assinatura e digest de release aprovados. Certificado pinado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- [Release oficial LT285](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.85-54489): `v0.02.85-54489`, publicada em 07/11/2026 às 05:23:02 UTC, `draft=false`, `prerelease=false`. APK `PokeSearch-v0.02.85-LT.apk`, 33.820.604 bytes, SHA-256 `7c361bc8d118b9e764e62a68000c5b36b4429cdbb7c7c1bc76e56caf97351ea1`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.85-54489/PokeSearch-v0.02.85-LT.apk). Fonte exata da solicitação `cf6feb0a13390f0df303edb0486fc4e498852a85`.
+- **Pendente:** homologação física Samsung P1/P2, impacto no tempo de expansão e checagem de disponibilidade real de MT Elite via anúncio oficial. Notas da fonte histórica não substituem status ao vivo. Android segue exigindo confirmação da instalação.
