@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.02.93",
-  "code": 54497,
-  "label": 51297,
-  "previous_tag": "v0.02.92-54496",
-  "qa_max_code": 54496,
-  "release_notes": "PokeSearch LT293: corrigidas as miniaturas de eventos que continuavam minúsculas nos Resultados, especialmente Charmander com chapéu nas duas Pokébolas. O erro persistia porque os PNGs de origem do PoGoCoordinates eram exibidos corretamente mas suas margens transparentes não podiam ser medidas pelo canvas WebView bloqueado por CORS; as versões LT288–LT290 mantinham zoom neutro nesses casos. Um decodificador Android nativo e assíncrono, com URL de imagem exata já validada no card do site, calcula somente o contorno alfa 96×96, sem modificar a arte/URL exibida nem fazer buscas extras na API. A leitura usa HTTPS e hosts permitidos, sem cookies, credenciais, coordenadas ou redirecionamentos, com limites de tamanho, tempo, memória, duas threads e cache. O Resultado só é ajustado se a silhueta real ocupar menos de 80% do quadrado, preservando as proporções normais de Psyduck, Snorlax, Treecko, Mudkip, Pikachu etc. A identidade da URL e token é conferida também no callback para evitar modificações em linhas antigas ou trocadas. Quando o serviço remoto não permite leitura, mantém o fallback seguro e não inventa zoom nem outra fantasia. Preservados P/M/G, caixas com ou sem bordas, dados, IV, ranks, golpes, cards detalhados, sprites especiais, filtros, favoritos, OTA e duas Pokébolas independentes. PR #287 aprovada por sete gates (Node completa, Java, Android core, OTA, visual, beta privado), teste físico Samsung pendente."
+  "version": "0.02.94",
+  "code": 54498,
+  "label": 51298,
+  "previous_tag": "v0.02.93-54497",
+  "qa_max_code": 54497,
+  "release_notes": "PokeSearch LT294: regra universal de enquadramento visual das sprites dos Resultados das duas Pokébolas, modos 100% e Rank #1, com/sem moldura e P/M/G. O desenho efetivamente opaco de qualquer imagem mensurável passa a ocupar 85–90% da caixa, meta 87%, centralizado e sem corte, independente das margens transparentes do arquivo. A LT293 media silhuetas pequenas mas só aplicava correção quando a imagem ocupava menos de 80% do PNG (80% vezes os 88% da área de imagem = apenas 70,4% da caixa) e limitava imagens muito pequenas a zoom 2,85× ou 7×. LT294 aplica o mesmo cálculo para todo contorno verificado da própria imagem exibida (canvas, card do PoGoCoordinates ou leitor nativo Android), admitindo zoom maior apenas mediante geometria real. URLs oficiais fixadas de sprites GO exatas também podem usar a leitura nativa quando comprovadas pela fonte; não se aceitam URLs arbitrárias ou fantasias inferidas. A caixa física, toque, URL e imagem originais permanecem iguais; sprites grandes ficam praticamente inalteradas. Leituras de outra URL e respostas atrasadas continuam ignoradas; com servidor inacessível mantém fallback conservador em vez de inventar zoom. Preservados IV, rankings, golpes, formas, eventos, Shiny, duas Pokébolas, favoritos, localização, OTA e assinatura permanente. Sete gates CI da PR #288 aprovados, incluindo Node completo, Android, Java, OTA, visual e beta privado. Homologação física Samsung ainda pendente."
 }
