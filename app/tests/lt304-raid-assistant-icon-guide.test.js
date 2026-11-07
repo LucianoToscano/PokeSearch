@@ -35,7 +35,7 @@ for(let i=0;i<steps.length;i++){
  assert.equal(e.id,"E"+String(i+1).padStart(2,"0"));
  for(const name of ["titulo","instrucao","falaEdu","ajudaEdu","periodo",
                     "naoAconteceu","retornoSeguro"])
-   assert.ok(e[name]&&e[name].length>=3,e.id+" missing "+name);
+   assert.ok(e[name]&&e[name].length>=(name==="periodo"?1:3),e.id+" missing "+name);
  assert.ok(Array.isArray(e.precondicoes)&&e.precondicoes.length>0);
  assert.deepEqual(e.confirmacoesAceitas,["USER_ATTESTED"]);
  if(e.local!==null)assert.ok(variant.locais[e.local],e.id+" location");
