@@ -1,5 +1,5 @@
 # PokeSearch LT283 — Painéis inteligentes, confiabilidade e desempenho
-Data: 07/11/2026. Estado inicial: **branch de QA**, sem afirmar publicação, assinatura, merge ou homologação física.
+Data: 07/11/2026. **Estado final:** release oficial publicada e verificada; homologação física Samsung ainda pendente. O estágio inicial foi branch QA.
 
 ## Base verificada
 - Estável anterior LT282 `0.02.82`, versionCode `54486`, release [v0.02.82-54486](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.82-54486).
@@ -30,3 +30,9 @@ Data: 07/11/2026. Estado inicial: **branch de QA**, sem afirmar publicação, as
 
 ## Publicação
 Exige PR, CI do SHA, merge autorizado e workflow oficial `release/official-request.json`, hash, certificado e release verificáveis. A LT282 permanece opção de rollback até que LT283 seja oficialmente distribuída.
+
+## Evidência final de integração e publicação
+- PR [#276](https://github.com/LucianoToscano/PokeSearch/pull/276), squash merge `be6b29aee55e8b534454bc5555b46b3f9380540f`, testes no head `3fc82f21b5ff277ad3d95ec725eee93587aabb49`: oito QA `success` incluindo beta privado; alteração feita sem tocar a chave de assinatura.
+- [Workflow permanente #42339368036](https://github.com/LucianoToscano/PokeSearch/actions/runs/42339368036) `completed/success` com `preflight` e `publish` aprovados, pacote ZIP válido, R8, apksigner, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` e hash verificados.
+- [Release LT283](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.83-54487) `v0.02.83-54487`, 07/11/2026 04:42:53 UTC, `draft=false`, `prerelease=false`. Asset `PokeSearch-v0.02.83-LT.apk` `uploaded`, **33.816.856 bytes**, SHA-256 `1ebbdcb1844f842c4f33516af34da6f5de5f78c69951ec00aeb4feeb1f21ac14`, [download direto](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.83-54487/PokeSearch-v0.02.83-LT.apk).
+- **Não comprovado:** instalação/uso real no Samsung, comparação cronometrada de performance nem conclusão das etapas posteriores do [roadmap #277](https://github.com/LucianoToscano/PokeSearch/issues/277).
