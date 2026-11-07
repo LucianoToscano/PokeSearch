@@ -108,7 +108,7 @@ assert.ok(html.includes('id="psRankAlternates" hidden'));
 assert.ok(html.includes('panel.hidden=false;button?.setAttribute?.("aria-expanded","true")'));
 assert.ok(html.includes("orderEvolutionRows?.("),
  "expanded analysis uses evolution stage order, not the separate RG recommendation");
-assert.ok(html.includes("...orderedEntries,...references,...megas"),
+assert.ok(html.includes("...orderedEntries,...orderedReferences,...megas"),
  "Mega projections follow ordinary evolution stages in the expanded panel");
 const secondary=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
 assert.ok(secondary.includes("extends OverlayService"),
