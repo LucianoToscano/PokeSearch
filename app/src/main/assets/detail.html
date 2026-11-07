@@ -478,6 +478,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* LT295: only the 30dp card artwork moves; text/grid/actions stay fixed.
    Match the measured 87% visible-art rule used by the 100%/#1 results. */
 #artColumn:not(.gengarSprite) #img{transform:translate(var(--ps-detail-x,0px),var(--ps-detail-y,0px)) scale(var(--ps-alpha-scale,1));transform-origin:center}
+#artColumn #img{pointer-events:none} /* Large transparent pixels never block card buttons. */
 
 /* QA20: number, sex, size and form belong IMMEDIATELY below Pokémon name.
    QA18's grid-row:2 spanned the action column and created a blank stripe below title.
