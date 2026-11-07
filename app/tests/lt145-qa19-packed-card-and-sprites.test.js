@@ -16,7 +16,9 @@ assert.ok(css.includes("#major .statValue{font-size:10px;"),"uncrushed IV number
 assert.ok(css.includes("#major .statTile:nth-child(2) .statValue{font-size:9px;"),"CP readable");
 assert.ok(css.includes("#major .statTile:nth-child(3) .statValue{font-size:8px;"),"level readable");
 assert.ok(d.includes('class="sexChip"')&&d.includes('class="sizeChip"'),"separate sex/size");
-assert.ok(d.includes('class="ivTypes"'),"types left of IV");
+assert.ok(d.includes('class="statTile psTypeTile"')&&
+ d.includes('id="psTypeTap"')&&d.includes('#major .ivTile .ivTypes{display:none!important}'),
+ "LT297: type symbols are now separated to the left of the IV box");
 assert.ok(d.includes('<span class="despawnLabel">Despawn</span>'),"timer beneath star");
 assert.ok(d.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red coords");
 assert.ok(d.includes('window.PokeSearchSpriteScale?.applyDetail?.('),"detail alpha scale");
