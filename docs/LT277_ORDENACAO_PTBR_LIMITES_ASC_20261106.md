@@ -24,4 +24,11 @@ Os relatos sobre `min_ttl`, `blacklist_*`, `always_show`, `powerspots`, `rarecan
 ## QA e rollout
 - Validar no mesmo branch: Node, interface P/M/G, Android Java e OTA; confirmar que `-CP` é serializado sem conversão e que `-IV` não recebe uma promessa de ordem global.
 - Em aparelho Samsung, testar cada opção com o provedor conectado e ambas as Pokébolas. Sem acesso autenticado nesta execução, a interface e o contrato podem ser testados, mas não o resultado ao vivo.
-- Base atual LT276 `0.02.76/54480`; LT277 `0.02.77/54481` candidata à publicação após CI/merge.
+- **Resultado:** PR #270 integrada na main; release oficial **LT277 `0.02.77/54481` publicada e assinada**. O teste físico e a confirmação da ordenação ao vivo na API em Samsung continuam pendentes.
+
+## Encerramento pós-publicação
+- PR #270 mesclada em `8e98ed2ec4e9d75224f4dbe46f80ad37e5e6a8a6`, oito checks automáticos `success` no head `79fee0d41de3789d1928a6262a4099db5649a88b`.
+- Workflow [#42318676353](https://github.com/LucianoToscano/PokeSearch/actions/runs/42318676353) concluiu preflight e publicação `success`: build protegido, assinatura, SHA-256 e upload verificados.
+- Release [v0.02.77-54481](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.77-54481) `PokeSearch-v0.02.77-LT.apk` (33.614.942 bytes), SHA-256 `f9efdea4c75c896d4c1d3beae95ed7a2744833250c0267f5ccb7ce7647c88851`, publicada em 07/11/2026 00:33:34 UTC.
+- **Não afirmar:** que o aplicativo já foi instalado em Samsung ou que a API ordena `-IV` rigorosamente. A homologação física não foi realizada nesta execução.
+
