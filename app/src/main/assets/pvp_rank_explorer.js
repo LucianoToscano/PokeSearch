@@ -318,6 +318,13 @@
    rank:exact?.rank||null,iv:state.iv,forms:state.forms,
    gm:state.gm,overall:state.overall,family:state.family,railKey:state.railKey});
  }
+ // LT299: IV tile toggles the entire Rank Classe panel, even after the
+ // user changes its league (which changes the rank explorer's clickKey).
+ // Do not close a Rank Geral panel on an IV tap.
+ function closeIfKind(kind){
+  if(!state||state.kind!==kind||!view||view.hidden)return false;
+  close();return true;
+ }
  function close(){
   if(view)view.hidden=true;
   state=null;openKey="";
@@ -644,7 +651,7 @@
   if(typeof window!=="undefined"&&typeof window.resizeEvolutionPanel==="function")
    window.resizeEvolutionPanel();
  }
- return {open,toggle,close,switchOverallLeague,switchOverallSpecies,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
+ return {open,toggle,close,closeIfKind,switchOverallLeague,switchOverallSpecies,switchClassLeague,getIvRows,getOverallRows,compareIv,ivIndex,megaName,pageForRank,
   setFilter,jumpToSelected,toggleComparison,comparedRows,visibleRows,filteredCsv,summaryText,feedback};
 
 });
