@@ -14,12 +14,24 @@
             </intent-filter>
         </activity>
         <activity android:name=".CommunityScrapbookActivity" android:exported="false" />
+        <activity android:name=".RaidDayCaptureConsentActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.Light.Dialog.NoActionBar" />
+        <service android:name=".RaidDayScreenCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+        <activity android:name=".RaidDayEventSettingsActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+        <receiver android:name=".RaidDayReminderReceiver"
+            android:exported="false" />
         <activity android:name=".CandyCaptureConsentActivity"
             android:exported="false"
             android:theme="@android:style/Theme.Material.Light.Dialog.NoActionBar" />
         <service android:name=".OverlayService" android:exported="false" />
         <service android:name=".SecondaryOverlayService" android:exported="false" />
         <service android:name=".RareCandyOverlayService" android:exported="false" />
+        <service android:name=".RaidDayAssistantOverlayService" android:exported="false" />
         <service android:name=".CandyScreenCaptureService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />

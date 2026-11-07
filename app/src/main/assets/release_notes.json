@@ -3104,6 +3104,36 @@
           "Verificação visual no Samsung com primeira e segunda Pokébolas após instalar."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt304-edu-assistente-conversa-ficticia-20261107",
+      "minVersionCode": 54510,
+      "date": "07/11/2026",
+      "title": "LT304 — Edu, Assistente do Dia de Reides",
+      "sections": {
+        "novidades": [
+          "Conheça o Edu: mini treinador flutuante que explica o tutorial Dia de Reides por balões de conversa, com uma pergunta ou instrução por vez.",
+          "Modo Simular hoje: treine o roteiro de 11 etapas, distinguindo véspera e dia do evento, sem gravar ações reais nem alterar o Pokémon GO.",
+          "Registro manual de reides com perguntas simples para vitória, derrota, saída e captura; continue de onde parou ao reabrir."
+        ],
+        "melhorias": [
+          "Janela do Edu pequena, arrastável pelo cabeçalho e com posição salva. O menu ⋯ separa P/M/G, animação, horários, lembretes e leitura visual do tutorial.",
+          "A preparação agora faz sete perguntas; não oferece locais aleatórios para começar. O roteiro segue as regiões e a ordem da variante relatada.",
+          "Na leitura visual opcional, o Edu recolhe a janela durante a autorização do Android e oferece sugestões que exigem confirmação do jogador.",
+          "Programação configurada manualmente e fusos com referência a Brasília; eventos sem fontes oficiais continuam identificados como não verificados.",
+          "O mini Edu agora começa no tamanho G (100 px); P (50 px) e M (75 px) continuam disponíveis no menu ⋯ e a escolha anterior é preservada."
+        ],
+        "correcoes": [
+          "Removido o painel gigante com horários de quatro países, nine botões simultâneos e avisos permanentes.",
+          "O guia não deve encobrir o diálogo de compartilhamento de tela do Android.",
+          "As reides podem ser registradas separadamente sem interpretar captura como vitória ou conceder passes automaticamente."
+        ],
+        "emDesenvolvimento": [
+          "Validação física Samsung do novo painel, gestos, acessibilidade, notificações e autorização de captura ainda necessária.",
+          "Reconhecimento visual PT-BR/EN é experimental; requer calibração com telas reais e medição de falsos positivos.",
+          "O método comunitário Bug dos Passes não é garantido, pode violar os termos do jogo e não é executado pelo PokeSearch. Nenhum horário oficial foi carregado automaticamente."
+        ]
+      }
     }
   ]
 }

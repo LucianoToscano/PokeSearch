@@ -23,6 +23,10 @@ public final class CandyCaptureConsentActivity extends Activity {
                 .getBoolean("candyAutoPickupOptIn",false)){
             finish();return;
         }
+        if(RaidDayScreenCaptureService.isActive()){
+            Toast.makeText(this,"Encerre a leitura do Assistente do Dia de Reides antes de compartilhar outra tela",Toast.LENGTH_LONG).show();
+            finish();return;
+        }
         if(requested)return;
         new AlertDialog.Builder(this)
             .setTitle("Detectar Doce Raro na tela")
