@@ -69,7 +69,7 @@ assert.equal(c.maps.ivSpeciesCanonicalByName.get("duplicado"),null,"duplicate so
 assert.equal(c.maps.pvpVerifiedNames.get("wormadam (trash)"),"Wormadam (Trash)");
 assert.equal(c.maps.pvpVerifiedNames.has("zero"),false,"invalid stats not used for family listing");
 assert.ok(dock.includes('rankSpecies:ivSpeciesCanonicalByName.get(safePvpSpeciesKey(card))||""'));
-assert.ok(dock.includes("const names=pvpVerifiedNames;"),"family lookup reuses one-time index");
+assert.ok(dock.includes('typeof pvpVerifiedNames!=="undefined"?pvpVerifiedNames:'),"runtime reuses one-time index");
 assert.ok(dock.includes("return exact?[exact]:[];"),"exact form retained");
 assert.ok(!dock.includes("const names=new Map(PVP_IV_GAME_MASTER.pokemon.filter("),"no repeated full master scan");
 assert.ok(dock.includes('window.pvpEvolutionDetails=function(index){'),"per-ball context preserved");
