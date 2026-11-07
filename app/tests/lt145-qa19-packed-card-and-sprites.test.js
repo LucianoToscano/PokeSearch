@@ -19,10 +19,10 @@ assert.ok(d.includes('class="sexChip"')&&d.includes('class="sizeChip"'),"separat
 assert.ok(d.includes('class="ivTypes"'),"types left of IV");
 assert.ok(d.includes('<span class="despawnLabel">Despawn</span>'),"timer beneath star");
 assert.ok(d.includes('#coordRow #coords:not(.hasCoords):not(.isPending){'),"red coords");
-assert.ok(d.includes('window.PokeSearchSpriteScale?.apply?.(img)'),"detail alpha scale");
+assert.ok(d.includes('window.PokeSearchSpriteScale?.applyDetail?.('),"detail alpha scale");
 assert.ok(k.includes('window.PokeSearchSpriteScale?.apply?.(img)'),"result alpha scale");
 assert.ok(d.includes('src="sprite_visual_scale.js"')&&k.includes('src="sprite_visual_scale.js"'));
-assert.ok(css.includes('.gengarHalloween #img{transform:scale(calc(.49 * var(--ps-alpha-scale,1)))'),"Halloween Gengar detail");
+assert.ok(css.includes('.gengarHalloween #img{transform:translate(var(--ps-detail-x,0px),var(--ps-detail-y,0px)) scale(calc(.49 * var(--ps-alpha-scale,1)))'),"Halloween Gengar detail");
 assert.ok(k.includes('const effectiveArtFit=halloweenGengar?0.42:artFit;'),"Halloween Gengar list");
 assert.ok(k.includes('var(--visual-sprite-scale,1) * var(--ps-alpha-scale,1)'),"visual editor scale preserved");
 const env={window:{}};
