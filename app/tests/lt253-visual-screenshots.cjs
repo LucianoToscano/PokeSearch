@@ -582,6 +582,39 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
    assert.ok(typing297.ok,"LT297 type badge and defensive panel visual contract "+
     sz.name+" "+JSON.stringify(typing297));
    await page.screenshot({path:path.join(output,sz.name+"-lt297-type-panel.png")});
+   // LT299: physical CSS-pixel contract for mono/dual types on P/M/G.
+   const typeGeometry299=await page.evaluate(()=>{
+    const show=(number,name,sourceIndex)=>
+     window.showDetails({number,name,sourceIndex,iv:"0/15/14",cp:600,
+      level:22,moves:"Scratch / Ember",location:"Singapore"},"gl",false);
+    const geometry=()=>{
+     const tile=document.getElementById("psTypeTap");
+     const icons=[...tile.querySelectorAll("img")].map(img=>img.getBoundingClientRect());
+     const box=tile.getBoundingClientRect();
+     return {box:{x:box.x,width:box.width},
+      icons:icons.map(rect=>({x:rect.x,width:rect.width,height:rect.height,
+       center:rect.x+rect.width/2}))};
+    };
+    show("#255","Torchic",2991);
+    const solo=geometry();
+    show("#16","Pidgey",2992);
+    const duo=geometry();
+    const gap=duo.icons.length===2?duo.icons[1].x-
+     (duo.icons[0].x+duo.icons[0].width):null;
+    const center=solo.icons.length===1?
+     Math.abs(solo.icons[0].center-(solo.box.x+solo.box.width/2)):99;
+    const dualCenter=duo.icons.length===2?
+     Math.abs((duo.icons[0].x+duo.icons[1].x+duo.icons[1].width)/2-
+      (duo.box.x+duo.box.width/2)):99;
+    return {ok:solo.box.width===40&&duo.box.width===40&&
+     solo.icons.length===1&&duo.icons.length===2&&
+     [...solo.icons,...duo.icons].every(i=>i.width===16&&i.height===16)&&
+     Math.abs(gap-2)<.01&&center<.01&&dualCenter<.01,
+     solo,duo,gap,center,dualCenter};
+   });
+   assert.ok(typeGeometry299.ok,"LT299 icon geometry P/M/G "+
+    sz.name+" "+JSON.stringify(typeGeometry299));
+   await page.screenshot({path:path.join(output,sz.name+"-lt299-dual-types.png")});
    // LT298: real click and measurements on the shipping card WebView.
    const attack298=await page.evaluate(()=>{
     window.showDetails({number:"#255",name:"Torchic",sourceIndex:1998,
