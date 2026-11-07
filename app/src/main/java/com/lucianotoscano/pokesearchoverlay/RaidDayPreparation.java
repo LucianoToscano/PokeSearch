@@ -8,11 +8,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 /**
- * Assistente de preparação: 8 perguntas simples, uma por vez.
+ * Assistente de preparação: sete perguntas em diálogo; nenhuma escolha de local de partida.
  * Informações são declarações do jogador; nunca uma leitura do servidor.
  */
 public final class RaidDayPreparation {
-    public static final int COUNT=8;
+    public static final int COUNT=7;
     private static final String KEY="raid_day_prep_v2_";
     private static final DateTimeFormatter BR_DATE=
         DateTimeFormatter.ofPattern("dd/MM/yyyy",Locale.forLanguageTag("pt-BR"));
@@ -26,21 +26,29 @@ public final class RaidDayPreparation {
     private RaidDayPreparation(Context context){
         questions=context.getResources().getStringArray(
             R.array.raid_day_preparation_questions);
-        String[] locations=context.getResources().getStringArray(
-            R.array.raid_day_preparation_locations);
         String[] tri=context.getResources().getStringArray(
             R.array.raid_day_preparation_yes_no);
         String[] modes=context.getResources().getStringArray(
             R.array.raid_day_preparation_modes);
-        if(questions.length!=COUNT||tri.length!=3||modes.length!=2||
-            locations.length!=5)throw new IllegalStateException("Preparação inválida");
+        if(questions.length!=COUNT||tri.length!=3||modes.length!=2)throw new IllegalStateException("Preparação inválida");
         options=new String[][]{
-            {},locations,tri,tri,tri,tri,tri,modes
+            {},tri,tri,tri,tri,tri,modes
         };
     }
     public static RaidDayPreparation load(Context context,
         SharedPreferences prefs,Clock clock){
         RaidDayPreparation prep=new RaidDayPreparation(context);
+        // Migra perguntas da LT304 anterior sem descartar passes e restrições.
+        if(!prefs.getBoolean("raid_day_prep_v3_migrated",false)){
+            int[] oldIndexes={0,2,3,4,5,6,7};
+            SharedPreferences.Editor migrate=prefs.edit();
+            String[] old=new String[COUNT];
+            for(int i=0;i<COUNT;i++)old[i]=prefs.getString(KEY+"answer_"+oldIndexes[i],"");
+            for(int i=0;i<COUNT;i++)migrate.putString(KEY+"answer_"+i,old[i]);
+            migrate.putBoolean(KEY+"completed",false)
+                .putInt(KEY+"question",0)
+                .putBoolean("raid_day_prep_v3_migrated",true).apply();
+        }
         for(int i=0;i<COUNT;i++)prep.answers[i]=prefs.getString(KEY+"answer_"+i,"");
         if(prep.answers[0].isEmpty())
             prep.answers[0]=RaidDayEventClock.todayBrasilia(clock)
@@ -103,15 +111,13 @@ public final class RaidDayPreparation {
     public void beginEditing(){complete=false;questionIndex=0;}
     public String eventKey(){
         // Não contém GPS real ou outro dado privado do jogador.
-        return "manual:"+answers[0]+":"+answers[1].replace(" ","_");
+        return "manual:"+answers[0];
     }
     public String summary(){
         return "Dia: "+displayDate()+" (informado, não verificado)"+
-            "\nLocal: "+answers[1]+
-            "\nPasse anterior: "+answers[2]+" | Passe atual: "+answers[3]+
-            "\nReide hoje: "+answers[4]+" | Já iniciou: "+answers[5]+
-            "\nAviso/restrição: "+answers[6]+
-            "\nModo escolhido: "+answers[7];
+            "\nPasse anterior: "+answers[1]+" | Passe de hoje: "+answers[2]+
+            "\nReide hoje: "+answers[3]+" | Já começou: "+answers[4]+
+            "\nRestrição: "+answers[5]+" | Modo: "+answers[6];
     }
     public void save(SharedPreferences prefs){
         SharedPreferences.Editor e=prefs.edit();
