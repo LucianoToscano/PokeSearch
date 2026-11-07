@@ -3120,7 +3120,8 @@
           "Janela do Edu pequena, arrastável pelo cabeçalho e com posição salva. O menu ⋯ separa P/M/G, animação, horários, lembretes e leitura visual do tutorial.",
           "A preparação agora faz sete perguntas; não oferece locais aleatórios para começar. O roteiro segue as regiões e a ordem da variante relatada.",
           "Na leitura visual opcional, o Edu recolhe a janela durante a autorização do Android e oferece sugestões que exigem confirmação do jogador.",
-          "Programação configurada manualmente e fusos com referência a Brasília; eventos sem fontes oficiais continuam identificados como não verificados."
+          "Programação configurada manualmente e fusos com referência a Brasília; eventos sem fontes oficiais continuam identificados como não verificados.",
+          "O mini Edu agora começa no tamanho G (100 px); P (50 px) e M (75 px) continuam disponíveis no menu ⋯ e a escolha anterior é preservada."
         ],
         "correcoes": [
           "Removido o painel gigante com horários de quatro países, nine botões simultâneos e avisos permanentes.",
