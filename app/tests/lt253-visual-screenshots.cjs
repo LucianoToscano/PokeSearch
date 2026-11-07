@@ -278,14 +278,14 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     JSON.stringify(rail270.labels)==='["—","#12","#5","#1","#142"]'&&
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
-    // LT302: delicate 3px strokes, zero gap, 3px corner clearance.
+    // LT303: 1px left vs LT302 (card right inset +1px), strokes unchanged.
     rail270.badge?.tag==="SPAN"&&
     rail270.badge?.chevrons===2&&rail270.badge?.steps==="2"&&
     rail270.badge?.span===5&&rail270.badge?.height===7&&
     rail270.badge?.cardHeight===39&&rail270.badge?.rowHeight===41&&
     rail270.badge?.flagSize===19&&
     // The physical CSS border contributes ~1px to the measured inset.
-    rail270.badge?.right>=2.9&&rail270.badge?.right<=4.1&&
+    rail270.badge?.right>=3.9&&rail270.badge?.right<=5.1&&
     rail270.badge?.bottom>=2.9&&rail270.badge?.bottom<=4.1&&
     rail270.badge?.arrows?.length===2&&
     rail270.badge?.arrows?.every(a=>a.width===3&&a.height===3&&
@@ -318,7 +318,8 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
      lb=logo?.getBoundingClientRect();
     const result={ok:!!cb&&!!mb&&!!lb&&
       mark.dataset.steps==="2"&&mark.children.length===2&&
-      mb.left>=lb.right+.5&&
+      // Same 1px shift must keep a measurable nonnegative raid/logo gap.
+      mb.left>=lb.right-.01&&
       Math.abs((lb.left+lb.right-cb.left-cb.right)/2)<.3&&
       cb.right-mb.right>=2&&cb.bottom-mb.bottom>=2,
       gap:mb&&lb?mb.left-lb.right:null,marker:mb?{x:mb.x,y:mb.y,w:mb.width,h:mb.height}:null,
