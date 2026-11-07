@@ -1514,6 +1514,45 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #psCapturedMovesPanel .psMoveTypedName{font-size:10.5px;line-height:1.2;overflow-wrap:anywhere}
 #psCapturedMovesPanel .psMoveMtIcon{justify-self:center}
 #psCapturedMovesPanel .psMoveUnavailable{font-size:8.5px;color:#b3bdcb}
+
+/* LT300: five tighter rank/raid boxes (39px vs 45px), same 5 targets;
+   1–3 small upward chevrons represent verified forward evolution steps. */
+#rankLine[data-rank-rail="five"]{height:41px!important;min-height:41px!important;gap:3px!important}
+#rankLine[data-rank-rail="five"] .psRailButton{
+ height:39px!important;min-height:39px!important;padding:1px 1px!important;gap:0!important
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailNumber{
+ font-size:10px!important;line-height:11px!important;min-height:11px!important;
+ transform:translateY(-1px)!important
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailIcon{
+ width:21px!important;height:21px!important;flex:0 0 21px!important;
+ transform:translateY(-2px)!important
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ justify-content:flex-end!important;gap:0!important;
+ position:absolute!important;right:2px!important;bottom:2px!important;left:auto!important;top:auto!important;
+ width:9px!important;max-width:9px!important;min-width:9px!important;
+ height:18px!important;max-height:18px!important;min-height:18px!important;
+ margin:0!important;padding:0 0 1px!important;border:0!important;
+ background:transparent!important;border-radius:0!important;box-shadow:none!important;
+ pointer-events:none!important;z-index:2!important;
+}
+#rankLine[data-rank-rail="five"] .psRailButton .psRailChevron{
+ display:block!important;flex:0 0 5px!important;box-sizing:border-box!important;
+ width:6px!important;height:6px!important;
+ border-top:1.6px solid #e7fbff!important;border-left:1.6px solid #e7fbff!important;
+ border-right:0!important;border-bottom:0!important;
+ transform:rotate(45deg)!important;margin:0!important;padding:0!important;
+ filter:drop-shadow(0 0 1px #0a2339)!important;
+}
+@media(max-width:345px){
+ #rankLine[data-rank-rail="five"] .psRailButton .psRailEvolve{
+ right:1px!important;bottom:2px!important;width:9px!important;height:18px!important;
+ min-width:9px!important;max-width:9px!important;min-height:18px!important;max-height:18px!important;
+ }
+}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -2971,14 +3010,25 @@ function psToggleLeagueAssessment(league){
  renderRankOneMoves();
  resizeEvolutionPanel();return true;
 }
-/* The original submitted artwork is stored offline; no arrows or label text. */
-function psMakeEvolutionBadge(){
- const img=document.createElement("img");img.className="psRailEvolve";
- img.src="ui-icons/ps-evolution-lt272.png";
- img.alt="";img.setAttribute?.("aria-hidden","true");
- img.setAttribute?.("draggable","false");
- return img;
+/* LT300 — 1, 2, or 3 upward stacked chevrons for verified forward steps. */
+function psEvolutionStepCount(currentName,targetName){
+ return window.PokeSearchPvpFamilyCatalog?.evolutionSteps?.(currentName,targetName,3)??null;
 }
+function psMakeEvolutionBadge(count){
+ if(!Number.isInteger(count)||count<1||count>3)return null;
+ const mark=document.createElement("span");
+ mark.className="psRailEvolve";mark.dataset.steps=String(count);
+ mark.setAttribute?.("aria-hidden","true");
+ for(let i=0;i<count;i++){
+  const chevron=document.createElement("span");
+  chevron.className="psRailChevron";mark.appendChild(chevron);
+ }
+ return mark;
+}
+if(typeof window!=="undefined")window.PokeSearchEvolutionBadge=(from,to,allowed=true)=>{
+ const count=allowed?psEvolutionStepCount(from,to):null;
+ return count?psMakeEvolutionBadge(count):null;
+};
 function psUpdateRaidShortcut(){
  const b=document.getElementById("rankLine")?.querySelector?.(".psRailRaid");
  if(!b)return false;
@@ -2993,12 +3043,13 @@ function psUpdateRaidShortcut(){
   "Raides · avaliação ainda não confirmada · toque para consultar";
  b.setAttribute?.("aria-label",b.title);
  b.dataset.psRank=good?String(rank):"";
- b.dataset.psEvolve=best?.projected?"true":"false";
+ const steps=best?.projected&&good?
+  psEvolutionStepCount(watchName,best?.name):null;
+ b.dataset.psEvolve=steps?"true":"false";
+ b.dataset.psEvolutionSteps=String(steps||0);
  const mark=b.querySelector?.(".psRailEvolve");
  if(mark)mark.remove();
- if(best?.projected&&good){
-  b.appendChild(psMakeEvolutionBadge());
- }
+ if(steps)b.appendChild(psMakeEvolutionBadge(steps));
  return true;
 }
 function psRenderFiveRankRail(payload){
@@ -3033,13 +3084,14 @@ function psRenderFiveRankRail(payload){
   b.dataset.psLeague=league||selected;
   b.dataset.psName=item?.name||payload?.name||watchName||"";
   if(Number.isInteger(rank)&&rank>=1)b.dataset.psRank=String(rank);
-  if(item?.evolves){
-   b.appendChild(psMakeEvolutionBadge());
-  }
+  const steps=item?.evolves?
+   psEvolutionStepCount(payload?.name||watchName,item.name):null;
+  b.dataset.psEvolutionSteps=String(steps||0);
+  if(steps)b.appendChild(psMakeEvolutionBadge(steps));
   const title=kind==="raid"?"Raides · tocar para abrir":
    (kind==="overall"?"Rank Geral PvP · ":"Avaliação PvP · ")+names[league]+
    " · "+b.dataset.psName+(rank?" · #"+rank:" · sem rank verificado")+
-   (item?.evolves?" · ↳ pertence à evolução":"");
+   (steps?" · requer "+steps+" evolução"+(steps>1?"ões":""):"");
   b.title=title;b.setAttribute?.("aria-label",title);
   if(kind==="raid"){
    b.onclick=()=>toggleRaidDetails();

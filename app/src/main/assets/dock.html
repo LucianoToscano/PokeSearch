@@ -6702,6 +6702,13 @@ function cosmeticPvpIdentity(card){
  const seas=(dex===422||dex===423)&&/^(west|westsea|east|eastsea)$/.test(form);
  const appearance=(dex===676)&&/^(natural|heart|star|diamond|debutante|matron|dandy|lareine|kabuki|pharaoh)$/.test(form);
  if(seasons||seas||appearance)return true;
+ // Official 2026 Pokémon GO PokéXciting! Singapore blue-costume Pikachu.
+ // PoGoCoordinates calls it "Anniversary 2026 Singapore 01". Verify the
+ // species number and name before using Pikachu battle stats and IV ranks.
+ // This does NOT establish that this costume can evolve.
+ const singapore2026Pikachu=dex===25&&key==="pikachu"&&
+  /^anniversary2026singapore0?1$/.test(form);
+ if(singapore2026Pikachu)return true;
  const costumeTag=/(halloween|costume|holiday|christmas|santa|hat|tophat|cartola|goggles|flowercrown|partyhat|fashionweek|pikachuhat|copy2019|fall2023|outfit)/;
  if(costumeTag.test(evidence))return true;
  const costumeId=Number(card.costume_id??card.costumeId??0);

@@ -3016,6 +3016,31 @@
           "Conferir o visual físico no Samsung dos cartões Slowpoke (2 tipos) e Chikorita (1 tipo) após a instalação."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt300-pikachu-singapore-costume-type-iv-20261107",
+      "minVersionCode": 54504,
+      "date": "07/11/2026",
+      "title": "LT300 — Pikachu Singapura e indicadores compactos de evolução",
+      "sections": {
+        "novidades": [
+          "Reconhecimento da fantasia Pikachu Anniversary 2026 Singapore 01 do evento PokéXciting!, sem perder sua sprite e identificação de evento.",
+          "Os cinco indicadores Raides, GL, UL, ML e Rank Geral ficaram 6 px mais baixos (cartões de 39 px) com bandeiras de 21 px."
+        ],
+        "melhorias": [
+          "O cartão do Pikachu de Singapura exibe o tipo Elétrico e a eficácia defensiva correspondente.",
+          "As ligas GL/UL/ML reutilizam o cálculo verificado de IVs da espécie Pikachu, sem confundir fantasia com outra forma de batalha.",
+          "O antigo ícone grande de evolução foi substituído por 1, 2 ou 3 setas pequenas empilhadas apontando para cima, conforme as etapas reais da cadeia evolutiva da espécie."
+        ],
+        "correcoes": [
+          "Corrigidos os indicadores de tipo e classificação IV que apareciam como '—' por não reconhecer a identificação cosmética do evento.",
+          "Outras formas desconhecidas ou regionais continuam bloqueadas; não é presumida evolução da fantasia nem criado Rank Geral ausente do PvPoke.",
+          "Quando o ranking é da própria espécie ou a evolução não está confirmada, nenhuma seta é exibida. O status de evolução de fantasias continua restrito."
+        ],
+        "emDesenvolvimento": [
+          "Conferência física no Samsung e nas duas Pokébolas ainda pendente."
+        ]
+      }
     }
   ]
 }

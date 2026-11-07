@@ -50,6 +50,33 @@
   }
   return [...base,...megas].slice(0,36);
  }
+ /* LT300: count FORWARD evolution edges (not position in family).
+  * Branches are handled by BFS, including multi-stage targets.
+  * Return null for unknown regional, costume, Mega or unrelated forms.
+  * This graph documents species stages, not whether an event individual
+  * is allowed to evolve; callers must enforce their existing eligibility.
+  */
+ function evolutionSteps(rawFrom,rawTo,maxSteps=3){
+  const from=normalized(rawFrom),to=normalized(rawTo);
+  const shadow=/ \(shadow\)$/.test(from);
+  if(shadow!==/ \(shadow\)$/.test(to))return null;
+  const clean=x=>shadow?x.slice(0,-" (shadow)".length):x;
+  const source=clean(from),target=clean(to);
+  if(!source||!target||source.includes("(")||target.includes("(")||
+   /^mega\s/.test(source)||/^mega\s/.test(target))return null;
+  if(source===target)return 0;
+  const limit=Number.isInteger(maxSteps)?Math.max(1,Math.min(3,maxSteps)):3;
+  const seen=new Set([source]),queue=[[source,0]];
+  while(queue.length){
+   const [name,depth]=queue.shift();
+   if(depth>=limit)continue;
+   for(const next of forward.get(name)||[]){
+    if(next===target)return depth+1;
+    if(!seen.has(next)){seen.add(next);queue.push([next,depth+1]);}
+   }
+  }
+  return null;
+ }
  /* LT291: panel order reflects the VERIFIED evolutionary chain, never the
   * IV rank or general meta rank. Keep original order for branches at the
   * same stage; unknown forms remain in original order rather than guessing.
@@ -82,5 +109,5 @@
   }).sort((a,b)=>a.stage-b.stage||a.index-b.index)
    .map(({row})=>row);
  }
- return Object.freeze({family,links,orderEvolutionRows});
+ return Object.freeze({family,links,evolutionSteps,orderEvolutionRows});
 });

@@ -38,7 +38,16 @@ function node(name=""){
  };
 }
 const rail=node("div"),doc={getElementById:id=>id==="rankLine"?rail:null,createElement:node};
-const win={POKESEARCH_PVPOKE_OVERALL:{gl:[[1,"Ursaluna",142]],ul:[[1,"Teddiursa",220]],ml:[[1,"Teddiursa",311]]}};
+const family=require("../src/main/assets/pvp_family_catalog.js");
+assert.equal(family.evolutionSteps("Cyndaquil","Quilava"),1);
+assert.equal(family.evolutionSteps("Cyndaquil","Typhlosion"),2);
+assert.equal(family.evolutionSteps("Teddiursa","Ursaluna"),2);
+assert.equal(family.evolutionSteps("Ursaluna","Teddiursa"),null);
+assert.equal(family.evolutionSteps("Teddiursa","Teddiursa"),0);
+assert.equal(family.evolutionSteps("Teddiursa","Ursaluna (Mega)"),null);
+assert.equal(family.evolutionSteps("Pikachu (Singapore 2026)","Raichu"),null);
+const win={PokeSearchPvpFamilyCatalog:family,
+ POKESEARCH_PVPOKE_OVERALL:{gl:[[1,"Ursaluna",142]],ul:[[1,"Teddiursa",220]],ml:[[1,"Teddiursa",311]]}};
 const calls=[];
 const render=new Function("document","window","activeRankLeague","currentRankSpecies",
  "resizeEvolutionPanel","toggleRaidDetails","openPvpRankExplorer",
@@ -53,14 +62,17 @@ assert.deepEqual(rail.children.map(x=>x.dataset.psRail),["raid","gl","ul","ml","
 assert.deepEqual(rail.children.map(x=>x.querySelector(".psRailNumber")?.textContent),
  ["—","#12","#5","#1","#142"]);
 const evoMark=rail.children[1].querySelector(".psRailEvolve");
-assert.equal(evoMark.tagName,"img");
-assert.equal(evoMark.src,"ui-icons/ps-evolution-lt272.png");
-assert.equal(evoMark.alt,"");
+assert.equal(evoMark.tagName,"span");
+assert.equal(evoMark.dataset.steps,"2");
+assert.equal(evoMark.children.length,2);
+assert.ok(evoMark.children.every(x=>x.className==="psRailChevron"));
 assert.equal(evoMark["aria-hidden"],"true");
 assert.equal(rail.children[1].children[0].textContent,"#12","rank number remains first");
 assert.equal(rail.children[1].children[1].src,"ui-icons/ps-gl-lt268.png","flag remains centered original asset");
 assert.equal(rail.children[2].querySelector(".psRailEvolve"),null,"current species does not get evolution icon");
-assert.equal(rail.children[4].querySelector(".psRailEvolve").src,"ui-icons/ps-evolution-lt272.png");
+assert.equal(rail.children[4].querySelector(".psRailEvolve").dataset.steps,"2");
+assert.equal(rail.children[1].dataset.psEvolutionSteps,"2");
+assert.equal(rail.children[2].dataset.psEvolutionSteps,"0");
 assert.equal(rail.children[1].dataset.psName,"Ursaluna");
 assert.equal(rail.children[4].dataset.psRailOverall,"true");
 assert.ok(rail.children.every(x=>x.querySelector(".psRailIcon")?.src.includes("-lt268.png")));
@@ -92,5 +104,14 @@ assert.equal(crypto.createHash("sha256").update(art).digest("hex"),
  "67a26f134fbe41a38d75bd4a0e13de526379a029dc904a7cd0e26701c7c78aa5");
 assert.match(html,/right:5px!important;bottom:5px!important/);
 assert.match(html,/width:15px!important;height:15px!important/);
-assert.ok(explorer.includes('mark.src="ui-icons/ps-evolution-lt272.png"'));
-console.log("LT272 PASS: original transparent evolution mark, bottom right margin, original flags and intact rank numbers");
+assert.ok(explorer.includes("context.PokeSearchEvolutionBadge?.(original,opts.name,canEvolve)"));
+assert.match(html,/window.PokeSearchEvolutionBadge=/);
+assert.match(html,/height:39px!important;min-height:39px!important/);
+assert.match(html,/width:21px!important;height:21px!important/);
+// Three chevrons are supported even where current game graph has only two stages.
+const originalSteps=win.PokeSearchPvpFamilyCatalog;
+win.PokeSearchPvpFamilyCatalog={evolutionSteps:(from,to)=>to==="Ursaluna"?3:null};
+assert.equal(render(payload),true);
+assert.equal(rail.children[1].querySelector(".psRailEvolve").children.length,3);
+win.PokeSearchPvpFamilyCatalog=originalSteps;
+console.log("LT300 PASS: compact five-rank rail and 0/1/2/3 forward evolution chevrons");

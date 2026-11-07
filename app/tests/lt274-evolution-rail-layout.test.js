@@ -15,10 +15,13 @@ assert.match(rail, /height:47px!important;min-height:47px!important/, 'rank row 
 assert.match(rail, /height:45px!important;min-height:45px!important/, 'rank buttons remain compact');
 assert.match(rail, /\.psRailIcon\{order:1;width:23px!important;height:23px!important/, 'league flags retain their size');
 
-// The original supplied evolution PNG (not an arrow or text) must be retained.
-assert.match(html, /ui-icons\/ps-evolution-lt272\.png/);
+// LT300: original historical PNG stays in the repository for rollback,
+ // but the SHIPPING rank marker is a small stack of up chevrons.
 assert.ok(fs.existsSync(path.join(assets, 'ui-icons', 'ps-evolution-lt272.png')));
-
+assert.doesNotMatch(html.slice(html.indexOf('function psMakeEvolutionBadge(')),
+ /img.src="ui-icons\/ps-evolution-lt272\.png"/);
+assert.ok(html.includes('mark.className="psRailEvolve"'));
+assert.ok(html.includes('chevron.className="psRailChevron"'));
 const evo = rail.slice(rail.indexOf('/* LT272 —'));
 assert.ok(evo.length > 500, 'LT272 evolution badge CSS must exist');
 assert.match(evo, /right:5px!important;bottom:5px!important/);
@@ -45,4 +48,14 @@ assert.match(lt278, /\.psRailButton \.psRailNumber\{\s*transform:translateY\(-1p
 assert.match(lt278, /\.psRailButton \.psRailIcon\{\s*transform:translateY\(-4px\)!important;\s*\}/);
 assert.doesNotMatch(lt278, /\.psRailButton\{\s*transform:/, 'card must remain fixed');
 assert.doesNotMatch(lt278, /height:5[46]px!important/, 'rank card must stay 45px');
-console.log('LT275: compact cards, preserved flags and evolution icon with corner clearance.');
+const lt300=rail.slice(rail.indexOf('/* LT300: five tighter rank/raid boxes'));
+assert.ok(lt300.startsWith('/* LT300: five tighter rank/raid boxes'));
+assert.match(lt300,/height:41px!important;min-height:41px!important/);
+assert.match(lt300,/height:39px!important;min-height:39px!important/);
+assert.match(lt300,/width:21px!important;height:21px!important/);
+assert.match(lt300,/width:9px!important/);
+assert.match(lt300,/height:18px!important/);
+assert.match(lt300,/width:6px!important;height:6px!important/);
+assert.match(lt300,/transform:rotate\(45deg\)!important/);
+assert.ok(rail.indexOf('/* LT300: five tighter')>rail.indexOf('/* LT278 —'));
+console.log('LT300: smaller five-card rail, original flags and stacked evolution chevrons.');

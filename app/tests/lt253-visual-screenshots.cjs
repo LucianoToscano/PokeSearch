@@ -221,7 +221,11 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const eBox=evol?.getBoundingClientRect(),fBox=flag?.getBoundingClientRect();
     const nBox=number?.getBoundingClientRect();
     const badge=eBox&&cardBox&&nBox&&fBox?{
-     src:evol.getAttribute("src"),tag:evol.tagName,span:eBox.width,
+     tag:evol.tagName,span:eBox.width,height:eBox.height,
+     chevrons:evol.querySelectorAll(".psRailChevron").length,
+     steps:evol.dataset.steps,cardHeight:cardBox.height,
+     rowHeight:rail.getBoundingClientRect().height,
+     flagSize:fBox.width,
      right:cardBox.right-eBox.right,bottom:cardBox.bottom-eBox.bottom,
      // The flags are triangles: enforce actual geometric separation from
      // their sloping right edge, not merely overlap of transparent image boxes.
@@ -258,18 +262,19 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     JSON.stringify(rail270.labels)==='["—","#12","#5","#1","#142"]'&&
     rail270.names[1]==="Ursaluna"&&
     rail270.icons.every(x=>x.includes("lt268.png"))&&
-    rail270.badge?.src==="ui-icons/ps-evolution-lt272.png"&&
-    // LT275: same-sized artwork shifted into the bottom-right FREE corner.
-    // Reject the LT274 +5px inset that visibly overlaid the triangle.
-    rail270.badge?.tag==="IMG"&&
-    rail270.badge?.span>=13&&rail270.badge?.span<=15&&
+    // LT300: 39px badge, 21px original flag, 2 stacked upward chevrons.
+    rail270.badge?.tag==="SPAN"&&
+    rail270.badge?.chevrons===2&&rail270.badge?.steps==="2"&&
+    rail270.badge?.span===9&&rail270.badge?.height===18&&
+    rail270.badge?.cardHeight===39&&rail270.badge?.rowHeight===41&&
+    rail270.badge?.flagSize===21&&
     rail270.badge?.right>=1&&rail270.badge?.right<=3&&
     rail270.badge?.bottom>=1&&rail270.badge?.bottom<=3&&
     rail270.badge?.triangleGap>=-1&&
     rail270.badge?.belowRank===true&&rail270.badge?.flagCenterDiff<1.5&&
     rail270.badge?.flagSrc==="ui-icons/ps-gl-lt268.png"&&
     rail270.numberShift.length===5&&rail270.numberShift.every(y=>y===-1)&&
-    rail270.flagShift.length===5&&rail270.flagShift.every(y=>y===-4),
+    rail270.flagShift.length===5&&rail270.flagShift.every(y=>y===-2),
     "LT270 five actual buttons must fit P/M/G "+sz.name+" "+JSON.stringify(rail270));
    await page.screenshot({path:path.join(output,sz.name+"-lt270-five-ranks.png")});
    const overall270=await page.evaluate(()=>{
