@@ -1345,6 +1345,12 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
    Move the same artwork into the bottom-right corner and move only the
    unchanged flag image 4px upward to free that corner; #rank remains in place.
    All five badges and both Pokeballs share this CSS. */
+/* LT278 — Samsung Growlithe: raise ONLY #rank text 1 CSS pixel.
+   Keep centered flags (including LT275 -4px), evolution badge, 45px cards,
+   47px rail, button hit areas and the five independent targets unchanged. */
+#rankLine[data-rank-rail="five"] .psRailButton .psRailNumber{
+ transform:translateY(-1px)!important;
+}
 #rankLine[data-rank-rail="five"] .psRailButton .psRailIcon{
  transform:translateY(-4px)!important;
 }
