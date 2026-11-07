@@ -48,7 +48,7 @@
           "retornoSeguro": "Voltar à preparação e revisar as condições iniciais.",
           "local": null,
           "opcional": false,
-          "falaEdu": "Edu: vamos conferir tudo antes de começar?",
+          "falaEdu": "Edu: antes de começar, confira seus passes e se há alguma restrição na conta. Tudo certo?",
           "ajudaEdu": "Primeiro, confira se o Passe Diário e a data do evento estão corretos. Nada será feito automaticamente.",
           "periodo": "preparacao"
         },
@@ -67,7 +67,7 @@
           "retornoSeguro": "Reabrir a etapa E02 sem registrar passe.",
           "local": "hawaii",
           "opcional": false,
-          "falaEdu": "Edu: na véspera, o roteiro começa pelo Havaí. Você já concluiu essa parte?",
+          "falaEdu": "Edu: primeiro vem o Havaí. Feche e reabra o Pokémon GO e espere o mapa carregar. Já fez isso?",
           "ajudaEdu": "Esta é a primeira região do relato. O jogo precisa ser conferido manualmente; aguardar um minuto não prova resultado.",
           "periodo": "D-1"
         },
@@ -87,7 +87,7 @@
           "local": "newzealand",
           "opcional": false,
           "semPassePara": "E08",
-          "falaEdu": "Edu: o próximo ponto é Nova Zelândia. Você viu um Passe Diário gratuito?",
+          "falaEdu": "Edu: agora vem a Nova Zelândia. Apareceu um Passe de Reide Diário gratuito?",
           "ajudaEdu": "Não comece uma reide esperando um passe que não esteja visível. A ordem do vídeo é Havaí → Nova Zelândia.",
           "periodo": "D-1"
         },
@@ -105,7 +105,7 @@
           "retornoSeguro": "Revisar a reide e retomar somente após saber o desfecho.",
           "local": null,
           "opcional": false,
-          "falaEdu": "Edu: como terminou essa reide?",
+          "falaEdu": "Edu: participe da reide usando o passe. Como terminou: venceu, perdeu ou saiu?",
           "ajudaEdu": "Vencer a reide, receber recompensas e capturar o Pokémon são acontecimentos diferentes. Se não souber, marque 'Não sei'.",
           "periodo": "D-1"
         },
@@ -123,7 +123,7 @@
           "retornoSeguro": "Voltar à etapa E05 e revisar carregamento.",
           "local": "hawaii",
           "opcional": false,
-          "falaEdu": "Edu: agora o roteiro retorna ao Havaí. O jogo carregou?",
+          "falaEdu": "Edu: depois, volte ao Havaí e reabra o Pokémon GO. O mapa carregou?",
           "ajudaEdu": "Siga a sequência apresentada no tutorial, sem considerar um teleporte como confirmado pelo servidor.",
           "periodo": "D-1"
         },
@@ -142,7 +142,7 @@
           "local": null,
           "opcional": false,
           "semPassePara": "E08",
-          "falaEdu": "Edu: apareceu outro Passe Diário?",
+          "falaEdu": "Edu: confira a mochila. Apareceu outro Passe Diário gratuito?",
           "ajudaEdu": "Conferir o inventário é mais importante do que contar ciclos. Se não apareceu, podemos parar de repetir.",
           "periodo": "D-1"
         },
@@ -200,7 +200,7 @@
           "local": "kiribati",
           "opcional": true,
           "pularPara": "E10",
-          "falaEdu": "Edu: o vídeo também cita Kiribati. Quer conferir essa etapa opcional?",
+          "falaEdu": "Edu: o tutorial também cita Kiribati. Após reabrir o jogo, quer conferir essa etapa opcional?",
           "ajudaEdu": "Essa fase aparece em algumas variantes do relato. Você pode ignorá-la sem perder seu histórico.",
           "periodo": "D"
         },
@@ -218,7 +218,7 @@
           "retornoSeguro": "Rever passes atuais e preparar encerramento.",
           "local": null,
           "opcional": false,
-          "falaEdu": "Edu: voltou ao local do evento? Confira os passes que realmente aparecem.",
+          "falaEdu": "Edu: volte ao local onde vai jogar as reides. Quer registrar o resultado de alguma?",
           "ajudaEdu": "Registre reides apenas depois de verificar a participação no Pokémon GO. O assistente não cria passes.",
           "periodo": "D"
         },
