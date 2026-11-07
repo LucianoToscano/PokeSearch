@@ -18,8 +18,8 @@ assert.match(dock,/verifiedEvent,verifiedProvider\)/);
 assert.match(dock,/sourceCard\?\.imageFromSite===true&&engine\?\.resolve/);
 assert.match(scaler,/function enhanceProviderTile\(img,cardBounds,verifiedEvent,verifiedProvider=false\)/);
 assert.match(scaler,/if\(verifiedProvider&&nativeSourceGeometry\(img,src,applyMeasured,tryCors\)\)/);
-assert.match(scaler,/const fit=geometryFit\(bounds,cardSize\*\.88,7\)/);
-assert.match(scaler,/if\(fit\.occupancy<\.80\)setResultTileFit\(img,fit\)/);
+assert.match(scaler,/const fit=geometryFit\(bounds,cardSize\*RESULT_IMAGE_BOX,SOURCE_MEASURED_MAX_ZOOM\)/);
+assert.match(scaler,/setResultTileFit\(img,fit\);/);
 assert.match(scaler,/root\.PokeSearchSpriteScale=Object\.freeze\(\{.*onNativeBounds\}\)/);
 assert.match(java,/class VerifiedSpriteGeometry/);
 for(const host of ["pogocoordinates.com","raw.githubusercontent.com","cdn.jsdelivr.net"])
@@ -81,12 +81,13 @@ assert.equal(x.requests.length,1,"same image never triggers repeated download");
 assert.equal(x.scale.onNativeBounds(x.requests[0].token,url,tiny),false,
  "native callback is one-use only");
 
-// Image already occupies >= 80%: keep P/M/G fixed, don't enlarge Snorlax.
+// Already large images also use the same 87% target, near 1x.
 x=env();
 x.scale.enhanceProviderTile(x.img,null,false,true);
 assert.equal(x.scale.onNativeBounds(x.requests[0].token,url,
  {left:4,right:91,top:5,bottom:90}),true);
-assert.equal(x.props["--tile-alpha-zoom"],"1");
+assert.ok(Math.abs(Number(x.props["--tile-alpha-zoom"])*.88*(88/96)-.87)<.01,
+ "well-filled Snorlax is still normalized to the same 87% target");
 
 // Invalid result source identity: no native fetch, no enhancement.
 x=env();
