@@ -60,7 +60,9 @@ f=e.api.applyResultTile(e.img);
 assert.ok(f.zoom>=.96&&f.zoom<=1.01,"full-frame image scales near unity without cropping");
 e=spriteEnv({left:40,right:54,top:40,bottom:54});
 f=e.api.applyResultTile(e.img);
-assert.equal(f.zoom,2.85,"tiny icon scale bounded to avoid wild growth");
+assert.ok(f.zoom>6&&f.zoom<7,"tiny icon grows to meet 87% from its own measured pixels");
+assert.ok(Math.abs((15/96)*.88*f.zoom-.87)<.01,
+ "even tiny but confirmed art fills 85–90% without cropping");
 e=spriteEnv({left:24,right:70,top:20,bottom:75},true);
 assert.equal(e.api.applyResultTile(e.img),null,"CORS-tainted original is not replaced");
 assert.equal(e.props["--tile-alpha-zoom"],"1");
