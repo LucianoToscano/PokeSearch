@@ -200,6 +200,24 @@ COSTUME_FILES.update({
     "costumes/pm423.fWEST_SEA.s.icon.png": ("pm423.fWEST_SEA.s.icon.png", "b2a32696a03694df48b8885d749537e3c8b65628"),
 })
 
+# LT279: Burmy and Wormadam exact Plant, Sandy and Trash cloaks,
+# including normal + Shiny, fixed upstream commit and indexed blob SHA-1.
+# Never replace a missing cloak with generic base #412 / #413 art.
+COSTUME_FILES.update({
+    "costumes/pm412.fBURMY_PLANT.icon.png": ("pm412.fBURMY_PLANT.icon.png", "94f3b01ffeeba8b24b8f73eb8ce91ba04341af77"),
+    "costumes/pm412.fBURMY_PLANT.s.icon.png": ("pm412.fBURMY_PLANT.s.icon.png", "853fcbe8728e249cc1ef20b043331f7ec210b19a"),
+    "costumes/pm412.fBURMY_SANDY.icon.png": ("pm412.fBURMY_SANDY.icon.png", "6592742f00d47422326a78d634523a95d315d212"),
+    "costumes/pm412.fBURMY_SANDY.s.icon.png": ("pm412.fBURMY_SANDY.s.icon.png", "6bfbd82d0a5757c00eca1ad611f20b7cd8fd732e"),
+    "costumes/pm412.fBURMY_TRASH.icon.png": ("pm412.fBURMY_TRASH.icon.png", "3ef66a12b95ed7039c21554fe60216118e1d6a94"),
+    "costumes/pm412.fBURMY_TRASH.s.icon.png": ("pm412.fBURMY_TRASH.s.icon.png", "9afbb40c9ef68d73ec98bb91b3028eb1c5c41331"),
+    "costumes/pm413.fWORMADAM_PLANT.icon.png": ("pm413.fWORMADAM_PLANT.icon.png", "ffacdbf58e817975f2774bd981469831eb744ba8"),
+    "costumes/pm413.fWORMADAM_PLANT.s.icon.png": ("pm413.fWORMADAM_PLANT.s.icon.png", "add5ed6f548ddc5197189e437135a19601e9c6f4"),
+    "costumes/pm413.fWORMADAM_SANDY.icon.png": ("pm413.fWORMADAM_SANDY.icon.png", "e83eb805345b5ac49e7505286394f21c3c6f6be9"),
+    "costumes/pm413.fWORMADAM_SANDY.s.icon.png": ("pm413.fWORMADAM_SANDY.s.icon.png", "21fa0161b4e19ecdd50b9455821a75c1ed324bd2"),
+    "costumes/pm413.fWORMADAM_TRASH.icon.png": ("pm413.fWORMADAM_TRASH.icon.png", "2cdb73ab881e35b275403ce8159d15dbe48a4dc2"),
+    "costumes/pm413.fWORMADAM_TRASH.s.icon.png": ("pm413.fWORMADAM_TRASH.s.icon.png", "e876c959d674e8b87654f9e910e09b10504ec209"),
+})
+
 # LT267: Diwali Pikachu + four Squawkabilly plumages, all normal/Shiny,
 # pinned to immutable go-exact-sprites.tsv Git blob SHA-1 evidence.
 COSTUME_FILES.update({

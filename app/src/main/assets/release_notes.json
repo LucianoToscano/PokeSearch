@@ -2545,6 +2545,26 @@
           "Conferir a aparência e o espaçamento real dos cinco rankings no Samsung após instalar a versão."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt279-burmy-sandy-sprite-offline-20261106",
+      "minVersionCode": 54483,
+      "date": "06/11/2026",
+      "title": "LT279 — Sprites do Burmy e Wormadam corrigidos",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "As três formas de Burmy e Wormadam agora utilizam imagens específicas e disponíveis offline, normais e brilhantes, em resultados e cartões."
+        ],
+        "correcoes": [
+          "Corrigida a imagem ausente de Burmy Forma Areia (Sandy), que mostrava apenas BU/Sandy no Samsung.",
+          "Os 12 sprites são identificados pela forma correta, verificados por hashes imutáveis e exigidos no APK oficial."
+        ],
+        "emDesenvolvimento": [
+          "Ranks com — continuam assim até haver dados de avaliação verificáveis; nenhuma classificação foi inventada.",
+          "Validação de instalação e imagem real no Samsung P1/P2 ainda pendente."
+        ]
+      }
     }
   ]
 }
