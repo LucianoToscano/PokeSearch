@@ -98,7 +98,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private final Clock eventClock=Clock.systemUTC();
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
-            if(clockText!=null)updateEventClock();
+            if(eduBadge!=null)updateEventClock();
             handler.postDelayed(this,60000L);
         }
     };
@@ -869,118 +869,306 @@ public final class RaidDayAssistantOverlayService extends Service {
         appendEvent(eventType,actedOnStep);
     }
 
-    private void updateVisual(){
-        if(visualStatus==null||visualActions==null)return;
-        SharedPreferences state=prefs;
-        boolean viewing=RaidDayScreenCaptureService.isActive();
-        String label=state.getString("raid_day_capture_stage","");
-        long seen=state.getLong("raid_day_capture_time",0L);
-        if(!viewing||System.currentTimeMillis()-seen>180000L)label="";
-        if(!label.equals(visualCandidate)){
-            visualCandidate=label;visualSeenAt=seen;
-        }
-        visualToggle.setText(viewing?"Parar leitura visual":
-            "Ativar leitura visual (opcional)");
-        String modeStatus=state.getString("raid_day_capture_status",
-            "Acompanhamento visual desligado");
-        if(!visualCandidate.isEmpty())
-            visualStatus.setText("Possível tela: "+visualCandidate+
-                ". Confirme se realmente apareceu no Pokémon GO.");
-        else visualStatus.setText(viewing?modeStatus:
-            "Modo manual · sem captura ativa");
-        visualActions.setVisibility(!visualCandidate.isEmpty()&&!training&&
-            active?View.VISIBLE:View.GONE);
-    }
 
-    private void updateStep(){
-        if(progressText==null)return;
-        // Uma pergunta por tela; sessões antigas já iniciadas não são apagadas.
-        boolean needsPreparation=!preparation.isComplete()&&!active&&!training;
-        preparationSection.setVisibility(needsPreparation?View.VISIBLE:View.GONE);
-        boolean needsRisk=!needsPreparation&&!riskAccepted&&!active&&!training;
-        riskSection.setVisibility(needsRisk?View.VISIBLE:View.GONE);
-        boolean canStart=!needsPreparation&&!needsRisk&&riskAccepted&&!active&&!training;
-        startSection.setVisibility(canStart?View.VISIBLE:View.GONE);
-        boolean guiding=active||training;
-        guideContent.setVisibility(guiding?View.VISIBLE:View.GONE);
-        if(canStart){
-            eventWindowText.setText(RaidDaySchedule.status(this));
-            summaryText.setText("Respostas do jogador (não verificadas):\n"+
-                preparation.summary()+
-                "\nHorário do evento não confirmado. Sem captura de tela ativa.");
+    /** A captura sugere apenas; não avança e não tem botão no tutorial. */
+    private void updateVisual(){
+        if(prefs==null)return;
+        String candidate=prefs.getString("raid_day_capture_stage","");
+        long seen=prefs.getLong("raid_day_capture_time",0L);
+        if(training||!RaidDayScreenCaptureService.isActive()||
+            System.currentTimeMillis()-seen>180000L)candidate="";
+        if(!candidate.equals(visualCandidate)){
+            visualCandidate=candidate;visualSeenAt=seen;
+            if(visible&&!eduSettingsOpen&&active)updateStep();
         }
-        updateEventClock();
-        if(!guiding){if(visible)placePanel();return;}
+    }
+    private String currentPhaseNote(RaidDayGuidePlan.Step step){
+        if(step==null||training)return "";
+        LocalDate date=preparation.eventDate();
+        if(date==null)return "Confira a data do evento antes de continuar.";
+        LocalDate now=RaidDayEventClock.todayBrasilia(eventClock);
+        if("D-1".equals(step.phase)&&!now.equals(date.minusDays(1)))
+            return "Esta parte do roteiro é da VÉSPERA (D−1). "+
+                "O horário correto não foi confirmado para o evento selecionado.";
+        if("D".equals(step.phase)&&!now.equals(date))
+            return "Esta etapa é do DIA DO EVENTO (D). "+
+                "Ainda não estamos nessa data em Brasília.";
+        return "";
+    }
+    private String phaseClock(RaidDayGuidePlan.Step step){
+        if(training)return "Treino • Evento fictício hoje • Sem alterações no jogo";
+        String now=RaidDayEventClock.format(eventClock.instant(),
+            RaidDayEventClock.BRASILIA);
+        String zone="";
+        if("hawaii".equals(step.locationRef))
+            zone=" · Havaí "+RaidDayEventClock.format(eventClock.instant(),
+                RaidDayEventClock.HAWAII);
+        else if("newzealand".equals(step.locationRef))
+            zone=" · NZ "+RaidDayEventClock.format(eventClock.instant(),
+                RaidDayEventClock.NEW_ZEALAND);
+        else if("kiribati".equals(step.locationRef))
+            zone=" · Kiribati "+RaidDayEventClock.format(eventClock.instant(),
+                RaidDayEventClock.KIRIBATI);
+        return "Brasília "+now+zone+" • Horário do método não verificado";
+    }
+    private void advanceEdu(String type){
+        if(paused||finished)return;
         RaidDayGuidePlan.Step current=plan.step(index);
-        progressText.setText(finished?"Resumo concluído":
-            (training?"TREINO · ":"")+"Etapa "+current.id+" de E11");
-        progressBar.setMax(plan.size());
-        progressBar.setProgress(finished?plan.size():index);
-        titleText.setText(finished?"Roteiro finalizado":
-            current.id+" — "+current.title);
-        instructionText.setText(finished?
-            "Roteiro encerrado.\n"+RaidDayRecovery.stats(
-                journal.events().all(sessionKey)):
-            current.instruction);
-        raidRecordActions.setVisibility(!finished&&
-            ("E04".equals(current.id)||"E10".equals(current.id))?
-            View.VISIBLE:View.GONE);
-        statusText.setText(paused?"Pausado · toque em ▶ para retomar":
-            training?"Modo Treino · nenhuma ação é salva":
-            getString(R.string.raid_day_no_screen_access));
-        copyButton.setVisibility(!finished&&!plan.coords(index).isEmpty()?
-            View.VISIBLE:View.GONE);
-        cycleText.setText("Ciclos repetidos: "+repeatedCycles+
-            " · não representa passes");
-        boolean check=!finished&&!current.repeatTo.isEmpty();
-        boolean noPass=!finished&&!current.noPassTo.isEmpty();
-        boolean optional=!finished&&!current.skipTo.isEmpty();
-        cycleActions.setVisibility(check||noPass||optional?
-            View.VISIBLE:View.GONE);
-        repeatButton.setVisibility(check?View.VISIBLE:View.GONE);
-        skipButton.setVisibility(check||noPass||optional?
-            View.VISIBLE:View.GONE);
-        skipButton.setText(optional?"Pular Kiribati":"Sem passe → evento");
-        confirmButton.setText(finished?"✓ Concluído":
-            check?"✓ Prosseguir":"✓ Confirmar");
-        confirmButton.setAlpha(paused||finished?.45f:1f);
-        pauseButton.setText(paused?"▶":"Ⅱ");
-        trainingExit.setVisibility(training?View.VISIBLE:View.GONE);
-        endButton.setText(training?"Sair do treino":
-            endPending?"Confirmar fim":"Encerrar");
-        updateVisual();
+        if(!training&&!currentPhaseNote(current).isEmpty()){
+            eduNote=currentPhaseNote(current);updateStep();return;
+        }
+        String from=current.id;
+        if(index<plan.size()-1)index++;else finished=true;
+        eduHelpOpen=false;eduNote="";eduCaptureQuestion=false;
+        persist(finished?"FINISHED":type,from);
+        reactAvatar(RaidDayAvatarFrames.OK);
+        updateStep();
+    }
+    private void navigateEdu(String destination,String type){
+        if(paused||finished||destination==null||destination.isEmpty())return;
+        int next=plan.indexOf(destination);
+        if(next<0)return;
+        String from=plan.step(index).id;
+        if("CYCLE_REPEATED".equals(type))repeatedCycles++;
+        index=next;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
+        persist(type,from);
+        reactAvatar(RaidDayAvatarFrames.WAVE);
+        updateStep();
+    }
+    private void recordEduOutcome(String type){
+        if(paused||finished)return;
+        persist(type);
+        reactAvatar("RAID_WIN".equals(type)?RaidDayAvatarFrames.OK:
+            RaidDayAvatarFrames.QUESTION);
+        if("RAID_WIN".equals(type)){
+            eduCaptureQuestion=true;
+            eduNote="";updateStep();return;
+        }
+        advanceEdu("STEP_CONFIRMED");
+    }
+    private void recordEduCapture(String type){
+        if(paused||finished)return;
+        persist(type);
+        eduCaptureQuestion=false;
+        advanceEdu("STEP_CONFIRMED");
+    }
+    private void showEduWelcome(){
+        setTalk("Oi! Eu sou o Edu. Quer aprender o roteiro como se o evento fosse HOJE?",
+            "Simulação fictícia, sem passes extras. O método é relato da comunidade e pode violar as regras do jogo.");
+        addTwo("▶ Simular hoje",()->startDemoToday(),
+               "Evento real",()->{eduWantsReal=true;eduNote="";updateStep();});
+    }
+    private void showEduRisk(){
+        setTalk("Edu: antes de começar, um aviso rápido.",
+            "O método relatado pode violar os Termos do Pokémon GO e não garante passes. O PokeSearch não altera GPS nem joga por você.");
+        addTwo("Entendi, continuar",()->{
+            riskAccepted=true;
+            prefs.edit().putString("riskAcceptance",
+                plan.riskVersion+":"+eventKey)
+                .putLong("riskAcceptedAtMs",System.currentTimeMillis()).apply();
+            updateStep();
+        },"Sair",()->{eduWantsReal=false;updateStep();});
+    }
+    private void showEduReady(){
+        setTalk("Edu: tudo pronto! O roteiro começa na véspera, pelo Havaí.",
+            "Data informada: "+preparation.displayDate()+
+            " • Horário oficial não verificado");
+        LocalDate day=preparation.eventDate();
+        if(day!=null&&RaidDayEventClock.todayBrasilia(eventClock)
+            .equals(day.minusDays(1))){
+            addTwo("✓ Começar",()->beginRealSession(),"Treinar",()->{
+                demoToday=true;beginTraining();
+            });
+        }else{
+            addTwo("▶ Simular hoje",()->startDemoToday(),
+                "Mudar data",()->{
+                    preparation.beginEditing();preparation.save(prefs);updateStep();
+                });
+        }
+    }
+    private void showEduSettings(){
+        eduMainCard.setVisibility(View.GONE);
+        preparationSection.setVisibility(View.GONE);
+        eduActions.setVisibility(View.GONE);
+        eduMiniActions.setVisibility(View.GONE);
+        eduSettings.setVisibility(View.VISIBLE);
+        visualToggle.setText(RaidDayScreenCaptureService.isActive()?
+            "⏹ Parar leitura visual":"👁 Autorizar leitura de tela");
+        if(!eduNote.isEmpty()){
+            eduMainCard.setVisibility(View.VISIBLE);
+            setTalk("Edu: "+eduNote,"");
+        }
+    }
+    private void showEduGuide(){
+        RaidDayGuidePlan.Step step=plan.step(index);
+        if(endPending){
+            setTalk("Edu: quer mesmo encerrar? Seu histórico será preservado.","");
+            addTwo("Encerrar sessão",()->{
+                endPending=false;active=false;finished=true;
+                persist("ENDED");updateStep();
+            },"Continuar",()->{endPending=false;eduNote="";updateStep();});
+            return;
+        }
+        if(paused){
+            setTalk("Edu: roteiro pausado. Retomamos daqui, sem recomeçar.","");
+            addChoice(eduActions,"▶ Retomar",()->{
+                paused=false;persist("RESUMED");updateStep();
+            });
+            return;
+        }
+        String warning=currentPhaseNote(step);
+        if(!warning.isEmpty()){
+            setTalk("Edu: "+warning,"Para aprender sem alterar sua sessão, use o treino.");
+            addTwo("Ver ajuda",()->{eduHelpOpen=true;updateStep();},
+                "Pausar",()->{paused=true;persist("PAUSED");updateStep();});
+            return;
+        }
+        if(eduHelpOpen){
+            setTalk("Edu: "+step.help,"Volte à conversa quando estiver pronto.");
+            addChoice(eduActions,"✓ Entendi",()->{
+                eduHelpOpen=false;eduNote="";updateStep();
+            });
+            return;
+        }
+        if(!visualCandidate.isEmpty()&&!training){
+            setTalk("Edu: parece que encontrei esta tela: "+visualCandidate+
+                ". É isso mesmo?","A análise visual não confirma passes e não pula etapas.");
+            addTwo("✓ Sim, era",()->confirmEduVision(),
+                "Não era",()->rejectEduVision());
+            return;
+        }
+        if(eduCaptureQuestion){
+            setTalk("Edu: depois da vitória, conseguiu capturar o Pokémon?",
+                "A captura é separada da vitória da reide.");
+            addThree("Capturei",()->recordEduCapture("RAID_CAUGHT"),
+                "Fugiu",()->recordEduCapture("RAID_FLED"),
+                "Não sei",()->recordEduCapture("RAID_UNKNOWN"));
+            return;
+        }
+        setTalk(step.speech,eduNote.isEmpty()?phaseClock(step):eduNote);
+        switch(step.id){
+            case "E03":
+                addTwo("Vi um passe",()->advanceEdu("STEP_CONFIRMED"),
+                    "Sem passe",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                break;
+            case "E04":
+                addThree("Venci",()->recordEduOutcome("RAID_WIN"),
+                    "Perdi",()->recordEduOutcome("RAID_LOSS"),
+                    "Saí",()->recordEduOutcome("RAID_LEFT"));
+                break;
+            case "E06":
+                addTwo("Sim, apareceu",()->advanceEdu("STEP_CONFIRMED"),
+                    "Não apareceu",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                break;
+            case "E07":
+                addTwo("↻ Repetir",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
+                    "Ir ao evento",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                break;
+            case "E09":
+                addTwo("Concluí",()->advanceEdu("STEP_CONFIRMED"),
+                    "Pular etapa",()->navigateEdu(step.skipTo,"OPTIONAL_SKIPPED"));
+                break;
+            case "E11":
+                addChoice(eduActions,"✓ Ver resumo",()->advanceEdu("FINISHED"));
+                break;
+            default:
+                addTwo("✓ Concluí",()->advanceEdu("STEP_CONFIRMED"),
+                    "Ainda não",()->{
+                        persist("NOT_OBSERVED");
+                        eduNote=step.ajudaEdu;
+                        reactAvatar(RaidDayAvatarFrames.QUESTION);
+                        updateStep();
+                    });
+                break;
+        }
+        addMini("← Voltar",()->{
+            if(index>0){
+                String from=plan.step(index).id;
+                index--;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
+                persist("BACK",from);updateStep();
+            }
+        });
+        addMini("? Ajuda",()->{
+            eduHelpOpen=true;eduNote="";
+            reactAvatar(RaidDayAvatarFrames.QUESTION);updateStep();
+        });
+        if(!step.locationRef.isEmpty())addMini("Copiar local",()->copyEduCoordinates());
+    }
+    private void showEduFinished(){
+        String stats=training?"O treino terminou; nenhuma ação foi salva.":
+            RaidDayRecovery.stats(journal.events().all(sessionKey));
+        setTalk("Edu: chegamos ao fim do roteiro!",""+
+            (training?"SIMULAÇÃO concluída • sem recompensas reais":stats));
+        if(training)addChoice(eduActions,"✓ Sair da simulação",()->leaveTraining());
+        else addChoice(eduActions,"✓ Fechar o resumo",()->{
+            active=false;finished=true;persist("ENDED");
+            eduWantsReal=false;updateStep();
+        });
+    }
+    private void addMini(String label,Runnable action){
+        TextView b=button(label);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(34),1);
+        if(eduMiniActions.getChildCount()>0)p.leftMargin=dp(4);
+        eduMiniActions.addView(b,p);
+        b.setOnClickListener(v->action.run());
+    }
+    private void updateStep(){
+        if(eduSpeech==null)return;
+        eduActions.removeAllViews();
+        eduMiniActions.removeAllViews();
+        eduSettings.setVisibility(View.GONE);
+        eduMainCard.setVisibility(View.VISIBLE);
+        preparationSection.setVisibility(View.GONE);
+        eduActions.setVisibility(View.VISIBLE);
+        eduMiniActions.setVisibility(View.VISIBLE);
+        updateEventClock();
+        if(eduSettingsOpen){showEduSettings();}
+        else if(active||training){
+            if(finished)showEduFinished();else showEduGuide();
+        }else if(!eduWantsReal){
+            showEduWelcome();
+        }else if(!preparation.isComplete()){
+            eduMainCard.setVisibility(View.GONE);
+            eduActions.setVisibility(View.GONE);
+            preparationSection.setVisibility(View.VISIBLE);
+            renderPreparation();
+        }else if(!riskAccepted){showEduRisk();}
+        else{showEduReady();}
         if(visible)placePanel();
     }
     private void placePanelCoordinates(){
+        int width=eduPanelWidth;
         int sw=getResources().getDisplayMetrics().widthPixels;
         int sh=getResources().getDisplayMetrics().heightPixels;
-        int width=dp(272);
-        int preferred=bubbleParams.x+bubbleParams.width+dp(4);
-        panelParams.x=preferred+width<=sw?preferred:
-            Math.max(0,bubbleParams.x-width-dp(4));
-        panelParams.x=Math.max(0,Math.min(sw-width,panelParams.x));
-        int panelHeight=panelScroll!=null&&panelScroll.getHeight()>0?
-            panelScroll.getHeight():dp(330);
-        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-panelHeight-dp(8)),
-            bubbleParams.y-dp(12)));
+        int preferred=bubbleParams.x+bubbleParams.width+dp(5);
+        int fallback=preferred+width<sw?preferred:
+            Math.max(0,bubbleParams.x-width-dp(5));
+        panelParams.x=Math.max(0,Math.min(Math.max(0,sw-width),
+            prefs.getInt("edu_panel_x",fallback)));
+        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-dp(125)),
+            prefs.getInt("edu_panel_y",bubbleParams.y)));
     }
     private void placePanel(){
-        if(!visible||panel==null||panelParams==null)return;
-        placePanelCoordinates();
+        if(!visible||panelScroll==null||panelParams==null)return;
+        int sw=getResources().getDisplayMetrics().widthPixels;
+        int sh=getResources().getDisplayMetrics().heightPixels;
+        int height=Math.max(dp(90),panelScroll.getHeight());
+        panelParams.x=Math.max(0,Math.min(sw-eduPanelWidth,panelParams.x));
+        panelParams.y=Math.max(0,Math.min(Math.max(0,sh-height),panelParams.y));
         try{wm.updateViewLayout(panelScroll,panelParams);}
         catch(IllegalArgumentException ignored){}
     }
     private void setVisible(boolean show){
-        if(panel==null||wm==null||show==visible)return;
+        if(panelScroll==null||wm==null||show==visible)return;
         visible=show;
         if(show){
-            updateEventClock();
-            if(eventWindowText!=null)eventWindowText.setText(RaidDaySchedule.status(this));
+            updateStep();
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);
             panelScroll.post(this::placePanel);
         }else{
-            try{wm.removeView(panelScroll);}catch(IllegalArgumentException ignored){}
+            try{wm.removeView(panelScroll);}
+            catch(IllegalArgumentException ignored){}
         }
     }
     @Override public void onDestroy(){
