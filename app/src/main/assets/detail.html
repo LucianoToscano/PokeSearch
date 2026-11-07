@@ -2905,19 +2905,12 @@ window.showEvolutionDetails=payload=>{
  for(const league of payload.leagues){
   if(!league||!Object.prototype.hasOwnProperty.call(labels,league.league))continue;
   const entries=Array.isArray(league.evolutions)?league.evolutions.slice(0,24):[];
-  // LT245: put verified species meta rankings ahead when IV spreads are good.
-  // Mega previews and costume reference rows retain independent semantics.
-  const quality=x=>Number.isInteger(Number(x?.rank))&&
-    Number(x.rank)>=1&&Number(x.rank)<=50&&x?.eligible!==false;
-  const general=x=>x?.referenceOnly===true?Infinity:
-    Number.isInteger(Number(x?.overallRank))&&Number(x.overallRank)>0?
-    Number(x.overallRank):Infinity;
-  entries.sort((a,b)=>{
-   const aq=quality(a),bq=quality(b);
-   if(aq!==bq)return aq?-1:1;
-   if(aq&&bq&&general(a)!==general(b))return general(a)-general(b);
-   return (Number(a?.rank)||4097)-(Number(b?.rank)||4097);
-  });
+  // LT291: display the actual evolutionary sequence, never sort by PvP rank.
+  // E.g. Cyndaquil -> Quilava -> Typhlosion even when Typhlosion has a
+  // better Rank Classe. Compact 'best IV/RG' recommendations still use ranks.
+  // Branches at the same stage stay stable; unverified forms are not guessed.
+  const orderedEntries=window.PokeSearchPvpFamilyCatalog?.orderEvolutionRows?.(
+   payload.rankSpecies||payload.name,entries)||entries;
   // Costume references are projected by the calculator, but are not an
   // assertion that an event Pokémon can evolve. Keep both result types visible.
   const references=payload.includePreviousEvolutions!==false&&Array.isArray(league.comparisons)?
@@ -2927,7 +2920,7 @@ window.showEvolutionDetails=payload=>{
   const megas=Array.isArray(league.megas)?
    league.megas.filter(e=>e?.megaProjection===true):[];
   window.psRankRenderLeague=league.league;
-  const rows=[...megas,...entries,...references].map(e=>evolutionRow(e,false)).filter(Boolean);
+  const rows=[...orderedEntries,...references,...megas].map(e=>evolutionRow(e,false)).filter(Boolean);
   const own=league.own?evolutionRow({...league.own,name:payload.name},true):"";
   if(!rows.length&&!own)continue;
   html+='<div class="psLeagueAnalysis" data-ps-league="'+league.league+'">'+
