@@ -540,7 +540,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             LinearLayout responses=new LinearLayout(this);
             responses.setGravity(Gravity.CENTER);
             for(String option:preparation.optionsFor(q)){
-                TextView b=button((option.equals(selected)?"✓ ":"")+option);
+                String shortLabel=option.startsWith("Híbrido")?"Híbrido":option;
+                TextView b=button((option.equals(selected)?"✓ ":"")+shortLabel);
+                b.setContentDescription(option);
                 LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(
                     0,dp(41),1);
                 lp.leftMargin=dp(3);
@@ -740,6 +742,9 @@ public final class RaidDayAssistantOverlayService extends Service {
                 updateAvatarSize();
             });
         }
+        for(int i=0;i<avatarSizeButtons.length;i++)
+            avatarSizeButtons[i].setTextColor(i==avatarSizeIndex?
+                Color.rgb(118,235,195):Color.WHITE);
         LinearLayout.LayoutParams sizesLp=new LinearLayout.LayoutParams(-1,dp(39));
         sizesLp.topMargin=dp(6);
         eduSettings.addView(sizes,sizesLp);
