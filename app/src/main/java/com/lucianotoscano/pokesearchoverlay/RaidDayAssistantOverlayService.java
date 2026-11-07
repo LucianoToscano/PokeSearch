@@ -96,6 +96,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private SharedPreferences prefs;
     private TextView progressText,titleText,instructionText,statusText,confirmButton,pauseButton;
     private TextView copyButton,repeatButton,cycleText,skipButton;
+    private LinearLayout cycleActions;
     private ProgressBar progressBar;
     private boolean paused=false,finished=false,visible=false,dragging=false;
     private int index=0;
@@ -161,7 +162,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Notification note=new Notification.Builder(this,CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("PokeSearch · Assistente de Reides")
+            .setContentTitle("PokeSearch · Assistente do Dia de Raides")
             .setContentText("Guia manual ativo · toque no ícone flutuante")
             .setOngoing(true)
             .addAction(new Notification.Action.Builder(
@@ -339,7 +340,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         pauseButton.setOnClickListener(v->{
             paused=!paused;persist();updateStep();
         });
-        LinearLayout cycleActions=new LinearLayout(this);
+        cycleActions=new LinearLayout(this);
         LinearLayout.LayoutParams cycleActionsLp=new LinearLayout.LayoutParams(-1,dp(36));
         cycleActionsLp.topMargin=dp(6);
         panel.addView(cycleActions,cycleActionsLp);
@@ -360,7 +361,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         skipLp.leftMargin=dp(6);
         cycleActions.addView(skipButton,skipLp);
         skipButton.setOnClickListener(v->{
-            if(paused||finished||index!=STEP_CHECK)return;
+            if(paused||finished||(index!=STEP_CHECK&&index!=STEP_NZ_RAID))return;
             index=7;persist();updateStep();
         });
         panelParams=new WindowManager.LayoutParams(
@@ -388,8 +389,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         copyButton.setVisibility(!finished&&!COORDS[index].isEmpty()?View.VISIBLE:View.GONE);
         cycleText.setText("Ciclos repetidos: "+repeatedCycles+" · não representa passes");
         boolean check=!finished&&index==STEP_CHECK;
+        boolean noPass=!finished&&index==STEP_NZ_RAID;
+        cycleActions.setVisibility(check||noPass?View.VISIBLE:View.GONE);
         repeatButton.setVisibility(check?View.VISIBLE:View.GONE);
-        skipButton.setVisibility(check?View.VISIBLE:View.GONE);
+        skipButton.setVisibility(check||noPass?View.VISIBLE:View.GONE);
         confirmButton.setText(finished?"↻ Reiniciar":check?"✓ Prosseguir":"✓ Confirmar");
         confirmButton.setAlpha(paused?.46f:1f);
         pauseButton.setText(paused?"▶":"Ⅱ");
