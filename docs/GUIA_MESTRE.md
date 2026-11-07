@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT300 — PIKACHU ANNIVERSARY 2026 SINGAPORE 01: TIPAGEM E PvP (07/11/2026)
+
+- **Evidência:** screenshot real no Samsung do Pikachu #25 fantasiado (01, Singapura, aniversário 2026), IV 15/15/15 e 100%, sprite específica correta, mas tipo e atalhos GL/UL/ML/RG exibiam `—`. O anúncio oficial Pokémon GO PokéXciting! confirma Pikachu com traje azul exclusivo de Singapura em 07–08/11/2026 (`https://pokemongo.com/en/news/event-apac-30th-anniversary-2026`).
+- **Causa:** `pokemon_card_presentation.meta()` bloqueava a string `Anniversary 2026 Singapore 01` porque não era uma forma oficial reconhecida nem continha tags convencionais `costume/hat`. `dock.html::cosmeticPvpIdentity()` aplicava bloqueio equivalente, e `safePvpSpeciesKey()` então não consultava a espécie Pikachu no Game Master. Isso não demonstra falta de tipagem nem invalida os IVs verificados.
+- **Correção restrita e segura:** reconhecer **somente** `#25 Pikachu` com form token normalizado `anniversary2026singapore01` (ou `...1`) e nome/número de espécie consistentes. O tipo **Elétrico** vem de `PokeSearchCardMetaData.base[25]`, que é compilado do PvPoke fixado; as classificações GL/UL/ML vêm do Game Master e IVs reais da espécie Pikachu. **Não** reutilizar sprite de Pikachu comum nem inferir que o Pokémon de evento pode evoluir. Outras formas desconhecidas/regionais, Dex incompatível e tokens parecidos continuam sem dados. A fonte geral `pvpoke-overall-ranks.js` **não contém Pikachu**, então Rank Geral permanece `—` e não se inventa um número. A classificação de raides permanece independente.
+- **Arquivos:** `app/src/main/assets/pokemon_card_presentation.js`, `app/src/main/assets/dock.html`, teste `app/tests/lt300-singapore-anniversary-pikachu-types-pvp.test.js`, notas de versão `release_notes.json`. A correção beneficia P1/P2. Branch `fix/lt300-pikachu-singapore-costume-type-ranks-20261107`; mesclagem/publicação oficial deverão ser registradas somente após verificação completa.
+
+
 ## LT299 — AJUSTE EXATO DOS ÍCONES DE TIPOS NOS CARDS (07/11/2026)
 
 - **Evidência física do usuário:** prints no Samsung dos cartões **Slowpoke** (Água/Psíquico) e **Chikorita** (Planta) após LT298. Os ícones ficaram visualmente grandes e o ícone de tipo único era maior que cada ícone individual do conjunto de dois. Pedido: igualar o tamanho, centralizar o tipo único, impor separação de **2 px** entre dois tipos e diminuir a caixa em **1 px de cada lado**.
