@@ -37,7 +37,8 @@ const notes=JSON.parse(fs.readFileSync(path.join(root,"release_notes.json"),"utf
 assert.ok(notes.releases.some(x=>x.minVersionCode===54472),"LT268 release notes included");
 const req=JSON.parse(fs.readFileSync(path.join(__dirname,"../../release/official-request.json"),"utf8"));
 assert.ok(req.code>=54472,"LT268 signed baseline remains supported");
-assert.ok(/^v0[.]02[.][0-9]{2}-[0-9]+$/.test(req.previous_tag),"Well-formed previous release tag");
+assert.ok(/^v[0-9]+[.][0-9]{2}[.][0-9]{2}-[0-9]+$/.test(req.previous_tag),
+ "Well-formed previous official release tag (including 0.03.xx and later)");
 assert.ok(req.code>Number(req.previous_tag.split("-").at(-1)),
  "Official update versionCode must be strictly greater than previous official release (skipped intermediate LT versions are allowed)");
 console.log("LT268 PASS: six glow-free badges, RG/Raid correct, Modos/Pokeballs untouched, signed hashes");
