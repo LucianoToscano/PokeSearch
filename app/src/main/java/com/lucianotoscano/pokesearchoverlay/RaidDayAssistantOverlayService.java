@@ -77,7 +77,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     // Edu: interface de conversa, isolada das opções avançadas.
     static final String ACTION_CONSENT_DONE="com.lucianotoscano.pokesearch.EDU_CONSENT_DONE";
     private boolean demoToday=false,eduWantsReal=false,eduSettingsOpen=false;
-    private boolean eduHelpOpen=false,eduCaptureQuestion=false,eduMovePanel=false;
+    private boolean eduHelpOpen=false,eduCaptureQuestion=false,eduMovePanel=false,eduRecordingExtraRaid=false;
     private String eduNote="";
     private LinearLayout eduWelcome,eduSettings,eduActions,eduMiniActions,eduMainCard;
     private TextView eduHeader,eduBadge,eduSpeech,eduSubline,eduSettingsClose;
@@ -322,7 +322,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(!demoToday&&(!riskAccepted||!preparation.isComplete()))return;
         training=true;active=false;index=0;repeatedCycles=0;
         paused=false;finished=false;endPending=false;
-        eduCaptureQuestion=false;eduHelpOpen=false;eduSettingsOpen=false;
+        eduCaptureQuestion=false;eduRecordingExtraRaid=false;
+        eduHelpOpen=false;eduSettingsOpen=false;
         reactAvatar(RaidDayAvatarFrames.WAVE);
         updateStep();
     }
@@ -335,6 +336,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void leaveTraining(){
         training=false;demoToday=false;eduWantsReal=false;
+        eduRecordingExtraRaid=false;
         eduSettingsOpen=false;eduHelpOpen=false;eduCaptureQuestion=false;
         restoreJournal();updateStep();
     }
@@ -923,6 +925,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         String from=current.id;
         if(index<plan.size()-1)index++;else finished=true;
         eduHelpOpen=false;eduNote="";eduCaptureQuestion=false;
+        eduRecordingExtraRaid=false;
         persist(finished?"FINISHED":type,from);
         reactAvatar(RaidDayAvatarFrames.OK);
         updateStep();
@@ -934,6 +937,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         String from=plan.step(index).id;
         if("CYCLE_REPEATED".equals(type))repeatedCycles++;
         index=next;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
+        eduRecordingExtraRaid=false;
         persist(type,from);
         reactAvatar("NO_PASS".equals(type)?RaidDayAvatarFrames.ALERT:
             RaidDayAvatarFrames.WAVE);
@@ -948,12 +952,22 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduCaptureQuestion=true;
             eduNote="";updateStep();return;
         }
+        if(eduRecordingExtraRaid){
+            eduRecordingExtraRaid=false;
+            eduNote="Reide anotada. Deseja registrar outra?";
+            updateStep();return;
+        }
         advanceEdu("STEP_CONFIRMED");
     }
     private void recordEduCapture(String type){
         if(paused||finished)return;
         persist(type);
         eduCaptureQuestion=false;
+        if(eduRecordingExtraRaid){
+            eduRecordingExtraRaid=false;
+            eduNote="Resultado registrado. Você pode anotar outra reide.";
+            updateStep();return;
+        }
         advanceEdu("STEP_CONFIRMED");
     }
     private void showEduWelcome(){
@@ -1051,6 +1065,14 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "Não sei",()->recordEduCapture("RAID_UNKNOWN"));
             return;
         }
+        if(eduRecordingExtraRaid){
+            setTalk("Edu: como terminou essa reide?",
+                "Registre o resultado. Você poderá adicionar outra depois.");
+            addThree("Venci",()->recordEduOutcome("RAID_WIN"),
+                "Perdi",()->recordEduOutcome("RAID_LOSS"),
+                "Saí",()->recordEduOutcome("RAID_LEFT"));
+            return;
+        }
         setTalk(step.speech,eduNote.isEmpty()?phaseClock(step):eduNote);
         switch(step.id){
             case "E03":
@@ -1073,6 +1095,11 @@ public final class RaidDayAssistantOverlayService extends Service {
             case "E09":
                 addTwo("Concluí",()->advanceEdu("STEP_CONFIRMED"),
                     "Pular etapa",()->navigateEdu(step.skipTo,"OPTIONAL_SKIPPED"));
+                break;
+            case "E10":
+                addTwo("Registrar reide",()->{
+                    eduRecordingExtraRaid=true;eduNote="";updateStep();
+                },"Seguir",()->advanceEdu("STEP_CONFIRMED"));
                 break;
             case "E11":
                 addChoice(eduActions,"✓ Ver resumo",()->advanceEdu("FINISHED"));
