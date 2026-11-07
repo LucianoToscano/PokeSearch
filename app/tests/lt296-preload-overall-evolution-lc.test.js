@@ -21,9 +21,9 @@ assert.equal(explorer.getOverallRows(w.POKESEARCH_PVPOKE_OVERALL,"lc")[0].rank,1
 assert.equal(explorer.getIvRows(null,"Bulbasaur","lc"),null);
 assert.equal(typeof explorer.switchOverallSpecies,"function");
 const sprite=require("../src/main/assets/sprite_offline.js");
-assert.match(sprite.rankSprite("Squirtle"),/7\\.png$/);
-assert.match(sprite.rankSprite("Wartortle"),/8\\.png$/);
-assert.match(sprite.rankSprite("Blastoise"),/9\\.png$/);
+assert.match(sprite.rankSprite("Squirtle"),/7\.png$/);
+assert.match(sprite.rankSprite("Wartortle"),/8\.png$/);
+assert.match(sprite.rankSprite("Blastoise"),/9\.png$/);
 assert.equal(sprite.rankSprite("Squirtle (Shadow)"),"");
 const rows=["Squirtle","Wartortle","Blastoise"].map(name=>{
  const button={dataset:{psLeague:"gl",psName:name,psMega:"false"},
