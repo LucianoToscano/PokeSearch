@@ -3631,6 +3631,12 @@ function renderDetailMetric(){
 function openDetailMetric(kind){
  if(kind==="iv"){
   if(!metricCard?.ivValid)return false;
+  // A second tap on the SAME IV tile always collapses Rank Classe,
+  // even if the selected league was changed inside the explorer.
+  if(window.PokeSearchRankExplorer?.closeIfKind?.("class")){
+   if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
+   return true;
+  }
   if(typeof psCloseOtherPanels==="function")psCloseOtherPanels("rank");
   // LT276: remember the last league chosen inside Rank Classe for this card.
   const context=window.psRankContext,league=window.psRailClassSelectedLeague||
