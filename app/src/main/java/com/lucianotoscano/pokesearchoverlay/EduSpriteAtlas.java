@@ -37,6 +37,7 @@ public final class EduSpriteAtlas {
 
     private final Bitmap atlas;
     private final Bitmap uniform;
+    private final boolean correctedAtlas;
     private final Bitmap extras;
     private final Bitmap consistentIdle;
     private final Bitmap shadowSprite;
@@ -44,10 +45,12 @@ public final class EduSpriteAtlas {
     private final Context app;
 
     private EduSpriteAtlas(Context context, Bitmap image, Bitmap uniformImage,
-                           Bitmap extrasImage, Bitmap idleImage, Bitmap shadowImage){
+                           Bitmap extrasImage, Bitmap idleImage, Bitmap shadowImage,
+                           boolean corrected){
         app=context.getApplicationContext();
         atlas=image;
         uniform=uniformImage;
+        correctedAtlas=corrected;
         extras=extrasImage;
         consistentIdle=idleImage;
         shadowSprite=shadowImage;
@@ -77,6 +80,7 @@ public final class EduSpriteAtlas {
             }catch(IOException|RuntimeException ignored){
                 // Só faz fallback à coleção anterior, nunca exibe vazio.
             }
+            boolean correctedUsed=false;
             // Preferir a revisão LT316; se faltar, estiver corrompida ou não
             // decodificar em 1024x1152, manter integralmente o atlas LT315.
             try(InputStream corrected=context.getAssets().open(CORRECTED_UNIFORM_ASSET)){
@@ -92,6 +96,7 @@ public final class EduSpriteAtlas {
                     candidate.getHeight()==UNIFORM_ROWS*CELL){
                     if(unified!=null)unified.recycle();
                     unified=candidate;
+                    correctedUsed=true;
                 }else if(candidate!=null)candidate.recycle();
             }catch(IOException|RuntimeException ignored){
                 // Preservar o original LT315 e os outros três fallback.
@@ -141,7 +146,8 @@ public final class EduSpriteAtlas {
             }catch(RuntimeException|IOException ignored){
                 // Asset opcional: não bloquear o Edu nem as 67 poses anteriores.
             }
-            return new EduSpriteAtlas(context,image,unified,extra,idle,shadow);
+            return new EduSpriteAtlas(context,image,unified,extra,idle,shadow,
+                correctedUsed);
         }
     }
     public Drawable frame(int index){
@@ -172,6 +178,10 @@ public final class EduSpriteAtlas {
                 if(!replacement)crop=normalizeIdleBody(crop,i);
                 crop=EduSpriteGeometry.stabilize(crop,i,replacement);
             }
+            // LT316: só os cinco quadros de acessórios recebem retoque
+            // adicional. Todos os demais 63 permanecem no atlas QA.
+            if(uniformFrame&&correctedAtlas)
+                crop=EduSpriteManualRetouch.apply(crop,i);
             // Nunca reescalar o atlas LT315, pré-alinhado em 128x128.
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
             drawable.setFilterBitmap(false);
