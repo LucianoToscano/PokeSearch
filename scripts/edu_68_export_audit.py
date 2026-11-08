@@ -27,7 +27,36 @@ NAMES={
  66:"armadura_mewtwo_shiny",67:"sombria_ansioso"
 }
 RETOQUES={20,28,30,36,49}
+# Parâmetros extraídos de EduSpriteManualRetouch.java, sem modificar código do app.
+RETOUCH={
+ 20:dict(poly=[(22,15),(70,15),(78,23),(79,44),(90,63),(91,84),(85,117),(26,124),(16,100),(15,55)],scale=1.115,head=56.97,feet=117,props=[(83,73,107,108)]),
+ 28:dict(poly=[(26,23),(76,19),(85,36),(89,55),(87,83),(85,122),(27,124),(22,84),(21,49)],scale=1.155,head=58.60,feet=118,props=[(91,59,122,84)]),
+ 30:dict(poly=[(25,20),(78,19),(89,35),(91,58),(90,86),(87,124),(28,124),(22,86),(21,48)],scale=1.135,head=61.66,feet=118,props=[(96,68,119,99)]),
+ 36:dict(poly=[(23,19),(69,18),(79,35),(81,58),(83,89),(79,124),(25,124),(19,86),(18,45)],scale=1.165,head=55.66,feet=119,props=[(81,9,112,46),(84,54,122,112)]),
+ 49:dict(poly=[(25,18),(78,16),(88,34),(93,57),(92,81),(89,108),(82,124),(25,124),(18,86),(17,48)],scale=1.090,head=55.68,feet=116,props=[(93,10,128,54),(93,54,128,119)])
+}
 assert len(NAMES)==68
+def retouch_approx_android(source,i):
+    """Aproxima máscara de polígono, escala do corpo e reposição de props
+    usados pelo Java; Android Canvas é referência final, não Pillow."""
+    q=RETOUCH[i]
+    mask=Image.new("L",(128,128),0)
+    ImageDraw.Draw(mask).polygon(q["poly"],fill=255)
+    body=source.copy()
+    body.putalpha(ImageChops.multiply(source.getchannel("A"),mask))
+    width=round(128*q["scale"])
+    body=body.resize((width,width),Image.Resampling.NEAREST)
+    dx=round(64-q["head"]*q["scale"])
+    dy=round(119-q["feet"]*q["scale"])
+    result=source.copy()
+    result.putalpha(ImageChops.multiply(
+        source.getchannel("A"),ImageChops.invert(mask)))
+    layer=Image.new("RGBA",(128,128))
+    layer.paste(body,(dx,dy))
+    result=Image.alpha_composite(result,layer)
+    for box in q["props"]:
+        result.paste(source.crop(box),(box[0],box[1]))
+    return result
 def digest(data):return hashlib.sha256(data).hexdigest()
 def font(size,bold=False):
     path="/usr/share/fonts/truetype/dejavu/DejaVuSans"+("-Bold" if bold else "")+".ttf"
@@ -115,10 +144,16 @@ def main():
             "avisos":";".join(note),
             "estado":"REVISAR" if note else "SEM_ALERTA_GEOMETRICO"
         })
-    # Guardar os cinco casos especiais em pasta própria para conferência.
-    # Não simular retoque Android em pixels por aproximação e declarar idêntico.
+    # Antes/depois dos cinco retoques de acessórios da LT316.
+    # São APROXIMAÇÕES em Pillow; o Java/Android é a referência exata.
     for i in sorted(RETOQUES):
-        frames[i].save(folders["retoque"]/crop_name(i),optimize=True)
+        frame=frames[i]
+        fixed=retouch_approx_android(frame,i)
+        nm=crop_name(i)
+        frame.save(folders["retoque"]/("ANTES_"+nm),optimize=True)
+        fixed.save(folders["retoque"]/("DEPOIS_aproximado_"+nm),optimize=True)
+        fixed.resize((512,512),Image.Resampling.NEAREST).save(
+            folders["retoque"]/("DEPOIS_512_derivado_"+nm),optimize=True)
     preview_sheet(frames,list(range(68)),
         folders["prev"]/"PAINEL_68_QUADROS.png",8,174,
         "EDU 68 SPRITES - ATLAS LT316 (128 pixels por quadro)")
@@ -173,7 +208,7 @@ def main():
         "- As duas pastas 512px são AMPLIAÇÕES derivadas, nunca fontes novas nem recriação fiel de olhos.",
         "- A auditoria automatizada verifica integridade, geometria, bordas e transparência; NÃO comprova perfeição artística, identidade facial ou nitidez de origem.",
         "- Quadros 52 a 60 de teleporte têm escala/opacidade intencionalmente variáveis.",
-        "- Quadros 20, 28, 30, 36 e 49 recebem retoques adicionais por código Android; a pasta de referência mostra suas bases e NÃO pretende simular esses retoques em outro renderizador.",
+        "- Quadros 20, 28, 30, 36 e 49 recebem retoques Android; pasta 05 contém ANTES, DEPOIS aproximado e 512 derivado. A aproximação Pillow NÃO é pixel a pixel igual ao Canvas Android.",
         "- Inspecionar visualmente especialmente olhos/óculos e acessórios nos índices 36,37,38,42,49,50,51,67.",
         "",
         "## O que fazer para melhorar de verdade",
@@ -188,7 +223,7 @@ def main():
     (OUT/"LEIA_PRIMEIRO.txt").write_text(
         "Pacote de auditoria dos 68 sprites Edu LT320.\n"
         "Pasta 02 = originais 128. Pastas 03 e 04 = DERIVADOS 512, não originais.\n"
-        "Pasta 05 = bases de cinco retoques aplicados pelo Android.\n"
+        "Pasta 05 = cinco retoques em comparações ANTES/DEPOIS aproximadas (não idênticas ao Android).\n"
         "Painéis e relatórios nas pastas 06 e 07.\n",encoding="utf8")
     zip_path=OUT.parent/(NAME+".zip")
     with zipfile.ZipFile(zip_path,"w",zipfile.ZIP_DEFLATED,compresslevel=7) as z:
