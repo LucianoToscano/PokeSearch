@@ -61,4 +61,5 @@ for(const seq of ["pokebola_gesto","caminhada_frente","caminhada_direita",
 assert.match(java,/SIZES_PX=\{50,75,100\}/,"não muda P/M/G");
 assert.ok(old.length>700000,"atlas de 62 continua incluído");
 assert.ok(extra.length>5000,"atlas de 5 continua incluído");
-assert.match(java,/boolean uniformFrame=uniform!=null/);\nconsole.log("LT313: asset WebP lossless 22, proporções consistentes, mapeamento e fallback PASS");
+assert.match(java,/boolean uniformFrame=uniform!=null/);
+console.log("LT313: asset WebP lossless 22, proporções consistentes, mapeamento e fallback PASS");
