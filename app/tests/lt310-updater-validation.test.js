@@ -18,5 +18,5 @@ assert(src.includes('browserFallback.setText("Baixar APK oficial pelo navegador"
 assert(src.includes('browserFallback.setVisibility(android.view.View.VISIBLE);'), "Browser alternative is available even on failure");
 assert(src.includes('browserFallback.setOnClickListener(v->openOfficialDownload(activity,release.url))'), "Alternative route opens pinned official release URL");
 assert(src.includes('c.setReadTimeout(30000)'), "Allow slower connections to complete large APK transfers");
-assert(src.includes('https://github\\\\.com/LucianoToscano/PokeSearch/releases/download/'), "Official URL pattern stays pinned");
+assert(src.includes('private static final String ASSET_PREFIX="https://github.com/LucianoToscano/PokeSearch/releases/download/";'), "Official URL pattern stays pinned");
 console.log("LT310 updater safe diagnostics, browser fallback and pinned integrity checks PASS");
