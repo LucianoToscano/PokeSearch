@@ -69,5 +69,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f exports/EDU_68_SPRITES_LT320_AUDITORIA_2026-11-08.zip
           git add -f exports/EDU_68_SPRITES_LT320_AUDITORIA_2026-11-08_RESUMO.json
-          git commit -m "qa(edu): disponibilizar ZIP auditado de 68 sprites LT320"
+          git add -f exports/edu_sprite_audit/06_Previas/PAINEL_68_QUADROS.png
+          git add -f exports/edu_sprite_audit/07_Auditoria/RELATORIO.md
+          git add -f exports/edu_sprite_audit/07_Auditoria/inventario_status_68.csv
+          git add -f exports/edu_sprite_audit/07_Auditoria/resumo.json
+          git commit -m "qa(edu): publicar ZIP, painel e relatório de 68 sprites LT320"
           git push origin HEAD:qa/edu-sprite-export-lt320-20261108
