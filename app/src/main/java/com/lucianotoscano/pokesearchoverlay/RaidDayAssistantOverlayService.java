@@ -138,14 +138,125 @@ public final class RaidDayAssistantOverlayService extends Service {
     private int touchSlop;
     private Bitmap artwork;
     private RaidDayAvatarFrames avatarSprites;
+    private EduSpriteAtlas eduSprites; // LT309: 62 quadros; atlas LT304 permanece fallback
     private ImageView avatarView;
     private TextView[] avatarSizeButtons;
     private TextView avatarMotionButton;
     private int avatarSizeIndex=2,avatarAnimationTick=0,avatarReactionFrame=-1;
     private long avatarReactionUntil=0L;
     private boolean avatarMotion=true;
+    private String eduAnimationName="",eduReactionState="";
+    private long eduAnimationStartedAt=0L,eduDragStartedAt=0L,eduReactionStateUntil=0L;
+    // Exibição de efeitos não implica teleporte, passe, vitória ou evento confirmado.
+    private int eduCurrentFrame(long now){
+        if(dragging){
+            int[] frames=EduSpriteAtlas.sequence("arrastando");
+            int tick=(int)Math.max(0,(now-eduDragStartedAt)/185L);
+            return frames[Math.min(frames.length-1,tick)];
+        }
+        if(!eduAnimationName.isEmpty()){
+            int[] frames=EduSpriteAtlas.sequence(eduAnimationName);
+            if(frames.length>0){
+                long duration=EduSpriteAtlas.durationMs(eduAnimationName);
+                int tick=(int)Math.max(0,(now-eduAnimationStartedAt)/duration);
+                if(tick<frames.length)return frames[tick];
+                // Reproduz uma passagem por gatilho. Nunca caminha
+                // indefinidamente parado na tela.
+            }
+            eduAnimationName="";
+        }
+        if(!eduReactionState.isEmpty()&&now<eduReactionStateUntil)
+            return EduSpriteAtlas.indexForState(eduReactionState);
+        eduReactionState="";
+        return EduSpriteAtlas.indexForState(eduContextState());
+    }
+    private String eduContextState(){
+        if(finished)return "resumo_concluido";
+        if(eduSettingsOpen)return "perguntando";
+        if(paused)return "parado";
+        if(eduCaptureQuestion)return "perguntando";
+        if(!eduIntroAccepted||(!active&&!training))return "apresentacao";
+        if(plan==null||index<0||index>=plan.size())return "parado";
+        String id=plan.step(index).id;
+        if("E01".equals(id)){
+            if("pre_softban".equals(eduDialogueState))return "softban_aviso";
+            if("pre_blocked".equals(eduDialogueState))return "alerta";
+            if("pass_wait".equals(eduDialogueState))return "sem_passe_disponivel";
+            return "guardar_passe_vespera";
+        }
+        if("E02".equals(id)||"E05".equals(id)){
+            if("travel_reload".equals(eduDialogueState)&&"E05".equals(id))
+                return "fechar_reabrir_jogo";
+            if("travel_wait".equals(eduDialogueState)||
+                "travel_reload".equals(eduDialogueState))
+                return "esperando_carregamento_1";
+            return "ir_local_evento_escolhido";
+        }
+        if("E03".equals(id)||"E06".equals(id)){
+            if("nz_retry_reload".equals(eduDialogueState))
+                return "fechar_reabrir_jogo";
+            if("nz_retry_offer".equals(eduDialogueState))
+                return "sem_passe_disponivel";
+            return "conferir_passes";
+        }
+        if("E04".equals(id))
+            return "raid_interrupted".equals(eduDialogueState)?
+                "reide_perdida":"iniciar_reide";
+        if("E07".equals(id))return "repetir_ciclo";
+        if("E08".equals(id)){
+            if("event_wait".equals(eduDialogueState))
+                return "evento_nao_comecou";
+            if("event_pass".equals(eduDialogueState)||
+                "event_pass_wait".equals(eduDialogueState))
+                return "evento_comecou";
+            return "perguntando";
+        }
+        if("E09".equals(id))
+            return "kiribati_reload".equals(eduDialogueState)||
+                "kiribati_wait".equals(eduDialogueState)?
+                "fechar_reabrir_jogo":"ir_local_evento_escolhido";
+        if("E10".equals(id)){
+            if("event_empty".equals(eduDialogueState))return "sem_passe_disponivel";
+            if(eduRecordingExtraRaid)return "esperando_batalha_reide";
+            return "conferir_passes";
+        }
+        if("E11".equals(id))return "resumo_concluido";
+        return "parado";
+    }
+    private void reactEdu(String name){
+        if(eduSprites==null||!avatarMotion)return;
+        eduAnimationName="";
+        eduReactionState=name;
+        eduReactionStateUntil=SystemClock.elapsedRealtime()+1250L;
+        if(avatarView!=null)avatarView.setImageDrawable(eduSprites.state(name));
+    }
+    private void playEduAnimation(String name){
+        if(eduSprites==null||!avatarMotion)return;
+        int[] frames=EduSpriteAtlas.sequence(name);
+        if(frames.length==0)return;
+        eduAnimationName=name;eduAnimationStartedAt=SystemClock.elapsedRealtime();
+        if(avatarView!=null)avatarView.setImageDrawable(eduSprites.frame(frames[0]));
+    }
+    private void playEduStepTransition(){
+        if(plan==null||finished||eduSprites==null||!avatarMotion)return;
+        String id=plan.step(index).id;
+        if("E02".equals(id)||"E05".equals(id)||"E09".equals(id))
+            playEduAnimation("caminhada_direita");
+        else if("E03".equals(id)||"E06".equals(id)||"E10".equals(id))
+            playEduAnimation("caminhada_esquerda");
+        else playEduAnimation("caminhada_frente");
+    }
     private final Runnable avatarTicker=new Runnable(){
         @Override public void run(){
+            if(eduSprites!=null){
+                if(avatarView==null||!avatarMotion)return;
+                long now=SystemClock.elapsedRealtime();
+                avatarView.setImageDrawable(eduSprites.frame(eduCurrentFrame(now)));
+                avatarAnimationTick++;
+                handler.postDelayed(this,dragging?180L:
+                    eduAnimationName.isEmpty()?500L:160L);
+                return;
+            }
             if(avatarSprites==null||avatarView==null||!avatarMotion)return;
             int frame;
             long now=SystemClock.elapsedRealtime();
@@ -232,6 +343,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         avatarSizeIndex=savedAvatarSize==50?0:savedAvatarSize==75?1:2;
         avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
         avatarSprites=RaidDayAvatarFrames.load(this);
+        try{eduSprites=EduSpriteAtlas.load(this);}
+        catch(Exception invalidAtlas){eduSprites=null;} // Sem crash: usar LT304
         touchSlop=ViewConfiguration.get(this).getScaledTouchSlop();
         wm=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(wm==null){stopSelf();return;}
@@ -417,6 +530,18 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
 
     private void reactAvatar(int frame){
+        if(eduSprites!=null){
+            if(frame==RaidDayAvatarFrames.WAVE)
+                playEduAnimation("pokebola_gesto");
+            else if(frame==RaidDayAvatarFrames.QUESTION)
+                reactEdu("perguntando");
+            else if(frame==RaidDayAvatarFrames.ALERT)
+                reactEdu("alerta");
+            else if(frame==RaidDayAvatarFrames.OK)
+                reactEdu("confirmando");
+            else reactEdu("parado");
+            return;
+        }
         if(avatarSprites==null||!avatarMotion)return;
         avatarReactionFrame=frame;
         avatarReactionUntil=SystemClock.elapsedRealtime()+1250L;
@@ -454,8 +579,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         avatarMotion=enabled;
         prefs.edit().putBoolean(RaidDayAvatarFrames.PREF_MOTION,enabled).apply();
         handler.removeCallbacks(avatarTicker);
-        if(avatarView!=null&&avatarSprites!=null){
+        if(avatarView!=null&&(avatarSprites!=null||eduSprites!=null)){
             if(enabled)handler.post(avatarTicker);
+            else if(eduSprites!=null)
+                avatarView.setImageDrawable(eduSprites.state(eduContextState()));
             else avatarView.setImageDrawable(avatarSprites.frame(
                 RaidDayAvatarFrames.IDLE_A));
         }
@@ -468,7 +595,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         avatarView=new ImageView(this);
         avatarView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         avatarView.setContentDescription("Personagem interativo do Assistente do Dia de Reides");
-        if(avatarSprites!=null)
+        if(eduSprites!=null)
+            avatarView.setImageDrawable(eduSprites.state("parado"));
+        else if(avatarSprites!=null)
             avatarView.setImageDrawable(avatarSprites.frame(RaidDayAvatarFrames.IDLE_A));
         else if(artwork!=null)avatarView.setImageBitmap(artwork);
         else avatarView.setImageResource(R.drawable.ic_notification);
@@ -520,6 +649,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                         float dx=event.getRawX()-downX,dy=event.getRawY()-downY;
                         if(!dragging&&Math.hypot(dx,dy)>touchSlop){
                             dragging=true;handler.removeCallbacks(longPress);
+                            eduDragStartedAt=SystemClock.elapsedRealtime();
+                            eduAnimationName="";
                         }
                         if(dragging){
                             bubbleParams.x=Math.max(0,Math.min(
@@ -540,6 +671,7 @@ public final class RaidDayAssistantOverlayService extends Service {
                         handler.removeCallbacks(longPress);
                         if(dragging){
                             prefs.edit().putInt("x",bubbleParams.x).putInt("y",bubbleParams.y).apply();
+                            reactEdu("arrastado_final");
                         }else if(!held&&event.getActionMasked()==MotionEvent.ACTION_UP){
                             reactAvatar(RaidDayAvatarFrames.WAVE);
                             setVisible(!visible);
@@ -550,7 +682,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             }
         });
         wm.addView(bubble,bubbleParams);
-        if(avatarSprites!=null && avatarMotion)
+        if((avatarSprites!=null||eduSprites!=null)&&avatarMotion)
             handler.post(avatarTicker);
     }
 
@@ -1147,6 +1279,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduRecordingExtraRaid=false;
         persist(finished?"FINISHED":type,from);
         reactAvatar(RaidDayAvatarFrames.OK);
+        playEduStepTransition();
         updateStep();
     }
     private void navigateEdu(String destination,String type){
@@ -1159,8 +1292,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         index=next;eduNote="";eduHelpOpen=false;eduCaptureQuestion=false;
         eduRecordingExtraRaid=false;
         persist(type,from);
-        reactAvatar("NO_PASS".equals(type)?RaidDayAvatarFrames.ALERT:
+        reactAvatar(type.startsWith("NO_PASS")?RaidDayAvatarFrames.ALERT:
             RaidDayAvatarFrames.WAVE);
+        if(type.startsWith("NO_PASS"))reactEdu("sem_passe_disponivel");
+        else playEduStepTransition();
         updateStep();
     }
     private void recordEduOutcome(String type){
@@ -1168,6 +1303,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         persist(type);
         reactAvatar("RAID_WIN".equals(type)?RaidDayAvatarFrames.OK:
             RaidDayAvatarFrames.QUESTION);
+        if("RAID_LOSS".equals(type))reactEdu("reide_perdida");
+        else if("RAID_LEFT".equals(type))reactEdu("reide_abandonada");
+        else if("RAID_WIN".equals(type))reactEdu("vitoria_informada");
         if("RAID_WIN".equals(type)){
             eduCaptureQuestion=true;
             eduNote="";updateStep();return;
@@ -1189,6 +1327,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(paused||finished)return;
         persist(type);
         eduCaptureQuestion=false;
+        if("RAID_CAUGHT".equals(type))reactEdu("captura_informada");
+        else if("RAID_FLED".equals(type))reactEdu("pokemon_fugiu");
+        else reactEdu("perguntando");
         if(eduRecordingExtraRaid){
             eduRecordingExtraRaid=false;
             eduNote="Resultado registrado. Você pode anotar outra reide.";
@@ -1309,7 +1450,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "conforme a condição mencionada pelo autor.");
             addEduCoordinateButton();
             addTwo("Sim, já estou",()->{
-                setEduDialogueState("travel_reload");updateStep();
+                setEduDialogueState("travel_reload");
+                playEduAnimation("teleporte_efeito");updateStep();
             },"Ainda não",()->{
                 setEduDialogueState("travel_pending");updateStep();
             });
@@ -1398,7 +1540,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "As coordenadas são copiáveis; Edu não altera seu GPS.");
             addEduCoordinateButton();
             addTwo("Sim, cheguei",()->{
-                setEduDialogueState("nz_check");updateStep();
+                setEduDialogueState("nz_check");
+                playEduAnimation("teleporte_efeito");updateStep();
             },"Ainda não",()->{
                 setEduDialogueState("nz_pending");updateStep();
             });
@@ -1441,7 +1584,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "14h às 17h locais; confirme o horário deste evento.");
             addTwo("Sim, começou",()->{
                 setEduDialogueState("event_pass");updateStep();
-            },"Ainda não",()->{setEduDialogueState("event_wait");updateStep();});
+            },"Ainda não",()->{
+                setEduDialogueState("event_wait");
+                reactEdu("evento_nao_comecou");updateStep();
+            });
             return;
         }
         setTalk("Com o evento iniciado, você ainda tem um passe "+
@@ -1461,7 +1607,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "A etapa final só vem depois de o evento começar.");
             addEduCoordinateButton();
             addTwo("Sim, cheguei",()->{
-                setEduDialogueState("kiribati_reload");updateStep();
+                setEduDialogueState("kiribati_reload");
+                playEduAnimation("teleporte_efeito");updateStep();
             },"Ainda não",()->updateStep());
             return;
         }
@@ -1498,7 +1645,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "fazer as reides?",
                 "Confira o evento no lugar escolhido. Edu não teleporta.");
             addTwo("Sim, estou",()->{
-                setEduDialogueState("event_pass");updateStep();
+                setEduDialogueState("event_pass");
+                playEduAnimation("teleporte_efeito");updateStep();
             },"Ainda não",()->updateStep());
             return;
         }
@@ -1811,6 +1959,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         visible=false;
         if(artwork!=null){artwork.recycle();artwork=null;}
+        if(eduSprites!=null){eduSprites.release();eduSprites=null;}
         if(avatarSprites!=null){avatarSprites.release();avatarSprites=null;}
         super.onDestroy();
     }
