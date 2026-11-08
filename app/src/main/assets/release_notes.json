@@ -2,6 +2,30 @@
   "schema": "pokesearch-release-notes-v1",
   "releases": [
     {
+      "id": "pokesearch-lt309-edu-62-sprites-20261108",
+      "minVersionCode": 54515,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT309 — Edu com 62 sprites",
+      "sections": {
+        "novidades": [
+          "Assistente Edu atualizado com 62 quadros pixel-art fornecidos pelo criador, com transições de movimento, reação ao arrastar e teleporte visual.",
+          "Reações próprias para passe diário, passe ausente, vitória, derrota, saída da reide, captura, fuga, espera e encerramento do evento."
+        ],
+        "melhorias": [
+          "Sprite do evento iniciado não depende de Kiribati: usa a etapa e a confirmação do jogador sobre o local escolhido.",
+          "Preservados os tamanhos P=50, M=75 e G=100 pixels, o balão compacto, o relógio único da Home e os ajustes ocultos por toque prolongado.",
+          "Novo atlas de 62 quadros transparente, offline, sem suavização; atlas antigo de 12 quadros mantido como fallback."
+        ],
+        "correcoes": [
+          "Arrastar o Edu usa a sequência própria de dez poses em vez da caminhada.",
+          "Animações de caminhada e teleporte não alteram GPS nem avançam etapas ou confirmam passes."
+        ],
+        "emDesenvolvimento": [
+          "Homologação visual no Samsung, incluindo transições P/M/G e OCR PT-BR/EN."
+        ]
+      }
+    },
+    {
       "id": "release-notes-ui-20261022",
       "minVersionCode": 54250,
       "date": "22/10/2026",
