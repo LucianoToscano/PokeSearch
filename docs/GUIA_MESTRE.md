@@ -1,6 +1,20 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## LT309 OFICIAL — 62 SPRITES DO EDU E ANIMAÇÕES CONTEXTUAIS (08/11/2026)
+
+- **Versão publicada/verificada:** LT309 · `0.03.09` · versionCode `54515` · label `51313`; [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.09-54515) publicada em **08/11/2026 às 13:04:03 UTC**. Não fazer downgrade para LT308.
+- **APK público:** [`PokeSearch-v0.03.09-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.09-54515/PokeSearch-v0.03.09-LT.apk), **34.859.017 bytes**, digest GitHub **SHA-256 `825c674843e8bc3f48f74dffc55664ae618e5a40d134796cf8f6f1d664d6abc6`**. Build assinado pelo certificado v2 permanente, fingerprint `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`; `Validate APK and signer` sucesso; limite <35.000.000 bytes respeitado.
+- **PRs integradas:** [#307 — 62 sprites](https://github.com/LucianoToscano/PokeSearch/pull/307) squash `d9095465bdd114a43d9ac1a81385a361126e1bdf` e [#308 — atlas compacto](https://github.com/LucianoToscano/PokeSearch/pull/308) squash `ff4498e79835d415887951f47fac393a59926fde`. Commits de origem validados no CI: `e79c199dea4c18c546d441a86b35197c282a92d4` e `8ee076be92dde68a6fd12df2c023186501b0b9d4`.
+- **Workflow oficial:** [#42482922039](https://github.com/LucianoToscano/PokeSearch/actions/runs/42482922039) `completed/success`, jobs `preflight` e `publish`; commit de solicitação/build `7b5024566596b5a4703eca54decc63dd6147c5de` em `main`, `previous_tag=v0.03.08-54514`. Primeiro pipeline #42482249977 falhou no gate final por pacote grande, sem publicar; corrigido no segundo workflow, sem afrouxar verificação ou assinatura.
+- **Recursos:** atlas `app/src/main/assets/edu_avatar_atlas_62.webp` com 62 sprites originais em WebP **lossless**, 8×8 frames de 128×128 px (1024×1024 total), **822.866 bytes**, SHA-256 `5c81ba10976328ab479bf1d04d9082203cb8c5f45ee403f23265b05f6947942f`. Quadros carregados offline por `EduSpriteAtlas.java`; `RaidDayAssistantOverlayService.java` mostra emoções/contexto E01–E11 e animações de andar à frente/direita/esquerda, teleporte visual, arrastar, poses da Pokébola; 12 sprites originais LT304 preservadas como fallback.
+- **Regra de evento:** o evento pode começar em locais diferentes. Edu mostra `evento_comecou` conforme confirmação manual do jogador no local escolhido; não pressupõe início em Kiribati. Kiribati continua somente a etapa específica do relato comunitário. O aplicativo não modifica GPS, não concede passes e não confirma resultados sozinho.
+- **UX preservada:** tamanho G=100 px inicial, P=50/M=75 salvos, balão branco independente, toque longo 1,2 s para ajustes, relógio único de Home/Edu, histórico, consentimento MediaProjection, duas Pokébolas, Doce Raro e demais funcionalidades.
+- **QA:** Node, LT169, LT211, Java LT62, LT173 e regressões do workflow oficial aprovadas. **Ainda pendentes:** teste físico no Samsung das sprites e transições, OCR PT-BR/EN e verificação visual de P/M/G. Instalação exige confirmação Android; atualização OTA depende de rede e preferências.
+- **Detalhes:** `docs/LT309_EDU_62_SPRITES_INTEGRACAO_20261108.md`.
+
+---
+
 ## LT308 OFICIAL — DATA E HORA DO EDU ESTILO SAMSUNG (08/11/2026)
 
 - **Versão pública verificada:** **LT308 · `0.03.08` · versionCode `54514` · label `51312`**. GitHub Releases/latest aponta para [`v0.03.08-54514`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.08-54514), `draft=false`, `prerelease=false`, publicada em 08/11/2026 às 10:42:40 UTC. LT307 e anteriores são históricos; **não fazer downgrade**.
