@@ -1499,6 +1499,27 @@ public final class RaidDayAssistantOverlayService extends Service {
             updateStep();
         },"Sair",()->{eduWantsReal=false;updateStep();});
     }
+    private void selectEduChandelureExample(){
+        // Troca de evento somente por toque explícito: não substitui outro
+        // evento configurado quando o usuário ajusta apenas o relógio.
+        RaidDaySchedule.save(this,RaidDayRegionalWindow.CHANDELURE_DATE,
+            RaidDayRegionalWindow.CHANDELURE_START,
+            RaidDayRegionalWindow.CHANDELURE_END,
+            EduEventClock.zone(this),true);
+        EduEventSelection.sync(this,prefs,eventClock);
+        preparation=RaidDayPreparation.load(this,prefs,eventClock);
+        String next=preparation.eventKey();
+        if(!next.equals(eventKey)){
+            eventKey=next;
+            prefs.edit().putString("eventKey",next)
+                .putInt("sessionGeneration",1).apply();
+            sessionKey=next+"#1";
+            restoreJournal();
+        }
+        riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+            prefs.getString("riskAcceptance",""));
+        updateStep();
+    }
     private void showEduReady(){
         LocalDate day=preparation.eventDate();
         LocalDate today=eduEventLocalToday();
@@ -1508,6 +1529,17 @@ public final class RaidDayAssistantOverlayService extends Service {
             "Relógio Edu ajustado manualmente, sem verificação oficial.":
             "Horário do celular no fuso "+EduEventClock.zone(this).getId()+
                 "; horário do evento ainda não verificado.";
+        if(EduEventSelection.isHistoricalExampleClock(this)&&
+            !RaidDaySchedule.isChandelureExample(this)&&
+            !RaidDayRegionalWindow.CHANDELURE_DATE.equals(day)){
+            setTalk("O relógio do Edu está no período de Mega Chandelure, "+
+                "mas existe outra data salva: "+preparation.displayDate()+".",
+                "O exemplo oficial foi 31/10/2026 das 14h às 17h no "+
+                "horário local da região escolhida.");
+            addTwo("Usar Chandelure",()->selectEduChandelureExample(),
+                "Manter evento",()->editEduEventRegion());
+            return;
+        }
         boolean ended=eduConfiguredPhase()==RaidDayRegionalWindow.Phase.ENDED;
         setTalk(ended?
             "O evento já terminou na região escolhida. Não vamos presumir novos passes.":
