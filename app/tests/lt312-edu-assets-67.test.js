@@ -22,9 +22,9 @@ const java=fs.readFileSync(path.join(__dirname,
 assert(java.includes('EXTRA_ASSET="edu_avatar_extra_5.webp"'));
 assert(java.includes("EXTRA_COLS=5, EXTRA_COUNT=5"));
 assert(java.includes("TOTAL_COUNT=COUNT+EXTRA_COUNT"));
-assert(java.includes('if(i>=COUNT&&i<TOTAL_COUNT&&extras==null&&'),
+assert(java.includes('if(uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&'),
   "A ausência de extras antigos deve preservar o fallback, sem afetar a nova Sombria");
-assert(java.includes('CONSISTENT_IDLE_ASSET="edu_avatar_idle_consistent_22.webp"'));
+assert(java.includes('CONSISTENT_IDLE_ASSET="edu_avatar_idle_consistent_22.webp"'));\nassert(java.includes('UNIFORM_ASSET="edu_avatar_uniform_68.webp"'),"68 novos com prioridade");
 assert(java.includes('consistentIdle!=null&&consistentFrame>=0'));
 // A versão LT313 pode renderizar as cinco extras pelo atlas novo quando disponível.
 for (const [name,index] of Object.entries({edu_shiny:62,edu_jogando_01:63,edu_jogando_02:64,edu_armadura_mewtwo:65,edu_armadura_mewtwo_shiny:66})){
