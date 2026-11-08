@@ -3482,6 +3482,29 @@
           "Verificar visualmente no Samsung as sprites, o alinhamento do balão e os links ⓘ em P50/M75/G100. CI automatizado não comprova o resultado visual nem a instalação."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt319-relogio-virtual-edu-tamanhos-nitidez-20261108",
+      "minVersionCode": 54525,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT319 — Edu maior e relógio virtual simplificado",
+      "sections": {
+        "novidades": [
+          "O Edu agora oferece sprites P=100, M=150 e G=200 pixels; M é o tamanho inicial para quem não havia escolhido um tamanho.",
+          "O painel do relógio virtual ganhou horário grande, modo Automático, 17 momentos do evento e ajuste de data/hora em uma ação."
+        ],
+        "melhorias": [
+          "Removidos interruptores redundantes do relógio; fuso e formato 24 horas permanecem recolhidos em Mais opções.",
+          "Os desenhos do Edu preservam contornos e detalhes do rosto com ampliação sem interpolação ou suavização; as 68 sprites e retoques originais foram mantidos."
+        ],
+        "correcoes": [
+          "Preferências antigas de tamanho migram por categoria P/M/G sem confundir o P100 novo com o G100 antigo.",
+          "Corrigidos rótulos de fuso automático, da restauração do relógio da Home e da opção de momento de evento após retornar à hora automática."
+        ],
+        "emDesenvolvimento": [
+          "Homologação visual e de toques no Samsung continua necessária para verificar rosto/olhos, nitidez, escala P/M/G, balão e relógio virtual."
+        ]
+      }
     }
   ]
 }
