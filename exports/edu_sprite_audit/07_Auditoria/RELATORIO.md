@@ -11,7 +11,7 @@ Quadros de pixels duplicados: []
 - As duas pastas 512px são AMPLIAÇÕES derivadas, nunca fontes novas nem recriação fiel de olhos.
 - A auditoria automatizada verifica integridade, geometria, bordas e transparência; NÃO comprova perfeição artística, identidade facial ou nitidez de origem.
 - Quadros 52 a 60 de teleporte têm escala/opacidade intencionalmente variáveis.
-- Quadros 20, 28, 30, 36 e 49 recebem retoques adicionais por código Android; a pasta de referência mostra suas bases e NÃO pretende simular esses retoques em outro renderizador.
+- Quadros 20, 28, 30, 36 e 49 recebem retoques Android; pasta 05 contém ANTES, DEPOIS aproximado e 512 derivado. A aproximação Pillow NÃO é pixel a pixel igual ao Canvas Android.
 - Inspecionar visualmente especialmente olhos/óculos e acessórios nos índices 36,37,38,42,49,50,51,67.
 
 ## O que fazer para melhorar de verdade
