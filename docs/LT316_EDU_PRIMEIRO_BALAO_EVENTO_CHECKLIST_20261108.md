@@ -11,7 +11,7 @@ A apresentação fica no mesmo balão branco do Edu. Ao tocar no ícone flutuant
 - **Apresentação:** "Olá! Eu sou o Edu, seu coach de Pokémon GO! Vou acompanhar você nesta jornada. Hoje vamos conhecer o Bug dos Passes ⓘ."
 - **Evento encerrado:** "Infelizmente, o evento já foi encerrado nesta região. Aguarde o próximo evento!" Usa a sprite `evento_encerrou` (#36).
 - **Evento antes do início:** "O evento ainda não começou. Início: data e hora no fuso configurado." Mostra o contador regressivo vivo e os três itens de checklist; usa `evento_nao_comecou` (#38).
-- **Evento ativo:** "O evento já começou! Horário local: ..." com observação de conferir reides e passes no próprio jogo. Ao tocar novamente no balão aparece só o checklist; usa `evento_comecou` (#37).
+- **Evento ativo:** "O evento já começou!" acompanhado de nome do evento quando conhecido, data/hora de início, término e orientação para conferir reides e passes no próprio jogo. Ao tocar novamente no balão aparece só o checklist; usa `evento_comecou` (#37).
 - **Sem janela válida:** informa que data e horário ainda não foram configurados, sem inventar dia ou status. O calendário do Edu continua acessível pelo menu oculto já existente, ao segurar a sprite.
 
 ### Checklist manual, sem botões
@@ -26,7 +26,7 @@ O jogador toca no `☐` para marcar, sem efeito sobre o estado do Pokémon GO, s
 
 ## Tratamento de imagem e horário
 
-- `EduSpeechDrawable` continua sendo o balão branco sem caixa externa, com ponta lateral mais longa (28dp) orientada à região da cabeça, abertura com distância lateral de **5 pixels** e posicionamento limitado à tela, favorecendo o lado com mais espaço. Não obstrui o corpo do próprio Edu; eventuais conflitos com outras overlays independentes devem ser observados no Samsung.
+- `EduSpeechDrawable` continua sendo o balão branco sem caixa externa, com ponta lateral mais longa (28dp) orientada à região da cabeça, ponta posicionada a aproximadamente **5 pixels da lateral estimada da cabeça**, descontadas as margens transparentes da arte, e posicionamento limitado à tela, favorecendo o lado com mais espaço. Não obstrui o corpo do próprio Edu; eventuais conflitos com outras overlays independentes devem ser observados no Samsung.
 - A cabeça/cabelo/pés, 68 quadros, 22 poses ociosas, Sombria e efeitos de teleporte não são redimensionados. Tamanhos P/M/G 50/75/100 preservados.
 - Contador da janela BEFORE usa o **mesmo `eventClock`** já configurado na Home; dia/hora de início vêm de `RaidDaySchedule`, exibidos no fuso IANA selecionado. Atualização de segundos somente com o balão visível no estado BEFORE; fora dele, intervalo original de 5 s.
 - Relógio manual é simulação interna, **não comprova horário do servidor**. O exemplo Mega Chandelure (31/10/2026, 14–17h local) é histórico.
