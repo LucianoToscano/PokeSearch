@@ -27,7 +27,7 @@ assert.match(src,/new Rect\(30,7,61,30\)/);
 assert.match(src,/setFilterBitmap\(false\)/);
 assert.match(src,/setAntiAlias\(false\)/);
 assert.match(src,/crop=normalizeIdleBody\(crop,i\)/);
-assert.match(src,/SIZES_PX=\{50,75,100\}/);
+assert.match(src,/SIZES_PX=\{100,150,200\}/);
 assert.match(src,/COUNT=62/);
 assert.match(src,/TOTAL_COUNT=COUNT\+EXTRA_COUNT/);
 assert.match(src,/ASSET="edu_avatar_atlas_62.webp"/);

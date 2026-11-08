@@ -152,10 +152,10 @@ public class MainActivity extends Activity {
             "Relógio do Edu: "+EduEventClock.dateLabel(this)+
             " "+EduEventClock.timeLabel(this)+
             (EduEventClock.isAdjusted(this)?". Horário ajustado manualmente. ":
-                ". Hora atual do celular, fuso de Brasília. ")+
+                ". Hora atual do celular. ")+
             "Toque para abrir as opções; segure para restaurar.");
     }
-    // O visor abre a mesma organização de configurações das capturas Samsung.
+    // Toque abre apenas o painel virtual simplificado; toque longo restaura a hora atual.
     // Todas as alterações afetam APENAS o relógio do Edu, nunca o Android.
     private void showEduClockOptions(){
         startActivity(new android.content.Intent(this,
@@ -569,7 +569,7 @@ public class MainActivity extends Activity {
         eduSimulationClockDisplay.setOnLongClickListener(v->{
             EduEventClock.reset(this);
             refreshEduSimulationClock();
-            Toast.makeText(this,"Edu voltou à hora atual de Brasília",
+            Toast.makeText(this,"Relógio restaurado para a hora atual",
                 Toast.LENGTH_SHORT).show();
             return true;
         });

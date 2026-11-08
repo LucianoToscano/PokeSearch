@@ -49,8 +49,8 @@ assert.match(src, /if\(eduSprites!=null\)return EduSpriteAtlas\.SIZES_PX\[avatar
 assert.match(src, /if\(avatarSprites!=null\)return RaidDayAvatarFrames\.SIZES_PX\[avatarSizeIndex\]/);
 assert.match(src, /int art=eduAvatarArtSize\(\)/);
 assert.match(src, /int artSize=eduAvatarArtSize\(\)/);
-assert.match(atlas, /SIZES_PX=\{50,75,100\}/);
-assert.match(src, /avatarSizeIndex=2/, "Tamanho inicial G");
+assert.match(atlas, /SIZES_PX=\{100,150,200\}/);
+assert.match(src, /avatarSizeIndex=1/, "Tamanho inicial M");
 
 // Regressão: 68 poses, apenas cinco retoques localizados, fallback LT315.
 assert.match(atlas, /SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT\+1/);
@@ -60,5 +60,7 @@ assert.match(atlas, /if\(!uniformFrame\)/);
 assert.match(fine, /i==20\|\|i==28\|\|i==30\|\|i==36\|\|i==49/);
 assert.match(fine, /paint\.setFilterBitmap\(false\)/);
 assert.match(fine, /canvas\.clipOutPath\(path\)/);
-assert.match(agents, /LT317.*0\.03\.17.*54523/s, "A continuidade deve apontar para a Release oficial LT317, preservando os guardas LT316");
+const documented=agents.match(/BASE OFICIAL ATUAL: LT(\d+)/);
+assert.ok(documented&&Number(documented[1])>=318,
+  "A continuidade não deve rebaixar a base oficial LT318 ou superior");
 console.log("LT316 PASS: idle 22 poses, Sombria/teleporte sob gatilho, P/M/G, fallback e retoques.");

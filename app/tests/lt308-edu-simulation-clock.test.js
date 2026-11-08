@@ -66,32 +66,38 @@ assert.match(home,/long delta=1000L-\(System\.currentTimeMillis\(\)%1000L\)/);
 assert.match(home,/eduSimulationClockHandler\.postDelayed\(this,Math\.max\(120L,delta\)\)/);
 assert.match(home,/eduSimulationClockHandler\.removeCallbacks\(eduSimulationClockTick\)/);
 
-// As opções e a organização do Samsung, com switches no próprio app.
+// LT319: o painel mantém o relógio único e reduz os controles à superfície
+// principal (Automático/Momento/Ajustar data e hora), com opções avançadas
+// recolhidas. O mecanismo de fuso/formato continua funcional, sem GPS.
 assert.match(manifest,/activity android:name="\.EduClockSettingsActivity"/);
-assert.match(screen,/setTitle|label\("Data e hora",26/);
+assert.match(screen,/label\("Relógio virtual",23/);
 for(const title of [
-  "Data e hora automáticas", "Definir data", "Definir hora",
-  "Fuso horário automático", "Definir fuso conforme localização",
-  "Formato 24 horas"
-])assert.ok(screen.includes(title),"Falta opção da imagem: "+title);
+  "Automático","Momento do evento","Ajustar data e hora",
+  "Mais opções","Fuso horário","Formato 24 horas"
+])assert.ok(screen.includes(title),"Falta controle essencial: "+title);
 assert.match(screen,/autoDate=new Switch\(this\)/);
-assert.match(screen,/autoZone=new Switch\(this\)/);
-assert.match(screen,/locationZone=new Switch\(this\)/);
 assert.match(screen,/format24=new Switch\(this\)/);
-assert.match(screen,/manualDateTime\.setVisibility\(autoDate\.isChecked\(\)\?View\.GONE:View\.VISIBLE\)/,
-  "Data/hora manuais ficam ocultas se automático está ativo");
-assert.match(screen,/manualZone\.setVisibility\(autoZone\.isChecked\(\)\?View\.GONE:View\.VISIBLE\)/);
+assert.doesNotMatch(screen,/autoZone=new Switch\(this\)/);
+assert.doesNotMatch(screen,/locationZone=new Switch\(this\)/);
+assert.match(screen,/manualDateTime\.setVisibility\(automatic\?View\.GONE:View\.VISIBLE\)/,
+  "Ajuste manual aparece apenas quando o relógio não está em automático");
+assert.match(screen,/advancedOptions\.setVisibility\(advancedOpen\?View\.VISIBLE:View\.GONE\)/);
+assert.match(screen,/chosenMomentLabel=getPreferences\(MODE_PRIVATE\)/,
+  "Selecionar momento deve manter o nome na próxima abertura");
 assert.match(screen,/new DatePickerDialog\(this/);
 assert.match(screen,/new TimePickerDialog\(this/);
-assert.match(screen,/EduEventClock\.setAutomaticDateTime\(this,on\)/);
-assert.match(screen,/EduEventClock\.setAutomaticTimeZone\(this,on\)/);
-assert.match(screen,/EduEventClock\.setLocationBasedTimeZone\(this,on\)/);
-assert.match(screen,/EduEventClock\.set24HourFormat\(this,on\)/);
-assert.match(screen,/EduEventClock\.setBrasiliaDateTime\(this/);
+assert.match(screen,/EduEventClock\.setAutomaticDateTime\(this,checked\)/);
+assert.match(screen,/EduEventClock\.setAutomaticTimeZone\(this,true\)/);
+assert.match(screen,/EduEventClock\.setLocationBasedTimeZone\(this,true\)/);
+assert.match(screen,/EduEventClock\.setManualTimeZone\(this,ids\[which\]\)/);
+assert.match(screen,/EduEventClock\.set24HourFormat\(this,checked\)/);
+assert.match(screen,/EduEventClock\.setBrasiliaDateTime\(this,/);
 assert.match(screen,/handler\.postDelayed\(this,1000\)/);
-assert.match(screen,/setAutomaticTimeZone|setManualTimeZone/);
-assert.match(screen,/sem acessar GPS/);
-assert.match(screen,/NUNCA|nunca altera|nunca altera/i);
+assert.match(screen,/nenhuma configuração desta tela altera/i);
+assert.doesNotMatch(screen,/Definir fuso conforme localização/,
+  "Remover opção redundante do relógio Android");
+assert.doesNotMatch(screen,/Fuso horário automático/,
+  "Não manter duas chaves para o mesmo fuso");
 
 assert.match(edu,/eventClock=EduEventClock\.forEdu\(this\)/);
 assert.match(edu,/LocalDate day=eduEventLocalToday\(\)/,

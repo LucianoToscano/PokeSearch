@@ -25,7 +25,7 @@ for(const [name,idx] of Object.entries({
     assert.match(avatar,new RegExp(name+"="+idx+"(?:,|;)"),name);
 }
 assert.match(avatar,/CELL=64, COLS=6, COUNT=12/);
-assert.match(avatar,/SIZES_PX=\{50,75,100\}/);
+assert.match(avatar,/SIZES_PX=\{100,150,200\}/);
 // check exact named keys in user-facing persisted preferences
 assert.match(avatar,/PREF_SIZE="raid_day_avatar_size_px"/);
 assert.match(avatar,/PREF_MOTION="raid_day_avatar_motion"/);
@@ -37,9 +37,9 @@ assert.match(service,/Math\.max\(dp\(BUBBLE_DP\),artSize\+dp\(6\)\)/);
 assert.match(service,/avatarSprites=RaidDayAvatarFrames\.load\(this\)/);
 assert.match(service,/avatarView\.setImageDrawable\(avatarSprites\.frame/);
 assert.match(service,/avatarSizeIndex/);
-assert.match(service,/avatarSizeIndex=2,avatarAnimationTick=0/);
-assert.match(service,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,100\)/);
-assert.match(service,/savedAvatarSize==50\?0:savedAvatarSize==75\?1:2/);
+assert.match(service,/avatarSizeIndex=1,avatarAnimationTick=0/);
+assert.match(service,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,-1\)/);
+assert.match(service,/avatarSizeIndex=savedAvatarSize==100\?0:savedAvatarSize==200\?2:1/);
 assert.match(service,/String\[\] sizeLabels=\{"P","M","G"\}/);
 assert.match(service,/prefs\.edit\(\)\.putInt\("x",bubbleParams\.x\)/);
 assert.match(service,/putInt\(RaidDayAvatarFrames\.PREF_SIZE,/);

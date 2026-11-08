@@ -70,7 +70,7 @@ assert.match(clock,/putBoolean\(AUTO_DATE_TIME,false\)/);
 assert.match(clock,/putLong\(VIRTUAL_BASE,moment\.toEpochMilli\(\)\)/);
 assert.match(clock,/putLong\(WALL_BASE,now\)/);
 assert.doesNotMatch(clock,/Settings\.Global|Settings\.Secure|setTimeZone\(|LocationManager/);
-assert.match(screen,/momentDetail=addAction\(dateCard,"Momento do evento"/);
+assert.match(screen,/momentDetail=addAction\(mainCard,"Momento do evento"/);
 assert.match(screen,/this::chooseEventMoment/);
 assert.match(screen,/RaidDaySchedule\.valid\(begin,finish\)/);
 assert.match(screen,/EduEventMomentPresets\.forWindow\(begin,finish\)/);

@@ -24,5 +24,5 @@ assert.match(atlasJava,/if\(!uniformFrame\)\{/,"A nova arte não deve sofrer seg
 assert.match(atlasJava,/COLLECTION_COUNT=TOTAL_COUNT\+1/);
 assert.match(atlasJava,/SHADOW_INDEX=67/);
 assert.match(atlasJava,/UNIFORM_COLS=8, UNIFORM_ROWS=9/);
-assert.match(atlasJava,/SIZES_PX=\{50,75,100\}/,"P/M/G mantidos");
+assert.match(atlasJava,/SIZES_PX=\{100,150,200\}/,"P/M/G LT319 nítidos");
 console.log("LT316 PASS: WebP 68 quadros, SHA-256, fallback e imagem sem segunda escala");

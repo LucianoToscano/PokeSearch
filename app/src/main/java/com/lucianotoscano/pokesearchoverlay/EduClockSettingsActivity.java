@@ -13,7 +13,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -22,27 +21,30 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * Configuração visual do relógio do Edu, inspirada na tela de data/hora do
- * Android. Afeta EXCLUSIVAMENTE o relógio interno do Edu; nunca altera a
- * hora, fuso, modo de rede ou detector de localização do sistema.
+ * LT319 — painel compacto do relógio virtual. Este é o ÚNICO relógio do Edu;
+ * nenhuma configuração desta tela altera a hora, o fuso ou o GPS do Android.
+ * O simulador de testes não aparece nos balões de conversa do personagem.
  */
 public final class EduClockSettingsActivity extends Activity {
-    private static final int BACK=0xff000000;
-    private static final int CARD=0xff1b1b1e;
-    private static final int PRIMARY=0xfff7f7f9;
-    private static final int SECONDARY=0xffa2a4ac;
-    private static final int DIVIDER=0xff44444b;
-    private static final int ACCENT=0xff4e91ff;
+    private static final int BACK=0xff131c28;
+    private static final int CARD=0xff202b38;
+    private static final int PRIMARY=0xfff1f5f6;
+    private static final int SECONDARY=0xffa7b5bd;
+    private static final int DIVIDER=0xff344451;
+    private static final int ACCENT=0xff8fd0c5;
+    private static final Locale BR=Locale.forLanguageTag("pt-BR");
+    private static final String PREF_MOMENT="last_moment_label";
 
-    private LinearLayout manualDateTime,manualZone;
-    private Switch autoDate,autoZone,locationZone,format24;
-    private TextView dateDetail,timeDetail,zoneDetail,clockInfo,momentDetail;
+    private LinearLayout manualDateTime,advancedOptions;
+    private Switch autoDate,format24;
+    private TextView previewDate,previewTime,previewMode;
+    private TextView momentDetail,dateTimeDetail,zoneDetail,moreDetail;
     private String chosenMomentLabel="";
-    private boolean rendering=false;
+    private boolean rendering=false,advancedOpen=false;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private boolean active=false;
     private final Runnable tick=new Runnable(){
@@ -57,219 +59,222 @@ public final class EduClockSettingsActivity extends Activity {
         return Math.round(value*getResources().getDisplayMetrics().density);
     }
     private GradientDrawable bg(int color,int radius){
-        GradientDrawable d=new GradientDrawable();
-        d.setColor(color);
-        d.setCornerRadius(dp(radius));
-        return d;
+        GradientDrawable drawable=new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radius));
+        drawable.setStroke(dp(1),0x28d7eeed);
+        return drawable;
     }
     private TextView label(String title,int sp,int color,boolean bold){
-        TextView t=new TextView(this);
-        t.setText(title);
-        t.setTextColor(color);
-        t.setTextSize(sp);
-        if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
-        return t;
+        TextView view=new TextView(this);
+        view.setText(title);
+        view.setTextColor(color);
+        view.setTextSize(sp);
+        view.setIncludeFontPadding(false);
+        if(bold)view.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        return view;
     }
     private LinearLayout column(){
-        LinearLayout c=new LinearLayout(this);
-        c.setOrientation(LinearLayout.VERTICAL);
-        return c;
+        LinearLayout layout=new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        return layout;
     }
     private LinearLayout.LayoutParams match(){
         return new LinearLayout.LayoutParams(-1,-2);
     }
-    private void divider(LinearLayout container){
+    private void divider(LinearLayout parent){
         View line=new View(this);
         line.setBackgroundColor(DIVIDER);
-        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(1));
-        lp.leftMargin=dp(23);lp.rightMargin=dp(23);
-        container.addView(line,lp);
+        LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(-1,dp(1));
+        params.leftMargin=dp(17);
+        params.rightMargin=dp(17);
+        parent.addView(line,params);
     }
     private LinearLayout card(LinearLayout parent){
-        LinearLayout card=column();
-        card.setBackground(bg(CARD,28));
-        card.setClipToOutline(true);
-        LinearLayout.LayoutParams lp=match();
-        lp.topMargin=dp(28);
-        parent.addView(card,lp);
-        return card;
+        LinearLayout container=column();
+        container.setBackground(bg(CARD,19));
+        LinearLayout.LayoutParams params=match();
+        params.topMargin=dp(13);
+        parent.addView(container,params);
+        return container;
     }
-    private void addSwitchRow(LinearLayout card,String title,String sub,
-                              Switch control,boolean enabled){
+    private void addSwitchRow(LinearLayout parent,String title,String sub,
+                              Switch control,boolean checked){
         LinearLayout row=new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(24),dp(23),dp(23),dp(23));
+        row.setPadding(dp(17),dp(15),dp(17),dp(15));
         LinearLayout text=column();
-        TextView headline=label(title,18,PRIMARY,false);
-        text.addView(headline,match());
+        text.addView(label(title,16,PRIMARY,true),match());
         if(sub!=null&&!sub.isEmpty()){
-            TextView detail=label(sub,14,SECONDARY,false);
-            LinearLayout.LayoutParams subLp=match();
-            subLp.topMargin=dp(4);
-            text.addView(detail,subLp);
+            TextView detail=label(sub,12,SECONDARY,false);
+            LinearLayout.LayoutParams params=match();
+            params.topMargin=dp(4);
+            text.addView(detail,params);
         }
         row.addView(text,new LinearLayout.LayoutParams(0,-2,1));
-        LinearLayout.LayoutParams swLp=new LinearLayout.LayoutParams(-2,-2);
-        swLp.leftMargin=dp(14);
-        row.addView(control,swLp);
-        control.setChecked(enabled);
+        LinearLayout.LayoutParams controlParams=new LinearLayout.LayoutParams(-2,-2);
+        controlParams.leftMargin=dp(10);
+        row.addView(control,controlParams);
+        control.setChecked(checked);
         control.setContentDescription(title);
-        int[][] states=new int[][]{
-            new int[]{android.R.attr.state_checked},
-            new int[]{}
+        int[][] states={
+            {android.R.attr.state_checked},
+            {}
         };
         control.setThumbTintList(new ColorStateList(states,
-            new int[]{Color.WHITE,0xffe6e6eb}));
+            new int[]{Color.WHITE,0xffd0d8d9}));
         control.setTrackTintList(new ColorStateList(states,
-            new int[]{ACCENT,0xff777782}));
-        card.addView(row,match());
+            new int[]{ACCENT,0xff5b6975}));
+        parent.addView(row,match());
         row.setOnClickListener(v->control.setChecked(!control.isChecked()));
     }
-    private TextView addAction(LinearLayout card,String title,String initial,Runnable click){
+    private TextView addAction(LinearLayout parent,String title,
+                               String initial,Runnable click){
         LinearLayout row=column();
-        row.setPadding(dp(24),dp(19),dp(23),dp(19));
-        TextView headline=label(title,18,PRIMARY,false);
-        row.addView(headline,match());
-        TextView value=label(initial,14,ACCENT,false);
-        LinearLayout.LayoutParams detailLp=match();
-        detailLp.topMargin=dp(5);
-        row.addView(value,detailLp);
+        row.setPadding(dp(17),dp(14),dp(17),dp(14));
+        row.addView(label(title,16,PRIMARY,true),match());
+        TextView detail=label(initial,12,ACCENT,false);
+        LinearLayout.LayoutParams params=match();
+        params.topMargin=dp(4);
+        row.addView(detail,params);
+        row.setContentDescription(title);
         row.setOnClickListener(v->click.run());
-        card.addView(row,match());
-        return value;
+        parent.addView(row,match());
+        return detail;
     }
 
-    @Override public void onCreate(Bundle state){
-        super.onCreate(state);
+    @Override public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(BACK);
         getWindow().setNavigationBarColor(BACK);
+        chosenMomentLabel=getPreferences(MODE_PRIVATE)
+            .getString(PREF_MOMENT,"");
 
         ScrollView scroll=new ScrollView(this);
         scroll.setFillViewport(true);
-        scroll.setBackgroundColor(BACK);
+        scroll.setClipToPadding(false);
+        GradientDrawable backdrop=new GradientDrawable(
+            GradientDrawable.Orientation.TL_BR,
+            new int[]{0xff121a25,0xff192635});
+        scroll.setBackground(backdrop);
         LinearLayout screen=column();
-        screen.setPadding(dp(18),dp(13),dp(18),dp(32));
+        screen.setPadding(dp(15),dp(11),dp(15),dp(28));
         scroll.addView(screen,new ScrollView.LayoutParams(-1,-2));
         setContentView(scroll);
 
         LinearLayout heading=new LinearLayout(this);
         heading.setGravity(Gravity.CENTER_VERTICAL);
-        TextView back=label("‹",39,PRIMARY,false);
+        TextView back=label("‹",32,PRIMARY,false);
         back.setGravity(Gravity.CENTER);
-        heading.addView(back,new LinearLayout.LayoutParams(dp(50),dp(60)));
+        heading.addView(back,new LinearLayout.LayoutParams(dp(42),dp(48)));
         back.setOnClickListener(v->finish());
-        TextView title=label("Data e hora",26,PRIMARY,true);
-        LinearLayout.LayoutParams titleLp=new LinearLayout.LayoutParams(-2,-2);
-        titleLp.leftMargin=dp(4);
-        heading.addView(title,titleLp);
+        TextView title=label("Relógio virtual",23,PRIMARY,true);
+        LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(-2,-2);
+        titleParams.leftMargin=dp(3);
+        heading.addView(title,titleParams);
         screen.addView(heading,match());
 
-        clockInfo=label("",12,SECONDARY,false);
-        LinearLayout.LayoutParams infoLp=match();
-        infoLp.topMargin=dp(5);
-        infoLp.leftMargin=dp(31);
-        screen.addView(clockInfo,infoLp);
+        TextView subtitle=label("Ajuste o horário para testar as etapas do evento.",
+            12,SECONDARY,false);
+        LinearLayout.LayoutParams subtitleParams=match();
+        subtitleParams.leftMargin=dp(44);
+        subtitleParams.topMargin=dp(2);
+        screen.addView(subtitle,subtitleParams);
+
+        LinearLayout preview=card(screen);
+        preview.setPadding(dp(18),dp(17),dp(18),dp(17));
+        previewDate=label("",13,SECONDARY,false);
+        preview.addView(previewDate,match());
+        previewTime=label("",34,PRIMARY,true);
+        previewTime.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);
+        LinearLayout.LayoutParams timeParams=match();
+        timeParams.topMargin=dp(7);
+        preview.addView(previewTime,timeParams);
+        previewMode=label("",12,ACCENT,false);
+        LinearLayout.LayoutParams modeParams=match();
+        modeParams.topMargin=dp(6);
+        preview.addView(previewMode,modeParams);
 
         autoDate=new Switch(this);
-        autoZone=new Switch(this);
-        locationZone=new Switch(this);
         format24=new Switch(this);
-
-        LinearLayout dateCard=card(screen);
-        addSwitchRow(dateCard,"Data e hora automáticas",
-            "Usa o relógio do aparelho (rede, se ativada no Android).",
+        LinearLayout mainCard=card(screen);
+        addSwitchRow(mainCard,"Automático","Usar a hora do celular",
             autoDate,EduEventClock.isAutomaticDateTime(this));
+        divider(mainCard);
+        momentDetail=addAction(mainCard,"Momento do evento",
+            "Escolher entre 17 momentos",this::chooseEventMoment);
         manualDateTime=column();
-        dateCard.addView(manualDateTime,match());
+        mainCard.addView(manualDateTime,match());
         divider(manualDateTime);
-        dateDetail=addAction(manualDateTime,"Definir data","",
-            this::chooseDate);
-        divider(manualDateTime);
-        timeDetail=addAction(manualDateTime,"Definir hora","",
-            this::chooseTime);
-        // Um único seletor de momentos nos ajustes do relógio existente.
-        // A escolha desativa o automático só do Edu, nunca do Android.
-        divider(dateCard);
-        momentDetail=addAction(dateCard,"Momento do evento",
-            "Selecionar fase e horário",this::chooseEventMoment);
+        dateTimeDetail=addAction(manualDateTime,"Ajustar data e hora",
+            "",this::chooseDateTime);
 
-        LinearLayout zoneCard=card(screen);
-        addSwitchRow(zoneCard,"Fuso horário automático",
-            "Segue o fuso já configurado no Android.",
-            autoZone,EduEventClock.isAutomaticTimeZone(this));
-        divider(zoneCard);
-        addSwitchRow(zoneCard,"Definir fuso conforme localização",
-            "Usa o fuso detectado pelo Android, sem acessar GPS.",
-            locationZone,EduEventClock.isLocationBasedTimeZone(this));
-        manualZone=column();
-        zoneCard.addView(manualZone,match());
-        divider(manualZone);
-        zoneDetail=addAction(manualZone,"Definir fuso","",
+        LinearLayout extras=card(screen);
+        moreDetail=addAction(extras,"Mais opções",
+            "Fuso horário e formato",()->{
+                advancedOpen=!advancedOpen;
+                showAdvancedOptions();
+            });
+        advancedOptions=column();
+        extras.addView(advancedOptions,match());
+        divider(advancedOptions);
+        zoneDetail=addAction(advancedOptions,"Fuso horário","",
             this::chooseZone);
+        divider(advancedOptions);
+        addSwitchRow(advancedOptions,"Formato 24 horas","",
+            format24,EduEventClock.is24HourFormat(this));
+        showAdvancedOptions();
 
-        LinearLayout formatCard=card(screen);
-        addSwitchRow(formatCard,"Formato 24 horas",
-            "13:00",format24,EduEventClock.is24HourFormat(this));
-
-        autoDate.setOnCheckedChangeListener((v,on)->{
+        autoDate.setOnCheckedChangeListener((v,checked)->{
             if(rendering)return;
-            EduEventClock.setAutomaticDateTime(this,on);
-            chosenMomentLabel="";
+            EduEventClock.setAutomaticDateTime(this,checked);
+            clearMomentLabel();
             refresh();
         });
-        autoZone.setOnCheckedChangeListener((v,on)->{
+        format24.setOnCheckedChangeListener((v,checked)->{
             if(rendering)return;
-            EduEventClock.setAutomaticTimeZone(this,on);refresh();
-        });
-        locationZone.setOnCheckedChangeListener((v,on)->{
-            if(rendering)return;
-            EduEventClock.setLocationBasedTimeZone(this,on);refresh();
-        });
-        format24.setOnCheckedChangeListener((v,on)->{
-            if(rendering)return;
-            EduEventClock.set24HourFormat(this,on);refresh();
+            EduEventClock.set24HourFormat(this,checked);
+            refresh();
         });
         refresh();
     }
 
-    private void chooseDate(){
-        LocalDateTime date=EduEventClock.localNow(this);
+    private void clearMomentLabel(){
+        chosenMomentLabel="";
+        getPreferences(MODE_PRIVATE).edit().remove(PREF_MOMENT).apply();
+    }
+    private void showAdvancedOptions(){
+        advancedOptions.setVisibility(advancedOpen?View.VISIBLE:View.GONE);
+        moreDetail.setText(advancedOpen?"Ocultar opções":
+            "Fuso horário e formato");
+    }
+
+    /** Data e hora são definidas numa única ação: o cancelamento não altera nada. */
+    private void chooseDateTime(){
+        LocalDateTime current=EduEventClock.localNow(this);
         DatePickerDialog picker=new DatePickerDialog(this,(view,y,m,d)->{
-            LocalDateTime latest=EduEventClock.localNow(this);
-            EduEventClock.setBrasiliaDateTime(this,
-                latest.withDayOfMonth(1).withYear(y)
-                    .withMonth(m+1).withDayOfMonth(d));
-            chosenMomentLabel="";
-            refresh();
-        },date.getYear(),date.getMonthValue()-1,date.getDayOfMonth());
+            LocalDateTime day=current.withDayOfMonth(1)
+                .withYear(y).withMonth(m+1).withDayOfMonth(d);
+            new TimePickerDialog(this,(timePicker,h,minute)->{
+                EduEventClock.setBrasiliaDateTime(this,
+                    day.withHour(h).withMinute(minute).withSecond(0));
+                clearMomentLabel();
+                refresh();
+            },current.getHour(),current.getMinute(),
+              EduEventClock.is24HourFormat(this)).show();
+        },current.getYear(),current.getMonthValue()-1,
+          current.getDayOfMonth());
         picker.show();
     }
 
-    private void chooseTime(){
-        LocalDateTime value=EduEventClock.localNow(this);
-        new TimePickerDialog(this,(picker,h,m)->{
-            LocalDateTime latest=EduEventClock.localNow(this);
-            EduEventClock.setBrasiliaDateTime(this,
-                latest.withHour(h).withMinute(m).withSecond(0));
-            chosenMomentLabel="";
-            refresh();
-        },value.getHour(),value.getMinute(),
-          EduEventClock.is24HourFormat(this)).show();
-    }
-
-    /**
-     * Os momentos dependem da janela do evento escolhida, não da data atual.
-     * Cada item ajusta o MESMO relógio Edu usado pela Home e pelos balões.
-     */
+    /** Os 17 momentos seguem a janela do evento e seu fuso real. */
     private void chooseEventMoment(){
         long begin=RaidDaySchedule.start(this);
         long finish=RaidDaySchedule.finish(this);
         if(!RaidDaySchedule.valid(begin,finish)){
             new AlertDialog.Builder(this)
                 .setTitle("Momento do evento")
-                .setMessage("Primeiro configure a data, os horários de início " +
-                    "e fim e a região do evento. Depois escolha o momento " +
-                    "neste relógio do Edu.")
+                .setMessage("Configure primeiro a data e o horário do evento.")
                 .setPositiveButton("Entendi",null)
                 .show();
             return;
@@ -277,7 +282,7 @@ public final class EduClockSettingsActivity extends Activity {
         List<EduEventMomentPresets.Moment> moments=
             EduEventMomentPresets.forWindow(begin,finish);
         DateTimeFormatter formatter=DateTimeFormatter.ofPattern(
-            "dd/MM HH:mm:ss",Locale.forLanguageTag("pt-BR"));
+            "dd/MM HH:mm:ss",BR);
         ZoneId eventZone=RaidDaySchedule.zone(this);
         String[] items=new String[moments.size()];
         for(int i=0;i<moments.size();i++){
@@ -293,6 +298,8 @@ public final class EduClockSettingsActivity extends Activity {
                 EduEventClock.setManualInstant(this,
                     Instant.ofEpochMilli(selected.epochMillis));
                 chosenMomentLabel=selected.label;
+                getPreferences(MODE_PRIVATE).edit()
+                    .putString(PREF_MOMENT,chosenMomentLabel).apply();
                 dialog.dismiss();
                 refresh();
             })
@@ -302,54 +309,67 @@ public final class EduClockSettingsActivity extends Activity {
 
     private void chooseZone(){
         final String[] names={
+            "Automático (celular)",
             "Brasília (UTC−3)",
             "Manaus (UTC−4)",
             "Fernando de Noronha (UTC−2)",
-            "Rio Branco (UTC−5)",
-            "Fuso atual do Android"
+            "Rio Branco (UTC−5)"
         };
         final String[] ids={
-            "America/Sao_Paulo","America/Manaus","America/Noronha",
-            "America/Rio_Branco",ZoneId.systemDefault().getId()
+            "", "America/Sao_Paulo","America/Manaus",
+            "America/Noronha","America/Rio_Branco"
         };
         new AlertDialog.Builder(this)
-            .setTitle("Fuso horário do Edu")
-            .setItems(names,(d,which)->{
-                EduEventClock.setManualTimeZone(this,ids[which]);
+            .setTitle("Fuso horário")
+            .setItems(names,(dialog,which)->{
+                if(which==0){
+                    EduEventClock.setAutomaticTimeZone(this,true);
+                    EduEventClock.setLocationBasedTimeZone(this,true);
+                }else{
+                    EduEventClock.setManualTimeZone(this,ids[which]);
+                }
                 refresh();
             })
-            .setNegativeButton("Cancelar",null).show();
+            .setNegativeButton("Cancelar",null)
+            .show();
+    }
+
+    private String zoneLabel(){
+        if(EduEventClock.isAutomaticTimeZone(this))
+            return EduEventClock.isLocationBasedTimeZone(this)?
+                "Automático · celular":"Brasília (UTC−3)";
+        String zone=EduEventClock.zone(this).getId();
+        if(zone.equals("America/Sao_Paulo"))return "Brasília (UTC−3)";
+        if(zone.equals("America/Manaus"))return "Manaus (UTC−4)";
+        if(zone.equals("America/Noronha"))return "Fernando de Noronha (UTC−2)";
+        if(zone.equals("America/Rio_Branco"))return "Rio Branco (UTC−5)";
+        return "Fuso personalizado";
     }
 
     private void refresh(){
         if(autoDate==null)return;
         rendering=true;
-        autoDate.setChecked(EduEventClock.isAutomaticDateTime(this));
-        autoZone.setChecked(EduEventClock.isAutomaticTimeZone(this));
-        locationZone.setChecked(EduEventClock.isLocationBasedTimeZone(this));
+        boolean automatic=EduEventClock.isAutomaticDateTime(this);
+        // Restaurar pelo atalho da Home invalida a antiga seleção virtual.
+        if(automatic&&!chosenMomentLabel.isEmpty())clearMomentLabel();
+        autoDate.setChecked(automatic);
         format24.setChecked(EduEventClock.is24HourFormat(this));
-        manualDateTime.setVisibility(autoDate.isChecked()?View.GONE:View.VISIBLE);
-        manualZone.setVisibility(autoZone.isChecked()?View.GONE:View.VISIBLE);
-        locationZone.setEnabled(autoZone.isChecked());
-        locationZone.setAlpha(autoZone.isChecked()?1f:.5f);
+        manualDateTime.setVisibility(automatic?View.GONE:View.VISIBLE);
+
         LocalDateTime now=EduEventClock.localNow(this);
-        dateDetail.setText(now.format(DateTimeFormatter.ofPattern(
-            "d 'de' MMMM 'de' yyyy",new Locale("pt","BR"))));
-        timeDetail.setText(EduEventClock.timeLabel(this));
-        zoneDetail.setText(EduEventClock.zone(this).getId());
-        boolean eventConfigured=RaidDaySchedule.valid(
+        previewDate.setText(now.format(DateTimeFormatter.ofPattern(
+            "d 'de' MMMM 'de' yyyy",BR)));
+        previewTime.setText(EduEventClock.timeLabel(this));
+        previewMode.setText(automatic?"Hora atual do celular":
+            "Horário de teste · os segundos continuam passando");
+        dateTimeDetail.setText(now.format(DateTimeFormatter.ofPattern(
+            "dd/MM/yyyy · HH:mm",BR)));
+        zoneDetail.setText(zoneLabel());
+        boolean configured=RaidDaySchedule.valid(
             RaidDaySchedule.start(this),RaidDaySchedule.finish(this));
-        momentDetail.setText(!eventConfigured?
-            "Configure primeiro a data e o horário do evento":
-            chosenMomentLabel.isEmpty()?
-                "Selecionar entre 17 momentos · "+
-                    RaidDaySchedule.zone(this).getId():
-                chosenMomentLabel+" · hora manual do Edu");
-        clockInfo.setText(
-            (autoDate.isChecked()?"Automático":"Manual")+
-            " · "+EduEventClock.dateLabel(this)+" "+EduEventClock.timeLabel(this)+
-            " · "+EduEventClock.zone(this).getId()+
-            (autoDate.isChecked()?"":" · horário ajustado (não oficial)"));
+        momentDetail.setText(!configured?"Configure primeiro o evento":
+            chosenMomentLabel.isEmpty()?"17 momentos disponíveis":
+            chosenMomentLabel);
         rendering=false;
     }
 

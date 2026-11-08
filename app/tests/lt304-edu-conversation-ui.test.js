@@ -27,8 +27,8 @@ assert.match(overlay,/setTalk\(/);
 assert.match(overlay,/addTwo\(/);
 assert.match(overlay,/addThree\(/);
 assert.match(overlay,/String\[\] sizeLabels=\{"P","M","G"\}/);
-assert.match(overlay,/avatarSizeIndex=2/);
-assert.match(overlay,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,100\)/);
+assert.match(overlay,/avatarSizeIndex=1/);
+assert.match(overlay,/prefs\.getInt\(RaidDayAvatarFrames\.PREF_SIZE,-1\)/);
 assert.match(overlay,/eduSettings\.setVisibility\(View\.VISIBLE\)/);
 assert.doesNotMatch(overlay,/menu=button\("⋯"\)/,
   "Configurações não devem aparecer como botão na conversa");

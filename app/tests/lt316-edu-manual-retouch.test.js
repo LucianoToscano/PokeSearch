@@ -32,7 +32,7 @@ assert.match(atlas,/if\(uniformFrame&&correctedAtlas\)/);
 assert.match(atlas,/EduSpriteManualRetouch\.apply\(crop,i\)/);
 assert.match(atlas,/SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT\+1/);
 assert.match(atlas,/UNIFORM_COLS=8, UNIFORM_ROWS=9/);
-assert.match(atlas,/SIZES_PX=\{50,75,100\}/);
+assert.match(atlas,/SIZES_PX=\{100,150,200\}/);
 assert.match(atlas,/if\(!uniformFrame\)\{/,"Original fallback remains available");
 assert.match(oldTest,/sha256/);
 for(let i=52;i<=60;i++)assert(!indices.includes(i),"Teleport effect must not be resized");

@@ -199,7 +199,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     private ImageView avatarView;
     private TextView[] avatarSizeButtons;
     private TextView avatarMotionButton;
-    private int avatarSizeIndex=2,avatarAnimationTick=0,avatarReactionFrame=-1;
+    // M (150px) é o padrão. Preferências antigas migram por categoria P/M/G.
+    private int avatarSizeIndex=1,avatarAnimationTick=0,avatarReactionFrame=-1;
     private long avatarReactionUntil=0L;
     private boolean avatarMotion=true;
     private String eduAnimationName="",eduReactionState="";
@@ -515,10 +516,19 @@ public final class RaidDayAssistantOverlayService extends Service {
                 Toast.LENGTH_LONG).show();
             stopSelf();return;
         }
-        // G (100 pixels) e o tamanho inicial para quem ainda nao escolheu.
-        // Uma preferencia de P/M/G previamente salva continua respeitada.
-        int savedAvatarSize=prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,100);
-        avatarSizeIndex=savedAvatarSize==50?0:savedAvatarSize==75?1:2;
+        // Migração LT319: antigos P50/M75/G100 -> P100/M150/G200.
+        // Quem nunca escolheu um tamanho inicia em M=150 pixels.
+        // A flag evita confundir o novo P100 com o antigo G100 no reinício.
+        final String sizeMigration="edu_size_pmg_100_150_200_v1";
+        int savedAvatarSize=prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,-1);
+        if(!prefs.getBoolean(sizeMigration,false)){
+            int converted=savedAvatarSize==50?100:
+                savedAvatarSize==75?150:savedAvatarSize==100?200:150;
+            prefs.edit().putInt(RaidDayAvatarFrames.PREF_SIZE,converted)
+                .putBoolean(sizeMigration,true).apply();
+            savedAvatarSize=converted;
+        }
+        avatarSizeIndex=savedAvatarSize==100?0:savedAvatarSize==200?2:1;
         avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
         resetEduIdle();
         avatarSprites=RaidDayAvatarFrames.load(this);
@@ -747,8 +757,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         avatarReactionUntil=SystemClock.elapsedRealtime()+1250L;
         if(avatarView!=null)avatarView.setImageDrawable(avatarSprites.frame(frame));
     }
-    // A coleção Edu deve respeitar P/M/G mesmo se o atlas legado LT304
-    // não puder ser carregado. Nunca rebaixar G=100 para ART_DP por engano.
+    // O tamanho selecionado é fixo em pixels físicos: P100/M150/G200.
+    // Também vale quando o atlas novo carrega sem o fallback LT304.
     private int eduAvatarArtSize(){
         if(eduSprites!=null)return EduSpriteAtlas.SIZES_PX[avatarSizeIndex];
         if(avatarSprites!=null)return RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex];
@@ -799,7 +809,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         bubble=new FrameLayout(this);
         bubble.setBackgroundColor(Color.TRANSPARENT);
         avatarView=new ImageView(this);
+        // Preservar os pixels originais de olhos/óculos, sem suavização.
+        // O BitmapDrawable de cada quadro também usa filterBitmap=false.
         avatarView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        avatarView.setLayerType(View.LAYER_TYPE_SOFTWARE,null);
         avatarView.setContentDescription("Personagem interativo do Assistente do Dia de Reides");
         if(eduSprites!=null)
             avatarView.setImageDrawable(eduSprites.state("parado"));
