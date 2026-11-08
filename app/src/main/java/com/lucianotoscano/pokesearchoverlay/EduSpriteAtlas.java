@@ -84,7 +84,7 @@ public final class EduSpriteAtlas {
         int consistentFrame=consistentIdleFrameIndex(i);
         // Os cinco extras continuam válidos mesmo quando só o novo atlas está
         // disponível; não mostrar uma caixa vazia por falha de asset opcional.
-        if(i>=COUNT && extras==null && consistentFrame<0)
+        if(i>=COUNT && extras==null && (consistentIdle==null||consistentFrame<0))
             i=indexForState("parado");
         if(cache[i]==null){
             boolean replacement=consistentIdle!=null&&consistentFrame>=0;
