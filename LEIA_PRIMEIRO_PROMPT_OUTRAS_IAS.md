@@ -1,4 +1,12 @@
-# LEIA PRIMEIRO — PokeSearch LT316 Edu (08/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT317 Edu (08/11/2026)
+
+**BASE ATUAL VERIFICADA:** **LT317 · 0.03.17 · versionCode 54523 · label 51321**. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.17-54523) de 08/11/2026 21:15:21 UTC, APK [PokeSearch-v0.03.17-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.17-54523/PokeSearch-v0.03.17-LT.apk) **34.708.982 bytes**, SHA-256 `a477f8aa93c75d50ab09e6c95d14435744ec6f8d69ec1629d1494ba636026dda`. PR #317 squash `a4c4b696c94e32f3afeb01ec03d3b93d646e9a0d`, fonte/pedido `903994b905da8dd33bc4e77695af4bb18c1e28a3`, workflow oficial [#42523901901](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523901901) **SUCCESS**, assinatura v2 permanente verificada. Não começar do zero nem fazer downgrade.
+
+**Edu LT317:** primeiro balão de apresentação com `Bug dos Passes ⓘ`, estados do evento por fuso (sprites 36/37/38), contador regressivo, checklist manual com três ⓘ, ponta do balão prolongada. Um único relógio na Home, cujo menu `Data e hora` tem 17 momentos de teste em ordem cronológica baseados na janela de início/fim e fuso do evento; opção altera apenas o relógio manual do Edu. Mantém 68 sprites/22 ociosas, Sombria, teleporte, P/M/G 50/75/100, E01–E11, P1/P2, Doce Raro, login, API e assinatura. **Homologação física Samsung pendente**, sem presumir passes ou instalação. Ler [registro LT317](docs/LT317_EDU_PUBLICACAO_OFICIAL_E_HOMOLOGACAO_20261108.md), [Guia Mestre](docs/GUIA_MESTRE.md) e [prompt LT317](docs/PROMPT_CONTINUIDADE_LT317_EDU_20261108.md).
+
+---
+
+## Histórico LT316 — não é mais a versão atual
 
 **BASE OFICIAL ATUAL:** LT316 · `0.03.16` · versionCode `54522` · label `51320`. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.16-54522), APK `PokeSearch-v0.03.16-LT.apk` **34.708.590 bytes**, SHA-256 `7646eb5254da13f5da930813767d4265701da37a46f59d2d9fba2373ca47c252`. [Workflow #42513115954](https://github.com/LucianoToscano/PokeSearch/actions/runs/42513115954) preflight/publish **SUCCESS**. [PR #316](https://github.com/LucianoToscano/PokeSearch/pull/316) squash `ec12fc48c7116449d7785dd6ba51a744b3fcff44`, pedido `fd3cdf373b4bb79e900b4e182ff38a8ffe530a03`. Assinatura v2 permanente preservada; não começar do zero e não fazer downgrade.
 
