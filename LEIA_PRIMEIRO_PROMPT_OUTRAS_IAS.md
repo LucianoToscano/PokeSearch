@@ -1,4 +1,14 @@
-# LEIA PRIMEIRO — PokeSearch LT308 Edu (08/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT312 Edu (08/11/2026)
+
+**PONTO DE PARTIDA OFICIAL MAIS RECENTE — 08/11/2026:** **LT312 / 0.03.12 / versionCode 54518 / label 51316**, [Release v0.03.12-54518](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.12-54518), APK `PokeSearch-v0.03.12-LT.apk` de **34.889.169 bytes**, SHA-256 `07304fb155fe9e85e821c5c96ff900d8c43972b9420d27954365b2e0d865f9d7`. [Workflow oficial #42493781398](https://github.com/LucianoToscano/PokeSearch/actions/runs/42493781398) **completed/success**. [PR #311](https://github.com/LucianoToscano/PokeSearch/pull/311) integrada por squash `2f8f8e257d09deb848ac95a533f7435c9d4196f4`; pedido no commit `ea89455b7025da7dbccac76ac85dd711f6f4627d`. **Não começar da LT308 nem restaurar versões antigas.** Confira HEAD/Release/latest novamente antes de editar; as informações LT308 abaixo são **históricas**.
+
+**Novidades essenciais LT312:** correção de data antiga 07/11 contra relógio manual Edu 30/10; reconhecimento automático do exemplo Mega Chandelure 31/10/2026 14–17h no horário local quando não existe outra janela configurada e relógio é manual no período histórico; preservação de eventos personalizados, seleção IANA de região e histórico; agora **67 sprites** com atlas adicional `edu_avatar_extra_5.webp`, 22 poses ociosas com escala corporal constante e pausas. O relógio Edu não altera o sistema/GPS e a simulação não concede passes. Referência atual: `docs/LT312_EDU_AUDITORIA_COMPLETA_RELÓGIO_IDLE_67_20261108.md`, `docs/PROMPT_CONTINUIDADE_LT312_EDU_20261108.md`, `docs/GUIA_MESTRE.md`. QA física Samsung ainda pendente.
+
+**LEIA AGORA:** `AGENTS.md`, `docs/GUIA_MESTRE.md`, `docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md`, `docs/PROMPT_CONTINUIDADE_LT312_EDU_20261108.md`. Preserve assinatura v2 permanente, P1/P2, Doce Raro, APIs e o comportamento seguro de notificações.
+
+---
+
+## Registro histórico LT308 e anteriores (não é a base atual)
 
 **LEITURA OBRIGATÓRIA DE CONTINUIDADE:** [manual completo de GitHub, CI, build, APK assinado, merge, OTA, Drive, Arquivo Mestre e recuperação](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Verifique o estado remoto antes de agir e preserve o protocolo de consentimento. Este documento não transfere acesso, secrets nem permissões entre contas.
 
