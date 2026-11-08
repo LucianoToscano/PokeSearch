@@ -384,6 +384,11 @@ public final class EduSpriteAtlas {
             "caminhada_esquerda".equals(name);
     }
     public void release(){
+        for(BitmapDrawable drawable:displayCache.snapshot().values()){
+            Bitmap b=drawable.getBitmap();
+            if(b!=null&&!b.isRecycled())b.recycle();
+        }
+        displayCache.evictAll();
         for(int i=0;i<cache.length;i++){
             if(cache[i]!=null){
                 Bitmap b=cache[i].getBitmap();
