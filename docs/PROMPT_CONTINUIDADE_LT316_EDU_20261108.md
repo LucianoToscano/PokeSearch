@@ -13,3 +13,10 @@ Tamanho fixo de visualização P50/M75/G100 (G padrão). Cabeça/corpo devem par
 Relógio Edu único (automático/manual, fonte da Home); Mega Chandelure exemplo histórico por fuso IANA (31/10/2026, 14–17h local); tutorial E01–E11; duas Pokébolas P1/P2, Doce Raro, scanner/PoGoCoordinates, IV/PvP, favoritos, login, notificações, Firebase, dados, atualização segura por GitHub, assinatura v2 original. Nada concede passes ou manipula Pokémon GO.
 
 Mudanças futuras: confirmar autorização, usar branch/PR, executar Node completo/LT169/LT211/Java LT62/OTA LT173, integrar squash, emitir pedido protegido em `release/official-request.json`, verificar versão/APK/assinatura/SHA/limite e registrar no Arquivo Mestre. Responder sem menus extras ou interfaces poluídas.
+
+
+## QA em andamento após a Release LT316 (ainda NÃO publicada como LT317)
+
+A PR em rascunho [#317](https://github.com/LucianoToscano/PokeSearch/pull/317), branch `qa/lt316-edu-samsung-visual-guards-20261108`, protege o tamanho P/M/G da sprite Edu quando o atlas antigo LT304 falha no carregamento (função `eduAvatarArtSize()` em `RaidDayAssistantOverlayService.java`). Acrescenta `app/tests/lt316-edu-samsung-visual-guards.test.js` para as 22 poses ociosas, Sombria e teleporte só por gatilhos, cinco retoques e fallback LT315. `AGENTS.md` foi alinhado à LT316. CI no commit de código `eb3a0e44d5c268f04c1c75b74e4c88043b48b45f`: Node/LT169/LT211/Java LT62/OTA LT173 todos SUCCESS. Guia e detalhes em `docs/LT316_EDU_HOMOLOGACAO_VISUAL_GUARDAS_20261108.md`.
+
+**Pendente:** homologação física Samsung em P50/M75/G100 com vídeos/prints. A PR #317 permanece draft, sem merge nem novo APK/Release. Jamais usar o código de QA para declarar LT317 oficial; qualquer publicação futura exige autorização expressa, workflow e validação de assinatura/hash.
