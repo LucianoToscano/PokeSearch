@@ -12,7 +12,13 @@ assert.equal(asset.toString("ascii",0,4),"RIFF");
 assert.equal(asset.toString("ascii",8,12),"WEBP");
 assert.ok(asset.length>100000&&asset.length<1000000,"Atlas lossless de 62 quadros compactado");
 assert.equal(crypto.createHash("sha256").update(asset).digest("hex"),
-    "5c81ba10976328ab479bf1d04d9082203cb8c5f45ee403f23265b05f6947942f");
+    "69c1ea7b0f5dec4292d90cb62dae891c95835017204274cc4121ca3698f6889a");
+const archived=fs.readFileSync(path.join(__dirname,
+  "../../docs/legacy-assets/lt309/edu_avatar_atlas_62-original.webp"));
+assert.equal(archived.length,822866,"Fonte original íntegra, fora do APK");
+assert.equal(crypto.createHash("sha256").update(archived).digest("hex"),
+  "5c81ba10976328ab479bf1d04d9082203cb8c5f45ee403f23265b05f6947942f");
+assert.equal(asset.length,133078,"Fallback com 62 sprites compactado para APK abaixo de 35 MB");
 assert.match(java,/CELL=128, COLS=8, COUNT=62/);
 assert.match(java,/SIZES_PX=\{50,75,100\}/);
 assert.match(java,/options\.inScaled=false/);
