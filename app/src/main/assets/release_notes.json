@@ -3188,6 +3188,35 @@
           "Leitura visual continua opcional e depende da autorização Android; o tutorial comunitário não garante passes, não altera a localização nem automatiza o jogo."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt307-edu-roteiro-video-txt-pdf-20261108",
+      "minVersionCode": 54513,
+      "date": "08/11/2026",
+      "title": "LT307 — Edu com roteiro fiel ao vídeo original",
+      "sections": {
+        "novidades": [
+          "Tutorial do Edu revisado a partir do vídeo e das transcrições TXT/PDF: condições da véspera, reides na Nova Zelândia, retorno ao Havaí e etapa final em Kiribati.",
+          "Na Nova Zelândia, se não aparecer passe, Edu apresenta uma tentativa de conferir novamente após reiniciar o jogo na própria região, sem garantia.",
+          "No dia do evento, Edu confirma que o evento realmente começou e oferece a etapa final do relato quando os passes acabam."
+        ],
+        "melhorias": [
+          "A primeira chegada ao Havaí não exige reiniciar o jogo; os retornos após uma reide pedem fechar/reabrir e conferir o mapa.",
+          "Novo ciclo correto: reide na Nova Zelândia, retorno ao Havaí e nova conferência na Nova Zelândia, sem repetir a primeira chegada ao Havaí.",
+          "Preparação separa passe laranja guardado, condição de softban e ausência de interação prévia onde já começara o dia do evento, conforme relato do autor.",
+          "Se perdeu ou saiu da reide, o Edu não marca vitória; apresenta aviso de interrupção como alegação não comprovada.",
+          "Kiribati segue a última parte apresentada no vídeo, com escolha explícita de fazer o relato ou jogar normalmente; o reinício lá ocorre uma única vez."
+        ],
+        "correcoes": [
+          "Corrigidas a ordem da verificação de passes e a localização da segunda conferência: ela ocorre na Nova Zelândia, não no Havaí.",
+          "Sem passe observado, não registra reide fictícia nem presume que o método funcionou."
+        ],
+        "emDesenvolvimento": [
+          "QA físico Samsung do novo roteiro, balões, gestos e retomada ainda pendente; OCR PT-BR/EN permanece experimental.",
+          "O vídeo de Mega Chandelure usava 31/10/2026 das 14h às 17h no horário local como exemplo; outros eventos devem ter horários conferidos manualmente.",
+          "O uso antecipado de passes do dia seguinte, o rendimento prometido e a possibilidade de softban são afirmações do vídeo, não garantias nem validação técnica. O PokeSearch não altera a localização nem automatiza Pokémon GO."
+        ]
+      }
     }
   ]
 }
