@@ -41,7 +41,8 @@ for(const obsolete of [
 // Selecionar um momento continua funcionando até no modo automático:
 // define manual internamente e guarda a escolha na UI.
 assert.match(ui,/EduEventMomentPresets\.forWindow\(begin,finish\)/);
-assert.match(ui,/RaidDaySchedule\.zone\(this\)/);
+assert.match(ui,/RaidDaySchedule\.start\(this\)/);
+assert.match(ui,/RaidDaySchedule\.finish\(this\)/);
 assert.doesNotMatch(ui,/setSingleChoiceItems\(items,-1/,
   "Não abrir modal de momentos no relógio");
 assert.match(ui,/EduEventClock\.setManualInstant\(this,/);
