@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.08",
-  "code": 54514,
-  "label": 51312,
-  "previous_tag": "v0.03.07-54513",
-  "qa_max_code": 54513,
-  "release_notes": "PokeSearch LT308 — Novo relógio único do Assistente Edu ao lado do ícone de passes, com data e hora incluindo segundos que avançam normalmente. Ao tocar, abre a tela Data e hora inspirada no Samsung: Data e hora automáticas ON/OFF (quando desligadas, exibem Definir data e Definir hora), Fuso horário automático ON/OFF, Definir fuso conforme localização ON/OFF e Formato 24 horas ON/OFF; fuso manual disponível quando o automático está desligado. Os controles modificam apenas o relógio interno do Edu, sem alterar o Android, GPS, rede, relógio do aparelho ou Pokémon GO. No modo automático usa o horário do aparelho, cuja sincronização depende do sistema; a referência manual é sinalizada como ajustada/não oficial. O Edu não oferece simulador separado: a mesma referência do relógio é usada nas conversas, na preparação e nas condições de véspera D−1 e dia D. Corrigida divergência entre dia exibido em fuso selecionado e validação de evento. Preservados balão branco independente do Edu, passos E01–E11, duas Pokébolas, Doce Raro, busca sem login, dez resultados, sprites, filtros, favoritos, ranks, 429/Retry-After, assinatura v2 original e consentimento Android para captura. PR #306 integrada por squash em 60581c4ef69e1c85a4a35e8e0fc687309cd5c598. Gates Node QA, LT169, LT211, Java LT62 e LT173 aprovados no commit 076b577b59160db2439070c7ed608e3d5dc9d588. Ainda pendente homologação visual no Samsung, bem como OCR PT-BR/EN; instalação depende de confirmação do Android. Horários reais dos eventos devem ser confirmados em fontes oficiais; o tutorial comunitário não garante passes e não é automatizado pelo aplicativo."
+  "version": "0.03.09",
+  "code": 54515,
+  "label": 51313,
+  "previous_tag": "v0.03.08-54514",
+  "qa_max_code": 54514,
+  "release_notes": "PokeSearch LT309 — Assistente Edu atualizado com 62 sprites pixel-art padronizadas (atlas RGBA 2048×2048, offline) e animações de caminhada à frente/esquerda/direita, teleporte visual e reação ao arrastar. Reações contextuais para guardar passe, conferência, passe ausente, reide vencida/perdida/abandonada, captura, fuga, carregamento, espera, SoftBan e início/encerramento de evento; evento iniciado depende da confirmação do jogador no local escolhido, não de Kiribati obrigatório. Mantidos o relógio único do Edu, balão branco independente, opções ocultas por toque prolongado, tamanhos P/M/G, roteiro E01–E11, fallback das 12 sprites antigas, duas Pokébolas, Doce Raro, buscas, API e assinatura original. Não modifica GPS, não concede passes, não comprova o bug nem avança etapas automaticamente. PR #307 integrada por squash d9095465bdd114a43d9ac1a81385a361126e1bdf; QA Node, LT169, LT211, LT62 e LT173 passaram na PR. Testes físicos Samsung e OCR PT-BR/EN pendentes."
 }
