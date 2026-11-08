@@ -257,6 +257,17 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(eduSettingsOpen)return "perguntando";
         if(paused)return "parado";
         if(eduCaptureQuestion)return "perguntando";
+        // A sprite Sombria representa ansiedade na ESPERA do jogador.
+        // Não confundir com confirmação de softban, passes ou evento ativo.
+        if(active&&!training&&(
+            "event_wait".equals(eduDialogueState)||
+            "event_pass_wait".equals(eduDialogueState)||
+            "pass_wait".equals(eduDialogueState)||
+            "travel_wait".equals(eduDialogueState)||
+            "kiribati_wait".equals(eduDialogueState)||
+            "nz_check_wait".equals(eduDialogueState)||
+            "nz_retry_check_wait".equals(eduDialogueState)))
+            return "edu_sombria";
         if(!active&&!training&&eduWantsReal&&eduDateConfirmed()){
             RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
             if(phase==RaidDayRegionalWindow.Phase.BEFORE)return "evento_nao_comecou";
