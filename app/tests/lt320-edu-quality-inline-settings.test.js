@@ -45,8 +45,10 @@ assert.match(clock,/String\[\] labels=\{"P · 100","M · 150","G · 200"\}/);
 assert.match(clock,/getSharedPreferences\("raid_assistant_overlay",MODE_PRIVATE\)/);
 assert.match(clock,/final int\[\] sizes=\{100,150,200\}/);
 assert.match(clock,/SeekBar\.OnSeekBarChangeListener/);
-assert.match(clock,/balloonAlpha\.setMin\(40\)/);
-assert.match(clock,/balloonAlpha\.setMax\(100\)/);
+assert.match(clock,/balloonAlpha\.setMin\(0\)/);
+assert.match(clock,/balloonAlpha\.setMax\(60\)/);
+assert.match(clock,/100-value\)\.apply\(\)/,
+  "Maior transparência deve significar menos opacidade no fundo");
 assert.match(clock,/PREF_BUBBLE_OPACITY/);
 assert.match(service,/static final String PREF_BUBBLE_OPACITY="edu_speech_opacity_percent"/);
 assert.match(service,/registerOnSharedPreferenceChangeListener\(visualSettingsListener\)/);
