@@ -132,6 +132,20 @@ public final class EduEventClock {
             zone(context));
     }
 
+    /** O dia do Edu segue exatamente a data exibida no relógio dele. */
+    public static java.time.LocalDate today(Context context){
+        return localNow(context).toLocalDate();
+    }
+
+    public static RaidDayEventClock.DayState dayState(
+        Context context,java.time.LocalDate eventDate){
+        if(eventDate==null)return RaidDayEventClock.DayState.UNKNOWN;
+        java.time.LocalDate today=today(context);
+        if(today.isBefore(eventDate))return RaidDayEventClock.DayState.BEFORE_DAY;
+        if(today.isAfter(eventDate))return RaidDayEventClock.DayState.AFTER_DAY;
+        return RaidDayEventClock.DayState.EVENT_DAY;
+    }
+
     public static String dateLabel(Context context){
         return localNow(context).format(DATE_FORMAT);
     }
@@ -172,14 +186,16 @@ public final class EduEventClock {
 
     private static final class EduClock extends Clock {
         private final Context context;
-        private final ZoneId clockZone;
-        EduClock(Context context){this(context,zone(context));}
-        EduClock(Context context,ZoneId zone){
-            this.context=context;this.clockZone=zone;
+        private final ZoneId zoneOverride;
+        EduClock(Context context){this(context,null);}
+        EduClock(Context context,ZoneId override){
+            this.context=context;this.zoneOverride=override;
         }
-        @Override public ZoneId getZone(){return clockZone;}
+        @Override public ZoneId getZone(){
+            // Sem override, acompanha a seleção de fuso em tempo real.
+            return zoneOverride==null?zone(context):zoneOverride;
+        }
         @Override public Clock withZone(ZoneId zone){
-            // Trocar a visão de fuso mantém a MESMA linha do tempo em movimento.
             return new EduClock(context,zone);
         }
         @Override public Instant instant(){
