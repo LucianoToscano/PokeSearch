@@ -198,7 +198,7 @@ public final class GitHubUpdateCenter {
                 !(asset?assetHost(u.getHost()):metadataHost(u.getHost()))||
                 u.getUserInfo()!=null||u.getPort()!=-1)throw new SecurityException("Untrusted update endpoint");
             HttpsURLConnection c=(HttpsURLConnection)u.openConnection();
-            c.setInstanceFollowRedirects(false);c.setConnectTimeout(6500);c.setReadTimeout(10000);
+            c.setInstanceFollowRedirects(false);c.setConnectTimeout(12000);c.setReadTimeout(30000);
             c.setRequestProperty("User-Agent","PokeSearch-Android-Updater");
             c.setRequestProperty("Accept",asset?"application/octet-stream":"application/vnd.github+json");
             int code=c.getResponseCode();
@@ -372,6 +372,21 @@ public final class GitHubUpdateCenter {
             if(ready&&onReady!=null)MAIN.post(onReady);
         });
     }
+    // Mensagens limitadas a categorias seguras: nunca exibem URLs assinadas,
+    // headers, exceções internas ou dados da conta do treinador.
+    private static String downloadFailureMessage(Exception error){
+        if(error instanceof java.net.UnknownHostException)
+            return "Sem acesso ao GitHub. Confira a conexão e tente novamente.";
+        if(error instanceof java.net.SocketTimeoutException)
+            return "A conexão com o GitHub demorou demais. Tente outra rede ou baixe pelo navegador.";
+        if(error instanceof javax.net.ssl.SSLException)
+            return "Não foi possível estabelecer uma conexão HTTPS segura com o GitHub.";
+        if(error instanceof java.io.IOException)
+            return "O download foi interrompido. Confira a conexão ou baixe pelo navegador.";
+        if(error instanceof SecurityException)
+            return "A origem ou a integridade do APK não passou na verificação. Use apenas a Release oficial.";
+        return "Não foi possível baixar ou validar o APK. Tente pelo navegador oficial.";
+    }
     private static void download(Context context,Release release,AtomicBoolean cancel,Progress cb){
         if(!DOWNLOADING.compareAndSet(false,true)){
             MAIN.post(()->cb.report(-1,"Download automático em andamento. Abra novamente em instantes.",null));
@@ -384,7 +399,7 @@ public final class GitHubUpdateCenter {
             }catch(InterruptedException e){
                 MAIN.post(()->cb.report(-1,"Download cancelado",null));
             }catch(Exception e){
-                MAIN.post(()->cb.report(-1,"Não foi possível validar o APK",null));
+                MAIN.post(()->cb.report(-1,downloadFailureMessage(e),null));
             }finally{DOWNLOADING.set(false);}
         });
     }
@@ -517,8 +532,9 @@ public final class GitHubUpdateCenter {
         // in-app package handler closes immediately after a verified download.
         final Button browserFallback=new Button(activity);
         browserFallback.setAllCaps(false);
-        browserFallback.setText("Instalar pelo navegador");
-        browserFallback.setVisibility(android.view.View.GONE);
+        browserFallback.setText("Baixar APK oficial pelo navegador");
+        // Fallback disponível antes do download, inclusive após erros de rede ou hash.
+        browserFallback.setVisibility(android.view.View.VISIBLE);
         browserFallback.setOnClickListener(v->openOfficialDownload(activity,release.url));
         layout.addView(browserFallback);
         AlertDialog dialog=new AlertDialog.Builder(activity)
@@ -541,7 +557,6 @@ public final class GitHubUpdateCenter {
                         return;
                     }
                     button.setText("Instalar atualização");button.setEnabled(true);
-                    browserFallback.setVisibility(android.view.View.VISIBLE);
                     button.setOnClickListener(v2->install(activity,apk,release));
                 }else if(percent<0){button.setText("Tentar novamente");button.setEnabled(true);
                     button.setOnClickListener(v3->{

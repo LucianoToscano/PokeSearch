@@ -3267,6 +3267,28 @@
           "Homologação visual no Samsung, incluindo transições P/M/G e OCR PT-BR/EN."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt310-updater-fallback-diagnostico-20261108",
+      "minVersionCode": 54516,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT310 — Download de atualização mais confiável",
+      "sections": {
+        "novidades": [
+          "Botão Baixar APK oficial pelo navegador aparece diretamente no diálogo de atualização como alternativa ao download interno."
+        ],
+        "melhorias": [
+          "Aumentado o tempo limite de conexão e leitura HTTPS para redes lentas, sem alterar a verificação de segurança do arquivo.",
+          "Avisos de falha separados para conexão indisponível, tempo limite, erro HTTPS, download interrompido e integridade."
+        ],
+        "correcoes": [
+          "A mensagem genérica Não foi possível validar o APK não oculta mais problemas de rede na instalação de versões futuras.",
+          "Preservada a validação do APK por tamanho, SHA-256, pacote, versão e certificado original antes de instalação interna."
+        ],
+        "emDesenvolvimento": [
+          "Validação física no Samsung do fluxo completo de instalação, em Wi-Fi e conexão lenta. Se a versão instalada falhar antes desta correção, usar o download oficial do GitHub pelo navegador."
+        ]
+      }
     }
   ]
 }
