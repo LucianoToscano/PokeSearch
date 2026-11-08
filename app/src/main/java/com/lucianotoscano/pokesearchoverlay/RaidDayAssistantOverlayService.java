@@ -116,7 +116,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
             if(eventClock!=null){
-                LocalDate day=EduEventClock.today(this);
+                LocalDate day=EduEventClock.today(
+                    RaidDayAssistantOverlayService.this);
                 if(lastEduClockDay!=null&&!day.equals(lastEduClockDay)&&
                     visible&&eduSpeech!=null)updateStep();
                 lastEduClockDay=day;
