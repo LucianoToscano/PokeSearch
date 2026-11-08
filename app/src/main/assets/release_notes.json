@@ -3339,6 +3339,31 @@
           "Verificação visual de escala e animações no Samsung; relógio ajustado manualmente simula horários históricos, sem acesso ao servidor Pokémon GO."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt313-edu-visual-consistency-22-idle-20261108",
+      "minVersionCode": 54519,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT313 — Edu com proporções estáveis nas 22 poses ociosas",
+      "sections": {
+        "novidades": [
+          "Novo conjunto visual padronizado para as 22 poses automáticas do Edu, com cabeça, corpo e altura do personagem mais consistentes.",
+          "Movimentos de Pokébola, caminhada e versões especiais usam quadros de uma mesma escala corporal."
+        ],
+        "melhorias": [
+          "Corpo alinhado pelo chão e referência de 112 pixels em cada sprite de 128×128, sem mudanças de tamanho ao alternar animações.",
+          "Atlas leve WebP lossless com fundo transparente e pixel art sem suavização; preservadas pausas naturais.",
+          "A escolha P/M/G (50/75/100) e o tamanho padrão G continuam os mesmos."
+        ],
+        "correcoes": [
+          "Evita variações de escala entre a posição parada e as animações, inclusive nos quadros de Pokébola.",
+          "Sem alteração dos outros 45 estados de tutorial e sem renumerar as 67 sprites."
+        ],
+        "emDesenvolvimento": [
+          "Aparência e fluidêz nos tamanhos P/M/G dependem de validação visual final em aparelho Samsung.",
+          "As três poses Shiny/Jogando mantêm desenhos anteriores com escala uniformizada; outras reações podem receber refinamentos futuros."
+        ]
+      }
     }
   ]
 }
