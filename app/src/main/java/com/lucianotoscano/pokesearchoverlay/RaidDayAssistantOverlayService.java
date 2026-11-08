@@ -347,8 +347,11 @@ public final class RaidDayAssistantOverlayService extends Service {
                 long now=SystemClock.elapsedRealtime();
                 avatarView.setImageDrawable(eduSprites.frame(eduCurrentFrame(now)));
                 avatarAnimationTick++;
+                // Uma animação ociosa de caminhada/pokébola também usa
+                // ticks curtos: caso contrário, 500 ms pulariam quadros.
                 handler.postDelayed(this,dragging?180L:
-                    eduAnimationName.isEmpty()?500L:160L);
+                    (!eduAnimationName.isEmpty()||!eduIdleName.isEmpty())?
+                        150L:500L);
                 return;
             }
             if(avatarSprites==null||avatarView==null||!avatarMotion)return;
