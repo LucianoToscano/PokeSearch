@@ -15,7 +15,8 @@ assert.match(ui,/previewDate=label\("",13,SECONDARY,false\)/);
 assert.match(ui,/previewMode=label\("",12,ACCENT,false\)/);
 assert.match(ui,/previewTime\.setText\(EduEventClock\.timeLabel\(this\)\)/);
 assert.match(ui,/addSwitchRow\(mainCard,"Automático","Usar a hora do celular"/);
-assert.match(ui,/momentDetail=addAction\(mainCard,"Momento do evento"/);
+assert.match(ui,/addQuickMomentGrid\(mainCard\)/,
+  "Os momentos ficam na mesma tela, sem submenu");
 assert.match(ui,/dateTimeDetail=addAction\(manualDateTime,"Ajustar data e hora"/);
 assert.match(ui,/private void chooseDateTime\(\)/);
 assert.match(ui,/new DatePickerDialog\(this/);
@@ -40,14 +41,20 @@ for(const obsolete of [
 // Selecionar um momento continua funcionando até no modo automático:
 // define manual internamente e guarda a escolha na UI.
 assert.match(ui,/EduEventMomentPresets\.forWindow\(begin,finish\)/);
-assert.match(ui,/RaidDaySchedule\.zone\(this\)/);
-assert.match(ui,/setSingleChoiceItems\(items,-1/);
+assert.match(ui,/RaidDaySchedule\.start\(this\)/);
+assert.match(ui,/RaidDaySchedule\.finish\(this\)/);
+assert.doesNotMatch(ui,/setSingleChoiceItems\(items,-1/,
+  "Não abrir modal de momentos no relógio");
 assert.match(ui,/EduEventClock\.setManualInstant\(this,/);
 assert.match(ui,/getPreferences\(MODE_PRIVATE\)\.edit\(\)\s*\.putString\(PREF_MOMENT,chosenMomentLabel\)/);
 assert.match(ui,/private void clearMomentLabel\(\)/);
 assert.match(ui,/EduEventClock\.setAutomaticDateTime\(this,checked\)/);
-assert.match(ui,/chosenMomentLabel\.isEmpty\(\)\?"17 momentos disponíveis"/);
-assert.equal((moments.match(/add\(result,/g)||[]).length,17);
+assert.match(ui,/chosenMomentLabel\.isEmpty\(\)\?/);
+assert.equal((moments.match(/add\(result,/g)||[]).length,17,
+  "A API histórica preserva os 17 offsets de compatibilidade");
+assert.match(ui,/private static final String\[\] QUICK_MOMENTS=/);
+assert.match(ui,/addBalloonAlphaSlider\(appearance\)/);
+assert.match(ui,/addSizeSelector\(appearance\)/);
 
 // Um único relógio para Home e Edu; sem um simulador interno extra.
 assert.match(clock,/Clock forEdu\(Context context\)/);

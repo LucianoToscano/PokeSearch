@@ -3505,6 +3505,31 @@
           "Homologação visual e de toques no Samsung continua necessária para verificar rosto/olhos, nitidez, escala P/M/G, balão e relógio virtual."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt320-edu-visual-512-in-memory-clock-slider-20261108",
+      "minVersionCode": 54526,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT320 — Edu mais legível e controles em uma tela",
+      "sections": {
+        "novidades": [
+          "O Edu utiliza buffers de exibição de até 512px por quadro, preparados sob demanda a partir do atlas original para melhorar a amostragem em P100/M150/G200.",
+          "O painel Relógio virtual agora reúne oito momentos essenciais do evento, escolha de tamanho P/M/G e slider de transparência do balão na própria tela."
+        ],
+        "melhorias": [
+          "O slider varia de 0% a 60% de transparência, com mudança imediata apenas no fundo branco; os textos e o personagem continuam opacos.",
+          "Oito momentos rápidos substituem a lista extensa de 17 opções visíveis, que permanece compatível no modelo interno; tamanho e transparência são aplicados ao Edu sem reiniciar a conversa.",
+          "Um cache limitado a oito quadros de exibição evita carregar as 68 imagens ampliadas ao mesmo tempo; se a memória estiver baixa, a sprite original continua funcionando."
+        ],
+        "correcoes": [
+          "Melhorada a amostragem do atlas de 128px em telas densas sem trocar a identidade, alinhamento ou ordem das 68 sprites.",
+          "Ajustes de tamanho e transparência são sincronizados entre o painel da Home e o overlay Edu, preservando preferências existentes."
+        ],
+        "emDesenvolvimento": [
+          "Os quadros publicados têm fonte original 128×128; a exibição 512px é ampliação otimizada, não recriação de detalhes ausentes nem arte mestre 512px. Se existirem originais 512, poderão substituí-la posteriormente.",
+          "Homologação visual Samsung pendente para confirmar detalhes dos olhos, suavidade, slider e conforto em P100/M150/G200."
+        ]
+      }
     }
   ]
 }
