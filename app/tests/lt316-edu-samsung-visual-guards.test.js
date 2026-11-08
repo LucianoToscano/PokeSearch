@@ -49,8 +49,8 @@ assert.match(src, /if\(eduSprites!=null\)return EduSpriteAtlas\.SIZES_PX\[avatar
 assert.match(src, /if\(avatarSprites!=null\)return RaidDayAvatarFrames\.SIZES_PX\[avatarSizeIndex\]/);
 assert.match(src, /int art=eduAvatarArtSize\(\)/);
 assert.match(src, /int artSize=eduAvatarArtSize\(\)/);
-assert.match(atlas, /SIZES_PX=\{50,75,100\}/);
-assert.match(src, /avatarSizeIndex=2/, "Tamanho inicial G");
+assert.match(atlas, /SIZES_PX=\{100,150,200\}/);
+assert.match(src, /avatarSizeIndex=1/, "Tamanho inicial M");
 
 // Regressão: 68 poses, apenas cinco retoques localizados, fallback LT315.
 assert.match(atlas, /SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT\+1/);
