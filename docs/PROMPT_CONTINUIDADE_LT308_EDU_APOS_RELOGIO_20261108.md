@@ -1,11 +1,11 @@
 # PROMPT DE CONTINUIDADE — POKÉSEARCH / LT308 EDU (08/11/2026)
 
-> Cole o texto a seguir em um novo chat. Os números de execução e hashes devem ser confirmados no GitHub porque o estado pode ter avançado. Este documento foi criado na PR #306 antes da publicação e receberá evidências após a Release.
+> Cole o texto a seguir em um novo chat. **A LT308 foi publicada e verificada em 08/11/2026.** Antes de agir, confira novamente o GitHub: o repositório pode ter avançado desde esta conferência.
 
 CONTINUAR POKÉSEARCH — EDU, UM PASSO POR VEZ (PT-BR)
 
 Repositório: LucianoToscano/PokeSearch (https://github.com/LucianoToscano/PokeSearch).
-Não começar do zero e não usar versões antigas. Consulte o SHA da `main`, a última Release, o versionCode, os workflows e PRs abertos antes de editar. Na preparação deste documento a última Release pública era LT307 — 0.03.07 / versionCode 54513, e a candidata LT308 — 0.03.08 / 54514 estava na PR #306; verifique se ela já foi mesclada e publicada ao iniciar o chat.
+Não começar do zero nem restaurar versões antigas. **Última Release pública verificada em 08/11/2026: LT308 — 0.03.08 — versionCode 54514 — label 51312**, tag https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.08-54514, APK `PokeSearch-v0.03.08-LT.apk`, tamanho **34.035.668 bytes**, SHA-256 **`c693b8c28be6536d91c6774c17d8c6867a685091232b06bf8a8bf8624a217871`**. PR #306 integrada à `main` por squash **`60581c4ef69e1c85a4a35e8e0fc687309cd5c598`**; fonte do APK foi o commit **`25873554634f66d8af202d5f5a8eb081db6ebf9a`**. Workflow oficial https://github.com/LucianoToscano/PokeSearch/actions/runs/42472319313 terminou **`completed/success`**, com assinatura v2 permanente e digest verificados. **Este é o novo ponto de partida oficial**, mas confirme `main`, `releases/latest`, workflows e PRs novamente antes de editar.
 
 Leia nesta ordem:
 1. LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md
@@ -19,7 +19,7 @@ Leia nesta ordem:
 
 **Estado visual da conversa:** treinador flutuante pixel-art, tamanho G=100px inicial (preferências P/M/G preservadas), um balão branco independente com cauda apontando para Edu e botões de resposta separados. Configurações do personagem ocultas por toque prolongado na sprite (~1,2 s). Não modificar indevidamente o roteiro E01–E11 já alinhado ao vídeo/TXT/PDF de usuário.
 
-**Primeira etapa do novo ciclo (LT308): relógio único do Edu.** Ícone dos passes na Home tem ao lado visor compacto de `dd/MM/yy` e `HH:mm:ss`, que avança segundo a segundo. Tocar abre tela “Data e hora” com aparência inspirada em Samsung. Exibir:
+**Primeira etapa publicada (LT308): relógio único do Edu.** Ícone dos passes na Home tem ao lado visor compacto de `dd/MM/yy` e `HH:mm:ss`, que avança segundo a segundo. Tocar abre tela “Data e hora” com aparência inspirada em Samsung. Exibir:
 - Interruptor **Data e hora automáticas** (ON esconde Definir data/Definir hora; OFF permite edição).
 - **Fuso horário automático** e **Definir fuso conforme localização**, com indicação do fuso já detectado pelo Android; OFF no automático permite definir o fuso manual.
 - **Formato 24 horas** ON/OFF.
