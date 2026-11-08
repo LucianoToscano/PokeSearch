@@ -44,6 +44,10 @@ assert.match(clock,/putBoolean\(AUTO_DATE_TIME,false\)/);
 assert.match(clock,/putLong\(WALL_BASE,System\.currentTimeMillis\(\)\)/);
 assert.match(clock,/Clock forEdu\(Context context\)/);
 assert.match(clock,/return new EduClock\(context,zone\)/);
+assert.match(clock,/return zoneOverride==null\?zone\(context\):zoneOverride/);
+assert.match(clock,/java\.time\.LocalDate today\(Context context\)/);
+assert.match(clock,/RaidDayEventClock\.DayState dayState\(/);
+assert.match(clock,/LocalDateTime\.ofInstant\(Instant\.ofEpochMilli\(nowMillis\(context\)\),\s*zone\(context\)\)/);
 assert.doesNotMatch(clock,/Settings\.Global|Settings\.Secure|setTimeZone\(|LocationManager|ACCESS_FINE_LOCATION|Runtime\.getRuntime\(\)\.exec/,
   "Não acessar funções privilegiadas do Android nem GPS");
 
@@ -90,9 +94,10 @@ assert.match(screen,/sem acessar GPS/);
 assert.match(screen,/NUNCA|nunca altera|nunca altera/i);
 
 assert.match(edu,/eventClock=EduEventClock\.forEdu\(this\)/);
-assert.match(edu,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
+assert.match(edu,/EduEventClock\.today\(this\)/);
+assert.match(edu,/EduEventClock\.dayState\(this,preparation\.eventDate\(\)\)/);
 assert.match(edu,/if\(lastEduClockDay!=null&&!day\.equals\(lastEduClockDay\)/);
-assert.match(edu,/source=EduEventClock\.isAdjusted\(this\)\?"Hora ajustada":"Brasília"/);
+assert.match(edu,/EduEventClock\.isAdjusted\(this\)\?"Hora ajustada"/);
 assert.doesNotMatch(edu,/Quer simular um evento acontecendo hoje/);
 assert.match(settings,/EduEventClock\.forEdu\(this\)/);
 console.log("LT308 PASS: tela automática/manual com todas as opções das capturas Samsung e relógio único do Edu");
