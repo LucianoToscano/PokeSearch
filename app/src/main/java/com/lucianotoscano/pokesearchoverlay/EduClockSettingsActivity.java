@@ -18,10 +18,12 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.List;
 
 /**
  * Configuração visual do relógio do Edu, inspirada na tela de data/hora do
@@ -38,7 +40,8 @@ public final class EduClockSettingsActivity extends Activity {
 
     private LinearLayout manualDateTime,manualZone;
     private Switch autoDate,autoZone,locationZone,format24;
-    private TextView dateDetail,timeDetail,zoneDetail,clockInfo;
+    private TextView dateDetail,timeDetail,zoneDetail,clockInfo,momentDetail;
+    private String chosenMomentLabel="";
     private boolean rendering=false;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private boolean active=false;
@@ -184,6 +187,11 @@ public final class EduClockSettingsActivity extends Activity {
         divider(manualDateTime);
         timeDetail=addAction(manualDateTime,"Definir hora","",
             this::chooseTime);
+        // Um único seletor de momentos nos ajustes do relógio existente.
+        // A escolha desativa o automático só do Edu, nunca do Android.
+        divider(dateCard);
+        momentDetail=addAction(dateCard,"Momento do evento",
+            "Selecionar fase e horário",this::chooseEventMoment);
 
         LinearLayout zoneCard=card(screen);
         addSwitchRow(zoneCard,"Fuso horário automático",
@@ -205,7 +213,9 @@ public final class EduClockSettingsActivity extends Activity {
 
         autoDate.setOnCheckedChangeListener((v,on)->{
             if(rendering)return;
-            EduEventClock.setAutomaticDateTime(this,on);refresh();
+            EduEventClock.setAutomaticDateTime(this,on);
+            chosenMomentLabel="";
+            refresh();
         });
         autoZone.setOnCheckedChangeListener((v,on)->{
             if(rendering)return;
@@ -229,6 +239,7 @@ public final class EduClockSettingsActivity extends Activity {
             EduEventClock.setBrasiliaDateTime(this,
                 latest.withDayOfMonth(1).withYear(y)
                     .withMonth(m+1).withDayOfMonth(d));
+            chosenMomentLabel="";
             refresh();
         },date.getYear(),date.getMonthValue()-1,date.getDayOfMonth());
         picker.show();
@@ -240,9 +251,53 @@ public final class EduClockSettingsActivity extends Activity {
             LocalDateTime latest=EduEventClock.localNow(this);
             EduEventClock.setBrasiliaDateTime(this,
                 latest.withHour(h).withMinute(m).withSecond(0));
+            chosenMomentLabel="";
             refresh();
         },value.getHour(),value.getMinute(),
           EduEventClock.is24HourFormat(this)).show();
+    }
+
+    /**
+     * Os momentos dependem da janela do evento escolhida, não da data atual.
+     * Cada item ajusta o MESMO relógio Edu usado pela Home e pelos balões.
+     */
+    private void chooseEventMoment(){
+        long begin=RaidDaySchedule.start(this);
+        long finish=RaidDaySchedule.finish(this);
+        if(!RaidDaySchedule.valid(begin,finish)){
+            new AlertDialog.Builder(this)
+                .setTitle("Momento do evento")
+                .setMessage("Primeiro configure a data, os horários de início " +
+                    "e fim e a região do evento. Depois escolha o momento " +
+                    "neste relógio do Edu.")
+                .setPositiveButton("Entendi",null)
+                .show();
+            return;
+        }
+        List<EduEventMomentPresets.Moment> moments=
+            EduEventMomentPresets.forWindow(begin,finish);
+        DateTimeFormatter formatter=DateTimeFormatter.ofPattern(
+            "dd/MM HH:mm:ss",Locale.forLanguageTag("pt-BR"));
+        ZoneId eventZone=RaidDaySchedule.zone(this);
+        String[] items=new String[moments.size()];
+        for(int i=0;i<moments.size();i++){
+            EduEventMomentPresets.Moment moment=moments.get(i);
+            String when=Instant.ofEpochMilli(moment.epochMillis)
+                .atZone(eventZone).format(formatter);
+            items[i]=moment.label+"\n"+when;
+        }
+        new AlertDialog.Builder(this)
+            .setTitle("Momento do evento")
+            .setSingleChoiceItems(items,-1,(dialog,which)->{
+                EduEventMomentPresets.Moment selected=moments.get(which);
+                EduEventClock.setManualInstant(this,
+                    Instant.ofEpochMilli(selected.epochMillis));
+                chosenMomentLabel=selected.label;
+                dialog.dismiss();
+                refresh();
+            })
+            .setNegativeButton("Cancelar",null)
+            .show();
     }
 
     private void chooseZone(){
@@ -282,6 +337,14 @@ public final class EduClockSettingsActivity extends Activity {
             "d 'de' MMMM 'de' yyyy",new Locale("pt","BR"))));
         timeDetail.setText(EduEventClock.timeLabel(this));
         zoneDetail.setText(EduEventClock.zone(this).getId());
+        boolean eventConfigured=RaidDaySchedule.valid(
+            RaidDaySchedule.start(this),RaidDaySchedule.finish(this));
+        momentDetail.setText(!eventConfigured?
+            "Configure primeiro a data e o horário do evento":
+            chosenMomentLabel.isEmpty()?
+                "Selecionar entre 17 momentos · "+
+                    RaidDaySchedule.zone(this).getId():
+                chosenMomentLabel+" · hora manual do Edu");
         clockInfo.setText(
             (autoDate.isChecked()?"Automático":"Manual")+
             " · "+EduEventClock.dateLabel(this)+" "+EduEventClock.timeLabel(this)+

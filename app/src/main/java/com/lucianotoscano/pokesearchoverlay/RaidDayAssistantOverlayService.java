@@ -23,6 +23,12 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.ColorFilter;
 import android.graphics.Rect;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ClickableSpan;
+import android.text.style.UnderlineSpan;
+import android.text.method.LinkMovementMethod;
+import android.text.TextPaint;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -96,6 +102,14 @@ public final class RaidDayAssistantOverlayService extends Service {
     private TextView eduPrepQuestion,eduPrepCaption;
     private int eduPanelWidth=0;
     private EduSpeechDrawable eduSpeechBackground;
+    // Primeiro contato: apresentação, situação e checklist, sem botões extras.
+    private int eduWelcomePage=0;
+    private String eduInfoTopic="";
+    private boolean eduFirstBubbleMode=false;
+    private final boolean[] eduPreparationChecks={false,false,false};
+    private LinearLayout eduPanelHeader;
+    private float eduSpeechDownX,eduSpeechDownY;
+    private boolean eduSpeechMoving=false;
 
     private TextView visualStatus,visualToggle,visualAccept,visualReject;
     private LinearLayout visualActions;
@@ -145,7 +159,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                     }
                 }
                 LocalDate day=eduEventLocalToday();
-                RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
+                RaidDayRegionalWindow.Phase phase=(!active&&!training&&
+                    eduFirstBubbleMode)?eduWelcomePhase():eduConfiguredPhase();
                 String identity=RaidDaySchedule.zone(
                     RaidDayAssistantOverlayService.this).getId()+":"+
                     RaidDaySchedule.start(RaidDayAssistantOverlayService.this)+":"+
@@ -160,8 +175,13 @@ public final class RaidDayAssistantOverlayService extends Service {
                 if(changed&&visible&&eduSpeech!=null)updateStep();
             }
             if(eduBadge!=null)updateEventClock();
-            // Hora e transições regionais são calculadas da mesma fonte do Edu.
-            handler.postDelayed(this,5000L);
+            if(visible)updateEduWelcomeCountdown();
+            // Apenas no contador visível usamos segundos; fora dele,
+            // mantemos o pulso original para economizar bateria.
+            boolean counting=visible&&eduFirstBubbleMode&&
+                eduWelcomePage==1&&eduInfoTopic.isEmpty()&&
+                eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE;
+            handler.postDelayed(this,counting?1000L:5000L);
         }
     };
     private boolean paused=false,finished=false,visible=false,dragging=false;
@@ -268,13 +288,19 @@ public final class RaidDayAssistantOverlayService extends Service {
             "nz_check_wait".equals(eduDialogueState)||
             "nz_retry_check_wait".equals(eduDialogueState)))
             return "edu_sombria";
-        if(!active&&!training&&eduWantsReal&&eduDateConfirmed()){
-            RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
-            if(phase==RaidDayRegionalWindow.Phase.BEFORE)return "evento_nao_comecou";
-            if(phase==RaidDayRegionalWindow.Phase.ACTIVE)return "evento_comecou";
-            if(phase==RaidDayRegionalWindow.Phase.ENDED)return "evento_encerrou";
+        if(!active&&!training){
+            if(eduWelcomePage>0){
+                RaidDayRegionalWindow.Phase phase=eduWelcomePhase();
+                if(phase==RaidDayRegionalWindow.Phase.BEFORE)
+                    return "evento_nao_comecou";
+                if(phase==RaidDayRegionalWindow.Phase.ACTIVE)
+                    return "evento_comecou";
+                if(phase==RaidDayRegionalWindow.Phase.ENDED)
+                    return "evento_encerrou";
+            }
+            return "apresentacao";
         }
-        if(!eduIntroAccepted||(!active&&!training))return "apresentacao";
+        if(!eduIntroAccepted)return "apresentacao";
         if(plan==null||index<0||index>=plan.size())return "parado";
         String id=plan.step(index).id;
         if("E01".equals(id)){
@@ -695,10 +721,16 @@ public final class RaidDayAssistantOverlayService extends Service {
         avatarReactionUntil=SystemClock.elapsedRealtime()+1250L;
         if(avatarView!=null)avatarView.setImageDrawable(avatarSprites.frame(frame));
     }
+    // A coleção Edu deve respeitar P/M/G mesmo se o atlas legado LT304
+    // não puder ser carregado. Nunca rebaixar G=100 para ART_DP por engano.
+    private int eduAvatarArtSize(){
+        if(eduSprites!=null)return EduSpriteAtlas.SIZES_PX[avatarSizeIndex];
+        if(avatarSprites!=null)return RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex];
+        return dp(ART_DP);
+    }
     private void updateAvatarSize(){
         if(avatarView==null||bubbleParams==null||wm==null)return;
-        int art=avatarSprites!=null?
-            RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]:dp(ART_DP);
+        int art=eduAvatarArtSize();
         avatarView.setLayoutParams(new FrameLayout.LayoutParams(
             art,art,Gravity.CENTER));
         int target=Math.max(dp(BUBBLE_DP),art+dp(6));
@@ -749,8 +781,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             avatarView.setImageDrawable(avatarSprites.frame(RaidDayAvatarFrames.IDLE_A));
         else if(artwork!=null)avatarView.setImageBitmap(artwork);
         else avatarView.setImageResource(R.drawable.ic_notification);
-        int artSize=avatarSprites!=null?
-            RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]:dp(ART_DP);
+        int artSize=eduAvatarArtSize();
         bubble.addView(avatarView,new FrameLayout.LayoutParams(
             artSize,artSize,Gravity.CENTER));
         View grip=new View(this);
@@ -822,8 +853,12 @@ public final class RaidDayAssistantOverlayService extends Service {
                             prefs.edit().putInt("x",bubbleParams.x).putInt("y",bubbleParams.y).apply();
                             reactEdu("arrastado_final");
                         }else if(!held&&event.getActionMasked()==MotionEvent.ACTION_UP){
-                            reactAvatar(RaidDayAvatarFrames.WAVE);
+                            if(visible)reactAvatar(RaidDayAvatarFrames.WAVE);
+                            else{eduAnimationName="";eduReactionState="";}
                             setVisible(!visible);
+                            if(visible&&eduSprites!=null&&avatarView!=null)
+                                avatarView.setImageDrawable(
+                                    eduSprites.state(eduContextState()));
                         }
                         dragging=false;return true;
                 }
@@ -1016,6 +1051,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         private final Paint fill=new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint edge=new Paint(Paint.ANTI_ALIAS_FLAG);
         private boolean pointerRight=true;
+        private float pointerYRatio=.5f;
+        void setPointerYRatio(float value){
+            float safe=Math.max(.20f,Math.min(.80f,value));
+            if(Math.abs(safe-pointerYRatio)>.01f){
+                pointerYRatio=safe;
+                invalidateSelf();
+            }
+        }
         EduSpeechDrawable(){
             fill.setColor(Color.WHITE);
             fill.setStyle(Paint.Style.FILL);
@@ -1032,10 +1075,10 @@ public final class RaidDayAssistantOverlayService extends Service {
             Rect bounds=getBounds();
             float l=bounds.left+dp(1),t=bounds.top+dp(1);
             float r=bounds.right-dp(1),bottom=bounds.bottom-dp(1);
-            float tip=dp(15),rad=dp(15),half=dp(8);
+            float tip=dp(28),rad=dp(15),half=dp(7);
             float bodyLeft=pointerRight?l:l+tip;
             float bodyRight=pointerRight?r-tip:r;
-            float cy=(t+bottom)/2f;
+            float cy=t+(bottom-t)*pointerYRatio;
             Path shape=new Path();
             shape.moveTo(bodyLeft+rad,t);
             shape.lineTo(bodyRight-rad,t);
@@ -1073,11 +1116,17 @@ public final class RaidDayAssistantOverlayService extends Service {
             panelParams==null||bubbleParams==null)return;
         boolean pointsRight=panelParams.x+eduPanelWidth/2<
             bubbleParams.x+bubbleParams.width/2;
-        if(eduSpeechBackground.pointsRight()!=pointsRight){
+        if(eduSpeechBackground.pointsRight()!=pointsRight)
             eduSpeechBackground.setPointerRight(pointsRight);
-            eduMainCard.setPadding(dp(pointsRight?12:27),dp(11),
-                dp(pointsRight?27:12),dp(11));
-        }
+        eduMainCard.setPadding(dp(pointsRight?12:41),dp(11),
+            dp(pointsRight?41:12),dp(11));
+        int art=eduAvatarArtSize();
+        int avatarTop=bubbleParams.y+(bubbleParams.height-art)/2;
+        float headY=avatarTop+art*.20f;
+        float cardTop=panelParams.y+eduMainCard.getTop()-
+            (panelScroll==null?0:panelScroll.getScrollY());
+        float height=Math.max(dp(60),eduMainCard.getHeight());
+        eduSpeechBackground.setPointerYRatio((headY-cardTop)/height);
     }
     private void createPanel(){
         panel=new LinearLayout(this);
@@ -1161,6 +1210,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduHeader.setOnTouchListener(move);
         nameChip.setOnTouchListener(move);
         header.setOnTouchListener(move);
+        eduPanelHeader=header;
         panel.addView(header);
 
         eduMainCard=new LinearLayout(this);
@@ -1179,6 +1229,35 @@ public final class RaidDayAssistantOverlayService extends Service {
         LinearLayout.LayoutParams subLp=new LinearLayout.LayoutParams(-1,-2);
         subLp.topMargin=dp(7);
         eduMainCard.addView(eduSubline,subLp);
+        eduMainCard.setOnClickListener(v->advanceEduWelcome());
+        eduSpeech.setMovementMethod(LinkMovementMethod.getInstance());
+        eduSpeech.setHighlightColor(Color.TRANSPARENT);
+        eduSpeech.setOnTouchListener((view,event)->{
+            if(!eduFirstBubbleMode)return false;
+            if(event.getActionMasked()==MotionEvent.ACTION_DOWN){
+                eduSpeechDownX=event.getX();
+                eduSpeechDownY=event.getY();
+                eduSpeechMoving=false;
+                return true;
+            }
+            if(event.getActionMasked()==MotionEvent.ACTION_MOVE){
+                if(Math.hypot(event.getX()-eduSpeechDownX,
+                    event.getY()-eduSpeechDownY)>touchSlop){
+                    eduSpeechMoving=true;
+                    return false;
+                }
+                return true;
+            }
+            if(event.getActionMasked()==MotionEvent.ACTION_UP){
+                if(!eduSpeechMoving&&!activateEduTextLink(event))
+                    advanceEduWelcome();
+                return true;
+            }
+            return false;
+        });
+        eduSubline.setOnClickListener(v->{
+            if(eduFirstBubbleMode)advanceEduWelcome();
+        });
 
         // A cauda lateral é desenhada pelo próprio EduSpeechDrawable:
         // não existe segundo triângulo solto nem balão dentro de painel.
@@ -1495,6 +1574,242 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         advanceEdu("STEP_CONFIRMED");
     }
+
+    // O relógio único da Home é a fonte de tempo. Sem janela configurada,
+    // não inventar data, contagem regressiva ou status oficial de evento.
+    private RaidDayRegionalWindow.Phase eduWelcomePhase(){
+        if(!RaidDaySchedule.valid(RaidDaySchedule.start(this),
+            RaidDaySchedule.finish(this)))
+            return RaidDayRegionalWindow.Phase.UNKNOWN;
+        return RaidDaySchedule.phase(this,eventClock.instant());
+    }
+    private String eduWelcomeStart(){
+        long start=RaidDaySchedule.start(this);
+        if(!RaidDaySchedule.valid(start,RaidDaySchedule.finish(this)))
+            return "horário ainda não configurado";
+        java.time.ZonedDateTime local=Instant.ofEpochMilli(start)
+            .atZone(RaidDaySchedule.zone(this));
+        return local.format(DateTimeFormatter.ofPattern(
+            "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")))+
+            " ("+RaidDaySchedule.zone(this).getId()+")";
+    }
+    private String eduWelcomeEnd(){
+        long finish=RaidDaySchedule.finish(this);
+        return Instant.ofEpochMilli(finish).atZone(RaidDaySchedule.zone(this))
+            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm",
+                Locale.forLanguageTag("pt-BR")));
+    }
+    private String eduWelcomeCountdown(){
+        long delta=Math.max(0,RaidDaySchedule.start(this)-
+            eventClock.instant().toEpochMilli());
+        long seconds=(delta+999L)/1000L;
+        long days=seconds/86400L;
+        long hours=(seconds/3600L)%24;
+        long minutes=(seconds/60L)%60;
+        long secs=seconds%60;
+        return "Faltam "+(days>0?days+"d ":"")+
+            String.format(Locale.forLanguageTag("pt-BR"),
+                "%02dh %02dmin %02ds",hours,minutes,secs);
+    }
+    private String eduWelcomeSource(){
+        return EduEventClock.isAdjusted(this)?
+            "Relógio manual do Edu · não confirma horário do servidor":
+            (RaidDaySchedule.isChandelureExample(this)?
+                "Exemplo histórico Mega Chandelure · horário local":
+                "Janela informada no relógio do Edu · confira o evento no jogo");
+    }
+    private void updateEduWelcomeCountdown(){
+        if(eduFirstBubbleMode&&eduWelcomePage==1&&
+            eduInfoTopic.isEmpty()&&
+            eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE&&
+            eduSubline!=null)
+            eduSubline.setText(eduWelcomeCountdown()+"\n"+
+                eduWelcomeSource());
+    }
+    private void appendEduLink(SpannableStringBuilder rich,
+        String title,String topic){
+        final int from=rich.length();
+        rich.append(title).append(" ⓘ");
+        final int to=rich.length();
+        rich.setSpan(new UnderlineSpan(),from,to,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        rich.setSpan(new ClickableSpan(){
+            @Override public void onClick(View widget){
+                eduInfoTopic=topic;
+                updateStep();
+            }
+            @Override public void updateDrawState(TextPaint paint){
+                paint.setColor(Color.rgb(34,92,112));
+                paint.setUnderlineText(true);
+            }
+        },from,to,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+    private void appendEduCheck(SpannableStringBuilder rich,int index,
+        String title,String topic){
+        int at=rich.length();
+        rich.append(eduPreparationChecks[index]?"☑ ":"☐ ");
+        rich.setSpan(new ClickableSpan(){
+            @Override public void onClick(View widget){
+                // Uma marcação é apenas confirmação manual, nunca passe
+                // encontrado, ausência de softban ou recompensa verificada.
+                eduPreparationChecks[index]=!eduPreparationChecks[index];
+                showEduFirstBubble();
+            }
+        },at,at+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        appendEduLink(rich,title,topic);
+    }
+    private SpannableStringBuilder eduChecklistText(
+        boolean before,String start){
+        SpannableStringBuilder content=new SpannableStringBuilder();
+        if(before)
+            content.append("O evento ainda não começou.\n")
+                .append("Início: ").append(start)
+                .append("\n\nAntes de começar:\n");
+        else
+            content.append("Checklist antes de continuar:\n");
+        appendEduCheck(content,0,"Sem softban","softban");
+        content.append("\n");
+        appendEduCheck(content,1,"Não ter acessado uma região onde já é dia do evento",
+            "regiao");
+        content.append("\n");
+        appendEduCheck(content,2,"Guardar o passe de reide laranja da véspera",
+            "passe");
+        return content;
+    }
+    private String eduInfoText(){
+        switch(eduInfoTopic){
+            case "bug":
+                return "Bug dos Passes ⓘ\n\nÉ o nome de um método relatado " +
+                    "por jogadores para tentar obter passes extras durante " +
+                    "eventos de reides, combinando horários de regiões diferentes. " +
+                    "É um relato comunitário, não uma função oficial, " +
+                    "e não existe garantia de passes ou recompensas. " +
+                    "Algumas práticas podem contrariar as regras do Pokémon GO.";
+            case "softban":
+                return "Softban ⓘ\n\nÉ uma restrição temporária de ações " +
+                    "no jogo. Para reduzir riscos, evite aplicativos de " +
+                    "localização não autorizados e mudanças artificiais " +
+                    "de região. Confira no próprio jogo se suas ações " +
+                    "funcionam normalmente. O Edu não detecta softban.";
+            case "regiao":
+                return "Região e data ⓘ\n\nFusos horários diferentes " +
+                    "podem estar em dias diferentes ao mesmo tempo. " +
+                    "O tutorial comunitário recomenda não ter iniciado " +
+                    "interações em uma região onde já é o dia do evento. " +
+                    "Isso não comprova que o método funcione; respeite " +
+                    "as regras de localização do jogo.";
+            case "passe":
+                return "Passe de reide laranja ⓘ\n\nÉ o passe diário " +
+                    "gratuito, normalmente obtido ao interagir com " +
+                    "um ginásio quando elegível. Confira o inventário " +
+                    "no Pokémon GO. O relato recomenda guardar o " +
+                    "passe da véspera, mas isso não garante outro passe.";
+            default: return "";
+        }
+    }
+    private boolean activateEduTextLink(MotionEvent event){
+        CharSequence content=eduSpeech.getText();
+        android.text.Layout layout=eduSpeech.getLayout();
+        if(!(content instanceof Spanned)||layout==null)return false;
+        int x=(int)event.getX()-eduSpeech.getTotalPaddingLeft()+
+            eduSpeech.getScrollX();
+        int y=(int)event.getY()-eduSpeech.getTotalPaddingTop()+
+            eduSpeech.getScrollY();
+        if(y<0||y>layout.getHeight())return false;
+        int line=layout.getLineForVertical(y);
+        if(x<layout.getLineLeft(line)||x>layout.getLineRight(line))
+            return false;
+        int offset=layout.getOffsetForHorizontal(line,x);
+        ClickableSpan[] links=((Spanned)content).getSpans(
+            offset,offset,ClickableSpan.class);
+        if(links.length==0&&offset>0)
+            links=((Spanned)content).getSpans(
+                offset-1,offset,ClickableSpan.class);
+        if(links.length==0)return false;
+        links[0].onClick(eduSpeech);
+        return true;
+    }
+    private void advanceEduWelcome(){
+        if(!eduFirstBubbleMode)return;
+        if(!eduInfoTopic.isEmpty()){
+            eduInfoTopic="";
+            updateStep();
+            return;
+        }
+        if(eduWelcomePage==0){
+            eduWelcomePage=1;
+            updateStep();
+        }else if(eduWelcomePage==1&&
+            eduWelcomePhase()==RaidDayRegionalWindow.Phase.ACTIVE){
+            eduWelcomePage=2;
+            updateStep();
+        }
+        if(avatarView!=null&&eduSprites!=null)
+            avatarView.setImageDrawable(eduSprites.state(eduContextState()));
+        // Esta etapa termina no checklist; E01-E11 não são iniciados
+        // implicitamente nem são gerados passes pelo toque.
+    }
+    private void showEduFirstBubble(){
+        eduFirstBubbleMode=true;
+        eduPanelHeader.setVisibility(View.GONE);
+        eduActions.setVisibility(View.GONE);
+        eduMiniActions.setVisibility(View.GONE);
+        preparationSection.setVisibility(View.GONE);
+        eduSettings.setVisibility(View.GONE);
+        eduMainCard.setVisibility(View.VISIBLE);
+        eduSpeech.setTextSize(14);
+        eduSubline.setTextSize(12);
+        // Antes do início, deixar o contador VISÍVEL no alto do balão:
+        // uma lista longa não pode escondê-lo no fim da rolagem.
+        boolean countdownFirst=eduInfoTopic.isEmpty()&&eduWelcomePage==1&&
+            eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE;
+        int sublineIndex=countdownFirst?0:1;
+        if(eduMainCard.indexOfChild(eduSubline)!=sublineIndex){
+            eduMainCard.removeView(eduSubline);
+            eduMainCard.addView(eduSubline,sublineIndex);
+        }
+        if(!eduInfoTopic.isEmpty()){
+            setTalk(eduInfoText(),"Toque no balão para voltar.");
+            return;
+        }
+        if(eduWelcomePage==0){
+            SpannableStringBuilder intro=new SpannableStringBuilder(
+                "Olá! Eu sou o Edu, seu coach de Pokémon GO! " +
+                "Vou acompanhar você nesta jornada.\n\n" +
+                "Hoje vamos conhecer o ");
+            appendEduLink(intro,"Bug dos Passes","bug");
+            intro.append(".");
+            eduSpeech.setText(intro);
+            eduSubline.setText("Toque no balão para continuar.");
+            eduSubline.setVisibility(View.VISIBLE);
+            return;
+        }
+        RaidDayRegionalWindow.Phase phase=eduWelcomePhase();
+        if(phase==RaidDayRegionalWindow.Phase.UNKNOWN){
+            setTalk("Ainda não há um evento com data e horário definidos.",
+                "Configure o evento no relógio da Home para eu acompanhar.");
+        }else if(phase==RaidDayRegionalWindow.Phase.ENDED){
+            setTalk("Infelizmente, o evento já foi encerrado nesta região. " +
+                "Aguarde o próximo evento!","Encerrado · "+eduWelcomeSource());
+        }else if(phase==RaidDayRegionalWindow.Phase.BEFORE){
+            eduSpeech.setText(eduChecklistText(true,eduWelcomeStart()));
+            eduSubline.setVisibility(View.VISIBLE);
+            updateEduWelcomeCountdown();
+        }else if(eduWelcomePage==1){
+            setTalk("O evento já começou!\n\n"+
+                (RaidDaySchedule.isChandelureExample(this)?
+                    "Mega Chandelure (exemplo histórico)":
+                    "Evento configurado no Edu")+
+                "\nInício: "+eduWelcomeStart()+
+                "\nTérmino: "+eduWelcomeEnd()+
+                "\nConfira suas reides e passes no próprio jogo.",
+                eduWelcomeSource()+" · Toque para ver o checklist.");
+        }else{
+            eduSpeech.setText(eduChecklistText(false,eduWelcomeStart()));
+            eduSubline.setText("Toque em ☐ para marcar; ⓘ explica cada item.");
+            eduSubline.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void showEduWelcome(){
         setTalk("Olá! Meu nome é Edu. Serei seu treinador hoje! "+
             "Vou te ensinar, passo a passo, o tutorial comunitário "+
@@ -2112,7 +2427,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduActions.setVisibility(View.VISIBLE);
         eduMiniActions.setVisibility(View.VISIBLE);
         updateEventClock();
+        eduFirstBubbleMode=!eduSettingsOpen&&!active&&!training;
+        if(eduPanelHeader!=null)eduPanelHeader.setVisibility(
+            eduFirstBubbleMode?View.GONE:View.VISIBLE);
         if(eduSettingsOpen){showEduSettings();}
+        else if(eduFirstBubbleMode){showEduFirstBubble();}
         else if(active||training){
             if(finished)showEduFinished();else showEduGuide();
         }else if(!eduWantsReal){
@@ -2138,25 +2457,31 @@ public final class RaidDayAssistantOverlayService extends Service {
     private void placePanelCoordinates(){
         int sw=getResources().getDisplayMetrics().widthPixels;
         int sh=getResources().getDisplayMetrics().heightPixels;
-        int gap=dp(6);
-        int leftSpace=Math.max(0,bubbleParams.x-gap);
-        int rightSpace=Math.max(0,sw-
-            (bubbleParams.x+bubbleParams.width+gap));
+        // O avatar tem margens transparentes: 5px da BORDA da imagem
+        // ficariam muito distantes da cabeça. Ancorar na lateral estimada
+        // do cabelo, enquanto a caixa branca fica recuada 28dp da ponta.
+        int gap=5; // distância física estimada da lateral da cabeça
+        int headCenterX=bubbleParams.x+bubbleParams.width/2;
+        int headHalfWidth=Math.round(eduAvatarArtSize()*.23f);
+        int headLeft=headCenterX-headHalfWidth;
+        int headRight=headCenterX+headHalfWidth;
+        int leftSpace=Math.max(0,headLeft-gap);
+        int rightSpace=Math.max(0,sw-(headRight+gap));
         boolean dockLeft=leftSpace>=rightSpace;
-        // Em celulares estreitos, encolher a fala para caber AO LADO do Edu:
-        // nunca desenhar balão sobre sua sprite.
         eduPanelWidth=Math.min(dp(286),Math.max(dp(132),
             Math.max(leftSpace,rightSpace)));
         panelParams.width=eduPanelWidth;
         int docking=dockLeft?
-            bubbleParams.x-gap-eduPanelWidth:
-            bubbleParams.x+bubbleParams.width+gap;
+            headLeft-gap-eduPanelWidth:
+            headRight+gap;
         panelParams.x=Math.max(0,Math.min(
             Math.max(0,sw-eduPanelWidth),docking));
         int measured=panelScroll==null?dp(175):
             Math.max(dp(125),panelScroll.getHeight());
+        int avatarHead=bubbleParams.y+bubbleParams.height/2-
+            eduAvatarArtSize()*3/10;
         panelParams.y=Math.max(0,Math.min(Math.max(0,sh-measured),
-            bubbleParams.y+bubbleParams.height/2-measured/2));
+            avatarHead-measured/4));
         pointSpeechAtEdu();
     }
     private void placePanel(){
@@ -2175,6 +2500,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         resetEduIdle();
         visible=show;
         if(show){
+            if(!active&&!training){
+                eduWelcomePage=0;
+                eduInfoTopic="";
+            }
             updateStep();
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);

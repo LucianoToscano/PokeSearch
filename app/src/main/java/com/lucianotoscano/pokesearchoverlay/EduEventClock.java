@@ -166,6 +166,21 @@ public final class EduEventClock {
             .apply();
     }
 
+    /**
+     * Ajusta um instante EXATO para testar etapas de um evento com fuso próprio.
+     * Evita a ambiguidade de horários locais na transição de horário de verão.
+     * O único relógio do Edu continua correndo; Android e Pokémon GO intactos.
+     */
+    public static void setManualInstant(Context context,Instant moment){
+        if(moment==null)throw new IllegalArgumentException("Momento obrigatório");
+        long now=System.currentTimeMillis();
+        prefs(context).edit()
+            .putBoolean(AUTO_DATE_TIME,false)
+            .putLong(VIRTUAL_BASE,moment.toEpochMilli())
+            .putLong(WALL_BASE,now)
+            .apply();
+    }
+
     /** Restaura somente a data/hora automática, sem alterar o fuso/24h. */
     public static void reset(Context context){
         setAutomaticDateTime(context,true);

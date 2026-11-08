@@ -13,3 +13,25 @@ Tamanho fixo de visualização P50/M75/G100 (G padrão). Cabeça/corpo devem par
 Relógio Edu único (automático/manual, fonte da Home); Mega Chandelure exemplo histórico por fuso IANA (31/10/2026, 14–17h local); tutorial E01–E11; duas Pokébolas P1/P2, Doce Raro, scanner/PoGoCoordinates, IV/PvP, favoritos, login, notificações, Firebase, dados, atualização segura por GitHub, assinatura v2 original. Nada concede passes ou manipula Pokémon GO.
 
 Mudanças futuras: confirmar autorização, usar branch/PR, executar Node completo/LT169/LT211/Java LT62/OTA LT173, integrar squash, emitir pedido protegido em `release/official-request.json`, verificar versão/APK/assinatura/SHA/limite e registrar no Arquivo Mestre. Responder sem menus extras ou interfaces poluídas.
+
+
+## QA em andamento após a Release LT316 (ainda NÃO publicada como LT317)
+
+A PR em rascunho [#317](https://github.com/LucianoToscano/PokeSearch/pull/317), branch `qa/lt316-edu-samsung-visual-guards-20261108`, protege o tamanho P/M/G da sprite Edu quando o atlas antigo LT304 falha no carregamento (função `eduAvatarArtSize()` em `RaidDayAssistantOverlayService.java`). Acrescenta `app/tests/lt316-edu-samsung-visual-guards.test.js` para as 22 poses ociosas, Sombria e teleporte só por gatilhos, cinco retoques e fallback LT315. `AGENTS.md` foi alinhado à LT316. CI no commit de código `eb3a0e44d5c268f04c1c75b74e4c88043b48b45f`: Node/LT169/LT211/Java LT62/OTA LT173 todos SUCCESS. Guia e detalhes em `docs/LT316_EDU_HOMOLOGACAO_VISUAL_GUARDAS_20261108.md`.
+
+**Pendente:** homologação física Samsung em P50/M75/G100 com vídeos/prints. A PR #317 permanece draft, sem merge nem novo APK/Release. Jamais usar o código de QA para declarar LT317 oficial; qualquer publicação futura exige autorização expressa, workflow e validação de assinatura/hash.
+
+
+## Próxima etapa em QA — primeiro balão do Edu
+
+O proprietário pediu recomeçar apenas a **conversa de apresentação**, mantendo o aplicativo LT316 sem downgrade. A PR #317 (draft) foi ampliada: primeiro toque mostra sprite Edu e abertura da fala; a apresentação "Olá! Eu sou o Edu, seu coach de Pokémon GO!" contém **Bug dos Passes ⓘ** sublinhado. Ao tocar no balão avança ao estado regional pelo relógio único `eventClock`: BEFORE → sprite `evento_nao_comecou` (38), data/hora IANA, contador com segundos acima dos três itens de checklist; ACTIVE → sprite `evento_comecou` (37), início/término e toque seguinte apresenta checklist; ENDED → sprite `evento_encerrou` (36) e aviso de que encerrou. Horário ausente = status UNKNOWN sem inventar evento.
+
+Checklist dentro do mesmo balão: ☐ Sem softban ⓘ; ☐ Não ter acessado região onde já é dia do evento ⓘ; ☐ Passe laranja da véspera ⓘ. Cada ⓘ sublinhado abre explicação no próprio balão, toque retorna, sem criar botões. Marcas são manuais e não equivalem a comprovação no jogo. O "Bug dos Passes" é **relato comunitário**, não garantia de recompensa. Balão único com cauda 28dp e ponta estimada a 5px da lateral da cabeça; cabeçalho e botões existentes ficam ocultos apenas nesta abertura.
+
+Arquivos: `RaidDayAssistantOverlayService.java`, `app/tests/lt316-edu-first-bubble-onboarding.test.js`, `docs/LT316_EDU_PRIMEIRO_BALAO_EVENTO_CHECKLIST_20261108.md` e Guia Mestre na branch `qa/lt316-edu-samsung-visual-guards-20261108`. Confirmar os cinco gates no HEAD final. **Sem merge/publicação de LT317** até autorização explícita; QA físico Samsung continua pendente. O roteiro E01–E11 e o restante do aplicativo não foram reescritos.
+
+## QA adicional — 17 momentos no relógio único do Edu
+
+Continuação da PR [#317](https://github.com/LucianoToscano/PokeSearch/pull/317), ainda **draft e sem merge**. Na atividade `EduClockSettingsActivity.java`, existe agora **um único campo "Momento do evento"** que abre 17 horários relativos à janela regional configurada. O cálculo é feito por `EduEventMomentPresets.java` (ordem cronológica com base no início e fim), incluindo 3 dias antes, 24h/1h/30m/10m/1m/10s antes, início, +2h/+4h/+8h/+12h/+24h/+48h após início, 10min antes/depois do término e 1 semana após término. A seleção chama `EduEventClock.setManualInstant(Context,Instant)` e **ajusta só o relógio manual do Edu**, que continua avançando e controla Home, balão e fases regionais; nenhum relógio paralelo, mudança do sistema, teleporte ou passes presumidos. Lista exibe horários do **fuso do evento**. Sem evento configurado, o seletor informa a exigência e não inventa data.
+
+Novo teste `app/tests/lt316-edu-event-clock-moments.test.js`; relatório `docs/LT316_EDU_RELOGIO_MOMENTOS_EVENTO_20261108.md`. Os cinco gates automáticos (Node completo, LT169, LT211, Java LT62, OTA LT173) foram **SUCCESS** para o commit de código `40b20b7c21edf6c2da2514c1d39bf91783a96661`; conferir novamente o HEAD da branch após docs. QA físico Samsung P/M/G e transições do relógio/primeiro balão continuam pendentes. Última Release pública LT316 0.03.16/code54522; não anunciar LT317 sem merge, pipeline oficial e digest verificado.
