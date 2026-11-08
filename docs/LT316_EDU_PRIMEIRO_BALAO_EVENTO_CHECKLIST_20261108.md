@@ -36,3 +36,15 @@ O jogador toca no `☐` para marcar, sem efeito sobre o estado do Pokémon GO, s
 Arquivos da branch: `RaidDayAssistantOverlayService.java`, teste `app/tests/lt316-edu-first-bubble-onboarding.test.js`, este documento, Guia Mestre e prompt de continuidade. Preservados P1/P2, PoGoCoordinates, Doce Raro, ranking, login, relógio único, dados, assinatura, OTA e todo E01–E11.
 
 **Pendente:** conferir em Samsung que o primeiro toque abre só o balão, links/ⓘ são tocáveis, texto cabe sem cortar, scroll é possível, a ponta fica próxima à cabeça sem cobrir outra sprite, o contador avança em segundos, e as três sprites mudam de acordo com o fuso. CI automatizado não substitui homologação física. Esta entrega é apenas QA em branch; não declara release nem APK instalado.
+
+## QA automatizado comprovado
+
+SHA do HEAD validado antes do registro documental: `57f3381dbd06a7a9ae668aff2685d978ed7f9912`.
+
+- [Node completo — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/42522363913)
+- [LT169 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/42522363860)
+- [LT211 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/42522363886)
+- [Android Java LT62 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/42522363832)
+- [OTA LT173 — SUCCESS](https://github.com/LucianoToscano/PokeSearch/actions/runs/42522363821)
+
+O CI compilou fontes e executou regressões, mas **não criou Release nem homologou toque/posicionamento real das sprites no Samsung**.
