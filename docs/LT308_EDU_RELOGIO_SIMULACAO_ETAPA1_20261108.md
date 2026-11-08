@@ -1,30 +1,31 @@
-# LT308 — Etapa 1: relógio de simulação ao lado do ícone dos passes
+# LT308 — Etapa 1: relógio único do Edu ao lado do ícone de passes
 
-**Data:** 08/11/2026 · **Base oficial existente:** LT307 `0.03.07` / versionCode `54513`.
+**Data:** 08/11/2026 · **Base pública:** LT307 `0.03.07` / versionCode `54513`.
+**Governança:** primeiro componente solicitado; confirmar visual e comportamento com o proprietário **antes** de merge/release/APK.
 
-## Escopo autorizado nesta conversa
-O proprietário pediu reconstruir a interface do Edu **uma peça por vez**, com confirmação antes de avançar. O primeiro item é um relógio no PokeSearch ao lado do ícone dos passes. O relógio começa na data/hora atual do próprio celular e avança automaticamente com segundos, minutos, horas e dias. É um **simulador temporário** para ensaiar o evento; depois será removido e o Edu real dependerá de data/hora de Brasília. Nesta etapa **não publicar APK nem mesclar** sem o proprietário conferir e aprovar.
+## Especificação atual — corrigida pelo proprietário com duas imagens
+O proprietário explicou: **“O Assistente Edu não tem simulador. Ele vai ser já o final. Ele vai se basear na hora e data deste relógio.”** Assim, não pode haver relógio de treino separado, nem uma pergunta “Simular hoje ou Evento real” no diálogo. Tudo o que Edu diz sobre dia D, véspera D−1, datas e condição de início usa **o mesmo relógio do ícone de passes**.
 
-## Implementação candidata
-- **Home:** novo visor compacto **65 × 34 dp** imediatamente à direita do ícone do Edu/Passes e à esquerda do apoio/coração; sem janela enorme. Data `dd/MM/yy` na linha superior e `HH:mm:ss` na inferior. Atualização na thread principal aproximadamente a cada segundo enquanto a Home está visível; ao fechar, o relógio virtual continua pelo tempo decorrido.
-- **Toque curto no visor:** selecionar **data** no calendário Android e **hora/minuto** no seletor do sistema. Os segundos ficam inicialmente `:00` e seguem automaticamente. **Toque prolongado:** restaurar a data/hora do celular sem mexer nas configurações do Android.
-- **Primeira abertura:** usar relógio do celular sem ajustes. Alterações explícitas são gravadas em `edu_simulation_clock`, usando `virtual_epoch_ms` e `wall_epoch_ms`; o horário virtual é âncora escolhida + diferença do tempo real transcorrido. Horas/dias avançam em sequência automaticamente. Não há serviço de rede, permissões ou alteração do GPS.
-- **Compatibilidade visual:** o cabeçalho reserva largura para o novo visor; em telefones estreitos omite apenas o wordmark de texto, mantendo o logo e controles tocáveis.
-- **Treinamento do Edu:** quando `training && demoToday`, a data e hora fictícias alimentam o cabeçalho e as datas da simulação por `EduSimulationClock.forTraining`. A entrada “Simular hoje” muda para “Simular data” quando a data/hora foram modificadas. Nenhum histórico de reide real é criado.
-- **Sessão real:** usa `Clock.systemUTC()` e interpreta a data em `America/Sao_Paulo` nos pontos já existentes; **nunca** usa o relógio ajustado, não muda os horários oficiais do evento e não presume que dados do celular sejam uma autoridade de tempo verificada na internet.
-- **Remoção futura:** relógio temporário encapsulado em `EduSimulationClock.java`; desacoplar somente o modo de treino, remover visor, manter `RaidDayEventClock.BRASILIA` para o modo real.
+## Interface
+- Pequeno visor à **direita do ícone dos passes na Home**: duas linhas `dd/MM/yy` e `HH:mm:ss`, 65 × 34 dp, sem abrir janela grande por padrão.
+- **Primeira abertura:** data e hora atuais do celular interpretadas no fuso `America/Sao_Paulo` (Brasília), com segundos passando em velocidade normal. Não altera GPS nem data do Android.
+- **Toque:** menu leve “Relógio do Edu” com 6 opções: **Escolher data**, **Escolher hora**, **Ajustar segundos**, **−1 dia**, **+1 dia**, **Usar hora atual do celular**. Calendário, seletor de hora/minuto e seletor numérico de segundos são controles nativos Android.
+- **Segurar o visor:** restabelece instantaneamente a hora do aparelho. A escolha manual salva âncoras locais; os segundos continuam correndo naturalmente, inclusive viradas de dia e após recolher a Home.
+- A barra superior reserva espaço para o relógio, ocultando o wordmark em celulares muito estreitos, mas não oculta os controles. Não adicionar botões de simulador na conversa do Edu.
 
-## Arquivos nesta branch de aprovação
-- `app/src/main/java/com/lucianotoscano/pokesearchoverlay/EduSimulationClock.java` (novo)
-- `app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java` (visor e seletores, sem alterar botão dos passes)
-- `app/src/main/java/com/lucianotoscano/pokesearchoverlay/RaidDayAssistantOverlayService.java` (treino isolado)
-- `app/tests/lt308-edu-simulation-clock.test.js` (contratos Node)
+## Fonte única do assistente
+- `EduEventClock.java` fornece `Clock forEdu(context)`, usando o próprio relógio da Home. **Apagar** o protótipo `EduSimulationClock.java` para não haver dois relógios.
+- `RaidDayAssistantOverlayService`: inicializa `eventClock=EduEventClock.forEdu(this)` depois que o serviço está ativo; **TODAS** as verificações de data da conversa usam este clock; o painel atualiza quando a data simulada muda e ao passar da meia-noite.
+- Depois de “Olá, sou Edu ... Está pronto?”, a resposta **Sim** abre diretamente a preparação normal do tutorial; não há seleção “Simular hoje / Evento real”, nem botão “Treinar” nas telas normais.
+- O calendário manual do evento consulta o mesmo relógio. Quando ajustado, o Edu mostra “**Hora ajustada**”; quando não, mostra horário do celular em Brasília. Não afirmar que hora ajustada manualmente é verificação oficial de rede.
+- Funções internas legadas de `training` podem permanecer inativas por compatibilidade com histórico anterior, mas **não são expostas na conversa** nem alteram a fonte de horário.
+- Futuramente, quando o proprietário autorizar, o **horário oficial de Brasília** substituirá a fonte editável `EduEventClock` sem duplicar o relógio ou criar um simulador dentro do Edu.
 
-## Testes exigidos e pendências
-- [ ] Node QA + LT169, Android core LT211, Java LT62, OTA LT173 no HEAD exato da PR.
-- [ ] Ver no Samsung o visor ao lado do ícone, sem cortes e com dígitos legíveis.
-- [ ] Testar hora escolhida, segundos, meia-noite, mudança de dia, retorno da Home e long-press para usar horário real.
-- [ ] Iniciar treinamento com hora fictícia; verificar que sessão **real** ignora qualquer ajuste da simulação.
-- [ ] Não alterar duas Pokébolas, Doce Raro, configuração do Edu, MediaProjection/OCR, assinatura original ou APK publicado LT307.
+## QA e proteções
+- Contrato Node em `app/tests/lt308-edu-simulation-clock.test.js` foi atualizado para validar **fonte única**, menu, data, hora, segundos, +/- dia, retorno ao agora e remoção da escolha de treino.
+- Testar Node QA, regressão LT169, Android core LT211, Java LT62 e OTA LT173 no último commit da branch, além de teste físico Samsung do cabeçalho.
+- **Não presumir** que as opções das imagens foram homologadas visualmente; verificar tamanho de fonte, pressões, calendário, TimePicker, NumberPicker e ausência de cortes.
+- **Não mexer** no roteiro E01–E11, assinatura Android permanente, duas Pokébolas, Doce Raro, API, consentimento MediaProjection ou histórico real de passes. A alteração manual do relógio não modifica Pokémon GO e não garante recompensas.
+- A fonte de tempo ajustada **não é relógio oficial verificado**. Não programar notificações reais para horários fictícios como se fossem horários confirmados pela Niantic.
 
-**Governança:** branch e PR devem permanecer em **rascunho e sem merge** até confirmação da aparência/comportamento pelo proprietário. Testes automatizados aprovados não significam teste físico no Samsung.
+**Status:** PR #306, rascunho, sem merge e sem nova Release até o usuário aprovar esta primeira etapa.
