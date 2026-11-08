@@ -13,7 +13,7 @@ import java.io.ByteArrayOutputStream;
 import android.util.Base64;
 import java.io.InputStream;
 
-/** LT312 — preserva as 62 sprites LT309 e carrega 5 extras opcionais sem mudar as poses anteriores. */
+/** LT315 — um atlas visual uniforme de 68 quadros, mantendo todos os índices e os três assets antigos como fallback. */
 public final class EduSpriteAtlas {
     public static final int CELL=128, COLS=8, COUNT=62;
     public static final String ASSET="edu_avatar_atlas_62.webp";
@@ -22,6 +22,8 @@ public final class EduSpriteAtlas {
     public static final int TOTAL_COUNT=COUNT+EXTRA_COUNT;
     public static final int SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT+1;
     public static final String SHADOW_ASSET="edu_sombria_68.b64";
+    public static final String UNIFORM_ASSET="edu_avatar_uniform_68.webp";
+    public static final int UNIFORM_COLS=8, UNIFORM_ROWS=9;
     // Atlas visual LT313: 22 poses com o MESMO personagem em células 128×128.
     // É opcional e nunca altera o índice público das 67 sprites.
     public static final String CONSISTENT_IDLE_ASSET="edu_avatar_idle_consistent_22.webp";
@@ -32,16 +34,18 @@ public final class EduSpriteAtlas {
     public static final int[] SIZES_PX={50,75,100};
 
     private final Bitmap atlas;
+    private final Bitmap uniform;
     private final Bitmap extras;
     private final Bitmap consistentIdle;
     private final Bitmap shadowSprite;
     private final BitmapDrawable[] cache=new BitmapDrawable[COLLECTION_COUNT];
     private final Context app;
 
-    private EduSpriteAtlas(Context context, Bitmap image, Bitmap extrasImage,
-                           Bitmap idleImage,Bitmap shadowImage){
+    private EduSpriteAtlas(Context context, Bitmap image, Bitmap uniformImage,
+                           Bitmap extrasImage, Bitmap idleImage, Bitmap shadowImage){
         app=context.getApplicationContext();
         atlas=image;
+        uniform=uniformImage;
         extras=extrasImage;
         consistentIdle=idleImage;
         shadowSprite=shadowImage;
@@ -55,6 +59,21 @@ public final class EduSpriteAtlas {
                 image.getHeight()!=COLS*CELL){
                 if(image!=null)image.recycle();
                 throw new IOException("Edu: atlas invalido (esperado 1024x1024)");
+            }
+            // Prioridade LT315: todos os 68 quadros possuem o MESMO tamanho
+            // corporal, centro da cabeça e base dos pés. Não escalar de novo.
+            Bitmap unified=null;
+            try(InputStream common=context.getAssets().open(UNIFORM_ASSET)){
+                BitmapFactory.Options noScale=new BitmapFactory.Options();
+                noScale.inScaled=false;
+                unified=BitmapFactory.decodeStream(common,null,noScale);
+                if(unified==null||unified.getWidth()!=UNIFORM_COLS*CELL||
+                    unified.getHeight()!=UNIFORM_ROWS*CELL){
+                    if(unified!=null)unified.recycle();
+                    unified=null;
+                }
+            }catch(IOException|RuntimeException ignored){
+                // Só faz fallback à coleção anterior, nunca exibe vazio.
             }
             Bitmap extra=null;
             try(InputStream supplement=context.getAssets().open(EXTRA_ASSET)){
@@ -101,30 +120,38 @@ public final class EduSpriteAtlas {
             }catch(RuntimeException|IOException ignored){
                 // Asset opcional: não bloquear o Edu nem as 67 poses anteriores.
             }
-            return new EduSpriteAtlas(context,image,extra,idle,shadow);
+            return new EduSpriteAtlas(context,image,unified,extra,idle,shadow);
         }
     }
     public Drawable frame(int index){
         int i=index>=0&&index<COLLECTION_COUNT?index:indexForState("parado");
-        if(i==SHADOW_INDEX&&shadowSprite==null)i=indexForState("parado");
+        if(uniform==null&&i==SHADOW_INDEX&&shadowSprite==null)
+            i=indexForState("parado");
         int consistentFrame=consistentIdleFrameIndex(i);
-        if(i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
+        if(uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
             (consistentIdle==null||consistentFrame<0)){
             i=indexForState("parado");
             consistentFrame=consistentIdleFrameIndex(i);
         }
         if(cache[i]==null){
-            boolean replacement=consistentIdle!=null&&consistentFrame>=0;
-            Bitmap source=i==SHADOW_INDEX?shadowSprite:replacement?consistentIdle:
+            boolean uniformFrame=uniform!=null;
+            boolean replacement=!uniformFrame&&consistentIdle!=null&&consistentFrame>=0;
+            Bitmap source=uniformFrame?uniform:
+                i==SHADOW_INDEX?shadowSprite:replacement?consistentIdle:
                 i<COUNT?atlas:extras;
-            int left=i==SHADOW_INDEX?0:replacement?
+            int left=uniformFrame?(i%UNIFORM_COLS)*CELL:
+                i==SHADOW_INDEX?0:replacement?
                 (consistentFrame%IDLE_COLS)*CELL:
                 i<COUNT?(i%COLS)*CELL:(i-COUNT)*EXTRA_CELL;
-            int top=i==SHADOW_INDEX?0:replacement?
+            int top=uniformFrame?(i/UNIFORM_COLS)*CELL:
+                i==SHADOW_INDEX?0:replacement?
                 (consistentFrame/IDLE_COLS)*CELL:i<COUNT?(i/COLS)*CELL:0;
             Bitmap crop=Bitmap.createBitmap(source,left,top,CELL,CELL);
-            if(!replacement)crop=normalizeIdleBody(crop,i);
-            crop=EduSpriteGeometry.stabilize(crop,i,replacement);
+            if(!uniformFrame){
+                if(!replacement)crop=normalizeIdleBody(crop,i);
+                crop=EduSpriteGeometry.stabilize(crop,i,replacement);
+            }
+            // Nunca reescalar o atlas LT315, pré-alinhado em 128x128.
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
             drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
@@ -215,7 +242,7 @@ public final class EduSpriteAtlas {
         original.recycle();
         return aligned;
     }
-    public boolean hasExtras(){return extras!=null;}
+    public boolean hasExtras(){return uniform!=null||extras!=null;}
     public Drawable state(String state){return frame(indexForState(state));}
     public static int indexForState(String name){
         if(name==null)return 42;
@@ -301,6 +328,7 @@ public final class EduSpriteAtlas {
             }
         }
         if(atlas!=null&&!atlas.isRecycled())atlas.recycle();
+        if(uniform!=null&&!uniform.isRecycled())uniform.recycle();
         if(extras!=null&&!extras.isRecycled())extras.recycle();
         if(consistentIdle!=null&&!consistentIdle.isRecycled())
             consistentIdle.recycle();
