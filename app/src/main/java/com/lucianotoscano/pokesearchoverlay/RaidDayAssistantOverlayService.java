@@ -129,16 +129,19 @@ public final class RaidDayAssistantOverlayService extends Service {
                     if(loaded==null||!stored.equals(loaded.toString())){
                         preparation=RaidDayPreparation.load(
                             RaidDayAssistantOverlayService.this,prefs,eventClock);
-                        String updatedKey=preparation.eventKey();
-                        if(!updatedKey.equals(eventKey)){
-                            eventKey=updatedKey;
-                            prefs.edit().putString("eventKey",eventKey)
-                                .putInt("sessionGeneration",1).apply();
-                            sessionKey=eventKey+"#1";
-                            restoreJournal();
-                            riskAccepted=(plan.riskVersion+":"+eventKey).equals(
-                                prefs.getString("riskAcceptance",""));
-                        }
+                    }
+                    String updatedKey=preparation.eventKey();
+                    if(preparation.eventDate()!=null&&
+                        preparation.eventDate().equals(RaidDaySchedule.eventDate(
+                            RaidDayAssistantOverlayService.this))&&
+                        !updatedKey.equals(eventKey)){
+                        eventKey=updatedKey;
+                        prefs.edit().putString("eventKey",eventKey)
+                            .putInt("sessionGeneration",1).apply();
+                        sessionKey=eventKey+"#1";
+                        restoreJournal();
+                        riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+                            prefs.getString("riskAcceptance",""));
                     }
                 }
                 LocalDate day=eduEventLocalToday();
@@ -430,7 +433,11 @@ public final class RaidDayAssistantOverlayService extends Service {
             plan=RaidDayGuidePlan.load(this);
             journal=RaidDayDatabase.get(this);
             eventKey=prefs.getString("eventKey","evento_nao_configurado");
-            if(eventSynchronized&&!preparation.eventKey().equals(eventKey)){
+            if((eventSynchronized||RaidDaySchedule.valid(
+                RaidDaySchedule.start(this),RaidDaySchedule.finish(this)))&&
+                preparation.eventDate()!=null&&
+                preparation.eventDate().equals(RaidDaySchedule.eventDate(this))&&
+                !preparation.eventKey().equals(eventKey)){
                 eventKey=preparation.eventKey();
                 prefs.edit().putString("eventKey",eventKey)
                     .putInt("sessionGeneration",1).apply();
