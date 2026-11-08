@@ -3315,6 +3315,30 @@
           "As regras de cada novo evento devem vir do anúncio oficial correspondente; o exemplo de Mega Chandelure não deve ser aplicado automaticamente a eventos futuros."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt312-edu-auto-event-clock-idle-67-20261108",
+      "minVersionCode": 54518,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT312 — Edu reconhece o evento e mantém tamanho das sprites",
+      "sections": {
+        "novidades": [
+          "Com o relógio Edu manual em 30/10, 31/10 ou 01/11/2026, sem outro evento configurado, o Edu reconhece o exemplo oficial Mega Chandelure de 31/10/2026 (14h–17h locais) e não pergunta novamente a data 07/11.",
+          "Rotação ociosa das 22 poses autorizadas, com pausas, no balão fechado, incluindo as cinco sprites especiais opcionais."
+        ],
+        "melhorias": [
+          "A data da janela de reides prevalece sobre o formulário antigo; as configurações preservam a confirmação ao salvar uma região.",
+          "Sprites normalizadas à altura visual do corpo parado, mantendo a escala P/M/G e efeitos de Pokébola separados.",
+          "Início e fim de evento dependem do fuso da região escolhida, não de Kiribati obrigatório."
+        ],
+        "correcoes": [
+          "Salvar o exemplo oficial de Mega Chandelure agora ativa a janela com um toque e não devolve à etapa Qual é o Dia de Reides.",
+          "A sincronização do relógio atualiza estado e animação sem atribuir passes ou reides ao jogador."
+        ],
+        "emDesenvolvimento": [
+          "Verificação visual de escala e animações no Samsung; relógio ajustado manualmente simula horários históricos, sem acesso ao servidor Pokémon GO."
+        ]
+      }
     }
   ]
 }
