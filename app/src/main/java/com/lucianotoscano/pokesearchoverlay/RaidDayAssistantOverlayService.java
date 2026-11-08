@@ -1588,63 +1588,59 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         switch(step.id){
             case "E01":
-                askEduPass("O evento será em "+eduEventWhen()+
-                    ". Na véspera (D−1), guarde no inventário um Passe de "+
-                    "Reide Diário gratuito, sem gastar. Você já tem esse passe?",
-                    training?"Simulação: a véspera fictícia foi ontem. "+
-                        "Nenhum passe real será usado.":
-                        "Se ainda não apareceu, aguarde e confira no jogo.",
-                    ()->advanceEdu("PASS_CONFIRMED"),
-                    ()->{setEduDialogueState("pass_wait");updateStep();});
+                showEduPreparationChecks();
                 break;
             case "E02":
-                showEduTravel("Havaí","Ótimo! O primeiro local do relato é o Havaí.");
+                showEduTravel("Havaí","A primeira região do relato é o Havaí.",
+                    false);
                 break;
             case "E03":
-                showEduNewZealand(step);
+                showEduNewZealandPass(step,false);
                 break;
             case "E04":
-                setTalk("Agora, se existe um passe válido, participe de uma reide. "+
-                    "Como terminou?", "Vitória, captura e recompensas são coisas diferentes.");
+                if("raid_interrupted".equals(eduDialogueState)){
+                    setTalk("Você registrou derrota ou saída da reide. "+
+                        "O autor diz que isso pode afetar a primeira "+
+                        "parte, mas não está comprovado.",
+                        "Não vamos contar passe ou vitória inexistente.");
+                    addTwo("Ir ao evento",()->navigateEdu("E08","RAID_INTERRUPTED"),
+                        "Rever resultado",()->{
+                            setEduDialogueState("");updateStep();
+                        });
+                    break;
+                }
+                setTalk("Na Nova Zelândia, entre na reide com um "+
+                    "passe válido. Como terminou?",
+                    "O autor recomenda vencer. Registre o que aconteceu "+
+                    "de verdade; a captura será perguntada separadamente.");
                 addThree("Venci",()->recordEduOutcome("RAID_WIN"),
                     "Perdi",()->recordEduOutcome("RAID_LOSS"),
                     "Saí",()->recordEduOutcome("RAID_LEFT"));
                 break;
             case "E05":
-                showEduTravel("Havaí","Depois da reide, o relato retorna ao Havaí.");
+                showEduTravel("Havaí",
+                    "Depois da reide, volte ao Havaí.",true);
                 break;
             case "E06":
-                askEduPass("Agora abra a mochila: apareceu outro Passe Diário "+
-                    "gratuito?", "Só conte um passe que realmente esteja no inventário.",
-                    ()->advanceEdu("PASS_CONFIRMED"),
-                    ()->navigateEdu(step.noPassTo,"NO_PASS"));
+                showEduNewZealandPass(step,true);
                 break;
             case "E07":
-                setTalk("Você quer repetir o ciclo a partir do Havaí ou "+
-                    "seguir ao dia do evento?",
-                    "Contamos ciclos realizados, não passes garantidos.");
-                addTwo("Repetir ciclo",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
-                    "Ir ao evento",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                setTalk("Apareceu outro passe na Nova Zelândia. "+
+                    "Quer fazer mais uma reide aí e repetir o retorno "+
+                    "ao Havaí, ou encerrar a primeira parte?",
+                    "O ciclo do vídeo é reide na Nova Zelândia → "+
+                    "Havaí reinicia → Nova Zelândia.");
+                addTwo("Outra reide",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
+                    "Ir ao evento",()->navigateEdu(step.noPassTo,"FIRST_PART_ENDED"));
                 break;
             case "E08":
                 showEduEventDay();
                 break;
             case "E09":
-                setTalk("O relato também cita Kiribati (Kiritimati), mas "+
-                    "esta etapa é opcional. Quer conferir ou pular?",
-                    "Se conferir, o relato menciona reabrir o jogo e aguardar "+
-                    "aproximadamente um minuto. Isso não prova um passe.");
-                addEduCoordinateButton();
-                addTwo("Já conferi",()->advanceEdu("STEP_CONFIRMED"),
-                    "Pular",()->navigateEdu(step.skipTo,"OPTIONAL_SKIPPED"));
+                showEduKiribati();
                 break;
             case "E10":
-                setTalk("Volte ao local onde vai jogar o evento. "+
-                    "Quer registrar o resultado de uma reide?",
-                    "Registre somente reides reais, uma por vez.");
-                addTwo("Registrar reide",()->{
-                    eduRecordingExtraRaid=true;eduNote="";updateStep();
-                },"Seguir",()->advanceEdu("STEP_CONFIRMED"));
+                showEduEventRaids();
                 break;
             case "E11":
                 setTalk("Chegamos ao final! Vamos conferir os ciclos, "+
