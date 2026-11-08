@@ -1,4 +1,15 @@
-# LEIA PRIMEIRO — PokeSearch LT318 Edu (08/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT319 Edu (08/11/2026)
+
+**BASE ATUAL OFICIAL: LT319 · 0.03.19 · versionCode 54525 · label 51323.** [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.19-54525), publicada em 08/11/2026 às 22:40:59 UTC; APK [PokeSearch-v0.03.19-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.19-54525/PokeSearch-v0.03.19-LT.apk) de **34.709.718 bytes**, SHA-256 `a0cf19f7af8b6e954c24b905ec21899ec519b23dc1422bee7a595f1d1511758f`. PR #319 integrada por squash `893edb035531323c635161f7ee1412be9a4ebd82`; fonte/pedido protegido `f556338f9bf6e2d331bd11e817527a2a45177245`; [workflow oficial #42531166399](https://github.com/LucianoToscano/PokeSearch/actions/runs/42531166399) **SUCCESS**. Certificado Android v2 permanente preservado; não começar do zero ou fazer downgrade.
+
+**Edu LT319:** tamanhos **P100 / M150 (novo padrão) / G200 pixels**, migração única de escolhas anteriores P50/M75/G100 preservando categorias. O atlas de 68 quadros não foi redesenhado; filtros de bitmap/antialias/dither desligados e renderização por software para melhorar a nitidez dos olhos, óculos e bordas. O **painel do relógio virtual** na Home foi compactado: hora/data grandes, Automático, 17 momentos e Ajustar data/hora; fuso e 24h ficam recolhidos em Mais opções. Mantida a primeira conversa simples do Edu da LT318, sem X, ETAPA e botões desnecessários, sprites por fase, contador e checklist, E01–E11, P1/P2, PoGoCoordinates, Doce Raro, ranking, dados, OTA e segurança.
+
+**Homologação física Samsung PENDENTE:** confirmar nitidez real dos olhos, tamanhos, gestos, balão e relógio após instalar LT319 sobre LT318. CI/Release não comprovam instalação nem aparência perfeita. Ler [relatório LT319](docs/LT319_EDU_PUBLICACAO_OFICIAL_SPRITES_RELOGIO_20261108.md), [Guia Mestre](docs/GUIA_MESTRE.md) e [prompt LT319](docs/PROMPT_CONTINUIDADE_LT319_EDU_20261108.md).
+
+---
+
+## Histórico LT318 — versão anterior
+
 
 **BASE OFICIAL VERIFICADA: LT318 · 0.03.18 · versionCode 54524 · label 51322.** [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.18-54524) publicada em 08/11/2026 às 21:59:05 UTC. [APK PokeSearch-v0.03.18-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.18-54524/PokeSearch-v0.03.18-LT.apk) **34.709.358 bytes**, SHA-256 `14e28a71fcbbadae35179c91c61e40957f6f7d865e886299f3c5845ef9462280`. PR #318 squash `9688f8e25788d4b3bfae2eb2aba9b2b38fd08de6`, commit fonte `8eef94422ab26d76f7afbc7f3b335d08911df483`, workflow protegido [#42527566539](https://github.com/LucianoToscano/PokeSearch/actions/runs/42527566539) **SUCCESS**, assinatura Android v2 permanente verificada. **Não reiniciar ou fazer downgrade.**
 
