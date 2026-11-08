@@ -3364,6 +3364,31 @@
           "As três poses Shiny/Jogando mantêm desenhos anteriores com escala uniformizada; outras reações podem receber refinamentos futuros."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt314-edu-68-sprites-sombria-geometry-20261108",
+      "minVersionCode": 54520,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT314 — Edu mais estável e sprite Sombria",
+      "sections": {
+        "novidades": [
+          "Edu Sombria: 68ª sprite, com aura roxa e fundo transparente, exibida em situações de ansiedade e espera do jogador.",
+          "Auditoria de todas as 68 sprites com referência do corpo/rosto, alinhamento da cabeça e base dos pés."
+        ],
+        "melhorias": [
+          "Menos saltos laterais na mudança entre poses: referência do rosto em X=64 e pés em Y=119.",
+          "As 22 poses ociosas mantêm a escala consistente sem redimensionamento adicional; movimentos especiais e efeitos são preservados.",
+          "Pixel-art permanece nítido, sem desfoque, com dimensionamento P/M/G inalterado; harmonização calculada uma vez por quadro e armazenada em cache."
+        ],
+        "correcoes": [
+          "Evita que acessórios e efeitos sejam usados como referência para centralizar o personagem.",
+          "A ausência da sprite Sombria não bloqueia o assistente, com fallback para a pose parada."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual no Samsung dos 68 estados, com atenção à mudança entre Jogando e Armadura Mewtwo, caminhada, arrastado e reações de ansiedade.",
+          "Os nove quadros de teleporte preservam variações intencionais de aparição/desaparecimento; nenhuma sprite comprova evento, passe ou GPS."
+        ]
+      }
     }
   ]
 }
