@@ -14,7 +14,7 @@ import java.io.InputStream;
  */
 public final class RaidDayAvatarFrames {
     public static final int CELL=64, COLS=6, COUNT=12;
-    public static final int[] SIZES_PX={50,75,100};
+    public static final int[] SIZES_PX={100,150,200};
     public static final String PREF_SIZE="raid_day_avatar_size_px";
     public static final String PREF_MOTION="raid_day_avatar_motion";
     public static final int IDLE_A=0, IDLE_B=1;
@@ -36,6 +36,7 @@ public final class RaidDayAvatarFrames {
             BitmapDrawable drawable=new BitmapDrawable(context.getResources(),crop);
             drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
+            drawable.setDither(false);
             images[i]=drawable;
         }
     }
