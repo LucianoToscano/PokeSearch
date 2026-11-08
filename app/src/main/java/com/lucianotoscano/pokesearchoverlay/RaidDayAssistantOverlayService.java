@@ -1163,81 +1163,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduPanelWidth=Math.min(dp(286),
             getResources().getDisplayMetrics().widthPixels-dp(22));
 
-        LinearLayout header=new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout nameChip=new LinearLayout(this);
-        nameChip.setGravity(Gravity.CENTER_VERTICAL);
-        nameChip.setPadding(dp(9),0,dp(9),0);
-        nameChip.setBackground(surface(Color.argb(162,28,40,55),
-            Color.argb(90,190,205,222),19));
-        eduHeader=text("Edu",13,Color.WHITE,true);
-        eduHeader.setContentDescription("Edu · arraste este identificador para mover o assistente");
-        nameChip.addView(eduHeader,new LinearLayout.LayoutParams(-2,-1));
-        eduBadge=text("",10,Color.rgb(127,219,189),false);
-        eduBadge.setSingleLine(true);
-        eduBadge.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams smallBadge=
-            new LinearLayout.LayoutParams(0,-1,1);
-        smallBadge.leftMargin=dp(6);
-        nameChip.addView(eduBadge,smallBadge);
-        header.addView(nameChip,new LinearLayout.LayoutParams(0,dp(31),1));
-        TextView close=button("×");
-        close.setBackground(surface(Color.argb(166,32,44,60),
-            Color.argb(105,200,215,230),22));
-        close.setTextColor(Color.WHITE);
-        close.setTextSize(17);
-        close.setContentDescription("Recolher conversa do Edu");
-        LinearLayout.LayoutParams closeP=new LinearLayout.LayoutParams(dp(33),dp(33));
-        closeP.leftMargin=dp(5);
-        header.addView(close,closeP);
-        close.setOnClickListener(v->{
-            eduSettingsOpen=false;
-            setVisible(false);
-        });
-        View.OnTouchListener move=new View.OnTouchListener(){
-            float originX,originY;
-            int avatarX,avatarY;
-            boolean moved;
-            @Override public boolean onTouch(View view,MotionEvent event){
-                switch(event.getActionMasked()){
-                    case MotionEvent.ACTION_DOWN:
-                        panelScroll.requestDisallowInterceptTouchEvent(true);
-                        originX=event.getRawX();originY=event.getRawY();
-                        avatarX=bubbleParams.x;avatarY=bubbleParams.y;
-                        moved=false;return true;
-                    case MotionEvent.ACTION_MOVE:
-                        float dx=event.getRawX()-originX,dy=event.getRawY()-originY;
-                        if(!moved&&Math.hypot(dx,dy)>touchSlop)moved=true;
-                        if(moved){
-                            // Arrastar o cabeçalho move também a sprite:
-                            // balão e treinador nunca ficam visualmente separados.
-                            int sw=getResources().getDisplayMetrics().widthPixels;
-                            int sh=getResources().getDisplayMetrics().heightPixels;
-                            bubbleParams.x=Math.max(0,Math.min(
-                                sw-bubbleParams.width,avatarX+Math.round(dx)));
-                            bubbleParams.y=Math.max(0,Math.min(
-                                sh-bubbleParams.height,avatarY+Math.round(dy)));
-                            try{wm.updateViewLayout(bubble,bubbleParams);}
-                            catch(IllegalArgumentException ignored){}
-                            placePanelCoordinates();
-                            placePanel();
-                        }
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        panelScroll.requestDisallowInterceptTouchEvent(false);
-                        if(moved)prefs.edit().putInt("x",bubbleParams.x)
-                            .putInt("y",bubbleParams.y).apply();
-                        return true;
-                }
-                return false;
-            }
-        };
-        eduHeader.setOnTouchListener(move);
-        nameChip.setOnTouchListener(move);
-        header.setOnTouchListener(move);
-        eduPanelHeader=header;
-        panel.addView(header);
+        // O balão é a conversa inteira: não criar cabeçalho, botão X,
+        // etiqueta ETAPA nem indicadores de data/hora sobre a sprite.
+        // O usuário recolhe a fala tocando novamente no próprio Edu;
+        // o menu de ajustes permanece acessível segurando a sprite.
+        eduPanelHeader=null;
+        eduHeader=null;
+        eduBadge=null;
 
         eduMainCard=new LinearLayout(this);
         eduMainCard.setOrientation(LinearLayout.VERTICAL);
@@ -1767,7 +1699,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void showEduFirstBubble(){
         eduFirstBubbleMode=true;
-        eduPanelHeader.setVisibility(View.GONE);
+        if(eduPanelHeader!=null)
+            eduPanelHeader.setVisibility(View.GONE);
         eduActions.setVisibility(View.GONE);
         eduMiniActions.setVisibility(View.GONE);
         preparationSection.setVisibility(View.GONE);
