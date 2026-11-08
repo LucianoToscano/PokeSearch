@@ -3289,6 +3289,32 @@
           "Validação física no Samsung do fluxo completo de instalação, em Wi-Fi e conexão lenta. Se a versão instalada falhar antes desta correção, usar o download oficial do GitHub pelo navegador."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt311-edu-local-event-time-chandelure-20261108",
+      "minVersionCode": 54517,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT311 — Edu interpreta o evento por região",
+      "sections": {
+        "novidades": [
+          "Exemplo oficial de Mega Chandelure (31/10/2026, 14h–17h locais) na configuração do Dia de Reides.",
+          "Seletor do local do evento por fuso IANA: relógio Edu, Brasília, Nova Zelândia, Singapura, Havaí, Kiribati ou outro fuso informado."
+        ],
+        "melhorias": [
+          "O Edu distingue evento não iniciado, ativo e encerrado pela data e hora LOCAIS da região selecionada, mesmo quando a data em Brasília é diferente.",
+          "As sprites de começo, espera e encerramento mudam com o relógio único automático/manual, inclusive quando a janela cruza o dia na zona do celular.",
+          "A confirmação do jogador continua necessária antes de registrar qualquer passe/reide; Kiribati não é local obrigatório de início."
+        ],
+        "correcoes": [
+          "Horário da janela de evento deixa de ser sempre interpretado como horário de Brasília; respeita corretamente os fusos, inclusive horário de verão na Nova Zelândia.",
+          "Ao confirmar a preparação, uma janela já configurada para a mesma data local não é apagada.",
+          "No encerramento da janela escolhida, o Edu oferece resumo sem presumir passes."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física no Samsung dos estados do Edu e de suas sprites P/M/G; configuração de relógio manual é apenas um exemplo histórico, não altera GPS/servidor nem garante passes.",
+          "As regras de cada novo evento devem vir do anúncio oficial correspondente; o exemplo de Mega Chandelure não deve ser aplicado automaticamente a eventos futuros."
+        ]
+      }
     }
   ]
 }
