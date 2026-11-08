@@ -1,6 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## LT318 QA — BALÃO EDU SEM UI LEGADA (08/11/2026; PR #318 em rascunho)
+
+- **Base pública preservada:** [LT317 · 0.03.17 · code54523](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.17-54523), APK SHA-256 `a477f8aa93c75d50ab09e6c95d14435744ec6f8d69ec1629d1494ba636026dda`. **Esta etapa não alterou `main` nem publicou LT318.**
+- **Bug comprovado na captura do Samsung LT317:** sessão legada `ETAPA 10/11` com X, botões `Conferir novamente`/`Rever região`, `America/Sao_Paulo`, menção de `Exemplo histórico oficial` e relógio interno. A sprite não acompanhava o estado ANTES e faltava o contador.
+- **Correção na [PR #318](https://github.com/LucianoToscano/PokeSearch/pull/318):** toda abertura normal do Edu prioriza a apresentação breve e o balão branco com `Bug dos Passes ⓘ`, sem header/X/botões. `showEduFirstBubble()` é o único fluxo inicial, independentemente de `active/training/finished` recuperados de Room. Histórico E01–E11 não foi apagado. Toque na sprite recolhe, toque longo mantém acesso aos ajustes ocultos.
+- **Fases/sprites:** primeiro quadro de apresentação #42; ANTES #38 (`evento_nao_comecou`), ATIVO #37, ENCERRADO #36; prioridade imediata sobre animações/reactions antigas e ticker. Textos sem fuso técnico ou menção ao relógio de testes; Chandelure 31/10/2026 14–17h local é a base se não há outra janela válida, sem sobrescrever personalizações.
+- **Contador/checklist:** antes do início, contador com segundos acima do texto e três itens `ⓘ` sobre softban, região/data e passe laranja da véspera; ativo apresenta evento e em seguida checklist por toque na própria fala; encerrado apresenta mensagem simples. Nenhum botão extra; `ⓘ` permanece dentro do balão.
+- **QA automatizado do commit `ce1dbee8d29326c65fe0034eeb86e644faca5ced`:** Node [#42526528371](https://github.com/LucianoToscano/PokeSearch/actions/runs/42526528371), LT169 [#42526528361](https://github.com/LucianoToscano/PokeSearch/actions/runs/42526528361), LT211 [#42526528400](https://github.com/LucianoToscano/PokeSearch/actions/runs/42526528400), Java LT62 [#42526528486](https://github.com/LucianoToscano/PokeSearch/actions/runs/42526528486), OTA LT173 [#42526528393](https://github.com/LucianoToscano/PokeSearch/actions/runs/42526528393): **SUCCESS**. Contratos históricos LT304/LT316 ajustados apenas para retirar expectativas obsoletas de X/chip/cabeçalho e versão LT316; novas verificações `app/tests/lt318-edu-clean-first-bubble-regression.test.js`.
+- **Pendente:** QA físico na LT318 instalada no Samsung com etapa 10/11 persistida, relógio 28/10/2026 antes do Chandelure, estado ativo/encerrado, contador em 10s, rolagem/links e possíveis sobreposições com outras sprites. [Documento técnico](LT318_EDU_REINICIO_BALAO_SEM_UI_LEGADO_20261108.md). **Não anunciar merge ou publicação até confirmação real.**
+
+
+
 ## LT317 OFICIAL — EDU: PRIMEIRA CONVERSA E 17 MOMENTOS (08/11/2026)
 
 - **ÚLTIMA RELEASE PUBLICADA E VERIFICADA:** **LT317 · `0.03.17` · versionCode `54523` · label `51321`**. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.17-54523), publicada em 08/11/2026 às **21:15:21 UTC**. **Sem downgrade; LT316/anteriores são históricas.**
