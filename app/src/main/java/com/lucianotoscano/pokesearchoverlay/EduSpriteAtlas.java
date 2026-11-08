@@ -9,6 +9,8 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
+import android.util.Base64;
 import java.io.InputStream;
 
 /** LT312 — preserva as 62 sprites LT309 e carrega 5 extras opcionais sem mudar as poses anteriores. */
@@ -18,6 +20,8 @@ public final class EduSpriteAtlas {
     public static final int EXTRA_CELL=128, EXTRA_COLS=5, EXTRA_COUNT=5;
     public static final String EXTRA_ASSET="edu_avatar_extra_5.webp";
     public static final int TOTAL_COUNT=COUNT+EXTRA_COUNT;
+    public static final int SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT+1;
+    public static final String SHADOW_ASSET="edu_sombria_68.b64";
     // Atlas visual LT313: 22 poses com o MESMO personagem em células 128×128.
     // É opcional e nunca altera o índice público das 67 sprites.
     public static final String CONSISTENT_IDLE_ASSET="edu_avatar_idle_consistent_22.webp";
@@ -30,15 +34,17 @@ public final class EduSpriteAtlas {
     private final Bitmap atlas;
     private final Bitmap extras;
     private final Bitmap consistentIdle;
-    private final BitmapDrawable[] cache=new BitmapDrawable[TOTAL_COUNT];
+    private final Bitmap shadowSprite;
+    private final BitmapDrawable[] cache=new BitmapDrawable[COLLECTION_COUNT];
     private final Context app;
 
     private EduSpriteAtlas(Context context, Bitmap image, Bitmap extrasImage,
-                           Bitmap idleImage){
+                           Bitmap idleImage,Bitmap shadowImage){
         app=context.getApplicationContext();
         atlas=image;
         extras=extrasImage;
         consistentIdle=idleImage;
+        shadowSprite=shadowImage;
     }
     public static EduSpriteAtlas load(Context context) throws IOException {
         try(InputStream input=context.getAssets().open(ASSET)){
@@ -76,26 +82,49 @@ public final class EduSpriteAtlas {
             }catch(IOException ignored){
                 // Sem a arte nova, mantém o comportamento da LT312 sem travar.
             }
-            return new EduSpriteAtlas(context,image,extra,idle);
+            // O asset da sprite Sombria é PNG paletizado comprimido em Base64,
+            // mantendo o pacote OTA pequeno e a transparência intacta.
+            Bitmap shadow=null;
+            try(InputStream shadowInput=context.getAssets().open(SHADOW_ASSET)){
+                ByteArrayOutputStream buffer=new ByteArrayOutputStream(6000);
+                byte[] temp=new byte[1024];
+                for(int n;(n=shadowInput.read(temp))!=-1;)
+                    buffer.write(temp,0,n);
+                byte[] raw=Base64.decode(buffer.toByteArray(),Base64.DEFAULT);
+                BitmapFactory.Options noScale=new BitmapFactory.Options();
+                noScale.inScaled=false;
+                shadow=BitmapFactory.decodeByteArray(raw,0,raw.length,noScale);
+                if(shadow==null||shadow.getWidth()!=CELL||shadow.getHeight()!=CELL){
+                    if(shadow!=null)shadow.recycle();
+                    shadow=null;
+                }
+            }catch(RuntimeException|IOException ignored){
+                // Asset opcional: não bloquear o Edu nem as 67 poses anteriores.
+            }
+            return new EduSpriteAtlas(context,image,extra,idle,shadow);
         }
     }
     public Drawable frame(int index){
-        int i=index>=0&&index<TOTAL_COUNT?index:indexForState("parado");
+        int i=index>=0&&index<COLLECTION_COUNT?index:indexForState("parado");
+        if(i==SHADOW_INDEX&&shadowSprite==null)i=indexForState("parado");
         int consistentFrame=consistentIdleFrameIndex(i);
-        // Os cinco extras continuam válidos mesmo quando só o novo atlas está
-        // disponível; não mostrar uma caixa vazia por falha de asset opcional.
-        if(i>=COUNT && extras==null && (consistentIdle==null||consistentFrame<0))
+        if(i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
+            (consistentIdle==null||consistentFrame<0)){
             i=indexForState("parado");
+            consistentFrame=consistentIdleFrameIndex(i);
+        }
         if(cache[i]==null){
             boolean replacement=consistentIdle!=null&&consistentFrame>=0;
-            Bitmap source=replacement?consistentIdle:
+            Bitmap source=i==SHADOW_INDEX?shadowSprite:replacement?consistentIdle:
                 i<COUNT?atlas:extras;
-            int left=replacement?(consistentFrame%IDLE_COLS)*CELL:
+            int left=i==SHADOW_INDEX?0:replacement?
+                (consistentFrame%IDLE_COLS)*CELL:
                 i<COUNT?(i%COLS)*CELL:(i-COUNT)*EXTRA_CELL;
-            int top=replacement?(consistentFrame/IDLE_COLS)*CELL:
-                i<COUNT?(i/COLS)*CELL:0;
+            int top=i==SHADOW_INDEX?0:replacement?
+                (consistentFrame/IDLE_COLS)*CELL:i<COUNT?(i/COLS)*CELL:0;
             Bitmap crop=Bitmap.createBitmap(source,left,top,CELL,CELL);
             if(!replacement)crop=normalizeIdleBody(crop,i);
+            crop=EduSpriteGeometry.stabilize(crop,i,replacement);
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
             drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
@@ -225,6 +254,7 @@ public final class EduSpriteAtlas {
             case "edu_jogando_02": return 64;
             case "edu_armadura_mewtwo": return 65;
             case "edu_armadura_mewtwo_shiny": return 66;
+            case "edu_sombria": case "ansioso": return SHADOW_INDEX;
             default: return 42;
         }
     }
@@ -274,5 +304,7 @@ public final class EduSpriteAtlas {
         if(extras!=null&&!extras.isRecycled())extras.recycle();
         if(consistentIdle!=null&&!consistentIdle.isRecycled())
             consistentIdle.recycle();
+        if(shadowSprite!=null&&!shadowSprite.isRecycled())
+            shadowSprite.recycle();
     }
 }
