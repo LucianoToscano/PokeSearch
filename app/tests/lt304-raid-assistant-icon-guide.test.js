@@ -96,7 +96,7 @@ assert.match(service,/bubbleParams\.x/);
 assert.match(service,/bubbleParams\.y/);
 assert.doesNotMatch(service,/edu_panel_x|edu_panel_y/,
   "A janela antiga independente não existe mais");
-assert.match(service,/requestDisallowInterceptTouchEvent\(true\)/);
+assert.match(service,/grip\.setOnTouchListener\(/, "O avatar segue arrastável sem cabeçalho antigo");
 assert.match(service,/showEduSettings\(/);
 assert.match(service,/showEduGuide\(/);
 assert.match(service,/showEduWelcome\(/);
