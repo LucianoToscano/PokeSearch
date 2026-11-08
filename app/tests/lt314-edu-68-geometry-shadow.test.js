@@ -23,8 +23,8 @@ assert(atlas.includes("SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT+1"),"68ª s
 assert(atlas.includes('SHADOW_ASSET="edu_sombria_68.b64"'));
 assert(atlas.includes('case "edu_sombria": case "ansioso": return SHADOW_INDEX;'));
 assert(atlas.includes("BitmapFactory.decodeByteArray(raw,0,raw.length,noScale)"));
-assert(atlas.includes("if(i==SHADOW_INDEX&&shadowSprite==null)i=indexForState"),"Fallback Sombria");
-assert(atlas.includes("EduSpriteGeometry.stabilize(crop,i,replacement)"),"Todas as imagens verificadas no carregamento");
+assert(atlas.includes("if(uniform==null&&i==SHADOW_INDEX&&shadowSprite==null)"),"Fallback Sombria");
+assert(atlas.includes("if(!uniformFrame){")&&atlas.includes("EduSpriteGeometry.stabilize(crop,i,replacement)"),"Todas as imagens verificadas no carregamento");
 assert(atlas.includes("BitmapDrawable[] cache=new BitmapDrawable[COLLECTION_COUNT]"),"Cache 68 sem trabalho a cada tick");
 assert(atlas.includes("drawable.setFilterBitmap(false)"));
 assert(atlas.includes("drawable.setAntiAlias(false)"));
