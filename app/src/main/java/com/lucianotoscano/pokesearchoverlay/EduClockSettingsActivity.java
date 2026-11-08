@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.res.ColorStateList;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -16,12 +17,14 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -43,6 +46,25 @@ public final class EduClockSettingsActivity extends Activity {
     private Switch autoDate,format24;
     private TextView previewDate,previewTime,previewMode;
     private TextView momentDetail,dateTimeDetail,zoneDetail,moreDetail;
+    private TextView alphaPercent;
+    private final List<TextView> quickMomentButtons=new ArrayList<>();
+    private final List<TextView> sizeButtons=new ArrayList<>();
+    private SeekBar balloonAlpha;
+    private SharedPreferences visualPrefs;
+    // Só as fases que mudam decisões ou validam o contador/encerramento.
+    // Os 17 offsets históricos continuam no modelo para compatibilidade.
+    private static final String[] QUICK_MOMENTS={
+        "Faltam 24 horas","Falta 1 hora",
+        "10 minutos antes","10 segundos antes",
+        "Início do evento","2 horas após o início",
+        "10 minutos antes do fim","10 minutos depois do fim"
+    };
+    private static final String[] QUICK_LABELS={
+        "24h antes","1h antes",
+        "10min antes","10s antes",
+        "Início","2h depois",
+        "10min p/ fim","10min após fim"
+    };
     private String chosenMomentLabel="";
     private boolean rendering=false,advancedOpen=false;
     private final Handler handler=new Handler(Looper.getMainLooper());
@@ -149,6 +171,8 @@ public final class EduClockSettingsActivity extends Activity {
         getWindow().setNavigationBarColor(BACK);
         chosenMomentLabel=getPreferences(MODE_PRIVATE)
             .getString(PREF_MOMENT,"");
+        visualPrefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
+        migrateAvatarSizeIfNeeded();
 
         ScrollView scroll=new ScrollView(this);
         scroll.setFillViewport(true);
@@ -201,13 +225,26 @@ public final class EduClockSettingsActivity extends Activity {
         addSwitchRow(mainCard,"Automático","Usar a hora do celular",
             autoDate,EduEventClock.isAutomaticDateTime(this));
         divider(mainCard);
-        momentDetail=addAction(mainCard,"Momento do evento",
-            "Escolher entre 17 momentos",this::chooseEventMoment);
+        // Os oito momentos essenciais ficam na própria tela, sem modal,
+        // submenus ou a lista longa com 17 opções pouco utilizadas.
+        TextView quickTitle=label("Momentos rápidos",15,PRIMARY,true);
+        quickTitle.setPadding(dp(16),dp(12),dp(16),dp(7));
+        mainCard.addView(quickTitle,match());
+        addQuickMomentGrid(mainCard);
+        momentDetail=label("",12,ACCENT,false);
+        momentDetail.setPadding(dp(16),dp(8),dp(16),dp(11));
+        mainCard.addView(momentDetail,match());
         manualDateTime=column();
         mainCard.addView(manualDateTime,match());
         divider(manualDateTime);
         dateTimeDetail=addAction(manualDateTime,"Ajustar data e hora",
             "",this::chooseDateTime);
+
+        LinearLayout appearance=card(screen);
+        appearance.setPadding(dp(16),dp(12),dp(16),dp(12));
+        appearance.addView(label("Aparência do Edu",16,PRIMARY,true),match());
+        addSizeSelector(appearance);
+        addBalloonAlphaSlider(appearance);
 
         LinearLayout extras=card(screen);
         moreDetail=addAction(extras,"Mais opções",
@@ -267,44 +304,146 @@ public final class EduClockSettingsActivity extends Activity {
         picker.show();
     }
 
-    /** Os 17 momentos seguem a janela do evento e seu fuso real. */
-    private void chooseEventMoment(){
+    /** Mantém a preferência P/M/G existente; novas contas iniciam em M. */
+    private void migrateAvatarSizeIfNeeded(){
+        final String migrated="edu_size_pmg_100_150_200_v1";
+        if(visualPrefs.getBoolean(migrated,false))return;
+        int previous=visualPrefs.getInt(RaidDayAvatarFrames.PREF_SIZE,-1);
+        int next=previous==50?100:previous==75?150:
+            previous==100?200:150;
+        visualPrefs.edit().putInt(RaidDayAvatarFrames.PREF_SIZE,next)
+            .putBoolean(migrated,true).apply();
+    }
+    private TextView chip(String label){
+        TextView b=label(label,13,PRIMARY,true);
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(dp(5),0,dp(5),0);
+        b.setBackground(bg(0xff2c3a45,11));
+        return b;
+    }
+    private void addQuickMomentGrid(LinearLayout parent){
+        for(int line=0;line<4;line++){
+            LinearLayout row=new LinearLayout(this);
+            row.setPadding(dp(13),0,dp(13),0);
+            for(int column=0;column<2;column++){
+                int i=line*2+column;
+                TextView button=chip(QUICK_LABELS[i]);
+                button.setContentDescription("Simular "+QUICK_MOMENTS[i]);
+                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
+                    0,dp(37),1);
+                if(column>0)p.leftMargin=dp(8);
+                button.setOnClickListener(v->chooseQuickMoment(i));
+                row.addView(button,p);
+                quickMomentButtons.add(button);
+            }
+            LinearLayout.LayoutParams rp=match();
+            rp.bottomMargin=dp(7);
+            parent.addView(row,rp);
+        }
+    }
+    /** Seleção imediata e no mesmo painel, sem abrir uma segunda janela. */
+    private void chooseQuickMoment(int index){
         long begin=RaidDaySchedule.start(this);
         long finish=RaidDaySchedule.finish(this);
         if(!RaidDaySchedule.valid(begin,finish)){
-            new AlertDialog.Builder(this)
-                .setTitle("Momento do evento")
-                .setMessage("Configure primeiro a data e o horário do evento.")
-                .setPositiveButton("Entendi",null)
-                .show();
+            momentDetail.setText("Configure primeiro a data do evento.");
             return;
         }
-        List<EduEventMomentPresets.Moment> moments=
-            EduEventMomentPresets.forWindow(begin,finish);
-        DateTimeFormatter formatter=DateTimeFormatter.ofPattern(
-            "dd/MM HH:mm:ss",BR);
-        ZoneId eventZone=RaidDaySchedule.zone(this);
-        String[] items=new String[moments.size()];
-        for(int i=0;i<moments.size();i++){
-            EduEventMomentPresets.Moment moment=moments.get(i);
-            String when=Instant.ofEpochMilli(moment.epochMillis)
-                .atZone(eventZone).format(formatter);
-            items[i]=moment.label+"\n"+when;
+        for(EduEventMomentPresets.Moment moment:
+            EduEventMomentPresets.forWindow(begin,finish)){
+            if(!moment.label.equals(QUICK_MOMENTS[index]))continue;
+            EduEventClock.setManualInstant(this,
+                Instant.ofEpochMilli(moment.epochMillis));
+            chosenMomentLabel=moment.label;
+            getPreferences(MODE_PRIVATE).edit()
+                .putString(PREF_MOMENT,chosenMomentLabel).apply();
+            refresh();
+            return;
         }
-        new AlertDialog.Builder(this)
-            .setTitle("Momento do evento")
-            .setSingleChoiceItems(items,-1,(dialog,which)->{
-                EduEventMomentPresets.Moment selected=moments.get(which);
-                EduEventClock.setManualInstant(this,
-                    Instant.ofEpochMilli(selected.epochMillis));
-                chosenMomentLabel=selected.label;
-                getPreferences(MODE_PRIVATE).edit()
-                    .putString(PREF_MOMENT,chosenMomentLabel).apply();
-                dialog.dismiss();
-                refresh();
-            })
-            .setNegativeButton("Cancelar",null)
-            .show();
+    }
+    private void addSizeSelector(LinearLayout parent){
+        TextView title=label("Tamanho da sprite",13,SECONDARY,false);
+        LinearLayout.LayoutParams header=match();
+        header.topMargin=dp(12);
+        parent.addView(title,header);
+        LinearLayout row=new LinearLayout(this);
+        final String[] labels={"P · 100","M · 150","G · 200"};
+        final int[] sizes={100,150,200};
+        for(int i=0;i<3;i++){
+            TextView choice=chip(labels[i]);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
+                0,dp(40),1);
+            if(i>0)p.leftMargin=dp(8);
+            final int size=sizes[i];
+            choice.setOnClickListener(v->{
+                visualPrefs.edit()
+                    .putInt(RaidDayAvatarFrames.PREF_SIZE,size).apply();
+                refreshVisualControls();
+            });
+            row.addView(choice,p);
+            sizeButtons.add(choice);
+        }
+        LinearLayout.LayoutParams rp=match();
+        rp.topMargin=dp(7);
+        parent.addView(row,rp);
+    }
+    private void addBalloonAlphaSlider(LinearLayout parent){
+        LinearLayout line=new LinearLayout(this);
+        line.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title=label("Transparência do balão",13,SECONDARY,false);
+        line.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+        alphaPercent=label("",13,ACCENT,true);
+        line.addView(alphaPercent);
+        LinearLayout.LayoutParams lp=match();
+        lp.topMargin=dp(13);
+        parent.addView(line,lp);
+        balloonAlpha=new SeekBar(this);
+        balloonAlpha.setMin(40);
+        balloonAlpha.setMax(100);
+        balloonAlpha.setProgress(visualPrefs.getInt(
+            RaidDayAssistantOverlayService.PREF_BUBBLE_OPACITY,100));
+        balloonAlpha.setOnSeekBarChangeListener(
+            new SeekBar.OnSeekBarChangeListener(){
+                @Override public void onProgressChanged(
+                    SeekBar bar,int value,boolean fromUser){
+                    alphaPercent.setText(value+"% opaco");
+                    if(fromUser)visualPrefs.edit().putInt(
+                        RaidDayAssistantOverlayService.PREF_BUBBLE_OPACITY,
+                        value).apply();
+                }
+                @Override public void onStartTrackingTouch(SeekBar bar){}
+                @Override public void onStopTrackingTouch(SeekBar bar){}
+            });
+        parent.addView(balloonAlpha,match());
+        TextView hint=label(
+            "Só o fundo muda; o texto continua legível.",
+            11,SECONDARY,false);
+        parent.addView(hint,match());
+    }
+    private void refreshVisualControls(){
+        int selected=visualPrefs.getInt(RaidDayAvatarFrames.PREF_SIZE,150);
+        int[] sizes={100,150,200};
+        for(int i=0;i<sizeButtons.size();i++){
+            boolean active=sizes[i]==selected;
+            TextView choice=sizeButtons.get(i);
+            choice.setBackground(bg(active?0xff245c58:0xff2c3a45,11));
+            choice.setTextColor(active?0xffd6ffef:PRIMARY);
+        }
+        if(balloonAlpha!=null){
+            int alpha=visualPrefs.getInt(
+                RaidDayAssistantOverlayService.PREF_BUBBLE_OPACITY,100);
+            if(balloonAlpha.getProgress()!=alpha)
+                balloonAlpha.setProgress(alpha);
+            alphaPercent.setText(alpha+"% opaco");
+        }
+    }
+    private void highlightQuickMoment(){
+        for(int i=0;i<quickMomentButtons.size();i++){
+            boolean active=QUICK_MOMENTS[i].equals(chosenMomentLabel);
+            TextView b=quickMomentButtons.get(i);
+            b.setBackground(bg(active?0xff245c58:0xff2c3a45,11));
+            b.setTextColor(active?0xffd6ffef:PRIMARY);
+        }
     }
 
     private void chooseZone(){
@@ -367,9 +506,12 @@ public final class EduClockSettingsActivity extends Activity {
         zoneDetail.setText(zoneLabel());
         boolean configured=RaidDaySchedule.valid(
             RaidDaySchedule.start(this),RaidDaySchedule.finish(this));
-        momentDetail.setText(!configured?"Configure primeiro o evento":
-            chosenMomentLabel.isEmpty()?"17 momentos disponíveis":
-            chosenMomentLabel);
+        momentDetail.setText(!configured?"Configure o evento para testar.":
+            chosenMomentLabel.isEmpty()?
+                "Toque para testar; a hora continua correndo.":
+                "Selecionado: "+chosenMomentLabel);
+        highlightQuickMoment();
+        refreshVisualControls();
         rendering=false;
     }
 
