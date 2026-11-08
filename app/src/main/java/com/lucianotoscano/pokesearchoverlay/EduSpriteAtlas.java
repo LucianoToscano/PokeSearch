@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import android.util.Base64;
 import java.io.InputStream;
+import android.util.LruCache;
 
 /** LT315 — um atlas visual uniforme de 68 quadros, mantendo todos os índices e os três assets antigos como fallback. */
 public final class EduSpriteAtlas {
@@ -44,6 +45,13 @@ public final class EduSpriteAtlas {
     private final Bitmap consistentIdle;
     private final Bitmap shadowSprite;
     private final BitmapDrawable[] cache=new BitmapDrawable[COLLECTION_COUNT];
+    // A fonte publicada é 128px: NÃO há arte original de 512px no repo.
+    // Uma versão de EXIBIÇÃO 512px é preparada por quadro sob demanda,
+    // com cache limitado a 8 frames (~8 MiB), sem duplicar o atlas no APK.
+    // O filtro atua no downsample 512->100/150/200, não altera a arte.
+    private static final int DISPLAY_SOURCE_PX=512;
+    private final LruCache<Integer,BitmapDrawable> displayCache=
+        new LruCache<>(8);
     private final Context app;
 
     private EduSpriteAtlas(Context context, Bitmap image, Bitmap uniformImage,
@@ -193,7 +201,27 @@ public final class EduSpriteAtlas {
             drawable.setDither(false);
             cache[i]=drawable;
         }
-        return cache[i];
+        // Um 512px preparado a partir do quadro 128px melhora a amostragem
+        // na tela de alta densidade e mantém a forma dos olhos/óculos.
+        // É uma ampliação de EXIBIÇÃO, não recuperação de detalhes ausentes.
+        BitmapDrawable enlarged=displayCache.get(i);
+        if(enlarged!=null)return enlarged;
+        try{
+            Bitmap high=Bitmap.createScaledBitmap(cache[i].getBitmap(),
+                DISPLAY_SOURCE_PX,DISPLAY_SOURCE_PX,false);
+            high.setDensity(app.getResources().getDisplayMetrics().densityDpi);
+            BitmapDrawable drawable=new BitmapDrawable(app.getResources(),high);
+            // Suaviza só o redimensionamento final para P/M/G, evitando
+            // serrilhado de blocos 4x sem borrar o atlas original.
+            drawable.setFilterBitmap(true);
+            drawable.setAntiAlias(false);
+            drawable.setDither(false);
+            displayCache.put(i,drawable);
+            return drawable;
+        }catch(OutOfMemoryError memory){
+            // Em aparelhos limitados, preserva o atlas original sem crash.
+            return cache[i];
+        }
     }
     /** A ordem neste mapa preserva os índices LT309/LT312 e os seis movimentos.
      * Todos os quadros do atlas consistente têm corpo de 112px e pés em Y=120.
