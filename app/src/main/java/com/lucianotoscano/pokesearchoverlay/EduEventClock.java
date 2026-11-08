@@ -58,7 +58,7 @@ public final class EduEventClock {
 
     /** Escolha de data e hora DE BRASÍLIA; segundos podem ser definidos. */
     public static void setBrasiliaDateTime(Context context,LocalDateTime dateTime){
-        long chosen=dateTime.atZone(ZoneId.systemDefault())
+        long chosen=dateTime.atZone(RaidDayEventClock.BRASILIA)
             .toInstant().toEpochMilli();
         prefs(context).edit()
             .putLong(VIRTUAL_BASE,chosen)
@@ -73,12 +73,21 @@ public final class EduEventClock {
             .remove(WALL_BASE).apply();
     }
 
-    /** Clock adaptador exclusivo para o modo de treino, nunca para o real. */
-    public static Clock forTraining(Context context){
-        return new SimulationClock(context.getApplicationContext(),ZoneId.systemDefault());
+    /** Relógio único do Edu, inclusive data do evento e passagem D−1/D. */
+    public static Clock forEdu(Context context){
+        return new EduClock(context.getApplicationContext(),RaidDayEventClock.BRASILIA);
     }
 
-    private static final class SimulationClock extends Clock {
+    public static LocalDateTime nowBrasilia(Context context){
+        return localNow(context);
+    }
+
+    /** Atalho de ajuste para ensaiar véspera ou dia do evento. */
+    public static void shiftDays(Context context,int days){
+        setBrasiliaDateTime(context,nowBrasilia(context).plusDays(days));
+    }
+
+    private static final class EduClock extends Clock {
         private final Context context;
         private final ZoneId zone;
         EduClock(Context context,ZoneId zone){
