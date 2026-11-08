@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.13",
-  "code": 54519,
-  "label": 51317,
-  "previous_tag": "v0.03.12-54518",
-  "qa_max_code": 54518,
-  "release_notes": "PokeSearch LT313 — Assistente Edu com identidade visual e escala corporal consistentes nas 22 poses ociosas. Novo atlas offline WebP lossless com paleta pixel-art 256 cores (22 quadros em 1024×384, 59.618 bytes), construído a partir da nova arte de referência: cabelo, rosto/óculos, cabeça, tronco e pernas seguem proporções estáveis, corpo com referência 112px em células 128×128, pés alinhados à base. A Pokébola e os efeitos não reduzem o corpo nas sequências. Troca de poses sem suavização, mantendo o tamanho P/M/G (50/75/100), pausas naturais e animações completas antes da próxima sequência. Os 67 índices e as 45 sprites contextuais de evento/reides/passes continuam preservados; fallback LT312 funciona caso o atlas suplementar falhe. Preserva relógio Edu automático/manual, exemplo de Mega Chandelure por fuso IANA, guia E01–E11, dois overlays P1/P2, Doce Raro, rankings, filtros, APIs, login, dados locais, assinatura Android permanente e atualizador LT310. Integração pela PR #312 (squash 36754a72f6d08f1dd8ad107b1b5b42dd5c186d72). Testes principais Node, LT169, LT211, compilação Java LT62 e OTA LT173 aprovados. Assinatura do APK e integridade verificadas no workflow oficial. Teste visual em Samsung físico ainda pendente; nenhuma instalação ou alteração no Pokémon GO é automática."
+  "version": "0.03.14",
+  "code": 54520,
+  "label": 51318,
+  "previous_tag": "v0.03.13-54519",
+  "qa_max_code": 54519,
+  "release_notes": "PokeSearch LT314 — Assistente Edu com auditoria integral de 68 sprites (62 antigas, cinco especiais e uma nova Sombria). Novo estado Sombria de olhos avermelhados, aura roxa e fundo transparente, reservado às situações de espera e ansiedade do jogador, sem adicioná-lo à rotação ociosa. Correção dos saltos laterais no rosto e na postura: alinhamento óptico por centro do rosto X=64 e pés Y=119, com corpo de referência 112 px e quadro 128×128. As 22 poses idle existentes mantêm escala fixa, sem novo redimensionamento, e os outros estados recebem correções limitadas e processadas uma única vez no cache. Teleporte mantém os quadros de desaparecimento sem esticamento artificial. P/M/G continuam 50/75/100, pixel art sem interpolação. Mantidos índices 0–66, fallback para ausência da Sombria, atlas offline, relógio Edu único, exemplo de Mega Chandelure por fuso IANA, roteiro E01–E11, passes informados manualmente, P1/P2, Doce Raro, PvP, APIs, autenticação e dados, assinatura Android e updater. A sprite não altera GPS, conta Pokémon GO ou concessão de passes. PR #313 squash af6edbb4212596984322bd223481b2bb63d8289a. Node QA, Node regressão LT169, QA core LT211, compilação Android Java LT62 e OTA LT173 passaram na branch. Homologação visual física Samsung permanece pendente: fluidez de Jogando, Armadura, Sombria, carregamento, arraste e saída do modo ocioso."
 }
