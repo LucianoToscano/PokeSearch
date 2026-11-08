@@ -1593,6 +1593,12 @@ public final class RaidDayAssistantOverlayService extends Service {
             "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")))+
             " ("+RaidDaySchedule.zone(this).getId()+")";
     }
+    private String eduWelcomeEnd(){
+        long finish=RaidDaySchedule.finish(this);
+        return Instant.ofEpochMilli(finish).atZone(RaidDaySchedule.zone(this))
+            .format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm",
+                Locale.forLanguageTag("pt-BR")));
+    }
     private String eduWelcomeCountdown(){
         long delta=Math.max(0,RaidDaySchedule.start(this)-
             eventClock.instant().toEpochMilli());
@@ -1780,10 +1786,13 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduSubline.setVisibility(View.VISIBLE);
             updateEduWelcomeCountdown();
         }else if(eduWelcomePage==1){
-            setTalk("O evento já começou!\n\n" +
-                "Horário local: "+eduWelcomeStart()+
-                "\nAcompanhe suas reides no Pokémon GO e confirme " +
-                "seus passes diretamente no jogo.",
+            setTalk("O evento já começou!\n\n"+
+                (RaidDaySchedule.isChandelureExample(this)?
+                    "Mega Chandelure (exemplo histórico)":
+                    "Evento configurado no Edu")+
+                "\nInício: "+eduWelcomeStart()+
+                "\nTérmino: "+eduWelcomeEnd()+
+                "\nConfira suas reides e passes no próprio jogo.",
                 eduWelcomeSource()+" · Toque para ver o checklist.");
         }else{
             eduSpeech.setText(eduChecklistText(false,eduWelcomeStart()));
