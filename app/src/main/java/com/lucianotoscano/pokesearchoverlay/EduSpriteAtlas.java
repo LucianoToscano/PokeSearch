@@ -18,6 +18,10 @@ public final class EduSpriteAtlas {
     public static final int EXTRA_CELL=128, EXTRA_COLS=5, EXTRA_COUNT=5;
     public static final String EXTRA_ASSET="edu_avatar_extra_5.webp";
     public static final int TOTAL_COUNT=COUNT+EXTRA_COUNT;
+    // Atlas visual LT313: 22 poses com o MESMO personagem em células 128×128.
+    // É opcional e nunca altera o índice público das 67 sprites.
+    public static final String CONSISTENT_IDLE_ASSET="edu_avatar_idle_consistent_22.webp";
+    public static final int IDLE_COLS=8, IDLE_ROWS=3, IDLE_COUNT=22;
     // 112/128 px correspondem à altura do Edu na pose padrão.
     // A Pokébola ou os efeitos NÃO entram nessa medida.
     public static final int IDLE_BODY_HEIGHT=112;
@@ -25,13 +29,16 @@ public final class EduSpriteAtlas {
 
     private final Bitmap atlas;
     private final Bitmap extras;
+    private final Bitmap consistentIdle;
     private final BitmapDrawable[] cache=new BitmapDrawable[TOTAL_COUNT];
     private final Context app;
 
-    private EduSpriteAtlas(Context context, Bitmap image, Bitmap extrasImage){
+    private EduSpriteAtlas(Context context, Bitmap image, Bitmap extrasImage,
+                           Bitmap idleImage){
         app=context.getApplicationContext();
         atlas=image;
         extras=extrasImage;
+        consistentIdle=idleImage;
     }
     public static EduSpriteAtlas load(Context context) throws IOException {
         try(InputStream input=context.getAssets().open(ASSET)){
@@ -56,24 +63,65 @@ public final class EduSpriteAtlas {
             }catch(IOException ignored){
                 // Atualização conservadora: falta do atlas adicional não elimina as 62 originais.
             }
-            return new EduSpriteAtlas(context,image,extra);
+            Bitmap idle=null;
+            try(InputStream idleInput=context.getAssets().open(CONSISTENT_IDLE_ASSET)){
+                BitmapFactory.Options noScale=new BitmapFactory.Options();
+                noScale.inScaled=false;
+                idle=BitmapFactory.decodeStream(idleInput,null,noScale);
+                if(idle==null||idle.getWidth()!=IDLE_COLS*CELL||
+                    idle.getHeight()!=IDLE_ROWS*CELL){
+                    if(idle!=null)idle.recycle();
+                    idle=null;
+                }
+            }catch(IOException ignored){
+                // Sem a arte nova, mantém o comportamento da LT312 sem travar.
+            }
+            return new EduSpriteAtlas(context,image,extra,idle);
         }
     }
     public Drawable frame(int index){
         int i=index>=0&&index<TOTAL_COUNT?index:indexForState("parado");
-        if(i>=COUNT && extras==null)i=indexForState("parado");
+        int consistentFrame=consistentIdleFrameIndex(i);
+        // Os cinco extras continuam válidos mesmo quando só o novo atlas está
+        // disponível; não mostrar uma caixa vazia por falha de asset opcional.
+        if(i>=COUNT && extras==null && (consistentIdle==null||consistentFrame<0))
+            i=indexForState("parado");
         if(cache[i]==null){
-            Bitmap source=i<COUNT?atlas:extras;
-            int left=i<COUNT?(i%COLS)*CELL:(i-COUNT)*EXTRA_CELL;
-            int top=i<COUNT?(i/COLS)*CELL:0;
+            boolean replacement=consistentIdle!=null&&consistentFrame>=0;
+            Bitmap source=replacement?consistentIdle:
+                i<COUNT?atlas:extras;
+            int left=replacement?(consistentFrame%IDLE_COLS)*CELL:
+                i<COUNT?(i%COLS)*CELL:(i-COUNT)*EXTRA_CELL;
+            int top=replacement?(consistentFrame/IDLE_COLS)*CELL:
+                i<COUNT?(i/COLS)*CELL:0;
             Bitmap crop=Bitmap.createBitmap(source,left,top,CELL,CELL);
-            crop=normalizeIdleBody(crop,i);
+            if(!replacement)crop=normalizeIdleBody(crop,i);
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
             drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
             cache[i]=drawable;
         }
         return cache[i];
+    }
+    /** A ordem neste mapa preserva os índices LT309/LT312 e os seis movimentos.
+     * Todos os quadros do atlas consistente têm corpo de 112px e pés em Y=120.
+     */
+    public static int consistentIdleFrameIndex(int original){
+        switch(original){
+            case 42: return 0; // parado
+            case 0: return 1; case 1: return 2;
+            case 2: return 3; case 3: return 4; // Pokébola
+            case 5: return 5; case 6: return 6;
+            case 7: return 7; case 8: return 8; // frente
+            case 24: return 9; case 25: return 10;
+            case 26: return 11; case 27: return 12; // direita
+            case 32: return 13; case 33: return 14;
+            case 34: return 15; case 35: return 16; // esquerda
+            case 62: return 17; // shiny
+            case 63: return 18; case 64: return 19; // jogando
+            case 65: return 20; case 66: return 21; // armaduras
+            default: return -1; // outras poses contextuais NÃO são alteradas
+        }
     }
     /** Normaliza a altura VISÍVEL do Edu, e não a caixa do PNG.
      * Mantém os pés na mesma base e as poses em proporção constante.
@@ -224,5 +272,7 @@ public final class EduSpriteAtlas {
         }
         if(atlas!=null&&!atlas.isRecycled())atlas.recycle();
         if(extras!=null&&!extras.isRecycled())extras.recycle();
+        if(consistentIdle!=null&&!consistentIdle.isRecycled())
+            consistentIdle.recycle();
     }
 }
