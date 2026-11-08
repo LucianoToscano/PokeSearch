@@ -23,6 +23,8 @@ public final class EduSpriteAtlas {
     public static final int SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT+1;
     public static final String SHADOW_ASSET="edu_sombria_68.b64";
     public static final String UNIFORM_ASSET="edu_avatar_uniform_68.webp";
+    // LT316 QA: atlas revisado opcional, sem descartar o publicado na LT315.
+    public static final String CORRECTED_UNIFORM_ASSET="edu_avatar_uniform_68_lt316.b64";
     public static final int UNIFORM_COLS=8, UNIFORM_ROWS=9;
     // Atlas visual LT313: 22 poses com o MESMO personagem em células 128×128.
     // É opcional e nunca altera o índice público das 67 sprites.
@@ -35,6 +37,7 @@ public final class EduSpriteAtlas {
 
     private final Bitmap atlas;
     private final Bitmap uniform;
+    private final boolean correctedAtlas;
     private final Bitmap extras;
     private final Bitmap consistentIdle;
     private final Bitmap shadowSprite;
@@ -42,10 +45,12 @@ public final class EduSpriteAtlas {
     private final Context app;
 
     private EduSpriteAtlas(Context context, Bitmap image, Bitmap uniformImage,
-                           Bitmap extrasImage, Bitmap idleImage, Bitmap shadowImage){
+                           Bitmap extrasImage, Bitmap idleImage, Bitmap shadowImage,
+                           boolean corrected){
         app=context.getApplicationContext();
         atlas=image;
         uniform=uniformImage;
+        correctedAtlas=corrected;
         extras=extrasImage;
         consistentIdle=idleImage;
         shadowSprite=shadowImage;
@@ -74,6 +79,27 @@ public final class EduSpriteAtlas {
                 }
             }catch(IOException|RuntimeException ignored){
                 // Só faz fallback à coleção anterior, nunca exibe vazio.
+            }
+            boolean correctedUsed=false;
+            // Preferir a revisão LT316; se faltar, estiver corrompida ou não
+            // decodificar em 1024x1152, manter integralmente o atlas LT315.
+            try(InputStream corrected=context.getAssets().open(CORRECTED_UNIFORM_ASSET)){
+                ByteArrayOutputStream buffer=new ByteArrayOutputStream(320000);
+                byte[] chunk=new byte[4096];
+                for(int n;(n=corrected.read(chunk))!=-1;)buffer.write(chunk,0,n);
+                byte[] bytes=Base64.decode(buffer.toByteArray(),Base64.DEFAULT);
+                BitmapFactory.Options noScale=new BitmapFactory.Options();
+                noScale.inScaled=false;
+                Bitmap candidate=BitmapFactory.decodeByteArray(
+                    bytes,0,bytes.length,noScale);
+                if(candidate!=null&&candidate.getWidth()==UNIFORM_COLS*CELL&&
+                    candidate.getHeight()==UNIFORM_ROWS*CELL){
+                    if(unified!=null)unified.recycle();
+                    unified=candidate;
+                    correctedUsed=true;
+                }else if(candidate!=null)candidate.recycle();
+            }catch(IOException|RuntimeException ignored){
+                // Preservar o original LT315 e os outros três fallback.
             }
             Bitmap extra=null;
             try(InputStream supplement=context.getAssets().open(EXTRA_ASSET)){
@@ -120,7 +146,8 @@ public final class EduSpriteAtlas {
             }catch(RuntimeException|IOException ignored){
                 // Asset opcional: não bloquear o Edu nem as 67 poses anteriores.
             }
-            return new EduSpriteAtlas(context,image,unified,extra,idle,shadow);
+            return new EduSpriteAtlas(context,image,unified,extra,idle,shadow,
+                correctedUsed);
         }
     }
     public Drawable frame(int index){
@@ -151,6 +178,10 @@ public final class EduSpriteAtlas {
                 if(!replacement)crop=normalizeIdleBody(crop,i);
                 crop=EduSpriteGeometry.stabilize(crop,i,replacement);
             }
+            // LT316: só os cinco quadros de acessórios recebem retoque
+            // adicional. Todos os demais 63 permanecem no atlas QA.
+            if(uniformFrame&&correctedAtlas)
+                crop=EduSpriteManualRetouch.apply(crop,i);
             // Nunca reescalar o atlas LT315, pré-alinhado em 128x128.
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
             drawable.setFilterBitmap(false);
