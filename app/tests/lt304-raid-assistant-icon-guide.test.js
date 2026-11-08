@@ -48,7 +48,9 @@ assert.deepEqual(steps.slice(7,10).map(x=>x.periodo),
                  Array(3).fill("D"));
 assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
                  ["hawaii","newzealand","hawaii"]);
-assert.equal(steps[6].repetePara,"E02");
+assert.equal(steps[6].repetePara,"E04");
+assert.equal(steps[5].local,"newzealand");
+assert.equal(steps[8].opcional,false);
 assert.equal(steps[6].semPassePara,"E08");
 assert.equal(steps[8].pularPara,"E10");
 assert.equal(variant.locais.hawaii.coordenadas,"21.2709423,-157.818172");
