@@ -3459,6 +3459,29 @@
           "Homologação física Samsung de transições de sprites, balão, checklist e passagem de fases do evento ainda pendente. Horário manual é recurso de teste e não comprova recompensas ou horários do servidor."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt318-edu-balao-simples-sprites-estados-20261108",
+      "minVersionCode": 54524,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT318 — Edu: balão simples e sprites corretas do evento",
+      "sections": {
+        "novidades": [
+          "Ao tocar no Edu, a primeira fala volta a ser a apresentação curta e intuitiva, mesmo que exista uma sessão antiga salva em outra etapa.",
+          "O personagem usa as poses correspondentes à apresentação, ao evento ainda não iniciado, iniciado ou encerrado, sem depender de botões extras."
+        ],
+        "melhorias": [
+          "A conversa inicial não mostra mais cabeçalho de etapas, botão X, relógio de testes ou botões 'Conferir novamente' e 'Rever região'.",
+          "Contador regressivo do início aparece em destaque com segundos e checklist explicativo ⓘ, sem nomes técnicos de fusos ou do simulador."
+        ],
+        "correcoes": [
+          "Corrigida a prioridade de estados para impedir que uma sessão E01–E11 antiga exiba o fluxo anterior em vez dos balões atuais.",
+          "Mudança imediata e estável da sprite contextual; Mega Chandelure permanece como evento-base quando não há outro evento configurado."
+        ],
+        "emDesenvolvimento": [
+          "Verificar visualmente no Samsung as sprites, o alinhamento do balão e os links ⓘ em P50/M75/G100. CI automatizado não comprova o resultado visual nem a instalação."
+        ]
+      }
     }
   ]
 }

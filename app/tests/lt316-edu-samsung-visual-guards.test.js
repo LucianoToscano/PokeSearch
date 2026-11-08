@@ -60,5 +60,5 @@ assert.match(atlas, /if\(!uniformFrame\)/);
 assert.match(fine, /i==20\|\|i==28\|\|i==30\|\|i==36\|\|i==49/);
 assert.match(fine, /paint\.setFilterBitmap\(false\)/);
 assert.match(fine, /canvas\.clipOutPath\(path\)/);
-assert.match(agents, /LT316.*0\.03\.16.*54522/s, "Instruções atualizadas para LT316");
+assert.match(agents, /LT317.*0\.03\.17.*54523/s, "A continuidade deve apontar para a Release oficial LT317, preservando os guardas LT316");
 console.log("LT316 PASS: idle 22 poses, Sombria/teleporte sob gatilho, P/M/G, fallback e retoques.");
