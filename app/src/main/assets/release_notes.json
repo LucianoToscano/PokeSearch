@@ -3436,6 +3436,29 @@
           "Validar visualmente no Samsung as transições reais e a legibilidade P/M/G. Testes automatizados não substituem a confirmação no aparelho."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt317-edu-primeiro-balao-relogio-momentos-20261108",
+      "minVersionCode": 54523,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT317 — Edu: primeira conversa e momentos do evento",
+      "sections": {
+        "novidades": [
+          "Novo primeiro balão do Edu, com apresentação curta e explicações tocáveis sobre Bug dos Passes, softban, fuso do evento e passe diário.",
+          "Relógio único do Edu ganhou a opção Momento do evento, com 17 horários relativos ao início e término, em ordem cronológica e no fuso escolhido."
+        ],
+        "melhorias": [
+          "Edu mostra o estado do evento com a sprite correspondente, data/hora regional, contador regressivo e checklist marcado manualmente, sem novos botões na conversa.",
+          "Cauda do balão alongada e direcionada para próximo da cabeça, respeitando a tela e tamanhos P50/M75/G100."
+        ],
+        "correcoes": [
+          "Corrigido o tamanho P/M/G do Edu quando seu atlas carrega sem o atlas legado; regressões preservam as 22 animações ociosas e os 68 índices.",
+          "Seletor de momentos altera apenas o relógio manual do Edu, sem afetar horário do Android, GPS ou dados do Pokémon GO."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física Samsung de transições de sprites, balão, checklist e passagem de fases do evento ainda pendente. Horário manual é recurso de teste e não comprova recompensas ou horários do servidor."
+        ]
+      }
     }
   ]
 }
