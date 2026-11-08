@@ -109,6 +109,11 @@ public final class RaidDayAssistantOverlayService extends Service {
     };
     private RaidDayPreparation preparation;
     private final Clock eventClock=Clock.systemUTC();
+    // O relógio fictício vale só para a simulação. Sessões reais sempre
+    // usam o tempo do sistema interpretado no fuso oficial de Brasília.
+    private Clock eduTrainingOrRealClock(){
+        return training&&demoToday?EduSimulationClock.forTraining(this):eventClock;
+    }
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
             if(eduBadge!=null)updateEventClock();
@@ -310,7 +315,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private String eduEventWhen(){
         LocalDate date=training&&demoToday?
-            RaidDayEventClock.todayBrasilia(eventClock):preparation.eventDate();
+            RaidDayEventClock.todayBrasilia(eduTrainingOrRealClock()):
+            preparation.eventDate();
         if(date==null)return "data ainda não informada";
         DateTimeFormatter dateOnly=DateTimeFormatter.ofPattern("dd/MM/yyyy",
             Locale.forLanguageTag("pt-BR"));
@@ -388,7 +394,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         updateStep();
     }
     private void startDemoToday(){
-        // Usa a data atual de Brasília apenas neste TREINO, nunca como evento oficial.
+        // Usa a data/hora fictícia selecionada no relógio do ícone dos passes.
+        // Se nunca foi ajustado, começa com a data/hora do próprio celular.
         demoToday=true;
         eduWantsReal=false;
         eduNote="";
@@ -658,7 +665,10 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(eduBadge==null)return;
         String now=RaidDayEventClock.format(eventClock.instant(),
             RaidDayEventClock.BRASILIA);
-        if(demoToday)eduBadge.setText("SIMULAÇÃO HOJE · "+now);
+        if(training&&demoToday)
+            eduBadge.setText("TREINO · "+
+                EduSimulationClock.dateLabel(this)+" "+
+                EduSimulationClock.timeLabel(this));
         else if(active)eduBadge.setText("ETAPA "+(index+1)+"/11 · "+now);
         else eduBadge.setText("Brasília · "+now);
     }
@@ -1087,7 +1097,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private String phaseClock(RaidDayGuidePlan.Step step){
         if(training){
-            LocalDate today=RaidDayEventClock.todayBrasilia(eventClock);
+            LocalDate today=RaidDayEventClock.todayBrasilia(eduTrainingOrRealClock());
             java.time.format.DateTimeFormatter shortDate=
                 java.time.format.DateTimeFormatter.ofPattern("dd/MM",
                     java.util.Locale.forLanguageTag("pt-BR"));
@@ -1193,7 +1203,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             "acompanhar um evento real?",
             "A simulação é fictícia e não concede passes. "+
             "O método comunitário não é garantido e pode violar os termos do jogo.");
-        addTwo("Simular hoje",()->startDemoToday(),
+        addTwo(EduSimulationClock.isAdjusted(this)?"Simular data":"Simular hoje",
+            ()->startDemoToday(),
             "Evento real",()->{eduWantsReal=true;eduNote="";updateStep();});
     }
     private void showEduRisk(){
