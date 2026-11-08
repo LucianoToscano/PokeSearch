@@ -36,4 +36,5 @@ assert.match(src,/if\(uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&/);
 assert.match(src,/consistentIdle!=null&&consistentFrame>=0/,"Aplicar novo atlas sem dupla normalização");
 assert.match(src,/if\(!replacement\)crop=normalizeIdleBody\(crop,i\)/,"Fallback LT312 continua com escala explícita");
 assert.match(overlay,/avatarView\.setScaleType\(ImageView\.ScaleType\.FIT_CENTER\)/);
-assert.match(src,/if\(!uniformFrame\)\{/,"A normalização legada só é aplicada no fallback");\nconsole.log("LT312 EDU: tamanho corporal fixo de 22 poses, borda alinhada e extras opcionais OK");
+assert.match(src,/if\(!uniformFrame\)\{/,"A normalização legada só é aplicada no fallback");
+console.log("LT312 EDU: tamanho corporal fixo de 22 poses, borda alinhada e extras opcionais OK");
