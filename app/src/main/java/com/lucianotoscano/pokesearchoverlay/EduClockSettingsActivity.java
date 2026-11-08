@@ -398,18 +398,19 @@ public final class EduClockSettingsActivity extends Activity {
         lp.topMargin=dp(13);
         parent.addView(line,lp);
         balloonAlpha=new SeekBar(this);
-        balloonAlpha.setMin(40);
-        balloonAlpha.setMax(100);
-        balloonAlpha.setProgress(visualPrefs.getInt(
+        // Slider semântico: 0%=fundo sólido, 60%=mais transparente.
+        balloonAlpha.setMin(0);
+        balloonAlpha.setMax(60);
+        balloonAlpha.setProgress(100-visualPrefs.getInt(
             RaidDayAssistantOverlayService.PREF_BUBBLE_OPACITY,100));
         balloonAlpha.setOnSeekBarChangeListener(
             new SeekBar.OnSeekBarChangeListener(){
                 @Override public void onProgressChanged(
                     SeekBar bar,int value,boolean fromUser){
-                    alphaPercent.setText(value+"% opaco");
+                    alphaPercent.setText(value+"% transparente");
                     if(fromUser)visualPrefs.edit().putInt(
                         RaidDayAssistantOverlayService.PREF_BUBBLE_OPACITY,
-                        value).apply();
+                        100-value).apply();
                 }
                 @Override public void onStartTrackingTouch(SeekBar bar){}
                 @Override public void onStopTrackingTouch(SeekBar bar){}
@@ -432,9 +433,9 @@ public final class EduClockSettingsActivity extends Activity {
         if(balloonAlpha!=null){
             int alpha=visualPrefs.getInt(
                 RaidDayAssistantOverlayService.PREF_BUBBLE_OPACITY,100);
-            if(balloonAlpha.getProgress()!=alpha)
-                balloonAlpha.setProgress(alpha);
-            alphaPercent.setText(alpha+"% opaco");
+            if(balloonAlpha.getProgress()!=100-alpha)
+                balloonAlpha.setProgress(100-alpha);
+            alphaPercent.setText((100-alpha)+"% transparente");
         }
     }
     private void highlightQuickMoment(){
