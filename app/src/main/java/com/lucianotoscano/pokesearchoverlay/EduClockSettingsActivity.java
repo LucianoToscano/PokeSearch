@@ -336,7 +336,8 @@ public final class EduClockSettingsActivity extends Activity {
 
     private String zoneLabel(){
         if(EduEventClock.isAutomaticTimeZone(this))
-            return "Automático · celular";
+            return EduEventClock.isLocationBasedTimeZone(this)?
+                "Automático · celular":"Brasília (UTC−3)";
         String zone=EduEventClock.zone(this).getId();
         if(zone.equals("America/Sao_Paulo"))return "Brasília (UTC−3)";
         if(zone.equals("America/Manaus"))return "Manaus (UTC−4)";
@@ -349,6 +350,8 @@ public final class EduClockSettingsActivity extends Activity {
         if(autoDate==null)return;
         rendering=true;
         boolean automatic=EduEventClock.isAutomaticDateTime(this);
+        // Restaurar pelo atalho da Home invalida a antiga seleção virtual.
+        if(automatic&&!chosenMomentLabel.isEmpty())clearMomentLabel();
         autoDate.setChecked(automatic);
         format24.setChecked(EduEventClock.is24HourFormat(this));
         manualDateTime.setVisibility(automatic?View.GONE:View.VISIBLE);
