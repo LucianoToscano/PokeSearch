@@ -79,6 +79,10 @@ public final class RaidDayAssistantOverlayService extends Service {
     private ScrollView panelScroll;
     private WindowManager.LayoutParams bubbleParams,panelParams;
     private SharedPreferences prefs;
+    // A tela Relógio e Edu escreve nas mesmas preferências; atualiza o
+    // overlay imediatamente, sem reiniciar ou perder a conversa.
+    static final String PREF_BUBBLE_OPACITY="edu_speech_opacity_percent";
+    private SharedPreferences.OnSharedPreferenceChangeListener visualSettingsListener;
     private TextView progressText,titleText,instructionText,statusText,confirmButton,pauseButton;
     private TextView copyButton,repeatButton,cycleText,skipButton;
     private TextView riskContinue,riskExit,startButton,trainButton,trainingExit;
@@ -529,6 +533,19 @@ public final class RaidDayAssistantOverlayService extends Service {
             savedAvatarSize=converted;
         }
         avatarSizeIndex=savedAvatarSize==100?0:savedAvatarSize==200?2:1;
+        visualSettingsListener=(changed,key)->{
+            if(RaidDayAvatarFrames.PREF_SIZE.equals(key)){
+                int selected=changed.getInt(RaidDayAvatarFrames.PREF_SIZE,150);
+                int i=selected==100?0:selected==200?2:1;
+                if(i!=avatarSizeIndex){
+                    avatarSizeIndex=i;
+                    updateAvatarSize();
+                }
+            }else if(PREF_BUBBLE_OPACITY.equals(key)){
+                applyBubbleTransparency();
+            }
+        };
+        prefs.registerOnSharedPreferenceChangeListener(visualSettingsListener);
         avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
         resetEduIdle();
         avatarSprites=RaidDayAvatarFrames.load(this);
@@ -763,6 +780,14 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(eduSprites!=null)return EduSpriteAtlas.SIZES_PX[avatarSizeIndex];
         if(avatarSprites!=null)return RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex];
         return dp(ART_DP);
+    }
+    private void applyBubbleTransparency(){
+        if(eduSpeechBackground==null||prefs==null)return;
+        // Apenas a tinta do balão: texto/links mantêm alpha 255,
+        // sem tornar a própria sprite transparente.
+        int value=Math.max(40,Math.min(100,
+            prefs.getInt(PREF_BUBBLE_OPACITY,100)));
+        eduSpeechBackground.setAlpha(Math.round(value*2.55f));
     }
     private void updateAvatarSize(){
         if(avatarView==null||bubbleParams==null||wm==null)return;
@@ -1189,6 +1214,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduMainCard.setPadding(dp(12),dp(11),dp(27),dp(11));
         eduSpeechBackground=new EduSpeechDrawable();
         eduMainCard.setBackground(eduSpeechBackground);
+        applyBubbleTransparency();
         eduMainCard.setElevation(dp(2));
         LinearLayout.LayoutParams speechLp=new LinearLayout.LayoutParams(-1,-2);
         speechLp.topMargin=dp(8);
@@ -1331,7 +1357,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,PixelFormat.TRANSLUCENT);
         panelParams.gravity=Gravity.TOP|Gravity.LEFT;
-        // O balão branco e a tipografia não devem ficar translúcidos. Apenas a moldura é glass.
+        // O slider altera somente o Drawable do balão; manter o
+        // WindowManager em alpha=1 para preservar texto e sprites nítidos.
         panelParams.alpha=1f;
         placePanelCoordinates();
     }
@@ -2504,6 +2531,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(RaidDayScreenCaptureService.isActive())
             stopService(new Intent(this,RaidDayScreenCaptureService.class));
         handler.removeCallbacksAndMessages(null);
+        if(prefs!=null&&visualSettingsListener!=null){
+            prefs.unregisterOnSharedPreferenceChangeListener(
+                visualSettingsListener);
+            visualSettingsListener=null;
+        }
         if(wm!=null){
             if(panel!=null&&visible){
                 try{wm.removeView(panelScroll);}catch(IllegalArgumentException ignored){}
