@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.17",
-  "code": 54523,
-  "label": 51321,
-  "previous_tag": "v0.03.16-54522",
-  "qa_max_code": 54522,
-  "release_notes": "PokeSearch LT317 — Assistente Edu com primeiro balão de apresentação mais limpo e intuitivo. A fala apresenta o Edu e explica 'Bug dos Passes ⓘ' no próprio balão, sem botões extras; ao tocar, mostra a situação da janela de evento na região selecionada: ainda não começou, em andamento ou encerrado, com sprites contextuais já existentes. Inclui contador regressivo com segundos e checklist manual de três orientações, com explicações tocáveis sobre softban, fuso regional e passe laranja da véspera. As informações não garantem passes ou benefícios. A ponta alongada do balão se aproxima da cabeça sem aumentar sprites. Nos ajustes do relógio único da Home, novo seletor com 17 momentos relativos ao início e término do evento, inclusive testes desde 3 dias antes até uma semana após; opções ordenadas cronologicamente no fuso IANA do evento. O ajuste muda apenas a hora manual interna do Edu, sem alterar o Android nem Pokémon GO. Correção na seleção de tamanho P50/M75/G100 quando o atlas legado falha. Preservados os 68 quadros, 22 animações ociosas, Sombria, teleporte, relógio único, E01–E11, duas Pokébolas, Doce Raro, PoGoCoordinates, rankings, login, dados e assinatura permanente. PR #317 integrada por squash a4c4b696c94e32f3afeb01ec03d3b93d646e9a0d. Gates Node, LT169, LT211, Java LT62 e OTA LT173 aprovados no SHA da PR; QA visual e funcional físico Samsung continua pendente."
+  "version": "0.03.18",
+  "code": 54524,
+  "label": 51322,
+  "previous_tag": "v0.03.17-54523",
+  "qa_max_code": 54523,
+  "release_notes": "PokeSearch LT318 — Correção da primeira conversa do Assistente Edu após relatos visuais do Samsung na LT317. Ao tocar na sprite, o Edu inicia pela apresentação curta no próprio balão branco, com link sublinhado 'Bug dos Passes ⓘ', mesmo quando uma sessão antiga (por exemplo, ETAPA 10/11) está salva; histórico anterior preservado. Removidos da construção da conversa o cabeçalho com ETAPA, o X, rótulos de data/hora do simulador e os botões 'Conferir novamente' e 'Rever região'. O próximo toque mostra o estado correto do evento: antes de começar, em andamento ou encerrado, com sprites contextualizadas #38, #37 e #36, respectivamente, e apresentação #42. Corrigida a prioridade da sprite sobre animações e reações antigas; atualização visual imediata. Antes do evento, destaque para o contador regressivo em dias/horas/minutos/segundos e checklist com explicações ⓘ; falas limpas, sem nomes técnicos de fuso ou do relógio de testes. O relógio único da Home e seus 17 momentos continuam controlando testes, sem alterar Android ou Pokémon GO; Mega Chandelure é base quando não há outra janela válida. Preservados 68 sprites, P50/M75/G100, duas Pokébolas, Doce Raro, PoGoCoordinates, rankings, dados, OTA e assinatura permanente. PR #318 integrada por squash 9688f8e25788d4b3bfae2eb2aba9b2b38fd08de6; cinco gates Node/LT169/LT211/Java LT62/OTA LT173 aprovados para o head testado 799b20654cb5e0557f0453a55fbd5a52dd92d065. Homologação física final do novo APK Samsung ainda pendente; não há garantia de passes extras."
 }
