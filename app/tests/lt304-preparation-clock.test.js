@@ -83,7 +83,8 @@ assert.match(service,/preparation\.setQuestion\(0\)/,
   "Preparação simples deve abrir na data do evento");
 assert.match(service,/preparation\.isComplete\(\)\|\|preparation\.eventKey\(\)\.equals/,
   "Respostas completas já salvas devem continuar aceitas");
-assert.match(service,/DayState\.AFTER_DAY/);
+assert.match(service,/if\(today\.isAfter\(date\)\)/);
+assert.match(service,/private LocalDate eduEventLocalToday\(\)/);
 assert.match(service,/currentPhaseNote\(/);
 assert.match(service,/startDemoToday\(/);
 assert.match(service,/preparation\.choose\(option\)/);

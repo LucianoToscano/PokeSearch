@@ -94,11 +94,11 @@ assert.match(screen,/sem acessar GPS/);
 assert.match(screen,/NUNCA|nunca altera|nunca altera/i);
 
 assert.match(edu,/eventClock=EduEventClock\.forEdu\(this\)/);
-assert.match(edu,/EduEventClock\.today\(\s*RaidDayAssistantOverlayService\.this\)/,
-  "O Runnable interno deve usar contexto do serviço, não this da tarefa");
+assert.match(edu,/LocalDate day=eduEventLocalToday\(\)/,
+  "O Runnable interno deve usar a data local do evento e a fonte do Edu");
 assert.match(edu,/EduEventClock\.today\(this\)/);
-assert.match(edu,/EduEventClock\.dayState\(this,preparation\.eventDate\(\)\)/);
-assert.match(edu,/if\(lastEduClockDay!=null&&!day\.equals\(lastEduClockDay\)/);
+assert.match(edu,/RaidDaySchedule\.phase\(this,eventClock\.instant\(\)\)/);
+assert.match(edu,/lastEduClockDay!=null&&/);
 assert.match(edu,/EduEventClock\.isAdjusted\(this\)\?"Hora ajustada"/);
 assert.doesNotMatch(edu,/Quer simular um evento acontecendo hoje/);
 assert.match(settings,/EduEventClock\.forEdu\(this\)/);

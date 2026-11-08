@@ -28,27 +28,54 @@ public final class RaidDaySchedule {
     public static boolean valid(long start,long finish){
         return start>0&&finish>start&&finish-start<=24*60*60*1000L;
     }
+    // Compatibilidade com configurações antigas de Brasília.
     public static void save(Context ctx,LocalDate date,LocalTime start,
                             LocalTime end){
-        ZoneId zone=RaidDayEventClock.BRASILIA;
-        long begin=LocalDateTime.of(date,start).atZone(zone).toInstant().toEpochMilli();
-        long stop=LocalDateTime.of(date,end).atZone(zone).toInstant().toEpochMilli();
-        if(stop<=begin)stop=LocalDateTime.of(date.plusDays(1),end).atZone(zone)
-            .toInstant().toEpochMilli();
-        if(!valid(begin,stop))throw new IllegalArgumentException("Janela inválida");
+        save(ctx,date,start,end,RaidDayEventClock.BRASILIA,false);
+    }
+    public static void save(Context ctx,LocalDate date,LocalTime start,
+                            LocalTime end,ZoneId zone,boolean officialExample){
+        long[] range=RaidDayRegionalWindow.bounds(date,start,end,zone);
         ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE).edit()
-            .putLong("raid_day_window_start_ms",begin)
-            .putLong("raid_day_window_end_ms",stop)
-            .putString("raid_day_window_source","INFORMADO_USUARIO")
+            .putLong("raid_day_window_start_ms",range[0])
+            .putLong("raid_day_window_end_ms",range[1])
+            .putString("raid_day_window_zone",zone.getId())
+            .putString("raid_day_window_date",date.toString())
+            .putBoolean("raid_day_window_chandelure_example",officialExample)
+            .putString("raid_day_window_source",
+                officialExample?"EXEMPLO_OFICIAL": "INFORMADO_USUARIO")
             .apply();
+    }
+    public static ZoneId zone(Context ctx){
+        String id=ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE)
+            .getString("raid_day_window_zone",RaidDayEventClock.BRASILIA.getId());
+        try{return ZoneId.of(id);}
+        catch(RuntimeException ignored){return RaidDayEventClock.BRASILIA;}
+    }
+    public static LocalDate eventDate(Context ctx){
+        SharedPreferences p=ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE);
+        String saved=p.getString("raid_day_window_date","");
+        try{if(!saved.isEmpty())return LocalDate.parse(saved);}
+        catch(RuntimeException ignored){}
+        long begin=start(ctx);
+        return begin>0?Instant.ofEpochMilli(begin).atZone(zone(ctx)).toLocalDate():null;
+    }
+    public static boolean isChandelureExample(Context ctx){
+        return ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE)
+            .getBoolean("raid_day_window_chandelure_example",false);
+    }
+    public static RaidDayRegionalWindow.Phase phase(Context ctx,Instant now){
+        return RaidDayRegionalWindow.phase(now,start(ctx),finish(ctx));
     }
     public static String status(Context ctx){
         long begin=start(ctx),end=finish(ctx);
         if(!valid(begin,end))return "Horário oficial NÃO verificado. Configure sua janela.";
-        Instant now=Instant.now();
+        Instant now=Instant.ofEpochMilli(EduEventClock.nowMillis(ctx));
         String prefix=now.toEpochMilli()<begin?"Antes da janela informada":
             now.toEpochMilli()>end?"Depois da janela informada":"Dentro da janela informada";
-        return prefix+" · horário informado pelo jogador, NÃO verificado.";
+        return prefix+" · "+(isChandelureExample(ctx)?
+            "exemplo oficial de 31/10/2026; confirme disponibilidade no jogo.":
+            "horário informado pelo jogador, NÃO verificado.");
     }
     public static void setReminders(Context ctx,boolean enabled){
         ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE).edit()
@@ -79,6 +106,10 @@ public final class RaidDaySchedule {
         setReminders(ctx,false);
         ctx.getSharedPreferences(PREF,Context.MODE_PRIVATE).edit()
             .remove("raid_day_window_start_ms")
-            .remove("raid_day_window_end_ms").apply();
+            .remove("raid_day_window_end_ms")
+            .remove("raid_day_window_zone")
+            .remove("raid_day_window_date")
+            .remove("raid_day_window_chandelure_example")
+            .remove("raid_day_window_source").apply();
     }
 }
