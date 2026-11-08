@@ -159,7 +159,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                     }
                 }
                 LocalDate day=eduEventLocalToday();
-                RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
+                RaidDayRegionalWindow.Phase phase=(!active&&!training&&
+                    eduFirstBubbleMode)?eduWelcomePhase():eduConfiguredPhase();
                 String identity=RaidDaySchedule.zone(
                     RaidDayAssistantOverlayService.this).getId()+":"+
                     RaidDaySchedule.start(RaidDayAssistantOverlayService.this)+":"+
@@ -1736,6 +1737,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduWelcomePage=2;
             updateStep();
         }
+        if(avatarView!=null&&eduSprites!=null)
+            avatarView.setImageDrawable(eduSprites.state(eduContextState()));
         // Esta etapa termina no checklist; E01-E11 não são iniciados
         // implicitamente nem são gerados passes pelo toque.
     }
