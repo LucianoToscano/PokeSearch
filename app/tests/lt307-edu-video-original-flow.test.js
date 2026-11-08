@@ -25,7 +25,7 @@ assert.match(s[2].naoAconteceu,/Nova Zelândia/);
 assert.equal(s[4].local,"hawaii");
 assert.match(s[4].instrucao,/feche e reabra/);
 assert.equal(s[5].local,"newzealand");
-assert.match(s[5].instrucao,/reiniciar na própria Nova Zelândia/);
+assert.match(s[5].instrucao,/fechar\/reabrir na própria Nova Zelândia/);
 assert.equal(s[6].repetePara,"E04","Outro passe leva a uma reide na NZ, não à chegada inicial ao Havaí");
 assert.equal(s[6].semPassePara,"E08");
 assert.match(s[7].instrucao,/evento deve ter efetivamente começado/);
@@ -33,7 +33,7 @@ assert.equal(s[8].local,"kiribati");
 assert.equal(s[8].opcional,false,"Kiribati integra a última parte narrada (mas pode ser recusada)");
 assert.equal(s[8].pularPara,"E10");
 assert.match(s[8].ajudaEdu,/pode fazer o jogador ficar sem passe no dia seguinte/);
-assert.match(s[9].instrucao,/não reiniciar entre reides/);
+assert.match(s[9].instrucao,/sem reiniciar entre reides/);
 // UX por etapas: condições, duas paradas distintas no Havaí e duas na NZ.
 assert.match(app,/private void showEduPreparationChecks\(\)/);
 assert.match(app,/pre_softban/);
