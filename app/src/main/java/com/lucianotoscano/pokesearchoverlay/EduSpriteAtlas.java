@@ -3,6 +3,9 @@ package com.lucianotoscano.pokesearchoverlay;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import java.io.IOException;
@@ -15,6 +18,9 @@ public final class EduSpriteAtlas {
     public static final int EXTRA_CELL=128, EXTRA_COLS=5, EXTRA_COUNT=5;
     public static final String EXTRA_ASSET="edu_avatar_extra_5.webp";
     public static final int TOTAL_COUNT=COUNT+EXTRA_COUNT;
+    // 112/128 px correspondem à altura do Edu na pose padrão.
+    // A Pokébola ou os efeitos NÃO entram nessa medida.
+    public static final int IDLE_BODY_HEIGHT=112;
     public static final int[] SIZES_PX={50,75,100};
 
     private final Bitmap atlas;
@@ -61,12 +67,76 @@ public final class EduSpriteAtlas {
             int left=i<COUNT?(i%COLS)*CELL:(i-COUNT)*EXTRA_CELL;
             int top=i<COUNT?(i/COLS)*CELL:0;
             Bitmap crop=Bitmap.createBitmap(source,left,top,CELL,CELL);
+            crop=normalizeIdleBody(crop,i);
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
             drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
             cache[i]=drawable;
         }
         return cache[i];
+    }
+    /** Normaliza a altura VISÍVEL do Edu, e não a caixa do PNG.
+     * Mantém os pés na mesma base e as poses em proporção constante.
+     * Só aplica nas poses do ciclo ocioso, sem alterar as cenas de tutorial.
+     */
+    private static int idleSourceHeight(int index){
+        switch(index){
+            case 0: return 85;  // Pokébola na mão
+            case 1: return 86;  // Pokébola subindo
+            case 2: case 3: return 84; // Pokébola alta / descendo
+            case 5: return 104;
+            case 6: return 108;
+            case 7: return 106;
+            case 8: return 101;
+            case 24: case 25: return 107;
+            case 26: case 27: return 108;
+            case 32: return 107;
+            case 33: return 106;
+            case 34: return 107;
+            case 35: return 108;
+            case 42: return IDLE_BODY_HEIGHT;
+            case 62: case 63: case 64: case 65: case 66: return 110;
+            default: return 0;
+        }
+    }
+    private static int idleFeetY(int index){
+        switch(index){
+            case 0: case 1: case 2: case 3: return 113;
+            case 24: case 25: case 34: return 119;
+            case 62: case 63: case 64: case 65: case 66: return 116;
+            default: return 120;
+        }
+    }
+    private static Bitmap normalizeIdleBody(Bitmap original,int index){
+        int rawHeight=idleSourceHeight(index);
+        if(rawHeight<=0)return original;
+        float scale=(float)IDLE_BODY_HEIGHT/rawHeight;
+        Bitmap aligned=Bitmap.createBitmap(CELL,CELL,Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(aligned);
+        Paint pixelPaint=new Paint();
+        pixelPaint.setFilterBitmap(false);
+        pixelPaint.setAntiAlias(false);
+        pixelPaint.setDither(false);
+
+        canvas.save();
+        canvas.translate(CELL/2f-(CELL/2f)*scale,
+            120f-idleFeetY(index)*scale);
+        canvas.scale(scale,scale);
+        if(index==2){
+            // A Pokébola lançada fica acima do personagem.
+            // Não permitir que ela reduza o corpo nem seja duplicada.
+            canvas.clipRect(0,30,CELL,CELL);
+        }
+        canvas.drawBitmap(original,0,0,pixelPaint);
+        canvas.restore();
+
+        if(index==2){
+            // Desenha o efeito separadamente no espaço livre da célula.
+            canvas.drawBitmap(original,new Rect(30,7,61,30),
+                new Rect(14,0,41,22),pixelPaint);
+        }
+        original.recycle();
+        return aligned;
     }
     public Drawable state(String state){return frame(indexForState(state));}
     public static int indexForState(String name){
