@@ -204,6 +204,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "reide_perdida":"iniciar_reide";
         if("E07".equals(id))return "repetir_ciclo";
         if("E08".equals(id)){
+            RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
+            if(phase==RaidDayRegionalWindow.Phase.BEFORE)return "evento_nao_comecou";
+            if(phase==RaidDayRegionalWindow.Phase.ENDED)return "evento_ja_acabou";
+            if(phase==RaidDayRegionalWindow.Phase.ACTIVE)return "evento_comecou";
             if("event_wait".equals(eduDialogueState))
                 return "evento_nao_comecou";
             if("event_pass".equals(eduDialogueState)||
@@ -211,6 +215,9 @@ public final class RaidDayAssistantOverlayService extends Service {
                 return "evento_comecou";
             return "perguntando";
         }
+        if(("E09".equals(id)||"E10".equals(id))&&
+            eduConfiguredPhase()==RaidDayRegionalWindow.Phase.ENDED)
+            return "evento_ja_acabou";
         if("E09".equals(id))
             return "kiribati_reload".equals(eduDialogueState)||
                 "kiribati_wait".equals(eduDialogueState)?
@@ -1394,20 +1401,26 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void showEduReady(){
         LocalDate day=preparation.eventDate();
-        LocalDate today=EduEventClock.today(this);
+        LocalDate today=eduEventLocalToday();
         boolean eve=day!=null&&today.equals(day.minusDays(1));
         boolean eventDay=day!=null&&today.equals(day);
         String reference=EduEventClock.isAdjusted(this)?
             "Relógio Edu ajustado manualmente, sem verificação oficial.":
             "Horário do celular no fuso "+EduEventClock.zone(this).getId()+
                 "; horário do evento ainda não verificado.";
-        setTalk(eventDay?
-            "Hoje é o dia do evento informado. Vamos conferir seus passes!":
+        boolean ended=eduConfiguredPhase()==RaidDayRegionalWindow.Phase.ENDED;
+        setTalk(ended?
+            "O evento já terminou na região escolhida. Não vamos presumir novos passes.":
+            eventDay?
+            "Hoje é o dia do evento no local escolhido. Vamos conferir seus passes!":
             eve?"Estamos na véspera do evento. Já guardou seu passe diário?":
             "A data do evento ainda não corresponde ao dia ou à véspera "+
                 "mostrados no relógio do Edu.",
             "Evento: "+eduEventWhen()+" · "+reference);
-        if(eve||eventDay){
+        if(ended){
+            addTwo("Rever horário",()->editEduEventRegion(),
+                "Agora não",()->setVisible(false));
+        }else if(eve||eventDay){
             addTwo("Começar",()->beginRealSession(),
                 "Mudar data",()->editEduDate());
         }else{
@@ -1596,22 +1609,50 @@ public final class RaidDayAssistantOverlayService extends Service {
             });
     }
     private void showEduEventDay(){
+        RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
+        if(phase==RaidDayRegionalWindow.Phase.BEFORE){
+            setTalk("O evento ainda NÃO começou em "+RaidDaySchedule.zone(this).getId()+
+                ". Confira o horário local antes de iniciar.",
+                "Evento: "+eduEventWhen()+". Relógio Edu no local: "+
+                RaidDayEventClock.format(eventClock.instant(),
+                    RaidDaySchedule.zone(this))+
+                ". O evento pode já estar ativo em outra região.");
+            addTwo("Conferir novamente",()->updateStep(),
+                "Rever região",()->editEduEventRegion());
+            return;
+        }
+        if(phase==RaidDayRegionalWindow.Phase.ENDED){
+            setTalk("O evento JÁ ACABOU em "+RaidDaySchedule.zone(this).getId()+
+                ". Não contabilize novos passes ou reides.",
+                "Janela: "+eduEventWhen()+". O relógio Edu pode estar "+
+                "ajustado manualmente, sem validar o servidor.");
+            addTwo("Ver resumo",()->navigateEdu("E11","EVENT_ENDED"),
+                "Rever região",()->editEduEventRegion());
+            return;
+        }
         if("event_wait".equals(eduDialogueState)){
-            setTalk("O evento ainda não começou no lugar onde você "+
-                "vai jogar? Aguarde a abertura real.",
-                "Não use automaticamente as 14h do vídeo antigo.");
-            addTwo("Começou agora",()->{
+            setTalk(phase==RaidDayRegionalWindow.Phase.ACTIVE?
+                "O relógio mostra o evento ATIVO no local escolhido. "+
+                "Confirme no Pokémon GO se ele começou.":
+                "O evento já começou no lugar onde vai jogar? "+
+                "Confira a data e o horário local.",
+                "Sem confirmação, não vamos registrar novos passes.");
+            addTwo("Confirmado no jogo",()->{
                 setEduDialogueState("event_pass");updateStep();
             },"Continuar aguardando",()->updateStep());
             return;
         }
         if(!"event_pass".equals(eduDialogueState)&&
             !"event_pass_wait".equals(eduDialogueState)){
-            setTalk("Hoje é a data informada para o evento ("+
-                eduEventWhen()+"). Ele já começou no local onde "+
-                "você pretende jogar?",
-                "O exemplo do vídeo foi Mega Chandelure em 31/10, "+
-                "14h às 17h locais; confirme o horário deste evento.");
+            setTalk(phase==RaidDayRegionalWindow.Phase.ACTIVE?
+                "O relógio indica que o evento está acontecendo em "+
+                RaidDaySchedule.zone(this).getId()+". Você confirma no jogo?":
+                "A data informada para o evento é "+eduEventWhen()+
+                ". Ele já começou no lugar onde vai jogar?",
+                phase==RaidDayRegionalWindow.Phase.ACTIVE?
+                    "Janela local: "+eduEventWhen()+
+                    ". Isso não confirma passes automaticamente.":
+                    "Sem janela configurada, confirme o horário manualmente.");
             addTwo("Sim, começou",()->{
                 setEduDialogueState("event_pass");updateStep();
             },"Ainda não",()->{
@@ -1623,7 +1664,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         setTalk("Com o evento iniciado, você ainda tem um passe "+
             "de reide disponível?",
             "Se tiver, faça as reides normalmente. Se esgotou, "+
-            "o relato segue à etapa final de Kiribati.");
+            "o relato segue à etapa opcional em Kiribati.");
         addThree("Sim, tenho",()->navigateEdu("E10","EVENT_PASS_AVAILABLE"),
             "Não tenho",()->advanceEdu("NO_EVENT_PASS"),
             "Vou conferir",()->{
@@ -1729,8 +1770,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         // não pode ficar bloqueada em E02–E07. A mudança é MANUAL.
         // O histórico anterior é preservado e nenhum passe é presumido.
         if(!training&&"D-1".equals(step.phase)&&
-            EduEventClock.today(this).equals(
-                preparation.eventDate())){
+            eduEventLocalToday().equals(preparation.eventDate())){
             setTalk("Chegou o dia do evento! Ontem era a véspera. "+
                 "Vamos conferir os passes de hoje?",
                 "As etapas da véspera não serão marcadas como concluídas.");
@@ -1738,6 +1778,16 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "Agora não",()->{
                     paused=true;persist("PAUSED");updateStep();
                 });
+            return;
+        }
+        RaidDayRegionalWindow.Phase regionPhase=eduConfiguredPhase();
+        if(!training&&regionPhase==RaidDayRegionalWindow.Phase.ENDED&&
+            ("E08".equals(step.id)||"E09".equals(step.id)||"E10".equals(step.id))){
+            setTalk("O evento acabou na região escolhida. "+
+                "Não vou avançar reides nem contar passes automaticamente.",
+                "Acompanhe o resumo ou ajuste a região e o relógio Edu.");
+            addTwo("Ver resumo",()->navigateEdu("E11","EVENT_ENDED"),
+                "Rever região",()->editEduEventRegion());
             return;
         }
         String warning=currentPhaseNote(step);
