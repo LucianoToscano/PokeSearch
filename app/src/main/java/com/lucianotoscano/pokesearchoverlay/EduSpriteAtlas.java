@@ -23,6 +23,8 @@ public final class EduSpriteAtlas {
     public static final int SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT+1;
     public static final String SHADOW_ASSET="edu_sombria_68.b64";
     public static final String UNIFORM_ASSET="edu_avatar_uniform_68.webp";
+    // LT316 QA: atlas revisado opcional, sem descartar o publicado na LT315.
+    public static final String CORRECTED_UNIFORM_ASSET="edu_avatar_uniform_68_lt316.b64";
     public static final int UNIFORM_COLS=8, UNIFORM_ROWS=9;
     // Atlas visual LT313: 22 poses com o MESMO personagem em células 128×128.
     // É opcional e nunca altera o índice público das 67 sprites.
@@ -74,6 +76,25 @@ public final class EduSpriteAtlas {
                 }
             }catch(IOException|RuntimeException ignored){
                 // Só faz fallback à coleção anterior, nunca exibe vazio.
+            }
+            // Preferir a revisão LT316; se faltar, estiver corrompida ou não
+            // decodificar em 1024x1152, manter integralmente o atlas LT315.
+            try(InputStream corrected=context.getAssets().open(CORRECTED_UNIFORM_ASSET)){
+                ByteArrayOutputStream buffer=new ByteArrayOutputStream(320000);
+                byte[] chunk=new byte[4096];
+                for(int n;(n=corrected.read(chunk))!=-1;)buffer.write(chunk,0,n);
+                byte[] bytes=Base64.decode(buffer.toByteArray(),Base64.DEFAULT);
+                BitmapFactory.Options noScale=new BitmapFactory.Options();
+                noScale.inScaled=false;
+                Bitmap candidate=BitmapFactory.decodeByteArray(
+                    bytes,0,bytes.length,noScale);
+                if(candidate!=null&&candidate.getWidth()==UNIFORM_COLS*CELL&&
+                    candidate.getHeight()==UNIFORM_ROWS*CELL){
+                    if(unified!=null)unified.recycle();
+                    unified=candidate;
+                }else if(candidate!=null)candidate.recycle();
+            }catch(IOException|RuntimeException ignored){
+                // Preservar o original LT315 e os outros três fallback.
             }
             Bitmap extra=null;
             try(InputStream supplement=context.getAssets().open(EXTRA_ASSET)){
