@@ -695,10 +695,16 @@ public final class RaidDayAssistantOverlayService extends Service {
         avatarReactionUntil=SystemClock.elapsedRealtime()+1250L;
         if(avatarView!=null)avatarView.setImageDrawable(avatarSprites.frame(frame));
     }
+    // A coleção Edu deve respeitar P/M/G mesmo se o atlas legado LT304
+    // não puder ser carregado. Nunca rebaixar G=100 para ART_DP por engano.
+    private int eduAvatarArtSize(){
+        if(eduSprites!=null)return EduSpriteAtlas.SIZES_PX[avatarSizeIndex];
+        if(avatarSprites!=null)return RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex];
+        return dp(ART_DP);
+    }
     private void updateAvatarSize(){
         if(avatarView==null||bubbleParams==null||wm==null)return;
-        int art=avatarSprites!=null?
-            RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]:dp(ART_DP);
+        int art=eduAvatarArtSize();
         avatarView.setLayoutParams(new FrameLayout.LayoutParams(
             art,art,Gravity.CENTER));
         int target=Math.max(dp(BUBBLE_DP),art+dp(6));
@@ -749,8 +755,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             avatarView.setImageDrawable(avatarSprites.frame(RaidDayAvatarFrames.IDLE_A));
         else if(artwork!=null)avatarView.setImageBitmap(artwork);
         else avatarView.setImageResource(R.drawable.ic_notification);
-        int artSize=avatarSprites!=null?
-            RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]:dp(ART_DP);
+        int artSize=eduAvatarArtSize();
         bubble.addView(avatarView,new FrameLayout.LayoutParams(
             artSize,artSize,Gravity.CENTER));
         View grip=new View(this);
