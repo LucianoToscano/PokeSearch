@@ -159,8 +159,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                     }
                 }
                 LocalDate day=eduEventLocalToday();
-                RaidDayRegionalWindow.Phase phase=(!active&&!training&&
-                    eduFirstBubbleMode)?eduWelcomePhase():eduConfiguredPhase();
+                RaidDayRegionalWindow.Phase phase=eduFirstBubbleMode?
+                    eduWelcomePhase():eduConfiguredPhase();
                 String identity=RaidDaySchedule.zone(
                     RaidDayAssistantOverlayService.this).getId()+":"+
                     RaidDaySchedule.start(RaidDayAssistantOverlayService.this)+":"+
