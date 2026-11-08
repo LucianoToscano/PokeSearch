@@ -46,10 +46,14 @@ contains(/eventClock\.instant\(\)\.toEpochMilli\(\)/,
   "Contador usa relógio existente");
 contains(/handler\.postDelayed\(this,counting\?1000L:5000L\)/,
   "Contador regressivo atualiza a cada segundo somente quando visível");
+contains(/int sublineIndex=countdownFirst\?0:1/,
+  "Contador aparece antes do checklist para não ficar oculto");
 contains(/eduWelcomePhase\(\)==RaidDayRegionalWindow\.Phase\.BEFORE/,
   "Contador limitado ao evento antes de começar");
 contains(/int gap=5; \/\/ distância física/,
   "Ponta do balão tem afastamento de 5px");
+contains(/int headHalfWidth=Math\.round\(eduAvatarArtSize\(\)\*\.23f\)/,
+  "Distância de 5px calculada a partir da cabeça estimada, não da célula");
 contains(/float tip=dp\(28\)/,"Cauda alongada");
 contains(/pointerYRatio/,"A ponta segue posição da cabeça");
 contains(/private final class EduSpeechDrawable extends Drawable/,
