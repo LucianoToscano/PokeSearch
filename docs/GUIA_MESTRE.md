@@ -1,6 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## QA LT316 — 17 momentos no relógio do Edu (08/11/2026; PR #317 draft)
+
+- **Demanda:** no painel `Data e hora` da Home, um único seletor `Momento do evento` oferece **17 instantes** relativos ao início ou ao fim da janela regional: 3 dias antes (evento não começou), 24h/1h/30m/10m/1m/10s antes, início, +2h/+4h/+8h/+12h/+24h/+48h do início, 10 minutos antes/10 minutos após o fim e 7 dias depois do fim.
+- **Implementação:** `EduEventMomentPresets.java` calcula/ordena as opções cronologicamente pelo início/fim real; `EduClockSettingsActivity.java` exibe os horários no fuso IANA do evento, exige janela válida e converte o mesmo relógio Edu para manual; `EduEventClock.setManualInstant()` evita ambiguidade em fusos de horário de verão. **Não altera hora ou GPS do Android, data/hora do servidor, passes, nem cria simulador separado.**
+- **Teste:** `app/tests/lt316-edu-event-clock-moments.test.js`; documento `docs/LT316_EDU_RELOGIO_MOMENTOS_EVENTO_20261108.md`. No SHA `40b20b7c21edf6c2da2514c1d39bf91783a96661`, Node [#42523177418](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523177418), LT169 [#42523177668](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523177668), LT211 [#42523177462](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523177462), Java LT62 [#42523177415](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523177415) e OTA LT173 [#42523177507](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523177507) **SUCCESS**.
+- **Preservado:** 68 sprites, primeira fala e checklist, relógio único, E01–E11, 2 Pokébolas, Doce Raro, login, PoGoCoordinates, preferências, assinatura permanente. **Homologação Samsung pendente.** PR [#317](https://github.com/LucianoToscano/PokeSearch/pull/317) segue em rascunho. A Release pública **LT316 · 0.03.16 · code 54522** permanece intacta, sem merge ou publicação nova.
+
+
 ## QA LT316 — PRIMEIRO BALÃO DO EDU (CONTINUIDADE DA PR #317) · 08/11/2026
 
 - **Nova etapa solicitada:** somente apresentação e primeiras informações no balão branco, sem novos botões. Ao abrir Edu, mostra apenas sprite; ao tocar no Edu, abre a apresentação com `Bug dos Passes ⓘ` sublinhado e tocável; outro toque no balão apresenta o estado regional do evento.
