@@ -146,6 +146,8 @@ public class MainActivity extends Activity {
         eduSimulationClockDisplay.setText(
             EduEventClock.dateLabel(this)+"\n"+
             EduEventClock.timeLabel(this));
+        eduSimulationClockDisplay.setTextSize(
+            EduEventClock.is24HourFormat(this)?10:8);
         eduSimulationClockDisplay.setContentDescription(
             "Relógio do Edu: "+EduEventClock.dateLabel(this)+
             " "+EduEventClock.timeLabel(this)+
@@ -153,61 +155,11 @@ public class MainActivity extends Activity {
                 ". Hora atual do celular, fuso de Brasília. ")+
             "Toque para abrir as opções; segure para restaurar.");
     }
-    // Um único menu discreto associado ao próprio relógio.
+    // O visor abre a mesma organização de configurações das capturas Samsung.
+    // Todas as alterações afetam APENAS o relógio do Edu, nunca o Android.
     private void showEduClockOptions(){
-        final String[] choices={
-            "Escolher data", "Escolher hora", "Ajustar segundos",
-            "−1 dia", "+1 dia", "Usar hora atual do celular"
-        };
-        new AlertDialog.Builder(this)
-            .setTitle("Relógio do Edu")
-            .setMessage("Horário de Brasília · os segundos continuam correndo.")
-            .setItems(choices,(dialog,which)->{
-                if(which==0)chooseEduClockDate();
-                else if(which==1)chooseEduClockTime();
-                else if(which==2)chooseEduClockSeconds();
-                else if(which==3||which==4){
-                    EduEventClock.shiftDays(this,which==3?-1:1);
-                    refreshEduSimulationClock();
-                }else if(which==5){
-                    EduEventClock.reset(this);
-                    refreshEduSimulationClock();
-                }
-            })
-            .setNegativeButton("Fechar",null).show();
-    }
-    private void chooseEduClockDate(){
-        LocalDateTime base=EduEventClock.nowBrasilia(this);
-        new DatePickerDialog(this,(picker,year,month,day)->{
-            EduEventClock.setBrasiliaDateTime(this,base
-                .withDayOfMonth(1).withYear(year).withMonth(month+1)
-                .withDayOfMonth(day));
-            refreshEduSimulationClock();
-        },base.getYear(),base.getMonthValue()-1,base.getDayOfMonth()).show();
-    }
-    private void chooseEduClockTime(){
-        LocalDateTime base=EduEventClock.nowBrasilia(this);
-        new TimePickerDialog(this,(picker,hour,minute)->{
-            EduEventClock.setBrasiliaDateTime(this,
-                base.withHour(hour).withMinute(minute).withSecond(0));
-            refreshEduSimulationClock();
-        },base.getHour(),base.getMinute(),true).show();
-    }
-    private void chooseEduClockSeconds(){
-        LocalDateTime base=EduEventClock.nowBrasilia(this);
-        android.widget.NumberPicker seconds=new android.widget.NumberPicker(this);
-        seconds.setMinValue(0);seconds.setMaxValue(59);
-        seconds.setValue(base.getSecond());
-        seconds.setWrapSelectorWheel(true);
-        new AlertDialog.Builder(this)
-            .setTitle("Segundos")
-            .setView(seconds)
-            .setPositiveButton("Aplicar",(dialog,which)->{
-                EduEventClock.setBrasiliaDateTime(this,
-                    base.withSecond(seconds.getValue()).withNano(0));
-                refreshEduSimulationClock();
-            })
-            .setNegativeButton("Cancelar",null).show();
+        startActivity(new android.content.Intent(this,
+            EduClockSettingsActivity.class));
     }
     private TextView sessionHint;
     private View homeDrawerLayer;
