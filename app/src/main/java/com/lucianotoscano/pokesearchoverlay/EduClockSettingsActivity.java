@@ -227,7 +227,7 @@ public final class EduClockSettingsActivity extends Activity {
         divider(mainCard);
         // Os oito momentos essenciais ficam na própria tela, sem modal,
         // submenus ou a lista longa com 17 opções pouco utilizadas.
-        TextView quickTitle=label("Momentos rápidos",15,PRIMARY,true);
+        TextView quickTitle=label("Momento do evento",15,PRIMARY,true);
         quickTitle.setPadding(dp(16),dp(12),dp(16),dp(7));
         mainCard.addView(quickTitle,match());
         addQuickMomentGrid(mainCard);
