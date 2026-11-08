@@ -3217,6 +3217,32 @@
           "O uso antecipado de passes do dia seguinte, o rendimento prometido e a possibilidade de softban são afirmações do vídeo, não garantias nem validação técnica. O PokeSearch não altera a localização nem automatiza Pokémon GO."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt308-edu-relogio-unico-samsung-20261108",
+      "minVersionCode": 54514,
+      "date": "08/11/2026",
+      "title": "LT308 — Relógio único do Edu, automático/manual estilo Samsung",
+      "sections": {
+        "novidades": [
+          "Relógio do Edu próximo ao ícone de passes, exibindo data e segundos em movimento; toque abre a tela Data e hora com grupos inspirados nas configurações do Samsung.",
+          "Data e hora automáticas ou manuais: a opção automática oculta Definir data e Definir hora; o modo manual permite ajustar ambas sem alterar a hora do Android.",
+          "Controles de fuso horário automático, uso do fuso já detectado pelo Android e formato 12 ou 24 horas, com seleção manual de fuso quando o automático estiver desligado."
+        ],
+        "melhorias": [
+          "O Edu agora segue a mesma fonte de data/hora e fuso que o visor, inclusive nas decisões de véspera D−1 e dia do evento D; não existe seletor Simular hoje / Evento real na conversa.",
+          "O visor retorna ao relógio do aparelho ao segurar; configurações manuais persistem e continuam avançando com o tempo real, sem alterar o relógio, GPS ou Pokémon GO.",
+          "Quando hora ou fuso são ajustados, o aplicativo identifica essa referência como horário manual, não como confirmação oficial do evento."
+        ],
+        "correcoes": [
+          "Eliminada divergência em que a tela mostrava um dia em fuso selecionado, mas o Edu validava etapas sempre pela data fixa de Brasília.",
+          "Corrigido uso de relógio duplicado no Edu; preparado suporte para substituir futuramente a fonte ajustável por horário oficial de Brasília."
+        ],
+        "emDesenvolvimento": [
+          "Validação física Samsung da aparência da tela, escala, toques, interruptores, virada do dia, retomada e sobreposição Edu permanece pendente.",
+          "Horários oficiais dos eventos e uso comunitário do chamado Bug dos Passes não são garantidos; o aplicativo não automatiza o jogo, o GPS nem o recebimento de passes."
+        ]
+      }
     }
   ]
 }
