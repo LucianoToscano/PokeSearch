@@ -119,14 +119,27 @@ public final class RaidDayAssistantOverlayService extends Service {
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
             if(eventClock!=null){
-                // A tela de ajustes pode alterar data/fuso enquanto o Edu está visível.
-                // Nunca muda o histórico de uma sessão em andamento.
+                // Reconhece a janela selecionada e a virada para o exemplo
+                // histórico sem perder sessões anteriores nem criar passes.
                 if(preparation!=null&&!active&&!training&&prefs!=null){
+                    EduEventSelection.sync(
+                        RaidDayAssistantOverlayService.this,prefs,eventClock);
                     String stored=prefs.getString("raid_day_prep_v2_answer_0","");
                     LocalDate loaded=preparation.eventDate();
-                    if(loaded!=null&&!stored.equals(loaded.toString()))
+                    if(loaded==null||!stored.equals(loaded.toString())){
                         preparation=RaidDayPreparation.load(
                             RaidDayAssistantOverlayService.this,prefs,eventClock);
+                        String updatedKey=preparation.eventKey();
+                        if(!updatedKey.equals(eventKey)){
+                            eventKey=updatedKey;
+                            prefs.edit().putString("eventKey",eventKey)
+                                .putInt("sessionGeneration",1).apply();
+                            sessionKey=eventKey+"#1";
+                            restoreJournal();
+                            riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+                                prefs.getString("riskAcceptance",""));
+                        }
+                    }
                 }
                 LocalDate day=eduEventLocalToday();
                 RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
@@ -357,10 +370,21 @@ public final class RaidDayAssistantOverlayService extends Service {
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
         eventClock=EduEventClock.forEdu(this);
         preparation=RaidDayPreparation.load(this,prefs,eventClock);
+        // A janela configurada é a referência da data do evento.
+        // Se o Edu estiver no exemplo histórico manual, escolhe Mega Chandelure
+        // automaticamente, sem reabrir "Qual é o Dia de Reides?".
+        boolean eventSynchronized=EduEventSelection.sync(this,prefs,eventClock);
+        if(eventSynchronized)
+            preparation=RaidDayPreparation.load(this,prefs,eventClock);
         try{
             plan=RaidDayGuidePlan.load(this);
             journal=RaidDayDatabase.get(this);
             eventKey=prefs.getString("eventKey","evento_nao_configurado");
+            if(eventSynchronized&&!preparation.eventKey().equals(eventKey)){
+                eventKey=preparation.eventKey();
+                prefs.edit().putString("eventKey",eventKey)
+                    .putInt("sessionGeneration",1).apply();
+            }
             int generation=Math.max(1,prefs.getInt("sessionGeneration",1));
             sessionKey=eventKey+"#"+generation;
             riskAccepted=(plan.riskVersion+":"+eventKey).equals(
@@ -1456,6 +1480,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
     }
     private void editEduDate(){
+        if(RaidDaySchedule.valid(RaidDaySchedule.start(this),
+            RaidDaySchedule.finish(this))){
+            editEduEventRegion(); // data, região e hora ficam numa única tela
+            return;
+        }
         prefs.edit().remove("edu_event_date_confirmed_key").apply();
         preparation.beginEditing();
         preparation.save(prefs);
