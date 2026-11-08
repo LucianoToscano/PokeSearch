@@ -172,12 +172,15 @@ public final class EduEventClock {
 
     private static final class EduClock extends Clock {
         private final Context context;
-        EduClock(Context context){this.context=context;}
-        @Override public ZoneId getZone(){return zone(context);}
+        private final ZoneId clockZone;
+        EduClock(Context context){this(context,zone(context));}
+        EduClock(Context context,ZoneId zone){
+            this.context=context;this.clockZone=zone;
+        }
+        @Override public ZoneId getZone(){return clockZone;}
         @Override public Clock withZone(ZoneId zone){
-            // Exigir clock com outra zona não muda a fonte temporal nem as
-            // opções escolhidas na Home: somente uma visão de mesmo instante.
-            return Clock.fixed(instant(),zone);
+            // Trocar a visão de fuso mantém a MESMA linha do tempo em movimento.
+            return new EduClock(context,zone);
         }
         @Override public Instant instant(){
             return Instant.ofEpochMilli(nowMillis(context));
