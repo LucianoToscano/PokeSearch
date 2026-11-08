@@ -26,7 +26,7 @@ assert.match(reminders,/eventKey\.equals\(prefs\.getString\("eventKey",""\)\)/);
 assert.match(settings,/CalendarContract\.Events\.CONTENT_URI/);
 assert.match(settings,/Intent\.ACTION_INSERT/);
 assert.match(settings,/requestPermissions\(/);
-assert.match(settings,/Você confirma|você confirma/);
+assert.match(settings,/Adicionar ao calendário/); // fluxo externo requer confirmação do usuário
 assert.match(recovery,/lastConfirmed\(/);
 assert.match(recovery,/RAID_WIN/);
 assert.match(recovery,/RAID_CAUGHT/);
