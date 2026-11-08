@@ -1,6 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## LT317 OFICIAL — EDU: PRIMEIRA CONVERSA E 17 MOMENTOS (08/11/2026)
+
+- **ÚLTIMA RELEASE PUBLICADA E VERIFICADA:** **LT317 · `0.03.17` · versionCode `54523` · label `51321`**. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.17-54523), publicada em 08/11/2026 às **21:15:21 UTC**. **Sem downgrade; LT316/anteriores são históricas.**
+- **APK oficial persistente:** [`PokeSearch-v0.03.17-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.17-54523/PokeSearch-v0.03.17-LT.apk), **34.708.982 bytes**, digest SHA-256 **`a477f8aa93c75d50ab09e6c95d14435744ec6f8d69ec1629d1494ba636026dda`**. Asset `uploaded` e digest/tamanho conferidos em GitHub Releases/latest. Assinatura Android v2 permanente com certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, gate de certificado/R8, APK não-debuggable e limite **<35.000.000 bytes** aprovados no CI.
+- **Publicação protegida:** [workflow oficial #42523901901](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523901901), `completed/success`; jobs **preflight/publish** e checagem pós-publicação aprovados. [PR #317](https://github.com/LucianoToscano/PokeSearch/pull/317) squash `a4c4b696c94e32f3afeb01ec03d3b93d646e9a0d`; fonte do APK/pedido `release/official-request.json` commit **`903994b905da8dd33bc4e77695af4bb18c1e28a3`**. CI no head da PR `25ce0047cda8a2bfbed6456905e2e4b389769e5a`: Node, LT169, LT211, Java LT62 e OTA LT173 **SUCCESS**.
+- **Edu — fala inicial e fases:** primeiro balão simples de apresentação, link sublinhado `Bug dos Passes ⓘ` e links contextuais sem botões adicionais na conversa; sprites evento ainda não começou (38), iniciado (37) e encerrado (36), data/hora regional IANA, contador regressivo com segundos e checklist manual de softban, fuso/região e passe laranja com ⓘ. A cauda branca alongada é direcionada aproximadamente a 5px da cabeça; texto fica no balão, sem prometer passes ou validar automaticamente recompensas.
+- **Relógio único:** menu `Data e hora` na Home ganhou **17 momentos relativos ao início/término** do evento, selecionados cronologicamente e exibidos no fuso do evento. O ajuste altera **somente o relógio interno manual do Edu**, não a hora do Android nem o Pokémon GO. `EduEventMomentPresets.java`, `EduClockSettingsActivity.java`, `EduEventClock.setManualInstant()`; teste `app/tests/lt316-edu-event-clock-moments.test.js`.
+- **Correção P/M/G e preservações:** `eduAvatarArtSize()` usa a seleção 50/75/100 px do atlas Edu mesmo sem o legado, mantendo os **68 sprites**, 22 poses ociosas, Sombria, teleporte e índices 0–67. P1/P2, Doce Raro, PoGoCoordinates, API, login, rankings, favoritos, E01–E11, preferências, assinatura e atualizador seguros sem mudanças de escopo.
+- **Limite de validação:** **QA físico Samsung ainda pendente** de instalação e inspeção de sprites, balões, contador, checklists e 17 presets. CI automatizado não equivale à homologação visual ou instalação. APK distribuído pelo GitHub é descoberto pelo atualizador; Android requer confirmação do instalador. [Registro técnico detalhado](LT317_EDU_PUBLICACAO_OFICIAL_E_HOMOLOGACAO_20261108.md).
+
+
+
 ## QA LT316 — 17 momentos no relógio do Edu (08/11/2026; PR #317 draft)
 
 - **Demanda:** no painel `Data e hora` da Home, um único seletor `Momento do evento` oferece **17 instantes** relativos ao início ou ao fim da janela regional: 3 dias antes (evento não começou), 24h/1h/30m/10m/1m/10s antes, início, +2h/+4h/+8h/+12h/+24h/+48h do início, 10 minutos antes/10 minutos após o fim e 7 dias depois do fim.
