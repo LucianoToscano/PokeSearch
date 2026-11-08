@@ -16,7 +16,8 @@ const service=read(dir+"RaidDayAssistantOverlayService.java");
 const manifest=read("AndroidManifest.xml");
 const workflows=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt304-dia-reides-signed-qa.yml"),"utf8");
 
-assert.match(schedule,/ZoneId zone=RaidDayEventClock\.BRASILIA/);
+assert.match(schedule,/save\(ctx,date,start,end,RaidDayEventClock\.BRASILIA,false\)/);
+assert.match(schedule,/putString\("raid_day_window_zone",zone\.getId\(\)\)/);
 assert.match(schedule,/setAndAllowWhileIdle\(/);
 assert.doesNotMatch(schedule,/setExactAndAllowWhileIdle|SCHEDULE_EXACT_ALARM/);
 assert.match(schedule,/INFORMADO_USUARIO/);
