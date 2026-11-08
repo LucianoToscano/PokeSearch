@@ -255,6 +255,10 @@ public final class RaidDayAssistantOverlayService extends Service {
             int tick=(int)Math.max(0,(now-eduDragStartedAt)/185L);
             return frames[Math.min(frames.length-1,tick)];
         }
+        // Com a fala aberta, a fase do evento tem prioridade total sobre
+        // reações/animações antigas recuperadas do histórico da sessão.
+        if(visible&&eduFirstBubbleMode)
+            return EduSpriteAtlas.indexForState(eduContextState());
         if(!eduAnimationName.isEmpty()){
             int[] frames=EduSpriteAtlas.sequence(eduAnimationName);
             if(frames.length>0){
@@ -273,6 +277,20 @@ public final class RaidDayAssistantOverlayService extends Service {
         return EduSpriteAtlas.indexForState(eduContextState());
     }
     private String eduContextState(){
+        // Não retomar sprites E01-E11 enquanto o usuário está no primeiro
+        // balão. Histórico e progresso continuam salvos, mas não comandam
+        // a apresentação nem os três estados simples do evento.
+        if(eduFirstBubbleMode){
+            if(eduWelcomePage==0)return "apresentacao";
+            RaidDayRegionalWindow.Phase phase=eduWelcomePhase();
+            if(phase==RaidDayRegionalWindow.Phase.BEFORE)
+                return "evento_nao_comecou";
+            if(phase==RaidDayRegionalWindow.Phase.ACTIVE)
+                return "evento_comecou";
+            if(phase==RaidDayRegionalWindow.Phase.ENDED)
+                return "evento_encerrou";
+            return "apresentacao";
+        }
         if(finished)return "resumo_concluido";
         if(eduSettingsOpen)return "perguntando";
         if(paused)return "parado";
@@ -460,9 +478,17 @@ public final class RaidDayAssistantOverlayService extends Service {
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
         eventClock=EduEventClock.forEdu(this);
         preparation=RaidDayPreparation.load(this,prefs,eventClock);
-        // A janela configurada é a referência da data do evento.
-        // Se o Edu estiver no exemplo histórico manual, escolhe Mega Chandelure
-        // automaticamente, sem reabrir "Qual é o Dia de Reides?".
+        // Mega Chandelure é o evento-base do tutorial. Usar a janela local
+        // de 31/10/2026 somente se o usuário não escolheu outra janela.
+        // O relógio interno é só uma ferramenta de teste: não aparece na fala.
+        if(!RaidDaySchedule.valid(RaidDaySchedule.start(this),
+                RaidDaySchedule.finish(this))){
+            RaidDaySchedule.save(this,
+                RaidDayRegionalWindow.CHANDELURE_DATE,
+                RaidDayRegionalWindow.CHANDELURE_START,
+                RaidDayRegionalWindow.CHANDELURE_END,
+                EduEventClock.zone(this),true);
+        }
         boolean eventSynchronized=EduEventSelection.sync(this,prefs,eventClock);
         if(eventSynchronized)
             preparation=RaidDayPreparation.load(this,prefs,eventClock);
@@ -1590,8 +1616,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         java.time.ZonedDateTime local=Instant.ofEpochMilli(start)
             .atZone(RaidDaySchedule.zone(this));
         return local.format(DateTimeFormatter.ofPattern(
-            "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")))+
-            " ("+RaidDaySchedule.zone(this).getId()+")";
+            "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")));
     }
     private String eduWelcomeEnd(){
         long finish=RaidDaySchedule.finish(this);
@@ -1611,20 +1636,12 @@ public final class RaidDayAssistantOverlayService extends Service {
             String.format(Locale.forLanguageTag("pt-BR"),
                 "%02dh %02dmin %02ds",hours,minutes,secs);
     }
-    private String eduWelcomeSource(){
-        return EduEventClock.isAdjusted(this)?
-            "Relógio manual do Edu · não confirma horário do servidor":
-            (RaidDaySchedule.isChandelureExample(this)?
-                "Exemplo histórico Mega Chandelure · horário local":
-                "Janela informada no relógio do Edu · confira o evento no jogo");
-    }
     private void updateEduWelcomeCountdown(){
         if(eduFirstBubbleMode&&eduWelcomePage==1&&
             eduInfoTopic.isEmpty()&&
             eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE&&
             eduSubline!=null)
-            eduSubline.setText(eduWelcomeCountdown()+"\n"+
-                eduWelcomeSource());
+            eduSubline.setText(eduWelcomeCountdown());
     }
     private void appendEduLink(SpannableStringBuilder rich,
         String title,String topic){
@@ -1758,6 +1775,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduMainCard.setVisibility(View.VISIBLE);
         eduSpeech.setTextSize(14);
         eduSubline.setTextSize(12);
+        eduSubline.setTextColor(Color.rgb(88,98,107));
+        eduSubline.setTypeface(android.graphics.Typeface.DEFAULT,
+            android.graphics.Typeface.NORMAL);
         // Antes do início, deixar o contador VISÍVEL no alto do balão:
         // uma lista longa não pode escondê-lo no fim da rolagem.
         boolean countdownFirst=eduInfoTopic.isEmpty()&&eduWelcomePage==1&&
@@ -1766,6 +1786,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(eduMainCard.indexOfChild(eduSubline)!=sublineIndex){
             eduMainCard.removeView(eduSubline);
             eduMainCard.addView(eduSubline,sublineIndex);
+        }
+        if(countdownFirst){
+            eduSubline.setTextSize(16);
+            eduSubline.setTextColor(Color.rgb(37,94,116));
+            eduSubline.setTypeface(android.graphics.Typeface.DEFAULT,
+                android.graphics.Typeface.BOLD);
         }
         if(!eduInfoTopic.isEmpty()){
             setTalk(eduInfoText(),"Toque no balão para voltar.");
@@ -1785,24 +1811,23 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         RaidDayRegionalWindow.Phase phase=eduWelcomePhase();
         if(phase==RaidDayRegionalWindow.Phase.UNKNOWN){
-            setTalk("Ainda não há um evento com data e horário definidos.",
-                "Configure o evento no relógio da Home para eu acompanhar.");
+            setTalk("Ainda não tenho o horário deste evento.\n"+
+                "Aguarde as informações do próximo evento.","");
         }else if(phase==RaidDayRegionalWindow.Phase.ENDED){
-            setTalk("Infelizmente, o evento já foi encerrado nesta região. " +
-                "Aguarde o próximo evento!","Encerrado · "+eduWelcomeSource());
+            setTalk("Infelizmente, o evento já terminou.\n"+
+                "Aguarde o próximo evento!","");
         }else if(phase==RaidDayRegionalWindow.Phase.BEFORE){
             eduSpeech.setText(eduChecklistText(true,eduWelcomeStart()));
             eduSubline.setVisibility(View.VISIBLE);
             updateEduWelcomeCountdown();
         }else if(eduWelcomePage==1){
-            setTalk("O evento já começou!\n\n"+
+            setTalk("O evento começou!\n"+
                 (RaidDaySchedule.isChandelureExample(this)?
-                    "Mega Chandelure (exemplo histórico)":
-                    "Evento configurado no Edu")+
-                "\nInício: "+eduWelcomeStart()+
+                    "Mega Chandelure\n":"")+
+                "Início: "+eduWelcomeStart()+
                 "\nTérmino: "+eduWelcomeEnd()+
-                "\nConfira suas reides e passes no próprio jogo.",
-                eduWelcomeSource()+" · Toque para ver o checklist.");
+                "\nConfira suas reides e passes no jogo.",
+                "Toque no balão para ver o checklist.");
         }else{
             eduSpeech.setText(eduChecklistText(false,eduWelcomeStart()));
             eduSubline.setText("Toque em ☐ para marcar; ⓘ explica cada item.");
@@ -2427,9 +2452,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduActions.setVisibility(View.VISIBLE);
         eduMiniActions.setVisibility(View.VISIBLE);
         updateEventClock();
-        eduFirstBubbleMode=!eduSettingsOpen&&!active&&!training;
-        if(eduPanelHeader!=null)eduPanelHeader.setVisibility(
-            eduFirstBubbleMode?View.GONE:View.VISIBLE);
+        // Toda abertura da fala usa a nova introdução, inclusive quando
+        // havia uma sessão E01-E11 antiga persistida (etapa 10/11 etc.).
+        // O menu oculto de ajustes continua disponível por toque longo.
+        eduFirstBubbleMode=!eduSettingsOpen;
+        // Nunca mostrar "Edu ETAPA ...", X ou cabeçalho antigo na fala.
+        if(eduPanelHeader!=null)
+            eduPanelHeader.setVisibility(View.GONE);
         if(eduSettingsOpen){showEduSettings();}
         else if(eduFirstBubbleMode){showEduFirstBubble();}
         else if(active||training){
@@ -2448,6 +2477,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         }else if(!riskAccepted){showEduRisk();}
         else{showEduReady();}
         if(visible){
+            // Trocar a sprite IMEDIATAMENTE, mesmo com animação P/M/G OFF.
+            // O ticker posterior apenas mantém a pose contextual.
+            if(eduFirstBubbleMode&&eduSprites!=null&&avatarView!=null)
+                avatarView.setImageDrawable(
+                    eduSprites.state(eduContextState()));
             // Centraliza novamente após a fala alterar a altura do balão.
             panelScroll.post(()->{
                 if(visible){placePanelCoordinates();placePanel();}
@@ -2500,10 +2534,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         resetEduIdle();
         visible=show;
         if(show){
-            if(!active&&!training){
+            if(!eduSettingsOpen){
                 eduWelcomePage=0;
                 eduInfoTopic="";
             }
+            eduAnimationName="";
+            eduReactionState="";
             updateStep();
             placePanelCoordinates();
             wm.addView(panelScroll,panelParams);
