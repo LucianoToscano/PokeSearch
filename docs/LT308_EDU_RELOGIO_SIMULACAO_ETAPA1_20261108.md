@@ -40,7 +40,7 @@ Os grupos seguem a organização das imagens, **mas não reproduzem a interface 
 - **Não mexer** no roteiro E01–E11, assinatura Android permanente, duas Pokébolas, Doce Raro, API, consentimento MediaProjection ou histórico real de passes. A alteração manual do relógio não modifica Pokémon GO e não garante recompensas.
 - A fonte de tempo ajustada **não é relógio oficial verificado**. Não programar notificações reais para horários fictícios como se fossem horários confirmados pela Niantic.
 
-**Status deste documento:** PR #306 em preparação para merge/publicação autorizados. Conferir no GitHub o commit, os gates e a Release antes de marcar como publicado; a homologação física ainda é pendente.
+**Status oficial verificado em 08/11/2026:** PR #306 integrada por squash `60581c4ef69e1c85a4a35e8e0fc687309cd5c598`, Release pública **LT308 — 0.03.08 / code 54514** no link https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.08-54514. APK `PokeSearch-v0.03.08-LT.apk`, **34.035.668 bytes**, SHA-256 `c693b8c28be6536d91c6774c17d8c6867a685091232b06bf8a8bf8624a217871`. Workflow protegido [#42472319313](https://github.com/LucianoToscano/PokeSearch/actions/runs/42472319313) `completed/success` com assinatura e digest validados. Fonte do APK `25873554634f66d8af202d5f5a8eb081db6ebf9a`. **A homologação física Samsung e OCR PT/EN ainda está pendente.**
 
 ## Revisão antes da publicação — fuso e virada de dia
 
