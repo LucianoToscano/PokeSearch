@@ -94,6 +94,8 @@ assert.match(screen,/sem acessar GPS/);
 assert.match(screen,/NUNCA|nunca altera|nunca altera/i);
 
 assert.match(edu,/eventClock=EduEventClock\.forEdu\(this\)/);
+assert.match(edu,/EduEventClock\.today\(\s*RaidDayAssistantOverlayService\.this\)/,
+  "O Runnable interno deve usar contexto do serviço, não this da tarefa");
 assert.match(edu,/EduEventClock\.today\(this\)/);
 assert.match(edu,/EduEventClock\.dayState\(this,preparation\.eventDate\(\)\)/);
 assert.match(edu,/if\(lastEduClockDay!=null&&!day\.equals\(lastEduClockDay\)/);
