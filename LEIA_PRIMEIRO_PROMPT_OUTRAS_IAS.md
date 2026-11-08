@@ -1,6 +1,12 @@
-# LEIA PRIMEIRO — PokeSearch LT313 Edu (08/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT314 Edu (08/11/2026)
 
-**BASE OFICIAL ATUAL:** **LT313 · 0.03.13 · versionCode 54519 · label 51317**, [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.13-54519), APK **`PokeSearch-v0.03.13-LT.apk`** de **34.949.360 bytes**, SHA-256 `ec1a85fbcd37483cfde7823797b22c4fca53bef303d43ec01128c01282652b3f`. [Workflow oficial #42498529759](https://github.com/LucianoToscano/PokeSearch/actions/runs/42498529759) **completed/success**. [PR #312](https://github.com/LucianoToscano/PokeSearch/pull/312) integrada por squash `36754a72f6d08f1dd8ad107b1b5b42dd5c186d72`. Pedido oficial commit `b61bd0220b325bd944d586f7aab66ed2f0406bc7`. **Não restaurar versões antigas nem começar pela LT308/LT312**. Verificar HEAD e Release/latest em tempo real a cada novo chat.
+**ÚLTIMA BASE OFICIAL:** LT314 · `0.03.14` · versionCode `54520` · label `51318`.
+[Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.14-54520), APK `PokeSearch-v0.03.14-LT.apk` de **34.953.255 bytes**, SHA-256 `21ad916305460d9bcf36e2fce200419f65b6488de82a51ed831d55dc7251f99a`.
+[Workflow oficial #42503837610](https://github.com/LucianoToscano/PokeSearch/actions/runs/42503837610) **completed/success**, [PR #313](https://github.com/LucianoToscano/PokeSearch/pull/313) squash `af6edbb4212596984322bd223481b2bb63d8289a`; release request `43f071bd98be9f62d5260587579fe643a9945cf6`. Não fazer downgrade; confirmar HEAD, Releases e CI antes de mexer.
+
+**Mudanças LT314:** coleção de **68 sprites**, nova Sombria (índice 67) em espera ansiosa, geometria `EduSpriteGeometry` fixa âncoras de cabeça/rosto X=64 e pés Y=119, 112 px referência para corpo, pixel art sem blur, cache e P/M/G mantidos. Os 22 quadros ociosos não recebem reescala; teleporte preserva alterações intencionais de tamanho/opacidade. Assets antigos preservados (62 base, cinco especiais e override de 22). Teste `app/tests/lt314-edu-68-geometry-shadow.test.js`, registro `docs/LT314_EDU_AUDITORIA_68_SPRITES_SOMBRIA_GEOMETRIA_20261108.md`. QA física Samsung **ainda pendente**. Não modificar dados, GPS, passes, botões, relógio único, P1/P2, login, OTA ou assinatura.
+
+## Histórico LT313 — referência visual anterior
 
 **Foco LT313:** normalizar a identidade e as proporções do Edu nas **22 poses ociosas**. Novo atlas local `app/src/main/assets/edu_avatar_idle_consistent_22.webp` (WebP VP8L 256 cores, 1024×384, 22 sprites transparentes de 128×128 px, 59.618 bytes, SHA-256 `9ec3afa294d06d9d1cad9db8d4a3256e5f7230623f58cd6819e835192eee1a62`). Cabeça/rosto/corpo no mesmo estilo, altura corporal 112px, pés Y=120. A nova imagem substitui visualmente 22 quadros pelos índices originais, sem mexer nas demais 45 poses ou nas 67 referências. Fallback para o atlas anterior se necessário, mantendo P/M/G 50/75/100, sem blur e com ciclo ocioso em sequências e pausas naturais. **QA físico Samsung permanece pendente**.
 
