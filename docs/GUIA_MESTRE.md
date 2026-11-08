@@ -1,6 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## LT308 — EDU · RELÓGIO DE SIMULAÇÃO (ETAPA 1) — AGUARDANDO APROVAÇÃO (08/11/2026)
+
+- **Combinado com o proprietário:** redesenho do Edu por partes, em conversa, mostrando e confirmando cada uma. **Não fazer merge nem publicar APK desta candidata antes da confirmação expressa da etapa.** Última Release pública verificada na abertura da tarefa: **LT307 / 0.03.07 / versionCode 54513**.
+- **Primeira peça criada em branch `feature/lt308-edu-simulation-clock-step1-20261108`:** visor discreto de 65×34 dp **ao lado direito do ícone dos passes/Edu na Home**, com data `dd/MM/yy` em cima e hora `HH:mm:ss` embaixo. Relógio começa na hora atual do celular e corre continuamente, avançando segundos, minutos, horas e dias. Tocar abre data e hora nativas do Android; segurar restaura relógio do aparelho. Em telas estreitas pode ocultar o wordmark, mas não os controles.
+- **Isolamento temporal:** `EduSimulationClock.java` mantém âncora local de hora virtual e tempo real transcorrido, sem alterar sistema/GPS. **Somente treinamento** `training&&demoToday` lê a hora fictícia, atualizando datas de exemplo; **sessões reais continuam com `Clock.systemUTC()` e `America/Sao_Paulo`**, sem usar dados artificiais. O simulador será removido em etapa futura, quando o Edu real dependerá exclusivamente da referência de Brasília (horário de rede oficial ainda não implementado/verificado).
+- **QA e doc:** teste novo `app/tests/lt308-edu-simulation-clock.test.js`; análise técnica [`LT308_EDU_RELOGIO_SIMULACAO_ETAPA1_20261108.md`](LT308_EDU_RELOGIO_SIMULACAO_ETAPA1_20261108.md). **CI e teste visual Samsung pendentes**; não presumir nova Release, merge, APK ou validação de imagem. Manter intactos P1/P2, Doce Raro, Edu avatar/diálogos, consentimentos Android, API e assinatura.
+
+
+
 ## LT307 OFICIAL — EDU REVISADO A PARTIR DO VÍDEO ORIGINAL (publicação verificada em 08/11/2026)
 
 - **Status público confirmado:** LT307 **`0.03.07` / versionCode `54513` / label `51311`**, tag [`v0.03.07-54513`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.07-54513), GitHub Releases/latest, `draft=false`, `prerelease=false`, APK `state=uploaded`. **Nova referência pública é LT307**, com LT306 e anteriores mantidas como histórico e sem downgrade.
