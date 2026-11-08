@@ -69,7 +69,7 @@ public final class RaidDayEventSettingsActivity extends Activity {
             startTime=RaidDayRegionalWindow.CHANDELURE_START;
             endTime=RaidDayRegionalWindow.CHANDELURE_END;
             chandelureExample=true;
-            render();
+            persistSelectedWindow();
         });
         addButton("Região onde vai jogar",this::chooseRegion);
         addButton("Escolher data",()->{
@@ -90,30 +90,7 @@ public final class RaidDayEventSettingsActivity extends Activity {
             },
                 endTime.getHour(),endTime.getMinute(),true).show();
         });
-        addButton("Salvar janela informada",()->{
-            try{
-                RaidDaySchedule.save(this,date,startTime,endTime,
-                    eventZone,chandelureExample);
-                // Data do roteiro acompanha a data LOCAL escolhida para o evento.
-                // Requer reconfirmação somente quando a data anterior era diferente.
-                RaidDayPreparation latest=RaidDayPreparation.load(this,prefs,
-                    EduEventClock.forEdu(this));
-                if(!date.equals(latest.eventDate())){
-                    prefs.edit()
-                        .putString("raid_day_prep_v2_answer_0",date.toString())
-                        .putBoolean("raid_day_prep_v2_completed",false)
-                        .putInt("raid_day_prep_v2_question",0)
-                        .remove("edu_event_date_confirmed_key")
-                        .apply();
-                }
-                RaidDaySchedule.setReminders(this,
-                    prefs.getBoolean("raid_day_alerts_enabled",false));
-                render();
-            }catch(IllegalArgumentException invalid){
-                new AlertDialog.Builder(this).setMessage("Janela inválida. Verifique os horários.")
-                    .setPositiveButton("OK",null).show();
-            }
-        });
+        addButton("Salvar janela informada",this::persistSelectedWindow);
         addButton("Ativar / desativar lembretes",()->{
             if(!RaidDaySchedule.valid(RaidDaySchedule.start(this),
                 RaidDaySchedule.finish(this))){
@@ -156,6 +133,20 @@ public final class RaidDayEventSettingsActivity extends Activity {
         setContentView(root);
         render();
     }
+    private void persistSelectedWindow(){
+        try{
+            RaidDaySchedule.save(this,date,startTime,endTime,
+                eventZone,chandelureExample);
+            EduEventSelection.sync(this,prefs,EduEventClock.forEdu(this));
+            RaidDaySchedule.setReminders(this,
+                prefs.getBoolean("raid_day_alerts_enabled",false));
+            render();
+        }catch(IllegalArgumentException invalid){
+            new AlertDialog.Builder(this)
+                .setMessage("Janela inválida. Verifique os horários e a região.")
+                .setPositiveButton("OK",null).show();
+        }
+    }
     private void addButton(String label,Runnable action){
         Button button=new Button(this);
         button.setText(label);button.setAllCaps(false);
@@ -183,7 +174,8 @@ public final class RaidDayEventSettingsActivity extends Activity {
             .setItems(labels,(d,index)->{
                 if(index<ids.length){
                     eventZone=ZoneId.of(ids[index]);
-                    render();
+                    if(chandelureExample)persistSelectedWindow();
+                    else render();
                 }else{
                     EditText input=new EditText(this);
                     input.setSingleLine(true);
@@ -195,7 +187,8 @@ public final class RaidDayEventSettingsActivity extends Activity {
                         .setPositiveButton("Aplicar",(dialog,which)->{
                             try{
                                 eventZone=ZoneId.of(input.getText().toString().trim());
-                                render();
+                                if(chandelureExample)persistSelectedWindow();
+                                else render();
                             }catch(RuntimeException invalid){
                                 new AlertDialog.Builder(this)
                                     .setMessage("Fuso inválido. Exemplo: Europe/London.")
@@ -235,7 +228,7 @@ public final class RaidDayEventSettingsActivity extends Activity {
             "\\nHorário local: "+startTime+"–"+endTime+
             "\\nRegião: "+localZone+"\\n"+origin+
             preview+
-            "\\nStatus no relógio do Edu: "+phase+
+            "\\nStatus no relógio do Edu: "+phasePt+
             "\\nRelógio Edu "+(EduEventClock.isAdjusted(this)?
                 "(ajustado, não oficial)":"(hora do celular)")+": "+
             RaidDayEventClock.summary(EduEventClock.forEdu(this).instant())+
