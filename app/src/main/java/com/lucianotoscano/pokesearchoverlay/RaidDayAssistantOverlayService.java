@@ -1758,6 +1758,15 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduMainCard.setVisibility(View.VISIBLE);
         eduSpeech.setTextSize(14);
         eduSubline.setTextSize(12);
+        // Antes do início, deixar o contador VISÍVEL no alto do balão:
+        // uma lista longa não pode escondê-lo no fim da rolagem.
+        boolean countdownFirst=eduInfoTopic.isEmpty()&&eduWelcomePage==1&&
+            eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE;
+        int sublineIndex=countdownFirst?0:1;
+        if(eduMainCard.indexOfChild(eduSubline)!=sublineIndex){
+            eduMainCard.removeView(eduSubline);
+            eduMainCard.addView(eduSubline,sublineIndex);
+        }
         if(!eduInfoTopic.isEmpty()){
             setTalk(eduInfoText(),"Toque no balão para voltar.");
             return;
