@@ -115,8 +115,15 @@ public final class RaidDayAssistantOverlayService extends Service {
     private Clock eduTrainingOrRealClock(){return eventClock;}
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
+            if(eventClock!=null){
+                LocalDate day=RaidDayEventClock.todayBrasilia(eventClock);
+                if(lastEduClockDay!=null&&!day.equals(lastEduClockDay)&&
+                    visible&&eduSpeech!=null)updateStep();
+                lastEduClockDay=day;
+            }
             if(eduBadge!=null)updateEventClock();
-            handler.postDelayed(this,60000L);
+            // Atualiza a conversa quando o relógio manual cruza meia-noite.
+            handler.postDelayed(this,5000L);
         }
     };
     private boolean paused=false,finished=false,visible=false,dragging=false;
