@@ -1227,7 +1227,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         boolean eventDay=day!=null&&today.equals(day);
         String reference=EduEventClock.isAdjusted(this)?
             "Relógio Edu ajustado manualmente, sem verificação oficial.":
-            "Horário atual do celular em Brasília.";
+            "Horário do celular no fuso "+EduEventClock.zone(this).getId()+
+                "; horário do evento ainda não verificado.";
         setTalk(eventDay?
             "Hoje é o dia do evento informado. Vamos conferir seus passes!":
             eve?"Estamos na véspera do evento. Já guardou seu passe diário?":
