@@ -54,6 +54,6 @@ assert(service.includes('private static final String[] EDU_IDLE_ROTATION'),"Idle
 assert(!service.match(/EDU_IDLE_ROTATION=\{[^}]*edu_sombria/s),"Sombria não é exibida ociosamente");
 const old=fs.readFileSync(path.join(root,"assets/edu_avatar_atlas_62.webp"));
 assert.equal(crypto.createHash("sha256").update(old).digest("hex"),
- "5c81ba10976328ab479bf1d04d9082203cb8c5f45ee403f23265b05f6947942f",
- "Atlas original das 62 sprites preservado");
+ "69c1ea7b0f5dec4292d90cb62dae891c95835017204274cc4121ca3698f6889a",
+ "Fallback LT315 das 62 sprites compacto e verificado");
 console.log("LT314 QA PASS — 68 sprites, Sombria, centro do rosto, pés e pixel-art sem interpolação");
