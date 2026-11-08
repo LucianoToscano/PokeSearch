@@ -1,6 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## QA LT316 — PRIMEIRO BALÃO DO EDU (CONTINUIDADE DA PR #317) · 08/11/2026
+
+- **Nova etapa solicitada:** somente apresentação e primeiras informações no balão branco, sem novos botões. Ao abrir Edu, mostra apenas sprite; ao tocar no Edu, abre a apresentação com `Bug dos Passes ⓘ` sublinhado e tocável; outro toque no balão apresenta o estado regional do evento.
+- **Estados:** antes do evento → `evento_nao_comecou` (índice 38), data/hora no fuso escolhido, contador regressivo com segundos visível **acima do checklist** e três itens marcáveis; ativo → `evento_comecou` (37), data/hora inicial/final e próximo toque no balão abre checklist; encerrado → `evento_encerrou` (36), mensagem de aguardar próximo evento. Sem janela válida → não inventar programação. Relógio único do Edu e `RaidDaySchedule` existentes; nenhum passe ou softban confirmado automaticamente.
+- **ⓘ contextual:** `Bug dos Passes` (relato comunitário sem benefício garantido), `Softban`, `Região e data`, `Passe laranja da véspera`; explicações substituem o conteúdo do mesmo balão e voltam com um toque. Marcas ☐ são feitas somente pelo usuário, sem gravar resultado real.
+- **Visual:** `EduSpeechDrawable` com cauda alongada **28dp**, ponta próxima de **5px da lateral estimada da cabeça**, corpo do balão fora da arte, deslocamento ajustado à tela; cabeçalho, X e botões de resposta/auxiliares **ocultos apenas nesta primeira conversa**. Preservados P/M/G, 68 sprites, 22 idle, Sombria, teleporte, P1/P2 e integrações.
+- **Código/Teste/Documento da branch:** `RaidDayAssistantOverlayService.java`, `app/tests/lt316-edu-first-bubble-onboarding.test.js`, `docs/LT316_EDU_PRIMEIRO_BALAO_EVENTO_CHECKLIST_20261108.md`. Continua a PR [#317](https://github.com/LucianoToscano/PokeSearch/pull/317) em rascunho; a correção de fallback P/M/G do registro anterior permanece intacta.
+- **Estado de publicação:** última Release **LT316 0.03.16/code54522**; este trabalho **não foi mesclado, publicado nem instalado no Samsung**. Validar os gates do HEAD final e fazer homologação visual/tátil física antes de aprovar aparência, overlaps e contagem regressiva.
+
+
 ## QA LT316 — guardas visuais pós-publicação (08/11/2026; branch, sem Release nova)
 
 - **Base pública preservada:** LT316 · 0.03.16 · versionCode 54522; último APK oficial `PokeSearch-v0.03.16-LT.apk` (34.708.590 bytes; SHA-256 `7646eb5254da13f5da930813767d4265701da37a46f59d2d9fba2373ca47c252`). Não houve downgrade, merge ou substituição de assets nesta etapa.
