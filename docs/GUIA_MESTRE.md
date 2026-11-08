@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+
+## QA LT316 — guardas visuais pós-publicação (08/11/2026; branch, sem Release nova)
+
+- **Base pública preservada:** LT316 · 0.03.16 · versionCode 54522; último APK oficial `PokeSearch-v0.03.16-LT.apk` (34.708.590 bytes; SHA-256 `7646eb5254da13f5da930813767d4265701da37a46f59d2d9fba2373ca47c252`). Não houve downgrade, merge ou substituição de assets nesta etapa.
+- **PR #317 (rascunho):** https://github.com/LucianoToscano/PokeSearch/pull/317 — branch `qa/lt316-edu-samsung-visual-guards-20261108`, criada a partir do HEAD `f6fab99848b77dc44155da8f5d99fa7b8542d7d4`.
+- **Correção isolada em código:** `RaidDayAssistantOverlayService.eduAvatarArtSize()` agora utiliza `EduSpriteAtlas.SIZES_PX` quando o atlas Edu carrega mesmo sem o atlas legado; preserva 50/75/100 px no fallback, mantém G inicial. Não altera os 68 sprites, atlas corrigido, cinco retoques, teleporte, balões, relógio, E01–E11, P1/P2, Doce Raro, busca, login ou assinatura.
+- **QA:** `app/tests/lt316-edu-samsung-visual-guards.test.js` adiciona guardas estáticas sobre as 22 poses ociosas, Sombria/teleporte por gatilho, pausas, P/M/G, cinco retoques e fallback. `AGENTS.md` corrigido para referência oficial LT316. Documento `docs/LT316_EDU_HOMOLOGACAO_VISUAL_GUARDAS_20261108.md`.
+- **Pendências:** CI completo da PR e QA visual **físico no Samsung** ainda não documentados como concluídos. PR permanece draft; **sem merge, publicação, novo APK ou instalação** neste registro. Exigir evidências do SHA CI, aprovação e autorização de publicação antes de alterar a Release.
+
 ## LT316 OFICIAL — RETOQUES FINAIS DAS 68 SPRITES (08/11/2026)
 
 - **ÚLTIMA RELEASE OFICIAL VERIFICADA:** LT316 · `0.03.16` · versionCode `54522` · label `51320`. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.16-54522) publicada **08/11/2026 às 19:07:23 UTC**. Sem downgrade.
