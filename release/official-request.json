@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.09",
-  "code": 54515,
-  "label": 51313,
-  "previous_tag": "v0.03.08-54514",
-  "qa_max_code": 54514,
-  "release_notes": "PokeSearch LT309 — Assistente Edu atualizado com 62 sprites pixel-art padronizadas (atlas RGBA 2048×2048, offline) e animações de caminhada à frente/esquerda/direita, teleporte visual e reação ao arrastar. Reações contextuais para guardar passe, conferência, passe ausente, reide vencida/perdida/abandonada, captura, fuga, carregamento, espera, SoftBan e início/encerramento de evento; evento iniciado depende da confirmação do jogador no local escolhido, não de Kiribati obrigatório. Mantidos o relógio único do Edu, balão branco independente, opções ocultas por toque prolongado, tamanhos P/M/G, roteiro E01–E11, fallback das 12 sprites antigas, duas Pokébolas, Doce Raro, buscas, API e assinatura original. Não modifica GPS, não concede passes, não comprova o bug nem avança etapas automaticamente. PR #307 integrada por squash d9095465bdd114a43d9ac1a81385a361126e1bdf; QA Node, LT169, LT211, LT62 e LT173 passaram na PR. Testes físicos Samsung e OCR PT-BR/EN pendentes. Correção de empacotamento LT309: atlas de 62 quadros compactado em WebP lossless 1024×1024 (822.866 bytes) para respeitar limite de tamanho do APK sem alterar a verificação de assinatura ou as animações. PR #308 squash ff4498e79835d415887951f47fac393a59926fde. Regressões completas repetidas e aprovadas."
+  "version": "0.03.10",
+  "code": 54516,
+  "label": 51314,
+  "previous_tag": "v0.03.09-54515",
+  "qa_max_code": 54515,
+  "release_notes": "PokeSearch LT310 — Corrigida a experiência de atualização após erro de validação relatado no Samsung durante o download da LT309. O diálogo agora mostra desde o início o botão Baixar APK oficial pelo navegador, inclusive se o download interno falhar. Erros de rede, tempo de resposta, HTTPS e integridade recebem mensagens distintas sem expor dados técnicos sensíveis. Maior tolerância em redes lentas (tempo de conexão 12 s e leitura 30 s). Segurança preservada: download exclusivamente pelo HTTPS e URLs autorizadas do GitHub, limite de tamanho, SHA-256, versionCode, packageName, certificado permanente Android e confirmação do instalador. Não substitui nem afrouxa a validação de assinatura. Preservadas integralmente as 62 sprites do Edu, as animações, relógio único, roteiro do evento, P1/P2, Doce Raro, buscas, dados locais, login e assinatura original. PR #309 integrada via squash em 18341d0c05362537122ea40c70e1f4059d90c3cc; QA Node LT169, LT211, LT62 e LT173 aprovados na PR. Ainda é necessária validação de instalação no Samsung em redes variadas. Quem estiver na versão antiga com falha de atualização pode baixar a LT310 manualmente da Release oficial, sem desinstalar o app."
 }
