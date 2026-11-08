@@ -3413,6 +3413,29 @@
           "A validação física das transições no Samsung e dos tamanhos P/M/G continua necessária; diferenças de estilo entre desenhos não são garantidas como perfeitas só com testes de código."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt316-edu-68-retouch-pmg-20261108",
+      "minVersionCode": 54522,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT316 — Edu: 68 poses revisadas, corpo e acessórios em escala estável",
+      "sections": {
+        "novidades": [
+          "Novo atlas offline revisado das 68 poses do Edu, com alinhamento individual de cabeça, pés e corpo.",
+          "Retoques direcionados às poses 20, 28, 30, 36 e 49, ampliando apenas o personagem e preservando calendário, celular e outros indicadores."
+        ],
+        "melhorias": [
+          "Transições de caminhada, Pokébola, Jogando, Armaduras e estados do tutorial com menos deslocamento lateral e sem reescala dupla.",
+          "Sprites exibidas sem interpolação, mantendo tamanhos P50, M75 e G100; letras pequenas continuam descritas nos balões."
+        ],
+        "correcoes": [
+          "As cinco poses com acessórios maiores recebem ajuste de geometria separado e cacheado, sem deformar os objetos.",
+          "Conservada a arte da Sombria e o teleporte intencional (9 quadros). Fallback anterior preservado quando o atlas revisado não estiver disponível."
+        ],
+        "emDesenvolvimento": [
+          "Validar visualmente no Samsung as transições reais e a legibilidade P/M/G. Testes automatizados não substituem a confirmação no aparelho."
+        ]
+      }
     }
   ]
 }
