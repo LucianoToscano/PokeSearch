@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.16",
-  "code": 54522,
-  "label": 51320,
-  "previous_tag": "v0.03.15-54521",
-  "qa_max_code": 54521,
-  "release_notes": "PokeSearch LT316 — revisão completa da coleção de 68 sprites do assistente Edu, com 51 alinhamentos por cabeça/cabelo/pés e retoques localizados nas cinco poses com acessórios maiores (índices 20, 28, 30, 36 e 49). O atlas QA offline lossless 1024×1152 (8×9 quadros 128×128) mantém identidade visual uniforme sem reduzir o personagem. O renderizador Android separa o corpo de celular, calendário, indicadores e outros objetos para ampliar o Edu sem deformar os itens, preservando âncora da cabeça, pés, nitidez pixel-art e tamanho P50/M75/G100. Os nove estágios de teleporte (52–60) permanecem com variação visual intencional. Animações ociosas, Sombria ansiosa (índice 67), 68 índices, balões, relógio automático/manual único, exemplo Mega Chandelure por fuso IANA, tutorial, P1/P2, Doce Raro, buscas, rankings, contas, dados locais, assinatura v2 permanente e updater seguro preservados. Se o atlas revisado falhar, LT315 continua como fallback. PR #316 integrada por squash ec12fc48c7116449d7785dd6ba51a744b3fcff44. Node completo, LT169, LT211, Android Java LT62 e OTA LT173 aprovados; teste visual físico Samsung após instalação ainda pendente. Retoques autorizados expressamente pelo usuário."
+  "version": "0.03.17",
+  "code": 54523,
+  "label": 51321,
+  "previous_tag": "v0.03.16-54522",
+  "qa_max_code": 54522,
+  "release_notes": "PokeSearch LT317 — Assistente Edu com primeiro balão de apresentação mais limpo e intuitivo. A fala apresenta o Edu e explica 'Bug dos Passes ⓘ' no próprio balão, sem botões extras; ao tocar, mostra a situação da janela de evento na região selecionada: ainda não começou, em andamento ou encerrado, com sprites contextuais já existentes. Inclui contador regressivo com segundos e checklist manual de três orientações, com explicações tocáveis sobre softban, fuso regional e passe laranja da véspera. As informações não garantem passes ou benefícios. A ponta alongada do balão se aproxima da cabeça sem aumentar sprites. Nos ajustes do relógio único da Home, novo seletor com 17 momentos relativos ao início e término do evento, inclusive testes desde 3 dias antes até uma semana após; opções ordenadas cronologicamente no fuso IANA do evento. O ajuste muda apenas a hora manual interna do Edu, sem alterar o Android nem Pokémon GO. Correção na seleção de tamanho P50/M75/G100 quando o atlas legado falha. Preservados os 68 quadros, 22 animações ociosas, Sombria, teleporte, relógio único, E01–E11, duas Pokébolas, Doce Raro, PoGoCoordinates, rankings, login, dados e assinatura permanente. PR #317 integrada por squash a4c4b696c94e32f3afeb01ec03d3b93d646e9a0d. Gates Node, LT169, LT211, Java LT62 e OTA LT173 aprovados no SHA da PR; QA visual e funcional físico Samsung continua pendente."
 }
