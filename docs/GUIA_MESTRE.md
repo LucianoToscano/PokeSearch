@@ -1,6 +1,19 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## LT319 OFICIAL — EDU P100/M150/G200 E RELÓGIO COMPACTO (08/11/2026)
+
+- **ÚLTIMA RELEASE PÚBLICA:** **LT319 · `0.03.19` · versionCode `54525` · label `51323`** — [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.19-54525), publicada **08/11/2026 22:40:59 UTC**. **Não fazer downgrade.** LT318 e anteriores são versões históricas.
+- **APK oficial:** [`PokeSearch-v0.03.19-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.19-54525/PokeSearch-v0.03.19-LT.apk), **34.709.718 bytes**, digest SHA-256 **`a0cf19f7af8b6e954c24b905ec21899ec519b23dc1422bee7a595f1d1511758f`**, asset `uploaded`, Release `draft=false`/`prerelease=false`. Certificado Android v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, tamanho **<35.000.000 bytes** e assinatura validados no pipeline.
+- **Publicação protegida:** [workflow oficial #42531166399](https://github.com/LucianoToscano/PokeSearch/actions/runs/42531166399) **completed/success** (preflight/publish). Commit fonte/pedido oficial `release/official-request.json`: **`f556338f9bf6e2d331bd11e817527a2a45177245`**.
+- **Merge:** [PR #319](https://github.com/LucianoToscano/PokeSearch/pull/319) integrada por squash **`893edb035531323c635161f7ee1412be9a4ebd82`**, head testado `70e1e3bb9550e25632d6eefa866baac29be5ff2e`. Gates: Node [#42530553005](https://github.com/LucianoToscano/PokeSearch/actions/runs/42530553005), LT169 [#42530553188](https://github.com/LucianoToscano/PokeSearch/actions/runs/42530553188), LT211 [#42530552992](https://github.com/LucianoToscano/PokeSearch/actions/runs/42530552992), Java LT62 [#42530553315](https://github.com/LucianoToscano/PokeSearch/actions/runs/42530553315), OTA LT173 [#42530552971](https://github.com/LucianoToscano/PokeSearch/actions/runs/42530552971): **5 de 5 SUCCESS**.
+- **Edu maior e mais nítido:** agora **P100 / M150 (padrão) / G200 px**. Migração de preferências antigas P50/M75/G100 pelas categorias salvas, e M150 para quem nunca escolheu. `EduSpriteAtlas` e fallback `RaidDayAvatarFrames` usam os mesmos tamanhos. Sem filtro bitmap, antialias nem dither; ImageView por software para preservar pixel art. **Os 68 quadros, olhos/óculos originais, 22 idle, cinco retoques, Sombria e teleporte não foram redesenhados**. Renderização melhorada não prova eliminação de possível defeito no desenho de um quadro.
+- **Painel do relógio virtual organizado:** `EduClockSettingsActivity` mostra data/hora grande, **Automático**, **Momento do evento (17 presets)** e **Ajustar data e hora**. Fuso e formato 24h ficam em **Mais opções** recolhido, removendo duas chaves redundantes de fuso; correções na exibição do fuso Brasília e na restauração do automático. O mesmo relógio continua sem alterar hora/GPS do Android nem o Pokémon GO.
+- **Preservado:** primeira conversa simples do Edu LT318, sprites de eventos #42/#38/#37/#36, checklist, contador, 17 presets, E01–E11, duas Pokébolas P1/P2, PoGoCoordinates, Doce Raro, login, rankings, filtros, Firebase, dados e OTA com assinatura permanente.
+- **Pendência:** **QA visual/tátil no Samsung físico LT319 ainda NÃO executado**. Conferir as três escalas, legibilidade dos olhos/óculos, transições, balão, relógio compacto e atualização sobre LT318. CI e Release não equivalem a instalação. [Relatório técnico completo](LT319_EDU_PUBLICACAO_OFICIAL_SPRITES_RELOGIO_20261108.md).
+
+
+
 ## LT318 OFICIAL — EDU SEM TELA LEGADA / CONTADOR E SPRITES (08/11/2026)
 
 - **VERSÃO ATUAL PUBLICADA E VERIFICADA:** **LT318 · `0.03.18` · versionCode `54524` · label `51322`**. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.18-54524), publicada **08/11/2026 21:59:05 UTC**. **Não fazer downgrade.** LT317 e anteriores são históricas.
