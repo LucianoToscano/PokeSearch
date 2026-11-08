@@ -33,7 +33,9 @@ public final class EduSpriteAtlas {
     // 112/128 px correspondem à altura do Edu na pose padrão.
     // A Pokébola ou os efeitos NÃO entram nessa medida.
     public static final int IDLE_BODY_HEIGHT=112;
-    public static final int[] SIZES_PX={50,75,100};
+    // LT319: dimensões reais em pixels; M=150 é o tamanho padrão.
+    // Cada célula original continua 128×128, sem deformação do pixel art.
+    public static final int[] SIZES_PX={100,150,200};
 
     private final Bitmap atlas;
     private final Bitmap uniform;
@@ -184,8 +186,11 @@ public final class EduSpriteAtlas {
                 crop=EduSpriteManualRetouch.apply(crop,i);
             // Nunca reescalar o atlas LT315, pré-alinhado em 128x128.
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),crop);
+            // Pixel art: manter os contornos/olhos sem blur por interpolação.
+            // A ImageView amplia o bitmap, mas o Paint não faz filtro linear.
             drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
+            drawable.setDither(false);
             cache[i]=drawable;
         }
         return cache[i];
