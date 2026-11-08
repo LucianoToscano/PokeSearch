@@ -1,4 +1,15 @@
-# LEIA PRIMEIRO — PokeSearch LT317 Edu (08/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT318 Edu (08/11/2026)
+
+**BASE OFICIAL VERIFICADA: LT318 · 0.03.18 · versionCode 54524 · label 51322.** [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.18-54524) publicada em 08/11/2026 às 21:59:05 UTC. [APK PokeSearch-v0.03.18-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.18-54524/PokeSearch-v0.03.18-LT.apk) **34.709.358 bytes**, SHA-256 `14e28a71fcbbadae35179c91c61e40957f6f7d865e886299f3c5845ef9462280`. PR #318 squash `9688f8e25788d4b3bfae2eb2aba9b2b38fd08de6`, commit fonte `8eef94422ab26d76f7afbc7f3b335d08911df483`, workflow protegido [#42527566539](https://github.com/LucianoToscano/PokeSearch/actions/runs/42527566539) **SUCCESS**, assinatura Android v2 permanente verificada. **Não reiniciar ou fazer downgrade.**
+
+**Edu corrigido LT318:** primeiro balão sempre abre apresentação e `Bug dos Passes ⓘ` mesmo com sessão antiga salva (ex.: `ETAPA 10/11`). Cabeçalho com etapa, X, botões `Conferir novamente`/`Rever região`, nomes técnicos de fuso, `relógio simulado` e `exemplo histórico` foram retirados do primeiro fluxo. Sprites conforme estado: apresentação #42, antes #38, ativo #37, encerrado #36, atualizadas com prioridade. Se antes do início, contador regressivo em dias/horas/minutos/segundos e checklist com três `ⓘ` no balão. Chandelure 31/10/2026 14h–17h local é a janela-base sem outro evento válido. O único relógio da Home com 17 momentos é ferramenta para testar eventos; **Edu não fala do relógio**. Mantidas 68 sprites/22 ociosas, P/M/G, E01–E11, dois overlays, Doce Raro, API, OTA e assinatura.
+
+**QA físico Samsung ainda pendente** após a instalação real da LT318. Testes automáticos aprovados não comprovam resultado visual. Ler [relatório oficial LT318](docs/LT318_EDU_PUBLICACAO_OFICIAL_E_HOMOLOGACAO_20261108.md), [Guia Mestre](docs/GUIA_MESTRE.md) e [prompt de continuidade LT318](docs/PROMPT_CONTINUIDADE_LT318_EDU_20261108.md).
+
+---
+
+## Histórico LT317 — não é mais a versão atual
+
 
 **BASE ATUAL VERIFICADA:** **LT317 · 0.03.17 · versionCode 54523 · label 51321**. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.17-54523) de 08/11/2026 21:15:21 UTC, APK [PokeSearch-v0.03.17-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.17-54523/PokeSearch-v0.03.17-LT.apk) **34.708.982 bytes**, SHA-256 `a477f8aa93c75d50ab09e6c95d14435744ec6f8d69ec1629d1494ba636026dda`. PR #317 squash `a4c4b696c94e32f3afeb01ec03d3b93d646e9a0d`, fonte/pedido `903994b905da8dd33bc4e77695af4bb18c1e28a3`, workflow oficial [#42523901901](https://github.com/LucianoToscano/PokeSearch/actions/runs/42523901901) **SUCCESS**, assinatura v2 permanente verificada. Não começar do zero nem fazer downgrade.
 
