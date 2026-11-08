@@ -113,17 +113,38 @@ public final class RaidDayAssistantOverlayService extends Service {
     private Clock eventClock;
     private LocalDate lastEduClockDay;
     private Clock eduTrainingOrRealClock(){return eventClock;}
+    private RaidDayRegionalWindow.Phase lastRegionalPhase=
+        RaidDayRegionalWindow.Phase.UNKNOWN;
+    private String lastEventWindowIdentity="";
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
             if(eventClock!=null){
-                LocalDate day=EduEventClock.today(
-                    RaidDayAssistantOverlayService.this);
-                if(lastEduClockDay!=null&&!day.equals(lastEduClockDay)&&
-                    visible&&eduSpeech!=null)updateStep();
+                // A tela de ajustes pode alterar data/fuso enquanto o Edu está visível.
+                // Nunca muda o histórico de uma sessão em andamento.
+                if(preparation!=null&&!active&&!training&&prefs!=null){
+                    String stored=prefs.getString("raid_day_prep_v2_answer_0","");
+                    LocalDate loaded=preparation.eventDate();
+                    if(loaded!=null&&!stored.equals(loaded.toString()))
+                        preparation=RaidDayPreparation.load(
+                            RaidDayAssistantOverlayService.this,prefs,eventClock);
+                }
+                LocalDate day=eduEventLocalToday();
+                RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
+                String identity=RaidDaySchedule.zone(
+                    RaidDayAssistantOverlayService.this).getId()+":"+
+                    RaidDaySchedule.start(RaidDayAssistantOverlayService.this)+":"+
+                    RaidDaySchedule.finish(RaidDayAssistantOverlayService.this);
+                boolean changed=(lastEduClockDay!=null&&
+                    !day.equals(lastEduClockDay))||
+                    phase!=lastRegionalPhase||
+                    !identity.equals(lastEventWindowIdentity);
                 lastEduClockDay=day;
+                lastRegionalPhase=phase;
+                lastEventWindowIdentity=identity;
+                if(changed&&visible&&eduSpeech!=null)updateStep();
             }
             if(eduBadge!=null)updateEventClock();
-            // Atualiza a conversa quando o relógio manual cruza meia-noite.
+            // Hora e transições regionais são calculadas da mesma fonte do Edu.
             handler.postDelayed(this,5000L);
         }
     };
@@ -206,7 +227,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         if("E08".equals(id)){
             RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
             if(phase==RaidDayRegionalWindow.Phase.BEFORE)return "evento_nao_comecou";
-            if(phase==RaidDayRegionalWindow.Phase.ENDED)return "evento_ja_acabou";
+            if(phase==RaidDayRegionalWindow.Phase.ENDED)return "evento_encerrou";
             if(phase==RaidDayRegionalWindow.Phase.ACTIVE)return "evento_comecou";
             if("event_wait".equals(eduDialogueState))
                 return "evento_nao_comecou";
@@ -217,7 +238,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         if(("E09".equals(id)||"E10".equals(id))&&
             eduConfiguredPhase()==RaidDayRegionalWindow.Phase.ENDED)
-            return "evento_ja_acabou";
+            return "evento_encerrou";
         if("E09".equals(id))
             return "kiribati_reload".equals(eduDialogueState)||
                 "kiribati_wait".equals(eduDialogueState)?
