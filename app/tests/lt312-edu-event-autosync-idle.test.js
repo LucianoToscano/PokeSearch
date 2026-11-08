@@ -19,7 +19,8 @@ assert(!example.includes("putBoolean(\"raid_day_prep_v2_completed\",false)"),"N�
 assert(service.includes("EduEventSelection.sync(this,prefs,eventClock)"),"Alinhar ao iniciar o serviço");
 assert(service.includes("EduEventSelection.sync("),"Alinhar quando relógio muda");
 assert(service.includes("preparation=RaidDayPreparation.load"),"Atualizar estado visual após ajustar data");
-assert(service.includes("if(eventSynchronized&&!preparation.eventKey().equals(eventKey))"),"Histórico isolado por data");
+assert(service.includes("eventSynchronized||RaidDaySchedule.valid("),"Janela salva é autoritativa");
+assert(service.includes("preparation.eventDate().equals(RaidDaySchedule.eventDate(this))"),"Histórico isolado por data");
 assert(settings.includes("persistSelectedWindow();"),"Selecionar exemplo já deve salvar");
 assert(settings.includes("EduEventSelection.sync(this,prefs,EduEventClock.forEdu(this))"),"Salvar região confirma data");
 assert(settings.includes('this::persistSelectedWindow'),"Manter botão salvar");
