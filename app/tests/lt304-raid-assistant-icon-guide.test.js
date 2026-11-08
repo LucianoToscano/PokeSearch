@@ -26,7 +26,7 @@ assert.equal(plan.id,"roteiro_bug_passes");
 assert.equal(plan.evidenceKind,"RELATO_COMUNIDADE");
 assert.ok(plan.riskTextVersion);
 assert.equal(variant.id,"eduhunterplay-2026-10-28");
-assert.equal(variant.verificadoEm,"2026-11-07");
+assert.equal(variant.verificadoEm,"2026-11-08");
 assert.match(variant.confianca,/nao_verificado/);
 const steps=variant.etapas;
 assert.equal(steps.length,11);
