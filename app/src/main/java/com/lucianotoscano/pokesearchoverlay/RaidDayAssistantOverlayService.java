@@ -2439,19 +2439,23 @@ public final class RaidDayAssistantOverlayService extends Service {
     private void placePanelCoordinates(){
         int sw=getResources().getDisplayMetrics().widthPixels;
         int sh=getResources().getDisplayMetrics().heightPixels;
-        int gap=5; // distância física entre a ponta e o avatar
-        int leftSpace=Math.max(0,bubbleParams.x-gap);
-        int rightSpace=Math.max(0,sw-
-            (bubbleParams.x+bubbleParams.width+gap));
+        // O avatar tem margens transparentes: 5px da BORDA da imagem
+        // ficariam muito distantes da cabeça. Ancorar na lateral estimada
+        // do cabelo, enquanto a caixa branca fica recuada 28dp da ponta.
+        int gap=5; // distância física estimada da lateral da cabeça
+        int headCenterX=bubbleParams.x+bubbleParams.width/2;
+        int headHalfWidth=Math.round(eduAvatarArtSize()*.23f);
+        int headLeft=headCenterX-headHalfWidth;
+        int headRight=headCenterX+headHalfWidth;
+        int leftSpace=Math.max(0,headLeft-gap);
+        int rightSpace=Math.max(0,sw-(headRight+gap));
         boolean dockLeft=leftSpace>=rightSpace;
-        // Em celulares estreitos, encolher a fala para caber AO LADO do Edu:
-        // nunca desenhar balão sobre sua sprite.
         eduPanelWidth=Math.min(dp(286),Math.max(dp(132),
             Math.max(leftSpace,rightSpace)));
         panelParams.width=eduPanelWidth;
         int docking=dockLeft?
-            bubbleParams.x-gap-eduPanelWidth:
-            bubbleParams.x+bubbleParams.width+gap;
+            headLeft-gap-eduPanelWidth:
+            headRight+gap;
         panelParams.x=Math.max(0,Math.min(
             Math.max(0,sw-eduPanelWidth),docking));
         int measured=panelScroll==null?dp(175):
