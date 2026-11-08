@@ -35,9 +35,9 @@ public final class RaidDayEventSettingsActivity extends Activity {
         super.onCreate(state);
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
         RaidDayPreparation prep=RaidDayPreparation.load(this,prefs,
-            java.time.Clock.systemUTC());
+            EduEventClock.forEdu(this));
         date=prep.eventDate()!=null?prep.eventDate():
-            LocalDate.now(RaidDayEventClock.BRASILIA).plusDays(1);
+            RaidDayEventClock.todayBrasilia(EduEventClock.forEdu(this)).plusDays(1);
         try{
             long begin=RaidDaySchedule.start(this),end=RaidDaySchedule.finish(this);
             if(RaidDaySchedule.valid(begin,end)){
@@ -136,7 +136,8 @@ public final class RaidDayEventSettingsActivity extends Activity {
         info.setText("Dia de Reides · configuração manual\n"+
             "Data: "+date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))+
             "\nInício: "+startTime+" · Fim: "+endTime+"\n"+
-            "Brasília: "+RaidDayEventClock.summary(Instant.now())+"\n"+
+            "Relógio Edu "+(EduEventClock.isAdjusted(this)?"(ajustado, não oficial)":"(hora do celular)")+": "+
+            RaidDayEventClock.summary(EduEventClock.forEdu(this).instant())+"\n"+
             (RaidDaySchedule.valid(a,b)?
                 "Janela registrada (informação sua, NÃO oficial).":
                 "Janela ainda não salva.")+"\n"+

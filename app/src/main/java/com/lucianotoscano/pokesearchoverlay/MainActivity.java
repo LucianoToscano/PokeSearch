@@ -26,6 +26,9 @@ import android.Manifest;
 import android.widget.Toast;
 import android.widget.ScrollView;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import java.time.LocalDateTime;
 import android.content.SharedPreferences;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -125,6 +128,39 @@ public class MainActivity extends Activity {
     private ImageView overlayControl,secondaryOverlayControl;
     private ImageButton rareCandyControl;
     private ImageButton raidAssistantControl;
+    private TextView eduSimulationClockDisplay;
+    private final android.os.Handler eduSimulationClockHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private boolean eduSimulationClockTicking=false;
+    private final Runnable eduSimulationClockTick=new Runnable(){
+        @Override public void run(){
+            refreshEduSimulationClock();
+            if(eduSimulationClockTicking){
+                long delta=1000L-(System.currentTimeMillis()%1000L);
+                eduSimulationClockHandler.postDelayed(this,Math.max(120L,delta));
+            }
+        }
+    };
+    private void refreshEduSimulationClock(){
+        if(eduSimulationClockDisplay==null)return;
+        eduSimulationClockDisplay.setText(
+            EduEventClock.dateLabel(this)+"\n"+
+            EduEventClock.timeLabel(this));
+        eduSimulationClockDisplay.setTextSize(
+            EduEventClock.is24HourFormat(this)?10:8);
+        eduSimulationClockDisplay.setContentDescription(
+            "Relógio do Edu: "+EduEventClock.dateLabel(this)+
+            " "+EduEventClock.timeLabel(this)+
+            (EduEventClock.isAdjusted(this)?". Horário ajustado manualmente. ":
+                ". Hora atual do celular, fuso de Brasília. ")+
+            "Toque para abrir as opções; segure para restaurar.");
+    }
+    // O visor abre a mesma organização de configurações das capturas Samsung.
+    // Todas as alterações afetam APENAS o relógio do Edu, nunca o Android.
+    private void showEduClockOptions(){
+        startActivity(new android.content.Intent(this,
+            EduClockSettingsActivity.class));
+    }
     private TextView sessionHint;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
@@ -455,16 +491,21 @@ public class MainActivity extends Activity {
         TextView brandSubtitle=homeText("POKÉMON GO",9,
             homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
         // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
-        // Reserve five native 34dp action targets (plus 5dp margins).
+        // A data/hora fica AO LADO do ícone de passes. Em telas estreitas,
+        // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(28)-d(38)-d(6)-(d(34)*5+d(5)*4)-d(3);
-        int wordmarkWidth=Math.max(d(90),Math.min(d(156),availableBrandWidth));
+            -d(28)-d(38)-d(6)-(d(34)*5+d(5)*4)-d(69)-d(3);
+        int wordmarkWidth=Math.max(d(55),Math.min(d(156),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
         brandLabels.addView(brandTitle,
             new LinearLayout.LayoutParams(wordmarkWidth,wordmarkHeight));
         brandLabels.addView(brandSubtitle);
         header.addView(brandLabels,new LinearLayout.LayoutParams(-2,-2));
+        if(availableBrandWidth<d(55)){
+            // Pequenos telefones exibem o emblema no lugar do título comprimido.
+            brandLabels.setVisibility(View.GONE);
+        }
 
         header.addView(new View(this),new LinearLayout.LayoutParams(0,d(1),1));
         LinearLayout controls=new LinearLayout(this);
@@ -507,6 +548,32 @@ public class MainActivity extends Activity {
         guideLp.leftMargin=d(5);
         controls.addView(raidAssistantControl,guideLp);
         raidAssistantControl.setOnClickListener(v->toggleRaidAssistantOverlay());
+
+        // LT308 · único relógio de referência do Edu, ajustável para testes.
+        // Compacto, de duas linhas e sem um novo menu na tela.
+        eduSimulationClockDisplay=homeText("--/--/--\n--:--:--",10,
+            homeLightMode?Color.rgb(35,53,72):Color.rgb(243,248,255),true);
+        eduSimulationClockDisplay.setGravity(Gravity.CENTER);
+        eduSimulationClockDisplay.setLineSpacing(0f,0.9f);
+        eduSimulationClockDisplay.setPadding(d(2),0,d(2),0);
+        eduSimulationClockDisplay.setBackground(homeSurface(
+            homeLightMode?Color.argb(240,241,248,251):
+                Color.argb(184,26,39,53),10,
+            homeLightMode?Color.rgb(156,169,183):
+                Color.argb(150,172,193,215)));
+        LinearLayout.LayoutParams simulationClockLp=
+            new LinearLayout.LayoutParams(d(65),d(34));
+        simulationClockLp.leftMargin=d(4);
+        controls.addView(eduSimulationClockDisplay,simulationClockLp);
+        eduSimulationClockDisplay.setOnClickListener(v->showEduClockOptions());
+        eduSimulationClockDisplay.setOnLongClickListener(v->{
+            EduEventClock.reset(this);
+            refreshEduSimulationClock();
+            Toast.makeText(this,"Edu voltou à hora atual de Brasília",
+                Toast.LENGTH_SHORT).show();
+            return true;
+        });
+        refreshEduSimulationClock();
 
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
@@ -2557,6 +2624,9 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        eduSimulationClockTicking=true;
+        eduSimulationClockHandler.removeCallbacks(eduSimulationClockTick);
+        eduSimulationClockHandler.post(eduSimulationClockTick);
         UpdateCenter.check(this); // Preserve existing Google Drive fallback.
         GitHubUpdateCenter.schedule(this); // 30 min, Doze-aware; no extra service.
         GitHubUpdateCenter.check(this); // Official stable Releases only.
@@ -2564,6 +2634,8 @@ public class MainActivity extends Activity {
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        eduSimulationClockTicking=false;
+        eduSimulationClockHandler.removeCallbacks(eduSimulationClockTick);
         availabilityHandler.removeCallbacks(availabilityTick);
         missionResumed=false;
         syncMissionClock(false);
@@ -3752,6 +3824,8 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        eduSimulationClockTicking=false;
+        eduSimulationClockHandler.removeCallbacks(eduSimulationClockTick);
         availabilityHandler.removeCallbacks(availabilityTick);
         if(availabilityDialog!=null){
             availabilityDialog.dismiss();availabilityDialog=null;

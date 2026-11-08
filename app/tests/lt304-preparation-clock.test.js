@@ -54,7 +54,7 @@ assert.doesNotMatch(prep,/R\.array\.raid_day_preparation_locations/);
 assert.match(prep,/String eventKey\(\)/);
 assert.match(prep,/prefs\.getBoolean\(KEY\+"completed",false\)/);
 assert.match(prep,/prefs\.getInt\(KEY\+"question",0\)/);
-assert.match(prep,/prep\.answers\[0\]=RaidDayEventClock\.todayBrasilia\(clock\)/);
+assert.match(prep,/prep\.answers\[0\]=LocalDate\.now\(clock\)/);
 assert.match(prep,/public void markComplete\(\)/);
 assert.match(prep,/public void beginEditing\(\)/);
 assert.match(prep,/getString\(KEY\+"answer_"/);
@@ -73,7 +73,7 @@ assert.match(service,/riskAccepted=\(plan\.riskVersion\+":"\+eventKey\)\.equals/
 assert.match(service,/preparationSection\.setVisibility\(View\.VISIBLE\)/);
 assert.match(service,/updateEventClock\(\)/);
 assert.match(service,/RaidDayEventClock\.format\(eventClock\.instant\(\)/);
-assert.match(service,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
+assert.match(service,/EduEventClock\.today\(this\)/);
 assert.match(service,/if\(active\|\|training\|\|!eduDateConfirmed\(\)\|\|!riskAccepted\)return/);
 assert.match(service,/private boolean eduDateConfirmed\(\)/);
 assert.match(service,/edu_event_date_confirmed_key/);

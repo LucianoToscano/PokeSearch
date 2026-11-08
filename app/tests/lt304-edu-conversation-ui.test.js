@@ -148,7 +148,7 @@ assert.match(overlay,/eduRecordingExtraRaid=true/);
 
 assert.match(overlay,/private void startDemoToday\(/);
 assert.match(overlay,/demoToday=true/);
-assert.match(overlay,/RaidDayEventClock\.todayBrasilia\(eventClock\)/);
+assert.match(overlay,/EduEventClock\.today\(this\)/);
 assert.match(overlay,/training=true/);
 assert.match(overlay,/if\(training\)return;/);
 assert.match(overlay,/SIMULAÇÃO HOJE/);
