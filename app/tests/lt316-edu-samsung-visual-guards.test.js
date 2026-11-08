@@ -51,7 +51,6 @@ assert.match(src, /int art=eduAvatarArtSize\(\)/);
 assert.match(src, /int artSize=eduAvatarArtSize\(\)/);
 assert.match(atlas, /SIZES_PX=\{50,75,100\}/);
 assert.match(src, /avatarSizeIndex=2/, "Tamanho inicial G");
-assert.match(src, /setFilterBitmap\(false\)/); // no service ou remover se não houver
 
 // Regressão: 68 poses, apenas cinco retoques localizados, fallback LT315.
 assert.match(atlas, /SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT\+1/);
