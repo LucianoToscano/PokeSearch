@@ -136,7 +136,8 @@ public final class RaidDayEventSettingsActivity extends Activity {
         info.setText("Dia de Reides · configuração manual\n"+
             "Data: "+date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))+
             "\nInício: "+startTime+" · Fim: "+endTime+"\n"+
-            "Relógio Edu "+(EduEventClock.isAdjusted(this)?"(ajustado, não oficial)":"(hora do celular)")+": "+\n            RaidDayEventClock.summary(EduEventClock.forEdu(this).instant())+"\n"+
+            "Relógio Edu "+(EduEventClock.isAdjusted(this)?"(ajustado, não oficial)":"(hora do celular)")+": "+
+            RaidDayEventClock.summary(EduEventClock.forEdu(this).instant())+"\n"+
             (RaidDaySchedule.valid(a,b)?
                 "Janela registrada (informação sua, NÃO oficial).":
                 "Janela ainda não salva.")+"\n"+
