@@ -22,7 +22,8 @@ const java=fs.readFileSync(path.join(__dirname,
 assert(java.includes('EXTRA_ASSET="edu_avatar_extra_5.webp"'));
 assert(java.includes("EXTRA_COLS=5, EXTRA_COUNT=5"));
 assert(java.includes("TOTAL_COUNT=COUNT+EXTRA_COUNT"));
-assert(java.includes('if(i>=COUNT && extras==null && (consistentIdle==null||consistentFrame<0))'));
+assert(java.includes('if(i>=COUNT&&i<TOTAL_COUNT&&extras==null&&'),
+  "A ausência de extras antigos deve preservar o fallback, sem afetar a nova Sombria");
 assert(java.includes('CONSISTENT_IDLE_ASSET="edu_avatar_idle_consistent_22.webp"'));
 assert(java.includes('consistentIdle!=null&&consistentFrame>=0'));
 // A versão LT313 pode renderizar as cinco extras pelo atlas novo quando disponível.
