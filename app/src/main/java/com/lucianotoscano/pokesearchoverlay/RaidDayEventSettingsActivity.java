@@ -207,7 +207,7 @@ public final class RaidDayEventSettingsActivity extends Activity {
             }).show();
     }
     private void render(){
-        long a=RaidDaySchedule.start(this),b=RaidDaySchedule.finish(this);
+
         String localZone=eventZone.getId();
         String origin=chandelureExample?
             "EXEMPLO oficial histórico Mega Chandelure": "Informado por você, não verificado";
@@ -226,6 +226,10 @@ public final class RaidDayEventSettingsActivity extends Activity {
             preview="\\nJanela inválida, verifique as horas.";
         }
         long a=RaidDaySchedule.start(this),b=RaidDaySchedule.finish(this);
+        String phasePt=phase==RaidDayRegionalWindow.Phase.BEFORE?
+            "Ainda não começou":phase==RaidDayRegionalWindow.Phase.ACTIVE?
+            "Acontecendo":phase==RaidDayRegionalWindow.Phase.ENDED?
+            "Já acabou":"Verifique o horário";
         info.setText("Dia de Reides · horário do LOCAL escolhido\\n"+
             "Data no local: "+date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))+
             "\\nHorário local: "+startTime+"–"+endTime+
