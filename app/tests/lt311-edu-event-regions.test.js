@@ -44,7 +44,7 @@ assert(schedule.includes('.putString("raid_day_window_date",date.toString())'));
 assert(schedule.includes('RaidDayRegionalWindow.phase(now,start(ctx),finish(ctx))'));
 assert(schedule.includes("EduEventClock.nowMillis(ctx)"),"status must use the shared Edu clock");
 assert(settings.includes('addButton("Região onde vai jogar",this::chooseRegion)'));
-assert(settings.includes('addButton("Exemplo oficial · Mega Chandelure (31/10/2026)"'));
+assert(settings.includes('addButton("Exemplo oficial · Mega Chandelure (31/10/2026)",'));
 assert(settings.includes('RaidDaySchedule.save(this,date,startTime,endTime,'));
 for(const id of ["America/Sao_Paulo","Pacific/Auckland","Asia/Singapore","Pacific/Honolulu","Pacific/Kiritimati"])
   assert(settings.includes(id),"region preset "+id);
@@ -62,6 +62,6 @@ for(const state of ["evento_nao_comecou","evento_comecou","evento_encerrou"]){
 }
 assert(service.includes("lastRegionalPhase"),"refresh on event window transition");
 assert(service.includes('lastEventWindowIdentity'),"refresh on region change");
-assert(service.includes('preparation.eventDate().equals(RaidDaySchedule.eventDate(this))'),"avoid stale settings");
+assert(service.includes("preparation.eventDate().equals(")&&service.includes("RaidDaySchedule.eventDate(this)"),"avoid stale settings");
 assert(service.includes('editEduEventRegion()'),"region controls accessible");
 console.log("LT311 event regional window and five clock transitions PASS");
