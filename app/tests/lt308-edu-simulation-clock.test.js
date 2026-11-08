@@ -44,7 +44,8 @@ assert.match(clock,/putBoolean\(AUTO_DATE_TIME,false\)/);
 assert.match(clock,/putLong\(WALL_BASE,System\.currentTimeMillis\(\)\)/);
 assert.match(clock,/Clock forEdu\(Context context\)/);
 assert.match(clock,/return new EduClock\(context,zone\)/);
-assert.doesNotMatch(clock,/Settings\.Global|Settings\.Secure|setTimeZone\(|LocationManager|ACCESS_FINE_LOCATION|su\b/);
+assert.doesNotMatch(clock,/Settings\.Global|Settings\.Secure|setTimeZone\(|LocationManager|ACCESS_FINE_LOCATION|Runtime\.getRuntime\(\)\.exec/,
+  "Não acessar funções privilegiadas do Android nem GPS");
 
 const passIndex=home.indexOf("controls.addView(raidAssistantControl,guideLp);");
 const watchIndex=home.indexOf("controls.addView(eduSimulationClockDisplay,simulationClockLp);");
