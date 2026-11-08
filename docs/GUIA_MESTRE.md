@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT310 OFICIAL — ATUALIZADOR COM FALLBACK SEGURO (08/11/2026)
+
+- **Versão oficial:** LT310 · `0.03.10` · versionCode `54516` · label `51314`. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.10-54516) publicada em **08/11/2026 às 13:21:13 UTC**; não fazer downgrade.
+- **APK:** [`PokeSearch-v0.03.10-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.10-54516/PokeSearch-v0.03.10-LT.apk), **34.859.389 bytes**, digest SHA-256 `67c97dce6b8590f94dbc4238503cd57724ad7a8548b3c1e54a49d03c88aaf79f`, verificado contra a Release/latest e no pipeline.
+- **Publicação:** [GitHub Actions #42484291695](https://github.com/LucianoToscano/PokeSearch/actions/runs/42484291695), jobs preflight/publish **SUCCESS**; compilação, assinatura v2, certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, integridade do ZIP, `sha256sum -c`, pacote e versão validados pelo workflow. Pedido `release/official-request.json` no commit `4758ff483c9a3540145f8cd55d7d9fd322549318`.
+- **Integração:** [PR #309](https://github.com/LucianoToscano/PokeSearch/pull/309) integrada por squash `18341d0c05362537122ea40c70e1f4059d90c3cc`. Na revisão final passaram Node full LT169, QA LT211, Java LT62, OTA LT173 e beta QA assinado. Documento técnico `docs/LT310_QA_FALHA_VALIDACAO_APK_20261108.md`.
+- **Correção:** a LT309 apresentava em um Samsung a mensagem genérica **Não foi possível validar o APK** antes do instalador. Isso não prova APK corrompido: faltava diferenciar exceções. A LT310 expõe **Baixar APK oficial pelo navegador** desde o início, classifica categorias de falha de rede/timeout/TLS/integridade sem divulgar informações sensíveis e usa timeout 12s/30s. Continuam obrigatórios HTTPS, allowlist de hosts, tamanho, SHA-256, pacote, versionCode, assinatura e confirmação do Android. **Não reduz segurança**.
+- **Transição:** a correção só existe a partir da LT310. Dispositivos com LT308/LT309 que não consigam baixar pelo atualizador antigo devem instalar **por cima** o APK oficial via navegador/Meus Arquivos, sem desinstalar, sem limpar dados nem trocar o certificado. Instalação física Samsung e tolerância a redes lentas ainda precisam ser verificadas; não afirmar que a causa raiz no aparelho está comprovada. Edu com 62 sprites, seus movimentos, relógio, P1/P2, Doce Raro, buscas e dados continuam preservados.
+
 
 ## LT309 OFICIAL — 62 SPRITES DO EDU E ANIMAÇÕES CONTEXTUAIS (08/11/2026)
 
