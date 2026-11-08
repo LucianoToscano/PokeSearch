@@ -31,7 +31,7 @@ assert.match(java,/if\(!replacement\)crop=normalizeIdleBody\(crop,i\)/,
 assert.match(java,/drawable\.setFilterBitmap\(false\)/);
 assert.match(java,/drawable\.setAntiAlias\(false\)/);
 assert.match(java,/consistentIdle!=null&&consistentFrame>=0/);
-assert.match(java,/if\(i>=COUNT && extras==null && \(consistentIdle==null\|\|consistentFrame<0\)\)/,
+assert.match(java,/if\(i>=COUNT&&i<TOTAL_COUNT&&extras==null&&/,
     "sem crash se novos assets estiverem ausentes");
 const mapped=new Map([
  [42,0],[0,1],[1,2],[2,3],[3,4],
