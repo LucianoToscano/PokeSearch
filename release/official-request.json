@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.14",
-  "code": 54520,
-  "label": 51318,
-  "previous_tag": "v0.03.13-54519",
-  "qa_max_code": 54519,
-  "release_notes": "PokeSearch LT314 — Assistente Edu com auditoria integral de 68 sprites (62 antigas, cinco especiais e uma nova Sombria). Novo estado Sombria de olhos avermelhados, aura roxa e fundo transparente, reservado às situações de espera e ansiedade do jogador, sem adicioná-lo à rotação ociosa. Correção dos saltos laterais no rosto e na postura: alinhamento óptico por centro do rosto X=64 e pés Y=119, com corpo de referência 112 px e quadro 128×128. As 22 poses idle existentes mantêm escala fixa, sem novo redimensionamento, e os outros estados recebem correções limitadas e processadas uma única vez no cache. Teleporte mantém os quadros de desaparecimento sem esticamento artificial. P/M/G continuam 50/75/100, pixel art sem interpolação. Mantidos índices 0–66, fallback para ausência da Sombria, atlas offline, relógio Edu único, exemplo de Mega Chandelure por fuso IANA, roteiro E01–E11, passes informados manualmente, P1/P2, Doce Raro, PvP, APIs, autenticação e dados, assinatura Android e updater. A sprite não altera GPS, conta Pokémon GO ou concessão de passes. PR #313 squash af6edbb4212596984322bd223481b2bb63d8289a. Node QA, Node regressão LT169, QA core LT211, compilação Android Java LT62 e OTA LT173 passaram na branch. Homologação visual física Samsung permanece pendente: fluidez de Jogando, Armadura, Sombria, carregamento, arraste e saída do modo ocioso."
+  "version": "0.03.15",
+  "code": 54521,
+  "label": 51319,
+  "previous_tag": "v0.03.14-54520",
+  "qa_max_code": 54520,
+  "release_notes": "PokeSearch LT315 — Correção visual integrada de verdade ao assistente Edu: todas as 68 sprites passam a vir de um ÚNICO atlas lossless e transparente 1024×1152, 8 colunas por 9 linhas de 128×128 pixels. Cabeça, rosto, corpo e pés centralizados/normalizados com a mesma escala visual entre as animações, sem saltos laterais por acessórios e sem encolhimento ao Jogar ou trocar Armaduras. Corrigidos recortes defeituosos da última linha de sprites que cortavam cabelo e capacetes. O carregador Android usa app/src/main/assets/edu_avatar_uniform_68.webp (221.178 bytes, SHA-256 90c363203dd9c8ed7e014237b13eded699d1030a59463d7c41ae51191ce52893) para os índices originais 0–67 e não aplica uma segunda escala ao novo atlas. Os atlas da LT314 continuam como fallback caso o novo esteja ausente/inválido. Preserva as 22 poses ociosas e pausas, os estados ansiosos da Sombria, teleporte, passes, reides, conversas, relógio único, evento Mega Chandelure por região IANA, P/M/G 50/75/100, P1/P2, Doce Raro, PvP, rankings, API, filtros, contas, dados locais, assinatura Android permanente e updater seguro. PR #314 integrada via squash 3001ad23d0cbebed4d01e7770af5ca398ea443c0; regressão Node completa, QA LT211, compilação Java LT62 e OTA LT173 passaram. A instalação e homologação visual em Samsung físico permanecem pendentes."
 }
