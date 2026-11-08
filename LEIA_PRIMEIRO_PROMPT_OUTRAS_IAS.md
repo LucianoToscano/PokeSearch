@@ -1,4 +1,14 @@
-# LEIA PRIMEIRO — PokeSearch LT314 Edu (08/11/2026)
+# LEIA PRIMEIRO — PokeSearch LT316 Edu (08/11/2026)
+
+**BASE OFICIAL ATUAL:** LT316 · `0.03.16` · versionCode `54522` · label `51320`. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.16-54522), APK `PokeSearch-v0.03.16-LT.apk` **34.708.590 bytes**, SHA-256 `7646eb5254da13f5da930813767d4265701da37a46f59d2d9fba2373ca47c252`. [Workflow #42513115954](https://github.com/LucianoToscano/PokeSearch/actions/runs/42513115954) preflight/publish **SUCCESS**. [PR #316](https://github.com/LucianoToscano/PokeSearch/pull/316) squash `ec12fc48c7116449d7785dd6ba51a744b3fcff44`, pedido `fd3cdf373b4bb79e900b4e182ff38a8ffe530a03`. Assinatura v2 permanente preservada; não começar do zero e não fazer downgrade.
+
+**Edu LT316:** 68 sprites nos índices 0–67, atlas revisto `edu_avatar_uniform_68_lt316.b64` e retoque `EduSpriteManualRetouch.java` nos índices **20/28/30/36/49** para escalar somente o corpo do personagem e não seus acessórios. Demais poses preservadas, incluindo 9 teletransportes intencionalmente variáveis e Sombria ansiosa. Sem reescala dupla; tamanhos P50/M75/G100, balões, 22 animações ociosas, relógio único, tutorial e dados intactos. Testes `app/tests/lt316-edu-uniform-68-audit.test.js`, `app/tests/lt316-edu-manual-retouch.test.js`, documento `docs/LT316_EDU_RETOQUE_FINAL_5_QUADROS_20261108.md`. QA físico no Samsung ainda pendente; texto minúsculo de imagens P50 não precisa ser legível, explicar no balão.
+
+**Governança:** ler `AGENTS.md`, `docs/GUIA_MESTRE.md`, `docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md`. Não alterar P1/P2, Doce Raro, PoGoCoordinates, API, login, rankings, assinatura, relógio ou dados sem nova autorização. Toda Release requer gates e verificação de hash antes de oferecer link.
+
+---
+
+## Histórico LT314 e versões anteriores
 
 **ÚLTIMA BASE OFICIAL:** LT314 · `0.03.14` · versionCode `54520` · label `51318`.
 [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.14-54520), APK `PokeSearch-v0.03.14-LT.apk` de **34.953.255 bytes**, SHA-256 `21ad916305460d9bcf36e2fce200419f65b6488de82a51ed831d55dc7251f99a`.
