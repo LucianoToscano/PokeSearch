@@ -20,7 +20,7 @@ assert.equal(crypto.createHash("sha256").update(archived).digest("hex"),
   "5c81ba10976328ab479bf1d04d9082203cb8c5f45ee403f23265b05f6947942f");
 assert.equal(asset.length,133078,"Fallback com 62 sprites compactado para APK abaixo de 35 MB");
 assert.match(java,/CELL=128, COLS=8, COUNT=62/);
-assert.match(java,/SIZES_PX=\{50,75,100\}/);
+assert.match(java,/SIZES_PX=\{100,150,200\}/);
 assert.match(java,/options\.inScaled=false/);
 assert.match(java,/drawable\.setFilterBitmap\(false\)/);
 assert.match(java,/drawable\.setAntiAlias\(false\)/);
