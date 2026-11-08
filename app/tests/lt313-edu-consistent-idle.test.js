@@ -31,7 +31,7 @@ assert.match(java,/if\(!replacement\)crop=normalizeIdleBody\(crop,i\)/,
 assert.match(java,/drawable\.setFilterBitmap\(false\)/);
 assert.match(java,/drawable\.setAntiAlias\(false\)/);
 assert.match(java,/consistentIdle!=null&&consistentFrame>=0/);
-assert.match(java,/if\(i>=COUNT&&i<TOTAL_COUNT&&extras==null&&/,
+assert.match(java,/if\(uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&/,
     "sem crash se novos assets estiverem ausentes");
 const mapped=new Map([
  [42,0],[0,1],[1,2],[2,3],[3,4],
@@ -61,4 +61,4 @@ for(const seq of ["pokebola_gesto","caminhada_frente","caminhada_direita",
 assert.match(java,/SIZES_PX=\{50,75,100\}/,"não muda P/M/G");
 assert.ok(old.length>700000,"atlas de 62 continua incluído");
 assert.ok(extra.length>5000,"atlas de 5 continua incluído");
-console.log("LT313: asset WebP lossless 22, proporções consistentes, mapeamento e fallback PASS");
+assert.match(java,/boolean uniformFrame=uniform!=null/);\nconsole.log("LT313: asset WebP lossless 22, proporções consistentes, mapeamento e fallback PASS");
