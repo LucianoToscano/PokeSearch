@@ -24,6 +24,20 @@ A função `eduAvatarArtSize()` prioriza `EduSpriteAtlas.SIZES_PX[avatarSizeInde
 
 Os testes são verificações de contrato no código: **não medem pixels finais de um aparelho** e não provam que os movimentos estejam visualmente perfeitos.
 
+## Verificação de CI no SHA da PR
+
+Commit com o código, teste e registro mestre: `eb3a0e44d5c268f04c1c75b74e4c88043b48b45f`.
+
+| Gate | Execução | Resultado |
+| --- | --- | --- |
+| Node completo | [42518112298](https://github.com/LucianoToscano/PokeSearch/actions/runs/42518112298) | SUCCESS |
+| LT169 regressões | [42518112202](https://github.com/LucianoToscano/PokeSearch/actions/runs/42518112202) | SUCCESS |
+| LT211 core | [42518112325](https://github.com/LucianoToscano/PokeSearch/actions/runs/42518112325) | SUCCESS |
+| LT62 Java Android | [42518112195](https://github.com/LucianoToscano/PokeSearch/actions/runs/42518112195) | SUCCESS |
+| LT173 OTA/Android | [42518112242](https://github.com/LucianoToscano/PokeSearch/actions/runs/42518112242) | SUCCESS |
+
+Esses fluxos não construíram um APK público, não verificaram instalação física nem autorizam afirmar que o visual foi homologado no Samsung.
+
 ## Roteiro de QA físico — pendente
 
 No Samsung, após instalar uma build de QA assinada e identificada por versão superior, capturar vídeo da transição de cada combinação em **P50, M75 e G100**:
