@@ -196,6 +196,12 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(eduSettingsOpen)return "perguntando";
         if(paused)return "parado";
         if(eduCaptureQuestion)return "perguntando";
+        if(!active&&!training&&eduWantsReal&&eduDateConfirmed()){
+            RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
+            if(phase==RaidDayRegionalWindow.Phase.BEFORE)return "evento_nao_comecou";
+            if(phase==RaidDayRegionalWindow.Phase.ACTIVE)return "evento_comecou";
+            if(phase==RaidDayRegionalWindow.Phase.ENDED)return "evento_encerrou";
+        }
         if(!eduIntroAccepted||(!active&&!training))return "apresentacao";
         if(plan==null||index<0||index>=plan.size())return "parado";
         String id=plan.step(index).id;
@@ -1809,6 +1815,11 @@ public final class RaidDayAssistantOverlayService extends Service {
                 "Acompanhe o resumo ou ajuste a região e o relógio Edu.");
             addTwo("Ver resumo",()->navigateEdu("E11","EVENT_ENDED"),
                 "Rever região",()->editEduEventRegion());
+            return;
+        }
+        if(!training&&regionPhase==RaidDayRegionalWindow.Phase.BEFORE&&
+            ("E08".equals(step.id)||"E09".equals(step.id)||"E10".equals(step.id))){
+            showEduEventDay(); // status regional, sem avançar o roteiro
             return;
         }
         String warning=currentPhaseNote(step);
