@@ -10,8 +10,8 @@ import java.io.InputStream;
 
 /** LT309 — atlas offline das 62 sprites do Edu; o atlas LT304 permanece fallback. */
 public final class EduSpriteAtlas {
-    public static final int CELL=256, COLS=8, COUNT=62;
-    public static final String ASSET="edu_avatar_atlas_62.png";
+    public static final int CELL=128, COLS=8, COUNT=62;
+    public static final String ASSET="edu_avatar_atlas_62.webp";
     public static final int[] SIZES_PX={50,75,100};
 
     private final Bitmap atlas;
@@ -30,7 +30,7 @@ public final class EduSpriteAtlas {
             if(image==null || image.getWidth()!=COLS*CELL ||
                 image.getHeight()!=COLS*CELL){
                 if(image!=null)image.recycle();
-                throw new IOException("Edu: atlas invalido (esperado 2048x2048)");
+                throw new IOException("Edu: atlas invalido (esperado 1024x1024)");
             }
             return new EduSpriteAtlas(context,image);
         }
