@@ -119,14 +119,30 @@ public final class RaidDayAssistantOverlayService extends Service {
     private final Runnable clockPulse=new Runnable(){
         @Override public void run(){
             if(eventClock!=null){
-                // A tela de ajustes pode alterar data/fuso enquanto o Edu está visível.
-                // Nunca muda o histórico de uma sessão em andamento.
+                // Reconhece a janela selecionada e a virada para o exemplo
+                // histórico sem perder sessões anteriores nem criar passes.
                 if(preparation!=null&&!active&&!training&&prefs!=null){
+                    EduEventSelection.sync(
+                        RaidDayAssistantOverlayService.this,prefs,eventClock);
                     String stored=prefs.getString("raid_day_prep_v2_answer_0","");
                     LocalDate loaded=preparation.eventDate();
-                    if(loaded!=null&&!stored.equals(loaded.toString()))
+                    if(loaded==null||!stored.equals(loaded.toString())){
                         preparation=RaidDayPreparation.load(
                             RaidDayAssistantOverlayService.this,prefs,eventClock);
+                    }
+                    String updatedKey=preparation.eventKey();
+                    if(preparation.eventDate()!=null&&
+                        preparation.eventDate().equals(RaidDaySchedule.eventDate(
+                            RaidDayAssistantOverlayService.this))&&
+                        !updatedKey.equals(eventKey)){
+                        eventKey=updatedKey;
+                        prefs.edit().putString("eventKey",eventKey)
+                            .putInt("sessionGeneration",1).apply();
+                        sessionKey=eventKey+"#1";
+                        restoreJournal();
+                        riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+                            prefs.getString("riskAcceptance",""));
+                    }
                 }
                 LocalDate day=eduEventLocalToday();
                 RaidDayRegionalWindow.Phase phase=eduConfiguredPhase();
@@ -168,6 +184,50 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean avatarMotion=true;
     private String eduAnimationName="",eduReactionState="";
     private long eduAnimationStartedAt=0L,eduDragStartedAt=0L,eduReactionStateUntil=0L;
+    // As 22 poses autorizadas só entram no modo ocioso com o balão fechado.
+    // A sequência sempre termina antes de iniciar outra, com pausas naturais.
+    private static final String[] EDU_IDLE_ROTATION={
+        "pokebola_gesto","caminhada_frente","caminhada_direita",
+        "caminhada_esquerda","edu_jogando","edu_shiny",
+        "edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"
+    };
+    private long eduLastInteractionAt=0L,eduIdleNextAt=0L,eduIdleStartedAt=0L;
+    private String eduIdleName="";
+    private int eduIdleIndex=0;
+    private void resetEduIdle(){
+        eduLastInteractionAt=SystemClock.elapsedRealtime();
+        eduIdleNextAt=eduLastInteractionAt+6500L;
+        eduIdleStartedAt=0L;
+        eduIdleName="";
+    }
+    private int eduIdleFrame(long now){
+        if(eduSprites==null||visible||dragging||!avatarMotion)
+            return EduSpriteAtlas.indexForState("parado");
+        if(now-eduLastInteractionAt<6500L)
+            return EduSpriteAtlas.indexForState("parado");
+        if(!eduIdleName.isEmpty()){
+            int[] frames=EduSpriteAtlas.sequence(eduIdleName);
+            long interval=eduIdleName.startsWith("caminhada_")?290L:
+                "pokebola_gesto".equals(eduIdleName)?340L:
+                "edu_jogando".equals(eduIdleName)?650L:1900L;
+            int frame=(int)Math.max(0L,(now-eduIdleStartedAt)/interval);
+            if(frames.length>0&&frame<frames.length)return frames[frame];
+            eduIdleName="";
+            eduIdleNextAt=now+5800L;
+            return EduSpriteAtlas.indexForState("parado");
+        }
+        if(now<eduIdleNextAt)return EduSpriteAtlas.indexForState("parado");
+        for(int tries=0;tries<EDU_IDLE_ROTATION.length;tries++){
+            String next=EDU_IDLE_ROTATION[eduIdleIndex++%EDU_IDLE_ROTATION.length];
+            if(next.startsWith("edu_")&&!eduSprites.hasExtras())continue;
+            eduIdleName=next;
+            eduIdleStartedAt=now;
+            int[] frames=EduSpriteAtlas.sequence(next);
+            if(frames.length>0)return frames[0];
+        }
+        eduIdleNextAt=now+5800L;
+        return EduSpriteAtlas.indexForState("parado");
+    }
     // Exibição de efeitos não implica teleporte, passe, vitória ou evento confirmado.
     private int eduCurrentFrame(long now){
         if(dragging){
@@ -189,6 +249,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(!eduReactionState.isEmpty()&&now<eduReactionStateUntil)
             return EduSpriteAtlas.indexForState(eduReactionState);
         eduReactionState="";
+        if(!visible)return eduIdleFrame(now);
         return EduSpriteAtlas.indexForState(eduContextState());
     }
     private String eduContextState(){
@@ -259,6 +320,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void reactEdu(String name){
         if(eduSprites==null||!avatarMotion)return;
+        resetEduIdle();
         eduAnimationName="";
         eduReactionState=name;
         eduReactionStateUntil=SystemClock.elapsedRealtime()+1250L;
@@ -266,6 +328,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void playEduAnimation(String name){
         if(eduSprites==null||!avatarMotion)return;
+        resetEduIdle();
         int[] frames=EduSpriteAtlas.sequence(name);
         if(frames.length==0)return;
         eduAnimationName=name;eduAnimationStartedAt=SystemClock.elapsedRealtime();
@@ -287,8 +350,11 @@ public final class RaidDayAssistantOverlayService extends Service {
                 long now=SystemClock.elapsedRealtime();
                 avatarView.setImageDrawable(eduSprites.frame(eduCurrentFrame(now)));
                 avatarAnimationTick++;
+                // Uma animação ociosa de caminhada/pokébola também usa
+                // ticks curtos: caso contrário, 500 ms pulariam quadros.
                 handler.postDelayed(this,dragging?180L:
-                    eduAnimationName.isEmpty()?500L:160L);
+                    (!eduAnimationName.isEmpty()||!eduIdleName.isEmpty())?
+                        150L:500L);
                 return;
             }
             if(avatarSprites==null||avatarView==null||!avatarMotion)return;
@@ -357,10 +423,25 @@ public final class RaidDayAssistantOverlayService extends Service {
         prefs=getSharedPreferences("raid_assistant_overlay",MODE_PRIVATE);
         eventClock=EduEventClock.forEdu(this);
         preparation=RaidDayPreparation.load(this,prefs,eventClock);
+        // A janela configurada é a referência da data do evento.
+        // Se o Edu estiver no exemplo histórico manual, escolhe Mega Chandelure
+        // automaticamente, sem reabrir "Qual é o Dia de Reides?".
+        boolean eventSynchronized=EduEventSelection.sync(this,prefs,eventClock);
+        if(eventSynchronized)
+            preparation=RaidDayPreparation.load(this,prefs,eventClock);
         try{
             plan=RaidDayGuidePlan.load(this);
             journal=RaidDayDatabase.get(this);
             eventKey=prefs.getString("eventKey","evento_nao_configurado");
+            if((eventSynchronized||RaidDaySchedule.valid(
+                RaidDaySchedule.start(this),RaidDaySchedule.finish(this)))&&
+                preparation.eventDate()!=null&&
+                preparation.eventDate().equals(RaidDaySchedule.eventDate(this))&&
+                !preparation.eventKey().equals(eventKey)){
+                eventKey=preparation.eventKey();
+                prefs.edit().putString("eventKey",eventKey)
+                    .putInt("sessionGeneration",1).apply();
+            }
             int generation=Math.max(1,prefs.getInt("sessionGeneration",1));
             sessionKey=eventKey+"#"+generation;
             riskAccepted=(plan.riskVersion+":"+eventKey).equals(
@@ -376,6 +457,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         int savedAvatarSize=prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,100);
         avatarSizeIndex=savedAvatarSize==50?0:savedAvatarSize==75?1:2;
         avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
+        resetEduIdle();
         avatarSprites=RaidDayAvatarFrames.load(this);
         try{eduSprites=EduSpriteAtlas.load(this);}
         catch(Exception invalidAtlas){eduSprites=null;} // Sem crash: usar LT304
@@ -695,6 +777,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             @Override public boolean onTouch(View v,MotionEvent event){
                 switch(event.getActionMasked()){
                     case MotionEvent.ACTION_DOWN:
+                        resetEduIdle();
                         downX=event.getRawX();downY=event.getRawY();
                         startX=bubbleParams.x;startY=bubbleParams.y;
                         held=false;dragging=false;
@@ -1426,6 +1509,27 @@ public final class RaidDayAssistantOverlayService extends Service {
             updateStep();
         },"Sair",()->{eduWantsReal=false;updateStep();});
     }
+    private void selectEduChandelureExample(){
+        // Troca de evento somente por toque explícito: não substitui outro
+        // evento configurado quando o usuário ajusta apenas o relógio.
+        RaidDaySchedule.save(this,RaidDayRegionalWindow.CHANDELURE_DATE,
+            RaidDayRegionalWindow.CHANDELURE_START,
+            RaidDayRegionalWindow.CHANDELURE_END,
+            EduEventClock.zone(this),true);
+        EduEventSelection.sync(this,prefs,eventClock);
+        preparation=RaidDayPreparation.load(this,prefs,eventClock);
+        String next=preparation.eventKey();
+        if(!next.equals(eventKey)){
+            eventKey=next;
+            prefs.edit().putString("eventKey",next)
+                .putInt("sessionGeneration",1).apply();
+            sessionKey=next+"#1";
+            restoreJournal();
+        }
+        riskAccepted=(plan.riskVersion+":"+eventKey).equals(
+            prefs.getString("riskAcceptance",""));
+        updateStep();
+    }
     private void showEduReady(){
         LocalDate day=preparation.eventDate();
         LocalDate today=eduEventLocalToday();
@@ -1435,6 +1539,17 @@ public final class RaidDayAssistantOverlayService extends Service {
             "Relógio Edu ajustado manualmente, sem verificação oficial.":
             "Horário do celular no fuso "+EduEventClock.zone(this).getId()+
                 "; horário do evento ainda não verificado.";
+        if(EduEventSelection.isHistoricalExampleClock(this)&&
+            !RaidDaySchedule.isChandelureExample(this)&&
+            !RaidDayRegionalWindow.CHANDELURE_DATE.equals(day)){
+            setTalk("O relógio do Edu está no período de Mega Chandelure, "+
+                "mas existe outra data salva: "+preparation.displayDate()+".",
+                "O exemplo oficial foi 31/10/2026 das 14h às 17h no "+
+                "horário local da região escolhida.");
+            addTwo("Usar Chandelure",()->selectEduChandelureExample(),
+                "Manter evento",()->editEduEventRegion());
+            return;
+        }
         boolean ended=eduConfiguredPhase()==RaidDayRegionalWindow.Phase.ENDED;
         setTalk(ended?
             "O evento já terminou na região escolhida. Não vamos presumir novos passes.":
@@ -1456,6 +1571,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
     }
     private void editEduDate(){
+        if(RaidDaySchedule.valid(RaidDaySchedule.start(this),
+            RaidDaySchedule.finish(this))){
+            editEduEventRegion(); // data, região e hora ficam numa única tela
+            return;
+        }
         prefs.edit().remove("edu_event_date_confirmed_key").apply();
         preparation.beginEditing();
         preparation.save(prefs);
@@ -2041,6 +2161,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void setVisible(boolean show){
         if(panelScroll==null||wm==null||show==visible)return;
+        resetEduIdle();
         visible=show;
         if(show){
             updateStep();

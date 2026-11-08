@@ -6,6 +6,7 @@ const read=name=>fs.readFileSync(root+name,"utf8");
 const region=read("RaidDayRegionalWindow.java");
 const schedule=read("RaidDaySchedule.java");
 const settings=read("RaidDayEventSettingsActivity.java");
+const autoSync=read("EduEventSelection.java");
 const service=read("RaidDayAssistantOverlayService.java");
 const sprites=read("EduSpriteAtlas.java");
 
@@ -49,7 +50,9 @@ assert(settings.includes('RaidDaySchedule.save(this,date,startTime,endTime,'));
 for(const id of ["America/Sao_Paulo","Pacific/Auckland","Asia/Singapore","Pacific/Honolulu","Pacific/Kiritimati"])
   assert(settings.includes(id),"region preset "+id);
 assert(settings.includes("ZoneId.of(input.getText().toString().trim())"),"custom region support");
-assert(settings.includes('putString("raid_day_prep_v2_answer_0",date.toString())'),"date aligned to local event day");
+assert(settings.includes("EduEventSelection.sync(this,prefs,EduEventClock.forEdu(this))"),"region save synchronizes event date");
+assert(autoSync.includes(".putString(PREP_DATE,iso)"),"date aligned to local event day");
+assert(autoSync.includes(".putString(CONFIRMED,key)"),"configured event must skip date question");
 assert(service.includes("private LocalDate eduEventLocalToday()"));
 assert(service.includes("private RaidDayRegionalWindow.Phase eduConfiguredPhase()"));
 assert(service.includes("RaidDaySchedule.zone(this)"));
