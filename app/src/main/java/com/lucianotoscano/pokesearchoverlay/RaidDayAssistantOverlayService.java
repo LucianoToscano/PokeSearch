@@ -89,6 +89,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     // Subperguntas por etapa: nunca concluir só por chegada, espera ou OCR.
     private String eduDialogueState="";
     private boolean eduIntroAccepted=false;
+    // Etapa final relatada só uma vez; persistida em eventos da sessão real.
+    private boolean eduKiribatiAttempted=false;
     private LinearLayout eduWelcome,eduSettings,eduActions,eduMiniActions,eduMainCard;
     private TextView eduHeader,eduBadge,eduSpeech,eduSubline,eduSettingsClose;
     private TextView eduPrepQuestion,eduPrepCaption;
@@ -266,6 +268,7 @@ public final class RaidDayAssistantOverlayService extends Service {
      */
     private void restoreJournal(){
         index=0;repeatedCycles=0;paused=false;finished=false;active=false;
+        eduKiribatiAttempted=false;
         java.util.List<RaidDayEvent> events=journal.events().all(sessionKey);
         if(events.isEmpty()){
             // Migração cautelosa do protótipo LT304 anterior: não apagar o progresso.
@@ -287,6 +290,9 @@ public final class RaidDayAssistantOverlayService extends Service {
             index=Math.max(0,Math.min(plan.size()-1,item.nextIndex));
             repeatedCycles=Math.max(0,Math.min(100,item.cycleCount));
             paused=item.paused;finished=item.finished;active=item.active;
+            if("KIRIBATI_MAP_LOADED".equals(item.type)||
+                "KIRIBATI_SKIPPED".equals(item.type))
+                eduKiribatiAttempted=true;
         }
         // Se o jogo fechar entre chegar à região e carregar o mapa,
         // retomar a mesma pergunta, sem pular a confirmação humana.
@@ -364,6 +370,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         index=today.equals(date)?plan.indexOf("E08"):0;
         if(index<0)index=0;
         repeatedCycles=0;paused=false;finished=false;active=true;
+        eduKiribatiAttempted=false;
         setEduDialogueState("");
         appendEvent(today.equals(date)?"STARTED_DAY_D":"STARTED");
         reactAvatar(RaidDayAvatarFrames.WAVE);
@@ -372,6 +379,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     private void beginTraining(){
         if(!demoToday&&(!riskAccepted||!preparation.isComplete()))return;
         training=true;active=false;index=0;repeatedCycles=0;
+        eduKiribatiAttempted=false;
         eduDialogueState="";
         paused=false;finished=false;endPending=false;
         eduCaptureQuestion=false;eduRecordingExtraRaid=false;
@@ -1143,6 +1151,12 @@ public final class RaidDayAssistantOverlayService extends Service {
             eduCaptureQuestion=true;
             eduNote="";updateStep();return;
         }
+        if("E04".equals(plan.step(index).id)){
+            // O autor diz que perder/sair pode interromper a primeira fase.
+            // Não continuar o ciclo como se a vitória tivesse ocorrido.
+            setEduDialogueState("raid_interrupted");
+            updateStep();return;
+        }
         if(eduRecordingExtraRaid){
             eduRecordingExtraRaid=false;
             eduNote="Reide anotada. Deseja registrar outra?";
@@ -1260,72 +1274,240 @@ public final class RaidDayAssistantOverlayService extends Service {
                 updateStep();
             });
     }
-    private void showEduTravel(String region,String firstSpeech){
+    // Chegada e carregamento são confirmações independentes. Só o retorno ao
+    // Havaí (E05) manda reiniciar: a primeira ida (E02) não exige isso.
+    private void showEduTravel(String region,String firstSpeech,
+                               boolean mustRestart){
         boolean arrived="travel_reload".equals(eduDialogueState)||
             "travel_wait".equals(eduDialogueState);
         if(!arrived){
             setTalk(("travel_pending".equals(eduDialogueState)?
-                "Sem pressa! Confirme a região antes de continuar. ":firstSpeech)+
-                " Você já está no local indicado ("+region+")?",
-                "Toque nas coordenadas para copiar. Edu não altera sua localização.");
+                "Tudo bem. Confira a localização. ":firstSpeech)+
+                " Já está em "+region+"?",
+                "Toque nas coordenadas para copiar. Não interaja no Havaí, "+
+                "conforme a condição mencionada pelo autor.");
             addEduCoordinateButton();
             addTwo("Sim, já estou",()->{
-                setEduDialogueState("travel_reload");
-                reactAvatar(RaidDayAvatarFrames.WAVE);
-                updateStep();
+                setEduDialogueState("travel_reload");updateStep();
             },"Ainda não",()->{
-                setEduDialogueState("travel_pending");
-                updateStep();
+                setEduDialogueState("travel_pending");updateStep();
             });
             return;
         }
-        setTalk("Ótimo! Agora feche e reabra o Pokémon GO. Aguarde cerca de "+
-            "um minuto até o mapa e os Pokémon carregarem. Carregaram?",
+        setTalk(mustRestart?
+            "Agora feche e reabra o Pokémon GO no Havaí. "+
+            "O mapa, os Pokémon e as Poképaradas carregaram?":
+            "Aguarde o mapa e os Pokémon carregarem no Havaí. Já carregaram?",
             "travel_wait".equals(eduDialogueState)?
-                "Aguarde o mapa carregar. Não precisa confirmar antes.":"Confirme o carregamento que você realmente viu.");
+            "Sem pressa. Confirme apenas quando aparecer na tela.":
+            "A primeira chegada ao Havaí não pede reiniciar o jogo.");
         addTwo("Sim, carregaram",()->advanceEdu("MAP_LOADED"),
-            "Ainda não",()->{
-                setEduDialogueState("travel_wait");updateStep();
-            });
+            "Ainda não",()->{setEduDialogueState("travel_wait");updateStep();});
     }
-    private void showEduNewZealand(RaidDayGuidePlan.Step step){
-        boolean atPass="nz_pass".equals(eduDialogueState)||
-            "pass_check".equals(eduDialogueState);
-        if(!atPass){
-            setTalk("nz_pending".equals(eduDialogueState)?
-                "Sem pressa! Confira a região. Já chegou à Nova Zelândia?":
-                "Agora vamos para a Nova Zelândia. Já está na região indicada?",
-                "Toque nas coordenadas para copiar. Esta é a próxima região do relato.");
+    private void showEduPreparationChecks(){
+        if("pre_softban".equals(eduDialogueState)){
+            setTalk("Antes de começar, você está sem softban/restrição de "+
+                "ações no Pokémon GO?",
+                "O autor coloca essa condição na véspera; Edu não "+
+                "consegue confirmar uma restrição da conta.");
+            addThree("Sim, sem restrição",()->{
+                setEduDialogueState("pre_region");updateStep();
+            },"Tenho restrição",()->{
+                setEduDialogueState("pre_blocked");updateStep();
+            },"Não sei",()->{
+                setEduDialogueState("pre_blocked");updateStep();
+            });
+            return;
+        }
+        if("pre_region".equals(eduDialogueState)){
+            setTalk("Na véspera, você já interagiu no jogo em algum "+
+                "lugar onde o dia do evento já havia começado?",
+                "No vídeo, isso impede a primeira parte do relato.");
+            addThree("Não, ainda não",()->advanceEdu("PRECHECKS_CONFIRMED"),
+                "Sim, já joguei",()->{setEduDialogueState("pre_blocked");updateStep();},
+                "Não sei",()->{setEduDialogueState("pre_blocked");updateStep();});
+            return;
+        }
+        if("pre_blocked".equals(eduDialogueState)){
+            setTalk("O vídeo diz que uma condição da véspera não foi "+
+                "confirmada. Não vamos presumir que essa parte funciona.",
+                "Você pode revisar ou aguardar o dia do evento.");
+            addTwo("Revisar",()->{setEduDialogueState("pre_softban");updateStep();},
+                "Ir ao evento",()->navigateEdu("E08","PRECHECKS_NOT_MET"));
+            return;
+        }
+        askEduPass("Na véspera do evento ("+eduEventWhen()+
+            "), você guardou o Passe Diário laranja sem gastar?",
+            training?"Treino fictício: nenhum passe real será obtido.":
+            "No vídeo, o horário de 22h é apenas exemplo de 30/10.",
+            ()->{setEduDialogueState("pre_softban");updateStep();},
+            ()->{setEduDialogueState("pass_wait");updateStep();});
+    }
+    private void showEduNewZealandPass(RaidDayGuidePlan.Step step,
+                                        boolean returning){
+        boolean retryOffer="nz_retry_offer".equals(eduDialogueState);
+        boolean retryReload="nz_retry_reload".equals(eduDialogueState);
+        boolean retryCheck=eduDialogueState.startsWith("nz_retry_check");
+        boolean checking="nz_check".equals(eduDialogueState)||
+            "nz_check_wait".equals(eduDialogueState)||
+            retryCheck;
+        if(retryOffer){
+            setTalk("Não apareceu passe no ginásio da Nova Zelândia? "+
+                "O vídeo sugere fechar e reabrir o jogo aqui uma vez.",
+                "É uma tentativa do relato, sem garantia de passe.");
+            addTwo("Reabrir na NZ",()->{
+                setEduDialogueState("nz_retry_reload");updateStep();
+            },"Seguir ao evento",()->navigateEdu(step.noPassTo,"NO_PASS"));
+            return;
+        }
+        if(retryReload){
+            setTalk("Feche e reabra o Pokémon GO na Nova Zelândia. "+
+                "O mapa carregou de novo?",
+                "Depois, confira novamente o passe ao tocar na reide.");
+            addTwo("Sim, carregou",()->{
+                setEduDialogueState("nz_retry_check");updateStep();
+            },"Ainda não",()->updateStep());
+            return;
+        }
+        if(!checking){
+            setTalk(("nz_pending".equals(eduDialogueState)?"Confira a região. ":
+                returning?"Depois do Havaí, volte à Nova Zelândia. ":
+                "Agora siga do Havaí para a Nova Zelândia. ")+
+                "Já chegou?",
+                "As coordenadas são copiáveis; Edu não altera seu GPS.");
             addEduCoordinateButton();
-            addTwo("Sim, já estou",()->{
-                setEduDialogueState("nz_pass");updateStep();
+            addTwo("Sim, cheguei",()->{
+                setEduDialogueState("nz_check");updateStep();
             },"Ainda não",()->{
                 setEduDialogueState("nz_pending");updateStep();
             });
             return;
         }
-        askEduPass("Confira o Pokémon GO: apareceu um Passe de Reide "+
-            "Diário gratuito?", "Só use um passe que você realmente veja no jogo.",
-            ()->advanceEdu("PASS_CONFIRMED"),
-            ()->navigateEdu(step.noPassTo,"NO_PASS"));
+        setTalk(retryCheck?
+            "Depois de reiniciar na própria Nova Zelândia, apareceu "+
+                "um Passe Diário laranja ao verificar a reide?":
+            returning?
+            "No ginásio da Nova Zelândia, apareceu outro passe "+
+                "laranja para fazer a próxima reide?":
+            "Na Nova Zelândia, você tem um passe laranja válido "+
+                "ao verificar a reide?",
+            "Conte apenas passes realmente observados.");
+        addThree("Sim, apareceu",()->advanceEdu("PASS_CONFIRMED"),
+            "Não apareceu",()->{
+                if(retryCheck)navigateEdu(step.noPassTo,"NO_PASS_AFTER_RETRY");
+                else {setEduDialogueState("nz_retry_offer");updateStep();}
+            },"Vou conferir",()->{
+                setEduDialogueState(retryCheck?"nz_retry_check_wait":
+                    "nz_check_wait");updateStep();
+            });
     }
     private void showEduEventDay(){
-        if("no_event_pass".equals(eduDialogueState)){
-            setTalk("Sem passe confirmado, não vamos registrar uma reide "+
-                "que não aconteceu. Quer conferir novamente ou encerrar?",
-                "Nenhum passe extra é garantido.");
-            addTwo("Conferir de novo",()->{
-                setEduDialogueState("");updateStep();
-            },"Ver resumo",()->navigateEdu("E11","NO_PASS"));
+        if("event_wait".equals(eduDialogueState)){
+            setTalk("O evento ainda não começou no lugar onde você "+
+                "vai jogar? Aguarde a abertura real.",
+                "Não use automaticamente as 14h do vídeo antigo.");
+            addTwo("Começou agora",()->{
+                setEduDialogueState("event_pass");updateStep();
+            },"Continuar aguardando",()->updateStep());
             return;
         }
-        askEduPass((training?"Na simulação, hoje é o evento fictício: ":
-                "Pela data informada, hoje seria o dia do evento: ")+eduEventWhen()+
-                ". Você já tem um passe disponível no inventário?",
-            "Confira também o horário do evento. O horário informado não "+
-                "é uma programação oficial verificada.",
-            ()->advanceEdu("PASS_CONFIRMED"),
-            ()->{setEduDialogueState("no_event_pass");updateStep();});
+        if(!"event_pass".equals(eduDialogueState)&&
+            !"event_pass_wait".equals(eduDialogueState)){
+            setTalk("Hoje é a data informada para o evento ("+
+                eduEventWhen()+"). Ele já começou no local onde "+
+                "você pretende jogar?",
+                "O exemplo do vídeo foi Mega Chandelure em 31/10, "+
+                "14h às 17h locais; confirme o horário deste evento.");
+            addTwo("Sim, começou",()->{
+                setEduDialogueState("event_pass");updateStep();
+            },"Ainda não",()->{setEduDialogueState("event_wait");updateStep();});
+            return;
+        }
+        setTalk("Com o evento iniciado, você ainda tem um passe "+
+            "de reide disponível?",
+            "Se tiver, faça as reides normalmente. Se esgotou, "+
+            "o relato segue à etapa final de Kiribati.");
+        addThree("Sim, tenho",()->navigateEdu("E10","EVENT_PASS_AVAILABLE"),
+            "Não tenho",()->advanceEdu("NO_EVENT_PASS"),
+            "Vou conferir",()->{
+                setEduDialogueState("event_pass_wait");updateStep();
+            });
+    }
+    private void showEduKiribati(){
+        if("kiribati_pending".equals(eduDialogueState)){
+            setTalk("Você chegou à região de Kiribati indicada no relato?",
+                "Toque nas coordenadas para copiar. "+
+                "A etapa final só vem depois de o evento começar.");
+            addEduCoordinateButton();
+            addTwo("Sim, cheguei",()->{
+                setEduDialogueState("kiribati_reload");updateStep();
+            },"Ainda não",()->updateStep());
+            return;
+        }
+        if("kiribati_reload".equals(eduDialogueState)||
+            "kiribati_wait".equals(eduDialogueState)){
+            setTalk("No vídeo, Edu fecha e reabre o jogo uma vez em "+
+                "Kiribati. O mapa e os Pokémon carregaram?",
+                "Depois volte ao local do evento; não reinicie "+
+                "entre cada reide da etapa final.");
+            addTwo("Sim, carregou",()->{
+                eduKiribatiAttempted=true;
+                navigateEdu("E10","KIRIBATI_MAP_LOADED");
+            },"Ainda não",()->{
+                setEduDialogueState("kiribati_wait");updateStep();
+            });
+            return;
+        }
+        setTalk("No relato, quando os passes acabam durante o evento, "+
+            "Edu vai a Kiribati e reabre o Pokémon GO uma única vez. "+
+            "Quer acompanhar essa etapa?",
+            "Ele afirma antecipar um passe do dia seguinte, "+
+            "que pode então faltar amanhã. Nada é garantido.");
+        addTwo("Seguir relato",()->{
+            setEduDialogueState("kiribati_pending");updateStep();
+        },"Jogar normal",()->{
+            eduKiribatiAttempted=true;
+            navigateEdu("E10","KIRIBATI_SKIPPED");
+        });
+    }
+    private void showEduEventRaids(){
+        if(!"event_pass".equals(eduDialogueState)&&
+            !"event_empty".equals(eduDialogueState)){
+            setTalk("Você já está de volta ao local do evento para "+
+                "fazer as reides?",
+                "Confira o evento no lugar escolhido. Edu não teleporta.");
+            addTwo("Sim, estou",()->{
+                setEduDialogueState("event_pass");updateStep();
+            },"Ainda não",()->updateStep());
+            return;
+        }
+        if("event_empty".equals(eduDialogueState)){
+            setTalk("Nenhum passe confirmado para outra reide. "+
+                "Quer tentar a etapa final do relato ou encerrar?",
+                eduKiribatiAttempted?
+                "Você já registrou a passagem por Kiribati nesta sessão.":
+                "Kiribati faz parte da etapa final relatada, não é "+
+                "obrigatório para jogar normalmente.");
+            if(eduKiribatiAttempted){
+                addTwo("Ver resumo",()->advanceEdu("NO_EVENT_PASS"),
+                    "Conferir de novo",()->{
+                        setEduDialogueState("event_pass");updateStep();
+                    });
+            }else{
+                addTwo("Tentar Kiribati",()->navigateEdu("E09","EVENT_PASS_EMPTY"),
+                    "Ver resumo",()->navigateEdu("E11","NO_EVENT_PASS"));
+            }
+            return;
+        }
+        setTalk("Confira o ginásio: tem um passe realmente "+
+            "disponível para participar de outra reide?",
+            "Na etapa final o vídeo não manda fechar e "+
+            "reabrir entre as reides.");
+        addThree("Sim, vou fazer",()->{
+            eduRecordingExtraRaid=true;updateStep();
+        },"Não apareceu",()->{
+            setEduDialogueState("event_empty");updateStep();
+        },"Vou conferir",()->updateStep());
     }
     private void showEduGuide(){
         RaidDayGuidePlan.Step step=plan.step(index);
@@ -1406,63 +1588,59 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         switch(step.id){
             case "E01":
-                askEduPass("O evento será em "+eduEventWhen()+
-                    ". Na véspera (D−1), guarde no inventário um Passe de "+
-                    "Reide Diário gratuito, sem gastar. Você já tem esse passe?",
-                    training?"Simulação: a véspera fictícia foi ontem. "+
-                        "Nenhum passe real será usado.":
-                        "Se ainda não apareceu, aguarde e confira no jogo.",
-                    ()->advanceEdu("PASS_CONFIRMED"),
-                    ()->{setEduDialogueState("pass_wait");updateStep();});
+                showEduPreparationChecks();
                 break;
             case "E02":
-                showEduTravel("Havaí","Ótimo! O primeiro local do relato é o Havaí.");
+                showEduTravel("Havaí","A primeira região do relato é o Havaí.",
+                    false);
                 break;
             case "E03":
-                showEduNewZealand(step);
+                showEduNewZealandPass(step,false);
                 break;
             case "E04":
-                setTalk("Agora, se existe um passe válido, participe de uma reide. "+
-                    "Como terminou?", "Vitória, captura e recompensas são coisas diferentes.");
+                if("raid_interrupted".equals(eduDialogueState)){
+                    setTalk("Você registrou derrota ou saída da reide. "+
+                        "O autor diz que isso pode afetar a primeira "+
+                        "parte, mas não está comprovado.",
+                        "Não vamos contar passe ou vitória inexistente.");
+                    addTwo("Ir ao evento",()->navigateEdu("E08","RAID_INTERRUPTED"),
+                        "Rever resultado",()->{
+                            setEduDialogueState("");updateStep();
+                        });
+                    break;
+                }
+                setTalk("Na Nova Zelândia, entre na reide com um "+
+                    "passe válido. Como terminou?",
+                    "O autor recomenda vencer. Registre o que aconteceu "+
+                    "de verdade; a captura será perguntada separadamente.");
                 addThree("Venci",()->recordEduOutcome("RAID_WIN"),
                     "Perdi",()->recordEduOutcome("RAID_LOSS"),
                     "Saí",()->recordEduOutcome("RAID_LEFT"));
                 break;
             case "E05":
-                showEduTravel("Havaí","Depois da reide, o relato retorna ao Havaí.");
+                showEduTravel("Havaí",
+                    "Depois da reide, volte ao Havaí.",true);
                 break;
             case "E06":
-                askEduPass("Agora abra a mochila: apareceu outro Passe Diário "+
-                    "gratuito?", "Só conte um passe que realmente esteja no inventário.",
-                    ()->advanceEdu("PASS_CONFIRMED"),
-                    ()->navigateEdu(step.noPassTo,"NO_PASS"));
+                showEduNewZealandPass(step,true);
                 break;
             case "E07":
-                setTalk("Você quer repetir o ciclo a partir do Havaí ou "+
-                    "seguir ao dia do evento?",
-                    "Contamos ciclos realizados, não passes garantidos.");
-                addTwo("Repetir ciclo",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
-                    "Ir ao evento",()->navigateEdu(step.noPassTo,"NO_PASS"));
+                setTalk("Apareceu outro passe na Nova Zelândia. "+
+                    "Quer fazer mais uma reide aí e repetir o retorno "+
+                    "ao Havaí, ou encerrar a primeira parte?",
+                    "O ciclo do vídeo é reide na Nova Zelândia → "+
+                    "Havaí reinicia → Nova Zelândia.");
+                addTwo("Outra reide",()->navigateEdu(step.repeatTo,"CYCLE_REPEATED"),
+                    "Ir ao evento",()->navigateEdu(step.noPassTo,"FIRST_PART_ENDED"));
                 break;
             case "E08":
                 showEduEventDay();
                 break;
             case "E09":
-                setTalk("O relato também cita Kiribati (Kiritimati), mas "+
-                    "esta etapa é opcional. Quer conferir ou pular?",
-                    "Se conferir, o relato menciona reabrir o jogo e aguardar "+
-                    "aproximadamente um minuto. Isso não prova um passe.");
-                addEduCoordinateButton();
-                addTwo("Já conferi",()->advanceEdu("STEP_CONFIRMED"),
-                    "Pular",()->navigateEdu(step.skipTo,"OPTIONAL_SKIPPED"));
+                showEduKiribati();
                 break;
             case "E10":
-                setTalk("Volte ao local onde vai jogar o evento. "+
-                    "Quer registrar o resultado de uma reide?",
-                    "Registre somente reides reais, uma por vez.");
-                addTwo("Registrar reide",()->{
-                    eduRecordingExtraRaid=true;eduNote="";updateStep();
-                },"Seguir",()->advanceEdu("STEP_CONFIRMED"));
+                showEduEventRaids();
                 break;
             case "E11":
                 setTalk("Chegamos ao final! Vamos conferir os ciclos, "+

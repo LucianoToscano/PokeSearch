@@ -26,7 +26,7 @@ assert.equal(plan.id,"roteiro_bug_passes");
 assert.equal(plan.evidenceKind,"RELATO_COMUNIDADE");
 assert.ok(plan.riskTextVersion);
 assert.equal(variant.id,"eduhunterplay-2026-10-28");
-assert.equal(variant.verificadoEm,"2026-11-07");
+assert.equal(variant.verificadoEm,"2026-11-08");
 assert.match(variant.confianca,/nao_verificado/);
 const steps=variant.etapas;
 assert.equal(steps.length,11);
@@ -48,7 +48,9 @@ assert.deepEqual(steps.slice(7,10).map(x=>x.periodo),
                  Array(3).fill("D"));
 assert.deepEqual([steps[1].local,steps[2].local,steps[4].local],
                  ["hawaii","newzealand","hawaii"]);
-assert.equal(steps[6].repetePara,"E02");
+assert.equal(steps[6].repetePara,"E04");
+assert.equal(steps[5].local,"newzealand");
+assert.equal(steps[8].opcional,false);
 assert.equal(steps[6].semPassePara,"E08");
 assert.equal(steps[8].pularPara,"E10");
 assert.equal(variant.locais.hawaii.coordenadas,"21.2709423,-157.818172");

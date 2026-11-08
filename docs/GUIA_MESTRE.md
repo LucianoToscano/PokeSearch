@@ -1,6 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 
+## LT307 — EDU · ROTEIRO VALIDADO CONTRA VÍDEO/TXT/PDF ORIGINAIS (08/11/2026, EM QA)
+
+- **Autorização do proprietário:** após receber vídeo `videoplayback (1).mp4` e transcrições TXT/PDF “BUG DOS PASSES ATÉ 40 PASSES DE RAIDS GRATUITO NO #pokemongo”, ele confirmou explicitamente “Sim” para **corrigir tutorial no aplicativo, registrar, fazer merge e publicar nova versão**. Base confirmada: LT306 `0.03.06 / code 54512` oficialmente publicada; candidata LT307 `0.03.07 / code 54513 / label 51311`. Não tratar autorização como prova do método ou do QA físico.
+- **Correção importante da ordem:** o relato exige **véspera** com passe laranja guardado, ausência de softban e ausência de interação em local onde já era o dia D. **Primeiro Havaí** é chegar e aguardar mapa, **sem reinício obrigatório**; Nova Zelândia faz a primeira reide; **cada retorno ao Havaí** depois da reide requer fechar/reabrir e carregar mapa; **volta à NZ** para outra reide/passe. `E06` agora tem `local=newzealand`; `E07.repetePara=E04`, não E02. Sem passe na NZ, oferecer **reinício na própria NZ e nova conferência**, sem promessa.
+- **Resultado e fase final:** derrota/saída registradas sem declarar vitória; o autor *afirma* que isso pode afetar o relato, não é dado verificado. E08 pergunta se o evento **de fato começou no local escolhido**, não apenas se é dia D. E09 **Kiribati faz parte da fase final narrada** após esgotar passes (usuário pode optar por não tentar e jogar normalmente); na região reinicia uma vez, aguarda mapa e volta ao local do evento. E10 confirma passes no ginásio e registra reides sem reinícios adicionais. O relato alega antecipar passe do dia seguinte, portanto pode faltar no dia seguinte; não garantir.
+- **Fonte, data e horários:** evento exemplo no vídeo Mega Chandelure em **31/10/2026, 14h–17h hora local**; o autor relata iniciar a primeira parte às **22h da véspera**. **NÃO generalizar** esses horários para outros eventos. Contagens como 15–16 ou 39–40 passes são promessas do autor, **não verificadas**. Coordenadas apenas copiadas, sem GPS alterado pelo PokeSearch.
+- **UX e compatibilidade:** manter balão único branco solto com cauda para o Edu (LT306), botões independentes, configurações ocultas por segurar 1,2s, G=100px padrão, etapas conversacionais, confirmação de usuário, simulação sem histórico real, MediaProjection/OCR protegido, P1/P2, Doce Raro, API 429 e cap 10, assinatura permanente.
+- **Artefatos em branch:** `app/src/main/assets/roteiro_bug_passes.json`, `RaidDayAssistantOverlayService.java`, contratos LT304 e teste novo `app/tests/lt307-edu-video-original-flow.test.js`, release notes embarcadas para code 54513. Auditoria [`LT307_EDU_ROTEIRO_VIDEO_TXT_PDF_20261108.md`](LT307_EDU_ROTEIRO_VIDEO_TXT_PDF_20261108.md). **CI e Samsung pendentes até evidência**, assim como publicação e hash do novo APK. Continuar pelo workflow oficial permanente, sem afirmar sucesso antecipado.
+
+
+
 ## LT306 OFICIAL — EDU COM BALÃO ÚNICO SOLTO, SEM CAIXA EXTERNA (publicação verificada em 07/11/2026)
 
 - **Status público confirmado:** **LT306 · `0.03.06` · versionCode `54512` · label `51310`**. GitHub Releases/latest apontando para [`v0.03.06-54512`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.06-54512), `draft=false`, `prerelease=false`, asset `uploaded`.

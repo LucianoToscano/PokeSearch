@@ -121,10 +121,11 @@ assert.match(overlay,/private void addEduCoordinateButton\(\)/);
 assert.match(overlay,/coordinate\.setOnClickListener\(v->copyEduCoordinates\(\)\)/,
   "Um toque sobre a coordenada deve copiá-la");
 assert.match(overlay,/showEduTravel\("Havaí"/);
-assert.match(overlay,/showEduNewZealand\(step\)/);
+assert.match(overlay,/showEduNewZealandPass\(step,false\)/);
+assert.match(overlay,/showEduNewZealandPass\(step,true\)/);
 assert.match(overlay,/travel_reload/);
 assert.match(overlay,/travel_wait/);
-assert.match(overlay,/nz_pass/);
+assert.match(overlay,/nz_check/);
 assert.match(overlay,/Sim, já estou/);
 assert.match(overlay,/Sim, carregaram/);
 assert.match(overlay,/Ainda não/);
@@ -133,10 +134,10 @@ assert.match(overlay,/Não tenho/);
 assert.match(overlay,/Vou conferir/);
 assert.match(overlay,/setEduDialogueState\("pass_wait"\)/,
   "Sem passe na véspera não deve avançar");
-assert.match(overlay,/setEduDialogueState\("no_event_pass"\)/,
-  "Sem passe no dia D exige decisão antes de seguir");
-assert.match(overlay,/navigateEdu\("E11","NO_PASS"\)/,
-  "Sem passe no dia D permite encerrar, sem inventar reide");
+assert.match(overlay,/advanceEdu\("NO_EVENT_PASS"\)/,
+  "Sem passe no dia D segue para a parte final, sem inventar passe");
+assert.match(overlay,/navigateEdu\("E11","NO_EVENT_PASS"\)/,
+  "Após verificar passe ausente no dia D, permite encerrar");
 assert.match(overlay,/case "E01":/);
 assert.match(overlay,/case "E02":/);
 assert.match(overlay,/case "E05":/);
@@ -162,10 +163,10 @@ assert.match(overlay,/case "E09":/);
 assert.match(overlay,/case "E10":/);
 assert.match(overlay,/eduRecordingExtraRaid/);
 assert.match(overlay,/Copiar local/);
-assert.match(overlay,/Sem passe/);
+assert.match(overlay,/Nenhum passe/);
 assert.match(overlay,/Sim, tenho/);
 assert.match(overlay,/Não tenho/);
-assert.match(overlay,/Registrar reide/);
+assert.match(overlay,/Sim, vou fazer/);
 assert.match(overlay,/RaidDayRecovery\.lastConfirmed/);
 assert.match(overlay,/bubble\.setVisibility\(View\.GONE\)/);
 assert.match(overlay,/setVisible\(false\)/);

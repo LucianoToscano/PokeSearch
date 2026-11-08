@@ -9,12 +9,12 @@
     {
       "id": "eduhunterplay-2026-10-28",
       "nome": "EduhunterPlay — vídeo de 28/10/2026",
-      "fonte": "Vídeo compartilhado pelo usuário; roteiro resumido sujeito a confirmação no conteúdo original",
+      "fonte": "Vídeo e transcrições TXT/PDF enviados pelo usuário em 08/11/2026; sequência fiel ao relato, sem validação de eficácia",
       "url": "https://youtu.be/S0cTvtaMim0",
       "publicadoEm": "2026-10-28",
-      "verificadoEm": "2026-11-07",
+      "verificadoEm": "2026-11-08",
       "confianca": "relato_comunitario_nao_verificado",
-      "horario": "D-1 / D; sem horário universal comprovado para eventos futuros",
+      "horario": "Exemplo histórico Mega Chandelure 31/10/2026, 14h–17h horário local; demais eventos devem ser conferidos manualmente; hora da véspera no vídeo é apenas exemplo",
       "locais": {
         "hawaii": {
           "nome": "Havaí",
@@ -36,10 +36,12 @@
         {
           "id": "E01",
           "titulo": "Preparação",
-          "instrucao": "Confira a programação do evento, os passes existentes e as condições do tutorial. Este roteiro é um relato da comunidade, não uma garantia de passes.",
+          "instrucao": "Na véspera, preservar o Passe Diário laranja, não estar sob softban e não ter interagido em país onde já é o dia D. O vídeo usa 22h como exemplo, não como regra universal.",
           "precondicoes": [
-            "Evento e horário conferidos pelo jogador",
-            "Aviso de risco aceito"
+            "Passe Diário laranja de D-1 guardado, não gasto",
+            "Sem softban declarado pelo jogador",
+            "Não interagiu em local onde já era D",
+            "Evento e horários conferidos manualmente"
           ],
           "confirmacoesAceitas": [
             "USER_ATTESTED"
@@ -48,17 +50,18 @@
           "retornoSeguro": "Voltar à preparação e revisar as condições iniciais.",
           "local": null,
           "opcional": false,
-          "falaEdu": "Edu: antes de começar, confira seus passes e se há alguma restrição na conta. Tudo certo?",
-          "ajudaEdu": "Primeiro, confira se o Passe Diário e a data do evento estão corretos. Nada será feito automaticamente.",
+          "falaEdu": "Edu: na véspera, guarde seu Passe Diário laranja. Você não gastou esse passe?",
+          "ajudaEdu": "O vídeo pede três condições: passe guardado, sem softban e sem interação anterior em região que já entrou no dia do evento. Se não cumpriu, pode aguardar a etapa do evento.",
           "periodo": "preparacao"
         },
         {
           "id": "E02",
           "titulo": "Havaí",
-          "instrucao": "O vídeo descreve fechar e reabrir o Pokémon GO após conferir a região do Havaí e aguardar cerca de um minuto. O PokeSearch não modifica a localização.",
+          "instrucao": "Primeira chegada ao Havaí: apenas aguarde mapa e Pokémon carregarem; não é exigido fechar/reabrir o jogo nesse primeiro acesso. Não interaja no jogo no Havaí, segundo a orientação do vídeo.",
           "precondicoes": [
-            "Véspera D-1 conferida",
-            "Jogo fechado antes da retomada, conforme relato"
+            "Véspera e três condições iniciais conferidas",
+            "Chegada ao Havaí confirmada",
+            "Mapa e Pokémon carregados"
           ],
           "confirmacoesAceitas": [
             "USER_ATTESTED"
@@ -67,14 +70,14 @@
           "retornoSeguro": "Reabrir a etapa E02 sem registrar passe.",
           "local": "hawaii",
           "opcional": false,
-          "falaEdu": "Edu: primeiro vem o Havaí. Feche e reabra o Pokémon GO e espere o mapa carregar. Já fez isso?",
-          "ajudaEdu": "Esta é a primeira região do relato. O jogo precisa ser conferido manualmente; aguardar um minuto não prova resultado.",
+          "falaEdu": "Edu: comece no Havaí. Quando o mapa e os Pokémon carregarem, confirme; a primeira ida não pede reiniciar o jogo.",
+          "ajudaEdu": "No exemplo do vídeo, Havaí ainda estava em D−1 enquanto Nova Zelândia já entrara em D. O PokeSearch só copia coordenadas.",
           "periodo": "D-1"
         },
         {
           "id": "E03",
           "titulo": "Nova Zelândia",
-          "instrucao": "O tutorial menciona a Nova Zelândia. Verifique no jogo se existe um Passe Diário gratuito antes de iniciar qualquer reide.",
+          "instrucao": "Da primeira parada no Havaí, siga para Nova Zelândia e confira o passe laranja na reide/academia. Se não receber passe, tente reabrir o jogo na própria Nova Zelândia antes de abandonar a primeira parte.",
           "precondicoes": [
             "Etapa anterior confirmada",
             "Passe disponível observado, não presumido"
@@ -82,19 +85,19 @@
           "confirmacoesAceitas": [
             "USER_ATTESTED"
           ],
-          "naoAconteceu": "Sem Passe Diário? Não registre uma reide; avance ao caminho de revisão e evento.",
+          "naoAconteceu": "Não apareceu passe? O vídeo sugere fechar/reabrir o Pokémon GO na Nova Zelândia e tocar outra vez na reide. Se ainda não apareceu, aguarde a etapa do evento, sem contabilizar passe.",
           "retornoSeguro": "Revisar a confirmação do passe e o horário do evento.",
           "local": "newzealand",
           "opcional": false,
           "semPassePara": "E08",
-          "falaEdu": "Edu: agora vem a Nova Zelândia. Apareceu um Passe de Reide Diário gratuito?",
-          "ajudaEdu": "Não comece uma reide esperando um passe que não esteja visível. A ordem do vídeo é Havaí → Nova Zelândia.",
+          "falaEdu": "Edu: agora Nova Zelândia. Confira no ginásio se possui um Passe Diário laranja para a reide.",
+          "ajudaEdu": "No vídeo o passe pode aparecer ao tocar no ginásio. Não registre passe caso não apareça. Tentativa de reinício na própria NZ é opcional e não garante.",
           "periodo": "D-1"
         },
         {
           "id": "E04",
           "titulo": "Resultado da reide",
-          "instrucao": "Registre separadamente: entrou no lobby, iniciou, venceu, perdeu ou abandonou. Ganhar a reide não significa capturar o chefe.",
+          "instrucao": "Registre o resultado da reide da Nova Zelândia. O autor alerta que perder a reide pode interromper o método; isto é uma alegação, não regra validada. Registrar captura em pergunta separada.",
           "precondicoes": [
             "Resultado informado pelo jogador"
           ],
@@ -106,13 +109,13 @@
           "local": null,
           "opcional": false,
           "falaEdu": "Edu: participe da reide usando o passe. Como terminou: venceu, perdeu ou saiu?",
-          "ajudaEdu": "Vencer a reide, receber recompensas e capturar o Pokémon são acontecimentos diferentes. Se não souber, marque 'Não sei'.",
+          "ajudaEdu": "O autor recomenda vencer a reide; não garante o método se perder ou sair. Registre vitória, derrota ou saída de modo fiel e capture/fuga separadamente.",
           "periodo": "D-1"
         },
         {
           "id": "E05",
           "titulo": "Voltar ao Havaí",
-          "instrucao": "Segundo o vídeo, volte ao Havaí e reinicie o jogo antes de conferir novamente os passes. A mudança de mapa não confirma o fuso do servidor.",
+          "instrucao": "Depois da reide, retorne ao Havaí, feche e reabra o Pokémon GO e aguarde mapa, Pokémon e Poképaradas carregarem. Esta reinicialização é repetida em cada ciclo.",
           "precondicoes": [
             "Resultado da reide registrado"
           ],
@@ -123,33 +126,33 @@
           "retornoSeguro": "Voltar à etapa E05 e revisar carregamento.",
           "local": "hawaii",
           "opcional": false,
-          "falaEdu": "Edu: depois, volte ao Havaí e reabra o Pokémon GO. O mapa carregou?",
+          "falaEdu": "Edu: volte ao Havaí, feche e reabra o jogo, depois confirme o mapa carregado.",
           "ajudaEdu": "Siga a sequência apresentada no tutorial, sem considerar um teleporte como confirmado pelo servidor.",
           "periodo": "D-1"
         },
         {
           "id": "E06",
-          "titulo": "Conferência de passe",
-          "instrucao": "Confira se existe realmente um novo Passe Diário. Marque 'Não aconteceu' caso ele não apareça. Não confunda reide concluída com passe obtido.",
+          "titulo": "Retornar à Nova Zelândia e verificar passe",
+          "instrucao": "Após reiniciar no Havaí, volte à Nova Zelândia e toque em uma reide para conferir se recebeu outro passe laranja. Se não, tente fechar/reabrir na própria Nova Zelândia antes de encerrar o ciclo.",
           "precondicoes": [
             "Estado do passe informado pelo jogador"
           ],
           "confirmacoesAceitas": [
             "USER_ATTESTED"
           ],
-          "naoAconteceu": "Nenhum passe novo confirmado. A próxima etapa permite encerrar a repetição.",
+          "naoAconteceu": "Sem passe? Faça no máximo uma tentativa de conferência manual após reiniciar na própria Nova Zelândia; se não apareceu, siga para o dia do evento. Sem garantia.",
           "retornoSeguro": "Revisar a mochila e seguir à decisão de ciclo.",
-          "local": null,
+          "local": "newzealand",
           "opcional": false,
           "semPassePara": "E08",
-          "falaEdu": "Edu: confira a mochila. Apareceu outro Passe Diário gratuito?",
-          "ajudaEdu": "Conferir o inventário é mais importante do que contar ciclos. Se não apareceu, podemos parar de repetir.",
+          "falaEdu": "Edu: após reiniciar no Havaí, volte à Nova Zelândia e confira na reide se apareceu outro passe laranja.",
+          "ajudaEdu": "Não é no Havaí que se confirma o passe extra: o vídeo volta à Nova Zelândia. Reiniciar lá quando faltar passe é a recuperação mencionada.",
           "periodo": "D-1"
         },
         {
           "id": "E07",
-          "titulo": "Decisão de ciclo",
-          "instrucao": "Se observou outro passe, use 'Repetir ciclo' para revisar E02. Se não houve passe, escolha 'Sem passe → evento'. O contador mede ciclos, não recompensas.",
+          "titulo": "Repetir a reide na Nova Zelândia ou seguir",
+          "instrucao": "Se apareceu passe na Nova Zelândia, repetir significa realizar outra reide ali (E04), depois voltar Havaí (E05) e voltar Nova Zelândia (E06). Não reiniciar desde a primeira chegada Havaí (E02).",
           "precondicoes": [
             "Passe visto ou ausência registrada"
           ],
@@ -160,16 +163,16 @@
           "retornoSeguro": "Rever E06 e escolher uma das saídas.",
           "local": null,
           "opcional": false,
-          "repetePara": "E02",
+          "repetePara": "E04",
           "semPassePara": "E08",
-          "falaEdu": "Edu: quer repetir o ciclo ou seguir ao dia do evento?",
-          "ajudaEdu": "Repetir volta à etapa do Havaí. A contagem mostra ciclos, não passes recebidos.",
+          "falaEdu": "Edu: há passe confirmado. Faça outra reide na Nova Zelândia ou encerre a primeira parte?",
+          "ajudaEdu": "O vídeo repete NZ reide → Havaí fechar/reabrir → NZ reide. Só conte passes observados e reides efetivas.",
           "periodo": "D-1"
         },
         {
           "id": "E08",
           "titulo": "Dia do evento",
-          "instrucao": "Confira a data D, o horário oficial e quantos passes realmente estão disponíveis. Jogue no local selecionado por você.",
+          "instrucao": "No dia D, antes da fase final em Kiribati, o evento deve ter efetivamente começado no local de jogo escolhido. O jogador informa manualmente se começou e se ainda possui passes; caso tenha, pode fazer as reides normalmente primeiro.",
           "precondicoes": [
             "Data e janela do evento conferidas"
           ],
@@ -180,14 +183,14 @@
           "retornoSeguro": "Retomar quando a janela do evento estiver válida.",
           "local": null,
           "opcional": false,
-          "falaEdu": "Edu: chegou o dia do evento. Você conferiu a janela e os passes disponíveis?",
-          "ajudaEdu": "O local para fazer reides só é escolhido nesta etapa. O horário oficial depende do evento e não do vídeo antigo.",
+          "falaEdu": "Edu: o evento já começou no seu local? Confira a data e o horário específico, não use automaticamente o 14h do vídeo antigo.",
+          "ajudaEdu": "O exemplo de Mega Chandelure era 31/10/2026 das 14h às 17h local. Para outros eventos não presumir esse horário. A fase Kiribati vem após iniciar o evento e esgotar passes.",
           "periodo": "D"
         },
         {
           "id": "E09",
-          "titulo": "Kiribati (opcional)",
-          "instrucao": "O vídeo cita Kiribati em uma etapa opcional. Confira as condições e o resultado no jogo; cerca de um minuto de espera não comprova passe.",
+          "titulo": "Kiribati — etapa final do relato",
+          "instrucao": "Na fase final relatada, já com evento iniciado no local escolhido e passes esgotados, o autor vai a Kiribati, fecha e reabre o jogo, aguarda o mapa carregar e retorna uma vez ao local das reides. Não repetir reinício no restante das reides. O usuário pode optar por não tentar o método.",
           "precondicoes": [
             "Dia do evento conferido",
             "Etapa opcional escolhida pelo jogador"
@@ -195,19 +198,19 @@
           "confirmacoesAceitas": [
             "USER_ATTESTED"
           ],
-          "naoAconteceu": "Se não houver passe ou optar por não fazer a etapa, continue para E10.",
+          "naoAconteceu": "Se não quiser tentar Kiribati, seguir jogando normalmente, sem contabilizar passe do dia seguinte.",
           "retornoSeguro": "Voltar ao contexto da etapa E08, sem contar passe.",
           "local": "kiribati",
-          "opcional": true,
+          "opcional": false,
           "pularPara": "E10",
-          "falaEdu": "Edu: o tutorial também cita Kiribati. Após reabrir o jogo, quer conferir essa etapa opcional?",
-          "ajudaEdu": "Essa fase aparece em algumas variantes do relato. Você pode ignorá-la sem perder seu histórico.",
+          "falaEdu": "Edu: sem passes durante o evento? O relato propõe Kiribati, fechar/reabrir uma vez e voltar ao local do evento.",
+          "ajudaEdu": "Alega usar antecipadamente o passe do dia seguinte; isso não é comprovado e pode fazer o jogador ficar sem passe no dia seguinte. Não garante passe e não é obrigatório para jogar o evento normalmente.",
           "periodo": "D"
         },
         {
           "id": "E10",
           "titulo": "Retorno ao evento",
-          "instrucao": "Retorne ao local de jogo e confira apenas passes efetivamente disponíveis. Registre cada reide separadamente.",
+          "instrucao": "Depois de Kiribati, voltar ao local do evento e conferir no ginásio se apareceu passe realmente utilizável. Se houve passe, registrar cada reide, sem reiniciar entre reides. Se não, encerrar sem atribuir erro ao usuário.",
           "precondicoes": [
             "Local de jogo informado"
           ],
@@ -218,14 +221,14 @@
           "retornoSeguro": "Rever passes atuais e preparar encerramento.",
           "local": null,
           "opcional": false,
-          "falaEdu": "Edu: volte ao local onde vai jogar as reides. Quer registrar o resultado de alguma?",
+          "falaEdu": "Edu: voltou ao evento? Verifique passe no ginásio antes de registrar reides; não é necessário reiniciar após cada reide da etapa final.",
           "ajudaEdu": "Registre reides apenas depois de verificar a participação no Pokémon GO. O assistente não cria passes.",
           "periodo": "D"
         },
         {
           "id": "E11",
           "titulo": "Encerramento",
-          "instrucao": "Revise seu histórico: ciclos, passes observados, reides e capturas informadas. Relatos não são resultados garantidos.",
+          "instrucao": "Concluir com resumo dos passes observados, reides feitas, capturas e resultado desconhecido. Quaisquer promessas de 15–40 passes são apenas alegações do autor.",
           "precondicoes": [
             "Resumo conferido pelo jogador"
           ],
