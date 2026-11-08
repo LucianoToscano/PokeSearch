@@ -14,7 +14,10 @@ const arrays=load("res/values/arrays_raid_day.xml");
 const steps=JSON.parse(load("assets/roteiro_bug_passes.json")).variantes[0].etapas;
 const home=load(java+"MainActivity.java");
 assert.match(home,/Edu · Assistente do Dia de Reides/);
-assert.match(overlay,/eduHeader=text\("Edu"/);
+assert.match(overlay,/eduPanelHeader=null;/,
+  "LT318: o balão não deve criar cabeçalho Edu / ETAPA");
+assert.doesNotMatch(overlay,/TextView close=button\("×"\)/,
+  "LT318: não construir X na conversa");
 assert.match(overlay,/eduSpeech=text/);
 assert.match(overlay,/showEduWelcome\(/);
 assert.match(overlay,/showEduGuide\(/);
@@ -53,7 +56,8 @@ assert.match(overlay,/eduSettingsOpen=false;\s*try\{wm\.removeView\(panelScroll\
 assert.match(overlay,/eduMainCard\.setVisibility\(View\.GONE\)/);
 assert.match(overlay,/eduPanelWidth=Math\.min\(dp\(286\)/);
 assert.match(overlay,/\.heightPixels\*\.43f/);
-assert.match(overlay,/requestDisallowInterceptTouchEvent\(true\)/);
+assert.match(overlay,/grip\.setOnTouchListener\(/,
+  "A sprite continua arrastável e acessível por toque");
 assert.match(overlay,/putInt\("x",bubbleParams\.x\)/,
   "Arrastar o chip deve salvar a posição do treinador");
 assert.match(overlay,/putInt\("y",bubbleParams\.y\)/,
@@ -68,8 +72,8 @@ assert.match(overlay,/answersLp\.topMargin=dp\(14\)/,
   "Respostas flutuam abaixo do balão e não fazem parte dele");
 assert.match(overlay,/b\.setBackground\(surface\(Color\.rgb\(253,253,253\),Color\.rgb\(183,191,199\),22\)\)/,
   "Botões separados em formato de pílula");
-assert.match(overlay,/nameChip\.setBackground\(surface\(Color\.argb\(162,28,40,55\)/,
-  "Cabeçalho compacto em chip, não painel gigante");
+assert.doesNotMatch(overlay,/nameChip\.setBackground\(/,
+  "LT318: nem chip nem painel gigante em volta da fala");
 assert.match(overlay,/void setPointerRight\(boolean right\)/,
   "Mudar lado da cauda conforme o avatar");
 assert.match(overlay,/boolean pointsRight=panelParams\.x\+eduPanelWidth\/2</,
@@ -82,8 +86,8 @@ assert.match(overlay,/panelParams\.width=eduPanelWidth/,
   "Largura real da janela deve acompanhar a área livre");
 assert.match(overlay,/placePanelCoordinates\(\);\s*placePanel\(\);/,
   "Movimento do sprite deve reposicionar o balão");
-assert.match(overlay,/bubbleParams\.x=Math\.max\(0,Math\.min\(\s*sw-bubbleParams\.width,avatarX\+/,
-  "Arrastar chip também move o sprite, mantendo fala conectada");
+assert.match(overlay,/startX\+Math\.round\(dx\)/,
+  "O avatar continua arrastável, e a fala o acompanha sem chip");
 assert.match(overlay,/eduNote\.isEmpty\(\)\?"":eduNote/,
   "Apresentação não deve ter legenda extra desnecessária");
 
