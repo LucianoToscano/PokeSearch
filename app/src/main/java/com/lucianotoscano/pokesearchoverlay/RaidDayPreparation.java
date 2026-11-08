@@ -51,11 +51,11 @@ public final class RaidDayPreparation {
         }
         for(int i=0;i<COUNT;i++)prep.answers[i]=prefs.getString(KEY+"answer_"+i,"");
         if(prep.answers[0].isEmpty())
-            prep.answers[0]=RaidDayEventClock.todayBrasilia(clock)
+            prep.answers[0]=LocalDate.now(clock)
                 .plusDays(1).toString();
         try{LocalDate.parse(prep.answers[0]);}
         catch(Exception invalid){
-            prep.answers[0]=RaidDayEventClock.todayBrasilia(clock)
+            prep.answers[0]=LocalDate.now(clock)
                 .plusDays(1).toString();
         }
         for(int i=1;i<COUNT;i++){
@@ -84,9 +84,9 @@ public final class RaidDayPreparation {
     }
     public void shiftDate(int deltaDays,Clock clock){
         LocalDate current=eventDate();
-        if(current==null)current=RaidDayEventClock.todayBrasilia(clock).plusDays(1);
+        if(current==null)current=LocalDate.now(clock).plusDays(1);
         LocalDate chosen=current.plusDays(deltaDays);
-        LocalDate minimum=RaidDayEventClock.todayBrasilia(clock).minusDays(1);
+        LocalDate minimum=LocalDate.now(clock).minusDays(1);
         LocalDate maximum=minimum.plusYears(3);
         if(chosen.isBefore(minimum))chosen=minimum;
         if(chosen.isAfter(maximum))chosen=maximum;
