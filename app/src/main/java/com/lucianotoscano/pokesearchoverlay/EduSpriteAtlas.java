@@ -138,6 +138,7 @@ public final class EduSpriteAtlas {
         original.recycle();
         return aligned;
     }
+    public boolean hasExtras(){return extras!=null;}
     public Drawable state(String state){return frame(indexForState(state));}
     public static int indexForState(String name){
         if(name==null)return 42;
@@ -189,6 +190,9 @@ public final class EduSpriteAtlas {
             case "teleporte_efeito": return new int[]{52,53,54,55,56,57,58,59,60};
             case "pokebola_gesto": return new int[]{0,1,2,3};
             case "edu_jogando": return new int[]{63,64};
+            case "edu_shiny": return new int[]{62};
+            case "edu_armadura_mewtwo": return new int[]{65};
+            case "edu_armadura_mewtwo_shiny": return new int[]{66};
             default: return new int[0];
         }
     }
