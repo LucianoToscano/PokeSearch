@@ -37,7 +37,7 @@ test("Unexpected installer exit has useful safe fallback",()=>{
  assert.match(center,/static boolean onInstallerResult/);
  assert.match(main,/GitHubUpdateCenter.onInstallerResult\(this,req,result,data\)/);
  assert.match(center,/elapsed>=0&&elapsed<4000/);
- assert.match(center,/browserFallback.setText\("Instalar pelo navegador"\)/);
+ assert.match(center,/browserFallback.setText\("Baixar APK oficial pelo navegador"\)/);
  assert.match(center,/browserFallback.setVisibility\(android.view.View.VISIBLE\)/);
  assert.match(center,/browser.addCategory\(Intent.CATEGORY_BROWSABLE\)/);
  assert.match(center,/!url.startsWith\(ASSET_PREFIX\)/);
