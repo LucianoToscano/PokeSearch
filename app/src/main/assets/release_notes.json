@@ -3389,6 +3389,30 @@
           "Os nove quadros de teleporte preservam variações intencionais de aparição/desaparecimento; nenhuma sprite comprova evento, passe ou GPS."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt315-edu-atlas-68-unificado-20261108",
+      "minVersionCode": 54521,
+      "date": "08/11/2026",
+      "title": "PokeSearch LT315 — 68 sprites do Edu com proporções e alinhamento uniformes",
+      "sections": {
+        "novidades": [
+          "Um único atlas visual auditado com 68 quadros do Edu, incluindo Shiny, Jogando, Armaduras e Sombria, mantendo os mesmos índices e animações.",
+          "Quadros especiais da última linha recuperados e padronizados para evitar cabeças cortadas ou personagens menores."
+        ],
+        "melhorias": [
+          "A cabeça e o corpo são centralizados visualmente, com a mesma escala e referência de altura; objetos e efeitos não devem influenciar a dimensão do personagem.",
+          "O aplicativo evita uma segunda reescala dos quadros padronizados, reduzindo pulos laterais e variações de tamanho.",
+          "As 22 poses automáticas, reações ansiosas e ações do tutorial continuam ativas com os nomes originais."
+        ],
+        "correcoes": [
+          "Eliminado o carregamento de fontes visuais divergentes quando o atlas completo está disponível.",
+          "Preservado o fallback dos atlas anteriores caso a nova imagem esteja ausente ou inválida."
+        ],
+        "emDesenvolvimento": [
+          "A validação física das transições no Samsung e dos tamanhos P/M/G continua necessária; diferenças de estilo entre desenhos não são garantidas como perfeitas só com testes de código."
+        ]
+      }
     }
   ]
 }
