@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.10",
-  "code": 54516,
-  "label": 51314,
-  "previous_tag": "v0.03.09-54515",
-  "qa_max_code": 54515,
-  "release_notes": "PokeSearch LT310 — Corrigida a experiência de atualização após erro de validação relatado no Samsung durante o download da LT309. O diálogo agora mostra desde o início o botão Baixar APK oficial pelo navegador, inclusive se o download interno falhar. Erros de rede, tempo de resposta, HTTPS e integridade recebem mensagens distintas sem expor dados técnicos sensíveis. Maior tolerância em redes lentas (tempo de conexão 12 s e leitura 30 s). Segurança preservada: download exclusivamente pelo HTTPS e URLs autorizadas do GitHub, limite de tamanho, SHA-256, versionCode, packageName, certificado permanente Android e confirmação do instalador. Não substitui nem afrouxa a validação de assinatura. Preservadas integralmente as 62 sprites do Edu, as animações, relógio único, roteiro do evento, P1/P2, Doce Raro, buscas, dados locais, login e assinatura original. PR #309 integrada via squash em 18341d0c05362537122ea40c70e1f4059d90c3cc; QA Node LT169, LT211, LT62 e LT173 aprovados na PR. Ainda é necessária validação de instalação no Samsung em redes variadas. Quem estiver na versão antiga com falha de atualização pode baixar a LT310 manualmente da Release oficial, sem desinstalar o app."
+  "version": "0.03.11",
+  "code": 54517,
+  "label": 51315,
+  "previous_tag": "v0.03.10-54516",
+  "qa_max_code": 54516,
+  "release_notes": "PokeSearch LT311 — Exemplo oficial Dia de Super Megarreides Mega Chandelure (31/10/2026, 14h–17h no horário LOCAL) integrado ao assistente Edu. A nova configuração permite selecionar a região de jogo via fuso IANA: Brasília, Havaí, Nova Zelândia, Singapura, Kiribati, fuso atual do relógio Edu ou outro informado. O início não depende de Kiribati; cada região tem seu próprio horário e data locais, incluindo horário de verão da Nova Zelândia. O Edu usa seu relógio único automático/manual e apresenta as sprites corretas de evento ainda não iniciado, acontecendo ou encerrado; atualiza nas transições da janela e exige confirmação no jogo antes de registrar passes/reides, sem avançar automaticamente. A configuração conserva o fuso e origem do exemplo histórico, apresenta conversões para Brasília e não altera hora/GPS do Android, nem concede passes ou promete o método comunitário. Preservados 62 sprites, tamanhos P/M/G, balões do Edu, roteiro E01–E11, opção de etapa Kiribati apenas no relato, overlay P1/P2, Doce Raro, buscas, APIs, preferências, assinatura permanente e todos os recursos da LT310. PR #310 integrada via squash 6db0602559b0461bad90cceeca38eea56d74bb59; regressões Node completas, LT211, compilação Java LT62 e OTA LT173 aprovadas. Instalação e QA visual em Samsung ainda pendentes; o evento usado como exemplo já ocorreu e exige ajuste manual do relógio do Edu para reproduzir o cenário."
 }
