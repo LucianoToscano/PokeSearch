@@ -144,23 +144,70 @@ public class MainActivity extends Activity {
     private void refreshEduSimulationClock(){
         if(eduSimulationClockDisplay==null)return;
         eduSimulationClockDisplay.setText(
-            EduSimulationClock.dateLabel(this)+"\n"+
-            EduSimulationClock.timeLabel(this));
+            EduEventClock.dateLabel(this)+"\n"+
+            EduEventClock.timeLabel(this));
         eduSimulationClockDisplay.setContentDescription(
-            "Relógio de simulação: "+EduSimulationClock.dateLabel(this)+
-            " "+EduSimulationClock.timeLabel(this)+
-            ". Toque para escolher data e hora. Segure para usar o relógio do celular.");
+            "Relógio do Edu: "+EduEventClock.dateLabel(this)+
+            " "+EduEventClock.timeLabel(this)+
+            (EduEventClock.isAdjusted(this)?". Horário ajustado manualmente. ":
+                ". Hora atual do celular, fuso de Brasília. ")+
+            "Toque para abrir as opções; segure para restaurar.");
     }
-    private void editEduSimulationClock(){
-        LocalDateTime base=EduSimulationClock.localNow(this);
+    // Um único menu discreto associado ao próprio relógio.
+    private void showEduClockOptions(){
+        final String[] choices={
+            "Escolher data", "Escolher hora", "Ajustar segundos",
+            "−1 dia", "+1 dia", "Usar hora atual do celular"
+        };
+        new AlertDialog.Builder(this)
+            .setTitle("Relógio do Edu")
+            .setMessage("Horário de Brasília · os segundos continuam correndo.")
+            .setItems(choices,(dialog,which)->{
+                if(which==0)chooseEduClockDate();
+                else if(which==1)chooseEduClockTime();
+                else if(which==2)chooseEduClockSeconds();
+                else if(which==3||which==4){
+                    EduEventClock.shiftDays(this,which==3?-1:1);
+                    refreshEduSimulationClock();
+                }else if(which==5){
+                    EduEventClock.reset(this);
+                    refreshEduSimulationClock();
+                }
+            })
+            .setNegativeButton("Fechar",null).show();
+    }
+    private void chooseEduClockDate(){
+        LocalDateTime base=EduEventClock.nowBrasilia(this);
         new DatePickerDialog(this,(picker,year,month,day)->{
-            new TimePickerDialog(this,(timePicker,hour,minute)->{
-                EduSimulationClock.setLocalDateTime(this,
-                    LocalDateTime.of(year,month+1,day,hour,minute,0));
+            EduEventClock.setBrasiliaDateTime(this,base
+                .withDayOfMonth(1).withYear(year).withMonth(month+1)
+                .withDayOfMonth(day));
+            refreshEduSimulationClock();
+        },base.getYear(),base.getMonthValue()-1,base.getDayOfMonth()).show();
+    }
+    private void chooseEduClockTime(){
+        LocalDateTime base=EduEventClock.nowBrasilia(this);
+        new TimePickerDialog(this,(picker,hour,minute)->{
+            EduEventClock.setBrasiliaDateTime(this,
+                base.withHour(hour).withMinute(minute).withSecond(0));
+            refreshEduSimulationClock();
+        },base.getHour(),base.getMinute(),true).show();
+    }
+    private void chooseEduClockSeconds(){
+        LocalDateTime base=EduEventClock.nowBrasilia(this);
+        android.widget.NumberPicker seconds=new android.widget.NumberPicker(this);
+        seconds.setMinValue(0);seconds.setMaxValue(59);
+        seconds.setValue(base.getSecond());
+        seconds.setWrapSelectorWheel(true);
+        new AlertDialog.Builder(this)
+            .setTitle("Segundos")
+            .setView(seconds)
+            .setPositiveButton("Aplicar",(dialog,which)->{
+                EduEventClock.setBrasiliaDateTime(this,
+                    base.withSecond(seconds.getValue()).withNano(0));
                 refreshEduSimulationClock();
-            },base.getHour(),base.getMinute(),true).show();
-        },base.getYear(),base.getMonthValue()-1,
-          base.getDayOfMonth()).show();
+            })
+            .setNegativeButton("Cancelar",null).show();
     }
     private TextView sessionHint;
     private View homeDrawerLayer;
@@ -550,7 +597,7 @@ public class MainActivity extends Activity {
         controls.addView(raidAssistantControl,guideLp);
         raidAssistantControl.setOnClickListener(v->toggleRaidAssistantOverlay());
 
-        // LT308 · reloginho isolado para ensaiar eventos (sem alterar o Android).
+        // LT308 · único relógio de referência do Edu, ajustável para testes.
         // Compacto, de duas linhas e sem um novo menu na tela.
         eduSimulationClockDisplay=homeText("--/--/--\n--:--:--",10,
             homeLightMode?Color.rgb(35,53,72):Color.rgb(243,248,255),true);
@@ -566,11 +613,11 @@ public class MainActivity extends Activity {
             new LinearLayout.LayoutParams(d(65),d(34));
         simulationClockLp.leftMargin=d(4);
         controls.addView(eduSimulationClockDisplay,simulationClockLp);
-        eduSimulationClockDisplay.setOnClickListener(v->editEduSimulationClock());
+        eduSimulationClockDisplay.setOnClickListener(v->showEduClockOptions());
         eduSimulationClockDisplay.setOnLongClickListener(v->{
-            EduSimulationClock.reset(this);
+            EduEventClock.reset(this);
             refreshEduSimulationClock();
-            Toast.makeText(this,"Relógio voltou à hora do celular",
+            Toast.makeText(this,"Edu voltou à hora atual de Brasília",
                 Toast.LENGTH_SHORT).show();
             return true;
         });
