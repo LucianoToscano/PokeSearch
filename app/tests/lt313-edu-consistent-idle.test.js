@@ -58,7 +58,7 @@ for(const seq of ["pokebola_gesto","caminhada_frente","caminhada_direita",
    "caminhada_esquerda","edu_jogando","edu_shiny",
    "edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"])
  assert.ok(service.includes('"'+seq+'"'),"ciclo ocioso "+seq);
-assert.match(java,/SIZES_PX=\{50,75,100\}/,"não muda P/M/G");
+assert.match(java,/SIZES_PX=\{100,150,200\}/,"novos P/M/G preservam as proporções");
 assert.ok(old.length>100000&&old.length<350000,"fallback das 62 sprites mantém nitidez e tamanho compacto");
 assert.ok(extra.length>5000,"atlas de 5 continua incluído");
 assert.match(java,/boolean uniformFrame=uniform!=null/);
