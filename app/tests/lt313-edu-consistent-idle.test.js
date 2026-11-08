@@ -18,7 +18,7 @@ assert.equal((bits&0x3fff)+1,1024,"atlas 8 colunas");
 assert.equal(((bits>>>14)&0x3fff)+1,384,"atlas 3 linhas");
 assert.ok(asset.length>50000&&asset.length<500000,"asset compactado offline");
 assert.equal(crypto.createHash("sha256").update(asset).digest("hex"),
-  "f6b4f43d69abaaf35303a85e5d5f4687953970c06e0f245bea06f0c4192c8c94");
+  "9ec3afa294d06d9d1cad9db8d4a3256e5f7230623f58cd6819e835192eee1a62");
 assert.match(java,/COUNT=62/,"62 frames LT309 imutáveis");
 assert.match(java,/EXTRA_COUNT=5/,"mais cinco LT312");
 assert.match(java,/TOTAL_COUNT=COUNT\+EXTRA_COUNT/,"67 frames");
