@@ -16,3 +16,11 @@ Base: LT314 (0.03.14 / 54520). O usuário informou que quadros ainda mudavam de 
 - app/tests/lt315-edu-68-uniform-atlas.test.js verifica hash, dimensões VP8L, indices, fallback, ausência de reescala e memória.
 - Requer regressões Node, compilação Java Android, OTA, assinatura v2 e integridade do APK antes de publicar.
 - QA física no Samsung pendente; não interpretar sucesso de CI como confirmação de fluidez em aparelho.
+
+## Auditoria de tamanho e preservação do fallback
+- Primeira tentativa de publicar LT315: build e assinatura concluídos, mas o gate oficial Validate APK and signer falhou. O workflow exige APK com menos de 35.000.000 bytes.
+- A nova arte de 68 sprites é preservada em resolução/qualidade integral: 221.178 bytes, WebP lossless.
+- Para recuperar margem de espaço sem retirar o novo atlas, somente o fallback legado das 62 sprites foi recompactado em WebP lossless com 192 cores, dimensões 1024x1024, 133.078 bytes, SHA-256 69c1ea7b0f5dec4292d90cb62dae891c95835017204274cc4121ca3698f6889a.
+- O arquivo original exato da LT309 foi preservado no repositório em docs/legacy-assets/lt309/edu_avatar_atlas_62-original.webp: 822.866 bytes, SHA-256 5c81ba10976328ab479bf1d04d9082203cb8c5f45ee403f23265b05f6947942f.
+- Essa mudança economiza 689.788 bytes no APK sem tocar na arte uniforme de 68 quadros e sem eliminar a alternativa em caso de falha de leitura do novo atlas.
+- Gates Node anteriores atualizados para conferir tanto o fallback compacto quanto a fonte histórica íntegra. Não alterar limite de APK nem controles de assinatura.
