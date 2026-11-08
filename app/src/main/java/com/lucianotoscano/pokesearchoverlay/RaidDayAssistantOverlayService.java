@@ -181,6 +181,50 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean avatarMotion=true;
     private String eduAnimationName="",eduReactionState="";
     private long eduAnimationStartedAt=0L,eduDragStartedAt=0L,eduReactionStateUntil=0L;
+    // As 22 poses autorizadas só entram no modo ocioso com o balão fechado.
+    // A sequência sempre termina antes de iniciar outra, com pausas naturais.
+    private static final String[] EDU_IDLE_ROTATION={
+        "pokebola_gesto","caminhada_frente","caminhada_direita",
+        "caminhada_esquerda","edu_jogando","edu_shiny",
+        "edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"
+    };
+    private long eduLastInteractionAt=0L,eduIdleNextAt=0L,eduIdleStartedAt=0L;
+    private String eduIdleName="";
+    private int eduIdleIndex=0;
+    private void resetEduIdle(){
+        eduLastInteractionAt=SystemClock.elapsedRealtime();
+        eduIdleNextAt=eduLastInteractionAt+6500L;
+        eduIdleStartedAt=0L;
+        eduIdleName="";
+    }
+    private int eduIdleFrame(long now){
+        if(eduSprites==null||visible||dragging||!avatarMotion)
+            return EduSpriteAtlas.indexForState("parado");
+        if(now-eduLastInteractionAt<6500L)
+            return EduSpriteAtlas.indexForState("parado");
+        if(!eduIdleName.isEmpty()){
+            int[] frames=EduSpriteAtlas.sequence(eduIdleName);
+            long interval=eduIdleName.startsWith("caminhada_")?290L:
+                "pokebola_gesto".equals(eduIdleName)?340L:
+                "edu_jogando".equals(eduIdleName)?650L:1900L;
+            int frame=(int)Math.max(0L,(now-eduIdleStartedAt)/interval);
+            if(frames.length>0&&frame<frames.length)return frames[frame];
+            eduIdleName="";
+            eduIdleNextAt=now+5800L;
+            return EduSpriteAtlas.indexForState("parado");
+        }
+        if(now<eduIdleNextAt)return EduSpriteAtlas.indexForState("parado");
+        for(int tries=0;tries<EDU_IDLE_ROTATION.length;tries++){
+            String next=EDU_IDLE_ROTATION[eduIdleIndex++%EDU_IDLE_ROTATION.length];
+            if(next.startsWith("edu_")&&!eduSprites.hasExtras())continue;
+            eduIdleName=next;
+            eduIdleStartedAt=now;
+            int[] frames=EduSpriteAtlas.sequence(next);
+            if(frames.length>0)return frames[0];
+        }
+        eduIdleNextAt=now+5800L;
+        return EduSpriteAtlas.indexForState("parado");
+    }
     // Exibição de efeitos não implica teleporte, passe, vitória ou evento confirmado.
     private int eduCurrentFrame(long now){
         if(dragging){
@@ -202,6 +246,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(!eduReactionState.isEmpty()&&now<eduReactionStateUntil)
             return EduSpriteAtlas.indexForState(eduReactionState);
         eduReactionState="";
+        if(!visible)return eduIdleFrame(now);
         return EduSpriteAtlas.indexForState(eduContextState());
     }
     private String eduContextState(){
@@ -272,6 +317,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void reactEdu(String name){
         if(eduSprites==null||!avatarMotion)return;
+        resetEduIdle();
         eduAnimationName="";
         eduReactionState=name;
         eduReactionStateUntil=SystemClock.elapsedRealtime()+1250L;
@@ -279,6 +325,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void playEduAnimation(String name){
         if(eduSprites==null||!avatarMotion)return;
+        resetEduIdle();
         int[] frames=EduSpriteAtlas.sequence(name);
         if(frames.length==0)return;
         eduAnimationName=name;eduAnimationStartedAt=SystemClock.elapsedRealtime();
@@ -400,6 +447,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         int savedAvatarSize=prefs.getInt(RaidDayAvatarFrames.PREF_SIZE,100);
         avatarSizeIndex=savedAvatarSize==50?0:savedAvatarSize==75?1:2;
         avatarMotion=prefs.getBoolean(RaidDayAvatarFrames.PREF_MOTION,true);
+        resetEduIdle();
         avatarSprites=RaidDayAvatarFrames.load(this);
         try{eduSprites=EduSpriteAtlas.load(this);}
         catch(Exception invalidAtlas){eduSprites=null;} // Sem crash: usar LT304
@@ -719,6 +767,7 @@ public final class RaidDayAssistantOverlayService extends Service {
             @Override public boolean onTouch(View v,MotionEvent event){
                 switch(event.getActionMasked()){
                     case MotionEvent.ACTION_DOWN:
+                        resetEduIdle();
                         downX=event.getRawX();downY=event.getRawY();
                         startX=bubbleParams.x;startY=bubbleParams.y;
                         held=false;dragging=false;
@@ -2070,6 +2119,7 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     private void setVisible(boolean show){
         if(panelScroll==null||wm==null||show==visible)return;
+        resetEduIdle();
         visible=show;
         if(show){
             updateStep();
