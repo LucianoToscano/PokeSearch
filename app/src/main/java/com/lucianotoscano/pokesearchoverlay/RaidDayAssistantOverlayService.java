@@ -174,8 +174,13 @@ public final class RaidDayAssistantOverlayService extends Service {
                 if(changed&&visible&&eduSpeech!=null)updateStep();
             }
             if(eduBadge!=null)updateEventClock();
-            // Hora e transições regionais são calculadas da mesma fonte do Edu.
-            handler.postDelayed(this,5000L);
+            if(visible)updateEduWelcomeCountdown();
+            // Apenas no contador visível usamos segundos; fora dele,
+            // mantemos o pulso original para economizar bateria.
+            boolean counting=visible&&eduFirstBubbleMode&&
+                eduWelcomePage==1&&eduInfoTopic.isEmpty()&&
+                eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE;
+            handler.postDelayed(this,counting?1000L:5000L);
         }
     };
     private boolean paused=false,finished=false,visible=false,dragging=false;
@@ -1568,6 +1573,222 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         advanceEdu("STEP_CONFIRMED");
     }
+
+    // O relógio único da Home é a fonte de tempo. Sem janela configurada,
+    // não inventar data, contagem regressiva ou status oficial de evento.
+    private RaidDayRegionalWindow.Phase eduWelcomePhase(){
+        if(!RaidDaySchedule.valid(RaidDaySchedule.start(this),
+            RaidDaySchedule.finish(this)))
+            return RaidDayRegionalWindow.Phase.UNKNOWN;
+        return RaidDaySchedule.phase(this,eventClock.instant());
+    }
+    private String eduWelcomeStart(){
+        long start=RaidDaySchedule.start(this);
+        if(!RaidDaySchedule.valid(start,RaidDaySchedule.finish(this)))
+            return "horário ainda não configurado";
+        java.time.ZonedDateTime local=Instant.ofEpochMilli(start)
+            .atZone(RaidDaySchedule.zone(this));
+        return local.format(DateTimeFormatter.ofPattern(
+            "dd/MM/yyyy 'às' HH:mm",Locale.forLanguageTag("pt-BR")))+
+            " ("+RaidDaySchedule.zone(this).getId()+")";
+    }
+    private String eduWelcomeCountdown(){
+        long delta=Math.max(0,RaidDaySchedule.start(this)-
+            eventClock.instant().toEpochMilli());
+        long seconds=(delta+999L)/1000L;
+        long days=seconds/86400L;
+        long hours=(seconds/3600L)%24;
+        long minutes=(seconds/60L)%60;
+        long secs=seconds%60;
+        return "Faltam "+(days>0?days+"d ":"")+
+            String.format(Locale.forLanguageTag("pt-BR"),
+                "%02dh %02dmin %02ds",hours,minutes,secs);
+    }
+    private String eduWelcomeSource(){
+        return EduEventClock.isAdjusted(this)?
+            "Relógio manual do Edu · não confirma horário do servidor":
+            (RaidDaySchedule.isChandelureExample(this)?
+                "Exemplo histórico Mega Chandelure · horário local":
+                "Janela informada no relógio do Edu · confira o evento no jogo");
+    }
+    private void updateEduWelcomeCountdown(){
+        if(eduFirstBubbleMode&&eduWelcomePage==1&&
+            eduInfoTopic.isEmpty()&&
+            eduWelcomePhase()==RaidDayRegionalWindow.Phase.BEFORE&&
+            eduSubline!=null)
+            eduSubline.setText(eduWelcomeCountdown()+"\n"+
+                eduWelcomeSource());
+    }
+    private void appendEduLink(SpannableStringBuilder rich,
+        String title,String topic){
+        final int from=rich.length();
+        rich.append(title).append(" ⓘ");
+        final int to=rich.length();
+        rich.setSpan(new UnderlineSpan(),from,to,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        rich.setSpan(new ClickableSpan(){
+            @Override public void onClick(View widget){
+                eduInfoTopic=topic;
+                updateStep();
+            }
+            @Override public void updateDrawState(TextPaint paint){
+                paint.setColor(Color.rgb(34,92,112));
+                paint.setUnderlineText(true);
+            }
+        },from,to,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+    private void appendEduCheck(SpannableStringBuilder rich,int index,
+        String title,String topic){
+        int at=rich.length();
+        rich.append(eduPreparationChecks[index]?"☑ ":"☐ ");
+        rich.setSpan(new ClickableSpan(){
+            @Override public void onClick(View widget){
+                // Uma marcação é apenas confirmação manual, nunca passe
+                // encontrado, ausência de softban ou recompensa verificada.
+                eduPreparationChecks[index]=!eduPreparationChecks[index];
+                showEduFirstBubble();
+            }
+        },at,at+1,Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        appendEduLink(rich,title,topic);
+    }
+    private SpannableStringBuilder eduChecklistText(
+        boolean before,String start){
+        SpannableStringBuilder content=new SpannableStringBuilder();
+        if(before)
+            content.append("O evento ainda não começou.\n")
+                .append("Início: ").append(start)
+                .append("\n\nAntes de começar:\n");
+        else
+            content.append("Checklist antes de continuar:\n");
+        appendEduCheck(content,0,"Sem softban","softban");
+        content.append("\n");
+        appendEduCheck(content,1,"Não ter acessado uma região onde já é dia do evento",
+            "regiao");
+        content.append("\n");
+        appendEduCheck(content,2,"Guardar o passe de reide laranja da véspera",
+            "passe");
+        return content;
+    }
+    private String eduInfoText(){
+        switch(eduInfoTopic){
+            case "bug":
+                return "Bug dos Passes ⓘ\n\nÉ o nome de um método relatado " +
+                    "por jogadores para tentar obter passes extras durante " +
+                    "eventos de reides, combinando horários de regiões diferentes. " +
+                    "É um relato comunitário, não uma função oficial, " +
+                    "e não existe garantia de passes ou recompensas. " +
+                    "Algumas práticas podem contrariar as regras do Pokémon GO.";
+            case "softban":
+                return "Softban ⓘ\n\nÉ uma restrição temporária de ações " +
+                    "no jogo. Para reduzir riscos, evite aplicativos de " +
+                    "localização não autorizados e mudanças artificiais " +
+                    "de região. Confira no próprio jogo se suas ações " +
+                    "funcionam normalmente. O Edu não detecta softban.";
+            case "regiao":
+                return "Região e data ⓘ\n\nFusos horários diferentes " +
+                    "podem estar em dias diferentes ao mesmo tempo. " +
+                    "O tutorial comunitário recomenda não ter iniciado " +
+                    "interações em uma região onde já é o dia do evento. " +
+                    "Isso não comprova que o método funcione; respeite " +
+                    "as regras de localização do jogo.";
+            case "passe":
+                return "Passe de reide laranja ⓘ\n\nÉ o passe diário " +
+                    "gratuito, normalmente obtido ao interagir com " +
+                    "um ginásio quando elegível. Confira o inventário " +
+                    "no Pokémon GO. O relato recomenda guardar o " +
+                    "passe da véspera, mas isso não garante outro passe.";
+            default: return "";
+        }
+    }
+    private boolean activateEduTextLink(MotionEvent event){
+        CharSequence content=eduSpeech.getText();
+        android.text.Layout layout=eduSpeech.getLayout();
+        if(!(content instanceof Spanned)||layout==null)return false;
+        int x=(int)event.getX()-eduSpeech.getTotalPaddingLeft()+
+            eduSpeech.getScrollX();
+        int y=(int)event.getY()-eduSpeech.getTotalPaddingTop()+
+            eduSpeech.getScrollY();
+        if(y<0||y>layout.getHeight())return false;
+        int line=layout.getLineForVertical(y);
+        if(x<layout.getLineLeft(line)||x>layout.getLineRight(line))
+            return false;
+        int offset=layout.getOffsetForHorizontal(line,x);
+        ClickableSpan[] links=((Spanned)content).getSpans(
+            offset,offset,ClickableSpan.class);
+        if(links.length==0&&offset>0)
+            links=((Spanned)content).getSpans(
+                offset-1,offset,ClickableSpan.class);
+        if(links.length==0)return false;
+        links[0].onClick(eduSpeech);
+        return true;
+    }
+    private void advanceEduWelcome(){
+        if(!eduFirstBubbleMode)return;
+        if(!eduInfoTopic.isEmpty()){
+            eduInfoTopic="";
+            updateStep();
+            return;
+        }
+        if(eduWelcomePage==0){
+            eduWelcomePage=1;
+            updateStep();
+        }else if(eduWelcomePage==1&&
+            eduWelcomePhase()==RaidDayRegionalWindow.Phase.ACTIVE){
+            eduWelcomePage=2;
+            updateStep();
+        }
+        // Esta etapa termina no checklist; E01-E11 não são iniciados
+        // implicitamente nem são gerados passes pelo toque.
+    }
+    private void showEduFirstBubble(){
+        eduFirstBubbleMode=true;
+        eduPanelHeader.setVisibility(View.GONE);
+        eduActions.setVisibility(View.GONE);
+        eduMiniActions.setVisibility(View.GONE);
+        preparationSection.setVisibility(View.GONE);
+        eduSettings.setVisibility(View.GONE);
+        eduMainCard.setVisibility(View.VISIBLE);
+        eduSpeech.setTextSize(14);
+        eduSubline.setTextSize(12);
+        if(!eduInfoTopic.isEmpty()){
+            setTalk(eduInfoText(),"Toque no balão para voltar.");
+            return;
+        }
+        if(eduWelcomePage==0){
+            SpannableStringBuilder intro=new SpannableStringBuilder(
+                "Olá! Eu sou o Edu, seu coach de Pokémon GO! " +
+                "Vou acompanhar você nesta jornada.\n\n" +
+                "Hoje vamos conhecer o ");
+            appendEduLink(intro,"Bug dos Passes","bug");
+            intro.append(".");
+            eduSpeech.setText(intro);
+            eduSubline.setText("Toque no balão para continuar.");
+            eduSubline.setVisibility(View.VISIBLE);
+            return;
+        }
+        RaidDayRegionalWindow.Phase phase=eduWelcomePhase();
+        if(phase==RaidDayRegionalWindow.Phase.UNKNOWN){
+            setTalk("Ainda não há um evento com data e horário definidos.",
+                "Configure o evento no relógio da Home para eu acompanhar.");
+        }else if(phase==RaidDayRegionalWindow.Phase.ENDED){
+            setTalk("Infelizmente, o evento já foi encerrado nesta região. " +
+                "Aguarde o próximo evento!","Encerrado · "+eduWelcomeSource());
+        }else if(phase==RaidDayRegionalWindow.Phase.BEFORE){
+            eduSpeech.setText(eduChecklistText(true,eduWelcomeStart()));
+            eduSubline.setVisibility(View.VISIBLE);
+            updateEduWelcomeCountdown();
+        }else if(eduWelcomePage==1){
+            setTalk("O evento já começou!\n\n" +
+                "Horário local: "+eduWelcomeStart()+
+                "\nAcompanhe suas reides no Pokémon GO e confirme " +
+                "seus passes diretamente no jogo.",
+                eduWelcomeSource()+" · Toque para ver o checklist.");
+        }else{
+            eduSpeech.setText(eduChecklistText(false,eduWelcomeStart()));
+            eduSubline.setText("Toque em ☐ para marcar; ⓘ explica cada item.");
+            eduSubline.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void showEduWelcome(){
         setTalk("Olá! Meu nome é Edu. Serei seu treinador hoje! "+
             "Vou te ensinar, passo a passo, o tutorial comunitário "+
@@ -2185,7 +2406,11 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduActions.setVisibility(View.VISIBLE);
         eduMiniActions.setVisibility(View.VISIBLE);
         updateEventClock();
+        eduFirstBubbleMode=!eduSettingsOpen&&!active&&!training;
+        if(eduPanelHeader!=null)eduPanelHeader.setVisibility(
+            eduFirstBubbleMode?View.GONE:View.VISIBLE);
         if(eduSettingsOpen){showEduSettings();}
+        else if(eduFirstBubbleMode){showEduFirstBubble();}
         else if(active||training){
             if(finished)showEduFinished();else showEduGuide();
         }else if(!eduWantsReal){
