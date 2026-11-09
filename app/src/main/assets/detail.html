@@ -2496,7 +2496,8 @@ function evolutionRow(x,first){
  // Only ordinary, verified species graph paths; no costume/Shadow/Mega claims.
  const conditions=(!first&&!isReference&&!isMega)?
   window.PokeSearchEvolutionRequirements?.forRoute?.(
-   watchName,name,window.PokeSearchPvpFamilyCatalog?.links):null;
+   (typeof watchName==="string"?watchName:""),name,
+   window.PokeSearchPvpFamilyCatalog?.links):null;
  const conditionText=Array.isArray(conditions)&&conditions.length?
   [...new Set(conditions.flatMap(row=>[row.label,...(row.additional?[row.additional]:[])]))].join(" · "):"";
  return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
