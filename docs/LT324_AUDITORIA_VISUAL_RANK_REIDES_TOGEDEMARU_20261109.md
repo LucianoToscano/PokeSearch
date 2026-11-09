@@ -33,3 +33,9 @@ A evidência permite auditar **organização e legibilidade da janela**. Não co
 - Antes de publicação: revisar screenshots do CI e executar QA físico no Samsung (toque curto no nome, no número, recolher, abrir outra classificação, deslocamento/scroll, duplicidade de Pokébolas).
 
 **Fora do escopo:** Dittobase/Max Battles, novos filtros, alterações de largura/altura do card principal, do Edu ou do menu de resultados. A LT323 permanece pública até a liberação autorizada da LT324.
+
+## Ajuste solicitado pelo usuário — sem tripla repetição
+
+A captura confirma que **sprite, nome e número da Pokédex** já estão no cabeçalho principal do card. Portanto, o Rank Reides da mesma espécie **não deve reproduzir nenhuma das três informações** a cada tipo. Para Togedemaru ficam somente `#58 Elétrico` com golpes e `#94 Aço` com golpes. O rank por tipo continua clicável para abrir ER, DPS e TDO; o `aria-label` conserva o nome acessível para leitor de tela. **Somente linhas de evolução ou forma projetada** mantêm identificação específica, a fim de não atribuir desempenho Mega/Shadow à captura comum. A regra mais recente prevalece sobre a proposta anterior de alinhar cópias do nome/# e aumentar sua sprite na janela. Nenhum sprite adicional deve ser carregado no ranking.
+
+Os testes LT323/LT324 e screenshots P/M/G foram ajustados para comprovar **zero elementos visuais duplicados**, dois ranks funcionais, ausência de cortes e manutenção de acessibilidade.
