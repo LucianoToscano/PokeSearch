@@ -64,7 +64,8 @@ const rows=[
     return {rowCount:all.length,buttonCount:buttons.length,
      visibleButtons:buttons.filter(e=>e.getBoundingClientRect().width>0).length,
      openMetrics:p.querySelectorAll(".psRaidMetrics:not([hidden])").length,
-     firstDex:buttons[0].textContent,firstType:all[0].querySelector(".psRaidTypeRank")?.textContent,
+     firstRank:buttons[0].textContent,firstType:all[0].querySelector(".psRaidTypeRank")?.textContent,
+     repeatedIdentity:p.querySelectorAll(".psRaidSprite,.psRaidDex,.psRaidName").length,
      panelWidth:p.clientWidth,scrollWidth:p.scrollWidth,
      requestedResizes:window.__lt323Resizes.length};
    });
@@ -72,8 +73,9 @@ const rows=[
    assert.equal(initial.buttonCount,5);
    assert.equal(initial.visibleButtons,3,"extra rankings start collapsed "+sz.name);
    assert.equal(initial.openMetrics,0,"collapsed metrics by default "+sz.name);
-   assert.match(initial.firstDex,/#0094/);
+   assert.match(initial.firstRank,/#12/);
    assert.match(initial.firstType,/#12/);
+   assert.equal(initial.repeatedIdentity,0,"no main-card identity repeated in the raid rows");
    assert.ok(initial.scrollWidth<=initial.panelWidth+3,
     "no initial horizontal scrolling "+sz.name+" "+JSON.stringify(initial));
    await page.screenshot({path:path.join(out,sz.name+"-raid-collapsed.png")});
@@ -124,13 +126,74 @@ const rows=[
      panelWidth:p.clientWidth,scrollWidth:p.scrollWidth,
      viewWidth:window.innerWidth,metricsRight:opened.getBoundingClientRect().right,
      panelRight:group.right,hasSource:!!p.getAttribute("data-ps-source"),
-     hasShadowSprite:!!p.querySelectorAll(".psRaidRow")[4].querySelector(".psRaidSprite")};
+     hasShadowSprite:!!p.querySelectorAll(".psRaidRow")[4].querySelector(".psRaidSprite"),
+     offenders:[...p.querySelectorAll("*")].map(el=>({
+      tag:el.tagName,cls:String(el.className||"").slice(0,60),
+      right:Math.round(el.getBoundingClientRect().right),
+      width:Math.round(el.getBoundingClientRect().width),
+      sw:el.scrollWidth,cw:el.clientWidth
+     })).filter(x=>x.right>p.getBoundingClientRect().right+3||x.sw>x.cw+40)
+      .sort((a,b)=>b.right-a.right).slice(0,8)};
    });
    assert.ok(extra.expanded&&extra.visible&&extra.hasSource);
    assert.equal(extra.hasShadowSprite,false,"no unverified Shadow sprite "+sz.name);
    assert.ok(extra.metricsRight<=extra.panelRight+2&&extra.scrollWidth<=extra.panelWidth+3,
     "extra ranking no horizontal clip "+sz.name+" "+JSON.stringify(extra));
    await page.screenshot({path:path.join(out,sz.name+"-raid-more-metrics.png")});
+   // LT324: real screenshot reproduction — Togedemaru has two type rankings.
+   // Both rows must keep the Dex below the name, while Charged is never
+   // separated from its label by an accidental line break.
+   const toge=[
+    {name:"Togedemaru",number:777,variant:"normal",rank:58,
+     type:"electric",typePt:"Elétrico",score:20.2,dps:16.9,tdo:388,
+     fast:"THUNDER_SHOCK_FAST",charged:"WILD_CHARGE",elite:false},
+    {name:"Togedemaru",number:777,variant:"normal",rank:94,
+     type:"steel",typePt:"Aço",score:15.7,dps:12.4,tdo:400,
+     fast:"THUNDER_SHOCK_FAST",charged:"GYRO_BALL",elite:false}
+   ];
+   await page.evaluate(input=>{
+    psRaidReport={verified:true,best:input[0],rows:input,
+     source:"S-Tier-Devs/pogo-db-api · referência"};
+    psRaidExpanded=true;renderRaidPreview();
+   },toge);
+   const samsung=await page.evaluate(()=>{
+    const p=document.getElementById("raidPanel");
+    const measurements=[...p.querySelectorAll(".psRaidRow")].map(row=>{
+     const fast=row.querySelector('.psRaidMoveNames>span[title="Ataque Ágil"]')?.getBoundingClientRect();
+     const charged=row.querySelector('.psRaidMoveNames>span[title="Ataque Carregado"]')?.getBoundingClientRect();
+     const rank=row.querySelector(".psRaidTypeRank")?.getBoundingClientRect();
+     const button=row.querySelector(".psRaidIdentityButton")?.getBoundingClientRect();
+     return {
+      rankInsideButton:!!rank&&!!button&&rank.left>=button.left-1&&rank.right<=button.right+1,
+      names:[...row.querySelectorAll(".psRaidMoveNames>span[title]")].map(el=>el.textContent),
+      fastTop:fast?.top,chargedTop:charged?.top,
+      rankText:row.querySelector(".psRaidTypeRank")?.textContent,
+      accessible:row.querySelector(".psRaidIdentityButton")?.getAttribute("aria-label")
+     };
+    });
+    return {measurements,clientWidth:p.clientWidth,scrollWidth:p.scrollWidth,
+     repeated:p.querySelectorAll(".psRaidSprite,.psRaidDex,.psRaidSpecies,.psRaidName").length,
+     projected:p.querySelectorAll(".psRaidFormLabel").length,
+     openMetrics:p.querySelectorAll(".psRaidMetrics:not([hidden])").length};
+   });
+   assert.equal(samsung.measurements.length,2);
+   assert.equal(samsung.repeated,0,
+    "species, sprite and number are already in main card "+sz.name);
+   assert.equal(samsung.projected,0,
+    "same Togedemaru must not be re-labelled for electric and steel");
+   assert.ok(samsung.measurements.every(r=>r.rankInsideButton),
+    "touch must remain on type rank "+sz.name+" "+JSON.stringify(samsung));
+   assert.ok(samsung.measurements.every(r=>r.names.length===2));
+   assert.ok(samsung.measurements[0].rankText.includes("#58"));
+   assert.ok(samsung.measurements[1].rankText.includes("#94"));
+   assert.ok(samsung.measurements.every(r=>r.accessible.includes("Togedemaru")),
+    "screen-reader keeps the Pokemon identity even though it is not repeated visually");
+   assert.equal(samsung.openMetrics,0,"Togedemaru remains compact before tap");
+   assert.ok(samsung.scrollWidth<=samsung.clientWidth+3,
+    "Togedemaru no horizontal clipping "+sz.name+" "+JSON.stringify(samsung));
+   if(sz.w<=240)assert.ok(samsung.measurements.every(r=>r.chargedTop>r.fastTop),
+    "narrow device keeps Charged as a complete second item "+sz.name);
+   await page.screenshot({path:path.join(out,sz.name+"-lt324-togedemaru.png")});
    assert.deepEqual(errors,[],"JS runtime errors "+sz.name);
    console.log("LT323 visual P/M/G PASS",sz.name,
     {width:sz.w,initial:initial.rowCount,metrics:opened.values,

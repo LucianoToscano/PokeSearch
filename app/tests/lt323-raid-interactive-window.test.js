@@ -19,7 +19,8 @@ assert.match(html,/class="psRaidIdentityButton"/);
 assert.match(html,/aria-controls="psRaidMetrics-/);
 assert.match(html,/raidPanel\.psRaidMetricOpenIndex=-1/,"a new capture closes old metrics");
 assert.match(html,/panel\.onclick=event=>/,"one delegated click handler");
-assert.match(html,/window\.PokeSearchOfflineSprite\?\.rankSprite/);
+assert.match(html,/const raidProjectionLabel=row=>/);
+assert.match(html,/class="psRaidTypeRank"/);
 assert.equal(art.rankSprite("Gengar"),
  "file:///android_asset/pokemon-sprites/base/94.png");
 assert.equal(art.rankSprite("Mega Gengar"),
@@ -96,13 +97,20 @@ const ctx={
 vm.createContext(ctx);
 vm.runInContext(source+";renderRaidPreview();",ctx);
 const text=panel.innerHTML;
-assert.equal((text.match(/class="psRaidSprite"/g)||[]).length,2,
- "only exact Normal + Mega sprites appear; Shadow and unknown do not");
-assert.ok(text.includes('src="file:///android_asset/pokemon-sprites/base/94.png"'));
-assert.ok(text.includes("variety-10038.png"));
-assert.deepEqual(calls,["Gengar","Mega Gengar"],
- "don't request misleading Shadow sprite or guess missing Dex");
-assert.match(text,/>#0094<\/small>/,"Pokédex number visible beside name");
+assert.equal((text.match(/class="psRaidSprite"/g)||[]).length,0,
+ "no repeated sprite inside Rank Raides");
+assert.equal((text.match(/class="psRaidDex"/g)||[]).length,0,
+ "Pokédex # only belongs to the main card");
+assert.equal((text.match(/class="psRaidName"/g)||[]).length,0,
+ "do not repeat current Pokémon species for each type");
+assert.deepEqual(calls,[],"raid row doesn't request sprites already shown in card");
+assert.match(text,/class="psRaidFormLabel"/,
+ "projected Mega/Shadow must still be identifiable");
+assert.match(text,/Mega Gengar/);
+assert.match(text,/Ver ER, DPS e TDO de Gengar, rank 12 Fantasma/,
+ "type-rank remains an accessible clickable control");
+assert.doesNotMatch(text,/#0094/,
+ "Pokédex number should not be duplicated in rank rows");
 assert.match(text,/#12 Fantasma/,"type-specific rank stays distinct from Dex number");
 assert.match(text,/37,5/);
 assert.match(text,/24,4/);
@@ -138,4 +146,4 @@ vm.runInContext("renderRaidPreview();",ctx);
 assert.equal(events.length,1,"rerender does not duplicate toggle listeners");
 assert.equal((panel.innerHTML.match(/id="psRaidMetrics-\d+" hidden/g)||[]).length,4);
 assert.match(button.textContent,/Raides · Destaque/);
-console.log("PASS LT323: compact raid sprite, Dex/name tap, ER/DPS/TDO, projection, Shadow guard, P1/P2 and resize");
+console.log("PASS LT323/LT324: no repeated identity, type rank tap, ER/DPS/TDO, projected form, P1/P2 and resize");
