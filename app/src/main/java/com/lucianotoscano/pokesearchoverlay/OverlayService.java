@@ -760,6 +760,9 @@ public class OverlayService extends Service {
     private boolean firstStart=true;
     private boolean locationEnabled=false;
     private boolean locationVerified=false; // true only after DOM verification for current search
+    // Origin of the last accepted result set; distance is relative to this center.
+    // Keep in memory only. Never reuse km after the user changes coordinates.
+    private String resultsDistanceCenter="";
     private int locationFinalRetryCount=0; // bound React rebinds before Search
     private String locationCoords="";
     private int locationRadius=0;
@@ -3223,6 +3226,10 @@ public class OverlayService extends Service {
             if(!key.isEmpty())existing.put(key,old);
         }
         boolean samePvPMode=shownMode.equals(mode);
+        // A valid previous distance is stable for the SAME encounter and search
+        // center, regardless of CP/Level/IV sorting. Sorting never turns km off.
+        boolean sameDistanceCenter=locationEnabled&&!locationCoords.isEmpty()&&
+            locationCoords.equals(resultsDistanceCenter);
         String[] stable={"iv","ivPercent","moves","gender","size","form"};
         String[] scoped={"rank","ivRank","ivRankSource","ivRankLeague"};
         for(int i=0;i<incoming.length();i++){
@@ -3237,6 +3244,11 @@ public class OverlayService extends Service {
                         prior.has(field)&&!prior.isNull(field)&&
                         !prior.optString(field,"").trim().isEmpty())
                         card.put(field,prior.get(field));
+                if(sameDistanceCenter&&card.optString("distance","").trim().isEmpty()){
+                    String trustedDistance=prior.optString("distance","").trim();
+                    if(trustedDistance.matches("(?i)\\d+(?:[.,]\\d+)?\\s*(?:km|m|mi)"))
+                        card.put("distance",trustedDistance);
+                }
                 if(samePvPMode)for(String field:scoped)
                     if((!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
@@ -3646,6 +3658,7 @@ public class OverlayService extends Service {
         }
         displayedApiResults=authorizedApiQa;
         results=sorted.toString();
+        resultsDistanceCenter=locationEnabled?locationCoords:"";
         searchPhase=sorted.length()==0?"empty":"updated";
         // Criteria were verified before Search and rechecked during collection.
         // Acknowledge transient clear intents only after accepting the result.
