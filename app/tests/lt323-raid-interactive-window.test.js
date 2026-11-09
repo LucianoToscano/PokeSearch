@@ -13,6 +13,8 @@ assert.equal(rank.SOURCE.includes("pogo-db-api"),true);
 assert.match(java,/extends OverlayService/,"P2 uses shared detail.html");
 assert.match(html,/#raidPanel \.psRaidIdentityButton\{/);
 assert.match(html,/#raidPanel \.psRaidMetrics\[hidden\]\{display:none!important\}/);
+assert.match(html,/#raidPanel \.psRaidMore:not\(\[open\]\) > \.psRaidRow\{display:none!important\}/,
+ "closed Ver mais must hide rows despite grid display override");
 assert.match(html,/class="psRaidIdentityButton"/);
 assert.match(html,/aria-controls="psRaidMetrics-/);
 assert.match(html,/raidPanel\.psRaidMetricOpenIndex=-1/,"a new capture closes old metrics");
