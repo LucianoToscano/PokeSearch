@@ -57,8 +57,8 @@ assert.equal((p.innerHTML.match(/class="psRaidSpecies"/g)||[]).length,0);
 assert.equal((p.innerHTML.match(/class="psRaidDex"/g)||[]).length,0);
 assert.equal((p.innerHTML.match(/class="psRaidSprite"/g)||[]).length,0);
 assert.equal((p.innerHTML.match(/class="psRaidFormLabel"/g)||[]).length,0);
-assert.doesNotMatch(p.innerHTML,/#0777|Togedemaru/,
- "main card owns species, number and sprite — only type ranks repeat");
+assert.doesNotMatch(p.innerHTML,/>#0777<|>Togedemaru</,
+ "main card owns visible species and number — accessible labels stay intact");
 assert.match(p.innerHTML,/#58 Elétrico/);
 assert.match(p.innerHTML,/#94 Aço/);
 assert.match(p.innerHTML,/Ágil:.*Trovoada de Choques/);
