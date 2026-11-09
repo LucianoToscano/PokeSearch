@@ -2326,7 +2326,8 @@ function renderRaidPreview(){
  // non-bubbling "toggle" on the persistent parent (child HTML is regenerated).
  if(!panel.psRaidMoreToggleBound&&typeof panel.addEventListener==="function"){
   panel.addEventListener("toggle",event=>{
-   if(event.target?.matches?.(".psRaidMore, .psRaidTmInfo")&&
+   if((event.target?.matches?.(".psRaidMore")||
+       event.target?.matches?.(".psRaidTmInfo"))&&
      typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
   },true);
   panel.psRaidMoreToggleBound=true;
