@@ -92,7 +92,7 @@ const pngNames=[
  "glacial-lure-module.png","rainy-lure-module.png"
 ];
 for(const name of pngNames){
- const file=path.join(__dirname,"../src/main/assets/evolution-items",name);
+ const file=path.join(__dirname,"../src/evolution-image-masters",name);
  const bytes=fs.readFileSync(file);
  assert.ok(bytes.length>1000,name+" must have full image bytes");
  assert.equal(bytes.toString("ascii",1,4),"PNG",name+" must be PNG");
@@ -100,6 +100,16 @@ for(const name of pngNames){
  assert.ok(width>=128&&height>=128&&width<=2048&&height<=2048,
   name+" must have sensible dimensions");
 }
+const build=fs.readFileSync(path.join(__dirname,"../build.gradle.kts"),"utf8");
+const javaPreview=fs.readFileSync(path.join(__dirname,
+ "../scripts/EvolutionPreviewIcons.java"),"utf8");
+assert.match(build,/sourceSets\.getByName\("main"\)\.assets\.srcDir/);
+assert.match(build,/generateEvolutionPreviews/);
+assert.match(javaPreview,/private static final int SIDE = 64/);
+assert.match(javaPreview,/MAX_TOTAL_BYTES = 180_000/);
+assert.match(javaPreview,/ImageIO\.write\(preview, "PNG", bytes\)/);
+assert.equal((javaPreview.match(/\.png"/g)||[]).length,15,
+ "generator owns exactly the 15 pinned PNG masters");
 assert.equal(req.byTransition("Poliwhirl","Politoed")?.icon,
  "evolution-items/kings-rock.png");
 assert.match(renderer("Poliwag",{form:""})(evolved,false),
