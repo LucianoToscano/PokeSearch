@@ -188,11 +188,11 @@
   }
   const seen=new Set([start]),queue=[[start,[]]];
   while(queue.length){
-   const [now,path]=queue.shift();
+   const [current,path]=queue.shift();
    if(path.length>=limit)continue;
-   for(const next of graph.get(now)||[]){
+   for(const next of graph.get(current)||[]){
     if(seen.has(next))continue;
-    const route=[...path,[now,next]];
+    const route=[...path,[current,next]];
     if(next===end){
      return route.map(([a,b])=>byTransition(a,b,now)).filter(Boolean);
     }
