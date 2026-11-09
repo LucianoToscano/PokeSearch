@@ -14,7 +14,7 @@ assert.match(html,/#raidPanel \.psRaidSprite\{display:block;width:28px;height:28
 assert.match(html,/min-height:30px;max-width:100%/);
 assert.match(html,/psRaidName"><span class="psRaidSpecies"/);
 assert.match(html,/psRaidSpecies[\s\S]*?psRaidDex[\s\S]*?psRaidTypeRank/);
-assert.match(html,/rows\.slice\(0,3\)\.map\(rowHtml\)\.join\("")/,
+assert.ok(html.includes('rows.slice(0,3).map(rowHtml).join("")'),
  "preserve exact historical 3-line renderer and same stable indices");
 assert.match(html,/data-raid-index/);
 assert.match(html,/psRaidMetricOpenIndex=-1/);
