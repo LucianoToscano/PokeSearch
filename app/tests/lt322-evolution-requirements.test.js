@@ -9,7 +9,7 @@ const family=require("../src/main/assets/pvp_family_catalog.js");
 const detail=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
 const java=fs.readFileSync(path.join(__dirname,
  "../src/main/java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
-assert.equal(req.ruleCount,48,"all 48 curated evolution transitions are present");
+assert.equal(req.ruleCount,76,"all 76 curated special transitions are present");
 const direct=[
  ["Gloom","Bellossom","Pedra Solar"],
  ["Poliwhirl","Politoed","Pedra do Rei"],
@@ -18,9 +18,9 @@ const direct=[
  ["Porygon","Porygon2","Melhora (Up-Grade)"],
  ["Togetic","Togekiss","Pedra de Sinnoh"],
  ["Lampent","Chandelure","Pedra de Unova"],
- ["Applin","Flapple","Maçã Azeda"],
- ["Applin","Appletun","Maçã Doce"],
- ["Applin","Dipplin","Maçã Melada"],
+ ["Applin","Flapple","20 Maçãs Azedas"],
+ ["Applin","Appletun","20 Maçãs Doces"],
+ ["Applin","Dipplin","20 Maçãs Xaropentas"],
  ["Gimmighoul","Gholdengo","999 Moedas de Gimmighoul"],
  ["Magneton","Magnezone","Módulo Atrair Magnético"],
  ["Eevee","Leafeon","Módulo Atrair Musgoso"],
@@ -37,7 +37,9 @@ const porygon=req.forRoute("Porygon","Porygon-Z",family.links);
 assert.deepEqual(porygon?.map(r=>r.label),
  ["Melhora (Up-Grade)","Pedra de Sinnoh"]);
 const applin=req.forRoute("Applin","Hydrapple",family.links);
-assert.deepEqual(applin?.map(r=>r.label),["Maçã Melada"]);
+assert.deepEqual(applin?.map(r=>r.label),
+ ["20 Maçãs Xaropentas",
+  "Capturar 7 Pokémon Dragão com Dipplin companheiro"]);
 assert.deepEqual(req.forRoute("Poliwag","Politoed",family.links)?.map(r=>r.label),
  ["Pedra do Rei"]);
 assert.equal(req.byTransition("Kirlia","Gallade")?.additional,"Somente Kirlia macho");
@@ -103,4 +105,38 @@ assert.equal(req.byTransition("Poliwhirl","Politoed")?.icon,
 assert.match(renderer("Poliwag",{form:""})(evolved,false),
  /evolution-items\/kings-rock\.png/);
 assert.match(detail,/\.evoConditionIcon\{/);
-console.log("PASS LT322: 48 rules, 15 PNGs, guarded renderer, P1\/P2");
+const applinDirect=req.byTransition("Applin","Dipplin");
+assert.equal(applinDirect?.detail,"200 Doces de Applin");
+assert.equal(applinDirect?.icon,"evolution-items/syrupy-apple.png");
+assert.equal(req.byTransition("Dipplin","Hydrapple")?.detail,"400 Doces de Applin");
+const taskEdges=[
+ "Dipplin>Hydrapple","Primeape>Annihilape",
+ "Charcadet>Armarouge","Charcadet>Ceruledge","Bisharp>Kingambit",
+ "Pancham>Pangoro","Spritzee>Aromatisse","Swirlix>Slurpuff",
+ "Poipole>Naganadel","Feebas>Milotic","Pawmo>Pawmot",
+ "Bramblin>Brambleghast","Woobat>Swoobat","Bonsly>Sudowoodo",
+ "Happiny>Chansey","Eevee>Espeon","Eevee>Umbreon","Eevee>Sylveon",
+ "Snom>Frosmoth","Inkay>Malamar","Tyrunt>Tyrantrum",
+ "Yungoos>Gumshoos","Fomantis>Lurantis","Cosmoem>Solgaleo",
+ "Amaura>Aurorus","Cosmoem>Lunala","Combee>Vespiquen",
+ "Salandit>Salazzle"
+];
+for(const edge of taskEdges){
+ const [a,b]=edge.split(">");
+ assert.ok(family.links.some(x=>x[0]===a&&x[1]===b),
+  "special condition must exist in graph: "+edge);
+ assert.ok(req.byTransition(a,b)?.label,
+  "specific route must have condition: "+edge);
+}
+const capture=renderer("Applin",{form:""} )(
+ {name:"Hydrapple",rank:1,cp:1500,level:23},false);
+assert.match(capture,/20 Maçãs Xaropentas/);
+assert.match(capture,/200 Doces de Applin/);
+assert.match(capture,/400 Doces de Applin/);
+assert.match(capture,/Capturar 7 Pokémon Dragão/);
+assert.ok(capture.includes('class="evoConditionSep"'),
+ "multi-stage path uses a visual separator");
+assert.doesNotMatch(renderer("Applin",{form:"Costume"})(
+ {name:"Hydrapple",rank:1},false),/Etapa especial/,
+ "unverified costume cannot inherit apples or challenges");
+console.log("PASS LT322: 76 rules, 15 PNGs, amounts and tasks, guarded renderer, P1/P2");
