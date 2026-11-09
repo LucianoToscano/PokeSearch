@@ -32,6 +32,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
 .evoCondition{font-size:9px;color:#d6c9f1;line-height:1.32;margin-top:2px;overflow-wrap:anywhere}
+.evoConditionPart{display:inline-flex;align-items:center;gap:2px;vertical-align:middle;max-width:100%}
+.evoConditionIcon{display:inline-block;width:14px;height:14px;min-width:14px;object-fit:contain;vertical-align:middle}
+.evoConditionSep{display:inline-block;padding:0 3px;color:#bfb7d5}
 /* LT242: original in-game Mega mark replaces the old glyph, never occupies a
    second badge/column. No :has dependency or forced flex-basis on tiny cards. */
 .psMegaMark{display:inline-block;width:11px;height:11px;max-width:11px;max-height:11px;vertical-align:-2px;object-fit:contain;margin:0}
@@ -2503,8 +2506,15 @@ function evolutionRow(x,first){
   window.PokeSearchEvolutionRequirements?.forRoute?.(
    (typeof watchName==="string"?watchName:""),name,
    window.PokeSearchPvpFamilyCatalog?.links):null;
- const conditionText=Array.isArray(conditions)&&conditions.length?
-  [...new Set(conditions.flatMap(row=>[row.label,...(row.additional?[row.additional]:[])]))].join(" · "):"";
+ const conditionHtml=Array.isArray(conditions)&&conditions.length?
+  conditions.map(row=>{
+   const url=String(row.icon||"");
+   const image=/^evolution-items\/[a-z0-9-]+\.png$/.test(url)?
+    '<img class="evoConditionIcon" src="'+h(url)+'" alt="" aria-hidden="true">':"";
+   return '<span class="evoConditionPart">'+image+'<span>'+
+    h(row.label)+(row.additional?' · '+h(row.additional):"")+
+    '</span></span>';
+  }).join('<span class="evoConditionSep" aria-hidden="true">›</span>'):"";
  return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
   '" class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+(isMega?' isMega':'')+
@@ -2527,7 +2537,7 @@ function evolutionRow(x,first){
    '>'+h(pct)+'%</span>':"")+'</div>'+
   '<div class="evoMeta evoRankRow">'+ranks.join("")+'</div>'+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+
-  (conditionText?'<div class="evoCondition">Etapa especial: '+h(conditionText)+'</div>':"")+
+  (conditionHtml?'<div class="evoCondition">Etapa especial: '+conditionHtml+'</div>':"")+
   '<div class="evoMoveDetails" hidden role="region" aria-label="Golpes PvP de '+
    h(name)+'"></div></div>';
 }
