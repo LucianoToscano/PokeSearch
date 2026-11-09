@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.23",
-  "code": 54529,
-  "label": 51327,
-  "previous_tag": "v0.03.22-54528",
-  "qa_max_code": 54528,
-  "release_notes": "PokeSearch LT323 — melhorias na janela Rank Reides. Toque no nome ou número da Pokédex (#) para abrir ou recolher as métricas ER, DPS e TDO da espécie; a interação funciona sem abrir outra janela nem acrescentar abas. A Pokédex aparece separada do rank por tipo. Sprites compactas 26px utilizam imagens locais verificadas por espécie/forma, evitando falsas correspondências com formas Sombrias. Métricas não disponíveis são mostradas como traço em vez de valores estimados. Mantidos golpes, ícones de MT Normal/Elite, três classificações principais e a expansão Ver mais classificações, com redimensionamento da janela. Teste visual automatizado do HTML real em P/M/G, testes de toque, rolagem e regressões PvE/Android aprovados; paridade com duas Pokébolas por detalhe compartilhado. Rankings e fontes de dados não foram alterados. Preservados Edu, Doce Raro, PoGoCoordinates, sessão, filtros, favoritos, dados e assinatura Android v2 permanente. A avaliação em Samsung físico ainda está pendente e a instalação requer confirmação do Android. PR #323 integrada na main por squash 18d440ce539d3f48bdbea67de25e1a04f321e770, com sete gates de QA aprovados no head e485a90807b315676bce888e4c2a1fcdaea230bb."
+  "version": "0.03.24",
+  "code": 54530,
+  "label": 51328,
+  "previous_tag": "v0.03.23-54529",
+  "qa_max_code": 54529,
+  "release_notes": "PokeSearch LT324 — Distância dos Pokémon nos cards. O valor em km fornecido pelo PoGoCoordinates passa a ser exibido por padrão em todas as ordenações, inclusive PC (menor/maior), Nível (menor/maior), IV, tempo de desaparecimento e pesquisas gerais sem filtro geográfico. Não é necessário pegar ou copiar as coordenadas do Pokémon para visualizar um km já fornecido pela fonte. Personalização → Info Pokémon → Dist. continua permitindo ligar ou desligar o campo, preservando preferências existentes. A exibição é compartilhada pelas duas Pokébolas, mantendo dados, filtros, sprites, Edu, ranking, login, favoritos e assinatura Android v2 permanente. Para atualizações parciais de um mesmo encontro, a distância confirmada pode ser conservada somente enquanto o Pokémon ainda está válido e o centro de busca é idêntico. Se a API não fornecer km, nenhum valor é calculado ou inventado, sem GPS e sem usar última localização automaticamente. Testes Node, Android Java, OTA e QA foram aprovados no código da PR #325 (head f4d9a652429a446b0f88912ab97e744783009c8a), integrada por squash 0df5e271ee43a486d117502e415933772477be1d; notas e auditoria integradas via PR #326. Teste físico em Samsung, tanto P1 como P2, permanece pendente; atualização requer confirmação do Android."
 }
