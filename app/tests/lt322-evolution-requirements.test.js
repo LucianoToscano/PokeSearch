@@ -62,4 +62,23 @@ assert.match(java,/extends OverlayService/,
  "P2 inherits the same shared detail rendering as P1");
 assert.match(detail,/\.evoCondition\{/,
  "legible, non-obtrusive conditions use their own style");
-console.log("PASS LT322: evolution items, multi-step routes, guarded forms, shared P1/P2 detail");
+// Execute the real HTML renderer rather than only checking source strings.
+const start=detail.indexOf("function evolutionRow(");
+const end=detail.indexOf("// Compact rank shown",start);
+assert.ok(start>0&&end>start,"extract evolution renderer");
+const fakeWindow={psRankRenderLeague:"gl",
+ PokeSearchEvolutionRequirements:req,PokeSearchPvpFamilyCatalog:family};
+const renderer=(capturedName,card)=>new Function(
+ "window","h","watchName","psCapturedCard",
+ detail.slice(start,end)+";return evolutionRow;")(
+ fakeWindow,value=>String(value),capturedName,card);
+const evolved={name:"Politoed",rank:2,overallRank:15,statProductPct:"99,22",
+ cp:1498,level:30,eligible:null};
+assert.match(renderer("Poliwag",{form:"",costume:""})(evolved,false),
+ /Etapa especial: Pedra do Rei/);
+assert.doesNotMatch(renderer("Poliwag",{form:"Galarian"})(evolved,false),
+ /Etapa especial:/,"regional capture must not inherit base requirement");
+assert.doesNotMatch(renderer("Poliwag",{form:""} )(
+ {...evolved,referenceOnly:true},false),
+ /Etapa especial:/,"theoretical costume evolution must not show item eligibility");
+console.log("PASS LT322: 48 item rules, evolution paths, form guards, real renderer, P1/P2");
