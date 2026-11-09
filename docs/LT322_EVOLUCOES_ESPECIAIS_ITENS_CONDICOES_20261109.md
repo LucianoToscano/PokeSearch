@@ -14,11 +14,13 @@ Melhorar o painel **Análise PvP** já existente, sem outro menu, sem alterar ra
 - `Kirlia → Gallade` tem observação de macho; `Snorunt → Froslass` tem observação de fêmea.
 - Módulos e condições de tempo não significam consumo automático do item, e algumas evoluções permitem alternativas (como clima/chamariz). Mostrar condições sem afirmar disponibilidade.
 - O componente é local e offline, não consulta novas APIs ou autenticação. Ambos os overlays usam a mesma WebView de detalhe. Preserva `applicationId`, versionCode atual, assinatura, limites de busca e qualquer preferência já salva.
-- **Não foram incluídos PNGs:** pacote mestre documenta links/metadados, não os arquivos visuais binários requisitados anteriormente. Um ícone só pode ser incorporado após ter a imagem exata e os direitos de utilização comprovados.
+- **15 PNGs transparentes incluídos:** extraídos dos arquivos enviados no Drive em 09/11/2026, adicionados em `app/src/main/assets/evolution-items/` e associados aos rótulos das condições. Correspondem a sete itens tradicionais, três maçãs, Moedas de Gimmighoul e quatro módulos atrair (Magnético/Musgoso/Glacial/Chuvoso). **Não** substituem os ícones atuais de tipos, menus, passes ou Edu.
+- **Origem verificada:** a pasta `Banco de Imagens` contém 133 arquivos (129 PNG, 3 WebP e 1 ZIP); o ZIP tem 98 imagens sem erros de integridade. Os 15 arquivos da PR têm bytes idênticos aos correspondentes no ZIP (SHA de blob Git coincidente), transparência real e dimensões PNG verificadas. Não publicar URL privada ou dados de conta nos manifests.
+- **Governança de mídia:** conferir direito de redistribuição das artes da franquia em repositório público antes da incorporação definitiva. Imagens recebidas do usuário não comprovam licença de terceiros.
 
 ## QA e pendências
 
-Teste `node app/tests/lt322-evolution-requirements.test.js` verifica os tipos, rotas de múltiplos passos, casos de risco, importação pelo HTML e herança P1/P2. Após inclusão na PR, executar também regressões completas do repositório, cinco gates oficiais, build assinada apenas se autorizada e QA físico Samsung.
+Teste `node app/tests/lt322-evolution-requirements.test.js` verifica 48 regras, 15 PNGs reais (cabeçalho, bytes e dimensões), rotas de múltiplos passos, casos de risco, renderização de ícones e herança P1/P2. Após inclusão na PR, executar também regressões completas do repositório, cinco gates oficiais, build assinada apenas se autorizada e QA físico Samsung.
 
 **Pendências:** averiguar tradução oficial das três maçãs e novas regras/variações por Game Master. A tabela é um subconjunto de evoluções especiais confirmadas, não catálogo universal de todas as tarefas, formas e custos. `Etapa especial` é informação; não prova que um Pokémon individual pode evoluir. Não há mudança de release `LT321 / 0.03.21 / 54527`.
 
