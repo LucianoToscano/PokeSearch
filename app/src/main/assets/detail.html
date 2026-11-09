@@ -2513,6 +2513,7 @@ function evolutionRow(x,first){
     '<img class="evoConditionIcon" src="'+h(url)+'" alt="" aria-hidden="true">':"";
    return '<span class="evoConditionPart">'+image+'<span>'+
     h(row.label)+(row.additional?' · '+h(row.additional):"")+
+    (row.detail?' · '+h(row.detail):"")+
     '</span></span>';
   }).join('<span class="evoConditionSep" aria-hidden="true">›</span>'):"";
  return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
