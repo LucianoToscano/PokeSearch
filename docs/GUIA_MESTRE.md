@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT322 candidata — evolução especial em Análise PvP (09/11/2026)
+
+- **Branch de melhoria, sem merge/release:** requisitos de evolução GO em módulo local `evolution_requirements.js` e exibição discreta nas linhas da Análise PvP (`detail.html`). Escopo revisado: 77 condições/transições de itens, moedas, módulos, clima, gênero, caminhada e tarefas (inclui Annihilape, Charcadet, Hydrapple, Floette e Kingambit). **Applin:** 20 Maçãs Doces/Azedas/Xaropentas e 200 Doces; Hydrapple: 400 Doces e sete capturas Dragão com Dipplin companheiro, conforme anúncio oficial. O catálogo não informa posse do item/progresso e regras podem mudar em eventos.
+- **Evento temporário Kingambit 21/11/2026:** das 14h às 21h, horário local, a missão Bisharp → Kingambit cai de 15 para 1 chefe de Reide Sombrio/Aço e a evolução oferece **Humilhação Dividida**. Antes da janela mostrar aviso futuro; na janela aplicar 1 chefe; depois das 21h restaurar 15 e ocultar a nota. Lógica usa relógio local do aparelho e é recalculada ao abrir o painel (não confere a conta no jogo). Fonte: `pokemongo.com/pt-BR/news/communityday-november-2026-pawniard`.
+- **Banco de imagens original (Drive):** 15 PNGs transparentes originais preservados em `app/src/evolution-image-masters/` (1.083.681 bytes), e miniaturas 64px geradas por `app/scripts/EvolutionPreviewIcons.java` no build (amostra local 70.701 bytes) para exibir ícones de 14px. Originais não são empacotados na APK. Pasta completa inventariada com 133 entradas, demais não integradas. Verificar direitos de redistribuição, empacotamento APK e leitura em Samsung antes do merge.
+- Rota somente pelo grafo canônico `pvp_family_catalog.js`, até seis arestas; desconhecidos, Shadow, costumes, Mega e formas regionais não recebem requisitos presumidos. Projeções de fantasia/Mega não devem apresentar exigência como elegibilidade real.
+- Teste novo: `app/tests/lt322-evolution-requirements.test.js`. A paridade P1/P2 decorre do detalhe compartilhado, mas QA físico Samsung ainda não foi feito; os PNGs de origem somam 1.083.681 bytes e é obrigatório medir a APK assinada diante do limite oficial de 35.000.000 bytes; regressão de ambas as Pokébolas exigida antes de publicar.
+- **LT321 continua última Release oficial verificada** `0.03.21` / `54527`; esta mudança não gera APK/OTA, não modifica versão, assinatura, API ou preferências. Leia [detalhes LT322](LT322_EVOLUCOES_ESPECIAIS_ITENS_CONDICOES_20261109.md) antes de ampliar o catálogo.
+
+
 ## Edu — padrão visual canônico #42 (09/11/2026)
 
 - **Imagem de referência definitiva aprovada:** Edu Parado **#42**, imagem original recebida do proprietário e preservada na Biblioteca `/PokeSearch/Arquivos Mestres/Edu/Edu_Parado_42_PADRAO_OFICIAL_2026-11-09.jpg` (JPEG RGB 1536×1536, fundo preto, SHA-256 `dd995781c039972bd72ea22bc2d89c7c32c04cf056d1dfd96d3e94d735fec1cc`). O anexo veio nomeado como PNG, mas seus bytes são JPEG; **não há transparência no original**.

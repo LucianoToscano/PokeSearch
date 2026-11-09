@@ -111,6 +111,10 @@ android {
     buildFeatures { buildConfig = true }
     namespace = "com.lucianotoscano.pokesearchoverlay"
     compileSdk = 36
+    // LT322: include only generated 64px previews in APK; original PNGs are
+    // under src/evolution-image-masters and stay unchanged in Git.
+    sourceSets.getByName("main").assets.srcDir(
+        layout.buildDirectory.dir("generated/evolution-preview-assets"))
     defaultConfig {
         // Separate distribution identity: avoids signature conflicts with previous alpha APKs.
         applicationId = "com.lucianotoscano.pokesearch"
@@ -203,3 +207,22 @@ val createRoundIcon by tasks.registering(Exec::class) {
         original.absolutePath, output.absolutePath, adaptive.absolutePath)
 }
 tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(createRoundIcon) }
+
+// LT322: reduce 15 original PNGs (1.08 MB) to small transparent preview assets.
+// This is an Android packaging transform; it does not alter the artwork masters.
+val evolutionMasters = file("src/evolution-image-masters")
+val evolutionPreviewRoot = layout.buildDirectory.dir("generated/evolution-preview-assets")
+val generateEvolutionPreviews by tasks.registering(Exec::class) {
+    inputs.files(fileTree(evolutionMasters) { include("*.png") })
+    inputs.file(file("scripts/EvolutionPreviewIcons.java"))
+    outputs.dir(evolutionPreviewRoot)
+    commandLine("java", "-Djava.awt.headless=true",
+        file("scripts/EvolutionPreviewIcons.java").absolutePath,
+        evolutionMasters.absolutePath, evolutionPreviewRoot.get().asFile.absolutePath)
+}
+// preBuild and merge assets must not race when Gradle runs workers in parallel.
+tasks.matching {
+    it.name == "preBuild" ||
+        (it.name.startsWith("merge") && it.name.endsWith("Assets"))
+}.configureEach { dependsOn(generateEvolutionPreviews) }
+
