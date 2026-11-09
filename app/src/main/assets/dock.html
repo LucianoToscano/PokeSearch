@@ -4944,7 +4944,7 @@ let resultDisplayHeightDp=0;
 // Every optional Pokémon detail starts hidden. The native saved preferences
 // remain authoritative once a user explicitly enables an individual field.
 let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:false,
- form:false,moves:false,location:false,distance:false,shiny:false,
+ form:false,moves:false,location:false,distance:true,shiny:false,
  cp:false,level:false,despawn:false,iv:false,rawIv:false,
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
  speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
@@ -7688,7 +7688,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
    gender:!!displayPrefs.gender,size:!!displayPrefs.size,form:!!displayPrefs.form,
    moves:!!displayPrefs.moves,location:!!displayPrefs.location,
-   distance:!!displayPrefs.distance,shiny:!!displayPrefs.shiny,
+   distance:displayPrefs.distance!==false,shiny:!!displayPrefs.shiny,
    cp:!!displayPrefs.cp,level:!!displayPrefs.level,
    despawn:!!displayPrefs.despawn,iv:!!displayPrefs.iv,rawIv:!!displayPrefs.rawIv,
    overallRank:!!displayPrefs.overallRank,speciesIvRank:!!displayPrefs.speciesIvRank,

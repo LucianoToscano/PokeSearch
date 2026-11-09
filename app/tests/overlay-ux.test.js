@@ -155,7 +155,7 @@ test("UX-INFO-10 visibility toggles report confirmed Android state without scrol
  dock.includes('selected?"✓":"–"')&&
  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
  !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
-test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overriding saved choices",()=>{
+test("UX-INFO-DEFAULT-KM-VISIBLE distance ON, other optional fields OFF, preserving saved choices",()=>{
  const source=dock.match(/let resultDisplayOptions=\{([\s\S]*?)\};/);
  if(!source)return false;
  const names=[
@@ -168,7 +168,7 @@ test("UX-INFO-DEFAULT-ALL-HIDDEN all 21 optional fields start OFF without overri
   .map(m=>[m[1],source[1].slice(m.index).startsWith(m[1]+":true")]));
  const nativeBlock=service.split("private void syncPreferencesWithoutSearch(){")[1]
   ?.split("String wantedSort=",1)[0]||"";
- return names.length===21&&names.every(name=>defaultOptions[name]===false)&&
+ return names.length===21&&names.every(name=>defaultOptions[name]===(name==="distance"))&&
   names.every(name=>dock.includes('["'+name+'",'))&&
   dock.includes('let showResultText=false;')&&
   dock.includes('showTimers=false')&&
@@ -2267,11 +2267,12 @@ test("UX-WATCHDOG-90S late requests discarded",()=>{
 // presentation only; do not change the source query or the original sprite gap.
 test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown",()=>{
  const keys=["name","number","gender","size","form","moves","location","distance","shiny"];
- return keys.every(key=>
-   dock.includes('"'+key+'":!!displayPrefs.'+key)||
-   dock.includes(key+':!!displayPrefs.'+key))&&
+ return keys.every(key=>key==="distance"?
+    dock.includes('distance:displayPrefs.distance!==false'):
+    dock.includes('"'+key+'":!!displayPrefs.'+key)||
+    dock.includes(key+':!!displayPrefs.'+key))&&
   keys.every(key=>service.includes('case "'+key+'":')&&
-    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",false)'))&&
+    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",'+(key==="distance"?"true":"false")+')'))&&
   keys.every(key=>key==="shiny"?dock.includes('if(opts.shiny){'):
     dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:0;')&&
