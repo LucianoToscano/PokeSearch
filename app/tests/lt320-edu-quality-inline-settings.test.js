@@ -13,7 +13,7 @@ assert.match(atlas,/CELL=128, COLS=8, COUNT=62/);
 assert.match(atlas,/COLLECTION_COUNT=TOTAL_COUNT\+1/);
 assert.match(atlas,/DISPLAY_SOURCE_PX=512/);
 assert.match(atlas,/new LruCache<>\(8\)/);
-assert.match(atlas,/Bitmap\.createScaledBitmap\(cache\[i\]\.getBitmap\(\),\s*DISPLAY_SOURCE_PX,DISPLAY_SOURCE_PX,false\)/);
+assert.match(atlas,/EduPixelArtUpscale\.scale4x\(pixels,CELL,CELL\)/);
 assert.match(atlas,/drawable\.setFilterBitmap\(true\)/);
 assert.match(atlas,/catch\(OutOfMemoryError memory\)/);
 assert.match(atlas,/return cache\[i\]/);
