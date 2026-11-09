@@ -1,6 +1,6 @@
-# LT323 candidata — Rank Reides compacto e interativo
+# LT323 OFICIAL — Rank Reides compacto e interativo
 
-**Data:** 09/11/2026 · **Base:** release oficial LT322 `0.03.22`, code `54528` · **Estado:** branch/PR de melhoria, sem merge, APK ou publicação.
+**Data:** 09/11/2026 · **Base anterior:** LT322 `0.03.22`, code `54528` · **Estado:** PR #323 integrada e APK oficial LT323 publicada. QA visual em Samsung físico ainda pendente.
 
 ## Objetivo
 
@@ -28,7 +28,7 @@ Aprimorar **somente a janela de Rank Reides existente** na ficha do Pokémon. N�
 - `app/tests/lt323-raid-interactive-window.test.js`: cobre HTML real, sprite Normal/Mega, guarda Shadow, número #, ER/DPS/TDO e valores sem dados, toque para abrir/recolher, troca de linha, um listener, resize e paridade P1/P2.
 - Executar regressão Node completa, compilação Android e gates de PvE/visual no SHA da PR. Conferir que os testes históricos LT259 e LT282 permanecem passando.
 - **Pendente QA Samsung físico** em P/M/G e ambas as Pokébolas: toques no número pequeno, ícones 26px, contraste do texto, rolagem após expandir métricas e voltar, troca de espécie, Mega e Shadow.
-- **Não publicar / fazer merge antes de autorização específica.** LT322 continua oficial.
+- **Publicação autorizada pelo proprietário em 09/11/2026.** A Release oficial agora é LT323; LT322 é a versão anterior.
 
 
 ## Segunda auditoria: renderização real P/M/G
@@ -51,3 +51,14 @@ Aprimorar **somente a janela de Rank Reides existente** na ficha do Pokémon. N�
 - Os testes LT265/LT285 exigiam literalmente `rows.slice(0,3).map(rowHtml).join("")`; o renderizador mantém essa chamada sem perder os índices corretos das classificações adicionais.
 - A regra LT316 do Edu já não reconhecia a convenção documental vigente desde LT322 em `AGENTS.md`. O teste foi atualizado para reconhecer o cabeçalho oficial `ESTADO OFICIAL VERIFICADO EM ... LT322`, preservar o limite mínimo LT318 e não confundir registros históricos LT320 com a versão atual. O código, atlas e comportamento do Edu permanecem inalterados.
 - Na rodada inicial do CI, o teste específico LT323 passou. Após o ajuste, Node QA, LT211 core Android, LT62 Java, LT173 OTA e LT259 PvE passaram. LT169 e LT253 retornaram `failure` **sem jobs criados** na segunda rodada; esse status não comprova falha de teste nem sucesso. Uma nova execução é necessária e seus resultados devem ser registrados para o SHA final.
+
+## Publicação oficial e verificações — 09/11/2026
+
+- **PR #323 integrada** em `main` por squash `18d440ce539d3f48bdbea67de25e1a04f321e770` após 7 gates obrigatórios aprovados no commit `e485a90807b315676bce888e4c2a1fcdaea230bb` (Node, regressões, Android, Java, OTA, PvE e visual).
+- **Código-fonte exato da Release:** `78096af5113522a0628a833416a38c6a325c9017`, incluindo histórico `release_notes.json` e a solicitação oficial versionada.
+- [Workflow protegido #42684618619](https://github.com/LucianoToscano/PokeSearch/actions/runs/42684618619) **completed/success**: preflight, regressões Node/OTA, geração de assets, Gradle/R8, verificação de tamanho, certificado permanente, publicação e revalidação do hash público concluídos.
+- **LT323 / 0.03.23 / versionCode 54529 / label 51327**, [Release estável v0.03.23-54529](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.23-54529) publicada em **09/11/2026 às 19:38:15 UTC**.
+- [PokeSearch-v0.03.23-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.23-54529/PokeSearch-v0.03.23-LT.apk) de **34.790.852 bytes**, SHA-256 `eebb8ee2077703c2d2ba30a167b4a5e0f914c27a24cdce12161ac580d9f9a736`; abaixo do limite de 35.000.000 bytes. Certificado v2 Android original e permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` preservado.
+- O atualizador interno consulta o canal de Releases estáveis; **não se afirma que o Android instalou sozinho nem que o aparelho Samsung foi testado fisicamente**. O usuário precisa confirmar a instalação, sujeito às configurações/rede.
+- **Fora desta atualização:** novas abas Max Ataque/Tanque e importação de rankings Dittobase. Fonte PvE original preservada.
+
