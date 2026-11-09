@@ -131,6 +131,54 @@ const rows=[
    assert.ok(extra.metricsRight<=extra.panelRight+2&&extra.scrollWidth<=extra.panelWidth+3,
     "extra ranking no horizontal clip "+sz.name+" "+JSON.stringify(extra));
    await page.screenshot({path:path.join(out,sz.name+"-raid-more-metrics.png")});
+   // LT324: real screenshot reproduction — Togedemaru has two type rankings.
+   // Both rows must keep the Dex below the name, while Charged is never
+   // separated from its label by an accidental line break.
+   const toge=[
+    {name:"Togedemaru",number:777,variant:"normal",rank:58,
+     type:"electric",typePt:"Elétrico",score:20.2,dps:16.9,tdo:388,
+     fast:"THUNDER_SHOCK_FAST",charged:"WILD_CHARGE",elite:false},
+    {name:"Togedemaru",number:777,variant:"normal",rank:94,
+     type:"steel",typePt:"Aço",score:15.7,dps:12.4,tdo:400,
+     fast:"THUNDER_SHOCK_FAST",charged:"GYRO_BALL",elite:false}
+   ];
+   await page.evaluate(input=>{
+    psRaidReport={verified:true,best:input[0],rows:input,
+     source:"S-Tier-Devs/pogo-db-api · referência"};
+    psRaidExpanded=true;renderRaidPreview();
+   },toge);
+   const samsung=await page.evaluate(()=>{
+    const p=document.getElementById("raidPanel");
+    const measurements=[...p.querySelectorAll(".psRaidRow")].map(row=>{
+     const name=row.querySelector(".psRaidSpecies")?.getBoundingClientRect();
+     const dex=row.querySelector(".psRaidDex")?.getBoundingClientRect();
+     const fast=row.querySelector('.psRaidMoveNames>span[title="Ataque Ágil"]')?.getBoundingClientRect();
+     const charged=row.querySelector('.psRaidMoveNames>span[title="Ataque Carregado"]')?.getBoundingClientRect();
+     const rank=row.querySelector(".psRaidTypeRank")?.getBoundingClientRect();
+     const button=row.querySelector(".psRaidIdentityButton")?.getBoundingClientRect();
+     return {dexBelow:!!dex&&!!name&&dex.top>=name.bottom-1,
+      buttonRankSeparated:!!button&&!!rank&&button.right<=rank.left+2,
+      names:[...row.querySelectorAll(".psRaidMoveNames>span[title]")].map(el=>el.textContent),
+      fastTop:fast?.top,chargedTop:charged?.top,
+      visibleDex:row.querySelector(".psRaidDex")?.textContent,
+      rankText:row.querySelector(".psRaidTypeRank")?.textContent};
+    });
+    return {measurements,clientWidth:p.clientWidth,scrollWidth:p.scrollWidth,
+     openMetrics:p.querySelectorAll(".psRaidMetrics:not([hidden])").length};
+   });
+   assert.equal(samsung.measurements.length,2);
+   assert.deepEqual(samsung.measurements.map(r=>r.visibleDex),["#0777","#0777"]);
+   assert.ok(samsung.measurements.every(r=>r.dexBelow&&r.buttonRankSeparated),
+    "consistent Dex and rank alignment "+sz.name+" "+JSON.stringify(samsung));
+   assert.ok(samsung.measurements.every(r=>r.names.length===2));
+   assert.ok(samsung.measurements[0].rankText.includes("#58"));
+   assert.ok(samsung.measurements[1].rankText.includes("#94"));
+   assert.equal(samsung.openMetrics,0,"Togedemaru remains compact before tap");
+   assert.ok(samsung.scrollWidth<=samsung.clientWidth+3,
+    "Togedemaru no horizontal clipping "+sz.name+" "+JSON.stringify(samsung));
+   if(sz.w<=240)assert.ok(samsung.measurements.every(r=>r.chargedTop>r.fastTop),
+    "narrow device keeps Charged as a complete second item "+sz.name);
+   await page.screenshot({path:path.join(out,sz.name+"-lt324-togedemaru.png")});
    assert.deepEqual(errors,[],"JS runtime errors "+sz.name);
    console.log("LT323 visual P/M/G PASS",sz.name,
     {width:sz.w,initial:initial.rowCount,metrics:opened.values,
