@@ -8,7 +8,7 @@ Melhorar o painel **Análise PvP** já existente, sem outro menu, sem alterar ra
 
 ## Escopo
 
-- Criado `app/src/main/assets/evolution_requirements.js` com **76 transições especiais conhecidas**: Pedra Solar, Pedra do Rei, Revestimento Metálico, Escama de Dragão, Melhora (Up-Grade), Pedra de Sinnoh, Pedra de Unova, três maçãs de Applin, moedas de Gimmighoul, módulos/chuva e lua cheia de Ursaring, tarefas de companheiro, caminhada, corações e horários.
+- Criado `app/src/main/assets/evolution_requirements.js` com **77 transições especiais conhecidas**: Pedra Solar, Pedra do Rei, Revestimento Metálico, Escama de Dragão, Melhora (Up-Grade), Pedra de Sinnoh, Pedra de Unova, três maçãs de Applin, moedas de Gimmighoul, módulos/chuva e lua cheia de Ursaring, tarefas de companheiro, caminhada, corações e horários.
 - A nomenclatura oficial do Pokémon GO em português foi verificada: **20 Maçãs Doces/Azedas/Xaropentas**, cada variante com **200 Doces de Applin**. A denominação antiga "Maçã Melada" não era a tradução oficial. Dipplin → Hydrapple exige **400 Doces de Applin** e **capturar sete Pokémon Dragão tendo Dipplin como companheiro**, segundo anúncio oficial de 2025.
 - Evoluções por companheiro/tarefas estão incluídas quando o grafo oferece uma rota verificável (Primeape, Charcadet, Bisharp, Pancham, Poipole, Pawmo, Feebas, Inkay etc.). Essas condições podem ser flexibilizadas temporariamente por eventos; **nenhum requisito mostra progresso, posse de itens ou status real da conta**.
 - Exibir até múltiplos itens em uma rota (exemplo: **Porygon → Porygon2 → Porygon-Z** requer Up-Grade e Pedra de Sinnoh), sem somar doces nem alegar posse do item.
@@ -22,9 +22,17 @@ Melhorar o painel **Análise PvP** já existente, sem outro menu, sem alterar ra
 
 ## QA e pendências
 
-Teste `node app/tests/lt322-evolution-requirements.test.js` verifica 76 regras, 15 PNGs reais (cabeçalho, bytes e dimensões), rotas de múltiplos passos, casos de risco, renderização de ícones e herança P1/P2. Após inclusão na PR, executar também regressões completas do repositório, cinco gates oficiais, build assinada apenas se autorizada e QA físico Samsung.
+Teste `node app/tests/lt322-evolution-requirements.test.js` verifica 77 regras, 15 PNGs reais (cabeçalho, bytes e dimensões), rotas de múltiplos passos, casos de risco, renderização de ícones e herança P1/P2. Após inclusão na PR, executar também regressões completas do repositório, cinco gates oficiais, build assinada apenas se autorizada e QA físico Samsung.
 
 **Pendências:** validar outros requisitos situacionais e novas regras/variações por Game Master; a tradução oficial das três maçãs já foi confirmada. A tabela é um subconjunto de evoluções especiais confirmadas, não catálogo universal de todas as tarefas, formas e custos. `Etapa especial` é informação; não prova que um Pokémon individual pode evoluir. Não há mudança de release `LT321 / 0.03.21 / 54527`.
+
+## Atualização sobre exigências por evento — 21/11/2026
+
+- O anúncio **oficial** do Dia Comunitário de Pawniard confirmou uma exceção para **Bisharp → Kingambit**: em **21/11/2026, das 14h até antes das 21h (horário local)**, a missão passa de 15 para **1 chefe de Reide do tipo Sombrio ou Aço**, com Bisharp como companheiro. A evolução entre 14h e 21h também pode conceder o ataque especial **Humilhação Dividida**. Fonte: https://pokemongo.com/pt-BR/news/communityday-november-2026-pawniard (texto corrigido em 28/10/2026).
+- O módulo usa a data e hora locais do **aparelho** ao abrir/renderizar o painel; não consulta um servidor de horário e não garante que o relógio do usuário coincida com o relógio do jogo. **Antes** da janela, informa o bônus futuro sem substituir o requisito normal; **durante** a janela, apresenta 1 chefe; a partir das **21h**, restaura automaticamente a regra de 15 chefes e remove o aviso. A tela pode precisar ser reaberta para recalcular; conferir o botão de evolução dentro do jogo.
+- Foram criados testes determinísticos de bordas 13h59, 14h00, 20h59 e 21h00, abrangendo também linhas descendentes **Pawniard → Kingambit** e bloqueio de linhas teóricas.
+- Acrescentado **Floette → Florges** (20 corações com Floette companheiro e 100 Doces de Flabébé) conforme https://pokemongo.com/news/valentines-day-event-2022; cores diferentes continuam não sendo inferidas silenciosamente do espécime capturado.
+- Continua fora do escopo: atualização de relógio em tempo real com a tela aberta, detecção de requisitos cumpridos, indicação de posse de doces, eventos futuros não anunciados e atendimento a variantes regionais fora do grafo do catálogo atual.
 
 ## Fontes e proveniência
 
