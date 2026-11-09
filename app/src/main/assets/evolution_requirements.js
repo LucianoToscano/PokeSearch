@@ -20,6 +20,23 @@
   return !name||name.includes("(")||/^(mega|primal)\b/.test(name)?"":name;
  };
  const registry=new Map();
+ const iconByLabel=Object.freeze({
+  "Pedra Solar":"sun-stone.png",
+  "Pedra do Rei":"kings-rock.png",
+  "Revestimento Metálico":"metal-coat.png",
+  "Escama de Dragão":"dragon-scale.png",
+  "Melhora (Up-Grade)":"upgrade.png",
+  "Pedra de Sinnoh":"sinnoh-stone.png",
+  "Pedra de Unova":"unova-stone.png",
+  "Maçã Doce":"sweet-apple.png",
+  "Maçã Azeda":"tart-apple.png",
+  "Maçã Melada":"syrupy-apple.png",
+  "999 Moedas de Gimmighoul":"gimmighoul-coins.png",
+  "Módulo Atrair Magnético":"magnetic-lure-module.png",
+  "Módulo Atrair Musgoso":"mossy-lure-module.png",
+  "Módulo Atrair Glacial":"glacial-lure-module.png",
+  "Chuva no jogo ou Módulo Atrair Chuvoso":"rainy-lure-module.png"
+ });
  const add=(kind,label,edges)=>{
   for(const edge of edges){
    const parts=edge.split(">");
@@ -68,7 +85,9 @@
   const rule=registry.get(a+">"+b);
   if(!rule)return null;
   const requirement=gender.get(a+">"+b);
+  const file=iconByLabel[rule.label];
   return Object.freeze({kind:rule.kind,label:rule.label,
+   ...(file?{icon:"evolution-items/"+file}:{}),
    ...(requirement?{additional:requirement}:{})});
  }
  // Only follow explicit, directed edges from the existing GO family graph.
