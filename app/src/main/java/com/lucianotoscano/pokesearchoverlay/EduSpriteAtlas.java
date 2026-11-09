@@ -46,7 +46,7 @@ public final class EduSpriteAtlas {
     private final Bitmap shadowSprite;
     private final BitmapDrawable[] cache=new BitmapDrawable[COLLECTION_COUNT];
     // A fonte publicada é 128px: NÃO há arte original de 512px no repo.
-    // Uma versão de EXIBIÇÃO 512px usa Scale2x duas vezes sob demanda,
+    // Uma versão de EXIBIÇÃO 512px usa Scale2x e escala exata 2x sob demanda,
     // com cache limitado a 8 frames (~8 MiB), sem duplicar o atlas no APK.
     // O filtro atua no downsample 512->100/150/200, não altera a arte.
     private static final int DISPLAY_SOURCE_PX=512;
