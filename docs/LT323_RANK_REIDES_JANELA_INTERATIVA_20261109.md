@@ -30,3 +30,9 @@ Aprimorar **somente a janela de Rank Reides existente** na ficha do Pokémon. N�
 - **Pendente QA Samsung físico** em P/M/G e ambas as Pokébolas: toques no número pequeno, ícones 26px, contraste do texto, rolagem após expandir métricas e voltar, troca de espécie, Mega e Shadow.
 - **Não publicar / fazer merge antes de autorização específica.** LT322 continua oficial.
 
+
+## Compatibilidade de regressões históricas
+
+- Os testes LT265/LT285 exigiam literalmente `rows.slice(0,3).map(rowHtml).join("")`; o renderizador mantém essa chamada sem perder os índices corretos das classificações adicionais.
+- A regra LT316 do Edu já não reconhecia a convenção documental vigente desde LT322 em `AGENTS.md`. O teste foi atualizado para reconhecer o cabeçalho oficial `ESTADO OFICIAL VERIFICADO EM ... LT322`, preservar o limite mínimo LT318 e não confundir registros históricos LT320 com a versão atual. O código, atlas e comportamento do Edu permanecem inalterados.
+- Na rodada inicial do CI, o teste específico LT323 passou. Após o ajuste, Node QA, LT211 core Android, LT62 Java, LT173 OTA e LT259 PvE passaram. LT169 e LT253 retornaram `failure` **sem jobs criados** na segunda rodada; esse status não comprova falha de teste nem sucesso. Uma nova execução é necessária e seus resultados devem ser registrados para o SHA final.
