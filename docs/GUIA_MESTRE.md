@@ -2,6 +2,10 @@
 
 ## LT324 candidata — refinamento visual Rank Reides no Samsung (09/11/2026)
 
+**Ajuste final da LT324:** como nome, sprite e número da Pokédex já estão no topo do card, o Rank Reides agora **omite os três** nas linhas da mesma espécie. Cada linha mostra apenas rank por tipo e golpes; o rank clicável expande ER/DPS/TDO. Evolução ou forma projetada continua identificada separadamente. Esta decisão substitui a proposta anterior de repetir/alinhar nome, # e sprite no ranking. Testes e screenshots P/M/G atualizados.
+
+
+
 - **Base LT323 pública preservada.** A captura enviada mostra Togedemaru (#0777), com ranking #58 Elétrico / #94 Aço e quebras irregulares. Ajustamos apenas a **janela Rank Reides existente**: nome e número em linhas padronizadas, sprite 28px, área de toque 30px e agrupamento integral dos pares `Ágil: [golpe]` / `Carregado: [golpe]` quando a largura obriga a quebrar a linha. Nenhum novo menu, cartão ou modo Max.
 - O botão nome/# continua abrindo/recolhendo ER/DPS/TDO da fonte PvE já instalada, sem recalcular ranks, IV, golpes ou atualizar a API. P1/P2 continuam compartilhando `detail.html`.
 - **Validação:** `app/tests/lt324-raid-layout-samsung.test.js` reproduz as duas classificações; `app/tests/lt323-raid-real-ui-visual.cjs` foi estendido para capturas P/M/G, checagem de quebra de golpes e ausência de cortes horizontais. Documento [LT324](LT324_AUDITORIA_VISUAL_RANK_REIDES_TOGEDEMARU_20261109.md). Aguardar CI e homologação física antes de merge/publicação.
