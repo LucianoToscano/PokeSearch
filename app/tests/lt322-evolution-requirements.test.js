@@ -9,7 +9,7 @@ const family=require("../src/main/assets/pvp_family_catalog.js");
 const detail=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
 const java=fs.readFileSync(path.join(__dirname,
  "../src/main/java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
-assert.ok(req.ruleCount>=40,"multiple items and special conditions catalogued");
+assert.equal(req.ruleCount,48,"all 48 curated evolution transitions are present");
 const direct=[
  ["Gloom","Bellossom","Pedra Solar"],
  ["Poliwhirl","Politoed","Pedra do Rei"],
