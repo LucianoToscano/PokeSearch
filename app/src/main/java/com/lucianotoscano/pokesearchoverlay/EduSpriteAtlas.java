@@ -46,7 +46,7 @@ public final class EduSpriteAtlas {
     private final Bitmap shadowSprite;
     private final BitmapDrawable[] cache=new BitmapDrawable[COLLECTION_COUNT];
     // A fonte publicada é 128px: NÃO há arte original de 512px no repo.
-    // Uma versão de EXIBIÇÃO 512px é preparada por quadro sob demanda,
+    // Uma versão de EXIBIÇÃO 512px usa Scale2x duas vezes sob demanda,
     // com cache limitado a 8 frames (~8 MiB), sem duplicar o atlas no APK.
     // O filtro atua no downsample 512->100/150/200, não altera a arte.
     private static final int DISPLAY_SOURCE_PX=512;
@@ -201,14 +201,21 @@ public final class EduSpriteAtlas {
             drawable.setDither(false);
             cache[i]=drawable;
         }
-        // Um 512px preparado a partir do quadro 128px melhora a amostragem
+        // Um upscale de pixel art 4x preparado a partir do quadro 128px melhora contornos
         // na tela de alta densidade e mantém a forma dos olhos/óculos.
         // É uma ampliação de EXIBIÇÃO, não recuperação de detalhes ausentes.
         BitmapDrawable enlarged=displayCache.get(i);
         if(enlarged!=null)return enlarged;
         try{
-            Bitmap high=Bitmap.createScaledBitmap(cache[i].getBitmap(),
-                DISPLAY_SOURCE_PX,DISPLAY_SOURCE_PX,false);
+            Bitmap source128=cache[i].getBitmap();
+            int[] pixels=new int[CELL*CELL];
+            source128.getPixels(pixels,0,CELL,0,0,CELL,CELL);
+            // Depois do retoque LT316: upscale completo sem reescalar a pose.
+            int[] enhanced=EduPixelArtUpscale.scale4x(pixels,CELL,CELL);
+            Bitmap high=Bitmap.createBitmap(DISPLAY_SOURCE_PX,
+                DISPLAY_SOURCE_PX,Bitmap.Config.ARGB_8888);
+            high.setPixels(enhanced,0,DISPLAY_SOURCE_PX,
+                0,0,DISPLAY_SOURCE_PX,DISPLAY_SOURCE_PX);
             high.setDensity(app.getResources().getDisplayMetrics().densityDpi);
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),high);
             // Suaviza só o redimensionamento final para P/M/G, evitando
