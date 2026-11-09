@@ -15,7 +15,7 @@ assert.match(html,/#raidPanel \.psRaidIdentityButton\{/);
 assert.match(html,/#raidPanel \.psRaidMetrics\[hidden\]\{display:none!important\}/);
 assert.match(html,/class="psRaidIdentityButton"/);
 assert.match(html,/aria-controls="psRaidMetrics-/);
-assert.match(html,/panel\.psRaidMetricOpenIndex=-1/,"a new capture closes old metrics");
+assert.match(html,/raidPanel\.psRaidMetricOpenIndex=-1/,"a new capture closes old metrics");
 assert.match(html,/panel\.onclick=event=>/,"one delegated click handler");
 assert.match(html,/window\.PokeSearchOfflineSprite\?\.rankSprite/);
 assert.equal(art.rankSprite("Gengar"),
@@ -32,7 +32,7 @@ assert.ok(from>0&&until>from,"extract real raid renderer");
 const source=inline.slice(from,until);
 const rows=[
  {name:"Gengar",number:94,variant:"normal",rank:12,
-  type:"ghost",typePt:"Fantasma",score:37.45,dps:24.35,tdo:604.18,
+  type:"ghost",typePt:"Fantasma",score:37.46,dps:24.36,tdo:604.18,
   fast:"SHADOW_CLAW_FAST",charged:"SHADOW_BALL",elite:false},
  {name:"Mega Gengar",number:94,variant:"mega",projected:true,rank:2,
   type:"ghost",typePt:"Fantasma",score:57.01,dps:31.1,tdo:724.6,
@@ -135,5 +135,5 @@ assert.equal(btns[1].getAttribute("aria-expanded"),"false");
 vm.runInContext("renderRaidPreview();",ctx);
 assert.equal(events.length,1,"rerender does not duplicate toggle listeners");
 assert.equal((panel.innerHTML.match(/id="psRaidMetrics-\d+" hidden/g)||[]).length,4);
-assert.match(panel.innerHTML,/Raides · Destaque/);
+assert.match(button.textContent,/Raides · Destaque/);
 console.log("PASS LT323: compact raid sprite, Dex/name tap, ER/DPS/TDO, projection, Shadow guard, P1/P2 and resize");
