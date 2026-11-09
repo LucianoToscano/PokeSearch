@@ -10,7 +10,7 @@ const javaFile=dir+"EduPixelArtUpscale.java";
 const java=fs.readFileSync(javaFile,"utf8");
 const atlas=fs.readFileSync(dir+"EduSpriteAtlas.java","utf8");
 assert.match(java,/static int\[\] scale4x\(int\[\] argb,int width,int height\)/);
-assert.match(java,/return scale2x\(twice,width\*2,height\*2\)/);
+assert.match(java,/return nearest2x\(twice,width\*2,height\*2\)/);
 assert.match(java,/if\(n!=s && w!=e\)/);
 assert.match(atlas,/EduPixelArtUpscale\.scale4x\(pixels,CELL,CELL\)/);
 assert.match(atlas,/EduSpriteManualRetouch\.apply\(crop,i\)/);
