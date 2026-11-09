@@ -3531,5 +3531,29 @@
         ]
       }
     }
+,
+    {
+      "id": "pokesearch-lt321-edu-upscale-pixelart-512-20261109",
+      "minVersionCode": 54527,
+      "date": "09/11/2026",
+      "title": "PokeSearch LT321 — Edu: contornos aprimorados nas 68 sprites",
+      "sections": {
+        "novidades": [
+          "O Edu agora amplia os 68 quadros para 512×512 durante a exibição, com tratamento de pixel art para melhorar contornos diagonais sem trocar os desenhos originais."
+        ],
+        "melhorias": [
+          "A ampliação trata as bordas com Scale2x e preserva pixels isolados de olhos e óculos com uma segunda passagem exata.",
+          "Mantidos os 68 índices, a sprite parada #42, as armaduras Mewtwo e Shiny, a Sombria, os nove quadros de teleporte e os cinco retoques de acessórios.",
+          "O cache de oito quadros e o retorno ao desenho original em caso de memória insuficiente continuam ativos; P100/M150/G200 permanecem inalterados."
+        ],
+        "correcoes": [
+          "Evitado engrossamento não intencional de pixels isolados na ampliação 4×, preservando as cores e a transparência originais."
+        ],
+        "emDesenvolvimento": [
+          "A origem das imagens continua 128×128: este upscale melhora a exibição, mas não recupera detalhes ausentes da arte original.",
+          "A verificação visual em Samsung físico continua pendente, especialmente olhos, armaduras, transições e teleporte."
+        ]
+      }
+    }
   ]
 }
