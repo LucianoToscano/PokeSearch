@@ -64,7 +64,8 @@ const rows=[
     return {rowCount:all.length,buttonCount:buttons.length,
      visibleButtons:buttons.filter(e=>e.getBoundingClientRect().width>0).length,
      openMetrics:p.querySelectorAll(".psRaidMetrics:not([hidden])").length,
-     firstDex:buttons[0].textContent,firstType:all[0].querySelector(".psRaidTypeRank")?.textContent,
+     firstRank:buttons[0].textContent,firstType:all[0].querySelector(".psRaidTypeRank")?.textContent,
+     repeatedIdentity:p.querySelectorAll(".psRaidSprite,.psRaidDex,.psRaidName").length,
      panelWidth:p.clientWidth,scrollWidth:p.scrollWidth,
      requestedResizes:window.__lt323Resizes.length};
    });
@@ -72,8 +73,9 @@ const rows=[
    assert.equal(initial.buttonCount,5);
    assert.equal(initial.visibleButtons,3,"extra rankings start collapsed "+sz.name);
    assert.equal(initial.openMetrics,0,"collapsed metrics by default "+sz.name);
-   assert.match(initial.firstDex,/#0094/);
+   assert.match(initial.firstRank,/#12/);
    assert.match(initial.firstType,/#12/);
+   assert.equal(initial.repeatedIdentity,0,"no main-card identity repeated in the raid rows");
    assert.ok(initial.scrollWidth<=initial.panelWidth+3,
     "no initial horizontal scrolling "+sz.name+" "+JSON.stringify(initial));
    await page.screenshot({path:path.join(out,sz.name+"-raid-collapsed.png")});
@@ -150,29 +152,35 @@ const rows=[
    const samsung=await page.evaluate(()=>{
     const p=document.getElementById("raidPanel");
     const measurements=[...p.querySelectorAll(".psRaidRow")].map(row=>{
-     const name=row.querySelector(".psRaidSpecies")?.getBoundingClientRect();
-     const dex=row.querySelector(".psRaidDex")?.getBoundingClientRect();
      const fast=row.querySelector('.psRaidMoveNames>span[title="Ataque Ágil"]')?.getBoundingClientRect();
      const charged=row.querySelector('.psRaidMoveNames>span[title="Ataque Carregado"]')?.getBoundingClientRect();
      const rank=row.querySelector(".psRaidTypeRank")?.getBoundingClientRect();
      const button=row.querySelector(".psRaidIdentityButton")?.getBoundingClientRect();
-     return {dexBelow:!!dex&&!!name&&dex.top>=name.bottom-1,
-      buttonRankSeparated:!!button&&!!rank&&button.right<=rank.left+2,
+     return {
+      rankInsideButton:!!rank&&!!button&&rank.left>=button.left-1&&rank.right<=button.right+1,
       names:[...row.querySelectorAll(".psRaidMoveNames>span[title]")].map(el=>el.textContent),
       fastTop:fast?.top,chargedTop:charged?.top,
-      visibleDex:row.querySelector(".psRaidDex")?.textContent,
-      rankText:row.querySelector(".psRaidTypeRank")?.textContent};
+      rankText:row.querySelector(".psRaidTypeRank")?.textContent,
+      accessible:row.querySelector(".psRaidIdentityButton")?.getAttribute("aria-label")
+     };
     });
     return {measurements,clientWidth:p.clientWidth,scrollWidth:p.scrollWidth,
+     repeated:p.querySelectorAll(".psRaidSprite,.psRaidDex,.psRaidSpecies,.psRaidName").length,
+     projected:p.querySelectorAll(".psRaidFormLabel").length,
      openMetrics:p.querySelectorAll(".psRaidMetrics:not([hidden])").length};
    });
    assert.equal(samsung.measurements.length,2);
-   assert.deepEqual(samsung.measurements.map(r=>r.visibleDex),["#0777","#0777"]);
-   assert.ok(samsung.measurements.every(r=>r.dexBelow&&r.buttonRankSeparated),
-    "consistent Dex and rank alignment "+sz.name+" "+JSON.stringify(samsung));
+   assert.equal(samsung.repeated,0,
+    "species, sprite and number are already in main card "+sz.name);
+   assert.equal(samsung.projected,0,
+    "same Togedemaru must not be re-labelled for electric and steel");
+   assert.ok(samsung.measurements.every(r=>r.rankInsideButton),
+    "touch must remain on type rank "+sz.name+" "+JSON.stringify(samsung));
    assert.ok(samsung.measurements.every(r=>r.names.length===2));
    assert.ok(samsung.measurements[0].rankText.includes("#58"));
    assert.ok(samsung.measurements[1].rankText.includes("#94"));
+   assert.ok(samsung.measurements.every(r=>r.accessible.includes("Togedemaru")),
+    "screen-reader keeps the Pokemon identity even though it is not repeated visually");
    assert.equal(samsung.openMetrics,0,"Togedemaru remains compact before tap");
    assert.ok(samsung.scrollWidth<=samsung.clientWidth+3,
     "Togedemaru no horizontal clipping "+sz.name+" "+JSON.stringify(samsung));
