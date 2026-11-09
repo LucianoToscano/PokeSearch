@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## Edu — padrão visual canônico #42 (09/11/2026)
+
+- **Imagem de referência definitiva aprovada:** Edu Parado **#42**, imagem original recebida do proprietário e preservada na Biblioteca `/PokeSearch/Arquivos Mestres/Edu/Edu_Parado_42_PADRAO_OFICIAL_2026-11-09.jpg` (JPEG RGB 1536×1536, fundo preto, SHA-256 `dd995781c039972bd72ea22bc2d89c7c32c04cf056d1dfd96d3e94d735fec1cc`). O anexo veio nomeado como PNG, mas seus bytes são JPEG; **não há transparência no original**.
+- **Regra para as 68 sprites:** comparar qualquer nova criação/alteração com a #42 aprovada, preservando o rosto, cabelo castanho, óculos claros, bigode/cavanhaque, jaqueta vermelha/gola amarela, alças verdes, camiseta azul, calça azul e tênis vermelhos/brancos, além de proporções e alinhamento. Fantasias e efeitos não substituem a anatomia.
+- **Registro completo:** [EDU_PADRAO_VISUAL_OFICIAL_SPRITE_42_20261109.md](EDU_PADRAO_VISUAL_OFICIAL_SPRITE_42_20261109.md). Este ato registra a referência visual **sem substituir automaticamente o atlas atual** nem disparar atualização. Não confundir imagem JPEG 1536 com artes mestre 512 transparentes.
+
+---
+
 ## LT321 — EDU UPSCALE 4× INTEGRADO, PUBLICAÇÃO SOLICITADA (09/11/2026)
 
 - **Merge comprovado:** [PR #321](https://github.com/LucianoToscano/PokeSearch/pull/321) integrada em `main` por squash `5bd5bceff6b5abcb0d0cb995aeb1a910f2387e2f`. O código LT321 preserva as 68 sprites de origem 128×128 e produz exibição 512×512 (Scale2x seguido de cópia exata 2×), depois de aplicar os retoques LT316. Não são novos masters 512 desenhados.
