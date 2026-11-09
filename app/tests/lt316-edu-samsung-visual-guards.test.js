@@ -60,7 +60,12 @@ assert.match(atlas, /if\(!uniformFrame\)/);
 assert.match(fine, /i==20\|\|i==28\|\|i==30\|\|i==36\|\|i==49/);
 assert.match(fine, /paint\.setFilterBitmap\(false\)/);
 assert.match(fine, /canvas\.clipOutPath\(path\)/);
-const documented=agents.match(/BASE OFICIAL ATUAL: LT(\d+)/);
+// Since LT322, AGENTS puts the verified current release first and keeps LT320
+// explicitly historical. Never parse the historical LT320 as today's baseline.
+const documented=agents.match(/ESTADO OFICIAL VERIFICADO EM \d{2}\/\d{2}\/\d{4}:\*\* LT(\d+)/)||
+ agents.match(/BASE OFICIAL ATUAL: LT(\d+)/);
 assert.ok(documented&&Number(documented[1])>=318,
   "A continuidade não deve rebaixar a base oficial LT318 ou superior");
+assert.ok(!agents.startsWith("BASE OFICIAL ATUAL: LT320"),
+  "A antiga LT320 não pode reaparecer como release atual");
 console.log("LT316 PASS: idle 22 poses, Sombria/teleporte sob gatilho, P/M/G, fallback e retoques.");

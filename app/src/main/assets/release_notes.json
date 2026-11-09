@@ -3580,6 +3580,31 @@
           "Validação visual e instalação no Samsung ainda são necessárias; eventos especiais seguem horários locais do aparelho."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt323-rank-reides-interativo-20261109",
+      "minVersionCode": 54529,
+      "date": "09/11/2026",
+      "title": "PokeSearch LT323 — Rank Reides mais compacto e interativo",
+      "sections": {
+        "novidades": [
+          "Na janela Rank Reides, toque no nome ou número da Pokédex (#) para expandir ER, DPS e TDO da classificação; toque novamente para recolher.",
+          "Sprites pequenas e específicas aparecem quando há arte verificada da espécie ou forma, sem substituir automaticamente uma forma Sombria por outra."
+        ],
+        "melhorias": [
+          "O número da Pokédex fica visualmente separado do rank por tipo; as três classificações principais continuam visíveis.",
+          "As métricas ficam ocultas até o toque, mantendo o painel compacto, com atualização da altura ao expandir, recolher ou abrir mais classificações.",
+          "Informações de MT Elite, golpes e formas projetadas continuam identificadas sem criar abas adicionais."
+        ],
+        "correcoes": [
+          "Ausência de ER, DPS ou TDO é indicada por um traço, sem inventar valores.",
+          "A navegação por toques e o redimensionamento foram verificados em P, M e G num navegador de teste, preservando a interface compartilhada pelas duas Pokébolas."
+        ],
+        "emDesenvolvimento": [
+          "Os dados de Reides são métricas de referência por espécie, não representam automaticamente os IVs, PC ou golpes do Pokémon capturado.",
+          "A validação visual e a instalação em aparelho Samsung físico continuam pendentes."
+        ]
+      }
     }
   ]
 }
