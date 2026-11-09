@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.20",
-  "code": 54526,
-  "label": 51324,
-  "previous_tag": "v0.03.19-54525",
-  "qa_max_code": 54525,
-  "release_notes": "PokeSearch LT320 — Ajustes solicitados após inspeção no Samsung. O Assistente Edu preserva as 68 sprites corrigidas com origem 128×128 e utiliza, para exibição, quadros derivados em buffers de 512×512 gerados sob demanda, com cache LRU limitado a oito e fallback seguro se faltar memória. A mudança melhora a amostragem visual e reduz serrilhado, mas não equivale aos arquivos-mestres originais em 512px, indisponíveis no repositório. Mantidos P=100, M=150 (padrão) e G=200 pixels, com escolhas antigas preservadas. O painel do relógio virtual foi otimizado para uma única tela: oito momentos essenciais do evento em grade tocável, sem modal; seleção do tamanho do Edu; slider de transparência do balão de 0% (sólido) a 60% (translúcido), aplicado imediatamente só ao fundo/borda, mantendo texto e personagem opacos. O modelo de 17 momentos permanece internamente por compatibilidade. Fuso e formato 24 horas continuam recolhidos em Mais opções. As escolhas são persistidas e sincronizadas com o overlay sem reiniciar a conversa. Nada modifica o relógio/GPS do Android nem o Pokémon GO. Preservados primeiros balões, fases e contador do evento, E01–E11, 68 imagens, 22 poses ociosas, Sombria, teleporte, duas Pokébolas, Doce Raro, PoGoCoordinates, filtros, login, rankings, dados, Firebase e certificado de assinatura permanente. PR #320 integrada por squash b98e80b8a0b44d4b5e1d68e0b782a61e5507f39a; CI 5 de 5 SUCCESS no head 143efcd96ec20893b57acf38c6afd353b00e4d8f (Node #42533793472, LT169 #42533793348, LT211 #42533793545, Java LT62 #42533793441, OTA LT173 #42533793398). QA físico Samsung dos detalhes dos olhos, legibilidade e controle de transparência ainda pendente."
+  "version": "0.03.21",
+  "code": 54527,
+  "label": 51325,
+  "previous_tag": "v0.03.20-54526",
+  "qa_max_code": 54526,
+  "release_notes": "PokeSearch LT321 — aprimoramento do Assistente Edu: as 68 sprites originais em 128×128 agora têm upscale de exibição para 512×512, com Scale2x seguido de ampliação exata 2×. O algoritmo melhora os contornos diagonais e mantém pixels isolados de olhos/óculos, cores, alfa, enquadramento e as animações. Preservados a sprite padrão #42, 22 poses ociosas, Sombria #67, armaduras Mewtwo e Mewtwo Shiny, teleporte 52–60 e cinco retoques de corpo/acessórios 20/28/30/36/49. P100/M150/G200, cache LRU 8 e fallback de memória permanecem. A origem artística continua 128×128; não é recriação de detalhes em master 512. Sem alteração nas Pokébolas, filtros, API, login, relógio, Firebase, dados ou assinatura. PR #321 integrada por squash 5bd5bceff6b5abcb0d0cb995aeb1a910f2387e2f, com QA do head f4505595a3e8c8b1b42d3366297cf819d2a3b1da: Node #42593104532, LT169 #42593104580, LT211 #42593104507, Java LT62 #42593104680 e OTA LT173 #42593104504, todos SUCCESS. Homologação visual em Samsung físico ainda pendente."
 }
