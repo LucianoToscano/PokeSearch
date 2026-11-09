@@ -31,6 +31,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 .evoLine{font-size:10px;line-height:1.32;padding:3px 0;border-bottom:1px solid #ffffff12}
 .evoLine b{font-weight:900}.evoLine.best b{color:#83e7bb}
 .evoStats{font-size:9px;color:#c1ced9}.evoState{font-size:9px;color:#ffb3ac;font-weight:800}
+.evoCondition{font-size:9px;color:#d6c9f1;line-height:1.32;margin-top:2px;overflow-wrap:anywhere}
 /* LT242: original in-game Mega mark replaces the old glyph, never occupies a
    second badge/column. No :has dependency or forced flex-basis on tiny cards. */
 .psMegaMark{display:inline-block;width:11px;height:11px;max-width:11px;max-height:11px;vertical-align:-2px;object-fit:contain;margin:0}
@@ -1707,6 +1708,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 <script src="pvpoke-little-ranks.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
 <script src="pvp_family_catalog.js"></script>
+<script src="evolution_requirements.js"></script>
 <script src="pvp_rank_explorer.js"></script>
 <script src="pvp_rank_insights.js"></script>
 <script src="pvp_rank_moves.js"></script><script src="pvp_evolution_moves_ui.js"></script>
@@ -2491,6 +2493,12 @@ function evolutionRow(x,first){
  // Reference rows are theory-only: do not assert costume evolution legality.
  if(!isReference&&x.eligible===false&&hasClass)state="Não elegível no nível atual";
  else if(!isReference&&x.eligible===null&&hasClass)state="Elegibilidade não verificada";
+ // Only ordinary, verified species graph paths; no costume/Shadow/Mega claims.
+ const conditions=(!first&&!isReference&&!isMega)?
+  window.PokeSearchEvolutionRequirements?.forRoute?.(
+   watchName,name,window.PokeSearchPvpFamilyCatalog?.links):null;
+ const conditionText=Array.isArray(conditions)&&conditions.length?
+  [...new Set(conditions.flatMap(row=>[row.label,...(row.additional?[row.additional]:[])]))].join(" · "):"";
  return '<div data-ps-league="'+h(psLeague)+'" data-ps-name="'+h(name)+
   '" class="evoLine'+(first?' isCurrent':'')+
   (isReference?' isReference':'')+(isMega?' isMega':'')+
@@ -2513,6 +2521,7 @@ function evolutionRow(x,first){
    '>'+h(pct)+'%</span>':"")+'</div>'+
   '<div class="evoMeta evoRankRow">'+ranks.join("")+'</div>'+
   (state?'<div class="evoState">'+h(state)+'</div>':"")+
+  (conditionText?'<div class="evoCondition">Etapa especial: '+h(conditionText)+'</div>':"")+
   '<div class="evoMoveDetails" hidden role="region" aria-label="Golpes PvP de '+
    h(name)+'"></div></div>';
 }
