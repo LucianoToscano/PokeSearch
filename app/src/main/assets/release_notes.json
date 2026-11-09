@@ -3554,6 +3554,32 @@
           "A verificação visual em Samsung físico continua pendente, especialmente olhos, armaduras, transições e teleporte."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt322-evolucoes-especiais-icones-locais-20261109",
+      "minVersionCode": 54528,
+      "date": "09/11/2026",
+      "title": "PokeSearch LT322 — evolução especial com itens e condições",
+      "sections": {
+        "novidades": [
+          "A Análise PvP agora informa exigências especiais de evolução, como pedras, módulos atrair, caminhada, tarefas e períodos do dia, em rotas verificadas do catálogo.",
+          "Quinze ícones transparentes dos itens aparecem em miniaturas discretas, com fallback de texto quando não há imagem.",
+          "O catálogo contempla 77 transições especiais, inclusive evoluções em duas etapas como Applin → Dipplin → Hydrapple."
+        ],
+        "melhorias": [
+          "As três maçãs de Applin mostram quantidades e doces; evolução até Hydrapple apresenta os requisitos de suas etapas.",
+          "Ícones otimizados de 64×64 são gerados para a APK, mantendo os originais de alta resolução preservados no projeto.",
+          "O painel informa a exceção anunciada de Kingambit para 21 de novembro de 2026 e deixa de exibir o aviso quando a janela local termina."
+        ],
+        "correcoes": [
+          "Rotas com múltiplas evoluções recebem o mesmo horário de referência do evento, evitando avisos vencidos.",
+          "Requisitos de formas regionais, fantasias, sombrias ou Mega não são presumidos apenas pelo nome-base."
+        ],
+        "emDesenvolvimento": [
+          "As informações são orientativas; o aplicativo não detecta se cada desafio foi concluído, quantos itens o jogador possui ou se a evolução está disponível no jogo.",
+          "Validação visual e instalação no Samsung ainda são necessárias; eventos especiais seguem horários locais do aparelho."
+        ]
+      }
     }
   ]
 }
