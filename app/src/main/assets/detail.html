@@ -1303,6 +1303,9 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
  padding:4px 5px;margin:1px 0 2px;border:1px solid #e1c78630;
  border-radius:5px;background:#d1b36f0b}
 #raidPanel .psRaidMetrics[hidden]{display:none!important}
+/* The author grid display on .psRaidRow must not override the browser's
+   closed <details> hiding rule; otherwise rows 4-8 leak into collapsed UI. */
+#raidPanel .psRaidMore:not([open]) > .psRaidRow{display:none!important}
 #raidPanel .psRaidMetric{display:flex;flex-direction:column;align-items:center;
  min-width:0;gap:2px}
 #raidPanel .psRaidMetric small{font:650 9px/1.2 Roboto,Arial,sans-serif;
