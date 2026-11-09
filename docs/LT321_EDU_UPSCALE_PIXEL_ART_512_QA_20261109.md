@@ -5,7 +5,7 @@ Base verificada: LT320 `0.03.20`, versionCode `54526` (última release registrad
 As 68 sprites de 128×128 do atlas LT316 continuam sendo a **única fonte**. A #42 permanece referência de rosto/óculos/cabeça/pés, sem alteração de índices, pose, posição ou vestuário. `EduSpriteManualRetouch` continua sendo aplicado em 20,28,30,36,49 antes de ampliar. A transparência especial dos teleportes 52–60 permanece inalterada. Sombria #67, Shiny, armaduras e 22 poses ociosas são preservadas.
 
 ## Mudança proposta
-- Introduzido `EduPixelArtUpscale.java`: upscale **4× com Scale2x duas vezes** para melhorar os contornos diagonais de pixel art sem cores novas, reamostragem borrada do original nem movimentar a célula.
+- Introduzido `EduPixelArtUpscale.java`: upscale **4× com Scale2x uma vez (128→256) seguido de ampliação exata 2× (256→512)** para melhorar os contornos diagonais de pixel art sem cores novas, reamostragem borrada do original nem movimentar a célula.
 - `EduSpriteAtlas.frame()` gera a imagem 512×512 **em memória** após crop, alinhamento e retoque, usando 8 quadros em cache LRU; falha de memória retorna à sprite 128.
 - Mantido `drawable.setFilterBitmap(true)` só para reduzir a saída 512 aos tamanhos P100/M150/G200, evitando perder detalhes em escalas não inteiras.
 - Não altera o atlas-fonte, não cria masters artísticos 512, não adiciona 68 imagens ao APK, não altera comportamento do Edu, relógio, menus, balões, buscas ou assinatura.
