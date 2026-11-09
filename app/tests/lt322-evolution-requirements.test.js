@@ -9,7 +9,7 @@ const family=require("../src/main/assets/pvp_family_catalog.js");
 const detail=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
 const java=fs.readFileSync(path.join(__dirname,
  "../src/main/java/com/lucianotoscano/pokesearchoverlay/SecondaryOverlayService.java"),"utf8");
-assert.equal(req.ruleCount,76,"all 76 curated special transitions are present");
+assert.equal(req.ruleCount,77,"all 77 curated special transitions are present");
 const direct=[
  ["Gloom","Bellossom","Pedra Solar"],
  ["Poliwhirl","Politoed","Pedra do Rei"],
@@ -26,7 +26,8 @@ const direct=[
  ["Eevee","Leafeon","Módulo Atrair Musgoso"],
  ["Eevee","Glaceon","Módulo Atrair Glacial"],
  ["Sliggoo","Goodra","Chuva no jogo ou Módulo Atrair Chuvoso"],
- ["Ursaring","Ursaluna","Lua cheia no jogo"]
+ ["Ursaring","Ursaluna","Lua cheia no jogo"],
+ ["Floette","Florges","Ganhar 20 corações com Floette companheiro"]
 ];
 for(const [a,b,label] of direct){
  assert.equal(req.byTransition(a,b)?.label,label,a+" -> "+b);
@@ -42,6 +43,28 @@ assert.deepEqual(applin?.map(r=>r.label),
   "Capturar 7 Pokémon Dragão com Dipplin companheiro"]);
 assert.deepEqual(req.forRoute("Poliwag","Politoed",family.links)?.map(r=>r.label),
  ["Pedra do Rei"]);
+// Pokémon GO announcement on 21/11/2026, 14:00–21:00 device-local time.
+// Frozen local dates avoid relying on CI's timezone or current real-world time.
+const kingNormal="Derrotar 15 chefes de Reide Sombrio/Aço com Bisharp companheiro";
+const kingEvent="Derrotar 1 chefe de Reide Sombrio/Aço com Bisharp companheiro";
+const eventCases=[
+ [new Date(2026,10,20,23,59),kingNormal,"futuro"],
+ [new Date(2026,10,21,13,59),kingNormal,"futuro"],
+ [new Date(2026,10,21,14,0),kingEvent,"ativo"],
+ [new Date(2026,10,21,20,59),kingEvent,"ativo"],
+ [new Date(2026,10,21,21,0),kingNormal,undefined],
+ [new Date(2026,10,22,0,0),kingNormal,undefined],
+ [new Date(2027,0,1,0,0),kingNormal,undefined]
+];
+for(const [date,label,eventState] of eventCases){
+ const direct=req.byTransition("Bisharp","Kingambit",date);
+ assert.equal(direct?.label,label,date+" direct temporary rule");
+ assert.equal(direct?.eventState,eventState,date+" no stale event note");
+ const multi=req.forRoute("Pawniard","Kingambit",family.links,6,date);
+ assert.equal(multi?.[0]?.label,label,date+" multiphase event rule");
+ assert.equal(multi?.[0]?.eventState,eventState,date+" multiphase note expiry");
+}
+assert.equal(req.byTransition("Floette","Florges")?.detail,"100 Doces de Flabébé");
 assert.equal(req.byTransition("Kirlia","Gallade")?.additional,"Somente Kirlia macho");
 assert.equal(req.byTransition("Snorunt","Froslass")?.additional,"Somente Snorunt fêmea");
 assert.equal(req.byTransition("Gloom","Vileplume"),null,
@@ -115,6 +138,29 @@ assert.equal(req.byTransition("Poliwhirl","Politoed")?.icon,
 assert.match(renderer("Poliwag",{form:""})(evolved,false),
  /evolution-items\/kings-rock\.png/);
 assert.match(detail,/\.evoConditionIcon\{/);
+assert.match(detail,/\.evoEventNote\{/);
+const kingCard={name:"Kingambit",rank:3,overallRank:9,cp:1498,level:27};
+const eventRenderer=now=>new Function("window","h","watchName","psCapturedCard",
+ detail.slice(start,end)+";return evolutionRow;")({
+  psRankRenderLeague:"gl",
+  PokeSearchEvolutionRequirements:{
+   forRoute:(from,to,links)=>req.forRoute(from,to,links,6,now)
+  },
+  PokeSearchPvpFamilyCatalog:family
+ },value=>String(value),"Pawniard",{form:""});
+const upcomingHtml=eventRenderer(new Date(2026,10,21,13,59))(kingCard,false);
+const liveHtml=eventRenderer(new Date(2026,10,21,14,0))(kingCard,false);
+const expiredHtml=eventRenderer(new Date(2026,10,21,21,0))(kingCard,false);
+assert.match(upcomingHtml,/21\/11\/2026, 14h–21h/);
+assert.match(liveHtml,/Derrotar 1 chefe de Reide/);
+assert.match(liveHtml,/Humilhação Dividida/);
+assert.doesNotMatch(expiredHtml,/Humilhação Dividida|21\/11\/2026/,
+ "expired temporary evolution must disappear from UI");
+assert.match(expiredHtml,/Derrotar 15 chefes de Reide/);
+assert.doesNotMatch(eventRenderer(new Date(2026,10,21,14,0))(
+ {...kingCard,referenceOnly:true},false),/evoEventNote/,
+ "theoretical rows cannot show limited-time eligibility");
+
 const applinDirect=req.byTransition("Applin","Dipplin");
 assert.equal(applinDirect?.detail,"200 Doces de Applin");
 assert.equal(applinDirect?.icon,"evolution-items/syrupy-apple.png");
@@ -149,4 +195,4 @@ assert.ok(capture.includes('class="evoConditionSep"'),
 assert.doesNotMatch(renderer("Applin",{form:"Costume"})(
  {name:"Hydrapple",rank:1},false),/Etapa especial/,
  "unverified costume cannot inherit apples or challenges");
-console.log("PASS LT322: 76 rules, 15 PNGs, amounts and tasks, guarded renderer, P1/P2");
+console.log("PASS LT322: 77 rules, official event expiry, 15 PNGs, guarded renderer, P1/P2");
