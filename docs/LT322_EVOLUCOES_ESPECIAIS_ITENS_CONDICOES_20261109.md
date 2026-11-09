@@ -8,7 +8,7 @@ Melhorar o painel **Análise PvP** já existente, sem outro menu, sem alterar ra
 
 ## Escopo
 
-- Criado `app/src/main/assets/evolution_requirements.js` com **47 transições especiais conhecidas**: Pedra Solar, Pedra do Rei, Revestimento Metálico, Escama de Dragão, Melhora (Up-Grade), Pedra de Sinnoh, Pedra de Unova, três maçãs de Applin, moedas de Gimmighoul, quatro modalidades de módulo/chuva e lua cheia de Ursaring.
+- Criado `app/src/main/assets/evolution_requirements.js` com **48 transições especiais conhecidas**: Pedra Solar, Pedra do Rei, Revestimento Metálico, Escama de Dragão, Melhora (Up-Grade), Pedra de Sinnoh, Pedra de Unova, três maçãs de Applin, moedas de Gimmighoul, quatro modalidades de módulo/chuva e lua cheia de Ursaring.
 - Exibir até múltiplos itens em uma rota (exemplo: **Porygon → Porygon2 → Porygon-Z** requer Up-Grade e Pedra de Sinnoh), sem somar doces nem alegar posse do item.
 - Caminho dirigido calculado apenas sobre `PokeSearchPvpFamilyCatalog.links`; linhagem desconhecida, sem dados, costume, Mega, variantes regionais e formas Shadow não recebem exigência inferida.
 - `Kirlia → Gallade` tem observação de macho; `Snorunt → Froslass` tem observação de fêmea.
