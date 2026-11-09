@@ -38,6 +38,14 @@ Aprimorar **somente a janela de Rank Reides existente** na ficha do Pokémon. N�
 - **Bug real detectado na primeira execução:** o CSS `#raidPanel .psRaidRow{display:grid}` estava sobrepondo a regra de exibição do navegador para linhas dentro de `<details>` fechado, de modo que as classificações extras ainda ocupavam espaço. Corrigido com `#raidPanel .psRaidMore:not([open]) > .psRaidRow{display:none!important}`. Incluído teste Node para impedir regressão.
 - **Limite:** o Chromium lê o HTML real, mas `file:///android_asset` não representa o Android no runner. Falhas de carregamento de sprite devem manter fallback sem círculo; ainda requer inspeção em Samsung real para avaliar definição/contraste/toques.
 
+## Verificação final do protótipo visual (09/11/2026)
+
+- **7/7 gates SUCCESS** no SHA `cc448997447425164450535826949284f860840e`: [LT169 Node integral](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682600862), [Node QA](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682600906), [LT211 core Android](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682601000), [LT62 compilação Java](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682600988), [LT173 OTA](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682600827), [LT259 ranking PvE](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682601276) e [LT253 visual real](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682601465).
+- O gate visual LT253 executou **LT323 visual P/M/G PASS** nas três larguras, com toques de abrir/recolher, alternância entre linhas, clique em `Ver mais`, três métricas numéricas, controles dentro da largura do painel e ausência de erros JavaScript. Gerou nove screenshots LT323, três por tamanho, no [artefato visual #13703372282](https://github.com/LucianoToscano/PokeSearch/actions/runs/42682601465/artifacts/13703372282) junto às demais capturas do gate.
+- O problema das linhas extras visíveis foi corrigido e validado **após** a detecção; não confundir o primeiro gate vermelho (teste antes do ajuste) com a execução final verde.
+- **Homologação física Samsung ainda pendente**, incluindo o carregamento de sprites `file:///android_asset` no APK instalado, contraste em painel translúcido, dimensão dos toques e rolagem nas duas Pokébolas. Browser não prova instalação no Android.
+- PR #323 é candidata; **sem merge, publicação, APK ou alteração da release LT322**.
+
 ## Compatibilidade de regressões históricas
 
 - Os testes LT265/LT285 exigiam literalmente `rows.slice(0,3).map(rowHtml).join("")`; o renderizador mantém essa chamada sem perder os índices corretos das classificações adicionais.
