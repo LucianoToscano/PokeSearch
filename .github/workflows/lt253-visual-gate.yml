@@ -49,6 +49,10 @@ jobs:
         env:
           LT253_VISUAL_OUTPUT: visual-evidence-lt253
         run: node app/tests/lt253-visual-screenshots.cjs
+      - name: LT323 real Rank Reides P/M/G touch and clipping assertions
+        env:
+          LT323_VISUAL_OUTPUT: visual-evidence-lt253
+        run: node app/tests/lt323-raid-real-ui-visual.cjs
       - name: Preserve visual evidence even if screenshot assertions fail
         if: always()
         uses: actions/upload-artifact@v4
