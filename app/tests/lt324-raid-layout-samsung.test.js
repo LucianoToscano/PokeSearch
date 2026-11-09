@@ -10,6 +10,8 @@ const __dirname=path.dirname(fileURLToPath(import.meta.url));
 const html=fs.readFileSync(path.join(__dirname,"../src/main/assets/detail.html"),"utf8");
 assert.match(html,/#raidPanel \.psRaidRow\{padding:3px 0;gap:1px 5px;/);
 assert.match(html,/#raidPanel \.psRaidFormLabel\{/);
+assert.match(html,/#raidPanel \.psRaidFormLabel \.psShadowMark\{/);
+assert.match(html,/max-width:12px!important;/);
 assert.match(html,/#raidPanel \.psRaidMoveNames\{display:flex;flex-wrap:wrap/);
 assert.match(html,/#raidPanel \.psRaidMoveNames \.psRaidMoveSep\{display:none/);
 assert.match(html,/min-height:30px;max-width:100%/);
