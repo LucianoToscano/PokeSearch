@@ -32,12 +32,26 @@ for(const [sortBy,wire] of sorts){
  assert.equal(response.cards[0].distance,"12.3 km",
    "Alterar a ordenação não deve ocultar distance_km do provedor");
 }
+// A source-provided distance is display metadata, not a distance-sort/geo-filter requirement.
+for(const [sortBy,wire] of sorts.filter(([_,wire])=>wire!=="DISTANCE")){
+ const req=api.buildPayload({mode:"raw",attack:15,defense:15,stamina:15,
+  sortBy,locationEnabled:false,locationCoords:""});
+ assert.equal(req.ok,true,sortBy+" without coords");
+ assert.equal(req.payload.sort,wire,sortBy);
+ assert.equal(req.payload.center_lat,null,sortBy);
+ assert.equal(req.payload.center_lng,null,sortBy);
+ const data=api.normalizeResponse(fixture,{nowMs:Date.UTC(2026,10,9,17)});
+ assert.equal(data.cards[0].distance,"12.3 km",
+  "Source-provided distance must not be hidden because geo-filter is OFF");
+}
 const missing=api.normalizeResponse({results:[{...fixture.results[0],distance_km:null}]},
  {nowMs:Date.UTC(2026,10,9,17)});
 assert.equal(missing.cards[0].distance,"",
  "Nunca inventar distância quando a API não fornece km");
 const java=fs.readFileSync(path.join(root,
  "java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+assert.ok(java.includes('resultShowDistance=prefs.getBoolean("resultShowDistance",true);'),
+ "Distance must be visible by default while explicit user choices are preserved");
 assert.ok(java.includes("locationCoords.equals(resultsDistanceCenter)"),
  "Só reaproveitar km quando o centro de busca for idêntico");
 assert.ok(java.includes('existing.get(encounterIdentityForMetadata(card))'),
@@ -48,4 +62,8 @@ assert.ok(java.includes('resultsDistanceCenter=locationEnabled?locationCoords:""
  "Atualizar a origem somente após aceitar novos resultados");
 const dock=fs.readFileSync(path.join(root,"assets/dock.html"),"utf8");
 assert.ok(dock.includes("if(opts.distance&&"),"Campo independente na apresentação");
+assert.ok(dock.includes("distance:displayPrefs.distance!==false"),
+ "Do not hide km if legacy display preferences omit this key");
+assert.ok(dock.includes("location:false,distance:true,shiny:false"),
+ "Show distance by default even without a location filter");
 console.log("PASS: km independente de sort com centro válido e preservação segura do encontro");
