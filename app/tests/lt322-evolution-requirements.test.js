@@ -75,10 +75,32 @@ const renderer=(capturedName,card)=>new Function(
 const evolved={name:"Politoed",rank:2,overallRank:15,statProductPct:"99,22",
  cp:1498,level:30,eligible:null};
 assert.match(renderer("Poliwag",{form:"",costume:""})(evolved,false),
- /Etapa especial: Pedra do Rei/);
+ /Etapa especial: [\s\S]*Pedra do Rei/);
 assert.doesNotMatch(renderer("Poliwag",{form:"Galarian"})(evolved,false),
  /Etapa especial:/,"regional capture must not inherit base requirement");
 assert.doesNotMatch(renderer("Poliwag",{form:""} )(
  {...evolved,referenceOnly:true},false),
  /Etapa especial:/,"theoretical costume evolution must not show item eligibility");
-console.log("PASS LT322: 48 item rules, evolution paths, form guards, real renderer, P1/P2");
+
+const pngNames=[
+ "sun-stone.png","kings-rock.png","metal-coat.png","dragon-scale.png",
+ "upgrade.png","sinnoh-stone.png","unova-stone.png","sweet-apple.png",
+ "tart-apple.png","syrupy-apple.png","gimmighoul-coins.png",
+ "magnetic-lure-module.png","mossy-lure-module.png",
+ "glacial-lure-module.png","rainy-lure-module.png"
+];
+for(const name of pngNames){
+ const file=path.join(__dirname,"../src/main/assets/evolution-items",name);
+ const bytes=fs.readFileSync(file);
+ assert.ok(bytes.length>1000,name+" must have full image bytes");
+ assert.equal(bytes.toString("ascii",1,4),"PNG",name+" must be PNG");
+ const width=bytes.readUInt32BE(16),height=bytes.readUInt32BE(20);
+ assert.ok(width>=128&&height>=128&&width<=2048&&height<=2048,
+  name+" must have sensible dimensions");
+}
+assert.equal(req.byTransition("Poliwhirl","Politoed")?.icon,
+ "evolution-items/kings-rock.png");
+assert.match(renderer("Poliwag",{form:""})(evolved,false),
+ /evolution-items\/kings-rock\.png/);
+assert.match(detail,/\.evoConditionIcon\{/);
+console.log("PASS LT322: 48 rules, 15 PNGs, guarded renderer, P1\/P2");
