@@ -1,6 +1,6 @@
-# LT322 candidata — informações sobre itens e condições de evolução
+# LT322 OFICIAL — informações sobre itens e condições de evolução
 
-**Data:** 09/11/2026 · **Base de trabalho:** `main` após LT321 · **Estado:** branch/PR candidata, sem merge, APK, OTA ou homologação física.
+**Data:** 09/11/2026 · **Base de trabalho:** LT321 · **Estado:** PR #322 integrada, APK oficial LT322 assinada e publicada; homologação física Samsung pendente.
 
 ## Objetivo
 
@@ -18,13 +18,13 @@ Melhorar o painel **Análise PvP** já existente, sem outro menu, sem alterar ra
 - O componente é local e offline, não consulta novas APIs ou autenticação. Ambos os overlays usam a mesma WebView de detalhe. Preserva `applicationId`, versionCode atual, assinatura, limites de busca e qualquer preferência já salva.
 - **15 PNGs originais preservados:** arquivos enviados no Drive em 09/11/2026, mantidos byte a byte em `app/src/evolution-image-masters/` e associados aos rótulos das condições. Correspondem a sete itens tradicionais, três maçãs, Moedas de Gimmighoul e quatro módulos atrair. **Não** substituem os ícones atuais de tipos, menus, passes ou Edu. Durante a compilação, `app/scripts/EvolutionPreviewIcons.java` gera miniaturas transparentes PNG 64×64 para `build/generated/evolution-preview-assets/evolution-items/`, incluídas nos assets da APK. Os 15 originais não entram no APK.
 - **Origem verificada:** a pasta `Banco de Imagens` contém 133 arquivos (129 PNG, 3 WebP e 1 ZIP); o ZIP tem 98 imagens sem erros de integridade. Os 15 arquivos da PR têm bytes idênticos aos correspondentes no ZIP (SHA de blob Git coincidente), transparência real e dimensões PNG verificadas. Não publicar URL privada ou dados de conta nos manifests. Inventário dos 133 arquivos preservado em `docs/CATALOGO_ASSETS_DRIVE_20261109.csv` com estados separados `LT322` versus `somente catalogado`.
-- **Governança de mídia:** conferir direito de redistribuição das artes da franquia em repositório público antes da incorporação definitiva. Imagens recebidas do usuário não comprovam licença de terceiros.
+- **Governança de mídia:** imagens recebidas do usuário foram incluídas no repositório e APK publicados a pedido do proprietário. A autorização e os direitos de redistribuição das artes da franquia **não foram comprovados nesta auditoria**; revisar com o proprietário. A publicação técnica não equivale a licença.
 
 ## QA e pendências
 
-Teste `node app/tests/lt322-evolution-requirements.test.js` verifica 77 regras, 15 PNGs reais (cabeçalho, bytes e dimensões), rotas de múltiplos passos, casos de risco, renderização de ícones e herança P1/P2. Após inclusão na PR, executar também regressões completas do repositório, cinco gates oficiais, build assinada apenas se autorizada e QA físico Samsung.
+Teste `node app/tests/lt322-evolution-requirements.test.js` verifica 77 regras, 15 PNGs reais (cabeçalho, bytes e dimensões), rotas de múltiplos passos, casos de risco, renderização de ícones e herança P1/P2. A PR passou as regressões completas e cinco gates oficiais; a publicação autorizada executou build assinado e verificações de SHA-256, versão, certificado e limite de tamanho. **QA físico Samsung ainda está pendente.**
 
-**Pendências:** validar outros requisitos situacionais e novas regras/variações por Game Master; a tradução oficial das três maçãs já foi confirmada. A tabela é um subconjunto de evoluções especiais confirmadas, não catálogo universal de todas as tarefas, formas e custos. `Etapa especial` é informação; não prova que um Pokémon individual pode evoluir. Não há mudança de release `LT321 / 0.03.21 / 54527`.
+**Pendências:** validar outros requisitos situacionais e novas regras/variações por Game Master; a tradução oficial das três maçãs já foi confirmada. A tabela é um subconjunto de evoluções especiais confirmadas, não catálogo universal de todas as tarefas, formas e custos. `Etapa especial` é informação; não prova que um Pokémon individual pode evoluir. A Release oficial agora é `LT322 / 0.03.22 / 54528`.
 
 ## Atualização sobre exigências por evento — 21/11/2026
 
@@ -46,4 +46,14 @@ Teste `node app/tests/lt322-evolution-requirements.test.js` verifica 77 regras, 
 
 ## Controle do tamanho da APK (pendência técnica)
 
-A LT321 pública tinha APK de **34.710.626 bytes**; o limite declarado no fluxo oficial é **35.000.000 bytes**. Os 15 PNGs de origem somam **1.083.681 bytes** em disco, incluindo `gimmighoul-coins.png` de 512.120 bytes. **Mitigação candidata:** mestre original preservado fora dos assets; durante a compilação, 15 miniaturas PNG 64×64 transparentes são criadas por Java 17 com filtro bicúbico. Execução local do gerador sobre os 15 originais entregou **70.701 bytes** somados (redução de aproximadamente 93,5%), limitados por QA automatizado a 180 KB. A tela apresenta 14px; 64px oferece 4,6× de resolução. O tamanho final do APK não pode ser inferido dessa soma porque empacotamento/compressão podem alterá-lo; **validar build real do APK e visual no Samsung antes de publicar.**
+A LT321 pública tinha APK de **34.710.626 bytes**; o limite declarado no fluxo oficial é **35.000.000 bytes**. Os 15 PNGs de origem somam **1.083.681 bytes** em disco, incluindo `gimmighoul-coins.png` de 512.120 bytes. **Mitigação publicada e verificada:** mestre original preservado fora dos assets; durante a compilação, 15 miniaturas PNG 64×64 transparentes são criadas por Java 17 com filtro bicúbico. Execução local do gerador sobre os 15 originais entregou **70.701 bytes** somados (redução de aproximadamente 93,5%), limitados por QA automatizado a 180 KB. A tela apresenta 14px; 64px oferece 4,6× de resolução. O APK assinado de produção foi validado com **34.788.940 bytes** (abaixo de 35.000.000), certificado permanente verificado e SHA-256 publicado. A **validação visual física no Samsung ainda está pendente**.
+
+## Publicação oficial comprovada — 09/11/2026
+
+- PR #322 integrada à `main` por squash: `062ff94f3f259b7ff623c300c8f83970b485596d`.
+- Commit-fonte exato, incluindo a solicitação oficial: `5a35e7f9cabec43781d7780256648d450f8a6670`.
+- Workflow protegido `PokeSearch permanent official release` [#42649309515](https://github.com/LucianoToscano/PokeSearch/actions/runs/42649309515): `completed/success`, preflight e publish concluídos. Java 17, testes Node/OTA, geração de 15 miniaturas 64×64 (70.701 bytes), Gradle/R8, assinatura Android v2, integridade ZIP/APK, manifesto e tamanho aprovados.
+- Release estável [v0.03.22-54528](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.22-54528), publicada às 15:58:39 UTC; arquivo [PokeSearch-v0.03.22-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.22-54528/PokeSearch-v0.03.22-LT.apk) de **34.788.940 bytes**, SHA-256 `91db785c8c69218d10ced2cf15cee57aa7b6fa99d5da12730644bb567e72d3a8`.
+- Certificado permanente SHA-256: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. `versionCode=54528`, `versionName=0.03.22`, `label=51326`.
+- Artefato de verificação Actions `PokeSearch-v0.03.22-54528-Signed-Verified`, ID `13689840344`. O canal público é o GitHub Release/latest, lido pelo atualizador do aplicativo. **Nenhuma instalação automática foi confirmada; exige confirmação do Android.** LT321 preservada para rollback.
+
