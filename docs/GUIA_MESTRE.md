@@ -2,7 +2,7 @@
 
 ## LT322 candidata — evolução especial em Análise PvP (09/11/2026)
 
-- **Branch de melhoria, sem merge/release:** requisitos de evolução GO em módulo local `evolution_requirements.js` e exibição discreta nas linhas da Análise PvP (`detail.html`). Escopo: 47 transições de itens/moedas/módulos/clima, incluindo Pedra Solar/Rei/Sinnoh/Unova, maçãs de Applin, Gimmighoul e Ursaluna.
+- **Branch de melhoria, sem merge/release:** requisitos de evolução GO em módulo local `evolution_requirements.js` e exibição discreta nas linhas da Análise PvP (`detail.html`). Escopo: 48 transições de itens/moedas/módulos/clima, incluindo Pedra Solar/Rei/Sinnoh/Unova, maçãs de Applin, Gimmighoul e Ursaluna.
 - Rota somente pelo grafo canônico `pvp_family_catalog.js`, até seis arestas; desconhecidos, Shadow, costumes, Mega e formas regionais não recebem requisitos presumidos. Projeções de fantasia/Mega não devem apresentar exigência como elegibilidade real.
 - Teste novo: `app/tests/lt322-evolution-requirements.test.js`. A paridade P1/P2 decorre do detalhe compartilhado, mas QA físico Samsung ainda não foi feito; regressão de ambas as Pokébolas exigida antes de publicar.
 - **LT321 continua última Release oficial verificada** `0.03.21` / `54527`; esta mudança não gera APK/OTA, não modifica versão, assinatura, API ou preferências. Leia [detalhes LT322](LT322_EVOLUCOES_ESPECIAIS_ITENS_CONDICOES_20261109.md) antes de ampliar o catálogo.
