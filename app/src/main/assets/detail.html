@@ -2296,7 +2296,7 @@ function renderRaidPreview(){
     'não medem os IVs capturados.</span></div></div>';
   };
   panel.innerHTML='<div class="psRaidHead"><img class="psRaidBadge" src="ui-icons/ps-raid-lt268.png" alt=""><span class="psRaidTitle">Rank Raides</span><span class="psRaidConfidence" title="Ranking de espécies confirmado pela fonte PvE; não é ranking dos IVs capturados" aria-label="Ranking PvE verificado">✓</span></div>'+
-   rows.slice(0,3).map((row,i)=>rowHtml(row,i)).join("")+
+   rows.slice(0,3).map(rowHtml).join("")+
    (rows.length>3?'<details class="psRaidMore"><summary>Ver mais '+(rows.length-3)+
     ' classificações</summary>'+rows.slice(3).map((row,i)=>rowHtml(row,i+3)).join("")+'</details>':"")+
 
