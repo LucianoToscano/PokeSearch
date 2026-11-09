@@ -771,7 +771,7 @@ public class OverlayService extends Service {
     // Display-only preferences: they must never change remote search filters.
     private boolean resultShowName=false,resultShowNumber=false,resultShowGender=false,
         resultShowSize=false,resultShowForm=false,resultShowMoves=false,
-        resultShowLocation=false,resultShowDistance=false,resultShowShiny=false;
+        resultShowLocation=false,resultShowDistance=true,resultShowShiny=false;
     private boolean resultShowCount=false,resultShowCp=false,resultShowLevel=false,
         resultShowOverallRank=false,resultShowSpeciesIvRank=false,resultShowRawIv=false,
         resultShowOverallRankGl=false,resultShowOverallRankUl=false,resultShowOverallRankMl=false,
@@ -5743,8 +5743,9 @@ public class OverlayService extends Service {
         spriteSize=(wanted==35||wanted==45||wanted==55)?wanted:45;
         showTimers=prefs.getBoolean("showTimers",false);
         showResultText=prefs.getBoolean("showResultText",false);
-        // Never auto-enable a Pokémon info field, including spawn count.
-        // Existing individually saved ON/OFF preferences remain untouched.
+        // Preserve individually saved ON/OFF preferences. Distance alone defaults
+        // to visible, including when location search is OFF: it is a display field,
+        // not a geo-filter, and is shown only when the source supplies valid km.
         resultShowCount=prefs.getBoolean("resultShowCount",false);
         resultShowName=prefs.getBoolean("resultShowName",false);
         resultShowNumber=prefs.getBoolean("resultShowNumber",false);
@@ -5753,7 +5754,7 @@ public class OverlayService extends Service {
         resultShowForm=prefs.getBoolean("resultShowForm",false);
         resultShowMoves=prefs.getBoolean("resultShowMoves",false);
         resultShowLocation=prefs.getBoolean("resultShowLocation",false);
-        resultShowDistance=prefs.getBoolean("resultShowDistance",false);
+        resultShowDistance=prefs.getBoolean("resultShowDistance",true);
         resultShowShiny=prefs.getBoolean("resultShowShiny",false);
         resultShowCp=prefs.getBoolean("resultShowCp",false);
         resultShowLevel=prefs.getBoolean("resultShowLevel",false);
