@@ -3530,8 +3530,7 @@
           "Homologação visual Samsung pendente para confirmar detalhes dos olhos, suavidade, slider e conforto em P100/M150/G200."
         ]
       }
-    }
-,
+    },
     {
       "id": "pokesearch-lt321-edu-upscale-pixelart-512-20261109",
       "minVersionCode": 54527,
@@ -3603,6 +3602,30 @@
         "emDesenvolvimento": [
           "Os dados de Reides são métricas de referência por espécie, não representam automaticamente os IVs, PC ou golpes do Pokémon capturado.",
           "A validação visual e a instalação em aparelho Samsung físico continuam pendentes."
+        ]
+      }
+    },
+    {
+      "id": "pokesearch-lt324-distancia-km-global-20261109",
+      "minVersionCode": 54530,
+      "date": "09/11/2026",
+      "title": "PokeSearch LT324 — distância em km em todas as pesquisas",
+      "sections": {
+        "novidades": [
+          "O campo Distância (km) aparece por padrão nas informações de cada Pokémon, inclusive em pesquisas sem coordenadas definidas, quando a fonte disponibiliza esse dado."
+        ],
+        "melhorias": [
+          "Ordenar por PC maior/menor, Nível maior/menor, IV ou Tempo restante não esconde o km fornecido pela API.",
+          "A configuração Distância permanece independente do filtro geográfico e pode ser ligada ou desligada individualmente em Personalização → Info Pokémon.",
+          "A mudança é compartilhada pelas duas Pokébolas e preserva as demais preferências visuais e critérios de pesquisa."
+        ],
+        "correcoes": [
+          "Resultados atualizados podem reaproveitar km confirmado somente para o mesmo encontro ainda válido e a mesma referência de busca; nunca copiar a distância entre Pokémon diferentes.",
+          "Campos válidos são exibidos sem exigir que o usuário revele ou copie as coordenadas de cada Pokémon."
+        ],
+        "emDesenvolvimento": [
+          "Sem coordenadas de referência, o provedor pode não devolver distância; nesses casos o app não calcula nem inventa km, nem obtém GPS automaticamente.",
+          "A verificação física em Samsung e a disponibilidade de km nas pesquisas globais do provedor ainda precisam ser confirmadas em uso real."
         ]
       }
     }
