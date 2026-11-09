@@ -31,6 +31,13 @@ Aprimorar **somente a janela de Rank Reides existente** na ficha do Pokémon. N�
 - **Não publicar / fazer merge antes de autorização específica.** LT322 continua oficial.
 
 
+## Segunda auditoria: renderização real P/M/G
+
+- Acrescentado `app/tests/lt323-raid-real-ui-visual.cjs`, executado pelo gate visual oficial LT253 após instalar o Chromium pinado do projeto, com o **HTML/CSS/JS de produção** (`detail.html`). Usa linhas PvE sintéticas **somente para reproduzir o layout**, não afirma novos rankings reais. Viewports: P 200×590, M 240×740 e G 320×860.
+- O teste valida: apenas três linhas iniciais, `Ver mais` realmente recolhido, nome/Dex tocável, ER/DPS/TDO em três colunas sem estouro, troca da classificação ativa, sprite Shadow ausente quando não é verificável, fonte marcada e expansão das linhas adicionais. Gera capturas de tela no artefato `PokeSearch-LT253-visual-PMG`.
+- **Bug real detectado na primeira execução:** o CSS `#raidPanel .psRaidRow{display:grid}` estava sobrepondo a regra de exibição do navegador para linhas dentro de `<details>` fechado, de modo que as classificações extras ainda ocupavam espaço. Corrigido com `#raidPanel .psRaidMore:not([open]) > .psRaidRow{display:none!important}`. Incluído teste Node para impedir regressão.
+- **Limite:** o Chromium lê o HTML real, mas `file:///android_asset` não representa o Android no runner. Falhas de carregamento de sprite devem manter fallback sem círculo; ainda requer inspeção em Samsung real para avaliar definição/contraste/toques.
+
 ## Compatibilidade de regressões históricas
 
 - Os testes LT265/LT285 exigiam literalmente `rows.slice(0,3).map(rowHtml).join("")`; o renderizador mantém essa chamada sem perder os índices corretos das classificações adicionais.
