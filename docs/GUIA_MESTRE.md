@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT321 — EDU UPSCALE 4× INTEGRADO, PUBLICAÇÃO SOLICITADA (09/11/2026)
+
+- **Merge comprovado:** [PR #321](https://github.com/LucianoToscano/PokeSearch/pull/321) integrada em `main` por squash `5bd5bceff6b5abcb0d0cb995aeb1a910f2387e2f`. O código LT321 preserva as 68 sprites de origem 128×128 e produz exibição 512×512 (Scale2x seguido de cópia exata 2×), depois de aplicar os retoques LT316. Não são novos masters 512 desenhados.
+- **QA no head `f4505595a3e8c8b1b42d3366297cf819d2a3b1da`: cinco verificações SUCCESS.** Node [#42593104532](https://github.com/LucianoToscano/PokeSearch/actions/runs/42593104532), Node completo [#42593104580](https://github.com/LucianoToscano/PokeSearch/actions/runs/42593104580), LT211 [#42593104507](https://github.com/LucianoToscano/PokeSearch/actions/runs/42593104507), Java [#42593104680](https://github.com/LucianoToscano/PokeSearch/actions/runs/42593104680), OTA [#42593104504](https://github.com/LucianoToscano/PokeSearch/actions/runs/42593104504).
+- **Pedido oficial registrado:** `release/official-request.json` em `main`, commit `37452bdcce96f998510a15c0aa72c95c604e0e43`, versão solicitada **LT321 · 0.03.21 · versionCode 54527 · label 51325**, tag prevista `v0.03.21-54527`, release anterior `v0.03.20-54526`. Notas incorporadas ao aplicativo por commit `96c78b85455a597ba2d354b90c05726c09e3441c`.
+- **NÃO CONFUNDIR pedido com publicação:** nesta atualização documental ainda não foi confirmada nova Release/asset nem SHA do APK. Até confirmação, última Release **verificada** permanece LT320. Não divulgar URL de download LT321 sem validar GitHub Actions (preflight/publish), tag, bytes, digest, versão e assinatura v2.
+- **QA físico Samsung pendente:** conferir todas as poses P100/M150/G200, olhos, óculos, armaduras, Sombria, teleportes 52–60, tamanho de corpo, transições e uso de memória. Integridade dos filtros, duas Pokébolas, Doce Raro, relógio, login, API e assinatura deve permanecer intacta. [Relatório LT321](LT321_EDU_UPSCALE_PIXEL_ART_512_QA_20261109.md).
+
+---
+
 
 ## LT320 OFICIAL — EDU COM EXIBIÇÃO 512 E SLIDER (08/11/2026)
 
