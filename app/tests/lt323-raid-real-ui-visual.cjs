@@ -126,7 +126,14 @@ const rows=[
      panelWidth:p.clientWidth,scrollWidth:p.scrollWidth,
      viewWidth:window.innerWidth,metricsRight:opened.getBoundingClientRect().right,
      panelRight:group.right,hasSource:!!p.getAttribute("data-ps-source"),
-     hasShadowSprite:!!p.querySelectorAll(".psRaidRow")[4].querySelector(".psRaidSprite")};
+     hasShadowSprite:!!p.querySelectorAll(".psRaidRow")[4].querySelector(".psRaidSprite"),
+     offenders:[...p.querySelectorAll("*")].map(el=>({
+      tag:el.tagName,cls:String(el.className||"").slice(0,60),
+      right:Math.round(el.getBoundingClientRect().right),
+      width:Math.round(el.getBoundingClientRect().width),
+      sw:el.scrollWidth,cw:el.clientWidth
+     })).filter(x=>x.right>p.getBoundingClientRect().right+3||x.sw>x.cw+40)
+      .sort((a,b)=>b.right-a.right).slice(0,8)};
    });
    assert.ok(extra.expanded&&extra.visible&&extra.hasSource);
    assert.equal(extra.hasShadowSprite,false,"no unverified Shadow sprite "+sz.name);
