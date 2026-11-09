@@ -1262,14 +1262,23 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #raidPanel{margin:2px 0 4px;padding:5px 7px;border-radius:7px;
  font:500 10px/1.25 Roboto,Arial,sans-serif}
 #raidPanel .psRaidHead{margin:0 0 3px;font-size:10.5px}
-#raidPanel .psRaidRow{padding:4px 0;gap:2px 5px;
- grid-template-columns:minmax(0,1fr) auto;align-items:baseline}
-#raidPanel .psRaidRow .psRaidName{font-weight:650;min-width:0;
+#raidPanel .psRaidRow{padding:4px 0;gap:1px 5px;
+ grid-template-columns:minmax(0,1fr) auto;align-items:center}
+#raidPanel .psRaidRow .psRaidName{display:flex;flex-direction:column;
+ align-items:flex-start;gap:1px;font-weight:650;min-width:0;
  white-space:normal;overflow-wrap:anywhere}
+#raidPanel .psRaidSpecies{display:block;max-width:100%;
+ line-height:1.15;overflow-wrap:anywhere}
 #raidPanel .psRaidRow strong{font-size:10px}
 #raidPanel .psRaidMoves{display:flex;align-items:center;gap:3px;
  flex-wrap:wrap;font-size:9.3px;line-height:1.25;color:#d6e5f3}
-#raidPanel .psRaidMoveNames{min-width:0;overflow-wrap:anywhere}
+/* LT324 Samsung: keep each move label WITH its attack name.
+   Wrapped Charged moves start on a clean line, not after an orphan label. */
+#raidPanel .psRaidMoveNames{display:flex;flex-wrap:wrap;
+ align-items:baseline;gap:0 6px;min-width:0;max-width:100%}
+#raidPanel .psRaidMoveNames>span[title]{display:inline-block;max-width:100%;
+ white-space:normal;overflow-wrap:anywhere}
+#raidPanel .psRaidMoveNames .psRaidMoveSep{display:none}
 /* LT282: moves only: show the verified attack-type COLOR ON TEXT, never chips. */
 #raidPanel .psRaidMoveText{color:var(--ps-move-type,inherit);font-weight:700;
  background:transparent;border:0;padding:0;box-shadow:none}
@@ -1286,18 +1295,19 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 /* LT323: touch-friendly identity/number, verified sprite and on-demand metrics.
    Metrics are collapsed by default; keep the existing raid card height. */
 #raidPanel .psRaidIdentityButton{display:inline-flex;align-items:center;gap:4px;
- min-width:0;min-height:26px;max-width:100%;margin:0;padding:0;
+ min-width:0;min-height:30px;max-width:100%;margin:0;padding:0;
  border:0;background:transparent;color:inherit;text-align:left;
  font:inherit;cursor:pointer;touch-action:manipulation}
 #raidPanel .psRaidIdentityButton:focus-visible{outline:1px solid #e6ca87;
  outline-offset:2px;border-radius:3px}
 #raidPanel .psRaidIdentityButton[aria-expanded="true"] .psRaidName{
  color:#ffe3a5;text-decoration:underline;text-decoration-thickness:1px}
-#raidPanel .psRaidSprite{display:block;width:26px;height:26px;min-width:26px;
- object-fit:contain;image-rendering:pixelated;flex:0 0 26px}
+#raidPanel .psRaidSprite{display:block;width:28px;height:28px;min-width:28px;
+ object-fit:contain;image-rendering:pixelated;flex:0 0 28px}
 #raidPanel .psRaidSprite[hidden]{display:none!important}
-#raidPanel .psRaidDex{color:#acbfd1;font:600 9px/1.2 Roboto,Arial,sans-serif;
- white-space:nowrap;margin-left:3px}
+#raidPanel .psRaidDex{display:block;color:#acbfd1;
+ font:600 9px/1.1 Roboto,Arial,sans-serif;
+ white-space:nowrap;margin-left:0}
 #raidPanel .psRaidMetrics{grid-column:1/-1;display:grid;
  grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
  padding:4px 5px;margin:1px 0 2px;border:1px solid #e1c78630;
@@ -2282,9 +2292,9 @@ function renderRaidPreview(){
     '" aria-controls="psRaidMetrics-'+index+'" title="'+
     (projected?"Evolução ou forma projetada — toque para ver métricas":"Toque para ver métricas de Reides")+
     '" aria-label="Ver ER, DPS e TDO de '+h(name)+(dex?' '+dex:"")+'">'+
-    raidSprite(row)+'<span class="psRaidName">'+raidStatusIcon(row)+
-    (projected&&row.variant==="normal"?"↳ ":"")+h(name)+
-    (dex?'<small class="psRaidDex">'+dex+'</small>':"")+
+    raidSprite(row)+'<span class="psRaidName"><span class="psRaidSpecies">'+
+    raidStatusIcon(row)+(projected&&row.variant==="normal"?"↳ ":"")+h(name)+
+    '</span>'+(dex?'<small class="psRaidDex">'+dex+'</small>':"")+
     '</span></button><strong class="psRaidTypeRank">'+raidTypeIcon(row)+
     '#'+row.rank+' '+h(row.typePt)+'</strong>'+
     '<span class="psRaidMoves">'+moveLabel(row)+'</span>'+
