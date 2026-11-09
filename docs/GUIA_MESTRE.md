@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT323 candidata — janela Rank Reides interativa (09/11/2026)
+
+- **Somente PR/QA (sem merge/APK):** na janela existente `Rank Reides` de `detail.html`, o nome e o número da Pokédex `#` tornam-se tocáveis. Um toque expande **ER, DPS, TDO** verificadas do mesmo ranking PvE; o segundo recolhe; abrir outra linha fecha a primeira. `#0094` da Pokédex é visualmente distinto de `#12 Fantasma` (rank por tipo). Números ausentes são `—`, nunca estimados.
+- **Sprite 26px:** usar somente `PokeSearchOfflineSprite.rankSprite()` com identificação validada, incluindo Mega exata; ausência de forma/Shadow não gera sprite base enganoso. Preserva três linhas e `Ver mais classificações`; resize no toque, no expandir a lista e nas informações de MT. Mesma WebView nas duas Pokébolas.
+- **Fonte preservada:** S-Tier-Devs/pogo-db-api (referência, não live), sem misturar Max Battle ou importar os rankings Dittobase nesta etapa. Detalhes [LT323](LT323_RANK_REIDES_JANELA_INTERATIVA_20261109.md). QA Node/Android e QA visual Samsung P1/P2 pendentes no registro inicial.
+- **LT322 0.03.22 / 54528 continua a versão oficial publicada**, sem nova release nem alteração de assinatura ou dados.
+
 ## LT322 OFICIAL — evolução especial em Análise PvP (09/11/2026)
 
 - **Código publicado e assinado:** requisitos de evolução GO em módulo local `evolution_requirements.js` e exibição discreta nas linhas da Análise PvP (`detail.html`). Escopo revisado: 77 condições/transições de itens, moedas, módulos, clima, gênero, caminhada e tarefas (inclui Annihilape, Charcadet, Hydrapple, Floette e Kingambit). **Applin:** 20 Maçãs Doces/Azedas/Xaropentas e 200 Doces; Hydrapple: 400 Doces e sete capturas Dragão com Dipplin companheiro, conforme anúncio oficial. O catálogo não informa posse do item/progresso e regras podem mudar em eventos.
