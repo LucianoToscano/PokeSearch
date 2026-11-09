@@ -2493,8 +2493,13 @@ function evolutionRow(x,first){
  // Reference rows are theory-only: do not assert costume evolution legality.
  if(!isReference&&x.eligible===false&&hasClass)state="Não elegível no nível atual";
  else if(!isReference&&x.eligible===null&&hasClass)state="Elegibilidade não verificada";
+ // A base species name alone is insufficient for event/regional/Shadow catches.
+ const captured=(typeof psCapturedCard!=="undefined"&&psCapturedCard)||null;
+ const variant=!!(captured&&(String(captured.form||"").trim()||
+  String(captured.costume||"").trim()||Number(captured.costume_id||0)>0||
+  captured.isCostume===true||captured.shadow===true||captured.isShadow===true));
  // Only ordinary, verified species graph paths; no costume/Shadow/Mega claims.
- const conditions=(!first&&!isReference&&!isMega)?
+ const conditions=(!first&&!isReference&&!isMega&&!variant)?
   window.PokeSearchEvolutionRequirements?.forRoute?.(
    (typeof watchName==="string"?watchName:""),name,
    window.PokeSearchPvpFamilyCatalog?.links):null;
