@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT324 candidata — refinamento visual Rank Reides no Samsung (09/11/2026)
+
+- **Base LT323 pública preservada.** A captura enviada mostra Togedemaru (#0777), com ranking #58 Elétrico / #94 Aço e quebras irregulares. Ajustamos apenas a **janela Rank Reides existente**: nome e número em linhas padronizadas, sprite 28px, área de toque 30px e agrupamento integral dos pares `Ágil: [golpe]` / `Carregado: [golpe]` quando a largura obriga a quebrar a linha. Nenhum novo menu, cartão ou modo Max.
+- O botão nome/# continua abrindo/recolhendo ER/DPS/TDO da fonte PvE já instalada, sem recalcular ranks, IV, golpes ou atualizar a API. P1/P2 continuam compartilhando `detail.html`.
+- **Validação:** `app/tests/lt324-raid-layout-samsung.test.js` reproduz as duas classificações; `app/tests/lt323-raid-real-ui-visual.cjs` foi estendido para capturas P/M/G, checagem de quebra de golpes e ausência de cortes horizontais. Documento [LT324](LT324_AUDITORIA_VISUAL_RANK_REIDES_TOGEDEMARU_20261109.md). Aguardar CI e homologação física antes de merge/publicação.
+
 ## LT323 OFICIAL — janela Rank Reides interativa (09/11/2026)
 
 - **Atualização integrada e publicada:** na janela existente `Rank Reides` de `detail.html`, o nome e o número da Pokédex `#` tornam-se tocáveis. Um toque expande **ER, DPS, TDO** verificadas do mesmo ranking PvE; o segundo recolhe; abrir outra linha fecha a primeira. `#0094` da Pokédex é visualmente distinto de `#12 Fantasma` (rank por tipo). Números ausentes são `—`, nunca estimados.
