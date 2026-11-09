@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.22",
-  "code": 54528,
-  "label": 51326,
-  "previous_tag": "v0.03.21-54527",
-  "qa_max_code": 54527,
-  "release_notes": "PokeSearch LT322 — Evoluções Especiais. O painel já existente da Análise PvP informa 77 condições de evolução verificadas no catálogo offline: pedras, módulos atrair, maçãs, moedas, companheiro, caminhada, tarefas, gênero, clima e horários. Inclui maçãs de Applin e requisitos de Hydrapple, Floette e Annihilape. Quinze ícones transparentes fornecidos para o banco visual do projeto são gerados em miniaturas compactas de 64px para o APK, com originais preservados. O Dia Comunitário de Pawniard em 21/11/2026 tem aviso temporário e exceção do requisito de Kingambit entre 14h e 21h, no horário local do aparelho, retirados depois. Esta informação é orientativa e não mede progresso, itens ou elegibilidade real no jogo. Preservados Edu, as duas Pokébolas independentes, o Doce Raro, rankings, API, login, favoritos, dados, preferências e assinatura permanente. PR #322 integrada por squash no commit 062ff94f3f259b7ff623c300c8f83970b485596d, após cinco gates SUCCESS no HEAD aabde60553e169bb69a8559bd2cc3a937ee65e7d. O APK requer autorização de instalação do Android; testes visuais e de interação num Samsung físico continuam pendentes."
+  "version": "0.03.23",
+  "code": 54529,
+  "label": 51327,
+  "previous_tag": "v0.03.22-54528",
+  "qa_max_code": 54528,
+  "release_notes": "PokeSearch LT323 — melhorias na janela Rank Reides. Toque no nome ou número da Pokédex (#) para abrir ou recolher as métricas ER, DPS e TDO da espécie; a interação funciona sem abrir outra janela nem acrescentar abas. A Pokédex aparece separada do rank por tipo. Sprites compactas 26px utilizam imagens locais verificadas por espécie/forma, evitando falsas correspondências com formas Sombrias. Métricas não disponíveis são mostradas como traço em vez de valores estimados. Mantidos golpes, ícones de MT Normal/Elite, três classificações principais e a expansão Ver mais classificações, com redimensionamento da janela. Teste visual automatizado do HTML real em P/M/G, testes de toque, rolagem e regressões PvE/Android aprovados; paridade com duas Pokébolas por detalhe compartilhado. Rankings e fontes de dados não foram alterados. Preservados Edu, Doce Raro, PoGoCoordinates, sessão, filtros, favoritos, dados e assinatura Android v2 permanente. A avaliação em Samsung físico ainda está pendente e a instalação requer confirmação do Android. PR #323 integrada na main por squash 18d440ce539d3f48bdbea67de25e1a04f321e770, com sete gates de QA aprovados no head e485a90807b315676bce888e4c2a1fcdaea230bb."
 }
