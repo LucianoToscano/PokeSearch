@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT324 — distância em km em todas as pesquisas (09/11/2026)
+
+- **Código integrado:** [PR #325](https://github.com/LucianoToscano/PokeSearch/pull/325) squash `0df5e271ee43a486d117502e415933772477be1d`. O campo `Dist.` inicia ON em novas instalações, sem alterar filtros; exibe km disponibilizados pela API mesmo sem coordenadas e com ordenações PC, Nível, IV, Despawn etc. OFF manual continua respeitado. P1/P2 compartilham a lógica, com estados independentes. Nenhum km é inventado.
+- **Notas e auditoria integradas:** [PR #326](https://github.com/LucianoToscano/PokeSearch/pull/326), squash `63e0de75d6f533cc0cabbc5b4c1202b0135d3fdf`; detalhes em [LT324](LT324_KM_GLOBAL_ORDENACAO_20261109.md). QA do código da PR #325: Node, regressão completa, Java, OTA, QA core, visual e APK privado **SUCCESS**, sem prova de disponibilidade de km global na API.
+- **Publicação solicitada, ainda não confirmada:** pedido `release/official-request.json` no commit `d01301794348828a4dd31a706e95ad5aa861c3dc`, versão `0.03.24`, versionCode `54530`, label `51328`, anterior `v0.03.23-54529`; fluxo permanente protegido. **Não considerar LT324 pública até conferir workflow, tag, APK, digest e assinatura. A última release verificada continua LT323.** QA Samsung das duas Pokébolas e instalação exigem conferência física.
+
+
 ## LT323 OFICIAL — janela Rank Reides interativa (09/11/2026)
 
 - **Atualização integrada e publicada:** na janela existente `Rank Reides` de `detail.html`, o nome e o número da Pokédex `#` tornam-se tocáveis. Um toque expande **ER, DPS, TDO** verificadas do mesmo ranking PvE; o segundo recolhe; abrir outra linha fecha a primeira. `#0094` da Pokédex é visualmente distinto de `#12 Fantasma` (rank por tipo). Números ausentes são `—`, nunca estimados.
