@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.21",
-  "code": 54527,
-  "label": 51325,
-  "previous_tag": "v0.03.20-54526",
-  "qa_max_code": 54526,
-  "release_notes": "PokeSearch LT321 — aprimoramento do Assistente Edu: as 68 sprites originais em 128×128 agora têm upscale de exibição para 512×512, com Scale2x seguido de ampliação exata 2×. O algoritmo melhora os contornos diagonais e mantém pixels isolados de olhos/óculos, cores, alfa, enquadramento e as animações. Preservados a sprite padrão #42, 22 poses ociosas, Sombria #67, armaduras Mewtwo e Mewtwo Shiny, teleporte 52–60 e cinco retoques de corpo/acessórios 20/28/30/36/49. P100/M150/G200, cache LRU 8 e fallback de memória permanecem. A origem artística continua 128×128; não é recriação de detalhes em master 512. Sem alteração nas Pokébolas, filtros, API, login, relógio, Firebase, dados ou assinatura. PR #321 integrada por squash 5bd5bceff6b5abcb0d0cb995aeb1a910f2387e2f, com QA do head f4505595a3e8c8b1b42d3366297cf819d2a3b1da: Node #42593104532, LT169 #42593104580, LT211 #42593104507, Java LT62 #42593104680 e OTA LT173 #42593104504, todos SUCCESS. Homologação visual em Samsung físico ainda pendente."
+  "version": "0.03.22",
+  "code": 54528,
+  "label": 51326,
+  "previous_tag": "v0.03.21-54527",
+  "qa_max_code": 54527,
+  "release_notes": "PokeSearch LT322 — Evoluções Especiais. O painel já existente da Análise PvP informa 77 condições de evolução verificadas no catálogo offline: pedras, módulos atrair, maçãs, moedas, companheiro, caminhada, tarefas, gênero, clima e horários. Inclui maçãs de Applin e requisitos de Hydrapple, Floette e Annihilape. Quinze ícones transparentes fornecidos para o banco visual do projeto são gerados em miniaturas compactas de 64px para o APK, com originais preservados. O Dia Comunitário de Pawniard em 21/11/2026 tem aviso temporário e exceção do requisito de Kingambit entre 14h e 21h, no horário local do aparelho, retirados depois. Esta informação é orientativa e não mede progresso, itens ou elegibilidade real no jogo. Preservados Edu, as duas Pokébolas independentes, o Doce Raro, rankings, API, login, favoritos, dados, preferências e assinatura permanente. PR #322 integrada por squash no commit 062ff94f3f259b7ff623c300c8f83970b485596d, após cinco gates SUCCESS no HEAD aabde60553e169bb69a8559bd2cc3a937ee65e7d. O APK requer autorização de instalação do Android; testes visuais e de interação num Samsung físico continuam pendentes."
 }
