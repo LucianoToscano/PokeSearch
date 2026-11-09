@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT322 candidata — evolução especial em Análise PvP (09/11/2026)
+
+- **Branch de melhoria, sem merge/release:** requisitos de evolução GO em módulo local `evolution_requirements.js` e exibição discreta nas linhas da Análise PvP (`detail.html`). Escopo: 47 transições de itens/moedas/módulos/clima, incluindo Pedra Solar/Rei/Sinnoh/Unova, maçãs de Applin, Gimmighoul e Ursaluna.
+- Rota somente pelo grafo canônico `pvp_family_catalog.js`, até seis arestas; desconhecidos, Shadow, costumes, Mega e formas regionais não recebem requisitos presumidos. Projeções de fantasia/Mega não devem apresentar exigência como elegibilidade real.
+- Teste novo: `app/tests/lt322-evolution-requirements.test.js`. A paridade P1/P2 decorre do detalhe compartilhado, mas QA físico Samsung ainda não foi feito; regressão de ambas as Pokébolas exigida antes de publicar.
+- **LT321 continua última Release oficial verificada** `0.03.21` / `54527`; esta mudança não gera APK/OTA, não modifica versão, assinatura, API ou preferências. Leia [detalhes LT322](LT322_EVOLUCOES_ESPECIAIS_ITENS_CONDICOES_20261109.md) antes de ampliar o catálogo.
+
+
 ## Edu — padrão visual canônico #42 (09/11/2026)
 
 - **Imagem de referência definitiva aprovada:** Edu Parado **#42**, imagem original recebida do proprietário e preservada na Biblioteca `/PokeSearch/Arquivos Mestres/Edu/Edu_Parado_42_PADRAO_OFICIAL_2026-11-09.jpg` (JPEG RGB 1536×1536, fundo preto, SHA-256 `dd995781c039972bd72ea22bc2d89c7c32c04cf056d1dfd96d3e94d735fec1cc`). O anexo veio nomeado como PNG, mas seus bytes são JPEG; **não há transparência no original**.
