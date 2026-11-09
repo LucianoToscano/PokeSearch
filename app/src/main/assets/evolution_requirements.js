@@ -10,6 +10,8 @@
  * https://pokemongohub.net/post/wiki/evolution-items/
  * https://pokemongo.com/pt-BR/news/harvest-festival-2025
  * https://pokemongo.com/pt-BR/news/harvest-festival-2026
+ * https://pokemongo.com/pt-BR/news/communityday-november-2026-pawniard
+ * https://pokemongo.com/news/valentines-day-event-2022
  */
 (function(root,factory){"use strict";
  const api=factory();
@@ -90,7 +92,7 @@
  add("task","Derrotar 30 Fantasmas com Charcadet companheiro",
   ["Charcadet>Ceruledge"],"50 Doces");
  add("task","Derrotar 15 chefes de Reide Sombrio/Aço com Bisharp companheiro",
-  ["Bisharp>Kingambit"],"100 Doces · eventos podem alterar essa tarefa");
+  ["Bisharp>Kingambit"],"100 Doces");
  add("task","Capturar 32 Pokémon Sombrio com Pancham companheiro",
   ["Pancham>Pangoro"],"50 Doces");
  add("task","Usar 1 Incenso com Spritzee companheiro",
@@ -117,6 +119,8 @@
   ["Eevee>Umbreon"],"25 Doces · apelido especial pode oferecer alternativa");
  add("buddy","Ganhar 70 corações com Eevee companheiro",
   ["Eevee>Sylveon"],"25 Doces · apelido especial pode oferecer alternativa");
+ add("buddy","Ganhar 20 corações com Floette companheiro",
+  ["Floette>Florges"],"100 Doces de Flabébé");
  add("buddy","Ganhar 10 corações com Snom companheiro, à noite",
   ["Snom>Frosmoth"],"400 Doces");
  add("device","Virar o celular de cabeça para baixo",
@@ -132,21 +136,43 @@
   ["kirlia>gallade","Somente Kirlia macho"],
   ["snorunt>froslass","Somente Snorunt fêmea"]
  ]);
- function byTransition(from,to){
+ // Uses device-local wall clock for the announced LOCAL-TIME event window.
+ // This never asserts the player's server eligibility; always confirm in game.
+ // The note automatically disappears on 21/11/2026 at 21:00 local time.
+ function kingambitEvent(now){
+  const date=now instanceof Date?now:new Date();
+  if(!Number.isFinite(date.getTime()))return null;
+  const day=date.getFullYear()*10000+(date.getMonth()+1)*100+date.getDate();
+  const minutes=date.getHours()*60+date.getMinutes();
+  const eventDay=20261121, begin=14*60, end=21*60;
+  if(day>eventDay||(day===eventDay&&minutes>=end))return null;
+  const active=day===eventDay&&minutes>=begin;
+  return Object.freeze({
+   active,
+   note:active?
+    "Evento ativo até 21h (horário local): Humilhação Dividida ao evoluir":
+    "21/11/2026, 14h–21h (horário local): 1 chefe de Reide Sombrio/Aço e Humilhação Dividida ao evoluir"
+  });
+ }
+ function byTransition(from,to,now){
   const a=safe(from),b=safe(to);
   if(!a||!b)return null;
   const rule=registry.get(a+">"+b);
   if(!rule)return null;
   const requirement=gender.get(a+">"+b);
   const file=iconByLabel[rule.label];
-  return Object.freeze({kind:rule.kind,label:rule.label,
+  const event=a==="bisharp"&&b==="kingambit"?kingambitEvent(now):null;
+  return Object.freeze({kind:rule.kind,
+   label:event?.active?
+    "Derrotar 1 chefe de Reide Sombrio/Aço com Bisharp companheiro":rule.label,
    ...(rule.detail?{detail:rule.detail}:{}),
    ...(file?{icon:"evolution-items/"+file}:{}),
-   ...(requirement?{additional:requirement}:{})});
+   ...(requirement?{additional:requirement}:{}) ,
+   ...(event?{eventNote:event.note,eventState:event.active?"ativo":"futuro"}:{})});
  }
  // Only follow explicit, directed edges from the existing GO family graph.
  // Unknown forms/edges must not silently inherit conditions from a base form.
- function forRoute(from,to,links,maxEdges=6){
+ function forRoute(from,to,links,maxEdges=6,now){
   const start=safe(from),end=safe(to);
   if(!start||!end)return null;
   if(start===end)return [];
@@ -168,7 +194,7 @@
     if(seen.has(next))continue;
     const route=[...path,[now,next]];
     if(next===end){
-     return route.map(([a,b])=>byTransition(a,b)).filter(Boolean);
+     return route.map(([a,b])=>byTransition(a,b,now)).filter(Boolean);
     }
     seen.add(next);
     queue.push([next,route]);
