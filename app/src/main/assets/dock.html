@@ -4762,6 +4762,16 @@ body.popup-window.controls-window #shell #collapse{
 body.popup-window.controls-window #shell #menu #choices{
   visibility:visible!important;pointer-events:auto!important;
 }
+/* LT325: only flag unusual evidence; confirmed results get no repeated tick.
+   Stay inside each existing sprite hitbox, no extra rows or overlay buttons. */
+body.result-window .spriteStage .resultEvidenceFlag{
+ position:absolute;right:1px;top:0;z-index:3;pointer-events:none;
+ display:block;font:800 9px/9px Roboto,Arial,sans-serif;
+ color:#d1d8e2;text-shadow:0 1px 2px #000,0 0 3px #000;
+}
+body.result-window .spriteStage .resultEvidenceFlag.previous,
+body.result-window .spriteStage .resultEvidenceFlag.expired{color:#f1bd78}
+body.result-window .spriteStage .resultEvidenceFlag.partial{color:#cad4e3}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4793,7 +4803,7 @@ if(window.location.search.indexOf("results=1")!==-1){
  document.write('<script src="file:///android_asset/pvpoke-iv-gamemaster.js"><\/script>');
 }
 </script>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="result_evidence.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const popupWindow=window.location.search.indexOf("popup=1")!==-1;
@@ -7473,7 +7483,13 @@ function draw(){
  // Only the independent results WebView owns the Pokémon list and its taps.
  if(resultWindow)document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
   const verifiedPercent=verifiedSpawnIvPercent(c);
+  const evidence=window.PokeSearchResultEvidence?.assess(c,{
+   stale:resultsStale,searching:searchActive
+  },{ivVerified:verifiedPercent!==null});
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
+  const evidenceTitle=evidence?.explanation||"";
+  const evidenceFlag=evidence?.warning&&evidence.icon?
+   '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
   const art=window.PokeSearchOfflineSprite?
    window.PokeSearchOfflineSprite.resolve(c):
    {src:String(c.image||""),original:String(c.image||""),offline:false};
@@ -7516,7 +7532,7 @@ function draw(){
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
     ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">#'+
-    esc(String(dexNumber||"?"))+'</span></span>';
+    esc(String(dexNumber||"?"))+'</span>'+evidenceFlag+'</span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
   let cooldownMarkup="";
@@ -7544,7 +7560,8 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
+  const accessibleLabel=evidenceTitle?label+" · "+evidenceTitle:label;
+  return '<button title="'+esc(accessibleLabel)+'" aria-label="'+esc(accessibleLabel)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){
