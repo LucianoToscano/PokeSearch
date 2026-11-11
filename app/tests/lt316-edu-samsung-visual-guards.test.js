@@ -62,7 +62,7 @@ assert.match(fine, /paint\.setFilterBitmap\(false\)/);
 assert.match(fine, /canvas\.clipOutPath\(path\)/);
 // Since LT322, AGENTS puts the verified current release first and keeps LT320
 // explicitly historical. Never parse the historical LT320 as today's baseline.
-const documented=agents.match(/ESTADO OFICIAL VERIFICADO EM \d{2}\/\d{2}\/\d{4}:\*\* LT(\d+)/)||
+const documented=agents.match(/ESTADO OFICIAL VERIFICADO EM \d{2}\/\d{2}\/\d{4}(?:\s*\([^)]*\))?:\*{0,2}\s*LT(\d+)/i)||
  agents.match(/BASE OFICIAL ATUAL: LT(\d+)/);
 assert.ok(documented&&Number(documented[1])>=318,
   "A continuidade não deve rebaixar a base oficial LT318 ou superior");
