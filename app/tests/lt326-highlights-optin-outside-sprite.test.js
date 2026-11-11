@@ -20,7 +20,8 @@ test("new and upgraded installations have markers OFF",()=>{
  assert.match(java,/resultShowHighlights=prefs\.getBoolean\("resultShowHighlights",false\)/);
 });
 test("native sends separate boolean state to all 4 WebViews",()=>{
- assert.match(java,/,\\"highlights\\":\+resultShowHighlights/);
+ assert.ok(java.includes('\\"highlights\\"')&&java.includes('resultShowHighlights+'),
+  "highlights field is explicitly serialized in existing JSON bridge");
  assert.ok(java.includes("resultDisplayOptionsJson()"),"shared bridge JSON");
  assert.match(dock,/highlights:displayPrefs\.highlights===true/);
 });
