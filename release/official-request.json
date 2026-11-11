@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.26",
-  "code": 54532,
-  "label": 51330,
-  "previous_tag": "v0.03.25-54531",
-  "qa_max_code": 54531,
-  "release_notes": "PokeSearch LT326 — correção de interface solicitada pelo usuário após identificar losangos sobrepostos às sprites na LT325. Os indicadores de Pokémon valiosos (IV 100%, PvP, evolução projetada e referências de Reides) e os alertas visuais de qualidade ficam OCULTOS POR PADRÃO, inclusive após atualização de instalações anteriores. A ativação é opcional em Personalização → Info Pokémon → ◆ Destaques, com preferência salva individualmente para P1 e P2 e restaurada ao reabrir o serviço. Quando habilitados, os pequenos marcadores aparecem em faixa dedicada de 12px AO LADO de cada sprite, nunca em cima da arte. Quando desligados, a faixa desaparece e a largura original dos cards é preservada. Em cards com informações laterais ativas, a faixa utiliza espaço existente, sem alterar tamanho das sprites. Sem novas consultas à API, GPS, filtros ou notificações e sem perda da informação ⓘ Fonte/qualidade no detalhe. PR #328, squash af40aed14c97301e77c019e4ecb303b3b26bbff2, com QA Node integral, Java Android, OTA, Playwright P/M/G e APK beta privado aprovados. QA físico Samsung P1/P2 ainda pendente. Solicitação pelo workflow oficial protegido usando a mesma assinatura Android v2 permanente, sem downgrade."
+  "version": "0.03.27",
+  "code": 54533,
+  "label": 51331,
+  "previous_tag": "v0.03.26-54532",
+  "qa_max_code": 54532,
+  "release_notes": "PokeSearch 0.03.27 — LT327–LT328: auditoria e correções de sprites, formas e fantasias de Pokémon GO. Rank Geral reorganizado com ícone do Pokémon e nome/forma à esquerda, número da Pokédex separado da posição no ranking à direita. Reconhecimento por IDs de espécie, forma e fantasia, inclusive rótulos PT-BR, variantes Shiny e sexo feminino e combinações de forma+vestimenta. Adicionados 35 arquivos especiais verificados por SHA-1 e origem imutável, empacotados para uso offline. Correção dos IDs Small/Average de Pumpkaboo/Gourgeist, Nidoran fêmea/macho e nomes discrepantes no snapshot. Vulpix sem posição na Grande Liga continua com IVs disponíveis e rankings da Copa Pequena identificados. Mantém as duas Pokébolas, buscas, filtros, alertas, contador de km e demais preferências existentes. PR #329 mesclado no commit 79575b2ba5fe60ded9b18412d73f7d2a13f9b72d. QA Node, regressão completa, Java Android, OTA e compilação APK privada aprovados; verificação visual física Samsung permanece pendente. Atualização oficial exige assinatura permanente do aplicativo e confirmação do Android, sem downgrade."
 }
