@@ -3677,6 +3677,32 @@
           "A validação visual automatizada P/M/G foi aprovada; a conferência física em Samsung com ambas as Pokébolas ainda não foi realizada."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt327-lt328-rank-geral-formas-sprites-20261111",
+      "minVersionCode": 54533,
+      "date": "11/11/2026",
+      "title": "PokeSearch LT327–LT328 — Rankings, formas e sprites de fantasias",
+      "sections": {
+        "novidades": [
+          "Rank Geral reorganizado: sprite e nome/forma à esquerda, número da Pokédex e posição RG identificados separadamente à direita.",
+          "Ampliado o catálogo de 35 PNGs especiais verificados de Pokémon GO, incluindo fantasias de eventos, versões femininas, Shiny e combinação de forma regional com fantasia."
+        ],
+        "melhorias": [
+          "Reconhecimento de formas e vestimentas por ID da espécie, ID de forma e ID de fantasia, com rótulos PT-BR validados no catálogo GO.",
+          "Sprites exatas são empacotadas para uso offline e verificadas por hash; URLs alternativas só são tentadas quando correspondem à mesma espécie/forma.",
+          "Classificações de todas as quatro ligas mantêm o nome e a posição do Pokémon sem truncar as formas, com fallback claro quando a imagem não está disponível."
+        ],
+        "correcoes": [
+          "Corrigidas as associações Small/Average de Pumpkaboo e Gourgeist, além da identificação de Nidoran fêmea/macho e nomes inconsistentes em rankings.",
+          "Vulpix sem classificação de espécie na Grande Liga deixa de parecer sem dados: os IVs continuam disponíveis e as posições da Copa Pequena são identificadas.",
+          "Imagens de formas Sombrias e especiais não são trocadas silenciosamente por fantasias ou cores de outro Pokémon."
+        ],
+        "emDesenvolvimento": [
+          "O catálogo externo da PoGoCoordinates depende da disponibilidade de seus endpoints. O app utiliza dados públicos previamente verificados quando a consulta não é possível.",
+          "A instalação e inspeção visual em aparelho Samsung físico, com internet e offline, ainda precisam ser confirmadas. Sem garantia de 100% das variantes nunca disponibilizadas pelas fontes."
+        ]
+      }
     }
   ]
 }
