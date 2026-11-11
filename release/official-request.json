@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.25",
-  "code": 54531,
-  "label": 51329,
-  "previous_tag": "v0.03.24-54530",
-  "qa_max_code": 54530,
-  "release_notes": "PokeSearch LT325 — Resultados confiáveis e Detector de Pokémon valiosos. Os resultados agora indicam origem (API/Site), qualidade, pesquisa parcial/anterior e validade do encontro, com explicações em ⓘ Fonte/qualidade no card de detalhes existente. O detector destaca, de forma compacta e sem inventar rank, IV 100% comprovado, bom potencial PvP para a mesma espécie/forma/liga, Rank IV #1 e evoluções promissoras identificadas como projeções — não como evoluções garantidas. O Rank Reides já consultado no detalhe pode sinalizar a classificação PvE por tipo do mesmo Pokémon na lista, sem requisição adicional e sem atribuir ao exemplar os IVs/golpes da referência. Os cards P/M/G, as duas Pokébolas, os favoritos, Edu e as ordenações existentes são preservados. Alertas gerais priorizam Top PvP comprovado e 15/15/15 comprovado sem criar nova notificação, som ou canal. Resultados sem despawn válido não são declarados disponíveis; reaproveitamento de IV/rank/sprite/distância entre pesquisas exige correspondência de encontro, forma, local e estado, com indicação dos campos conservados e sem inventar km. Testes de regressão Node, Android Java, fontes PvE, OTA e navegador real P/M/G passaram na PR #327 (merge squash d22c90c64f9063ba269df20a5a461485b33183cd). Instalação exige confirmação no Android e o QA físico Samsung P1/P2 permanece pendente. Publicação via fluxo oficial protegido, mantendo a assinatura Android v2 permanente."
+  "version": "0.03.26",
+  "code": 54532,
+  "label": 51330,
+  "previous_tag": "v0.03.25-54531",
+  "qa_max_code": 54531,
+  "release_notes": "PokeSearch LT326 — correção de interface solicitada pelo usuário após identificar losangos sobrepostos às sprites na LT325. Os indicadores de Pokémon valiosos (IV 100%, PvP, evolução projetada e referências de Reides) e os alertas visuais de qualidade ficam OCULTOS POR PADRÃO, inclusive após atualização de instalações anteriores. A ativação é opcional em Personalização → Info Pokémon → ◆ Destaques, com preferência salva individualmente para P1 e P2 e restaurada ao reabrir o serviço. Quando habilitados, os pequenos marcadores aparecem em faixa dedicada de 12px AO LADO de cada sprite, nunca em cima da arte. Quando desligados, a faixa desaparece e a largura original dos cards é preservada. Em cards com informações laterais ativas, a faixa utiliza espaço existente, sem alterar tamanho das sprites. Sem novas consultas à API, GPS, filtros ou notificações e sem perda da informação ⓘ Fonte/qualidade no detalhe. PR #328, squash af40aed14c97301e77c019e4ecb303b3b26bbff2, com QA Node integral, Java Android, OTA, Playwright P/M/G e APK beta privado aprovados. QA físico Samsung P1/P2 ainda pendente. Solicitação pelo workflow oficial protegido usando a mesma assinatura Android v2 permanente, sem downgrade."
 }
