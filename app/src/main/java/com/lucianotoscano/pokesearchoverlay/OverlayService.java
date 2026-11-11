@@ -3643,6 +3643,21 @@ public class OverlayService extends Service {
             "api-http-200".equals(r.optString("confirmationSource",""))&&
             (!("gl".equals(mode)||"ul".equals(mode))||
                 r.optBoolean("leagueConfirmed",false));
+        // LT325: provenance is attached only AFTER native validation.
+        // Partial extraction does not invalidate already checked encounters.
+        boolean evidenceVerified=authorizedApiQa?apiConfirmed:
+            r.optBoolean("criteriaConfirmed",false);
+        boolean evidencePartial=r.optBoolean("siteIncomplete",false)||
+            r.optBoolean("uncertain",false);
+        for(int i=0;i<sorted.length();i++){
+            JSONObject card=sorted.optJSONObject(i);
+            if(card==null)continue;
+            try{
+                card.put("evidenceSource",authorizedApiQa?"api":"site");
+                card.put("evidenceVerified",evidenceVerified);
+                card.put("evidencePartial",evidencePartial);
+            }catch(org.json.JSONException ignored){}
+        }
         if(!authorizedApiQa||apiConfirmed){
             recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
             verifiedFavoriteResultsGeneration=requestGeneration;
@@ -3790,6 +3805,10 @@ public class OverlayService extends Service {
             if(selected!=index){coordinateRequestToken++;detailManuallyPositioned=false;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
+            // Old previews and pending refreshes cannot impersonate fresh
+            // source evidence; this copy is for the detail WebView only.
+            obj.put("evidenceOld",resultsStale||searchInProgress||
+                !("updated".equals(searchPhase)||"empty".equals(searchPhase)));
             // A card can be reopened after a refresh or a WebView recreation.
             // Reattach ONLY a verified coordinate of the exact unexpired spawn.
             String verifiedCoords=cachedVerifiedEncounterCoords(obj);
