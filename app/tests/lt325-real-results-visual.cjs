@@ -79,11 +79,14 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
       r.right<=outer.right+1&&r.bottom<=outer.bottom+1;
     });
     const boxes=[...document.querySelectorAll("#spawns .spawn")];
-    const usable=boxes.every(x=>{
-     const b=x.getBoundingClientRect();
-     return b.width>=30&&b.height>=30&&b.width<=window.innerWidth;
+    const dimensions=boxes.map(x=>{
+     const b=x.getBoundingClientRect(),sprite=x.querySelector(".spriteStage")?.getBoundingClientRect();
+     return {button:[b.width,b.height,b.left,b.top],stage:sprite?
+      [sprite.width,sprite.height,sprite.left,sprite.top]:[]};
     });
-    return {denied,accepted,flags:flags.length,
+    const usable=dimensions.every(x=>x.button[0]>=30&&x.button[1]>=30&&
+     x.button[0]<=window.innerWidth);
+    return {denied,accepted,flags:flags.length,dimensions,
      raiders:document.querySelectorAll(".resultValueFlag.raid").length,
      warnings:document.querySelectorAll(".resultEvidenceFlag.partial").length,
      aria:boxes[1].getAttribute("aria-label"),allInside,usable,
@@ -97,7 +100,8 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
    assert.match(combined.aria,/Raides · #12 Fantasma/);
    assert.match(combined.aria,/não são os IVs capturados/);
    assert.ok(combined.allInside,"markers stay inside the P/M/G sprite "+sz.name);
-   assert.ok(combined.usable,"tiles keep legible, touchable geometry "+sz.name);
+   assert.ok(combined.usable,"tiles keep legible, touchable geometry "+sz.name+
+    " "+JSON.stringify(combined.dimensions));
    assert.ok(combined.bodyScroll<=sz.w+4,
     "no horizontal page clipping "+sz.name+" "+JSON.stringify(combined));
    await page.screenshot({path:path.join(output,sz.name+"-lt325-confiabilidade-raide.png")});
