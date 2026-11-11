@@ -28,6 +28,7 @@
      report?.source!=="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)"||
      !raidTypes.has(report?.type))return null;
   const rank=validRank(report.rank,50);
+  if(!Number.isInteger(report.number))return null;
   const own=dex(c.number??c.dex),theirs=dex(report.number);
   if(rank===null||own===null||theirs!==own||!norm(c.name)||
      norm(c.name)!==norm(report.name))return null;
