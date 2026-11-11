@@ -167,7 +167,7 @@ test("sparkle is vector white by default, yellow when site-verified",()=>{
  assert.ok(dock.includes('button[data-key="sh"].selected,'));
 });
 test("favorites location and notification share neutral button background",()=>{
- const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("</style>")[0]||"";
+ const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("/* LT326:")[0]||"";
  for(const id of ["sh","star","location","bell"]){
   assert.ok(css.includes('button[data-key="'+id+'"]'),id);
   assert.ok(css.includes('background:var(--visual-menu-button-bg,#28292cce)!important;'));
@@ -243,7 +243,7 @@ test("bell shows independent white/gold/star/silent/permission patterns",()=>{
  assert.ok(!dock.includes('bell-both-muted .quickGlyph::before'));
 });
 test("legacy toggle icon colors match compact menu without changing IV or results",()=>{
- const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("</style>")[0]||"";
+ const css=dock.split("/* UX-ICONS-STATE:")[1]?.split("/* LT326:")[0]||"";
  for(const id of ["sh","star","location","bell"])assert.ok(css.includes("#controls #"+id),id);
  assert.ok(css.includes("#controls #location.locOn{color:#ff5264!important}"));
  assert.ok(css.includes("#controls #bell.generalOn{color:#ffd64b!important}"));
