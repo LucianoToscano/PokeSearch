@@ -4776,6 +4776,7 @@ body.result-window .spriteStage .resultValueFlag{
  color:#eac77c;text-shadow:0 1px 2px #000,0 0 3px #000;
 }
 body.result-window .spriteStage .resultValueFlag.projected{color:#c1c9d3}
+body.result-window .spriteStage .resultValueFlag.raid{color:#e1c892}
 body.result-window .spriteStage .resultEvidenceFlag.previous,
 body.result-window .spriteStage .resultEvidenceFlag.expired{color:#f1bd78}
 body.result-window .spriteStage .resultEvidenceFlag.partial{color:#cad4e3}
@@ -7361,6 +7362,39 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
 let lastListKey="",metadataCacheKey="",metadataCache=[];
+/* LT325: the Raid rank is obtained only by the already-open detail card.
+ * This cache lives in the current results WebView, never in preferences and
+ * never crosses P1/P2. An identical validated encounter is required.
+ */
+const psRaidValueByEncounter=new Map();
+function psRaidEncounterIdentity(card){
+ return JSON.stringify([
+  String(card?.sourceIndex??""),String(card?.name??""),
+  String(card?.number??""),String(card?.iv??""),String(card?.cp??""),
+  String(card?.expiresAtMs??""),String(card?.form??""),
+  String(card?.costume??""),String(card?.location??"")
+ ]);
+}
+window.receiveVerifiedRaidEvidence=function(index,exactCard,raid){
+ if(!resultWindow||!Number.isInteger(index)||index<0||index>=cards.length||
+    !exactCard||typeof exactCard!=="object"||!raid||typeof raid!=="object"||
+    resultsStale||searchActive)return false;
+ const current=cards[index];
+ if(psRaidEncounterIdentity(current)!==psRaidEncounterIdentity(exactCard))return false;
+ if(window.PokeSearchResultEvidence?.assess(current)?.state!=="verified")return false;
+ const raidCandidate=window.PokeSearchValueDetector?.detect(current,{
+  ivVerified:false,stale:false,searching:false
+ },{leagues:[],raid});
+ if(raidCandidate?.kind!=="raid")return false;
+ const key=psRaidEncounterIdentity(current),now=Date.now();
+ for(const [old,entry] of psRaidValueByEncounter)
+  if(entry.expiresAtMs<=now)psRaidValueByEncounter.delete(old);
+ if(psRaidValueByEncounter.size>=16)
+  psRaidValueByEncounter.delete(psRaidValueByEncounter.keys().next().value);
+ psRaidValueByEncounter.set(key,{raid,expiresAtMs:Number(current.expiresAtMs)});
+ lastListKey="";draw();
+ return true;
+};
 let cooldownState={enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
 window.onCooldownState=function(payload){
  cooldownState=payload&&typeof payload==="object"?
@@ -7500,32 +7534,35 @@ function draw(){
   // Rank Classe and Rank Geral are already derived and species-validated here;
   // never treat the Top-N search ceiling as a Pokémon's actual rank.
   let opportunity=null;
-  if(evidence?.state==="verified"&&verifiedSpawnRawIv(c)!==null&&
-      window.PokeSearchValueDetector){
-   const leagueOrder=shownMode==="gl"||shownMode==="ul"?
-    [shownMode]:["gl","ul","ml"];
+  if(evidence?.state==="verified"&&window.PokeSearchValueDetector){
+   const rawVerified=verifiedSpawnRawIv(c)!==null;
+   const leagueOrder=rawVerified?
+    (shownMode==="gl"||shownMode==="ul"?[shownMode]:["gl","ul","ml"]):[];
    const leagueValues=leagueOrder.map(league=>({
     league,ivRank:verifiedSpeciesIvRank(c,league),
     overallRank:verifiedOverallRank(c,league)
    }));
-   const context={ivVerified:true,ivPercent:verifiedPercent,
+   const context={ivVerified:rawVerified,ivPercent:verifiedPercent,
     stale:resultsStale,searching:searchActive};
-   opportunity=window.PokeSearchValueDetector.detect(c,context,{leagues:leagueValues});
+   const raid=psRaidValueByEncounter.get(psRaidEncounterIdentity(c))?.raid||null;
+   opportunity=window.PokeSearchValueDetector.detect(c,context,
+    {leagues:leagueValues,raid});
    // Only the selected league may request a bounded evolution projection.
    // A projected CP fit is not proof of item/quest/costume eligibility.
-   if(!opportunity&&(shownMode==="gl"||shownMode==="ul")){
+   if(!opportunity&&rawVerified&&(shownMode==="gl"||shownMode==="ul")){
     const evolution=bestEvolutionRank(c,shownMode);
     if(evolution?.eligible===true){
      const projection={league:shownMode,name:evolution.name,
       ivRank:evolution.rank,eligible:true,
       overallRank:verifiedOverallRank({name:evolution.name},shownMode)};
      opportunity=window.PokeSearchValueDetector.detect(c,context,{
-      leagues:leagueValues,evolutions:[projection]});
+      leagues:leagueValues,evolutions:[projection],raid});
     }
    }
   }
   const valueFlag=opportunity?
-   '<span class="resultValueFlag'+(opportunity.projected?' projected':'')+
+   '<span class="resultValueFlag'+(opportunity.projected?' projected':
+    opportunity.kind==="raid"?' raid':'')+
    '" aria-hidden="true">'+esc(opportunity.symbol)+'</span>':"";
   const art=window.PokeSearchOfflineSprite?
    window.PokeSearchOfflineSprite.resolve(c):
