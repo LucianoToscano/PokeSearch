@@ -10,7 +10,7 @@
  "use strict";
  const ORIGIN="https://pogocoordinates.com";
  const API="https://coordinates-api.pokemongopro.com";
- const MAX_BYTES=512*1024;
+ const MAX_BYTES=2*1024*1024;
  const TTL_MS=300000;
  function fail(reason){return {ok:false,reason};}
  function clean(v,n){return typeof v==="string"&&v.length<=n&&
@@ -19,7 +19,7 @@
   catalogSpeciesForms:result.catalogSpeciesForms.map(x=>({...x})),
   expiresAtMs:result.expiresAtMs,source:"official-catalog-cache"};}
  function validateForms(value){
-  if(!Array.isArray(value)||value.length>1000)return null;
+  if(!Array.isArray(value)||value.length>5000)return null;
   const forms=[],seen=new Set();
   for(const v of value){
    const name=clean(v,100);

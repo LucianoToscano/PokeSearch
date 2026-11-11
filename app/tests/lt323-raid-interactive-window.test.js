@@ -24,8 +24,12 @@ assert.equal(art.rankSprite("Gengar"),
  "file:///android_asset/pokemon-sprites/base/94.png");
 assert.equal(art.rankSprite("Mega Gengar"),
  "file:///android_asset/pokemon-sprites/forms/variety-10038.png");
-assert.equal(art.rankSprite("Gengar (Shadow)"),"",
- "a shadow form cannot silently inherit a base sprite");
+assert.equal(art.rankSprite("Gengar (Shadow)"),
+ "file:///android_asset/pokemon-sprites/base/94.png");
+assert.equal(art.rankSpriteMeta("Gengar (Shadow)").shadow,true,
+ "Rank Geral labels shadow explicitly while sharing verified species art");
+assert.ok(html.includes('!["normal","mega"].includes(row.variant)'),
+ "Raid preview still rejects shadow rank artwork, without guessed PvE sprite");
 const inline=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(inline);new vm.Script(inline);
 const from=inline.indexOf("function renderRaidPreview(){");

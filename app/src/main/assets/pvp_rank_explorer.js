@@ -94,11 +94,20 @@
   }
   return out.some(x=>x.verified)?out:null;
  }
+ // LT327: canonicalize three verified ID/name conflicts without modifying
+ // any PvPoke rank, tier, source ID, or the immutable snapshot.
+ const PVP_OVERALL_CANONICAL_NAMES=Object.freeze({
+  aegislash_shield:"Aegislash (Shield)",
+  morpeko_full_belly:"Morpeko (Full Belly)",
+  mimikyu:"Mimikyu",
+  mime_jr:"Mime Jr."
+ });
  function getOverallRows(snapshot,league){
   if(!snapshot||!LIGAS[league]||!Array.isArray(snapshot[league]))return null;
   return snapshot[league].filter(e=>Array.isArray(e)&&typeof e[1]==="string"&&
-   Number.isInteger(e[2])&&e[2]>=1).map(e=>({id:e[0],name:e[1],rank:e[2]}))
-   .sort((a,b)=>a.rank-b.rank);
+   Number.isInteger(e[2])&&e[2]>=1).map(e=>({
+    id:e[0],name:PVP_OVERALL_CANONICAL_NAMES[e[0]]||e[1],rank:e[2]
+   })).sort((a,b)=>a.rank-b.rank);
  }
 
  const PAGE_SIZE=10;
@@ -393,7 +402,20 @@
    "#psRankExplorer .psrFamilyButton img{height:38px;width:38px;object-fit:contain;pointer-events:none}",
    "#psRankExplorer .psrFamilyButton .psrFamilyRank{font:750 9px/1.1 Roboto,Arial,sans-serif;color:#e0e8f3}",
    "#psRankExplorer .psrMissingSprite{font:700 8px/1.1 Roboto,Arial,sans-serif;color:#bac9d9;overflow:hidden;max-height:37px;max-width:42px;overflow-wrap:anywhere}",
-   "#psRankExplorer .psrTableSprite{width:19px;height:19px;vertical-align:middle;object-fit:contain;margin-right:4px}"
+   "#psRankExplorer .psrTableSprite{width:22px;height:22px;object-fit:contain;display:block}",
+   "#psRankExplorer tr.psrOverallRow td:first-child{white-space:normal;overflow:visible;text-align:left}",
+   "#psRankExplorer .psrPokemonCell{display:flex;align-items:center;gap:5px;min-width:0;text-align:left}",
+   "#psRankExplorer .psrPokemonName{min-width:0;flex:1;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:9.5px}",
+   "#psRankExplorer .psrOverallRank{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}",
+   "#psRankExplorer .psrPokedexNumber{font-size:10px;font-weight:800;color:#f3f6fc}",
+   "#psRankExplorer .psrOverallPlace{font-size:8px;font-weight:650;color:#aabccd;margin-top:2px}",
+   "#psRankExplorer .psrSpriteWrap{width:23px;height:23px;flex:0 0 23px;display:inline-flex;justify-content:center;align-items:center;position:relative}",
+   "#psRankExplorer .psrSpriteWrap.psrShadow img{filter:drop-shadow(0 0 2px #a174ee)}",
+   "#psRankExplorer .psrArtFallback{font:700 8px/1.1 Roboto,Arial,sans-serif;color:#cbd4e0;text-align:center}",
+   "#psRankExplorer .psrSpriteWrap img[hidden],#psRankExplorer .psrArtFallback[hidden]{display:none!important}",
+   "#psRankExplorer .psrFamilyButton .psrSpriteWrap{width:38px;height:38px;flex:0 0 38px}",
+   "#psRankExplorer .psrFamilyButton .psrSpriteWrap img{width:38px;height:38px}",
+   "#psRankExplorer .psrNoRank{color:#d7e1ef;font-size:9px;line-height:1.35;margin:4px 0;padding:5px;border:1px solid #ffffff26;border-radius:6px}"
   ].join("\n");
   document.head.appendChild(css);
  }
@@ -407,6 +429,21 @@
     const anchor=document.getElementById("evolutions");
     if(!anchor)return false;
     anchor.insertAdjacentElement("afterend",view);
+    // Try the next independently verified sprite source after an image error.
+    // Only identical species+form candidates from rankSpriteMeta are allowed.
+    view.addEventListener("error",evt=>{
+     const img=evt.target;
+     if(!img?.matches?.("img[data-ps-sprite-alts]"))return;
+     const remaining=String(img.dataset.psSpriteAlts||"").split("|").filter(Boolean);
+     const next=remaining.shift();
+     img.dataset.psSpriteAlts=remaining.join("|");
+     if(next&&/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(next)){
+      img.src=next;return;
+     }
+     img.hidden=true;
+     const fallback=img.parentElement?.querySelector?.(".psrArtFallback");
+     if(fallback)fallback.hidden=false;
+    },true);
     view.addEventListener("change",evt=>{
      const control=evt.target.closest?.("select[data-ps-filter]");
      if(control&&state&&setFilter(state,Number(control.value)))draw();
@@ -531,10 +568,21 @@
   const maxPage=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
   const cells=s.kind==="class"?
    '<th class="psrNum">#</th><th class="psrIv">IVs</th><th class="psrLevel">Nv.</th><th class="psrCp">PC</th><th class="psrEff">Eficiência</th>':
-   '<th style="width:17%">#</th><th colspan="4">Pokémon / forma</th>';
+   '<th colspan="4">Pokémon / forma</th><th style="width:22%">Nº / RG</th>';
   const spriteFor=name=>{
-   const src=typeof window!=="undefined"?window.PokeSearchOfflineSprite?.rankSprite?.(name):"";
-   return typeof src==="string"&&/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(src)?safe(src):"";
+   const lib=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
+   const meta=lib?.rankSpriteMeta?.(name)||null;
+   const list=meta?.candidates||[lib?.rankSprite?.(name)||""];
+   const sources=list.filter(src=>typeof src==="string"&&
+    /^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(src));
+   const dex=meta?.dex||0,shadow=meta?.shadow===true;
+   const img=sources.length?
+    '<img class="psrTableSprite" src="'+safe(sources[0])+
+    '" data-ps-sprite-alts="'+safe(sources.slice(1).join("|"))+
+    '" alt="" aria-hidden="true">':"";
+   const fallback='<span class="psrArtFallback"'+(sources.length?' hidden':'')+
+    ' aria-label="Sprite indisponível">'+(dex?'#'+dex:'?')+'</span>';
+   return '<span class="psrSpriteWrap'+(shadow?' psrShadow':'')+'">'+img+fallback+'</span>';
   };
   const body=subset.map(r=>{
    const selected=r.rank===s.selectedRank;
@@ -545,15 +593,19 @@
     '<td><button type="button" class="psrTap" data-ps-act="compare" data-rank="'+r.rank+
      '" aria-pressed="'+marked+'" title="Adicionar ou remover da comparação">'+safe(r.iv)+'</button></td>'+
     '<td>'+levelString(r.level)+'</td><td>'+r.cp+'</td><td>'+r.efficiency+'%</td>':
-    '<td>#'+r.rank+'</td><td colspan="4">'+
-    (spriteFor(r.name)?'<img class="psrTableSprite" src="'+spriteFor(r.name)+'" alt="">':"")+
-    safe(r.name)+'</td>';
+    '<td colspan="4"><div class="psrPokemonCell">'+spriteFor(r.name)+
+    '<span class="psrPokemonName">'+safe(r.name)+'</span></div></td>'+
+    '<td class="psrOverallRank"><div class="psrPokedexNumber">#'+
+    (typeof window!=="undefined"?
+     (window.PokeSearchOfflineSprite?.rankSpriteMeta?.(r.name)?.dex||"—"):"—")+
+    '</div><div class="psrOverallPlace">RG #'+r.rank+'</div></td>';
    const details=s.kind==="class"&&s.expandedRank===r.rank?
     '<tr class="psrExpanded"><td colspan="5"><div class="psrExtra">ATK '+statString(r.atk)+
     ' · DEF '+statString(r.def)+' · HP '+r.hp+' · Nível '+
     levelString(r.level)+' · PC '+r.cp+'</div></td></tr>':"";
    return '<tr data-ps-row="'+r.rank+'" tabindex="0"'+(selected?' data-ps-owned="true"':'')+
-    ' class="'+(selected?'psrSelected ':'')+(marked?'psrCompared':'')+
+    ' class="'+(s.kind==="overall"?'psrOverallRow ':'')+
+    (selected?'psrSelected ':'')+(marked?'psrCompared':'')+
     '" aria-label="'+safe(s.kind==="class"?"Rank "+r.rank+", IV "+r.iv:"Rank "+r.rank+", "+r.name)+'">'+
      markup+'</tr>'+details;
   }).join("");
@@ -587,12 +639,19 @@
      ' data-ps-name="'+safe(name)+'" aria-pressed="'+(n(s.name)===n(name))+'"'+
      ' aria-label="'+safe(name)+' · '+(row?'Rank Geral #'+row.rank:'Sem classificação')+'"'+
      ' title="'+safe(name)+' · '+(row?'#'+row.rank:'Não ranqueado')+'">'+
-     (image?'<img src="'+image+'" alt="">':
-      '<span class="psrMissingSprite">'+safe(name)+'</span>')+
+     image+
      '<span class="psrFamilyRank">'+(row?'#'+row.rank:'—')+'</span></button>';
    }).join('')+'</div>':"";
   const actualIv=s.kind==="class"&&s.selectedIv>=0?
    s.rows.find(r=>r.index===s.selectedIv):null;
+  const otherRanks=s.kind==="overall"&&!s.selectedRank?
+   s.leagueOptions.filter(x=>x.league!==s.league&&x.rank):[];
+  const noRank=s.kind==="overall"&&!s.selectedRank?
+   '<div class="psrNoRank">'+safe(s.name)+' não possui posição no snapshot da '+
+   safe(LIGAS[s.league])+'.'+
+   (otherRanks.length?' Nesta base: '+otherRanks.map(x=>safe(LIGAS[x.league])+
+    ' #'+x.rank).join(' · ')+'. Selecione outra liga acima.':'')+
+   ' Os dados de IV são independentes do Rank Geral.</div>':"";
   view.innerHTML='<div class="psrHead"><div class="psrTitle">'+
    '<img class="psrHeaderIcon" src="ui-icons/'+
    (s.kind==="class"?PVP_LEAGUE_ICONS[s.league]:"ps-overall-lt268.png")+
@@ -602,7 +661,7 @@
    '<div class="psrSub">'+(s.kind==="overall"?safe(s.name)+" · "+safe(LIGAS[s.league]):safe(s.name))+
    (actualIv?' · IV '+safe(actualIv.iv):"")+
    (s.selectedRank?' · '+(s.kind==="class"?"Classe IV ":"Rank Geral ")+
-      '#'+s.selectedRank:' · Não ranqueado')+'</div>'+familyChooser+leagueChooser+
+      '#'+s.selectedRank:' · Não consta nesta liga')+'</div>'+familyChooser+leagueChooser+noRank+
    (s.kind==="class"?
      '<div class="psrScopeNote">Posição entre 4.096 IVs de '+safe(s.name)+
      ' — não é o Rank Geral da '+safe(LIGAS[s.league])+'.</div>':"")+

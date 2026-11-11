@@ -70,6 +70,11 @@ async function suite(){
   const a=setup({fetchImpl:async url=>reply(url.endsWith("/forms")?["Normal"]: [{pokemon_id:"19"}])});
   assert.equal((await a.client.getCatalog()).reason,"invalid-catalog");
  });
+ await check("all known GO form entries fit the bounded official catalog",()=>{
+  const names=Array.from({length:1506},(_,i)=>"GO_FORM_"+i);
+  assert.equal(catalog.validateForms(names)?.length,1506);
+  assert.equal(catalog.validateForms(Array(5001).fill("Normal")),null);
+ });
  await check("disposed client does not fetch",async()=>{
   const a=setup();a.client.dispose();
   assert.equal((await a.client.getCatalog()).reason,"disposed");

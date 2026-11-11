@@ -98,29 +98,36 @@
   // The official site may append a bracketed colour (Flabébé (Yellow)).
   // Verify the species before the bracket against the independent Dex list.
   const species=nameKey(String(card?.name||"").replace(/\s*\([^)]*\)\s*$/,""));
-  return dex>=1&&dex<=1025&&species===BASE_SPECIES[dex];
+  // Numeric Dex differentiates the two Nidoran even when a provider spells
+  // the species out rather than using the male/female Unicode glyphs.
+  return dex>=1&&dex<=1025&&(
+   species===BASE_SPECIES[dex]||
+   (dex===29&&species==="NIDORANFEMALE")||
+   (dex===32&&species==="NIDORANMALE"));
  }
  function verifiedBase(card){
   if(!card||typeof card!=="object")return false;
   const dex=dexOf(card),species=nameKey(String(card.name||"").replace(/\s*\([^)]*\)\s*$/,"")),form=nameKey(card.form);
   const costume=nameKey(card.costume);
-  if(dex<1||dex>1025||!species||species!==BASE_SPECIES[dex])return false;
+  if(dex<1||dex>1025||!species||!verifiedSpeciesIdentity(card))return false;
   if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
   // LT126: independent GO catalog is bundled at build time and may prove
   // the *default* form ID. An unknown/nondefault numeric form never uses base.
   const wwm=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
   const metadata=wwm&&wwm.species&&wwm.species[dex];
-  // These two defaults were independently checked against PokeAPI #710/#711
-  // and the pinned WatWowMap defaultFormId 2641/2645, even without the
-  // optional catalog bundle in older WebViews.
-  const auditedAverageId=dex===710?2641:dex===711?2645:
+  // WatWowMap: Pumpkaboo 2641=Small, 2642=Average; Gourgeist
+  // 2645=Small, 2646=Average. The PokeAPI #710/#711 base art is Average.
+  // Do not mistake the first registered GO form for the Average form.
+  const auditedDefaultId=dex===710?2642:dex===711?2646:
     dex===94?1044:dex===41?157:0;
   const defaultId=metadata&&nameKey(metadata[0])===species?
-    Number(metadata[1]):auditedAverageId;
+    Number(metadata[1]):auditedDefaultId;
   const formId=card.form_id!=null?Number(card.form_id):card.formId!=null?Number(card.formId):0;
   if(!Number.isInteger(formId)||formId<0)return false;
-  if(formId!==0&&(!defaultId||formId!==defaultId))return false;
+  if(dex===710||dex===711){
+   if(formId!==0&&formId!==auditedDefaultId)return false;
+  }else if(formId!==0&&(!defaultId||formId!==defaultId))return false;
   if(card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return false;
   // DOM results often omit Form for ordinary Pokémon (Noibat #714).
   // A BLANK form is safe only when Dex + catalogue species agree exactly.
@@ -132,13 +139,11 @@
   // BOTH results and detail WebViews. Never guess a regional/costume form.
   if(form==="NORMAL"||form==="DEFAULT"||
      form===species||form===species+"NORMAL"||form===species+"DEFAULT")return true;
-  // Exact default Average varieties: WatWowMap GO forms 2641 / 2645
-  // and PokeAPI base #710/#711 refer to the same named Average variety.
-  // This repairs Pumpkaboo's explicit "Average" from DOM/API without
-  // borrowing any Small/Large/Super artwork.
+  // The GO numeric Average IDs are 2642/2646; never borrow this base
+  // for Small/Large/Super, or when a different numeric form is supplied.
   if((dex===710||dex===711)&&
      (form==="AVERAGE"||form===species+"AVERAGE")&&
-     (formId===0||formId===(dex===710?2641:2645)))return true;
+     (formId===0||formId===(dex===710?2642:2646)))return true;
   // Furfrou Natural (#676) is its official base coat. Not the other trims.
   if(dex===676&&species==="FURFROU"&&
      (form==="NATURAL"||form==="FURFROUNATURAL"))return true;
@@ -488,7 +493,9 @@
  function bundledGoCostumeSource(art){
   const src=String(art?.src||"");
   const file=src.startsWith(GO_ASSET_ROOT)?src.slice(GO_ASSET_ROOT.length):
-    src.startsWith(GO_ASSET_MIRROR)?src.slice(GO_ASSET_MIRROR.length):"";
+    src.startsWith(GO_ASSET_MIRROR)?src.slice(GO_ASSET_MIRROR.length):
+    src.startsWith(GO_LT328_RECENT_ROOT)?src.slice(GO_LT328_RECENT_ROOT.length):
+    src.startsWith(GO_LT328_RECENT_MIRROR)?src.slice(GO_LT328_RECENT_MIRROR.length):"";
   if(!/^(?:pm[0-9]{1,4})\.[A-Za-z0-9._-]{5,130}\.png$/.test(file)||
      !BUNDLED_GO_COSTUME_FILES.has(file))return "";
   return LOCAL+"costumes/"+file;
@@ -2190,11 +2197,103 @@
   "pm999.fCOIN_A2_2026.icon.png",
   "pm999.fCOIN_A2_2026.s.icon.png"
  ];
+
+ // LT328: 35 exact extra GO files from two independently pinned revisions.
+ // The malformed pm479.f.s.icon.png has no form identity and is deliberately
+ // not presented as a valid sprite. The manifest records it for audit.
+ const GO_LT328_EXTRA_FILES=Object.freeze(["pm133.cMay_2023.icon.png","pm169.fHALLOWEEN_2026_01.icon.png","pm169.fHALLOWEEN_2026_01.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.s.icon.png","pm263.fGALARIAN.cGOFEST_2021_NOEVOLVE.icon.png","pm263.fGALARIAN.cGOFEST_2021_NOEVOLVE.s.icon.png","pm41.fHALLOWEEN_2026_01.g2.icon.png","pm41.fHALLOWEEN_2026_01.g2.s.icon.png","pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png","pm42.fHALLOWEEN_2026_01.g2.icon.png","pm42.fHALLOWEEN_2026_01.g2.s.icon.png","pm42.fHALLOWEEN_2026_01.icon.png","pm42.fHALLOWEEN_2026_01.s.icon.png","pm710.fAVERAGE.cFALL_2022.icon.png","pm710.fAVERAGE.cFALL_2022.s.icon.png","pm710.fLARGE.cFALL_2022.icon.png","pm710.fLARGE.cFALL_2022.s.icon.png","pm710.fSMALL.cFALL_2022.icon.png","pm710.fSMALL.cFALL_2022.s.icon.png","pm710.fSUPER.cFALL_2022.icon.png","pm710.fSUPER.cFALL_2022.s.icon.png","pm711.fAVERAGE.cFALL_2022.icon.png","pm711.fAVERAGE.cFALL_2022.s.icon.png","pm711.fLARGE.cFALL_2022.icon.png","pm711.fLARGE.cFALL_2022.s.icon.png","pm711.fSMALL.cFALL_2022.icon.png","pm711.fSMALL.cFALL_2022.s.icon.png","pm711.fSUPER.cFALL_2022.icon.png","pm711.fSUPER.cFALL_2022.s.icon.png","pm77.fGALARIAN.cGOFEST_2021_NOEVOLVE.icon.png","pm77.fGALARIAN.cGOFEST_2021_NOEVOLVE.s.icon.png"]);
+ const GO_LT328_RECENT_FILES=new Set(["pm169.fHALLOWEEN_2026_01.icon.png","pm169.fHALLOWEEN_2026_01.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.s.icon.png","pm41.fHALLOWEEN_2026_01.g2.icon.png","pm41.fHALLOWEEN_2026_01.g2.s.icon.png","pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png","pm42.fHALLOWEEN_2026_01.g2.icon.png","pm42.fHALLOWEEN_2026_01.g2.s.icon.png","pm42.fHALLOWEEN_2026_01.icon.png","pm42.fHALLOWEEN_2026_01.s.icon.png"]);
+ const GO_LT328_RECENT_ROOT="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+  "db10df75d6f6f92018d9786af0aecc238fecc4ef/"+
+  "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ const GO_LT328_RECENT_MIRROR="https://cdn.jsdelivr.net/gh/PokeMiners/pogo_assets@"+
+  "db10df75d6f6f92018d9786af0aecc238fecc4ef/"+
+  "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ GO_FILE_LIST.push(...GO_LT328_EXTRA_FILES);
+ // LT328 build_sprite_bundle.py pins and packages these exact PNG bytes.
+ for(const file of GO_LT328_EXTRA_FILES)BUNDLED_GO_COSTUME_FILES.add(file);
+ const GO_COMPOSITE_BY_ID=Object.create(null);
  const GO_FILE_BY_ID=Object.create(null);
  for(const file of GO_FILE_LIST){
-  const m=/^pm(\d+)\.([fc])([A-Z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
-  if(m)GO_FILE_BY_ID[Number(m[1])+":"+m[2]+":"+m[3].replace(/[^A-Z0-9]/g,"")+":"+
-    (m[4]?"female":"any")+":"+(m[5]?"shiny":"normal")]=file;
+  const single=/^pm(\d+)\.([fc])([A-Za-z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
+  if(single)GO_FILE_BY_ID[Number(single[1])+":"+single[2]+":"+
+    nameKey(single[3])+":"+(single[4]?"female":"any")+":"+
+    (single[5]?"shiny":"normal")]=file;
+  const mixed=/^pm(\d+)\.f([A-Za-z0-9_]+)\.c([A-Za-z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
+  if(mixed)GO_COMPOSITE_BY_ID[Number(mixed[1])+":"+
+    nameKey(mixed[2])+":"+nameKey(mixed[3])+":"+
+    (mixed[4]?"female":"any")+":"+(mixed[5]?"shiny":"normal")]=file;
+ }
+ const goFileSource=file=>{
+  const recent=GO_LT328_RECENT_FILES.has(file);
+  return {src:(recent?GO_LT328_RECENT_ROOT:GO_ASSET_ROOT)+file,
+   original:(recent?GO_LT328_RECENT_MIRROR:GO_ASSET_MIRROR)+file,
+   offline:false,exactForm:true,goExact:true};
+ };
+ // Any numeric form/costume key must match the independent GO species map.
+ // Unknown or contradictory form IDs fail closed; no borrowed base sprites.
+
+ function goCatalogEvidence(card,dex){
+  const data=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
+  if(!data?.species||!data?.forms||!data?.costumes)
+   return {blocked:false,form:"",costume:"",costumeLabels:[]};
+  const species=data.species[dex];
+  const rawForm=card?.form_id??card?.formId;
+  const rawCostume=card?.costume_id??card?.costumeId;
+  const speciesKey=nameKey(species?.[0]);
+  const explicitForm=nameKey(card?.form),explicitCostume=nameKey(card?.costume);
+  const region=s=>GO_REGION_KEYS[s]||s;
+  const clean=s=>{
+   const key=nameKey(s);
+   const shorter=key.startsWith(speciesKey)&&speciesKey?
+    key.slice(speciesKey.length):key;
+   return region(shorter.replace(/FORM$/,""));
+  };
+  const formRow=id=>{
+   if(!speciesKey||!Array.isArray(species?.[2])||!species[2].includes(id))
+    return null;
+   const item=data.forms[id];
+   const proto=nameKey(item?.[0]);
+   if(!proto.startsWith(speciesKey)||proto.length<=speciesKey.length)
+    return null;
+   const form=proto.slice(speciesKey.length);
+   const labels=[form,item?.[1],data.ptBr?.pt_forms?.["form_"+id]];
+   return {id,form,labels:labels.map(clean).filter(Boolean)};
+  };
+  let form="",costume="",costumeLabels=[];
+  if(rawForm!=null&&Number(rawForm)!==0){
+   if(!/^\d+$/.test(String(rawForm)))return {blocked:true};
+   const row=formRow(Number(rawForm));
+   if(!row||explicitForm&&!row.labels.includes(clean(explicitForm)))
+    return {blocked:true};
+   form=row.form;
+  }else if(explicitForm&&species){
+   const matches=(species[2]||[]).map(id=>formRow(Number(id)))
+    .filter(row=>row&&row.labels.includes(clean(explicitForm)));
+   if(matches.length===1)form=matches[0].form;
+  }
+  const costumeRow=id=>{
+   const item=data.costumes[id];
+   if(!item?.[0])return null;
+   const proto=nameKey(item[0]);
+   return {id,proto,labels:[proto,nameKey(item[1]),
+    nameKey(data.ptBr?.pt_costumes?.["costume_"+id])].filter(Boolean)};
+  };
+  if(rawCostume!=null&&Number(rawCostume)!==0){
+   if(!/^\d+$/.test(String(rawCostume)))return {blocked:true};
+   const row=costumeRow(Number(rawCostume));
+   if(!row||explicitCostume&&!row.labels.includes(explicitCostume))
+    return {blocked:true};
+   costume=row.proto;costumeLabels=row.labels;
+  }else if(explicitCostume){
+   const ids=Object.keys(data.costumes).filter(x=>/^\d+$/.test(x));
+   const matches=ids.map(id=>costumeRow(Number(id)))
+    .filter(row=>row&&row.labels.includes(explicitCostume));
+   if(matches.length===1){
+    costume=matches[0].proto;costumeLabels=matches[0].labels;
+   }
+  }
+  return {blocked:false,form,costume,costumeLabels};
  }
  const GO_REGION_KEYS=Object.freeze({
    GALAR:"GALARIAN",ALOLAN:"ALOLA",HISUI:"HISUIAN",
@@ -2204,9 +2303,19 @@
   if(!card||typeof card!=="object")return null;
   const dex=dexOf(card);
   if(!verifiedSpeciesIdentity(card)||dex<1||dex>1025)return null;
-  const costume=nameKey(card.costume);
-  const form=nameKey(card.form)||
+  const metadata=goCatalogEvidence(card,dex);
+  if(metadata.blocked)return null;
+  const namedForm=nameKey(card.form)||
     nameKey((String(card.name||"").match(/\(([^)]+)\)/)||[])[1]);
+  const namedCostume=nameKey(card.costume);
+  // The official form_id/costume_id wins only if it belongs to this Dex.
+  // Conflicting costume evidence is deliberately rejected.
+  if(metadata.costume&&namedCostume&&
+     !["NORMAL","NONE","DEFAULT"].includes(namedCostume)&&
+     namedCostume!==metadata.costume&&
+     !metadata.costumeLabels?.includes(namedCostume))return null;
+  const costume=metadata.costume||namedCostume;
+  const form=metadata.form||namedForm;
   const specialCostume=costume&&!["NONE","DEFAULT","NORMAL"].includes(costume);
   // LT267: Pikachu's exact Diwali 2024 art is a GO .f asset even when
   // the provider labels it as a costume; reject unrelated costumes.
@@ -2257,6 +2366,22 @@
   const gender=/^(?:♀|female)$/i.test(String(card.gender||""))?"female":"any";
   const shiny=card.shiny===true?"shiny":"normal";
   let file="";
+  // Two independently verified identities are required for combination
+  // sprites (regional form + costume, or sized Pumpkaboo/Gourgeist + hat).
+  if(specialCostume&&form){
+   const formCandidates=[form,GO_REGION_KEYS[form]||form];
+   if(form.startsWith(species)&&form.length>species.length)
+    formCandidates.push(form.slice(species.length));
+   for(const f of formCandidates){
+    const root=dex+":"+(GO_REGION_KEYS[f]||f)+":"+costume+":";
+    file=GO_COMPOSITE_BY_ID[root+gender+":"+shiny]||
+     GO_COMPOSITE_BY_ID[root+"any:"+shiny]||"";
+    if(file)break;
+   }
+   if(file){
+    return {...goFileSource(file),officialForm:true,officialCostume:true};
+   }
+  }
   for(const candidate of candidates){
    if(!candidate)continue;
    const root=dex+":"+type+":"+(GO_REGION_KEYS[candidate]||candidate)+":";
@@ -2266,7 +2391,7 @@
   }
   // Costumes can be GO form assets (.fCOSTUME_*), but only if their explicit
   // costume name matches that exact filename. Unknown costume IDs stay blank.
-  if(!file&&specialCostume&&!(card.costume_id!=null&&Number(card.costume_id)!==0)){
+  if(!file&&specialCostume&&(!Number(card.costume_id??card.costumeId??0)||metadata.costume)){
    const root=dex+":f:"+costume+":";
    file=GO_FILE_BY_ID[root+gender+":"+shiny]||
         GO_FILE_BY_ID[root+"any:"+shiny]||"";
@@ -2278,9 +2403,8 @@
   }
   if(!file)return null;
   // Immutable upstream commit; URL built from audited explicit file names.
-  return {src:GO_ASSET_ROOT+file,original:GO_ASSET_MIRROR+file,offline:false,
-    officialForm:!specialCostume,officialCostume:!!specialCostume,
-    exactForm:true,goExact:true};
+  return {...goFileSource(file),officialForm:!specialCostume,
+    officialCostume:!!specialCostume};
  }
  function resolve(card){
   const image=String(card?.image||"");
@@ -2394,30 +2518,86 @@
  /* LT296: only rank family identities proven by the independent Dex table
   * may receive bundled species sprites. Never replace an unknown costume,
   * colour, regional or Shadow variant with a misleading base sprite. */
- function rankSprite(rawName){
-  let name=String(rawName||"").trim(),form="";
-  if(!name||name.length>90)return "";
-  const megaPrefix=/^Mega\s+(.+?)(?:\s+([XY]))?$/i.exec(name);
-  const megaSuffix=/^(.+?)\s+\(Mega(?:\s+([XY]))?\)$/i.exec(name);
+
+ /* LT327: Rank Geral uses only species/form identities verified by the
+  * existing Dex, PokeAPI variety map or the pinned Pokémon GO sprite index.
+  * Shadow shares its species/form artwork: aura is a UI label, never an
+  * invented alternate form. Return fallbacks so Android can recover images. */
+ function rankSpriteMeta(rawName){
+  const raw=String(rawName||"").trim();
+  const empty={src:"",candidates:[],shadow:false,dex:0,exact:false};
+  if(!raw||raw.length>100)return empty;
+  const shadow=/\s+\(Shadow\)$/i.test(raw);
+  let value=raw.replace(/\s+\(Shadow\)$/i,""),name=value,form="";
+  // PvPoke renders the species Mime Jr. as "Mime (Jr)" in the LC source.
+  // This is not a Pokémon form; normalize only this verified exact spelling.
+  if(value==="Mime (Jr)"){name="Mime Jr.";value=name;}
+  const megaPrefix=/^Mega\s+(.+?)(?:\s+([XY]))?$/i.exec(value);
+  const megaSuffix=/^(.+?)\s+\(Mega(?:\s+([XY]))?\)$/i.exec(value);
   if(megaPrefix||megaSuffix){
-   const mega=megaPrefix||megaSuffix;
-   name=mega[1];form="Mega"+(mega[2]||"");
+   const m=megaPrefix||megaSuffix;
+   name=m[1];form="Mega"+(m[2]||"");
   }else{
-   const extra=/^(.+?)\s+\(([^)]+)\)$/.exec(name);
-   if(extra){
-    if(!/^(?:Sandy|Trash|Plant|East Sea|West Sea|Alolan|Galarian|Hisuian)$/i.test(extra[2]))
-     return "";
-    name=extra[1];form=extra[2];
-   }
+   const match=/^(.+?)\s+\(([^()]+)\)$/.exec(value);
+   if(match){name=match[1];form=match[2];}
   }
-  const identity=nameKey(name);
-  const ids=Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===identity);
-  if(ids.length!==1)return "";
-  const art=resolve({number:Number(ids[0]),name,form,shiny:false});
-  // Unknown variants cannot silently inherit a base Pokemon illustration.
-  return art?.src&&/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(art.src)?
-   art.src:"";
+  // A nested or unexpected suffix is not a verified Pokémon/form identity.
+  if(/[()]/.test(name)||/[()]/.test(form))return {...empty,shadow};
+  const species=nameKey(name);
+  // Nidoran female (#29) and male (#32) share an official base species
+  // label in the independent Dex map. The PvPoke names disambiguate them.
+  const ids=species==="NIDORANFEMALE"?["29"]:
+   species==="NIDORANMALE"?["32"]:
+   Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===species);
+  if(ids.length!==1)return {...empty,shadow};
+  const dex=Number(ids[0]),f=nameKey(form);
+  const artName=/^NIDORAN(?:FEMALE|MALE)$/.test(species)?"Nidoran":name;
+  const alias=Object.freeze({
+   "128:AQUA":"PALDEA_AQUA","128:COMBAT":"PALDEA_COMBAT",
+   "128:BLAZE":"PALDEA_BLAZE","150:ARMORED":"A",
+   "421:SUNSHINE":"SUNNY","555:GALARIAN":"GALARIAN_STANDARD",
+   "718:50FORME":"FIFTY_PERCENT","718:10FORME":"TEN_PERCENT",
+   "718:COMPLETEFORME":"COMPLETE","741:POMPOM":"POMPOM",
+   "741:PAU":"PAU","892:SINGLESTRIKE":"SINGLE_STRIKE",
+   "892:RAPIDSTRIKE":"RAPID_STRIKE",
+   "888:CROWNEDSWORD":"CROWNED_SWORD",
+   "889:CROWNEDSHIELD":"CROWNED_SHIELD",
+   "800:DUSKMANE":"DUSK_MANE","800:DAWNWINGS":"DAWN_WINGS"
+  });
+  // Male Meowstic is the independently verified default form (#678).
+  const defaultForm=dex===678&&f==="MALE";
+  const variantKey=dex+":"+f,fullKey=dex+":"+species+f;
+  const entry=FORM_VARIANTS[FORM_ALIASES[variantKey]||variantKey]||
+   FORM_VARIANTS[FORM_ALIASES[fullKey]||fullKey];
+  const goForm=form?(alias[dex+":"+f]||form):"";
+  const goArt=form?goExactIcon({number:dex,name:artName,form:goForm,shiny:false}):null;
+  if(form&&!entry&&!goArt&&!defaultForm)return {...empty,shadow,dex};
+  const localArt=resolve({number:dex,name:artName,form:defaultForm?"":form,shiny:false});
+  const plainArt=defaultForm?localArt:(!form?localArt:null);
+  const sources=[];
+  const add=src=>{
+   const value=String(src||"");
+   if(/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(value)&&
+      !sources.includes(value))sources.push(value);
+  };
+  // Use verified, locally bundled exact forms first. Never fall back to a
+  // different regional colour, costume or species for an unknown form.
+  if(entry&&localArt?.exactForm){
+   add(localArt.src);add(localArt.original);
+  }
+  if(goArt){
+   const bundled=bundledGoCostumeSource(goArt);
+   if(bundled)add(bundled);
+   add(goArt.src);add(goArt.original);
+  }
+  if(!form||defaultForm){
+   add(plainArt?.src);add(plainArt?.original);
+  }
+  return {src:sources[0]||"",candidates:sources,shadow,dex,
+   exact:sources.length>0,form};
  }
- return Object.freeze({resolve,rankSprite,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
+ function rankSprite(rawName){return rankSpriteMeta(rawName).src;}
+
+ return Object.freeze({resolve,rankSprite,rankSpriteMeta,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
   verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm,exactWestSeaForm});
 });
