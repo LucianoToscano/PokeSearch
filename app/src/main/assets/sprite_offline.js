@@ -2420,9 +2420,14 @@
   // A nested or unexpected suffix is not a verified Pokémon/form identity.
   if(/[()]/.test(name)||/[()]/.test(form))return {...empty,shadow};
   const species=nameKey(name);
-  const ids=Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===species);
+  // Nidoran female (#29) and male (#32) share an official base species
+  // label in the independent Dex map. The PvPoke names disambiguate them.
+  const ids=species==="NIDORANFEMALE"?["29"]:
+   species==="NIDORANMALE"?["32"]:
+   Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===species);
   if(ids.length!==1)return {...empty,shadow};
   const dex=Number(ids[0]),f=nameKey(form);
+  const artName=/^NIDORAN(?:FEMALE|MALE)$/.test(species)?"Nidoran":name;
   const alias=Object.freeze({
    "128:AQUA":"PALDEA_AQUA","128:COMBAT":"PALDEA_COMBAT",
    "128:BLAZE":"PALDEA_BLAZE","150:ARMORED":"A",
@@ -2441,9 +2446,9 @@
   const entry=FORM_VARIANTS[FORM_ALIASES[variantKey]||variantKey]||
    FORM_VARIANTS[FORM_ALIASES[fullKey]||fullKey];
   const goForm=form?(alias[dex+":"+f]||form):"";
-  const goArt=form?goExactIcon({number:dex,name,form:goForm,shiny:false}):null;
+  const goArt=form?goExactIcon({number:dex,name:artName,form:goForm,shiny:false}):null;
   if(form&&!entry&&!goArt&&!defaultForm)return {...empty,shadow,dex};
-  const localArt=resolve({number:dex,name,form:defaultForm?"":form,shiny:false});
+  const localArt=resolve({number:dex,name:artName,form:defaultForm?"":form,shiny:false});
   const plainArt=defaultForm?localArt:(!form?localArt:null);
   const sources=[];
   const add=src=>{
