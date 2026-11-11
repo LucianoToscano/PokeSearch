@@ -2232,41 +2232,68 @@
  };
  // Any numeric form/costume key must match the independent GO species map.
  // Unknown or contradictory form IDs fail closed; no borrowed base sprites.
+
  function goCatalogEvidence(card,dex){
   const data=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
   if(!data?.species||!data?.forms||!data?.costumes)
-   return {blocked:false,form:"",costume:""};
+   return {blocked:false,form:"",costume:"",costumeLabels:[]};
   const species=data.species[dex];
   const rawForm=card?.form_id??card?.formId;
   const rawCostume=card?.costume_id??card?.costumeId;
-  let form="",costume="";
+  const speciesKey=nameKey(species?.[0]);
+  const explicitForm=nameKey(card?.form),explicitCostume=nameKey(card?.costume);
+  const region=s=>GO_REGION_KEYS[s]||s;
+  const clean=s=>{
+   const key=nameKey(s);
+   const shorter=key.startsWith(speciesKey)&&speciesKey?
+    key.slice(speciesKey.length):key;
+   return region(shorter.replace(/FORM$/,""));
+  };
+  const formRow=id=>{
+   if(!speciesKey||!Array.isArray(species?.[2])||!species[2].includes(id))
+    return null;
+   const item=data.forms[id];
+   const proto=nameKey(item?.[0]);
+   if(!proto.startsWith(speciesKey)||proto.length<=speciesKey.length)
+    return null;
+   const form=proto.slice(speciesKey.length);
+   const labels=[form,item?.[1],data.ptBr?.pt_forms?.["form_"+id]];
+   return {id,form,labels:labels.map(clean).filter(Boolean)};
+  };
+  let form="",costume="",costumeLabels=[];
   if(rawForm!=null&&Number(rawForm)!==0){
-   if(!/^\d+$/.test(String(rawForm))||!species||!Array.isArray(species[2])||
-     !species[2].includes(Number(rawForm)))return {blocked:true};
-   const match=data?.forms?.[Number(rawForm)];
-   const proto=nameKey(match?.[0]),name=nameKey(species[0]);
-   if(!proto||!name||!proto.startsWith(name)||proto.length<=name.length)
+   if(!/^\d+$/.test(String(rawForm)))return {blocked:true};
+   const row=formRow(Number(rawForm));
+   if(!row||explicitForm&&!row.labels.includes(clean(explicitForm)))
     return {blocked:true};
-   form=proto.slice(name.length);
-   const explicit=nameKey(card.form);
-   // Exact formId and explicit form label must agree. A contradictory label
-   // (including a fake regional name) must not borrow a valid form's art.
-   if(explicit){
-    const naked=explicit.startsWith(name)?explicit.slice(name.length):explicit;
-    const region=part=>GO_REGION_KEYS[part]||part;
-    const clean=part=>region(part.replace(/FORM$/,""));
-    const label=nameKey(match?.[1]);
-    if(clean(naked)!==clean(form)&&clean(naked)!==clean(label))
-     return {blocked:true};
-   }
+   form=row.form;
+  }else if(explicitForm&&species){
+   const matches=(species[2]||[]).map(id=>formRow(Number(id)))
+    .filter(row=>row&&row.labels.includes(clean(explicitForm)));
+   if(matches.length===1)form=matches[0].form;
   }
+  const costumeRow=id=>{
+   const item=data.costumes[id];
+   if(!item?.[0])return null;
+   const proto=nameKey(item[0]);
+   return {id,proto,labels:[proto,nameKey(item[1]),
+    nameKey(data.ptBr?.pt_costumes?.["costume_"+id])].filter(Boolean)};
+  };
   if(rawCostume!=null&&Number(rawCostume)!==0){
    if(!/^\d+$/.test(String(rawCostume)))return {blocked:true};
-   const costumeInfo=data?.costumes?.[Number(rawCostume)];
-   if(!costumeInfo||!costumeInfo[0])return {blocked:true};
-   costume=nameKey(costumeInfo[0]);
+   const row=costumeRow(Number(rawCostume));
+   if(!row||explicitCostume&&!row.labels.includes(explicitCostume))
+    return {blocked:true};
+   costume=row.proto;costumeLabels=row.labels;
+  }else if(explicitCostume){
+   const ids=Object.keys(data.costumes).filter(x=>/^\d+$/.test(x));
+   const matches=ids.map(id=>costumeRow(Number(id)))
+    .filter(row=>row&&row.labels.includes(explicitCostume));
+   if(matches.length===1){
+    costume=matches[0].proto;costumeLabels=matches[0].labels;
+   }
   }
-  return {blocked:false,form,costume};
+  return {blocked:false,form,costume,costumeLabels};
  }
  const GO_REGION_KEYS=Object.freeze({
    GALAR:"GALARIAN",ALOLAN:"ALOLA",HISUI:"HISUIAN",
@@ -2285,7 +2312,8 @@
   // Conflicting costume evidence is deliberately rejected.
   if(metadata.costume&&namedCostume&&
      !["NORMAL","NONE","DEFAULT"].includes(namedCostume)&&
-     namedCostume!==metadata.costume)return null;
+     namedCostume!==metadata.costume&&
+     !metadata.costumeLabels?.includes(namedCostume))return null;
   const costume=metadata.costume||namedCostume;
   const form=metadata.form||namedForm;
   const specialCostume=costume&&!["NONE","DEFAULT","NORMAL"].includes(costume);
