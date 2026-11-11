@@ -54,7 +54,9 @@ assert.equal(go({name:"Flabebe",number:"#669",form:"YELLOW",image:site,
 const shinyNormal=go({name:"Flabebe",number:"#669",form:"YELLOW",shiny:true});
 const normal=go({name:"Flabebe",number:"#669",form:"YELLOW",shiny:false});
 assert.notEqual(shinyNormal,normal,"shiny and normal must be separate");
-assert.match(code,/GO_FILE_BY_ID\[Number\(m\[1\]\)/);
+assert.match(code,/GO_FILE_BY_ID\[Number\(single\[1\]\)/);
+assert.match(code,/GO_COMPOSITE_BY_ID/);
+assert.match(code,/go-extra-sprites-lt328\.tsv|GO_LT328_EXTRA_FILES/);
 assert.match(code,/c2a686eb08ace6e890d8fe3d2134c76988db87b5/);
 assert.match(code,/goExactIcon/);
 assert.match(dock,/PokeSearchOfflineSprite\.resolve\(c\)/);
