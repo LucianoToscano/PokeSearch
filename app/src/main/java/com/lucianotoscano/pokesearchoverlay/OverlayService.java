@@ -3839,9 +3839,9 @@ public class OverlayService extends Service {
             int ranking=rank.optInt("rank",0);
             if(ranking<1||ranking>50)return;
             String type=rank.optString("type","");
-            if(!("bug,dark,dragon,electric,fairy,fighting,fire,flying,ghost,"+
-                "grass,ground,ice,normal,poison,psychic,rock,steel,water")
-                .contains(type) || !type.matches("[a-z]{3,9}"))return;
+            if(!type.matches(
+                "bug|dark|dragon|electric|fairy|fighting|fire|flying|ghost|"+
+                "grass|ground|ice|normal|poison|psychic|rock|steel|water"))return;
             JSONArray arr=new JSONArray(results);
             if(selected>=arr.length())return;
             JSONObject current=arr.optJSONObject(selected);
