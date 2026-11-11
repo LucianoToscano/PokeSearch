@@ -41,9 +41,18 @@ final class VerifiedSpriteCache {
         GO_COMMIT+"/"+GO_DIR;
     private static final String GO_MIRROR="https://cdn.jsdelivr.net/gh/PokeMiners/pogo_assets@"+
         GO_COMMIT+"/"+GO_DIR;
+    // LT328 supplemental icons from another immutable tree revision.
+    private static final String GO_COMMIT_LT328="db10df75d6f6f92018d9786af0aecc238fecc4ef";
+    private static final String GO_RAW_LT328="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+        GO_COMMIT_LT328+"/"+GO_DIR;
+    private static final String GO_MIRROR_LT328="https://cdn.jsdelivr.net/gh/PokeMiners/pogo_assets@"+
+        GO_COMMIT_LT328+"/"+GO_DIR;
+    // Verified composite form+costume names and cMay_2023 capitalization.
+    // Invalid pm479.f.s.icon.png lacks a form ID and is never accepted.
     private static final Pattern GO_NAME=Pattern.compile(
-        "^pm[0-9]{1,4}\\.[fc][A-Z0-9_]+(?:\\.g2)?(?:\\.s)?\\.icon\\.png$");
+        "^pm[0-9]{1,4}\\.(?:[fc][A-Za-z0-9_]+|f[A-Za-z0-9_]+\\.c[A-Za-z0-9_]+)(?:\\.g2)?(?:\\.s)?\\.icon\\.png$");
     private static final Map<String,String> GO_HASHES=new ConcurrentHashMap<>();
+    private static final Map<String,String> GO_LT328_SOURCE=new ConcurrentHashMap<>();
     private static final Map<String,Long> GO_FAILURES=new ConcurrentHashMap<>();
     private static volatile boolean goIndexRead;
     private static final Object GO_INDEX_LOCK=new Object();
@@ -61,6 +70,25 @@ final class VerifiedSpriteCache {
                     if(pair.length!=2||!GO_NAME.matcher(pair[0]).matches()||
                         !pair[1].matches("[0-9a-f]{40}"))continue;
                     GO_HASHES.put(pair[0],pair[1]);count++;
+                }
+            }catch(IOException ignored){}
+            // The signed second manifest includes the SHA and exact source
+            // commit, never a mutable "latest" icon URL.
+            try(java.io.BufferedReader lines=new java.io.BufferedReader(
+                new java.io.InputStreamReader(context.getAssets().open("go-extra-sprites-lt328.tsv"),
+                    java.nio.charset.StandardCharsets.UTF_8))){
+                String line;int count=0;
+                while((line=lines.readLine())!=null&&count<100){
+                    if(line.startsWith("#")||line.isEmpty())continue;
+                    String[] parts=line.split("\\t",-1);
+                    if(parts.length!=3||!GO_NAME.matcher(parts[0]).matches()||
+                        !parts[1].matches("[0-9a-f]{40}")||
+                        !(parts[2].equals(GO_COMMIT)||parts[2].equals(GO_COMMIT_LT328)))
+                        continue;
+                    String old=GO_HASHES.putIfAbsent(parts[0],parts[1]);
+                    if(old!=null&&!old.equals(parts[1]))continue;
+                    GO_LT328_SOURCE.put(parts[0],parts[2]);
+                    count++;
                 }
             }catch(IOException ignored){}
             goIndexRead=true;
@@ -98,7 +126,10 @@ final class VerifiedSpriteCache {
     private static boolean goFetch(Context context,String name,String expected){
         // A request never carries credentials; no endpoint of PoGoCoordinates
         // is queried by the sprite cache. Both URLs use the same pinned commit.
-        for(String base:new String[]{GO_RAW,GO_MIRROR}){
+        final boolean recent=GO_COMMIT_LT328.equals(GO_LT328_SOURCE.get(name));
+        for(String base:recent?
+            new String[]{GO_RAW_LT328,GO_MIRROR_LT328}:
+            new String[]{GO_RAW,GO_MIRROR}){
             HttpURLConnection conn=null;
             try{
                 conn=(HttpURLConnection)new URL(base+name).openConnection();
@@ -146,11 +177,17 @@ final class VerifiedSpriteCache {
         final String name;
         if(url.startsWith(GO_RAW))name=url.substring(GO_RAW.length());
         else if(url.startsWith(GO_MIRROR))name=url.substring(GO_MIRROR.length());
+        else if(url.startsWith(GO_RAW_LT328))name=url.substring(GO_RAW_LT328.length());
+        else if(url.startsWith(GO_MIRROR_LT328))name=url.substring(GO_MIRROR_LT328.length());
         else return null;
         if(!GO_NAME.matcher(name).matches())return null;
         loadGOIndex(context);
         String expected=GO_HASHES.get(name);
         if(expected==null)return null;
+        final boolean recentRequest=url.startsWith(GO_RAW_LT328)||
+            url.startsWith(GO_MIRROR_LT328);
+        if(recentRequest!=GO_COMMIT_LT328.equals(GO_LT328_SOURCE.get(name)))
+            return null;
         WebResourceResponse available=goCached(context,name,expected);
         if(available!=null)return available;
         long now=System.currentTimeMillis();
@@ -263,7 +300,8 @@ final class VerifiedSpriteCache {
         // Fixed-commit GO icons are fetched and cached with a Git-blob SHA-1
         // from the signed allowlist, so first-load network and subsequent
         // offline reads share exactly the same source artwork.
-        if(url.startsWith(GO_RAW)||url.startsWith(GO_MIRROR))
+        if(url.startsWith(GO_RAW)||url.startsWith(GO_MIRROR)||
+           url.startsWith(GO_RAW_LT328)||url.startsWith(GO_MIRROR_LT328))
             return goResponse(context,url);
         Matcher raw=RAW.matcher(url),mirror=MIRROR.matcher(url),variety=PINNED_FORM.matcher(url);
         boolean baseRaw=raw.matches(),baseMirror=mirror.matches(),form=variety.matches();
