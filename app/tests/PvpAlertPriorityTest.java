@@ -18,6 +18,33 @@ public final class PvpAlertPriorityTest {
         check(PvpAlertPriority.higherPriority(1,5),"prioritize Top1");
         check(!PvpAlertPriority.higherPriority(5,1),"do not downgrade Top1");
         check(!PvpAlertPriority.higherPriority(0,1),"unknown rank ignored");
-        System.out.println("LT253 PvpAlertPriority: 13 cases PASS");
+        // LT325: ordering of an EXISTING alert, never a new channel.
+        check(PvpAlertPriority.verifiedHundo(true,true,"15/15/15","100"),
+            "verified perfect with consistent percent");
+        check(PvpAlertPriority.verifiedHundo(true,true,"15/15/15",""),
+            "verified raw perfect with missing optional percent");
+        check(PvpAlertPriority.verifiedHundo(true,true,"15/15/15","100.00"),
+            "verified raw perfect with precise percent");
+        check(!PvpAlertPriority.verifiedHundo(false,true,"15/15/15","100"),
+            "unconfirmed source ignored");
+        check(!PvpAlertPriority.verifiedHundo(true,false,"15/15/15","100"),
+            "unverified encounter ignored");
+        check(!PvpAlertPriority.verifiedHundo(true,true,"14/15/15","100"),
+            "rounded percentage cannot invent perfect");
+        check(!PvpAlertPriority.verifiedHundo(true,true,"15/15/15","98"),
+            "contradictory percentage ignored");
+        check(PvpAlertPriority.higherValuePriority(0,true,0,false),
+            "verified Hundo outranks ordinary result in existing slot");
+        check(!PvpAlertPriority.higherValuePriority(0,false,0,true),
+            "ordinary cannot suppress a Hundo");
+        check(PvpAlertPriority.higherValuePriority(1,false,0,true),
+            "verified Top PvP retains priority above Hundo");
+        check(!PvpAlertPriority.higherValuePriority(0,true,1,false),
+            "Hundo cannot suppress verified Top PvP");
+        check(PvpAlertPriority.higherValuePriority(1,false,5,false),
+            "Top 1 still outranks Top 5");
+        check(!PvpAlertPriority.higherValuePriority(10,true,1,false),
+            "Top 1 still wins even if candidate is Hundo");
+        System.out.println("LT325 PvpAlertPriority: 26 cases PASS");
     }
 }
