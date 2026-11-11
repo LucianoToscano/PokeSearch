@@ -388,7 +388,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
     const heading=document.querySelector("#psRankExplorer .psrTitle")?.textContent||"";
     return {ok:heading==="Rank Geral"&&stillChosen==="Blastoise"&&
      second.includes("Copa Pequena")&&
-     second.includes(currentLC?"#"+currentLC.rank:"Não ranqueado"),
+     second.includes(currentLC?"#"+currentLC.rank:"Não consta nesta liga"),
      chosen,stillChosen,first,second,heading,names};
    });
    assert.ok(family296.ok,"LT296 exact family sprites and Little Cup selection "+
