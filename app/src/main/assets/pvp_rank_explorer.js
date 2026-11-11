@@ -99,7 +99,8 @@
  const PVP_OVERALL_CANONICAL_NAMES=Object.freeze({
   aegislash_shield:"Aegislash (Shield)",
   morpeko_full_belly:"Morpeko (Full Belly)",
-  mimikyu:"Mimikyu"
+  mimikyu:"Mimikyu",
+  mime_jr:"Mime Jr."
  });
  function getOverallRows(snapshot,league){
   if(!snapshot||!LIGAS[league]||!Array.isArray(snapshot[league]))return null;
