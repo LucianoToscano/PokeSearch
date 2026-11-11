@@ -2190,11 +2190,61 @@
   "pm999.fCOIN_A2_2026.icon.png",
   "pm999.fCOIN_A2_2026.s.icon.png"
  ];
+
+ // LT328: 35 exact extra GO files from two independently pinned revisions.
+ // The malformed pm479.f.s.icon.png has no form identity and is deliberately
+ // not presented as a valid sprite. The manifest records it for audit.
+ const GO_LT328_EXTRA_FILES=Object.freeze(["pm133.cMay_2023.icon.png","pm169.fHALLOWEEN_2026_01.icon.png","pm169.fHALLOWEEN_2026_01.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.s.icon.png","pm263.fGALARIAN.cGOFEST_2021_NOEVOLVE.icon.png","pm263.fGALARIAN.cGOFEST_2021_NOEVOLVE.s.icon.png","pm41.fHALLOWEEN_2026_01.g2.icon.png","pm41.fHALLOWEEN_2026_01.g2.s.icon.png","pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png","pm42.fHALLOWEEN_2026_01.g2.icon.png","pm42.fHALLOWEEN_2026_01.g2.s.icon.png","pm42.fHALLOWEEN_2026_01.icon.png","pm42.fHALLOWEEN_2026_01.s.icon.png","pm710.fAVERAGE.cFALL_2022.icon.png","pm710.fAVERAGE.cFALL_2022.s.icon.png","pm710.fLARGE.cFALL_2022.icon.png","pm710.fLARGE.cFALL_2022.s.icon.png","pm710.fSMALL.cFALL_2022.icon.png","pm710.fSMALL.cFALL_2022.s.icon.png","pm710.fSUPER.cFALL_2022.icon.png","pm710.fSUPER.cFALL_2022.s.icon.png","pm711.fAVERAGE.cFALL_2022.icon.png","pm711.fAVERAGE.cFALL_2022.s.icon.png","pm711.fLARGE.cFALL_2022.icon.png","pm711.fLARGE.cFALL_2022.s.icon.png","pm711.fSMALL.cFALL_2022.icon.png","pm711.fSMALL.cFALL_2022.s.icon.png","pm711.fSUPER.cFALL_2022.icon.png","pm711.fSUPER.cFALL_2022.s.icon.png","pm77.fGALARIAN.cGOFEST_2021_NOEVOLVE.icon.png","pm77.fGALARIAN.cGOFEST_2021_NOEVOLVE.s.icon.png"]);
+ const GO_LT328_RECENT_FILES=new Set(["pm169.fHALLOWEEN_2026_01.icon.png","pm169.fHALLOWEEN_2026_01.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.g2.s.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.icon.png","pm25.fANNIVERSARY_2026_THAILAND_01.s.icon.png","pm41.fHALLOWEEN_2026_01.g2.icon.png","pm41.fHALLOWEEN_2026_01.g2.s.icon.png","pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png","pm42.fHALLOWEEN_2026_01.g2.icon.png","pm42.fHALLOWEEN_2026_01.g2.s.icon.png","pm42.fHALLOWEEN_2026_01.icon.png","pm42.fHALLOWEEN_2026_01.s.icon.png"]);
+ const GO_LT328_RECENT_ROOT="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+  "db10df75d6f6f92018d9786af0aecc238fecc4ef/"+
+  "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ const GO_LT328_RECENT_MIRROR="https://cdn.jsdelivr.net/gh/PokeMiners/pogo_assets@"+
+  "db10df75d6f6f92018d9786af0aecc238fecc4ef/"+
+  "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
+ GO_FILE_LIST.push(...GO_LT328_EXTRA_FILES);
+ const GO_COMPOSITE_BY_ID=Object.create(null);
  const GO_FILE_BY_ID=Object.create(null);
  for(const file of GO_FILE_LIST){
-  const m=/^pm(\d+)\.([fc])([A-Z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
-  if(m)GO_FILE_BY_ID[Number(m[1])+":"+m[2]+":"+m[3].replace(/[^A-Z0-9]/g,"")+":"+
-    (m[4]?"female":"any")+":"+(m[5]?"shiny":"normal")]=file;
+  const single=/^pm(\d+)\.([fc])([A-Za-z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
+  if(single)GO_FILE_BY_ID[Number(single[1])+":"+single[2]+":"+
+    nameKey(single[3])+":"+(single[4]?"female":"any")+":"+
+    (single[5]?"shiny":"normal")]=file;
+  const mixed=/^pm(\d+)\.f([A-Za-z0-9_]+)\.c([A-Za-z0-9_]+)(\.g2)?(\.s)?\.icon\.png$/.exec(file);
+  if(mixed)GO_COMPOSITE_BY_ID[Number(mixed[1])+":"+
+    nameKey(mixed[2])+":"+nameKey(mixed[3])+":"+
+    (mixed[4]?"female":"any")+":"+(mixed[5]?"shiny":"normal")]=file;
+ }
+ const goFileSource=file=>{
+  const recent=GO_LT328_RECENT_FILES.has(file);
+  return {src:(recent?GO_LT328_RECENT_ROOT:GO_ASSET_ROOT)+file,
+   original:(recent?GO_LT328_RECENT_MIRROR:GO_ASSET_MIRROR)+file,
+   offline:false,exactForm:true,goExact:true};
+ };
+ // Any numeric form/costume key must match the independent GO species map.
+ // Unknown or contradictory form IDs fail closed; no borrowed base sprites.
+ function goCatalogEvidence(card,dex){
+  const data=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
+  const species=data?.species?.[dex];
+  const rawForm=card?.form_id??card?.formId;
+  const rawCostume=card?.costume_id??card?.costumeId;
+  let form="",costume="";
+  if(rawForm!=null&&Number(rawForm)!==0){
+   if(!/^\d+$/.test(String(rawForm))||!species||!Array.isArray(species[2])||
+     !species[2].includes(Number(rawForm)))return {blocked:true};
+   const match=data?.forms?.[Number(rawForm)];
+   const proto=nameKey(match?.[0]),name=nameKey(species[0]);
+   if(!proto||!name||!proto.startsWith(name)||proto.length<=name.length)
+    return {blocked:true};
+   form=proto.slice(name.length);
+  }
+  if(rawCostume!=null&&Number(rawCostume)!==0){
+   if(!/^\d+$/.test(String(rawCostume)))return {blocked:true};
+   const costumeInfo=data?.costumes?.[Number(rawCostume)];
+   if(!costumeInfo||!costumeInfo[0])return {blocked:true};
+   costume=nameKey(costumeInfo[0]);
+  }
+  return {blocked:false,form,costume};
  }
  const GO_REGION_KEYS=Object.freeze({
    GALAR:"GALARIAN",ALOLAN:"ALOLA",HISUI:"HISUIAN",
