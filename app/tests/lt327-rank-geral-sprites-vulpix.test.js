@@ -77,7 +77,9 @@ for(const [variant,rank] of [["Vulpix",31],["Vulpix (Shadow)",32],
 assert.equal(explorer.getIvRows(gm,"Vulpix","gl")?.length,4096,
  "Vulpix GL IV attributes exist independently of overall species ranking");
 const ui=read("pvp_rank_explorer.js");
-assert.ok(ui.includes('<th colspan="4">Pokémon / forma</th><th style="width:17%">Rank</th>'));
+assert.ok(ui.includes('<th colspan="4">Pokémon / forma</th><th style="width:22%">Nº / RG</th>'));
+assert.ok(ui.includes('class="psrPokedexNumber"'));
+assert.ok(ui.includes('RG #'));
 assert.ok(ui.includes('class="psrPokemonCell"'));
 assert.ok(ui.includes('class="psrOverallRank"'));
 assert.ok(ui.includes('img[data-ps-sprite-alts]'));
