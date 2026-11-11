@@ -103,7 +103,7 @@ test('existing results preserve P/M/G geometry and show warnings only',()=>{
  assert.match(dock,/<script src="result_evidence\.js"><\/script>/);
  assert.match(dock,/evidence\?\.warning&&evidence\.icon/);
  assert.match(dock,/stale:resultsStale,searching:searchActive/);
- assert.match(dock,/const accessibleLabel=evidenceTitle\?label/);
+ assert.match(dock,/const accessibleLabel=\[label,evidenceTitle,opportunity\?\.label\]\.filter\(Boolean\)\.join\(" · "\)/);
  assert.match(dock,/resultEvidenceFlag/);
  assert.match(dock,/--result-tile-size/);
  assert.match(java,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
