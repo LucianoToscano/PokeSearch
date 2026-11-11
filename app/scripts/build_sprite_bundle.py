@@ -95,6 +95,40 @@ COSTUME_FILES = {
     )
 }
 
+# LT328: exact new GO forms/costumes (incl. composite form+costume),
+# validated against two immutable PokeMiners Git tree revisions. Download at
+# build time only; no unauthenticated APK metadata changes or guessed URLs.
+LT328_RECENT_COMMIT="db10df75d6f6f92018d9786af0aecc238fecc4ef"
+LT328_RECENT_ROOT=("https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+                   LT328_RECENT_COMMIT+
+                   "/Images/Pokemon%20-%20256x256/Addressable%20Assets/")
+LT328_RECENT_FILES=set()
+LT328_MANIFEST=Path(__file__).resolve().parent.parent / "src/main/assets/go-extra-sprites-lt328.tsv"
+if LT328_MANIFEST.exists():
+    for raw_line in LT328_MANIFEST.read_text(encoding="utf-8").splitlines():
+        line=raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts=line.split("\t")
+        if len(parts)!=3:
+            raise ValueError("Invalid LT328 sprite provenance row")
+        name,blob,commit=parts
+        import re
+        if (not re.fullmatch(r"pm\d+\.[fc][A-Za-z0-9_.]+\.icon\.png",name)
+            or not re.fullmatch(r"[a-f0-9]{40}",blob)
+            or commit not in (COSTUME_SOURCE_COMMIT,LT328_RECENT_COMMIT)):
+            raise ValueError("Invalid verified LT328 GO sprite")
+        # Source has one malformed artifact without a form ID.
+        if name=="pm479.f.s.icon.png":
+            continue
+        output="costumes/"+name
+        previous=COSTUME_FILES.get(output)
+        if previous and previous!=(name,blob):
+            raise ValueError("Conflicting immutable GO sprite hash: "+name)
+        COSTUME_FILES[output]=(name,blob)
+        if commit==LT328_RECENT_COMMIT:
+            LT328_RECENT_FILES.add(name)
+
 # Verified extra Halloween / fall costumes, including normal/shiny, female and
 # size-specific sprites. Each PNG must match its immutable Git blob SHA-1.
 COSTUME_FILES.update({
@@ -425,7 +459,7 @@ def main():
     # Reject redirected HTML, mismatched bytes and missing normal/shiny art.
     costume_hashes = {}
     for output, (relative, object_id) in COSTUME_FILES.items():
-        url = COSTUME_ROOT + relative
+        url = (LT328_RECENT_ROOT if relative in LT328_RECENT_FILES else COSTUME_ROOT) + relative
         request = urllib.request.Request(
             url, headers={"User-Agent": "PokeSearch-LT125-costume-pinner/1"})
         try:
