@@ -2405,6 +2405,9 @@
   if(!raw||raw.length>100)return empty;
   const shadow=/\s+\(Shadow\)$/i.test(raw);
   let value=raw.replace(/\s+\(Shadow\)$/i,""),name=value,form="";
+  // PvPoke renders the species Mime Jr. as "Mime (Jr)" in the LC source.
+  // This is not a Pokémon form; normalize only this verified exact spelling.
+  if(value==="Mime (Jr)"){name="Mime Jr.";value=name;}
   const megaPrefix=/^Mega\s+(.+?)(?:\s+([XY]))?$/i.exec(value);
   const megaSuffix=/^(.+?)\s+\(Mega(?:\s+([XY]))?\)$/i.exec(value);
   if(megaPrefix||megaSuffix){
