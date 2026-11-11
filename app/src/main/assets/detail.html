@@ -2382,6 +2382,30 @@ function toggleRaidDetails(){
  renderRaidPreview();
  return true;
 }
+/* LT325: forward ONLY a verified direct PvE result already fetched by the
+ * existing Raid panel. The results WebView never fetches PvE on its own.
+ * Native checks the selected encounter and forwards a read-only hint to P1/P2.
+ */
+function psShareExistingRaidEvidence(card,report){
+ const source=window.PokeSearchRaidRank?.SOURCE;
+ const best=report?.best;
+ if(!source||report?.verified!==true||report?.source!==source||
+    report?.ivIndependent!==true||best?.projected!==false||
+    best?.variant!=="normal"||!Number.isInteger(best.rank)||
+    best.rank<1||best.rank>50||
+    typeof Native?.receiveRaidValueEvidence!=="function")return false;
+ try{
+  Native.receiveRaidValueEvidence(JSON.stringify({
+   card:{sourceIndex:card.sourceIndex,name:card.name,number:card.number,
+    iv:card.iv,cp:card.cp,expiresAtMs:card.expiresAtMs,
+    form:card.form,costume:card.costume,location:card.location},
+   raid:{verified:true,projected:false,variant:"normal",name:best.name,
+    number:best.number,rank:best.rank,type:best.type,typePt:best.typePt,
+    source:report.source,ivIndependent:true}
+  }));
+  return true;
+ }catch(_){return false;}
+}
 function loadRaidBeforeCapture(card){
  const rank=window.PokeSearchRaidRank;
  const button=document.getElementById("raidRow");
@@ -2420,6 +2444,7 @@ function loadRaidBeforeCapture(card){
  Promise.resolve().then(()=>rank.assess(card,related)).then(result=>{
   if(token!==psRaidToken||identity!==detailIdentity)return;
   psRaidReport=result;renderRaidPreview();
+  psShareExistingRaidEvidence(card,result);
  }).catch(()=>{
   if(token!==psRaidToken||identity!==detailIdentity)return;
   psRaidReport={verified:false,reason:"Fonte PvE indisponível"};
