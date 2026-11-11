@@ -3239,10 +3239,19 @@ public class OverlayService extends Service {
             card.remove("evidenceReusedFields");
             JSONObject prior=existing.get(encounterIdentityForMetadata(card));
             if(prior==null)continue;
+            // A new Shiny/sex presentation is not permission to inherit
+            // old IV/rank/moves. Distance is location-based and can still
+            // be retained for the same exact form, position and despawn.
+            boolean sameCombatState=card.optString("shiny","<missing>")
+                    .equals(prior.optString("shiny","<missing>"))&&
+                card.optString("gender","<missing>")
+                    .equals(prior.optString("gender","<missing>"))&&
+                card.optString("sex","<missing>")
+                    .equals(prior.optString("sex","<missing>"));
             try{
                 JSONArray inherited=new JSONArray();
                 for(String field:stable)
-                    if((!card.has(field)||card.isNull(field)||
+                    if(sameCombatState&&(!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
                         prior.has(field)&&!prior.isNull(field)&&
                         !prior.optString(field,"").trim().isEmpty()){
@@ -3256,7 +3265,7 @@ public class OverlayService extends Service {
                         inherited.put("distance");
                     }
                 }
-                if(samePvPMode)for(String field:scoped)
+                if(samePvPMode&&sameCombatState)for(String field:scoped)
                     if((!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
                         prior.has(field)&&!prior.isNull(field)&&
@@ -3276,7 +3285,8 @@ public class OverlayService extends Service {
                     card.optBoolean("isShadow",false)==prior.optBoolean("isShadow",false)&&
                     card.optBoolean("shadow",false)==prior.optBoolean("shadow",false)&&
                     card.optBoolean("shiny",false)==prior.optBoolean("shiny",false)&&
-                    card.optString("gender","").equals(prior.optString("gender",""));
+                    card.optString("gender","").equals(prior.optString("gender",""))&&
+                    card.optString("sex","").equals(prior.optString("sex",""));
                 if(sameArtIdentity&&card.optString("image","").isEmpty()&&
                     prior.optBoolean("imageFromSite",false)&&
                     prior.optString("image","").startsWith("https://")&&
@@ -3299,12 +3309,12 @@ public class OverlayService extends Service {
             card.optString("number")+"|"+card.optString("name")+"|"+
             card.optString("cp")+"|"+card.optString("level")+"|"+
             card.optString("location")+"|"+card.optLong("expiresAtMs"));
-        // Different forms, costumes or shadows can otherwise inherit each
-        // other's IV/rank/sprite when their visible name and PC coincide.
-        // Missing and explicit empty values are deliberately distinct.
+        // The encounter key keeps form/costume distinct. Shiny and sex
+        // are checked per-field above: an absent Shiny/sex flag must not
+        // suppress a valid distance from the same position and despawn.
+        // Missing and explicit empty form values remain distinct.
         for(String field:new String[]{"form","form_id","costume","costume_id",
-                "costumeId","isCostume","isShadow","shadow","shiny",
-                "gender","sex","variant","region"}){
+                "costumeId","isCostume","isShadow","shadow","variant","region"}){
             identity.append('|').append(field).append('=');
             identity.append(card.has(field)&&!card.isNull(field)?
                 card.optString(field,""):"<missing>");
