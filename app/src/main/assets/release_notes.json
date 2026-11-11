@@ -3654,6 +3654,29 @@
           "A validação física da atualização no Samsung, nas duas Pokébolas e nos tamanhos P/M/G, permanece pendente; a instalação do APK exige confirmação do Android."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt326-destaques-opcionais-20261111",
+      "minVersionCode": 54532,
+      "date": "11/11/2026",
+      "title": "PokeSearch LT326 — Destaques opcionais e fora das sprites",
+      "sections": {
+        "novidades": [
+          "Agora os símbolos de valor e qualidade dos Pokémon ficam ocultos por padrão. Para ativar: Personalização → Info Pokémon → ◆ Destaques."
+        ],
+        "melhorias": [
+          "Quando ativados, os indicadores aparecem em uma faixa discreta de 12 px ao lado da sprite, sem encobrir o Pokémon.",
+          "A configuração é salva de maneira independente para cada Pokébola e restaurada ao reabrir o aplicativo.",
+          "Nos tamanhos P, M e G, desativar os destaques remove completamente a faixa e preserva a largura compacta anterior."
+        ],
+        "correcoes": [
+          "Corrigidos os losangos da LT325 que apareciam sobre os desenhos e poluíam a lista de resultados.",
+          "Preservados os indicadores de valor, qualidade e Reides existentes, sem novas buscas à API, filtros ou notificações."
+        ],
+        "emDesenvolvimento": [
+          "A validação visual automatizada P/M/G foi aprovada; a conferência física em Samsung com ambas as Pokébolas ainda não foi realizada."
+        ]
+      }
     }
   ]
 }
