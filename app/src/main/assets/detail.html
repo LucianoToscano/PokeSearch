@@ -2393,9 +2393,9 @@ function psShareExistingRaidEvidence(card,report){
     report?.ivIndependent!==true||best?.projected!==false||
     best?.variant!=="normal"||!Number.isInteger(best.rank)||
     best.rank<1||best.rank>50||
-    typeof Native?.receiveRaidValueEvidence!=="function")return false;
+    typeof window.Native?.receiveRaidValueEvidence!=="function")return false;
  try{
-  Native.receiveRaidValueEvidence(JSON.stringify({
+  window.Native.receiveRaidValueEvidence(JSON.stringify({
    card:{sourceIndex:card.sourceIndex,name:card.name,number:card.number,
     iv:card.iv,cp:card.cp,expiresAtMs:card.expiresAtMs,
     form:card.form,costume:card.costume,location:card.location},
