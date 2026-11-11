@@ -6100,6 +6100,9 @@ public class OverlayService extends Service {
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
         showTimers=pref.getBoolean("showTimers",false);
         showResultText=pref.getBoolean("showResultText",false);
+        // Initial service start must restore the opt-in, not only SYNC_PREFS.
+        // P1/P2 read their own overlayPrefs() and never share this switch.
+        resultShowHighlights=pref.getBoolean("resultShowHighlights",false);
         alerts=pref.getBoolean("alerts",false);
         alertsMode=pref.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";
