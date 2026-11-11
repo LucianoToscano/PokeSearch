@@ -36,7 +36,7 @@ for(const dex of [710,711]){
 assert.equal(art.resolve({name:"Drifblim",number:"#426",form:"",image:""}).src,base+"426.png");
 assert.equal(art.resolve({name:"Pumpkaboo",number:"#710",form:"Average",costume_id:57}).src,"");
 const now=Date.now();
-const response=api.normalizeResponse({cap:10,results:[{pokemon_id:710,pokemon_name:"Pumpkaboo",form:"AVERAGE",form_id:2641,cp:645,level:21,raw_iv:"0/14/13",iv_percent:60,despawn_at:new Date(now+600000).toISOString()}]}, {nowMs:now});
-assert.equal(response.ok,true);assert.equal(response.cards[0].form_id,2641);
+const response=api.normalizeResponse({cap:10,results:[{pokemon_id:710,pokemon_name:"Pumpkaboo",form:"AVERAGE",form_id:2642,cp:645,level:21,raw_iv:"0/14/13",iv_percent:60,despawn_at:new Date(now+600000).toISOString()}]}, {nowMs:now});
+assert.equal(response.ok,true);assert.equal(response.cards[0].form_id,2642);
 assert.equal(art.resolve(response.cards[0]).src,base+"710.png");
 console.log("LT126: shared Firebase Chat, pinned metadata importer and Pumpkaboo/Drifblim sprite regressions PASS");
