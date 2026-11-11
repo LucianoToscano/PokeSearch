@@ -21,7 +21,6 @@ test("new and upgraded installations have markers OFF",()=>{
 });
 test("native sends separate boolean state to all 4 WebViews",()=>{
  assert.match(java,/,\\"highlights\\":\+resultShowHighlights/);
- const fn=native("private void update(){","private void ");
  assert.ok(java.includes("resultDisplayOptionsJson()"),"shared bridge JSON");
  assert.match(dock,/highlights:displayPrefs\.highlights===true/);
 });
@@ -50,7 +49,7 @@ test("render does not compute or show value indicators while OFF",()=>{
  assert.match(dock,/const markerRail=resultDisplayOptions\.highlights\?/);
 });
 test("both confidence warning and value marker leave the spriteStage",()=>{
- const card=slice("const icon='<span class=\"spriteStage\">';","const kind=");
+ const card=slice("const icon='<span class=\"spriteStage\">'+","const kind=");
  assert.ok(!card.includes("+evidenceFlag+valueFlag+"),"no marker in sprite box");
  assert.match(card,/\+'<\/span><\/span>'\+markerRail/);
  assert.match(dock,/class="resultMarkerRail" aria-hidden="true"/);
