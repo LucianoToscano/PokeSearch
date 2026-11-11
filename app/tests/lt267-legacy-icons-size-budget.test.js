@@ -20,8 +20,16 @@ for(const name of names){
 }
 assert.ok(workflow.includes('assert "assets/ui-icons/"+filename not in names'),"APK must not carry legacy duplicate");
 assert.ok(workflow.includes("import sys,zipfile,hashlib,os"),"APK verifier imports OS for archive verification");
-assert.ok(workflow.includes('test "$(stat -c %s "$APK")" -lt 35000000'),
- "The original 35 MB size safety guard remains strict");
+// LT328 adds 35 individually authenticated GO PNGs. Maintain a strict
+// post-compile bound while also verifying all 35 Git blob hashes inside APK.
+assert.ok(workflow.includes('test "$APK_BYTES" -lt 37000000'),
+ "Release must retain a bounded 37 MB APK size gate");
+assert.ok(workflow.includes('assert len(extra)==35'),
+ "Every new GO costume/form sprite must be included in release integrity audit");
+assert.ok(workflow.includes('assert blob==expected_sha'),
+ "Every supplemental PNG must match its immutable source Git blob");
+assert.ok(workflow.includes('test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"'),
+ "Permanent Android signing fingerprint must still match");
 assert.ok(oldSize>5000000,"Measured multi-megabyte waste removed from shipping assets");
 const signedQa=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt146-signed-update-qa.yml"),"utf8");
 assert.ok(signedQa.includes("LT267 QA: 18 transparent local types and exact pinned digests PASS"),
@@ -30,4 +38,5 @@ assert.ok(signedQa.includes("image.readUInt32BE(16)!==512"),
   "signed QA must reject wrong-size or missing LT267 PNGs");
 assert.ok(!signedQa.includes("data:image/png;base64,iVBORw0KGgo"),
   "signed QA must not expect old inline Base64 icons");
-console.log("LT267 APK size PASS: archived 18 originals with exact SHA, removed "+oldSize+" unused bytes, 35MB guard intact");
+console.log("LT267/LT328 APK size PASS: archived 18 originals, removed "+
+ oldSize+" unused bytes, 37 MB guard and 35 pinned GO PNG validations intact");
