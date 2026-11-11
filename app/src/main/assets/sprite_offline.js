@@ -2239,6 +2239,17 @@
    if(!proto||!name||!proto.startsWith(name)||proto.length<=name.length)
     return {blocked:true};
    form=proto.slice(name.length);
+   const explicit=nameKey(card.form);
+   // Exact formId and explicit form label must agree. A contradictory label
+   // (including a fake regional name) must not borrow a valid form's art.
+   if(explicit){
+    const naked=explicit.startsWith(name)?explicit.slice(name.length):explicit;
+    const region=part=>GO_REGION_KEYS[part]||part;
+    const clean=part=>region(part.replace(/FORM$/,""));
+    const label=nameKey(match?.[1]);
+    if(clean(naked)!==clean(form)&&clean(naked)!==clean(label))
+     return {blocked:true};
+   }
   }
   if(rawCostume!=null&&Number(rawCostume)!==0){
    if(!/^\d+$/.test(String(rawCostume)))return {blocked:true};
