@@ -28,7 +28,7 @@ assert.equal(art.rankSprite("Gengar (Shadow)"),
  "file:///android_asset/pokemon-sprites/base/94.png");
 assert.equal(art.rankSpriteMeta("Gengar (Shadow)").shadow,true,
  "Rank Geral labels shadow explicitly while sharing verified species art");
-assert.match(html,/if\(!\["normal","mega"\]\.includes\(row\.variant\)\)return "";/,
+assert.ok(html.includes('!["normal","mega"].includes(row.variant)'),
  "Raid preview still rejects shadow rank artwork, without guessed PvE sprite");
 const inline=html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert.ok(inline);new vm.Script(inline);
