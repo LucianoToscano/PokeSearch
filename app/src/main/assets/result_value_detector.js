@@ -13,6 +13,38 @@
  const validRank=(v,max)=>Number.isInteger(v)&&v>=1&&v<=max?v:null;
  const leagues=["gl","ul","ml"];
  const short={gl:"GL",ul:"UL",ml:"ML"};
+ const raidTypes=new Set(["bug","dark","dragon","electric","fairy","fighting",
+  "fire","flying","ghost","grass","ground","ice","normal","poison","psychic",
+  "rock","steel","water"]);
+ const norm=v=>typeof v==="string"?v.normalize("NFD")
+  .replace(/[\u0300-\u036f]/g,"").trim().toLowerCase().replace(/\s+/g," "):"";
+ const dex=v=>{const n=Number(String(v??"").replace(/^#/,"").trim());
+  return Number.isInteger(n)&&n>=1&&n<=2000?n:null;};
+ // The PvE source ranks a SPECIES by attack type at level 50, not a
+ // specific caught IV/moveset. Accept only the exact captured, ordinary form.
+ function raidCandidate(c,report){
+  if(report?.verified!==true||report?.projected!==false||
+     report?.ivIndependent!==true||report?.variant!=="normal"||
+     report?.source!=="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)"||
+     !raidTypes.has(report?.type))return null;
+  const rank=validRank(report.rank,50);
+  const own=dex(c.number??c.dex),theirs=dex(report.number);
+  if(rank===null||own===null||theirs!==own||!norm(c.name)||
+     norm(c.name)!==norm(report.name))return null;
+  const exceptional=v=>v!==undefined&&v!==null&&v!==false&&v!==0&&
+   !/^(?:|none|normal|default|false|0)$/i.test(String(v).trim());
+  if(c.isCostume===true||c.isShadow===true||c.shadow===true||
+     exceptional(c.costume_id)||exceptional(c.costumeId)||
+     exceptional(c.costume)||exceptional(c.form)||exceptional(c.form_id)||
+     /(?:\(mega(?: [xy])?\)|\(shadow\)|^mega\s)/i.test(String(c.name||"")))
+   return null;
+  const typePt=typeof report.typePt==="string"&&
+   /^[\p{L}\s-]{3,20}$/u.test(report.typePt)?report.typePt:report.type;
+  return Object.freeze({kind:"raid",symbol:"◈",priority:150,
+   label:"Raides · #"+rank+" "+typePt+
+    " · referência por espécie (IV 15/15/15 no nível 50; não são os IVs capturados)",
+   projected:false,rank,type:report.type});
+ }
  function detect(card,context,analysis) {
   const c=card&&typeof card==="object"?card:{};
   const opts=context&&typeof context==="object"?context:{};
@@ -24,18 +56,18 @@
   if(c.evidenceVerified!==true||c.evidencePartial===true||
      c.evidenceOld===true||opts.stale===true||opts.searching===true||
      !Number.isFinite(expiry)||expiry<=now||expiry>now+86400000||
-     opts.ivVerified!==true||!Array.isArray(rows.leagues))
+     !Array.isArray(rows.leagues))
     return null;
   const raw=typeof c.iv==="string"?c.iv.trim():"";
-  if(!/^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw))
-    return null;
+  const hasRaw=opts.ivVerified===true&&
+   /^(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])\/(?:[0-9]|1[0-5])$/.test(raw);
   // IV 100% means exact 15/15/15, not a search threshold or a
   // rounded percentage from another spawn.
-  if(raw==="15/15/15"&&opts.ivPercent===100)
+  if(hasRaw&&raw==="15/15/15"&&opts.ivPercent===100)
    return Object.freeze({kind:"perfect",symbol:"◆",priority:400,
     label:"IV 100% · 15/15/15",projected:false});
   const matches=[];
-  for(const row of rows.leagues.slice(0,3)){
+  for(const row of (hasRaw?rows.leagues:[]).slice(0,3)){
    const league=row?.league;
    if(!leagues.includes(league)||matches.some(x=>x.league===league))continue;
    const iv=validRank(row.ivRank,4096),rg=validRank(row.overallRank,10000);
@@ -58,6 +90,11 @@
    return Object.freeze({kind:best.kind,symbol:"◆",priority:best.priority,
     label:best.label,league:best.league,projected:false});
   }
+  // A verified PvE snapshot is useful even if this catch has no A/D/S:
+  // it never claims its particular IVs, moves or boss-counter strength.
+  const raid=raidCandidate(c,rows.raid);
+  if(raid)return raid;
+  if(!hasRaw)return null;
   // Projection-only: the EXISTING evolution engine must have proved a
   // numerical CP fit and an exact species+league IV rank. Items, quests,
   // costume legality and ability to evolve remain explicitly unverified.
