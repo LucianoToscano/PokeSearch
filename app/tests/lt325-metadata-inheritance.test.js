@@ -61,7 +61,7 @@ t("previous km is reused only for identical explicit search center",()=>{
 });
 t("previous PvP rank is scoped to same league mode, not merely IV percent",()=>{
  assert.match(reuse,/boolean samePvPMode=shownMode\.equals\(mode\)/);
- assert.match(reuse,/if\(samePvPMode\)for\(String field:scoped\)/);
+ assert.match(reuse,/if\(samePvPMode&&sameCombatState\)for\(String field:scoped\)/);
 });
 t("evidence marks carried fields without masquerading as new source fields",()=>{
  const result=evidence.assess({...card,
