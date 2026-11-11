@@ -18,6 +18,7 @@ test("new and upgraded installations have markers OFF",()=>{
  assert.match(dock,/shiny:false,highlights:false/);
  assert.match(java,/resultShowHighlights=false;/);
  assert.match(java,/resultShowHighlights=prefs\.getBoolean\("resultShowHighlights",false\)/);
+ assert.match(java,/resultShowHighlights=pref\.getBoolean\("resultShowHighlights",false\)/);
 });
 test("native sends separate boolean state to all 4 WebViews",()=>{
  assert.ok(java.includes('\\"highlights\\"')&&java.includes('resultShowHighlights+'),
