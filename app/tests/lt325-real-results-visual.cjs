@@ -84,8 +84,12 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
      return {button:[b.width,b.height,b.left,b.top],stage:sprite?
       [sprite.width,sprite.height,sprite.left,sprite.top]:[]};
     });
-    const usable=dimensions.every(x=>x.button[0]>=30&&x.button[1]>=30&&
-     x.button[0]<=window.innerWidth);
+    // The actual result tiles are deliberately 24/32/40px for P/M/G.
+    // Do not confuse them with the 35/45/55 native sprite-size presets.
+    const tile=spriteSize===55?40:spriteSize===45?32:24;
+    const usable=dimensions.every(x=>x.button[0]>=tile-0.25&&
+     x.button[1]>=tile-0.25&&x.button[0]<=window.innerWidth&&
+     x.stage[0]>=tile-0.25&&x.stage[1]>=tile-0.25);
     return {denied,accepted,flags:flags.length,dimensions,
      raiders:document.querySelectorAll(".resultValueFlag.raid").length,
      warnings:document.querySelectorAll(".resultEvidenceFlag.partial").length,
