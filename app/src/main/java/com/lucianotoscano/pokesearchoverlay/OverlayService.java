@@ -3815,6 +3815,68 @@ public class OverlayService extends Service {
             yes||resultCollapsed||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
     }
+    /* LT325: a verified Raid assessment already requested by detail.html can
+     * annotate ONLY this same still-live encounter in the results WebView.
+     * No network, no new alert, no cross-Pokéball cache and no disclosure.
+     * Do not persist or pass a rank until the source and identity match.
+     */
+    private void acceptRaidValueEvidence(String raw){
+        if(stopped||raw==null||raw.length()>1600||selected<0||
+            !resultLoaded||resultPanel==null||detailRoot==null||
+            detailRoot.getVisibility()!=View.VISIBLE||
+            resultsStale||searchInProgress||!"updated".equals(searchPhase))return;
+        try{
+            JSONObject envelope=new JSONObject(raw);
+            JSONObject input=envelope.optJSONObject("card");
+            JSONObject rank=envelope.optJSONObject("raid");
+            if(input==null||rank==null||
+                !rank.optBoolean("verified",false)||
+                rank.optBoolean("projected",true)||
+                !rank.optBoolean("ivIndependent",false)||
+                !"normal".equals(rank.optString("variant",""))||
+                !"S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)"
+                    .equals(rank.optString("source","")))return;
+            int ranking=rank.optInt("rank",0);
+            if(ranking<1||ranking>50)return;
+            String type=rank.optString("type","");
+            if(!("bug,dark,dragon,electric,fairy,fighting,fire,flying,ghost,"+
+                "grass,ground,ice,normal,poison,psychic,rock,steel,water")
+                .contains(type) || !type.matches("[a-z]{3,9}"))return;
+            JSONArray arr=new JSONArray(results);
+            if(selected>=arr.length())return;
+            JSONObject current=arr.optJSONObject(selected);
+            if(current==null||!current.optBoolean("evidenceVerified",false)||
+                current.optBoolean("evidencePartial",false)||
+                current.optLong("expiresAtMs",0L)<=System.currentTimeMillis())return;
+            for(String key:new String[]{"sourceIndex","name","number","iv","cp",
+                    "expiresAtMs","form","costume","location"}){
+                if(!current.optString(key,"").equals(input.optString(key,"")))return;
+            }
+            String ownName=current.optString("name","").trim();
+            if(ownName.isEmpty()||
+                !ownName.equalsIgnoreCase(rank.optString("name","").trim()))return;
+            String ownDex=current.optString("number","").replace("#","").trim();
+            if(!ownDex.matches("[0-9]{1,4}"))return;
+            int dexNumber=Integer.parseInt(ownDex);
+            if(dexNumber<1||dexNumber>2000||
+                rank.optInt("number",0)!=dexNumber)return;
+            JSONObject checked=new JSONObject();
+            checked.put("verified",true);
+            checked.put("projected",false);
+            checked.put("ivIndependent",true);
+            checked.put("variant","normal");
+            checked.put("name",ownName);
+            checked.put("number",dexNumber);
+            checked.put("rank",ranking);
+            checked.put("type",type);
+            checked.put("typePt",rank.optString("typePt","").substring(
+                0,Math.min(24,rank.optString("typePt","").length())));
+            checked.put("source","S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)");
+            js(resultPanel,resultLoaded,"window.receiveVerifiedRaidEvidence("+
+                selected+","+current.toString()+","+checked.toString()+")");
+        }catch(Exception e){BugReport.log(this,"RAID_VALUE_EVIDENCE","Metadado PvE rejeitado");}
+    }
+
     private void showDetails(int index){
         if(detailRoot==null||detailPanel==null||!detailLoaded||minimized)return;
         try{
@@ -5681,6 +5743,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
         @JavascriptInterface public void resizePopup(int width,int height){
             handler.post(()->resizeIndependentPopup(width,height));
+        }
+        @JavascriptInterface public void receiveRaidValueEvidence(String json){
+            if(json==null||json.length()>1600)return;
+            handler.post(()->OverlayService.this.acceptRaidValueEvidence(json));
         }
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{
