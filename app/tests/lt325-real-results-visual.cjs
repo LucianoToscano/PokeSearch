@@ -130,6 +130,14 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
    });
    assert.deepEqual(invalidated,{raid:0,values:0,expired:1},
     "changed identity and expiry cannot retain value markers "+sz.name);
+   const unknownDespawn=await page.evaluate(()=>{
+    cards[0]={...cards[0],expiresAtMs:null};
+    lastListKey="";draw();
+    return {unknown:document.querySelectorAll("#spawns .resultEvidenceFlag.unverified").length,
+     perfect:document.querySelectorAll("#spawns .resultValueFlag").length};
+   });
+   assert.deepEqual(unknownDespawn,{unknown:1,perfect:0},
+    "unknown despawn cannot be presented as a fresh verified hundo "+sz.name);
    assert.equal(extraRaidRequests,0,"results have no new remote Raid fetch "+sz.name);
    assert.deepEqual(errors,[],"no production JS error "+sz.name);
    console.log("LT325 results visual "+sz.name+" PASS",combined);
