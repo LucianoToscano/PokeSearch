@@ -3461,8 +3461,27 @@ public class OverlayService extends Service {
             // Retain eligibility until an actual accepted notification or TTL.
             int candidateTopRank=verifiedTopPvpRank(c,leagueConfirmed);
             int currentTopRank=verifiedTopPvpRank(firstNewCard,leagueConfirmed);
+            // Use only evidence from this accepted search; never promote an
+            // inherited IV, a search threshold or an unconfirmed API result.
+            boolean candidateHundo=PvpAlertPriority.verifiedHundo(
+                c.optBoolean("evidenceVerified",false)&&
+                    !c.optBoolean("evidencePartial",false),
+                verifiedTargetCriteria(c),c.optString("iv",""),
+                c.optString("ivPercent",""));
+            boolean currentHundo=firstNewCard!=null&&
+                PvpAlertPriority.verifiedHundo(
+                    firstNewCard.optBoolean("evidenceVerified",false)&&
+                        !firstNewCard.optBoolean("evidencePartial",false),
+                    verifiedTargetCriteria(firstNewCard),
+                    firstNewCard.optString("iv",""),
+                    firstNewCard.optString("ivPercent",""));
             boolean higherPriority=PvpAlertPriority.higherPriority(
                 candidateTopRank,currentTopRank);
+            // Keep Top PvP priority higher than Hundo; for two ordinary
+            // candidates, the Hundo wins the SAME pre-existing alert slot.
+            if(!higherPriority&&candidateTopRank==0&&currentTopRank==0)
+                higherPriority=PvpAlertPriority.higherValuePriority(
+                    candidateTopRank,candidateHundo,currentTopRank,currentHundo);
             if((firstNew.isEmpty()||higherPriority) &&
                 successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
