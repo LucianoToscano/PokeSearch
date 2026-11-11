@@ -11,7 +11,7 @@ const detail=read('src/main/assets/detail.html');
 const java=read('src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java');
 const accepted={evidenceSource:'api',evidenceVerified:true,evidencePartial:false,
  iv:'0/15/15',ivPercent:'67',distance:'2.4 km',rank:'1',ivRankSource:'api-pvp',
- shiny:true,expiresAtMs:Date.UTC(2026,10,13)};
+ shiny:true,expiresAtMs:Date.UTC(2026,10,10,0,10)};
 const now=Date.UTC(2026,10,10);
 let tests=0;
 function test(name,body){body();tests++;console.log('PASS LT325 '+name);}
