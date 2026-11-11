@@ -2394,30 +2394,78 @@
  /* LT296: only rank family identities proven by the independent Dex table
   * may receive bundled species sprites. Never replace an unknown costume,
   * colour, regional or Shadow variant with a misleading base sprite. */
- function rankSprite(rawName){
-  let name=String(rawName||"").trim(),form="";
-  if(!name||name.length>90)return "";
-  const megaPrefix=/^Mega\s+(.+?)(?:\s+([XY]))?$/i.exec(name);
-  const megaSuffix=/^(.+?)\s+\(Mega(?:\s+([XY]))?\)$/i.exec(name);
+
+ /* LT327: Rank Geral uses only species/form identities verified by the
+  * existing Dex, PokeAPI variety map or the pinned Pokémon GO sprite index.
+  * Shadow shares its species/form artwork: aura is a UI label, never an
+  * invented alternate form. Return fallbacks so Android can recover images. */
+ function rankSpriteMeta(rawName){
+  const raw=String(rawName||"").trim();
+  const empty={src:"",candidates:[],shadow:false,dex:0,exact:false};
+  if(!raw||raw.length>100)return empty;
+  const shadow=/\s+\(Shadow\)$/i.test(raw);
+  let value=raw.replace(/\s+\(Shadow\)$/i,""),name=value,form="";
+  const megaPrefix=/^Mega\s+(.+?)(?:\s+([XY]))?$/i.exec(value);
+  const megaSuffix=/^(.+?)\s+\(Mega(?:\s+([XY]))?\)$/i.exec(value);
   if(megaPrefix||megaSuffix){
-   const mega=megaPrefix||megaSuffix;
-   name=mega[1];form="Mega"+(mega[2]||"");
+   const m=megaPrefix||megaSuffix;
+   name=m[1];form="Mega"+(m[2]||"");
   }else{
-   const extra=/^(.+?)\s+\(([^)]+)\)$/.exec(name);
-   if(extra){
-    if(!/^(?:Sandy|Trash|Plant|East Sea|West Sea|Alolan|Galarian|Hisuian)$/i.test(extra[2]))
-     return "";
-    name=extra[1];form=extra[2];
-   }
+   const match=/^(.+?)\s+\(([^()]+)\)$/.exec(value);
+   if(match){name=match[1];form=match[2];}
   }
-  const identity=nameKey(name);
-  const ids=Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===identity);
-  if(ids.length!==1)return "";
-  const art=resolve({number:Number(ids[0]),name,form,shiny:false});
-  // Unknown variants cannot silently inherit a base Pokemon illustration.
-  return art?.src&&/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(art.src)?
-   art.src:"";
+  // A nested or unexpected suffix is not a verified Pokémon/form identity.
+  if(/[()]/.test(name)||/[()]/.test(form))return {...empty,shadow};
+  const species=nameKey(name);
+  const ids=Object.keys(BASE_SPECIES).filter(id=>BASE_SPECIES[id]===species);
+  if(ids.length!==1)return {...empty,shadow};
+  const dex=Number(ids[0]),f=nameKey(form);
+  const alias=Object.freeze({
+   "128:AQUA":"PALDEA_AQUA","128:COMBAT":"PALDEA_COMBAT",
+   "128:BLAZE":"PALDEA_BLAZE","150:ARMORED":"A",
+   "421:SUNSHINE":"SUNNY","555:GALARIAN":"GALARIAN_STANDARD",
+   "718:50FORME":"FIFTY_PERCENT","718:10FORME":"TEN_PERCENT",
+   "718:COMPLETEFORME":"COMPLETE","741:POMPOM":"POMPOM",
+   "741:PAU":"PAU","892:SINGLESTRIKE":"SINGLE_STRIKE",
+   "892:RAPIDSTRIKE":"RAPID_STRIKE",
+   "888:CROWNEDSWORD":"CROWNED_SWORD",
+   "889:CROWNEDSHIELD":"CROWNED_SHIELD",
+   "800:DUSKMANE":"DUSK_MANE","800:DAWNWINGS":"DAWN_WINGS"
+  });
+  // Male Meowstic is the independently verified default form (#678).
+  const defaultForm=dex===678&&f==="MALE";
+  const variantKey=dex+":"+f,fullKey=dex+":"+species+f;
+  const entry=FORM_VARIANTS[FORM_ALIASES[variantKey]||variantKey]||
+   FORM_VARIANTS[FORM_ALIASES[fullKey]||fullKey];
+  const goForm=form?(alias[dex+":"+f]||form):"";
+  const goArt=form?goExactIcon({number:dex,name,form:goForm,shiny:false}):null;
+  if(form&&!entry&&!goArt&&!defaultForm)return {...empty,shadow,dex};
+  const localArt=resolve({number:dex,name,form:defaultForm?"":form,shiny:false});
+  const plainArt=defaultForm?localArt:(!form?localArt:null);
+  const sources=[];
+  const add=src=>{
+   const value=String(src||"");
+   if(/^(?:file:\/\/\/android_asset\/|https:\/\/)/.test(value)&&
+      !sources.includes(value))sources.push(value);
+  };
+  // Use verified, locally bundled exact forms first. Never fall back to a
+  // different regional colour, costume or species for an unknown form.
+  if(entry&&localArt?.exactForm){
+   add(localArt.src);add(localArt.original);
+  }
+  if(goArt){
+   const bundled=bundledGoCostumeSource(goArt);
+   if(bundled)add(bundled);
+   add(goArt.src);add(goArt.original);
+  }
+  if(!form||defaultForm){
+   add(plainArt?.src);add(plainArt?.original);
+  }
+  return {src:sources[0]||"",candidates:sources,shadow,dex,
+   exact:sources.length>0,form};
  }
- return Object.freeze({resolve,rankSprite,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
+ function rankSprite(rawName){return rankSpriteMeta(rawName).src;}
+
+ return Object.freeze({resolve,rankSprite,rankSpriteMeta,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
   verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm,exactWestSeaForm});
 });
