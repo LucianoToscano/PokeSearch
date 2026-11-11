@@ -66,7 +66,10 @@ const wwm={species:{
  56:["VULPIX_ALOLA","Alola"],55:["VULPIX_NORMAL","Normal"],
  2641:["PUMPKABOO_SMALL","Small"],
  3376:["PIKACHU_ANNIVERSARY_2026_THAILAND_01","Anniversary 2026 Thailand 01"]
- },costumes:{57:["FALL_2022","Fall 2022"]}};
+ },costumes:{57:["FALL_2022","Fall 2022"]},
+ ptBr:{pt_forms:{"form_56":"Alola","form_2641":"Pequeno",
+  "form_3376":"Aniversário 2026 Tailândia 01"},
+ pt_costumes:{"costume_57":"Outono 2022"}}};
 const mod={exports:{}};
 new Function("module","exports","globalThis",code)(mod,mod.exports,
  {PokeSearchWWMCatalog:wwm});
@@ -77,11 +80,23 @@ assert.ok(resolver.goExactIcon({number:710,name:"Pumpkaboo",
  form_id:2641,costume_id:57})?.src.endsWith("pm710.fSMALL.cFALL_2022.icon.png"));
 assert.ok(resolver.goExactIcon({number:25,name:"Pikachu",form_id:3376})
  ?.src.endsWith("pm25.fANNIVERSARY_2026_THAILAND_01.icon.png"));
+assert.ok(resolver.goExactIcon({number:710,name:"Pumpkaboo",
+ form:"Pequeno",costume:"Outono 2022"})?.src
+ .endsWith("pm710.fSMALL.cFALL_2022.icon.png"),
+ "official PT-BR labels map to exact numeric catalog IDs");
 for(const bad of [
  {number:37,name:"Vulpix",form_id:3362},
  {number:37,name:"Vulpix",form_id:56,form:"Fake Form"},
  {number:37,name:"Vulpix",form_id:56,costume_id:9999},
  {number:710,name:"Pumpkaboo",form_id:2641,costume_id:57,costume:"Wrong Costume"}
 ])assert.equal(resolver.goExactIcon(bad),null,"conflicting numeric catalog metadata");
+const native=fs.readFileSync(path.join(__dirname,
+ "../src/main/java/com/lucianotoscano/pokesearchoverlay/VerifiedSpriteCache.java"),"utf8");
+const builder=fs.readFileSync(path.join(__dirname,"../scripts/build_sprite_bundle.py"),"utf8");
+assert.ok(native.includes("go-extra-sprites-lt328.tsv"));
+assert.ok(native.includes("GO_COMMIT_LT328"));
+assert.ok(native.includes("GO_LT328_SOURCE"));
+assert.ok(builder.includes("LT328_RECENT_FILES"));
+assert.ok(builder.includes("LT328_MANIFEST"));
 console.log("LT328 OK: "+checked+" GO sprites incl. "+combined+
  " combined form+costume; WWM IDs, Shiny, gender and strict identity");
