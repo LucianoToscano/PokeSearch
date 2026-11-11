@@ -672,7 +672,7 @@ const sizes=[{name:"P",w:200,h:590},{name:"M",w:240,h:740},
       (duo.box.x+duo.box.width/2)):99;
     return {ok:solo.box.width===40&&duo.box.width===40&&
      solo.icons.length===1&&duo.icons.length===2&&
-     [...solo.icons,...duo.icons].every(i=>i.width===16&&i.height===16)&&
+     [...solo.icons,...duo.icons].every(i=>i.width===15&&i.height===15)&&
      Math.abs(gap-2)<.01&&center<.01&&dualCenter<.01,
      solo,duo,gap,center,dualCenter};
    });
