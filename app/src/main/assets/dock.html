@@ -4762,6 +4762,24 @@ body.popup-window.controls-window #shell #collapse{
 body.popup-window.controls-window #shell #menu #choices{
   visibility:visible!important;pointer-events:auto!important;
 }
+/* LT325: only flag unusual evidence; confirmed results get no repeated tick.
+   Stay inside each existing sprite hitbox, no extra rows or overlay buttons. */
+body.result-window .spriteStage .resultEvidenceFlag{
+ position:absolute;right:1px;top:0;z-index:3;pointer-events:none;
+ display:block;font:800 9px/9px Roboto,Arial,sans-serif;
+ color:#d1d8e2;text-shadow:0 1px 2px #000,0 0 3px #000;
+}
+/* One opportunity marker in the existing tile; never another rank strip. */
+body.result-window .spriteStage .resultValueFlag{
+ position:absolute;left:1px;top:0;z-index:3;pointer-events:none;
+ display:block;font:900 9px/9px Roboto,Arial,sans-serif;
+ color:#eac77c;text-shadow:0 1px 2px #000,0 0 3px #000;
+}
+body.result-window .spriteStage .resultValueFlag.projected{color:#c1c9d3}
+body.result-window .spriteStage .resultValueFlag.raid{color:#e1c892}
+body.result-window .spriteStage .resultEvidenceFlag.previous,
+body.result-window .spriteStage .resultEvidenceFlag.expired{color:#f1bd78}
+body.result-window .spriteStage .resultEvidenceFlag.partial{color:#cad4e3}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4793,7 +4811,7 @@ if(window.location.search.indexOf("results=1")!==-1){
  document.write('<script src="file:///android_asset/pvpoke-iv-gamemaster.js"><\/script>');
 }
 </script>
-<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script>
+<script src="wwm_catalog.js"></script><script src="sprite_offline.js"></script><script src="sprite_visual_scale.js"></script><script src="cooldown_estimate.js"></script><script src="result_evidence.js"></script><script src="result_value_detector.js"></script>
 <script>
 const controlsWindow=window.location.search.indexOf("controls=1")!==-1;
 const popupWindow=window.location.search.indexOf("popup=1")!==-1;
@@ -7344,6 +7362,39 @@ function computeResultLayout(items,chosenSprite,displayHeight,timersEnabled,text
   infoScale:Math.max(0.86,Math.min(1,factor))};
 }
 let lastListKey="",metadataCacheKey="",metadataCache=[];
+/* LT325: the Raid rank is obtained only by the already-open detail card.
+ * This cache lives in the current results WebView, never in preferences and
+ * never crosses P1/P2. An identical validated encounter is required.
+ */
+const psRaidValueByEncounter=new Map();
+function psRaidEncounterIdentity(card){
+ return JSON.stringify([
+  String(card?.sourceIndex??""),String(card?.name??""),
+  String(card?.number??""),String(card?.iv??""),String(card?.cp??""),
+  String(card?.expiresAtMs??""),String(card?.form??""),
+  String(card?.costume??""),String(card?.location??"")
+ ]);
+}
+window.receiveVerifiedRaidEvidence=function(index,exactCard,raid){
+ if(!resultWindow||!Number.isInteger(index)||index<0||index>=cards.length||
+    !exactCard||typeof exactCard!=="object"||!raid||typeof raid!=="object"||
+    resultsStale||searchActive)return false;
+ const current=cards[index];
+ if(psRaidEncounterIdentity(current)!==psRaidEncounterIdentity(exactCard))return false;
+ if(window.PokeSearchResultEvidence?.assess(current)?.state!=="verified")return false;
+ const raidCandidate=window.PokeSearchValueDetector?.detect(current,{
+  ivVerified:false,stale:false,searching:false
+ },{leagues:[],raid});
+ if(raidCandidate?.kind!=="raid")return false;
+ const key=psRaidEncounterIdentity(current),now=Date.now();
+ for(const [old,entry] of psRaidValueByEncounter)
+  if(entry.expiresAtMs<=now)psRaidValueByEncounter.delete(old);
+ if(psRaidValueByEncounter.size>=16)
+  psRaidValueByEncounter.delete(psRaidValueByEncounter.keys().next().value);
+ psRaidValueByEncounter.set(key,{raid,expiresAtMs:Number(current.expiresAtMs)});
+ lastListKey="";draw();
+ return true;
+};
 let cooldownState={enabled:false,linked:false,reference:null,apiVerified:false,fresh:false,searchCenter:""};
 window.onCooldownState=function(payload){
  cooldownState=payload&&typeof payload==="object"?
@@ -7467,13 +7518,52 @@ function draw(){
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
  const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
-  shownMode,resultDisplayOptions,cooldownState]);
+  shownMode,resultDisplayOptions,cooldownState,resultsStale,searchActive]);
  if(listKey!==lastListKey){lastListKey=listKey;
  // The gear and menu WebViews never create hidden sprite buttons.
  // Only the independent results WebView owns the Pokémon list and its taps.
  if(resultWindow)document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
   const verifiedPercent=verifiedSpawnIvPercent(c);
+  const evidence=window.PokeSearchResultEvidence?.assess(c,{
+   stale:resultsStale,searching:searchActive
+  },{ivVerified:verifiedPercent!==null});
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
+  const evidenceTitle=evidence?.explanation||"";
+  const evidenceFlag=evidence?.warning&&evidence.icon?
+   '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
+  // Rank Classe and Rank Geral are already derived and species-validated here;
+  // never treat the Top-N search ceiling as a Pokémon's actual rank.
+  let opportunity=null;
+  if(evidence?.state==="verified"&&window.PokeSearchValueDetector){
+   const rawVerified=verifiedSpawnRawIv(c)!==null;
+   const leagueOrder=rawVerified?
+    (shownMode==="gl"||shownMode==="ul"?[shownMode]:["gl","ul","ml"]):[];
+   const leagueValues=leagueOrder.map(league=>({
+    league,ivRank:verifiedSpeciesIvRank(c,league),
+    overallRank:verifiedOverallRank(c,league)
+   }));
+   const context={ivVerified:rawVerified,ivPercent:verifiedPercent,
+    stale:resultsStale,searching:searchActive};
+   const raid=psRaidValueByEncounter.get(psRaidEncounterIdentity(c))?.raid||null;
+   opportunity=window.PokeSearchValueDetector.detect(c,context,
+    {leagues:leagueValues,raid});
+   // Only the selected league may request a bounded evolution projection.
+   // A projected CP fit is not proof of item/quest/costume eligibility.
+   if(!opportunity&&rawVerified&&(shownMode==="gl"||shownMode==="ul")){
+    const evolution=bestEvolutionRank(c,shownMode);
+    if(evolution?.eligible===true){
+     const projection={league:shownMode,name:evolution.name,
+      ivRank:evolution.rank,eligible:true,
+      overallRank:verifiedOverallRank({name:evolution.name},shownMode)};
+     opportunity=window.PokeSearchValueDetector.detect(c,context,{
+      leagues:leagueValues,evolutions:[projection],raid});
+    }
+   }
+  }
+  const valueFlag=opportunity?
+   '<span class="resultValueFlag'+(opportunity.projected?' projected':
+    opportunity.kind==="raid"?' raid':'')+
+   '" aria-hidden="true">'+esc(opportunity.symbol)+'</span>':"";
   const art=window.PokeSearchOfflineSprite?
    window.PokeSearchOfflineSprite.resolve(c):
    {src:String(c.image||""),original:String(c.image||""),offline:false};
@@ -7516,7 +7606,7 @@ function draw(){
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
     ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">#'+
-    esc(String(dexNumber||"?"))+'</span></span>';
+    esc(String(dexNumber||"?"))+'</span>'+evidenceFlag+valueFlag+'</span>';
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
   let cooldownMarkup="";
@@ -7544,7 +7634,8 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  return '<button title="'+esc(label)+'" aria-label="'+esc(label)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
+  const accessibleLabel=[label,evidenceTitle,opportunity?.label].filter(Boolean).join(" · ");
+  return '<button title="'+esc(accessibleLabel)+'" aria-label="'+esc(accessibleLabel)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
  if(resultWindow){

@@ -15,6 +15,7 @@ on:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PvpAlertPriority.java'
       - 'app/tests/lt253-*'
+      - 'app/tests/lt325-real-results-visual.cjs'
       - '.github/workflows/lt253-visual-gate.yml'
   workflow_dispatch:
 permissions:
@@ -53,6 +54,10 @@ jobs:
         env:
           LT323_VISUAL_OUTPUT: visual-evidence-lt253
         run: node app/tests/lt323-raid-real-ui-visual.cjs
+      - name: LT325 real results-list quality and Raid markers P/M/G
+        env:
+          LT325_VISUAL_OUTPUT: visual-evidence-lt253
+        run: node app/tests/lt325-real-results-visual.cjs
       - name: Preserve visual evidence even if screenshot assertions fail
         if: always()
         uses: actions/upload-artifact@v4

@@ -23,4 +23,22 @@ final class PvpAlertPriority {
     static boolean higherPriority(int candidate,int current) {
         return candidate>0&&(current==0||candidate<current);
     }
+
+    // LT325: a source-verified 15/15/15 can take precedence over an ordinary
+    // candidate in the EXISTING general-notice slot. No extra notification,
+    // queue, sound, channel or suppression key is introduced.
+    static boolean verifiedHundo(boolean confirmed,boolean targetVerified,
+                                 String rawIv,String percent){
+        if(!confirmed||!targetVerified||rawIv==null||
+            !"15/15/15".equals(rawIv.trim()))return false;
+        String pct=percent==null?"":percent.trim().replace(',','.');
+        return pct.isEmpty()||pct.matches("100(?:\\.0{1,8})?");
+    }
+
+    static boolean higherValuePriority(int candidateTop,boolean candidateHundo,
+                                       int currentTop,boolean currentHundo){
+        if(candidateTop>0||currentTop>0)
+            return higherPriority(candidateTop,currentTop);
+        return candidateHundo&&!currentHundo;
+    }
 }

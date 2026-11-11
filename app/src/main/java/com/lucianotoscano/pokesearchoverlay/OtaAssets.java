@@ -60,6 +60,7 @@ final class OtaAssets {
             "ui-icons/mt-agil-normal-lt298.svg", "ui-icons/mt-carregada-normal-lt298.svg","pvpoke-overall-ranks.js", "pvpoke-little-ranks.js",
             "pvpoke-iv-gamemaster.js","pvp_rank_explorer.js",
             "pvp_rank_insights.js","pvp_rank_advanced_ui.js","pvp_rank_moves.js","pvp_evolution_moves_ui.js","pve_moves_ptbr.js","pve_raid_rank.js",
+            "result_evidence.js","result_value_detector.js",
             "pvp_family_catalog.js",
             "mega_evolution_icon.svg",
             "probe.js","release_notes.json","pokemon_catalog.json");

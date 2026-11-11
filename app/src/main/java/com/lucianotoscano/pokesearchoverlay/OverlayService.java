@@ -3235,33 +3235,58 @@ public class OverlayService extends Service {
         for(int i=0;i<incoming.length();i++){
             JSONObject card=incoming.optJSONObject(i);
             if(card==null)continue;
+            // The upstream source cannot forge a local cache-provenance flag.
+            card.remove("evidenceReusedFields");
             JSONObject prior=existing.get(encounterIdentityForMetadata(card));
             if(prior==null)continue;
+            // A new Shiny/sex presentation is not permission to inherit
+            // old IV/rank/moves. Distance is location-based and can still
+            // be retained for the same exact form, position and despawn.
+            boolean sameCombatState=card.optString("shiny","<missing>")
+                    .equals(prior.optString("shiny","<missing>"))&&
+                card.optString("gender","<missing>")
+                    .equals(prior.optString("gender","<missing>"))&&
+                card.optString("sex","<missing>")
+                    .equals(prior.optString("sex","<missing>"));
             try{
+                JSONArray inherited=new JSONArray();
                 for(String field:stable)
-                    if((!card.has(field)||card.isNull(field)||
+                    if(sameCombatState&&(!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
                         prior.has(field)&&!prior.isNull(field)&&
-                        !prior.optString(field,"").trim().isEmpty())
+                        !prior.optString(field,"").trim().isEmpty()){
                         card.put(field,prior.get(field));
+                        inherited.put(field);
+                    }
                 if(sameDistanceCenter&&card.optString("distance","").trim().isEmpty()){
                     String trustedDistance=prior.optString("distance","").trim();
-                    if(trustedDistance.matches("(?i)\\d+(?:[.,]\\d+)?\\s*(?:km|m|mi)"))
+                    if(trustedDistance.matches("(?i)\\d+(?:[.,]\\d+)?\\s*(?:km|m|mi)")){
                         card.put("distance",trustedDistance);
+                        inherited.put("distance");
+                    }
                 }
-                if(samePvPMode)for(String field:scoped)
+                if(samePvPMode&&sameCombatState)for(String field:scoped)
                     if((!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
                         prior.has(field)&&!prior.isNull(field)&&
-                        !prior.optString(field,"").trim().isEmpty())
+                        !prior.optString(field,"").trim().isEmpty()){
                         card.put(field,prior.get(field));
-                // Lazy site images may disappear on refresh while their exact
-                // encounter stays visible. Keep the original URL ONLY when
-                // form, costume, Shiny and identity all still match.
+                        inherited.put(field);
+                    }
+                // Site artwork must refer to the exact same known form,
+                // costume, shiny state and encounter, not a base sprite
+                // borrowed from a region/event variant with the same Dex.
                 boolean sameArtIdentity=card.optString("form","").equals(prior.optString("form",""))&&
+                    card.optString("form_id","").equals(prior.optString("form_id",""))&&
                     card.optString("costume","").equals(prior.optString("costume",""))&&
+                    card.optString("costume_id","").equals(prior.optString("costume_id",""))&&
+                    card.optString("costumeId","").equals(prior.optString("costumeId",""))&&
+                    card.optBoolean("isCostume",false)==prior.optBoolean("isCostume",false)&&
+                    card.optBoolean("isShadow",false)==prior.optBoolean("isShadow",false)&&
+                    card.optBoolean("shadow",false)==prior.optBoolean("shadow",false)&&
                     card.optBoolean("shiny",false)==prior.optBoolean("shiny",false)&&
-                    card.optString("gender","").equals(prior.optString("gender",""));
+                    card.optString("gender","").equals(prior.optString("gender",""))&&
+                    card.optString("sex","").equals(prior.optString("sex",""));
                 if(sameArtIdentity&&card.optString("image","").isEmpty()&&
                     prior.optBoolean("imageFromSite",false)&&
                     prior.optString("image","").startsWith("https://")&&
@@ -3269,7 +3294,9 @@ public class OverlayService extends Service {
                     !prior.optString("image","").contains(" ")){
                     card.put("image",prior.getString("image"));
                     card.put("imageFromSite",true);
+                    inherited.put("image");
                 }
+                if(inherited.length()>0)card.put("evidenceReusedFields",inherited);
             }catch(org.json.JSONException ignored){}
         }
         return incoming;
@@ -3278,9 +3305,21 @@ public class OverlayService extends Service {
         if(card==null||card.optLong("expiresAtMs",0)<=0)return "";
         for(String key:new String[]{"number","name","cp","level","location"})
             if(card.optString(key,"").isEmpty())return "";
-        return card.optString("number")+"|"+card.optString("name")+"|"+
+        StringBuilder identity=new StringBuilder(
+            card.optString("number")+"|"+card.optString("name")+"|"+
             card.optString("cp")+"|"+card.optString("level")+"|"+
-            card.optString("location")+"|"+card.optLong("expiresAtMs");
+            card.optString("location")+"|"+card.optLong("expiresAtMs"));
+        // The encounter key keeps form/costume distinct. Shiny and sex
+        // are checked per-field above: an absent Shiny/sex flag must not
+        // suppress a valid distance from the same position and despawn.
+        // Missing and explicit empty form values remain distinct.
+        for(String field:new String[]{"form","form_id","costume","costume_id",
+                "costumeId","isCostume","isShadow","shadow","variant","region"}){
+            identity.append('|').append(field).append('=');
+            identity.append(card.has(field)&&!card.isNull(field)?
+                card.optString(field,""):"<missing>");
+        }
+        return identity.toString();
     }
     private JSONArray sortItems(JSONArray source){
         java.util.ArrayList<JSONObject> a=new java.util.ArrayList<>();
@@ -3461,8 +3500,27 @@ public class OverlayService extends Service {
             // Retain eligibility until an actual accepted notification or TTL.
             int candidateTopRank=verifiedTopPvpRank(c,leagueConfirmed);
             int currentTopRank=verifiedTopPvpRank(firstNewCard,leagueConfirmed);
+            // Use only evidence from this accepted search; never promote an
+            // inherited IV, a search threshold or an unconfirmed API result.
+            boolean candidateHundo=PvpAlertPriority.verifiedHundo(
+                c.optBoolean("evidenceVerified",false)&&
+                    !c.optBoolean("evidencePartial",false),
+                verifiedTargetCriteria(c),c.optString("iv",""),
+                c.optString("ivPercent",""));
+            boolean currentHundo=firstNewCard!=null&&
+                PvpAlertPriority.verifiedHundo(
+                    firstNewCard.optBoolean("evidenceVerified",false)&&
+                        !firstNewCard.optBoolean("evidencePartial",false),
+                    verifiedTargetCriteria(firstNewCard),
+                    firstNewCard.optString("iv",""),
+                    firstNewCard.optString("ivPercent",""));
             boolean higherPriority=PvpAlertPriority.higherPriority(
                 candidateTopRank,currentTopRank);
+            // Keep Top PvP priority higher than Hundo; for two ordinary
+            // candidates, the Hundo wins the SAME pre-existing alert slot.
+            if(!higherPriority&&candidateTopRank==0&&currentTopRank==0)
+                higherPriority=PvpAlertPriority.higherValuePriority(
+                    candidateTopRank,candidateHundo,currentTopRank,currentHundo);
             if((firstNew.isEmpty()||higherPriority) &&
                 successfullyNotifiedGeneralSpawns.getOrDefault(key,0L)<=now &&
                 ("iv".equals(mode)||"raw".equals(mode)||"percent".equals(mode)||leagueConfirmed) &&
@@ -3643,6 +3701,21 @@ public class OverlayService extends Service {
             "api-http-200".equals(r.optString("confirmationSource",""))&&
             (!("gl".equals(mode)||"ul".equals(mode))||
                 r.optBoolean("leagueConfirmed",false));
+        // LT325: provenance is attached only AFTER native validation.
+        // Partial extraction does not invalidate already checked encounters.
+        boolean evidenceVerified=authorizedApiQa?apiConfirmed:
+            r.optBoolean("criteriaConfirmed",false);
+        boolean evidencePartial=r.optBoolean("siteIncomplete",false)||
+            r.optBoolean("uncertain",false);
+        for(int i=0;i<sorted.length();i++){
+            JSONObject card=sorted.optJSONObject(i);
+            if(card==null)continue;
+            try{
+                card.put("evidenceSource",authorizedApiQa?"api":"site");
+                card.put("evidenceVerified",evidenceVerified);
+                card.put("evidencePartial",evidencePartial);
+            }catch(org.json.JSONException ignored){}
+        }
         if(!authorizedApiQa||apiConfirmed){
             recordNewResults(sorted,r.optBoolean("leagueConfirmed",false));
             verifiedFavoriteResultsGeneration=requestGeneration;
@@ -3781,6 +3854,68 @@ public class OverlayService extends Service {
             yes||resultCollapsed||loginPaused||pickerOpen?View.GONE:View.VISIBLE);
         updateWindow();
     }
+    /* LT325: a verified Raid assessment already requested by detail.html can
+     * annotate ONLY this same still-live encounter in the results WebView.
+     * No network, no new alert, no cross-Pokéball cache and no disclosure.
+     * Do not persist or pass a rank until the source and identity match.
+     */
+    private void acceptRaidValueEvidence(String raw){
+        if(stopped||raw==null||raw.length()>1600||selected<0||
+            !resultLoaded||resultPanel==null||detailRoot==null||
+            detailRoot.getVisibility()!=View.VISIBLE||
+            resultsStale||searchInProgress||!"updated".equals(searchPhase))return;
+        try{
+            JSONObject envelope=new JSONObject(raw);
+            JSONObject input=envelope.optJSONObject("card");
+            JSONObject rank=envelope.optJSONObject("raid");
+            if(input==null||rank==null||
+                !rank.optBoolean("verified",false)||
+                rank.optBoolean("projected",true)||
+                !rank.optBoolean("ivIndependent",false)||
+                !"normal".equals(rank.optString("variant",""))||
+                !"S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)"
+                    .equals(rank.optString("source","")))return;
+            int ranking=rank.optInt("rank",0);
+            if(ranking<1||ranking>50)return;
+            String type=rank.optString("type","");
+            if(!type.matches(
+                "bug|dark|dragon|electric|fairy|fighting|fire|flying|ghost|"+
+                "grass|ground|ice|normal|poison|psychic|rock|steel|water"))return;
+            JSONArray arr=new JSONArray(results);
+            if(selected>=arr.length())return;
+            JSONObject current=arr.optJSONObject(selected);
+            if(current==null||!current.optBoolean("evidenceVerified",false)||
+                current.optBoolean("evidencePartial",false)||
+                current.optLong("expiresAtMs",0L)<=System.currentTimeMillis())return;
+            for(String key:new String[]{"sourceIndex","name","number","iv","cp",
+                    "expiresAtMs","form","costume","location"}){
+                if(!current.optString(key,"").equals(input.optString(key,"")))return;
+            }
+            String ownName=current.optString("name","").trim();
+            if(ownName.isEmpty()||
+                !ownName.equalsIgnoreCase(rank.optString("name","").trim()))return;
+            String ownDex=current.optString("number","").replace("#","").trim();
+            if(!ownDex.matches("[0-9]{1,4}"))return;
+            int dexNumber=Integer.parseInt(ownDex);
+            if(dexNumber<1||dexNumber>2000||
+                rank.optInt("number",0)!=dexNumber)return;
+            JSONObject checked=new JSONObject();
+            checked.put("verified",true);
+            checked.put("projected",false);
+            checked.put("ivIndependent",true);
+            checked.put("variant","normal");
+            checked.put("name",ownName);
+            checked.put("number",dexNumber);
+            checked.put("rank",ranking);
+            checked.put("type",type);
+            checked.put("typePt",rank.optString("typePt","").substring(
+                0,Math.min(24,rank.optString("typePt","").length())));
+            checked.put("source","S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)");
+            js(resultPanel,resultLoaded,"window.receiveVerifiedRaidEvidence("+
+                selected+","+current.toString()+","+checked.toString()+")");
+        }catch(Exception e){BugReport.log(this,"RAID_VALUE_EVIDENCE","Metadado PvE rejeitado");}
+    }
+
     private void showDetails(int index){
         if(detailRoot==null||detailPanel==null||!detailLoaded||minimized)return;
         try{
@@ -3790,6 +3925,10 @@ public class OverlayService extends Service {
             if(selected!=index){coordinateRequestToken++;detailManuallyPositioned=false;}
             selected=index;
             JSONObject obj=a.getJSONObject(index);
+            // Old previews and pending refreshes cannot impersonate fresh
+            // source evidence; this copy is for the detail WebView only.
+            obj.put("evidenceOld",resultsStale||searchInProgress||
+                !("updated".equals(searchPhase)||"empty".equals(searchPhase)));
             // A card can be reopened after a refresh or a WebView recreation.
             // Reattach ONLY a verified coordinate of the exact unexpired spawn.
             String verifiedCoords=cachedVerifiedEncounterCoords(obj);
@@ -5643,6 +5782,10 @@ public class OverlayService extends Service {
         @JavascriptInterface public void closePopup(){handler.post(OverlayService.this::closeIndependentPopup);}
         @JavascriptInterface public void resizePopup(int width,int height){
             handler.post(()->resizeIndependentPopup(width,height));
+        }
+        @JavascriptInterface public void receiveRaidValueEvidence(String json){
+            if(json==null||json.length()>1600)return;
+            handler.post(()->OverlayService.this.acceptRaidValueEvidence(json));
         }
         @JavascriptInterface public void resizeDetail(int size){handler.post(()->OverlayService.this.resizeDetail(size));}
         @JavascriptInterface public void toggleDetail(int index){handler.post(()->{

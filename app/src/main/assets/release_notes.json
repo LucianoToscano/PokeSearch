@@ -3628,6 +3628,32 @@
           "A verificação física em Samsung e a disponibilidade de km nas pesquisas globais do provedor ainda precisam ser confirmadas em uso real."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt325-resultados-confiaveis-valiosos-20261110",
+      "minVersionCode": 54531,
+      "date": "10/11/2026",
+      "title": "PokeSearch LT325 — resultados confiáveis e Pokémon valiosos",
+      "sections": {
+        "novidades": [
+          "Detector discreto de Pokémon valiosos nos resultados: IV 100% comprovado, bons ranks IV/PvP, evoluções promissoras identificadas como projeção e referência de Rank Reides quando já confirmada no detalhe.",
+          "Nova informação ⓘ Fonte/qualidade no card existente: identifica origem API/Site, resultados anteriores, parciais e expirados, sem criar menus adicionais."
+        ],
+        "melhorias": [
+          "Um marcador por Pokémon, preservando os tamanhos compactos P/M/G, as duas Pokébolas e a interface atual.",
+          "Rank Reides por espécie/tipo pode ser reutilizado na lista somente depois de abrir o detalhe e obter avaliação confirmada, sem nova consulta PvE.",
+          "Alerta geral existente prioriza Top PvP e IV 15/15/15 confirmados sem criar notificações, sons ou canais extras."
+        ],
+        "correcoes": [
+          "Resultados sem despawn válido não recebem indicação de encontro vivo confirmado; a ausência de dados não vira valor estimado.",
+          "IVs, ranks, imagens e quilômetros reaproveitados entre atualizações exigem correspondência rigorosa de encontro e forma; alterações Shiny/sexo não eliminam automaticamente o km do mesmo encontro.",
+          "A indicação de qualidade informa quais campos foram preservados de uma busca anterior, sem afirmar que chegaram novamente da fonte."
+        ],
+        "emDesenvolvimento": [
+          "Os rankings PvP/PvE são referências por espécie, forma e liga, e projeções não garantem evolução no Pokémon GO nem ataques ou IVs futuros.",
+          "A validação física da atualização no Samsung, nas duas Pokébolas e nos tamanhos P/M/G, permanece pendente; a instalação do APK exige confirmação do Android."
+        ]
+      }
     }
   ]
 }
