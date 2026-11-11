@@ -98,13 +98,18 @@
   // The official site may append a bracketed colour (Flabébé (Yellow)).
   // Verify the species before the bracket against the independent Dex list.
   const species=nameKey(String(card?.name||"").replace(/\s*\([^)]*\)\s*$/,""));
-  return dex>=1&&dex<=1025&&species===BASE_SPECIES[dex];
+  // Numeric Dex differentiates the two Nidoran even when a provider spells
+  // the species out rather than using the male/female Unicode glyphs.
+  return dex>=1&&dex<=1025&&(
+   species===BASE_SPECIES[dex]||
+   (dex===29&&species==="NIDORANFEMALE")||
+   (dex===32&&species==="NIDORANMALE"));
  }
  function verifiedBase(card){
   if(!card||typeof card!=="object")return false;
   const dex=dexOf(card),species=nameKey(String(card.name||"").replace(/\s*\([^)]*\)\s*$/,"")),form=nameKey(card.form);
   const costume=nameKey(card.costume);
-  if(dex<1||dex>1025||!species||species!==BASE_SPECIES[dex])return false;
+  if(dex<1||dex>1025||!species||!verifiedSpeciesIdentity(card))return false;
   if(costume&&costume!=="NONE"&&costume!=="NORMAL"&&costume!=="DEFAULT")return false;
   if(card.costume_id!==undefined&&card.costume_id!==null&&Number(card.costume_id)!==0)return false;
   // LT126: independent GO catalog is bundled at build time and may prove
