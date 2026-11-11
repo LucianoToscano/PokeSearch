@@ -26,10 +26,18 @@ t("a change in form or form id invalidates previous metadata reuse",()=>{
  assert.match(match,/card\.has\(field\)&&!card\.isNull\(field\)/);
  assert.match(match,/"<missing>"/);
 });
-t("different costume, shiny, shadow or sex must not borrow a cached IV",()=>{
+t("form, costume and shadow belong to the strict location identity",()=>{
  for(const key of ["costume","costume_id","costumeId","isCostume",
-   "isShadow","shadow","shiny","gender","sex"])
+   "isShadow","shadow"])
   assert.ok(match.includes('"'+key+'"'),key);
+});
+t("Shiny/sex changes block IV/rank reuse without hiding the same verified km",()=>{
+ assert.match(reuse,/boolean sameCombatState=/);
+ for(const key of ["shiny","gender","sex"])
+  assert.ok(reuse.includes('card.optString("'+key+'","<missing>")'),key);
+ assert.match(reuse,/if\(sameCombatState&&\(!card\.has\(field\)/);
+ assert.match(reuse,/if\(samePvPMode&&sameCombatState\)for\(String field:scoped\)/);
+ assert.match(reuse,/if\(sameDistanceCenter&&card\.optString\("distance",""\)/);
 });
 t("cached sprite requires exact form and event identity in addition to encounter",()=>{
  const block=reuse.slice(reuse.indexOf("boolean sameArtIdentity="),
@@ -71,4 +79,4 @@ t("spurious upstream field lists are ignored instead of rendered as text",()=>{
  assert.equal(value.state,"verified");
  assert.doesNotMatch(value.explanation,/<script>|__proto__|Campos preservados/);
 });
-console.log("LT325 metadata reuse: 9 scenarios PASS");
+console.log("LT325 metadata reuse: 10 scenarios PASS");
