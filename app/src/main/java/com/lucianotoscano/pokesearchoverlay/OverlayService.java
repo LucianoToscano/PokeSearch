@@ -3235,31 +3235,46 @@ public class OverlayService extends Service {
         for(int i=0;i<incoming.length();i++){
             JSONObject card=incoming.optJSONObject(i);
             if(card==null)continue;
+            // The upstream source cannot forge a local cache-provenance flag.
+            card.remove("evidenceReusedFields");
             JSONObject prior=existing.get(encounterIdentityForMetadata(card));
             if(prior==null)continue;
             try{
+                JSONArray inherited=new JSONArray();
                 for(String field:stable)
                     if((!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
                         prior.has(field)&&!prior.isNull(field)&&
-                        !prior.optString(field,"").trim().isEmpty())
+                        !prior.optString(field,"").trim().isEmpty()){
                         card.put(field,prior.get(field));
+                        inherited.put(field);
+                    }
                 if(sameDistanceCenter&&card.optString("distance","").trim().isEmpty()){
                     String trustedDistance=prior.optString("distance","").trim();
-                    if(trustedDistance.matches("(?i)\\d+(?:[.,]\\d+)?\\s*(?:km|m|mi)"))
+                    if(trustedDistance.matches("(?i)\\d+(?:[.,]\\d+)?\\s*(?:km|m|mi)")){
                         card.put("distance",trustedDistance);
+                        inherited.put("distance");
+                    }
                 }
                 if(samePvPMode)for(String field:scoped)
                     if((!card.has(field)||card.isNull(field)||
                          card.optString(field,"").trim().isEmpty())&&
                         prior.has(field)&&!prior.isNull(field)&&
-                        !prior.optString(field,"").trim().isEmpty())
+                        !prior.optString(field,"").trim().isEmpty()){
                         card.put(field,prior.get(field));
-                // Lazy site images may disappear on refresh while their exact
-                // encounter stays visible. Keep the original URL ONLY when
-                // form, costume, Shiny and identity all still match.
+                        inherited.put(field);
+                    }
+                // Site artwork must refer to the exact same known form,
+                // costume, shiny state and encounter, not a base sprite
+                // borrowed from a region/event variant with the same Dex.
                 boolean sameArtIdentity=card.optString("form","").equals(prior.optString("form",""))&&
+                    card.optString("form_id","").equals(prior.optString("form_id",""))&&
                     card.optString("costume","").equals(prior.optString("costume",""))&&
+                    card.optString("costume_id","").equals(prior.optString("costume_id",""))&&
+                    card.optString("costumeId","").equals(prior.optString("costumeId",""))&&
+                    card.optBoolean("isCostume",false)==prior.optBoolean("isCostume",false)&&
+                    card.optBoolean("isShadow",false)==prior.optBoolean("isShadow",false)&&
+                    card.optBoolean("shadow",false)==prior.optBoolean("shadow",false)&&
                     card.optBoolean("shiny",false)==prior.optBoolean("shiny",false)&&
                     card.optString("gender","").equals(prior.optString("gender",""));
                 if(sameArtIdentity&&card.optString("image","").isEmpty()&&
@@ -3269,7 +3284,9 @@ public class OverlayService extends Service {
                     !prior.optString("image","").contains(" ")){
                     card.put("image",prior.getString("image"));
                     card.put("imageFromSite",true);
+                    inherited.put("image");
                 }
+                if(inherited.length()>0)card.put("evidenceReusedFields",inherited);
             }catch(org.json.JSONException ignored){}
         }
         return incoming;
@@ -3278,9 +3295,21 @@ public class OverlayService extends Service {
         if(card==null||card.optLong("expiresAtMs",0)<=0)return "";
         for(String key:new String[]{"number","name","cp","level","location"})
             if(card.optString(key,"").isEmpty())return "";
-        return card.optString("number")+"|"+card.optString("name")+"|"+
+        StringBuilder identity=new StringBuilder(
+            card.optString("number")+"|"+card.optString("name")+"|"+
             card.optString("cp")+"|"+card.optString("level")+"|"+
-            card.optString("location")+"|"+card.optLong("expiresAtMs");
+            card.optString("location")+"|"+card.optLong("expiresAtMs"));
+        // Different forms, costumes or shadows can otherwise inherit each
+        // other's IV/rank/sprite when their visible name and PC coincide.
+        // Missing and explicit empty values are deliberately distinct.
+        for(String field:new String[]{"form","form_id","costume","costume_id",
+                "costumeId","isCostume","isShadow","shadow","shiny",
+                "gender","sex","variant","region"}){
+            identity.append('|').append(field).append('=');
+            identity.append(card.has(field)&&!card.isNull(field)?
+                card.optString(field,""):"<missing>");
+        }
+        return identity.toString();
     }
     private JSONArray sortItems(JSONArray source){
         java.util.ArrayList<JSONObject> a=new java.util.ArrayList<>();
