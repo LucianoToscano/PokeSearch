@@ -493,7 +493,9 @@
  function bundledGoCostumeSource(art){
   const src=String(art?.src||"");
   const file=src.startsWith(GO_ASSET_ROOT)?src.slice(GO_ASSET_ROOT.length):
-    src.startsWith(GO_ASSET_MIRROR)?src.slice(GO_ASSET_MIRROR.length):"";
+    src.startsWith(GO_ASSET_MIRROR)?src.slice(GO_ASSET_MIRROR.length):
+    src.startsWith(GO_LT328_RECENT_ROOT)?src.slice(GO_LT328_RECENT_ROOT.length):
+    src.startsWith(GO_LT328_RECENT_MIRROR)?src.slice(GO_LT328_RECENT_MIRROR.length):"";
   if(!/^(?:pm[0-9]{1,4})\.[A-Za-z0-9._-]{5,130}\.png$/.test(file)||
      !BUNDLED_GO_COSTUME_FILES.has(file))return "";
   return LOCAL+"costumes/"+file;
@@ -2208,6 +2210,8 @@
   "db10df75d6f6f92018d9786af0aecc238fecc4ef/"+
   "Images/Pokemon%20-%20256x256/Addressable%20Assets/";
  GO_FILE_LIST.push(...GO_LT328_EXTRA_FILES);
+ // LT328 build_sprite_bundle.py pins and packages these exact PNG bytes.
+ for(const file of GO_LT328_EXTRA_FILES)BUNDLED_GO_COSTUME_FILES.add(file);
  const GO_COMPOSITE_BY_ID=Object.create(null);
  const GO_FILE_BY_ID=Object.create(null);
  for(const file of GO_FILE_LIST){
