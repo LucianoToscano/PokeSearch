@@ -64,8 +64,26 @@
   const shiny=c.shiny===true?
    "Shiny indicado na origem; não atesta vínculo com treinador":
    "Shiny não indicado; não presume disponibilidade";
+  // When the site omits fields on refresh, the native layer can carry
+  // them forward only from the SAME verified, unexpired encounter. Tell
+  // the reader which values were retained; "source confirmed" alone does
+  // not mean every field was freshly delivered.
+  const inheritedLabels=Object.freeze({
+   iv:"IV",ivPercent:"IV%",moves:"golpes",gender:"sexo",size:"tamanho",
+   form:"forma",distance:"distância",rank:"rank da pesquisa",
+   ivRank:"rank IV",ivRankSource:"origem do rank",
+   ivRankLeague:"liga do rank",image:"sprite"
+  });
+  const inherited=Array.isArray(c.evidenceReusedFields)?
+   [...new Set(c.evidenceReusedFields.filter(k=>typeof k==="string"&&
+    Object.prototype.hasOwnProperty.call(inheritedLabels,k)))]:[];
+  const note=inherited.length?
+   "Campos preservados de busca anterior do mesmo encontro: "+
+    inherited.map(k=>inheritedLabels[k]).join(", ")+
+    " (não fornecidos novamente nesta atualização)":"";
   const details=[headline,
    ...(expired||liveWindow?[]:["Despawn não confirmado; disponibilidade desconhecida"]),
+   ...(note?[note]:[]),
    iv,km,rank,shiny];
   return Object.freeze({state,source,headline,icon,
    warning:state!=="verified",details:Object.freeze(details),
