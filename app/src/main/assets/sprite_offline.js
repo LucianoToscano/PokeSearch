@@ -116,16 +116,18 @@
   // the *default* form ID. An unknown/nondefault numeric form never uses base.
   const wwm=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
   const metadata=wwm&&wwm.species&&wwm.species[dex];
-  // These two defaults were independently checked against PokeAPI #710/#711
-  // and the pinned WatWowMap defaultFormId 2641/2645, even without the
-  // optional catalog bundle in older WebViews.
-  const auditedAverageId=dex===710?2641:dex===711?2645:
+  // WatWowMap: Pumpkaboo 2641=Small, 2642=Average; Gourgeist
+  // 2645=Small, 2646=Average. The PokeAPI #710/#711 base art is Average.
+  // Do not mistake the first registered GO form for the Average form.
+  const auditedDefaultId=dex===710?2642:dex===711?2646:
     dex===94?1044:dex===41?157:0;
   const defaultId=metadata&&nameKey(metadata[0])===species?
-    Number(metadata[1]):auditedAverageId;
+    Number(metadata[1]):auditedDefaultId;
   const formId=card.form_id!=null?Number(card.form_id):card.formId!=null?Number(card.formId):0;
   if(!Number.isInteger(formId)||formId<0)return false;
-  if(formId!==0&&(!defaultId||formId!==defaultId))return false;
+  if(dex===710||dex===711){
+   if(formId!==0&&formId!==auditedDefaultId)return false;
+  }else if(formId!==0&&(!defaultId||formId!==defaultId))return false;
   if(card.isCostume===true||nameKey(card.variant)||nameKey(card.region))return false;
   // DOM results often omit Form for ordinary Pokémon (Noibat #714).
   // A BLANK form is safe only when Dex + catalogue species agree exactly.
@@ -137,13 +139,11 @@
   // BOTH results and detail WebViews. Never guess a regional/costume form.
   if(form==="NORMAL"||form==="DEFAULT"||
      form===species||form===species+"NORMAL"||form===species+"DEFAULT")return true;
-  // Exact default Average varieties: WatWowMap GO forms 2641 / 2645
-  // and PokeAPI base #710/#711 refer to the same named Average variety.
-  // This repairs Pumpkaboo's explicit "Average" from DOM/API without
-  // borrowing any Small/Large/Super artwork.
+  // The GO numeric Average IDs are 2642/2646; never borrow this base
+  // for Small/Large/Super, or when a different numeric form is supplied.
   if((dex===710||dex===711)&&
      (form==="AVERAGE"||form===species+"AVERAGE")&&
-     (formId===0||formId===(dex===710?2641:2645)))return true;
+     (formId===0||formId===(dex===710?2642:2646)))return true;
   // Furfrou Natural (#676) is its official base coat. Not the other trims.
   if(dex===676&&species==="FURFROU"&&
      (form==="NATURAL"||form==="FURFROUNATURAL"))return true;
