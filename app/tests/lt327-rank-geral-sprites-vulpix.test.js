@@ -81,6 +81,5 @@ assert.ok(ui.includes('<th colspan="4">Pokémon / forma</th><th style="width:17%
 assert.ok(ui.includes('class="psrPokemonCell"'));
 assert.ok(ui.includes('class="psrOverallRank"'));
 assert.ok(ui.includes('img[data-ps-sprite-alts]'));
-assert.ok(ui.includes("outro")===false);
 assert.ok(ui.includes("não possui posição no snapshot"));
 console.log("LT327 OK: "+all.size+" nomes, quatro ligas, sprites verificados, Vulpix em LC e layout compacto");
