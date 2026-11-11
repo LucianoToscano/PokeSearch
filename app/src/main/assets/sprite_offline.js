@@ -2225,7 +2225,9 @@
  // Unknown or contradictory form IDs fail closed; no borrowed base sprites.
  function goCatalogEvidence(card,dex){
   const data=typeof globalThis!=="undefined"?globalThis.PokeSearchWWMCatalog:null;
-  const species=data?.species?.[dex];
+  if(!data?.species||!data?.forms||!data?.costumes)
+   return {blocked:false,form:"",costume:""};
+  const species=data.species[dex];
   const rawForm=card?.form_id??card?.formId;
   const rawCostume=card?.costume_id??card?.costumeId;
   let form="",costume="";
@@ -2254,9 +2256,18 @@
   if(!card||typeof card!=="object")return null;
   const dex=dexOf(card);
   if(!verifiedSpeciesIdentity(card)||dex<1||dex>1025)return null;
-  const costume=nameKey(card.costume);
-  const form=nameKey(card.form)||
+  const metadata=goCatalogEvidence(card,dex);
+  if(metadata.blocked)return null;
+  const namedForm=nameKey(card.form)||
     nameKey((String(card.name||"").match(/\(([^)]+)\)/)||[])[1]);
+  const namedCostume=nameKey(card.costume);
+  // The official form_id/costume_id wins only if it belongs to this Dex.
+  // Conflicting costume evidence is deliberately rejected.
+  if(metadata.costume&&namedCostume&&
+     !["NORMAL","NONE","DEFAULT"].includes(namedCostume)&&
+     namedCostume!==metadata.costume)return null;
+  const costume=metadata.costume||namedCostume;
+  const form=metadata.form||namedForm;
   const specialCostume=costume&&!["NONE","DEFAULT","NORMAL"].includes(costume);
   // LT267: Pikachu's exact Diwali 2024 art is a GO .f asset even when
   // the provider labels it as a costume; reject unrelated costumes.
@@ -2307,6 +2318,22 @@
   const gender=/^(?:♀|female)$/i.test(String(card.gender||""))?"female":"any";
   const shiny=card.shiny===true?"shiny":"normal";
   let file="";
+  // Two independently verified identities are required for combination
+  // sprites (regional form + costume, or sized Pumpkaboo/Gourgeist + hat).
+  if(specialCostume&&form){
+   const formCandidates=[form,GO_REGION_KEYS[form]||form];
+   if(form.startsWith(species)&&form.length>species.length)
+    formCandidates.push(form.slice(species.length));
+   for(const f of formCandidates){
+    const root=dex+":"+(GO_REGION_KEYS[f]||f)+":"+costume+":";
+    file=GO_COMPOSITE_BY_ID[root+gender+":"+shiny]||
+     GO_COMPOSITE_BY_ID[root+"any:"+shiny]||"";
+    if(file)break;
+   }
+   if(file){
+    return {...goFileSource(file),officialForm:true,officialCostume:true};
+   }
+  }
   for(const candidate of candidates){
    if(!candidate)continue;
    const root=dex+":"+type+":"+(GO_REGION_KEYS[candidate]||candidate)+":";
@@ -2316,7 +2343,7 @@
   }
   // Costumes can be GO form assets (.fCOSTUME_*), but only if their explicit
   // costume name matches that exact filename. Unknown costume IDs stay blank.
-  if(!file&&specialCostume&&!(card.costume_id!=null&&Number(card.costume_id)!==0)){
+  if(!file&&specialCostume&&(!Number(card.costume_id??card.costumeId??0)||metadata.costume)){
    const root=dex+":f:"+costume+":";
    file=GO_FILE_BY_ID[root+gender+":"+shiny]||
         GO_FILE_BY_ID[root+"any:"+shiny]||"";
@@ -2328,9 +2355,8 @@
   }
   if(!file)return null;
   // Immutable upstream commit; URL built from audited explicit file names.
-  return {src:GO_ASSET_ROOT+file,original:GO_ASSET_MIRROR+file,offline:false,
-    officialForm:!specialCostume,officialCostume:!!specialCostume,
-    exactForm:true,goExact:true};
+  return {...goFileSource(file),officialForm:!specialCostume,
+    officialCostume:!!specialCostume};
  }
  function resolve(card){
   const image=String(card?.image||"");
