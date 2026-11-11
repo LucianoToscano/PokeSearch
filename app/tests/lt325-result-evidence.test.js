@@ -62,6 +62,18 @@ test('expired encounter overrides current, partial and stale source',()=>{
  const x=status({...accepted,evidencePartial:true,expiresAtMs:now-1},{stale:true});
  assert.equal(x.state,'expired');assert.equal(x.icon,'!');
 });
+test('a confirmed search without a valid despawn is NOT a confirmed live encounter',()=>{
+ for(const expiresAtMs of [undefined,null,'',0,'bad',now+86400001]){
+  const x=status({...accepted,expiresAtMs});
+  assert.equal(x.state,'unverified',String(expiresAtMs));
+  assert.equal(x.warning,true);
+  assert.match(x.explanation,/Despawn não confirmado/);
+ }
+ const good=status({...accepted,expiresAtMs:now+1000});
+ assert.equal(good.state,'verified');
+ const stale=status({...accepted,expiresAtMs:undefined},{stale:true});
+ assert.equal(stale.state,'previous');
+});
 test('valid distance from a global query is retained without auto-GPS',()=>{
  const x=status({...accepted,distance:'12,3 km'});
  assert.match(x.explanation,/Km informado/);
