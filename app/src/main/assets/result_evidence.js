@@ -25,13 +25,17 @@
   const now=Number.isFinite(o.nowMs)?o.nowMs:Date.now();
   const expiry=number(c.expiresAtMs);
   const expired=expiry!==null&&expiry>0&&expiry<=now;
+  // The source can confirm search criteria but not guarantee that the
+  // encountered Pokémon is still reachable without a plausible despawn.
+  // Never interpret missing, zero, invalid or far-future TTL as "verified".
+  const liveWindow=expiry!==null&&expiry>now&&expiry<=now+86400000;
   // A cached/previous encounter must NEVER be displayed as a newly
   // confirmed spawn while the next request is active or has failed.
   const previous=c.evidenceOld===true||o.stale===true||o.searching===true;
   const verified=c.evidenceVerified===true;
   const partial=c.evidencePartial===true;
   const state=expired?"expired":previous?"previous":
-   !verified?"unverified":partial?"partial":"verified";
+   !verified||!liveWindow?"unverified":partial?"partial":"verified";
   const source=origin(c);
   const headline={
    verified:source+" · busca confirmada",
@@ -60,7 +64,9 @@
   const shiny=c.shiny===true?
    "Shiny indicado na origem; não atesta vínculo com treinador":
    "Shiny não indicado; não presume disponibilidade";
-  const details=[headline,iv,km,rank,shiny];
+  const details=[headline,
+   ...(expired||liveWindow?[]:["Despawn não confirmado; disponibilidade desconhecida"]),
+   iv,km,rank,shiny];
   return Object.freeze({state,source,headline,icon,
    warning:state!=="verified",details:Object.freeze(details),
    explanation:details.join(" · ")});
