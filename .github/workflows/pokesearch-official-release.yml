@@ -139,6 +139,7 @@ jobs:
           test -s "$APK"
           test -s app/build/outputs/mapping/release/mapping.txt
           unzip -t "$APK" >/dev/null
+          echo "Candidate APK size before integrity scan: $(stat -c %s "$APK") bytes"
           # Abort before publication unless Halloween costume PNGs are truly inside the APK.
           python3 - "$APK" <<'PYSCRIPT'
           import sys,zipfile,hashlib,os
@@ -317,6 +318,16 @@ jobs:
               assert "assets/ui-icons/"+filename not in names, "Legacy LT266 image duplicated inside APK"
           # LT328: validate every new image INSIDE the signed release APK,
           # not merely by its filename or build-time log.
+          # The two Zubat event sprites already shipped from the immutable
+          # LT144/LeekDuck provenance; later PokeMiners images have different
+          # file hashes. Keep exact previously signed originals, never replace
+          # them silently during an update.
+          legacy={
+            "pm41.fHALLOWEEN_2026_01.icon.png":
+              "93dace15fb8136fda77c22114ea56063982cf24d7ff1d4066bd7e6c05a6e43c4",
+            "pm41.fHALLOWEEN_2026_01.s.icon.png":
+              "56086b8520c662a0d3bd57267482e3e08b2de1f32c74a984db642fb340cb8ce2"
+          }
           extra=[]
           with open("app/src/main/assets/go-extra-sprites-lt328.tsv",encoding="utf8") as rows:
             for raw in rows:
@@ -335,9 +346,13 @@ jobs:
               png=apk.read(key)
               assert png[:8]==bytes([137,80,78,71,13,10,26,10]),"Invalid LT328 PNG: "+key
               blob=hashlib.sha1(b"blob "+str(len(png)).encode("ascii")+b"\0"+png).hexdigest()
-              assert blob==expected_sha,"LT328 pinned source hash mismatch: "+key
+              if filename in legacy:
+                assert hashlib.sha256(png).hexdigest()==legacy[filename],(
+                  "LT144 immutable existing sprite changed: "+key)
+              else:
+                assert blob==expected_sha,"LT328 pinned source hash mismatch: "+key
           print("Official Sea/Halloween sprites (12) + GL/UL emblems (2) + badges (15) checked")
-          print("LT328: 35 supplemental GO sprites inside the APK match immutable Git blob SHA-1")
+          print("LT328: 33 supplemental GO sprites SHA-1 verified + 2 existing LT144 sprites SHA-256 verified")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
