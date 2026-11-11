@@ -24,7 +24,9 @@ const sprite=require("../src/main/assets/sprite_offline.js");
 assert.match(sprite.rankSprite("Squirtle"),/7\.png$/);
 assert.match(sprite.rankSprite("Wartortle"),/8\.png$/);
 assert.match(sprite.rankSprite("Blastoise"),/9\.png$/);
-assert.equal(sprite.rankSprite("Squirtle (Shadow)"),"");
+assert.match(sprite.rankSprite("Squirtle (Shadow)"),/7\.png$/);
+assert.equal(sprite.rankSpriteMeta("Squirtle (Shadow)").shadow,true);
+assert.equal(sprite.rankSprite("Squirtle (Unknown Event Costume)"),"");
 const rows=["Squirtle","Wartortle","Blastoise"].map(name=>{
  const button={dataset:{psLeague:"gl",psName:name,psMega:"false"},
   setAttribute(){},title:""};
