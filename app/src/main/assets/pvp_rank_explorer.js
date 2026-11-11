@@ -409,7 +409,6 @@
    "#psRankExplorer .psrOverallRank{font-size:10px;font-weight:750;white-space:nowrap;text-align:right}",
    "#psRankExplorer .psrSpriteWrap{width:23px;height:23px;flex:0 0 23px;display:inline-flex;justify-content:center;align-items:center;position:relative}",
    "#psRankExplorer .psrSpriteWrap.psrShadow img{filter:drop-shadow(0 0 2px #a174ee)}",
-   "#psRankExplorer .psrSpriteWrap.psrShadow:after{content:'';position:absolute;right:-1px;bottom:-1px;width:4px;height:4px;border-radius:50%;background:#a57ee7;pointer-events:none}",
    "#psRankExplorer .psrArtFallback{font:700 8px/1.1 Roboto,Arial,sans-serif;color:#cbd4e0;text-align:center}",
    "#psRankExplorer .psrSpriteWrap img[hidden],#psRankExplorer .psrArtFallback[hidden]{display:none!important}",
    "#psRankExplorer .psrFamilyButton .psrSpriteWrap{width:38px;height:38px;flex:0 0 38px}",
