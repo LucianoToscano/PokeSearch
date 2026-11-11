@@ -315,7 +315,29 @@ jobs:
               assert image[25]==6, "LT266 icon must have RGBA alpha "+archived
               assert hashlib.sha256(image).hexdigest()==digest, "Changed archived LT266 user type icon "+archived
               assert "assets/ui-icons/"+filename not in names, "Legacy LT266 image duplicated inside APK"
-          print("Official Sea/Halloween sprites (12) + GL/UL mode emblems (2) + card badges (15) checked")
+          # LT328: validate every new image INSIDE the signed release APK,
+          # not merely by its filename or build-time log.
+          extra=[]
+          with open("app/src/main/assets/go-extra-sprites-lt328.tsv",encoding="utf8") as rows:
+            for raw in rows:
+              if not raw.strip() or raw.startswith("#"):
+                continue
+              name,digest,commit=raw.strip().split("\t")
+              if name=="pm479.f.s.icon.png":
+                continue  # malformed upstream filename has no form identity
+              assert len(digest)==40 and len(commit)==40,"Invalid LT328 provenance"
+              extra.append((name,digest))
+          assert len(extra)==35,"Incomplete LT328 supplemental sprite set"
+          with zipfile.ZipFile(sys.argv[1]) as apk:
+            for filename,expected_sha in extra:
+              key="assets/pokemon-sprites/costumes/"+filename
+              assert key in apk.namelist(),"Missing LT328 exact sprite: "+key
+              png=apk.read(key)
+              assert png[:8]==bytes([137,80,78,71,13,10,26,10]),"Invalid LT328 PNG: "+key
+              blob=hashlib.sha1(b"blob "+str(len(png)).encode("ascii")+b"\0"+png).hexdigest()
+              assert blob==expected_sha,"LT328 pinned source hash mismatch: "+key
+          print("Official Sea/Halloween sprites (12) + GL/UL emblems (2) + badges (15) checked")
+          print("LT328: 35 supplemental GO sprites inside the APK match immutable Git blob SHA-1")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
@@ -326,7 +348,11 @@ jobs:
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
           ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}')"
           test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
-          test "$(stat -c %s "$APK")" -lt 35000000
+          # LT328 adds 35 individually SHA-1 verified form/costume PNGs to
+          # the previously 34.8 MB stable APK. Keep a bounded 37 MB budget.
+          APK_BYTES="$(stat -c %s "$APK")"
+          echo "Verified signed APK size: $APK_BYTES bytes (maximum 37,000,000)"
+          test "$APK_BYTES" -lt 37000000
           cp "$APK" "$OFFICIAL_APK"
           sha256sum "$OFFICIAL_APK" > SHA256SUMS.txt
           sha256sum -c SHA256SUMS.txt
