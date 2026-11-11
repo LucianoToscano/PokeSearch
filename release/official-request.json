@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.24",
-  "code": 54530,
-  "label": 51328,
-  "previous_tag": "v0.03.23-54529",
-  "qa_max_code": 54529,
-  "release_notes": "PokeSearch LT324 — Distância dos Pokémon nos cards. O valor em km fornecido pelo PoGoCoordinates passa a ser exibido por padrão em todas as ordenações, inclusive PC (menor/maior), Nível (menor/maior), IV, tempo de desaparecimento e pesquisas gerais sem filtro geográfico. Não é necessário pegar ou copiar as coordenadas do Pokémon para visualizar um km já fornecido pela fonte. Personalização → Info Pokémon → Dist. continua permitindo ligar ou desligar o campo, preservando preferências existentes. A exibição é compartilhada pelas duas Pokébolas, mantendo dados, filtros, sprites, Edu, ranking, login, favoritos e assinatura Android v2 permanente. Para atualizações parciais de um mesmo encontro, a distância confirmada pode ser conservada somente enquanto o Pokémon ainda está válido e o centro de busca é idêntico. Se a API não fornecer km, nenhum valor é calculado ou inventado, sem GPS e sem usar última localização automaticamente. Testes Node, Android Java, OTA e QA foram aprovados no código da PR #325 (head f4d9a652429a446b0f88912ab97e744783009c8a), integrada por squash 0df5e271ee43a486d117502e415933772477be1d; notas e auditoria integradas via PR #326. Teste físico em Samsung, tanto P1 como P2, permanece pendente; atualização requer confirmação do Android."
+  "version": "0.03.25",
+  "code": 54531,
+  "label": 51329,
+  "previous_tag": "v0.03.24-54530",
+  "qa_max_code": 54530,
+  "release_notes": "PokeSearch LT325 — Resultados confiáveis e Detector de Pokémon valiosos. Os resultados agora indicam origem (API/Site), qualidade, pesquisa parcial/anterior e validade do encontro, com explicações em ⓘ Fonte/qualidade no card de detalhes existente. O detector destaca, de forma compacta e sem inventar rank, IV 100% comprovado, bom potencial PvP para a mesma espécie/forma/liga, Rank IV #1 e evoluções promissoras identificadas como projeções — não como evoluções garantidas. O Rank Reides já consultado no detalhe pode sinalizar a classificação PvE por tipo do mesmo Pokémon na lista, sem requisição adicional e sem atribuir ao exemplar os IVs/golpes da referência. Os cards P/M/G, as duas Pokébolas, os favoritos, Edu e as ordenações existentes são preservados. Alertas gerais priorizam Top PvP comprovado e 15/15/15 comprovado sem criar nova notificação, som ou canal. Resultados sem despawn válido não são declarados disponíveis; reaproveitamento de IV/rank/sprite/distância entre pesquisas exige correspondência de encontro, forma, local e estado, com indicação dos campos conservados e sem inventar km. Testes de regressão Node, Android Java, fontes PvE, OTA e navegador real P/M/G passaram na PR #327 (merge squash d22c90c64f9063ba269df20a5a461485b33183cd). Instalação exige confirmação no Android e o QA físico Samsung P1/P2 permanece pendente. Publicação via fluxo oficial protegido, mantendo a assinatura Android v2 permanente."
 }
