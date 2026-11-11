@@ -374,7 +374,8 @@ public class OverlayService extends Service {
             ",\"gender\":"+resultShowGender+",\"size\":"+resultShowSize+
             ",\"form\":"+resultShowForm+",\"moves\":"+resultShowMoves+
             ",\"location\":"+resultShowLocation+",\"distance\":"+resultShowDistance+
-            ",\"shiny\":"+resultShowShiny+",\"cp\":"+resultShowCp+
+            ",\"shiny\":"+resultShowShiny+",\"highlights\":"+resultShowHighlights+
+            ",\"cp\":"+resultShowCp+
             ",\"level\":"+resultShowLevel+",\"despawn\":"+showTimers+
             ",\"iv\":"+showResultText+",\"overallRank\":"+resultShowOverallRank+
             ",\"speciesIvRank\":"+resultShowSpeciesIvRank+
@@ -771,7 +772,8 @@ public class OverlayService extends Service {
     // Display-only preferences: they must never change remote search filters.
     private boolean resultShowName=false,resultShowNumber=false,resultShowGender=false,
         resultShowSize=false,resultShowForm=false,resultShowMoves=false,
-        resultShowLocation=false,resultShowDistance=true,resultShowShiny=false;
+        resultShowLocation=false,resultShowDistance=true,resultShowShiny=false,
+        resultShowHighlights=false;
     private boolean resultShowCount=false,resultShowCp=false,resultShowLevel=false,
         resultShowOverallRank=false,resultShowSpeciesIvRank=false,resultShowRawIv=false,
         resultShowOverallRankGl=false,resultShowOverallRankUl=false,resultShowOverallRankMl=false,
@@ -5451,6 +5453,7 @@ public class OverlayService extends Service {
                 resultShowSize=enabled;resultShowForm=enabled;
                 resultShowMoves=enabled;resultShowLocation=enabled;
                 resultShowDistance=enabled;resultShowShiny=enabled;
+                resultShowHighlights=enabled;
                 resultShowCp=enabled;resultShowLevel=enabled;
                 resultShowRawIv=enabled;resultShowOverallRank=enabled;
                 resultShowSpeciesIvRank=enabled;
@@ -5464,6 +5467,7 @@ public class OverlayService extends Service {
                 String[] keys={"resultShowCount","resultShowName","resultShowNumber",
                     "resultShowGender","resultShowSize","resultShowForm","resultShowMoves",
                     "resultShowLocation","resultShowDistance","resultShowShiny",
+                    "resultShowHighlights",
                     "resultShowCp","resultShowLevel","resultShowRawIv",
                     "resultShowOverallRank","resultShowSpeciesIvRank",
                     "resultShowOverallRankGl","resultShowOverallRankUl",
@@ -5491,6 +5495,7 @@ public class OverlayService extends Service {
                     case "location":resultShowLocation=value;pref="resultShowLocation";break;
                     case "distance":resultShowDistance=value;pref="resultShowDistance";break;
                     case "shiny":resultShowShiny=value;pref="resultShowShiny";break;
+                    case "highlights":resultShowHighlights=value;pref="resultShowHighlights";break;
                     case "rawIv":resultShowRawIv=value;pref="resultShowRawIv";break;
                     case "overallRankGl":resultShowOverallRankGl=value;pref="resultShowOverallRankGl";break;
                     case "overallRankUl":resultShowOverallRankUl=value;pref="resultShowOverallRankUl";break;
@@ -5899,6 +5904,9 @@ public class OverlayService extends Service {
         resultShowLocation=prefs.getBoolean("resultShowLocation",false);
         resultShowDistance=prefs.getBoolean("resultShowDistance",true);
         resultShowShiny=prefs.getBoolean("resultShowShiny",false);
+        // LT326: never inherit the auto-visible LT325 diamonds on upgrade.
+        // Only an explicit opt-in via Info Pokémon can show list markers.
+        resultShowHighlights=prefs.getBoolean("resultShowHighlights",false);
         resultShowCp=prefs.getBoolean("resultShowCp",false);
         resultShowLevel=prefs.getBoolean("resultShowLevel",false);
         resultShowOverallRank=prefs.getBoolean("resultShowOverallRank",false);
@@ -6092,6 +6100,9 @@ public class OverlayService extends Service {
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
         showTimers=pref.getBoolean("showTimers",false);
         showResultText=pref.getBoolean("showResultText",false);
+        // Initial service start must restore the opt-in, not only SYNC_PREFS.
+        // P1/P2 read their own overlayPrefs() and never share this switch.
+        resultShowHighlights=pref.getBoolean("resultShowHighlights",false);
         alerts=pref.getBoolean("alerts",false);
         alertsMode=pref.getString("alertsMode",alerts?"on":"off");
         if(!"on".equals(alertsMode)&&!"silent".equals(alertsMode))alertsMode="off";

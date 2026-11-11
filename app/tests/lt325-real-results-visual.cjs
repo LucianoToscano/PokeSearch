@@ -49,6 +49,7 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
     resultDisplayHeightDp=height;
     resultDisplayOptions={count:false,name:false,number:false,gender:false,
      size:false,form:false,moves:false,location:false,distance:false,shiny:false,
+     highlights:false,
      cp:false,level:false,despawn:false,iv:false,rawIv:false,
      overallRank:false,speciesIvRank:false,overallRankGl:false,
      overallRankUl:false,overallRankMl:false,
@@ -60,8 +61,24 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
    },{sprite:sz.sprite,height:sz.h});
    assert.ok(initial.ok,"actual results WebView loads "+sz.name+" "+JSON.stringify(initial));
    assert.equal(initial.spawns,3,"three real sprite containers "+sz.name);
-   assert.equal(initial.values,1,"verified perfect visible once "+sz.name);
-   assert.equal(initial.partial,1,"partial source is visibly marked "+sz.name);
+   assert.equal(initial.values,0,"destaques ocultos sem opt-in "+sz.name);
+   assert.equal(initial.partial,0,"avisos de sprite ocultos por padrão "+sz.name);
+   const hidden=await page.evaluate(()=>{
+    const b=document.querySelector("#spawns .spawn").getBoundingClientRect();
+    const tile=spriteSize===55?40:spriteSize===45?32:24;
+    return {width:b.width,tile,rails:document.querySelectorAll(".resultMarkerRail").length};
+   });
+   assert.equal(hidden.width,hidden.tile,"OFF não altera largura original "+sz.name);
+   assert.equal(hidden.rails,0,"OFF não cria faixa invisível "+sz.name);
+   const enabled=await page.evaluate(()=>{
+    resultDisplayOptions={...resultDisplayOptions,highlights:true};
+    lastListKey="";draw();
+    return {values:document.querySelectorAll(".resultValueFlag").length,
+     partial:document.querySelectorAll(".resultEvidenceFlag.partial").length,
+     rails:document.querySelectorAll(".resultMarkerRail").length};
+   });
+   assert.deepEqual(enabled,{values:1,partial:1,rails:3},
+    "opt-in exibe destaques em faixa separada "+sz.name);
 
    const combined=await page.evaluate(source=>{
     const current=cards[1];
@@ -71,12 +88,15 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
     const denied=window.receiveVerifiedRaidEvidence(1,{...current,name:"Haunter"},verified);
     const accepted=window.receiveVerifiedRaidEvidence(1,{...current},verified);
     const flags=[...document.querySelectorAll("#spawns .resultValueFlag")];
-    const allInside=flags.every(el=>{
-     const outer=el.closest(".spriteStage").getBoundingClientRect();
-     const r=el.getBoundingClientRect();
-     return r.width>0&&r.height>0&&
-      r.left>=outer.left-1&&r.top>=outer.top-1&&
-      r.right<=outer.right+1&&r.bottom<=outer.bottom+1;
+    const allOutside=flags.every(el=>{
+     const stage=el.closest(".spawn").querySelector(".spriteStage").getBoundingClientRect();
+     const rail=el.closest(".resultMarkerRail")?.getBoundingClientRect();
+     const mark=el.getBoundingClientRect();
+     const box=el.closest(".spawn").getBoundingClientRect();
+     return !!rail&&mark.width>0&&mark.height>0&&
+      rail.left>=stage.right-0.5&&mark.left>=stage.right-0.5&&
+      mark.right<=rail.right+0.5&&rail.right<=box.right+0.5&&
+      mark.top>=rail.top-0.5&&mark.bottom<=rail.bottom+0.5;
     });
     const boxes=[...document.querySelectorAll("#spawns .spawn")];
     const dimensions=boxes.map(x=>{
@@ -93,7 +113,7 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
     return {denied,accepted,flags:flags.length,dimensions,
      raiders:document.querySelectorAll(".resultValueFlag.raid").length,
      warnings:document.querySelectorAll(".resultEvidenceFlag.partial").length,
-     aria:boxes[1].getAttribute("aria-label"),allInside,usable,
+     aria:boxes[1].getAttribute("aria-label"),allOutside,usable,
      bodyScroll:document.documentElement.scrollWidth,windowWidth:window.innerWidth};
    },sourceLabel);
    assert.equal(combined.denied,false,"wrong identity rejected "+sz.name);
@@ -103,7 +123,7 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
    assert.equal(combined.warnings,1,"partial evidence remains visible "+sz.name);
    assert.match(combined.aria,/Raides · #12 Fantasma/);
    assert.match(combined.aria,/não são os IVs capturados/);
-   assert.ok(combined.allInside,"markers stay inside the P/M/G sprite "+sz.name);
+   assert.ok(combined.allOutside,"marcadores não cobrem as sprites P/M/G "+sz.name);
    assert.ok(combined.usable,"tiles keep legible, touchable geometry "+sz.name+
     " "+JSON.stringify(combined.dimensions));
    assert.ok(combined.bodyScroll<=sz.w+4,
@@ -138,6 +158,16 @@ const sourceLabel="S-Tier-Devs/pogo-db-api · dados de referência (ago/2026)";
    });
    assert.deepEqual(unknownDespawn,{unknown:1,perfect:0},
     "unknown despawn cannot be presented as a fresh verified hundo "+sz.name);
+   const disabledAgain=await page.evaluate(()=>{
+    resultDisplayOptions={...resultDisplayOptions,highlights:false};
+    lastListKey="";draw();
+    const button=document.querySelector("#spawns .spawn").getBoundingClientRect();
+    return {rails:document.querySelectorAll(".resultMarkerRail").length,
+     markers:document.querySelectorAll(".resultValueFlag,.resultEvidenceFlag").length,
+     width:button.width};
+   });
+   assert.deepEqual(disabledAgain,{rails:0,markers:0,width:hidden.tile},
+    "ocultar novamente remove faixa e restaura largura "+sz.name);
    assert.equal(extraRaidRequests,0,"results have no new remote Raid fetch "+sz.name);
    assert.deepEqual(errors,[],"no production JS error "+sz.name);
    console.log("LT325 results visual "+sz.name+" PASS",combined);

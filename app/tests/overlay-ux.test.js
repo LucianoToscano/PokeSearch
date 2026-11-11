@@ -283,7 +283,8 @@ test("UX-INFO-04 sprite column stays under the movable full Pokébola hitbox",
  dock.includes('body.result-window .spriteStage{')&&
  dock.includes('width:var(--dock)!important')&&
  dock.includes('max-width:96px')&&
- dock.includes('metadataVisible?96:0')&&
+ dock.includes('const metaWidth=metadataVisible?96:highlightWidth;')&&
+ dock.includes('const highlightWidth=resultDisplayOptions.highlights?12:0;')&&
  service.includes('private void updateResultHeaderGrip()')&&
  service.includes('hit.leftMargin=dp(left)')===false&&
  service.includes('box.leftMargin=dp(left)')&&
@@ -2275,7 +2276,8 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
     service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",'+(key==="distance"?"true":"false")+')'))&&
   keys.every(key=>key==="shiny"?dock.includes('if(opts.shiny){'):
     dock.includes('opts.'+key+'&&'))&&
-  dock.includes('const metaWidth=metadataVisible?96:0;')&&
+  dock.includes('const metaWidth=metadataVisible?96:highlightWidth;')&&
+  dock.includes('const highlightWidth=resultDisplayOptions.highlights?12:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
   dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
 });
