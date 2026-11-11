@@ -4762,24 +4762,36 @@ body.popup-window.controls-window #shell #collapse{
 body.popup-window.controls-window #shell #menu #choices{
   visibility:visible!important;pointer-events:auto!important;
 }
-/* LT325: only flag unusual evidence; confirmed results get no repeated tick.
-   Stay inside each existing sprite hitbox, no extra rows or overlay buttons. */
-body.result-window .spriteStage .resultEvidenceFlag{
- position:absolute;right:1px;top:0;z-index:3;pointer-events:none;
- display:block;font:800 9px/9px Roboto,Arial,sans-serif;
- color:#d1d8e2;text-shadow:0 1px 2px #000,0 0 3px #000;
+/* LT326: user-opt-in indicators have their OWN 12px rail, never inside
+   the spriteStage. With regular metadata shown, this rail consumes only
+   12px of its existing 96px strip; otherwise it adds 12px when enabled.
+   Off = original tile width, same hit target, no invisible gutter. */
+body.result-window .resultMarkerRail{
+ box-sizing:border-box;display:flex;flex:0 0 var(--result-highlight-width,0px);
+ width:var(--result-highlight-width,0px);min-width:0;max-width:var(--result-highlight-width,0px);
+ height:var(--result-tile-size,24px);align-self:flex-start;
+ flex-direction:column;align-items:center;justify-content:flex-start;
+ gap:2px;padding:2px 0 0;margin:0;overflow:hidden;pointer-events:none;
 }
-/* One opportunity marker in the existing tile; never another rank strip. */
-body.result-window .spriteStage .resultValueFlag{
- position:absolute;left:1px;top:0;z-index:3;pointer-events:none;
- display:block;font:900 9px/9px Roboto,Arial,sans-serif;
- color:#eac77c;text-shadow:0 1px 2px #000,0 0 3px #000;
+body.result-window .resultMarkerRail .resultEvidenceFlag,
+body.result-window .resultMarkerRail .resultValueFlag{
+ position:static!important;display:block;flex:none;
+ width:10px;height:10px;margin:0;padding:0;pointer-events:none;
+ text-align:center;font:900 9px/10px Roboto,Arial,sans-serif;
+ text-shadow:0 1px 2px #000,0 0 3px #000;
 }
-body.result-window .spriteStage .resultValueFlag.projected{color:#c1c9d3}
-body.result-window .spriteStage .resultValueFlag.raid{color:#e1c892}
-body.result-window .spriteStage .resultEvidenceFlag.previous,
-body.result-window .spriteStage .resultEvidenceFlag.expired{color:#f1bd78}
-body.result-window .spriteStage .resultEvidenceFlag.partial{color:#cad4e3}
+body.result-window .resultMarkerRail .resultEvidenceFlag{color:#d1d8e2}
+body.result-window .resultMarkerRail .resultValueFlag{color:#eac77c}
+body.result-window .resultMarkerRail .resultValueFlag.projected{color:#c1c9d3}
+body.result-window .resultMarkerRail .resultValueFlag.raid{color:#e1c892}
+body.result-window .resultMarkerRail .resultEvidenceFlag.previous,
+body.result-window .resultMarkerRail .resultEvidenceFlag.expired{color:#f1bd78}
+body.result-window .resultMarkerRail .resultEvidenceFlag.partial{color:#cad4e3}
+body.result-window .spawnInfo{
+ flex-basis:calc(96px - var(--result-highlight-width,0px))!important;
+ width:calc(96px - var(--result-highlight-width,0px))!important;
+ max-width:calc(96px - var(--result-highlight-width,0px))!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -4962,7 +4974,7 @@ let resultDisplayHeightDp=0;
 // Every optional Pokémon detail starts hidden. The native saved preferences
 // remain authoritative once a user explicitly enables an individual field.
 let resultDisplayOptions={count:false,name:false,number:false,gender:false,size:false,
- form:false,moves:false,location:false,distance:true,shiny:false,
+ form:false,moves:false,location:false,distance:true,shiny:false,highlights:false,
  cp:false,level:false,despawn:false,iv:false,rawIv:false,
  overallRank:false,speciesIvRank:false,overallRankGl:false,overallRankUl:false,overallRankMl:false,
  speciesIvRankGl:false,speciesIvRankUl:false,speciesIvRankMl:false};
@@ -7439,7 +7451,9 @@ function draw(){
  }
  // P/M/G scales the header DOWN, never above its original 21px.
  const metadataVisible=resultWindow&&preparedLines.some(lines=>lines.length>0);
- const metaWidth=metadataVisible?96:0;
+ const highlightWidth=resultDisplayOptions.highlights?12:0;
+ const metaWidth=metadataVisible?96:highlightWidth;
+ document.documentElement.style.setProperty("--result-highlight-width",highlightWidth+"px");
  document.documentElement.style.setProperty("--results-width",
   resultWindow&&window.visualPrefs?.resultsOrientation==="horizontal"?"calc(100vw - 2px)":
   Math.max(38,resultWindow?resultLayout.sprite+metaWidth:spriteSize+8+metaWidth)+"px");
@@ -7529,12 +7543,13 @@ function draw(){
   },{ivVerified:verifiedPercent!==null});
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const evidenceTitle=evidence?.explanation||"";
-  const evidenceFlag=evidence?.warning&&evidence.icon?
+  const evidenceFlag=resultDisplayOptions.highlights&&evidence?.warning&&evidence.icon?
    '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
   // Rank Classe and Rank Geral are already derived and species-validated here;
   // never treat the Top-N search ceiling as a Pokémon's actual rank.
   let opportunity=null;
-  if(evidence?.state==="verified"&&window.PokeSearchValueDetector){
+  if(resultDisplayOptions.highlights&&evidence?.state==="verified"&&
+      window.PokeSearchValueDetector){
    const rawVerified=verifiedSpawnRawIv(c)!==null;
    const leagueOrder=rawVerified?
     (shownMode==="gl"||shownMode==="ul"?[shownMode]:["gl","ul","ml"]):[];
@@ -7602,11 +7617,13 @@ function draw(){
   // The working detail card does not force anonymous-CORS on its art.
   // Forcing it here can reject otherwise displayable PoGoCoordinates,
   // GitHub or CDN sprites. Alpha sampling already fails safely on taint.
+  const markerRail=resultDisplayOptions.highlights?
+   '<span class="resultMarkerRail" aria-hidden="true">'+valueFlag+evidenceFlag+'</span>':"";
   const icon='<span class="spriteStage">'+
    (hasImage?'<img class="sprite" src="'+esc(imageUrl)+'"'+
     ' data-original-src="'+esc(originalUrl)+'" alt="" loading="eager" decoding="async">':"")+
    '<span class="spriteFallback fallback" role="img" aria-label="Sprite indisponível para a forma exata" title="Imagem exata não verificada">#'+
-    esc(String(dexNumber||"?"))+'</span>'+evidenceFlag+valueFlag+'</span>';
+    esc(String(dexNumber||"?"))+'</span></span>'+markerRail;
   const kind=(c.shiny?"shiny":shownMode),deadline=Number(c.expiresAtMs)||0;
   const infoLines=preparedLines[i]||[];
   let cooldownMarkup="";
@@ -7634,7 +7651,8 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  const accessibleLabel=[label,evidenceTitle,opportunity?.label].filter(Boolean).join(" · ");
+  const accessibleLabel=[label,evidenceTitle,
+   resultDisplayOptions.highlights?opportunity?.label:null].filter(Boolean).join(" · ");
   return '<button title="'+esc(accessibleLabel)+'" aria-label="'+esc(accessibleLabel)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
  else document.getElementById("spawns").replaceChildren();
@@ -7780,6 +7798,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
    gender:!!displayPrefs.gender,size:!!displayPrefs.size,form:!!displayPrefs.form,
    moves:!!displayPrefs.moves,location:!!displayPrefs.location,
    distance:displayPrefs.distance!==false,shiny:!!displayPrefs.shiny,
+   highlights:displayPrefs.highlights===true,
    cp:!!displayPrefs.cp,level:!!displayPrefs.level,
    despawn:!!displayPrefs.despawn,iv:!!displayPrefs.iv,rawIv:!!displayPrefs.rawIv,
    overallRank:!!displayPrefs.overallRank,speciesIvRank:!!displayPrefs.speciesIvRank,
@@ -8806,6 +8825,7 @@ function renderInfoChoices(){
   ["size","Tam.","Tamanho"],["form","Forma","Forma"],
   ["moves","Ataques","Ataques"],["location","Local","Localização"],
   ["distance","Dist.","Distância"],["shiny","✨ Shiny","Indicador Shiny"],
+  ["highlights","◆ Destaques","Marcadores de Pokémon valiosos e qualidade ao lado da sprite"],
   ["despawn","Despawn","Tempo até desaparecer"],["level","Nível","Nível"],
   ["cp","PC","Poder de Combate"],["rawIv","IV A/D/S","IV bruto"],
   ["iv","IV%","Porcentagem de IV"],
