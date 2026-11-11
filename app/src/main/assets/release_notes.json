@@ -3703,6 +3703,25 @@
           "A instalação e inspeção visual em aparelho Samsung físico, com internet e offline, ainda precisam ser confirmadas. Sem garantia de 100% das variantes nunca disponibilizadas pelas fontes."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt329-card-type-icons-15px-20261111",
+      "minVersionCode": 54534,
+      "date": "11/11/2026",
+      "title": "PokeSearch LT329 — Ícones de tipo menores no card",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "No card de detalhes, os ícones dos tipos Pokémon passam de 16×16 px para 15×15 px, inclusive quando o Pokémon tem um único tipo.",
+          "Mantidos o alinhamento central e o espaço de 2 px entre dois tipos, sem modificar outros ícones ou o conteúdo do card."
+        ],
+        "correcoes": [
+          "A largura fixa e a base flexível de ambos os estados de ícone foram uniformizadas em 15 px, evitando diferença de tamanho em Pokémon com um ou dois tipos."
+        ],
+        "emDesenvolvimento": [
+          "Conferência visual e instalação em dispositivo Samsung físico, nas Pokébolas primária e secundária, continuam pendentes."
+        ]
+      }
     }
   ]
 }
