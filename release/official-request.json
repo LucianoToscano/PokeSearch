@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.28",
-  "code": 54534,
-  "label": 51332,
-  "previous_tag": "v0.03.27-54533",
-  "qa_max_code": 54533,
-  "release_notes": "PokeSearch LT329 (0.03.28) — Ícones de tipo do card de detalhes reduzidos de 16×16 para 15×15 pixels, nos Pokémon de um ou dois tipos, mantendo alinhamento central e espaço de 2 pixels entre ícones. Nenhum outro ícone, filtro, busca, acesso à API, classificação, sprite ou preferência foi alterado. A correção funciona na Pokébola principal e na secundária pelo layout compartilhado. Corrigidas apenas duas expectativas desatualizadas dos testes visuais de Rank Geral e dimensões dos tipos, sem mudanças de comportamento no aplicativo. PR #330 integrada no commit b153be3101a41e3f2baea662f5542b9f1f4e09ab. Verificações Node, Java/Android, OTA, Playwright visual P/M/G e APK beta privado concluídas com sucesso. Inspeção física no Samsung ainda pendente. APK público somente após build oficial assinado pelo certificado permanente e verificações de segurança; instalação exige confirmação do Android."
+  "version": "0.03.29",
+  "code": 54535,
+  "label": 51333,
+  "previous_tag": "v0.03.28-54534",
+  "qa_max_code": 54534,
+  "release_notes": "PokeSearch LT330 (0.03.29) — Assistente Edu atualizado com as 68 sprites transparentes de resolução original 512×512. A referência #42 Edu Parado foi preservada pixel a pixel; quadros da Pokébola, caminhada de frente, direita e esquerda, fantasias Mewtwo e Mewtwo Shiny, Shiny e Sombria foram corrigidos e alinhados conservadoramente. Animações, sequências, durações e estados contextuais preservados. Novo carregador usa pacote de 68 PNGs originais 512px conferido por SHA-256, cache privado e até oito quadros em memória, com fallback para atlas 128px padronizado e depois sprites legados se necessário. Preserva P1/P2, API, filtros, rankings, relógio, preferências, login, assinatura e tamanho P/M/G. PR #332 integrada por squash b818ca7210f905fbd15442fe95340801dc46e97b. Testes de Node, Java Android, OTA e compilação APK beta assinada concluídos com sucesso antes do merge. QA físico Samsung e confirmação de instalação permanecem pendentes. APK oficial somente após confirmação do workflow protegido e certificado permanente."
 }
