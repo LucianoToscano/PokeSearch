@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.30",
-  "code": 54536,
-  "label": 51334,
-  "previous_tag": "v0.03.29-54535",
-  "qa_max_code": 54535,
-  "release_notes": "PokeSearch LT331 (0.03.30) — Correção preventiva do modo ocioso do Assistente Edu. Após a auditoria das 68 sprites e das capturas reais no Samsung, a rotação automática do Edu foi limitada às caminhadas laterais, evitando alternância inesperada para Pokébola, celular/jogando, Shiny ou armaduras Mewtwo durante o repouso. As 68 sprites transparentes de 512×512 da LT330, a imagem canônica #42, os estados de tutorial, evento e reide e as sequências acionadas pelo usuário permanecem disponíveis e inalterados. Preservados P/M/G, P1/P2, buscas, API, filtros, rankings, relógio, login e assinatura. Correção em PR #335 (merge 5025623729b218b9c6a5c785b2786549ffa5012a); notas em PR #336 (merge 05a710543f79e5cc435f80863abb790849e1e7a6). Atenção: esta atualização reduz saltos de vestimenta em idle, mas NÃO conclui a padronização anatômica/visual das 68 imagens; o redesenho permanece em auditoria #334. Testes automáticos da PR aprovados; teste físico Samsung e instalação no aparelho dependem de confirmação. Assinatura e APK público somente após validação no workflow protegido. Novo guard de regressão da coleção Edu foi ajustado para verificar a progressão das versões sem exigir a numeração anterior LT330; integridade dos 68 PNGs, da referência #42 e limite de tamanho do APK mantidos. PR #337 integrada após Node, Android Core e APK beta de QA aprovados."
+  "version": "0.03.31",
+  "code": 54537,
+  "label": 51335,
+  "previous_tag": "v0.03.30-54536",
+  "qa_max_code": 54536,
+  "release_notes": "PokeSearch LT332 (0.03.31) — Assistente Edu: correção geométrica de exibição e restauração das oito sequências automáticas de animação. A LT331 havia restringido o ciclo a caminhada direita e esquerda; agora voltam Pokébola, caminhada de frente, jogando, Shiny, Mewtwo e Mewtwo Shiny, além das caminhadas laterais, sem remover nenhuma das 68 poses. O novo EduSpriteGeometry512 ajusta dinamicamente largura/posição da cabeça e pés em frames comuns do master 512 no momento da renderização, antes do cache, preservando #42 Edu Parado sem alteração e mantendo Pokébola aérea, ícones e outros acessórios independentes. O teleporte mantém escala e transparência excepcionais; armaduras e Sombria são preservadas sem autodeformação inadequada. P/M/G, sequências contextuais de reide/evento, animações sob gatilho, P1/P2, APIs, filtros, rankings, login, relógio e assinatura permanecem intactos. A alteração de renderização não é uma reconstrução artística pixel a pixel das 68 fontes e não prova geometria perfeita em todas as expressões; a auditoria visual e QA físico Samsung seguem pendentes em #334. PR #339 integrada como b2af147bb9b609e79d13ccb9ec8395a41ab8df31, regressões Node, Android Core, compilação Java, OTA e APK QA assinado aprovados. Instalação requer confirmação no Android; release somente após workflow oficial protegido."
 }
