@@ -209,13 +209,14 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean avatarMotion=true;
     private String eduAnimationName="",eduReactionState="";
     private long eduAnimationStartedAt=0L,eduDragStartedAt=0L,eduReactionStateUntil=0L;
-    // LT331: somente os dois ciclos laterais com corpo comparável entram
-    // no idle. A coleção de 68 poses e os demais gestos permanecem no atlas
-    // para uso contextual, nunca alternando fantasia/rosto de surpresa.
-    // Este é um bloqueio conservador até a auditoria artística das 68
-    // sprites (#334); não substitui a correção dos PNGs originais.
+    // LT332: reabilitar TODAS as oito sequências ociosas históricas.
+    // A LT331 havia limitado a rotação aos dois lados e ocultado a
+    // Pokébola, caminhada frontal, jogando, Shiny e duas armaduras.
+    // A geometria é estabilizada no atlas 512 sem remover quadros.
     private static final String[] EDU_IDLE_ROTATION={
-        "caminhada_direita","caminhada_esquerda"
+        "pokebola_gesto","caminhada_frente","caminhada_direita",
+        "caminhada_esquerda","edu_jogando","edu_shiny",
+        "edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"
     };
     private long eduLastInteractionAt=0L,eduIdleNextAt=0L,eduIdleStartedAt=0L;
     private String eduIdleName="";
