@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.32",
-  "code": 54538,
-  "label": 51336,
-  "previous_tag": "v0.03.31-54537",
-  "qa_max_code": 54537,
-  "release_notes": "PokeSearch LT333 (0.03.32) — Correção de nitidez das 68 sprites Edu. O aplicativo utiliza diretamente os masters PNG originais de 512×512, sem o normalizador LT332 que deformava a cabeça e o corpo com escalas horizontais/verticais diferentes e sem interpolação bilinear que borrava olhos, óculos e contornos. Removida EduSpriteGeometry512; nearest-neighbor também no fallback 128→512. Mantidos os hashes dos 68 PNGs e da imagem #42 canônica, os índices, as oito sequências automáticas (Pokébola, frente, direita, esquerda, jogando, Shiny e Mewtwo), as poses contextuais, teleporte, Sombria, tamanhos P/M/G, P1/P2 e demais recursos do PokeSearch. Esta atualização recupera fidelidade e legibilidade sem substituir os masters por um pacote de revisão que apresentou perda de qualidade. Não é remasterização artística integral: diferenças antigas na proporção da cabeça entre algumas poses continuam em revisão na issue #334 e dependem de QA físico Samsung. PR #341 integrada por squash b28aa1d7559788a59253086b1552c4dfd77bb6f1, com regressões Node, Android Core, Java, OTA e APK beta assinado aprovados. Instalação exige confirmação no Android; publicação somente após validação do workflow oficial protegido."
+  "version": "0.03.33",
+  "code": 54539,
+  "label": 51337,
+  "previous_tag": "v0.03.32-54538",
+  "qa_max_code": 54538,
+  "release_notes": "PokeSearch LT334 (0.03.33) — Corrigido o encolhimento do Assistente Edu ao levantar/jogar a Pokébola. Os quatro quadros #00–03 passam a compor a cabeça, rosto, óculos, tronco, calça e pés da pose canônica #42 com a camada animada do braço e da Pokébola originais, sem reduzir o personagem inteiro. Apenas a camada do gesto recebe transformação uniforme em nearest-neighbor; não há escala anisotrópica, suavização bilinear ou alteração dos 68 PNGs mestres de 512px. O quadro #02 mantém a bola aérea, as oito sequências ociosas, estados contextuais, efeitos, tamanhos P/M/G e fallback permanecem preservados. Código integrado na PR #343 (squash 16ae4e347398d88456fcdeeebdc2bab07577c827); checks Node/Android Core/Java/OTA/APK de teste assinado SUCCESS. A correção é específica à Pokébola e não constitui remasterização de todas as 68 artes; fluidez e junção do braço devem ser conferidas no Samsung físico após a instalação. Assinatura do APK oficial somente pelo workflow protegido, preservando certificado Android permanente e OTA. Atualização no aparelho requer confirmação de instalação."
 }
