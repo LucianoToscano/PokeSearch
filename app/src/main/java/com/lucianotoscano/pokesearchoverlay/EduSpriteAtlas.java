@@ -196,16 +196,13 @@ public final class EduSpriteAtlas {
             try{
                 Bitmap original512=masters.frame(i);
                 if(original512!=null){
-                    // LT332: a correção ocorre sobre o corpo/rosto na fonte
-                    // 512, ANTES do cache. Não redimensionar duas vezes.
-                    Bitmap corrected=EduSpriteGeometry512.normalize(original512,i);
-                    if(corrected!=original512){
-                        original512.recycle();
-                        original512=corrected;
-                    }
+                    // LT333: usar os pixels ORIGINAIS do master 512 sem
+                    // deformar cabeça, rosto, olhos, óculos ou corpo.
+                    // O ajuste anisotrópico da LT332 e o filtro bilinear
+                    // comprometiam nitidez; escala P/M/G continua na View.
                     original512.setDensity(app.getResources().getDisplayMetrics().densityDpi);
                     BitmapDrawable drawable=new BitmapDrawable(app.getResources(),original512);
-                    drawable.setFilterBitmap(true);
+                    drawable.setFilterBitmap(false);
                     drawable.setAntiAlias(false);
                     drawable.setDither(false);
                     displayCache.put(i,drawable);
@@ -263,9 +260,9 @@ public final class EduSpriteAtlas {
                 0,0,DISPLAY_SOURCE_PX,DISPLAY_SOURCE_PX);
             high.setDensity(app.getResources().getDisplayMetrics().densityDpi);
             BitmapDrawable drawable=new BitmapDrawable(app.getResources(),high);
-            // Suaviza só o redimensionamento final para P/M/G, evitando
-            // serrilhado de blocos 4x sem borrar o atlas original.
-            drawable.setFilterBitmap(true);
+            // LT333: nearest-neighbor também no fallback para preservar
+            // contornos do cabelo e dos óculos sem halo nos tamanhos P/M/G.
+            drawable.setFilterBitmap(false);
             drawable.setAntiAlias(false);
             drawable.setDither(false);
             displayCache.put(i,drawable);

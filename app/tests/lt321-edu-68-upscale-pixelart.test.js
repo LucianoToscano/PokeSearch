@@ -19,7 +19,9 @@ assert.match(atlas,/DISPLAY_SOURCE_PX=512/);
 assert.match(atlas,/new LruCache<>\(8\)/);
 assert.match(atlas,/catch\(OutOfMemoryError memory\)/);
 assert.match(atlas,/SHADOW_INDEX=67, COLLECTION_COUNT=TOTAL_COUNT\+1/);
-assert.match(atlas,/drawable\.setFilterBitmap\(true\)/);
+// LT333: a suavização anterior apagava detalhes finos do Edu.
+assert.match(atlas,/drawable\.setFilterBitmap\(false\)/);
+assert.doesNotMatch(atlas,/drawable\.setFilterBitmap\(true\)/);
 
 const javac=cp.spawnSync("javac",["-version"],{encoding:"utf8"});
 const javaRuntime=cp.spawnSync("java",["-version"],{encoding:"utf8"});
