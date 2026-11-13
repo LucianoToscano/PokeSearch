@@ -353,6 +353,34 @@ jobs:
                 assert blob==expected_sha,"LT328 pinned source hash mismatch: "+key
           print("Official Sea/Halloween sprites (12) + GL/UL emblems (2) + badges (15) checked")
           print("LT328: 33 supplemental GO sprites SHA-1 verified + 2 existing LT144 sprites SHA-256 verified")
+          # LT330: validar que as 68 fontes PNG corrigidas chegaram ao APK
+          # assinado, sem depender somente do teste Node no repositorio.
+          import io
+          prefix="assets/edu_avatar_masters_512_lt330.part"
+          with zipfile.ZipFile(sys.argv[1]) as apk:
+            parts=[]
+            for i in range(13):
+              key=prefix+f"{i:02d}"
+              assert key in apk.namelist(),"Missing Edu 512 master part: "+key
+              parts.append(apk.read(key))
+          packed=b"".join(parts)
+          assert len(packed)==10372393,"Unexpected Edu master archive length"
+          assert hashlib.sha256(packed).hexdigest()==(
+            "f1957b7f6446d82ed9fdb9ace8b0b5d950dfc10f0709aa1618054a366791ac25"
+          ),"Edu 512 master archive integrity mismatch"
+          with zipfile.ZipFile(io.BytesIO(packed)) as edu:
+            expected_names=[f"{i:02d}.png" for i in range(68)]
+            assert sorted(edu.namelist())==expected_names,"Missing/extra Edu master frame"
+            for name in expected_names:
+              png=edu.read(name)
+              assert png[:8]==bytes([137,80,78,71,13,10,26,10]),"Bad Edu PNG "+name
+              assert png[16:24]==bytes.fromhex("0000020000000200"),"Edu frame not 512px "+name
+              assert png[25]==6,"Edu frame not RGBA "+name
+              if name=="42.png":
+                assert hashlib.sha256(png).hexdigest()==(
+                  "700968753c52d196145c3b9758ec426db744f91625576dad84d18d7f2b476b24"
+                ),"Edu #42 canonical reference changed"
+          print("LT330: 68 Edu 512px masters verified inside signed APK, including #42")
           PYSCRIPT
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > PACKAGE-VERSION.txt
           grep -Fq "name='com.lucianotoscano.pokesearch'" PACKAGE-VERSION.txt
@@ -363,11 +391,12 @@ jobs:
           grep -Eq '^Verified using v2 scheme.*: true$' SIGNING-REPORT.txt
           ACTUAL="$(grep 'Signer #1 certificate SHA-256 digest:' SIGNING-REPORT.txt | awk '{print $NF}')"
           test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"
-          # LT328 adds 35 individually SHA-1 verified form/costume PNGs to
-          # the previously 34.8 MB stable APK. Keep a bounded 37 MB budget.
+          # LT330: 68 masters 512px acrescentam ~10 MB; o limite LT328
+          # de 37 MB bloqueava o APK valido de 46,621,576 bytes.
+          # Mantem margem controlada abaixo de 49 MB sem remover integridade.
           APK_BYTES="$(stat -c %s "$APK")"
-          echo "Verified signed APK size: $APK_BYTES bytes (maximum 37,000,000)"
-          test "$APK_BYTES" -lt 37000000
+          echo "Verified signed APK size: $APK_BYTES bytes (maximum 49,000,000)"
+          test "$APK_BYTES" -lt 49000000
           cp "$APK" "$OFFICIAL_APK"
           sha256sum "$OFFICIAL_APK" > SHA256SUMS.txt
           sha256sum -c SHA256SUMS.txt
