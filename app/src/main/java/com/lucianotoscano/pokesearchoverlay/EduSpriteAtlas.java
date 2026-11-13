@@ -196,10 +196,25 @@ public final class EduSpriteAtlas {
             try{
                 Bitmap original512=masters.frame(i);
                 if(original512!=null){
-                    // LT333: usar os pixels ORIGINAIS do master 512 sem
-                    // deformar cabeça, rosto, olhos, óculos ou corpo.
-                    // O ajuste anisotrópico da LT332 e o filtro bilinear
-                    // comprometiam nitidez; escala P/M/G continua na View.
+                    // LT334: somente a Pokébola #00–03 usa o corpo canônico
+                    // de #42 e recebe o braço/objeto original como camada.
+                    // Isso evita encolhimento sem voltar ao warp anisotrópico.
+                    if(i>=0&&i<=3){
+                        Bitmap reference=masters.frame(42);
+                        if(reference!=null){
+                            try{
+                                Bitmap stable=EduPokeballStable.compose(original512,reference,i);
+                                if(stable!=original512){
+                                    original512.recycle();
+                                    original512=stable;
+                                }
+                            }finally{
+                                reference.recycle();
+                            }
+                        }
+                    }
+                    // Pixel art sempre com nearest-neighbor; demais 64
+                    // sprites conservam integralmente os masters 512.
                     original512.setDensity(app.getResources().getDisplayMetrics().densityDpi);
                     BitmapDrawable drawable=new BitmapDrawable(app.getResources(),original512);
                     drawable.setFilterBitmap(false);
