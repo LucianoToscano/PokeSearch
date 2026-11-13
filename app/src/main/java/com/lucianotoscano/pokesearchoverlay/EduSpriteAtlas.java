@@ -180,10 +180,10 @@ public final class EduSpriteAtlas {
     }
     public Drawable frame(int index){
         int i=index>=0&&index<COLLECTION_COUNT?index:indexForState("parado");
-        if(masters==null&&uniform==null&&i==SHADOW_INDEX&&shadowSprite==null)
+        if(uniform==null&&i==SHADOW_INDEX&&shadowSprite==null)
             i=indexForState("parado");
         int consistentFrame=consistentIdleFrameIndex(i);
-        if(masters==null&&uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
+        if(uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
             (consistentIdle==null||consistentFrame<0)){
             i=indexForState("parado");
             consistentFrame=consistentIdleFrameIndex(i);
@@ -351,7 +351,7 @@ public final class EduSpriteAtlas {
         original.recycle();
         return aligned;
     }
-    public boolean hasExtras(){return masters!=null||uniform!=null||extras!=null;}
+    public boolean hasExtras(){return uniform!=null||extras!=null||masters!=null;}
     public Drawable state(String state){return frame(indexForState(state));}
     public static int indexForState(String name){
         if(name==null)return 42;
