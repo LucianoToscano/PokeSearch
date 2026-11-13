@@ -37,9 +37,12 @@ assert(service.includes("eduLastInteractionAt"),"Esperar interação parar");
 assert(service.includes("if(!visible)return eduIdleFrame(now)"),"Idle somente com balão fechado");
 assert(service.includes("eduIdleName=\"\";"),"Terminar sequência antes de próxima");
 assert(service.includes("resetEduIdle();"),"Interação para animação idle");
-for(const item of ["pokebola_gesto","caminhada_frente","caminhada_direita","caminhada_esquerda","edu_jogando","edu_shiny","edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"]) {
- assert(service.includes("\""+item+"\""),"Idle "+item);
+for(const item of ["caminhada_direita","caminhada_esquerda"]) {
+ assert(service.includes("\""+item+"\""),"Idle lateral "+item);
  assert(source.includes("\""+item+"\""),"Sprite "+item);
+}
+for(const item of ["pokebola_gesto","caminhada_frente","edu_jogando","edu_shiny","edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"]) {
+ assert(source.includes("\""+item+"\""),"Sprite preservada no atlas "+item);
 }
 for (const [zone,when] of [
  ["Pacific/Kiritimati","2026-10-30T21:00:00-03:00"],

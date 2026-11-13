@@ -11,10 +11,8 @@ const idle = src.match(/private static final String\[\] EDU_IDLE_ROTATION=\{([\s
 assert.ok(idle, "Não retirar a lista ociosa do Edu");
 const names = [...idle[1].matchAll(/"([^"]+)"/g)].map(match => match[1]);
 assert.deepEqual(names, [
-  "pokebola_gesto", "caminhada_frente", "caminhada_direita",
-  "caminhada_esquerda", "edu_jogando", "edu_shiny",
-  "edu_armadura_mewtwo", "edu_armadura_mewtwo_shiny"
-], "Não sortear sprites de reides/eventos/ansiedade no idle");
+  "caminhada_direita", "caminhada_esquerda"
+], "Idle não pode trocar rosto, Pokébola, Shiny ou armadura aleatoriamente");
 
 const sequences = {
   pokebola_gesto: [0,1,2,3],
@@ -30,10 +28,10 @@ const idleFrames = [42];
 for (const [name, frames] of Object.entries(sequences)) {
   assert.ok(atlas.includes('case "' + name + '": return new int[]{' + frames.join(",") + '};'),
     "Sequência do atlas alterada: " + name);
-  idleFrames.push(...frames);
+  if(names.includes(name)) idleFrames.push(...frames);
 }
-assert.equal(idleFrames.length, 22, "Parado + 21 quadros = 22 poses ociosas");
-assert.equal(new Set(idleFrames).size, 22, "Quadros ociosos não podem se repetir");
+assert.equal(idleFrames.length, 9, "Parado + 8 quadros laterais no idle reduzido");
+assert.equal(new Set(idleFrames).size, 9, "Quadros ociosos não podem se repetir");
 assert.ok(!idleFrames.includes(67), "Sombria nunca entra na rotação aleatória");
 for (let i = 52; i <= 60; i++) {
   assert.ok(!idleFrames.includes(i), "Teleportes só com gatilho");
@@ -68,4 +66,4 @@ assert.ok(documented&&Number(documented[1])>=318,
   "A continuidade não deve rebaixar a base oficial LT318 ou superior");
 assert.ok(!agents.startsWith("BASE OFICIAL ATUAL: LT320"),
   "A antiga LT320 não pode reaparecer como release atual");
-console.log("LT316 PASS: idle 22 poses, Sombria/teleporte sob gatilho, P/M/G, fallback e retoques.");
+console.log("LT316 PASS: idle lateral seguro, 68 poses no atlas, P/M/G, fallback e retoques.");
