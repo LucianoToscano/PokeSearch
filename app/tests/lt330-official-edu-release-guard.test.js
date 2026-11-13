@@ -6,10 +6,10 @@ const java = fs.readFileSync("app/src/main/java/com/lucianotoscano/pokesearchove
 const request = JSON.parse(fs.readFileSync("release/official-request.json","utf8"));
 // Não travar a versão pública em LT330: versões seguintes precisam poder
 // publicar a mesma coleção protegida de 68 PNGs após atualizar o pedido.
-assert.match(request.version,/^0\\.\\d{2}\\.\\d{2}$/);
+assert.match(request.version,/^0\.\d{2}\.\d{2}$/);
 assert.ok(Number.isInteger(request.code) && request.code>=54535,
   "Nao pode rebaixar a versionCode da colecao LT330");
-assert.match(request.previous_tag,/^v0\\.\\d{2}\\.\\d{2}-\\d+$/);
+assert.match(request.previous_tag,/^v0\.\d{2}\.\d{2}-\d+$/);
 const previousCode=Number(request.previous_tag.split("-").at(-1));
 assert.ok(request.code>previousCode,"Release precisa superar versao anterior");
 const notes=JSON.parse(fs.readFileSync("app/src/main/assets/release_notes.json","utf8"));
