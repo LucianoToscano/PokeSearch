@@ -3722,6 +3722,28 @@
           "Conferência visual e instalação em dispositivo Samsung físico, nas Pokébolas primária e secundária, continuam pendentes."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt330-edu-68-masters-512-20261113",
+      "minVersionCode": 54535,
+      "date": "13/11/2026",
+      "title": "PokeSearch 0.03.29 — Edu com 68 sprites 512px",
+      "sections": {
+        "novidades": [
+          "Assistente Edu com coleção de 68 poses em PNG transparente 512×512, baseada no Edu Parado #42."
+        ],
+        "melhorias": [
+          "Caminhadas, Pokébola, Shiny, fantasias Mewtwo e Sombria com melhor enquadramento e nitidez.",
+          "Carregamento sob demanda de PNGs originais 512px com cache limitado e atlas anterior como reserva."
+        ],
+        "correcoes": [
+          "Alinhamento corporal da caminhada e separação da Pokébola aérea para evitar sobreposição.",
+          "Transparência da sprite Sombria corrigida; cabeça e pés mantêm posição da referência #42 nas poses comuns."
+        ],
+        "emDesenvolvimento": [
+          "Confirmação física em Samsung das animações e da instalação permanece pendente."
+        ]
+      }
     }
   ]
 }

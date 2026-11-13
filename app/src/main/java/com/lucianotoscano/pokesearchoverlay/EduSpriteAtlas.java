@@ -41,6 +41,7 @@ public final class EduSpriteAtlas {
     private final Bitmap atlas;
     private final Bitmap uniform;
     private final boolean correctedAtlas;
+    private final EduSpriteMasters masters;
     private final Bitmap extras;
     private final Bitmap consistentIdle;
     private final Bitmap shadowSprite;
@@ -56,11 +57,12 @@ public final class EduSpriteAtlas {
 
     private EduSpriteAtlas(Context context, Bitmap image, Bitmap uniformImage,
                            Bitmap extrasImage, Bitmap idleImage, Bitmap shadowImage,
-                           boolean corrected){
+                           boolean corrected, EduSpriteMasters masterImages){
         app=context.getApplicationContext();
         atlas=image;
         uniform=uniformImage;
         correctedAtlas=corrected;
+        masters=masterImages;
         extras=extrasImage;
         consistentIdle=idleImage;
         shadowSprite=shadowImage;
@@ -111,6 +113,22 @@ public final class EduSpriteAtlas {
             }catch(IOException|RuntimeException ignored){
                 // Preservar o original LT315 e os outros três fallback.
             }
+            // LT330: os 68 masters 512px também oferecem atlas 128px de reserva.
+            // A arte nova já está alinhada: não aplicar o retoque LT316 uma segunda vez.
+            try(InputStream remastered=context.getAssets().open(
+                "edu_avatar_masters_normalizados_128.webp")){
+                BitmapFactory.Options noScale=new BitmapFactory.Options();
+                noScale.inScaled=false;
+                Bitmap candidate=BitmapFactory.decodeStream(remastered,null,noScale);
+                if(candidate!=null&&candidate.getWidth()==UNIFORM_COLS*CELL&&
+                    candidate.getHeight()==UNIFORM_ROWS*CELL){
+                    if(unified!=null)unified.recycle();
+                    unified=candidate;
+                    correctedUsed=false;
+                }else if(candidate!=null)candidate.recycle();
+            }catch(IOException|RuntimeException ignored){
+                // Preserva o atlas LT316 assinado caso o novo asset não esteja presente.
+            }
             Bitmap extra=null;
             try(InputStream supplement=context.getAssets().open(EXTRA_ASSET)){
                 BitmapFactory.Options noScale=new BitmapFactory.Options();
@@ -157,18 +175,38 @@ public final class EduSpriteAtlas {
                 // Asset opcional: não bloquear o Edu nem as 67 poses anteriores.
             }
             return new EduSpriteAtlas(context,image,unified,extra,idle,shadow,
-                correctedUsed);
+                correctedUsed, EduSpriteMasters.load(context));
         }
     }
     public Drawable frame(int index){
         int i=index>=0&&index<COLLECTION_COUNT?index:indexForState("parado");
-        if(uniform==null&&i==SHADOW_INDEX&&shadowSprite==null)
+        if(masters==null&&uniform==null&&i==SHADOW_INDEX&&shadowSprite==null)
             i=indexForState("parado");
         int consistentFrame=consistentIdleFrameIndex(i);
-        if(uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
+        if(masters==null&&uniform==null&&i>=COUNT&&i<TOTAL_COUNT&&extras==null&&
             (consistentIdle==null||consistentFrame<0)){
             i=indexForState("parado");
             consistentFrame=consistentIdleFrameIndex(i);
+        }
+        // LT330: fontes transparentes 512px verdadeiras, sem upscale 128->512.
+        // O cache LRU antigo continua limitando o consumo a oito sprites (~8 MiB).
+        BitmapDrawable nativeFrame=displayCache.get(i);
+        if(nativeFrame!=null)return nativeFrame;
+        if(masters!=null){
+            try{
+                Bitmap original512=masters.frame(i);
+                if(original512!=null){
+                    original512.setDensity(app.getResources().getDisplayMetrics().densityDpi);
+                    BitmapDrawable drawable=new BitmapDrawable(app.getResources(),original512);
+                    drawable.setFilterBitmap(true);
+                    drawable.setAntiAlias(false);
+                    drawable.setDither(false);
+                    displayCache.put(i,drawable);
+                    return drawable;
+                }
+            }catch(OutOfMemoryError memory){
+                // Falta de RAM: usar automaticamente o atlas legado de 128px.
+            }
         }
         if(cache[i]==null){
             boolean uniformFrame=uniform!=null;
@@ -313,7 +351,7 @@ public final class EduSpriteAtlas {
         original.recycle();
         return aligned;
     }
-    public boolean hasExtras(){return uniform!=null||extras!=null;}
+    public boolean hasExtras(){return masters!=null||uniform!=null||extras!=null;}
     public Drawable state(String state){return frame(indexForState(state));}
     public static int indexForState(String name){
         if(name==null)return 42;
@@ -410,5 +448,6 @@ public final class EduSpriteAtlas {
             consistentIdle.recycle();
         if(shadowSprite!=null&&!shadowSprite.isRecycled())
             shadowSprite.recycle();
+        if(masters!=null)masters.close();
     }
 }
