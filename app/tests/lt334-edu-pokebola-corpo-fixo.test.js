@@ -1,0 +1,37 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const dir="app/src/main/java/com/lucianotoscano/pokesearchoverlay/";
+const atlas=fs.readFileSync(dir+"EduSpriteAtlas.java","utf8");
+const fix=fs.readFileSync(dir+"EduPokeballStable.java","utf8");
+const masters=fs.readFileSync(dir+"EduSpriteMasters.java","utf8");
+const svc=fs.readFileSync(dir+"RaidDayAssistantOverlayService.java","utf8");
+
+// #00-03 usam a silhueta/pés/rosto da #42, e somente o braço ativo é animado.
+assert.match(atlas,/if\(i>=0&&i<=3\)\s*\{/);
+assert.match(atlas,/Bitmap reference=masters\.frame\(42\)/);
+assert.match(atlas,/EduPokeballStable\.compose\(original512,reference,i\)/);
+assert.match(atlas,/if\(stable!=original512\)/);
+assert.match(atlas,/reference\.recycle\(\)/);
+assert.match(fix,/canonical\.getPixels\(base/);
+assert.match(fix,/action\.getPixels\(source/);
+assert.match(fix,/if \(action == null \|\| canonical == null \|\| frame < 0 \|\| frame > 3/);
+assert.match(fix,/Math\.round\(\(y - OFFSET_Y\) \/ ARM_SCALE\)/);
+assert.match(fix,/Math\.round\(\(x - OFFSET_X\) \/ ARM_SCALE\)/);
+assert.match(fix,/result\.setPixels\(base/);
+assert.match(fix,/if \(frame == 2\)/,"Preservar Pokébola aérea do quadro #02");
+assert.doesNotMatch(fix,/setFilterBitmap\(true\)|createScaledBitmap\(.*true\)/);
+assert.doesNotMatch(atlas,/EduSpriteGeometry512|\.normalize\(original512/i);
+assert.match(atlas,/drawable\.setFilterBitmap\(false\)/);
+assert.match(atlas,/drawable\.setAntiAlias\(false\)/);
+assert.match(atlas,/case "pokebola_gesto": return new int\[\]\{0,1,2,3\}/);
+assert.match(atlas,/case "pokebola_gesto": return 220/);
+assert.match(masters,/COUNT = 68/);
+assert.match(atlas,/SIZES_PX=\{100,150,200\}/);
+const idle=svc.match(/private static final String\[\] EDU_IDLE_ROTATION=\{([\s\S]*?)\};/);
+assert.ok(idle && idle[1].includes('"pokebola_gesto"'));
+const notes=JSON.parse(fs.readFileSync("app/src/main/assets/release_notes.json","utf8"));
+const release=notes.releases.find(x=>x.minVersionCode===54539);
+assert.ok(release && release.title.includes("0.03.33"),"Notas LT334 embarcadas");
+assert.match(JSON.stringify(release),/Pokébola/);
+console.log("LT334 Edu: 4 gestos com corpo #42, nearest-neighbor, 68 quadros e 8 sequências preservados PASS");
