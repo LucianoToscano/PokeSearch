@@ -32,3 +32,9 @@
 - `app/tests/lt169-all-go-sprites-api-dom-parity.test.js`: preserva auditoria da base anterior.
 - A fonte PokeMiners também oferece imagens-base de Pokémon não presentes no índice de fantasias, e a PokeAPI oferece 1.025 sprites-base e 317 variedades pinadas. **Uma forma no catálogo não implica automaticamente uma imagem distinta**: muitos registros são `NORMAL`, cosméticos sem sprite separado, rótulos de evento ou formas ainda sem arte verificável.
 - Não há garantia de 100% de carregamento visual em aparelho somente pela presença de URL/arquivo verificado. Testar WebView Android com internet/desconectada, locale PT-BR, casos de erro, e conferir os hashes efetivos do APK antes de publicação.
+
+## Estado oficial posterior à auditoria (12/11/2026)
+
+- [PR #329](https://github.com/LucianoToscano/PokeSearch/pull/329) integrada por squash `79575b2ba5fe60ded9b18412d73f7d2a13f9b72d`; testes Node, Java/Android, OTA e compilação privada aprovados no processo, conforme PR e [notas da Release `v0.03.27-54533`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.27-54533). Asset oficial de 35.363.403 bytes, SHA-256 `3705e48bbc3d4317c33637c613a5666d0fe550f8ccce48e42010002a52923ce0`; publicado em 11/11/2026. Substituído posteriormente pela LT329 como latest.
+- **Permanece pendente:** inspeção física Samsung nas Pokébolas P1/P2 e carregamento real da WebView online/offline. Validação da origem de 35 sprites não equivale a cobertura visual total. Não alegar que os catálogos externos PoGoCoordinates foram integralmente sincronizados sem conexão autenticada e verificação atual.
+
