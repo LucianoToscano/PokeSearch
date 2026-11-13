@@ -3789,6 +3789,28 @@
           "A auditoria artística quadro a quadro e teste visual no Samsung real seguem necessários."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt333-edu-nitidez-sem-deformacao-20261113",
+      "minVersionCode": 54538,
+      "date": "13/11/2026",
+      "title": "PokeSearch 0.03.32 — Edu: nitidez restaurada",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "As 68 sprites do Edu voltam a usar diretamente os PNGs originais de 512×512, preservando detalhes dos olhos, óculos, cabelo e contornos.",
+          "A exibição P/M/G não aplica mais suavização bilinear: contornos em pixel art permanecem nítidos, inclusive no fallback."
+        ],
+        "correcoes": [
+          "Removida a rotina LT332 que ampliava horizontal e verticalmente o Edu em proporções diferentes, distorcendo algumas poses.",
+          "Mantidas as oito sequências automáticas do Edu, incluindo Pokébola, frente, laterais, jogando, Shiny e fantasias Mewtwo.",
+          "Mantidos os 68 índices, a referência #42, teleporte, eventos, reides e os três tamanhos P/M/G."
+        ],
+        "emDesenvolvimento": [
+          "Este lançamento restaura a nitidez das imagens já presentes no aplicativo; não substitui os 68 PNGs por um novo redesenho artístico.",
+          "Diferenças antigas de proporção entre algumas poses ainda exigem retoque pixel a pixel e teste visual em aparelho Samsung."
+        ]
+      }
     }
   ]
 }
