@@ -196,6 +196,13 @@ public final class EduSpriteAtlas {
             try{
                 Bitmap original512=masters.frame(i);
                 if(original512!=null){
+                    // LT332: a correção ocorre sobre o corpo/rosto na fonte
+                    // 512, ANTES do cache. Não redimensionar duas vezes.
+                    Bitmap corrected=EduSpriteGeometry512.normalize(original512,i);
+                    if(corrected!=original512){
+                        original512.recycle();
+                        original512=corrected;
+                    }
                     original512.setDensity(app.getResources().getDisplayMetrics().densityDpi);
                     BitmapDrawable drawable=new BitmapDrawable(app.getResources(),original512);
                     drawable.setFilterBitmap(true);

@@ -3765,6 +3765,30 @@
           "Teste visual no Samsung físico e confirmação de instalação ainda pendentes."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt332-edu-geometria-cabeca-idle-restaurado-20261113",
+      "minVersionCode": 54537,
+      "date": "13/11/2026",
+      "title": "PokeSearch 0.03.31 — Edu: proporções e animações restauradas",
+      "sections": {
+        "novidades": [
+          "Retornam oito sequências do Edu no modo ocioso: Pokébola, caminhada frontal/lateral, jogando, Shiny e armaduras Mewtwo."
+        ],
+        "melhorias": [
+          "Ajuste geométrico dos frames de 512 px na renderização para reduzir variação aparente da cabeça, altura e posição dos pés; referência #42 é mantida sem filtros.",
+          "A correção é calculada uma única vez no cache, evitando variação entre repetições e mantendo pixel art sem antialiasing."
+        ],
+        "correcoes": [
+          "Removida a restrição da LT331 que escondia seis sequências ociosas.",
+          "Objetos e efeitos de poses contextuais não são ampliados junto com a cabeça; o efeito intencional de teleporte mantém sua escala e opacidade.",
+          "Mantidas todas as 68 sprites, os índices dos eventos e reides, as pausas entre ciclos, P/M/G e o fallback existente."
+        ],
+        "emDesenvolvimento": [
+          "Correções são geométricas em tempo de exibição; não constituem redesenho pixel a pixel de todas as 68 artes nem certificam identidade completa.",
+          "A auditoria artística quadro a quadro e teste visual no Samsung real seguem necessários."
+        ]
+      }
     }
   ]
 }
