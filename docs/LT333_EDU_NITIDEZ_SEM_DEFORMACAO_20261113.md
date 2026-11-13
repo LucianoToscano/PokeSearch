@@ -1,6 +1,6 @@
 # LT333 — Correção de nitidez do Edu sem deformar o master 512
 
-Data: 13/11/2026. Estado: correção submetida a QA; **não confundir PR com release pública**.
+Data: 13/11/2026. **Publicação oficial comprovada:** [`v0.03.32-54538`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.32-54538); [APK `PokeSearch-v0.03.32-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.32-54538/PokeSearch-v0.03.32-LT.apk) de **46.622.532 bytes**, SHA-256 `fc1fbadbbbae9511253432b687a18f122bee07093132068cacab02fc6195d7fb`. [Workflow #43422048343](https://github.com/LucianoToscano/PokeSearch/actions/runs/43422048343) `completed/success`: verificações Node/OTA, build, certificado, 68 fontes e hash público. Fonte `0bff545f7756a875959be1f29d1601f6599b9d61`; merge PR #341 `b28aa1d7559788a59253086b1552c4dfd77bb6f1`.
 
 ## Defeito reproduzido na LT332
 
