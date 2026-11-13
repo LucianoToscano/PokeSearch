@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT332 OFICIAL — Edu com proporções e rotação restauradas (13/11/2026)
+
+- **Versão pública verificada:** `LT332 / 0.03.31 / versionCode 54537 / label 51335`. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.31-54537), [APK assinado `PokeSearch-v0.03.31-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.31-54537/PokeSearch-v0.03.31-LT.apk), **46.622.244 bytes**, SHA-256 `b738cf451167c4ad7d92480d95cd8beaa8d2b5aef693251f547bd820c0f17b72`. GitHub [workflow protegido #43394789856](https://github.com/LucianoToscano/PokeSearch/actions/runs/43394789856) **completed/success**: regressões, build oficial, APK/assinador, criação da release e checksum público validados. SHA fonte `fd28861eecc2f2521dfff3b262f39151db3e382a`; assinatura Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
+- **Código integrado:** [PR #339](https://github.com/LucianoToscano/PokeSearch/pull/339) squash `b2af147bb9b609e79d13ccb9ec8395a41ab8df31`. Restaura oito sequências no idle (Pokébola, frente, ambos lados, jogando, Shiny e duas armaduras), corrigindo regressão de apenas dois lados da LT331. Novo `EduSpriteGeometry512.java` estabiliza proporções de cabeça/pés no bitmap ao carregar no LRU; #42 intacta, acessórios separados, teleporte excepcional, 68 índices e P/M/G preservados.
+- **IMPORTANTE:** o patch é geométrico na **renderização** e não recria byte a byte as 68 fontes. As capturas de LT331 demonstraram divergências; a inspeção artística completa e QA físico Samsung continuam pendentes na [issue #334](https://github.com/LucianoToscano/PokeSearch/issues/334). Instalação manual depende do Android, nenhuma atualização silenciosa foi confirmada. O APK anterior `v0.03.30-54536` continua preservado.
+
+
 ## LT331 OFICIAL — Mitigação do idle Edu (13/11/2026)
 
 - **Release pública verificada:** `LT331 · 0.03.30 · versionCode 54536 · label 51334`. [Release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.30-54536), [APK `PokeSearch-v0.03.30-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.30-54536/PokeSearch-v0.03.30-LT.apk), **46.621.836 bytes**, SHA-256 `cd0c18b67b6ca57bc8ccd2c7c67b4754ff4eeca0532643dc485e2b18c855a6d4`. Release `draft=false`, `prerelease=false`, asset `uploaded`. Fonte exata `b9850b0f3df8570898db6a1d787a68aab84ac5f4`.
