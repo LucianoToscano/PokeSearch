@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.31",
-  "code": 54537,
-  "label": 51335,
-  "previous_tag": "v0.03.30-54536",
-  "qa_max_code": 54536,
-  "release_notes": "PokeSearch LT332 (0.03.31) — Assistente Edu: correção geométrica de exibição e restauração das oito sequências automáticas de animação. A LT331 havia restringido o ciclo a caminhada direita e esquerda; agora voltam Pokébola, caminhada de frente, jogando, Shiny, Mewtwo e Mewtwo Shiny, além das caminhadas laterais, sem remover nenhuma das 68 poses. O novo EduSpriteGeometry512 ajusta dinamicamente largura/posição da cabeça e pés em frames comuns do master 512 no momento da renderização, antes do cache, preservando #42 Edu Parado sem alteração e mantendo Pokébola aérea, ícones e outros acessórios independentes. O teleporte mantém escala e transparência excepcionais; armaduras e Sombria são preservadas sem autodeformação inadequada. P/M/G, sequências contextuais de reide/evento, animações sob gatilho, P1/P2, APIs, filtros, rankings, login, relógio e assinatura permanecem intactos. A alteração de renderização não é uma reconstrução artística pixel a pixel das 68 fontes e não prova geometria perfeita em todas as expressões; a auditoria visual e QA físico Samsung seguem pendentes em #334. PR #339 integrada como b2af147bb9b609e79d13ccb9ec8395a41ab8df31, regressões Node, Android Core, compilação Java, OTA e APK QA assinado aprovados. Instalação requer confirmação no Android; release somente após workflow oficial protegido."
+  "version": "0.03.32",
+  "code": 54538,
+  "label": 51336,
+  "previous_tag": "v0.03.31-54537",
+  "qa_max_code": 54537,
+  "release_notes": "PokeSearch LT333 (0.03.32) — Correção de nitidez das 68 sprites Edu. O aplicativo utiliza diretamente os masters PNG originais de 512×512, sem o normalizador LT332 que deformava a cabeça e o corpo com escalas horizontais/verticais diferentes e sem interpolação bilinear que borrava olhos, óculos e contornos. Removida EduSpriteGeometry512; nearest-neighbor também no fallback 128→512. Mantidos os hashes dos 68 PNGs e da imagem #42 canônica, os índices, as oito sequências automáticas (Pokébola, frente, direita, esquerda, jogando, Shiny e Mewtwo), as poses contextuais, teleporte, Sombria, tamanhos P/M/G, P1/P2 e demais recursos do PokeSearch. Esta atualização recupera fidelidade e legibilidade sem substituir os masters por um pacote de revisão que apresentou perda de qualidade. Não é remasterização artística integral: diferenças antigas na proporção da cabeça entre algumas poses continuam em revisão na issue #334 e dependem de QA físico Samsung. PR #341 integrada por squash b28aa1d7559788a59253086b1552c4dfd77bb6f1, com regressões Node, Android Core, Java, OTA e APK beta assinado aprovados. Instalação exige confirmação no Android; publicação somente após validação do workflow oficial protegido."
 }
