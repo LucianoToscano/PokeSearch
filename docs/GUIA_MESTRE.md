@@ -1,6 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT331 — Auditoria visual do Edu (13/11/2026; RELEASE DE REMASTERIZAÇÃO PENDENTE)
+## LT331 — Mitigação do idle do Edu, publicação solicitada (13/11/2026)
+
+- A pedido expresso do proprietário em 13/11/2026, preparar **release 0.03.30 / code 54536 / label 51334** a partir da PR #335, squash `5025623729b218b9c6a5c785b2786549ffa5012a`. A correção **somente restringe a rotação ociosa às caminhadas laterais**, preservando as 68 sprites e seus estados contextuais. Não afirmar que tamanho do rosto/corpo dos 68 PNGs já foi corrigido.
+- Notas registradas em `app/src/main/assets/release_notes.json`; versão pública anterior verificada: `v0.03.29-54535`. Publicação pela automação protegida `release/official-request.json` **somente após CI e confirmação de tag/APK/checksum**. Até essa evidência, este é um pedido, não uma release verificada. QA físico Samsung pendente.
+
+## LT331 — Auditoria visual do Edu (13/11/2026; REMASTERIZAÇÃO ARTÍSTICA PENDENTE)
 
 - Os 68 quadros LT330 foram reavaliados a pedido do proprietário após quatro fotos reais de saltos de escala e fantasia. Triagem das **fontes enviadas**: #42 cabeça/cabelo ~213px; Pokébola #00–03 ~146–149px; #29 mapa ~174px; #63–64 jogando ~172px; 44/44 poses comuns sinalizadas por desvio geométrico estrito, 23 exceções manuais. **Não assumir que a triagem é uma verificação byte a byte do APK** nem que cada frame esteja artisticamente condenado por uma métrica de cabelo.
 - Problema independente no código: idle alternava, sem contexto, Pokébola, caminhadas, Shiny, jogando, armaduras Mewtwo. Mitigação na branch de QA: **idle apenas caminhada lateral direita/esquerda**. Todos os 68 estados e sprites continuam no atlas, sem reescrever arquivos binários ou mudar tamanho P/M/G; isso não é remasterização artística completa.

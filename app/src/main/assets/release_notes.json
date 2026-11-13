@@ -3744,6 +3744,27 @@
           "Confirmação física em Samsung das animações e da instalação permanece pendente."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt331-edu-idle-sem-trocas-traje-20261113",
+      "minVersionCode": 54536,
+      "date": "13/11/2026",
+      "title": "PokeSearch 0.03.30 — Edu: movimentos ociosos mais consistentes",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "O Edu usa apenas as animações de caminhada lateral durante o repouso, reduzindo mudanças repentinas de pose, rosto e vestimenta.",
+          "As 68 sprites em 512×512, a referência #42 e as demais poses contextuais continuam disponíveis sem alteração de imagens."
+        ],
+        "correcoes": [
+          "Removida a alternância automática entre Pokébola, celular, Shiny e armaduras Mewtwo enquanto o Edu está parado.",
+          "Preservadas as sequências usadas pelo tutorial, eventos e ações do usuário, além dos tamanhos P/M/G."
+        ],
+        "emDesenvolvimento": [
+          "A padronização artística das 68 sprites ainda necessita redesenho e revisão quadro a quadro; esta atualização não corrige as proporções dos PNGs.",
+          "Teste visual no Samsung físico e confirmação de instalação ainda pendentes."
+        ]
+      }
     }
   ]
 }

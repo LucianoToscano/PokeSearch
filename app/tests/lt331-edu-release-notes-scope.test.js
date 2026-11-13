@@ -1,0 +1,18 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const releases=JSON.parse(fs.readFileSync("app/src/main/assets/release_notes.json","utf8")).releases;
+const note=releases.find(x=>x.minVersionCode===54536);
+assert.ok(note,"LT331 precisa ter notas embarcadas para 54536");
+assert.match(note.title,/0\.03\.30/);
+const sections=note.sections;
+for(const key of ["novidades","melhorias","correcoes","emDesenvolvimento"])assert.ok(Array.isArray(sections[key]),"Secao "+key);
+const text=JSON.stringify(sections);
+assert.match(text,/68 sprites/);
+assert.match(text,/ainda necessita redesenho/,"Sem afirmar que artes já estão padronizadas");
+assert.match(text,/P\/M\/G/);
+const service=fs.readFileSync("app/src/main/java/com/lucianotoscano/pokesearchoverlay/RaidDayAssistantOverlayService.java","utf8");
+const rotation=service.match(/private static final String\[\] EDU_IDLE_ROTATION=\{([\s\S]*?)\};/);
+assert.ok(rotation);
+assert.deepEqual([...rotation[1].matchAll(/"([^"]+)"/g)].map(x=>x[1]),["caminhada_direita","caminhada_esquerda"]);
+console.log("LT331 notas e escopo PASS: 0.03.30 corrige idle sem prometer remasterização");
