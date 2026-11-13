@@ -54,12 +54,14 @@ for(const forbidden of [9,20,23,28,29,36,37,38,39,40,41,43,44,45,46,47,48,49,50,
 assert.match(java,/if\(consistentIdle!=null&&!consistentIdle\.isRecycled\(\)\)/,
     "bitmaps suplementares são liberados ao fechar");
 assert.match(service,/EDU_IDLE_ROTATION/);
-for(const seq of ["pokebola_gesto","caminhada_frente","caminhada_direita",
-   "caminhada_esquerda","edu_jogando","edu_shiny",
-   "edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"])
- assert.ok(service.includes('"'+seq+'"'),"ciclo ocioso "+seq);
+for(const seq of ["caminhada_direita","caminhada_esquerda"])
+ assert.ok(service.includes('"'+seq+'"'),"ciclo ocioso seguro "+seq);
+const idle=service.match(/private static final String\[\] EDU_IDLE_ROTATION=\{([\s\S]*?)\};/);
+assert.ok(idle,"A rotação ociosa existe");
+for(const costume of ["edu_shiny","edu_armadura_mewtwo","edu_armadura_mewtwo_shiny","pokebola_gesto","edu_jogando"])
+ assert.ok(!idle[1].includes('"'+costume+'"'),"Proibido costume/gesto automático: "+costume);
 assert.match(java,/SIZES_PX=\{100,150,200\}/,"novos P/M/G preservam as proporções");
 assert.ok(old.length>100000&&old.length<350000,"fallback das 62 sprites mantém nitidez e tamanho compacto");
 assert.ok(extra.length>5000,"atlas de 5 continua incluído");
 assert.match(java,/boolean uniformFrame=uniform!=null/);
-console.log("LT313: asset WebP lossless 22, proporções consistentes, mapeamento e fallback PASS");
+console.log("LT313: atlas legado 22, idle lateral sem fantasias, mapeamento e fallback PASS");
