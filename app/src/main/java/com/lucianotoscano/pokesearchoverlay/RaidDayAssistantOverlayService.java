@@ -209,12 +209,13 @@ public final class RaidDayAssistantOverlayService extends Service {
     private boolean avatarMotion=true;
     private String eduAnimationName="",eduReactionState="";
     private long eduAnimationStartedAt=0L,eduDragStartedAt=0L,eduReactionStateUntil=0L;
-    // As 22 poses autorizadas só entram no modo ocioso com o balão fechado.
-    // A sequência sempre termina antes de iniciar outra, com pausas naturais.
+    // LT331: somente os dois ciclos laterais com corpo comparável entram
+    // no idle. A coleção de 68 poses e os demais gestos permanecem no atlas
+    // para uso contextual, nunca alternando fantasia/rosto de surpresa.
+    // Este é um bloqueio conservador até a auditoria artística das 68
+    // sprites (#334); não substitui a correção dos PNGs originais.
     private static final String[] EDU_IDLE_ROTATION={
-        "pokebola_gesto","caminhada_frente","caminhada_direita",
-        "caminhada_esquerda","edu_jogando","edu_shiny",
-        "edu_armadura_mewtwo","edu_armadura_mewtwo_shiny"
+        "caminhada_direita","caminhada_esquerda"
     };
     private long eduLastInteractionAt=0L,eduIdleNextAt=0L,eduIdleStartedAt=0L;
     private String eduIdleName="";
@@ -244,7 +245,6 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(now<eduIdleNextAt)return EduSpriteAtlas.indexForState("parado");
         for(int tries=0;tries<EDU_IDLE_ROTATION.length;tries++){
             String next=EDU_IDLE_ROTATION[eduIdleIndex++%EDU_IDLE_ROTATION.length];
-            if(next.startsWith("edu_")&&!eduSprites.hasExtras())continue;
             eduIdleName=next;
             eduIdleStartedAt=now;
             int[] frames=EduSpriteAtlas.sequence(next);
