@@ -3811,6 +3811,28 @@
           "Diferenças antigas de proporção entre algumas poses ainda exigem retoque pixel a pixel e teste visual em aparelho Samsung."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt334-edu-pokebola-escala-canonica-20261113",
+      "minVersionCode": 54539,
+      "date": "13/11/2026",
+      "title": "PokeSearch 0.03.33 — Edu mantém tamanho ao jogar Pokébola",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "O Edu mantém cabeça, óculos, corpo e sapatos da pose padrão #42 durante os quatro quadros de Pokébola.",
+          "Braço e Pokébola continuam animados sobre o corpo canônico, sem esticar ou diminuir o personagem.",
+          "A composição ocorre no carregador Android e é guardada no cache de sprites, com pixel art nítida."
+        ],
+        "correcoes": [
+          "Corrigido o encolhimento do Edu ao levantar e jogar Pokébola.",
+          "Preservados os 68 sprites originais em 512×512, a #42, as oito sequências ociosas e os tamanhos P/M/G."
+        ],
+        "emDesenvolvimento": [
+          "As outras poses contextuais ainda exigem revisão artística individual; esta atualização não é uma reconstrução das 68 imagens.",
+          "Transições no Samsung físico ainda precisam de avaliação visual após instalação."
+        ]
+      }
     }
   ]
 }
