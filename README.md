@@ -1,10 +1,20 @@
 # PokeSearch — Android Overlay
 
+## Versão oficial atual — LT329 · 0.03.28 · versionCode 54534 (11/11/2026)
+
+**Publicação estável verificada:** [Release `v0.03.28-54534`](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.28-54534) · [APK oficial `PokeSearch-v0.03.28-LT.apk`](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.28-54534/PokeSearch-v0.03.28-LT.apk) · [GitHub Actions #43084876133](https://github.com/LucianoToscano/PokeSearch/actions/runs/43084876133) `completed/success`. O asset tem **35.363.647 bytes** e digest SHA-256 **`e132a2cad26de221b9508efa80b0382e8fe3f800e420a6f8d8b350d7c7df29fc`**; certificado Android v2 permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Código fonte da compilação: `ae5e060ae5178ad19a0153c2f45dd28f47849113`; PR #330 integrada por squash `b153be3101a41e3f2baea662f5542b9f1f4e09ab`. A versão estável anterior é [LT327–LT328 / 0.03.27](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.27-54533).
+
+**Melhorias recentes:** LT327–LT328 reorganizaram o Rank Geral, corrigiram o tratamento do Vulpix, auditaram formas/fantasias e adicionaram 35 imagens especiais com identidade verificada. LT329 reduziu **somente os ícones de tipo do card de 16×16 para 15×15 px**, mantendo 2 px de espaço e os layouts das duas Pokébolas. O detalhe, login, filtros, sprites, Edu e Doce Raro existentes foram preservados.
+
+**Limites:** testes automatizados e publicação não significam instalação no Android nem inspeção física Samsung; ambas continuam pendentes. Atualizações exigem confirmação do usuário no instalador Android. **Fonte canônica de continuidade:** [AGENTS.md](AGENTS.md), [Guia Mestre](docs/GUIA_MESTRE.md), [documentos LT327](docs/LT327_AUDITORIA_RANK_GERAL_SPRITES_VULPIX_20261111.md), [LT328](docs/LT328_AUDITORIA_COMPLETA_FORMAS_FANTASIAS_20261111.md) e [LT329](docs/LT329_ICONES_TIPO_15PX_20261111.md). Não utilizar a versão histórica LT227 para iniciar o próximo trabalho.
+
+---
+
 **Continuidade para outra conta/IA:** [Manual operacional para analisar, corrigir, testar, mesclar, assinar APK, publicar OTA, enviar Drive e registrar o Arquivo Mestre](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Leia antes de qualquer atualização pública; não misturar APK de QA com release oficial.
 
-## Versão oficial publicada — LT227 · 0.02.27 · 54434
+## Histórico — LT227 · 0.02.27 · 54434
 
-**Atualização pública confirmada:** [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) = [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [Baixar APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk) · [GitHub Actions SUCCESS #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) · [ZIP no Google Drive](https://drive.google.com/file/d/125GyTbrh7_-8kJSC4BZFxhIiopxz-Afg/view?usp=drivesdk).
+**Publicação histórica confirmada em 02/11/2026:** [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [Baixar APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk) · [GitHub Actions SUCCESS #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) · [ZIP no Google Drive](https://drive.google.com/file/d/125GyTbrh7_-8kJSC4BZFxhIiopxz-Afg/view?usp=drivesdk).
 
 **Melhorias:** resultados Pokémon P/M/G (30/40/50 dp), sprites centralizados usando área alfa visível quando CORS permitir e modo Sem fundo sem molduras/sombras. O modo Com fundo continua disponível. Duas Pokébolas, Editor Visual, login opcional, Shiny pausado, Doces Raros e limites de PoGoCoordinates preservados.
 

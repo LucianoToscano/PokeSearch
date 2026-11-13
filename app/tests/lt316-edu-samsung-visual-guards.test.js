@@ -60,10 +60,12 @@ assert.match(atlas, /if\(!uniformFrame\)/);
 assert.match(fine, /i==20\|\|i==28\|\|i==30\|\|i==36\|\|i==49/);
 assert.match(fine, /paint\.setFilterBitmap\(false\)/);
 assert.match(fine, /canvas\.clipOutPath\(path\)/);
-// Since LT322, AGENTS puts the verified current release first and keeps LT320
-// explicitly historical. Never parse the historical LT320 as today's baseline.
-const documented=agents.match(/ESTADO OFICIAL VERIFICADO EM \d{2}\/\d{2}\/\d{4}(?:\s*\([^)]*\))?:\*{0,2}\s*LT(\d+)/i)||
- agents.match(/BASE OFICIAL ATUAL: LT(\d+)/);
+// Current release is documented at the top of AGENTS.md as
+// "**LTnnn OFICIAL VERIFICADA EM dd/mm/aaaa (...):**". Do not fall back to
+// historical LT326/LT320 paragraphs when validating today's baseline.
+const documented=agents.slice(0,4500).match(
+  /^\*\*LT(\d+) OFICIAL VERIFICADA EM \d{2}\/\d{2}\/\d{4}(?:\s*\([^)]*\))?:\*\*/m
+);
 assert.ok(documented&&Number(documented[1])>=318,
   "A continuidade não deve rebaixar a base oficial LT318 ou superior");
 assert.ok(!agents.startsWith("BASE OFICIAL ATUAL: LT320"),
