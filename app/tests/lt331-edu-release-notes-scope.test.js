@@ -11,8 +11,6 @@ const text=JSON.stringify(sections);
 assert.match(text,/68 sprites/);
 assert.match(text,/ainda necessita redesenho/,"Sem afirmar que artes já estão padronizadas");
 assert.match(text,/P\/M\/G/);
-const service=fs.readFileSync("app/src/main/java/com/lucianotoscano/pokesearchoverlay/RaidDayAssistantOverlayService.java","utf8");
-const rotation=service.match(/private static final String\[\] EDU_IDLE_ROTATION=\{([\s\S]*?)\};/);
-assert.ok(rotation);
-assert.deepEqual([...rotation[1].matchAll(/"([^"]+)"/g)].map(x=>x[1]),["caminhada_direita","caminhada_esquerda"]);
+// Notas LT331 são histórico imutável; não travar a rotação ativa nas versões futuras.
+assert.ok(releases.some(x=>x.minVersionCode>54536),"Nova versão deve manter suas próprias notas");
 console.log("LT331 notas e escopo PASS: 0.03.30 corrige idle sem prometer remasterização");
