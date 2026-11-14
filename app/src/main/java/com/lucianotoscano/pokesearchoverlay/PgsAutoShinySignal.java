@@ -11,6 +11,19 @@ import java.util.Locale;
 final class PgsAutoShinySignal {
     private PgsAutoShinySignal() {}
 
+    static boolean isExplicitNegative(String message){
+        if(message==null||message.trim().isEmpty())return false;
+        String norm=Normalizer.normalize(message.toLowerCase(Locale.ROOT),Normalizer.Form.NFD)
+            .replaceAll("\\p{M}","")
+            .replaceAll("[^a-z0-9]+"," ").trim();
+        String wrapped=" "+norm.replaceAll("\\s+"," ")+" ";
+        for(String phrase:new String[]{" no shiny "," not shiny "," not a shiny ",
+            " sem shiny "," shiny not found "," shiny nao encontrado ",
+            " shiny false "," shiny nao "," shiny no "})
+            if(wrapped.contains(phrase))return true;
+        return false;
+    }
+
     static boolean isPositive(String message) {
         if(message==null || message.trim().isEmpty())return false;
         String plain=Normalizer.normalize(message.toLowerCase(Locale.ROOT),Normalizer.Form.NFD)
