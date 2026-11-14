@@ -3833,6 +3833,33 @@
           "Transições no Samsung físico ainda precisam de avaliação visual após instalação."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt335-edu-inspecao-guias-gestos-20261114",
+      "minVersionCode": 54540,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.34 — Edu: conferir 68 sprites e corrigir braços/celular",
+      "sections": {
+        "novidades": [
+          "Controles flutuantes independentes ◀️ 👬 ▶️ para percorrer as 68 sprites sem alterar o roteiro.",
+          "Comparação lado a lado entre a pose #42 e qualquer outro quadro, em escala idêntica, com diferenças estimadas de cabeça, óculos, mãos, pés e altura.",
+          "Opção nas configurações para mostrar ou ocultar linhas-guia no Edu e na comparação, útil para capturas de tela e vídeos."
+        ],
+        "melhorias": [
+          "Ao tocar em ◀️/▶️, o quadro fica pausado para inspeção. Toque em 👬 para comparar; segure 👬 para voltar à animação automática.",
+          "Os controles ficam fora da sprite, podem ser ocultados nas configurações e acompanham o Edu quando ele é arrastado ou redimensionado.",
+          "As linhas-guia permanecem desligadas por padrão; P/M/G e o atlas de 68 PNGs 512x512 continuam inalterados."
+        ],
+        "correcoes": [
+          "Refeito o gesto da Pokébola sem o recorte rígido do braço da LT334, eliminando cortes horizontais nos ombros.",
+          "Refeitos os dois quadros jogando no celular (#63 e #64) usando a cabeça, rosto, óculos, torso e pés da #42, com mãos e celular como elementos independentes.",
+          "Preservadas as oito sequências de animação, transparências, fallback e nitidez sem suavização bilinear."
+        ],
+        "emDesenvolvimento": [
+          "Os indicadores de proporção são medidas visuais estimadas e podem variar por pose, fantasia e acessórios; não equivalem a auditoria artística definitiva das 68 fontes.",
+          "Verificação das junções e legibilidade no Samsung físico deve ser feita após a instalação."
+        ]
+      }
     }
   ]
 }

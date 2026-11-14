@@ -196,15 +196,15 @@ public final class EduSpriteAtlas {
             try{
                 Bitmap original512=masters.frame(i);
                 if(original512!=null){
-                    // LT334: somente a Pokébola #00–03 usa o corpo canônico
-                    // de #42 e recebe o braço/objeto original como camada.
-                    // Isso evita encolhimento sem voltar ao warp anisotrópico.
-                    if(i>=0&&i<=3){
+                    // LT335: todos os gestos de Pokébola e celular usam
+                    // o MESMO rosto/corpo/pés da #42; nenhum recorte rígido
+                    // de manga, deformação anisotrópica ou fonte externa.
+                    if(EduSpritePoseComposer.supports(i)){
                         Bitmap reference=masters.frame(42);
                         if(reference!=null){
                             try{
-                                Bitmap stable=EduPokeballStable.compose(original512,reference,i);
-                                if(stable!=original512){
+                                Bitmap stable=EduSpritePoseComposer.compose(reference,i);
+                                if(stable!=null){
                                     original512.recycle();
                                     original512=stable;
                                 }
