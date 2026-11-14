@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## ARK — CONTRATO OPERACIONAL RECONFIRMADO EM 14/11/2026 (AUTORIZAÇÃO PERMANENTE DO RESPONSÁVEL)
+
+**ARK = executar o ciclo completo, sem solicitar uma segunda autorização para corrigir, melhorar, integrar, fazer merge, oficializar e publicar uma atualização.** Dentro dos limites das ferramentas e do sistema de release, a execução deve incluir, nesta ordem: verificar o estado atual de main/PRs/releases; corrigir incompatibilidades; preservar dados e pacote; rodar testes Java/Node/Android/OTA; validar versão monotônica e assinatura original; fazer merge das PRs necessárias; registrar alterações e provas no Guia Mestre; abrir o pedido oficial de release; acompanhar workflow até conclusão; verificar tag, APK, digest SHA-256, certificado, manifesto/OTA do atualizador e comunicar a atualização instalada ou a confirmação Android que ainda falte. Não concluir a tarefa como **entregue ao aplicativo** apenas porque houve commit, PR ou APK de QA.
+
+**Autorização não equivale a garantia ou execução remota.** Não é possível tocar no Samsung do usuário ou confirmar uma instalação local sem evidência do aparelho. Para funcionalidades experimentais que não passaram por QA físico, manter desligadas até ativação explícita, nomear as limitações e não inventar validação. **Nunca enfraquecer verificação criptográfica, assinar com chave diferente, substituir release imutável nem esconder erro de CI para satisfazer o comando.** Se uma etapa externa obrigatória (permissão Android, proteção do GitHub, acesso a dados, QA físico imprescindível) impedir o fluxo, documentar a pendência específica e concluir todas as partes tecnicamente realizáveis, em vez de parar nas PRs.
+
+O comando também significa **resolver melhorias e falhas descobertas no escopo da tarefa**, reutilizando os componentes do aplicativo para não duplicar menus, serviços, persistência ou estilos. Fonte de verdade: `main` e `release/official-request.json` do GitHub; esta seção precede registros históricos, sem apagar qualquer histórico.
+
+
 ## Comando operacional abreviado — ARK (autorização do responsável)
 
 - Quando o responsável disser **"Ark"**, **"Faça Ark"** ou usar **ARK** como comando de execução, interpretar como autorização explícita para **concluir o ciclo de atualização do PokeSearch**: finalizar alterações solicitadas, executar auditorias e testes, corrigir falhas, incrementar versão conforme padrão do projeto, integrar por PR/merge, registrar no Guia Mestre, acionar o workflow oficial de assinatura/publicação e verificar release, APK, hash e resultado do workflow.
