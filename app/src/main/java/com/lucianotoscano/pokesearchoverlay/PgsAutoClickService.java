@@ -34,6 +34,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import java.io.File;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -77,9 +78,62 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean awaitingMap=false;
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
+    private boolean isGamePackage(String pkg){
+        if(pkg==null)return false;
+        return "com.nianticlabs.pokemongo".equals(pkg)||
+            pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
+    }
     private boolean isGameVisible(){
-        return "com.nianticlabs.pokemongo".equals(foreground)||
-            foreground.contains("pgsharp");
+        // Em janelas popup e multitarefa, o evento anterior pode ser de outra
+        // janela. Conferir o pacote efetivamente ativo antes de qualquer toque.
+        AccessibilityNodeInfo root=null;
+        try{
+            root=getRootInActiveWindow();
+            if(root!=null && root.getPackageName()!=null){
+                String pkg=root.getPackageName().toString();
+                if(isGamePackage(pkg)){foreground=pkg;return true;}
+                return false;
+            }
+        }catch(RuntimeException ignored){}
+        finally{if(root!=null)root.recycle();}
+        return isGamePackage(foreground);
+    }
+    private boolean passengerPromptPresent(){
+        // Aviso de velocidade do jogo exige declaração MANUAL do usuário.
+        // Nunca gerar gesto sobre "Sou passageiro" ou "I'm a passenger".
+        AccessibilityNodeInfo root=null;
+        try{
+            root=getRootInActiveWindow();
+            return root!=null&&containsPassengerLabel(root,0);
+        }catch(RuntimeException ignored){return false;}
+        finally{if(root!=null)root.recycle();}
+    }
+    private boolean containsPassengerLabel(AccessibilityNodeInfo node,int depth){
+        if(node==null||depth>12)return false;
+        CharSequence text=node.getText(),desc=node.getContentDescription();
+        String combined=(text==null?"":text.toString())+" "+(desc==null?"":desc.toString());
+        String normalized=combined.toLowerCase(java.util.Locale.ROOT);
+        if(normalized.contains("sou passageiro")||
+           normalized.contains("i'm a passenger")||
+           normalized.contains("i’m a passenger"))return true;
+        for(int i=0;i<node.getChildCount();i++){
+            AccessibilityNodeInfo child=node.getChild(i);
+            if(child==null)continue;
+            try{if(containsPassengerLabel(child,depth+1))return true;}
+            finally{child.recycle();}
+        }
+        return false;
+    }
+    private final Runnable armedStartTick=new Runnable(){
+        @Override public void run(){
+            if(!armedByHome||running||teachingInProgress)return;
+            if(isGameVisible())startArmedSearch();
+            if(armedByHome&&!running)handler.postDelayed(this,1000L);
+        }
+    };
+    private void scheduleArmedStart(){
+        handler.removeCallbacks(armedStartTick);
+        if(armedByHome)handler.postDelayed(armedStartTick,600L);
     }
     /** Pedido da Home ou do overlay: só captura o feed quando PGSharp estiver visível. */
     public static void requestTeaching(String species){
@@ -157,6 +211,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
         if(armedByHome&&isGameVisible())startArmedSearch();
+        else scheduleArmedStart();
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -169,13 +224,22 @@ public final class PgsAutoClickService extends AccessibilityService {
         // Nunca sobrescrever o jogo por causa dos menus do próprio PokeSearch.
         if(pkg.equals(getPackageName()))return;
         foreground=pkg;
-        if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
+        if(isGameVisible()&&armedByHome)startArmedSearch();
+        else if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
             queueTeachingWhenReady();
-        else if(isGameVisible()&&armedByHome)startArmedSearch();
+        else if(armedByHome)scheduleArmedStart();
     }
     private void startArmedSearch(){
-        if(!armedByHome||running||teachingInProgress||
-            !PgsAutoTemplateStore.pending(this).isEmpty())return;
+        if(!armedByHome||running||teachingInProgress)return;
+        // Reativar a partir dos modelos SALVOS, sem obrigar nova captura.
+        // Uma seleção de ensino antiga não deve bloquear a retomada.
+        if(!PgsAutoTemplateStore.pending(this).isEmpty()){
+            boolean existing=false;
+            for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
+                if(PgsAutoCatalog.isSelectedName(this,model.name)){existing=true;break;}
+            if(existing)PgsAutoTemplateStore.clearTeaching(this);
+            else {queueTeachingWhenReady();return;}
+        }
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
@@ -187,7 +251,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         toggle();
     }
-    @Override public void onInterrupt() {halt("INTERRUPÇÃO");}
+    @Override public void onInterrupt() {
+        // Uma perda temporária do foco de acessibilidade não equivale a
+        // "desligar": manter modelos e intenção de busca até o retorno do jogo.
+        status("AGUARDANDO JOGO");
+    }
     @Override public void onDestroy() {
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
@@ -297,7 +365,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                     int left=display.x-bubbleParams.x-dp(22);
                     quickMenus.toggle(left,bubbleParams.y);
                 }else {
-                    if(quickMenus!=null&&quickMenus.isOpen())quickMenus.dismissAll();
+                    // Toque com menu aberto apenas retrai o menu.
+                    if(quickMenus!=null&&quickMenus.isOpen()){
+                        quickMenus.dismissAll();return true;
+                    }
                     toggle();
                 }
                 return true;
@@ -321,6 +392,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
                 .putBoolean("armFromHome",true).apply();
             if(live.isGameVisible())live.startArmedSearch();
+            else live.scheduleArmedStart();
         });
     }
     /** A Home reflete se a bolha está visível, independente da varredura. */
@@ -446,7 +518,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void toggle(){
         if(running){halt("PARADO");return;}
         if(!PgsAutoTemplateStore.pending(this).isEmpty()){
-            queueTeachingWhenReady();return;
+            boolean saved=false;
+            for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
+                if(PgsAutoCatalog.isSelectedName(this,model.name)){saved=true;break;}
+            if(saved)PgsAutoTemplateStore.clearTeaching(this);
+            else {queueTeachingWhenReady();return;}
         }
         if(!reloadDetector()){
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
@@ -496,7 +572,12 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void scanAndTap(){
         if(!running)return;
-        if(!("com.nianticlabs.pokemongo".equals(foreground)||foreground.contains("pgsharp"))){
+        if(passengerPromptPresent()){
+            status("CONFIRME MANUALMENTE");
+            handler.postDelayed(()->{if(running)scanAndTap();},1200L);
+            return;
+        }
+        if(!isGameVisible()){
             status("ABRA O JOGO");
             handler.postDelayed(()->{if(running)scanAndTap();},2500L);return;
         }
@@ -643,7 +724,11 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void tap(int x,int y,int index,PgsAutoIconDetector.Match match,int screenWidth,int screenHeight){
         if(!running)return;
-        if(!("com.nianticlabs.pokemongo".equals(foreground)||foreground.contains("pgsharp"))){
+        if(passengerPromptPresent()){
+            status("CONFIRME MANUALMENTE");
+            handler.postDelayed(this::scanAndTap,1200L);return;
+        }
+        if(!isGameVisible()){
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
         status("TOQUE "+(index+1)+"/"+total);
