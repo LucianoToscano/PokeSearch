@@ -407,8 +407,8 @@
    "#psRankExplorer .psrPokemonCell{display:flex;align-items:center;gap:5px;min-width:0;text-align:left}",
    "#psRankExplorer .psrPokemonName{min-width:0;flex:1;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:9.5px}",
    "#psRankExplorer .psrOverallRank{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}",
-   "#psRankExplorer .psrPokedexNumber{font-size:10px;font-weight:800;color:#f3f6fc}",
-   "#psRankExplorer .psrOverallPlace{font-size:8px;font-weight:650;color:#aabccd;margin-top:2px}",
+   "#psRankExplorer .psrPokedexNumber{font-size:8px;font-weight:650;color:#bfcedd;white-space:nowrap}",
+   "#psRankExplorer .psrOverallPlace{font-size:11px;font-weight:850;color:#edf6ff;white-space:nowrap}",
    "#psRankExplorer .psrSpriteWrap{width:23px;height:23px;flex:0 0 23px;display:inline-flex;justify-content:center;align-items:center;position:relative}",
    "#psRankExplorer .psrSpriteWrap.psrShadow img{filter:drop-shadow(0 0 2px #a174ee)}",
    "#psRankExplorer .psrArtFallback{font:700 8px/1.1 Roboto,Arial,sans-serif;color:#cbd4e0;text-align:center}",
@@ -594,11 +594,12 @@
      '" aria-pressed="'+marked+'" title="Adicionar ou remover da comparação">'+safe(r.iv)+'</button></td>'+
     '<td>'+levelString(r.level)+'</td><td>'+r.cp+'</td><td>'+r.efficiency+'%</td>':
     '<td colspan="4"><div class="psrPokemonCell">'+spriteFor(r.name)+
-    '<span class="psrPokemonName">'+safe(r.name)+'</span></div></td>'+
-    '<td class="psrOverallRank"><div class="psrPokedexNumber">#'+
+    '<span class="psrPokemonName">'+safe(r.name)+'</span>'+
+    '<small class="psrPokedexNumber">#'+
     (typeof window!=="undefined"?
      (window.PokeSearchOfflineSprite?.rankSpriteMeta?.(r.name)?.dex||"—"):"—")+
-    '</div><div class="psrOverallPlace">RG #'+r.rank+'</div></td>';
+    '</small></div></td>'+
+    '<td class="psrOverallRank"><div class="psrOverallPlace">#'+r.rank+'</div></td>';
    const details=s.kind==="class"&&s.expandedRank===r.rank?
     '<tr class="psrExpanded"><td colspan="5"><div class="psrExtra">ATK '+statString(r.atk)+
     ' · DEF '+statString(r.def)+' · HP '+r.hp+' · Nível '+
