@@ -19,6 +19,7 @@ final class PgsAutoTemplateStore {
     static final String PREF = "pgs_buscas_auto_models_v1";
     static final String KEY = "models";
     static final String PENDING = "pending_name";
+    private static final String PENDING_REPLACE = "pending_replace_id";
     static final int WIDTH = 68, HEIGHT = 52, MAX_SAMPLES = 50;
     static final class Model {
         String id, name, file;
@@ -104,6 +105,29 @@ final class PgsAutoTemplateStore {
         models.add(new Model(file,name.trim(),file,true,false));
         persist(c,models);
     }
+    /** Substitui uma amostra por ID, mantendo o registro e a prioridade.
+     * Salva o novo PNG antes de excluir o antigo: cancelamento não perde modelo.
+     * Também funciona quando o limite de 50 imagens já foi atingido.
+     */
+    static synchronized void replaceSample(Context c,String id,String name,Bitmap cropped)
+        throws IOException {
+        List<Model> models=list(c);
+        Model original=null;
+        for(Model m:models)if(m.id.equals(id)&&!m.builtIn){original=m;break;}
+        if(original==null)throw new IOException("Ícone original não encontrado.");
+        String file="pokemon_"+UUID.randomUUID().toString()+".png";
+        File output=new File(c.getFilesDir(),file);
+        try(FileOutputStream stream=new FileOutputStream(output)){
+            if(!cropped.compress(Bitmap.CompressFormat.PNG,100,stream))
+                throw new IOException("Falha ao gravar nova imagem.");
+        }catch(IOException error){output.delete();throw error;}
+        String previous=original.file;
+        original.file=file;
+        original.name=name.trim();
+        original.enabled=true;
+        persist(c,models);
+        new File(c.getFilesDir(),previous).delete();
+    }
     /** Restaura uma amostra de um backup sem sobrescrever qualquer modelo atual. */
     static synchronized boolean restoreSample(Context c,String originalId,String name,
                                               Bitmap image,boolean enabled) throws IOException {
@@ -152,8 +176,17 @@ final class PgsAutoTemplateStore {
         preferences(c).edit().putString(KEY,arr.toString()).apply();
     }
     static void startTeaching(Context c,String name) {
-        preferences(c).edit().putString(PENDING,name.trim()).apply();
+        preferences(c).edit().putString(PENDING,name.trim()).remove(PENDING_REPLACE).apply();
+    }
+    static void startReplacing(Context c,String name,String modelId){
+        preferences(c).edit().putString(PENDING,name.trim())
+            .putString(PENDING_REPLACE,modelId).apply();
     }
     static String pending(Context c) {return preferences(c).getString(PENDING,"");}
-    static void clearTeaching(Context c) {preferences(c).edit().remove(PENDING).apply();}
+    static String pendingReplacement(Context c){
+        return preferences(c).getString(PENDING_REPLACE,"");
+    }
+    static void clearTeaching(Context c){
+        preferences(c).edit().remove(PENDING).remove(PENDING_REPLACE).apply();
+    }
 }
