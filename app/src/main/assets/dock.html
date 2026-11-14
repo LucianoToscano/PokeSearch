@@ -4488,11 +4488,11 @@ body.controls-window #choices.locationPanel .locCooldownPreview.is-visible{
  body.controls-window #choices.locationPanel .locCooldownPreview{transition:none!important}
 }
 
-/* LT203: upstream Shiny is paused. Keep the icon recognizable and tappable
-   for explanation, but no visual ON state or false promise of availability. */
+/* Shiny em espera: ícone branco e legível; botão continua alternando
+   visualmente, sem ativar filtro indisponível no provedor. */
 body.controls-window #sh.upstreamUnavailable,
 body.controls-window #quickMenuList button[data-key="sh"].upstreamUnavailable{
- opacity:.48!important;filter:grayscale(1)!important;
+ opacity:1!important;filter:none!important;color:#fff!important;
 }
 
 /* LT218: native Topo Horizontal compact ribbon. This intentionally lives at
