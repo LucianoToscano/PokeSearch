@@ -37,7 +37,7 @@ assert.match(pgs,/PgsAutoVisualState\.Core\.GREEN/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.RED/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
 assert.match(menu,/mount\(root,138,218\)/);
-assert.match(menu,/mount\(root,286,390\)/);
+assert.match(menu,/mount\(root,240,315\)/);
 assert.match(menu,/toolbar\.setVisibility\(View\.GONE\)/);
 assert.match(menu,/toolbar\.setVisibility\(View\.VISIBLE\)/);
 
