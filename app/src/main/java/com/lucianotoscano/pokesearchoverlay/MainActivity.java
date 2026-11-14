@@ -586,10 +586,12 @@ public class MainActivity extends Activity {
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
             FrameLayout loginHotspot=new FrameLayout(this);
-            // A Pokébola ocupa os 44dp inferiores do shell de 60dp.
-            // Bottom do badge fica 2 pixels físicos acima da arte, centrado.
+            // A imagem da Pokébola inclui transparência: a borda vermelha visível
+            // fica abaixo do topo do ImageView. Descemos a arte do seletor
+            // preservando alinhamento ao centro branco da Pokébola.
+            // A borda óptica é conferida no Samsung; pixels são físicos, não dp.
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(30),d(16)-2,Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+                d(30),d(21),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             shell.addView(loginHotspot,hotLp);
             ImageView badge=new ImageView(this);
             badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -683,7 +685,7 @@ public class MainActivity extends Activity {
         // Reposicionar o controle real do Doce Raro na fileira de atalhos.
         controls.removeView(rareCandyControl);
         rareCandyControl.setBackground(null);
-        rareCandyControl.setPadding(d(7),d(7),d(7),d(7)); // mesmo porte visual do Quests
+        rareCandyControl.setPadding(d(1),d(1),d(1),d(1)); // mesmas proporções ópticas dos demais
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
 
 
