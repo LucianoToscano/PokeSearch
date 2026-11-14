@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.40",
-  "code": 54547,
-  "label": 51344,
-  "previous_tag": "v0.03.39-54546",
-  "qa_max_code": 54546,
-  "release_notes": "PokeSearch LT342 (0.03.40): corrige os ícones do Buscar Pokémon de acordo com o mapeamento final — Home com Busca_Pokemon_Overlay_Off/On e bolha com Busca_Pokemon_Off/On. Recupera os quatro WebPs originais do Drive, corrige uma troca real na arte Overlay_On e preserva o PNG anterior no catálogo original. Mantém pulso verde no carregamento e vermelho em erro, branco natural ocioso; mantém as proporções de bolha P1/P2. Badges de login agora aparecem aproximadamente 10dp acima das Pokébolas e invertem o recurso Claro/Escuro para obter contraste por tema, sem baixar a fileira. Logo de volta a 118dp em proporção 3:1. Compartilhar vetorial branco no modo escuro e preto no claro; Apoiar e menu permanecem sem fundos. Menu Busca Pokémon menor, rolável e sem sobrepor a barra. Leitura do perfil oficial PoGoCoordinates ganhou fallback limitado à área visível com 'Member since' e até 4 releituras de hidratação, sem cookies, sem API privada e sem misturar contas. X do inspetor Edu encerra o assistente inteiro, liberando bolha, painel e comparador. QA Node, Java, Android PGS, OTA e beta aprovados na PR #362. Gestos PGSharp, Shiny e nome/foto após OAuth ainda exigem homologação física na issue #350. Preserva contas, dados, sons, sprites e assinatura permanente; validação final de R8, APK, ZIP e hash no workflow oficial."
+  "version": "0.03.41",
+  "code": 54548,
+  "label": 51345,
+  "previous_tag": "v0.03.40-54547",
+  "qa_max_code": 54547,
+  "release_notes": "PokeSearch LT343 (0.03.41): Home com 24 ícones originais PNG 512×512, com estados Normal/Hover/Ativo sem redução de qualidade; topo alinhado, badges de login próximos das duas Pokébolas e arte Busca Pokémon sem fundo preto. A bolha PGS volta a usar sprites já salvas ao reativar, recolhe o menu sem desligar a pesquisa e permanece disponível quando o jogo minimiza ou fica em popup, aguardando retorno seguro à janela do jogo. Captura de sprite com recorte ajustável, prévia, Confirmar/Cancelar. Menu personalização ao lado do sino: contador opcional, P/M/G e opacidade; alertas Novos Pokémon e Shiny monitorado sem duplicação. Avisos de segurança Sou passageiro/Estou seguro suspendem gestos e tempo até confirmação MANUAL pelo usuário, sem clique automático. Todas as janelas controladas pelo PokeSearch agora permitem screenshots, inclusive login; proteção externa do Google/Discord/Android não pode ser removida pelo app. Menu de contas da Home permite selecionar e abrir Conta 1/2 separadamente. Fluxo PoGoCoordinates apresenta botões oficiais para toque humano, não executa clique sintético, libera a página para mostrar erros e oferece abertura no navegador com aviso de que a sessão externa não é importada à WebView. Google OAuth em WebView pode ser bloqueado por disallowed_useragent; integração completa exige callback oficial autorizado pelo PoGoCoordinates. Login Google/Discord com nome/foto, PGSharp teleporte e Shiny reais aguardam teste Samsung na issue #350. Atualização preserva contas isoladas, dados, filtros, 68 sprites, imagens, sons, certificado permanente e proteções R8/APK/ZIP/SHA-256."
 }
