@@ -780,6 +780,35 @@ public final class PgsAutoClickService extends AccessibilityService {
         photo.setImageBitmap(screenshot);
         photo.setScaleType(ImageView.ScaleType.FIT_XY);
         picker.addView(photo,new FrameLayout.LayoutParams(-1,-1));
+        // O tamanho é em pixels da imagem padronizada (740 de largura).
+        // O usuário escolhe o tamanho REAL do ícone, não 68x52 fixos.
+        final int[] refSize={32};
+        LinearLayout presets=new LinearLayout(this);
+        presets.setGravity(Gravity.CENTER);
+        presets.setPadding(dp(6),dp(5),dp(6),dp(5));
+        presets.setBackgroundColor(0xDD101720);
+        TextView sizeLabel=new TextView(this);
+        sizeLabel.setTextColor(Color.WHITE);
+        sizeLabel.setTextSize(12);
+        sizeLabel.setText("Recorte: 32 px");
+        presets.addView(sizeLabel,new LinearLayout.LayoutParams(0,dp(42),1));
+        final int[] sizes={24,32,44};
+        for(int val:sizes){
+            Button preset=new Button(this);
+            preset.setAllCaps(false);preset.setText(val+"px");preset.setTextSize(11);
+            preset.setMinWidth(0);preset.setMinimumWidth(0);
+            preset.setPadding(dp(2),0,dp(2),0);
+            LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(dp(69),dp(42));
+            presets.addView(preset,pl);
+            preset.setOnClickListener(v->{
+                refSize[0]=val;
+                sizeLabel.setText("Recorte: "+val+" px");
+            });
+        }
+        FrameLayout.LayoutParams selectors=new FrameLayout.LayoutParams(
+            -1,dp(52),Gravity.TOP);
+        selectors.topMargin=dp(36);
+        picker.addView(presets,selectors);
         photo.setOnTouchListener((v,event)->{
             if(event.getAction()!=MotionEvent.ACTION_UP)return true;
             int x=Math.round(event.getX()*screenshot.getWidth()/Math.max(1,v.getWidth()));
@@ -787,15 +816,15 @@ public final class PgsAutoClickService extends AccessibilityService {
             // Permite ensinar um ícone pequeno em QUALQUER ponto da tela.
             if(x<0||y<0||x>=screenshot.getWidth()||y>=screenshot.getHeight())return true;
             try {
-                // O ícone será ajustado à resolução de referência (740px de largura).
-                int rw=Math.max(20,Math.round(PgsAutoTemplateStore.WIDTH*screenshot.getWidth()/740f));
-                int rh=Math.max(18,Math.round(PgsAutoTemplateStore.HEIGHT*screenshot.getWidth()/740f));
+                int ref=refSize[0];
+                int rw=Math.max(16,Math.round(ref*screenshot.getWidth()/740f));
+                int rh=rw; // Ícones pequenos: preservar o quadrado, sem esticar.
                 rw=Math.min(rw,screenshot.getWidth());rh=Math.min(rh,screenshot.getHeight());
                 int left=Math.max(0,Math.min(screenshot.getWidth()-rw,x-rw/2));
                 int top=Math.max(0,Math.min(screenshot.getHeight()-rh,y-rh/2));
                 Bitmap piece=Bitmap.createBitmap(screenshot,left,top,rw,rh);
-                Bitmap model=Bitmap.createScaledBitmap(piece,PgsAutoTemplateStore.WIDTH,PgsAutoTemplateStore.HEIGHT,true);
-                try { PgsAutoTemplateStore.saveSample(this,name,model); }
+                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
+                try { PgsAutoTemplateStore.saveSample(this,name,model,ref,ref); }
                 finally {if(piece!=model)piece.recycle();model.recycle();}
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();
@@ -815,7 +844,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             return true;
         });
         TextView help=new TextView(this);
-        help.setText("Toque no CENTRO do ícone de "+name+" no feed do PGSharp. Não toque no Pokémon 3D.");
+        help.setText("Escolha 24/32/44 px e toque no centro da IMAGEM de "+name+" no feed. Evite pegar o fundo.");
         help.setTextColor(Color.WHITE);help.setTextSize(13);
         help.setBackgroundColor(Color.rgb(22,73,93));help.setPadding(dp(10),dp(8),dp(10),dp(8));
         FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
