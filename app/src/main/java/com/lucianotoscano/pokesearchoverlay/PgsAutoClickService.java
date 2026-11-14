@@ -150,7 +150,10 @@ public final class PgsAutoClickService extends AccessibilityService {
         createChannel();
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
-        showBubble();
+        // Acessibilidade pode continuar ligada sem sobreposição invasiva.
+        // Só exibir a Pokébola PGS depois do toque explícito da Home.
+        if(getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+            .getBoolean("overlayVisible",false))showBubble();
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
     }
 
@@ -185,6 +188,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void showBubble() {
         windowManager=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(bubble!=null)return;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("overlayVisible",true).apply();
         bubble=new FrameLayout(this);
         bubble.setContentDescription("Busca Pokémon PGS: toque para ligar/desligar; segure para abrir menus");
         bubble.setBackground(null);
@@ -301,6 +306,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         handler.postDelayed(this::scanAndTap,350L);
     }
     private void removeHand(){
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("overlayVisible",false).apply();
         halt("FECHADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(bubble!=null&&windowManager!=null){
@@ -314,6 +321,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     public static void restoreBubble(){
         PgsAutoClickService service=instance;
         if(service!=null)service.handler.post(()->service.showBubble());
+    }
+    /** Home ON/OFF reflete overlay realmente mostrado, não busca rodando. */
+    public static boolean isOverlayVisible(){
+        PgsAutoClickService service=instance;
+        return service!=null&&service.bubble!=null
+            &&service.bubble.getVisibility()==View.VISIBLE;
     }
     private int dp(float n){return (int)(getResources().getDisplayMetrics().density*n+.5f);}
     /** A Home usa o estado REAL do serviço, nunca uma preferência desatualizada. */
