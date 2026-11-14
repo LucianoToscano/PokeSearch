@@ -375,64 +375,82 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
     }
-    /** Compacto: somente os nomes oficiais validados e já visíveis ao usuário. */
-    private void showCompactAccountNames(View anchor){
+    /**
+     * Indicador sobre P1/P2: atribui a conta usada pela Pokébola, NÃO faz login.
+     * Cada Pokébola tem sua própria atribuição persistente e independente.
+     */
+    private void showCompactAccountNames(View anchor,boolean secondary){
         if(anchor==null)return;
         LinearLayout content=new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(d(9),d(6),d(9),d(6));
+        content.setPadding(d(5),d(5),d(5),d(5));
         content.setBackground(homeSurface(
             homeLightMode?Color.rgb(246,249,252):Color.rgb(29,35,45),
-            10,homeLightMode?Color.rgb(154,166,180):Color.rgb(89,109,125)));
-        boolean showNames=getSharedPreferences("prefs",MODE_PRIVATE)
-            .getBoolean("homeShowPogoAccountName",true);
-        final android.widget.PopupWindow[] popupHolder={null};
+            9,homeLightMode?Color.rgb(154,166,180):Color.rgb(89,109,125)));
+        final android.widget.PopupWindow[] holder={null};
+        int active=PogoAccountSlots.assigned(this,secondary);
         for(int slot=1;slot<=2;slot++){
             final int account=slot;
             boolean available=slot==1||PogoAccountSlots.supportsSecond();
             boolean logged=available&&PogoAccountSlots.loggedIn(this,slot);
-            String name=logged&&showNames?PogoAccountSlots.prefs(this,slot)
+            String name=logged?PogoAccountSlots.prefs(this,slot)
                 .getString("profileDisplayName","").trim():"";
-            if(name.isEmpty())name=logged?"Conectada":available?"Sem login":"Não disponível";
-            if(name.length()>25)name=name.substring(0,22)+"…";
-            LinearLayout row=new LinearLayout(this);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setPadding(d(4),d(5),d(4),d(5));
-            TextView info=homeText("Conta "+slot+": "+name,12,
-                homeLightMode?Color.BLACK:Color.WHITE,false);
-            row.addView(info,new LinearLayout.LayoutParams(0,-2,1));
-            TextView action=homeText(logged?"Perfil ›":"Entrar ›",11,
-                homeLightMode?Color.rgb(10,83,126):Color.rgb(128,208,249),true);
-            action.setPadding(d(4),d(6),d(4),d(6));
-            row.addView(action);
-            row.setContentDescription("Conta "+slot+": "+name+
-                ". Toque para "+(logged?"gerenciar perfil":"entrar"));
-            row.setOnClickListener(v->{
-                if(popupHolder[0]!=null)popupHolder[0].dismiss();
-                preferredLoginProvider="";
-                openLoginDialogForSlot(account,logged?"manage":"login");
+            String label="Conta "+slot+(name.isEmpty()?"":": "+name);
+            if(label.length()>32)label=label.substring(0,29)+"…";
+            TextView choice=homeText((active==account?"✓  ":"   ")+label,12,
+                homeLightMode?Color.rgb(20,33,48):Color.WHITE,active==account);
+            choice.setGravity(Gravity.CENTER_VERTICAL);
+            choice.setPadding(d(8),0,d(5),0);
+            choice.setContentDescription("Usar Conta "+slot+
+                (active==account?", selecionada":"")+
+                (available?"":", indisponível"));
+            choice.setAlpha(available?1f:.5f);
+            choice.setOnClickListener(v->{
+                if(holder[0]!=null)holder[0].dismiss();
+                if(!available){
+                    Toast.makeText(this,"Conta 2 isolada não é suportada neste WebView",
+                        Toast.LENGTH_LONG).show();return;
+                }
+                PogoAccountSlots.bindAccountOnly(this,secondary,account);
+                Class<?> owner=secondary?SecondaryOverlayService.class:OverlayService.class;
+                boolean open=secondary?OverlayService.isSecondaryRunning():
+                    OverlayService.isRunning();
+                if(open){
+                    stopService(new Intent(this,owner));
+                    getWindow().getDecorView().postDelayed(()->{
+                        Intent intent=new Intent(this,owner);
+                        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);
+                        else startService(intent);
+                    },350L);
+                }
+                refreshPokeballLoginBadges();
+                refreshSessionSummary();
+                Toast.makeText(this,(secondary?"Pokébola 2":"Pokébola 1")+
+                    " → Conta "+account,Toast.LENGTH_SHORT).show();
             });
-            content.addView(row,new LinearLayout.LayoutParams(-1,d(42)));
+            content.addView(choice,new LinearLayout.LayoutParams(-1,d(38)));
         }
-        android.widget.PopupWindow popup=new android.widget.PopupWindow(
-            content,d(252),-2,true);
-        popupHolder[0]=popup;
+        android.widget.PopupWindow popup=new android.widget.PopupWindow(content,d(230),-2,true);
+        holder[0]=popup;
         popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
-        popup.setOutsideTouchable(true);
-        popup.setElevation(d(5));
+        popup.setOutsideTouchable(true);popup.setElevation(d(5));
         popup.showAsDropDown(anchor,0,d(2));
     }
     private void refreshPokeballLoginBadges(){
         boolean any=PogoAccountSlots.loggedIn(this,1)||
             PogoAccountSlots.loggedIn(this,2);
-        int art=any?(homeLightMode?R.drawable.login_modo_escuro:
-            R.drawable.login_modo_claro):R.drawable.login_modo_semlogin;
-        for(ImageView badge:pokeballLoginBadges)if(badge!=null){
+        int art=any?(homeLightMode?R.drawable.login_modo_claro:
+            R.drawable.login_modo_escuro):R.drawable.login_modo_semlogin;
+        for(int i=0;i<pokeballLoginBadges.length;i++){
+            ImageView badge=pokeballLoginBadges[i];
+            if(badge==null)continue;
             badge.setImageResource(art);
-            badge.clearColorFilter();
-            badge.setContentDescription(any?
-                "Exibir Contas 1 e 2":"Exibir contas sem login");
+            badge.setColorFilter(homeLightMode?Color.BLACK:Color.WHITE,
+                android.graphics.PorterDuff.Mode.SRC_IN);
+            boolean secondary=i==1;
+            badge.setContentDescription("Pokébola "+(i+1)+
+                " usa Conta "+PogoAccountSlots.assigned(this,secondary)+
+                ". Toque para trocar apenas esta Pokébola.");
         }
     }
 
@@ -470,7 +488,7 @@ public class MainActivity extends Activity {
         ImageView icon=new ImageView(this);
         icon.setImageResource(drawable);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        icon.setPadding(d(1),d(1),d(1),d(1));
+        icon.setPadding(0,0,0,0);
         icon.setContentDescription(description);
         icon.setBackground(null);
         if(description.contains("Buscar Pokémon")){
@@ -485,7 +503,7 @@ public class MainActivity extends Activity {
         ImageView icon=new ImageView(this);
         icon.setImageResource(drawable);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        icon.setPadding(d(1),d(1),d(1),d(1));
+        icon.setPadding(0,0,0,0);
         icon.setContentDescription(description+" · em desenvolvimento");
         icon.setBackground(null);
         int packIndex=previewPackIndex(description);
@@ -574,7 +592,7 @@ public class MainActivity extends Activity {
             });
             FrameLayout loginHotspot=new FrameLayout(this);
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(23),d(16),Gravity.TOP|Gravity.RIGHT);
+                d(30),d(16),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             shell.addView(loginHotspot,hotLp);
             ImageView badge=new ImageView(this);
             badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -582,8 +600,8 @@ public class MainActivity extends Activity {
                 d(12),d(12),Gravity.CENTER);
             loginHotspot.addView(badge,badgeLp);
             pokeballLoginBadges[i]=badge;
-            loginHotspot.setContentDescription("Ver Contas 1 e 2");
-            loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot));
+            loginHotspot.setContentDescription("Selecionar conta da Pokébola "+(which+1));
+            loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
         // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
@@ -668,7 +686,7 @@ public class MainActivity extends Activity {
         // Reposicionar o controle real do Doce Raro na fileira de atalhos.
         controls.removeView(rareCandyControl);
         rareCandyControl.setBackground(null);
-        rareCandyControl.setPadding(d(7),d(7),d(7),d(7)); // mesmo porte visual do Quests
+        rareCandyControl.setPadding(0,0,0,0); // Área visual igual aos demais atalhos
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
 
 
@@ -754,7 +772,7 @@ public class MainActivity extends Activity {
         shareIcon.setColorFilter(homeLightMode?Color.BLACK:Color.WHITE,android.graphics.PorterDuff.Mode.SRC_IN);
         shareIcon.setImageAlpha(255);
         shareIcon.setBackground(null);
-        shareIcon.setPadding(d(5),d(5),d(5),d(5));
+        shareIcon.setPadding(d(3),d(3),d(3),d(3));
         LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(28),d(28));
         shareIconLp.leftMargin=d(3);
         controls.addView(shareIcon,shareIconLp);
