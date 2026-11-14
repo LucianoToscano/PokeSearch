@@ -44,12 +44,12 @@ assert.match(activity,/login_modo_semlogin/);
 assert.doesNotMatch(activity,/overlayAccountLabel1=homeText\("P1 · Conta 1"/);
 assert.match(activity,/branding\.addView\(brand/);
 assert.match(activity,/branding\.addView\(brandLabels/);
-assert.match(activity,/header\.setOrientation\(LinearLayout\.VERTICAL\)/);
+assert.match(activity,/header\.setOrientation\(LinearLayout\.HORIZONTAL\)/);
 assert.match(activity,/wordmarkWidth=Math\.max\(d\(104\),Math\.min\(d\(118\),availableBrandWidth\)\)/);
 assert.match(activity,/heart\.setBackground\(null\)/);
 assert.match(activity,/menu\.setBackground\(null\)/);
 assert.match(activity,/shareIcon\.setColorFilter\(homeLightMode\?Color\.BLACK:Color\.WHITE,android\.graphics\.PorterDuff\.Mode\.SRC_IN\)/);
-assert.match(activity,/R\.drawable\.busca_pokemon_overlay_on:R\.drawable\.busca_pokemon_overlay_off/);
+assert.match(activity,/setHomePackIcon\(pgsSearchControl,3,on\?"hover":"normal"\)/);
 assert.doesNotMatch(activity,/new PgsBuscasPanel\(/);
 // Login must close with verified session even if trainer linkage lags.
 // Profile DOM and avatar URLs are public and only allowlisted HTTPS CDNs.
@@ -91,7 +91,7 @@ assert.match(edu,/pausePlayback\(\);/);
 assert.match(edu,/atlas\.frame\(42\)/);
 assert.match(edu,/case 6:listener\.closeAssistant\(\);break;/);
 assert.match(activity,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
-assert.match(activity,/d\(23\),d\(21\),Gravity\.TOP\|Gravity\.RIGHT/);
+assert.match(activity,/d\(23\),d\(16\),Gravity\.TOP\|Gravity\.RIGHT/);
 
 // Exact lixeira source for PGS and the WebView drawer.
 assert.match(pgsMenu,/R\.drawable\.lixeira_preta:R\.drawable\.lixeira_branca/);
