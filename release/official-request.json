@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.36",
-  "code": 54543,
-  "label": 51340,
-  "previous_tag": "v0.03.35-54541",
-  "qa_max_code": 54542,
-  "release_notes": "PokeSearch LT337 (0.03.36) — Nova Home compacta com Pokébolas sem fundos e fileira horizontal sem rolagem; menu Buscas Pokémon com seleção de até 50 espécies, prioridade, templates locais e motor experimental opt-in de Acessibilidade com confirmação em dois quadros, 5 segundos após evidência de mapa, timeout de 60 segundos e revarreduras 60/120; alertas Shiny somente quando reconhecida notificação positiva. Menus seguem identidade visual do PokeSearch e o código mantém Pokébolas P1/P2, Edu, Doce Raro, conta e filtros. A automação exige configuração manual de permissão e modelos visuais pelo usuário; não há detecção Shiny visual, QA físico Samsung ainda pendente, nem instalação silenciosa. ARK reconfirmado como autorização do ciclo completo com aprovação dos testes, merge, assinatura oficial, publicação e verificação OTA; Android ainda exige consentimento para instalar."
+  "version": "0.03.37",
+  "code": 54544,
+  "label": 51341,
+  "previous_tag": "v0.03.36-54543",
+  "qa_max_code": 54543,
+  "release_notes": "PokeSearch LT338 (0.03.37): correção incremental do PGS Buscas Auto. A Home e o menu flutuante compartilham o mesmo catálogo, seleção persistente, prioridade e limite de 50 espécies; o classificador Shiny agora exige sinal positivo textual explícito, rejeita mensagens com negações, emoji ✨ isolado, 'Shiny:' sem valor e 'Shiny: false'. Testes de regressão Node/Java e QA Android incluídos. P1/P2, Edu, Doce Raro, contas, sprites e assinatura permanente preservados. PGS permanece experimental e desligado até a ativação manual de Acessibilidade e modelos locais; gestos e alertas reais ainda exigem homologação Samsung na issue #350. Atualização via APK assinado no canal oficial, com confirmação de instalação pelo Android."
 }

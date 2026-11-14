@@ -24,3 +24,22 @@ A issue #350 permanece aberta: validar no Samsung a interface, 50 espécies, ges
 **QA legado paralelo:** o workflow de QA LT146 #43574012280 falhou no empacotamento/validação de sprites (AssertionError após recuperação de evento LT144 via CDN), apesar de testes de código terem passado. Investigar deriva de recursos e validar o hash original; não remover asserts nem substituir imagens para contornar a falha. Esse pipeline histórico não prova que o PGS falhou, mas deve permanecer monitorado.
 
 **Publicação:** somente incrementar versão e enviar pedido oficial após aprovação automática e verificação da configuração de release, hash e certificado. A LT337 permanece oficial até lá.
+
+
+## QA da PR #352 e solicitação de publicação LT338
+
+- PR [#352](https://github.com/LucianoToscano/PokeSearch/pull/352) integrada por squash \`469e222033d4ecca25dc699b5c23f0e311100e65\`, após testes no HEAD \`db06349c6f750aebf657defa2c7284daeaec0883\`.
+- [Node QA #43575648667](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648667): SUCCESS.
+- [Regressão LT169 #43575648676](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648676): SUCCESS.
+- [QA Core LT211 #43575648647](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648647): SUCCESS (inclui novo classificador Java).
+- [Compilação Java LT62 #43575648666](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648666): SUCCESS.
+- [QA OTA LT173 #43575648672](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648672): SUCCESS.
+- [PGS Buscas Auto QA #43575648697](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648697): SUCCESS (contratos, 16 casos de Shiny e build APK debug isolado).
+- [Secure beta APK #43575648675](https://github.com/LucianoToscano/PokeSearch/actions/runs/43575648675): SUCCESS; APK QA assinado de teste NÃO é instalável como substituto oficial.
+- Consulta dos assets ON/OFF: a árvore da branch main do repositório \`LucianoToscano/PGSharp-Privado\` possui 35 entradas e nenhum arquivo PNG/SVG/WebP da mão; as duas pastas PGSharp identificadas no Google Drive contêm apenas configurações, JSON e PNG geral de configurações, sem as mãos ON/OFF individuais. Permanecem **vetores provisórios**, sem substituir por arte não verificada.
+
+### Candidata oficial
+- Branch de preparação \`release/lt338-pgs-qa-20261114\`.
+- Versão proposta \`0.03.37 / code 54544 / label 51341\`, tag futura **somente após sucesso** \`v0.03.37-54544\` e \`previous_tag=v0.03.36-54543\`.
+- Notas embutidas em \`app/src/main/assets/release_notes.json\`; pedido protegido em \`release/official-request.json\`.
+- **Não considerar publicado até** o workflow oficial PASSAR, \`releases/latest\` apontar para o novo APK e assinatura, tamanho e hash público terem sido verificados.

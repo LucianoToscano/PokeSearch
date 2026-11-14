@@ -3910,6 +3910,29 @@
           "Atalhos novos da Home sem backend integrado mantêm caráter de prévia e ícones provisórios serão refinados."
         ]
       }
+    },
+    {
+      "id": "lt338-pgs-unificacao-shiny-conservador-20261114",
+      "minVersionCode": 54544,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.37 — PGS Buscas: seleção consistente e alertas Shiny",
+      "sections": {
+        "novidades": [],
+        "melhorias": [
+          "Menu Buscas Pokémon da Home e menu flutuante passam a compartilhar a mesma seleção e ordem de prioridades, respeitando o limite de 50 espécies e os modelos visuais cadastrados.",
+          "Os alertas Shiny exigem evidência positiva textual explícita e rejeitam mensagens negadas, genéricas ou emojis isolados.",
+          "Novos testes Java de classificação e contratos Android de preservação do catálogo e das preferências."
+        ],
+        "correcoes": [
+          "Removidas leituras e persistências duplicadas do catálogo no painel da Home.",
+          "Corrigidos falsos alertas Shiny causados por ✨ isolado, por 'Shiny:' sem resultado ou por 'Shiny: false'."
+        ],
+        "emDesenvolvimento": [
+          "O PGS Buscas Auto continua experimental, exige ativação consciente da Acessibilidade e modelos visuais locais; gestos não foram homologados em Samsung.",
+          "Notificações Shiny reais precisam ser confirmadas em aparelho físico na issue #350; formatos não identificados não disparam pausa.",
+          "Ícones ON/OFF da mão continuam provisórios até encontrar os PNGs originais."
+        ]
+      }
     }
   ]
 }
