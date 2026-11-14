@@ -457,6 +457,31 @@ final class PgsAutoMenus {
                     reorder.setOnClickListener(v->
                         Toast.makeText(context,"Segure e arraste o ícone para mudar a ordem",
                             Toast.LENGTH_SHORT).show());
+                    // TalkBack pode reordenar sem gestos de arraste.
+                    reorder.setAccessibilityDelegate(new View.AccessibilityDelegate(){
+                        @Override public void onInitializeAccessibilityNodeInfo(
+                                View host,android.view.accessibility.AccessibilityNodeInfo info){
+                            super.onInitializeAccessibilityNodeInfo(host,info);
+                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                                .AccessibilityAction.ACTION_SCROLL_FORWARD);
+                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                                .AccessibilityAction.ACTION_SCROLL_BACKWARD);
+                        }
+                        @Override public boolean performAccessibilityAction(
+                                View host,int action,android.os.Bundle args){
+                            if(action==android.view.accessibility.AccessibilityNodeInfo
+                                .ACTION_SCROLL_FORWARD){
+                                PgsAutoCatalog.move(context,pokemon.number,1);
+                                render[0].run();return true;
+                            }
+                            if(action==android.view.accessibility.AccessibilityNodeInfo
+                                .ACTION_SCROLL_BACKWARD){
+                                PgsAutoCatalog.move(context,pokemon.number,-1);
+                                render[0].run();return true;
+                            }
+                            return super.performAccessibilityAction(host,action,args);
+                        }
+                    });
                     reorder.setOnTouchListener(new View.OnTouchListener(){
                         private float downY;
                         private long downAt;
