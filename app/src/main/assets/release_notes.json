@@ -4181,6 +4181,38 @@
           "Instalar APK exige confirmação do Android; release publicada não instala silenciosamente."
         ]
       }
+    },
+    {
+      "id": "lt348-ark-crop-search-drag-alignment-20261114",
+      "minVersionCode": 54553,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.46 — LT348: Recorte e Buscar Pokémon alinhados",
+      "sections": {
+        "novidades": [
+          "Editor de recorte: dois menus arredondados alinhados no rodapé, com Confirmar | Prévia | Cancelar na linha superior e Background | Quadrado | Livre | Vertical na inferior.",
+          "Novo ícone Vertical WebP original do Drive preservado sem recompressão e alça de quatro direções fora do recorte para arrastar sem cobrir o Pokémon com o dedo.",
+          "Buscar Pokémon: segurar e arrastar os ícones de reordenação no lugar das setas, mantendo a ordem da seleção salva."
+        ],
+        "melhorias": [
+          "A barra lateral branca de tamanho contínuo permanece na posição anterior; modos de recorte, prévia, lupa e confirmação manual são preservados.",
+          "Menu Buscar Pokémon usa engrenagem com lápis desenhada a partir do SVG original das Pokébolas, X vermelho e brilho menor centralizado dentro do sino.",
+          "Barra de Buscar Pokémon e submenus agora acompanham o movimento da bolha, com reposicionamento após rotação; tocar a bolha volta um nível do menu sem desligar as buscas.",
+          "Menus Tempo e Personalização reduzidos e alinhados; as configurações compartilhadas de aparência das Pokébolas continuam sendo respeitadas.",
+          "Reordenação da lista oferece gestos e ações de acessibilidade TalkBack."
+        ],
+        "correcoes": [
+          "Corrigido desaparecimento da barra PGS ao arrastar a bolha. O menu é reposicionado em vez de ser descartado.",
+          "Substituído botão menos por X vermelho simples para desmarcar um Pokémon, sem excluir seu modelo PNG.",
+          "Corrigido botão de ajuste de recorte para evitar cobrir a imagem com o dedo. O Horizontal legado continua disponível por toque longo no Vertical.",
+          "Preservadas as ações de confirmar e cancelar, as preferências, as contas, filtros, alertas, Edu e Doces Raros, sem alteração de assinatura ou login."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico de alinhamento, contraste, gesto de arrastar e ancoragem real no Samsung permanece pendente; compilação automática não homologa o visual.",
+          "OAuth Google/Discord do PoGoCoordinates permanece dependente de fluxo/callback autorizado do provedor.",
+          "Teleporte real no PGSharp, Shiny e Encontro exigem evidência da tela e confirmação humana de avisos de segurança.",
+          "Atualização pelo APK exige consentimento do Android; não há instalação silenciosa."
+        ]
+      }
     }
   ]
 }
