@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT339 — HOME EM EDIÇÃO, SEM APK E SEM PUBLICAÇÃO (14/11/2026)
+
+**Base oficial e canal:** a última release continua **LT338 · 0.03.37 · versionCode 54544**, já verificada. **A LT339 ainda não existe como APK oficial.** O responsável pediu explicitamente que continuemos as alterações de interface **sem gerar APK, merge ou release agora**. Branch de estágio: `feature/lt339-home-icon-menu-refactor-20261114`.
+
+- Integrados à branch os **seis PNGs originais do usuário**, com os bytes íntegros: Pokébola 1/2 OFF, Pokébola 1/2 ON, Busca Pokémon, Weather, Modo Claro e Modo Escuro. Sem redimensionar as fontes, aplicar blur, remover alpha ou comprimir a qualidade. A alternância ON/OFF existente das duas Pokébolas é preservada.
+- Fileira de 10 ícones sem fundo mantida. Doce Raro ajustado para porte próximo ao ícone Quests (padding visual de 7dp); validar depois em Android.
+- No cabeçalho, junto de **Apoiar**, ficam os novos ícones Claro/Escuro (alterna o tema existente) e Compartilhar (mesma função). Removidas faixas inferiores Compartilhar/Agradecimentos da Home.
+- **Ativos agora** e **Instalações** migraram para a seção **ESTATÍSTICAS** no menu lateral com o mesmo `FirebaseStats.bind`. Nova sub-aba **Conta** no menu com Pokébola 1, Pokébola 2 e "Conta Premium · Gerenciar / Sair" quando autorizado. O botão/texto Premium saiu da Home, mas o serviço original foi preservado.
+- Menu lateral rolável para acomodar os comandos. Sem alteração em autenticação, P1/P2, filtros, Edu, sprites, segurança, OTA ou PGS.
+- Testes históricos da Home atualizados; novo contrato `app/tests/lt339-home-icons-drawer-contract.test.js` verifica assinaturas dos PNGs e vínculos de UI. **Sem build Gradle/APK/QA físico até a próxima autorização específica para entrega.**
+- Arquivo de continuidade de trabalho: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`. **Não incrementar versionCode, não criar Release, não fazer merge desta etapa até o usuário terminar de enviar as mudanças.**
+
+
 ## LT338 OFICIAL — PGS seleção única e alerta Shiny mais confiável (14/11/2026)
 
 **Versão publicada:** **LT338 · 0.03.37 · versionCode 54544 · label 51341**. Release estável [v0.03.37-54544](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.37-54544), APK `PokeSearch-v0.03.37-LT.apk` de **49.755.898 bytes**, SHA-256 **`dd958b9f0a9305cbb42ea83475fe82b1df2461198951ea10e140d76d887a439e`**. Workflow oficial protegido [#43576475168](https://github.com/LucianoToscano/PokeSearch/actions/runs/43576475168) concluído **SUCCESS**; preflight, versão, certificado permanente, testes Node/OTA, recursos completos, Gradle/R8, inspeção do APK, upload e verificação do hash no GitHub aprovados. Fonte exata da release: `98a8d367c601e75ef1126afec4fa7bfa84a6a6d0`. Certificado Android v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
