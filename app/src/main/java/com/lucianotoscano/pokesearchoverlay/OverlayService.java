@@ -409,7 +409,7 @@ public class OverlayService extends Service {
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=5,menuPadDp=0;
+    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=-3,menuPadDp=0;
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
@@ -1109,16 +1109,19 @@ public class OverlayService extends Service {
     private float startRawX,startRawY;
     private int startX,startY;
     private boolean dragged=false;
+    // -3 denotes the new 3-second preset; legacy positive preferences remain MINUTES.
+    // Refresh does not bypass the provider's existing request/cooldown protections.
+    private long autoRefreshDelayMs(){return intervalMinutes==-3?3000L:Math.max(0L,intervalMinutes)*60000L;}
     private final Runnable periodic=new Runnable(){
         @Override public void run(){
-            if(stopped||loginPaused||intervalMinutes<=0)return;
+            if(stopped||loginPaused||intervalMinutes==0)return;
             refresh();
-            if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(this,intervalMinutes*60000L);
+            if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(this,autoRefreshDelayMs());
         }
     };
     private void schedulePeriodic(){
         handler.removeCallbacks(periodic);
-        if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,intervalMinutes*60000L);
+        if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(periodic,autoRefreshDelayMs());
     }
     private int dp(int n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private DisplayMetrics metrics(){
@@ -5697,7 +5700,7 @@ public class OverlayService extends Service {
             });
         }
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             overlayPrefs().edit()
@@ -5705,10 +5708,10 @@ public class OverlayService extends Service {
             schedulePeriodic();
             update();
             android.widget.Toast.makeText(OverlayService.this,
-                intervalMinutes==0?"AUTO desligado":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
+                intervalMinutes==0?"AUTO desligado":intervalMinutes==-3?"AUTO: 3 segundos":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
-            int[] options={0,3,5,10,15,20};
+            int[] options={-3,0,3,5,10,15,20};
             int next=0;
             for(int j=0;j<options.length;j++){
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
@@ -6078,13 +6081,13 @@ public class OverlayService extends Service {
             shiny=false;
         }
         if(!pref.getBoolean("intervalExplicit",false)){
-            intervalMinutes=5;
-            pref.edit().putInt("intervalMinutes",5).apply();
+            intervalMinutes=-3;
+            pref.edit().putInt("intervalMinutes",-3).apply();
         }else{
-            intervalMinutes=pref.getInt("intervalMinutes",5);
+            intervalMinutes=pref.getInt("intervalMinutes",-3);
         }
-        if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
-           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=5;
+        if(intervalMinutes!=-3&&intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
+           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=-3;
         schedulePeriodic();
         if(initialStart&&!pref.getBoolean("gestureHelpV1Shown",false)){
             pref.edit().putBoolean("gestureHelpV1Shown",true).apply();
