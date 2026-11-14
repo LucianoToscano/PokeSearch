@@ -205,8 +205,20 @@ final class PgsAutoMenus {
         if(toolbar!=null)toolbar.setVisibility(View.GONE);
         Point screen=size();int width=Math.min(screen.x-dp(20),dp(preferredWidthDp));
         int estimated=dp(estimatedHeightDp);
-        int top=anchorY+dp(55);
-        if(top+estimated>screen.y-dp(18))top=Math.max(dp(14),anchorY-estimated-dp(10));
+        // Anchor submenus to the *actual* visible toolbar, not to a stale bubble
+        // coordinate. This keeps the panel attached when the toolbar is clamped
+        // near an edge or rendered above the bubble.
+        int toolbarTop=anchorY;
+        int toolbarLeft=anchorX;
+        int toolbarHeight=dp(54);
+        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
+            WindowManager.LayoutParams anchor=(WindowManager.LayoutParams)toolbar.getLayoutParams();
+            toolbarTop=anchor.y;
+            toolbarLeft=anchor.x+anchor.width/2;
+            toolbarHeight=anchor.height;
+        }
+        int top=toolbarTop+toolbarHeight+dp(4);
+        if(top+estimated>screen.y-dp(18))top=Math.max(dp(14),toolbarTop-estimated-dp(4));
         if(top+estimated>screen.y)top=Math.max(dp(14),screen.y-estimated-dp(20));
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -214,7 +226,7 @@ final class PgsAutoMenus {
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
         lp.gravity=Gravity.LEFT|Gravity.TOP;
-        lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),anchorX-width/2));lp.y=top;
+        lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),toolbarLeft-width/2));lp.y=top;
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         try{wm.addView(panel,lp);}catch(Exception e){
             panel=null;
