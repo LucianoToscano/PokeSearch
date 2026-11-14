@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT338 — PGS estado unificado e Shiny conservador (14/11/2026, CANDIDATO)
+
+- **Status:** branch `fix/lt338-pgs-catalog-shiny-20261114` originada do HEAD `87c61905`, ainda não publicada neste registro. Base oficial permanece **LT337 / v0.03.36-54543**.
+- A Home `PgsBuscasPanel` deixa de duplicar o catálogo/seleção/ordem e utiliza `PgsAutoCatalog` como única regra de até 50 espécies e modelos, sem migrar/apagar preferências existentes.
+- `PgsAutoShinyListener` deixa de pausar por emoji ✨ ou `shiny:` sem resultado; `PgsAutoShinySignal` aceita somente evidência textual explícita, rejeita negações e possui 16 testes Java, integrados ao QA PGS.
+- Nenhuma mudança em assinaturas, 68 PNGs Edu 512, sprites GO, P1/P2, Doce Raro, gestos ou limites de CI. QA física Samsung continua aberta na [issue #350](https://github.com/LucianoToscano/PokeSearch/issues/350).
+- **Anomalia externa observada:** o workflow LT146 assinado #43574012280 falhou no assert de pacote de sprites após deriva no CDN; **não** suprimir os hashes nem confundir com o workflow oficial LT337 bem-sucedido.
+- Documento de escopo, riscos e checklist: `docs/LT338_PGS_ESTADO_UNICO_SHINY_QA_20261114.md`. Somente criar versão/Release depois de CI comprovada.
+
+
 ## ARK LT337 — sem teto artificial de tamanho do APK oficial (14/11/2026)
 
 **Integração concluída:** [PR #351](https://github.com/LucianoToscano/PokeSearch/pull/351) integrada por squash `93d2582befcc6b8ba18747a45613603613e39a21`. Testes Node, regressões LT169, QA Core e preflight do workflow oficial passaram no HEAD da PR `ae5f0b24`; o workflow oficial em `main` não cria novo APK porque `v0.03.36-54543` já está publicado. Não republicar a mesma tag, aguardar uma versão funcional futura. Prompt salvo: `docs/PROMPT_CONTINUIDADE_LT337_ARK_APK_SEM_TETO_20261114.md`.
