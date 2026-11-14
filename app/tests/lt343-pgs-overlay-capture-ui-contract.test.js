@@ -57,4 +57,55 @@ assert.match(menu,/SeekBar opacity=new SeekBar/);
 assert.match(auto,/private void refreshAppearance\(\)/);
 assert.match(auto,/private TextView handBadge,countdownBadge/);
 assert.doesNotMatch(auto,/notifyConfigured\(PgsAutoNotificationPolicy\.SEARCH,/);
+
+// Pacote original completo, dividido em 5 ZIPs ZIP_STORED sem recompressão PNG.
+const crypto=require("node:crypto");
+const newPack=java("HomeMenuIconPack");
+assert.match(newPack,/options\.inScaled=false/);
+assert.match(newPack,/ZipInputStream/);
+assert.match(newPack,/menu_icons_512_/);
+assert.match(home,/setHomePackIcon\(overlayControl,1,on\?"ativo":"normal"\)/);
+assert.match(home,/setHomePackIcon\(secondaryOverlayControl,2,secondaryOn\?"ativo":"normal"\)/);
+assert.match(home,/setHomePackIcon\(raidAssistantControl,4,"normal"\)/);
+assert.match(home,/setHomePackIcon\(rareCandyControl,10,"normal"\)/);
+const expected={
+ 1:"652d4d98336b99cd466d30267aadfda0f7844e34fe3c757ef69cf963b39a41ff",
+ 2:"7c29fe87a22d01bf17c9e1c9803045e22fdfd30a0da33eb0e8132416295a4080",
+ 3:"37bccbada1ab7eb1d726cd792c0d1e7efdaca150bfb0b073e6ba9beb37bfbfd0",
+ 4:"7af7494f1202123409c03cee636cfad9424079e61b8514fea533a7971392554b",
+ 5:"d84cc77d33e5913697aea39525076e5e281a519b67407358392872de45acfd4b"
+};
+const found=new Set();
+for(const [part,sha] of Object.entries(expected)){
+ const data=fs.readFileSync(path.join("app/src/main/assets","menu_icons_512_"+part+".zip"));
+ assert.equal(crypto.createHash("sha256").update(data).digest("hex"),sha);
+ let index=0;
+ while(index+30<data.length && data.readUInt32LE(index)===0x04034b50){
+   const method=data.readUInt16LE(index+8),size=data.readUInt32LE(index+18);
+   const nameLen=data.readUInt16LE(index+26),extra=data.readUInt16LE(index+28);
+   const name=data.subarray(index+30,index+30+nameLen).toString("utf8");
+   const start=index+30+nameLen+extra;
+   assert.equal(method,0,"PNG original nunca deve ser recomprimido no ZIP");
+   assert.ok(name.startsWith("menu_icons/"),name);
+   const png=data.subarray(start,start+size);
+   assert.equal(png.toString("hex",0,8),"89504e470d0a1a0a",name);
+   assert.equal(png.readUInt32BE(16),512,name);
+   assert.equal(png.readUInt32BE(20),512,name);
+   found.add(name);
+   index=start+size;
+ }
+}
+const expectedNames=[];
+for(let i=1;i<=10;i++){
+ const n=String(i).padStart(2,"0");
+ expectedNames.push("menu_icons/"+n+"_normal.png","menu_icons/"+n+"_hover.png");
+ if(i<=2)expectedNames.push("menu_icons/"+n+"_ativo.png",
+   "menu_icons/"+n+"_ativo_hover.png");
+}
+assert.deepEqual([...found].sort(),expectedNames.sort(),"24 artes originais 512x512");
+assert.ok(fs.existsSync("app/src/main/assets/ui-originals/busca_pokemon_overlay_on_rgb_original.webp"));
+const alphaWebp=fs.readFileSync("app/src/main/res/drawable-nodpi/busca_pokemon_overlay_on.webp");
+assert.equal(crypto.createHash("sha256").update(alphaWebp).digest("hex"),
+ "2ef52d0edd1dcf1b5ab78ff80fd24a1eb8e96084494d23ad5fbb63f63b5decc6");
+
 console.log("LT343: captura confirmada, estados seguros, menus PGS, artes e Home PASS (teste físico pendente)");
