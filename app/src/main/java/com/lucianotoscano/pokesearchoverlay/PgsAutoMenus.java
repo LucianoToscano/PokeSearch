@@ -125,6 +125,34 @@ final class PgsAutoMenus {
     private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
     boolean isOpen(){return panel!=null||toolbar!=null;}
+    // Toque na bolha com submenu aberto volta à barra, sem desligar buscas.
+    // Com somente a barra aberta, um segundo toque a retrai (padrão P1/P2).
+    void collapseOneLevel(){
+        if(panel!=null)hidePanel();
+        else if(toolbar!=null)hideToolbar();
+    }
+
+    /** Reposiciona janelas EXISTENTES quando a bolha se move/roda a tela.
+     * NUNCA chama dismissAll nem recria menu durante o arraste.
+     */
+    void reanchor(int x,int y){
+        anchorX=x;anchorY=y;
+        if(toolbar==null)return;
+        if(!(toolbar.getLayoutParams() instanceof WindowManager.LayoutParams))return;
+        WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
+        int oldX=lp.x,oldY=lp.y;
+        positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
+        try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
+        if(panel!=null&&panel.getLayoutParams() instanceof WindowManager.LayoutParams){
+            WindowManager.LayoutParams pp=(WindowManager.LayoutParams)panel.getLayoutParams();
+            Point screen=size();
+            int width=pp.width>0?pp.width:panel.getWidth();
+            int height=Math.max(dp(80),panel.getHeight());
+            pp.x=Math.max(dp(8),Math.min(screen.x-width-dp(8),pp.x+lp.x-oldX));
+            pp.y=Math.max(dp(8),Math.min(screen.y-height-dp(8),pp.y+lp.y-oldY));
+            try{wm.updateViewLayout(panel,pp);}catch(Exception ignored){}
+        }
+    }
 
     // LT347: exactly the dock.html controls-window 30dp individual tiles,
     // 16dp artwork, 2dp base gap, 5dp rounded corners; NO enclosing capsule.
@@ -150,6 +178,8 @@ final class PgsAutoMenus {
         for(int i=0;i<icons.length;i++){
             final int n=i;
             ImageButton icon=imageButton(icons[i],descriptions[i],7);
+            // Exact P1/P2 SVG meaning: gear+pencil. Red is reserved for X.
+            if(i==4)icon.setColorFilter(0xFFFF596C);
             int padding=(PgsAutoMenuStyle.CELL_DP-PgsAutoMenuStyle.ART_DP)/2;
             icon.setPadding(dp(padding),dp(padding),dp(padding),dp(padding));
             LinearLayout.LayoutParams tileParams=new LinearLayout.LayoutParams(
@@ -170,9 +200,12 @@ final class PgsAutoMenus {
                         .getString(PgsAutoNotificationPolicy.SHINY,"strong"));
                 shiny.setColorFilter("off".equals(state)?fg():0xFFFFD47B);
                 shiny.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                // Fit sparkle inside bell BODY: 5dp, visually below its crown,
+                // without touching its outline or extending over the rim.
                 FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
-                    dp(8),dp(8),Gravity.CENTER);
-                inner.topMargin=dp(2);
+                    dp(5),dp(5),Gravity.CENTER);
+                inner.topMargin=dp(4);
+                shiny.setClickable(false);shiny.setFocusable(false);
                 tile.addView(shiny,inner);
                 tile.setContentDescription("Notificações e Shiny dentro do sino");
                 tile.setOnClickListener(v->handlers[n].run());
@@ -187,21 +220,29 @@ final class PgsAutoMenus {
         Point screen=size();
         int width=dp(visual.vertical?TOOL_CELL_DP:5*TOOL_CELL_DP+4*gap);
         int height=dp(visual.vertical?5*TOOL_CELL_DP+4*gap:TOOL_CELL_DP);
-        int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),
-            x-width/2+dp(visual.menuOffsetX)));
-        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3+
-            visual.gearMenuGap+visual.menuOffsetY);
-        if(top+height+dp(8)>screen.y)
-            top=Math.max(dp(15),y-height-dp(3));
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,height,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
-        lp.gravity=Gravity.TOP|Gravity.LEFT;lp.x=left;lp.y=top;
+        lp.gravity=Gravity.TOP|Gravity.LEFT;
+        positionToolbar(lp,x,y,visual);
         applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(toolbar,lp);}catch(Exception ignored){toolbar=null;}
     }
+    private void positionToolbar(WindowManager.LayoutParams lp,int x,int y,
+            PgsAutoMenuStyle visual){
+        Point screen=size();
+        int width=lp.width,height=lp.height;
+        lp.x=Math.max(dp(6),Math.min(screen.x-width-dp(6),
+            x-width/2+dp(visual.menuOffsetX)));
+        lp.y=y+dp(PgsAutoVisualState.TOUCH_DP+3+
+            visual.gearMenuGap+visual.menuOffsetY);
+        if(lp.y+height+dp(8)>screen.y)
+            lp.y=Math.max(dp(12),y-height-dp(4));
+        lp.y=Math.max(dp(6),Math.min(screen.y-height-dp(6),lp.y));
+    }
+
     private void applyNativeBlur(WindowManager.LayoutParams lp,int radiusDp){
         // Android can decline cross-app blur; the translucent tile remains
         // legible without needing a separate black background.
