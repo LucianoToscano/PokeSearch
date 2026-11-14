@@ -687,7 +687,7 @@ public class MainActivity extends Activity {
         homeThemeButton.setOnClickListener(v->toggleHomeTheme());
 
         // Só o ícone, sem a faixa de compartilhamento da Home.
-        ImageButton shareIcon=makeIcon(android.R.drawable.ic_menu_share,
+        ImageButton shareIcon=makeIcon(R.drawable.home_share_icon,
             "Compartilhar aplicativo PokeSearch");
         shareIcon.setColorFilter(homeLightMode?Color.BLACK:Color.WHITE,android.graphics.PorterDuff.Mode.SRC_IN);
         shareIcon.setImageAlpha(255);
