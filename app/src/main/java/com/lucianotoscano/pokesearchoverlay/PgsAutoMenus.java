@@ -125,14 +125,19 @@ final class PgsAutoMenus {
     private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
     boolean isOpen(){return panel!=null||toolbar!=null;}
-    // P1/P2 dock controls are 30px tall, icon artwork 21px. Android keeps
-    // a comfortably tappable 38dp cell without enlarging the visible artwork.
-    private static final int TOOL_CELL_DP=38, TOOL_GAP_DP=3, TOOL_HEIGHT_DP=46;
+
+    // LT347: exactly the dock.html controls-window 30dp individual tiles,
+    // 16dp artwork, 2dp base gap, 5dp rounded corners; NO enclosing capsule.
+    // Every layout/color value is read from the SAME prefs.visualPrefsJson as P1.
+    private static final int TOOL_CELL_DP=PgsAutoMenuStyle.CELL_DP;
     void showToolbar(int x,int y){
         dismissAll();anchorX=x;anchorY=y;
-        LinearLayout bar=horizontal();bar.setPadding(dp(4),dp(3),dp(4),dp(3));
-        bar.setBackground(bg(panelFill(),0x667E91A5,10));
-        // Assets shared with the original P1/P2 icon system, not Unicode.
+        PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
+        LinearLayout bar=horizontal();
+        bar.setOrientation(visual.vertical?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER);
+        bar.setPadding(0,0,0,0);
+        bar.setBackgroundColor(Color.TRANSPARENT);
         int[] icons={R.drawable.pgs_menu_search,R.drawable.pgs_menu_timer,
             R.drawable.ic_bell_outline,R.drawable.pgs_menu_customize,
             R.drawable.pgs_menu_close};
@@ -141,14 +146,20 @@ final class PgsAutoMenus {
         Runnable[] handlers={this::showSearch,this::showTime,
             this::showNotifications,this::showAppearance,
             ()->{dismissAll();actions.closeOverlay();}};
+        int gap=visual.itemGapDp();
         for(int i=0;i<icons.length;i++){
             final int n=i;
-            ImageButton icon=imageButton(icons[i],descriptions[i],9);
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
+            ImageButton icon=imageButton(icons[i],descriptions[i],7);
+            int padding=(PgsAutoMenuStyle.CELL_DP-PgsAutoMenuStyle.ART_DP)/2;
+            icon.setPadding(dp(padding),dp(padding),dp(padding),dp(padding));
+            LinearLayout.LayoutParams tileParams=new LinearLayout.LayoutParams(
                 dp(TOOL_CELL_DP),dp(TOOL_CELL_DP));
-            if(i>0)p.leftMargin=dp(TOOL_GAP_DP);
+            if(i>0){
+                if(visual.vertical)tileParams.topMargin=dp(gap);
+                else tileParams.leftMargin=dp(gap);
+            }
             if(i==2){
-                // Exact Shiny vector from dock.html, *inside* the original bell.
+                // Shiny is physically INSIDE the bell, never a detached star.
                 FrameLayout tile=new FrameLayout(context);
                 tile.addView(icon,new FrameLayout.LayoutParams(-1,-1));
                 ImageView shiny=new ImageView(context);
@@ -160,30 +171,44 @@ final class PgsAutoMenus {
                 shiny.setColorFilter("off".equals(state)?fg():0xFFFFD47B);
                 shiny.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
-                    dp(11),dp(11),Gravity.CENTER);
-                inner.topMargin=dp(1);
+                    dp(8),dp(8),Gravity.CENTER);
+                inner.topMargin=dp(2);
                 tile.addView(shiny,inner);
                 tile.setContentDescription("Notificações e Shiny dentro do sino");
                 tile.setOnClickListener(v->handlers[n].run());
                 icon.setOnClickListener(v->handlers[n].run());
-                bar.addView(tile,p);
+                bar.addView(tile,tileParams);
             }else{
-                bar.addView(icon,p);
+                bar.addView(icon,tileParams);
                 icon.setOnClickListener(v->handlers[n].run());
             }
         }
         toolbar=bar;
         Point screen=size();
-        int width=dp(8+5*TOOL_CELL_DP+4*TOOL_GAP_DP),h=dp(TOOL_HEIGHT_DP);
-        int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),x-width/2));
-        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3);
-        if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(3));
-        WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,h,
+        int width=dp(visual.vertical?TOOL_CELL_DP:5*TOOL_CELL_DP+4*gap);
+        int height=dp(visual.vertical?5*TOOL_CELL_DP+4*gap:TOOL_CELL_DP);
+        int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),
+            x-width/2+dp(visual.menuOffsetX)));
+        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3+
+            visual.gearMenuGap+visual.menuOffsetY);
+        if(top+height+dp(8)>screen.y)
+            top=Math.max(dp(15),y-height-dp(3));
+        WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,height,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
         lp.gravity=Gravity.TOP|Gravity.LEFT;lp.x=left;lp.y=top;
+        applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(toolbar,lp);}catch(Exception ignored){toolbar=null;}
+    }
+    private void applyNativeBlur(WindowManager.LayoutParams lp,int radiusDp){
+        // Android can decline cross-app blur; the translucent tile remains
+        // legible without needing a separate black background.
+        if(Build.VERSION.SDK_INT>=31&&radiusDp>0){
+            lp.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+            lp.setBlurBehindRadius(dp(radiusDp));
+        }
     }
     private LinearLayout panelRoot(String heading,String right){
         LinearLayout root=vertical();root.setPadding(dp(10),dp(10),dp(10),dp(10));
