@@ -426,6 +426,7 @@ public class MainActivity extends Activity {
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
         dualLp.bottomMargin=d(5);
+        dualOverlayRow.setVisibility(View.VISIBLE);
         screen.addView(dualOverlayRow,dualLp);
         LinearLayout slotsRow=new LinearLayout(this);
         slotsRow.setOrientation(LinearLayout.HORIZONTAL);
