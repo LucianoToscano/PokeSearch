@@ -461,9 +461,10 @@ public class MainActivity extends Activity {
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
         }
-        // Novos módulos ficam deliberadamente sem ação até serem implementados.
+        // LT340: mesma semântica das Pokébolas P1/P2. A Home liga/fecha
+        // somente o overlay: todos os ajustes ficam na LUPA flutuante.
         pgsSearchControl=addHomePreviewIcon(dualOverlayRow,R.drawable.busca_pokemon_off,
-            "Buscas Pokémon · desativado",v->PgsBuscasPanel.show(this));
+            "Buscar Pokémon · overlay desligado",v->togglePgsOverlayFromHome());
         lastPgsSearchState=null; // Após recriar a Home, atualizar o novo ImageView.
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
@@ -2178,17 +2179,36 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
     }
+    /** O usuário liga/fecha o overlay pela Home, nunca abre PgsBuscasPanel. */
+    private void togglePgsOverlayFromHome(){
+        if(PgsAutoClickService.isOverlayVisible()){
+            PgsAutoClickService.closeHand();
+            if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomePgsIcon,220);
+            return;
+        }
+        // Acessibilidade é uma permissão manual do Android. Após o usuário
+        // concedê-la, onServiceConnected respeita o pedido salvo.
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("overlayVisible",true).apply();
+        if(PgsAutoClickService.instance==null){
+            Toast.makeText(this,
+                "Ative PokeSearch · Buscar Pokémon na Acessibilidade para abrir o overlay.",
+                Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        }else PgsAutoClickService.restoreBubble();
+        if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomePgsIcon,250);
+    }
     private void refreshHomePgsIcon(){
         if(pgsSearchControl==null)return;
-        boolean on=PgsAutoClickService.isSearchActive();
+        boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
             pgsSearchControl.setImageResource(on?
                 R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
             lastPgsSearchState=on;
         }
         pgsSearchControl.setContentDescription(on?
-            "Buscas Pokémon ativas · abrir configurações":
-            "Buscas Pokémon desativadas · abrir configurações");
+            "Buscar Pokémon · overlay ativado · toque para fechar":
+            "Buscar Pokémon · overlay desativado · toque para abrir");
     }
     private void refreshHomeOverlay(){
         refreshHomePgsIcon();
