@@ -4122,6 +4122,35 @@
           "Comparação visual pixel a pixel em claro/escuro, minimização e funcionamento dos novos modos requerem homologação física. Atualização APK exige confirmação manual do Android."
         ]
       }
+    },
+    {
+      "id": "lt346-ark-pgs-crop-minimal-20261114",
+      "minVersionCode": 54551,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.44 — LT346: Recorte PGS minimalista",
+      "sections": {
+        "novidades": [
+          "Novo editor de recorte de sprites PGS com ícones originais Quadrado, Vertical e Livre, além de opção Horizontal por toque longo no ícone Vertical.",
+          "Barra lateral branca com alça deslizante para ajustar continuamente o tamanho do recorte de 16 a 92 pixels de referência, eliminando os botões fixos 24/32/44."
+        ],
+        "melhorias": [
+          "A captura mantém a imagem do jogo em evidência, sem faixas cinzas, botões de texto ou instruções permanentes; dica contextual apenas na primeira utilização.",
+          "Confirmação e cancelamento usam artes brancas originais; ícones Fundo On/Off importados dos anexos e preservados sem recompressão.",
+          "Mini-lupa afastada do dedo, alça do recorte, prévia em miniatura e confirmação explícita preservadas.",
+          "Remoção assistida de fundo plano permanece opcional e reversível; o controle não sobrescreve sprites antigos nem promete segmentação universal."
+        ],
+        "correcoes": [
+          "Eliminado o mínimo rígido em dp que impedia diferenças reais nas posições menores da nova barra; o tamanho acompanha a largura de referência 740.",
+          "Contratos LT340/LT343 atualizados para verificar os controles novos, em vez de textos e botões antigos, preservando os testes; regressões LT346 adicionadas.",
+          "Mantidas autenticações independentes de Conta 1/2, Doces Raros, Rank Geral, sprites Edu, notificações, filtros, proteção de gestos, OTA e assinatura existente sem mudanças nessas áreas."
+        ],
+        "emDesenvolvimento": [
+          "Testes físicos no Samsung da legibilidade, barra lateral, lupa, captura, retângulo vertical/livre, popup, rotação, temas e salvamento ainda são necessários.",
+          "Google OAuth/Discord do PoGoCoordinates dependem do fluxo/callback oficial do provedor; nenhum bloqueio foi contornado.",
+          "Teleporte efetivo no PGSharp, reconhecimento de Pokémon no mapa, Encontro e Shiny reais seguem não homologados; um gesto concluído pelo Android não prova sucesso no jogo.",
+          "A atualização exige consentimento do Android, sem instalação remota ou silenciosa."
+        ]
+      }
     }
   ]
 }
