@@ -84,6 +84,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private int noFreshAttempts=0,verifyMisses=0,emptyRetries=0;
     private long lastNoIconScan=0;
     private String currentTargetName="";
+    // Avisar somente alvos novos confirmados nesta rodada; repetir o feed não dispara spam.
+    private final java.util.HashSet<String> notifiedFeedSlots=new java.util.HashSet<>();
     private static final class VisitedSlot {
         final float x,y;
         final String group;
@@ -191,7 +193,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
             @Override public void retryNow(){restartSession();}
             @Override public void closeOverlay(){removeHand();}
-            @Override public void testShiny(){testShinyAlert();}
+            @Override public void testNotification(String type){testPgsNotification(type);}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -254,7 +256,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(service!=null)service.handler.post(service::removeHand);
     }
     private void restartSession(){
-        emptyRetries=0;lastNoIconScan=0;visitedSlots.clear();
+        emptyRetries=0;lastNoIconScan=0;visitedSlots.clear();notifiedFeedSlots.clear();
         nextIndex=0;total=0;awaitingMap=false;
         ++ticket;
         if(!running){toggle();return;}
@@ -352,7 +354,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         loadSettings();
         nextIndex=0;total=0;lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
-        visitedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
+        visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;
         running=true;
         status("LENDO TELA");
@@ -510,6 +512,15 @@ public final class PgsAutoClickService extends AccessibilityService {
                             if(x<0||x>=size.x||y<0||y>=size.y){
                                 fail("Ícone confirmado fora da área de toque.");return;
                             }
+                            // Só registra quando a MESMA imagem foi confirmada 2x.
+                            // Slot relativo + espécie evita repetição por revarredura.
+                            String evidence=found.group+":"+
+                                Math.round(found.x*100f/Math.max(1,w))+":"+
+                                Math.round(found.y*100f/Math.max(1,h));
+                            if(notifiedFeedSlots.size()<150&&notifiedFeedSlots.add(evidence))
+                                notifyConfigured(PgsAutoNotificationPolicy.NEW,
+                                    "PGS: novo Pokémon no feed",
+                                    found.name+" confirmado na lista de buscas.",false);
                             tap(x,y,nextIndex,found,w,h);
                         });
                     });
@@ -535,10 +546,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(!running||index!=nextIndex)return;
                 visitedSlots.add(new VisitedSlot(match,screenWidth,screenHeight));
                 currentTargetName=match.name;
-                String foundMode=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getString("searchSound","mute");
-                if(!"mute".equals(foundMode)){
-                    notifyUser("PGS Busca: "+match.name,"Ícone selecionado para teleporte.",false);
-                }
+                // A seleção de som PGS independe da Pokébola 1 e 2.
+                notifyConfigured(PgsAutoNotificationPolicy.SEARCH,
+                    "PGS Busca: "+match.name,"Alvo confirmado para teleporte.",false);
                 awaitingMap=true;clickedAt=SystemClock.uptimeMillis();
                 lastColors=null;stableRepeats=0;
                 sceneReadyAt=0;loadedStreak=0;
@@ -756,21 +766,24 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void halt(String label){
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
-        ticket++;nextIndex=0;total=0;visitedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
+        ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
     }
-    /** Teste local separado de um shiny real: não altera o estado da rodada. */
-    public static void testShinyAlert(){
-        PgsAutoClickService service=instance;
-        if(service==null)return;
-        service.handler.post(()->{
-            service.notifyUser("TESTE SHINY — alarme","Simulação local, sem Pokémon detectado.",true);
-            service.playShinySound();
-            Vibrator vib=(Vibrator)service.getSystemService(VIBRATOR_SERVICE);
-            if(service.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getBoolean("shinyVibrate",true)
-                &&vib!=null&&vib.hasVibrator())
-                vib.vibrate(VibrationEffect.createWaveform(new long[]{0,250,140,250},-1));
-            Toast.makeText(service,"Teste de alerta enviado.",Toast.LENGTH_SHORT).show();
+    /** Teste local por categoria, nunca simula detecção real. */
+    public static void testPgsNotification(String type){
+        PgsAutoClickService live=instance;
+        if(live==null||!PgsAutoNotificationPolicy.validKind(type))return;
+        live.handler.post(()->{
+            String label=PgsAutoNotificationPolicy.SHINY.equals(type)?"Shiny":
+                PgsAutoNotificationPolicy.NEW.equals(type)?"Novos Pokémon":"Pokémon de buscas";
+            live.notifyConfigured(type,"Teste PGS · "+label,
+                "Prévia local de notificação, sem encontro confirmado.",
+                PgsAutoNotificationPolicy.SHINY.equals(type));
+            Toast.makeText(live,"Notificação de "+label+" solicitada ao Android.",
+                Toast.LENGTH_SHORT).show();
         });
+    }
+    public static void testShinyAlert(){
+        testPgsNotification(PgsAutoNotificationPolicy.SHINY);
     }
     public static void onPgsharpShiny(String message){
         PgsAutoClickService live=instance;
@@ -784,12 +797,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         String alert="Alvo: "+(currentTargetName.isEmpty()?"não identificado":currentTargetName)+". "+message;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putString("lastShinyNotice",alert).apply();
-        notifyUser("✨ SHINY — pausa automática",alert,true);
-        playShinySound();
-        Vibrator v=(Vibrator)getSystemService(VIBRATOR_SERVICE);
-        if(getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getBoolean("shinyVibrate",true)
-            &&v!=null&&v.hasVibrator())
-            v.vibrate(VibrationEffect.createWaveform(new long[]{0,350,180,350,180,550},-1));
+        // Canal PGS exclusivo. O Android toca uma vez, sem ringtone duplicado.
+        notifyConfigured(PgsAutoNotificationPolicy.SHINY,
+            "✨ SHINY — pausa automática",alert,true);
     }
     private void createChannel(){
         NotificationManager n=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -816,24 +826,61 @@ public final class PgsAutoClickService extends AccessibilityService {
         quietShiny.enableVibration(false);
         n.createNotificationChannel(quietShiny);
     }
-    private void playShinySound(){
-        String mode=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getString("shinyMode","strong");
-        if("mute".equals(mode))return;
+    /** Usa canais privados ao PGS: cada tipo/modo/som tem ID distinto.
+     * O Android gerencia DND, permissões, volume e escolha do canal.
+     */
+    private void notifyConfigured(String kind,String title,String body,boolean important){
+        if(!PgsAutoNotificationPolicy.validKind(kind))return;
         try{
-            Uri tone="custom".equals(mode)?
-                PokeSoundLibrary.soundUri(this,getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getInt("shinyModeSoundIndex",21)):
-                RingtoneManager.getDefaultUri(
-                "default".equals(mode)?RingtoneManager.TYPE_NOTIFICATION:RingtoneManager.TYPE_ALARM);
-            if(tone==null)tone=RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            if(tone==null)return;
-            Ringtone ringtone=RingtoneManager.getRingtone(this,tone);
-            if(ringtone==null)return;
-            ringtone.setAudioAttributes(new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
-            ringtone.play();
-            handler.postDelayed(()->{try{ringtone.stop();}catch(Exception ignored){}},3500L);
-        }catch(Exception ignored){ }
+            NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            if(manager==null)return;
+            SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
+            String mode=PgsAutoNotificationPolicy.mode(kind,
+                prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
+            int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
+            String channelId=PgsAutoNotificationPolicy.channelId(kind,mode,index);
+            boolean isShiny=PgsAutoNotificationPolicy.SHINY.equals(kind);
+            boolean vibrate=isShiny&&prefs.getBoolean("shinyVibrate",true);
+            if(isShiny)channelId+=vibrate?"_vibrate":"_no_vibrate";
+            if(manager.getNotificationChannel(channelId)==null){
+                String titleChannel=isShiny?"PGS · Shiny":
+                    PgsAutoNotificationPolicy.NEW.equals(kind)?"PGS · Novos Pokémon":
+                    "PGS · Pokémon de buscas";
+                NotificationChannel channel=new NotificationChannel(channelId,titleChannel,
+                    isShiny?NotificationManager.IMPORTANCE_HIGH:
+                        NotificationManager.IMPORTANCE_DEFAULT);
+                channel.setDescription("Exclusivo de Buscar Pokémon · não altera P1 ou P2");
+                Uri sound=null;
+                if("default".equals(mode))
+                    sound=RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                else if("strong".equals(mode))
+                    sound=RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+                else if("custom".equals(mode))
+                    sound=PokeSoundLibrary.soundUri(this,index);
+                if(sound==null)channel.setSound(null,null);
+                else channel.setSound(sound,new AudioAttributes.Builder()
+                    .setUsage(isShiny?AudioAttributes.USAGE_ALARM:
+                        AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+                channel.enableVibration(vibrate);
+                manager.createNotificationChannel(channel);
+            }
+            Intent intent=new Intent(this,MainActivity.class);
+            PendingIntent open=PendingIntent.getActivity(this,0,intent,
+                PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
+            Notification notification=new Notification.Builder(this,channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle(title).setContentText(body)
+                .setStyle(new Notification.BigTextStyle().bigText(body))
+                .setContentIntent(open).setAutoCancel(true)
+                .setCategory(important?Notification.CATEGORY_ALARM:Notification.CATEGORY_STATUS)
+                .build();
+            manager.notify(PgsAutoNotificationPolicy.notificationId(kind),notification);
+        }catch(SecurityException ignored) {
+            // POST_NOTIFICATIONS negada: não simular entrega de alarme.
+        }catch(RuntimeException ignored) {
+            // Canal/dispositivo indisponível: não interromper a automação.
+        }
     }
     private void notifyUser(String title,String body,boolean important){
         try{
