@@ -266,7 +266,7 @@ final class PgsAutoMenus {
             margined(-1,dp(43),2));
         root.addView(label("4. Sem Shiny confirmado, procura automaticamente o próximo.",12,false),
             margined(-1,dp(43),2));
-        SharedPreferences prefs=context.getSharedPreferences("pgs_buscas_auto_v1",Context.MODE_PRIVATE);
+        SharedPreferences prefs=PgsAutoClickService.cyclePrefs(context);
         String[] names={"Limite de carregamento do mapa","Espera de Shiny após carregar"};
         String[] keys={"load_timeout","post_load"};
         int[] defaults={60,2},low={20,1},high={120,10};
