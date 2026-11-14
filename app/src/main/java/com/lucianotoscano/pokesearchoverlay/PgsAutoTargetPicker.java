@@ -53,9 +53,11 @@ final class PgsAutoTargetPicker {
         b.setBackground(bg(0xF0192736,0xFF6D90A7,dp(9)));
         return b;
     }
-    static void open(Context context,WindowManager manager,String mode,Callback callback){
-        new PgsAutoTargetPicker(context,manager,callback).show(mode);
+    static PgsAutoTargetPicker open(Context context,WindowManager manager,String mode,Callback callback){
+        PgsAutoTargetPicker picker=new PgsAutoTargetPicker(context,manager,callback);
+        picker.show(mode);return picker;
     }
+    void close(){dismiss();}
     private void setAim(float screenX,float screenY){
         x=Math.max(.035f,Math.min(.965f,screenX/Math.max(1,width)));
         y=Math.max(.12f,Math.min(.88f,screenY/Math.max(1,height)));
