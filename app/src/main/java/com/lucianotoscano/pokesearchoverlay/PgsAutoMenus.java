@@ -469,8 +469,7 @@ final class PgsAutoMenus {
         if(!PgsAutoNotificationPolicy.validKind(key))return;
         SharedPreferences prefs=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE);
         LinearLayout root=panelRoot("♫ SOM · BUSCA POKÉMON",null);
-        root.addView(label("Toque para ouvir. ✓ confirma somente o som do PGS.",11,false),
-            margined(-1,dp(32),3));
+
         ScrollView scroll=new ScrollView(context);
         LinearLayout list=vertical();
         Button[] buttons=new Button[PokeSoundLibrary.size()];
