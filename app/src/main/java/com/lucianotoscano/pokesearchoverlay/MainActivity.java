@@ -352,6 +352,14 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
     }
+    private void addHomePreviewIcon(LinearLayout row,String glyph,String description){
+        TextView icon=homeText(glyph,23,
+            homeLightMode?Color.rgb(35,53,72):Color.WHITE,false);
+        icon.setGravity(Gravity.CENTER);
+        icon.setContentDescription(description+" · em desenvolvimento");
+        icon.setBackground(null);
+        row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
+    }
     private FrameLayout buildHome(){
         homeLightMode=getSharedPreferences("prefs",0).getBoolean("homeLightMode",false);
         updateHomeSystemBars();
@@ -394,41 +402,30 @@ public class MainActivity extends Activity {
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(70)));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
+        // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
+        // Imagens das Pokébolas e atalhos funcionais reutilizam os recursos existentes.
         LinearLayout dualOverlayRow=new LinearLayout(this);
-        dualOverlayRow.setGravity(Gravity.CENTER);
+        dualOverlayRow.setGravity(Gravity.CENTER_VERTICAL);
         dualOverlayRow.setOrientation(LinearLayout.HORIZONTAL);
-        dualOverlayRow.setBackground(homeSurface(
-            homeLightMode?Color.rgb(243,248,251):Color.rgb(24,31,46),11,0));
-        dualOverlayRow.setPadding(d(7),d(4),d(7),d(4));
-        overlayControl=makeIcon(R.drawable.sem_filtro,"Ativar Pokébola 1");
-        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,
-            "Ativar Pokébola 2");
+        overlayControl=makeIcon(R.drawable.sem_filtro,"Pokémon 1");
+        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,"Pokémon 2");
         ImageView[] paired={overlayControl,secondaryOverlayControl};
         for(int i=0;i<paired.length;i++){
             final int which=i;
-            LinearLayout item=new LinearLayout(this);
-            item.setGravity(Gravity.CENTER_VERTICAL|Gravity.CENTER_HORIZONTAL);
-            item.setOrientation(LinearLayout.HORIZONTAL);
-            item.setPadding(d(5),0,d(5),0);
             ImageView icon=paired[i];
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            icon.setPadding(d(2),d(2),d(2),d(2));
-            item.addView(icon,new LinearLayout.LayoutParams(d(41),d(41)));
-            TextView title=homeText(i==0?"Pokébola 1":"Pokébola 2",12,
-                homeLightMode?Color.rgb(34,51,69):Color.rgb(233,240,252),true);
-            LinearLayout.LayoutParams nameLp=new LinearLayout.LayoutParams(-2,-2);
-            nameLp.leftMargin=d(5);
-            item.addView(title,nameLp);
-            dualOverlayRow.addView(item,new LinearLayout.LayoutParams(0,d(46),1));
-            item.setOnClickListener(v->{
+            icon.setPadding(d(1),d(1),d(1),d(1));
+            icon.setBackground(null);
+            dualOverlayRow.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
+            icon.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
         }
-        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(54));
-        dualLp.leftMargin=d(4);dualLp.rightMargin=d(4);
-        dualLp.bottomMargin=d(6);
-        dualOverlayRow.setVisibility(View.VISIBLE);
-        // Insert after header, preserving top toolbar space.
+        // Novos módulos ficam deliberadamente sem ação até serem implementados.
+        addHomePreviewIcon(dualOverlayRow,"⌕","Buscas Pokémon");
+        // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
+        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
+        dualLp.bottomMargin=d(5);
         screen.addView(dualOverlayRow,dualLp);
         LinearLayout slotsRow=new LinearLayout(this);
         slotsRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -535,6 +532,12 @@ public class MainActivity extends Activity {
         candyLp.leftMargin=d(5);
         controls.addView(rareCandyControl,candyLp);
         rareCandyControl.setOnClickListener(v->toggleRareCandyOverlay());
+        // Reposicionar o controle real do Doce Raro na fileira de atalhos.
+        controls.removeView(rareCandyControl);
+        rareCandyControl.setBackground(null);
+        rareCandyControl.setPadding(d(1),d(1),d(1),d(1));
+        dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
+
 
         // Independent, user-selected Pass icon for the MANUAL raid guide.
         raidAssistantControl=new ImageButton(this);
@@ -548,6 +551,19 @@ public class MainActivity extends Activity {
         guideLp.leftMargin=d(5);
         controls.addView(raidAssistantControl,guideLp);
         raidAssistantControl.setOnClickListener(v->toggleRaidAssistantOverlay());
+        controls.removeView(raidAssistantControl);
+        raidAssistantControl.setBackground(null);
+        raidAssistantControl.setPadding(d(1),d(1),d(1),d(1));
+        // Reorganizar para ordem oficial, preservando o botão funcional de passes.
+        dualOverlayRow.removeView(rareCandyControl);
+        dualOverlayRow.addView(raidAssistantControl,new LinearLayout.LayoutParams(0,d(44),1));
+        addHomePreviewIcon(dualOverlayRow,"⚔","Raids");
+        addHomePreviewIcon(dualOverlayRow,"⚡","Power Spots");
+        addHomePreviewIcon(dualOverlayRow,"▤","Quests");
+        addHomePreviewIcon(dualOverlayRow,"Ⓡ","Rocket");
+        addHomePreviewIcon(dualOverlayRow,"☁","Weather");
+        dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
+
 
         // LT308 · único relógio de referência do Edu, ajustável para testes.
         // Compacto, de duas linhas e sem um novo menu na tela.
@@ -2137,15 +2153,13 @@ public class MainActivity extends Activity {
         boolean on=OverlayService.isRunning();
         overlayControl.setImageResource(on?R.drawable.personalizado:R.drawable.sem_filtro);
         overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
-        overlayControl.setBackground(homeSurface(on?Color.rgb(18,94,82):
-            homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+        overlayControl.setBackground(null);
         if(secondaryOverlayControl!=null){
             boolean secondaryOn=OverlayService.isSecondaryRunning();
             secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.personalizado:R.drawable.sem_filtro);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar segunda Pokébola":"Ativar segunda Pokébola");
-            secondaryOverlayControl.setBackground(homeSurface(secondaryOn?Color.rgb(18,94,82):
-                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
+            secondaryOverlayControl.setBackground(null);
         }
     }
     private void openProviderLogin(String provider){
