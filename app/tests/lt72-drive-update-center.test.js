@@ -60,8 +60,10 @@ check("HTML/browser download only after validated eligibility",()=>{
 
 check("Home notice above Firebase counters and absent if disabled",()=>{
  const idx=main.indexOf("homeUpdateHolder=new LinearLayout(this)");
- const stats=main.indexOf("// New compact LT54 counters");
+ const stats=main.indexOf("FirebaseStats.bind(this,online,installations)");
+ // Counters moved to drawer, while the update banner remains accessible.
  assert.ok(idx>0&&idx<stats);
+ assert.ok(!main.includes("screen.addView(stats,statsLp)"));
  requireAll(main,['homeUpdateHolder.setVisibility(View.GONE);',
  'if(!UpdateCenter.isEligible(this,info)){','holder.setVisibility(View.GONE);',
  'FirebaseStats.bind(this,online,installations);']);
