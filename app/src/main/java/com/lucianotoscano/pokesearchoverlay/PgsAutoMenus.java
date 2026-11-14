@@ -93,7 +93,7 @@ final class PgsAutoMenus {
         dismissAll();anchorX=x;anchorY=y;
         LinearLayout bar=horizontal();bar.setPadding(dp(5),dp(4),dp(5),dp(4));
         bar.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,10));
-        // PGS: a mesma fileira compacta das Pokébolas, sem o popup "••• MAIS".
+        // PGS: a mesma fileira compacta das Pokébolas, sem submenus redundantes.
         String[] icons={"⌕","⏱","🔔","↻","×"};
         String[] descriptions={"Buscas","Tempo","Notificações PGS","Reiniciar buscas","Fechar Busca Pokémon"};
         Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications,
