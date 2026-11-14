@@ -678,29 +678,44 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     /** Captura um frame do mapa e deixa o usuário escolher um sprite pequeno. */
     private void startTeaching(){
-        if(running){showReason("Pare a sequência antes de cadastrar um Pokémon.");return;}
+        if(teachingInProgress)return;
+        if(running){showReason("Pare a busca antes de cadastrar o ícone.");return;}
         String pokemon=PgsAutoTemplateStore.pending(this);
-        if(pokemon.isEmpty()){preview();return;}
+        if(pokemon.isEmpty()){showReason("Selecione primeiro um Pokémon para cadastrar.");return;}
+        if(!isGameVisible()){queueTeachingWhenReady();return;}
+        teachingInProgress=true;
+        if(quickMenus!=null)quickMenus.dismissAll();
         if(bubble!=null)bubble.setVisibility(View.INVISIBLE);
-        handler.postDelayed(()->capture(new CaptureCallback(){
+        // Esconde menus e o botão antes de capturar, evitando que virem modelo.
+        handler.postDelayed(()->{
+            if(!isGameVisible()){
+                teachingInProgress=false;
+                if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+                queueTeachingWhenReady();return;
+            }
+            capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
                 try {
                     Bitmap saved=bitmap.copy(Bitmap.Config.ARGB_8888,false);
                     if(saved==null)throw new IOException("Captura vazia");
                     showPicker(saved,pokemon);
                 }catch(Exception e){
+                    teachingInProgress=false;
                     if(bubble!=null)bubble.setVisibility(View.VISIBLE);
                     showReason("Erro ao preparar seleção: "+e.getMessage());
                 }
             }
             @Override public void onError(String msg){
+                teachingInProgress=false;
                 if(bubble!=null)bubble.setVisibility(View.VISIBLE);
                 showReason(msg);
             }
-        }),250);
+            });
+        },400L);
     }
     private void showPicker(Bitmap screenshot,String name){
         dismissPicker();
+        teachingInProgress=true;
         pickerBitmap=screenshot;
         picker=new FrameLayout(this);
         picker.setBackgroundColor(Color.BLACK);
@@ -727,13 +742,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 finally {if(piece!=model)piece.recycle();model.recycle();}
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();
-                status("PARADO");
-                Toast.makeText(this,name+" adicionado! Marque/desmarque no aplicativo.",Toast.LENGTH_LONG).show();
+                boolean loaded=reloadDetector();
+                status(loaded?"PARADO":"SEM MODELO");
+                Toast.makeText(this,
+                    loaded?name+" gravado e pronto para buscar!":
+                        name+" salvo. Verifique se está selecionado na lista.",
+                    Toast.LENGTH_LONG).show();
             }catch(Exception e){showReason("Não foi possível salvar o ícone: "+e.getMessage());}
             return true;
         });
         TextView help=new TextView(this);
-        help.setText("Toque no ícone pequeno de "+name+" onde ele estiver.");
+        help.setText("Toque no CENTRO do ícone de "+name+" no feed do PGSharp. Não toque no Pokémon 3D.");
         help.setTextColor(Color.WHITE);help.setTextSize(13);
         help.setBackgroundColor(Color.rgb(22,73,93));help.setPadding(dp(10),dp(8),dp(10),dp(8));
         FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
@@ -742,7 +761,10 @@ public final class PgsAutoClickService extends AccessibilityService {
         cancel.setTextSize(12);cancel.setAllCaps(false);
         FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,dp(56),Gravity.BOTTOM);
         picker.addView(cancel,cp);
-        cancel.setOnClickListener(v->{dismissPicker();status("PARADO");});
+        cancel.setOnClickListener(v->{
+            PgsAutoTemplateStore.clearTeaching(this);
+            dismissPicker();status("PARADO");
+        });
         WindowManager.LayoutParams params=new WindowManager.LayoutParams(-1,-1,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
@@ -752,6 +774,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         catch(Exception e){dismissPicker();showReason("Não consegui abrir a seleção: "+e.getMessage());}
     }
     private void dismissPicker(){
+        teachingInProgress=false;
         if(picker!=null && windowManager!=null){
             try{windowManager.removeView(picker);}catch(Exception ignored){}
             picker=null;
