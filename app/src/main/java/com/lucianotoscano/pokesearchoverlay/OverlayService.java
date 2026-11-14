@@ -756,6 +756,7 @@ public class OverlayService extends Service {
     private long nextScheduledSearchAtMs=0L;
     private long lastSearchStartMs=0L;
     private boolean shinyVerified=false;
+    private boolean shinyVisualRequested=false; // UI only while upstream is unavailable
     private boolean shinyLoginPromptRequested=false;
     private boolean shinyLoginWindowOpened=false;
     private boolean firstStart=true;
@@ -1147,7 +1148,7 @@ public class OverlayService extends Service {
         if(visualResultsHorizontal&&resultParams!=null&&resultParams.width!=dp(resultWidthDp()))
             updateResultsWidth();
         String data="window.onNativeData("+results+","+JSONObject.quote(status)+","+
-                JSONObject.quote(mode)+","+(shiny&&shinyVerified)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+overlayPrefs().getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","+
+                JSONObject.quote(mode)+","+(ProviderFeatureFlags.SHINY_AVAILABLE?(shiny&&shinyVerified):shinyVisualRequested)+","+rowDp()+","+intervalMinutes+","+spriteSize+","+showTimers+",false,"+alerts+","+(WatchAlerts.watched(this).size()>0)+","+(ProviderFeatureFlags.SHINY_AVAILABLE&&shiny&&!shinyVerified)+","+Math.max(rowDp()*2,Math.min(rowDp()*10,screenHeightDp()-52))+","+locationEnabled+","+JSONObject.quote(locationEnabled?locationCoords:"")+","+locationRadius+","+JSONObject.quote(alertsMode)+","+filterConfigJson()+","+JSONObject.quote(shownMode)+","+shownConfigJson+","+shownShiny+","+resultsStale+","+nextScheduledSearchAtMs+","+searchInProgress+","+showResultText+","+overlayPrefs().getString("menuUiPrefs","{}")+","+(locationEnabled&&locationVerified)+","+screenHeightDp()+","+resultDisplayOptionsJson()+","+WatchAlerts.permissionGranted(this)+","+WatchAlerts.enabled(this)+","+JSONObject.quote(searchPhase)+","+
                 JSONObject.quote(WatchAlerts.mode(this))+","+
                 WatchAlerts.hasCustomTone(this,false)+","+
                 WatchAlerts.hasCustomTone(this,true)+","+
@@ -5721,11 +5722,15 @@ public class OverlayService extends Service {
             if(!ProviderFeatureFlags.SHINY_AVAILABLE){
                 // Never send shiny_only=true or force a login/trainer link
                 // while the provider is not supporting this feature.
+                // Mantém o botão como preferência visual ON/OFF, sem aplicar
+                // shiny_only na API enquanto o provedor não oferecer suporte.
+                shinyVisualRequested=!shinyVisualRequested;
                 shiny=false;shinyVerified=false;
-                overlayPrefs().edit().putBoolean("shiny",false).apply();
+                overlayPrefs().edit().putBoolean("shiny",false)
+                    .putBoolean("shinyVisualRequested",shinyVisualRequested).apply();
                 android.widget.Toast.makeText(OverlayService.this,
-                    "✨ Shiny temporariamente indisponível · busca normal liberada",
-                    android.widget.Toast.LENGTH_LONG).show();
+                    "✨ Shiny temporariamente indisponível",
+                    android.widget.Toast.LENGTH_SHORT).show();
                 update();
                 return;
             }
@@ -6162,11 +6167,9 @@ public class OverlayService extends Service {
             Math.min(100,pref.getInt("ivPercentMax",100)));
         // Shiny is paused upstream, not the general search. An old ON value
         // must never strand a guest or a logged-in user behind trainer checks.
-        if(!ProviderFeatureFlags.SHINY_AVAILABLE&&
-           overlayPrefs().getBoolean("shiny",false))
-            overlayPrefs().edit().putBoolean("shiny",false).apply();
-        shiny=ProviderFeatureFlags.SHINY_AVAILABLE&&
-            overlayPrefs().getBoolean("shiny",false);
+        // Estado visual persistido; a busca efetiva permanece sem filtro Shiny.
+        shiny=ProviderFeatureFlags.SHINY_AVAILABLE&&overlayPrefs().getBoolean("shiny",false);
+        shinyVisualRequested=overlayPrefs().getBoolean("shinyVisualRequested",false);
         if(!shiny)shinyVerified=false;
         update();
         return START_STICKY;

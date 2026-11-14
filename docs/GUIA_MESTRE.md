@@ -1,5 +1,23 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## Comando operacional abreviado — ARK (autorização do responsável)
+
+- Quando o responsável disser **"Ark"**, **"Faça Ark"** ou usar **ARK** como comando de execução, interpretar como autorização explícita para **concluir o ciclo de atualização do PokeSearch**: finalizar alterações solicitadas, executar auditorias e testes, corrigir falhas, incrementar versão conforme padrão do projeto, integrar por PR/merge, registrar no Guia Mestre, acionar o workflow oficial de assinatura/publicação e verificar release, APK, hash e resultado do workflow.
+- **ARK inclui entregar a atualização ao aplicativo instalado**: após publicar a release oficial, verificar o canal de atualização automática/OTA do PokeSearch, disponibilizar o novo APK para o atualizador integrado e conferir o manifesto/versão que o aplicativo consulta. Quando houver uma ação manual inevitável no Android (permissão de instalação/confirmação do usuário), informar claramente; não alegar instalação remota ou silenciosa.
+- O comando dispensa repetir cada etapa e permite seguir até o fim **sem solicitar novamente autorização para merge ou publicação**. Preservar `main`, dados, assinatura permanente, contas e funcionalidades existentes; não fazer downgrade.
+- **ARK não significa ignorar proteções**: se testes, compilação, assinatura, permissões, credenciais, aprovação obrigatória ou validações falharem, não publicar como sucesso; corrigir quando possível e informar bloqueios reais. Não afirmar release concluída antes da confirmação verificável.
+- A instrução é uma convenção operacional persistida **neste repositório**; para um chat sem contexto, ler este Guia Mestre e os arquivos de continuidade antes de executar.
+- O comando **não dispara uma publicação por si só neste registro**: somente quando for usado como pedido de execução.
+
+
+## LT336 — Correções em validação (não publicada)
+
+- PR [#345](https://github.com/LucianoToscano/PokeSearch/pull/345): auditoria automática de 68 fontes PNG 512×512, relatório comparativo e correções do inspetor Edu. **Não afirmar que as 68 artes foram retocadas**; auditoria visual e Samsung ainda pendentes.
+- Pokébola 2: permite escolher perfil isolado em modo visitante, sem exigir login para pesquisas públicas; não mistura cookies da Conta 1. Seleção de treinador continua em stand-by pela flag `TRAINER_SELECTION_AVAILABLE=false`.
+- Shiny: ícone branco no estado OFF e cor de destaque no ON; controle oculto por padrão na personalização do menu (padrão `QUICK_DEFAULT_HIDDEN=["sh","bg"]`), opção de exibir mantida. O toque alterna **somente estado visual persistido** e mostra Toast curto `✨ Shiny temporariamente indisponível`. Enquanto a API não oferecer Shiny, `shiny=false` no fluxo de busca: nunca enviar filtro Shiny, exigir treinador ou bloquear busca normal.
+- **Publicação:** pendente de QA, merge, versão e workflow oficial de assinatura. Última release confirmada permanece LT335 até publicação verificada.
+
+
 ## LT335 OFICIAL — Edu: gestos sem braço cortado + inspetor das 68 sprites (14/11/2026)
 
 - **Versão publicada e verificada:** `LT335 · 0.03.34 · versionCode 54540 · label 51338`. [Release pública](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.34-54540) e [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.34-54540/PokeSearch-v0.03.34-LT.apk), **46.623.392 bytes**, SHA-256 `5681d0295bcda0c8319733306846bb8ed911d7cfcd65717d8093f079c40e73fb`. Release `draft=false`, `prerelease=false`, asset `uploaded` em 14/11/2026 03:48:13 UTC.

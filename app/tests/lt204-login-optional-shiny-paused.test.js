@@ -18,11 +18,13 @@ check("Upstream Shiny disabled without deleting the future source implementation
  assert.match(service,/if\(!ProviderFeatureFlags\.SHINY_AVAILABLE\)/);
  assert.match(service,/shiny=ProviderFeatureFlags\.SHINY_AVAILABLE&&/);
  assert.match(service,/config\.put\("shiny",ProviderFeatureFlags\.SHINY_AVAILABLE&&shiny\)/);
- assert.match(service,/shiny=!shiny;/);
+ assert.match(service,/shinyVisualRequested=!shinyVisualRequested;/);
 });
 check("An old Shiny=ON cannot stop the next normal search",()=>{
- assert.match(service,/overlayPrefs\(\)\.edit\(\)\.putBoolean\("shiny",false\)\.apply\(\)/);
- assert.match(service,/Shiny temporariamente indisponível · busca normal liberada/);
+ assert.match(service,/\.putBoolean\("shinyVisualRequested",shinyVisualRequested\)\.apply\(\)/);
+ assert.match(service,/Shiny temporariamente indisponível/);
+ assert.match(service,/Toast\.LENGTH_SHORT/);
+ assert.match(service,/shiny=ProviderFeatureFlags\.SHINY_AVAILABLE&&overlayPrefs\(\)\.getBoolean\("shiny",false\)/);
  assert.match(dock,/const PROVIDER_SHINY_AVAILABLE=false;/);
  assert.match(dock,/case "sh":return !PROVIDER_SHINY_AVAILABLE\?"Indisp\."/);
  assert.match(dock,/upstreamUnavailable/);

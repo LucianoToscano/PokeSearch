@@ -43,8 +43,10 @@ assert.match(inspector,/listener\.comparing\(showComparison\)/);
 assert.match(inspector,/duo\.setOnLongClickListener/);
 assert.match(inspector,/atlas\.frame\(42\)/);
 assert.match(inspector,/atlas\.frame\(selectedIndex\)/);
-assert.match(inspector,/EduSpriteMeasurements\.compare\(reference,chosen\)/);
-assert.match(inspector,/measurements\.setText\(/);
+// LT336: retirar métricas heurísticas enganosas do painel, preservar inspeção lado a lado.
+assert.doesNotMatch(inspector,/EduSpriteMeasurements\.compare\(reference,chosen\)/);
+assert.doesNotMatch(inspector,/measurements\.setText\(/);
+assert.match(inspector,/int above=lastBubbleY-comparisonParams.height-gap/);
 assert.match(inspector,/FLAG_NOT_TOUCHABLE/);
 assert.match(inspector,/getBoolean\(PREF_CONTROLS,true\)/);
 assert.match(inspector,/getBoolean\(PREF_GUIDES,false\)/);

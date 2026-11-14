@@ -42,7 +42,7 @@ final class EduSpriteInspector {
     private WindowManager.LayoutParams toolbarParams,comparisonParams;
     private ImageView leftImage,rightImage;
     private EduSpriteGuideView leftGuides,rightGuides;
-    private TextView indexLabel,rightLabel,measurements;
+    private TextView indexLabel,rightLabel;
     private boolean controlsVisible,guidesVisible,reviewing,showComparison;
     private int selectedIndex=DEFAULT_FRAME;
     private int lastArtSize=-1;
@@ -234,15 +234,11 @@ final class EduSpriteInspector {
         pair.addView(right,rp);
         comparison.addView(pair,new LinearLayout.LayoutParams(-1,
             pairCellSize+dp(19)));
-        measurements=new TextView(context);
-        measurements.setTextSize(9f);
-        measurements.setTextColor(Color.rgb(238,243,251));
-        measurements.setGravity(Gravity.CENTER);
-        measurements.setMaxLines(2);
-        measurements.setContentDescription("Diferenças estimadas de tamanho entre sprites");
-        comparison.addView(measurements,new LinearLayout.LayoutParams(-1,dp(30)));
+        // A comparação é visual: percentuais baseados em cores variam com
+        // expressão, orientação, roupas e objetos e geram falsos alarmes.
+        // O painel deve permanecer compacto e nunca esconder os botões.
         comparisonParams=windowParams(pairCellSize*2+dp(11),
-            pairCellSize+dp(55),true);
+            pairCellSize+dp(25),true);
         wm.addView(comparison,comparisonParams);
         updateComparisonImages();
     }
@@ -280,15 +276,39 @@ final class EduSpriteInspector {
         leftImage.setImageDrawable(reference);
         rightImage.setImageDrawable(chosen);
         rightLabel.setText(String.format(java.util.Locale.ROOT,"Quadro #%02d",selectedIndex));
-        if(measurements!=null)
-            measurements.setText(EduSpriteMeasurements.compare(reference,chosen));
+
     }
     private void updateComparisonPosition(){
         if(comparison==null)return;
         int sw=context.getResources().getDisplayMetrics().widthPixels;
         int sh=context.getResources().getDisplayMetrics().heightPixels;
         int x=lastBubbleX+lastBubbleW/2-comparisonParams.width/2;
-        int y=lastBubbleY+lastBubbleH/2-comparisonParams.height/2;
+        // O painel nunca deve cobrir a sprite, a barra de navegação ou seus toques.
+        // Prefira a área acima do Edu; se não couber, use a área abaixo.
+        int gap=dp(8);
+        int above=lastBubbleY-comparisonParams.height-gap;
+        int below=lastBubbleY+lastBubbleH+gap;
+        int y;
+        if(above>=0){
+            y=above;
+        }else if(toolbarParams!=null && below+toolbarParams.height+gap+
+                 comparisonParams.height<=sh){
+            y=below+toolbarParams.height+gap;
+        }else if(below+comparisonParams.height<=sh){
+            y=below;
+        }else{
+            // Em telas pequenas, mantenha o painel no extremo mais livre.
+            int topSpace=Math.max(0,lastBubbleY);
+            int bottomSpace=Math.max(0,sh-below);
+            y=topSpace>=bottomSpace?0:Math.max(0,sh-comparisonParams.height);
+        }
+        // Se a barra estiver acima da sprite, mantenha o comparador abaixo dela.
+        if(toolbarParams!=null && toolbarParams.y<lastBubbleY &&
+           y<toolbarParams.y+toolbarParams.height &&
+           y+comparisonParams.height>toolbarParams.y){
+            y=Math.min(sh-comparisonParams.height,
+                toolbarParams.y+toolbarParams.height+gap);
+        }
         comparisonParams.x=clip(x,0,Math.max(0,sw-comparisonParams.width));
         comparisonParams.y=clip(y,0,Math.max(0,sh-comparisonParams.height));
         try{wm.updateViewLayout(comparison,comparisonParams);}
@@ -300,7 +320,7 @@ final class EduSpriteInspector {
             catch(IllegalArgumentException ignored){}
             comparison=null;leftImage=null;rightImage=null;
             leftGuides=null;rightGuides=null;rightLabel=null;
-            measurements=null;
+
         }
     }
     private void removeToolbar(){

@@ -1299,16 +1299,15 @@ public class MainActivity extends Activity {
             .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
                 dialog.dismiss();
                 int slot=which+1;
-                if(slot==2&&(!PogoAccountSlots.supportsSecond()||
-                    (ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&
-                     !PogoAccountSlots.loggedIn(this,2)))){
+                if(slot==2&&!PogoAccountSlots.supportsSecond()){
                     Toast.makeText(this,PogoAccountSlots.supportsSecond()?
                         "Conecte a Conta 2 antes de selecionar treinador":
                         "Perfil independente indisponível neste WebView",
                         Toast.LENGTH_LONG).show();
                     return;
                 }
-                if(ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE){
+                if(ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&
+                   PogoAccountSlots.loggedIn(this,slot)){
                     choosePokeballTrainer(secondary,slot);
                 }else{
                     // Account assignment is not a trainer selection. Preserve

@@ -1,0 +1,40 @@
+name: Edu — auditoria visual das 68 fontes (sem APK)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/tests/lt336-edu-pixels-68-audit.test.js'
+      - 'app/src/main/assets/edu_avatar_masters_512_lt330.part*'
+      - '.github/workflows/edu-visual-source-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-sources:
+    name: Medir e comparar 68 PNGs 512
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout da revisão exata
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Auditar PNGs, cabeças, olhos, mãos e pés
+        run: |
+          node --check app/tests/lt336-edu-pixels-68-audit.test.js
+          node app/tests/lt336-edu-pixels-68-audit.test.js
+      - name: Arquivar comparador e medições para inspeção humana
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edu-68-fontes-512-auditoria
+          path: app/build/edu-visual-audit/
+          if-no-files-found: warn
+          retention-days: 14
