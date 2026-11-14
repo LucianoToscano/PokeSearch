@@ -395,7 +395,7 @@ public class MainActivity extends Activity {
             boolean logged=available&&PogoAccountSlots.loggedIn(this,slot);
             String name=logged&&showNames?PogoAccountSlots.prefs(this,slot)
                 .getString("profileDisplayName","").trim():"";
-            if(name.isEmpty())name=logged?"Conectada":available?"Sem login":"Indisponível";
+            if(name.isEmpty())name=logged?"Nome indisponível":available?"Sem login":"Indisponível";
             if(name.length()>24)name=name.substring(0,21)+"…";
             TextView option=homeText((slot==assigned?"✓ ":"   ")+
                 "Conta "+slot+": "+name,12,
@@ -876,7 +876,7 @@ public class MainActivity extends Activity {
         LinearLayout identity=new LinearLayout(this);
         identity.setOrientation(LinearLayout.VERTICAL);
         accountRow.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
-        accountDisplay=homeText("Conta conectada",17,
+        accountDisplay=homeText("Perfil não sincronizado",17,
             homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
         accountDisplay.setSingleLine(true);
         accountDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -1352,7 +1352,8 @@ public class MainActivity extends Activity {
         boolean showName=privacy.getBoolean("homeShowPogoAccountName",true);
         boolean showTrainer=privacy.getBoolean("homeShowTrainerName",true);
         boolean showCode=privacy.getBoolean("homeShowTrainerCode",true);
-        String account=two.getString("profileDisplayName","Conta conectada");
+        String account=two.getString("profileDisplayName","").trim();
+        if(account.isEmpty())account="Nome indisponível · abrir perfil";
         String trainer=two.getString("profileTrainerName","");
         String code=two.getString("profileTrainerCode","");
         boolean linked=connected&&code.matches("[0-9]{12}")&&!trainer.isEmpty()&&
@@ -2737,7 +2738,7 @@ public class MainActivity extends Activity {
             "Busca normal com ou sem login · Shiny temporariamente indisponível");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getBoolean("homeShowPogoAccountName",true)?
-                prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
+                prefs.getString("profileDisplayName","Nome indisponível · abrir perfil"):"Anônimo");
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
@@ -2940,7 +2941,7 @@ public class MainActivity extends Activity {
                 PogoAccountSlots.prefs(this,activeLoginSlot).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
-                    .remove("profileAvatarUrl")
+                    .remove("profileAvatarUrl").remove("profileDisplayName")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
