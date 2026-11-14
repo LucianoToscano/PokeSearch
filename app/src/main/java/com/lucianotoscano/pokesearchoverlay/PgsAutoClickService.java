@@ -999,6 +999,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             String mode=PgsAutoNotificationPolicy.mode(kind,
                 prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
             int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
+            if("off".equals(mode))return; // OFF não gera notificação nem som.
             if("custom".equals(mode)&&(index<0||index>=PokeSoundLibrary.size()))
                 mode="default"; // Não criar canal sem som por índice corrompido.
             String channelId=PgsAutoNotificationPolicy.channelId(kind,mode,index);
