@@ -1,5 +1,9 @@
 # LT345 ARK — auditoria de implementação e aceite (14/11/2026)
 
+**ADENDO DE PUBLICAÇÃO (14/11/2026):** versão **0.03.43 / 54550** foi [publicada oficialmente](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.43-54550) como [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.43-54550/PokeSearch-v0.03.43-LT.apk), **60.010.180 bytes**, SHA-256 `4d02031c0bb26af2b859990996cbdcc9c3f652492fedbc5e6265c81e47d6f3db`. [Workflow #43642169249](https://github.com/LucianoToscano/PokeSearch/actions/runs/43642169249) completou **SUCCESS** para preflight, regressões, compilação R8 e certificação permanente, asset e hash. PR #371 implementada por squash `8f4fb2299cec85ff0ea8071c238988b6ed1c0186` após **8 gates verdes**: Node QA, LT169, QA Core LT211, Java LT62, OTA LT173, PGS Android QA, Secure beta e LT253 PvP. PR de publicação #372 squash `5bce07739cd98b44387d937a4c56e2eb47d62884` após **7 gates verdes**, incluindo preflight protegido. **Nada disso substitui teste físico; os bloqueios T01–T28 abaixo permanecem. Não houve instalação remota no Samsung.**
+
+
+
 ## Base e cadeia de entrega
 - Versão oficial anterior à LT345: **PokeSearch 0.03.42 / versionCode 54549**, assinada no [workflow oficial #43634931326](https://github.com/LucianoToscano/PokeSearch/actions/runs/43634931326).
 - [Issue LT345 #370](https://github.com/LucianoToscano/PokeSearch/issues/370); [PR #371](https://github.com/LucianoToscano/PokeSearch/pull/371), branch `lt345-ark-incremental-ui`.
