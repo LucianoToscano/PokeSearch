@@ -17,12 +17,12 @@ assert.match(engine,/takeScreenshot\(/);
 assert.match(engine,/dispatchGesture\(/);
 assert.match(engine,/gestureTicket/);
 assert.match(engine,/toggle\(\);/);
-assert.match(engine,/PgsAutoTemplateStore\.saveSample\(this,name,model,ref,ref\)/);
+assert.match(engine,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,refHeight\)/);
 assert.match(store,/referenceWidth/);
 assert.match(store,/referenceHeight/);
 assert.match(store,/optInt\("referenceWidth",WIDTH\)/);
 assert.match(store,/refWidth,refHeight/);
-assert.match(catalog,/MAX_SELECTED=50/);
+assert.match(catalog,/MAX_SELECTED=10/);
 assert.match(store,/model\.referenceWidth/); // metadata used by store decode
 assert.match(menu,/imagesFor\(PgsAutoCatalog\.Pokemon p\)/);
 assert.match(menu,/showModelActions\(/);
