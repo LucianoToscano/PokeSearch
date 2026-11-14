@@ -125,37 +125,45 @@ final class PgsAutoMenus {
     private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
     boolean isOpen(){return panel!=null||toolbar!=null;}
+    // P1/P2 dock controls are 30px tall, icon artwork 21px. Android keeps
+    // a comfortably tappable 38dp cell without enlarging the visible artwork.
+    private static final int TOOL_CELL_DP=38, TOOL_GAP_DP=3, TOOL_HEIGHT_DP=46;
     void showToolbar(int x,int y){
         dismissAll();anchorX=x;anchorY=y;
-        LinearLayout bar=horizontal();bar.setPadding(dp(5),dp(4),dp(5),dp(4));
+        LinearLayout bar=horizontal();bar.setPadding(dp(4),dp(3),dp(4),dp(3));
         bar.setBackground(bg(panelFill(),0x667E91A5,10));
-        // PGS: a mesma fileira compacta das Pokébolas, sem submenus redundantes.
+        // Assets shared with the original P1/P2 icon system, not Unicode.
         int[] icons={R.drawable.pgs_menu_search,R.drawable.pgs_menu_timer,
-            R.drawable.ic_bell_outline,R.drawable.pgs_menu_customize};
+            R.drawable.ic_bell_outline,R.drawable.pgs_menu_customize,
+            R.drawable.pgs_menu_close};
         String[] descriptions={"Buscar Pokémon","Tempos","Notificações",
-            "Personalização da Busca Pokémon"};
+            "Personalização da Busca Pokémon","Fechar Buscar Pokémon"};
         Runnable[] handlers={this::showSearch,this::showTime,
-            this::showNotifications,this::showAppearance};
+            this::showNotifications,this::showAppearance,
+            ()->{dismissAll();actions.closeOverlay();}};
         for(int i=0;i<icons.length;i++){
             final int n=i;
             ImageButton icon=imageButton(icons[i],descriptions[i],9);
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(44));
-            if(i>0)p.leftMargin=dp(4);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
+                dp(TOOL_CELL_DP),dp(TOOL_CELL_DP));
+            if(i>0)p.leftMargin=dp(TOOL_GAP_DP);
             if(i==2){
-                // Mesmo sino das Pokébolas: brilhante dentro (nunca estrela solta).
+                // Exact Shiny vector from dock.html, *inside* the original bell.
                 FrameLayout tile=new FrameLayout(context);
                 tile.addView(icon,new FrameLayout.LayoutParams(-1,-1));
-                TextView shiny=label("✨",15,true);
-                shiny.setTextColor(PgsAutoNotificationPolicy.mode(
+                ImageView shiny=new ImageView(context);
+                shiny.setImageResource(R.drawable.pgs_shiny_spark);
+                String state=PgsAutoNotificationPolicy.mode(
                     PgsAutoNotificationPolicy.SHINY,
                     context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
-                        .getString(PgsAutoNotificationPolicy.SHINY,"strong")).equals("off")
-                            ?fg():0xFFFFD47B);
-                shiny.setGravity(Gravity.CENTER);
-                FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(dp(16),dp(16),Gravity.CENTER);
-                inner.topMargin=dp(4);
+                        .getString(PgsAutoNotificationPolicy.SHINY,"strong"));
+                shiny.setColorFilter("off".equals(state)?fg():0xFFFFD47B);
+                shiny.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
+                    dp(11),dp(11),Gravity.CENTER);
+                inner.topMargin=dp(1);
                 tile.addView(shiny,inner);
-                tile.setContentDescription("Notificações, Shiny dentro do sino");
+                tile.setContentDescription("Notificações e Shiny dentro do sino");
                 tile.setOnClickListener(v->handlers[n].run());
                 icon.setOnClickListener(v->handlers[n].run());
                 bar.addView(tile,p);
@@ -164,19 +172,12 @@ final class PgsAutoMenus {
                 icon.setOnClickListener(v->handlers[n].run());
             }
         }
-        Button close=button("×",23);
-        close.setContentDescription("Fechar Buscar Pokémon");
-        LinearLayout.LayoutParams closeParams=
-            new LinearLayout.LayoutParams(dp(44),dp(44));
-        closeParams.leftMargin=dp(4);
-        bar.addView(close,closeParams);
-        close.setOnClickListener(v->{dismissAll();actions.closeOverlay();});
         toolbar=bar;
         Point screen=size();
-        int width=dp(5+5*44+4*4+5),h=dp(54);
+        int width=dp(8+5*TOOL_CELL_DP+4*TOOL_GAP_DP),h=dp(TOOL_HEIGHT_DP);
         int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),x-width/2));
-        int top=y+dp(53);
-        if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(6));
+        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3);
+        if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(3));
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,h,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
