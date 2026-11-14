@@ -230,7 +230,11 @@ final class PgsBuscasPanel {
             });
             content.addView(access);
             Button test=button(a,"Testar alerta (sem pausar busca)");
-            test.setOnClickListener(v->PgsAutoClickService.testShinyAlert());
+            test.setOnClickListener(v->{
+                if(PgsAutoClickService.instance==null)
+                    Toast.makeText(a,"Ative a mão PGS Auto antes de testar o alarme",Toast.LENGTH_LONG).show();
+                else PgsAutoClickService.testShinyAlert();
+            });
             content.addView(test);
             SharedPreferences alertPrefs=a.getSharedPreferences("pgs_auto_settings_v1",0);
             Switch vibrate=new Switch(a);vibrate.setText("Vibração Shiny");vibrate.setTextColor(foreground(a));
@@ -252,8 +256,28 @@ final class PgsBuscasPanel {
                 dialog.dismiss();
             });
             content.addView(activate);
+            Button report=button(a,"Reportar");
+            report.setOnClickListener(v->{
+                String issue=a.getSharedPreferences("pgs_auto_settings_v1",0).getString("lastError","sem erro registrado");
+                android.content.Intent send=new android.content.Intent(android.content.Intent.ACTION_SEND);
+                send.setType("text/plain");
+                send.putExtra(android.content.Intent.EXTRA_SUBJECT,"PokeSearch · PGS Buscas Auto");
+                send.putExtra(android.content.Intent.EXTRA_TEXT,
+                    BugReport.export(a,"PGS Buscas · último erro: "+DiagnosticSanitizer.clean(issue)));
+                a.startActivity(android.content.Intent.createChooser(send,"Revisar e compartilhar relatório"));
+            });
+            content.addView(report);
             Button donate=button(a,"Doar");donate.setOnClickListener(v->PixSupport.show(a));content.addView(donate);
-            Button close=button(a,"Fechar");close.setOnClickListener(v->dialog.dismiss());content.addView(close);
+            Button restart=button(a,"Reiniciar buscas");
+            restart.setOnClickListener(v->{
+                if(PgsAutoClickService.instance!=null)PgsAutoClickService.restartSearch();
+                else Toast.makeText(a,"Ative a mão em Acessibilidade antes de iniciar",Toast.LENGTH_LONG).show();
+                dialog.dismiss();
+            });
+            content.addView(restart);
+            Button close=button(a,"Fechar");
+            close.setOnClickListener(v->{PgsAutoClickService.closeHand();dialog.dismiss();});
+            content.addView(close);
         }
     }
 }
