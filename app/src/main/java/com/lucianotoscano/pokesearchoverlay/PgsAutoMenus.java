@@ -94,14 +94,13 @@ final class PgsAutoMenus {
         LinearLayout bar=horizontal();bar.setPadding(dp(5),dp(4),dp(5),dp(4));
         bar.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,10));
         // PGS: a mesma fileira compacta das Pokébolas, sem submenus redundantes.
-        String[] icons={"⌕","⏱","🔔","↻","×"};
-        String[] descriptions={"Buscas","Tempo","Notificações PGS","Reiniciar buscas","Fechar Busca Pokémon"};
+        String[] icons={"⌕","⏱","🔔","×"};
+        String[] descriptions={"Buscas","Tempos da busca","Alertas Buscar Pokémon","Fechar Buscar Pokémon"};
         Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications,
-            ()->{dismissAll();actions.retryNow();},
             ()->{dismissAll();actions.closeOverlay();}};
         for(int i=0;i<icons.length;i++){
             final int n=i;
-            Button b=button(icons[i],i==0?25:i==4?23:21);
+            Button b=button(icons[i],i==0?25:i==3?23:21);
             b.setContentDescription(descriptions[i]);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(44));
             if(i>0)p.leftMargin=dp(4);
@@ -110,7 +109,7 @@ final class PgsAutoMenus {
         }
         toolbar=bar;
         Point screen=size();
-        int width=dp(5+5*44+4*4+5),h=dp(54);
+        int width=dp(5+4*44+3*4+5),h=dp(54);
         int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),x-width/2));
         int top=y+dp(53);
         if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(6));
@@ -233,9 +232,10 @@ final class PgsAutoMenus {
                     LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(37),dp(39));cp.leftMargin=dp(4);
                     line.addView(camera,cp);
                     camera.setOnClickListener(v->{
-                        PgsAutoTemplateStore.startTeaching(context,pokemon.name);
                         dismissAll();
-                        Toast.makeText(context,"Abra o feed do PGSharp e segure o botão Busca Pokémon para capturar o ícone de "+pokemon.name+".",Toast.LENGTH_LONG).show();
+                        actions.teach(pokemon.name);
+                        Toast.makeText(context,"Abra o feed PGSharp: toque no ícone de "+
+                            pokemon.name+" quando aparecer a captura.",Toast.LENGTH_LONG).show();
                     });
                 }
             }
@@ -256,56 +256,58 @@ final class PgsAutoMenus {
         render[0].run();mount(root);
     }
     void showTime(){
-        LinearLayout root=panelRoot("⏱ TEMPO",null);
-        TextView help=label("Valores em segundos. As tentativas continuam sem pausar se o feed estiver vazio.",12,false);
-        root.addView(help,margined(-1,dp(43),3));
-        String[] labels={"Após mapa carregado","Limite de carregamento","Sem ícones: 1ª tentativa","Sem ícones: 2ª tentativa","Repetição depois de 120s"};
-        String[] keys={"post_load","load_timeout","first_empty","second_empty","repeat_interval"};
-        int[] defaults={5,60,60,120,120};
-        EditText[] fields=new EditText[keys.length];
+        LinearLayout root=panelRoot("⏱ TEMPOS · BUSCA",null);
+        root.addView(label("Como funciona:",13,true),margined(-1,dp(28),4));
+        root.addView(label("1. Toca no ícone e aguarda o mapa e os PokéStops.",12,false),
+            margined(-1,dp(37),2));
+        root.addView(label("2. Se em 60 segundos não carregar, segue para o próximo.",12,false),
+            margined(-1,dp(38),2));
+        root.addView(label("3. Se carregar, verifica aviso Shiny da mesma espécie por 2 s.",12,false),
+            margined(-1,dp(43),2));
+        root.addView(label("4. Sem Shiny confirmado, procura automaticamente o próximo.",12,false),
+            margined(-1,dp(43),2));
         SharedPreferences prefs=context.getSharedPreferences("pgs_buscas_auto_v1",Context.MODE_PRIVATE);
+        String[] names={"Limite de carregamento do mapa","Espera de Shiny após carregar"};
+        String[] keys={"load_timeout","post_load"};
+        int[] defaults={60,2},low={20,1},high={120,10};
+        EditText[] fields=new EditText[keys.length];
         for(int i=0;i<keys.length;i++){
             LinearLayout line=horizontal();line.setPadding(0,dp(3),0,dp(3));
-            TextView title=label(labels[i],12,false);line.addView(title,new LinearLayout.LayoutParams(0,dp(43),1));
+            TextView title=label(names[i]+" (segundos)",12,false);
+            line.addView(title,new LinearLayout.LayoutParams(0,dp(54),1));
             EditText input=new EditText(context);input.setSingleLine(true);input.setTextSize(14);
-            input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);input.setTextColor(WHITE);
-            input.setGravity(Gravity.CENTER);
+            input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            input.setTextColor(fg());input.setGravity(Gravity.CENTER);
             input.setBackground(bg(TILE,0xFF4E5F73,6));
-            input.setText(String.valueOf(prefs.getInt(keys[i],defaults[i])));
-            fields[i]=input;
-            final String preferenceKey=keys[i];
-            input.addTextChangedListener(new TextWatcher(){
-                public void beforeTextChanged(CharSequence str,int start,int count,int after){}
-                public void onTextChanged(CharSequence str,int start,int before,int count){
-                    try{
-                        int n=Integer.parseInt(str.toString().trim());
-                        if(n>=1&&n<=7200)prefs.edit().putInt(preferenceKey,n).apply();
-                    }catch(Exception ignored){}
-                }
-                public void afterTextChanged(Editable editable){}
-            });
-            line.addView(input,new LinearLayout.LayoutParams(dp(76),dp(39)));
+            int value=prefs.getInt(keys[i],defaults[i]);
+            value=i==0?PgsAutoCyclePolicy.mapTimeoutSeconds(value):
+                PgsAutoCyclePolicy.shinyCheckSeconds(value);
+            input.setText(String.valueOf(value));fields[i]=input;
+            line.addView(input,new LinearLayout.LayoutParams(dp(67),dp(41)));
             root.addView(line);
         }
-        CheckBox loop=new CheckBox(context);loop.setText("Repetir buscas sem pausar");loop.setTextColor(WHITE);
-        loop.setChecked(prefs.getBoolean("repeat",true));
-        loop.setOnCheckedChangeListener((v,on)->prefs.edit().putBoolean("repeat",on).apply());
-        root.addView(loop,margined(-1,dp(41),5));
-        Button save=button("✓ Salvar tempos",13);root.addView(save,margined(-1,dp(43),7));
+        root.addView(label("Sem ícones no feed: tenta novamente a cada 3 s. "+
+            "Sem botão de repetição: o ciclo já é automático.",11,false),
+            margined(-1,dp(51),7));
+        Button save=button("✓ Salvar tempos",13);
+        root.addView(save,margined(-1,dp(42),7));
         save.setOnClickListener(v->{
             try{
-                int[] values=new int[keys.length];
-                for(int i=0;i<keys.length;i++)values[i]=Integer.parseInt(fields[i].getText().toString().trim());
-                if(values[0]<3||values[0]>30||values[1]<30||values[1]>180||
-                   values[2]<10||values[2]>3600||values[3]<values[2]||
-                   values[3]>7200||values[4]<10||values[4]>7200){
-                    Toast.makeText(context,"Informe tempos válidos (60 ≤ 120; sem valores negativos).",Toast.LENGTH_LONG).show();return;
+                int[] values=new int[fields.length];
+                for(int i=0;i<fields.length;i++){
+                    values[i]=Integer.parseInt(fields[i].getText().toString().trim());
+                    if(values[i]<low[i]||values[i]>high[i]){
+                        Toast.makeText(context,"Mapa: 20–120 s · Shiny: 1–10 s.",
+                            Toast.LENGTH_LONG).show();return;
+                    }
                 }
-                SharedPreferences.Editor e=prefs.edit();
-                for(int i=0;i<keys.length;i++)e.putInt(keys[i],values[i]);
-                e.putBoolean("repeat",loop.isChecked()).apply();
-                Toast.makeText(context,"Tempos salvos.",Toast.LENGTH_SHORT).show();hidePanel();
-            }catch(Exception err){Toast.makeText(context,"Preencha os campos com números.",Toast.LENGTH_LONG).show();}
+                prefs.edit().putInt(keys[0],values[0]).putInt(keys[1],values[1]).apply();
+                Toast.makeText(context,"Tempos salvos para as próximas buscas.",
+                    Toast.LENGTH_SHORT).show();
+                hidePanel();
+            }catch(NumberFormatException error){
+                Toast.makeText(context,"Digite dois tempos em segundos.",Toast.LENGTH_LONG).show();
+            }
         });
         mount(root);
     }
