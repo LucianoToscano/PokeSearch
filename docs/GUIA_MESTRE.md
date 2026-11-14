@@ -7,6 +7,14 @@
 - Testes `ProfileScreenshotPolicyTest.java` (17 casos Java puros aprovados localmente) e `lt339-profile-screenshot-contract.test.js`. **Android/Samsung pendente**.
 - Esta correção permanece na mesma branch de trabalho LT339, **sem APK, merge ou release**, conforme instrução do responsável. Detalhes: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`.
 
+### LT339 — PGS Overlay compacto e alertas independentes (14/11/2026, branch de edição)
+
+- **Padronização visual:** a fileira `⌕ Buscar · ⏱ Tempo · 🔔 Notificações · ↻ Reiniciar · × Fechar` substitui a barra PGS com "Mais" e o segundo painel grande. Botões 44×44 dp com espaçamento 4 dp, cores/opacidade/borda de `OverlayQuickMenus`, largura 246 dp e posicionamento dentro da tela.
+- **Removidos só no menu PGS:** `••• Mais`, `Reportar`, `Doar`; Reiniciar e Fechar são agora ações diretas da fileira. Reportar e Apoiar/Doar globais continuam na Home/menu geral. Nenhuma duplicação de serviço.
+- **Notificações exclusivamente Buscar Pokémon:** três categorias `newSound` (alvo novo confirmado, deduplicado), `searchSound` (alvo confirmado para teleporte) e `shinyMode` (aviso real Shiny quando suportado). Cada uma tem Padrão/Forte/Mudo/Personalizado, biblioteca de sons, prévia, confirmação e teste Android individual. Preferências em `pgs_auto_settings_v1` e canais `pgs_buscas_*` separados das Pokébolas P1/P2; Shiny não toca ringtone manual duplicado. Respeitar volume, DND e permissões Android.
+- **QA:** contratos Node para layout/independência e `PgsAutoNotificationPolicyTest.java` adicionados, 26 verificações estruturais efetuadas; montagem Android, notificações reais e teste visual Samsung **pendentes**. `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md` detalha esta rodada.
+- **Estado de publicação:** LT339 continua em `feature/lt339-home-icon-menu-refactor-20261114`, sem APK, PR de integração, merge ou release; **LT338 0.03.37/54544 permanece oficial** até a autorização do usuário ao concluir as outras mudanças.
+
 ## LT339 — HOME EM EDIÇÃO, SEM APK E SEM PUBLICAÇÃO (14/11/2026)
 
 **Base oficial e canal:** a última release continua **LT338 · 0.03.37 · versionCode 54544**, já verificada. **A LT339 ainda não existe como APK oficial.** O responsável pediu explicitamente que continuemos as alterações de interface **sem gerar APK, merge ou release agora**. Branch de estágio: `feature/lt339-home-icon-menu-refactor-20261114`.
