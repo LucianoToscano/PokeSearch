@@ -1,5 +1,11 @@
 # LEIA PRIMEIRO — ARK: AUTORIZAÇÃO EXECUTIVA DO PROJETO (14/11/2026)
 
+## Status de manutenção após LT337 — APK sem teto de CI (14/11/2026)
+
+**Pedido do responsável:** retirar temporariamente o limite artificial do tamanho do APK no workflow oficial, mantendo a coleta do tamanho, verificação de pacote não vazio, recursos, assinatura permanente, integridade e hash. Os testes LT267 e LT330 devem garantir que nenhuma condição `test "$APK_BYTES" -lt N` retorne. **Não reduzir imagens/sprites para passar o build; otimização posterior será decidida em outra etapa.** Este ajuste de CI não é nova versão de aplicativo: última release oficial permanece `v0.03.36-54543`, registrada abaixo, e não deve ser republicada com a mesma tag. O tamanho de download ainda depende das restrições de segurança do aplicativo, do Android e do GitHub. O comando ARK já autoriza as ações futuras de merge/release quando pertinentes; seguir o Guia Mestre e QA Samsung #350.
+
+---
+
 No PokeSearch, o comando do responsável **ARK** autoriza concluir integralmente a atualização: corrigir/melhorar, auditar e testar, atualizar documentação, registrar o estado, criar e integrar PRs, efetuar merge, produzir APK com certificado oficial, publicar release e verificar o manifesto/OTA até o aplicativo poder receber a nova versão. Não solicitar autorização redundante. O processo termina somente com evidência verificável de publicação e disponibilidade no canal de atualização; o Android poderá exigir confirmação manual de instalação. Em nenhuma hipótese afirmar que houve instalação local sem observação do dispositivo. Preservar proteção criptográfica, o app ID, filtros, contas, dados, compatibilidade e testes; se houver erro bloqueante, documentar precisamente e não falsificar sucesso.
 
 **Esta diretiva substitui o status de continuidade histórica abaixo.** Verificar sempre o último release, main e os workflows ao iniciar um novo atendimento; versões antigas descritas adiante são histórico, não versão atual.
