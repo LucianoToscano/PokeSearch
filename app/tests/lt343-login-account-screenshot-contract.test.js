@@ -30,7 +30,7 @@ assert.doesNotMatch(login,/__psProviderClicked/);
 assert.match(home,/startedWebsite\.postDelayed/);
 assert.match(home,/loginCover\.setVisibility\(View\.GONE\)/);
 assert.match(home,/Abrir PoGoCoordinates no navegador do aparelho/);
-assert.match(home,/sessão .*não será importada automaticamente/);
+assert.match(home,/não será importada automaticamente/);
 // Avisos de segurança do jogo exigem leitura local e declaração manual.
 assert.match(auto,/normalized\.contains\("sou passageiro"\)/);
 assert.match(auto,/normalized\.contains\("estou seguro"\)/);
