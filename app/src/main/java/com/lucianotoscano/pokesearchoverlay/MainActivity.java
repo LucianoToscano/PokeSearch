@@ -454,6 +454,7 @@ public class MainActivity extends Activity {
         android.graphics.Bitmap image=HomeMenuIconPack.image(this,index,state);
         if(image==null)return false;
         target.setImageBitmap(image);
+        HomeMenuIconPack.fitVisibleArtwork(target,image);
         return true;
     }
     private void bindHomePackHover(ImageView target,int index,java.util.function.BooleanSupplier active){
