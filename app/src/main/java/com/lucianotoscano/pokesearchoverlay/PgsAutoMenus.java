@@ -108,7 +108,7 @@ final class PgsAutoMenus {
     }
     private ImageButton trashButton(String desc){
         ImageButton icon=new ImageButton(context);
-        icon.setImageResource(fg()==0xFF142130?
+        icon.setImageResource(PgsAutoMenuStyle.read(context).light?
             R.drawable.lixeira_preta:R.drawable.lixeira_branca);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setPadding(dp(8),dp(8),dp(8),dp(8));
