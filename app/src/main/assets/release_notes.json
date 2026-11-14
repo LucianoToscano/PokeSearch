@@ -4151,6 +4151,36 @@
           "A atualização exige consentimento do Android, sem instalação remota ou silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt347-ark-pgs-menu-parity-touch-feedback-20261114",
+      "minVersionCode": 54552,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.45 — LT347: Menu Buscar Pokémon corrigido",
+      "sections": {
+        "novidades": [
+          "Menu Buscar Pokémon redesenhado para acompanhar os tiles individuais do menu das Pokébolas, sem a antiga cápsula preta larga.",
+          "Pequeno efeito circular branco/ciano translúcido aparece por 380 ms na coordenada dos toques automáticos aceitos pelo Android, sem impedir a interação."
+        ],
+        "melhorias": [
+          "Buscar Pokémon herda as configurações canônicas prefs.visualPrefsJson da Pokébola 1: tema, transparência, desfoque quando suportado, orientação, gaps, offsets e limite de largura dos popups.",
+          "Padrão dos tiles de dock.html: 30dp por ícone, arte de 16dp, espaçamento de base 2dp, raio 5dp, com sino e Shiny no interior, engrenagem+lápis original, lupa, relógio e X.",
+          "A opção Mostrar local do toque pode ser desligada no submenu de personalização do PGS, mantendo Contadores regressivos e tamanhos P/M/G.",
+          "Configuração de referência fornecida pelo usuário preservada em docs/LT347_MENU_VISUAL_REFERENCE.json, sem regravar as preferências dos outros overlays."
+        ],
+        "correcoes": [
+          "Removida a opacidade exclusiva antiga menuAlphaPercent=90 do PGS, que sobrepunha o menuTransparency=50 compartilhado.",
+          "Removida a barra externa de 46dp/38dp; o menu agora é formado por tiles independentes transparentes e submenus ancorados à bolha.",
+          "Testes de contrato LT339 e LT343 foram atualizados para verificar a nova paridade visual em vez de exigir a aparência incorreta; LT347 adiciona novas verificações.",
+          "O feedback de toque é removido automaticamente ao terminar a animação ou fechar o overlay e nunca captura dados do jogo nem altera a lógica de segurança dos gestos."
+        ],
+        "emDesenvolvimento": [
+          "Comparação pixel a pixel entre PGS e Pokébolas em tema claro e escuro, popup e minimização no Samsung real continua bloqueada até evidências do aparelho.",
+          "O toque confirmado pelo Android não garante teleporte ou efeito no Pokémon GO; reconhecimento de mapa, Shiny e Encontro ainda não homologados fisicamente.",
+          "Login Google/Discord no PoGoCoordinates depende da autorização e callback oficial do provedor, sem contornos de OAuth.",
+          "Instalar APK exige confirmação do Android; release publicada não instala silenciosamente."
+        ]
+      }
     }
   ]
 }
