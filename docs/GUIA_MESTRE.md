@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## ARK — CONTRATO OPERACIONAL RECONFIRMADO EM 14/11/2026 (AUTORIZAÇÃO PERMANENTE DO RESPONSÁVEL)
+
+**ARK = executar o ciclo completo, sem solicitar uma segunda autorização para corrigir, melhorar, integrar, fazer merge, oficializar e publicar uma atualização.** Dentro dos limites das ferramentas e do sistema de release, a execução deve incluir, nesta ordem: verificar o estado atual de main/PRs/releases; corrigir incompatibilidades; preservar dados e pacote; rodar testes Java/Node/Android/OTA; validar versão monotônica e assinatura original; fazer merge das PRs necessárias; registrar alterações e provas no Guia Mestre; abrir o pedido oficial de release; acompanhar workflow até conclusão; verificar tag, APK, digest SHA-256, certificado, manifesto/OTA do atualizador e comunicar a atualização instalada ou a confirmação Android que ainda falte. Não concluir a tarefa como **entregue ao aplicativo** apenas porque houve commit, PR ou APK de QA.
+
+**Autorização não equivale a garantia ou execução remota.** Não é possível tocar no Samsung do usuário ou confirmar uma instalação local sem evidência do aparelho. Para funcionalidades experimentais que não passaram por QA físico, manter desligadas até ativação explícita, nomear as limitações e não inventar validação. **Nunca enfraquecer verificação criptográfica, assinar com chave diferente, substituir release imutável nem esconder erro de CI para satisfazer o comando.** Se uma etapa externa obrigatória (permissão Android, proteção do GitHub, acesso a dados, QA físico imprescindível) impedir o fluxo, documentar a pendência específica e concluir todas as partes tecnicamente realizáveis, em vez de parar nas PRs.
+
+O comando também significa **resolver melhorias e falhas descobertas no escopo da tarefa**, reutilizando os componentes do aplicativo para não duplicar menus, serviços, persistência ou estilos. Fonte de verdade: `main` e `release/official-request.json` do GitHub; esta seção precede registros históricos, sem apagar qualquer histórico.
+
+
 ## Comando operacional abreviado — ARK (autorização do responsável)
 
 - Quando o responsável disser **"Ark"**, **"Faça Ark"** ou usar **ARK** como comando de execução, interpretar como autorização explícita para **concluir o ciclo de atualização do PokeSearch**: finalizar alterações solicitadas, executar auditorias e testes, corrigir falhas, incrementar versão conforme padrão do projeto, integrar por PR/merge, registrar no Guia Mestre, acionar o workflow oficial de assinatura/publicação e verificar release, APK, hash e resultado do workflow.
@@ -2755,3 +2764,11 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - A janela de ranking abre dentro do card arrastável existente, com lista rolável própria; não foi adicionada janela Android independente. O card inteiro continua reposicionável.
 - Testes: `app/tests/lt238-clickable-rank-explorers.test.js` e suíte geral. Pendente aprovação CI, instalação física em Samsung, verificação P1/P2 e publicação em novo versionCode monotônico com assinatura permanente.
 - Registro técnico: [LT238_RANK_EXPLORERS_IV_GERAL_20261105.md](LT238_RANK_EXPLORERS_IV_GERAL_20261105.md). O texto de QA não é prova de merge, APK nem atualização distribuída.
+
+
+## 2026-11-14 — PGS Buscas Auto (integração QA PR #348)
+- Referência implementada: `LucianoToscano/PGSharp-Privado` branch `feature/auto-favoritos-0.7-pokesearch`, SHA `2221bddd`; integração no APK principal PokeSearch, branch `feature/pgs-buscas-auto-integracao-20261114`, PR #348, baseada na Home LT337 PR #347. Não criar APK independente ou modificar funcionalidades P1/P2/Doce Raro.
+- Foram adicionados `PgsBuscasPanel`, `PgsAutoClickService` (um único serviço de Acessibilidade opt-in), `PgsAutoMenus`, `PgsAutoCatalog`, `PgsAutoTemplateStore`, `PgsAutoIconDetector`, `PgsAutoMapReadiness`, `PgsAutoRetryPolicy`, `PgsAutoShinyListener`, configurações e serviços Android; catálogo offline original, seleção persistente até 50, ícones cadastrados pelo usuário, confirmação visual antes do toque, espera 5 s, timeout 60 s, revarredura 60/120, alerta Shiny por notificação positiva e retomada manual. Menus usam as cores/transparência `OverlayQuickMenus`, sprites locais `VerifiedSpriteCache`, sons `PokeSoundLibrary` e Pix `PixSupport`.
+- Testes automatizados: contratos Node, teste Java de 60/120, QA core, compile/debug e pipeline QA assinado com certificado original. Runs verificados antes dos retoques finais: debug #43568625531, assinado #43568619607, suíte core commit `8f8c6297`. Novos commits devem ser validados novamente antes de concluir.
+- **PENDENTE ANTES DE RELEASE:** testes reais Samsung (gestos, interface, áudio, notificações PGSharp, desempenho), confirmação exata das mãos ON/OFF (vetores provisórios; imagens originais PNG ainda não transferidas), comparação com menu oficial e versão OTA. NÃO alegar publicação/instalação até comprovação de workflow/release. Esta seção registra integração de QA, não release aprovada.
+- Documento técnico detalhado: [PGS_BUSCAS_AUTO_INTEGRACAO_QA_20261114.md](PGS_BUSCAS_AUTO_INTEGRACAO_QA_20261114.md).

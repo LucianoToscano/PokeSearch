@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pgs_auto_accessibility_description">PGS Buscas Auto: identifica ícones locais do feed e executa toques apenas após confirmação visual. Desative nas configurações de Acessibilidade.</string>
+</resources>

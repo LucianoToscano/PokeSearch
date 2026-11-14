@@ -75,5 +75,10 @@ assert.match(classification,/ITEM ENCONTRADO/);
 assert.match(classification,/DOCE RARO/);
 assert.match(classification,/redY\/red<yellowY\/yellow/);
 assert.doesNotMatch(capture,/openConnection\(|HttpURLConnection|FileOutputStream|\.compress\(|sendBroadcast\(/);
-assert.doesNotMatch(manifest,/BIND_ACCESSIBILITY_SERVICE|READ_MEDIA_IMAGES|READ_EXTERNAL_STORAGE/);
+// LT197: Doce Raro continua sem captura por Acessibilidade e sem permissão de galeria.
+// PGS Buscas usa um ÚNICO serviço próprio, opt-in, protegido pela permissão de binding.
+assert.doesNotMatch(manifest,/READ_MEDIA_IMAGES|READ_EXTERNAL_STORAGE/);
+assert.match(manifest,/<service android:name="\.PgsAutoClickService"[\s\S]*?android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"/);
+assert.equal((manifest.match(/android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"/g)||[]).length,1);
+assert.match(manifest,/android:name="\.CandyScreenCaptureService"[\s\S]*?foregroundServiceType="mediaProjection"/);
 console.log("PASS LT197: opt-in Android media capture, local OCR + sprite + two-frame gate and manual fallback");
