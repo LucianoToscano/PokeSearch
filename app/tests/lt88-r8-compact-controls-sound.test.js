@@ -21,7 +21,9 @@ assertIt("Filtro title toggles just Padrão, Filtro 1 and Filtro 2",()=>{
  assert.doesNotMatch(preset,/generalPresetTitle","Filtros salvos"/);
  assert.doesNotMatch(preset,/generalPresetHint","Toque/);
  assert.match(preset,/presetGlyph\("save"\)/);
- assert.match(preset,/presetGlyph\("delete"\)/);
+ assert.match(preset,/remove\.append\(whiteTrash,blackTrash\)/);
+ assert.match(preset,/ui-icons\/lixeira_branca\.png/);
+ assert.match(preset,/ui-icons\/lixeira_preta\.png/);
  assert.match(css,/stroke:#fff!important/);
  assert.match(preset,/Native\.saveGeneralFilterPreset\(slot\)/);
  assert.match(preset,/Native\.deleteGeneralFilterPreset\(slot\)/);
