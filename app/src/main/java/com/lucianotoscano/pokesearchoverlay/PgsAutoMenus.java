@@ -253,14 +253,14 @@ final class PgsAutoMenus {
         }
     }
     private LinearLayout panelRoot(String heading,String right){
-        LinearLayout root=vertical();root.setPadding(dp(10),dp(10),dp(10),dp(10));
+        LinearLayout root=vertical();root.setPadding(dp(7),dp(6),dp(7),dp(7));
         root.setBackground(bg(panelFill(),0x667E91A5,10));
         LinearLayout head=horizontal();
-        TextView title=label(heading,15,true);
-        head.addView(title,new LinearLayout.LayoutParams(0,dp(35),1));
+        TextView title=label(heading,12,true);
+        head.addView(title,new LinearLayout.LayoutParams(0,dp(28),1));
         if(right!=null){TextView meta=label(right,11,true);meta.setTextColor(GOLD);head.addView(meta);}
-        Button exit=button("×",19);
-        LinearLayout.LayoutParams x=new LinearLayout.LayoutParams(dp(32),dp(32));x.leftMargin=dp(7);
+        Button exit=button("×",17);exit.setTextColor(0xFFFF596C);
+        LinearLayout.LayoutParams x=new LinearLayout.LayoutParams(dp(26),dp(27));x.leftMargin=dp(4);
         head.addView(exit,x);exit.setOnClickListener(v->hidePanel());
         root.addView(head);
         return root;
@@ -607,7 +607,7 @@ final class PgsAutoMenus {
         for(int i=0;i<2;i++){
             LinearLayout row=horizontal();
             TextView name=label(names[i],11,false);
-            row.addView(name,new LinearLayout.LayoutParams(0,dp(36),1));
+            row.addView(name,new LinearLayout.LayoutParams(0,dp(29),1));
             EditText edit=new EditText(context);
             edit.setSingleLine(true);edit.setTextSize(12);
             edit.setTextColor(fg());edit.setGravity(Gravity.CENTER);
@@ -617,12 +617,12 @@ final class PgsAutoMenus {
                 PgsAutoCyclePolicy.shinyCheckSeconds(value);
             edit.setText(String.valueOf(value));
             edit.setBackground(bg(TILE,0x557E91A5,6));
-            row.addView(edit,new LinearLayout.LayoutParams(dp(52),dp(33)));
-            root.addView(row,margined(-1,dp(37),5));
+            row.addView(edit,new LinearLayout.LayoutParams(dp(46),dp(28)));
+            root.addView(row,margined(-1,dp(31),2));
             inputs[i]=edit;
         }
         Button apply=button("✓ Salvar",11);
-        root.addView(apply,margined(-1,dp(33),5));
+        root.addView(apply,margined(-1,dp(28),4));
         apply.setOnClickListener(v->{
             try{
                 int[] nums=new int[2];
@@ -642,7 +642,7 @@ final class PgsAutoMenus {
                 Toast.makeText(context,"Digite valores em segundos.",Toast.LENGTH_LONG).show();
             }
         });
-        mount(root,190,172);
+        mount(root,176,145);
     }
 
     void showAppearance(){
@@ -657,16 +657,16 @@ final class PgsAutoMenus {
             prefs.edit().putBoolean("showCountdown",on).apply();
             actions.appearanceChanged();
         });
-        root.addView(timers,margined(-1,dp(36),3));
+        root.addView(timers,margined(-1,dp(30),2));
 
         TextView artTitle=label("Tamanho dos ícones",11,true);
-        root.addView(artTitle,margined(-1,dp(25),5));
+        root.addView(artTitle,margined(-1,dp(20),3));
         LinearLayout scale=horizontal();scale.setGravity(Gravity.CENTER);
         final String saved=prefs.getString("iconScale","M");
         for(String value:new String[]{"P","M","G"}){
             Button option=button(value,12);
             markChosen(option,value.equals(saved));
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(35),1f);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(29),1f);
             p.leftMargin=dp(3);
             scale.addView(option,p);
             option.setOnClickListener(v->{
@@ -678,11 +678,11 @@ final class PgsAutoMenus {
                 }
             });
         }
-        root.addView(scale,margined(-1,dp(40),2));
+        root.addView(scale,margined(-1,dp(32),2));
         // The Pokébola Editor Visual is the single source of menu appearance.
         // Keep PGS-only choices (icons, countdown and tap indicator) separate.
         TextView inherited=label("Cores e transparência: Editor Visual das Pokébolas",10,false);
-        root.addView(inherited,margined(-1,dp(31),4));
+        root.addView(inherited,margined(-1,dp(24),2));
         CheckBox tapFeedback=new CheckBox(context);
         tapFeedback.setText("Mostrar local do toque");
         tapFeedback.setTextSize(11);tapFeedback.setTextColor(fg());
@@ -690,8 +690,8 @@ final class PgsAutoMenus {
         tapFeedback.setChecked(prefs.getBoolean("showTapIndicator",true));
         tapFeedback.setOnCheckedChangeListener((control,on)->
             prefs.edit().putBoolean("showTapIndicator",on).apply());
-        root.addView(tapFeedback,margined(-1,dp(35),2));
-        mount(root,240,215);
+        root.addView(tapFeedback,margined(-1,dp(30),2));
+        mount(root,210,177);
     }
 
     void showNotifications(){
