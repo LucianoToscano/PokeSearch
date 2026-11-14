@@ -141,8 +141,28 @@ final class PgsAutoMenus {
             ImageButton icon=imageButton(icons[i],descriptions[i],9);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(44));
             if(i>0)p.leftMargin=dp(4);
-            bar.addView(icon,p);
-            icon.setOnClickListener(v->handlers[n].run());
+            if(i==2){
+                // Mesmo sino das Pokébolas: brilhante dentro (nunca estrela solta).
+                FrameLayout tile=new FrameLayout(context);
+                tile.addView(icon,new FrameLayout.LayoutParams(-1,-1));
+                TextView shiny=label("✦",15,true);
+                shiny.setTextColor(PgsAutoNotificationPolicy.mode(
+                    PgsAutoNotificationPolicy.SHINY,
+                    context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
+                        .getString(PgsAutoNotificationPolicy.SHINY,"strong")).equals("off")
+                            ?fg():0xFFFFD47B);
+                shiny.setGravity(Gravity.CENTER);
+                FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(dp(16),dp(16),Gravity.CENTER);
+                inner.topMargin=dp(4);
+                tile.addView(shiny,inner);
+                tile.setContentDescription("Notificações, Shiny dentro do sino");
+                tile.setOnClickListener(v->handlers[n].run());
+                icon.setOnClickListener(v->handlers[n].run());
+                bar.addView(tile,p);
+            }else{
+                bar.addView(icon,p);
+                icon.setOnClickListener(v->handlers[n].run());
+            }
         }
         Button close=button("×",23);
         close.setContentDescription("Fechar Buscar Pokémon");
@@ -177,7 +197,8 @@ final class PgsAutoMenus {
         root.addView(head);
         return root;
     }
-    private void mount(LinearLayout root){mount(root,286,390);}
+    // Geometria de referência: dock.html standardPanel, não painel gigante.
+    private void mount(LinearLayout root){mount(root,240,315);}
     private void mount(LinearLayout root,int preferredWidthDp,int estimatedHeightDp){
         hidePanel();panel=root;
         // Nunca deixar a barra visível por trás do submenu translúcido.
@@ -267,7 +288,7 @@ final class PgsAutoMenus {
     }
 
     void showSearch(){
-        LinearLayout root=panelRoot("⌕ BUSCAS",PgsAutoCatalog.selected(context).size()+"/50");
+        LinearLayout root=panelRoot("⌕ BUSCAS",PgsAutoCatalog.selected(context).size()+"/10");
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -275,20 +296,19 @@ final class PgsAutoMenus {
         input.setHint("Nome ou #");
         input.setPadding(dp(8),0,dp(8),0);
         input.setBackground(bg(TILE,0x667E91A5,7));
-        root.addView(input,margined(-1,dp(36),5));
         LinearLayout rows=vertical();
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.addView(rows);
-        root.addView(scroll,margined(-1,dp(220),5));
-        Button clear=button("Limpar seleção",11);
-        root.addView(clear,margined(-1,dp(31),5));
+        root.addView(scroll,margined(-1,dp(168),4));
+        // A busca fica no rodapé, abaixo dos modelos, sem botão Limpar Seleção.
+        root.addView(input,margined(-1,dp(33),4));
         final Runnable[] render={null};
         render[0]=()->{
             rows.removeAllViews();
-            title.setText(PgsAutoCatalog.selected(context).size()+"/50");
+            title.setText(PgsAutoCatalog.selected(context).size()+"/10");
             List<PgsAutoCatalog.Pokemon> found=
-                PgsAutoCatalog.search(context,input.getText().toString().trim(),50);
+                PgsAutoCatalog.search(context,input.getText().toString().trim(),20);
             if(found.isEmpty()){
                 rows.addView(label("Nenhum Pokémon",12,false));
                 return;
@@ -354,8 +374,8 @@ final class PgsAutoMenus {
                 choose.setContentDescription(selected?"Desmarcar "+pokemon.name:"Adicionar "+pokemon.name);
                 line.addView(choose,new LinearLayout.LayoutParams(dp(27),dp(33)));
                 choose.setOnClickListener(v->{
-                    if(!selected&&PgsAutoCatalog.selected(context).size()>=50){
-                        Toast.makeText(context,"Limite de 50 Pokémon.",Toast.LENGTH_SHORT).show();
+                    if(!selected&&PgsAutoCatalog.selected(context).size()>=PgsAutoCatalog.MAX_SELECTED){
+                        Toast.makeText(context,"Até 10 Pokémon por lista; imagens já gravadas preservadas.",Toast.LENGTH_SHORT).show();
                         return;
                     }
                     PgsAutoCatalog.toggle(context,pokemon.number);
@@ -369,20 +389,16 @@ final class PgsAutoMenus {
             public void onTextChanged(CharSequence s,int st,int before,int count){render[0].run();}
             public void afterTextChanged(Editable s){}
         });
-        clear.setOnClickListener(v->{
-            PgsAutoCatalog.clear(context);
-            actions.modelsChanged();
-            render[0].run();
-        });
         render[0].run();
-        mount(root);
+        mount(root,240,290);
     }
     void showTime(){
         LinearLayout root=panelRoot("⏱ TEMPOS",null);
         SharedPreferences prefs=PgsAutoClickService.cyclePrefs(context);
         String[] keys={"load_timeout","post_load"};
-        String[] names={"Mapa (s)","Após mapa (s)"};
-        int[] defaults={60,2},low={20,1},high={120,10};
+        String[] names={"Cooldown Mapa","Sem Shiny"};
+        int[] defaults={PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS,
+            PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS};
         EditText[] inputs=new EditText[2];
         for(int i=0;i<2;i++){
             LinearLayout row=horizontal();
@@ -408,18 +424,21 @@ final class PgsAutoMenus {
                 int[] nums=new int[2];
                 for(int i=0;i<2;i++){
                     nums[i]=Integer.parseInt(inputs[i].getText().toString().trim());
-                    if(nums[i]<low[i]||nums[i]>high[i]){
-                        Toast.makeText(context,"Mapa: 20–120 s · após: 1–10 s",Toast.LENGTH_LONG).show();
+                    if(nums[i]<0 || (i==0&&nums[i]==0)){
+                        Toast.makeText(context,i==0?
+                            "Cooldown Mapa exige pelo menos 1 segundo; sem teto máximo.":
+                            "Sem Shiny aceita 0 ou mais segundos.",Toast.LENGTH_LONG).show();
                         return;
                     }
                 }
-                prefs.edit().putInt(keys[0],nums[0]).putInt(keys[1],nums[1]).apply();
+                prefs.edit().putInt(keys[0],nums[0]).putInt(keys[1],nums[1])
+                    .putBoolean("lt344_timeout_user_set",true).apply();
                 hidePanel();
             }catch(NumberFormatException error){
                 Toast.makeText(context,"Digite valores em segundos.",Toast.LENGTH_LONG).show();
             }
         });
-        mount(root,212,180);
+        mount(root,190,172);
     }
 
     void showAppearance(){
@@ -475,7 +494,7 @@ final class PgsAutoMenus {
             @Override public void onStopTrackingTouch(SeekBar seek){actions.appearanceChanged();}
         });
         root.addView(opacity,margined(-1,dp(36),1));
-        mount(root,236,245);
+        mount(root,240,245);
     }
 
     void showNotifications(){
