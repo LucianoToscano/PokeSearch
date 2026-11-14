@@ -13,7 +13,7 @@
  const providerChoices=clickable.some(e=>{
    const title=txt(e)+(e.getAttribute("aria-label")||"");
    return /(?:google|discord)/i.test(title)&&
-     /(?:continue|continuar|sign\\s*in|log\\s*in|login|entrar|google|discord)/i.test(title);
+     /(?:continue|continuar|sign\s*in|log\s*in|login|entrar|google|discord)/i.test(title);
  });
  if(authDialog||providerChoices){
    // Um clique JS não é um gesto humano confiável para janelas OAuth.
