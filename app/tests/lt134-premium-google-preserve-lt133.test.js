@@ -68,8 +68,10 @@ const checks=[
    !overlay.includes('if(isSecondaryOverlay()&&PremiumAccess.controlled())')],
  ["Shared OverlayService continues both Pokeballs",overlay.includes("isSecondaryOverlay()")],
  ["Premium user can sign out or switch account from Home, even with active P2",
-   ui.includes('"Conta Premium  ·  Gerenciar / Sair"')&&
-   ui.includes('accountPremium.setOnClickListener(v->showPremiumAccountOptions())')&&
+   ui.includes('"Conta Premium · Gerenciar / Sair"')&&
+   ui.includes('this::showPremiumAccountOptions')&&
+   ui.includes('this::showHomeAccountMenu')&&
+   !ui.includes('screen.addView(accountPremium,accountLp)')&&
    ui.includes('homeAuthButton("Sair da conta Google"')&&
    ui.includes('homeAuthButton("Trocar conta Google"')&&
    ui.includes('.setView(scroll)')&&
