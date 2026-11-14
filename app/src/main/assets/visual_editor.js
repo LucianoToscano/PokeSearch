@@ -84,9 +84,10 @@ function applyVisual(){
  set("result-tile-shadow",tileAlpha===0?"none":
   "0 1px 4px rgba(0,0,0,"+(tileAlpha*0.28).toFixed(3)+")");
  set("menu-bg",rgba(current.menuBgMode,current.menuTransparency));
- set("menu-readable-bg",readableSurface(current.menuBgMode,current.menuTransparency));
- set("menu-readable-button-bg",readableSurface(current.menuBgMode,
-  Math.min(100,current.menuTransparency+12)));
+ // Every menu, incl. Modos/Filtros/Favoritos/Saved Filters/Editor Visual,
+ // MUST use precisely the chosen alpha; do not silently make them opaque.
+ set("menu-readable-bg",rgba(current.menuBgMode,current.menuTransparency));
+ set("menu-readable-button-bg",rgba(current.menuBgMode,current.menuTransparency));
  set("menu-blur",current.menuBlur+"px");
  set("menu-button-bg",rgba(current.menuBgMode,current.menuTransparency));
  // One opacity slider controls fill, border and shadow of each tile.
@@ -164,6 +165,7 @@ window.onVisualEditorPreview=function(area){
  }
  if(typeof window.addEventListener==="function")
   window.addEventListener("resize",scheduleVisualMeasurements);
+ window.visualMeasurementsRefresh=scheduleVisualMeasurements;
  function saveGuideNow(){
   clearTimeout(saveTimer);saveTimer=null;
   pendingVisualJson=JSON.stringify(current);
