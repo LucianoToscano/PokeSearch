@@ -1006,6 +1006,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoCropSelection crop=new PgsAutoCropSelection(this,
             screenshot.getWidth(),screenshot.getHeight(),updatePreview[0]);
         selected[0]=crop;
+        crop.setPreviewBitmap(screenshot); // lupa deslocada em tempo real
         picker.addView(crop,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout presets=new LinearLayout(this);
@@ -1033,8 +1034,41 @@ public final class PgsAutoClickService extends AccessibilityService {
         presetsLp.topMargin=dp(36);
         picker.addView(presets,presetsLp);
 
+        // Três formatos reais; Livre = retângulo sem proporção fixa.
+        // Não afirmar segmentação automática da silhueta sem algoritmo comprovado.
+        LinearLayout modes=new LinearLayout(this);
+        modes.setGravity(Gravity.CENTER);
+        modes.setPadding(dp(5),dp(1),dp(5),dp(1));
+        modes.setBackgroundColor(0xE918212D);
+        String[] labels={"Quadrado","Horizontal","Livre"};
+        PgsAutoCropSelection.Mode[] values={
+            PgsAutoCropSelection.Mode.SQUARE,
+            PgsAutoCropSelection.Mode.HORIZONTAL,
+            PgsAutoCropSelection.Mode.FREE};
+        Button[] choices=new Button[3];
+        for(int i=0;i<3;i++){
+            final int selectedMode=i;
+            Button option=new Button(this);
+            option.setText(labels[i]);option.setAllCaps(false);
+            option.setTextSize(11);option.setPadding(dp(2),0,dp(2),0);
+            option.setMinimumWidth(0);option.setMinimumHeight(0);
+            choices[i]=option;
+            modes.addView(option,new LinearLayout.LayoutParams(0,dp(38),1));
+            option.setOnClickListener(v->{
+                crop.setMode(values[selectedMode]);
+                for(int j=0;j<choices.length;j++)
+                    choices[j].setAlpha(j==selectedMode?1f:.64f);
+            });
+            option.setAlpha(i==0?1f:.64f);
+        }
+        FrameLayout.LayoutParams modesLp=new FrameLayout.LayoutParams(
+            -1,dp(43),Gravity.TOP);
+        modesLp.topMargin=dp(86);
+        picker.addView(modes,modesLp);
+
         TextView instructions=new TextView(this);
-        instructions.setText("Toque no ícone 2D de "+name+" no feed. Arraste para mover e use o canto branco para ajustar. Confira a prévia antes de salvar.");
+        instructions.setText("Toque no ícone 2D de "+name+
+            ". Arraste; acompanhe a lupa distante do dedo. Ajuste a alça branca, veja a prévia e confirme.");
         instructions.setTextColor(Color.WHITE);instructions.setTextSize(12);
         instructions.setPadding(dp(8),dp(7),dp(8),dp(7));
         instructions.setBackgroundColor(0xE322303D);
@@ -1068,12 +1102,14 @@ public final class PgsAutoClickService extends AccessibilityService {
                 return;
             }
             try{
-                int ref=Math.max(16,Math.min(92,
+                int refWidth=Math.max(16,Math.min(92,
                     Math.round(cut.width()*740f/screenshot.getWidth())));
+                int refHeight=Math.max(16,Math.min(92,
+                    Math.round(refWidth*(float)cut.height()/cut.width())));
                 Bitmap piece=Bitmap.createBitmap(screenshot,cut.left,cut.top,
                     cut.width(),cut.height());
-                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
-                try{PgsAutoTemplateStore.saveSample(this,name,model,ref,ref);}
+                Bitmap model=Bitmap.createScaledBitmap(piece,refWidth,refHeight,true);
+                try{PgsAutoTemplateStore.saveSample(this,name,model,refWidth,refHeight);}
                 finally{if(piece!=model)piece.recycle();model.recycle();}
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();
