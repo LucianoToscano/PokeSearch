@@ -5,7 +5,7 @@ const ui=java("PgsAutoClickService"),crop=java("PgsAutoCropSelection"),slider=ja
 assert.doesNotMatch(ui,/for\(int ref:new int\[\]\{24,32,44\}\)/);
 assert.doesNotMatch(ui,/setText\("Recorte 32 px"\)|setText\("Fundo plano \(beta\)/);
 assert.match(ui,/new PgsAutoCropSizeSlider\(this,32,crop::setReferencePx\)/);
-assert.match(ui,/cropIcon\("icone_quadrado.png"/);
+assert.match(ui,/String\[\] icons=\{"icone_quadrado\.png"/);
 assert.match(ui,/cropIcon\("confirmar_branco.webp"/);
 assert.match(ui,/cropIcon\("cancelar_branco.webp"/);
 assert.match(ui,/removeFlatBackground\[0\]=!removeFlatBackground\[0\]/);
