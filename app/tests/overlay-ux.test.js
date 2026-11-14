@@ -1966,7 +1966,7 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  return update.includes('code.matches("[0-9]{12}")')&&
   update.includes('trainerPanel.setVisibility(')&&
   update.includes('ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged')&&
-  update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
+  update.includes('prefs.getString("profileDisplayName","Nome indisponível · abrir perfil")')&&
   main.includes("A remoção precisa ser confirmada no perfil oficial")&&
   main.includes('readAsset("profile_summary.js")')&&
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
@@ -2270,11 +2270,11 @@ test("UX-WATCHDOG-90S late requests discarded",()=>{
 test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown",()=>{
  const keys=["name","number","gender","size","form","moves","location","distance","shiny"];
  return keys.every(key=>key==="distance"?
-    dock.includes('distance:displayPrefs.distance!==false'):
+    dock.includes('distance:displayPrefs.distance===true'):
     dock.includes('"'+key+'":!!displayPrefs.'+key)||
     dock.includes(key+':!!displayPrefs.'+key))&&
   keys.every(key=>service.includes('case "'+key+'":')&&
-    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",'+(key==="distance"?"true":"false")+')'))&&
+    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",'+"false"+')'))&&
   keys.every(key=>key==="shiny"?dock.includes('if(opts.shiny){'):
     dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:highlightWidth;')&&
