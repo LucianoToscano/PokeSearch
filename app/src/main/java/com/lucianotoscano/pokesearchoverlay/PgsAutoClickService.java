@@ -250,6 +250,13 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(!armedByHome||running||teachingInProgress)return;
         // Reativar a partir dos modelos SALVOS, sem obrigar nova captura.
         // Uma seleção de ensino antiga não deve bloquear a retomada.
+        if(PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"))!=
+                PgsAutoTargetPolicy.Mode.SPRITE){
+            armedByHome=false;
+            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",false).apply();
+            toggle();return;
+        }
         if(!PgsAutoTemplateStore.pending(this).isEmpty()){
             boolean existing=false;
             for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
@@ -648,7 +655,13 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void onBitmap(Bitmap bitmap){
                 if(!running||stamp!=ticket)return;
                 boolean loaded=PgsAutoMapReadiness.analyze(bitmap).scenePopulated;
-                if(!loaded){
+                int[] colors=sampleMap(bitmap);
+                if(lastColors!=null&&difference(lastColors,colors)<=10f&&loaded)
+                    stableRepeats++;
+                else stableRepeats=0;
+                lastColors=colors;
+                // Dois frames estáveis, não uma única captura cheia de ícones.
+                if(!loaded||stableRepeats<1){
                     if(++emptyRetries>=12){
                         fail("Mapa não confirmado após várias capturas. Sem toque automático.");
                         return;
@@ -700,6 +713,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void onCompleted(GestureDescription g){handler.post(()->{
                 if(!running||ticket!=oldTicket)return;
                 clickedAt=SystemClock.uptimeMillis();
+                shinyNegativeConfirmed=false;
                 passengerHoldAt=0L;sceneReadyAt=0L;loadedStreak=0;
                 lastColors=null;stableRepeats=0;
                 currentTargetName=action.name();
@@ -1482,7 +1496,25 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     public static void onPgsharpShiny(String message){
         PgsAutoClickService live=instance;
-        if(live!=null)live.handler.post(()->live.pauseForShiny(message));
+        if(live!=null)live.handler.post(()->{
+            if(!live.running||!live.awaitingMap)return;
+            if(PgsAutoShinySignal.isExplicitNegative(message)){
+                if(live.tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){
+                    live.shinyNegativeConfirmed=true;
+                    BugReport.log(live,"PGS","Aviso explícito de ausência de Shiny registrado para gatilho");
+                }
+                return;
+            }
+            if(live.tapMode!=PgsAutoTargetPolicy.Mode.SPRITE&&
+               PgsAutoShinySignal.isPositive(message)){
+                live.running=false;live.awaitingMap=false;live.pausedByShiny=true;live.ticket++;
+                live.status("✨ SHINY\\nPAUSADO");
+                live.notifyConfigured(PgsAutoNotificationPolicy.SHINY,
+                    "PGS: Shiny explícito","Detecção do jogo; sequência pausada.",true);
+                return;
+            }
+            live.pauseForShiny(message);
+        });
     }
     private void pauseForShiny(String message){
         // Nunca confundir notificação de outra espécie com o alvo atual.
