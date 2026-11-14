@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT344 OFICIAL — 0.03.42 / 54549 (14/11/2026)
+
+**PUBLICAÇÃO CONFIRMADA:** [release estável v0.03.42-54549](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.42-54549) e [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.42-54549/PokeSearch-v0.03.42-LT.apk), **59.991.436 bytes**, SHA-256 `bb93937b393d469504f7a7fdba18f628933a1da58c784f21a3702b4d95cbd8e3`. [Workflow oficial protegido #43634931326](https://github.com/LucianoToscano/PokeSearch/actions/runs/43634931326) **completed/SUCCESS**, com preflight, regressões, recursos completos, Gradle/R8, certificado permanente, APK, upload e verificação pública do hash. Fonte publicada: `6cae615bcd850f5abb2ea786e5206758d8f7b1a9` (release PR #368); implementação PR #367 squash `fc24811e92587a1829eb5ed680719cb548fab62d`. APK anterior 0.03.41 preservado; atualizador do app consulta Releases, mas **instalação só após confirmação do Android**. Documento do [padrão oficial](PADRAO_OFICIAL_OVERLAYS_POKESEARCH.md), [auditoria LT344 T01–T28](LT344_ARK_AUDITORIA_ACEITACAO_20261114.md) e [issue física #350](https://github.com/LucianoToscano/PokeSearch/issues/350) permanecem vinculados. **Não declarar teleporte real, OAuth Google, Shiny, geometria física e persistência no Samsung homologados; continuam pendentes de teste físico/apoio oficial do provedor.**
+
+
 ## LT344 — código integrado, aceite e padrão oficial (14/11/2026)
 
 - **Integração:** [PR #367](https://github.com/LucianoToscano/PokeSearch/pull/367) squash `fc24811e92587a1829eb5ed680719cb548fab62d`. CI do HEAD `41976def4bfeb6ae76c421e9c3b1178e00998dd5` **7/7 verdes**: Node LT169, QA Core LT211, Node QA, Java LT62, OTA LT173, PGS QA Android e Secure beta. QA beta assinado com chave temporária disponível no workflow correspondente (não é release oficial).
