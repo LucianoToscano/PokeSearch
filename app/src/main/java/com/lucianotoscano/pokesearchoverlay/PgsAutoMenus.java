@@ -215,6 +215,34 @@ final class PgsAutoMenus {
         mount(root);
     }
 
+    private void showAllModels(PgsAutoCatalog.Pokemon pokemon){
+        LinearLayout root=panelRoot(pokemon.name,null);
+        ScrollView scroll=new ScrollView(context);
+        LinearLayout rows=vertical();
+        for(PgsAutoTemplateStore.Model model:imagesFor(pokemon)){
+            LinearLayout line=horizontal();
+            ImageView preview=new ImageView(context);
+            try{preview.setImageBitmap(PgsAutoTemplateStore.decode(context,model));}
+            catch(Exception ignored){}
+            preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
+            TextView name=label("Imagem cadastrada",11,false);
+            line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
+            Button remove=button("×",16);
+            remove.setContentDescription("Excluir esta imagem");
+            line.addView(remove,new LinearLayout.LayoutParams(dp(30),dp(35)));
+            remove.setOnClickListener(v->showModelActions(pokemon,model));
+            rows.addView(line,margined(-1,dp(41),2));
+            line.setOnClickListener(v->showModelActions(pokemon,model));
+        }
+        scroll.addView(rows);
+        root.addView(scroll,margined(-1,dp(175),5));
+        Button another=button("＋ Outra imagem",11);
+        root.addView(another,margined(-1,dp(34),3));
+        another.setOnClickListener(v->{dismissAll();actions.teach(pokemon.name);});
+        mount(root,265,265);
+    }
+
     void showSearch(){
         LinearLayout root=panelRoot("⌕ BUSCAS",PgsAutoCatalog.selected(context).size()+"/50");
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
@@ -272,6 +300,13 @@ final class PgsAutoMenus {
                             ". Toque para excluir ou selecionar outra.");
                         line.addView(thumb,new LinearLayout.LayoutParams(dp(27),dp(31)));
                         thumb.setOnClickListener(v->showModelActions(pokemon,model));
+                    }
+                    if(models.size()>2){
+                        Button extra=button("…",14);
+                        extra.setContentDescription("Mostrar todas as "+
+                            models.size()+" imagens de "+pokemon.name);
+                        line.addView(extra,new LinearLayout.LayoutParams(dp(24),dp(33)));
+                        extra.setOnClickListener(v->showAllModels(pokemon));
                     }
                     Button teach=button(models.isEmpty()?"◎":"＋",14);
                     teach.setContentDescription("Gravar imagem para clicar em "+pokemon.name);
