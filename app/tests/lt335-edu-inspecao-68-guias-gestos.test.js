@@ -6,6 +6,7 @@ const atlas=fs.readFileSync(dir+"EduSpriteAtlas.java","utf8");
 const pose=fs.readFileSync(dir+"EduSpritePoseComposer.java","utf8");
 const inspector=fs.readFileSync(dir+"EduSpriteInspector.java","utf8");
 const guides=fs.readFileSync(dir+"EduSpriteGuideView.java","utf8");
+const metrics=fs.readFileSync(dir+"EduSpriteMeasurements.java","utf8");
 const service=fs.readFileSync(dir+"RaidDayAssistantOverlayService.java","utf8");
 const masters=fs.readFileSync(dir+"EduSpriteMasters.java","utf8");
 
@@ -42,6 +43,8 @@ assert.match(inspector,/listener\.comparing\(showComparison\)/);
 assert.match(inspector,/duo\.setOnLongClickListener/);
 assert.match(inspector,/atlas\.frame\(42\)/);
 assert.match(inspector,/atlas\.frame\(selectedIndex\)/);
+assert.match(inspector,/EduSpriteMeasurements\.compare\(reference,chosen\)/);
+assert.match(inspector,/measurements\.setText\(/);
 assert.match(inspector,/FLAG_NOT_TOUCHABLE/);
 assert.match(inspector,/getBoolean\(PREF_CONTROLS,true\)/);
 assert.match(inspector,/getBoolean\(PREF_GUIDES,false\)/);
@@ -54,6 +57,12 @@ for(const token of ["256","41","185","342","476","149.5f","362.5f"])
  assert.ok(guides.includes(token),"Marcador essencial "+token);
 assert.match(guides,/void setEnabledGuides\(boolean enabled\)/);
 assert.doesNotMatch(guides,/setPixels\(|drawBitmap\(/);
+
+// Medidas informativas; não impõem geometria onde efeitos/roupas mudam.
+assert.match(metrics,/static String compare\(Drawable standard,Drawable candidate\)/);
+for(const property of ["head","glasses","hands","feet","height"])
+ assert.match(metrics,new RegExp("test\\."+property));
+assert.match(metrics,/String\.format\(Locale\.ROOT/);
 
 // Segurança de ciclo de vida / screenshot / toque e seleção manual.
 assert.match(service,/new EduSpriteInspector\(this,wm,eduSprites,prefs/);
