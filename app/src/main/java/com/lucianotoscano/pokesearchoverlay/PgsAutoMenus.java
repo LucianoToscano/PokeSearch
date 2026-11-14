@@ -34,6 +34,7 @@ final class PgsAutoMenus {
         void retryNow();
         void closeOverlay();
         void testNotification(String type);
+        void modelsChanged();
     }
     private final Context context;
     private final WindowManager wm;
@@ -153,107 +154,145 @@ final class PgsAutoMenus {
             panel=null;Toast.makeText(context,"Não foi possível abrir menu: "+e.getMessage(),Toast.LENGTH_LONG).show();
         }
     }
+    private List<PgsAutoTemplateStore.Model> imagesFor(PgsAutoCatalog.Pokemon p){
+        List<PgsAutoTemplateStore.Model> result=new ArrayList<>();
+        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.list(context))
+            if(PgsAutoCatalog.findNumber(context,model.name)==p.number)result.add(model);
+        return result;
+    }
+
+    /** Nenhum modelo desaparece ao desmarcar uma espécie. Só o botão Excluir remove PNG. */
+    private void showModelActions(PgsAutoCatalog.Pokemon pokemon,PgsAutoTemplateStore.Model model){
+        LinearLayout root=panelRoot(pokemon.name,null);
+        try{
+            ImageView preview=new ImageView(context);
+            preview.setImageBitmap(PgsAutoTemplateStore.decode(context,model));
+            preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            LinearLayout.LayoutParams pp=margined(-1,dp(74),5);
+            root.addView(preview,pp);
+        }catch(Exception ignored){}
+        Button delete=button("× Excluir imagem",12);
+        root.addView(delete,margined(-1,dp(37),5));
+        delete.setOnClickListener(v->{
+            // O usuário tocou explicitamente na imagem e solicitou exclusão.
+            PgsAutoTemplateStore.delete(context,model.id);
+            actions.modelsChanged();
+            showSearch();
+        });
+        Button another=button("＋ Selecionar outra imagem",12);
+        root.addView(another,margined(-1,dp(37),4));
+        another.setOnClickListener(v->{
+            dismissAll();actions.teach(pokemon.name);
+        });
+        Button back=button("Voltar",12);
+        root.addView(back,margined(-1,dp(34),4));
+        back.setOnClickListener(v->showSearch());
+        mount(root);
+    }
+
     void showSearch(){
-        List<Integer> chosen=PgsAutoCatalog.selected(context);
-        LinearLayout root=panelRoot("⌕ BUSCAS","Selecionados "+chosen.size()+"/50");
-        TextView countText=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
-        HorizontalScrollView chips=new HorizontalScrollView(context);chips.setHorizontalScrollBarEnabled(false);
-        LinearLayout chipContent=horizontal();chips.addView(chipContent);
-        root.addView(chips,new LinearLayout.LayoutParams(-1,dp(48)));
-        EditText input=new EditText(context);input.setTextSize(15);input.setSingleLine(true);
-        input.setTextColor(WHITE);input.setHintTextColor(0xFF9EA9B8);
-        input.setHint("Digite nome ou nº da Pokédex");
-        input.setPadding(dp(10),0,dp(9),0);input.setBackground(bg(0xC31C2330,0xFF758396,9));
-        root.addView(input,margined(-1,dp(47),6));
+        LinearLayout root=panelRoot("⌕ BUSCAS",PgsAutoCatalog.selected(context).size()+"/50");
+        TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
+        EditText input=new EditText(context);
+        input.setTextSize(13);input.setSingleLine(true);
+        input.setTextColor(fg());input.setHintTextColor(0xFF9CA8B8);
+        input.setHint("Nome ou #");
+        input.setPadding(dp(8),0,dp(8),0);
+        input.setBackground(bg(TILE,0x667E91A5,7));
+        root.addView(input,margined(-1,dp(36),5));
         LinearLayout rows=vertical();
-        ScrollView scroll=new ScrollView(context);scroll.setFillViewport(false);scroll.addView(rows);
-        root.addView(scroll,margined(-1,dp(272),7));
-        TextView note=label("Toque para selecionar. Ícones novos precisam de uma amostra do feed.",11,false);
-        root.addView(note,margined(-1,dp(37),3));
-        LinearLayout footer=horizontal();
-        Button clear=button("Limpar",12);Button teach=button("Capturar ícone",12);
-        footer.addView(clear,new LinearLayout.LayoutParams(0,dp(38),1));
-        LinearLayout.LayoutParams tf=new LinearLayout.LayoutParams(0,dp(38),2f);tf.leftMargin=dp(6);
-        footer.addView(teach,tf);root.addView(footer,margined(-1,dp(38),2));
-        Runnable drawChips=()->{
-            chipContent.removeAllViews();
-            List<Integer> selected=PgsAutoCatalog.selected(context);
-            if(selected.isEmpty()){chipContent.addView(label("Nenhum Pokémon selecionado",11,false));return;}
-            for(Integer id:selected){
-                for(PgsAutoCatalog.Pokemon p:PgsAutoCatalog.all(context))if(p.number==id){
-                    Button chip=button(p.name+(PgsAutoCatalog.hasTemplate(context,id)?" ✓":" · ⚠"),10);
-                    chip.setTextColor(PgsAutoCatalog.hasTemplate(context,id)?GOLD:SECONDARY);
-                    LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-2,dp(32));cp.rightMargin=dp(5);
-                    chipContent.addView(chip,cp);
-                    chip.setOnClickListener(v->{input.setText(p.name);input.setSelection(input.length());});
-                    break;
-                }
-            }
-        };
+        ScrollView scroll=new ScrollView(context);
+        scroll.setVerticalScrollBarEnabled(false);
+        scroll.addView(rows);
+        root.addView(scroll,margined(-1,dp(252),5));
+        Button clear=button("Limpar seleção",11);
+        root.addView(clear,margined(-1,dp(31),5));
         final Runnable[] render={null};
         render[0]=()->{
-            rows.removeAllViews();drawChips.run();
-            countText.setText("Selecionados "+PgsAutoCatalog.selected(context).size()+"/50");
-            String query=input.getText().toString().trim();
-            List<PgsAutoCatalog.Pokemon> matches=PgsAutoCatalog.search(context,query,28);
-            if(matches.isEmpty()){
-                rows.addView(label(query.isEmpty()?"Pesquise por Pokémon para adicionar.":"Nenhum Pokémon encontrado.",13,false));return;
+            rows.removeAllViews();
+            title.setText(PgsAutoCatalog.selected(context).size()+"/50");
+            List<PgsAutoCatalog.Pokemon> found=
+                PgsAutoCatalog.search(context,input.getText().toString().trim(),50);
+            if(found.isEmpty()){
+                rows.addView(label("Nenhum Pokémon",12,false));
+                return;
             }
-            for(PgsAutoCatalog.Pokemon pokemon:matches){
-                LinearLayout line=horizontal();line.setPadding(dp(7),dp(2),dp(6),dp(2));
-                line.setBackground(bg(TILE,0xFF4D5A6B,8));
-                LinearLayout.LayoutParams rowp=new LinearLayout.LayoutParams(-1,dp(49));rowp.bottomMargin=dp(4);
-                rows.addView(line,rowp);
+            for(PgsAutoCatalog.Pokemon pokemon:found){
                 boolean selected=PgsAutoCatalog.isSelected(context,pokemon.number);
-                android.widget.ImageView sprite=new android.widget.ImageView(context);
+                LinearLayout line=horizontal();
+                line.setPadding(dp(3),dp(2),dp(3),dp(2));
+                line.setBackground(bg(TILE,0x557E91A5,7));
+                rows.addView(line,margined(-1,dp(47),3));
+                ImageView dex=new ImageView(context);
                 try(java.io.InputStream in=VerifiedSpriteCache.bundledSprite(context,pokemon.number,false)){
-                    if(in!=null)sprite.setImageBitmap(android.graphics.BitmapFactory.decodeStream(in));
+                    if(in!=null)dex.setImageBitmap(android.graphics.BitmapFactory.decodeStream(in));
                 }catch(Exception ignored){}
-                sprite.setContentDescription("Sprite de "+pokemon.name);
-                line.addView(sprite,new LinearLayout.LayoutParams(dp(29),dp(35)));
-                TextView id=label(String.format(Locale.ROOT,"#%03d",pokemon.number),11,false);
-                id.setTextColor(0xFF9CA8B8);line.addView(id,new LinearLayout.LayoutParams(dp(42),dp(40)));
-                TextView name=label(pokemon.name,14,true);line.addView(name,new LinearLayout.LayoutParams(0,dp(40),1));
-                Button choose=button(selected?"✓":"＋",17);choose.setContentDescription(selected?"Remover "+pokemon.name:"Selecionar "+pokemon.name);
-                if(selected)choose.setTextColor(GOLD);
-                line.addView(choose,new LinearLayout.LayoutParams(dp(37),dp(39)));
-                View.OnClickListener pick=v->{
-                    if(!selected && PgsAutoCatalog.selected(context).size()>=50){
-                        Toast.makeText(context,"Máximo de 50 buscas.",Toast.LENGTH_SHORT).show();return;
+                dex.setContentDescription(pokemon.name);
+                line.addView(dex,new LinearLayout.LayoutParams(dp(26),dp(35)));
+                int priority=PgsAutoCatalog.selected(context).indexOf(pokemon.number);
+                TextView label=label((priority>=0?(priority+1)+". ":"")+pokemon.name,11,true);
+                label.setSingleLine(true);label.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                line.addView(label,new LinearLayout.LayoutParams(0,dp(38),1f));
+                if(selected){
+                    List<PgsAutoTemplateStore.Model> models=imagesFor(pokemon);
+                    for(int i=0;i<Math.min(2,models.size());i++){
+                        final PgsAutoTemplateStore.Model model=models.get(i);
+                        ImageView thumb=new ImageView(context);
+                        try{
+                            thumb.setImageBitmap(PgsAutoTemplateStore.decode(context,model));
+                        }catch(Exception ignored){}
+                        thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        thumb.setBackground(bg(0x66313C4B,0xFF728095,4));
+                        thumb.setContentDescription("Imagem monitorada de "+pokemon.name+
+                            ". Toque para excluir ou selecionar outra.");
+                        line.addView(thumb,new LinearLayout.LayoutParams(dp(27),dp(31)));
+                        thumb.setOnClickListener(v->showModelActions(pokemon,model));
                     }
-                    PgsAutoCatalog.toggle(context,pokemon.number);
-                    render[0].run();
-                    if(!selected && !PgsAutoCatalog.hasTemplate(context,pokemon.number))
-                        Toast.makeText(context,"Selecionado. Cadastre a imagem pequena de "+pokemon.name+" para reconhecer no PGSharp.",Toast.LENGTH_LONG).show();
-                };
-                line.setOnClickListener(pick);choose.setOnClickListener(pick);
-                if(selected&&!PgsAutoCatalog.hasTemplate(context,pokemon.number)){
-                    Button camera=button("◎",17);camera.setContentDescription("Ensinar ícone de "+pokemon.name);
-                    LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(dp(37),dp(39));cp.leftMargin=dp(4);
-                    line.addView(camera,cp);
-                    camera.setOnClickListener(v->{
-                        dismissAll();
-                        actions.teach(pokemon.name);
-                        Toast.makeText(context,"Abra o feed PGSharp: toque no ícone de "+
-                            pokemon.name+" quando aparecer a captura.",Toast.LENGTH_LONG).show();
+                    Button teach=button(models.isEmpty()?"◎":"＋",14);
+                    teach.setContentDescription("Gravar imagem para clicar em "+pokemon.name);
+                    line.addView(teach,new LinearLayout.LayoutParams(dp(27),dp(33)));
+                    teach.setOnClickListener(v->{
+                        dismissAll();actions.teach(pokemon.name);
+                    });
+                    Button up=button("↑",12);
+                    line.addView(up,new LinearLayout.LayoutParams(dp(24),dp(33)));
+                    up.setOnClickListener(v->{
+                        PgsAutoCatalog.move(context,pokemon.number,-1);
+                        render[0].run();
+                    });
+                    Button down=button("↓",12);
+                    line.addView(down,new LinearLayout.LayoutParams(dp(24),dp(33)));
+                    down.setOnClickListener(v->{
+                        PgsAutoCatalog.move(context,pokemon.number,1);
+                        render[0].run();
                     });
                 }
+                Button choose=button(selected?"−":"＋",14);
+                choose.setContentDescription(selected?"Desmarcar "+pokemon.name:"Adicionar "+pokemon.name);
+                line.addView(choose,new LinearLayout.LayoutParams(dp(27),dp(33)));
+                choose.setOnClickListener(v->{
+                    if(!selected&&PgsAutoCatalog.selected(context).size()>=50){
+                        Toast.makeText(context,"Limite de 50 Pokémon.",Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    PgsAutoCatalog.toggle(context,pokemon.number);
+                    actions.modelsChanged();
+                    render[0].run();
+                });
             }
         };
         input.addTextChangedListener(new TextWatcher(){
-            public void beforeTextChanged(CharSequence s,int start,int count,int after){}
-            public void onTextChanged(CharSequence s,int start,int before,int count){render[0].run();}
-            public void afterTextChanged(Editable e){}
+            public void beforeTextChanged(CharSequence s,int st,int count,int after){}
+            public void onTextChanged(CharSequence s,int st,int before,int count){render[0].run();}
+            public void afterTextChanged(Editable s){}
         });
-        clear.setOnClickListener(v->{PgsAutoCatalog.clear(context);render[0].run();});
-        teach.setOnClickListener(v->{
-            String pending=PgsAutoTemplateStore.pending(context);
-            if(pending.isEmpty()){
-                Toast.makeText(context,"Selecione um Pokémon sem modelo e toque ◎ para ensinar a imagem.",Toast.LENGTH_LONG).show();return;
-            }
-            dismissAll();actions.teach(pending);
+        clear.setOnClickListener(v->{
+            PgsAutoCatalog.clear(context);
+            actions.modelsChanged();
+            render[0].run();
         });
-        render[0].run();mount(root);
+        render[0].run();
+        mount(root);
     }
     void showTime(){
         LinearLayout root=panelRoot("⏱ TEMPOS · BUSCA",null);
