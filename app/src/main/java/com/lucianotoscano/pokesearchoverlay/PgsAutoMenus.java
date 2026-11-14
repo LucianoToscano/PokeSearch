@@ -2,6 +2,7 @@ package com.lucianotoscano.pokesearchoverlay;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -63,21 +64,14 @@ final class PgsAutoMenus {
     PgsAutoMenus(Context c,WindowManager w,Actions a){context=c;wm=w;actions=a;}
     private int dp(float value){return Math.round(value*context.getResources().getDisplayMetrics().density);}
     private Point size(){Point p=new Point();wm.getDefaultDisplay().getRealSize(p);return p;}
-    private int panelFill(){
-        SharedPreferences p=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE);
-        int percent=Math.max(30,Math.min(100,p.getInt("menuAlphaPercent",90)));
-        int original=OverlayQuickMenus.panelColor(context);
-        return ((percent*255/100)<<24)|(original&0x00FFFFFF);
-    }
+    // Exact readable surface shared with the Pokébola/Doce Raro menus;
+    // NO PGS-local 90% alpha override of the user's menuTransparency.
+    private int panelFill(){return PgsAutoMenuStyle.read(context).panelFill(context);}
     private GradientDrawable bg(int fill,int stroke,int radius){
         GradientDrawable d=new GradientDrawable();d.setColor(fill);d.setCornerRadius(dp(radius));
         if(stroke!=0)d.setStroke(dp(1),stroke);return d;
     }
-    private int fg(){
-        try{org.json.JSONObject p=new org.json.JSONObject(context.getSharedPreferences("prefs",0).getString("visualPrefsJson","{}"));
-            return "light".equals(p.optString("menuBgMode","dark"))?0xFF142130:0xFFF4F7FF;
-        }catch(Exception ignored){return 0xFFF4F7FF;}
-    }
+    private int fg(){return PgsAutoMenuStyle.read(context).foreground();}
     private TextView label(String value,int sp,boolean strong){
         TextView t=new TextView(context);t.setText(value);t.setTextSize(sp);
         t.setTextColor(fg());t.setGravity(Gravity.CENTER_VERTICAL);
@@ -88,11 +82,13 @@ final class PgsAutoMenus {
         Button b=new Button(context);b.setAllCaps(false);b.setText(value);b.setTextSize(sp);
         b.setTextColor(fg());b.setMinHeight(0);b.setMinimumHeight(0);
         b.setMinWidth(0);b.setMinimumWidth(0);b.setPadding(dp(5),0,dp(5),0);
-        b.setBackground(bg(0x55394A5C,0x557E91A5,6));return b;
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        b.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));return b;
     }
     private void markAlertIcon(ImageButton icon,boolean active){
-        icon.setBackground(bg(active?0x773A504B:0x55394A5C,
-            active?0xFF7DC8B4:0x557E91A5,6));
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        icon.setBackground(bg(active?0x773A504B:v.tileFill(),
+            active?0xFF7DC8B4:v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));
         icon.setColorFilter(fg());
         icon.setSelected(active);
     }
@@ -104,7 +100,8 @@ final class PgsAutoMenus {
         b.setContentDescription(description);
         b.setPadding(dp(artSize),dp(artSize),dp(artSize),dp(artSize));
         b.setMinimumWidth(0);b.setMinimumHeight(0);
-        b.setBackground(bg(0x55394A5C,0x557E91A5,6));
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        b.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));
         return b;
     }
     private ImageButton trashButton(String desc){
@@ -113,7 +110,8 @@ final class PgsAutoMenus {
             R.drawable.lixeira_preta:R.drawable.lixeira_branca);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setPadding(dp(8),dp(8),dp(8),dp(8));
-        icon.setBackground(bg(0x55394A5C,0x557E91A5,6));
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        icon.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));
         icon.setContentDescription(desc);
         return icon;
     }
