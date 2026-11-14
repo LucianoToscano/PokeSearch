@@ -32,7 +32,6 @@ import java.util.Locale;
 final class PgsAutoMenus {
     interface Actions {
         void teach(String species);
-        void retryNow();
         void closeOverlay();
         void testNotification(String type);
         void modelsChanged();
