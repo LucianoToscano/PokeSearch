@@ -1,5 +1,24 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT343 — Padronização visual, captura guiada e retomada PGS (14/11/2026)
+
+**Base:** LT342 oficial 0.03.40 / versionCode 54547; branch de desenvolvimento `fix/lt343-pgs-overlay-capture-ui-20261114`. Não afirmar nova release até CI assinado concluir.
+
+**Regra visual obrigatória para todos os overlays futuros:** o menu da Busca Pokémon deve usar as referências de geometria, estados, tipografia, raio, bordas, ícones, espaçamento, altura dos botões, P/M/G e transparência das Pokébolas 1 e 2 e do Doce Raro. Compartilhar estilos/implementação existentes, sem criar menus maiores ou independentes desnecessários. Só alterar dimensões com evidência no Samsung. Regressão em claro e escuro, 1/2 contas, janela inteira/popup e diferentes DPI.
+
+**Correções implementadas na branch:** alinhamento horizontal entre marca e ações superiores sem distorcer logo; badges de login com cerca de 2dp de separação vertical em relação às duas Pokébolas. `Busca_Pokemon_Overlay_On.webp` original possui fundo RGB quase preto; preservar o WebP 1254×1254 e remover somente a região escura conectada à borda **em memória**, por `PgsHomeArtwork`, sem recriar imagem ou apagar os detalhes internos da Pokébola. Mapeamento final permanece Home: `busca_pokemon_overlay_off/on`; bolha: `busca_pokemon_off/on`.
+
+**Busca PGS:** toque curto na bolha enquanto menu está expandido **somente recolhe menu**, não executa `toggle()`. Só o toque com menu retraído liga/desliga. Ao ligar novamente, reutilizar todas as amostras persistidas, sem exigir nova captura; `armFromHome` é reavaliado quando a janela do PGSharp voltar ao primeiro plano e não perde intenção em interrupção transitória da Acessibilidade. Minimizar/usar popup **não pode destruir o overlay**; com outro aplicativo em foco a varredura deve suspender gestos e reavaliar, sem clicar fora do jogo. Não inferir teleporte pelo callback Android.
+
+**Confirmação de passageiro:** avisos de trânsito do PGSharp (ex.: `Sou passageiro`) **não podem ser confirmados automaticamente** pelo PokeSearch. Se a mensagem estiver exposta na árvore de Acessibilidade, suspender cliques e timeout do mapa, informar `CONFIRME MANUALMENTE` e retomar somente depois do toque humano. Caso o aviso não esteja acessível, o detector não deve presumir liberação nem afirmar homologação. Preservar a lista e modelos locais.
+
+**Captura visual:** captura local da tela 2D via Acessibilidade, com recorte visível, ajuste/arraste de borda, prévia e botões explícitos **Confirmar/Cancelar**. A seleção não salva nem inicia busca ao tocar no frame; somente Confirmar grava PNG individual, sem apagar ou sobrescrever amostras anteriores. Os modelos guardados continuam disponíveis ao reativar o overlay.
+
+**Menu PGS:** barra compacta adiciona engrenagem+lápis ao lado do sino; personalização exclusiva do PGS: mostrar/ocultar contador regressivo, tamanho dos ícones P/M/G (17/21/25dp, sem alterar alvo de toque de 44dp) e transparência do fundo (30–100%). Submenu e barra usam `OverlayQuickMenus.panelColor`; configurações ficam em `pgs_auto_settings_v1`, sem mudar P1/P2. Notificações do PGS passam a **dois grupos visíveis**: `Novos Pokémon` (novidades deduplicadas do feed) e `Shiny monitorado` (somente sinal positivo da mesma espécie). Antigo tipo `SEARCH` permanece reconhecido para compatibilidade mas **não gera novas notificações** ao clicar em Pokémon comum. Shiny real continua não homologado no Samsung.
+
+**QA:** novo `lt343-pgs-overlay-capture-ui-contract.test.js` e contratos antigos atualizados para novos comportamentos; verificar Node, Java, Android, release R8 e assinatura permanente antes do merge. A homologação física da issue #350 continua obrigatória. Não eliminar recursos, sprites, sons, imagens, filtros, dados ou assinatura.
+
+
 ## LT342 — Candidata oficial protegida 0.03.40 / 54547 (14/11/2026)
 
 - **Feature integrada:** PR [#362](https://github.com/LucianoToscano/PokeSearch/pull/362), squash `0e383e8891b104f7b6ed9ad74960c9e4920a91dc`. A regressão completa do HEAD `880580600024f7e1f252aa9a5396a03090394847` passou: LT169 Node #43609518866, Core LT211 #43609518876, Java LT62 #43609518929, LT173 OTA #43609518924, QA Node #43609518951, QA PGS Android #43609518909 e Beta Secure #43609518917, todos SUCCESS. Não houve redução de recursos nem alterações nas contas existentes.
