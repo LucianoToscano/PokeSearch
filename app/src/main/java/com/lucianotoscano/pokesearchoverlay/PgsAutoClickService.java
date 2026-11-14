@@ -277,6 +277,24 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         toggle();
     }
+
+    @Override public void onConfigurationChanged(android.content.res.Configuration config){
+        super.onConfigurationChanged(config);
+        // Rotation/resolution: clamp bubble and move the existing menu with it.
+        handler.post(()->{
+            if(bubble==null||bubbleParams==null||windowManager==null)return;
+            Point display=new Point();windowManager.getDefaultDisplay().getRealSize(display);
+            bubbleParams.x=Math.max(0,Math.min(
+                display.x-dp(PgsAutoVisualState.TOUCH_DP),bubbleParams.x));
+            bubbleParams.y=Math.max(0,Math.min(
+                display.y-dp(PgsAutoVisualState.TOUCH_DP),bubbleParams.y));
+            try{windowManager.updateViewLayout(bubble,bubbleParams);}catch(Exception ignored){}
+            if(quickMenus!=null&&quickMenus.isOpen())
+                quickMenus.reanchor(display.x-bubbleParams.x-
+                    dp(PgsAutoVisualState.TOUCH_DP/2),bubbleParams.y);
+        });
+    }
+
     @Override public void onInterrupt() {
         // Uma perda temporária do foco de acessibilidade não equivale a
         // "desligar": manter modelos e intenção de busca até o retorno do jogo.
@@ -393,6 +411,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                     bubbleParams.x=Math.max(0,Math.min(display.x-dp(PgsAutoVisualState.TOUCH_DP),original[0]-Math.round(dx)));
                     bubbleParams.y=Math.max(0,Math.min(display.y-dp(PgsAutoVisualState.TOUCH_DP),original[1]+Math.round(dy)));
                     try{windowManager.updateViewLayout(bubble,bubbleParams);}catch(Exception ignored){}
+                    if(quickMenus!=null&&quickMenus.isOpen())
+                        quickMenus.reanchor(display.x-bubbleParams.x-
+                            dp(PgsAutoVisualState.TOUCH_DP/2),bubbleParams.y);
                 }
                 return true;
             }
@@ -400,7 +421,12 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(moved[0]){
                     prefs.edit().putInt("bubbleX",bubbleParams.x)
                         .putInt("bubbleY",bubbleParams.y).apply();
-                    if(quickMenus!=null)quickMenus.dismissAll();
+                    // Barra e submenu ficam ancorados após soltar o dedo.
+                    if(quickMenus!=null&&quickMenus.isOpen()){
+                        Point screen=new Point();windowManager.getDefaultDisplay().getRealSize(screen);
+                        quickMenus.reanchor(screen.x-bubbleParams.x-
+                            dp(PgsAutoVisualState.TOUCH_DP/2),bubbleParams.y);
+                    }
                 }else if(SystemClock.uptimeMillis()-pressAt[0]>=570){
                     if(!PgsAutoTemplateStore.pending(PgsAutoClickService.this).isEmpty()){
                         queueTeachingWhenReady();
@@ -412,7 +438,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 }else {
                     // Toque com menu aberto apenas retrai o menu.
                     if(quickMenus!=null&&quickMenus.isOpen()){
-                        quickMenus.dismissAll();return true;
+                        quickMenus.collapseOneLevel();return true;
                     }
                     toggle();
                 }
