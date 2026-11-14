@@ -15,11 +15,11 @@ const profile=fs.readFileSync(path.join(root,"assets/profile_summary.js"),"utf8"
 
 // Badge acima da Pokébola, gap ~10dp sem mover fileira nem crescer logo.
 assert.match(main,/homeLightMode\?R\.drawable\.login_modo_escuro:\s*R\.drawable\.login_modo_claro/);
-assert.match(main,/d\(23\),d\(21\),Gravity\.TOP\|Gravity\.RIGHT/);
+assert.match(main,/d\(23\),d\(16\),Gravity\.TOP\|Gravity\.RIGHT/);
 assert.match(main,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
-assert.match(main,/LinearLayout\.LayoutParams\(0,d\(70\),1\)/);
-assert.match(main,/screen\.addView\(header,new LinearLayout\.LayoutParams\(-1,d\(96\)\)/);
-assert.match(main,/header\.addView\(branding,new LinearLayout\.LayoutParams\(-1,d\(54\)\)/);
+assert.match(main,/LinearLayout\.LayoutParams\(0,d\(60\),1\)/);
+assert.match(main,/screen\.addView\(header,new LinearLayout\.LayoutParams\(-1,d\(58\)\)/);
+assert.match(main,/header\.addView\(branding,new LinearLayout\.LayoutParams\(0,d\(54\),1f\)\)/);
 assert.match(main,/wordmarkWidth=Math\.max\(d\(104\),Math\.min\(d\(118\),availableBrandWidth\)\)/);
 assert.match(main,/shareIcon=makeIcon\(R\.drawable\.home_share_icon/);
 assert.match(main,/homeLightMode\?Color\.BLACK:Color\.WHITE,android\.graphics\.PorterDuff\.Mode\.SRC_IN/);
@@ -29,14 +29,14 @@ assert.match(main,/menu\.setBackground\(null\)/);
 
 // HOME: overlay artworks. BOLHA PGS: disco frontal ON/OFF.
 assert.match(main,/addHomePreviewIcon\(dualOverlayRow,R\.drawable\.busca_pokemon_overlay_off/);
-assert.match(main,/R\.drawable\.busca_pokemon_overlay_on:R\.drawable\.busca_pokemon_overlay_off/);
+assert.match(main,/PgsHomeArtwork\.transparentOn\(this\)/);
 assert.match(pgs,/handView\.setImageResource\(R\.drawable\.busca_pokemon_off\)/);
 assert.match(pgs,/R\.drawable\.busca_pokemon_on:R\.drawable\.busca_pokemon_off/);
 assert.match(pgs,/coreIndicator\.setVisibility\(View\.GONE\)/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.GREEN/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.RED/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
-assert.match(menu,/mount\(root,138,292\)/);
+assert.match(menu,/mount\(root,138,218\)/);
 assert.match(menu,/mount\(root,286,390\)/);
 assert.match(menu,/toolbar\.setVisibility\(View\.GONE\)/);
 assert.match(menu,/toolbar\.setVisibility\(View\.VISIBLE\)/);
