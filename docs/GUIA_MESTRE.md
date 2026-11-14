@@ -1,5 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## Comando operacional abreviado — ARK (autorização do responsável)
+
+- Quando o responsável disser **"Ark"**, **"Faça Ark"** ou usar **ARK** como comando de execução, interpretar como autorização explícita para **concluir o ciclo de atualização do PokeSearch**: finalizar alterações solicitadas, executar auditorias e testes, corrigir falhas, incrementar versão conforme padrão do projeto, integrar por PR/merge, registrar no Guia Mestre, acionar o workflow oficial de assinatura/publicação e verificar release, APK, hash e resultado do workflow.
+- O comando dispensa repetir cada etapa e permite seguir até o fim **sem solicitar novamente autorização para merge ou publicação**. Preservar `main`, dados, assinatura permanente, contas e funcionalidades existentes; não fazer downgrade.
+- **ARK não significa ignorar proteções**: se testes, compilação, assinatura, permissões, credenciais, aprovação obrigatória ou validações falharem, não publicar como sucesso; corrigir quando possível e informar bloqueios reais. Não afirmar release concluída antes da confirmação verificável.
+- A instrução é uma convenção operacional persistida **neste repositório**; para um chat sem contexto, ler este Guia Mestre e os arquivos de continuidade antes de executar.
+- O comando **não dispara uma publicação por si só neste registro**: somente quando for usado como pedido de execução.
+
+
 ## LT336 — Correções em validação (não publicada)
 
 - PR [#345](https://github.com/LucianoToscano/PokeSearch/pull/345): auditoria automática de 68 fontes PNG 512×512, relatório comparativo e correções do inspetor Edu. **Não afirmar que as 68 artes foram retocadas**; auditoria visual e Samsung ainda pendentes.
