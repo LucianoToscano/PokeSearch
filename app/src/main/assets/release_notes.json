@@ -4087,6 +4087,41 @@
           "Persistência do overlay após minimizar/popup e ajustes finos de cor/alinhamento requerem revisão visual física; atualização oficial não instala APK silenciosamente."
         ]
       }
+    },
+    {
+      "id": "lt345-ark-home-overlay-mira-20261114",
+      "minVersionCode": 54550,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.43 — LT345: Home, menus e modos de mira",
+      "sections": {
+        "novidades": [
+          "Auto da Pokébola configurado em 3 segundos por padrão; as opções antigas escolhidas explicitamente continuam em minutos, com as proteções de cooldown do serviço.",
+          "Buscar Pokémon permite configurar Sprite, PokéStop, Ponto Específico ou Encontro; a mira neon pode ser arrastada e exige confirmação antes de salvar.",
+          "PokéStop permite deslocar o toque em pixels para fora do centro, sem afirmar que isso mova o GPS ou faça o treinador caminhar.",
+          "Modo Encontro tem um deslizamento para cima condicionado à confirmação de uma tela de captura e à ausência de avisos perigosos."
+        ],
+        "melhorias": [
+          "Seletores Conta 1/2 passam a utilizar a borda óptica real das Pokébolas e ficam alinhados 2 pixels físicos acima dela.",
+          "Ícones da Home harmonizados pela área opaca sem recomprimir artes e sem alterar proporção do logotipo.",
+          "Menu Buscar Pokémon mais compacto, com painel ancorado à posição real da barra; sino com Shiny vetorial interno, X vetorial e personalização existente.",
+          "Rank Geral reserva espaço para o título e centraliza o número pequeno da Pokédex abaixo do nome.",
+          "A distância começa oculta na aba Informações para configurações novas; a escolha feita pelo usuário permanece salva.",
+          "Se o nome do perfil oficial não estiver disponível, a Home informa isso em vez de apresentar um nome genérico como se fosse identidade real."
+        ],
+        "correcoes": [
+          "Novas autenticações deixam de herdar o nome do perfil anterior.",
+          "Seleção de mira persistida por resolução, cancelada ao mudar de orientação/dimensões; gestos exigem jogo visível, mapa com evidências e avisos de segurança tratados manualmente.",
+          "Repetição por Sem Shiny exige aviso negativo explícito; silêncio não equivale a prova.",
+          "Matriz de auditoria T01–T28, teste de segurança dos novos alvos e oito gates automatizados aprovados antes do merge LT345.",
+          "Preservados Pokébolas, Doces Raros, Edu, sessões independentes, filtros, sprites originais, assinatura permanente e proteção R8/OTA."
+        ],
+        "emDesenvolvimento": [
+          "Teleporte e caminhada reais no Pokémon GO não são confirmados pelo callback do gesto; testes Samsung e limitações do jogo continuam na issue #350.",
+          "Google OAuth/Discord no PoGoCoordinates depende de fluxo oficial externo e callback autorizado. A WebView pode ser bloqueada pelo provedor; nenhuma proteção foi contornada.",
+          "Detecção universal de sprite Pokémon 3D/recorte automático de silhueta não estão homologados; o modo Encontro usa mira e confirmação conservadora para evitar deslizar em telas desconhecidas.",
+          "Comparação visual pixel a pixel em claro/escuro, minimização e funcionamento dos novos modos requerem homologação física. Atualização APK exige confirmação manual do Android."
+        ]
+      }
     }
   ]
 }
