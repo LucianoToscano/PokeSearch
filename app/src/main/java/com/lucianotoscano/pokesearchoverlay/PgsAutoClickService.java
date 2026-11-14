@@ -795,7 +795,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 handler.postDelayed(new Runnable(){
                     @Override public void run(){
                         if(!running||!awaitingMap||ticket!=stamp)return;
-                        if(passengerPromptPresent()){
+                        if(!isGameVisible()||passengerPromptPresent()){
                             handler.postDelayed(this,1200L);return;
                         }
                         if(PgsAutoCyclePolicy.mapTimedOut(
@@ -818,9 +818,9 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void checkMap(int stamp){
         if(!running||!awaitingMap||ticket!=stamp)return;
         long now=SystemClock.uptimeMillis();
-        if(passengerPromptPresent()){
+        if(!isGameVisible()||passengerPromptPresent()){
             if(passengerHoldAt==0L)passengerHoldAt=now;
-            status("CONFIRME MANUALMENTE");
+            status(isGameVisible()?"CONFIRME MANUALMENTE":"AGUARDANDO JOGO");
             handler.postDelayed(()->checkMap(stamp),1200L);
             return;
         }
