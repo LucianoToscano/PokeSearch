@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT347 ARK — Buscar Pokémon com paridade visual canônica (candidata)
+
+O menu PGS lê diretamente o mesmo `prefs.visualPrefsJson` do Editor Visual das Pokébolas e usa tiles individuais do `dock.html` (30dp/16dp, gap base 2dp, raio 5dp), removendo a cápsula escura e o slider `menuAlphaPercent` de 90%. Respeita temas, transparência, offsets, orientação e blur quando disponível. Inclui indicador visual branco/ciano discreto por 380ms sobre o ponto de toque, não tocável nem prova de sucesso no jogo. Os parâmetros exatos recebidos do usuário estão em [JSON LT347](LT347_MENU_VISUAL_REFERENCE.json) e relatório em [LT347](LT347_ARK_MENU_PGS_E_INDICADOR_TOQUE_20261114.md). **Não declarada publicada nem homologada fisicamente**.
+
+
 ## LT346 OFICIAL — 0.03.44 / 54551 (14/11/2026)
 
 **LT346 OFICIAL — 14/11/2026:** versão **0.03.44 / versionCode 54551 / label 51348** publicada em [v0.03.44-54551](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.44-54551). APK `PokeSearch-v0.03.44-LT.apk` com **60.914.376 bytes**, SHA-256 `07b5bd7f10e7d2a1c6c0b82d23bf837306d3b58d092f801494a4897eb569f7cb`. [Workflow oficial protegido #43646502533](https://github.com/LucianoToscano/PokeSearch/actions/runs/43646502533) concluiu **SUCCESS** (preflight e publicação com assinatura, APK e hash público). Implementação [PR #373](https://github.com/LucianoToscano/PokeSearch/pull/373), squash `d1e5dfae2fc84cae427ff970dc4b78d49795b5f5`; solicitação de release [PR #374](https://github.com/LucianoToscano/PokeSearch/pull/374), squash `8952d6b016dd1cc92924c9713d583a7567c1b5e4`. Recortador PGS por ícones, barra lateral contínua 16–92 px de referência, modo Vertical e Horizontal legado por toque longo, lupa e prévia preservadas, confirmação explícita, fundos sem painéis cinzas e ON/OFF originais. Sete gates de implementação e sete da PR de publicação aprovados; testes reais no Samsung, OAuth Google/Discord, teleporte, mapa/Encontro e Shiny **continuam BLOQUEADOS**, não equivalem a confirmação de funcionamento físico. Instalação exige confirmação no Android.
