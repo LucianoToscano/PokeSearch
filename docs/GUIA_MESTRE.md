@@ -1,5 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT345 ARK — NOVA ETAPA SOLICITADA, NÃO IMPLEMENTADA (14/11/2026)
+
+**Fonte:** [issue #370](https://github.com/LucianoToscano/PokeSearch/issues/370), capturas reais do app 0.03.42. **Estado:** especificação registrada; NÃO houve merge, build nem publicação LT345. Versão oficial vigente confirmada anteriormente: 0.03.42 / 54549. **Não confundir especificação com entrega.**
+
+- **Home:** harmonizar tamanhos *ópticos* dos ícones da linha superior sem perder nitidez ou distorcer logo. Conta 1/2: cada seletor centrado no eixo da bola branca da sua Pokébola e separado **1–2 px físicos da borda superior**, sem abrir OAuth nem afetar a outra Pokébola.
+- **Pokébolas:** Auto/atualização com valor inicial **3 segundos** para novas configurações, preservando preferências existentes; Distância na aba Informações oculta por padrão em novas instalações, mas personalizável.
+- **Rank Geral:** número da espécie em fonte pequena logo abaixo do nome, ambos centralizados; corrigir texto "Rank Geral" truncado e testar escalonamento de fontes.
+- **PGS Busca Pokémon:** menu **ancorado à bolha**, com dimensões, ícones originais de engrenagem+lápis, sino e fechar, geometria, estados e abertura/retração **compartilhados de verdade** com Pokébolas 1/2 e Doces Raros. Símbolo Shiny branco/amarelo dentro do sino, não solto. Exigir UI compacta, minimalista, delicada, intuitiva e elegante em claro/escuro. Esta é regra permanente, não orientação opcional.
+- **PGS Auto Click — modos novos:** (1) selecionar PokéStop e um ponto deslocado do centro, sem prometer caminhada/GPS; (2) mira arrastável de Ponto Específico, confirmar/cancelar, coordenadas relativas e recalibração; (3) selecionar sprite Pokémon, confirmar encontro e deslizar para cima, verificando o resultado. Gatilhos por mapa carregado, ausência de Shiny validada ou tempo. Respeitar avisos de segurança e parar em estado incerto.
+- **Entrega:** inspecionar `PgsAutoMenus`, `PgsAutoClickService`, `OverlayQuickMenus`, `dock.html`, `OverlayService`, `RareCandyOverlayService`, Home e Rank Geral antes de editar. Testes automatizados + aparelho físico, merge com CI verde, Guia Mestre atualizado, release oficial somente com APK assinado/hash comprovados. Preservar pendências da [issue #350](https://github.com/LucianoToscano/PokeSearch/issues/350).
+
+
+
 ## LT344 OFICIAL — 0.03.42 / 54549 (14/11/2026)
 
 **PUBLICAÇÃO CONFIRMADA:** [release estável v0.03.42-54549](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.42-54549) e [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.42-54549/PokeSearch-v0.03.42-LT.apk), **59.991.436 bytes**, SHA-256 `bb93937b393d469504f7a7fdba18f628933a1da58c784f21a3702b4d95cbd8e3`. [Workflow oficial protegido #43634931326](https://github.com/LucianoToscano/PokeSearch/actions/runs/43634931326) **completed/SUCCESS**, com preflight, regressões, recursos completos, Gradle/R8, certificado permanente, APK, upload e verificação pública do hash. Fonte publicada: `6cae615bcd850f5abb2ea786e5206758d8f7b1a9` (release PR #368); implementação PR #367 squash `fc24811e92587a1829eb5ed680719cb548fab62d`. APK anterior 0.03.41 preservado; atualizador do app consulta Releases, mas **instalação só após confirmação do Android**. Documento do [padrão oficial](PADRAO_OFICIAL_OVERLAYS_POKESEARCH.md), [auditoria LT344 T01–T28](LT344_ARK_AUDITORIA_ACEITACAO_20261114.md) e [issue física #350](https://github.com/LucianoToscano/PokeSearch/issues/350) permanecem vinculados. **Não declarar teleporte real, OAuth Google, Shiny, geometria física e persistência no Samsung homologados; continuam pendentes de teste físico/apoio oficial do provedor.**
