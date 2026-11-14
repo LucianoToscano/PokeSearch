@@ -1869,7 +1869,7 @@ test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()
   home.includes("wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth))")&&
   home.includes("if(availableBrandWidth<d(55))")&&
   home.includes("brandLabels.setVisibility(View.GONE)")&&
-  home.includes("new LinearLayout.LayoutParams(-1,d(96))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(-1,d(54)))");
+  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f))");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
  const pngs=[
