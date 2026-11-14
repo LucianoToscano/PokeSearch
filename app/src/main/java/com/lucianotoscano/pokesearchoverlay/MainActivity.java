@@ -125,7 +125,18 @@ public class MainActivity extends Activity {
     private ImageButton trainerSelectButton;
     private TextView trainerSectionTitle;
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
-    private ImageView overlayControl,secondaryOverlayControl;
+    private ImageView overlayControl,secondaryOverlayControl,pgsSearchControl;
+    private Boolean lastPgsSearchState;
+    private boolean pgsHomeStatePolling=false;
+    private final android.os.Handler pgsHomeStateHandler=
+        new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable pgsHomeStateTick=new Runnable(){
+        @Override public void run(){
+            if(!pgsHomeStatePolling)return;
+            refreshHomePgsIcon();
+            pgsHomeStateHandler.postDelayed(this,1000L);
+        }
+    };
     private ImageButton rareCandyControl;
     private ImageButton raidAssistantControl;
     private TextView eduSimulationClockDisplay;
@@ -352,7 +363,7 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
     }
-    private void addHomePreviewIcon(LinearLayout row,int drawable,String description,
+    private ImageView addHomePreviewIcon(LinearLayout row,int drawable,String description,
                                     View.OnClickListener action){
         ImageView icon=new ImageView(this);
         icon.setImageResource(drawable);
@@ -362,6 +373,7 @@ public class MainActivity extends Activity {
         icon.setBackground(null);
         icon.setOnClickListener(action);
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
+        return icon;
     }
     private void addHomePreviewIcon(LinearLayout row,int drawable,String description){
         ImageView icon=new ImageView(this);
@@ -439,7 +451,9 @@ public class MainActivity extends Activity {
             });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
-        addHomePreviewIcon(dualOverlayRow,R.drawable.home_search,"Buscas Pokémon",v->PgsBuscasPanel.show(this));
+        pgsSearchControl=addHomePreviewIcon(dualOverlayRow,R.drawable.busca_pokemon_off,
+            "Buscas Pokémon · desativado",v->PgsBuscasPanel.show(this));
+        lastPgsSearchState=null; // Após recriar a Home, atualizar o novo ImageView.
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
         dualLp.bottomMargin=d(5);
@@ -2153,7 +2167,20 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
     }
+    private void refreshHomePgsIcon(){
+        if(pgsSearchControl==null)return;
+        boolean on=PgsAutoClickService.isSearchActive();
+        if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
+            pgsSearchControl.setImageResource(on?
+                R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
+            lastPgsSearchState=on;
+        }
+        pgsSearchControl.setContentDescription(on?
+            "Buscas Pokémon ativas · abrir configurações":
+            "Buscas Pokémon desativadas · abrir configurações");
+    }
     private void refreshHomeOverlay(){
+        refreshHomePgsIcon();
         if(raidAssistantControl!=null){
             boolean active=RaidDayAssistantOverlayService.isRunning();
             raidAssistantControl.setBackground(null);
@@ -2654,6 +2681,9 @@ public class MainActivity extends Activity {
         refreshWatchCount();
         refreshSessionSummary();
         refreshHomeOverlay();
+        pgsHomeStatePolling=true;
+        pgsHomeStateHandler.removeCallbacks(pgsHomeStateTick);
+        pgsHomeStateHandler.post(pgsHomeStateTick);
         eduSimulationClockTicking=true;
         eduSimulationClockHandler.removeCallbacks(eduSimulationClockTick);
         eduSimulationClockHandler.post(eduSimulationClockTick);
@@ -2664,6 +2694,8 @@ public class MainActivity extends Activity {
             serviceAction("com.lucianotoscano.pokesearchoverlay.SYNC_NOTIFICATION_PERMISSION");
     }
     @Override protected void onPause(){
+        pgsHomeStatePolling=false;
+        pgsHomeStateHandler.removeCallbacks(pgsHomeStateTick);
         eduSimulationClockTicking=false;
         eduSimulationClockHandler.removeCallbacks(eduSimulationClockTick);
         availabilityHandler.removeCallbacks(availabilityTick);
@@ -3854,6 +3886,8 @@ public class MainActivity extends Activity {
         if(website!=null&&website.canGoBack())website.goBack();else super.onBackPressed();
     }
     @Override protected void onDestroy(){
+        pgsHomeStatePolling=false;
+        pgsHomeStateHandler.removeCallbacks(pgsHomeStateTick);
         eduSimulationClockTicking=false;
         eduSimulationClockHandler.removeCallbacks(eduSimulationClockTick);
         availabilityHandler.removeCallbacks(availabilityTick);
