@@ -72,6 +72,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private long passengerHoldAt=0L;
 
     private PgsAutoMenus quickMenus;
+    private PgsAutoTapIndicator tapIndicator;
     private PgsAutoTargetPicker pointPicker;
     private PgsAutoTargetPolicy.Mode tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
     private boolean shinyNegativeConfirmed=false;
@@ -284,6 +285,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     @Override public void onDestroy() {
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
+        if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
         if(bubble!=null&&windowManager!=null) {
             try {windowManager.removeView(bubble);}catch(Exception ignored){}
         }
@@ -303,6 +305,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void showBubble() {
         windowManager=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(bubble!=null)return;
+        if(tapIndicator==null&&windowManager!=null)
+            tapIndicator=new PgsAutoTapIndicator(this,windowManager);
         bubble=new FrameLayout(this);
         bubble.setContentDescription("Busca Pokémon PGS: toque para ligar/desligar; segure para abrir menus");
         bubble.setBackground(null);
@@ -485,6 +489,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
         halt("FECHADO");
+        if(tapIndicator!=null)tapIndicator.clear();
         if(quickMenus!=null)quickMenus.dismissAll();
         if(bubble!=null&&windowManager!=null){
             try{windowManager.removeView(bubble);}catch(Exception ignored){}
@@ -734,10 +739,13 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
         },null);
         if(!accepted)fail("Android recusou gesto da mira.");
-        else handler.postDelayed(()->{
+        else{
+            if(tapIndicator!=null)tapIndicator.show(x,y);
+            handler.postDelayed(()->{
             if(running&&ticket==oldTicket)
                 fail("Sem confirmação do gesto Android para o ponto escolhido.");
-        },3500L);
+            },3500L);
+        }
     }
     /** Evita deslizamento cego em telas que podem ser mapa, aviso ou menu.
      * O jogo precisa expor as pistas nativas de um encontro; sem isso pausa. */
@@ -1073,10 +1081,13 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void onCancelled(GestureDescription g){handler.post(()->fail("Toque cancelado pelo Android."));}
         },null);
         if(!accepted)fail("O Android não autorizou o toque de Acessibilidade.");
-        else handler.postDelayed(()->{
+        else{
+            if(tapIndicator!=null)tapIndicator.show(x,y);
+            handler.postDelayed(()->{
             if(running&&!awaitingMap&&ticket==gestureTicket)
                 fail("O Android não confirmou o toque. Confira Acessibilidade e PGSharp.");
-        },3500L);
+            },3500L);
+        }
     }
 
     private void checkMap(int stamp){

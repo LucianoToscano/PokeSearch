@@ -2,6 +2,7 @@ package com.lucianotoscano.pokesearchoverlay;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -63,21 +64,14 @@ final class PgsAutoMenus {
     PgsAutoMenus(Context c,WindowManager w,Actions a){context=c;wm=w;actions=a;}
     private int dp(float value){return Math.round(value*context.getResources().getDisplayMetrics().density);}
     private Point size(){Point p=new Point();wm.getDefaultDisplay().getRealSize(p);return p;}
-    private int panelFill(){
-        SharedPreferences p=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE);
-        int percent=Math.max(30,Math.min(100,p.getInt("menuAlphaPercent",90)));
-        int original=OverlayQuickMenus.panelColor(context);
-        return ((percent*255/100)<<24)|(original&0x00FFFFFF);
-    }
+    // Exact readable surface shared with the Pokébola/Doce Raro menus;
+    // NO PGS-local 90% alpha override of the user's menuTransparency.
+    private int panelFill(){return PgsAutoMenuStyle.read(context).panelFill(context);}
     private GradientDrawable bg(int fill,int stroke,int radius){
         GradientDrawable d=new GradientDrawable();d.setColor(fill);d.setCornerRadius(dp(radius));
         if(stroke!=0)d.setStroke(dp(1),stroke);return d;
     }
-    private int fg(){
-        try{org.json.JSONObject p=new org.json.JSONObject(context.getSharedPreferences("prefs",0).getString("visualPrefsJson","{}"));
-            return "light".equals(p.optString("menuBgMode","dark"))?0xFF142130:0xFFF4F7FF;
-        }catch(Exception ignored){return 0xFFF4F7FF;}
-    }
+    private int fg(){return PgsAutoMenuStyle.read(context).foreground();}
     private TextView label(String value,int sp,boolean strong){
         TextView t=new TextView(context);t.setText(value);t.setTextSize(sp);
         t.setTextColor(fg());t.setGravity(Gravity.CENTER_VERTICAL);
@@ -88,11 +82,13 @@ final class PgsAutoMenus {
         Button b=new Button(context);b.setAllCaps(false);b.setText(value);b.setTextSize(sp);
         b.setTextColor(fg());b.setMinHeight(0);b.setMinimumHeight(0);
         b.setMinWidth(0);b.setMinimumWidth(0);b.setPadding(dp(5),0,dp(5),0);
-        b.setBackground(bg(0x55394A5C,0x557E91A5,6));return b;
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        b.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));return b;
     }
     private void markAlertIcon(ImageButton icon,boolean active){
-        icon.setBackground(bg(active?0x773A504B:0x55394A5C,
-            active?0xFF7DC8B4:0x557E91A5,6));
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        icon.setBackground(bg(active?0x773A504B:v.tileFill(),
+            active?0xFF7DC8B4:v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));
         icon.setColorFilter(fg());
         icon.setSelected(active);
     }
@@ -104,7 +100,8 @@ final class PgsAutoMenus {
         b.setContentDescription(description);
         b.setPadding(dp(artSize),dp(artSize),dp(artSize),dp(artSize));
         b.setMinimumWidth(0);b.setMinimumHeight(0);
-        b.setBackground(bg(0x55394A5C,0x557E91A5,6));
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        b.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));
         return b;
     }
     private ImageButton trashButton(String desc){
@@ -113,7 +110,8 @@ final class PgsAutoMenus {
             R.drawable.lixeira_preta:R.drawable.lixeira_branca);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setPadding(dp(8),dp(8),dp(8),dp(8));
-        icon.setBackground(bg(0x55394A5C,0x557E91A5,6));
+        PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
+        icon.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));
         icon.setContentDescription(desc);
         return icon;
     }
@@ -127,14 +125,19 @@ final class PgsAutoMenus {
     private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
     boolean isOpen(){return panel!=null||toolbar!=null;}
-    // P1/P2 dock controls are 30px tall, icon artwork 21px. Android keeps
-    // a comfortably tappable 38dp cell without enlarging the visible artwork.
-    private static final int TOOL_CELL_DP=38, TOOL_GAP_DP=3, TOOL_HEIGHT_DP=46;
+
+    // LT347: exactly the dock.html controls-window 30dp individual tiles,
+    // 16dp artwork, 2dp base gap, 5dp rounded corners; NO enclosing capsule.
+    // Every layout/color value is read from the SAME prefs.visualPrefsJson as P1.
+    private static final int TOOL_CELL_DP=PgsAutoMenuStyle.CELL_DP;
     void showToolbar(int x,int y){
         dismissAll();anchorX=x;anchorY=y;
-        LinearLayout bar=horizontal();bar.setPadding(dp(4),dp(3),dp(4),dp(3));
-        bar.setBackground(bg(panelFill(),0x667E91A5,10));
-        // Assets shared with the original P1/P2 icon system, not Unicode.
+        PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
+        LinearLayout bar=horizontal();
+        bar.setOrientation(visual.vertical?LinearLayout.VERTICAL:LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER);
+        bar.setPadding(0,0,0,0);
+        bar.setBackgroundColor(Color.TRANSPARENT);
         int[] icons={R.drawable.pgs_menu_search,R.drawable.pgs_menu_timer,
             R.drawable.ic_bell_outline,R.drawable.pgs_menu_customize,
             R.drawable.pgs_menu_close};
@@ -143,14 +146,20 @@ final class PgsAutoMenus {
         Runnable[] handlers={this::showSearch,this::showTime,
             this::showNotifications,this::showAppearance,
             ()->{dismissAll();actions.closeOverlay();}};
+        int gap=visual.itemGapDp();
         for(int i=0;i<icons.length;i++){
             final int n=i;
-            ImageButton icon=imageButton(icons[i],descriptions[i],9);
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
+            ImageButton icon=imageButton(icons[i],descriptions[i],7);
+            int padding=(PgsAutoMenuStyle.CELL_DP-PgsAutoMenuStyle.ART_DP)/2;
+            icon.setPadding(dp(padding),dp(padding),dp(padding),dp(padding));
+            LinearLayout.LayoutParams tileParams=new LinearLayout.LayoutParams(
                 dp(TOOL_CELL_DP),dp(TOOL_CELL_DP));
-            if(i>0)p.leftMargin=dp(TOOL_GAP_DP);
+            if(i>0){
+                if(visual.vertical)tileParams.topMargin=dp(gap);
+                else tileParams.leftMargin=dp(gap);
+            }
             if(i==2){
-                // Exact Shiny vector from dock.html, *inside* the original bell.
+                // Shiny is physically INSIDE the bell, never a detached star.
                 FrameLayout tile=new FrameLayout(context);
                 tile.addView(icon,new FrameLayout.LayoutParams(-1,-1));
                 ImageView shiny=new ImageView(context);
@@ -162,30 +171,44 @@ final class PgsAutoMenus {
                 shiny.setColorFilter("off".equals(state)?fg():0xFFFFD47B);
                 shiny.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
-                    dp(11),dp(11),Gravity.CENTER);
-                inner.topMargin=dp(1);
+                    dp(8),dp(8),Gravity.CENTER);
+                inner.topMargin=dp(2);
                 tile.addView(shiny,inner);
                 tile.setContentDescription("Notificações e Shiny dentro do sino");
                 tile.setOnClickListener(v->handlers[n].run());
                 icon.setOnClickListener(v->handlers[n].run());
-                bar.addView(tile,p);
+                bar.addView(tile,tileParams);
             }else{
-                bar.addView(icon,p);
+                bar.addView(icon,tileParams);
                 icon.setOnClickListener(v->handlers[n].run());
             }
         }
         toolbar=bar;
         Point screen=size();
-        int width=dp(8+5*TOOL_CELL_DP+4*TOOL_GAP_DP),h=dp(TOOL_HEIGHT_DP);
-        int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),x-width/2));
-        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3);
-        if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(3));
-        WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,h,
+        int width=dp(visual.vertical?TOOL_CELL_DP:5*TOOL_CELL_DP+4*gap);
+        int height=dp(visual.vertical?5*TOOL_CELL_DP+4*gap:TOOL_CELL_DP);
+        int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),
+            x-width/2+dp(visual.menuOffsetX)));
+        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3+
+            visual.gearMenuGap+visual.menuOffsetY);
+        if(top+height+dp(8)>screen.y)
+            top=Math.max(dp(15),y-height-dp(3));
+        WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,height,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
         lp.gravity=Gravity.TOP|Gravity.LEFT;lp.x=left;lp.y=top;
+        applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(toolbar,lp);}catch(Exception ignored){toolbar=null;}
+    }
+    private void applyNativeBlur(WindowManager.LayoutParams lp,int radiusDp){
+        // Android can decline cross-app blur; the translucent tile remains
+        // legible without needing a separate black background.
+        if(Build.VERSION.SDK_INT>=31&&radiusDp>0){
+            lp.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+            lp.setBlurBehindRadius(dp(radiusDp));
+        }
     }
     private LinearLayout panelRoot(String heading,String right){
         LinearLayout root=vertical();root.setPadding(dp(10),dp(10),dp(10),dp(10));
@@ -206,8 +229,10 @@ final class PgsAutoMenus {
         hidePanel();panel=root;
         // Nunca deixar a barra visível por trás do submenu translúcido.
         if(toolbar!=null)toolbar.setVisibility(View.GONE);
-        Point screen=size();int width=Math.min(screen.x-dp(20),dp(preferredWidthDp));
-        int estimated=dp(estimatedHeightDp);
+        PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
+        Point screen=size();int width=Math.min(screen.x-dp(20),
+            dp(Math.min(preferredWidthDp,visual.popupWidth)));
+        int estimated=dp(Math.min(estimatedHeightDp,visual.popupHeight));
         // Anchor submenus to the *actual* visible toolbar, not to a stale bubble
         // coordinate. This keeps the panel attached when the toolbar is clamped
         // near an edge or rendered above the bubble.
@@ -231,6 +256,7 @@ final class PgsAutoMenus {
         lp.gravity=Gravity.LEFT|Gravity.TOP;
         lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),toolbarLeft-width/2));lp.y=top;
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(panel,lp);}catch(Exception e){
             panel=null;
             if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);
@@ -561,26 +587,19 @@ final class PgsAutoMenus {
             });
         }
         root.addView(scale,margined(-1,dp(40),2));
-        TextView alpha=label("Fundo: "+prefs.getInt("menuAlphaPercent",90)+"%",11,true);
-        root.addView(alpha,margined(-1,dp(22),5));
-        SeekBar opacity=new SeekBar(context);
-        opacity.setMax(70);
-        opacity.setProgress(Math.max(0,Math.min(70,prefs.getInt("menuAlphaPercent",90)-30)));
-        opacity.setContentDescription("Transparência do fundo de 30 a 100 por cento");
-        opacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            @Override public void onProgressChanged(SeekBar seek,int progress,boolean user){
-                int percent=progress+30;
-                alpha.setText("Fundo: "+percent+"%");
-                if(user){
-                    prefs.edit().putInt("menuAlphaPercent",percent).apply();
-                    root.setBackground(bg(panelFill(),0x667E91A5,10));
-                }
-            }
-            @Override public void onStartTrackingTouch(SeekBar seek){}
-            @Override public void onStopTrackingTouch(SeekBar seek){actions.appearanceChanged();}
-        });
-        root.addView(opacity,margined(-1,dp(36),1));
-        mount(root,240,245);
+        // The Pokébola Editor Visual is the single source of menu appearance.
+        // Keep PGS-only choices (icons, countdown and tap indicator) separate.
+        TextView inherited=label("Cores e transparência: Editor Visual das Pokébolas",10,false);
+        root.addView(inherited,margined(-1,dp(31),4));
+        CheckBox tapFeedback=new CheckBox(context);
+        tapFeedback.setText("Mostrar local do toque");
+        tapFeedback.setTextSize(11);tapFeedback.setTextColor(fg());
+        tapFeedback.setButtonTintList(android.content.res.ColorStateList.valueOf(fg()));
+        tapFeedback.setChecked(prefs.getBoolean("showTapIndicator",true));
+        tapFeedback.setOnCheckedChangeListener((control,on)->
+            prefs.edit().putBoolean("showTapIndicator",on).apply());
+        root.addView(tapFeedback,margined(-1,dp(35),2));
+        mount(root,240,215);
     }
 
     void showNotifications(){
