@@ -17,7 +17,9 @@ test("filters saved: Filtro title is the toggle, two slots and thin SVG icon act
  assert.ok(ui.includes('for(let slot=1;slot<=2;slot++)'));
  assert.ok(ui.includes('generalPresetSave'));
  assert.ok(ui.includes('save.appendChild(presetGlyph("save"))'));
- assert.ok(ui.includes('remove.appendChild(presetGlyph("delete"))'));
+ assert.ok(ui.includes('remove.append(whiteTrash,blackTrash)'));
+  assert.ok(ui.includes('ui-icons/lixeira_branca.png'));
+  assert.ok(ui.includes('ui-icons/lixeira_preta.png'));
  assert.ok(ui.includes('Native.clearGeneralFilterPreset()'));
  assert.ok(ui.includes("Native.saveGeneralFilterPreset(slot)"));
  assert.ok(ui.includes("Native.deleteGeneralFilterPreset(slot)"));
