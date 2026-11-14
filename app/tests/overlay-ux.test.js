@@ -3774,8 +3774,8 @@ test("LT61-SHINY-MODE-03 pending Shiny is not presented as an applied site filte
   dock.includes('PROVIDER_SHINY_AVAILABLE=false')&&
   dock.includes("shiny=!!shi||shinyPending;")&&
   dock.includes("shownShiny=!!resultSourceShiny;resultsStale=!!stale;")&&
-  service.includes("(shiny&&shinyVerified)+\"")&&
-  service.includes("(shiny&&!shinyVerified)+\"")&&
+  service.includes("ProviderFeatureFlags.SHINY_AVAILABLE?(shiny&&shinyVerified):shinyVisualRequested")&&
+  service.includes("ProviderFeatureFlags.SHINY_AVAILABLE&&shiny&&!shinyVerified")&&
   service.includes("shinyVerified=shiny;")&&
   service.includes('execute("verifyShiny",verified->{');
 });
