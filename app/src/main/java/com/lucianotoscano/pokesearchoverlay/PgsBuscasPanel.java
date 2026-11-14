@@ -13,7 +13,7 @@ import android.widget.*;
 import java.io.InputStream;
 import java.util.List;
 
-/** Integração nativa de preferências do PGS Buscas; motor de gestos ainda não habilitado. */
+/** Home do PGS Buscas Auto; o motor experimental depende da ativação explícita. */
 final class PgsBuscasPanel {
     private static final String PREFS="pgs_buscas_auto_v1";
     // Home e menu flutuante compartilham o mesmo catalogo, preferencia
