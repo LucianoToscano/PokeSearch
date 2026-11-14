@@ -1285,87 +1285,98 @@ public final class PgsAutoClickService extends AccessibilityService {
         picker.addView(crop,new FrameLayout.LayoutParams(-1,-1));
 
 
-        // LT346: barra de formatos apenas com imagens, sem presets ou faixas cinzas.
+
+        // LT348: duas barras compactas alinhadas no rodapé. A barra lateral
+        // contínua permanece na posição original; nenhuma ação salva sem OK.
+        LinearLayout controlsStack=new LinearLayout(this);
+        controlsStack.setOrientation(LinearLayout.VERTICAL);
+        controlsStack.setGravity(Gravity.CENTER_HORIZONTAL);
+
+        // Linha superior: CONFIRMAR à esquerda, PRÉVIA, CANCELAR à direita.
+        LinearLayout actions=new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER);
+        actions.setPadding(dp(4),dp(3),dp(4),dp(3));
+        actions.setBackground(cropControlsBackground());
+        ImageView confirm=cropIcon("confirmar_branco.webp",
+            "Confirmar e salvar recorte",android.R.drawable.checkbox_on_background);
+        ImageView cancel=cropIcon("cancelar_branco.webp",
+            "Cancelar recorte",android.R.drawable.ic_menu_close_clear_cancel);
+        preview.setPadding(dp(3),dp(3),dp(3),dp(3));
+        actions.addView(confirm,new LinearLayout.LayoutParams(dp(48),dp(46)));
+        actions.addView(preview,new LinearLayout.LayoutParams(dp(56),dp(46)));
+        actions.addView(cancel,new LinearLayout.LayoutParams(dp(48),dp(46)));
+        controlsStack.addView(actions,new LinearLayout.LayoutParams(-2,dp(52)));
+
+        // Linha inferior: BACKGROUND | QUADRADO | LIVRE | VERTICAL.
         LinearLayout formats=new LinearLayout(this);
         formats.setGravity(Gravity.CENTER);
-        formats.setBackgroundColor(Color.TRANSPARENT);
-        String[] icons={"icone_quadrado.png","icone_vertical.png","icone_livre.png"};
-        String[] descriptions={"Recorte quadrado","Recorte vertical","Recorte livre"};
+        formats.setPadding(dp(4),dp(3),dp(4),dp(3));
+        formats.setBackground(cropControlsBackground());
+        LinearLayout.LayoutParams formatsRow=new LinearLayout.LayoutParams(-2,dp(52));
+        formatsRow.topMargin=dp(7);
+        controlsStack.addView(formats,formatsRow);
+        ImageView backgroundIcon=cropIcon("icone_background_off.webp",
+            "Ativar remoção de fundo plano",android.R.drawable.ic_menu_gallery);
+        formats.addView(backgroundIcon,new LinearLayout.LayoutParams(dp(48),dp(46)));
+        backgroundIcon.setAlpha(.94f);
+        backgroundIcon.setOnClickListener(v->{
+            removeFlatBackground[0]=!removeFlatBackground[0];
+            setCropIconImage(backgroundIcon,removeFlatBackground[0]?
+                "icone_background_on.png":"icone_background_off.webp",
+                android.R.drawable.ic_menu_gallery);
+            backgroundIcon.setAlpha(removeFlatBackground[0]?1f:.94f);
+            backgroundIcon.setBackground(cropOptionBackground(removeFlatBackground[0]));
+            backgroundIcon.setContentDescription(removeFlatBackground[0]?
+                "Desativar remoção de fundo plano":"Ativar remoção de fundo plano");
+            updatePreview[0].run();
+        });
+
+        String[] icons={"icone_quadrado.png","icone_livre.png","icone_vertical.webp"};
+        String[] descriptions={"Recorte quadrado","Recorte livre","Recorte vertical"};
         PgsAutoCropSelection.Mode[] values={
             PgsAutoCropSelection.Mode.SQUARE,
-            PgsAutoCropSelection.Mode.VERTICAL,
-            PgsAutoCropSelection.Mode.FREE};
+            PgsAutoCropSelection.Mode.FREE,
+            PgsAutoCropSelection.Mode.VERTICAL};
         ImageView[] choices=new ImageView[3];
-        for(int i=0;i<3;i++){
+        for(int i=0;i<choices.length;i++){
             final int index=i;
             ImageView option=cropIcon(icons[i],descriptions[i],android.R.drawable.ic_menu_crop);
             choices[i]=option;
-            option.setAlpha(i==0?1f:.65f);
-            formats.addView(option,new LinearLayout.LayoutParams(dp(48),dp(48)));
+            option.setAlpha(i==0?1f:.94f);
+            option.setBackground(cropOptionBackground(i==0));
+            formats.addView(option,new LinearLayout.LayoutParams(dp(48),dp(46)));
             option.setOnClickListener(v->{
                 crop.setMode(values[index]);
                 option.setContentDescription(descriptions[index]);
-                for(int j=0;j<choices.length;j++)
-                    choices[j].setAlpha(j==index?1f:.65f);
+                for(int j=0;j<choices.length;j++){
+                    choices[j].setAlpha(j==index?1f:.94f);
+                    choices[j].setBackground(cropOptionBackground(j==index));
+                }
             });
-            // Mantém o antigo modo horizontal acessível por toque longo
-            // no ícone vertical sem adicionar outro botão à tela.
-            if(index==1)option.setOnLongClickListener(v->{
+            // Compatibilidade: segurar Vertical seleciona Horizontal legado.
+            if(index==2)option.setOnLongClickListener(v->{
                 crop.setMode(PgsAutoCropSelection.Mode.HORIZONTAL);
                 option.setContentDescription("Recorte horizontal; toque curto volta ao vertical");
-                for(int j=0;j<choices.length;j++)
-                    choices[j].setAlpha(j==index?1f:.65f);
+                for(int j=0;j<choices.length;j++){
+                    choices[j].setAlpha(j==index?1f:.94f);
+                    choices[j].setBackground(cropOptionBackground(j==index));
+                }
                 Toast.makeText(this,"Horizontal",Toast.LENGTH_SHORT).show();
                 return true;
             });
         }
-        FrameLayout.LayoutParams formatsLp=new FrameLayout.LayoutParams(
-            -2,dp(48),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
-        formatsLp.topMargin=dp(42);
-        picker.addView(formats,formatsLp);
+        FrameLayout.LayoutParams controlsLp=new FrameLayout.LayoutParams(
+            -2,-2,Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
+        controlsLp.bottomMargin=dp(21);
+        picker.addView(controlsStack,controlsLp);
 
-        // Controle lateral contínuo, 16–92 pixels de referência.
+        // Mesmo slider 16–92px de LT346, NÃO mover nem duplicar.
         PgsAutoCropSizeSlider slider=new PgsAutoCropSizeSlider(this,32,crop::setReferencePx);
         FrameLayout.LayoutParams sliderLp=new FrameLayout.LayoutParams(
             dp(48),dp(290),Gravity.LEFT|Gravity.CENTER_VERTICAL);
         sliderLp.leftMargin=dp(3);
         picker.addView(slider,sliderLp);
 
-        // Fundo plano continua opcional e reversível; não toca no PNG de origem.
-        ImageView backgroundIcon=cropIcon("icone_background_off.webp",
-            "Ativar remoção de fundo plano",android.R.drawable.ic_menu_gallery);
-        FrameLayout.LayoutParams bgLp=new FrameLayout.LayoutParams(
-            dp(48),dp(48),Gravity.TOP|Gravity.RIGHT);
-        bgLp.topMargin=dp(42);bgLp.rightMargin=dp(12);
-        picker.addView(backgroundIcon,bgLp);
-        backgroundIcon.setAlpha(.68f);
-        backgroundIcon.setOnClickListener(v->{
-            removeFlatBackground[0]=!removeFlatBackground[0];
-            setCropIconImage(backgroundIcon,removeFlatBackground[0]?
-                "icone_background_on.png":"icone_background_off.webp",
-                android.R.drawable.ic_menu_gallery);
-            backgroundIcon.setAlpha(removeFlatBackground[0]?1f:.68f);
-            backgroundIcon.setContentDescription(removeFlatBackground[0]?
-                "Desativar remoção de fundo plano":"Ativar remoção de fundo plano");
-            updatePreview[0].run();
-        });
-
-        // Botões originais com áreas de toque 52dp, sem fundo/cápsula.
-        LinearLayout actions=new LinearLayout(this);
-        actions.setGravity(Gravity.CENTER);
-        actions.setBackgroundColor(Color.TRANSPARENT);
-        ImageView cancel=cropIcon("cancelar_branco.webp",
-            "Cancelar recorte",android.R.drawable.ic_menu_close_clear_cancel);
-        ImageView confirm=cropIcon("confirmar_branco.webp",
-            "Confirmar e salvar",android.R.drawable.checkbox_on_background);
-        actions.addView(cancel,new LinearLayout.LayoutParams(dp(52),dp(52)));
-        preview.setPadding(dp(4),dp(4),dp(4),dp(4));
-        actions.addView(preview,new LinearLayout.LayoutParams(dp(56),dp(52)));
-        actions.addView(confirm,new LinearLayout.LayoutParams(dp(52),dp(52)));
-        FrameLayout.LayoutParams actionsLp=new FrameLayout.LayoutParams(
-            -2,dp(52),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
-        actionsLp.bottomMargin=dp(23);
-        picker.addView(actions,actionsLp);
         SharedPreferences hints=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         if(!hints.getBoolean("cropGestureHintShown",false)){
             Toast.makeText(this,"Toque no ícone, ajuste o recorte pela barra ou alça e confirme.",
@@ -1420,6 +1431,21 @@ public final class PgsAutoClickService extends AccessibilityService {
         params.gravity=Gravity.TOP|Gravity.LEFT;
         try{windowManager.addView(picker,params);}
         catch(Exception e){dismissPicker();showReason("Não consegui abrir seleção: "+e.getMessage());}
+    }
+
+
+    private GradientDrawable cropControlsBackground(){
+        GradientDrawable bg=new GradientDrawable();
+        bg.setColor(0xE6131923);
+        bg.setCornerRadius(dp(13));
+        bg.setStroke(dp(1),0x99C5DAEC);
+        return bg;
+    }
+    private GradientDrawable cropOptionBackground(boolean selected){
+        GradientDrawable bg=new GradientDrawable();
+        bg.setColor(selected?0x665C8CAB:Color.TRANSPARENT);
+        bg.setCornerRadius(dp(8));
+        return bg;
     }
 
     private ImageView cropIcon(String asset,String desc,int fallback){
