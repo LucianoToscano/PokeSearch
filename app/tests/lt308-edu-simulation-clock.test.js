@@ -56,7 +56,7 @@ const watchIndex=home.indexOf("controls.addView(eduSimulationClockDisplay,simula
 const heartIndex=home.indexOf("controls.addView(heart,heartLp);");
 assert.ok(passIndex>0&&watchIndex>passIndex&&heartIndex>watchIndex,
   "O relógio fica ao lado do ícone dos passes");
-assert.match(home,/new LinearLayout\.LayoutParams\(d\(65\),d\(34\)\)/);
+assert.match(home,/new LinearLayout\.LayoutParams\(d\(59\),d\(32\)\)/);
 assert.match(home,/EduEventClock\.dateLabel\(this\)\+"\\n"\+/);
 assert.match(home,/EduEventClock\.timeLabel\(this\)/);
 assert.match(home,/eduSimulationClockDisplay\.setOnClickListener\(v->showEduClockOptions\(\)\)/);
