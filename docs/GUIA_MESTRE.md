@@ -1,5 +1,16 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT344 — código integrado, aceite e padrão oficial (14/11/2026)
+
+- **Integração:** [PR #367](https://github.com/LucianoToscano/PokeSearch/pull/367) squash `fc24811e92587a1829eb5ed680719cb548fab62d`. CI do HEAD `41976def4bfeb6ae76c421e9c3b1178e00998dd5` **7/7 verdes**: Node LT169, QA Core LT211, Node QA, Java LT62, OTA LT173, PGS QA Android e Secure beta. QA beta assinado com chave temporária disponível no workflow correspondente (não é release oficial).
+- **Contas/Home:** badges P1/P2 centralizados imediatamente acima das Pokébolas (1–2 pixels físicos); toque troca a conta usada por cada overlay, sem iniciar login e sem mudar o outro overlay. Ícones originais normalizados pela área visível mantendo PNG 512px e logo.
+- **Busca Pokémon/PGS:** menu reduzido; 10 espécies no seletor com pesquisa embaixo, sem Limpar Seleção. Renomeados Cooldown Mapa e Sem Shiny; padrão 25s, zero permitido na verificação Shiny, sem limites artificiais de teto, reativação com contadores zerados e sprites existentes. Símbolo Shiny ✨ dentro do sino; preservados WebPs ON/OFF, P/M/G, transparência e estados distintos de menu/pesquisa.
+- **Captura:** quadrado, horizontal e proporção livre retangular, lupa deslocada, prévia e Confirmar/Cancelar. Remoção experimental opcional de fundo plano da borda, com fallback reversível; **não afirmar segmentação automática de silhueta universal ou laço poligonal**.
+- **Auditoria:** [PADRÃO OFICIAL DOS OVERLAYS](docs/PADRAO_OFICIAL_OVERLAYS_POKESEARCH.md) e [matriz T01–T28](docs/LT344_ARK_AUDITORIA_ACEITACAO_20261114.md). Callback Android confirma o gesto, **não o teleporte dentro do jogo**; OAuth Google no WebView depende de callback autorizado pelo PoGoCoordinates. [Issue física #350](https://github.com/LucianoToscano/PokeSearch/issues/350) ainda aberta para login real, nome/foto, mapa, teleporte, Shiny e layouts Samsung. Avisos de passageiro requerem confirmação humana.
+- **Publicação:** solicitação separada da próxima `0.03.42 / versionCode 54549 / label 51346`, preservando 0.03.41 oficial; **não inferir publicação nem instalação sem provas** do workflow protegido, assinatura permanente e asset público.
+
+
+
 ## LT343 — Pedido oficial protegido 0.03.41 / 54548 (14/11/2026)
 
 - **Implementação na main:** [PR #365](https://github.com/LucianoToscano/PokeSearch/pull/365), merge squash `7724971b674bdba03473c88fe9e54edc9e9cb2d6` após QA completo **SUCCESS** do HEAD `1726c26da1ce221f1df787560e313895787b1b54`: LT169 Node, QA Core LT211, Node QA, Java LT62, OTA LT173, QA PGS Android e Secure beta. Não reduziu sprites, sons, imagens, contas ou resolução.

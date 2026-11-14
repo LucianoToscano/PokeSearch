@@ -4056,6 +4056,37 @@
           "Instalação da atualização exige confirmação do Android."
         ]
       }
+    },
+    {
+      "id": "lt344-home-pgs-contas-cooldown-20261114",
+      "minVersionCode": 54549,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.42 — LT344: contas, Busca Pokémon e recorte",
+      "sections": {
+        "novidades": [
+          "Seleção independente de Conta 1/Conta 2 sobre cada Pokébola sem abrir login ou misturar sessões.",
+          "Recorte de sprite quadrado, horizontal ou proporção livre, lupa deslocada e prévia com remoção opcional de fundo plano (beta reversível).",
+          "Documentação do Padrão Oficial dos Overlays, com dimensões e estados de referência."
+        ],
+        "melhorias": [
+          "Home centraliza os indicadores 1–2 pixels físicos acima das Pokébolas e equilibra as artes visíveis sem recomprimir PNGs originais.",
+          "Menus compactos da Busca Pokémon, busca na parte inferior, até 10 espécies selecionadas e retirada do botão Limpar Seleção; modelos salvos antigos preservados.",
+          "Avisos Shiny com símbolo ✨ dentro do sino e configurações de personalização preservadas.",
+          "Cooldown Mapa passa para 25 segundos por padrão e Sem Shiny aceita zero; sem tetos numéricos artificiais e com migração que respeita escolhas do usuário."
+        ],
+        "correcoes": [
+          "Reativação da Busca Pokémon limpa o estado temporal anterior e reutiliza as miniaturas gravadas.",
+          "Logs distinguem candidato reconhecido, toque Android, confirmação do gesto e mapa carregado; não confundem callback com teleporte real.",
+          "Revisados contratos antigos da geometria dos indicadores e menus; sete gates Node/Java/Android/OTA/beta QA aprovados antes da integração LT344.",
+          "Preservados arquivos de ícones, serviços de Pokébolas e Doces Raros, Edu, dados, notificações e assinatura oficial."
+        ],
+        "emDesenvolvimento": [
+          "OAuth Google no PoGoCoordinates pode ser bloqueado dentro do WebView por política oficial do Google; correção definitiva depende de redirecionamento autorizado pelo provedor e teste físico.",
+          "Teleporte realmente realizado no PGSharp, reconhecimento de Pokémon após carregar o mapa e Shiny positivo não foram homologados por testes Android reais; issue #350 segue aberta.",
+          "Recorte por silhueta usa apenas remoção opcional de fundo plano em condições adequadas, não segmentação automática universal por IA nem laço poligonal; validar no Samsung.",
+          "Persistência do overlay após minimizar/popup e ajustes finos de cor/alinhamento requerem revisão visual física; atualização oficial não instala APK silenciosamente."
+        ]
+      }
     }
   ]
 }
