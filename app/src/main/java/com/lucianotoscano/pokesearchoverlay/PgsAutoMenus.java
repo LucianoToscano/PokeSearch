@@ -374,7 +374,7 @@ final class PgsAutoMenus {
         scroll.addView(root);
         LinearLayout shell=vertical();
         int maxHeight=Math.max(dp(210),size().y-dp(150));
-        shell.addView(scroll,new LinearLayout.LayoutParams(-1,Math.min(dp(570),maxHeight)));
+        shell.addView(scroll,new LinearLayout.LayoutParams(-1,Math.min(dp(510),maxHeight)));
         mount(shell);
     }
     private void showSoundPicker(String key){
