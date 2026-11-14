@@ -28,7 +28,7 @@ assert.match(ui,/stopTonePreview\(\)/);
 assert.match(ui,/R\.drawable\.pgs_speaker_on/);
 assert.match(engine,/if\("off"\.equals\(mode\)\)return/);
 assert.match(engine,/PgsAutoNotificationPolicy\.NEW/);
-assert.match(engine,/PgsAutoNotificationPolicy\.SEARCH/);
+assert.doesNotMatch(engine,/notifyConfigured\(PgsAutoNotificationPolicy\.SEARCH,/);
 assert.match(engine,/PgsAutoNotificationPolicy\.SHINY/);
 assert.match(engine,/manager\.notify\(PgsAutoNotificationPolicy\.notificationId\(kind\),notification\)/);
 assert.match(policy,/return "pgs_buscas_"\+kind/);
