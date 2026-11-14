@@ -68,12 +68,18 @@ final class PgsAutoIconDetector {
         }
     }
     private final List<Template> templates=new ArrayList<>();
+    private int modelCount=0;
     PgsAutoIconDetector(Context context) throws IOException {
         List<PgsAutoTemplateStore.Model> selected=new ArrayList<>();
         for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
             if(PgsAutoCatalog.isSelectedName(context,model.name))selected.add(model);
         selected.sort(Comparator.comparingInt(m->PgsAutoCatalog.priority(context,m.name)));
-        float[] scales={.90f,1f,1.10f};
+        modelCount=selected.size();
+        // O tamanho agora vem da amostra escolhida no feed (24/32/44px),
+        // não de um retângulo forçado de 68x52. Variações de zoom são testadas.
+        float[] scales=selected.size()>12?
+            new float[]{.90f,1f,1.10f}:
+            new float[]{.76f,.88f,1f,1.12f,1.24f};
         for(int i=0;i<selected.size();i++) {
             PgsAutoTemplateStore.Model m=selected.get(i);
             Bitmap base=PgsAutoTemplateStore.decode(context,m);
@@ -88,7 +94,7 @@ final class PgsAutoIconDetector {
             }finally{base.recycle();}
         }
     }
-    int templateCount(){return templates.size()/3;}
+    int templateCount(){return modelCount;}
     List<Match> find(Bitmap screenshot){
         if(templates.isEmpty())return Collections.emptyList();
         float scale=ANALYSIS_WIDTH/(float)screenshot.getWidth();
@@ -101,7 +107,9 @@ final class PgsAutoIconDetector {
         for(int i=0;i<raw.length;i++)lum[i]=gray(raw[i]);
         ArrayList<Candidate> candidates=new ArrayList<>();
         // Pode ficar lento com muitos modelos; roda numa thread auxiliar.
-        int scanStep=templates.size()>18 ? 8 : 5;
+        // Passos menores para ícones pequenos; posição final é refinada
+        // por pixels e confirmada em dois frames antes do gesto.
+        int scanStep=templates.size()>55 ? 7 : 4;
         for(Template t:templates){
             int maxX=w-t.width,maxY=h-t.height;
             if(maxX<0||maxY<0)continue;
