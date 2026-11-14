@@ -18,13 +18,14 @@ import android.view.View;
  * Não grava nada até o botão Confirmar do serviço Android.
  */
 final class PgsAutoCropSelection extends View {
-    enum Mode {SQUARE,HORIZONTAL,FREE}
+    enum Mode {SQUARE,HORIZONTAL,VERTICAL,FREE}
     private final int originalWidth,originalHeight;
     private final Runnable changed;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
     private final RectF crop=new RectF();
     private Bitmap screenshot;
     private int referencePx=32;
+    int referencePx(){return referencePx;}
     private Mode mode=Mode.SQUARE;
     private boolean selected=false,tracking=false;
     private int dragging=0; // 1 mover, 2 ajustar lado/canto inferior direito
@@ -61,8 +62,9 @@ final class PgsAutoCropSelection extends View {
         float side=clamp(defaultSide(),12f*density(),
             Math.min(getWidth(),getHeight()));
         float w=mode==Mode.HORIZONTAL?Math.min(getWidth(),side*1.8f):
+            mode==Mode.VERTICAL?side/1.8f:
             mode==Mode.FREE?Math.min(getWidth(),side*1.3f):side;
-        float h=side;
+        float h=mode==Mode.VERTICAL?Math.min(getHeight(),side*1.8f):side;
         float left=clamp(cx-w/2f,0,Math.max(0,getWidth()-w));
         float top=clamp(cy-h/2f,0,Math.max(0,getHeight()-h));
         crop.set(left,top,left+w,top+h);selected=true;
@@ -84,7 +86,7 @@ final class PgsAutoCropSelection extends View {
     @Override protected void onDraw(Canvas canvas){
         super.onDraw(canvas);
         if(!selected)return;
-        paint.setStyle(Paint.Style.FILL);paint.setColor(0x8C02060E);
+        paint.setStyle(Paint.Style.FILL);paint.setColor(0x3802060E);
         canvas.drawRect(0,0,getWidth(),crop.top,paint);
         canvas.drawRect(0,crop.bottom,getWidth(),getHeight(),paint);
         canvas.drawRect(0,crop.top,crop.left,crop.bottom,paint);
@@ -159,6 +161,8 @@ final class PgsAutoCropSelection extends View {
                 if(mode==Mode.SQUARE)w=h=Math.min(w,h);
                 else if(mode==Mode.HORIZONTAL){
                     h=Math.min(h,w/1.8f);w=Math.min(getWidth()-crop.left,h*1.8f);
+                }else if(mode==Mode.VERTICAL){
+                    w=Math.min(w,h/1.8f);h=Math.min(getHeight()-crop.top,w*1.8f);
                 }
                 crop.right=crop.left+w;crop.bottom=crop.top+h;
             }
