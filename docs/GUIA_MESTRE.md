@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT335 — QA de gestos e inspeção dos 68 sprites (14/11/2026; publicação pendente)
+
+- O proprietário enviou duas capturas e um vídeo mostrando ruptura do braço ao usar Pokébola/celular. A correção LT335 substitui os recortes rígidos do compositor LT334 por `EduSpritePoseComposer.java`, desenhando braços/mãos conectados e objeto independente sobre o corpo/cabeça/óculos/pés canônicos #42; somente frames 0–3 e 63–64 são compostos; 62 outros índices e fontes 512 continuam intocados, sem blur/warp.
+- `EduSpriteInspector.java` oferece **◀️ 👬 ▶️ fora da sprite**, navegação manual em 68 quadros, comparação lado a lado com #42, segurar 👬 para retomar modo automático e opção em Ajustes para ocultar controles. `EduSpriteGuideView.java` mostra ou oculta linhas-guia (ocultas por padrão) de cabeça/óculos/mãos/pés; `EduSpriteMeasurements.java` mostra diferenças estimadas de largura/altura, não diagnóstico automático de defeito.
+- Código, documentação e testes detalhados em `docs/LT335_EDU_INSPECAO_GUIAS_GESTOS_20261114.md` e `app/tests/lt335-edu-inspecao-68-guias-gestos.test.js`. A versão pública anterior confirmada é **LT334 · 0.03.33 · code 54539**; proposta de nova release **LT335 · 0.03.34 · code 54540 · label 51338** somente após CI e confirmação de APK assinado público. Não alegar inspeção real Samsung ou remasterização das 68 fontes.
+
 ## LT333 OFICIAL — Edu: nitidez original 512px restaurada (13/11/2026)
 
 - **Release pública:** `LT333 · 0.03.32 · versionCode 54538 · label 51336`. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.32-54538) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.32-54538/PokeSearch-v0.03.32-LT.apk), **46.622.532 bytes**, SHA-256 `fc1fbadbbbae9511253432b687a18f122bee07093132068cacab02fc6195d7fb`. Workflow protegido [#43422048343](https://github.com/LucianoToscano/PokeSearch/actions/runs/43422048343) **completed/success**, fonte exata `0bff545f7756a875959be1f29d1601f6599b9d61`, certificado permanente Android v2 SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Validado certificado, 68 PNGs e hash público.
