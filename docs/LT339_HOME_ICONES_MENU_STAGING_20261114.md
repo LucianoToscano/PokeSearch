@@ -67,3 +67,12 @@ Todos os 6 SHA-256 acima identificam os PNGs fornecidos diretamente pelo respons
 - Contratos Node existentes `pgs-buscas-contracts.test.js`, `lt123-sprites-stats-home.test.js` e `lt339-home-icons-drawer-contract.test.js` atualizados para os novos recursos/estados e os hashes de origem.
 - Sem workflow Android ou release disparado; **compilação integral Android e teste visual/físico Samsung permanecem pendentes**. Não alegar homologação de gestos ou status de mapa sem aparelho.
 - **Não publicar ainda.** Aguardar as próximas mudanças nesta mesma LT339 até autorização explícita do usuário para gerar APK e lançar a versão.
+
+
+## Capturas de tela em PoGoCoordinates · Perfil (14/11/2026)
+
+- **Solicitação Samsung:** a tela "PoGoCoordinates · Perfil" exibia a mensagem Android "Este aplicativo não permite capturas de tela." A causa no PokeSearch é o `FLAG_SECURE` imposto à janela `loginDialog` em `MainActivity.java` (antes de mostrar e depois de `show()`), também no modo de gerenciamento de conta.
+- **Implementação na branch LT339:** `ProfileScreenshotPolicy` permite captura apenas com `loginPurpose="manage"`, carregamento concluído sem erro e URL `https://pogocoordinates.com/profile` (query e fragmento admitidos). Em `onPageFinished`, a proteção é removida somente se a URL final ainda corresponde à do WebView. Em `onPageStarted`, navegação SPA para fora, falha HTTP principal ou falha de rede, o `FLAG_SECURE` é restabelecido. Login Google/Discord, OAuth, pesquisa, outras origens, HTTP e URLs suspeitas permanecem protegidos. Ao sair, o estado é limpo.
+- **Testes:** `ProfileScreenshotPolicyTest.java` contém 17 cenários Java puros, positivos e negativos; `lt339-profile-screenshot-contract.test.js` valida a integração com a Activity. Os 17 cenários Java passaram localmente com javac 21, sem Gradle. Teste real de captura no Samsung continua pendente.
+- **Privacidade:** screenshots do Perfil podem incluir e-mail, treinador e outros identificadores; compartilhar somente com consentimento e após ocultar dados pessoais. Não exportar cookies, tokens ou senha pelo PokeSearch.
+- **Sem APK e sem merge:** o pedido de continuar acumulando alterações na LT339 permanece. A release oficial ainda é LT338. Nenhuma alteração em assinatura permanente, permissões, contas ou serviço de Overlay.
