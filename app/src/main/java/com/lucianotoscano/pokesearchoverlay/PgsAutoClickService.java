@@ -302,6 +302,45 @@ public final class PgsAutoClickService extends AccessibilityService {
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
         status("PARADO");
     }
+    public static void closeHand(){
+        PgsAutoClickService live=instance;
+        if(live!=null)live.handler.post(live::removeHand);
+    }
+    public static void activateFromHome(){
+        PgsAutoClickService live=instance;
+        if(live==null)return;
+        live.handler.post(()->{
+            live.showBubble();
+            live.armedByHome=true;
+            live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",true).apply();
+            if(live.isGameVisible())live.startArmedSearch();
+        });
+    }
+    /** A Home reflete se a bolha está visível, independente da varredura. */
+    public static boolean isOverlayVisible(){
+        PgsAutoClickService live=instance;
+        return live!=null&&live.bubble!=null&&
+            live.bubble.getVisibility()==View.VISIBLE;
+    }
+    public static void modelsChanged(){
+        PgsAutoClickService live=instance;
+        if(live!=null)live.handler.post(()->{
+            if(live.running)live.halt("PARADO");
+            live.reloadDetector();
+            live.status("PARADO");
+        });
+    }
+    public static String searchStatus(){
+        PgsAutoClickService live=instance;
+        if(live==null)return "Acessibilidade desligada";
+        if(live.running&&!live.isGameVisible())return "Abra PGSharp";
+        if(live.running&&live.awaitingMap)return "Aguardando mapa";
+        if(live.running)return "Procurando ícones";
+        if(live.pausedByError)return "Erro · verificar acesso";
+        if(live.pausedByShiny)return "Shiny confirmado";
+        return "Parado";
+    }
     private void removeHand(){
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
