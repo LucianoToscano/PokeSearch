@@ -46,6 +46,36 @@ final class HomeMenuIconPack {
         if(bitmap!=null)cache.put(key,bitmap);
         return bitmap;
     }
+    /** Equaliza as áreas visíveis SEM reduzir, recortar ou recomprimir os PNG 512px. */
+    static void fitVisibleArtwork(android.widget.ImageView view,Bitmap image){
+        if(view==null||image==null||image.isRecycled())return;
+        view.setScaleType(android.widget.ImageView.ScaleType.MATRIX);
+        view.post(()->{
+            if(image.isRecycled()||!(view.getDrawable() instanceof
+                    android.graphics.drawable.BitmapDrawable))return;
+            Bitmap shown=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+            if(shown!=image)return; // Evitar hover atrasado substituindo outro estado.
+            int w=view.getWidth(),h=view.getHeight();
+            if(w<=0||h<=0)return;
+            int l=image.getWidth(),t=image.getHeight(),r=0,b=0;
+            // Examinar somente alpha; dados originais não são modificados.
+            final int step=2, alphaThreshold=20;
+            for(int y=0;y<image.getHeight();y+=step)
+                for(int x=0;x<image.getWidth();x+=step)
+                    if(android.graphics.Color.alpha(image.getPixel(x,y))>alphaThreshold){
+                        if(x<l)l=x;if(x>r)r=x;
+                        if(y<t)t=y;if(y>b)b=y;
+                    }
+            if(r<l||b<t){view.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);return;}
+            float width=Math.max(1,r-l+1),height=Math.max(1,b-t+1);
+            float scale=Math.min((w*.94f)/width,(h*.94f)/height);
+            android.graphics.Matrix matrix=new android.graphics.Matrix();
+            matrix.setScale(scale,scale);
+            matrix.postTranslate(w*.5f-(l+r)*.5f*scale,
+                h*.5f-(t+b)*.5f*scale);
+            view.setImageMatrix(matrix);
+        });
+    }
     private static void load(Context context){
         for(int i=1;i<=5;i++){
             String file="menu_icons_512_"+i+".zip";
