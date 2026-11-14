@@ -36,7 +36,7 @@ for(const state of ["off","on"]){
 }
 // Account badges 12dp over ball, no large card; only verified account display.
 assert.match(activity,/pokeballLoginBadges=new ImageView\[2\]/);
-assert.match(activity,/d\(12\),d\(12\),Gravity\.CENTER/);
+assert.match(activity,/d\(12\),d\(12\),Gravity\.BOTTOM\|Gravity\.CENTER_HORIZONTAL/);
 assert.match(activity,/showCompactAccountNames\(loginHotspot,which==1\)/);
 assert.match(activity,/login_modo_claro/);
 assert.match(activity,/login_modo_escuro/);
