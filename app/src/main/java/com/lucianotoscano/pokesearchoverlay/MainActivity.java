@@ -2133,19 +2133,13 @@ public class MainActivity extends Activity {
     private void refreshHomeOverlay(){
         if(raidAssistantControl!=null){
             boolean active=RaidDayAssistantOverlayService.isRunning();
-            raidAssistantControl.setBackground(homeSurface(
-                active?Color.rgb(18,94,82):
-                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),
-                10,0));
+            raidAssistantControl.setBackground(null);
             raidAssistantControl.setContentDescription(active?
                 "Desativar Edu · Assistente do Dia de Reides":"Ativar Edu · Assistente do Dia de Reides");
         }
         if(rareCandyControl!=null){
             boolean active=RareCandyOverlayService.isRunning();
-            rareCandyControl.setBackground(homeSurface(
-                active?Color.rgb(18,94,82):
-                homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),
-                10,0));
+            rareCandyControl.setBackground(null);
             rareCandyControl.setContentDescription(active?
                 "Desativar overlay Doce Raro":"Ativar overlay Doce Raro");
         }
