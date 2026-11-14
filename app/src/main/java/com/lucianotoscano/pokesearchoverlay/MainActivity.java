@@ -2184,8 +2184,10 @@ public class MainActivity extends Activity {
         if(PgsAutoClickService.isOverlayVisible()){
             PgsAutoClickService.closeHand();
         }else if(PgsAutoClickService.instance!=null){
-            PgsAutoClickService.restoreBubble();
+            PgsAutoClickService.activateFromHome();
         }else{
+            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",true).apply();
             Toast.makeText(this,"Ative PokeSearch · Buscas Auto em Acessibilidade. "+
                 "A bolha aparecerá automaticamente.",Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
