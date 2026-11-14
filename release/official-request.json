@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.38",
-  "code": 54545,
-  "label": 51342,
-  "previous_tag": "v0.03.37-54544",
-  "qa_max_code": 54544,
-  "release_notes": "PokeSearch LT339 (0.03.38): cadastro de Lucario/ícones PGS com captura guiada ao abrir o feed, recarga imediata do modelo e correção do fluxo de pesquisa. Busca automática: mapa até 60 s, confirmação de mapa/PokéStops por sinais visuais, espera de 2 s para alerta Shiny da mesma espécie e avanço ao próximo ícone; nova leitura de feed vazio em 3 s. Removidos tempos/reinício redundantes da interface. Notificações do PGS independentes das Pokébolas 1 e 2. Home reorganizada com novos ícones ON/OFF, Weather, modo Claro/Escuro, Conta e estatísticas no menu lateral, Doce Raro compacto, compartilhamento no cabeçalho, popup PGS compacto e captura autorizada do Perfil PoGoCoordinates. Artes PNG/WebP originais preservadas; sem redução de resolução, assinatura permanente e dados preservados. PGSharp e Shiny exigem validação real no Samsung, issue #350; o PGS continua opt-in pela Acessibilidade Android. Atualizador oficial requer confirmação de instalação no Android."
+  "version": "0.03.39",
+  "code": 54546,
+  "label": 51343,
+  "previous_tag": "v0.03.38-54545",
+  "qa_max_code": 54545,
+  "release_notes": "PokeSearch LT341 (0.03.39): LT340/341 corrigem fluxo de busca do PGS, captura de imagem do feed em múltiplas escalas, detecção de jogo em primeiro plano e confirmação do gesto Android com erro explícito em caso de falha; modelo de Lucario com prévia e exclusão, ordenação de prioridade determinística. Home ativa diretamente PGS pelo ícone ON/OFF, usa Pokébolas WebP originais ON/OFF e badges de login 12dp claro/escuro/sem login sobre P1/P2, popover compacto de contas, logo em proporção 3:1, ícones sem fundo e compartilhar contrastante. Overlays PGS no porte de P1/P2 com centro natural branco sem efeito, verde pulsante na espera, vermelho em erro; notificações compactas com sino/risco equivalentes e independentes. Login PoGoCoordinates reforçado com detecção de sessão separada de treinador, perfil público e avatar validado, retry de hidratação sem remover proteções OAuth. Rank Geral separa Dex pequeno junto ao nome do rank direito. Doce Raro X encerra serviço. Edu inspetor: ◀ ⏯ 🎦 ▶ 👬 📐 ❌ e Auto/# com comparação e guias. Lixeiras PNG branca/preta originais preservadas. Não reduz pixels nem remove funções; assinatura permanente/ZIP/R8/SHA e atualizador sujeitos ao workflow protegido. PGSharp toque/teleporte/Shiny e OAuth reais dependem de Samsung (issue #350) — QA automatizado não comprova uso físico."
 }
