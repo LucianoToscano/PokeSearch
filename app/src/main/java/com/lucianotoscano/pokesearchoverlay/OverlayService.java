@@ -773,7 +773,7 @@ public class OverlayService extends Service {
     // Display-only preferences: they must never change remote search filters.
     private boolean resultShowName=false,resultShowNumber=false,resultShowGender=false,
         resultShowSize=false,resultShowForm=false,resultShowMoves=false,
-        resultShowLocation=false,resultShowDistance=true,resultShowShiny=false,
+        resultShowLocation=false,resultShowDistance=false,resultShowShiny=false,
         resultShowHighlights=false;
     private boolean resultShowCount=false,resultShowCp=false,resultShowLevel=false,
         resultShowOverallRank=false,resultShowSpeciesIvRank=false,resultShowRawIv=false,
@@ -5910,7 +5910,7 @@ public class OverlayService extends Service {
         resultShowForm=prefs.getBoolean("resultShowForm",false);
         resultShowMoves=prefs.getBoolean("resultShowMoves",false);
         resultShowLocation=prefs.getBoolean("resultShowLocation",false);
-        resultShowDistance=prefs.getBoolean("resultShowDistance",true);
+        resultShowDistance=prefs.getBoolean("resultShowDistance",false);
         resultShowShiny=prefs.getBoolean("resultShowShiny",false);
         // LT326: never inherit the auto-visible LT325 diamonds on upgrade.
         // Only an explicit opt-in via Info Pokémon can show list markers.
