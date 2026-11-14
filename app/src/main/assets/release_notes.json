@@ -3933,6 +3933,37 @@
           "Ícones ON/OFF da mão continuam provisórios até encontrar os PNGs originais."
         ]
       }
+    },
+    {
+      "id": "lt339-home-lucario-pgs-cycle-20261114",
+      "minVersionCode": 54545,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.38 — Buscar Pokémon automático e Home reorganizada",
+      "sections": {
+        "novidades": [
+          "Home com novas Pokébolas ON/OFF, Buscas Pokémon, Weather e ícones Claro/Escuro; Compartilhar junto de Apoiar e nova aba Conta no menu lateral.",
+          "Buscar Pokémon: captura guiada do ícone no feed PGSharp, com modelo salvo/recarregado antes da busca.",
+          "Menu flutuante Buscar Pokémon compacto; notificações próprias independentes das Pokébolas 1 e 2."
+        ],
+        "melhorias": [
+          "Ciclo de mapa: até 60 segundos de carregamento com indícios de PokéStops e estabilidade; depois 2 segundos para avaliar aviso Shiny da espécie selecionada.",
+          "Sem ícones no feed, busca novamente em 3 segundos; sequência automática sem botões de repetição e reinício redundantes.",
+          "Notificações PGS de novos ícones, alvo selecionado e Shiny com sons independentes, teste por categoria e vibração configurável.",
+          "Doce Raro menor e estatísticas/agradecimentos/compartilhamento reorganizados sem perder funções.",
+          "Permite captura de tela apenas na página oficial PoGoCoordinates Perfil carregada, preservando bloqueio em logins OAuth."
+        ],
+        "correcoes": [
+          "Corrigido cadastro que antes só marcava o Pokémon pendente sem iniciar a captura. Ao abrir o feed do PGSharp, a seleção do ícone aparece para toque e é salva no detector.",
+          "Adicionado watchdog de 60 segundos mesmo se o Android não entregar frame; corrigido ciclo de buscas travado após esgotar posições.",
+          "Alertas Shiny não pausam por espécie diferente ou aviso genérico sem identificação do Pokémon.",
+          "Corrigidas extensões de artes WebP lossless anteriormente nomeadas .png, com recursos Android válidos sem reduzir pixels."
+        ],
+        "emDesenvolvimento": [
+          "O reconhecimento do feed, o carregamento do mapa/PokéStops e a detecção de Shiny por notificações continuam experimentais e dependem de confirmação física no Samsung (issue #350).",
+          "Um mapa com PokéStops visíveis não garante que todos os Pokémon 3D terminaram de aparecer. Avisos Shiny sem nome da espécie não são considerados confirmação.",
+          "Ativação de Acessibilidade é opt-in. O Android precisa autorizar a instalação da atualização; não há instalação silenciosa."
+        ]
+      }
     }
   ]
 }
