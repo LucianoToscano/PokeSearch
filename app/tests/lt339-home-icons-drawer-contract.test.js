@@ -57,6 +57,7 @@ assert.match(pgs,/busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off/
 assert.match(pgs,/PgsAutoVisualState\.RESULT_ART_DP/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
 assert.match(pgs,/coreIndicator\.startAnimation\(pulse\)/);
+assert.match(pgs,/coreIndicator\.setVisibility\(View\.GONE\)/);
 assert.doesNotMatch(pgs,/searchPulseActive|R\.drawable\.pgs_hand_/);
 assert.match(visual,/TOUCH_DP=44/);
 assert.match(visual,/RESULT_SLOT_WIDTH_DP=35/);
@@ -71,7 +72,9 @@ assert.match(java,/overlayControl.setImageResource\(on\?R.drawable.home_pokeball
 assert.match(java,/secondaryOverlayControl.setImageResource\(secondaryOn\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
 assert.match(java,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_off/);
 assert.match(java,/R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off/);
-assert.match(java,/PgsAutoClickService.isSearchActive\(\)/);
+assert.match(java,/PgsAutoClickService.isOverlayVisible\(\)/);
+assert.match(java,/v->toggleHomePgsOverlay\(\)/);
+assert.doesNotMatch(java,/PgsBuscasPanel\.show\(this\)/);
 assert.match(java,/pgsHomeStateHandler.removeCallbacks\(pgsHomeStateTick\)/);
 assert.match(java,/addHomePreviewIcon\(dualOverlayRow,R.drawable.home_weather,"Weather"\)/);
 assert.match(java,/homeThemeButton=makeIcon\(homeLightMode\?\s*R.drawable.home_mode_dark:R.drawable.home_mode_light/);

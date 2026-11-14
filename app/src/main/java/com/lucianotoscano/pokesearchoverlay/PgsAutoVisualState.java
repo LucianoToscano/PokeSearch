@@ -25,24 +25,13 @@ final class PgsAutoVisualState {
         if(pausedByError
             ||label.startsWith("SEM CAPTURA")
             ||label.startsWith("SEM MODELO")
-            ||label.startsWith("TEMPO ESGOTADO")
             ||label.startsWith("ERRO")
             ||label.startsWith("FALHA")){
             return Core.RED;
         }
         if(!running)return Core.WHITE;
-        if(awaitingMap
-            ||label.startsWith("LENDO TELA")
-            ||label.startsWith("ANALISANDO")
-            ||label.startsWith("PROCURANDO")
-            ||label.startsWith("CONFIRMANDO")
-            ||label.startsWith("RELENDO")
-            ||label.startsWith("REBUSCAR")
-            ||label.startsWith("AGUARDANDO")
-            ||label.startsWith("CARREGANDO")
-            ||label.startsWith("ESPERA")
-            ||label.startsWith("MAPA VISÍVEL")
-            ||label.startsWith("MAPA VISIVEL")){
+        // Verde somente enquanto o mapa/objetos estão carregando.
+        if(awaitingMap){
             return Core.GREEN;
         }
         return Core.WHITE;

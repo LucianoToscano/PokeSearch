@@ -29,6 +29,7 @@ import android.view.WindowManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import java.io.File;
@@ -74,8 +75,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
     private boolean awaitingMap=false;
+    private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
-    private String teachingTarget="";
     private boolean isGameVisible(){
         return "com.nianticlabs.pokemongo".equals(foreground)||
             foreground.contains("pgsharp");
@@ -85,6 +86,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return;
         live.handler.post(()->{
+            if(live.running)live.halt("CADASTRANDO");
             PgsAutoTemplateStore.startTeaching(live,species);
             live.queueTeachingWhenReady();
         });
@@ -151,17 +153,34 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
+        armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+            .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
+        if(armedByHome&&isGameVisible())startArmedSearch();
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if(event.getPackageName()!=null &&
-            event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED){
-            foreground=event.getPackageName().toString();
-            // Fecha o fluxo Home -> feed -> selecionar sprite sem outro menu oculto.
-            if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
-                queueTeachingWhenReady();
-        }
+        if(event==null||event.getPackageName()==null)return;
+        int type=event.getEventType();
+        if(type!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            type!=AccessibilityEvent.TYPE_WINDOWS_CHANGED)return;
+        String pkg=event.getPackageName().toString();
+        // Acessibilidade pode anunciar NOSSA bolha como janela superior.
+        // Nunca sobrescrever o jogo por causa dos menus do próprio PokeSearch.
+        if(pkg.equals(getPackageName()))return;
+        foreground=pkg;
+        if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
+            queueTeachingWhenReady();
+        else if(isGameVisible()&&armedByHome)startArmedSearch();
+    }
+    private void startArmedSearch(){
+        if(!armedByHome||running||teachingInProgress||
+            !PgsAutoTemplateStore.pending(this).isEmpty())return;
+        armedByHome=false;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("armFromHome",false).apply();
+        if(!reloadDetector()){status("SEM MODELO");return;}
+        toggle();
     }
     @Override public void onInterrupt() {halt("INTERRUPÇÃO");}
     @Override public void onDestroy() {
@@ -208,6 +227,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         coreBackground.setColor(Color.WHITE);
         coreBackground.setStroke(dp(1),0xFFC4CFDB);
         coreIndicator.setBackground(coreBackground);
+        coreIndicator.setVisibility(View.GONE); // Branco natural da imagem: nunca cobrir.
         FrameLayout.LayoutParams coreLp=new FrameLayout.LayoutParams(
             dp(PgsAutoVisualState.CORE_DP),dp(PgsAutoVisualState.CORE_DP),Gravity.CENTER);
         iconSlot.addView(coreIndicator,coreLp);
@@ -223,9 +243,9 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void teach(String species){
                 requestTeaching(species);
             }
-            @Override public void retryNow(){restartSession();}
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
+            @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -283,24 +303,49 @@ public final class PgsAutoClickService extends AccessibilityService {
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
         status("PARADO");
     }
-    public static void restartSearch(){
-        PgsAutoClickService service=instance;
-        if(service!=null)service.handler.post(service::restartSession);
-    }
     public static void closeHand(){
-        PgsAutoClickService service=instance;
-        if(service!=null)service.handler.post(service::removeHand);
+        PgsAutoClickService live=instance;
+        if(live!=null)live.handler.post(live::removeHand);
     }
-    private void restartSession(){
-        emptyRetries=0;lastNoIconScan=0;visitedSlots.clear();notifiedFeedSlots.clear();
-        nextIndex=0;total=0;awaitingMap=false;
-        ++ticket;
-        if(!running){toggle();return;}
-        if(!reloadDetector()){fail("Nenhum modelo visual ativo para reiniciar.");return;}
-        status("REINICIANDO");
-        handler.postDelayed(this::scanAndTap,350L);
+    public static void activateFromHome(){
+        PgsAutoClickService live=instance;
+        if(live==null)return;
+        live.handler.post(()->{
+            live.showBubble();
+            live.armedByHome=true;
+            live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",true).apply();
+            if(live.isGameVisible())live.startArmedSearch();
+        });
+    }
+    /** A Home reflete se a bolha está visível, independente da varredura. */
+    public static boolean isOverlayVisible(){
+        PgsAutoClickService live=instance;
+        return live!=null&&live.bubble!=null&&
+            live.bubble.getVisibility()==View.VISIBLE;
+    }
+    public static void modelsChanged(){
+        PgsAutoClickService live=instance;
+        if(live!=null)live.handler.post(()->{
+            if(live.running)live.halt("PARADO");
+            live.reloadDetector();
+            live.status("PARADO");
+        });
+    }
+    public static String searchStatus(){
+        PgsAutoClickService live=instance;
+        if(live==null)return "Acessibilidade desligada";
+        if(live.running&&!live.isGameVisible())return "Abra PGSharp";
+        if(live.running&&live.awaitingMap)return "Aguardando mapa";
+        if(live.running)return "Procurando ícones";
+        if(live.pausedByError)return "Erro · verificar acesso";
+        if(live.pausedByShiny)return "Shiny confirmado";
+        return "Parado";
     }
     private void removeHand(){
+        armedByHome=false;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("armFromHome",false).apply();
         halt("FECHADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(bubble!=null&&windowManager!=null){
@@ -324,23 +369,25 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void setCoreState(PgsAutoVisualState.Core next){
         if(coreIndicator==null||coreBackground==null||currentCore==next)return;
-        // Só o miolo da Pokébola pisca. Não escurecer nem piscar a arte inteira.
+        // Branco não é pintado por cima: preservar a bola branca original,
+        // sem retângulo, contorno ou animação de alpha sobre ela.
         coreIndicator.clearAnimation();
+        if(next==PgsAutoVisualState.Core.WHITE){
+            coreIndicator.setVisibility(View.GONE);
+            currentCore=next;return;
+        }
+        coreIndicator.setVisibility(View.VISIBLE);
         int color=next==PgsAutoVisualState.Core.GREEN?0xFF38E18D:
             next==PgsAutoVisualState.Core.RED?0xFFFF515B:Color.WHITE;
         coreBackground.setColor(color);
         coreBackground.setStroke(dp(1),next==PgsAutoVisualState.Core.WHITE?
             0xFFC4CFDB:Color.WHITE);
-        if(next!=PgsAutoVisualState.Core.WHITE){
-            android.view.animation.AlphaAnimation pulse=
-                new android.view.animation.AlphaAnimation(.22f,1f);
-            pulse.setDuration(PgsAutoVisualState.PULSE_MS);
-            pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
-            pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
-            coreIndicator.startAnimation(pulse);
-        }else{
-            coreIndicator.setAlpha(1f);
-        }
+        android.view.animation.AlphaAnimation pulse=
+            new android.view.animation.AlphaAnimation(.22f,1f);
+        pulse.setDuration(PgsAutoVisualState.PULSE_MS);
+        pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
+        pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
+        coreIndicator.startAnimation(pulse);
         currentCore=next;
     }
     private void status(String value){
@@ -588,6 +635,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         Path path=new Path();path.moveTo(x,y);
         GestureDescription gesture=new GestureDescription.Builder()
             .addStroke(new GestureDescription.StrokeDescription(path,0,90)).build();
+        final int gestureTicket=ticket;
         boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
             @Override public void onCompleted(GestureDescription g){handler.post(()->{
                 if(!running||index!=nextIndex)return;
@@ -612,6 +660,10 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void onCancelled(GestureDescription g){handler.post(()->fail("Toque cancelado pelo Android."));}
         },null);
         if(!accepted)fail("O Android não autorizou o toque de Acessibilidade.");
+        else handler.postDelayed(()->{
+            if(running&&!awaitingMap&&ticket==gestureTicket)
+                fail("O Android não confirmou o toque. Confira Acessibilidade e PGSharp.");
+        },3500L);
     }
 
     private void checkMap(int stamp){
@@ -743,6 +795,35 @@ public final class PgsAutoClickService extends AccessibilityService {
         photo.setImageBitmap(screenshot);
         photo.setScaleType(ImageView.ScaleType.FIT_XY);
         picker.addView(photo,new FrameLayout.LayoutParams(-1,-1));
+        // O tamanho é em pixels da imagem padronizada (740 de largura).
+        // O usuário escolhe o tamanho REAL do ícone, não 68x52 fixos.
+        final int[] refSize={32};
+        LinearLayout presets=new LinearLayout(this);
+        presets.setGravity(Gravity.CENTER);
+        presets.setPadding(dp(6),dp(5),dp(6),dp(5));
+        presets.setBackgroundColor(0xDD101720);
+        TextView sizeLabel=new TextView(this);
+        sizeLabel.setTextColor(Color.WHITE);
+        sizeLabel.setTextSize(12);
+        sizeLabel.setText("Recorte: 32 px");
+        presets.addView(sizeLabel,new LinearLayout.LayoutParams(0,dp(42),1));
+        final int[] sizes={24,32,44};
+        for(int val:sizes){
+            Button preset=new Button(this);
+            preset.setAllCaps(false);preset.setText(val+"px");preset.setTextSize(11);
+            preset.setMinWidth(0);preset.setMinimumWidth(0);
+            preset.setPadding(dp(2),0,dp(2),0);
+            LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(dp(69),dp(42));
+            presets.addView(preset,pl);
+            preset.setOnClickListener(v->{
+                refSize[0]=val;
+                sizeLabel.setText("Recorte: "+val+" px");
+            });
+        }
+        FrameLayout.LayoutParams selectors=new FrameLayout.LayoutParams(
+            -1,dp(52),Gravity.TOP);
+        selectors.topMargin=dp(36);
+        picker.addView(presets,selectors);
         photo.setOnTouchListener((v,event)->{
             if(event.getAction()!=MotionEvent.ACTION_UP)return true;
             int x=Math.round(event.getX()*screenshot.getWidth()/Math.max(1,v.getWidth()));
@@ -750,29 +831,35 @@ public final class PgsAutoClickService extends AccessibilityService {
             // Permite ensinar um ícone pequeno em QUALQUER ponto da tela.
             if(x<0||y<0||x>=screenshot.getWidth()||y>=screenshot.getHeight())return true;
             try {
-                // O ícone será ajustado à resolução de referência (740px de largura).
-                int rw=Math.max(20,Math.round(PgsAutoTemplateStore.WIDTH*screenshot.getWidth()/740f));
-                int rh=Math.max(18,Math.round(PgsAutoTemplateStore.HEIGHT*screenshot.getWidth()/740f));
+                int ref=refSize[0];
+                int rw=Math.max(16,Math.round(ref*screenshot.getWidth()/740f));
+                int rh=rw; // Ícones pequenos: preservar o quadrado, sem esticar.
                 rw=Math.min(rw,screenshot.getWidth());rh=Math.min(rh,screenshot.getHeight());
                 int left=Math.max(0,Math.min(screenshot.getWidth()-rw,x-rw/2));
                 int top=Math.max(0,Math.min(screenshot.getHeight()-rh,y-rh/2));
                 Bitmap piece=Bitmap.createBitmap(screenshot,left,top,rw,rh);
-                Bitmap model=Bitmap.createScaledBitmap(piece,PgsAutoTemplateStore.WIDTH,PgsAutoTemplateStore.HEIGHT,true);
-                try { PgsAutoTemplateStore.saveSample(this,name,model); }
+                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
+                try { PgsAutoTemplateStore.saveSample(this,name,model,ref,ref); }
                 finally {if(piece!=model)piece.recycle();model.recycle();}
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();
                 boolean loaded=reloadDetector();
                 status(loaded?"PARADO":"SEM MODELO");
                 Toast.makeText(this,
-                    loaded?name+" gravado e pronto para buscar!":
-                        name+" salvo. Verifique se está selecionado na lista.",
+                    loaded?name+" gravado. Iniciando a busca no feed...":
+                        name+" salvo. Verifique se está selecionado na lupa.",
                     Toast.LENGTH_LONG).show();
+                // O usuário já escolheu o Pokémon e tocou a amostra: não
+                // exigir mais um botão oculto para iniciar o primeiro gesto.
+                if(loaded&&isGameVisible()&&!running)
+                    handler.postDelayed(()->{
+                        if(!running&&isGameVisible())toggle();
+                    },350L);
             }catch(Exception e){showReason("Não foi possível salvar o ícone: "+e.getMessage());}
             return true;
         });
         TextView help=new TextView(this);
-        help.setText("Toque no CENTRO do ícone de "+name+" no feed do PGSharp. Não toque no Pokémon 3D.");
+        help.setText("Escolha 24/32/44 px e toque no centro da IMAGEM de "+name+" no feed. Evite pegar o fundo.");
         help.setTextColor(Color.WHITE);help.setTextSize(13);
         help.setBackgroundColor(Color.rgb(22,73,93));help.setPadding(dp(10),dp(8),dp(10),dp(8));
         FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
@@ -925,6 +1012,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             String mode=PgsAutoNotificationPolicy.mode(kind,
                 prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
             int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
+            if("off".equals(mode))return; // OFF não gera notificação nem som.
             if("custom".equals(mode)&&(index<0||index>=PokeSoundLibrary.size()))
                 mode="default"; // Não criar canal sem som por índice corrompido.
             String channelId=PgsAutoNotificationPolicy.channelId(kind,mode,index);

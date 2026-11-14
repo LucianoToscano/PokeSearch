@@ -18,7 +18,7 @@ final class PgsAutoNotificationPolicy {
     static String mode(String kind,String value){
         if(!validKind(kind))return "mute";
         if("default".equals(value)||"strong".equals(value)||
-            "mute".equals(value)||"custom".equals(value))return value;
+            "mute".equals(value)||"off".equals(value)||"custom".equals(value))return value;
         return defaultMode(kind);
     }
     static String channelId(String kind,String mode,int soundIndex){

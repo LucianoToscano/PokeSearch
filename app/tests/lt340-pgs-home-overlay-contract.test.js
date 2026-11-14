@@ -1,0 +1,57 @@
+"use strict";
+const fs=require("node:fs"),assert=require("node:assert/strict");
+const root="app/src/main/java/com/lucianotoscano/pokesearchoverlay/";
+const read=x=>fs.readFileSync(root+x+".java","utf8");
+const main=read("MainActivity"),service=read("PgsAutoClickService"),
+ menu=read("PgsAutoMenus"),models=read("PgsAutoTemplateStore"),
+ detector=read("PgsAutoIconDetector"),visual=read("PgsAutoVisualState"),
+ policy=read("PgsAutoNotificationPolicy"),
+ accessibility=fs.readFileSync("app/src/main/res/xml/pgs_auto_accessibility_config.xml","utf8");
+assert.match(main,/v->toggleHomePgsOverlay\(\)/);
+assert.match(main,/private void toggleHomePgsOverlay\(\)/);
+assert.match(main,/PgsAutoClickService\.isOverlayVisible\(\)/);
+assert.match(main,/PgsAutoClickService\.closeHand\(\)/);
+assert.match(main,/PgsAutoClickService\.activateFromHome\(\)/);
+assert.match(service,/public static void activateFromHome\(\)/);
+assert.match(service,/startArmedSearch\(\)/);
+assert.match(service,/armFromHome/);
+assert.doesNotMatch(main,/PgsBuscasPanel\.show\(/);
+assert.equal(fs.existsSync(root+"PgsBuscasPanel.java"),false);
+assert.match(service,/public static boolean isOverlayVisible\(\)/);
+assert.match(service,/TYPE_WINDOWS_CHANGED/);
+assert.match(service,/if\(pkg\.equals\(getPackageName\(\)\)\)return/);
+assert.match(accessibility,/typeWindowStateChanged\|typeWindowsChanged/);
+assert.match(service,/coreIndicator\.setVisibility\(View\.GONE\)/);
+assert.match(service,/coreIndicator\.setVisibility\(View\.VISIBLE\)/);
+assert.match(service,/next==PgsAutoVisualState\.Core\.WHITE/);
+assert.match(service,/R\.drawable\.busca_pokemon_overlay_on:R\.drawable\.busca_pokemon_overlay_off/);
+assert.match(visual,/RESULT_ART_DP=21/);
+assert.match(visual,/CORE_DP=7/);
+assert.match(visual,/PULSE_MS=850L/);
+assert.match(visual,/if\(awaitingMap\)/);
+assert.doesNotMatch(visual,/label\.startsWith\("PROCURANDO"\)/);
+assert.match(service,/int\[\] sizes=\{24,32,44\}/);
+assert.match(service,/refSize\[0\]=val/);
+assert.match(service,/PgsAutoTemplateStore\.saveSample\(this,name,model,ref,ref\)/);
+assert.match(service,/if\(loaded&&isGameVisible\(\)&&!running\)/);
+assert.match(service,/gestureTicket=ticket/);
+assert.match(models,/referenceWidth/);
+assert.match(models,/optInt\("referenceWidth",WIDTH\)/);
+assert.match(models,/refWidth<16\|\|refWidth>92/);
+assert.match(models,/model\.referenceWidth,model\.referenceHeight/);
+assert.match(detector,/modelCount=selected\.size\(\)/);
+assert.match(detector,/new float\[\]\{\.76f,\.88f,1f,1\.12f,1\.24f\}/);
+assert.match(menu,/showModelActions\(/);
+assert.match(menu,/showAllModels\(/);
+assert.match(menu,/PgsAutoTemplateStore\.delete\(context,model\.id\)/);
+assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,-1\)/);
+assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,1\)/);
+assert.match(menu,/mount\(root,138,292\)/);
+assert.match(menu,/R\.drawable\.pgs_speaker_on/);
+assert.match(menu,/R\.drawable\.pgs_speaker_silent/);
+assert.match(menu,/R\.drawable\.pgs_speaker_off/);
+assert.match(menu,/getSharedPreferences\("pgs_auto_settings_v1",Context\.MODE_PRIVATE\)/);
+assert.match(policy,/off/);
+assert.match(service,/if\("off"\.equals\(mode\)\)return/);
+assert.doesNotMatch(menu,/Como funciona:|Configuração independente da Pokébola|Toque para selecionar\. Ícones novos/);
+console.log("LT340: Home, ícones, mini menus, imagens, prioridade e comportamento testados estaticamente");
