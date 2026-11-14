@@ -234,9 +234,11 @@ public final class PokemonPicker {
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setPadding(dp(activity,6),dp(activity,2),dp(activity,6),dp(activity,2));
                 android.graphics.drawable.GradientDrawable rowBg=new android.graphics.drawable.GradientDrawable();
-                rowBg.setColor(Color.argb(225,43,48,57));
+                // Never stack an opaque gray row over the slider-controlled
+                // translucent Favorites panel: the background belongs to root.
+                rowBg.setColor(Color.TRANSPARENT);
                 rowBg.setCornerRadius(dp(activity,7));
-                rowBg.setStroke(dp(activity,1),Color.argb(78,190,201,215));
+                rowBg.setStroke(dp(activity,1),Color.argb(42,235,239,245));
                 row.setBackground(rowBg);
                 holder.picture=new ImageView(activity);
                 holder.picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -305,10 +307,9 @@ public final class PokemonPicker {
             blurRadius=Math.max(0,Math.min(16,prefs.optInt("menuBlur",4)));
             lightMenu="light".equals(prefs.optString("menuBgMode","dark"));
         }catch(org.json.JSONException ignored){}
-        // Same legibility-aware surface as visual_editor.js: 50% BASE still
-        // reads clearly when external-window blur is unavailable on Android.
-        final int panelAlpha=(int)Math.round(255*
-            (1-Math.pow(Math.max(0,Math.min(100,transparency))/100.0,2.8)));
+        // Exact slider alpha — old non-linear boost made Favorites darker
+        // than Modes, Filters and the Pokébola toolbar at the same setting.
+        final int panelAlpha=(int)Math.round(255.0*(1-transparency/100.0));
         final int panelColor=lightMenu?Color.argb(panelAlpha,255,255,255):
             Color.argb(panelAlpha,15,19,26);
         final int panelFg=lightMenu?Color.rgb(21,34,49):Color.rgb(242,247,252);
@@ -605,7 +606,8 @@ public final class PokemonPicker {
         background.setColors(new int[]{panelColor,panelColor});
         background.setOrientation(android.graphics.drawable.GradientDrawable.Orientation.TL_BR);
         background.setStroke(dp(activity,1),lightMenu?
-            Color.argb(105,49,69,91):Color.argb(109,170,183,202));
+            Color.argb(Math.round(panelAlpha*.25f),49,69,91):
+            Color.argb(Math.round(panelAlpha*.25f),235,239,245));
         background.setCornerRadius(dp(activity,12));
         root.setBackground(background);
         Context context=(activity instanceof Activity)?activity:
