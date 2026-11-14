@@ -121,7 +121,7 @@ final class PgsBuscasPanel {
                         row.addView(teach);
                         teach.setOnClickListener(v->{
                             PgsAutoTemplateStore.startTeaching(a,s.name);
-                            Toast.makeText(a,"Abra o feed do PGSharp. Segure a mão e escolha Buscas > Capturar ícone de "+s.name,Toast.LENGTH_LONG).show();
+                            Toast.makeText(a,"Abra o feed do PGSharp. Segure o botão Busca Pokémon e escolha Buscas > Capturar ícone de "+s.name,Toast.LENGTH_LONG).show();
                             if(PgsAutoClickService.instance==null)
                                 a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
                             else PgsAutoClickService.restoreBubble();
@@ -190,7 +190,7 @@ final class PgsBuscasPanel {
             Button test=button(a,"Testar alerta (sem pausar busca)");
             test.setOnClickListener(v->{
                 if(PgsAutoClickService.instance==null)
-                    Toast.makeText(a,"Ative a mão PGS Auto antes de testar o alarme",Toast.LENGTH_LONG).show();
+                    Toast.makeText(a,"Ative o botão Busca Pokémon PGS antes de testar o alarme",Toast.LENGTH_LONG).show();
                 else PgsAutoClickService.testShinyAlert();
             });
             content.addView(test);
@@ -202,11 +202,11 @@ final class PgsBuscasPanel {
         }else{
             heading.setText("••• MAIS");
             content.addView(text(a,"Ative o serviço de Acessibilidade do PokeSearch. Toques só após reconhecimento local e confirmação."));
-            Button activate=button(a,"Ativar / mostrar mão");
+            Button activate=button(a,"Ativar / mostrar Busca Pokémon");
             activate.setOnClickListener(v->{
                 if(PgsAutoClickService.instance!=null){
                     PgsAutoClickService.restoreBubble();
-                    Toast.makeText(a,"Mão do PokeSearch exibida",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(a,"Busca Pokémon PGS exibida",Toast.LENGTH_SHORT).show();
                 }else {
                     a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
                     Toast.makeText(a,"Ative PokeSearch · Buscas Auto em Acessibilidade",Toast.LENGTH_LONG).show();
@@ -229,7 +229,7 @@ final class PgsBuscasPanel {
             Button restart=button(a,"Reiniciar buscas");
             restart.setOnClickListener(v->{
                 if(PgsAutoClickService.instance!=null)PgsAutoClickService.restartSearch();
-                else Toast.makeText(a,"Ative a mão em Acessibilidade antes de iniciar",Toast.LENGTH_LONG).show();
+                else Toast.makeText(a,"Ative o PGS Buscas Auto em Acessibilidade antes de iniciar",Toast.LENGTH_LONG).show();
                 dialog.dismiss();
             });
             content.addView(restart);
