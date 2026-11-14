@@ -16,14 +16,14 @@ for(const [f,expected] of Object.entries({
  assert.equal(bytes.subarray(8,12).toString("ascii"),"WEBP");
  assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"),expected,f);
 }
-assert.match(app,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribute\)/);
+assert.doesNotMatch(app,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribute\)/);
 assert.match(app,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
 assert.match(app,/if\(tributeOverlay!=null&&homeRoot!=null\)/);
 assert.match(tribute,/ZoomView extends ImageView/);
 assert.match(tribute,/chip\.setMinimumHeight\(dp\(a,48\)\)/);
 assert.match(tribute,/thumbnail\.setImageResource\(R\.drawable\.pokesearch_agradecimento_miniatura\)/);
-assert.match(app,/shareActions\.addView\(thanks,thanksLp\)/);
-assert.match(app,/shareActions\.addView\(share,shareLp\)/);
+assert.match(app,/shareIcon\.setOnClickListener\(v->sharePokeSearch\(\)\)/);
+assert.doesNotMatch(app,/shareActions\.addView/);
 assert.doesNotMatch(app,/screen\.addView\(thanks,thanksLp\)/);
 assert.doesNotMatch(tribute,/Conheça quem ajuda o PokeSearch a acontecer\./);
 

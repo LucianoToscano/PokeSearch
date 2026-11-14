@@ -18,15 +18,16 @@ test("Live chat visible by default, old prototype remains isolated",()=>{
  assert.match(activity,/if\(!CommunityScrapbookStage1\.isEnabled\(this\)\|\|!IntegrityGuard\.verify\(this\)\)/);
  assert.match(main,/if\(scrapbookPreview\)/);
 });
-test("Home is always scrollable for offline tribute and inline community",()=>{
+test("Home stays scrollable while tribute, sharing and stats move to the drawer",()=>{
  assert.match(main,/pageBackground\.setAlpha\(1f\)/);
  assert.match(main,/ScrollView stage1HomeScroll=new ScrollView\(this\)/);
  assert.match(main,/stage1HomeScroll\.setFillViewport\(true\)/);
  assert.match(main,/frame\.addView\(stage1HomeScroll/);
- assert.match(main,/CommunityTribute\.homeCard/);
+ assert.doesNotMatch(main,/CommunityTribute\.homeCard/);
+ assert.match(main,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
  assert.match(main,/screen\.addView\(footer,new LinearLayout\.LayoutParams\(-1,d\(30\)\)\)/);
  assert.match(main,/FirebaseStats\.bind\(this,online,installations\)/);
- assert.match(main,/share\.setOnClickListener\(v->sharePokeSearch\(\)\)/);
+ assert.match(main,/shareIcon\.setOnClickListener\(v->sharePokeSearch\(\)\)/);
 });
 test("Home preview: 3 demo posts, avatar nickname category time likes replies",()=>{
  assert.match(home,/for\(int i=0;i<3;i\+\+\)/);

@@ -60,7 +60,9 @@ final class PgsAutoMapReadiness {
         float blue=cyans/(float)n;
         // Exige indícios de objetos distribuídos em mais de uma área do mapa.
         // Mapas sem PokéStops/ginásios ou com clima diferente podem não passar.
-        boolean loaded=active>=2 && (magenta>.005f||blue>.0025f||texture>.21f);
+        // Textura alta sozinha (ou screenshot de menus) não confirma PokéStops.
+        // Marcadores reconhecíveis + regiões distribuídas são exigidos.
+        boolean loaded=active>=2 && (magenta>.005f||blue>.0025f);
         return new Evidence(loaded,texture,magenta,blue,active);
     }
 }

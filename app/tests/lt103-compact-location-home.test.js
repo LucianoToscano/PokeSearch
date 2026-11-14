@@ -21,8 +21,8 @@ for(const marker of ["clipboard.append(paste,copy)","title.appendChild(clipboard
 "paste.onclick=()=>Native.pasteLocationCoords()",
 "Native.setLocation(true,wantedCoords,wantedRadius)","Native.setLocation(false,\"\",0)"])
  assert.ok(location.includes(marker),"missing original logic "+marker);
-assert.match(main,/shareActions\.addView\(thanks,thanksLp\)/);
-assert.match(main,/shareActions\.addView\(share,shareLp\)/);
+assert.doesNotMatch(main,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribute\)/);
+assert.match(main,/shareIcon\.setOnClickListener\(v->sharePokeSearch\(\)\)/);
 assert.doesNotMatch(main,/screen\.addView\(thanks,thanksLp\)/);
 assert.match(main,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
 assert.match(tribute,/R\.drawable\.pokesearch_agradecimento_comunidade/);

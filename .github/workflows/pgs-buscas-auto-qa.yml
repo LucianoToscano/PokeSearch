@@ -13,6 +13,8 @@ on:
       - 'app/src/main/AndroidManifest.xml'
       - 'app/tests/pgs-buscas-contracts.test.js'
       - 'app/tests/PgsAutoShinySignalTest.java'
+      - 'app/tests/PgsAutoCyclePolicyTest.java'
+      - 'app/tests/PgsAutoNotificationPolicyTest.java'
       - '.github/workflows/pgs-buscas-auto-qa.yml'
   workflow_dispatch:
 permissions:
@@ -51,8 +53,14 @@ jobs:
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \
             app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoShinySignal.java \
-            app/tests/PgsAutoShinySignalTest.java
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoCyclePolicy.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoNotificationPolicy.java \
+            app/tests/PgsAutoShinySignalTest.java \
+            app/tests/PgsAutoCyclePolicyTest.java \
+            app/tests/PgsAutoNotificationPolicyTest.java
           java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoShinySignalTest
+          java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoCyclePolicyTest
+          java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoNotificationPolicyTest
       - name: Compilar e gerar APK debug somente para QA
         env:
           POKE_TEST_SIGNING_REQUIRED: 'false'

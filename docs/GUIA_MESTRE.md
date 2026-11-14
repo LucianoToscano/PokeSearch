@@ -1,5 +1,52 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT339 — Captura de tela no Perfil PoGoCoordinates (14/11/2026, somente branch)
+
+- No gerenciamento de conta PoGoCoordinates, a janela `loginDialog` do PokeSearch aplicava `FLAG_SECURE` e impedia capturas até da página oficial de Perfil.
+- Ajustado em `MainActivity.java` com `ProfileScreenshotPolicy.java`: prints ficam permitidos **apenas em `https://pogocoordinates.com/profile` quando `loginPurpose=manage` e a página termina de carregar sem erro**. Na navegação, OAuth Google/Discord, login, URLs externas e falhas HTTP/rede, `FLAG_SECURE` continua/restaura. Nenhuma credencial é exposta pelo app.
+- Testes `ProfileScreenshotPolicyTest.java` (17 casos Java puros aprovados localmente) e `lt339-profile-screenshot-contract.test.js`. **Android/Samsung pendente**.
+- Esta correção permanece na mesma branch de trabalho LT339, **sem APK, merge ou release**, conforme instrução do responsável. Detalhes: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`.
+
+### LT339 — Auditoria de Lucario, mapa e Shiny por espécie (14/11/2026)
+
+- **Causa do cadastro inerte:** botão na Home somente marcava modelo pendente e exigia nova navegação manual no menu overlay; captura não era disparada. Ajustado: `requestTeaching` aguarda feed PGSharp visível, abre captura com sobreposições ocultadas, solicita toque no centro do ícone de Lucario, salva modelo e recarrega detector; após cancelar limpa pendência. A seleção explícita do usuário e permissões continuam exigidas.
+- **Ciclo automático simplificado:** mapa/PokéStops heurísticos até **60 s**, se pronto conferir aviso Shiny por **2 s**, senão próximo destino automaticamente; se timeout, próximo destino sem pausa; feed vazio releitura em **3 s**, zerando fila visitada quando esgotada. Watchdog de timeout independente do callback de screenshot. Configurações Home/Overlay mostram somente esses dois ajustes, e `cycle_60_2_migrated` mantém compatibilidade sem apagar os dados LT338; opção redundante `repeat` e "Reiniciar" removidas da UI.
+- **Shiny seguro por espécie:** `PgsAutoCyclePolicy` exige aviso positivo da espécie efetivamente selecionada (`currentTargetName`) e estado de espera do mapa; evita pausas por `Shiny: true` genérico ou outras espécies. Não reivindica inspeção/identificação do Pokémon 3D. `PgsAutoMapReadiness` não considera textura genérica isolada prova de PokéStops.
+- QA: `PgsAutoCyclePolicyTest.java` e `lt339-pgs-cycle-capture-contract.test.js`, testados com políticas de notificações no QA Core/PGS. Homologação **real** do Lucario e do PGSharp segue pendente na issue #350.
+- Esta seção foi feita na branch `feature/lt339-home-icon-menu-refactor-20261114`, sem publicar ainda até todos os testes da release oficial passarem. Pedida release monotônica depois do merge protegido. Detalhes: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`.
+
+### LT339 — PGS Overlay compacto e alertas independentes (14/11/2026, branch de edição)
+
+- **Padronização visual:** a fileira `⌕ Buscar · ⏱ Tempo · 🔔 Notificações · ↻ Reiniciar · × Fechar` substitui a barra PGS com "Mais" e o segundo painel grande. Botões 44×44 dp com espaçamento 4 dp, cores/opacidade/borda de `OverlayQuickMenus`, largura 246 dp e posicionamento dentro da tela.
+- **Removidos só no menu PGS:** `••• Mais`, `Reportar`, `Doar`; Reiniciar e Fechar são agora ações diretas da fileira. Reportar e Apoiar/Doar globais continuam na Home/menu geral. Nenhuma duplicação de serviço.
+- **Notificações exclusivamente Buscar Pokémon:** três categorias `newSound` (alvo novo confirmado, deduplicado), `searchSound` (alvo confirmado para teleporte) e `shinyMode` (aviso real Shiny quando suportado). Cada uma tem Padrão/Forte/Mudo/Personalizado, biblioteca de sons, prévia, confirmação e teste Android individual. Preferências em `pgs_auto_settings_v1` e canais `pgs_buscas_*` separados das Pokébolas P1/P2; Shiny não toca ringtone manual duplicado. Respeitar volume, DND e permissões Android.
+- **QA:** contratos Node para layout/independência e `PgsAutoNotificationPolicyTest.java` adicionados, 26 verificações estruturais e 20/20 testes da política Java pura (sem APK) efetuadas; montagem Android, notificações reais e teste visual Samsung **pendentes**. `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md` detalha esta rodada.
+- **Estado de publicação:** LT339 continua em `feature/lt339-home-icon-menu-refactor-20261114`, sem APK, PR de integração, merge ou release; **LT338 0.03.37/54544 permanece oficial** até a autorização do usuário ao concluir as outras mudanças.
+
+## LT339 — HOME EM EDIÇÃO, SEM APK E SEM PUBLICAÇÃO (14/11/2026)
+
+**Base oficial e canal:** a última release continua **LT338 · 0.03.37 · versionCode 54544**, já verificada. **A LT339 ainda não existe como APK oficial.** O responsável pediu explicitamente que continuemos as alterações de interface **sem gerar APK, merge ou release agora**. Branch de estágio: `feature/lt339-home-icon-menu-refactor-20261114`.
+
+- Integrados à branch os **seis PNGs originais do usuário**, com os bytes íntegros: Pokébola 1/2 OFF, Pokébola 1/2 ON, Busca Pokémon, Weather, Modo Claro e Modo Escuro. Sem redimensionar as fontes, aplicar blur, remover alpha ou comprimir a qualidade. A alternância ON/OFF existente das duas Pokébolas é preservada.
+- Fileira de 10 ícones sem fundo mantida. Doce Raro ajustado para porte próximo ao ícone Quests (padding visual de 7dp); validar depois em Android.
+- No cabeçalho, junto de **Apoiar**, ficam os novos ícones Claro/Escuro (alterna o tema existente) e Compartilhar (mesma função). Removidas faixas inferiores Compartilhar/Agradecimentos da Home.
+- **Ativos agora** e **Instalações** migraram para a seção **ESTATÍSTICAS** no menu lateral com o mesmo `FirebaseStats.bind`. Nova sub-aba **Conta** no menu com Pokébola 1, Pokébola 2 e "Conta Premium · Gerenciar / Sair" quando autorizado. O botão/texto Premium saiu da Home, mas o serviço original foi preservado.
+- Menu lateral rolável para acomodar os comandos. Sem alteração em autenticação, P1/P2, filtros, Edu, sprites, segurança, OTA ou PGS.
+- Testes históricos da Home atualizados; novo contrato `app/tests/lt339-home-icons-drawer-contract.test.js` verifica assinaturas dos PNGs e vínculos de UI. **Sem build Gradle/APK/QA físico até a próxima autorização específica para entrega.**
+- Arquivo de continuidade de trabalho: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`. **Não incrementar versionCode, não criar Release, não fazer merge desta etapa até o usuário terminar de enviar as mudanças.**
+
+
+### LT339 — Segunda rodada: Busca Pokémon ON/OFF e status central do PGS (14/11/2026)
+
+**Implementação feita somente na branch de edição, sem APK/merge/release.** A Home agora usa `busca_pokemon_on.png` quando a busca PGS está rodando e `busca_pokemon_off.png` quando parada/pausada. O antigo botão “mão” do overlay foi visualmente substituído por `busca_pokemon_overlay_on/off.png`, preservando toque, arraste, menu por pressão longa, detecção e estado real da Acessibilidade. As imagens ON e overlay mantêm resolução original; OFF da Home foi convertida de RGB preto para RGBA sem reduzir o conteúdo, com o original também preservado em assets.
+
+- **Formato original real auditado no QA:** `busca_pokemon_on.webp`, `busca_pokemon_overlay_on.webp` e `busca_pokemon_overlay_off.webp` são WebP lossless com alpha, antes incorretamente nomeados `.png` (falha AAPT corrigida renomeando sem mudar bytes). `busca_pokemon_off.png` é PNG RGBA derivado de JPEG; original JPEG salvo em `assets/ui-originals/busca_pokemon_off_original.jpg`. As artes da Home P1/P2 continuam PNG originais sem alterações de resolução.
+- **Paridade visual com Pokébola de resultados:** mesmo slot 35 × 30 dp com arte 21 dp, mantendo 44 dp de hitbox no overlay PGS; centro branco em estado comum, verde pulsando durante busca/carga de mapa/Pokémon, vermelho pulsando em falha e tempo esgotado. Pulso apenas no centro, 850 ms; arte completa não pisca.
+- `PgsAutoVisualState.java` modela estados e mantém PGS independente de P1/P2; `PgsAutoClickService.isSearchActive()` sincroniza a Home em ciclo de 1 s enquanto visível, sem novas permissões. Mensagens antigas sobre o ícone da “mão” foram corrigidas.
+- 24 cenários Java puros aprovados localmente, sem APK; contratos Node atualizados com verificação dos novos PNGs e estados. Testes integrados Android, aparência no Samsung e gestos reais continuam pendentes.
+- Documento detalhado, tabelas de hashes e próximos passos em `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`. **A última versão oficial continua LT338 0.03.37 / 54544. Não criar APK até o usuário concluir as outras alterações.**
+
+
 ## LT338 OFICIAL — PGS seleção única e alerta Shiny mais confiável (14/11/2026)
 
 **Versão publicada:** **LT338 · 0.03.37 · versionCode 54544 · label 51341**. Release estável [v0.03.37-54544](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.37-54544), APK `PokeSearch-v0.03.37-LT.apk` de **49.755.898 bytes**, SHA-256 **`dd958b9f0a9305cbb42ea83475fe82b1df2461198951ea10e140d76d887a439e`**. Workflow oficial protegido [#43576475168](https://github.com/LucianoToscano/PokeSearch/actions/runs/43576475168) concluído **SUCCESS**; preflight, versão, certificado permanente, testes Node/OTA, recursos completos, Gradle/R8, inspeção do APK, upload e verificação do hash no GitHub aprovados. Fonte exata da release: `98a8d367c601e75ef1126afec4fa7bfa84a6a6d0`. Certificado Android v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
