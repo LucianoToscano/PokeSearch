@@ -2,6 +2,9 @@
 
 ## Status de manutenção após LT337 — APK sem teto de CI (14/11/2026)
 
+**PR #351 integrada:** squash `93d2582befcc6b8ba18747a45613603613e39a21`; workflow oficial sem teto de tamanho, mantendo assinatura e todos os hashes. Testes da PR passaram. Leia também `docs/PROMPT_CONTINUIDADE_LT337_ARK_APK_SEM_TETO_20261114.md`. A release atual continua `v0.03.36-54543` e não deve ser republicada.
+
+
 **Pedido do responsável:** retirar temporariamente o limite artificial do tamanho do APK no workflow oficial, mantendo a coleta do tamanho, verificação de pacote não vazio, recursos, assinatura permanente, integridade e hash. Os testes LT267 e LT330 devem garantir que nenhuma condição `test "$APK_BYTES" -lt N` retorne. **Não reduzir imagens/sprites para passar o build; otimização posterior será decidida em outra etapa.** Este ajuste de CI não é nova versão de aplicativo: última release oficial permanece `v0.03.36-54543`, registrada abaixo, e não deve ser republicada com a mesma tag. O tamanho de download ainda depende das restrições de segurança do aplicativo, do Android e do GitHub. O comando ARK já autoriza as ações futuras de merge/release quando pertinentes; seguir o Guia Mestre e QA Samsung #350.
 
 ---
