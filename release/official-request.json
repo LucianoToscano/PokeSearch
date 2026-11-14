@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.34",
-  "code": 54540,
-  "label": 51338,
-  "previous_tag": "v0.03.33-54539",
-  "qa_max_code": 54539,
-  "release_notes": "PokeSearch LT335 (0.03.34) — Assistente Edu: corrigidos cortes de braço na animação da Pokébola (#00–03) e poses jogando no celular (#63–64) com cabeça, olhos, óculos, corpo e pés da referência #42. Nova inspeção independente ◀️ 👬 ▶️ para navegar pelas 68 sprites, congelar quadros, comparar a sprite padrão #42 lado a lado e retomar a animação por toque longo; linhas-guia configuráveis e ocultas por padrão para capturas/vídeos; indicadores estimados de cabeça, óculos, mãos, pés e altura. Não modifica as 68 fontes PNG 512x512, mantém oito sequências, P/M/G, fallback e nitidez sem filtro bilinear. PR #344 integrada em squash 0edf66c850de180f1d9cb1d0b8e6eaa6389113b5. Testes Node, Android Core, Java, OTA e APK beta assinado SUCCESS; dispositivo físico Samsung ainda requer verificação visual. Usar assinatura permanente pelo workflow protegido e verificar SHA do APK público após publicar; instalação no aparelho exige confirmação do Android."
+  "version": "0.03.35",
+  "code": 54541,
+  "label": 51339,
+  "previous_tag": "v0.03.34-54540",
+  "qa_max_code": 54540,
+  "release_notes": "PokeSearch LT336 (0.03.35) — Shiny: botão visual independente, OFF branco, ON destacado, oculto por padrão com opção no menu e aviso curto '✨ Shiny temporariamente indisponível'; a API continua em busca normal, sem exigir treinador ou enviar shiny_only. Pokébola 2: escolha de perfil visitante independente, sem obrigar login para pesquisa pública. Edu: melhorias no posicionamento do comparador com a sprite #42, triagem automatizada de 68 fontes PNG 512×512 e retirada de percentuais anatômicos estimados enganosos. Comando ARK registrado no Guia Mestre incluindo distribuição pelo atualizador do aplicativo. A triagem não substitui correção artística das 68 fontes nem QA físico Samsung. Preservar dados, contas, assinatura permanente, fluxo OTA e exigir confirmação do Android para instalar."
 }
