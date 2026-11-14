@@ -226,7 +226,7 @@ final class PgsAutoMenus {
                     camera.setOnClickListener(v->{
                         PgsAutoTemplateStore.startTeaching(context,pokemon.name);
                         dismissAll();
-                        Toast.makeText(context,"Abra o feed do PGSharp e segure a mão para capturar o ícone de "+pokemon.name+".",Toast.LENGTH_LONG).show();
+                        Toast.makeText(context,"Abra o feed do PGSharp e segure o botão Busca Pokémon para capturar o ícone de "+pokemon.name+".",Toast.LENGTH_LONG).show();
                     });
                 }
             }
