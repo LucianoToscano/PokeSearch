@@ -1,9 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT348 — recortador e menus PGS alinhados (candidata)
+## LT348 OFICIAL — 0.03.46 / 54553 (14/11/2026)
 
-O recortador usa dois grupos escuros arredondados no rodapé (Confirmar/Prévia/Cancelar acima e Background/Quadrado/Livre/Vertical abaixo), alça externa original de quatro direções e barra lateral mantida. Ícone Vertical WebP atualizado diretamente do Drive sem transcodificar. Buscar Pokémon: ícone de arrastar no lugar de ↑/↓, X vermelho no lugar de −, gear+pencil exatamente do QUICK_SVG original, Shiny central dentro do sino, menu e submenu que acompanham a bolha em arraste/rotação, Tempo e Personalização menores. Referência detalhada em [LT348](LT348_ARK_RECORTADOR_MENU_ARRASTE_20261114.md). CI e homologação física exigidos; não declarar publicação antes de release protegida.
+**LT348 OFICIAL — 14/11/2026:** versão **0.03.46 / versionCode 54553 / label 51350**, [release v0.03.46-54553](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.46-54553), APK `PokeSearch-v0.03.46-LT.apk` de **61.013.429 bytes**, SHA-256 `ab6ed18f9facfd9fa55a78e5342cdb81d82f014c9b358483883e86abaf7680b0`, [workflow protegido #43653017055](https://github.com/LucianoToscano/PokeSearch/actions/runs/43653017055) **SUCCESS** com preflight, regressões, assinatura permanente e verificação pública. Implementação [PR #379](https://github.com/LucianoToscano/PokeSearch/pull/379), squash `d4249f07b091cfa8943fe54c7d8bb1298b1bc5bd`; pedido oficial [PR #380](https://github.com/LucianoToscano/PokeSearch/pull/380), squash `6e7a2f4801168f3a116cebf3b38f47842e5d5128`. Dois grupos de recorte alinhados no rodapé, novo vertical WebP original, alça externa quatro direções e slider preservado. Lista Busca com alça de arrastar e X vermelho; gear+pencil paths originais, Shiny dentro do sino, menus ancorados à bolha e submenus Tempo/Personalização menores. **O CI não substitui a homologação física em Samsung**: alinhamento pixel a pixel, arrastar no mapa, toque real, OAuth Google/Discord do PoGoCoordinates, Shiny/Encontro e teleporte real continuam BLOQUEADOS até evidência; instalação depende de confirmação do Android.
 
+O código e as regras LT348 estão registrados em [LT348](LT348_ARK_RECORTADOR_MENU_ARRASTE_20261114.md). Arte Vertical `icone_vertical.webp` recuperada do Drive sem transcodificar, SHA-256 `00dff29e152f385f30aaa204095bfc1f35f1218143a2f507479a03020720490e`. Testes Samsung seguem BLOQUEADOS apesar do CI.
 
 ## LT347 OFICIAL — 0.03.45 / 54552 (14/11/2026)
 
