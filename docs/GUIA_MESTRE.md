@@ -13,6 +13,16 @@
 - Arquivo de continuidade de trabalho: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`. **Não incrementar versionCode, não criar Release, não fazer merge desta etapa até o usuário terminar de enviar as mudanças.**
 
 
+### LT339 — Segunda rodada: Busca Pokémon ON/OFF e status central do PGS (14/11/2026)
+
+**Implementação feita somente na branch de edição, sem APK/merge/release.** A Home agora usa `busca_pokemon_on.png` quando a busca PGS está rodando e `busca_pokemon_off.png` quando parada/pausada. O antigo botão “mão” do overlay foi visualmente substituído por `busca_pokemon_overlay_on/off.png`, preservando toque, arraste, menu por pressão longa, detecção e estado real da Acessibilidade. As imagens ON e overlay mantêm resolução original; OFF da Home foi convertida de RGB preto para RGBA sem reduzir o conteúdo, com o original também preservado em assets.
+
+- **Paridade visual com Pokébola de resultados:** mesmo slot 35 × 30 dp com arte 21 dp, mantendo 44 dp de hitbox no overlay PGS; centro branco em estado comum, verde pulsando durante busca/carga de mapa/Pokémon, vermelho pulsando em falha e tempo esgotado. Pulso apenas no centro, 850 ms; arte completa não pisca.
+- `PgsAutoVisualState.java` modela estados e mantém PGS independente de P1/P2; `PgsAutoClickService.isSearchActive()` sincroniza a Home em ciclo de 1 s enquanto visível, sem novas permissões. Mensagens antigas sobre o ícone da “mão” foram corrigidas.
+- 24 cenários Java puros aprovados localmente, sem APK; contratos Node atualizados com verificação dos novos PNGs e estados. Testes integrados Android, aparência no Samsung e gestos reais continuam pendentes.
+- Documento detalhado, tabelas de hashes e próximos passos em `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`. **A última versão oficial continua LT338 0.03.37 / 54544. Não criar APK até o usuário concluir as outras alterações.**
+
+
 ## LT338 OFICIAL — PGS seleção única e alerta Shiny mais confiável (14/11/2026)
 
 **Versão publicada:** **LT338 · 0.03.37 · versionCode 54544 · label 51341**. Release estável [v0.03.37-54544](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.37-54544), APK `PokeSearch-v0.03.37-LT.apk` de **49.755.898 bytes**, SHA-256 **`dd958b9f0a9305cbb42ea83475fe82b1df2461198951ea10e140d76d887a439e`**. Workflow oficial protegido [#43576475168](https://github.com/LucianoToscano/PokeSearch/actions/runs/43576475168) concluído **SUCCESS**; preflight, versão, certificado permanente, testes Node/OTA, recursos completos, Gradle/R8, inspeção do APK, upload e verificação do hash no GitHub aprovados. Fonte exata da release: `98a8d367c601e75ef1126afec4fa7bfa84a6a6d0`. Certificado Android v2 permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`.
