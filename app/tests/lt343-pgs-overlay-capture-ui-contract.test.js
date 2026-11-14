@@ -9,7 +9,7 @@ const gear=fs.readFileSync("app/src/main/res/drawable/pgs_menu_customize.xml","u
 assert.match(home,/header\.setOrientation\(LinearLayout\.HORIZONTAL\)/);
 assert.match(home,/header\.addView\(branding,new LinearLayout\.LayoutParams\(0,d\(54\),1f\)\)/);
 assert.match(home,/header\.addView\(controls,new LinearLayout\.LayoutParams\(-2,d\(48\)\)\)/);
-assert.match(home,/d\(30\),d\(16\)-2,Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
+assert.match(home,/d\(30\),d\(21\),Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
 assert.match(home,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
 assert.match(home,/PgsHomeArtwork\.transparentOn\(this\)/);
 
@@ -51,7 +51,7 @@ assert.match(auto,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,re
 assert.match(gear,/android:pathData=/);
 assert.match(menu,/R\.drawable\.ic_bell_outline,R\.drawable\.pgs_menu_customize/);
 assert.match(menu,/this::showNotifications,this::showAppearance/);
-assert.match(menu,/width=dp\(5\+5\*44\+4\*4\+5\)/);
+assert.match(menu,/width=dp\(8\+5\*TOOL_CELL_DP\+4\*TOOL_GAP_DP\)/);
 assert.match(menu,/String\[\] names=\{"Novos Pokémon","Shiny monitorado"\}/);
 assert.match(menu,/showCountdown/);
 assert.match(menu,/for\(String value:new String\[\]\{"P","M","G"\}\)/);
