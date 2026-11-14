@@ -885,6 +885,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             });
         },400L);
     }
+    private Bitmap pickerPreviewBitmap;
     private void showPicker(Bitmap screenshot,String name){
         dismissPicker();
         teachingInProgress=true;
@@ -895,90 +896,121 @@ public final class PgsAutoClickService extends AccessibilityService {
         photo.setImageBitmap(screenshot);
         photo.setScaleType(ImageView.ScaleType.FIT_XY);
         picker.addView(photo,new FrameLayout.LayoutParams(-1,-1));
-        // O tamanho é em pixels da imagem padronizada (740 de largura).
-        // O usuário escolhe o tamanho REAL do ícone, não 68x52 fixos.
-        final int[] refSize={32};
+
+        // Recorte local visível. Tocar apenas POSICIONA; nunca salva sem confirmar.
+        final PgsAutoCropSelection[] selected={null};
+        ImageView preview=new ImageView(this);
+        preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        preview.setContentDescription("Prévia da imagem que será gravada");
+        final Runnable[] updatePreview={null};
+        updatePreview[0]=()->{
+            if(selected[0]==null)return;
+            android.graphics.Rect rect=selected[0].selectedBitmapRect();
+            if(rect==null)return;
+            try{
+                Bitmap copy=Bitmap.createBitmap(screenshot,rect.left,rect.top,
+                    rect.width(),rect.height());
+                Bitmap old=pickerPreviewBitmap;
+                pickerPreviewBitmap=copy;
+                preview.setImageBitmap(copy);
+                if(old!=null&&old!=copy&&!old.isRecycled())old.recycle();
+            }catch(RuntimeException ignored){}
+        };
+        PgsAutoCropSelection crop=new PgsAutoCropSelection(this,
+            screenshot.getWidth(),screenshot.getHeight(),updatePreview[0]);
+        selected[0]=crop;
+        picker.addView(crop,new FrameLayout.LayoutParams(-1,-1));
+
         LinearLayout presets=new LinearLayout(this);
-        presets.setGravity(Gravity.CENTER);
-        presets.setPadding(dp(6),dp(5),dp(6),dp(5));
-        presets.setBackgroundColor(0xDD101720);
+        presets.setGravity(Gravity.CENTER_VERTICAL);
+        presets.setPadding(dp(6),dp(4),dp(6),dp(4));
+        presets.setBackgroundColor(0xEB18212D);
         TextView sizeLabel=new TextView(this);
-        sizeLabel.setTextColor(Color.WHITE);
-        sizeLabel.setTextSize(12);
-        sizeLabel.setText("Recorte: 32 px");
-        presets.addView(sizeLabel,new LinearLayout.LayoutParams(0,dp(42),1));
-        final int[] sizes={24,32,44};
-        for(int val:sizes){
-            Button preset=new Button(this);
-            preset.setAllCaps(false);preset.setText(val+"px");preset.setTextSize(11);
-            preset.setMinWidth(0);preset.setMinimumWidth(0);
-            preset.setPadding(dp(2),0,dp(2),0);
-            LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(dp(69),dp(42));
-            presets.addView(preset,pl);
-            preset.setOnClickListener(v->{
-                refSize[0]=val;
-                sizeLabel.setText("Recorte: "+val+" px");
+        sizeLabel.setText("Recorte 32 px");
+        sizeLabel.setTextColor(Color.WHITE);sizeLabel.setTextSize(11);
+        presets.addView(sizeLabel,new LinearLayout.LayoutParams(0,dp(40),1f));
+        for(int ref:new int[]{24,32,44}){
+            Button size=new Button(this);
+            size.setAllCaps(false);size.setText(ref+"px");size.setTextSize(11);
+            size.setPadding(dp(1),0,dp(1),0);
+            size.setMinimumWidth(0);size.setMinimumHeight(0);
+            LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(dp(57),dp(38));
+            presets.addView(size,pl);
+            size.setOnClickListener(v->{
+                crop.setReferencePx(ref);
+                sizeLabel.setText("Recorte "+ref+" px");
             });
         }
-        FrameLayout.LayoutParams selectors=new FrameLayout.LayoutParams(
-            -1,dp(52),Gravity.TOP);
-        selectors.topMargin=dp(36);
-        picker.addView(presets,selectors);
-        photo.setOnTouchListener((v,event)->{
-            if(event.getAction()!=MotionEvent.ACTION_UP)return true;
-            int x=Math.round(event.getX()*screenshot.getWidth()/Math.max(1,v.getWidth()));
-            int y=Math.round(event.getY()*screenshot.getHeight()/Math.max(1,v.getHeight()));
-            // Permite ensinar um ícone pequeno em QUALQUER ponto da tela.
-            if(x<0||y<0||x>=screenshot.getWidth()||y>=screenshot.getHeight())return true;
-            try {
-                int ref=refSize[0];
-                int rw=Math.max(16,Math.round(ref*screenshot.getWidth()/740f));
-                int rh=rw; // Ícones pequenos: preservar o quadrado, sem esticar.
-                rw=Math.min(rw,screenshot.getWidth());rh=Math.min(rh,screenshot.getHeight());
-                int left=Math.max(0,Math.min(screenshot.getWidth()-rw,x-rw/2));
-                int top=Math.max(0,Math.min(screenshot.getHeight()-rh,y-rh/2));
-                Bitmap piece=Bitmap.createBitmap(screenshot,left,top,rw,rh);
-                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
-                try { PgsAutoTemplateStore.saveSample(this,name,model,ref,ref); }
-                finally {if(piece!=model)piece.recycle();model.recycle();}
-                PgsAutoTemplateStore.clearTeaching(this);
-                dismissPicker();
-                boolean loaded=reloadDetector();
-                status(loaded?"PARADO":"SEM MODELO");
-                Toast.makeText(this,
-                    loaded?name+" gravado. Iniciando a busca no feed...":
-                        name+" salvo. Verifique se está selecionado na lupa.",
-                    Toast.LENGTH_LONG).show();
-                // O usuário já escolheu o Pokémon e tocou a amostra: não
-                // exigir mais um botão oculto para iniciar o primeiro gesto.
-                if(loaded&&isGameVisible()&&!running)
-                    handler.postDelayed(()->{
-                        if(!running&&isGameVisible())toggle();
-                    },350L);
-            }catch(Exception e){showReason("Não foi possível salvar o ícone: "+e.getMessage());}
-            return true;
-        });
-        TextView help=new TextView(this);
-        help.setText("Escolha 24/32/44 px e toque no centro da IMAGEM de "+name+" no feed. Evite pegar o fundo.");
-        help.setTextColor(Color.WHITE);help.setTextSize(13);
-        help.setBackgroundColor(Color.rgb(22,73,93));help.setPadding(dp(10),dp(8),dp(10),dp(8));
-        FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
-        hp.bottomMargin=dp(62);picker.addView(help,hp);
-        Button cancel=new Button(this);cancel.setText("Cancelar seleção");
-        cancel.setTextSize(12);cancel.setAllCaps(false);
-        FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,dp(56),Gravity.BOTTOM);
-        picker.addView(cancel,cp);
+        FrameLayout.LayoutParams presetsLp=new FrameLayout.LayoutParams(
+            -1,dp(48),Gravity.TOP);
+        presetsLp.topMargin=dp(36);
+        picker.addView(presets,presetsLp);
+
+        TextView instructions=new TextView(this);
+        instructions.setText("Toque no ícone 2D de "+name+" no feed. Arraste para mover e use o canto branco para ajustar. Confira a prévia antes de salvar.");
+        instructions.setTextColor(Color.WHITE);instructions.setTextSize(12);
+        instructions.setPadding(dp(8),dp(7),dp(8),dp(7));
+        instructions.setBackgroundColor(0xE322303D);
+        FrameLayout.LayoutParams infoLp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
+        infoLp.bottomMargin=dp(67);
+        picker.addView(instructions,infoLp);
+
+        LinearLayout actions=new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(dp(6),dp(4),dp(6),dp(4));
+        actions.setBackgroundColor(0xF218212D);
+        actions.addView(preview,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        Button cancel=new Button(this);
+        cancel.setText("Cancelar");cancel.setAllCaps(false);cancel.setTextSize(12);
+        cancel.setMinimumHeight(0);cancel.setMinimumWidth(0);
+        actions.addView(cancel,new LinearLayout.LayoutParams(0,dp(48),1));
+        Button confirm=new Button(this);
+        confirm.setText("✓ Confirmar");confirm.setAllCaps(false);confirm.setTextSize(12);
+        confirm.setMinimumHeight(0);confirm.setMinimumWidth(0);
+        actions.addView(confirm,new LinearLayout.LayoutParams(0,dp(48),1));
+        picker.addView(actions,new FrameLayout.LayoutParams(-1,dp(60),Gravity.BOTTOM));
         cancel.setOnClickListener(v->{
             PgsAutoTemplateStore.clearTeaching(this);
             dismissPicker();status("PARADO");
         });
+        confirm.setOnClickListener(v->{
+            android.graphics.Rect cut=crop.selectedBitmapRect();
+            if(cut==null){
+                Toast.makeText(this,"Toque no ícone para posicionar o recorte.",
+                    Toast.LENGTH_LONG).show();
+                return;
+            }
+            try{
+                int ref=Math.max(16,Math.min(92,
+                    Math.round(cut.width()*740f/screenshot.getWidth())));
+                Bitmap piece=Bitmap.createBitmap(screenshot,cut.left,cut.top,
+                    cut.width(),cut.height());
+                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
+                try{PgsAutoTemplateStore.saveSample(this,name,model,ref,ref);}
+                finally{if(piece!=model)piece.recycle();model.recycle();}
+                PgsAutoTemplateStore.clearTeaching(this);
+                dismissPicker();
+                boolean ready=reloadDetector();
+                status(ready?"PARADO":"SEM MODELO");
+                Toast.makeText(this,ready?
+                    name+" gravado. Modelos preservados; retomando busca.":
+                    name+" salvo. Ative-o na lupa para pesquisar.",
+                    Toast.LENGTH_LONG).show();
+                if(ready)handler.postDelayed(()->{
+                    if(!running&&isGameVisible())toggle();
+                },450L);
+            }catch(Exception e){
+                showReason("Não consegui salvar a imagem: "+e.getMessage());
+            }
+        });
+
         WindowManager.LayoutParams params=new WindowManager.LayoutParams(-1,-1,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
         try{windowManager.addView(picker,params);}
-        catch(Exception e){dismissPicker();showReason("Não consegui abrir a seleção: "+e.getMessage());}
+        catch(Exception e){dismissPicker();showReason("Não consegui abrir seleção: "+e.getMessage());}
     }
     private void dismissPicker(){
         teachingInProgress=false;
@@ -986,6 +1018,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             try{windowManager.removeView(picker);}catch(Exception ignored){}
             picker=null;
         }
+        if(pickerPreviewBitmap!=null){pickerPreviewBitmap.recycle();pickerPreviewBitmap=null;}
         if(pickerBitmap!=null){pickerBitmap.recycle();pickerBitmap=null;}
         if(bubble!=null)bubble.setVisibility(View.VISIBLE);
     }
