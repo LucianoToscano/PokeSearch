@@ -235,6 +235,7 @@ public class OverlayService extends Service {
         clean.put("showGuides",input.optBoolean("showGuides",false));
         clean.put("menuGuides",input.optBoolean("menuGuides",input.optBoolean("showGuides",false)));
         clean.put("resultsGuides",input.optBoolean("resultsGuides",input.optBoolean("showGuides",false)));
+        clean.put("showMeasurements",input.optBoolean("showMeasurements",false));
         return clean;
     }
     private void readVisualRuntime(){
@@ -277,10 +278,24 @@ public class OverlayService extends Service {
                 return;
             }
             int oldMenuBase=visualMenuBaseDp();
+            // Guide and ruler switches must survive process exit immediately;
+            // avoid losing the new state on a quick Android overlay dismissal.
+            boolean changedGuides=false;
+            try{
+                JSONObject previous=new JSONObject(visualPrefsJson);
+                changedGuides=previous.optBoolean("menuGuides",false)!=
+                    cleaned.optBoolean("menuGuides",false)||
+                    previous.optBoolean("resultsGuides",false)!=
+                    cleaned.optBoolean("resultsGuides",false)||
+                    previous.optBoolean("showMeasurements",false)!=
+                    cleaned.optBoolean("showMeasurements",false);
+            }catch(org.json.JSONException ignored){changedGuides=true;}
             visualPrefsJson=next;
             readVisualRuntime();
-            overlayPrefs().edit()
-                .putString("visualPrefsJson",visualPrefsJson).apply();
+            android.content.SharedPreferences.Editor edit=overlayPrefs().edit()
+                .putString("visualPrefsJson",visualPrefsJson);
+            if(changedGuides)edit.commit();
+            else edit.apply();
             if(resultParams!=null&&resultRoot!=null&&wm!=null){
                 updateResultHeaderGrip();
                 resultParams.height=Math.max(resultParams.height,dp(minResultsHeaderHeightDp()));
