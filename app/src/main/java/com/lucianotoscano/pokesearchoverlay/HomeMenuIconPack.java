@@ -76,6 +76,31 @@ final class HomeMenuIconPack {
             view.setImageMatrix(matrix);
         });
     }
+    /**
+     * Topo ÓPTICO da imagem da Pokébola em pixels físicos, no pai.
+     * A borda real da arte é medida via alpha, não por uma estimativa em dp.
+     * Usa a mesma matriz e limiar dos ícones já normalizados.
+     */
+    static int opticalTopInParentPx(android.widget.ImageView view){
+        if(view==null||view.getHeight()<=0||
+            !(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable))
+            return -1;
+        Bitmap image=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+        if(image==null||image.isRecycled())return -1;
+        int first=-1;
+        for(int y=0;y<image.getHeight()&&first<0;y+=2){
+            for(int x=0;x<image.getWidth();x+=2){
+                if(android.graphics.Color.alpha(image.getPixel(x,y))>64){
+                    first=y;break;
+                }
+            }
+        }
+        if(first<0)return -1;
+        float[] top={image.getWidth()*.5f,first};
+        view.getImageMatrix().mapPoints(top);
+        return view.getTop()+view.getPaddingTop()+Math.round(top[1]);
+    }
+
     private static void load(Context context){
         for(int i=1;i<=5;i++){
             String file="menu_icons_512_"+i+".zip";
