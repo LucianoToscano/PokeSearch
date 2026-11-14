@@ -47,12 +47,12 @@ Todos os 6 SHA-256 acima identificam os PNGs fornecidos diretamente pelo respons
 
 | Finalidade | Arquivo de recurso Android | Dimensão da fonte | SHA-256 |
 |---|---|---|---|
-| Home ativada | `busca_pokemon_on.png` | 1000 × 1000 RGBA | `3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9` |
+| Home ativada | `busca_pokemon_on.webp` | 1000 × 1000 WebP lossless RGBA | `3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9` |
 | Home desativada | `busca_pokemon_off.png` | 1536 × 1536 RGBA | `657e147f978ff30e124e16b444cac1bdf6e107d00e101f119dcf92a352eee6bb` |
-| Overlay desativado | `busca_pokemon_overlay_off.png` | 1254 × 1254 RGBA | `51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b` |
-| Overlay ativado | `busca_pokemon_overlay_on.png` | 1254 × 1254 RGBA | `db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef` |
+| Overlay desativado | `busca_pokemon_overlay_off.webp` | 1254 × 1254 WebP lossless RGBA | `51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b` |
+| Overlay ativado | `busca_pokemon_overlay_on.webp` | 1254 × 1254 WebP lossless RGBA | `db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef` |
 
-**Preservação:** as artes ON e overlay são os arquivos originais sem redução de qualidade. A imagem Home OFF chegou como PNG RGB com fundo preto sólido, que apareceria como quadrado. Foi criada uma derivação RGBA por recorte de transparência, sem redimensionamento; **o original RGB exato foi preservado** em `app/src/main/assets/ui-originals/busca_pokemon_off_original.png` (SHA-256 `1d84fe6975f531797ae4f1364195c90913670c5cebea0ecd0885b1b421445b54`). Nenhuma imagem anterior da Home foi excluída.
+**Preservação:** as artes ON e overlay são WebPs lossless originais, com extensão correta no Android e sem redução de qualidade. A imagem Home OFF chegou como JPEG RGB com fundo preto sólido, que apareceria como quadrado. Foi criada uma derivação RGBA por recorte de transparência, sem redimensionamento; **o original JPEG exato foi preservado** em `app/src/main/assets/ui-originals/busca_pokemon_off_original.png` (SHA-256 `1d84fe6975f531797ae4f1364195c90913670c5cebea0ecd0885b1b421445b54`). Nenhuma imagem anterior da Home foi excluída.
 
 - `MainActivity`: o slot da Home mantém a abertura do `PgsBuscasPanel`, mas exibe `busca_pokemon_on/off` conforme o estado efetivo `PgsAutoClickService.isSearchActive()`, não conforme um boolean de preferência. Um temporizador leve de 1 s atualiza o ícone quando a Home está ativa, sendo removido em `onPause/onDestroy`. Toque continua abrindo as configurações; **não inicia gestos nem concede permissão**.
 - `PgsAutoClickService`: remove os drawables `pgs_hand_on/off` do botão visual e usa `busca_pokemon_overlay_on/off`; preserva a alternância por toque, segurar para menu, arraste, coordenadas salvas, reconhecimento, detecção de Shiny e ações originais.
@@ -68,6 +68,9 @@ Todos os 6 SHA-256 acima identificam os PNGs fornecidos diretamente pelo respons
 - Sem workflow Android ou release disparado; **compilação integral Android e teste visual/físico Samsung permanecem pendentes**. Não alegar homologação de gestos ou status de mapa sem aparelho.
 - **Não publicar ainda.** Aguardar as próximas mudanças nesta mesma LT339 até autorização explícita do usuário para gerar APK e lançar a versão.
 
+
+
+**Correção AAPT no QA da PR #355:** os três arquivos recebidos com container WebP lossless haviam sido registrados incorretamente como `.png`, causando erro real de compilação de recursos. Os recursos Android foram renomeados para `.webp` preservando byte a byte os originais; o JPEG de referência Home OFF permanece em `assets/ui-originals/busca_pokemon_off_original.jpg`. O novo `lt339-home-icons-drawer-contract.test.js` confere a assinatura VP8L, dimensões e SHA-256. A imagem OFF transparente derivada continua como PNG real.
 
 ## Capturas de tela em PoGoCoordinates · Perfil (14/11/2026)
 
