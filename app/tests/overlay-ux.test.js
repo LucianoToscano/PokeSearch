@@ -759,7 +759,7 @@ const proguard=fs.readFileSync(path.join(__dirname,"..","proguard-rules.pro"),"u
 const gradle=fs.readFileSync(path.join(__dirname,"..","build.gradle.kts"),"utf8");
 test("IntegrityGuard invoked in activity and service",main.includes("IntegrityGuard.verify(this)")&&service.includes("IntegrityGuard.verify(this)"));
 test("Pix digest checked with SHA-256 and constant-time compare",guard.includes("PixSupport.PAYLOAD")&&guard.includes("SHA-256")&&guard.includes("MessageDigest.isEqual"));
-test("Login protected from screenshots",main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
+test("Login screenshot permission remains under user control",main.includes("loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)")&&!main.includes("loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)"));
 test("R8 keeps JavascriptInterface",proguard.includes("@android.webkit.JavascriptInterface")&&proguard.includes("-keepattributes"));
 test("Release minifies and shrinks",gradle.includes("isMinifyEnabled = true")&&gradle.includes("isShrinkResources = true"));
 
@@ -1977,7 +1977,8 @@ test("HOME-01 provider detection needs real official Google/Discord domain",(()=
   host.includes('lower.equals("discord.com")')&&
   main.includes('provider=observedLoginProvider')&&
   !main.includes('provider=preferredLoginProvider')&&
-  read("assets/login_entry.js").includes('window.__psProviderClicked=true')&&
+  read("assets/login_entry.js").includes('return "ready";')&&
+   !read("assets/login_entry.js").includes('window.__psProviderClicked=true')&&
   !read("assets/profile_summary.js").includes("document.cookie")&&
   !read("assets/profile_summary.js").includes("localStorage.getItem(");
 })());
