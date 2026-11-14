@@ -62,10 +62,10 @@ final class PgsBuscasPanel {
     }
     private static boolean toggle(Context c,int id){
         List<Integer> ids=selected(c);
-        if(ids.contains(id))ids.remove(Integer.valueOf(id));
-        else if(ids.size()>=50)return false;
-        else ids.add(id);
-        save(c,ids);return true;
+        if(!ids.contains(id)&&ids.size()>=50)return false;
+        // Única regra de ativação de templates, usada também pelo menu flutuante.
+        PgsAutoCatalog.toggle(c,id);
+        return true;
     }
     private static int dp(Context c,int value){
         return Math.round(c.getResources().getDisplayMetrics().density*value);
@@ -181,7 +181,7 @@ final class PgsBuscasPanel {
                 if(count==0)list.addView(text(a,"Nenhum resultado"));
                 list.addView(text(a,"Sem modelo visual confiável: cadastrar ícone antes da automação."));
             };
-            clear.setOnClickListener(v->{save(a,new ArrayList<Integer>());refresh[0].run();});
+            clear.setOnClickListener(v->{PgsAutoCatalog.clear(a);refresh[0].run();});
             search.addTextChangedListener(new TextWatcher(){
                 public void beforeTextChanged(CharSequence s,int st,int count,int after){}
                 public void onTextChanged(CharSequence s,int st,int before,int count){refresh[0].run();}
@@ -220,6 +220,11 @@ final class PgsBuscasPanel {
             content.addView(text(a,"Shiny: apenas notificação Android reconhecida do PGSharp. Não existe detecção visual/3D; requer permissão de notificações."));
             Button access=button(a,"Permitir leitura de notificações");
             access.setOnClickListener(v->{
+                if(android.os.Build.VERSION.SDK_INT>=33 &&
+                   a.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=
+                       android.content.pm.PackageManager.PERMISSION_GRANTED){
+                    a.requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS},339);
+                }
                 a.startActivity(new android.content.Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
                 dialog.dismiss();
             });
