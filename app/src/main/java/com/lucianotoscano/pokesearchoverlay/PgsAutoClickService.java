@@ -65,6 +65,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private WindowManager windowManager;
     private FrameLayout bubble;
     private ImageView handView;
+    private boolean searchPulseActive=false;
     private TextView handBadge;
 
     private PgsAutoMenus quickMenus;
@@ -133,6 +134,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         
         
+        if(handView!=null)handView.clearAnimation();
         handView=null;handBadge=null;
         dismissPicker();
         analysis.shutdownNow();
@@ -225,7 +227,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     quickMenus.toggle(left,bubbleParams.y);
                 }else {
                     if(quickMenus!=null&&quickMenus.isOpen())quickMenus.dismissAll();
-                    else toggle();
+                    toggle();
                 }
                 return true;
             }
@@ -244,7 +246,16 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
         boolean on=running&&!shiny;
-        if(handView!=null)handView.setImageResource(on?R.drawable.pgs_hand_on:R.drawable.pgs_hand_off);
+        if(handView!=null){
+            handView.setImageResource(on?R.drawable.pgs_hand_on:R.drawable.pgs_hand_off);
+            boolean searching=on&&(value.startsWith("PROCURANDO")||value.startsWith("CONFIRMANDO"));
+            if(searching&&!searchPulseActive){
+                android.view.animation.AlphaAnimation pulse=new android.view.animation.AlphaAnimation(1f,.62f);
+                pulse.setDuration(720);pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
+                pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
+                handView.startAnimation(pulse);searchPulseActive=true;
+            }else if(!searching&&searchPulseActive){handView.clearAnimation();searchPulseActive=false;}
+        }
         if(handBadge!=null){handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
             handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);}
         bubble.setAlpha(on?1f:.78f);
@@ -259,8 +270,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void loadSettings(){
         SharedPreferences p=getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE);
         limit=50;
-        minSeconds=Math.max(3,Math.min(30,p.getInt("post_load",5)));
-        maxSeconds=Math.max(30,Math.min(120,p.getInt("load_timeout",60)));
+        minSeconds=Math.max(1,Math.min(30,p.getInt("post_load",5)));
+        maxSeconds=Math.max(10,Math.min(180,p.getInt("load_timeout",60)));
     }
     private float setting(SharedPreferences p,String key,float def){
         try{return Float.parseFloat(p.getString(key,String.valueOf(def)));}catch(Exception ignored){return def;}
@@ -690,7 +701,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             service.notifyUser("TESTE SHINY — alarme","Simulação local, sem Pokémon detectado.",true);
             service.playShinySound();
             Vibrator vib=(Vibrator)service.getSystemService(VIBRATOR_SERVICE);
-            if(vib!=null&&vib.hasVibrator())
+            if(service.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getBoolean("shinyVibrate",true)
+                &&vib!=null&&vib.hasVibrator())
                 vib.vibrate(VibrationEffect.createWaveform(new long[]{0,250,140,250},-1));
             Toast.makeText(service,"Teste de alerta enviado.",Toast.LENGTH_SHORT).show();
         });
@@ -743,7 +755,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         String mode=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getString("shinyMode","strong");
         if("mute".equals(mode))return;
         try{
-            Uri tone=RingtoneManager.getDefaultUri(
+            Uri tone="custom".equals(mode)?
+                PokeSoundLibrary.soundUri(this,getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getInt("shinyModeSoundIndex",21)):
+                RingtoneManager.getDefaultUri(
                 "default".equals(mode)?RingtoneManager.TYPE_NOTIFICATION:RingtoneManager.TYPE_ALARM);
             if(tone==null)tone=RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             if(tone==null)return;
@@ -763,7 +777,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             String channel=CHANNEL;
             if(title.contains("SHINY")){
                 String mode=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).getString("shinyMode","strong");
-                channel="mute".equals(mode)?SHINY_MUTED:"default".equals(mode)?SHINY_DEFAULT:SHINY_CHANNEL;
+                channel=("mute".equals(mode)||"custom".equals(mode))?SHINY_MUTED:"default".equals(mode)?SHINY_DEFAULT:SHINY_CHANNEL;
             }
             Notification n=new Notification.Builder(this,channel)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
