@@ -37,6 +37,18 @@
   }
   if(displayName)break;
  }
+ // Nome também pode estar em um nó separado do "Member since" no perfil React.
+ // O limite geométrico impede usar "Linked accounts" como nome.
+ if(!displayName&&members.length){
+  const anchor=members[0].getBoundingClientRect();
+  const possible=Array.from(document.querySelectorAll("h1,h2,h3,strong,span"))
+   .filter(visible).map(e=>({name:clean(text(e),65),rect:e.getBoundingClientRect()}))
+   .filter(x=>nameOk(x.name)&&x.rect.bottom<=anchor.top+3&&
+     x.rect.bottom>=anchor.top-115&&
+     Math.abs(x.rect.left-anchor.left)<180)
+   .sort((a,b)=>b.rect.bottom-a.rect.bottom);
+  if(possible.length)displayName=possible[0].name;
+ }
  const explicitVia=body.match(/\b(?:Logged in via|Logado via)\s+(Google|Discord)\b/i);
  const provider=explicitVia?explicitVia[1].replace(/^./,x=>x.toUpperCase()):"";
  // Verify linked state by the Pokemon GO section only, never a count elsewhere.
@@ -86,7 +98,7 @@
  const trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown";
  // Only use a provider picture actually rendered on the official profile.
  // Exclude team/GO images, do not read cookies or OAuth user metadata.
- const trustedGoogleUrl=value=>{
+ const trustedProfileAvatarUrl=value=>{
   try{
    let parsed=new URL(value,location.href);
    // The public profile may display its Google photo through Next.js
@@ -96,15 +108,18 @@
     const candidate=parsed.searchParams.get("url")||"";
     parsed=new URL(candidate,location.href);
    }
-   return parsed.protocol==="https:"&&
-    (parsed.hostname==="googleusercontent.com"||
-     parsed.hostname.endsWith(".googleusercontent.com"))&&
+   const google=parsed.hostname==="googleusercontent.com"||
+      parsed.hostname.endsWith(".googleusercontent.com");
+   const discord=(parsed.hostname==="cdn.discordapp.com"||
+      parsed.hostname==="media.discordapp.net")&&
+      (/^\/avatars\//.test(parsed.pathname)||/^\/embed\/avatars\//.test(parsed.pathname));
+   return parsed.protocol==="https:"&&(google||discord)&&
      !parsed.username&&!parsed.password&&parsed.href.length<=1600?
       parsed.href:"";
   }catch(_){return "";}
  };
  let avatarUrl="";
- if(provider==="Google"||!provider){
+ {
   const images=Array.from(document.querySelectorAll("img")).filter(visible);
   const trusted=[];
   for(const img of images){
@@ -125,7 +140,7 @@
    const srcset=img.getAttribute("srcset")||"";
    if(srcset)possible.push(srcset.split(",")[0].trim().split(/\s+/)[0]);
    for(const rawUrl of possible){
-    const candidate=trustedGoogleUrl(rawUrl||"");
+    const candidate=trustedProfileAvatarUrl(rawUrl||"");
     if(!candidate)continue;
     trusted.push(candidate);
     if(/avatar|profile|account|foto|photo/i.test(label)||
