@@ -74,6 +74,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
     private boolean awaitingMap=false;
+    private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
     private boolean isGameVisible(){
         return "com.nianticlabs.pokemongo".equals(foreground)||
@@ -151,7 +152,10 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
+        armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+            .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
+        if(armedByHome&&isGameVisible())startArmedSearch();
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -166,6 +170,16 @@ public final class PgsAutoClickService extends AccessibilityService {
         foreground=pkg;
         if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
             queueTeachingWhenReady();
+        else if(isGameVisible()&&armedByHome)startArmedSearch();
+    }
+    private void startArmedSearch(){
+        if(!armedByHome||running||teachingInProgress||
+            !PgsAutoTemplateStore.pending(this).isEmpty())return;
+        armedByHome=false;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("armFromHome",false).apply();
+        if(!reloadDetector()){status("SEM MODELO");return;}
+        toggle();
     }
     @Override public void onInterrupt() {halt("INTERRUPÇÃO");}
     @Override public void onDestroy() {
@@ -297,6 +311,18 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService service=instance;
         if(service!=null)service.handler.post(service::removeHand);
     }
+    /** Home ON arma a busca para quando PGSharp abrir, como P1/P2. */
+    public static void activateFromHome(){
+        PgsAutoClickService live=instance;
+        if(live==null)return;
+        live.handler.post(()->{
+            live.showBubble();
+            live.armedByHome=true;
+            live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",true).apply();
+            if(live.isGameVisible())live.startArmedSearch();
+        });
+    }
     /** A Home reflete a visibilidade da bolha (como Pokébolas 1/2),
      * não o estado da varredura após toque na arte. */
     public static boolean isOverlayVisible(){
@@ -333,6 +359,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         handler.postDelayed(this::scanAndTap,350L);
     }
     private void removeHand(){
+        armedByHome=false;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("armFromHome",false).apply();
         halt("FECHADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(bubble!=null&&windowManager!=null){
