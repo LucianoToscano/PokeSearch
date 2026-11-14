@@ -134,6 +134,19 @@ final class PgsBuscasPanel {
                         if(!toggle(a,s.number))Toast.makeText(a,"Limite de 50 espécies",Toast.LENGTH_SHORT).show();
                         refresh[0].run();
                     });
+                    if(chosen&&!PgsAutoCatalog.hasTemplate(a,s.number)){
+                        Button teach=button(a,"◎");
+                        teach.setContentDescription("Cadastrar ícone pequeno de "+s.name);
+                        row.addView(teach);
+                        teach.setOnClickListener(v->{
+                            PgsAutoTemplateStore.startTeaching(a,s.name);
+                            Toast.makeText(a,"Abra o feed do PGSharp. Segure a mão e escolha Buscas > Capturar ícone de "+s.name,Toast.LENGTH_LONG).show();
+                            if(PgsAutoClickService.instance==null)
+                                a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                            else PgsAutoClickService.restoreBubble();
+                            dialog.dismiss();
+                        });
+                    }
                     if(chosen){
                         Button up=button(a,"↑");row.addView(up);
                         up.setOnClickListener(v->{
@@ -182,14 +195,35 @@ final class PgsBuscasPanel {
         }else if(tab==2){
             heading.setText("🔔 NOTIFICAÇÕES");
             content.addView(text(a,"Novos Pokémon · Pokémon de Buscas · Shiny"));
-            content.addView(text(a,"Alertas dependem de fontes verificadas; não há detecção Shiny ativa."));
+            content.addView(text(a,"Shiny: apenas notificação Android reconhecida do PGSharp. Não existe detecção visual/3D; requer permissão de notificações."));
+            Button access=button(a,"Permitir leitura de notificações");
+            access.setOnClickListener(v->{
+                a.startActivity(new android.content.Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
+                dialog.dismiss();
+            });
+            content.addView(access);
+            Button test=button(a,"Testar alerta (sem pausar busca)");
+            test.setOnClickListener(v->PgsAutoClickService.testShinyAlert());
+            content.addView(test);
             Switch vibrate=new Switch(a);vibrate.setText("Vibração Shiny");vibrate.setTextColor(foreground(a));
             vibrate.setChecked(prefs.getBoolean("vibrate",true));
             vibrate.setOnCheckedChangeListener((v,on)->prefs.edit().putBoolean("vibrate",on).apply());
             content.addView(vibrate);
         }else{
             heading.setText("••• MAIS");
-            content.addView(text(a,"Automação de toques ainda desabilitada para evitar cliques sem confirmação visual."));
+            content.addView(text(a,"Ative o serviço de Acessibilidade do PokeSearch. Toques só após reconhecimento local e confirmação."));
+            Button activate=button(a,"Ativar / mostrar mão");
+            activate.setOnClickListener(v->{
+                if(PgsAutoClickService.instance!=null){
+                    PgsAutoClickService.restoreBubble();
+                    Toast.makeText(a,"Mão do PokeSearch exibida",Toast.LENGTH_SHORT).show();
+                }else {
+                    a.startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                    Toast.makeText(a,"Ative PokeSearch · Buscas Auto em Acessibilidade",Toast.LENGTH_LONG).show();
+                }
+                dialog.dismiss();
+            });
+            content.addView(activate);
             Button donate=button(a,"Doar");donate.setOnClickListener(v->PixSupport.show(a));content.addView(donate);
             Button close=button(a,"Fechar");close.setOnClickListener(v->dialog.dismiss());content.addView(close);
         }
