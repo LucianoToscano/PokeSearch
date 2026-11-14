@@ -167,9 +167,11 @@ final class PgsAutoMenus {
         root.addView(head);
         return root;
     }
-    private void mount(LinearLayout root){mount(root,340,520);}
+    private void mount(LinearLayout root){mount(root,286,390);}
     private void mount(LinearLayout root,int preferredWidthDp,int estimatedHeightDp){
         hidePanel();panel=root;
+        // Nunca deixar a barra visível por trás do submenu translúcido.
+        if(toolbar!=null)toolbar.setVisibility(View.GONE);
         Point screen=size();int width=Math.min(screen.x-dp(20),dp(preferredWidthDp));
         int estimated=dp(estimatedHeightDp);
         int top=anchorY+dp(55);
@@ -184,7 +186,9 @@ final class PgsAutoMenus {
         lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),anchorX-width/2));lp.y=top;
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         try{wm.addView(panel,lp);}catch(Exception e){
-            panel=null;Toast.makeText(context,"Não foi possível abrir menu: "+e.getMessage(),Toast.LENGTH_LONG).show();
+            panel=null;
+            if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);
+            Toast.makeText(context,"Não foi possível abrir menu: "+e.getMessage(),Toast.LENGTH_LONG).show();
         }
     }
     private List<PgsAutoTemplateStore.Model> imagesFor(PgsAutoCatalog.Pokemon p){
@@ -266,7 +270,7 @@ final class PgsAutoMenus {
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.addView(rows);
-        root.addView(scroll,margined(-1,dp(252),5));
+        root.addView(scroll,margined(-1,dp(220),5));
         Button clear=button("Limpar seleção",11);
         root.addView(clear,margined(-1,dp(31),5));
         final Runnable[] render={null};
