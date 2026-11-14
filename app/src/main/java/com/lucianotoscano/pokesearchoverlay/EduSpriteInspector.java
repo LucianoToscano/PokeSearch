@@ -56,7 +56,7 @@ final class EduSpriteInspector {
         atlas=sprites;
         prefs=settings;
         listener=callbacks;
-        controlsVisible=prefs.getBoolean(PREF_CONTROLS,false);
+        controlsVisible=prefs.getBoolean(PREF_CONTROLS,true);
         guidesVisible=prefs.getBoolean(PREF_GUIDES,false);
     }
     boolean controlsVisible(){return controlsVisible;}
