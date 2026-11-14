@@ -410,11 +410,10 @@ public class MainActivity extends Activity {
         boolean any=PogoAccountSlots.loggedIn(this,1)||
             PogoAccountSlots.loggedIn(this,2);
         int art=any?(homeLightMode?R.drawable.login_modo_claro:
-            R.drawable.login_modo_escuro):android.R.drawable.ic_lock_lock;
+            R.drawable.login_modo_escuro):R.drawable.login_modo_semlogin;
         for(ImageView badge:pokeballLoginBadges)if(badge!=null){
             badge.setImageResource(art);
-            if(any)badge.clearColorFilter();
-            else badge.setColorFilter(homeLightMode?Color.DKGRAY:Color.WHITE);
+            badge.clearColorFilter();
             badge.setContentDescription(any?
                 "Exibir Contas 1 e 2":"Exibir contas sem login");
         }
