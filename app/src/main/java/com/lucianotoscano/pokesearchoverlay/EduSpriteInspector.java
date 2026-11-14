@@ -281,14 +281,40 @@ final class EduSpriteInspector {
         rightImage.setImageDrawable(chosen);
         rightLabel.setText(String.format(java.util.Locale.ROOT,"Quadro #%02d",selectedIndex));
         if(measurements!=null)
-            measurements.setText(EduSpriteMeasurements.compare(reference,chosen));
+            measurements.setText("Estimativas por cor/pose (não são medidas anatômicas):\\n"+
+                EduSpriteMeasurements.compare(reference,chosen));
     }
     private void updateComparisonPosition(){
         if(comparison==null)return;
         int sw=context.getResources().getDisplayMetrics().widthPixels;
         int sh=context.getResources().getDisplayMetrics().heightPixels;
         int x=lastBubbleX+lastBubbleW/2-comparisonParams.width/2;
-        int y=lastBubbleY+lastBubbleH/2-comparisonParams.height/2;
+        // O painel nunca deve cobrir a sprite, a barra de navegação ou seus toques.
+        // Prefira a área acima do Edu; se não couber, use a área abaixo.
+        int gap=dp(8);
+        int above=lastBubbleY-comparisonParams.height-gap;
+        int below=lastBubbleY+lastBubbleH+gap;
+        int y;
+        if(above>=0){
+            y=above;
+        }else if(toolbarParams!=null && below+toolbarParams.height+gap+
+                 comparisonParams.height<=sh){
+            y=below+toolbarParams.height+gap;
+        }else if(below+comparisonParams.height<=sh){
+            y=below;
+        }else{
+            // Em telas pequenas, mantenha o painel no extremo mais livre.
+            int topSpace=Math.max(0,lastBubbleY);
+            int bottomSpace=Math.max(0,sh-below);
+            y=topSpace>=bottomSpace?0:Math.max(0,sh-comparisonParams.height);
+        }
+        // Se a barra estiver acima da sprite, mantenha o comparador abaixo dela.
+        if(toolbarParams!=null && toolbarParams.y<lastBubbleY &&
+           y<toolbarParams.y+toolbarParams.height &&
+           y+comparisonParams.height>toolbarParams.y){
+            y=Math.min(sh-comparisonParams.height,
+                toolbarParams.y+toolbarParams.height+gap);
+        }
         comparisonParams.x=clip(x,0,Math.max(0,sw-comparisonParams.width));
         comparisonParams.y=clip(y,0,Math.max(0,sh-comparisonParams.height));
         try{wm.updateViewLayout(comparison,comparisonParams);}
