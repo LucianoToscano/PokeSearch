@@ -602,6 +602,8 @@ public class MainActivity extends Activity {
             homeLightMode?"Ativar modo escuro":"Ativar modo claro");
         homeThemeButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
         homeThemeButton.setPadding(d(2),d(2),d(2),d(2));
+        // Os PNGs originais são brancos: usar contraste escuro só no tema claro.
+        if(homeLightMode)homeThemeButton.setColorFilter(Color.rgb(31,55,77));
         homeThemeButton.setBackground(null);
         LinearLayout.LayoutParams themeLp=new LinearLayout.LayoutParams(d(34),d(34));
         themeLp.leftMargin=d(5);
