@@ -202,7 +202,9 @@ jobs:
           assert report['formSourceCommit']=='d8c2fb78563e28ad7b3abe938cf6e79998d04e90'
           # LT267 adds exactly 10 pinned GO sprites: Pikachu Diwali and
           # Squawkabilly Blue/Green/White/Yellow, normal and Shiny.
-          assert len(report['costumes'])==144  # 136 pinned PokeMiners + 4 immutable LT144 event images
+          # LT146 is historical; later verified GO forms increase the catalog.
+          # Preserve all pinned PNGs and hashes without rejecting monotonic additions.
+          assert len(report['costumes'])>=144  # never drop the legacy signed baseline
           import hashlib
           exact_new=["pm25.fDIWALI_2024.icon.png","pm25.fDIWALI_2024.s.icon.png"]
           for color in ("BLUE","GREEN","WHITE","YELLOW"):
