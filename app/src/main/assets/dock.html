@@ -5217,6 +5217,7 @@ window.setResultsCollapsed=collapsed=>{
 let lastHeight=0;
 let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
+ if(typeof window.visualMeasurementsRefresh==="function")window.visualMeasurementsRefresh();
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?384:34; // 12 fixed 30px tiles in a single column.
