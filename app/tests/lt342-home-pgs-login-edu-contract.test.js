@@ -15,7 +15,7 @@ const profile=fs.readFileSync(path.join(root,"assets/profile_summary.js"),"utf8"
 
 // Badge acima da Pokébola, gap ~10dp sem mover fileira nem crescer logo.
 assert.match(main,/homeLightMode\?R\.drawable\.login_modo_escuro:\s*R\.drawable\.login_modo_claro/);
-assert.match(main,/d\(23\),d\(16\),Gravity\.TOP\|Gravity\.RIGHT/);
+assert.match(main,/d\(30\),d\(16\)-2,Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
 assert.match(main,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
 assert.match(main,/LinearLayout\.LayoutParams\(0,d\(60\),1\)/);
 assert.match(main,/screen\.addView\(header,new LinearLayout\.LayoutParams\(-1,d\(58\)\)/);
