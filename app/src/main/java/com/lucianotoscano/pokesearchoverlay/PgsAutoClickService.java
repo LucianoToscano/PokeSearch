@@ -811,7 +811,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 sceneReadyAt=0;loadedStreak=0;
                 final int stamp=++ticket;
                 status("AGUARDANDO MAPA");
-                BugReport.log(this,"PGS","Gesto concluído pelo Android; teleporte no jogo ainda não verificado");
+                BugReport.log(PgsAutoClickService.this,"PGS","Gesto concluído pelo Android; teleporte no jogo ainda não verificado");
                 // Watchdog próprio: o limite continua valendo mesmo se um frame
                 // Android nunca responder (não ficar preso em tela/carregamento).
                 handler.postDelayed(new Runnable(){
