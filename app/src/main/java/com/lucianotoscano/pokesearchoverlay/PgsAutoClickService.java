@@ -1327,6 +1327,10 @@ public final class PgsAutoClickService extends AccessibilityService {
             "Confirmar e salvar recorte",android.R.drawable.checkbox_on_background);
         ImageView cancel=cropIcon("cancelar_branco.webp",
             "Cancelar recorte",android.R.drawable.ic_menu_close_clear_cancel);
+        // Reduce only artwork to 70% of the prior visible 34dp.
+        // Retain full 48×46dp hit target for accessibility.
+        confirm.setPadding(dp(12),dp(12),dp(12),dp(12));
+        cancel.setPadding(dp(12),dp(12),dp(12),dp(12));
         preview.setPadding(dp(3),dp(3),dp(3),dp(3));
         actions.addView(confirm,new LinearLayout.LayoutParams(dp(48),dp(46)));
         actions.addView(preview,new LinearLayout.LayoutParams(dp(56),dp(46)));
@@ -1343,6 +1347,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         controlsStack.addView(formats,formatsRow);
         ImageView backgroundIcon=cropIcon("icone_background_off.webp",
             "Ativar remoção de fundo plano",android.R.drawable.ic_menu_gallery);
+        backgroundIcon.setPadding(dp(12),dp(12),dp(12),dp(12));
         formats.addView(backgroundIcon,new LinearLayout.LayoutParams(dp(48),dp(46)));
         backgroundIcon.setAlpha(.94f);
         backgroundIcon.setOnClickListener(v->{
@@ -1357,7 +1362,11 @@ public final class PgsAutoClickService extends AccessibilityService {
             updatePreview[0].run();
         });
 
-        String[] icons={"icone_quadrado.png","icone_livre.png","icone_vertical.webp"};
+        // All three format glyphs use the SAME 24dp viewport, thin 1.45dp
+        // strokes and centered touch cells. Original PNG/WebP kept in assets
+        // for rollback; new vectors prevent mismatched strokes and centering.
+        int[] icons={R.drawable.pgs_crop_square_thin,
+            R.drawable.pgs_crop_free_thin,R.drawable.pgs_crop_vertical_thin};
         String[] descriptions={"Recorte quadrado","Recorte livre","Recorte vertical"};
         PgsAutoCropSelection.Mode[] values={
             PgsAutoCropSelection.Mode.SQUARE,
@@ -1366,7 +1375,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         ImageView[] choices=new ImageView[3];
         for(int i=0;i<choices.length;i++){
             final int index=i;
-            ImageView option=cropIcon(icons[i],descriptions[i],android.R.drawable.ic_menu_crop);
+            ImageView option=cropThinIcon(icons[i],descriptions[i]);
             choices[i]=option;
             option.setAlpha(i==0?1f:.94f);
             option.setBackground(cropOptionBackground(i==0));
@@ -1462,16 +1471,28 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private GradientDrawable cropControlsBackground(){
         GradientDrawable bg=new GradientDrawable();
-        bg.setColor(0xE6131923);
+        // 70% transparent grey surface (30% opacity), no bright blue outline.
+        bg.setColor(0x4D35373D);
         bg.setCornerRadius(dp(13));
-        bg.setStroke(dp(1),0x99C5DAEC);
+        bg.setStroke(dp(1),0x33FFFFFF);
         return bg;
     }
     private GradientDrawable cropOptionBackground(boolean selected){
         GradientDrawable bg=new GradientDrawable();
-        bg.setColor(selected?0x665C8CAB:Color.TRANSPARENT);
+        bg.setColor(selected?0x334C5864:Color.TRANSPARENT);
         bg.setCornerRadius(dp(8));
         return bg;
+    }
+
+    private ImageView cropThinIcon(int drawable,String desc){
+        ImageView icon=new ImageView(this);
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        icon.setImageResource(drawable);
+        icon.setPadding(dp(8),dp(8),dp(8),dp(8));
+        icon.setContentDescription(desc);
+        icon.setFocusable(true);
+        icon.setClickable(true);
+        return icon;
     }
 
     private ImageView cropIcon(String asset,String desc,int fallback){
