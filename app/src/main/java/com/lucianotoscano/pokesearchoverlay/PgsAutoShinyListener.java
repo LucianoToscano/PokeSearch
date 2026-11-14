@@ -25,18 +25,9 @@ public final class PgsAutoShinyListener extends NotificationListenerService {
         CharSequence[] lines=values.getCharSequenceArray(Notification.EXTRA_TEXT_LINES);
         if(lines!=null)for(CharSequence s:lines)all.append(s).append(' ');
         String content=all.toString();
-        String normalized=content.toLowerCase(Locale.ROOT);
-        boolean negative=normalized.contains("no shiny")||
-            normalized.contains("not shiny")||normalized.contains("sem shiny")||
-            normalized.contains("não é brilhante");
-        boolean positive=content.contains("✨")||
-            normalized.contains("shiny found")||normalized.contains("found a shiny")||
-            normalized.contains("found shiny")||normalized.contains("shiny detected")||
-            normalized.contains("shiny:")||normalized.contains("brilhante encontrado")||
-            normalized.contains("encontrou um brilhante")||
-            normalized.contains("shiny pokemon found");
-        // Sem formato positivo confiável, não interromper por texto genérico sobre shiny.
-        if(positive&&!negative) {
+        // Somente frase positiva explicita; emoji ou "shiny:" isolados
+        // nao sao comprovacao de encontro no feed.
+        if(PgsAutoShinySignal.isPositive(content)) {
             // Impede múltiplos alarmes da mesma notificação repetida pelo jogo.
             long now=SystemClock.elapsedRealtime();
             if(content.equals(previousMessage) && now-previousAt<15000L)return;
