@@ -4816,7 +4816,7 @@ body.result-window .spawnInfo{
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.2c.65 3.8 2.7 7 6.8 8.3-4.2 1.3-6.15 4.6-6.8 8.6-.8-4-2.8-7.3-6.9-8.6 4.15-1.3 6.1-4.5 6.9-8.3Z"/><path d="M5.2 3c.35 1.8 1.1 2.7 2.8 3.2-1.7.55-2.45 1.55-2.8 3.2-.4-1.65-1.15-2.65-2.8-3.2C4.05 5.7 4.8 4.8 5.2 3Z"/><path d="M4.3 11.8c.38 2 1.5 3.2 3.5 3.8-2 .6-3.1 1.8-3.5 3.8-.45-2-1.6-3.2-3.6-3.8 2-.6 3.15-1.8 3.6-3.8Z"/><path d="M19.9 17.5c.4 1.6 1.2 2.5 2.8 3-1.6.5-2.4 1.4-2.8 3-.4-1.6-1.2-2.5-2.8-3 1.6-.5 2.4-1.4 2.8-3Z"/></svg></button>
-  <button id="period" aria-label="Atualização automática, 5 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">5m</span></button>
+  <button id="period" aria-label="Atualização automática, 3 segundos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">3s</span></button>
   <button id="manualRefresh" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
@@ -5000,7 +5000,7 @@ let displayedMetadataWidth=0;
 // Temporary upstream pause. Keep the original Shiny code and icons for
 // later verified reactivation; ordinary guest/logged searches stay active.
 const PROVIDER_SHINY_AVAILABLE=false;
-let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=5,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=-3,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],pokemonSavedSelections:[],pokemonFilterEnabled:true,form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
@@ -5385,12 +5385,12 @@ const off=document.createElement("button");off.type="button";
  off.onclick=()=>selectInterval(0);
  row.appendChild(off);
  // AUTO was only a decorative tile; OFF and minute presets are sufficient.
- for(const value of [3,5,10,15,20]){
+ for(const value of [-3,3,5,10,15,20]){
   const button=document.createElement("button");button.type="button";
   button.className="periodCompactValue"+(value===current?" chosen":"");
-  button.textContent=String(value);button.dataset.minutes=String(value);
+  button.textContent=value===-3?"3s":String(value);button.dataset.minutes=String(value);
   button.removeAttribute("title");
-  button.setAttribute("aria-label","Intervalo automático de "+value+" minutos");
+  button.setAttribute("aria-label",value===-3?"Intervalo automático de 3 segundos":"Intervalo automático de "+value+" minutos");
   button.setAttribute("aria-pressed",String(value===current));
   button.onclick=()=>selectInterval(value);
   row.appendChild(button);
@@ -7555,7 +7555,7 @@ function draw(){
  const star=document.getElementById("star");
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
- const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
+ const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":period===-3?"3s":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":period===-3?"Atualização a cada 3 segundos; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
   shownMode,resultDisplayOptions,cooldownState,resultsStale,searchActive]);
  if(listKey!==lastListKey){lastListKey=listKey;
@@ -7877,7 +7877,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  shinyPending=!!pending;
  shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.
  row=Number(r)||46;
- period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;
+ period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3;
  spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;
  refreshSpriteSizeButtons();
  showTimers=!!timers;
@@ -8058,7 +8058,7 @@ function quickState(id){
    const n=Array.isArray(saved)?saved.length:0;
    return enabled?(n?n+" escolhidos":"Todos"):"OFF"+(n?" · "+n+" salvos":"");
   }
-  case "period":return period>0?"Auto "+period+"m":"Auto OFF";
+  case "period":return period>0?"Auto "+(period===-3?"3s":period+"m"):"Auto OFF";
   case "appearance":return "Personalização";
   default:return "";
  }
@@ -8596,7 +8596,7 @@ function refreshQuickMenuStates(){
   button.classList.toggle("pending",id==="sh"&&shinyPending);
   if(id==="period"){
    const badge=button.querySelector(".periodBadge");
-   if(badge)badge.textContent=period===0?"":period+"m";
+   if(badge)badge.textContent=period===0?"":(period===-3?"3s":period+"m");
    button.classList.toggle("autoOff",period===0);
    button.setAttribute("aria-expanded",String(activeNativePopupKind==="period"||choiceOpen==="period"));
    button.setAttribute("aria-label",period===0?
