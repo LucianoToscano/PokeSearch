@@ -937,6 +937,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
             String mode=PgsAutoNotificationPolicy.mode(kind,
                 prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
+            if("off".equals(mode))return; // OFF não envia aviso, diferente de silencioso.
             int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
             if("custom".equals(mode)&&(index<0||index>=PokeSoundLibrary.size()))
                 mode="default"; // Não criar canal sem som por índice corrompido.
