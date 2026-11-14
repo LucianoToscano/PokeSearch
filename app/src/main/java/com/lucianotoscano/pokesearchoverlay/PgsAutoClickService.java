@@ -202,9 +202,21 @@ public final class PgsAutoClickService extends AccessibilityService {
         for(VisitedSlot slot:visitedSlots)if(slot.samePlace(item,width,height))return true;
         return false;
     }
-    private int minSeconds=5,maxSeconds=60;
+    private int minSeconds=PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS,
+        maxSeconds=PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS;
     private int[] lastColors;
     private long clickedAt=0;
+    /** Only PGS engine transitions: no credentials, account names or coordinates. */
+    private void trace(String step){
+        String line=android.text.format.DateFormat.format("HH:mm:ss",
+            System.currentTimeMillis())+" "+step+" ticket="+ticket+
+            " run="+running+" mapa="+awaitingMap+" posição="+nextIndex+"\n";
+        SharedPreferences p=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
+        String updated=p.getString("trace","")+line;
+        if(updated.length()>4000)updated=updated.substring(updated.length()-4000);
+        p.edit().putString("trace",updated).apply();
+        android.util.Log.i("PokeSearchPGS",step+" ticket="+ticket);
+    }
     private long sceneReadyAt=0;
     private int loadedStreak=0;
     private String foreground="";
@@ -553,11 +565,18 @@ public final class PgsAutoClickService extends AccessibilityService {
                 .putInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS)
                 .putBoolean("cycle_60_2_migrated",true).commit();
         }
+        if(!p.getBoolean("cycle_25_default_migrated",false)){
+            // Preserve old user values other than the former 60-second default.
+            SharedPreferences.Editor e=p.edit();
+            if(p.getInt("load_timeout",60)==60)
+                e.putInt("load_timeout",PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS);
+            e.putBoolean("cycle_25_default_migrated",true).commit();
+        }
         return p;
     }
     private void loadSettings(){
         SharedPreferences p=cyclePrefs(this);
-        limit=50;
+        limit=PgsAutoCatalog.MAX_SELECTED;
         minSeconds=PgsAutoCyclePolicy.shinyCheckSeconds(
             p.getInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS));
         maxSeconds=PgsAutoCyclePolicy.mapTimeoutSeconds(
@@ -568,7 +587,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void toggle(){
-        if(running){halt("PARADO");return;}
+        if(running){trace("DESLIGANDO BUSCA");halt("PARADO");return;}
         if(!PgsAutoTemplateStore.pending(this).isEmpty()){
             boolean saved=false;
             for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
@@ -580,18 +599,17 @@ public final class PgsAutoClickService extends AccessibilityService {
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
             status("SEM MODELO");return; // Falha visual: vermelho no centro.
         }
-        if(pausedByShiny||pausedByError){
-            pausedByShiny=false;pausedByError=false;
-            running=true;status("RETOMANDO");
-            handler.postDelayed(this::scanAndTap,500);
-            return;
-        }
         loadSettings();
-        nextIndex=0;total=0;lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
-        visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
-        emptyRetries=0;lastNoIconScan=0;
+        // Reativar com modelos existentes SEM herdar cronômetro ou frame anterior.
+        pausedByShiny=false;pausedByError=false;passengerHoldAt=0L;
+        clickedAt=0L;sceneReadyAt=0L;awaitingMap=false;
+        nextIndex=0;total=0;lastColors=null;stableRepeats=0;loadedStreak=0;
+        visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;
+        verifyMisses=0;currentTargetName="";emptyRetries=0;lastNoIconScan=0;
+        ticket++;
         running=true;
-        status("LENDO TELA");
+        trace("REINÍCIO cooldown="+maxSeconds+"s semShiny="+minSeconds+"s");
+        status("PROCURANDO ÍCONES");
         handler.postDelayed(this::scanAndTap,400);
     }
 
@@ -641,6 +659,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         if(detector==null){fail("Modelo visual não disponível.");return;}
         final int stamp=++ticket;
+        trace("BUSCA ÍCONES");
         status("PROCURANDO "+(nextIndex+1));
         capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
@@ -658,6 +677,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     handler.post(()->{
                 if(!running||ticket!=stamp)return;
                 if(items==null){fail("Erro ao reconhecer os modelos visuais.");return;}
+                trace("DETECTOR "+items.size()+" CANDIDATOS");
                 if(total==0 && !items.isEmpty()){
                     total=limit;
                     Toast.makeText(PgsAutoClickService.this,
@@ -709,6 +729,7 @@ public final class PgsAutoClickService extends AccessibilityService {
      */
     private void verifyAndTap(PgsAutoIconDetector.Match candidate,int width,int height,int stamp){
         if(!running||ticket!=stamp)return;
+        trace("VALIDANDO ALVO EM 2 FRAMES");
         status("CONFIRMANDO "+candidate.name);
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
@@ -763,6 +784,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 notifyConfigured(PgsAutoNotificationPolicy.NEW,
                                     "PGS: novo Pokémon no feed",
                                     found.name+" confirmado na lista de buscas.",false);
+                            trace("SOLICITANDO GESTO");
                             tap(x,y,nextIndex,found,w,h);
                         });
                     });
@@ -791,6 +813,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
             @Override public void onCompleted(GestureDescription g){handler.post(()->{
                 if(!running||index!=nextIndex)return;
+                trace("ANDROID CONFIRMOU GESTO");
                 visitedSlots.add(new VisitedSlot(match,screenWidth,screenHeight));
                 currentTargetName=match.name;
                 // Alvo tocado NÃO é Shiny; não duplicar alerta de busca.
@@ -818,7 +841,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void onCancelled(GestureDescription g){handler.post(()->fail("Toque cancelado pelo Android."));}
         },null);
         if(!accepted)fail("O Android não autorizou o toque de Acessibilidade.");
-        else handler.postDelayed(()->{
+        else trace("DISPATCH ACEITO PELO ANDROID");
+        if(accepted)handler.postDelayed(()->{
             if(running&&!awaitingMap&&ticket==gestureTicket)
                 fail("O Android não confirmou o toque. Confira Acessibilidade e PGSharp.");
         },3500L);
@@ -859,6 +883,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 else loadedStreak=0;
                 if(sceneReadyAt==0 && loadedStreak>=2){
                     sceneReadyAt=when;
+                    trace("MAPA CARREGADO · EVIDÊNCIA VISUAL");
                     status("MAPA VISÍVEL");
                 }
                 if(sceneReadyAt>0){
@@ -892,6 +917,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         awaitingMap=false;
         nextIndex++;
         sceneReadyAt=0;loadedStreak=0;lastColors=null;stableRepeats=0;
+        trace(timeout?"COOLDOWN ESGOTADO":"SEM SHINY · PRÓXIMA SPRITE");
         status(timeout?"TEMPO ESGOTADO":"PRÓXIMO");
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
@@ -1129,6 +1155,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void fail(String reason){
         if(!running){showReason(reason);return;}
+        trace("FALHA NA ETAPA · "+reason.replaceAll("[0-9]{4,}","…"));
         running=false;awaitingMap=false;pausedByError=true;ticket++;
         status("PAUSADO\nVER AVISO");
         showReason(reason);
@@ -1141,7 +1168,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void halt(String label){
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
-        passengerHoldAt=0L;
+        passengerHoldAt=0L;clickedAt=0L;sceneReadyAt=0L;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */
