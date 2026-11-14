@@ -116,7 +116,7 @@ public class MainActivity extends Activity {
         int alpha=Math.round(255f*(100-homeSurfacesTransparency())/100f);
         for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
     }
-    private TextView homeThemeButton;
+    private ImageButton homeThemeButton;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
     private View guestHeading;
@@ -466,20 +466,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams slotsLp=new LinearLayout.LayoutParams(-1,-2);
         slotsLp.leftMargin=d(5);slotsLp.rightMargin=d(5);slotsLp.bottomMargin=d(6);
         screen.addView(slotsRow,slotsLp);
-        if(PremiumAccess.controlled()){
-            TextView accountPremium=homeText("Conta Premium  ·  Gerenciar / Sair",11,
-                homeLightMode?Color.rgb(34,87,143):Color.rgb(149,203,255),true);
-            accountPremium.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
-            accountPremium.setContentDescription(
-                "Gerenciar ou sair da conta Google Premium");
-            accountPremium.setMinHeight(d(30));
-            accountPremium.setPadding(d(6),0,d(8),d(3));
-            accountPremium.setOnClickListener(v->showPremiumAccountOptions());
-            LinearLayout.LayoutParams accountLp=new LinearLayout.LayoutParams(-1,d(30));
-            accountLp.leftMargin=d(4);accountLp.rightMargin=d(4);
-            accountLp.bottomMargin=d(4);
-            screen.addView(accountPremium,accountLp);
-        }
+        // Conta Premium / Gerenciar / Sair vão para Menu > Conta.
 
         // HOME-02: icon only at top left; compact actions on the right.
         ImageView brand=new ImageView(this);
@@ -509,7 +496,7 @@ public class MainActivity extends Activity {
         // A data/hora fica AO LADO do ícone de passes. Em telas estreitas,
         // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(28)-d(38)-d(6)-(d(34)*5+d(5)*4)-d(69)-d(3);
+            -d(28)-d(38)-d(6)-(d(34)*4+d(5)*3)-d(69)-d(3);
         int wordmarkWidth=Math.max(d(55),Math.min(d(156),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
@@ -528,15 +515,7 @@ public class MainActivity extends Activity {
         controls.setOrientation(LinearLayout.HORIZONTAL);
         header.addView(controls,new LinearLayout.LayoutParams(-2,d(46)));
 
-        homeThemeButton=homeMiniButton(homeLightMode?"☾":"☀",
-            homeLightMode?"Ativar modo escuro":"Ativar modo claro");
-        homeThemeButton.setTextSize(21);
-        homeThemeButton.setTextColor(homeLightMode?Color.rgb(22,45,61):Color.rgb(255,230,155));
-        homeThemeButton.setBackground(homeSurface(
-            homeLightMode?Color.argb(225,244,249,253):Color.argb(150,9,25,49),10,
-            homeLightMode?Color.argb(110,67,98,128):Color.argb(90,180,221,255)));
-        controls.addView(homeThemeButton,new LinearLayout.LayoutParams(d(34),d(34)));
-        homeThemeButton.setOnClickListener(v->toggleHomeTheme());
+        // Alternador de tema será agrupado junto de Apoiar e Compartilhar.
 
         // LT175: a launcher for a THIRD, independent floating bubble.
         rareCandyControl=new ImageButton(this);
@@ -553,7 +532,7 @@ public class MainActivity extends Activity {
         // Reposicionar o controle real do Doce Raro na fileira de atalhos.
         controls.removeView(rareCandyControl);
         rareCandyControl.setBackground(null);
-        rareCandyControl.setPadding(d(1),d(1),d(1),d(1));
+        rareCandyControl.setPadding(d(7),d(7),d(7),d(7)); // mesmo porte visual do Quests
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
 
 
@@ -616,6 +595,29 @@ public class MainActivity extends Activity {
         heartLp.leftMargin=d(5);
         controls.addView(heart,heartLp);
         heart.setOnClickListener(v->PixSupport.show(this));
+
+        // O ícone indica o modo que será ativado ao tocar.
+        homeThemeButton=makeIcon(homeLightMode?
+            R.drawable.home_mode_dark:R.drawable.home_mode_light,
+            homeLightMode?"Ativar modo escuro":"Ativar modo claro");
+        homeThemeButton.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homeThemeButton.setPadding(d(2),d(2),d(2),d(2));
+        homeThemeButton.setBackground(null);
+        LinearLayout.LayoutParams themeLp=new LinearLayout.LayoutParams(d(34),d(34));
+        themeLp.leftMargin=d(5);
+        controls.addView(homeThemeButton,themeLp);
+        homeThemeButton.setOnClickListener(v->toggleHomeTheme());
+
+        // Só o ícone, sem a faixa de compartilhamento da Home.
+        ImageButton shareIcon=makeIcon(android.R.drawable.ic_menu_share,
+            "Compartilhar aplicativo PokeSearch");
+        shareIcon.setColorFilter(homeLightMode?Color.rgb(31,55,77):Color.rgb(235,245,255));
+        shareIcon.setBackground(null);
+        shareIcon.setPadding(d(5),d(5),d(5),d(5));
+        LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(34),d(34));
+        shareIconLp.leftMargin=d(5);
+        controls.addView(shareIcon,shareIconLp);
+        shareIcon.setOnClickListener(v->sharePokeSearch());
 
         TextView menu=homeMiniButton("☰","Abrir menu lateral");
         menu.setTextSize(18);
