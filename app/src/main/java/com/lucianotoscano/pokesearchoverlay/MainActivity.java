@@ -548,7 +548,7 @@ public class MainActivity extends Activity {
         brand.setImageResource(R.drawable.ps_home_brand_transparent);
         brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brand.setContentDescription("Ícone PokeSearch");
-        header.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
+        branding.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
         LinearLayout brandLabels=new LinearLayout(this);
         brandLabels.setOrientation(LinearLayout.VERTICAL);
         brandLabels.setPadding(d(6),0,0,0);
@@ -2452,17 +2452,24 @@ public class MainActivity extends Activity {
         bg.setColor(color);bg.setCornerRadius(d(radius));return bg;
     }
 
-    // Fetch only a public Google avatar URL explicitly present in the
-    // authenticated /profile DOM. Never forward cookies or OAuth secrets.
-    private static boolean allowedGoogleAvatar(String url){
+    // Somente foto pública presente no perfil oficial. Não ler tokens, cookies
+    // nem buscar endpoints privados de Google/Discord.
+    private static boolean allowedProfileAvatar(String url){
         if(url==null||url.length()>1600)return false;
         try{
             Uri uri=Uri.parse(url);
             String host=uri.getHost(),scheme=uri.getScheme();
-            return "https".equalsIgnoreCase(scheme)&&host!=null&&
-                (host.equalsIgnoreCase("googleusercontent.com")||
-                 host.toLowerCase(Locale.ROOT).endsWith(".googleusercontent.com"))&&
-                uri.getUserInfo()==null;
+            if(!"https".equalsIgnoreCase(scheme)||host==null||
+                uri.getUserInfo()!=null)return false;
+            String domain=host.toLowerCase(Locale.ROOT);
+            boolean google=domain.equals("googleusercontent.com")||
+                domain.endsWith(".googleusercontent.com");
+            boolean discord=(domain.equals("cdn.discordapp.com")||
+                domain.equals("media.discordapp.net"))&&
+                uri.getPath()!=null&&
+                (uri.getPath().startsWith("/avatars/")||
+                 uri.getPath().startsWith("/embed/avatars/"));
+            return google||discord;
         }catch(Exception ignored){return false;}
     }
     private String shownAvatarUrl="";
@@ -2470,7 +2477,7 @@ public class MainActivity extends Activity {
     private int secondAvatarRequestGeneration=0;
     private void refreshGoogleAvatar(String url){
         if(accountAvatar==null)return;
-        final String next=allowedGoogleAvatar(url)?url:"";
+        final String next=allowedProfileAvatar(url)?url:"";
         if(shownAvatarUrl.equals(next))return;
         shownAvatarUrl=next;
         final int avatarRequestId=++avatarRequestGeneration;
@@ -2488,7 +2495,7 @@ public class MainActivity extends Activity {
                 String current=next;
                 boolean ready=false;
                 for(int redirect=0;redirect<4;redirect++){
-                    if(!allowedGoogleAvatar(current))break;
+                    if(!allowedProfileAvatar(current))break;
                     if(connection!=null)connection.disconnect();
                     connection=(java.net.HttpURLConnection)new java.net.URL(current).openConnection();
                     connection.setInstanceFollowRedirects(false);
@@ -2500,7 +2507,7 @@ public class MainActivity extends Activity {
                     String location=connection.getHeaderField("Location");
                     if(location==null)break;
                     String redirected=new java.net.URL(new java.net.URL(current),location).toExternalForm();
-                    if(!allowedGoogleAvatar(redirected))break;
+                    if(!allowedProfileAvatar(redirected))break;
                     current=redirected;
                 }
                 if(!ready)return;
@@ -2542,7 +2549,7 @@ public class MainActivity extends Activity {
 
     private void refreshSecondGoogleAvatar(String url){
         if(secondAvatar==null)return;
-        final String next=allowedGoogleAvatar(url)?url:"";
+        final String next=allowedProfileAvatar(url)?url:"";
         if(shownSecondAvatarUrl.equals(next))return;
         shownSecondAvatarUrl=next;
         final int avatarRequestId=++secondAvatarRequestGeneration;
@@ -2560,7 +2567,7 @@ public class MainActivity extends Activity {
                 String current=next;
                 boolean ready=false;
                 for(int redirect=0;redirect<4;redirect++){
-                    if(!allowedGoogleAvatar(current))break;
+                    if(!allowedProfileAvatar(current))break;
                     if(connection!=null)connection.disconnect();
                     connection=(java.net.HttpURLConnection)new java.net.URL(current).openConnection();
                     connection.setInstanceFollowRedirects(false);
@@ -2572,7 +2579,7 @@ public class MainActivity extends Activity {
                     String location=connection.getHeaderField("Location");
                     if(location==null)break;
                     String redirected=new java.net.URL(new java.net.URL(current),location).toExternalForm();
-                    if(!allowedGoogleAvatar(redirected))break;
+                    if(!allowedProfileAvatar(redirected))break;
                     current=redirected;
                 }
                 if(!ready)return;
@@ -2952,7 +2959,7 @@ public class MainActivity extends Activity {
                     if(provider.equals("Google")||provider.equals("Discord"))
                         edit.putString("profileProvider",provider);
                     String avatar=profile.optString("avatarUrl","");
-                    if("Google".equals(provider)&&allowedGoogleAvatar(avatar))
+                    if(allowedProfileAvatar(avatar))
                         edit.putString("profileAvatarUrl",avatar);
                     else {
                         edit.remove("profileAvatarUrl");
@@ -3027,30 +3034,32 @@ public class MainActivity extends Activity {
             if(!parsed){
                 // A returned 200 is not proof that React rendered the cards.
                 // Retry React hydration, but never spin forever on site errors.
-                if(++profileCaptureRetryCount<=16){
-                    view.postDelayed(()->captureOfficialProfile(view,generation),600L);
+                if(++profileCaptureRetryCount<=8){
+                    view.postDelayed(()->captureOfficialProfile(view,generation),650L);
                 }else{
                     profileCaptureInProgress=false;
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    Toast.makeText(this,"Login reconhecido. Não foi possível verificar o perfil; confira no site oficial.",
+                    refreshSessionSummary();
+                    Toast.makeText(this,
+                        "Conta conectada. O site não carregou nome/foto; confira o perfil oficial.",
                         Toast.LENGTH_LONG).show();
+                    if(loginAutoReturnQueued&&loginDialog!=null&&
+                        loginDialog.isShowing())loginDialog.dismiss();
                 }
                 return;
             }
-            // Unknown is not proof of an unlinked trainer. Give React time
-            // to render the account cards before finalizing the local profile.
+            // Autenticação e treinador são estados INDEPENDENTES. Um perfil
+            // sem treinador vinculado não mantém o login aberto nem apaga
+            // o nome/foto verificados da conta do site.
             if("unknown".equals(PogoAccountSlots.prefs(this,activeLoginSlot)
                     .getString("profileTrainerState","unknown"))&&
                     !"manage".equals(loginPurpose)){
-                if(++profileCaptureRetryCount<=16){
-                    view.postDelayed(()->captureOfficialProfile(view,generation),600L);
-                }else{
-                    profileCaptureInProgress=false;
-                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
-                    Toast.makeText(this,"Discord/Google autorizado. Vínculo do treinador ainda não confirmado; confira no site.",
-                        Toast.LENGTH_LONG).show();
+                if(++profileCaptureRetryCount<=3&&
+                    PogoAccountSlots.prefs(this,activeLoginSlot)
+                        .getString("profileDisplayName","").trim().isEmpty()){
+                    view.postDelayed(()->captureOfficialProfile(view,generation),650L);
+                    return;
                 }
-                return;
             }
             if(avatarAwaitingHydration&&avatarReadRetryCount<2){
                 avatarReadRetryCount++;
