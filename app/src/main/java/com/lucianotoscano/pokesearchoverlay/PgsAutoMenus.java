@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -446,20 +447,70 @@ final class PgsAutoMenus {
                     teach.setOnClickListener(v->{
                         dismissAll();actions.teach(pokemon.name);
                     });
-                    Button up=button("↑",12);
-                    line.addView(up,new LinearLayout.LayoutParams(dp(24),dp(33)));
-                    up.setOnClickListener(v->{
-                        PgsAutoCatalog.move(context,pokemon.number,-1);
-                        render[0].run();
-                    });
-                    Button down=button("↓",12);
-                    line.addView(down,new LinearLayout.LayoutParams(dp(24),dp(33)));
-                    down.setOnClickListener(v->{
-                        PgsAutoCatalog.move(context,pokemon.number,1);
-                        render[0].run();
+                    // Único ícone de segurar/arrastar — no lugar das setas.
+                    // O deslocamento é calculado por linhas, preservando a
+                    // ordenação persistida PgsAutoCatalog e os modelos salvos.
+                    ImageButton reorder=imageButton(R.drawable.pgs_drag_handle,
+                        "Segure e arraste para reorganizar "+pokemon.name,6);
+                    reorder.setColorFilter(fg());
+                    line.addView(reorder,new LinearLayout.LayoutParams(dp(28),dp(33)));
+                    reorder.setOnClickListener(v->
+                        Toast.makeText(context,"Segure e arraste o ícone para mudar a ordem",
+                            Toast.LENGTH_SHORT).show());
+                    reorder.setOnTouchListener(new View.OnTouchListener(){
+                        private float downY;
+                        private long downAt;
+                        private boolean moved;
+                        @Override public boolean onTouch(View view,MotionEvent e){
+                            switch(e.getActionMasked()){
+                                case MotionEvent.ACTION_DOWN:
+                                    downY=e.getRawY();
+                                    downAt=android.os.SystemClock.uptimeMillis();
+                                    moved=false;
+                                    view.getParent().requestDisallowInterceptTouchEvent(true);
+                                    return true;
+                                case MotionEvent.ACTION_MOVE:{
+                                    float distance=e.getRawY()-downY;
+                                    if(Math.abs(distance)>dp(6)&&
+                                        android.os.SystemClock.uptimeMillis()-downAt>=110){
+                                        if(!moved)view.performHapticFeedback(
+                                            android.view.HapticFeedbackConstants.LONG_PRESS);
+                                        moved=true;
+                                        view.setTranslationY(Math.max(-dp(100),
+                                            Math.min(dp(100),distance)));
+                                        line.setAlpha(.79f);
+                                    }
+                                    return true;
+                                }
+                                case MotionEvent.ACTION_UP:{
+                                    float distance=e.getRawY()-downY;
+                                    view.setTranslationY(0f);line.setAlpha(1f);
+                                    if(moved){
+                                        int steps=Math.max(-9,Math.min(9,
+                                            Math.round(distance/dp(50f))));
+                                        if(steps!=0){
+                                            for(int step=0;step<Math.abs(steps);step++){
+                                                if(steps<0)PgsAutoCatalog.move(context,pokemon.number,-1);
+                                                else PgsAutoCatalog.move(context,pokemon.number,1);
+                                            }
+                                            render[0].run();
+                                        }
+                                    }else view.performClick();
+                                    return true;
+                                }
+                                case MotionEvent.ACTION_CANCEL:
+                                    view.setTranslationY(0f);line.setAlpha(1f);
+                                    return true;
+                                default:return false;
+                            }
+                        }
                     });
                 }
-                Button choose=button(selected?"−":"＋",14);
+                Button choose=button(selected?"×":"＋",14);
+                if(selected){
+                    choose.setTextColor(0xFFFF596C);
+                    choose.setContentDescription("Remover da lista: "+pokemon.name);
+                }
                 choose.setContentDescription(selected?"Desmarcar "+pokemon.name:"Adicionar "+pokemon.name);
                 line.addView(choose,new LinearLayout.LayoutParams(dp(27),dp(33)));
                 choose.setOnClickListener(v->{
