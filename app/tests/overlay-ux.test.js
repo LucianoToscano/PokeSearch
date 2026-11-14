@@ -2497,7 +2497,8 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   home.includes("R.drawable.ps_home_background_dark")&&
   home.includes("R.drawable.ps_home_background_light")&&
   home.includes("ImageView.ScaleType.CENTER_CROP")&&
-  home.includes('homeMiniButton(homeLightMode?"☾":"☀"')&&
+  home.includes("R.drawable.home_mode_light")&&
+  home.includes("R.drawable.home_mode_dark")&&
   home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
   home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
