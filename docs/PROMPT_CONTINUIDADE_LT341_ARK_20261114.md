@@ -1,5 +1,15 @@
 # PokeSearch — LT341 / ARK — Continuidade e homologação Samsung (14/11/2026)
 
+## ESTADO ATUAL — LT341 OFICIAL, PUBLICADA
+
+- **Código publicado:** PR #358 (LT340 PGS), #359 (LT341 Home/login/rank/Edu/Doce Raro), #360 (release protegida), fonte exata `5280a2214af1f891cda1357cb0a24e2504c893f1` na tag `v0.03.39-54546`.
+- **Versão oficial:** **0.03.39 / versionCode 54546 / label 51343**. APK `PokeSearch-v0.03.39-LT.apk`, **54.451.948 bytes**, SHA-256 **`637710d0140a09fc5f291db432a79b15569e6c8ffce47972fcfd9576b038f006`**. Workflow [#43604552760](https://github.com/LucianoToscano/PokeSearch/actions/runs/43604552760): **completed/success**, assinatura original, QA/recursos/R8/ZIP/manifesto/OTA. Release pública estável: https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.39-54546.
+- **Leitura obrigatória no novo chat:** `LEIA_PRIMEIRO_PROMPT_OUTRAS_IAS.md`, `docs/GUIA_MESTRE.md`, este arquivo, `AGENTS.md`, `main` atual, Releases, workflows e issues; não partir da LT339 nem reduzir resolução, nem retirar funções. A branch temporária paralela `feature/lt341-home-login-ranks-edu-candy-ark-20261114` possui apenas duplicatas das cinco artes que já estão na `main`, **não deve ser integrada**.
+- **Prioridade física, sem declarar sucesso presumido:** atualizar no Samsung com consentimento do Android; abrir PGSharp real no feed com Lucario, testar registro de imagem, miniatura, prioridade, status PROCURANDO/CONFIRMANDO/TOQUE e confirmação de `dispatchGesture`, teleporte, carregamento 60s/2s e Shiny verdadeiro só da espécie correta. Verificar login oficial Google/Discord por Conta 1/2, nome e foto públicos e fechamento da janela após autenticação. Conferir os menus P1/P2/PGS/Doce Raro, Rank Geral e inspetor Edu. Resultado e prints anônimos na issue [#350](https://github.com/LucianoToscano/PokeSearch/issues/350).
+- **QA legado LT146:** asserção antiga exigia `len(report['costumes'])==144`, mas sprites GO verificadas cresceram. A manutenção em `ci/lt341-legacy-lt146-asset-count-monotonic-20261114` exige pelo menos 144 mais verificações individuais de hashes; isso não altera APK nem apaga costumes. Após CI, fazer merge da correção separada.
+- **Próxima versão:** se surgirem defeitos físicos, trabalhar a partir da `main` atual, aumentar versãoCode/versionName de forma monotônica, com PR, CI verde, assinatura permanente e release/OTA oficial. Não alegar instalação sem confirmação do Android.
+
+
 ## Atualização de estado pós-merge da LT341
 - **LT340 aplicada à main:** PR #358, squash `0ab24070a48bd31e6fd2f216855515e4c7de2d20`.
 - **LT341 aplicada à main:** PR #359, squash `9d4b6a6705b894a2621d18dd846ecaf727119c47`.
