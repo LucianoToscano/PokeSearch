@@ -93,3 +93,28 @@ Todos os 6 SHA-256 acima identificam os PNGs fornecidos diretamente pelo respons
 - O feed confirmado armazena assinaturas relativas de espécie+posição (máximo 150 por sessão) para não disparar incessantemente a notificação de "Novo Pokémon" ao reler a tela. As verificações de gestos, duas capturas, filtros, pausa Shiny e limites mantêm seu fluxo anterior.
 - Fonte: `PgsAutoMenus.java`, `PgsAutoClickService.java` e `PgsAutoNotificationPolicy.java`. Contratos `app/tests/pgs-buscas-contracts.test.js`, `app/tests/lt339-pgs-compact-notifications-contract.test.js` e casos puros `app/tests/PgsAutoNotificationPolicyTest.java`.
 - **QA neste estágio:** 26 verificações estruturais e 20/20 testes da política Java pura (sem APK) realizadas e aprovadas sobre a branch; testes Java unitários versionados, mas **não** representam validação de Android. Compilação completa, recebimento e áudio das três notificações, gestos, toque/posicionamento e aparência em Samsung permanecem pendentes. Não iniciar workflow de APK; **sem PR/merge/release/OTA** até o usuário terminar suas solicitações. Release oficial continua LT338.
+
+
+## Quinta etapa — Auditoria funcional de Lucario, ciclo automático e Shiny correto (14/11/2026)
+
+**Relato do responsável:** seleção de Lucario e comando "gravar ícone" não iniciavam corretamente a gravação; menu de cinco tempos/repetição não explicava o que aconteceria depois do teleporte. Foi feita leitura do código atual (não inferência a partir da imagem): `PgsBuscasPanel`, `PgsAutoMenus`, `PgsAutoClickService`, `PgsAutoTemplateStore`, `PgsAutoIconDetector`, `PgsAutoMapReadiness` e `PgsAutoShinyListener`.
+
+### Problemas confirmados no código anterior
+
+- A Home só gravava `pending_name` e instruía o usuário a encontrar outro comando oculto no overlay para iniciar a seleção: um fluxo de dois passos não intuitivo.
+- Após gravar modelo, o motor do detector não era recarregado imediatamente, de modo que a primeira busca podia continuar sem o novo arquivo.
+- O modo de feed vazio mantinha esperas configuráveis de 60/120 segundos que não correspondiam ao ciclo desejado. A lista de locais visitados também podia ficar travada indefinidamente quando restavam somente posições já tocadas.
+- `post_load` tinha padrão de 5 segundos. O alerta Shiny positivo não validava a identidade da espécie do destino (`currentTargetName`): poderia interromper por uma espécie diferente.
+- `PgsAutoMapReadiness` aceitava um mapa muito texturizado sem marcador identificável, potencial falso positivo. Indicadores de PokéStop/gimásio **não provam** que todos os Pokémon 3D tenham aparecido.
+- `checkMap` dependia de `takeScreenshot` retornar para continuar; uma captura pendurada não garantia próximo destino em 60s.
+
+### Correções implementadas na branch LT339
+
+- **Gravar Lucario em fluxo guiado:** o botão de cadastro na Home chama `PgsAutoClickService.requestTeaching(s.name)`; o serviço mantém a solicitação pendente e aguarda que o usuário abra o **feed do PGSharp**. Ao detectar essa tela, esconde o menu e botão de overlay, captura o frame, exibe a seleção para o usuário tocar no centro do **ícone pequeno** de Lucario (nunca no Pokémon 3D), persiste o PNG com `PgsAutoTemplateStore.saveSample`, limpa o pedido e executa `reloadDetector()` antes de confirmar. Cancelar limpa a pendência; falhas exibem motivo. A seleção de câmera no menu flutuante usa a mesma ação. O cadastro continua controlado por consentimento humano na etapa de escolha do alvo.
+- **Ciclo único:** até **60 segundos** para mapa com marcadores confiáveis (sinais heurísticos com estabilidade temporal), depois **2 segundos** para aviso Shiny da mesma espécie; sem confirmação, avança automaticamente ao próximo destino. Sem carregamento até o limite, também avança. Watchdog paralelo evita ficar preso se uma captura do Android não retornar. Sem novos ícones no feed, nova leitura após **3 s**, com reinício da fila após esgotar as posições já visitadas.
+- **Shiny da espécie atual:** `PgsAutoCyclePolicy.shouldPauseForTarget` exige busca em andamento, espera do mapa e **notificação positiva explicitamente contendo o nome** (inclusive tratamento de `(amostra N)`). Notificação genérica `Shiny: true` ou de espécie diferente **não comprova** que Lucario seja Shiny. A pausa e o alerta só são acionados quando os critérios forem satisfeitos. Não se afirma validação de Pokémon Shiny 3D sem dados de origem.
+- **Menus Tempo simplificados:** Home e overlay exibem uma explicação curta do ciclo e **apenas dois ajustes** (máximo mapa 60 s / espera Shiny 2 s), com limites seguros de 20–120 s e 1–10 s. Repetição/reiniciar redundantes removidos da UI, mantendo compatibilidade de dados antigos. A migração única `cycle_60_2_migrated` não apaga informações, contas, modelos ou histórico.
+- **Validação:** `PgsAutoCyclePolicyTest.java` com casos de tempo, espécie e ausência de evidência; `lt339-pgs-cycle-capture-contract.test.js` e contratos atualizados. Pipeline QA Core e PGS incluem políticas Java puras de notificações/ciclo. A auditoria da fonte **não** substitui avaliação do feed/PGSharp real.
+- **Homologação obrigatória pendente:** o detector depende do desenho e escala verdadeiros do feed e das permissões Android; o teste com ícone Lucario, detecção de mapa/PokéStops e qualidade das notificações deve ser confirmado em Samsung na issue #350. Para mensagens do PGSharp sem nome da espécie, o motor mantém regra conservadora, não declara falsa detecção. Não inventar sucesso físico.
+
+**Publicação solicitada nesta etapa:** após CI Node/Java, compilação Android/R8, revisão do pedido monotônico, assinatura permanente e integridade verificada, preparar merge/release oficial. Não dispensar esses gates nem alegar instalação no Samsung.
