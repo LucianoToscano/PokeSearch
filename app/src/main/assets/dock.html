@@ -4051,6 +4051,20 @@ body.controls-window #choices.filterCascade .generalPresetRow .generalPresetSave
 body.controls-window #choices.filterCascade .generalPresetRow .generalPresetDelete{
  width:24px!important;min-width:24px!important;height:25px!important;
 }
+/* LT341: arte lixeira original fornecida, nunca glifo alternativo. */
+body.controls-window #choices.filterCascade .generalPresetDelete img{
+  width:17px!important;height:17px!important;object-fit:contain!important;
+  pointer-events:none!important;
+}
+body.controls-window #choices.filterCascade .generalPresetDelete .trashForLight{
+  display:none!important;
+}
+body.visual-light-menu.controls-window #choices.filterCascade .generalPresetDelete .trashForDark{
+  display:none!important;
+}
+body.visual-light-menu.controls-window #choices.filterCascade .generalPresetDelete .trashForLight{
+  display:block!important;
+}
 /* Location has no legacy named slots, star buttons or '?' controls. */
 body.controls-window #choices.locationPanel .locSavedRow,
 body.controls-window #choices.locationPanel .locSlotTools{display:none!important}
@@ -5727,7 +5741,14 @@ function renderGeneralPresetControls(rail,make){
    if(Native.saveGeneralFilterPreset)Native.saveGeneralFilterPreset(slot);
   };
   const remove=make("button","generalPresetDelete");
-  remove.type="button";remove.appendChild(presetGlyph("delete"));
+  remove.type="button";
+  const whiteTrash=make("img","trashForDark");
+  whiteTrash.src="file:///android_asset/ui-icons/lixeira_branca.png";
+  whiteTrash.alt="";whiteTrash.setAttribute("aria-hidden","true");
+  const blackTrash=make("img","trashForLight");
+  blackTrash.src="file:///android_asset/ui-icons/lixeira_preta.png";
+  blackTrash.alt="";blackTrash.setAttribute("aria-hidden","true");
+  remove.append(whiteTrash,blackTrash);
   remove.title="Excluir somente Filtro "+slot;
   remove.setAttribute("aria-label","Limpar Filtro "+slot);
   remove.onclick=()=>{
