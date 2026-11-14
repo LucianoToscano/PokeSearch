@@ -79,7 +79,8 @@ assert.equal(explorer.getIvRows(gm,"Vulpix","gl")?.length,4096,
 const ui=read("pvp_rank_explorer.js");
 assert.ok(ui.includes('<th colspan="4">Pokémon / forma</th><th style="width:22%">Rank Geral</th>'));
 assert.ok(ui.includes('class="psrPokedexNumber"'));
-assert.ok(ui.includes('RG #'));
+assert.ok(ui.includes('<td class="psrOverallRank"><div class="psrOverallPlace">#'));
+assert.ok(ui.includes('<small class="psrPokedexNumber">#'));
 assert.ok(ui.includes('class="psrPokemonCell"'));
 assert.ok(ui.includes('class="psrOverallRank"'));
 assert.ok(ui.includes('img[data-ps-sprite-alts]'));
