@@ -10,7 +10,7 @@ const DEFAULTS=Object.freeze({
  resultsOrientation:"vertical",menuOrientation:"horizontal",
  resultsBgMode:"dark",resultsTransparency:100,
  resultsTileStyle:"none",resultsTileTransparency:40,
- menuBgMode:"dark",menuTransparency:50,menuBlur:4,showGuides:false,menuGuides:false,resultsGuides:false
+ menuBgMode:"dark",menuTransparency:50,menuBlur:4,showGuides:false,menuGuides:false,resultsGuides:false,showMeasurements:false
 });
 const RANGES={
  resultGapTop:[-80,80],resultGapBetween:[0,65],resultSpriteScale:[70,160],headerIconY:[0,72],
@@ -50,6 +50,7 @@ function normalize(raw){
  result.showGuides=src.showGuides===true;
  result.menuGuides=src.menuGuides===true||(src.menuGuides===undefined&&result.showGuides);
  result.resultsGuides=src.resultsGuides===true||(src.resultsGuides===undefined&&result.showGuides);
+ result.showMeasurements=src.showMeasurements===true;
  return result;
 }
 function rgba(mode,transparent){
@@ -114,6 +115,8 @@ function applyVisual(){
  const guided=controlsWindow?(current.menuGuides||previewArea==="menu"):
   resultWindow?(current.resultsGuides||previewArea==="results"):false;
  body.classList.toggle("visual-guides",guided);
+ body.classList.toggle("visual-measurements",current.showMeasurements);
+ scheduleVisualMeasurements();
  body.classList.toggle("visual-preview-menu",controlsWindow&&previewArea==="menu");
  body.classList.toggle("visual-preview-results",resultWindow&&previewArea==="results");
  if(resultWindow&&typeof draw==="function"){
@@ -131,6 +134,43 @@ window.onVisualEditorPreview=function(area){
  previewArea=area==="menu"||area==="results"?area:"";
  applyVisual();
 };
+
+ // LT349: exact pixel measurements, overlay-only. No row or hitbox resizing.
+ let measurementScheduled=false;
+ function scheduleVisualMeasurements(){
+  if(!current.showMeasurements||measurementScheduled||
+     typeof requestAnimationFrame!=="function")return;
+  measurementScheduled=true;
+  requestAnimationFrame(()=>{
+   measurementScheduled=false;
+   const label=(node)=>{
+    if(!node||!node.getBoundingClientRect)return;
+    const rect=node.getBoundingClientRect();
+    if(rect.width<=0||rect.height<=0)return;
+    node.setAttribute("data-visual-measure",
+     Math.round(rect.width)+"×"+Math.round(rect.height)+" px");
+   };
+   if(controlsWindow){
+    label(document.getElementById("quickMenuList"));
+    label(document.getElementById("choices"));
+    document.querySelectorAll("#quickMenuList .quickRow,#quickMenuList .quickFooterAction")
+     .forEach(label);
+   }
+   if(resultWindow){
+    label(document.getElementById("shell"));
+    document.querySelectorAll("#spawns .spawn").forEach(label);
+   }
+  });
+ }
+ if(typeof window.addEventListener==="function")
+  window.addEventListener("resize",scheduleVisualMeasurements);
+ function saveGuideNow(){
+  clearTimeout(saveTimer);saveTimer=null;
+  pendingVisualJson=JSON.stringify(current);
+  if(controlsWindow&&window.Native&&Native.saveVisualPrefs)
+   Native.saveVisualPrefs(pendingVisualJson);
+  else saveSoon();
+ }
 function saveSoon(){
  if(!controlsWindow)return;
  clearTimeout(saveTimer);
@@ -146,7 +186,9 @@ function saveSoon(){
 function change(key,value){
  current=normalize({...current,[key]:value});
  applyVisual();
- saveSoon();
+ if(key==="menuGuides"||key==="resultsGuides"||key==="showMeasurements")
+  saveGuideNow();
+ else saveSoon();
 }
 function toast(msg){
  const el=document.getElementById("visualFeedback");
@@ -324,6 +366,9 @@ function renderVisualEditor(){
    btn(panel,"Linhas-guia resultados: "+(current.resultsGuides?"ON":"OFF"),()=>{
     change("resultsGuides",!current.resultsGuides);renderVisualEditor();
    });
+   btn(panel,"Medidas: "+(current.showMeasurements?"ON":"OFF"),()=>{
+    change("showMeasurements",!current.showMeasurements);renderVisualEditor();
+   });
   });
  }else if(tab==="menu"){
   visualGroup(panel,"position","Posição do menu",panel=>{
@@ -347,6 +392,9 @@ function renderVisualEditor(){
    panel.appendChild(info);
    btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
     change("menuGuides",!current.menuGuides);renderVisualEditor();
+   });
+   btn(panel,"Medidas: "+(current.showMeasurements?"ON":"OFF"),()=>{
+    change("showMeasurements",!current.showMeasurements);renderVisualEditor();
    });
   });
  }
