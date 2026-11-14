@@ -17,7 +17,7 @@ assert.match(pose,/drawPhone\(Canvas c,Paint p,int frame\)/);
 assert.match(pose,/frame==63\?0:8/);
 assert.match(pose,/PorterDuff\.Mode\.CLEAR/);
 assert.match(pose,/path\.close\(\)/);
-assert.doesNotMatch(pose,/(?:private|static)\\s+(?:int|float)\\s+(?:gestureRight|armEraseRight)\\s*\\(|ARM_SCALE\\s*=|createScaledBitmap\\s*\\(/);
+assert.doesNotMatch(pose,/gestureRight[(]|armEraseRight[(]|ARM_SCALE=|createScaledBitmap[(]/);
 assert.match(pose,/setAntiAlias\(false\)/);
 assert.match(pose,/setFilterBitmap\(false\)/);
 assert.match(atlas,/EduSpritePoseComposer\.supports\(i\)/);
