@@ -2965,7 +2965,8 @@ public class MainActivity extends Activity {
                         edit.remove("profileAvatarUrl");
                         // The official React profile can show the name before
                         // its public Google avatar has finished loading.
-                        avatarAwaitingHydration="Google".equals(provider);
+                        avatarAwaitingHydration="Google".equals(provider)||
+                            "Discord".equals(provider);
                     }
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
