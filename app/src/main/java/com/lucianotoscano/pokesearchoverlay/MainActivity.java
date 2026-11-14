@@ -85,14 +85,13 @@ public class MainActivity extends Activity {
     private android.app.Dialog loginDialog;
     private boolean loginProfilePageLoadFailed=false;
     // Prints são permitidos somente em /profile, nunca nas telas de autenticação.
-    private void updateLoginScreenshotProtection(String url,boolean loadedSuccessfully){
-        if(loginDialog==null||!loginDialog.isShowing())return;
-        android.view.Window window=loginDialog.getWindow();
-        if(window==null)return;
-        boolean allow=ProfileScreenshotPolicy.allowsScreenshot(
-            loginPurpose,url,loadedSuccessfully&&!loginProfilePageLoadFailed);
-        if(allow)window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
-        else window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+    // Capturas permitidas em qualquer tela do PokeSearch, inclusive login.
+    // Restrições de segurança impostas pelo provedor não são controladas por nós.
+    private void allowLoginScreenshots(){
+        if(loginDialog!=null&&loginDialog.getWindow()!=null)
+            loginDialog.getWindow().clearFlags(
+                android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
     }
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
@@ -381,28 +380,45 @@ public class MainActivity extends Activity {
         if(anchor==null)return;
         LinearLayout content=new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(d(10),d(7),d(10),d(7));
+        content.setPadding(d(9),d(6),d(9),d(6));
         content.setBackground(homeSurface(
             homeLightMode?Color.rgb(246,249,252):Color.rgb(29,35,45),
             10,homeLightMode?Color.rgb(154,166,180):Color.rgb(89,109,125)));
         boolean showNames=getSharedPreferences("prefs",MODE_PRIVATE)
             .getBoolean("homeShowPogoAccountName",true);
+        final android.widget.PopupWindow[] popupHolder={null};
         for(int slot=1;slot<=2;slot++){
-            boolean logged=PogoAccountSlots.loggedIn(this,slot);
-            String name=logged&&showNames?
-                PogoAccountSlots.prefs(this,slot)
-                    .getString("profileDisplayName","").trim():"";
-            if(name.isEmpty())name=logged?"Conectada":"Sem login";
-            if(name.length()>35)name=name.substring(0,32)+"…";
-            TextView line=homeText("Conta "+slot+": "+name,12,
+            final int account=slot;
+            boolean available=slot==1||PogoAccountSlots.supportsSecond();
+            boolean logged=available&&PogoAccountSlots.loggedIn(this,slot);
+            String name=logged&&showNames?PogoAccountSlots.prefs(this,slot)
+                .getString("profileDisplayName","").trim():"";
+            if(name.isEmpty())name=logged?"Conectada":available?"Sem login":"Não disponível";
+            if(name.length()>25)name=name.substring(0,22)+"…";
+            LinearLayout row=new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(d(4),d(5),d(4),d(5));
+            TextView info=homeText("Conta "+slot+": "+name,12,
                 homeLightMode?Color.BLACK:Color.WHITE,false);
-            line.setPadding(d(4),d(4),d(4),d(4));
-            content.addView(line);
+            row.addView(info,new LinearLayout.LayoutParams(0,-2,1));
+            TextView action=homeText(logged?"Perfil ›":"Entrar ›",11,
+                homeLightMode?Color.rgb(10,83,126):Color.rgb(128,208,249),true);
+            action.setPadding(d(4),d(6),d(4),d(6));
+            row.addView(action);
+            row.setContentDescription("Conta "+slot+": "+name+
+                ". Toque para "+(logged?"gerenciar perfil":"entrar"));
+            row.setOnClickListener(v->{
+                if(popupHolder[0]!=null)popupHolder[0].dismiss();
+                preferredLoginProvider="";
+                openLoginDialogForSlot(account,logged?"manage":"login");
+            });
+            content.addView(row,new LinearLayout.LayoutParams(-1,d(42)));
         }
         android.widget.PopupWindow popup=new android.widget.PopupWindow(
-            content,d(238),-2,true);
-        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
-            Color.TRANSPARENT));
+            content,d(252),-2,true);
+        popupHolder[0]=popup;
+        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
         popup.setOutsideTouchable(true);
         popup.setElevation(d(5));
         popup.showAsDropDown(anchor,0,d(2));
@@ -3279,7 +3295,7 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
                 if(view==website){
                     loginProfilePageLoadFailed=false;
-                    updateLoginScreenshotProtection(url,false);
+                    allowLoginScreenshots();
                 }
                 ++loginPageGeneration;
                 loginLinkAttempted=false;
@@ -3309,7 +3325,7 @@ public class MainActivity extends Activity {
             @Override public void onPageFinished(WebView view,String url){
                 if(view!=website)return;
                 // Só liberar se o WebView ainda mostrar a URL concluída.
-                updateLoginScreenshotProtection(url,url!=null&&url.equals(view.getUrl()));
+                allowLoginScreenshots();
                 if(url==null)return;
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
@@ -3336,16 +3352,14 @@ public class MainActivity extends Activity {
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
                 super.doUpdateVisitedHistory(view,url,isReload);
-                if(view==website &&
-                    !ProfileScreenshotPolicy.allowsScreenshot(loginPurpose,url,true))
-                    updateLoginScreenshotProtection(url,false);
+                if(view==website)allowLoginScreenshots();
             }
             @Override public void onReceivedError(WebView view,
                     android.webkit.WebResourceRequest request,
                     android.webkit.WebResourceError error){
                 if(view!=website||request==null||!request.isForMainFrame())return;
                 loginProfilePageLoadFailed=true;
-                updateLoginScreenshotProtection(view.getUrl(),false);
+                allowLoginScreenshots();
                 if(loginCover!=null)loginCover.setVisibility(View.GONE);
                 int code=error==null?0:error.getErrorCode();
                 BugReport.log(MainActivity.this,"AUTH","Navegação principal · erro "+code);
@@ -3357,7 +3371,7 @@ public class MainActivity extends Activity {
                 int status=response.getStatusCode();
                 if(status>=400){
                     loginProfilePageLoadFailed=true;
-                    updateLoginScreenshotProtection(view.getUrl(),false);
+                    allowLoginScreenshots();
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     BugReport.log(MainActivity.this,"AUTH","Página principal · HTTP "+status);
                 }
@@ -3380,6 +3394,26 @@ public class MainActivity extends Activity {
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
         toolbar.addView(loginName,new LinearLayout.LayoutParams(0,d(48),1));
+        TextView browser=new TextView(this);
+        browser.setText("↗ Site");
+        browser.setTextColor(Color.WHITE);
+        browser.setTextSize(12);
+        browser.setGravity(Gravity.CENTER);
+        browser.setContentDescription("Abrir PoGoCoordinates no navegador do aparelho");
+        toolbar.addView(browser,new LinearLayout.LayoutParams(d(57),d(48)));
+        browser.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle("Login pelo navegador")
+            .setMessage("O Google pode bloquear login dentro do Android WebView. "+
+                "No navegador você pode entrar no site oficial, mas a sessão "+
+                "do navegador não será importada automaticamente para o PokeSearch.")
+            .setPositiveButton("Abrir site",(dialog,which)->{
+                try{
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://pogocoordinates.com/search")));
+                }catch(Exception error){
+                    Toast.makeText(this,"Não foi possível abrir o navegador",Toast.LENGTH_LONG).show();
+                }
+            }).setNegativeButton("Cancelar",null).show());
         TextView done=new TextView(this);
         done.setText("✓ PokeSearch");
         done.setTextColor(Color.rgb(126,212,204));
@@ -3425,7 +3459,7 @@ public class MainActivity extends Activity {
         loginCover=loginWaiting;
         loginRoot.addView(loginStage,new LinearLayout.LayoutParams(-1,0,1));
         loginDialog=new android.app.Dialog(this);
-        if(loginDialog.getWindow()!=null)loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        // Nenhum bloqueio de print criado pelo PokeSearch.
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
         // Dialog consumes Android Back before Activity.onBackPressed().
@@ -3463,9 +3497,19 @@ public class MainActivity extends Activity {
         });
         serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN",false);
         loginDialog.show();
+        // React/Google/Discord podem não expor o seletor ao script. Deixar
+        // a página oficial visível e permitir que o usuário encontre o erro.
+        final WebView startedWebsite=website;
+        startedWebsite.postDelayed(()->{
+            if(startedWebsite!=website||loginDialog==null||!loginDialog.isShowing()||
+                loginSessionNotified)return;
+            if(loginCover!=null)loginCover.setVisibility(View.GONE);
+            if(loginWaitLabel!=null)
+                loginWaitLabel.setText("Entre pela página oficial. Confira qualquer erro exibido.");
+        },2800L);
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
-            loginWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+            loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
             loginWindow.setBackgroundDrawableResource(android.R.color.transparent);
             loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             loginWindow.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,
