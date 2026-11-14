@@ -168,6 +168,7 @@ window.onVisualEditorPreview=function(area){
  window.visualMeasurementsRefresh=scheduleVisualMeasurements;
  function saveGuideNow(){
   clearTimeout(saveTimer);saveTimer=null;
+  ++saveEpoch; // Invalidate any already enqueued debounce callback.
   pendingVisualJson=JSON.stringify(current);
   if(controlsWindow&&window.Native&&Native.saveVisualPrefs)
    Native.saveVisualPrefs(pendingVisualJson);
