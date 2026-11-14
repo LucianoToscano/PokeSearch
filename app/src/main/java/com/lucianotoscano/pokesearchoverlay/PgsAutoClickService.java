@@ -7,7 +7,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.media.AudioAttributes;
-import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.content.Context;
@@ -24,12 +23,9 @@ import android.hardware.HardwareBuffer;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.WindowManager;
-import android.graphics.drawable.GradientDrawable;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -838,6 +834,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             String mode=PgsAutoNotificationPolicy.mode(kind,
                 prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
             int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
+            if("custom".equals(mode)&&(index<0||index>=PokeSoundLibrary.size()))
+                mode="default"; // Não criar canal sem som por índice corrompido.
             String channelId=PgsAutoNotificationPolicy.channelId(kind,mode,index);
             boolean isShiny=PgsAutoNotificationPolicy.SHINY.equals(kind);
             boolean vibrate=isShiny&&prefs.getBoolean("shinyVibrate",true);
