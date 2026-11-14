@@ -366,16 +366,19 @@ public final class PgsAutoClickService extends AccessibilityService {
         try {detector=new PgsAutoIconDetector(this);return detector.templateCount()>0;}
         catch(IOException e){detector=null;showReason("Não foi possível carregar modelo: "+e.getMessage());return false;}
     }
-    private void loadSettings(){
-        SharedPreferences p=getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE);
-        // Migração única: os cinco tempos LT338 (5s/60s/60s/120s/120s)
-        // não devem invalidar o novo ciclo simples 60s/2s.
+    /** Compatibilidade LT338: migra temporizadores uma vez e mantém as escolhas novas. */
+    static SharedPreferences cyclePrefs(Context context){
+        SharedPreferences p=context.getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE);
         if(!p.getBoolean("cycle_60_2_migrated",false)){
             p.edit()
                 .putInt("load_timeout",PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS)
                 .putInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS)
-                .putBoolean("cycle_60_2_migrated",true).apply();
+                .putBoolean("cycle_60_2_migrated",true).commit();
         }
+        return p;
+    }
+    private void loadSettings(){
+        SharedPreferences p=cyclePrefs(this);
         limit=50;
         minSeconds=PgsAutoCyclePolicy.shinyCheckSeconds(
             p.getInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS));
@@ -594,6 +597,12 @@ public final class PgsAutoClickService extends AccessibilityService {
                 sceneReadyAt=0;loadedStreak=0;
                 final int stamp=++ticket;
                 status("AGUARDANDO MAPA");
+                // Watchdog próprio: o limite continua valendo mesmo se um frame
+                // Android nunca responder (não ficar preso em tela/carregamento).
+                handler.postDelayed(()->{
+                    if(running&&awaitingMap&&ticket==stamp)
+                        finishMapVisit(stamp,true);
+                },maxSeconds*1000L);
                 handler.postDelayed(()->checkMap(stamp),1300L);
             });}
             @Override public void onCancelled(GestureDescription g){handler.post(()->fail("Toque cancelado pelo Android."));}
