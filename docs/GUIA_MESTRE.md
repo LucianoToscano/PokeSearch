@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT342 — Candidata oficial protegida 0.03.40 / 54547 (14/11/2026)
+
+- **Feature integrada:** PR [#362](https://github.com/LucianoToscano/PokeSearch/pull/362), squash `0e383e8891b104f7b6ed9ad74960c9e4920a91dc`. A regressão completa do HEAD `880580600024f7e1f252aa9a5396a03090394847` passou: LT169 Node #43609518866, Core LT211 #43609518876, Java LT62 #43609518929, LT173 OTA #43609518924, QA Node #43609518951, QA PGS Android #43609518909 e Beta Secure #43609518917, todos SUCCESS. Não houve redução de recursos nem alterações nas contas existentes.
+- **Pedido protegido:** branch `release/lt342-official-20261114`, `versionName=0.03.40`, `versionCode=54547`, `label=51344`, `previous_tag=v0.03.39-54546`, `qa_max_code=54546`; notas publicadas em `release_notes.json` com mínimo 54547. **Publicação oficial só após preflight, CI, merge, assinatura permanente, R8, ZIP, APK e SHA-256 verificados.**
+- **Pendências físicas continuam:** login real Google/Discord com nome/foto, gestos e teleporte PGSharp e avisos Shiny sem prova física não podem ser homologados por CI; issue #350 aberta.
+
 ## LT342 — Correções solicitadas em dispositivo (14/11/2026; PR de desenvolvimento)
 
 - **Base correta:** `main` em `4db5b4b959ac2bcc65ba64e77903d52b3b9cf988` após LT341 publicada. Branch `fix/lt342-home-pgs-login-edu-20261114`. Não reexecutar alterações das PRs #358/#359/#360.
