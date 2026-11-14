@@ -4024,6 +4024,38 @@
           "A atualização oficial depende da autorização de instalação pelo Android; não ocorre instalação silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt343-pgs-visual-login-screenshots-20261114",
+      "minVersionCode": 54548,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.41 — Menus PGS, ícones, contas e prints",
+      "sections": {
+        "novidades": [
+          "24 ícones originais de 512px preservados na Home (normal, hover e ativo), incluindo duas Pokébolas e Busca Pokémon.",
+          "Captura de sprite com recorte movível, prévia e confirmação antes de salvar.",
+          "Personalização PGS: contador opcional, P/M/G e transparência, com notificações Novos e Shiny.",
+          "Popup de duas contas com opções diretas Entrar ou Perfil e sessões isoladas."
+        ],
+        "melhorias": [
+          "Logo e ações do topo alinhados na mesma linha; indicadores de login discretos, próximos das Pokébolas.",
+          "Buscar Pokémon mantém modelos salvos ao reativar, recolhe menu sem desligar e pausa gestos fora do jogo.",
+          "Fundo preto indesejado da arte ON corrigido com transparência real, preservando WebP RGB original.",
+          "Liberadas capturas de tela das janelas do próprio PokeSearch, inclusive páginas de login e erros.",
+          "Botões Google/Discord exibidos para toque humano; caso a página não carregue, a máscara é retirada e há opção de abrir o site no navegador."
+        ],
+        "correcoes": [
+          "Avisos 'Sou passageiro' ou 'Estou seguro' não provocam toques automáticos; o PGS aguarda confirmação manual e não consome o timeout durante a pausa.",
+          "Reduzidos alertas PGS redundantes para Novos Pokémon e Shiny monitorado.",
+          "Mantidos ícones e menus de P1/P2/Doce Raro, dados e resolução originais, assinatura e compatibilidade."
+        ],
+        "emDesenvolvimento": [
+          "Google pode bloquear OAuth dentro do WebView (disallowed_useragent). Login no navegador externo não sincroniza automaticamente; conclusão exige retorno oficial autorizado pelo PoGoCoordinates.",
+          "Confirmação do login Google/Discord nas duas contas, nome/foto e finalização de sessão ainda dependem de teste físico no Samsung.",
+          "Gesto do PGSharp, teleporte real e Shiny da mesma espécie ainda aguardam homologação na issue #350; o CI não substitui teste real.",
+          "Instalação da atualização exige confirmação do Android."
+        ]
+      }
     }
   ]
 }
