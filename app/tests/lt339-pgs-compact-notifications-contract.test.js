@@ -7,7 +7,7 @@ const policy=read("PgsAutoNotificationPolicy"),quick=read("OverlayQuickMenus");
 assert.match(ui,/R\.drawable\.pgs_menu_search/);
 assert.match(ui,/R\.drawable\.pgs_menu_timer/);
 assert.match(ui,/R\.drawable\.ic_bell_outline/);
-assert.match(ui,/new LinearLayout\.LayoutParams\(dp\(44\),dp\(44\)\)/);
+assert.match(ui,/new LinearLayout\.LayoutParams\(\s*dp\(TOOL_CELL_DP\),dp\(TOOL_CELL_DP\)\)/);
 assert.match(ui,/OverlayQuickMenus\.panelColor\(context\)/);
 assert.match(ui,/actions\.closeOverlay\(\)/);
 assert.doesNotMatch(ui,/actions\.retryNow\(\)|••• MAIS|Reportar|Doar|Reiniciar buscas/);
