@@ -37,6 +37,8 @@ final class PgsAutoMenus {
         void testNotification(String type);
         void modelsChanged();
         void appearanceChanged();
+        void choosePoint(String mode);
+        void selectSprites();
     }
     private final Context context;
     private final WindowManager wm;
@@ -302,6 +304,13 @@ final class PgsAutoMenus {
 
     void showSearch(){
         LinearLayout root=panelRoot("⌕ BUSCAS",PgsAutoCatalog.selected(context).size()+"/10");
+        String currentMode=context.getSharedPreferences("pgs_auto_target_v1",Context.MODE_PRIVATE)
+            .getString("mode","SPRITE");
+        Button target=button("◎ Alvo: "+currentMode.replace("SPRITE","Sprites")
+            .replace("POKESTOP","PokéStop").replace("POINT","Ponto específico")
+            .replace("ENCOUNTER","Encontro")+"  ▾",11);
+        target.setOnClickListener(v->showTargets());
+        root.addView(target,margined(-1,dp(32),4));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -405,6 +414,70 @@ final class PgsAutoMenus {
         render[0].run();
         mount(root,240,290);
     }
+    /** Alvos explícitos, separados da busca por sprites do feed PGSharp. */
+    void showTargets(){
+        SharedPreferences prefs=context.getSharedPreferences("pgs_auto_target_v1",Context.MODE_PRIVATE);
+        String chosen=prefs.getString("mode","SPRITE");
+        LinearLayout root=panelRoot("◎ ALVO DO TOQUE",null);
+        TextView explanation=label("Escolha o que tocar. Coordenadas não são GPS.",10,false);
+        root.addView(explanation,margined(-1,dp(31),4));
+        String[] keys={"SPRITE","POKESTOP","POINT","ENCOUNTER"};
+        String[] names={"Sprites Pokémon (feed)","PokéStop — tocar perto",
+            "Ponto específico — mira","Pokémon — entrar e deslizar"};
+        for(int i=0;i<keys.length;i++){
+            final String id=keys[i];
+            Button item=button(names[i],11);
+            markChosen(item,id.equals(chosen));
+            item.setOnClickListener(v->{
+                if("SPRITE".equals(id)){
+                    prefs.edit().putString("mode","SPRITE").apply();
+                    actions.selectSprites();showSearch();
+                }else{
+                    dismissAll();actions.choosePoint(id);
+                }
+            });
+            root.addView(item,margined(-1,dp(34),3));
+        }
+        TextView title=label("Repetir após:",11,true);
+        root.addView(title,margined(-1,dp(24),5));
+        String[] triggers={"MAP","NO_SHINY","TIMER"};
+        String[] labels={"Mapa","Sem Shiny confirmado","Tempo"};
+        LinearLayout modes=horizontal();
+        String chosenTrigger=prefs.getString("trigger","MAP");
+        for(int i=0;i<triggers.length;i++){
+            final String selected=triggers[i];
+            Button b=button(labels[i],9);
+            markChosen(b,selected.equals(chosenTrigger));
+            b.setOnClickListener(v->{
+                prefs.edit().putString("trigger",selected).apply();showTargets();
+            });
+            modes.addView(b,new LinearLayout.LayoutParams(0,dp(40),1));
+        }
+        root.addView(modes,margined(-1,dp(41),3));
+        LinearLayout offsetRow=horizontal();
+        TextView offsetText=label("Deslocar PokéStop: "+prefs.getInt("stopOffsetPx",24)+"px",10,false);
+        offsetRow.addView(offsetText,new LinearLayout.LayoutParams(0,dp(31),1));
+        SeekBar seek=new SeekBar(context);
+        seek.setMax(72);seek.setProgress(Math.min(72,Math.max(0,prefs.getInt("stopOffsetPx",24))));
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override public void onProgressChanged(SeekBar bar,int progress,boolean user){
+                if(user){
+                    prefs.edit().putInt("stopOffsetPx",progress).apply();
+                    offsetText.setText("Deslocar PokéStop: "+progress+"px");
+                }
+            }
+            @Override public void onStartTrackingTouch(SeekBar bar){}
+            @Override public void onStopTrackingTouch(SeekBar bar){}
+        });
+        offsetRow.addView(seek,new LinearLayout.LayoutParams(dp(95),dp(31)));
+        root.addView(offsetRow,margined(-1,dp(33),4));
+        TextView note=label(
+            "A mira exige confirmação. A ausência de Shiny precisa de evidência; "+ 
+            "avisos de segurança exigem toque manual. Tocar perto não move GPS.",9,false);
+        root.addView(note,margined(-1,dp(49),4));
+        mount(root,248,440);
+    }
+
     void showTime(){
         LinearLayout root=panelRoot("⏱ TEMPOS",null);
         SharedPreferences prefs=PgsAutoClickService.cyclePrefs(context);
