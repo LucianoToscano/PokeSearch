@@ -33,3 +33,17 @@ Registrar **PASSOU/FALHOU/BLOQUEADO**, arquivo/commit, vídeo/log e cenário par
 
 ## 6. Política de alteração
 Preservar componentes oficiais anteriores; extrair componente compartilhado antes de duplicar aparência. Toda exceção de dimensão, arte ou transição deve ter justificativa, teste e registro no Guia Mestre. Este documento é requisito para overlays novos e refatorações futuras.
+
+
+## Adendo LT345 — regra vinculante para todos os menus de sprites e Busca Pokémon
+
+A partir da [issue LT345 #370](https://github.com/LucianoToscano/PokeSearch/issues/370), **não aceitar** menus de sprites, Buscar Pokémon ou Auto Click que sejam apenas visualmente parecidos com os originais: devem compartilhar as primitivas, os drawables e as regras efetivas de geometria dos menus das Pokébolas 1/2 e Doces Raros. Comparar `OverlayQuickMenus`, `dock.html`, `OverlayService`, `RareCandyOverlayService` e `PgsAutoMenus` diretamente. Critérios obrigatórios:
+
+1. **Ancoragem:** a barra e seus submenus permanecem presos à bolha correspondente, mesmo após arrastar, girar, minimizar/retomar ou abrir popup. Nunca deixar um menu flutuando em posição antiga.
+2. **Estética:** aparência minimalista, delicada, compacta, intuitiva, elegante e moderna; mesma altura, ícones e padding óptico dos controles de referência, sem aumentos arbitrários. Áreas de toque acessíveis podem ser maiores que a arte visível.
+3. **Ícones originais:** fechar (X), personalização (engrenagem+lápis) e notificações (sino) são os mesmos recursos originais, não aproximações. O símbolo Shiny branco/amarelo deve ficar **inteiramente dentro** do sino, alinhado ao seu centro óptico.
+4. **Comportamento:** toque para abrir/retrair não desativa a busca; toque longo e arraste preservados; fechar segue semântica da função. Não usar um único estado para visibilidade, execução e temporizador.
+5. **Regressão:** comparar capturas em modo claro/escuro e escalas distintas com Pokébola 1, Pokébola 2 e Doce Raro; validar geometria real em pixels físicos e dp, acessibilidade, alpha e persistência antes do merge.
+6. **Novos alvos:** modos PokéStop, Ponto Específico e Pokémon + gesto só podem executar quando a tela-alvo foi validada; nenhum gesto em avisos de segurança, confirmação de direção ou conteúdo desconhecido. Um callback de gesto Android não prova sucesso no jogo.
+
+**Estado deste adendo:** regra/documentação registrada, mas implementação e homologação LT345 ainda pendentes. Não anunciar APK LT345 sem build e release verificáveis.
