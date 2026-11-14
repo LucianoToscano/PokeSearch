@@ -201,6 +201,11 @@ public final class RaidDayAssistantOverlayService extends Service {
     private RaidDayAvatarFrames avatarSprites;
     private EduSpriteAtlas eduSprites; // LT309: 62 quadros; atlas LT304 permanece fallback
     private ImageView avatarView;
+    private EduSpriteGuideView eduReviewGuides;
+    private EduSpriteInspector eduInspector;
+    private boolean eduReviewActive=false,eduReviewComparison=false;
+    private int eduReviewIndex=42;
+    private TextView eduReviewControlsButton,eduGuideLinesButton,eduResumeAutomaticButton;
     private TextView[] avatarSizeButtons;
     private TextView avatarMotionButton;
     // M (150px) é o padrão. Preferências antigas migram por categoria P/M/G.
@@ -256,6 +261,8 @@ public final class RaidDayAssistantOverlayService extends Service {
     }
     // Exibição de efeitos não implica teleporte, passe, vitória ou evento confirmado.
     private int eduCurrentFrame(long now){
+        // Inspeção manual congela o quadro selecionado sem afetar o roteiro.
+        if(eduReviewActive)return eduReviewIndex;
         if(dragging){
             int[] frames=EduSpriteAtlas.sequence("arrastando");
             int tick=(int)Math.max(0,(now-eduDragStartedAt)/185L);
@@ -409,7 +416,8 @@ public final class RaidDayAssistantOverlayService extends Service {
             if(eduSprites!=null){
                 if(avatarView==null||!avatarMotion)return;
                 long now=SystemClock.elapsedRealtime();
-                avatarView.setImageDrawable(eduSprites.frame(eduCurrentFrame(now)));
+                if(!eduReviewComparison)
+                    avatarView.setImageDrawable(eduSprites.frame(eduCurrentFrame(now)));
                 avatarAnimationTick++;
                 // Uma animação ociosa de caminhada/pokébola também usa
                 // ticks curtos: caso contrário, 500 ms pulariam quadros.
@@ -589,6 +597,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         }
         if(intent!=null&&ACTION_CONSENT_DONE.equals(intent.getAction())){
             if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+            if(eduInspector!=null)eduInspector.setOverlayVisible(true);
             // A janela permanece recolhida para não obstruir o diálogo do Android.
             updateStep();
             return START_NOT_STICKY;
@@ -795,6 +804,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         int art=eduAvatarArtSize();
         avatarView.setLayoutParams(new FrameLayout.LayoutParams(
             art,art,Gravity.CENTER));
+        if(eduReviewGuides!=null)
+            eduReviewGuides.setLayoutParams(new FrameLayout.LayoutParams(
+                art,art,Gravity.CENTER));
         int target=Math.max(dp(BUBBLE_DP),art+dp(6));
         bubbleParams.width=target;bubbleParams.height=target;
         int maxX=Math.max(0,getResources().getDisplayMetrics().widthPixels-target);
@@ -803,6 +815,7 @@ public final class RaidDayAssistantOverlayService extends Service {
         bubbleParams.y=Math.max(0,Math.min(maxY,bubbleParams.y));
         try{wm.updateViewLayout(bubble,bubbleParams);}
         catch(IllegalArgumentException ignored){}
+        if(eduInspector!=null)eduInspector.sync(bubbleParams,art);
         prefs.edit().putInt("x",bubbleParams.x).putInt("y",bubbleParams.y)
             .putInt(RaidDayAvatarFrames.PREF_SIZE,
                 RaidDayAvatarFrames.SIZES_PX[avatarSizeIndex]).apply();
@@ -824,7 +837,9 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(avatarView!=null&&(avatarSprites!=null||eduSprites!=null)){
             if(enabled)handler.post(avatarTicker);
             else if(eduSprites!=null)
-                avatarView.setImageDrawable(eduSprites.state(eduContextState()));
+                avatarView.setImageDrawable(eduSprites.frame(
+                    eduReviewActive?eduReviewIndex:
+                    EduSpriteAtlas.indexForState(eduContextState())));
             else avatarView.setImageDrawable(avatarSprites.frame(
                 RaidDayAvatarFrames.IDLE_A));
         }
@@ -849,6 +864,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         int artSize=eduAvatarArtSize();
         bubble.addView(avatarView,new FrameLayout.LayoutParams(
             artSize,artSize,Gravity.CENTER));
+        if(eduSprites!=null){
+            eduReviewGuides=new EduSpriteGuideView(this);
+            eduReviewGuides.setEnabledGuides(
+                prefs.getBoolean(EduSpriteInspector.PREF_GUIDES,false));
+            bubble.addView(eduReviewGuides,new FrameLayout.LayoutParams(
+                artSize,artSize,Gravity.CENTER));
+        }
         View grip=new View(this);
         grip.setClickable(true);
         grip.setContentDescription(
@@ -905,6 +927,8 @@ public final class RaidDayAssistantOverlayService extends Service {
                                 getResources().getDisplayMetrics().heightPixels-
                                 bubbleParams.height,startY+Math.round(dy)));
                             wm.updateViewLayout(bubble,bubbleParams);
+                            if(eduInspector!=null)
+                                eduInspector.sync(bubbleParams,eduAvatarArtSize());
                             if(visible){
                                 placePanelCoordinates();
                                 placePanel();
@@ -931,6 +955,45 @@ public final class RaidDayAssistantOverlayService extends Service {
             }
         });
         wm.addView(bubble,bubbleParams);
+        if(eduSprites!=null){
+            eduInspector=new EduSpriteInspector(this,wm,eduSprites,prefs,
+                new EduSpriteInspector.Listener(){
+                    @Override public int currentFrame(){
+                        return eduCurrentFrame(SystemClock.elapsedRealtime());
+                    }
+                    @Override public void selected(int index){
+                        eduReviewActive=true;
+                        eduReviewIndex=index;
+                        eduAnimationName="";eduReactionState="";
+                        if(avatarView!=null)
+                            avatarView.setImageDrawable(eduSprites.frame(index));
+                    }
+                    @Override public void comparing(boolean show){
+                        eduReviewComparison=show;
+                        if(avatarView!=null)
+                            avatarView.setVisibility(show?View.INVISIBLE:View.VISIBLE);
+                        if(eduReviewGuides!=null)
+                            eduReviewGuides.setVisibility(
+                                !show&&prefs.getBoolean(
+                                    EduSpriteInspector.PREF_GUIDES,false)?
+                                    View.VISIBLE:View.GONE);
+                    }
+                    @Override public void resumed(){
+                        eduReviewActive=false;eduReviewComparison=false;
+                        resetEduIdle();
+                        if(avatarView!=null){
+                            avatarView.setVisibility(View.VISIBLE);
+                            avatarView.setImageDrawable(
+                                eduSprites.frame(eduCurrentFrame(
+                                    SystemClock.elapsedRealtime())));
+                        }
+                        if(eduReviewGuides!=null)
+                            eduReviewGuides.setEnabledGuides(
+                                prefs.getBoolean(EduSpriteInspector.PREF_GUIDES,false));
+                    }
+                });
+            eduInspector.sync(bubbleParams,artSize);
+        }
         if((avatarSprites!=null||eduSprites!=null)&&avatarMotion)
             handler.post(avatarTicker);
     }
@@ -1302,6 +1365,29 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduSettings.addView(sizes,sizesLp);
         avatarMotionButton=button(avatarMotion?"Animação ✓":"Animação ×");
         addSettingsButton(avatarMotionButton,()->setAvatarMotion(!avatarMotion));
+        // LT335: controles de auditoria separados da própria sprite.
+        eduReviewControlsButton=button("◀️👬▶️ Inspecionar sprites");
+        addSettingsButton(eduReviewControlsButton,()->{
+            if(eduInspector==null)return;
+            eduInspector.setControlsVisible(!eduInspector.controlsVisible(),
+                bubbleParams,eduAvatarArtSize());
+            updateEduReviewSettingsLabels();
+        });
+        eduGuideLinesButton=button("Linhas-guia: ocultas");
+        addSettingsButton(eduGuideLinesButton,()->{
+            if(eduInspector==null)return;
+            boolean enabled=!eduInspector.guidesVisible();
+            eduInspector.setGuidesVisible(enabled);
+            if(eduReviewGuides!=null&&!eduReviewComparison)
+                eduReviewGuides.setEnabledGuides(enabled);
+            updateEduReviewSettingsLabels();
+        });
+        eduResumeAutomaticButton=button("↻ Retomar animação automática");
+        addSettingsButton(eduResumeAutomaticButton,()->{
+            if(eduInspector!=null)eduInspector.stopReview();
+            updateEduReviewSettingsLabels();
+        });
+        updateEduReviewSettingsLabels();
         TextView schedule=button("📅 Evento, lembretes e calendário");
         addSettingsButton(schedule,()->{
             setVisible(false);
@@ -1388,11 +1474,13 @@ public final class RaidDayAssistantOverlayService extends Service {
         eduSettingsOpen=false;
         setVisible(false);
         if(bubble!=null)bubble.setVisibility(View.GONE);
+        if(eduInspector!=null)eduInspector.setOverlayVisible(false);
         Intent intent=new Intent(this,RaidDayCaptureConsentActivity.class)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try{startActivity(intent);}
         catch(RuntimeException error){
             if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+            if(eduInspector!=null)eduInspector.setOverlayVisible(true);
             eduNote="O Android não abriu a autorização. Continue manualmente.";
         }
     }
@@ -1906,7 +1994,19 @@ public final class RaidDayAssistantOverlayService extends Service {
         preparation.save(prefs);
         updateStep();
     }
+    private void updateEduReviewSettingsLabels(){
+        if(eduReviewControlsButton!=null)
+            eduReviewControlsButton.setText("◀️👬▶️ Controles de inspeção "+
+                (eduInspector!=null&&eduInspector.controlsVisible()?"✓":"×"));
+        if(eduGuideLinesButton!=null)
+            eduGuideLinesButton.setText("Linhas-guia "+
+                (eduInspector!=null&&eduInspector.guidesVisible()?"✓ mostrar":"× ocultas"));
+        if(eduResumeAutomaticButton!=null)
+            eduResumeAutomaticButton.setVisibility(
+                eduInspector!=null&&eduInspector.isReviewing()?View.VISIBLE:View.GONE);
+    }
     private void showEduSettings(){
+        updateEduReviewSettingsLabels();
         eduMainCard.setVisibility(View.GONE);
         preparationSection.setVisibility(View.GONE);
         eduActions.setVisibility(View.GONE);
@@ -2453,7 +2553,8 @@ public final class RaidDayAssistantOverlayService extends Service {
         if(visible){
             // Trocar a sprite IMEDIATAMENTE, mesmo com animação P/M/G OFF.
             // O ticker posterior apenas mantém a pose contextual.
-            if(eduFirstBubbleMode&&eduSprites!=null&&avatarView!=null)
+            if(!eduReviewActive&&eduFirstBubbleMode&&
+                eduSprites!=null&&avatarView!=null)
                 avatarView.setImageDrawable(
                     eduSprites.state(eduContextState()));
             // Centraliza novamente após a fala alterar a altura do balão.
@@ -2536,6 +2637,10 @@ public final class RaidDayAssistantOverlayService extends Service {
             prefs.unregisterOnSharedPreferenceChangeListener(
                 visualSettingsListener);
             visualSettingsListener=null;
+        }
+        if(eduInspector!=null){
+            eduInspector.destroy();
+            eduInspector=null;
         }
         if(wm!=null){
             if(panel!=null&&visible){
