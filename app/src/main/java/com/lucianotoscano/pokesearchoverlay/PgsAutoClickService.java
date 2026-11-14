@@ -106,7 +106,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         AccessibilityNodeInfo root=null;
         try{
             root=getRootInActiveWindow();
-            return root!=null&&containsPassengerLabel(root,0);
+            return root!=null&&root.getPackageName()!=null&&
+                isGamePackage(root.getPackageName().toString())&&
+                containsPassengerLabel(root,0);
         }catch(RuntimeException ignored){return false;}
         finally{if(root!=null)root.recycle();}
     }
