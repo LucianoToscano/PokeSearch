@@ -118,8 +118,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         String combined=(text==null?"":text.toString())+" "+(desc==null?"":desc.toString());
         String normalized=combined.toLowerCase(java.util.Locale.ROOT);
         if(normalized.contains("sou passageiro")||
+           normalized.contains("sou um passageiro")||
            normalized.contains("i'm a passenger")||
-           normalized.contains("i’m a passenger"))return true;
+           normalized.contains("i’m a passenger")||
+           normalized.contains("i am a passenger")||
+           normalized.contains("estou seguro")||
+           normalized.contains("estou em segurança")||
+           normalized.contains("i am safe")||
+           normalized.contains("i'm safe")||
+           normalized.contains("i’m safe"))return true;
         for(int i=0;i<node.getChildCount();i++){
             AccessibilityNodeInfo child=node.getChild(i);
             if(child==null)continue;
