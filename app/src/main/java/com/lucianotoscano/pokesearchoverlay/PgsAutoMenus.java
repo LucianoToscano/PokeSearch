@@ -38,7 +38,7 @@ final class PgsAutoMenus {
         void teach(String species);
         void retryNow();
         void closeOverlay();
-        void testShiny();
+        void testNotification(String type);
     }
     private final Context context;
     private final WindowManager wm;
@@ -87,12 +87,15 @@ final class PgsAutoMenus {
         dismissAll();anchorX=x;anchorY=y;
         LinearLayout bar=horizontal();bar.setPadding(dp(5),dp(4),dp(5),dp(4));
         bar.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,10));
-        String[] icons={"⌕","⏱","🔔","•••"};
-        String[] descriptions={"Buscas","Tempo","Notificações","Mais"};
-        Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications,this::showMore};
+        // PGS: a mesma fileira compacta das Pokébolas, sem o popup "••• MAIS".
+        String[] icons={"⌕","⏱","🔔","↻","×"};
+        String[] descriptions={"Buscas","Tempo","Notificações PGS","Reiniciar buscas","Fechar Busca Pokémon"};
+        Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications,
+            ()->{dismissAll();actions.retryNow();},
+            ()->{dismissAll();actions.closeOverlay();}};
         for(int i=0;i<icons.length;i++){
             final int n=i;
-            Button b=button(icons[i],i==0?25:i==3?16:21);
+            Button b=button(icons[i],i==0?25:i==4?23:21);
             b.setContentDescription(descriptions[i]);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(44));
             if(i>0)p.leftMargin=dp(4);
@@ -101,10 +104,10 @@ final class PgsAutoMenus {
         }
         toolbar=bar;
         Point screen=size();
-        int width=dp(5+4*44+3*4+5),h=dp(54);
+        int width=dp(5+5*44+4*4+5),h=dp(54);
         int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),x-width/2));
         int top=y+dp(53);
-        if(top+dp(470)>screen.y)top=Math.max(dp(15),y-h-dp(6));
+        if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(6));
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,h,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
@@ -341,17 +344,6 @@ final class PgsAutoMenus {
         root.addView(label("A pausa shiny depende de uma notificação real do PGSharp; o app não analisa a cor do Pokémon 3D.",10,false),margined(-1,dp(43),4));
         mount(root);
     }
-    void showMore(){
-        LinearLayout root=panelRoot("••• MAIS",null);
-        String[] titles={"✉ Reportar","♧ Doar","↻ Reiniciar buscas","× Fechar"};
-        Runnable[] callbacks={this::report,this::donate,()->{
-            dismissAll();actions.retryNow();},()->{dismissAll();actions.closeOverlay();}};
-        for(int i=0;i<titles.length;i++){
-            Button b=button(titles[i],14);LinearLayout.LayoutParams p=margined(-1,dp(48),i==0?8:5);
-            root.addView(b,p);final int j=i;b.setOnClickListener(v->callbacks[j].run());
-        }
-        mount(root);
-    }
     private void showSoundPicker(String key){
         LinearLayout root=panelRoot("♫ ESCOLHER SOM",null);
         ScrollView list=new ScrollView(context);
@@ -375,35 +367,5 @@ final class PgsAutoMenus {
         list.addView(content);root.addView(list,new LinearLayout.LayoutParams(-1,dp(330)));
         mount(root);
     }
-    private void report(){
-        String issue=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE).getString("lastError","sem erro registrado");
-        Intent send=new Intent(Intent.ACTION_SEND);send.setType("text/plain");
-        send.putExtra(Intent.EXTRA_SUBJECT,"PGS Favoritos Auto 0.7 · relatório");
-        send.putExtra(Intent.EXTRA_TEXT,BugReport.export(context,
-            "PGS Buscas Auto · estado: "+(PgsAutoClickService.instance==null?"serviço inativo":"serviço ativo")+
-            " · último erro: "+DiagnosticSanitizer.clean(issue)));
-        Intent chooser=Intent.createChooser(send,"Reportar PGS Auto");
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try{context.startActivity(chooser);}catch(Exception e){Toast.makeText(context,"Sem aplicativo disponível para reportar.",Toast.LENGTH_LONG).show();}
-        dismissAll();
-    }
-    private void donate(){
-        LinearLayout root=panelRoot("♧ DOAR · PokeSearch",null);
-        root.addView(label("Pix do projeto PokeSearch. Confira os dados no seu banco antes de doar.",12,false),margined(-1,dp(58),8));
-        ImageView qr=new ImageView(context);
-        qr.setImageResource(R.drawable.support_pix_qr_original);
-        qr.setBackgroundColor(Color.WHITE);
-        qr.setContentDescription("QR Code Pix original do PokeSearch");
-        qr.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        LinearLayout.LayoutParams qrLp=new LinearLayout.LayoutParams(dp(205),dp(205));
-        qrLp.gravity=Gravity.CENTER_HORIZONTAL;
-        root.addView(qr,qrLp);
-        Button copy=button("⧉ Copiar código Pix do PokeSearch",12);root.addView(copy,margined(-1,dp(48),5));
-        copy.setOnClickListener(v->{
-            ClipboardManager clipboard=(ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
-            if(clipboard!=null){clipboard.setPrimaryClip(ClipData.newPlainText("Pix · PokeSearch",PIX));
-                Toast.makeText(context,"Código Pix copiado. Confira o recebedor no banco.",Toast.LENGTH_LONG).show();}
-        });
-        mount(root);
-    }
+
 }
