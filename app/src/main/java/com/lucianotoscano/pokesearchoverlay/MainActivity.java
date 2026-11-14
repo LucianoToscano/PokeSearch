@@ -3170,7 +3170,8 @@ public class MainActivity extends Activity {
             }
             @Override public void onPageFinished(WebView view,String url){
                 if(view!=website)return;
-                updateLoginScreenshotProtection(url,true);
+                // Só liberar se o WebView ainda mostrar a URL concluída.
+                updateLoginScreenshotProtection(url,url!=null&&url.equals(view.getUrl()));
                 if(url==null)return;
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
