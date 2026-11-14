@@ -229,8 +229,10 @@ final class PgsAutoMenus {
         hidePanel();panel=root;
         // Nunca deixar a barra visível por trás do submenu translúcido.
         if(toolbar!=null)toolbar.setVisibility(View.GONE);
-        Point screen=size();int width=Math.min(screen.x-dp(20),dp(preferredWidthDp));
-        int estimated=dp(estimatedHeightDp);
+        PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
+        Point screen=size();int width=Math.min(screen.x-dp(20),
+            dp(Math.min(preferredWidthDp,visual.popupWidth)));
+        int estimated=dp(Math.min(estimatedHeightDp,visual.popupHeight));
         // Anchor submenus to the *actual* visible toolbar, not to a stale bubble
         // coordinate. This keeps the panel attached when the toolbar is clamped
         // near an edge or rendered above the bubble.
@@ -254,6 +256,7 @@ final class PgsAutoMenus {
         lp.gravity=Gravity.LEFT|Gravity.TOP;
         lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),toolbarLeft-width/2));lp.y=top;
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
+        applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(panel,lp);}catch(Exception e){
             panel=null;
             if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);
@@ -584,26 +587,19 @@ final class PgsAutoMenus {
             });
         }
         root.addView(scale,margined(-1,dp(40),2));
-        TextView alpha=label("Fundo: "+prefs.getInt("menuAlphaPercent",90)+"%",11,true);
-        root.addView(alpha,margined(-1,dp(22),5));
-        SeekBar opacity=new SeekBar(context);
-        opacity.setMax(70);
-        opacity.setProgress(Math.max(0,Math.min(70,prefs.getInt("menuAlphaPercent",90)-30)));
-        opacity.setContentDescription("Transparência do fundo de 30 a 100 por cento");
-        opacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            @Override public void onProgressChanged(SeekBar seek,int progress,boolean user){
-                int percent=progress+30;
-                alpha.setText("Fundo: "+percent+"%");
-                if(user){
-                    prefs.edit().putInt("menuAlphaPercent",percent).apply();
-                    root.setBackground(bg(panelFill(),0x667E91A5,10));
-                }
-            }
-            @Override public void onStartTrackingTouch(SeekBar seek){}
-            @Override public void onStopTrackingTouch(SeekBar seek){actions.appearanceChanged();}
-        });
-        root.addView(opacity,margined(-1,dp(36),1));
-        mount(root,240,245);
+        // The Pokébola Editor Visual is the single source of menu appearance.
+        // Keep PGS-only choices (icons, countdown and tap indicator) separate.
+        TextView inherited=label("Cores e transparência: Editor Visual das Pokébolas",10,false);
+        root.addView(inherited,margined(-1,dp(31),4));
+        CheckBox tapFeedback=new CheckBox(context);
+        tapFeedback.setText("Mostrar local do toque");
+        tapFeedback.setTextSize(11);tapFeedback.setTextColor(fg());
+        tapFeedback.setButtonTintList(android.content.res.ColorStateList.valueOf(fg()));
+        tapFeedback.setChecked(prefs.getBoolean("showTapIndicator",true));
+        tapFeedback.setOnCheckedChangeListener((control,on)->
+            prefs.edit().putBoolean("showTapIndicator",on).apply());
+        root.addView(tapFeedback,margined(-1,dp(35),2));
+        mount(root,240,215);
     }
 
     void showNotifications(){
