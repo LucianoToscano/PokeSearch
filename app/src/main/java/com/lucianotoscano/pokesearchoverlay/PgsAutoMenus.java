@@ -145,7 +145,7 @@ final class PgsAutoMenus {
                 // Mesmo sino das Pokébolas: brilhante dentro (nunca estrela solta).
                 FrameLayout tile=new FrameLayout(context);
                 tile.addView(icon,new FrameLayout.LayoutParams(-1,-1));
-                TextView shiny=label("✦",15,true);
+                TextView shiny=label("✨",15,true);
                 shiny.setTextColor(PgsAutoNotificationPolicy.mode(
                     PgsAutoNotificationPolicy.SHINY,
                     context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
