@@ -996,6 +996,15 @@ public final class PgsAutoClickService extends AccessibilityService {
 
         // Recorte local visível. Tocar apenas POSICIONA; nunca salva sem confirmar.
         final PgsAutoCropSelection[] selected={null};
+        final boolean[] contour={false};
+        ImageView magnifier=new ImageView(this);
+        magnifier.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        magnifier.setBackgroundColor(0xED253342);
+        magnifier.setContentDescription("Lupa ampliada da região selecionada, fora da posição do dedo");
+        FrameLayout.LayoutParams lensParams=new FrameLayout.LayoutParams(
+            dp(96),dp(96),Gravity.TOP|Gravity.RIGHT);
+        lensParams.topMargin=dp(94);lensParams.rightMargin=dp(9);
+        picker.addView(magnifier,lensParams);
         ImageView preview=new ImageView(this);
         preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
         preview.setContentDescription("Prévia da imagem que será gravada");
@@ -1005,11 +1014,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             android.graphics.Rect rect=selected[0].selectedBitmapRect();
             if(rect==null)return;
             try{
-                Bitmap copy=Bitmap.createBitmap(screenshot,rect.left,rect.top,
+                Bitmap raw=Bitmap.createBitmap(screenshot,rect.left,rect.top,
                     rect.width(),rect.height());
+                Bitmap copy=contour[0]?PgsAutoSilhouette.clean(raw):raw;
+                if(copy!=raw)raw.recycle();
                 Bitmap old=pickerPreviewBitmap;
                 pickerPreviewBitmap=copy;
                 preview.setImageBitmap(copy);
+                magnifier.setImageBitmap(copy);
+                FrameLayout.LayoutParams lp=(FrameLayout.LayoutParams)magnifier.getLayoutParams();
+                lp.gravity=Gravity.TOP|
+                    (selected[0].centerRatioX()>.5f?Gravity.LEFT:Gravity.RIGHT);
+                lp.leftMargin=dp(9);lp.rightMargin=dp(9);
+                magnifier.setLayoutParams(lp);
                 if(old!=null&&old!=copy&&!old.isRecycled())old.recycle();
             }catch(RuntimeException ignored){}
         };
@@ -1042,15 +1059,55 @@ public final class PgsAutoClickService extends AccessibilityService {
             -1,dp(48),Gravity.TOP);
         presetsLp.topMargin=dp(36);
         picker.addView(presets,presetsLp);
+        LinearLayout modes=new LinearLayout(this);
+        modes.setGravity(Gravity.CENTER_VERTICAL);
+        modes.setPadding(dp(5),0,dp(5),0);
+        modes.setBackgroundColor(0xE918212D);
+        String[] shapes={"□ Quadrado","▭ Horizontal","⬚ Livre"};
+        PgsAutoCropSelection.Shape[] variants={
+            PgsAutoCropSelection.Shape.SQUARE,
+            PgsAutoCropSelection.Shape.HORIZONTAL,
+            PgsAutoCropSelection.Shape.FREE};
+        for(int i=0;i<shapes.length;i++){
+            final int index=i;
+            Button shapeButton=new Button(this);
+            shapeButton.setText(shapes[i]);shapeButton.setAllCaps(false);
+            shapeButton.setTextSize(10);shapeButton.setPadding(0,0,0,0);
+            shapeButton.setMinimumHeight(0);shapeButton.setMinimumWidth(0);
+            modes.addView(shapeButton,new LinearLayout.LayoutParams(0,dp(39),1));
+            shapeButton.setOnClickListener(v->{
+                crop.setShape(variants[index]);
+                sizeLabel.setText("Recorte "+shapes[index]);
+            });
+        }
+        FrameLayout.LayoutParams modeLp=new FrameLayout.LayoutParams(
+            -1,dp(41),Gravity.TOP);
+        modeLp.topMargin=dp(84);
+        picker.addView(modes,modeLp);
 
         TextView instructions=new TextView(this);
-        instructions.setText("Toque no ícone 2D de "+name+" no feed. Arraste para mover e use o canto branco para ajustar. Confira a prévia antes de salvar.");
+        instructions.setText("Selecione o ícone 2D de "+name+". Arraste a área; ajuste pela alça branca. A lupa ampliada fica longe do dedo. Confirme a prévia.");
         instructions.setTextColor(Color.WHITE);instructions.setTextSize(12);
         instructions.setPadding(dp(8),dp(7),dp(8),dp(7));
         instructions.setBackgroundColor(0xE322303D);
         FrameLayout.LayoutParams infoLp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
-        infoLp.bottomMargin=dp(67);
+        infoLp.bottomMargin=dp(103);
         picker.addView(instructions,infoLp);
+        Button assist=new Button(this);
+        assist.setText("Contorno: desativado");
+        assist.setAllCaps(false);assist.setTextSize(11);
+        assist.setMinimumHeight(0);assist.setMinimumWidth(0);
+        assist.setTextColor(Color.WHITE);
+        assist.setBackgroundColor(0xED243548);
+        FrameLayout.LayoutParams assistLp=new FrameLayout.LayoutParams(
+            -1,dp(34),Gravity.BOTTOM);
+        assistLp.bottomMargin=dp(66);
+        picker.addView(assist,assistLp);
+        assist.setOnClickListener(v->{
+            contour[0]=!contour[0];
+            assist.setText(contour[0]?"Contorno experimental: ativo":"Contorno: desativado");
+            updatePreview[0].run();
+        });
 
         LinearLayout actions=new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
@@ -1078,13 +1135,20 @@ public final class PgsAutoClickService extends AccessibilityService {
                 return;
             }
             try{
-                int ref=Math.max(16,Math.min(92,
+                int refWidth=Math.max(16,Math.min(92,
                     Math.round(cut.width()*740f/screenshot.getWidth())));
+                int refHeight=Math.max(16,Math.min(92,
+                    Math.round(cut.height()*740f/screenshot.getWidth())));
                 Bitmap piece=Bitmap.createBitmap(screenshot,cut.left,cut.top,
                     cut.width(),cut.height());
-                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
-                try{PgsAutoTemplateStore.saveSample(this,name,model,ref,ref);}
-                finally{if(piece!=model)piece.recycle();model.recycle();}
+                Bitmap clean=contour[0]?PgsAutoSilhouette.clean(piece):piece;
+                Bitmap model=Bitmap.createScaledBitmap(clean,refWidth,refHeight,true);
+                try{PgsAutoTemplateStore.saveSample(this,name,model,refWidth,refHeight);}
+                finally{
+                    if(clean!=piece)clean.recycle();
+                    if(piece!=model)piece.recycle();
+                    if(model!=piece&&!model.isRecycled())model.recycle();
+                }
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();
                 boolean ready=reloadDetector();
