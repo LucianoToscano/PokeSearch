@@ -1,5 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT343 — Pedido oficial protegido 0.03.41 / 54548 (14/11/2026)
+
+- **Implementação na main:** [PR #365](https://github.com/LucianoToscano/PokeSearch/pull/365), merge squash `7724971b674bdba03473c88fe9e54edc9e9cb2d6` após QA completo **SUCCESS** do HEAD `1726c26da1ce221f1df787560e313895787b1b54`: LT169 Node, QA Core LT211, Node QA, Java LT62, OTA LT173, QA PGS Android e Secure beta. Não reduziu sprites, sons, imagens, contas ou resolução.
+- **Pedido protegido monotônico:** branch `release/lt343-official-20261114`, `versionName=0.03.41`, `versionCode=54548`, `label=51345`, `previous_tag=v0.03.40-54547`, `qa_max_code=54547`. Notas internas `release_notes.json` com `minVersionCode=54548`. **Ainda depende de preflight, merge, workflow oficial de assinatura permanente, R8, APK/ZIP, SHA-256 e `releases/latest` antes de ser anunciada como publicação.**
+- **Login/prints:** veja abaixo: popup Conta 1/2 clicável; prints das janelas do PokeSearch liberados; Google OAuth incorporado pode ser bloqueado por política do provedor — o browser externo não importa a sessão. Discord e nome/foto seguem em QA real.
+- **Avisos de segurança PGSharp:** `Sou passageiro` e `Estou seguro` apenas suspendem a automação para confirmação MANUAL, sem clique automático e sem gastar o timeout. Não homologados fisicamente.
+- **Homologação:** [issue #350](https://github.com/LucianoToscano/PokeSearch/issues/350) atualizada com checklists LT343, sem simulação de gestos Shiny/Google.
+
 ## LT343 — Padronização visual, captura guiada e retomada PGS (14/11/2026)
 
 **Base:** LT342 oficial 0.03.40 / versionCode 54547; branch de desenvolvimento `fix/lt343-pgs-overlay-capture-ui-20261114`. Não afirmar nova release até CI assinado concluir.
