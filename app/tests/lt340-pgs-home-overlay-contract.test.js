@@ -32,7 +32,7 @@ assert.match(visual,/if\(awaitingMap\)/);
 assert.doesNotMatch(visual,/label\.startsWith\("PROCURANDO"\)/);
 assert.match(service,/for\(int ref:new int\[\]\{24,32,44\}\)/);
 assert.match(service,/crop\.setReferencePx\(ref\)/);
-assert.match(service,/PgsAutoTemplateStore\.saveSample\(this,name,model,ref,ref\)/);
+assert.match(service,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,refHeight\)/);
 assert.match(service,/if\(ready\)handler\.postDelayed/);
 assert.match(service,/gestureTicket=ticket/);
 assert.match(models,/referenceWidth/);

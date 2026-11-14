@@ -553,11 +553,19 @@ public final class PgsAutoClickService extends AccessibilityService {
                 .putInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS)
                 .putBoolean("cycle_60_2_migrated",true).commit();
         }
+        // Uma só migração do valor legado 60s; preservar valores distintos
+        // e mudanças explícitas feitas pelo usuário após a LT344.
+        if(!p.getBoolean("lt344_default_25_migrated",false)){
+            SharedPreferences.Editor e=p.edit().putBoolean("lt344_default_25_migrated",true);
+            if(!p.getBoolean("lt344_timeout_user_set",false)&&
+                p.getInt("load_timeout",60)==60)e.putInt("load_timeout",25);
+            e.apply();
+        }
         return p;
     }
     private void loadSettings(){
         SharedPreferences p=cyclePrefs(this);
-        limit=50;
+        limit=PgsAutoCatalog.MAX_SELECTED;
         minSeconds=PgsAutoCyclePolicy.shinyCheckSeconds(
             p.getInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS));
         maxSeconds=PgsAutoCyclePolicy.mapTimeoutSeconds(
@@ -582,16 +590,18 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         if(pausedByShiny||pausedByError){
             pausedByShiny=false;pausedByError=false;
-            running=true;status("RETOMANDO");
-            handler.postDelayed(this::scanAndTap,500);
-            return;
+            // Mesma reinicialização integral do ciclo normal: não herdar
+            // tempo já gasto do último mapa ao reativar a busca.
         }
         loadSettings();
-        nextIndex=0;total=0;lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
+        nextIndex=0;total=0;clickedAt=0L;awaitingMap=false;passengerHoldAt=0L;
+        lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;
         running=true;
         status("LENDO TELA");
+        BugReport.log(this,"PGS","Busca reativada, cooldown mapa "+maxSeconds+
+            "s, Sem Shiny "+minSeconds+"s; aguardando ícones do feed");
         handler.postDelayed(this::scanAndTap,400);
     }
 
@@ -784,6 +794,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
         status("TOQUE "+(index+1)+"/"+total);
+        BugReport.log(this,"PGS","Tentativa de gesto no feed, alvo "+(index+1)+
+            "/"+total+"; aguarda callback Android (não confirma teleporte)");
         Path path=new Path();path.moveTo(x,y);
         GestureDescription gesture=new GestureDescription.Builder()
             .addStroke(new GestureDescription.StrokeDescription(path,0,90)).build();
@@ -799,6 +811,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 sceneReadyAt=0;loadedStreak=0;
                 final int stamp=++ticket;
                 status("AGUARDANDO MAPA");
+                BugReport.log(PgsAutoClickService.this,"PGS","Gesto concluído pelo Android; teleporte no jogo ainda não verificado");
                 // Watchdog próprio: o limite continua valendo mesmo se um frame
                 // Android nunca responder (não ficar preso em tela/carregamento).
                 handler.postDelayed(new Runnable(){
@@ -869,7 +882,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     }
                     status("ESPERA "+Math.max(1,(remaining+999)/1000)+"s");
                 }else{
-                    int elapsed=(int)((when-clickedAt)/1000);
+                    long elapsed=Math.max(0L,(when-clickedAt)/1000L);
                     status("CARREGANDO "+elapsed+"/"+maxSeconds);
                 }
                 handler.postDelayed(()->checkMap(stamp),1500L);
@@ -893,6 +906,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         nextIndex++;
         sceneReadyAt=0;loadedStreak=0;lastColors=null;stableRepeats=0;
         status(timeout?"TEMPO ESGOTADO":"PRÓXIMO");
+        BugReport.log(this,"PGS",timeout?
+            "Cooldown mapa esgotado sem evidência suficiente de mapa pronto; relendo feed":
+            "Mapa com objetos estabilizado; Sem Shiny concluído; próximo ícone");
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
             if(nextIndex>=limit){
@@ -970,6 +986,7 @@ public final class PgsAutoClickService extends AccessibilityService {
 
         // Recorte local visível. Tocar apenas POSICIONA; nunca salva sem confirmar.
         final PgsAutoCropSelection[] selected={null};
+        final boolean[] removeFlatBackground={false};
         ImageView preview=new ImageView(this);
         preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
         preview.setContentDescription("Prévia da imagem que será gravada");
@@ -981,6 +998,10 @@ public final class PgsAutoClickService extends AccessibilityService {
             try{
                 Bitmap copy=Bitmap.createBitmap(screenshot,rect.left,rect.top,
                     rect.width(),rect.height());
+                if(removeFlatBackground[0]){
+                    Bitmap mask=PgsAutoSilhouette.tryRemoveFlatBackground(copy);
+                    if(mask!=null){copy.recycle();copy=mask;}
+                }
                 Bitmap old=pickerPreviewBitmap;
                 pickerPreviewBitmap=copy;
                 preview.setImageBitmap(copy);
@@ -990,6 +1011,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoCropSelection crop=new PgsAutoCropSelection(this,
             screenshot.getWidth(),screenshot.getHeight(),updatePreview[0]);
         selected[0]=crop;
+        crop.setPreviewBitmap(screenshot); // lupa deslocada em tempo real
         picker.addView(crop,new FrameLayout.LayoutParams(-1,-1));
 
         LinearLayout presets=new LinearLayout(this);
@@ -1017,8 +1039,54 @@ public final class PgsAutoClickService extends AccessibilityService {
         presetsLp.topMargin=dp(36);
         picker.addView(presets,presetsLp);
 
+        // Três formatos reais; Livre = retângulo sem proporção fixa.
+        // Não afirmar segmentação automática da silhueta sem algoritmo comprovado.
+        LinearLayout modes=new LinearLayout(this);
+        modes.setGravity(Gravity.CENTER);
+        modes.setPadding(dp(5),dp(1),dp(5),dp(1));
+        modes.setBackgroundColor(0xE918212D);
+        String[] labels={"Quadrado","Horizontal","Livre"};
+        PgsAutoCropSelection.Mode[] values={
+            PgsAutoCropSelection.Mode.SQUARE,
+            PgsAutoCropSelection.Mode.HORIZONTAL,
+            PgsAutoCropSelection.Mode.FREE};
+        Button[] choices=new Button[3];
+        for(int i=0;i<3;i++){
+            final int selectedMode=i;
+            Button option=new Button(this);
+            option.setText(labels[i]);option.setAllCaps(false);
+            option.setTextSize(11);option.setPadding(dp(2),0,dp(2),0);
+            option.setMinimumWidth(0);option.setMinimumHeight(0);
+            choices[i]=option;
+            modes.addView(option,new LinearLayout.LayoutParams(0,dp(38),1));
+            option.setOnClickListener(v->{
+                crop.setMode(values[selectedMode]);
+                for(int j=0;j<choices.length;j++)
+                    choices[j].setAlpha(j==selectedMode?1f:.64f);
+            });
+            option.setAlpha(i==0?1f:.64f);
+        }
+        FrameLayout.LayoutParams modesLp=new FrameLayout.LayoutParams(
+            -1,dp(43),Gravity.TOP);
+        modesLp.topMargin=dp(86);
+        picker.addView(modes,modesLp);
+        android.widget.CheckBox silhouette=new android.widget.CheckBox(this);
+        silhouette.setText("Fundo plano (beta) · prévia reversível");
+        silhouette.setTextColor(Color.WHITE);silhouette.setTextSize(11);
+        silhouette.setChecked(false);
+        silhouette.setBackgroundColor(0xDF18212D);
+        silhouette.setOnCheckedChangeListener((view,on)->{
+            removeFlatBackground[0]=on;
+            updatePreview[0].run();
+        });
+        FrameLayout.LayoutParams maskLp=new FrameLayout.LayoutParams(
+            -1,dp(40),Gravity.TOP);
+        maskLp.topMargin=dp(132);
+        picker.addView(silhouette,maskLp);
+
         TextView instructions=new TextView(this);
-        instructions.setText("Toque no ícone 2D de "+name+" no feed. Arraste para mover e use o canto branco para ajustar. Confira a prévia antes de salvar.");
+        instructions.setText("Toque no ícone 2D de "+name+
+            ". Arraste; acompanhe a lupa distante do dedo. Ajuste a alça branca, veja a prévia e confirme.");
         instructions.setTextColor(Color.WHITE);instructions.setTextSize(12);
         instructions.setPadding(dp(8),dp(7),dp(8),dp(7));
         instructions.setBackgroundColor(0xE322303D);
@@ -1052,12 +1120,18 @@ public final class PgsAutoClickService extends AccessibilityService {
                 return;
             }
             try{
-                int ref=Math.max(16,Math.min(92,
+                int refWidth=Math.max(16,Math.min(92,
                     Math.round(cut.width()*740f/screenshot.getWidth())));
+                int refHeight=Math.max(16,Math.min(92,
+                    Math.round(refWidth*(float)cut.height()/cut.width())));
                 Bitmap piece=Bitmap.createBitmap(screenshot,cut.left,cut.top,
                     cut.width(),cut.height());
-                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
-                try{PgsAutoTemplateStore.saveSample(this,name,model,ref,ref);}
+                if(removeFlatBackground[0]){
+                    Bitmap masked=PgsAutoSilhouette.tryRemoveFlatBackground(piece);
+                    if(masked!=null){piece.recycle();piece=masked;}
+                }
+                Bitmap model=Bitmap.createScaledBitmap(piece,refWidth,refHeight,true);
+                try{PgsAutoTemplateStore.saveSample(this,name,model,refWidth,refHeight);}
                 finally{if(piece!=model)piece.recycle();model.recycle();}
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();

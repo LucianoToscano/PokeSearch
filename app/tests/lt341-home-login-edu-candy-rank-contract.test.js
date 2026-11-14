@@ -36,8 +36,8 @@ for(const state of ["off","on"]){
 }
 // Account badges 12dp over ball, no large card; only verified account display.
 assert.match(activity,/pokeballLoginBadges=new ImageView\[2\]/);
-assert.match(activity,/d\(12\),d\(12\),Gravity\.CENTER/);
-assert.match(activity,/showCompactAccountNames\(loginHotspot\)/);
+assert.match(activity,/d\(12\),d\(12\),Gravity\.BOTTOM\|Gravity\.CENTER_HORIZONTAL/);
+assert.match(activity,/showCompactAccountNames\(loginHotspot,which==1\)/);
 assert.match(activity,/login_modo_claro/);
 assert.match(activity,/login_modo_escuro/);
 assert.match(activity,/login_modo_semlogin/);
@@ -91,7 +91,7 @@ assert.match(edu,/pausePlayback\(\);/);
 assert.match(edu,/atlas\.frame\(42\)/);
 assert.match(edu,/case 6:listener\.closeAssistant\(\);break;/);
 assert.match(activity,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
-assert.match(activity,/d\(23\),d\(16\),Gravity\.TOP\|Gravity\.RIGHT/);
+assert.match(activity,/d\(30\),d\(16\)-2,Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
 
 // Exact lixeira source for PGS and the WebView drawer.
 assert.match(pgsMenu,/R\.drawable\.lixeira_preta:R\.drawable\.lixeira_branca/);

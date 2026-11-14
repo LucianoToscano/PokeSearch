@@ -5,16 +5,16 @@ import java.util.Locale;
 
 /** Máquina de decisão pura, reutilizável pelo menu, pelo motor e pelos testes. */
 final class PgsAutoCyclePolicy {
-    static final int DEFAULT_MAP_TIMEOUT_SECONDS=60;
+    static final int DEFAULT_MAP_TIMEOUT_SECONDS=25;
     static final int DEFAULT_SHINY_CHECK_SECONDS=2;
     static final int EMPTY_FEED_RETRY_SECONDS=3;
     private PgsAutoCyclePolicy(){}
 
     static int mapTimeoutSeconds(int configured){
-        return configured>=20&&configured<=120?configured:DEFAULT_MAP_TIMEOUT_SECONDS;
+        return configured>0?configured:DEFAULT_MAP_TIMEOUT_SECONDS;
     }
     static int shinyCheckSeconds(int configured){
-        return configured>=1&&configured<=10?configured:DEFAULT_SHINY_CHECK_SECONDS;
+        return configured>=0?configured:DEFAULT_SHINY_CHECK_SECONDS;
     }
     static boolean mapTimedOut(long now,long clickedAt,int timeoutSeconds){
         return clickedAt>0&&now-clickedAt>=mapTimeoutSeconds(timeoutSeconds)*1000L;

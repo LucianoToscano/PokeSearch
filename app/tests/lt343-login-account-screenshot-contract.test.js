@@ -17,10 +17,10 @@ assert.match(home,/loginWindow\.clearFlags\(android\.view\.WindowManager\.Layout
 assert.match(home,/private void allowLoginScreenshots\(\)/);
 assert.match(policy,/return true;/);
 // Badge de login: selecionar Conta 1/2 é ação real, não lista apenas informativa.
-assert.match(home,/private void showCompactAccountNames\(View anchor\)/);
+assert.match(home,/private void showCompactAccountNames\(View anchor,boolean secondary\)/);
 assert.match(home,/for\(int slot=1;slot<=2;slot\+\+\)/);
-assert.match(home,/popupHolder\[0\]\.dismiss\(\)/);
-assert.match(home,/openLoginDialogForSlot\(account,logged\?"manage":"login"\)/);
+assert.match(home,/window\[0\]\.dismiss\(\)/);
+assert.match(home,/PogoAccountSlots\.bindAccountOnly\(this,secondary,account\)/);
 assert.match(home,/preferredLoginProvider="";/);
 assert.match(slots,/WebViewCompat\.setProfile\(web,NAME_2\)/);
 assert.match(slots,/if\(!supportsSecond\(\)\)throw/);

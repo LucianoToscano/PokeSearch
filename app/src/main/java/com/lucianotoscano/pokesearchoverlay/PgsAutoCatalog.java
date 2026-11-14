@@ -20,7 +20,7 @@ import java.util.Set;
  * taught before a species can actually be recognized in the PGSharp feed.
  */
 final class PgsAutoCatalog {
-    static final int MAX_SELECTED=50;
+    static final int MAX_SELECTED=10; // Preferência de busca: até dez espécies; modelos antigos preservados.
     static final class Pokemon {
         final int number;
         final String name;

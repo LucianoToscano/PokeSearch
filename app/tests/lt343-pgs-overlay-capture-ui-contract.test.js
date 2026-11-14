@@ -9,7 +9,7 @@ const gear=fs.readFileSync("app/src/main/res/drawable/pgs_menu_customize.xml","u
 assert.match(home,/header\.setOrientation\(LinearLayout\.HORIZONTAL\)/);
 assert.match(home,/header\.addView\(branding,new LinearLayout\.LayoutParams\(0,d\(54\),1f\)\)/);
 assert.match(home,/header\.addView\(controls,new LinearLayout\.LayoutParams\(-2,d\(48\)\)\)/);
-assert.match(home,/d\(23\),d\(16\),Gravity\.TOP\|Gravity\.RIGHT/);
+assert.match(home,/d\(30\),d\(16\)-2,Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
 assert.match(home,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
 assert.match(home,/PgsHomeArtwork\.transparentOn\(this\)/);
 
@@ -45,7 +45,7 @@ assert.match(crop,/ACTION_MOVE/);
 assert.match(auto,/new PgsAutoCropSelection/);
 assert.match(auto,/confirm\.setText\("✓ Confirmar"\)/);
 assert.match(auto,/cancel\.setText\("Cancelar"\)/);
-assert.match(auto,/PgsAutoTemplateStore\.saveSample\(this,name,model,ref,ref\)/);
+assert.match(auto,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,refHeight\)/);
 
 // PGS 5-tile toolbar with settings beside bell, isolated P/M/G, timer and alpha.
 assert.match(gear,/android:pathData=/);

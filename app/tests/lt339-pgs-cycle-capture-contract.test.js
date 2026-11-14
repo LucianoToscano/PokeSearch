@@ -17,7 +17,7 @@ assert.match(engine,/if\(!isGameVisible\(\)\)\{queueTeachingWhenReady\(\);return
 assert.match(engine,/quickMenus\.dismissAll\(\)/);
 assert.match(engine,/bubble\.setVisibility\(View\.INVISIBLE\)/);
 assert.match(engine,/takeScreenshot\(/);
-assert.match(engine,/PgsAutoTemplateStore\.saveSample\(this,name,model,ref,ref\)/);
+assert.match(engine,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,refHeight\)/);
 assert.match(engine,/PgsAutoTemplateStore\.clearTeaching\(this\)/);
 assert.match(engine,/boolean ready=reloadDetector\(\)/);
 assert.match(engine,/if\(ready\)handler\.postDelayed/);
