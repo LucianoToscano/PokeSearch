@@ -352,10 +352,11 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
     }
-    private void addHomePreviewIcon(LinearLayout row,String glyph,String description){
-        TextView icon=homeText(glyph,23,
-            homeLightMode?Color.rgb(35,53,72):Color.WHITE,false);
-        icon.setGravity(Gravity.CENTER);
+    private void addHomePreviewIcon(LinearLayout row,int drawable,String description){
+        ImageView icon=new ImageView(this);
+        icon.setImageResource(drawable);
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        icon.setPadding(d(1),d(1),d(1),d(1));
         icon.setContentDescription(description+" · em desenvolvimento");
         icon.setBackground(null);
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
@@ -407,8 +408,8 @@ public class MainActivity extends Activity {
         LinearLayout dualOverlayRow=new LinearLayout(this);
         dualOverlayRow.setGravity(Gravity.CENTER_VERTICAL);
         dualOverlayRow.setOrientation(LinearLayout.HORIZONTAL);
-        overlayControl=makeIcon(R.drawable.sem_filtro,"Pokémon 1");
-        secondaryOverlayControl=makeIcon(R.drawable.sem_filtro,"Pokémon 2");
+        overlayControl=makeIcon(R.drawable.home_pokeball_off,"Pokémon 1");
+        secondaryOverlayControl=makeIcon(R.drawable.home_pokeball_off,"Pokémon 2");
         ImageView[] paired={overlayControl,secondaryOverlayControl};
         for(int i=0;i<paired.length;i++){
             final int which=i;
@@ -422,7 +423,7 @@ public class MainActivity extends Activity {
             });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
-        addHomePreviewIcon(dualOverlayRow,"⌕","Buscas Pokémon");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_search,"Buscas Pokémon");
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
         dualLp.bottomMargin=d(5);
@@ -558,11 +559,11 @@ public class MainActivity extends Activity {
         // Reorganizar para ordem oficial, preservando o botão funcional de passes.
         dualOverlayRow.removeView(rareCandyControl);
         dualOverlayRow.addView(raidAssistantControl,new LinearLayout.LayoutParams(0,d(44),1));
-        addHomePreviewIcon(dualOverlayRow,"⚔","Raids");
-        addHomePreviewIcon(dualOverlayRow,"⚡","Power Spots");
-        addHomePreviewIcon(dualOverlayRow,"▤","Quests");
-        addHomePreviewIcon(dualOverlayRow,"Ⓡ","Rocket");
-        addHomePreviewIcon(dualOverlayRow,"☁","Weather");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_raids,"Raids");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_power_spots,"Power Spots");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_quests,"Quests");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_rocket,"Rocket");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_weather,"Weather");
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
 
 
@@ -2146,12 +2147,12 @@ public class MainActivity extends Activity {
         }
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
-        overlayControl.setImageResource(on?R.drawable.personalizado:R.drawable.sem_filtro);
+        overlayControl.setImageResource(on?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
         overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
         overlayControl.setBackground(null);
         if(secondaryOverlayControl!=null){
             boolean secondaryOn=OverlayService.isSecondaryRunning();
-            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.personalizado:R.drawable.sem_filtro);
+            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar segunda Pokébola":"Ativar segunda Pokébola");
             secondaryOverlayControl.setBackground(null);
