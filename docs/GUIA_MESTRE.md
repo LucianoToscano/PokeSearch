@@ -7,6 +7,14 @@
 - Testes `ProfileScreenshotPolicyTest.java` (17 casos Java puros aprovados localmente) e `lt339-profile-screenshot-contract.test.js`. **Android/Samsung pendente**.
 - Esta correção permanece na mesma branch de trabalho LT339, **sem APK, merge ou release**, conforme instrução do responsável. Detalhes: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`.
 
+### LT339 — Auditoria de Lucario, mapa e Shiny por espécie (14/11/2026)
+
+- **Causa do cadastro inerte:** botão na Home somente marcava modelo pendente e exigia nova navegação manual no menu overlay; captura não era disparada. Ajustado: `requestTeaching` aguarda feed PGSharp visível, abre captura com sobreposições ocultadas, solicita toque no centro do ícone de Lucario, salva modelo e recarrega detector; após cancelar limpa pendência. A seleção explícita do usuário e permissões continuam exigidas.
+- **Ciclo automático simplificado:** mapa/PokéStops heurísticos até **60 s**, se pronto conferir aviso Shiny por **2 s**, senão próximo destino automaticamente; se timeout, próximo destino sem pausa; feed vazio releitura em **3 s**, zerando fila visitada quando esgotada. Watchdog de timeout independente do callback de screenshot. Configurações Home/Overlay mostram somente esses dois ajustes, e `cycle_60_2_migrated` mantém compatibilidade sem apagar os dados LT338; opção redundante `repeat` e "Reiniciar" removidas da UI.
+- **Shiny seguro por espécie:** `PgsAutoCyclePolicy` exige aviso positivo da espécie efetivamente selecionada (`currentTargetName`) e estado de espera do mapa; evita pausas por `Shiny: true` genérico ou outras espécies. Não reivindica inspeção/identificação do Pokémon 3D. `PgsAutoMapReadiness` não considera textura genérica isolada prova de PokéStops.
+- QA: `PgsAutoCyclePolicyTest.java` e `lt339-pgs-cycle-capture-contract.test.js`, testados com políticas de notificações no QA Core/PGS. Homologação **real** do Lucario e do PGSharp segue pendente na issue #350.
+- Esta seção foi feita na branch `feature/lt339-home-icon-menu-refactor-20261114`, sem publicar ainda até todos os testes da release oficial passarem. Pedida release monotônica depois do merge protegido. Detalhes: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`.
+
 ### LT339 — PGS Overlay compacto e alertas independentes (14/11/2026, branch de edição)
 
 - **Padronização visual:** a fileira `⌕ Buscar · ⏱ Tempo · 🔔 Notificações · ↻ Reiniciar · × Fechar` substitui a barra PGS com "Mais" e o segundo painel grande. Botões 44×44 dp com espaçamento 4 dp, cores/opacidade/borda de `OverlayQuickMenus`, largura 246 dp e posicionamento dentro da tela.
