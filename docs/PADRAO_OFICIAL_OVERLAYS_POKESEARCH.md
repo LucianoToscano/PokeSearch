@@ -47,3 +47,8 @@ A partir da [issue LT345 #370](https://github.com/LucianoToscano/PokeSearch/issu
 6. **Novos alvos:** modos PokéStop, Ponto Específico e Pokémon + gesto só podem executar quando a tela-alvo foi validada; nenhum gesto em avisos de segurança, confirmação de direção ou conteúdo desconhecido. Um callback de gesto Android não prova sucesso no jogo.
 
 **Estado deste adendo:** regra/documentação registrada, mas implementação e homologação LT345 ainda pendentes. Não anunciar APK LT345 sem build e release verificáveis.
+
+
+## LT346 — recortador PGS minimalista, oficial no código
+
+A partir de 0.03.44 / 54551, o recorte de sprite PGS usa ícones originais PNG/WebP sem recompressão para Quadrado, Vertical, Livre, Confirmar/Cancelar e remoção de Fundo On/Off. Horizontal legado é acessível por toque longo no Vertical. Não voltar a incluir faixas cinzas, presets 24/32/44 px nem banners de instrução permanentes. Dimensões físicas de toque do controle lateral são ajustadas independentemente da arte; barra lateral branca de 16 a 92 pixels na referência 740, mini-lupa afastada do dedo, prévia e confirmação explícita antes de gravar. A remoção de fundo plano continua opcional, reversível e sem alegação de segmentação universal. Registros de implementação em [LT346](LT346_ARK_RECORTADOR_ICONES_QA_20261114.md); [workflow oficial #43646502533](https://github.com/LucianoToscano/PokeSearch/actions/runs/43646502533) passou, mas aceite físico Samsung de captura, contraste, toque e acessibilidade permanece bloqueado.

@@ -1,8 +1,8 @@
-## LT346 ARK — recortador PGS minimalista (candidata, 14/11/2026)
-
-Na branch LT346, o recortador usa ícones originais para Quadrado/Vertical/Livre e Confirmar/Cancelar; barra lateral de tamanho contínuo, prévia e lupa deslocada, sem presets 24/32/44, faixas cinzas ou textos permanentes. Remoção de fundo continua opcional e reversível. Consulte [registro LT346](LT346_ARK_RECORTADOR_ICONES_QA_20261114.md). **Não publicada ou homologada em Samsung**; LT345 permanece oficial 0.03.43 / 54550.
-
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+
+## LT346 OFICIAL — 0.03.44 / 54551 (14/11/2026)
+
+**LT346 OFICIAL — 14/11/2026:** versão **0.03.44 / versionCode 54551 / label 51348** publicada em [v0.03.44-54551](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.44-54551). APK `PokeSearch-v0.03.44-LT.apk` com **60.914.376 bytes**, SHA-256 `07b5bd7f10e7d2a1c6c0b82d23bf837306d3b58d092f801494a4897eb569f7cb`. [Workflow oficial protegido #43646502533](https://github.com/LucianoToscano/PokeSearch/actions/runs/43646502533) concluiu **SUCCESS** (preflight e publicação com assinatura, APK e hash público). Implementação [PR #373](https://github.com/LucianoToscano/PokeSearch/pull/373), squash `d1e5dfae2fc84cae427ff970dc4b78d49795b5f5`; solicitação de release [PR #374](https://github.com/LucianoToscano/PokeSearch/pull/374), squash `8952d6b016dd1cc92924c9713d583a7567c1b5e4`. Recortador PGS por ícones, barra lateral contínua 16–92 px de referência, modo Vertical e Horizontal legado por toque longo, lupa e prévia preservadas, confirmação explícita, fundos sem painéis cinzas e ON/OFF originais. Sete gates de implementação e sete da PR de publicação aprovados; testes reais no Samsung, OAuth Google/Discord, teleporte, mapa/Encontro e Shiny **continuam BLOQUEADOS**, não equivalem a confirmação de funcionamento físico. Instalação exige confirmação no Android.
 
 ## LT345 OFICIAL — PokeSearch 0.03.43 / 54550 (14/11/2026)
 
