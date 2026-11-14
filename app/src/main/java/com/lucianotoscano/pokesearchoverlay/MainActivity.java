@@ -687,7 +687,7 @@ public class MainActivity extends Activity {
         rareCandyControl.setImageBitmap(RareCandyOverlayService.loadIcon(this));
         setHomePackIcon(rareCandyControl,10,"normal");
         bindHomePackHover(rareCandyControl,10,()->false);
-        rareCandyControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        // A escala óptica do pacote é MATRIX; FIT_CENTER aqui anulava a correção.
         rareCandyControl.setPadding(d(3),d(3),d(3),d(3));
         rareCandyControl.setContentDescription("Ativar overlay Doce Raro");
         rareCandyControl.setBackground(homeSurface(
@@ -708,7 +708,7 @@ public class MainActivity extends Activity {
         raidAssistantControl.setImageBitmap(RaidDayAssistantOverlayService.loadArtwork(this));
         setHomePackIcon(raidAssistantControl,4,"normal");
         bindHomePackHover(raidAssistantControl,4,()->false);
-        raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        // A escala óptica do pacote é MATRIX; FIT_CENTER aqui anulava a correção.
         raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
         raidAssistantControl.setContentDescription("Ativar Edu · Assistente do Dia de Reides");
         raidAssistantControl.setBackground(homeSurface(
@@ -729,7 +729,13 @@ public class MainActivity extends Activity {
         addHomePreviewIcon(dualOverlayRow,R.drawable.home_rocket,"Rocket");
         addHomePreviewIcon(dualOverlayRow,R.drawable.home_weather,"Weather");
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
-
+        // Force final geometry after the weighted row has received its width.
+        dualOverlayRow.post(()->{
+            if(raidAssistantControl!=null)
+                setHomePackIcon(raidAssistantControl,4,"normal");
+            if(rareCandyControl!=null)
+                setHomePackIcon(rareCandyControl,10,"normal");
+        });
 
         // LT308 · único relógio de referência do Edu, ajustável para testes.
         // Compacto, de duas linhas e sem um novo menu na tela.
