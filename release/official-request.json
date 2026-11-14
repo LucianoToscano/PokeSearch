@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.37",
-  "code": 54544,
-  "label": 51341,
-  "previous_tag": "v0.03.36-54543",
-  "qa_max_code": 54543,
-  "release_notes": "PokeSearch LT338 (0.03.37): correção incremental do PGS Buscas Auto. A Home e o menu flutuante compartilham o mesmo catálogo, seleção persistente, prioridade e limite de 50 espécies; o classificador Shiny agora exige sinal positivo textual explícito, rejeita mensagens com negações, emoji ✨ isolado, 'Shiny:' sem valor e 'Shiny: false'. Testes de regressão Node/Java e QA Android incluídos. P1/P2, Edu, Doce Raro, contas, sprites e assinatura permanente preservados. PGS permanece experimental e desligado até a ativação manual de Acessibilidade e modelos locais; gestos e alertas reais ainda exigem homologação Samsung na issue #350. Atualização via APK assinado no canal oficial, com confirmação de instalação pelo Android."
+  "version": "0.03.38",
+  "code": 54545,
+  "label": 51342,
+  "previous_tag": "v0.03.37-54544",
+  "qa_max_code": 54544,
+  "release_notes": "PokeSearch LT339 (0.03.38): cadastro de Lucario/ícones PGS com captura guiada ao abrir o feed, recarga imediata do modelo e correção do fluxo de pesquisa. Busca automática: mapa até 60 s, confirmação de mapa/PokéStops por sinais visuais, espera de 2 s para alerta Shiny da mesma espécie e avanço ao próximo ícone; nova leitura de feed vazio em 3 s. Removidos tempos/reinício redundantes da interface. Notificações do PGS independentes das Pokébolas 1 e 2. Home reorganizada com novos ícones ON/OFF, Weather, modo Claro/Escuro, Conta e estatísticas no menu lateral, Doce Raro compacto, compartilhamento no cabeçalho, popup PGS compacto e captura autorizada do Perfil PoGoCoordinates. Artes PNG/WebP originais preservadas; sem redução de resolução, assinatura permanente e dados preservados. PGSharp e Shiny exigem validação real no Samsung, issue #350; o PGS continua opt-in pela Acessibilidade Android. Atualizador oficial requer confirmação de instalação no Android."
 }
