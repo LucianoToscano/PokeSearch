@@ -368,6 +368,14 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void loadSettings(){
         SharedPreferences p=getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE);
+        // Migração única: os cinco tempos LT338 (5s/60s/60s/120s/120s)
+        // não devem invalidar o novo ciclo simples 60s/2s.
+        if(!p.getBoolean("cycle_60_2_migrated",false)){
+            p.edit()
+                .putInt("load_timeout",PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS)
+                .putInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS)
+                .putBoolean("cycle_60_2_migrated",true).apply();
+        }
         limit=50;
         minSeconds=PgsAutoCyclePolicy.shinyCheckSeconds(
             p.getInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS));
@@ -437,9 +445,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         loadSettings();
         if(nextIndex>=total && total>0){
-            if(getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE).getBoolean("repeat",true)){
-                nextIndex=0;total=0;visitedSlots.clear();
-            }else{complete();return;}
+            // Recomeça a leitura do feed automaticamente, sem checkbox
+            // "repetir buscas" nem reinício manual redundante.
+            nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();
         }
         if(detector==null){fail("Modelo visual não disponível.");return;}
         final int stamp=++ticket;
@@ -476,21 +484,12 @@ public final class PgsAutoClickService extends AccessibilityService {
                     }
                 }
                 if(match==null){
-                    // O feed vazio ou apenas com posições visitadas nunca gera PAUSA.
-                    // Primeira leitura: +60s, segunda: até +120s do início; depois loop.
-                    SharedPreferences cfg=getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE);
-                    int first=Math.max(10,Math.min(3600,cfg.getInt("first_empty",60)));
-                    int second=Math.max(first,Math.min(7200,cfg.getInt("second_empty",120)));
-                    int cycle=Math.max(10,Math.min(7200,cfg.getInt("repeat_interval",120)));
-                    boolean repeat=cfg.getBoolean("repeat",true);
-                    if(!repeat && nextIndex>0){complete();return;}
-                    int delay=PgsAutoRetryPolicy.delaySeconds(emptyRetries,first,second,cycle);
-                    emptyRetries++;
-                    lastNoIconScan=SystemClock.uptimeMillis();
-                    status("REBUSCAR "+delay+"s");
+                    // Feed vazio/posições já visitadas: nova leitura em 3 s,
+                    // sem pausar, sem dormir 60/120 segundos desnecessariamente.
+                    status("FEED VAZIO · NOVA LEITURA");
                     handler.postDelayed(()->{
-                        if(running && ticket==stamp)scanAndTap();
-                    },delay*1000L);
+                        if(running&&ticket==stamp)scanAndTap();
+                    },PgsAutoCyclePolicy.EMPTY_FEED_RETRY_SECONDS*1000L);
                     return;
                 }
                 emptyRetries=0;noFreshAttempts=0;
@@ -605,7 +604,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void checkMap(int stamp){
         if(!running||!awaitingMap||ticket!=stamp)return;
         long now=SystemClock.uptimeMillis();
-        if(now-clickedAt>=maxSeconds*1000L){
+        if(PgsAutoCyclePolicy.mapTimedOut(now,clickedAt,maxSeconds)){
             finishMapVisit(stamp,true);
             return;
         }
@@ -628,7 +627,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 }
                 if(sceneReadyAt>0){
                     long remaining=minSeconds*1000L-(when-sceneReadyAt);
-                    if(remaining<=0){
+                    if(PgsAutoCyclePolicy.readyToAdvance(when,sceneReadyAt,minSeconds)){
                         finishMapVisit(stamp,false);
                         return;
                     }
@@ -653,11 +652,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
             if(nextIndex>=limit){
-                if(getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE).getBoolean("repeat",true)){
-                    nextIndex=0;total=0;visitedSlots.clear();scanAndTap();
-                }else complete();
-            }else scanAndTap();
-        },800L);
+                nextIndex=0;total=0;visitedSlots.clear();
+                notifiedFeedSlots.clear();
+            }
+            scanAndTap();
+        },500L);
     }
     private int[] sampleMap(Bitmap bitmap){
         int cols=14,rows=11, i=0;
@@ -854,7 +853,10 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(live!=null)live.handler.post(()->live.pauseForShiny(message));
     }
     private void pauseForShiny(String message){
-        if(!running)return;
+        // Nunca confundir notificação de outra espécie com o alvo atual.
+        // Um "Shiny: true" sem nome não comprova Lucario Shiny.
+        if(!PgsAutoCyclePolicy.shouldPauseForTarget(
+            message,currentTargetName,running,awaitingMap))return;
         if(awaitingMap && nextIndex<total)nextIndex++;
         running=false;awaitingMap=false;pausedByShiny=true;ticket++;
         status("✨ SHINY\nPAUSADO");
