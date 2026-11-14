@@ -1,3 +1,7 @@
+## LT346 ARK — recortador PGS minimalista (candidata, 14/11/2026)
+
+Na branch LT346, o recortador usa ícones originais para Quadrado/Vertical/Livre e Confirmar/Cancelar; barra lateral de tamanho contínuo, prévia e lupa deslocada, sem presets 24/32/44, faixas cinzas ou textos permanentes. Remoção de fundo continua opcional e reversível. Consulte [registro LT346](LT346_ARK_RECORTADOR_ICONES_QA_20261114.md). **Não publicada ou homologada em Samsung**; LT345 permanece oficial 0.03.43 / 54550.
+
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 ## LT345 OFICIAL — PokeSearch 0.03.43 / 54550 (14/11/2026)

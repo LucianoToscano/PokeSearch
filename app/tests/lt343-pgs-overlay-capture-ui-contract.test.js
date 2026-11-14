@@ -43,8 +43,8 @@ assert.match(crop,/extends View/);
 assert.match(crop,/selectedBitmapRect\(\)/);
 assert.match(crop,/ACTION_MOVE/);
 assert.match(auto,/new PgsAutoCropSelection/);
-assert.match(auto,/confirm\.setText\("✓ Confirmar"\)/);
-assert.match(auto,/cancel\.setText\("Cancelar"\)/);
+assert.match(auto,/ImageView confirm=cropIcon\("confirmar_branco\.webp"/);
+assert.match(auto,/ImageView cancel=cropIcon\("cancelar_branco\.webp"/);
 assert.match(auto,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,refHeight\)/);
 
 // PGS 5-tile toolbar with settings beside bell, isolated P/M/G, timer and alpha.

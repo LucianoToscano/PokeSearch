@@ -18,13 +18,14 @@ import android.view.View;
  * Não grava nada até o botão Confirmar do serviço Android.
  */
 final class PgsAutoCropSelection extends View {
-    enum Mode {SQUARE,HORIZONTAL,FREE}
+    enum Mode {SQUARE,HORIZONTAL,VERTICAL,FREE}
     private final int originalWidth,originalHeight;
     private final Runnable changed;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
     private final RectF crop=new RectF();
     private Bitmap screenshot;
     private int referencePx=32;
+    int referencePx(){return referencePx;}
     private Mode mode=Mode.SQUARE;
     private boolean selected=false,tracking=false;
     private int dragging=0; // 1 mover, 2 ajustar lado/canto inferior direito
@@ -52,17 +53,22 @@ final class PgsAutoCropSelection extends View {
     }
     private void notifyChanged(){if(changed!=null)changed.run();}
     boolean hasSelection(){return selected;}
+    private float minimumSide(){
+        // O mínimo é em pixels da tela de referência (740), não 12dp.
+        // Um mínimo em dp achatava várias posições do novo slider em 36px+.
+        return Math.max(1f,16f*getWidth()/740f);
+    }
     private float defaultSide(){
-        // Tela de bitmap pode ter resolução diferente do display de toque.
-        return Math.max(12f*density(),referencePx*originalWidth/740f*
-            getWidth()/originalWidth);
+        // A escala da referência acompanha a largura real da screenshot.
+        return Math.max(minimumSide(),referencePx*getWidth()/740f);
     }
     private void position(float cx,float cy){
-        float side=clamp(defaultSide(),12f*density(),
+        float side=clamp(defaultSide(),minimumSide(),
             Math.min(getWidth(),getHeight()));
         float w=mode==Mode.HORIZONTAL?Math.min(getWidth(),side*1.8f):
+            mode==Mode.VERTICAL?side/1.8f:
             mode==Mode.FREE?Math.min(getWidth(),side*1.3f):side;
-        float h=side;
+        float h=mode==Mode.VERTICAL?Math.min(getHeight(),side*1.8f):side;
         float left=clamp(cx-w/2f,0,Math.max(0,getWidth()-w));
         float top=clamp(cy-h/2f,0,Math.max(0,getHeight()-h));
         crop.set(left,top,left+w,top+h);selected=true;
@@ -84,7 +90,7 @@ final class PgsAutoCropSelection extends View {
     @Override protected void onDraw(Canvas canvas){
         super.onDraw(canvas);
         if(!selected)return;
-        paint.setStyle(Paint.Style.FILL);paint.setColor(0x8C02060E);
+        paint.setStyle(Paint.Style.FILL);paint.setColor(0x3802060E);
         canvas.drawRect(0,0,getWidth(),crop.top,paint);
         canvas.drawRect(0,crop.bottom,getWidth(),getHeight(),paint);
         canvas.drawRect(0,crop.top,crop.left,crop.bottom,paint);
@@ -153,12 +159,14 @@ final class PgsAutoCropSelection extends View {
                 if(crop.right>getWidth())crop.offset(getWidth()-crop.right,0);
                 if(crop.bottom>getHeight())crop.offset(0,getHeight()-crop.bottom);
             }else if(dragging==2){
-                float min=12f*density();
+                float min=minimumSide();
                 float w=clamp(x-crop.left,min,getWidth()-crop.left);
                 float h=clamp(y-crop.top,min,getHeight()-crop.top);
                 if(mode==Mode.SQUARE)w=h=Math.min(w,h);
                 else if(mode==Mode.HORIZONTAL){
                     h=Math.min(h,w/1.8f);w=Math.min(getWidth()-crop.left,h*1.8f);
+                }else if(mode==Mode.VERTICAL){
+                    w=Math.min(w,h/1.8f);h=Math.min(getHeight()-crop.top,w*1.8f);
                 }
                 crop.right=crop.left+w;crop.bottom=crop.top+h;
             }
