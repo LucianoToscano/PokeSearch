@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.MotionEvent;
@@ -28,7 +29,7 @@ final class PgsAutoCropSelection extends View {
     int referencePx(){return referencePx;}
     private Mode mode=Mode.SQUARE;
     private boolean selected=false,tracking=false;
-    private int dragging=0; // 1 mover, 2 ajustar lado/canto inferior direito
+    private int dragging=0; // 1 mover área, 2 redimensionar, 3 arrastar pela alça externa
     private float prevX,prevY,fingerX,fingerY;
 
     PgsAutoCropSelection(Context context,int width,int height,Runnable onChanged){
@@ -103,8 +104,43 @@ final class PgsAutoCropSelection extends View {
         canvas.drawLine(crop.right-handle,crop.bottom,crop.right,crop.bottom,paint);
         canvas.drawLine(crop.right,crop.bottom-handle,crop.right,crop.bottom,paint);
         paint.setStyle(Paint.Style.FILL);
+        drawMoveHandle(canvas);
         drawMagnifier(canvas);
     }
+
+    // A pequena alça se desloca COM o recorte, mas fica do lado de fora para
+    // o dedo não cobrir o Pokémon (tanto em modo claro quanto em fundo escuro).
+    private PointF moveHandleCenter(){
+        float margin=24f*density();
+        float x=clamp(crop.right+margin,margin,getWidth()-margin);
+        float y=clamp(crop.top-margin,margin,getHeight()-margin);
+        return new PointF(x,y);
+    }
+    private void drawMoveHandle(Canvas canvas){
+        PointF center=moveHandleCenter();
+        float cx=center.x,cy=center.y,d=density(),arm=9f*d,tip=3f*d;
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(0xC91A2632);
+        canvas.drawCircle(cx,cy,17f*d,paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(1.5f*d);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        paint.setColor(0xF5FFFFFF);
+        canvas.drawCircle(cx,cy,16f*d,paint);
+        canvas.drawLine(cx-arm,cy,cx+arm,cy,paint);
+        canvas.drawLine(cx,cy-arm,cx,cy+arm,paint);
+        canvas.drawLine(cx-arm,cy,cx-arm+tip,cy-tip,paint);
+        canvas.drawLine(cx-arm,cy,cx-arm+tip,cy+tip,paint);
+        canvas.drawLine(cx+arm,cy,cx+arm-tip,cy-tip,paint);
+        canvas.drawLine(cx+arm,cy,cx+arm-tip,cy+tip,paint);
+        canvas.drawLine(cx,cy-arm,cx-tip,cy-arm+tip,paint);
+        canvas.drawLine(cx,cy-arm,cx+tip,cy-arm+tip,paint);
+        canvas.drawLine(cx,cy+arm,cx-tip,cy+arm-tip,paint);
+        canvas.drawLine(cx,cy+arm,cx+tip,cy+arm-tip,paint);
+        paint.setStyle(Paint.Style.FILL);
+    }
+
     private void drawMagnifier(Canvas canvas){
         if(!tracking||screenshot==null||screenshot.isRecycled()||
             getWidth()<1||getHeight()<1)return;
@@ -144,7 +180,12 @@ final class PgsAutoCropSelection extends View {
         if(action==MotionEvent.ACTION_DOWN){
             tracking=true;fingerX=x;fingerY=y;
             float reach=30f*density();
-            if(selected&&Math.abs(x-crop.right)<reach&&Math.abs(y-crop.bottom)<reach)
+            PointF move=selected?moveHandleCenter():null;
+            if(move!=null&&Math.hypot(x-move.x,y-move.y)<22f*density()){
+                dragging=3;
+                fingerX=crop.centerX();fingerY=crop.centerY();
+                performHapticFeedback(android.view.HapticFeedbackConstants.CLOCK_TICK);
+            }else if(selected&&Math.abs(x-crop.right)<reach&&Math.abs(y-crop.bottom)<reach)
                 dragging=2;
             else if(selected&&crop.contains(x,y))dragging=1;
             else{position(x,y);dragging=1;}
@@ -152,12 +193,16 @@ final class PgsAutoCropSelection extends View {
         }
         if(action==MotionEvent.ACTION_MOVE){
             fingerX=x;fingerY=y;
-            if(dragging==1){
+            if(dragging==1||dragging==3){
                 crop.offset(x-prevX,y-prevY);
                 if(crop.left<0)crop.offset(-crop.left,0);
                 if(crop.top<0)crop.offset(0,-crop.top);
                 if(crop.right>getWidth())crop.offset(getWidth()-crop.right,0);
                 if(crop.bottom>getHeight())crop.offset(0,getHeight()-crop.bottom);
+                if(dragging==3){
+                    fingerX=crop.centerX();
+                    fingerY=crop.centerY();
+                }
             }else if(dragging==2){
                 float min=minimumSide();
                 float w=clamp(x-crop.left,min,getWidth()-crop.left);
