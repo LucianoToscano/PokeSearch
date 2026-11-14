@@ -1,5 +1,12 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+### LT339 — Captura de tela no Perfil PoGoCoordinates (14/11/2026, somente branch)
+
+- No gerenciamento de conta PoGoCoordinates, a janela `loginDialog` do PokeSearch aplicava `FLAG_SECURE` e impedia capturas até da página oficial de Perfil.
+- Ajustado em `MainActivity.java` com `ProfileScreenshotPolicy.java`: prints ficam permitidos **apenas em `https://pogocoordinates.com/profile` quando `loginPurpose=manage` e a página termina de carregar sem erro**. Na navegação, OAuth Google/Discord, login, URLs externas e falhas HTTP/rede, `FLAG_SECURE` continua/restaura. Nenhuma credencial é exposta pelo app.
+- Testes `ProfileScreenshotPolicyTest.java` (17 casos Java puros aprovados localmente) e `lt339-profile-screenshot-contract.test.js`. **Android/Samsung pendente**.
+- Esta correção permanece na mesma branch de trabalho LT339, **sem APK, merge ou release**, conforme instrução do responsável. Detalhes: `docs/LT339_HOME_ICONES_MENU_STAGING_20261114.md`.
+
 ## LT339 — HOME EM EDIÇÃO, SEM APK E SEM PUBLICAÇÃO (14/11/2026)
 
 **Base oficial e canal:** a última release continua **LT338 · 0.03.37 · versionCode 54544**, já verificada. **A LT339 ainda não existe como APK oficial.** O responsável pediu explicitamente que continuemos as alterações de interface **sem gerar APK, merge ou release agora**. Branch de estágio: `feature/lt339-home-icon-menu-refactor-20261114`.
