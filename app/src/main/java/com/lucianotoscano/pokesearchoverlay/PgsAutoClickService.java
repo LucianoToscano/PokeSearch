@@ -89,6 +89,28 @@ public final class PgsAutoClickService extends AccessibilityService {
             live.queueTeachingWhenReady();
         });
     }
+    /** Substituição sem perder a imagem anterior se a nova gravação falhar. */
+    public static void requestReplacement(String name,String modelId){
+        PgsAutoClickService live=instance;
+        if(live==null)return;
+        live.handler.post(()->{
+            if(live.running){
+                Toast.makeText(live,"Pare a busca antes de trocar uma imagem.",Toast.LENGTH_LONG).show();
+                return;
+            }
+            PgsAutoTemplateStore.startReplacing(live,name,modelId);
+            live.queueTeachingWhenReady();
+        });
+    }
+    public static void onTemplatesChanged(){
+        PgsAutoClickService live=instance;
+        if(live!=null)live.handler.post(()->{
+            // Interrompe uma busca ativa antes de eliminar modelos usados.
+            if(live.running)live.halt("PARADO");
+            live.reloadDetector();
+            live.status("PARADO");
+        });
+    }
     private void queueTeachingWhenReady(){
         if(teachingInProgress||teachingScheduled||running)return;
         String pending=PgsAutoTemplateStore.pending(this);
@@ -227,6 +249,12 @@ public final class PgsAutoClickService extends AccessibilityService {
         quickMenus=new PgsAutoMenus(this,windowManager,new PgsAutoMenus.Actions(){
             @Override public void teach(String species){
                 requestTeaching(species);
+            }
+            @Override public void replace(String species,String modelId){
+                requestReplacement(species,modelId);
+            }
+            @Override public void templatesChanged(){
+                onTemplatesChanged();
             }
             @Override public void retryNow(){restartSession();}
             @Override public void closeOverlay(){removeHand();}
@@ -771,8 +799,12 @@ public final class PgsAutoClickService extends AccessibilityService {
                 int top=Math.max(0,Math.min(screenshot.getHeight()-rh,y-rh/2));
                 Bitmap piece=Bitmap.createBitmap(screenshot,left,top,rw,rh);
                 Bitmap model=Bitmap.createScaledBitmap(piece,PgsAutoTemplateStore.WIDTH,PgsAutoTemplateStore.HEIGHT,true);
-                try { PgsAutoTemplateStore.saveSample(this,name,model); }
-                finally {if(piece!=model)piece.recycle();model.recycle();}
+                try {
+                    String replaceId=PgsAutoTemplateStore.pendingReplacement(this);
+                    if(!replaceId.isEmpty())
+                        PgsAutoTemplateStore.replaceSample(this,replaceId,name,model);
+                    else PgsAutoTemplateStore.saveSample(this,name,model);
+                }finally {if(piece!=model)piece.recycle();model.recycle();}
                 PgsAutoTemplateStore.clearTeaching(this);
                 dismissPicker();
                 boolean loaded=reloadDetector();
