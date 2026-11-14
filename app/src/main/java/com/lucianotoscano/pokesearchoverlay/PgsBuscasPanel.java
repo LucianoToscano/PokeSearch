@@ -157,6 +157,7 @@ final class PgsBuscasPanel {
             });
             refresh[0].run();
         }else if(tab==1){
+            PgsAutoClickService.cyclePrefs(a);
             heading.setText("⏱ TEMPOS · BUSCAS");
             content.addView(text(a,"1. Toque no Pokémon: esperar mapa e PokéStops (até 60 s)."));
             content.addView(text(a,"2. Com mapa pronto: conferir aviso Shiny do mesmo Pokémon por 2 s."));
