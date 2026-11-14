@@ -74,6 +74,38 @@ public final class PgsAutoClickService extends AccessibilityService {
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
     private boolean awaitingMap=false;
+    private boolean teachingScheduled=false,teachingInProgress=false;
+    private String teachingTarget="";
+    private boolean isGameVisible(){
+        return "com.nianticlabs.pokemongo".equals(foreground)||
+            foreground.contains("pgsharp");
+    }
+    /** Pedido da Home ou do overlay: só captura o feed quando PGSharp estiver visível. */
+    public static void requestTeaching(String species){
+        PgsAutoClickService live=instance;
+        if(live==null)return;
+        live.handler.post(()->{
+            PgsAutoTemplateStore.startTeaching(live,species);
+            live.queueTeachingWhenReady();
+        });
+    }
+    private void queueTeachingWhenReady(){
+        if(teachingInProgress||teachingScheduled||running)return;
+        String pending=PgsAutoTemplateStore.pending(this);
+        if(pending.isEmpty())return;
+        if(!isGameVisible()){
+            Toast.makeText(this,
+                "Abra o feed de Pokémon do PGSharp. A seleção do ícone de "+
+                pending+" aparecerá automaticamente.",Toast.LENGTH_LONG).show();
+            return;
+        }
+        teachingScheduled=true;
+        handler.postDelayed(()->{
+            teachingScheduled=false;
+            if(!running&&isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
+                startTeaching();
+        },650L);
+    }
     private int nextIndex=0, total=0, limit=20, ticket=0, stableRepeats=0;
     // Histórico das posições tocadas; a lista atual pode diminuir ou mudar.
     private final List<VisitedSlot> visitedSlots=new ArrayList<>();
@@ -119,12 +151,17 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
+        if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         if(event.getPackageName()!=null &&
-            event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+            event.getEventType()==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED){
             foreground=event.getPackageName().toString();
+            // Fecha o fluxo Home -> feed -> selecionar sprite sem outro menu oculto.
+            if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
+                queueTeachingWhenReady();
+        }
     }
     @Override public void onInterrupt() {halt("INTERRUPÇÃO");}
     @Override public void onDestroy() {
@@ -184,8 +221,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         bubble.addView(handBadge,sparkle);
         quickMenus=new PgsAutoMenus(this,windowManager,new PgsAutoMenus.Actions(){
             @Override public void teach(String species){
-                PgsAutoTemplateStore.startTeaching(PgsAutoClickService.this,species);
-                handler.postDelayed(()->startTeaching(),350);
+                requestTeaching(species);
             }
             @Override public void retryNow(){restartSession();}
             @Override public void closeOverlay(){removeHand();}
@@ -228,6 +264,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                         .putInt("bubbleY",bubbleParams.y).apply();
                     if(quickMenus!=null)quickMenus.dismissAll();
                 }else if(SystemClock.uptimeMillis()-pressAt[0]>=570){
+                    if(!PgsAutoTemplateStore.pending(PgsAutoClickService.this).isEmpty()){
+                        queueTeachingWhenReady();
+                        return true;
+                    }
                     Point display=new Point();windowManager.getDefaultDisplay().getRealSize(display);
                     int left=display.x-bubbleParams.x-dp(22);
                     quickMenus.toggle(left,bubbleParams.y);
@@ -329,8 +369,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void loadSettings(){
         SharedPreferences p=getSharedPreferences("pgs_buscas_auto_v1",MODE_PRIVATE);
         limit=50;
-        minSeconds=Math.max(1,Math.min(30,p.getInt("post_load",5)));
-        maxSeconds=Math.max(10,Math.min(180,p.getInt("load_timeout",60)));
+        minSeconds=PgsAutoCyclePolicy.shinyCheckSeconds(
+            p.getInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS));
+        maxSeconds=PgsAutoCyclePolicy.mapTimeoutSeconds(
+            p.getInt("load_timeout",PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS));
     }
     private float setting(SharedPreferences p,String key,float def){
         try{return Float.parseFloat(p.getString(key,String.valueOf(def)));}catch(Exception ignored){return def;}
@@ -338,6 +380,9 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void toggle(){
         if(running){halt("PARADO");return;}
+        if(!PgsAutoTemplateStore.pending(this).isEmpty()){
+            queueTeachingWhenReady();return;
+        }
         if(!reloadDetector()){
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
             status("SEM MODELO");return; // Falha visual: vermelho no centro.
