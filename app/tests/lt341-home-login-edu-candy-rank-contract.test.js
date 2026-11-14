@@ -45,7 +45,7 @@ assert.doesNotMatch(activity,/overlayAccountLabel1=homeText\("P1 · Conta 1"/);
 assert.match(activity,/branding\.addView\(brand/);
 assert.match(activity,/branding\.addView\(brandLabels/);
 assert.match(activity,/header\.setOrientation\(LinearLayout\.VERTICAL\)/);
-assert.match(activity,/wordmarkWidth=Math\.max\(d\(130\),Math\.min\(d\(205\),availableBrandWidth\)\)/);
+assert.match(activity,/wordmarkWidth=Math\.max\(d\(130\),Math\.min\(d\(180\),availableBrandWidth\)\)/);
 assert.match(activity,/heart\.setBackground\(null\)/);
 assert.match(activity,/menu\.setBackground\(null\)/);
 assert.match(activity,/shareIcon\.setColorFilter\(homeLightMode\?Color\.BLACK:Color\.WHITE\)/);
