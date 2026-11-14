@@ -553,11 +553,19 @@ public final class PgsAutoClickService extends AccessibilityService {
                 .putInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS)
                 .putBoolean("cycle_60_2_migrated",true).commit();
         }
+        // Uma só migração do valor legado 60s; preservar valores distintos
+        // e mudanças explícitas feitas pelo usuário após a LT344.
+        if(!p.getBoolean("lt344_default_25_migrated",false)){
+            SharedPreferences.Editor e=p.edit().putBoolean("lt344_default_25_migrated",true);
+            if(!p.getBoolean("lt344_timeout_user_set",false)&&
+                p.getInt("load_timeout",60)==60)e.putInt("load_timeout",25);
+            e.apply();
+        }
         return p;
     }
     private void loadSettings(){
         SharedPreferences p=cyclePrefs(this);
-        limit=50;
+        limit=PgsAutoCatalog.MAX_SELECTED;
         minSeconds=PgsAutoCyclePolicy.shinyCheckSeconds(
             p.getInt("post_load",PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS));
         maxSeconds=PgsAutoCyclePolicy.mapTimeoutSeconds(
@@ -582,16 +590,18 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         if(pausedByShiny||pausedByError){
             pausedByShiny=false;pausedByError=false;
-            running=true;status("RETOMANDO");
-            handler.postDelayed(this::scanAndTap,500);
-            return;
+            // Mesma reinicialização integral do ciclo normal: não herdar
+            // tempo já gasto do último mapa ao reativar a busca.
         }
         loadSettings();
-        nextIndex=0;total=0;lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
+        nextIndex=0;total=0;clickedAt=0L;awaitingMap=false;passengerHoldAt=0L;
+        lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;
         running=true;
         status("LENDO TELA");
+        BugReport.log(this,"PGS","Busca reativada, cooldown mapa "+maxSeconds+
+            "s, Sem Shiny "+minSeconds+"s; aguardando ícones do feed");
         handler.postDelayed(this::scanAndTap,400);
     }
 
@@ -784,6 +794,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
         status("TOQUE "+(index+1)+"/"+total);
+        BugReport.log(this,"PGS","Tentativa de gesto no feed, alvo "+(index+1)+
+            "/"+total+"; aguarda callback Android (não confirma teleporte)");
         Path path=new Path();path.moveTo(x,y);
         GestureDescription gesture=new GestureDescription.Builder()
             .addStroke(new GestureDescription.StrokeDescription(path,0,90)).build();
@@ -799,6 +811,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 sceneReadyAt=0;loadedStreak=0;
                 final int stamp=++ticket;
                 status("AGUARDANDO MAPA");
+                BugReport.log(this,"PGS","Gesto concluído pelo Android; teleporte no jogo ainda não verificado");
                 // Watchdog próprio: o limite continua valendo mesmo se um frame
                 // Android nunca responder (não ficar preso em tela/carregamento).
                 handler.postDelayed(new Runnable(){
@@ -869,7 +882,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     }
                     status("ESPERA "+Math.max(1,(remaining+999)/1000)+"s");
                 }else{
-                    int elapsed=(int)((when-clickedAt)/1000);
+                    long elapsed=Math.max(0L,(when-clickedAt)/1000L);
                     status("CARREGANDO "+elapsed+"/"+maxSeconds);
                 }
                 handler.postDelayed(()->checkMap(stamp),1500L);
@@ -893,6 +906,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         nextIndex++;
         sceneReadyAt=0;loadedStreak=0;lastColors=null;stableRepeats=0;
         status(timeout?"TEMPO ESGOTADO":"PRÓXIMO");
+        BugReport.log(this,"PGS",timeout?
+            "Cooldown mapa esgotado sem evidência suficiente de mapa pronto; relendo feed":
+            "Mapa com objetos estabilizado; Sem Shiny concluído; próximo ícone");
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
             if(nextIndex>=limit){
