@@ -93,8 +93,7 @@ final class PgsAutoMenus {
         b.setScaleType(ImageView.ScaleType.FIT_CENTER);
         b.setContentDescription(description);
         b.setPadding(dp(artSize),dp(artSize),dp(artSize),dp(artSize));
-        b.setMinWidth(0);b.setMinimumWidth(0);
-        b.setMinHeight(0);b.setMinimumHeight(0);
+        b.setMinimumWidth(0);b.setMinimumHeight(0);
         b.setBackground(bg(0x55394A5C,0x557E91A5,6));
         return b;
     }
