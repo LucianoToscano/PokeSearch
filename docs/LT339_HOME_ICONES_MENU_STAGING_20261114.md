@@ -39,3 +39,31 @@ Todos os 6 SHA-256 acima identificam os PNGs fornecidos diretamente pelo respons
 - QA estrutural do código e hashes são possíveis sem compilar. **Build Gradle/Android, inspeção visual P/M/G, toques Samsung, integração completa e homologação física permanecem PENDENTES**, conforme decisão de não gerar APK nesta rodada.
 - **Não incrementar code nem atualizar release_notes** até receber as próximas alterações solicitadas. Não acionar workflow que construa APK nem abrir PR que possa acionar pipelines de APK.
 - A issue #350 da homologação PGS continua pendente e não é modificada aqui.
+
+
+## Segunda etapa: Busca Pokémon ON/OFF e overlay com indicador central (14/11/2026)
+
+**Pedido do responsável:** substituir o ícone único de Busca Pokémon na Home por dois estados, e a antiga mão provisória do PGS por dois desenhos de Pokébola cinza. A LT339 continua apenas na branch de desenvolvimento, sem gerar APK, sem merge e sem publicação.
+
+| Finalidade | Arquivo de recurso Android | Dimensão da fonte | SHA-256 |
+|---|---|---|---|
+| Home ativada | `busca_pokemon_on.png` | 1000 × 1000 RGBA | `3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9` |
+| Home desativada | `busca_pokemon_off.png` | 1536 × 1536 RGBA | `657e147f978ff30e124e16b444cac1bdf6e107d00e101f119dcf92a352eee6bb` |
+| Overlay desativado | `busca_pokemon_overlay_off.png` | 1254 × 1254 RGBA | `51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b` |
+| Overlay ativado | `busca_pokemon_overlay_on.png` | 1254 × 1254 RGBA | `db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef` |
+
+**Preservação:** as artes ON e overlay são os arquivos originais sem redução de qualidade. A imagem Home OFF chegou como PNG RGB com fundo preto sólido, que apareceria como quadrado. Foi criada uma derivação RGBA por recorte de transparência, sem redimensionamento; **o original RGB exato foi preservado** em `app/src/main/assets/ui-originals/busca_pokemon_off_original.png` (SHA-256 `1d84fe6975f531797ae4f1364195c90913670c5cebea0ecd0885b1b421445b54`). Nenhuma imagem anterior da Home foi excluída.
+
+- `MainActivity`: o slot da Home mantém a abertura do `PgsBuscasPanel`, mas exibe `busca_pokemon_on/off` conforme o estado efetivo `PgsAutoClickService.isSearchActive()`, não conforme um boolean de preferência. Um temporizador leve de 1 s atualiza o ícone quando a Home está ativa, sendo removido em `onPause/onDestroy`. Toque continua abrindo as configurações; **não inicia gestos nem concede permissão**.
+- `PgsAutoClickService`: remove os drawables `pgs_hand_on/off` do botão visual e usa `busca_pokemon_overlay_on/off`; preserva a alternância por toque, segurar para menu, arraste, coordenadas salvas, reconhecimento, detecção de Shiny e ações originais.
+- Geometria explicitamente compartilhada com a Pokébola de resultados em `dock.html`: **arte 21 dp** no slot **35 × 30 dp**, com área tocável independente de **44 × 44 dp**. Não amplia o bloco transparente de toque nem reduz as fontes PNG.
+- Indicador separado sobre o centro: **branco** parado/normal; **verde piscando** enquanto lê/procura/confirma Pokémon ou aguarda/carrega o mapa; **vermelho piscando** em falha, captura ausente, modelo ausente ou tempo do mapa esgotado. Pulso de alpha exclusivamente no indicador central em **850 ms**, como `@keyframes psCapturePulse` da Pokébola de resultados. O resto da imagem fica estático.
+- A transição de estado é calculada em `PgsAutoVisualState`, separada do motor de gestos; evitar piscar o PNG inteiro. O overlay OFF usa sua arte de desligado, sem diminuir globalmente a opacidade para não apagar o branco central.
+- Mensagens que mencionavam a “mão” nos painéis foram atualizadas para “Busca Pokémon”, sem alterar o fluxo de Acessibilidade.
+
+### Validação da segunda etapa
+
+- **24/24 cenários Java do estado visual** aprovados localmente usando `javac/java`, sem gerar APK.
+- Contratos Node existentes `pgs-buscas-contracts.test.js`, `lt123-sprites-stats-home.test.js` e `lt339-home-icons-drawer-contract.test.js` atualizados para os novos recursos/estados e os hashes de origem.
+- Sem workflow Android ou release disparado; **compilação integral Android e teste visual/físico Samsung permanecem pendentes**. Não alegar homologação de gestos ou status de mapa sem aparelho.
+- **Não publicar ainda.** Aguardar as próximas mudanças nesta mesma LT339 até autorização explícita do usuário para gerar APK e lançar a versão.
