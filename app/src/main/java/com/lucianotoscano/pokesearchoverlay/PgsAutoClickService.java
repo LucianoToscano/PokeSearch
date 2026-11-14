@@ -986,6 +986,7 @@ public final class PgsAutoClickService extends AccessibilityService {
 
         // Recorte local visível. Tocar apenas POSICIONA; nunca salva sem confirmar.
         final PgsAutoCropSelection[] selected={null};
+        final boolean[] removeFlatBackground={false};
         ImageView preview=new ImageView(this);
         preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
         preview.setContentDescription("Prévia da imagem que será gravada");
@@ -997,6 +998,10 @@ public final class PgsAutoClickService extends AccessibilityService {
             try{
                 Bitmap copy=Bitmap.createBitmap(screenshot,rect.left,rect.top,
                     rect.width(),rect.height());
+                if(removeFlatBackground[0]){
+                    Bitmap mask=PgsAutoSilhouette.tryRemoveFlatBackground(copy);
+                    if(mask!=null){copy.recycle();copy=mask;}
+                }
                 Bitmap old=pickerPreviewBitmap;
                 pickerPreviewBitmap=copy;
                 preview.setImageBitmap(copy);
@@ -1065,6 +1070,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             -1,dp(43),Gravity.TOP);
         modesLp.topMargin=dp(86);
         picker.addView(modes,modesLp);
+        android.widget.CheckBox silhouette=new android.widget.CheckBox(this);
+        silhouette.setText("Fundo plano (beta) · prévia reversível");
+        silhouette.setTextColor(Color.WHITE);silhouette.setTextSize(11);
+        silhouette.setChecked(false);
+        silhouette.setBackgroundColor(0xDF18212D);
+        silhouette.setOnCheckedChangeListener((view,on)->{
+            removeFlatBackground[0]=on;
+            updatePreview[0].run();
+        });
+        FrameLayout.LayoutParams maskLp=new FrameLayout.LayoutParams(
+            -1,dp(40),Gravity.TOP);
+        maskLp.topMargin=dp(132);
+        picker.addView(silhouette,maskLp);
 
         TextView instructions=new TextView(this);
         instructions.setText("Toque no ícone 2D de "+name+
@@ -1108,6 +1126,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                     Math.round(refWidth*(float)cut.height()/cut.width())));
                 Bitmap piece=Bitmap.createBitmap(screenshot,cut.left,cut.top,
                     cut.width(),cut.height());
+                if(removeFlatBackground[0]){
+                    Bitmap masked=PgsAutoSilhouette.tryRemoveFlatBackground(piece);
+                    if(masked!=null){piece.recycle();piece=masked;}
+                }
                 Bitmap model=Bitmap.createScaledBitmap(piece,refWidth,refHeight,true);
                 try{PgsAutoTemplateStore.saveSample(this,name,model,refWidth,refHeight);}
                 finally{if(piece!=model)piece.recycle();model.recycle();}
