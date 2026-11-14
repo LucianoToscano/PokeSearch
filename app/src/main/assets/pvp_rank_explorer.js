@@ -405,8 +405,10 @@
    "#psRankExplorer .psrTableSprite{width:22px;height:22px;object-fit:contain;display:block}",
    "#psRankExplorer tr.psrOverallRow td:first-child{white-space:normal;overflow:visible;text-align:left}",
    "#psRankExplorer .psrPokemonCell{display:flex;align-items:center;gap:5px;min-width:0;text-align:left}",
-   "#psRankExplorer .psrPokemonName{min-width:0;flex:1;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:9.5px}",
-   "#psRankExplorer .psrOverallRank{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}",
+   "#psRankExplorer .psrNameBlock{display:flex;flex:1;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center}",
+    "#psRankExplorer .psrPokemonName{min-width:0;width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.2;font-size:9.5px}",
+   "#psRankExplorer .psrOverallHeading{text-align:center!important;white-space:normal!important;overflow:visible!important;font-size:10px;line-height:1.15}",
+    "#psRankExplorer .psrOverallRank{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}",
    "#psRankExplorer .psrPokedexNumber{font-size:8px;font-weight:650;color:#bfcedd;white-space:nowrap}",
    "#psRankExplorer .psrOverallPlace{font-size:11px;font-weight:850;color:#edf6ff;white-space:nowrap}",
    "#psRankExplorer .psrSpriteWrap{width:23px;height:23px;flex:0 0 23px;display:inline-flex;justify-content:center;align-items:center;position:relative}",
@@ -568,7 +570,7 @@
   const maxPage=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
   const cells=s.kind==="class"?
    '<th class="psrNum">#</th><th class="psrIv">IVs</th><th class="psrLevel">Nv.</th><th class="psrCp">PC</th><th class="psrEff">Eficiência</th>':
-   '<th colspan="4">Pokémon / forma</th><th style="width:22%">Rank Geral</th>';
+   '<th colspan="4">Pokémon / forma</th><th class="psrOverallHeading" style="width:30%">Rank Geral</th>';
   const spriteFor=name=>{
    const lib=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
    const meta=lib?.rankSpriteMeta?.(name)||null;
@@ -594,11 +596,11 @@
      '" aria-pressed="'+marked+'" title="Adicionar ou remover da comparação">'+safe(r.iv)+'</button></td>'+
     '<td>'+levelString(r.level)+'</td><td>'+r.cp+'</td><td>'+r.efficiency+'%</td>':
     '<td colspan="4"><div class="psrPokemonCell">'+spriteFor(r.name)+
-    '<span class="psrPokemonName">'+safe(r.name)+'</span>'+
+    '<span class="psrNameBlock"><span class="psrPokemonName">'+safe(r.name)+'</span>'+
     '<small class="psrPokedexNumber">#'+
     (typeof window!=="undefined"?
      (window.PokeSearchOfflineSprite?.rankSpriteMeta?.(r.name)?.dex||"—"):"—")+
-    '</small></div></td>'+
+    '</small></span></div></td>'+
     '<td class="psrOverallRank"><div class="psrOverallPlace">#'+r.rank+'</div></td>';
    const details=s.kind==="class"&&s.expandedRank===r.rank?
     '<tr class="psrExpanded"><td colspan="5"><div class="psrExtra">ATK '+statString(r.atk)+
