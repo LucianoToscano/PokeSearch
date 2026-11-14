@@ -238,11 +238,11 @@ final class EduSpriteInspector {
         measurements.setTextSize(9f);
         measurements.setTextColor(Color.rgb(238,243,251));
         measurements.setGravity(Gravity.CENTER);
-        measurements.setMaxLines(2);
+        measurements.setMaxLines(3);
         measurements.setContentDescription("Diferenças estimadas de tamanho entre sprites");
-        comparison.addView(measurements,new LinearLayout.LayoutParams(-1,dp(30)));
+        comparison.addView(measurements,new LinearLayout.LayoutParams(-1,dp(46)));
         comparisonParams=windowParams(pairCellSize*2+dp(11),
-            pairCellSize+dp(55),true);
+            pairCellSize+dp(71),true);
         wm.addView(comparison,comparisonParams);
         updateComparisonImages();
     }
