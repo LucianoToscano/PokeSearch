@@ -8,11 +8,12 @@ const cache=read("java/com/lucianotoscano/pokesearchoverlay/VerifiedSpriteCache.
 const stats=fs.readFileSync(path.join(__dirname,"../../functions/index.js"),"utf8");
 let checks=0;const test=(label,fn)=>{fn();checks++;console.log("PASS LT123 "+label)};
 test("P1 and P2 top controls have correct icons and independent callbacks",()=>{
- assert.match(home,/overlayControl=makeIcon\(R.drawable.sem_filtro/);
- assert.match(home,/secondaryOverlayControl=makeIcon\(R.drawable.sem_filtro/);
- assert.match(home,/R.drawable.personalizado:R.drawable.sem_filtro/);
+ assert.match(home,/overlayControl=makeIcon\(R.drawable.home_pokeball_off/);
+ assert.match(home,/secondaryOverlayControl=makeIcon\(R.drawable.home_pokeball_off/);
+ assert.match(home,/on\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off/);
  assert.match(home,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(home,/dualOverlayRow.setVisibility\(View.VISIBLE\)/);
+ assert.match(home,/addHomePreviewIcon\(dualOverlayRow,R.drawable.home_search/);
 });
 test("official catalog includes over 300 checked varieties",()=>{
  const values=Object.values(resolver.FORM_VARIANTS);
