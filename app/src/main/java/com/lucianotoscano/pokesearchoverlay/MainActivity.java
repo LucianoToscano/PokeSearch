@@ -601,6 +601,20 @@ public class MainActivity extends Activity {
             pokeballLoginBadges[i]=badge;
             loginHotspot.setContentDescription("Escolher Conta 1 ou 2 para Pokébola "+(i+1));
             loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
+            // Alinhar o canto inferior do badge a 2 pixels *físicos* acima
+            // da primeira linha visível da Pokébola (não do ImageView).
+            // A matriz já foi enfileirada em fitVisibleArtwork; aqui ela é
+            // lida só após o layout. Não altera a área visual da Pokébola.
+            icon.post(()->{
+                int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
+                if(visibleTop<0||!loginHotspot.isAttachedToWindow())return;
+                FrameLayout.LayoutParams placement=
+                    (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
+                placement.height=d(18);
+                placement.topMargin=visibleTop-2-placement.height;
+                placement.gravity=Gravity.TOP|Gravity.CENTER_HORIZONTAL;
+                loginHotspot.setLayoutParams(placement);
+            });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
         // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
