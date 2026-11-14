@@ -1,0 +1,98 @@
+name: PGS Buscas Auto - APK QA com assinatura oficial
+on:
+  push:
+    branches:
+      - feature/pgs-buscas-auto-integracao-20261114
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pgs-buscas-signed-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  signed-qa:
+    runs-on: ubuntu-24.04
+    environment: official-updates
+    timeout-minutes: 90
+    env:
+      POKE_TEST_VERSION_CODE: '54542'
+      POKE_TEST_VERSION_LABEL: '51337'
+      POKE_TEST_PUBLIC_VERSION: '0.03.36'
+      POKE_RELEASE_CERT_SHA256: '34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e'
+      POKE_CONTROLLED_DISTRIBUTION: 'true'
+      POKE_RELEASE_STORE_PASSWORD: ${{ secrets.POKE_TEST_STORE_PASSWORD }}
+      POKE_RELEASE_KEY_ALIAS: ${{ secrets.POKE_TEST_KEY_ALIAS }}
+      POKE_RELEASE_KEY_PASSWORD: ${{ secrets.POKE_TEST_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: SDK e contratos
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+          node app/tests/pgs-buscas-contracts.test.js
+      - name: Restaurar certificado oficial apenas no runner
+        shell: bash
+        env:
+          POKE_TEST_KEYSTORE_B64: ${{ secrets.POKE_TEST_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          for key in POKE_TEST_KEYSTORE_B64 POKE_RELEASE_STORE_PASSWORD POKE_RELEASE_KEY_ALIAS POKE_RELEASE_KEY_PASSWORD; do
+            test -n "$(printenv "$key")" || { echo "::error::Segredo da assinatura indisponivel"; exit 1; }
+          done
+          umask 077
+          printf '%s' "$POKE_TEST_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/pgs-qa.p12"
+          chmod 600 "$RUNNER_TEMP/pgs-qa.p12"
+          echo "POKE_RELEASE_KEYSTORE=$RUNNER_TEMP/pgs-qa.p12" >> "$GITHUB_ENV"
+          CERT="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/pgs-qa.p12" -storetype PKCS12 -storepass "$POKE_RELEASE_STORE_PASSWORD" -alias "$POKE_RELEASE_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+      - name: Preparar recursos e compilar APK de QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 app/scripts/build_pokemon_card_metadata.py
+          python3 app/scripts/update_wwm_catalog.py app/src/main/assets
+          python3 app/scripts/build_sprite_bundle.py --workers 10 --minimum-normal 950
+          gradle :app:testDebugUnitTest :app:assembleRelease --no-daemon --stacktrace
+      - name: Verificar assinatura, integridade, pacote e versão
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-pgs-assinada
+          APK=app/build/outputs/apk/release/app-release.apk
+          OUT=qa-pgs-assinada/PokeSearch-PGS-Buscas-v0.03.36-QA.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > qa-pgs-assinada/ASSINATURA.txt
+          grep -Eq '^Verified using v2 scheme.*: true$' qa-pgs-assinada/ASSINATURA.txt
+          CERT="$(grep 'Signer #1 certificate SHA-256 digest:' qa-pgs-assinada/ASSINATURA.txt | awk '{print $NF}')"
+          test "$CERT" = "$POKE_RELEASE_CERT_SHA256"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > qa-pgs-assinada/PACOTE.txt
+          grep -q "name='com.lucianotoscano.pokesearch'" qa-pgs-assinada/PACOTE.txt
+          grep -q "versionCode='54542'" qa-pgs-assinada/PACOTE.txt
+          cp "$APK" "$OUT"
+          (cd qa-pgs-assinada && sha256sum *.apk > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          git rev-parse HEAD > qa-pgs-assinada/SOURCE_COMMIT.txt
+          printf 'QA privado assinado pelo certificado original. NAO publicar como release. Teste real Samsung pendente.\n' > qa-pgs-assinada/LEIA-PRIMEIRO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-PGS-Buscas-Assinado-QA
+          path: qa-pgs-assinada/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Apagar chave restaurada
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pgs-qa.p12"
