@@ -26,7 +26,8 @@ final class PgsAutoCyclePolicy {
                                         boolean running,boolean awaitingMap){
         if(!running||!awaitingMap||target==null||target.trim().isEmpty()
             ||!PgsAutoShinySignal.isPositive(notification))return false;
-        String norm=normalize(notification),species=normalize(target);
+        String norm=normalize(notification),species=normalize(
+            target.replaceAll("(?i)\\s*\\(amostra\\s*\\d+\\)",""));
         if(species.isEmpty())return false;
         // Palavra completa: "Lucario" não valida um nome diferente por substring.
         return (" "+norm+" ").contains(" "+species+" ");
