@@ -51,7 +51,7 @@ assert.match(auto,/PgsAutoTemplateStore\.saveSample\(this,name,model,refWidth,re
 assert.match(gear,/android:pathData=/);
 assert.match(menu,/R\.drawable\.ic_bell_outline,R\.drawable\.pgs_menu_customize/);
 assert.match(menu,/this::showNotifications,this::showAppearance/);
-assert.match(menu,/width=dp\(8\+5\*TOOL_CELL_DP\+4\*TOOL_GAP_DP\)/);
+assert.match(menu,/width=dp\(visual.vertical\?TOOL_CELL_DP:5\*TOOL_CELL_DP\+4\*gap\)/);
 assert.match(menu,/String\[\] names=\{"Novos Pokémon","Shiny monitorado"\}/);
 assert.match(menu,/showCountdown/);
 assert.match(menu,/for\(String value:new String\[\]\{"P","M","G"\}\)/);
