@@ -1020,50 +1020,8 @@ public class MainActivity extends Activity {
         screen.addView(homeUpdateHolder,1,updateLp);
         renderDriveUpdateBanner();
 
-        // New compact LT54 counters; a dash indicates missing connectivity/rules.
-        LinearLayout stats=new LinearLayout(this);
-        stats.setOrientation(LinearLayout.HORIZONTAL);
-        LinearLayout.LayoutParams statsLp=new LinearLayout.LayoutParams(-1,d(48));
-        statsLp.topMargin=d(8);
-        screen.addView(stats,statsLp);
-        TextView online=homeText("●  Ativos agora: —",11,
-            homeLightMode?Color.rgb(34,63,80):Color.rgb(224,237,245),true);
-        TextView installations=homeText("▣  Instalações: —",11,
-            homeLightMode?Color.rgb(34,63,80):Color.rgb(224,237,245),true);
-        online.setGravity(Gravity.CENTER);installations.setGravity(Gravity.CENTER);
-        online.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),11,0));
-        installations.setBackground(homeSurface(homeLightMode?Color.rgb(251,253,255):Color.rgb(33,37,44),11,0));
-        LinearLayout.LayoutParams firstStat=new LinearLayout.LayoutParams(0,-1,1);
-        firstStat.rightMargin=d(5);
-        stats.addView(online,firstStat);
-        LinearLayout.LayoutParams secondStat=new LinearLayout.LayoutParams(0,-1,1);
-        secondStat.leftMargin=d(5);
-        stats.addView(installations,secondStat);
-        FirebaseStats.bind(this,online,installations);
-
-        // LT88 R7: always-visible Home sharing, without adding a fifth header icon.
-        TextView share=homeText("↗  Compartilhar app",12,
-            homeLightMode?Color.rgb(24,65,78):Color.rgb(205,235,246),true);
-        share.setGravity(Gravity.CENTER);
-        share.setContentDescription("Compartilhar APK PokeSearch pelo Google Drive");
-        share.setBackground(homeSurface(
-            homeLightMode?Color.rgb(235,247,250):Color.rgb(27,49,62),
-            11,homeLightMode?Color.rgb(155,192,204):Color.rgb(72,118,135)));
-        // LT103: integrate the small thank-you shortcut into an existing
-        // Home action row, not as a floating banner stranded between sections.
-        LinearLayout shareActions=new LinearLayout(this);
-        shareActions.setOrientation(LinearLayout.HORIZONTAL);
-        shareActions.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams shareRowLp=new LinearLayout.LayoutParams(-1,d(48));
-        shareRowLp.topMargin=d(6);
-        screen.addView(shareActions,shareRowLp);
-        LinearLayout.LayoutParams shareLp=new LinearLayout.LayoutParams(0,-1,1);
-        shareActions.addView(share,shareLp);
-        share.setOnClickListener(v->sharePokeSearch());
-        View thanks=CommunityTribute.homeCard(this,homeLightMode,this::openTribute);
-        LinearLayout.LayoutParams thanksLp=new LinearLayout.LayoutParams(d(164),-1);
-        thanksLp.leftMargin=d(6);
-        shareActions.addView(thanks,thanksLp);
+        // LT339: Estatísticas, Compartilhar e Agradecimentos ficam no menu lateral.
+        // Presença Firebase mantém-se independente da visibilidade dos contadores.
 
         if(scrapbookPreview){
             LinearLayout.LayoutParams scrapbookLp=new LinearLayout.LayoutParams(-1,-2);
@@ -1533,44 +1491,86 @@ public class MainActivity extends Activity {
     private void showHomeMenu(){
         if(homeRoot==null)return;
         if(homeDrawerLayer!=null){closeHomeMenu();return;}
+        showHomeDrawerPage(false);
+    }
+    /** Aba Conta com aparência idêntica ao menu lateral, sem duplicar a autenticação. */
+    private void showHomeAccountMenu(){
+        if(homeRoot!=null)showHomeDrawerPage(true);
+    }
+    private void showHomeDrawerPage(boolean accountPage){
         FrameLayout layer=new FrameLayout(this);
         View scrim=new View(this);
         scrim.setBackgroundColor(Color.argb(160,0,5,14));
         scrim.setOnClickListener(v->closeHomeMenu());
         layer.addView(scrim,new FrameLayout.LayoutParams(-1,-1));
+
+        // Scroll interno permite todos os atalhos + estatísticas sem cortes.
+        ScrollView drawerScroll=new ScrollView(this);
+        drawerScroll.setFillViewport(true);
+        drawerScroll.setVerticalScrollBarEnabled(false);
+        drawerScroll.setBackground(homeSurface(
+            homeLightMode?Color.rgb(247,250,254):Color.rgb(31,35,43),
+            12,homeLightMode?Color.rgb(173,187,202):Color.rgb(85,95,111)));
         LinearLayout drawer=new LinearLayout(this);
         drawer.setOrientation(LinearLayout.VERTICAL);
         drawer.setPadding(0,d(14),0,d(10));
-        drawer.setBackground(homeSurface(homeLightMode?Color.rgb(247,250,254):Color.rgb(31,35,43),
-            12,homeLightMode?Color.rgb(173,187,202):Color.rgb(85,95,111)));
+        drawerScroll.addView(drawer,new ScrollView.LayoutParams(-1,-2));
         int width=Math.min(d(286),getResources().getDisplayMetrics().widthPixels-d(48));
         FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.RIGHT|Gravity.TOP);
-        layer.addView(drawer,lp);
-        drawer.setOnClickListener(v->{});
-        TextView label=homeText("  PokeSearch",19,
+        layer.addView(drawerScroll,lp);
+
+        TextView label=homeText(accountPage?"  Conta":"  PokeSearch",19,
             homeLightMode?Color.rgb(29,47,66):Color.WHITE,true);
         drawer.addView(label,new LinearLayout.LayoutParams(-1,d(60)));
         View rule=new View(this);rule.setBackgroundColor(Color.argb(90,174,199,235));
         drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
-        addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
-        addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
-        addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
-        addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
-        addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
-        addHomeDrawerItem(drawer,"◇","Filtros PGSharp",this::showSavedPgsFilters);
-        addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
-        addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
-        if(CommunityScrapbookStage1.isEnabled(this))
-            addHomeDrawerItem(drawer,"💬","Chat ao vivo",this::scrollToCommunity);
-        // Users can collapse the chat without affecting P1/P2 overlays or login.
-        boolean chatVisible=CommunityScrapbookStage1.isEnabled(this);
-        addHomeDrawerItem(drawer,"💬",chatVisible?"Ocultar Chat":"Mostrar Chat",
-            this::toggleCommunityScrapbookStage1);
-        addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
-        addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
-        addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
+
+        TextView online=null,installations=null;
+        if(accountPage){
+            addHomeDrawerItem(drawer,"‹","Voltar ao menu",this::showHomeMenu);
+            addHomeDrawerItem(drawer,"◉","Pokébola 1 · Conta",
+                ()->showPokeballAccountChoice(false));
+            addHomeDrawerItem(drawer,"◉","Pokébola 2 · Conta",
+                ()->showPokeballAccountChoice(true));
+            // Mantém a autorização de Premium. Nunca libera recursos por aparência.
+            if(PremiumAccess.controlled())
+                addHomeDrawerItem(drawer,"★","Conta Premium · Gerenciar / Sair",
+                    this::showPremiumAccountOptions);
+        }else{
+            addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
+            addHomeDrawerItem(drawer,"◉","Conta",this::showHomeAccountMenu);
+            addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
+            addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
+            addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+            addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
+            addHomeDrawerItem(drawer,"◇","Filtros PGSharp",this::showSavedPgsFilters);
+            addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
+            addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
+            if(CommunityScrapbookStage1.isEnabled(this))
+                addHomeDrawerItem(drawer,"💬","Chat ao vivo",this::scrollToCommunity);
+            boolean chatVisible=CommunityScrapbookStage1.isEnabled(this);
+            addHomeDrawerItem(drawer,"💬",chatVisible?"Ocultar Chat":"Mostrar Chat",
+                this::toggleCommunityScrapbookStage1);
+            addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
+            addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
+            addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
+
+            TextView statistics=homeText("  ESTATÍSTICAS",11,
+                homeLightMode?Color.rgb(47,79,100):Color.rgb(170,195,218),true);
+            statistics.setPadding(d(18),d(9),0,0);
+            drawer.addView(statistics,new LinearLayout.LayoutParams(-1,d(33)));
+            online=homeText("●  Ativos agora: —",12,
+                homeLightMode?Color.rgb(29,47,66):Color.WHITE,false);
+            installations=homeText("▣  Instalações: —",12,
+                homeLightMode?Color.rgb(29,47,66):Color.WHITE,false);
+            online.setPadding(d(18),0,0,0);
+            installations.setPadding(d(18),0,0,0);
+            drawer.addView(online,new LinearLayout.LayoutParams(-1,d(40)));
+            drawer.addView(installations,new LinearLayout.LayoutParams(-1,d(40)));
+        }
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
+        if(online!=null&&installations!=null)FirebaseStats.bind(this,online,installations);
     }
     /** Text-only Android Sharesheet: prefer the verified public update manifest,
      * so each future release automatically changes both the shared URL and label.
