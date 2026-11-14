@@ -242,7 +242,6 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void teach(String species){
                 requestTeaching(species);
             }
-            @Override public void retryNow(){restartSession();}
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
@@ -302,61 +301,6 @@ public final class PgsAutoClickService extends AccessibilityService {
         try{windowManager.addView(bubble,bubbleParams);}
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
         status("PARADO");
-    }
-    public static void restartSearch(){
-        PgsAutoClickService service=instance;
-        if(service!=null)service.handler.post(service::restartSession);
-    }
-    public static void closeHand(){
-        PgsAutoClickService service=instance;
-        if(service!=null)service.handler.post(service::removeHand);
-    }
-    /** Home ON arma a busca para quando PGSharp abrir, como P1/P2. */
-    public static void activateFromHome(){
-        PgsAutoClickService live=instance;
-        if(live==null)return;
-        live.handler.post(()->{
-            live.showBubble();
-            live.armedByHome=true;
-            live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
-                .putBoolean("armFromHome",true).apply();
-            if(live.isGameVisible())live.startArmedSearch();
-        });
-    }
-    /** A Home reflete a visibilidade da bolha (como Pokébolas 1/2),
-     * não o estado da varredura após toque na arte. */
-    public static boolean isOverlayVisible(){
-        PgsAutoClickService live=instance;
-        return live!=null&&live.bubble!=null&&
-            live.bubble.getVisibility()==View.VISIBLE;
-    }
-    /** Edição de amostras pelo submenu da lupa; nunca deixar detector velho. */
-    public static void modelsChanged(){
-        PgsAutoClickService live=instance;
-        if(live!=null)live.handler.post(()->{
-            if(live.running)live.halt("PARADO");
-            live.reloadDetector();
-            live.status("PARADO");
-        });
-    }
-    public static String searchStatus(){
-        PgsAutoClickService live=instance;
-        if(live==null)return "Acessibilidade desligada";
-        if(live.running&&!live.isGameVisible())return "Abra PGSharp";
-        if(live.running&&live.awaitingMap)return "Aguardando mapa";
-        if(live.running)return "Procurando ícones";
-        if(live.pausedByError)return "Erro · verificar acesso";
-        if(live.pausedByShiny)return "Shiny confirmado";
-        return "Parado";
-    }
-    private void restartSession(){
-        emptyRetries=0;lastNoIconScan=0;visitedSlots.clear();notifiedFeedSlots.clear();
-        nextIndex=0;total=0;awaitingMap=false;
-        ++ticket;
-        if(!running){toggle();return;}
-        if(!reloadDetector()){fail("Nenhum modelo visual ativo para reiniciar.");return;}
-        status("REINICIANDO");
-        handler.postDelayed(this::scanAndTap,350L);
     }
     private void removeHand(){
         armedByHome=false;
