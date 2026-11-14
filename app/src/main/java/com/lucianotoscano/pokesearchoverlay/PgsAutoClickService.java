@@ -1331,7 +1331,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         backgroundIcon.setOnClickListener(v->{
             removeFlatBackground[0]=!removeFlatBackground[0];
             setCropIconImage(backgroundIcon,removeFlatBackground[0]?
-                "icone_background_on.webp":"icone_background_off.webp",
+                "icone_background_on.png":"icone_background_off.webp",
                 android.R.drawable.ic_menu_gallery);
             backgroundIcon.setAlpha(removeFlatBackground[0]?1f:.68f);
             backgroundIcon.setContentDescription(removeFlatBackground[0]?
@@ -1422,8 +1422,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         return icon;
     }
     private void setCropIconImage(ImageView icon,String asset,int fallback){
-        // Background_On/Off aguardam localização dos originais no Drive;
-        // fallback preserva a função sem deixar alvo de toque invisível.
+        // Artes Background On/Off originais importadas dos anexos LT346;
+        // fallback apenas defensivo contra asset ausente/corrompido.
         try(InputStream input=getAssets().open("pgs-crop/"+asset)){
             Bitmap bitmap=BitmapFactory.decodeStream(input);
             if(bitmap==null)throw new IOException("Ícone vazio: "+asset);
