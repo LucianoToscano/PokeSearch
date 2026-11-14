@@ -22,7 +22,7 @@ assert.match(engine,/extends AccessibilityService/);
 assert.match(engine,/takeScreenshot\(/);
 assert.match(engine,/verifyAndTap\(/);
 assert.match(engine,/dispatchGesture\(/);
-assert.match(engine,/Math\.max\(1,second-first\)/);
+assert.match(engine,/PgsAutoRetryPolicy\.delaySeconds/);
 assert.match(engine,/sceneReadyAt/);
 assert.match(engine,/pgs_buscas_auto_v1/);
 assert.match(engine,/PgsAutoMapReadiness\.analyze/);
