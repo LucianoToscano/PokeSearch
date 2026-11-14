@@ -396,6 +396,7 @@ jobs:
           # anterior de 49 MB bloqueou o pacote validado, não um erro de
           # assinatura ou recurso. Ampliar a margem controlada a 52 MB,
           # mantendo TODAS as checagens de sprites, assinatura v2 e SHA-256.
+          # Contratos Node LT267/LT330 atualizados no mesmo ciclo ARK.
           APK_BYTES="$(stat -c %s "$APK")"
           echo "Verified signed APK size: $APK_BYTES bytes (maximum 52,000,000)"
           test "$APK_BYTES" -lt 52000000
