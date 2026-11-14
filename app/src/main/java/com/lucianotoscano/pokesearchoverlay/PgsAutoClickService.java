@@ -1293,8 +1293,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             formats.addView(option,new LinearLayout.LayoutParams(dp(48),dp(48)));
             option.setOnClickListener(v->{
                 crop.setMode(values[index]);
+                option.setContentDescription(descriptions[index]);
                 for(int j=0;j<choices.length;j++)
                     choices[j].setAlpha(j==index?1f:.65f);
+            });
+            // Mantém o antigo modo horizontal acessível por toque longo
+            // no ícone vertical sem adicionar outro botão à tela.
+            if(index==1)option.setOnLongClickListener(v->{
+                crop.setMode(PgsAutoCropSelection.Mode.HORIZONTAL);
+                option.setContentDescription("Recorte horizontal; toque curto volta ao vertical");
+                for(int j=0;j<choices.length;j++)
+                    choices[j].setAlpha(j==index?1f:.65f);
+                Toast.makeText(this,"Horizontal",Toast.LENGTH_SHORT).show();
+                return true;
             });
         }
         FrameLayout.LayoutParams formatsLp=new FrameLayout.LayoutParams(
