@@ -23,7 +23,7 @@ assert.match(store,/referenceHeight/);
 assert.match(store,/optInt\("referenceWidth",WIDTH\)/);
 assert.match(store,/refWidth,refHeight/);
 assert.match(catalog,/MAX_SELECTED=50/);
-assert.match(detector,/model\.referenceWidth/); // metadata used in store decode or detector
+assert.match(store,/model\.referenceWidth/); // metadata used by store decode
 assert.match(menu,/imagesFor\(PgsAutoCatalog\.Pokemon p\)/);
 assert.match(menu,/showModelActions\(/);
 assert.match(menu,/PgsAutoTemplateStore\.delete\(context,model\.id\)/);
