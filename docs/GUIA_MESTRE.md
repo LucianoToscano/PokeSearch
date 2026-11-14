@@ -1,5 +1,17 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT345 — implementação na PR #371 (14/11/2026)
+
+**Em desenvolvimento, não considerar oficial até merge e workflow de publicação.** Consulte [auditoria LT345](LT345_ARK_AUDITORIA_E_ACEITE_20261114.md), [issue #370](https://github.com/LucianoToscano/PokeSearch/issues/370) e [PR #371](https://github.com/LucianoToscano/PokeSearch/pull/371).
+
+Implementado na branch: `HomeMenuIconPack.opticalTopInParentPx` mede borda da Pokébola por alpha e matriz, com badge a **2px físicos**, seleção Conta 1/2 independente; escala óptica da Home e RareCandy ajustadas; conta autenticada sem nome oficial mostra estado de sincronização indisponível em vez de nome fictício. Pokébola usa **Auto 3 segundos** por padrão via estado especial -3 no agendador, preserva opções explícitas antigas em minutos e limites do provedor; distância **oculta por padrão** na camada nativa e WebView. Rank Geral reserva coluna de título e coloca número #Pokédex centralizado abaixo do nome. PGS tem painel preso à toolbar real e ícones compactos lupa/relógio/sino+Shiny/engrenagem com lápis/X vetorial, sem desligar automaticamente a busca ao retrair.
+
+Novos modos PGS na branch: **Sprite**, **PokéStop** com mira/offset em pixels, **Ponto Específico** com mira arrastável, **Encontro** com mira e gesto para cima **somente quando a tela de captura é confirmada**, sob controle de gatilhos Mapa/Sem Shiny explícito/Tempo; exige confirmação, tela e orientação compatíveis, mapa estável e autorização de acessibilidade, sem contornar avisos de trânsito. **Isso não faz GPS andar nem comprova teleporte real**. As preferências são persistidas em `pgs_auto_target_v1`. Não anunciar detecção universal de sprite 3D ou segmentação perfeita sem prova.
+
+**Continuidade:** testes completos CI e build Android; homologação visual/física da [issue #350](https://github.com/LucianoToscano/PokeSearch/issues/350), especialmente OAuth Google oficial, teleport/mapa, menu/clipping em claro/escuro e funcionamento do modo Encontro. Respeitar o documento [Padrão Oficial](PADRAO_OFICIAL_OVERLAYS_POKESEARCH.md). Somente após gates verdes e merge gerar release protegida **0.03.43 / 54550**; nunca afirmar release sem verificar asset, assinatura e hash.
+
+
+
 ## LT345 ARK — NOVA ETAPA SOLICITADA, NÃO IMPLEMENTADA (14/11/2026)
 
 **Fonte:** [issue #370](https://github.com/LucianoToscano/PokeSearch/issues/370), capturas reais do app 0.03.42. **Estado:** especificação registrada; NÃO houve merge, build nem publicação LT345. Versão oficial vigente confirmada anteriormente: 0.03.42 / 54549. **Não confundir especificação com entrega.**

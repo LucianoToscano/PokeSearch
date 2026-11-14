@@ -395,7 +395,7 @@ public class MainActivity extends Activity {
             boolean logged=available&&PogoAccountSlots.loggedIn(this,slot);
             String name=logged&&showNames?PogoAccountSlots.prefs(this,slot)
                 .getString("profileDisplayName","").trim():"";
-            if(name.isEmpty())name=logged?"Conectada":available?"Sem login":"Indisponível";
+            if(name.isEmpty())name=logged?"Nome indisponível":available?"Sem login":"Indisponível";
             if(name.length()>24)name=name.substring(0,21)+"…";
             TextView option=homeText((slot==assigned?"✓ ":"   ")+
                 "Conta "+slot+": "+name,12,
@@ -586,10 +586,12 @@ public class MainActivity extends Activity {
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
             FrameLayout loginHotspot=new FrameLayout(this);
-            // A Pokébola ocupa os 44dp inferiores do shell de 60dp.
-            // Bottom do badge fica 2 pixels físicos acima da arte, centrado.
+            // A imagem da Pokébola inclui transparência: a borda vermelha visível
+            // fica abaixo do topo do ImageView. Descemos a arte do seletor
+            // preservando alinhamento ao centro branco da Pokébola.
+            // A borda óptica é conferida no Samsung; pixels são físicos, não dp.
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(30),d(16)-2,Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+                d(30),d(21),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             shell.addView(loginHotspot,hotLp);
             ImageView badge=new ImageView(this);
             badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -599,6 +601,20 @@ public class MainActivity extends Activity {
             pokeballLoginBadges[i]=badge;
             loginHotspot.setContentDescription("Escolher Conta 1 ou 2 para Pokébola "+(i+1));
             loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
+            // Alinhar o canto inferior do badge a 2 pixels *físicos* acima
+            // da primeira linha visível da Pokébola (não do ImageView).
+            // A matriz já foi enfileirada em fitVisibleArtwork; aqui ela é
+            // lida só após o layout. Não altera a área visual da Pokébola.
+            icon.post(()->{
+                int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
+                if(visibleTop<0||!loginHotspot.isAttachedToWindow())return;
+                FrameLayout.LayoutParams placement=
+                    (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
+                placement.height=d(18);
+                placement.topMargin=visibleTop-2-placement.height;
+                placement.gravity=Gravity.TOP|Gravity.CENTER_HORIZONTAL;
+                loginHotspot.setLayoutParams(placement);
+            });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
         // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
@@ -683,7 +699,7 @@ public class MainActivity extends Activity {
         // Reposicionar o controle real do Doce Raro na fileira de atalhos.
         controls.removeView(rareCandyControl);
         rareCandyControl.setBackground(null);
-        rareCandyControl.setPadding(d(7),d(7),d(7),d(7)); // mesmo porte visual do Quests
+        rareCandyControl.setPadding(d(1),d(1),d(1),d(1)); // mesmas proporções ópticas dos demais
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
 
 
@@ -874,7 +890,7 @@ public class MainActivity extends Activity {
         LinearLayout identity=new LinearLayout(this);
         identity.setOrientation(LinearLayout.VERTICAL);
         accountRow.addView(identity,new LinearLayout.LayoutParams(0,-2,1));
-        accountDisplay=homeText("Conta conectada",17,
+        accountDisplay=homeText("Perfil não sincronizado",17,
             homeLightMode?Color.rgb(19,38,59):Color.WHITE,true);
         accountDisplay.setSingleLine(true);
         accountDisplay.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -1350,7 +1366,8 @@ public class MainActivity extends Activity {
         boolean showName=privacy.getBoolean("homeShowPogoAccountName",true);
         boolean showTrainer=privacy.getBoolean("homeShowTrainerName",true);
         boolean showCode=privacy.getBoolean("homeShowTrainerCode",true);
-        String account=two.getString("profileDisplayName","Conta conectada");
+        String account=two.getString("profileDisplayName","").trim();
+        if(account.isEmpty())account="Nome indisponível · abrir perfil";
         String trainer=two.getString("profileTrainerName","");
         String code=two.getString("profileTrainerCode","");
         boolean linked=connected&&code.matches("[0-9]{12}")&&!trainer.isEmpty()&&
@@ -2735,7 +2752,7 @@ public class MainActivity extends Activity {
             "Busca normal com ou sem login · Shiny temporariamente indisponível");
         if(accountDisplay!=null)accountDisplay.setText(
             prefs.getBoolean("homeShowPogoAccountName",true)?
-                prefs.getString("profileDisplayName","Conta conectada"):"Anônimo");
+                prefs.getString("profileDisplayName","Nome indisponível · abrir perfil"):"Anônimo");
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
@@ -2938,7 +2955,7 @@ public class MainActivity extends Activity {
                 PogoAccountSlots.prefs(this,activeLoginSlot).edit()
                     .putString("sessionStatus","autenticada")
                     .putString("profileTrainerState","unknown")
-                    .remove("profileAvatarUrl")
+                    .remove("profileAvatarUrl").remove("profileDisplayName")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")

@@ -59,7 +59,7 @@ final class HomeMenuIconPack {
             if(w<=0||h<=0)return;
             int l=image.getWidth(),t=image.getHeight(),r=0,b=0;
             // Examinar somente alpha; dados originais não são modificados.
-            final int step=2, alphaThreshold=20;
+            final int step=2, alphaThreshold=64; // ignorar apenas halos translúcidos
             for(int y=0;y<image.getHeight();y+=step)
                 for(int x=0;x<image.getWidth();x+=step)
                     if(android.graphics.Color.alpha(image.getPixel(x,y))>alphaThreshold){
@@ -68,7 +68,7 @@ final class HomeMenuIconPack {
                     }
             if(r<l||b<t){view.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);return;}
             float width=Math.max(1,r-l+1),height=Math.max(1,b-t+1);
-            float scale=Math.min((w*.94f)/width,(h*.94f)/height);
+            float scale=Math.min((w*.97f)/width,(h*.97f)/height);
             android.graphics.Matrix matrix=new android.graphics.Matrix();
             matrix.setScale(scale,scale);
             matrix.postTranslate(w*.5f-(l+r)*.5f*scale,
@@ -76,6 +76,31 @@ final class HomeMenuIconPack {
             view.setImageMatrix(matrix);
         });
     }
+    /**
+     * Topo ÓPTICO da imagem da Pokébola em pixels físicos, no pai.
+     * A borda real da arte é medida via alpha, não por uma estimativa em dp.
+     * Usa a mesma matriz e limiar dos ícones já normalizados.
+     */
+    static int opticalTopInParentPx(android.widget.ImageView view){
+        if(view==null||view.getHeight()<=0||
+            !(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable))
+            return -1;
+        Bitmap image=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+        if(image==null||image.isRecycled())return -1;
+        int first=-1;
+        for(int y=0;y<image.getHeight()&&first<0;y+=2){
+            for(int x=0;x<image.getWidth();x+=2){
+                if(android.graphics.Color.alpha(image.getPixel(x,y))>64){
+                    first=y;break;
+                }
+            }
+        }
+        if(first<0)return -1;
+        float[] top={image.getWidth()*.5f,first};
+        view.getImageMatrix().mapPoints(top);
+        return view.getTop()+view.getPaddingTop()+Math.round(top[1]);
+    }
+
     private static void load(Context context){
         for(int i=1;i<=5;i++){
             String file="menu_icons_512_"+i+".zip";

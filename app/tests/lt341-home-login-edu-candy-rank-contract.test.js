@@ -91,7 +91,7 @@ assert.match(edu,/pausePlayback\(\);/);
 assert.match(edu,/atlas\.frame\(42\)/);
 assert.match(edu,/case 6:listener\.closeAssistant\(\);break;/);
 assert.match(activity,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
-assert.match(activity,/d\(30\),d\(16\)-2,Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
+assert.match(activity,/d\(30\),d\(21\),Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
 
 // Exact lixeira source for PGS and the WebView drawer.
 assert.match(pgsMenu,/R\.drawable\.lixeira_preta:R\.drawable\.lixeira_branca/);

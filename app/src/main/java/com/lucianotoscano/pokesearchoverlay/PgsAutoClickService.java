@@ -72,6 +72,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     private long passengerHoldAt=0L;
 
     private PgsAutoMenus quickMenus;
+    private PgsAutoTargetPicker pointPicker;
+    private PgsAutoTargetPolicy.Mode tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
+    private boolean shinyNegativeConfirmed=false;
+    private SharedPreferences targetPrefs(){
+        return getSharedPreferences("pgs_auto_target_v1",MODE_PRIVATE);
+    }
     private WindowManager.LayoutParams bubbleParams;
     private PgsAutoIconDetector detector;
     private FrameLayout picker;
@@ -244,6 +250,13 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(!armedByHome||running||teachingInProgress)return;
         // Reativar a partir dos modelos SALVOS, sem obrigar nova captura.
         // Uma seleção de ensino antiga não deve bloquear a retomada.
+        if(PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"))!=
+                PgsAutoTargetPolicy.Mode.SPRITE){
+            armedByHome=false;
+            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",false).apply();
+            toggle();return;
+        }
         if(!PgsAutoTemplateStore.pending(this).isEmpty()){
             boolean existing=false;
             for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
@@ -254,7 +267,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
-        if(!reloadDetector()){
+        if(PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"))==
+                PgsAutoTargetPolicy.Mode.SPRITE&&!reloadDetector()){
             status("SEM MODELO");
             showReason("Ícone não cadastrado para os Pokémon selecionados. "+
                 "Abra a lupa e grave uma imagem do feed do PGSharp.");
@@ -280,6 +294,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         handView=null;coreIndicator=null;coreBackground=null;
         currentCore=null;currentArtworkOn=null;handBadge=null;countdownBadge=null;
         dismissPicker();
+        if(pointPicker!=null){pointPicker.close();pointPicker=null;}
         analysis.shutdownNow();
         bubble=null;instance=null;
         super.onDestroy();
@@ -340,6 +355,11 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
             @Override public void appearanceChanged(){refreshAppearance();}
+            @Override public void choosePoint(String mode){showTargetSelector(mode);}
+            @Override public void selectSprites(){
+                if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
+                status("SPRITES DO FEED");
+            }
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -575,18 +595,239 @@ public final class PgsAutoClickService extends AccessibilityService {
         try{return Float.parseFloat(p.getString(key,String.valueOf(def)));}catch(Exception ignored){return def;}
     }
 
+
+    /** Posição confirmada, vinculada à resolução exata: jamais clicar após
+     * rotação/popup/escala diferente sem uma nova escolha humana. */
+    private boolean validTarget(){
+        SharedPreferences p=targetPrefs();
+        Point display=new Point();windowManager.getDefaultDisplay().getRealSize(display);
+        return p.getBoolean("confirmed",false)&&PgsAutoTargetPolicy.valid(
+            p.getFloat("fx",Float.NaN),p.getFloat("fy",Float.NaN),
+            p.getInt("screenW",0),p.getInt("screenH",0),display.x,display.y);
+    }
+    private void showTargetSelector(String name){
+        PgsAutoTargetPolicy.Mode requested=PgsAutoTargetPolicy.mode(name);
+        if(requested==PgsAutoTargetPolicy.Mode.SPRITE){
+            targetPrefs().edit().putString("mode","SPRITE").apply();
+            if(running)halt("ALVO ALTERADO");
+            status("SPRITES DO FEED");return;
+        }
+        if(running)halt("CONFIGURANDO MIRA");
+        if(!isGameVisible()||passengerPromptPresent()){
+            showReason("Abra o mapa do jogo sem avisos para posicionar a mira.");
+            return;
+        }
+        if(pointPicker!=null){pointPicker.close();pointPicker=null;}
+        if(quickMenus!=null)quickMenus.dismissAll();
+        if(bubble!=null)bubble.setVisibility(View.GONE);
+        pointPicker=PgsAutoTargetPicker.open(this,windowManager,name,
+            new PgsAutoTargetPicker.Callback(){
+                @Override public void confirmed(float fx,float fy,int w,int h){
+                    targetPrefs().edit().putFloat("fx",fx).putFloat("fy",fy)
+                        .putInt("screenW",w).putInt("screenH",h)
+                        .putString("mode",requested.name())
+                        .putBoolean("confirmed",true).apply();
+                    tapMode=requested;pointPicker=null;
+                    if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+                    status("MIRA SALVA · "+requested.name());
+                    Toast.makeText(PgsAutoClickService.this,
+                        "Ponto confirmado. Toque na bolha para iniciar com o mapa aberto.",
+                        Toast.LENGTH_LONG).show();
+                }
+                @Override public void cancelled(){
+                    pointPicker=null;
+                    if(bubble!=null)bubble.setVisibility(View.VISIBLE);
+                    status("MIRA CANCELADA");
+                }
+            });
+    }
+    /** Reconhece o mapa antes de tocar uma coordenada; não usa texto/imagem
+     * antiga do feed como prova de que o PokéStop ou ponto ainda está lá. */
+    private void scanFixedTarget(){
+        if(!running||awaitingMap)return;
+        if(!validTarget()){
+            fail("Resolução ou posição mudou: confirme novamente a mira.");
+            return;
+        }
+        final int stamp=++ticket;
+        status("CONFIRMANDO MAPA");
+        capture(new CaptureCallback(){
+            @Override public void onBitmap(Bitmap bitmap){
+                if(!running||stamp!=ticket)return;
+                boolean loaded=PgsAutoMapReadiness.analyze(bitmap).scenePopulated;
+                int[] colors=sampleMap(bitmap);
+                if(lastColors!=null&&difference(lastColors,colors)<=10f&&loaded)
+                    stableRepeats++;
+                else stableRepeats=0;
+                lastColors=colors;
+                // Dois frames estáveis, não uma única captura cheia de ícones.
+                if(!loaded||stableRepeats<1){
+                    if(++emptyRetries>=12){
+                        fail("Mapa não confirmado após várias capturas. Sem toque automático.");
+                        return;
+                    }
+                    status("AGUARDANDO MAPA");
+                    handler.postDelayed(()->{
+                        if(running&&ticket==stamp)scanAndTap();
+                    },1500L);
+                    return;
+                }
+                emptyRetries=0;
+                Point display=new Point();windowManager.getDefaultDisplay().getRealSize(display);
+                SharedPreferences prefs=targetPrefs();
+                float fx=prefs.getFloat("fx",Float.NaN),fy=prefs.getFloat("fy",Float.NaN);
+                if(!PgsAutoTargetPolicy.valid(fx,fy,
+                    prefs.getInt("screenW",0),prefs.getInt("screenH",0),
+                    display.x,display.y)){
+                    fail("A mira não corresponde à resolução atual.");return;
+                }
+                int x=PgsAutoTargetPolicy.pointX(fx,display.x);
+                int y=PgsAutoTargetPolicy.pointY(fy,display.y,tapMode,
+                    prefs.getInt("stopOffsetPx",24));
+                if(y>=display.y*.91f){
+                    fail("Ponto muito próximo dos controles inferiores. Reposicione.");
+                    return;
+                }
+                // Verificação final imediatamente antes de gestos acessíveis.
+                if(!PgsAutoTargetPolicy.safeToTap(isGameVisible(),
+                    passengerPromptPresent(),loaded,validTarget())){
+                    status("AGUARDANDO JOGO");return;
+                }
+                tapFixedTarget(x,y);
+            }
+            @Override public void onError(String message){
+                if(running&&stamp==ticket)fail("Falha na captura do mapa: "+message);
+            }
+        });
+    }
+    private void tapFixedTarget(int x,int y){
+        if(!running||!isGameVisible()||passengerPromptPresent())return;
+        final PgsAutoTargetPolicy.Mode action=tapMode;
+        final int oldTicket=ticket;
+        status("TOQUE · "+action.name());
+        BugReport.log(this,"PGS","Mira: gesto solicitado após mapa confirmado; resultado no jogo não verificado");
+        Path path=new Path();path.moveTo(x,y);
+        GestureDescription gesture=new GestureDescription.Builder()
+            .addStroke(new GestureDescription.StrokeDescription(path,0,90L)).build();
+        boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
+            @Override public void onCompleted(GestureDescription g){handler.post(()->{
+                if(!running||ticket!=oldTicket)return;
+                clickedAt=SystemClock.uptimeMillis();
+                shinyNegativeConfirmed=false;
+                passengerHoldAt=0L;sceneReadyAt=0L;loadedStreak=0;
+                lastColors=null;stableRepeats=0;
+                currentTargetName=action.name();
+                final int stamp=++ticket;
+                if(action==PgsAutoTargetPolicy.Mode.ENCOUNTER){
+                    status("CONFIRMANDO ENCONTRO");
+                    handler.postDelayed(()->checkEncounterThenSwipe(stamp),1200L);
+                }else{
+                    awaitingMap=true;
+                    status("AGUARDANDO MAPA");
+                    handler.postDelayed(()->checkMap(stamp),1300L);
+                }
+                BugReport.log(PgsAutoClickService.this,"PGS",
+                    "Mira: gesto Android concluído; ação no jogo ainda sem confirmação");
+            });}
+            @Override public void onCancelled(GestureDescription g){
+                handler.post(()->fail("Gesto cancelado pelo Android."));
+            }
+        },null);
+        if(!accepted)fail("Android recusou gesto da mira.");
+        else handler.postDelayed(()->{
+            if(running&&ticket==oldTicket)
+                fail("Sem confirmação do gesto Android para o ponto escolhido.");
+        },3500L);
+    }
+    /** Evita deslizamento cego em telas que podem ser mapa, aviso ou menu.
+     * O jogo precisa expor as pistas nativas de um encontro; sem isso pausa. */
+    private boolean encounterWindowConfirmed(){
+        AccessibilityNodeInfo root=null;
+        try{
+            root=getRootInActiveWindow();
+            if(root==null||root.getPackageName()==null||
+                !isGamePackage(root.getPackageName().toString()))return false;
+            StringBuilder details=new StringBuilder();
+            collectEncounterLabels(root,details,0);
+            String evidence=details.toString().toLowerCase(java.util.Locale.ROOT);
+            boolean ball=evidence.contains("poké ball")||
+                evidence.contains("poke ball")||evidence.contains("pokeball");
+            boolean exit=evidence.contains("fugir")||evidence.contains("run away")||
+                evidence.contains("flee encounter");
+            return ball&&exit;
+        }catch(RuntimeException ignored){return false;}
+        finally{if(root!=null)root.recycle();}
+    }
+    private void collectEncounterLabels(AccessibilityNodeInfo node,StringBuilder out,int depth){
+        if(node==null||depth>8||out.length()>9000)return;
+        if(node.getText()!=null)out.append(' ').append(node.getText());
+        if(node.getContentDescription()!=null)
+            out.append(' ').append(node.getContentDescription());
+        for(int i=0;i<node.getChildCount();i++){
+            AccessibilityNodeInfo child=node.getChild(i);
+            if(child!=null)try{collectEncounterLabels(child,out,depth+1);}
+            finally{child.recycle();}
+        }
+    }
+    private void checkEncounterThenSwipe(int stamp){
+        if(!running||ticket!=stamp)return;
+        if(!isGameVisible()||passengerPromptPresent()){
+            fail("Encontro interrompido por mudança de tela ou aviso.");return;
+        }
+        capture(new CaptureCallback(){
+            @Override public void onBitmap(Bitmap bitmap){
+                if(!running||ticket!=stamp)return;
+                boolean map=PgsAutoMapReadiness.analyze(bitmap).scenePopulated;
+                if(map||!encounterWindowConfirmed()){
+                    fail("Encontro não comprovado. Sem gesto de deslizar automático.");
+                    return;
+                }
+                Point size=new Point();windowManager.getDefaultDisplay().getRealSize(size);
+                Path swipe=new Path();
+                swipe.moveTo(size.x*.5f,size.y*.78f);
+                swipe.lineTo(size.x*.5f,size.y*.43f);
+                GestureDescription gesture=new GestureDescription.Builder()
+                    .addStroke(new GestureDescription.StrokeDescription(swipe,0,250L))
+                    .build();
+                boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
+                    @Override public void onCompleted(GestureDescription g){
+                        handler.post(()->{
+                            if(!running||stamp!=ticket)return;
+                            halt("DESLIZOU · VALIDAR NO JOGO");
+                            BugReport.log(PgsAutoClickService.this,"PGS",
+                                "Deslizamento concluído pelo Android, efeito no jogo não certificado");
+                        });
+                    }
+                    @Override public void onCancelled(GestureDescription g){
+                        handler.post(()->fail("Deslizamento cancelado pelo Android."));
+                    }
+                },null);
+                if(!accepted)fail("Android não autorizou o deslizamento.");
+            }
+            @Override public void onError(String msg){
+                if(running&&ticket==stamp)fail("Sem prova da tela de encontro: "+msg);
+            }
+        });
+    }
+
     private void toggle(){
         if(running){halt("PARADO");return;}
-        if(!PgsAutoTemplateStore.pending(this).isEmpty()){
+        tapMode=PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"));
+        if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&
+           !PgsAutoTemplateStore.pending(this).isEmpty()){
             boolean saved=false;
             for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
                 if(PgsAutoCatalog.isSelectedName(this,model.name)){saved=true;break;}
             if(saved)PgsAutoTemplateStore.clearTeaching(this);
             else {queueTeachingWhenReady();return;}
         }
-        if(!reloadDetector()){
+        if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&!reloadDetector()){
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
             status("SEM MODELO");return; // Falha visual: vermelho no centro.
+        }
+        if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE&&!validTarget()){
+            showReason("Mira ausente ou resolução alterada. Segure Buscar Pokémon → Alvo e confirme novamente.");
+            status("CONFIRMAR MIRA");return;
         }
         if(pausedByShiny||pausedByError){
             pausedByShiny=false;pausedByError=false;
@@ -597,7 +838,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         nextIndex=0;total=0;clickedAt=0L;awaitingMap=false;passengerHoldAt=0L;
         lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
-        emptyRetries=0;lastNoIconScan=0;
+        emptyRetries=0;lastNoIconScan=0;shinyNegativeConfirmed=false;
         running=true;
         status("LENDO TELA");
         BugReport.log(this,"PGS","Busca reativada, cooldown mapa "+maxSeconds+
@@ -644,6 +885,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             handler.postDelayed(()->{if(running)scanAndTap();},2500L);return;
         }
         loadSettings();
+        if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){scanFixedTarget();return;}
         if(nextIndex>=total && total>0){
             // Recomeça a leitura do feed automaticamente, sem checkbox
             // "repetir buscas" nem reinício manual redundante.
@@ -902,6 +1144,23 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void finishMapVisit(int stamp,boolean timeout){
         if(!running||!awaitingMap||stamp!=ticket)return;
+        if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){
+            if(sceneReadyAt==0L){
+                // Limite não autoriza clique cego em menu/diálogo/carregamento.
+                if(timeout)fail("Cooldown esgotado: mapa não confirmado; nenhum novo toque.");
+                else handler.postDelayed(()->checkMap(stamp),1200L);
+                return;
+            }
+            PgsAutoTargetPolicy.Trigger trigger=PgsAutoTargetPolicy.trigger(
+                targetPrefs().getString("trigger","MAP"));
+            boolean cooled=SystemClock.uptimeMillis()-clickedAt>=maxSeconds*1000L;
+            if(!cooled||!PgsAutoTargetPolicy.shouldRepeat(trigger,true,
+                pausedByShiny,shinyNegativeConfirmed,cooled)){
+                status(trigger==PgsAutoTargetPolicy.Trigger.NO_SHINY&&
+                    !shinyNegativeConfirmed?"AGUARDANDO SEM SHINY":"COOLDOWN MAPA");
+                handler.postDelayed(()->checkMap(stamp),1200L);return;
+            }
+        }
         awaitingMap=false;
         nextIndex++;
         sceneReadyAt=0;loadedStreak=0;lastColors=null;stableRepeats=0;
@@ -1237,7 +1496,25 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     public static void onPgsharpShiny(String message){
         PgsAutoClickService live=instance;
-        if(live!=null)live.handler.post(()->live.pauseForShiny(message));
+        if(live!=null)live.handler.post(()->{
+            if(!live.running||!live.awaitingMap)return;
+            if(PgsAutoShinySignal.isExplicitNegative(message)){
+                if(live.tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){
+                    live.shinyNegativeConfirmed=true;
+                    BugReport.log(live,"PGS","Aviso explícito de ausência de Shiny registrado para gatilho");
+                }
+                return;
+            }
+            if(live.tapMode!=PgsAutoTargetPolicy.Mode.SPRITE&&
+               PgsAutoShinySignal.isPositive(message)){
+                live.running=false;live.awaitingMap=false;live.pausedByShiny=true;live.ticket++;
+                live.status("✨ SHINY\\nPAUSADO");
+                live.notifyConfigured(PgsAutoNotificationPolicy.SHINY,
+                    "PGS: Shiny explícito","Detecção do jogo; sequência pausada.",true);
+                return;
+            }
+            live.pauseForShiny(message);
+        });
     }
     private void pauseForShiny(String message){
         // Nunca confundir notificação de outra espécie com o alvo atual.

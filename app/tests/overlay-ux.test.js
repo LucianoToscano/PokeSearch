@@ -28,7 +28,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("Atualização offers OFF, 3, 5, 10, 15 and 20 minutes without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
+test("Atualização offers OFF, 3 seconds, and existing minute presets without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [-3,3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?384:34;')&&
@@ -155,7 +155,7 @@ test("UX-INFO-10 visibility toggles report confirmed Android state without scrol
  dock.includes('selected?"✓":"–"')&&
  dock.includes('Native.setResultDisplayOption(key,!resultDisplayOptions[key])')&&
  !dock.includes('resultDisplayOptions[key]=!resultDisplayOptions[key];'));
-test("UX-INFO-DEFAULT-KM-VISIBLE distance ON, other optional fields OFF, preserving saved choices",()=>{
+test("UX-INFO-DEFAULT-KM-HIDDEN distance OFF, other optional fields OFF, preserving saved choices",()=>{
  const source=dock.match(/let resultDisplayOptions=\{([\s\S]*?)\};/);
  if(!source)return false;
  const names=[
@@ -168,7 +168,7 @@ test("UX-INFO-DEFAULT-KM-VISIBLE distance ON, other optional fields OFF, preserv
   .map(m=>[m[1],source[1].slice(m.index).startsWith(m[1]+":true")]));
  const nativeBlock=service.split("private void syncPreferencesWithoutSearch(){")[1]
   ?.split("String wantedSort=",1)[0]||"";
- return names.length===21&&names.every(name=>defaultOptions[name]===(name==="distance"))&&
+ return names.length===21&&names.every(name=>defaultOptions[name]===false)&&
   names.every(name=>dock.includes('["'+name+'",'))&&
   dock.includes('let showResultText=false;')&&
   dock.includes('showTimers=false')&&
@@ -465,7 +465,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
-test("AUTO retains 3/5/10/15/20 minute scheduling",service.includes("handler.postDelayed(periodic,intervalMinutes*60000L)")&&service.includes("int[] options={0,3,5,10,15,20};"));
+test("AUTO 3-second default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={-3,0,3,5,10,15,20};")&&service.includes("intervalMinutes==-3?3000L"));
 test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
@@ -557,7 +557,7 @@ test("B06 LOGIN_BEGIN pauses and invalidates active search",beginBlock.includes(
 test("B06 all six kinds of scheduled work are canceled",['queuedRefresh','periodic','expiryRefresh','pageFinishedRefresh','loginEndRefresh','deferredSessionReload'].every(n=>cancelBlock.includes('handler.removeCallbacks('+n+')')));
 test("B06 LOGIN_BEGIN cancels callbacks and hides all windows",beginBlock.includes('cancelSessionCallbacks();')&&['root','menuRoot','detailRoot'].every(v=>beginBlock.includes(v+'.setVisibility(View.GONE)')));
 test("B06 LOGIN_END cancels before 1600ms and periodic restarts after",endBlock.indexOf('cancelSessionCallbacks();')<endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)')&&endBlock.indexOf('schedulePeriodic();')>endBlock.indexOf('handler.postDelayed(loginEndRefresh,1600L)'));
-test("B06 periodic suppressed during login",service.includes('if(stopped||loginPaused||intervalMinutes<=0)return;')&&service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(this,intervalMinutes*60000L)'));
+test("B06 periodic suppressed during login",service.includes('if(stopped||loginPaused||intervalMinutes==0)return;')&&service.includes('if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(this,autoRefreshDelayMs())'));
 test("PL-02 page navigation independent of mutable filter generation",
  pageBlock.includes('onPageStarted')&&pageBlock.includes('pageLoadGeneration++;')&&
  pageBlock.includes('pendingPageRefreshGeneration=searchInProgress?-1:requestGeneration;')&&
@@ -613,9 +613,9 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5")&&
-    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
-    service.includes('if(!stopped&&!loginPaused&&intervalMinutes>0)handler.postDelayed(periodic,'));
+    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3")&&
+    service.includes('if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5')&&
+    service.includes('if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(periodic,autoRefreshDelayMs())'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
     dock.includes('bell-sound-new')&&dock.includes('bell-sound-favorites')&&
@@ -1966,7 +1966,7 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  return update.includes('code.matches("[0-9]{12}")')&&
   update.includes('trainerPanel.setVisibility(')&&
   update.includes('ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged')&&
-  update.includes('prefs.getString("profileDisplayName","Conta conectada")')&&
+  update.includes('prefs.getString("profileDisplayName","Nome indisponível · abrir perfil")')&&
   main.includes("A remoção precisa ser confirmada no perfil oficial")&&
   main.includes('readAsset("profile_summary.js")')&&
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');
@@ -2270,11 +2270,11 @@ test("UX-WATCHDOG-90S late requests discarded",()=>{
 test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown",()=>{
  const keys=["name","number","gender","size","form","moves","location","distance","shiny"];
  return keys.every(key=>key==="distance"?
-    dock.includes('distance:displayPrefs.distance!==false'):
+    dock.includes('distance:displayPrefs.distance===true'):
     dock.includes('"'+key+'":!!displayPrefs.'+key)||
     dock.includes(key+':!!displayPrefs.'+key))&&
   keys.every(key=>service.includes('case "'+key+'":')&&
-    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",'+(key==="distance"?"true":"false")+')'))&&
+    service.includes('prefs.getBoolean("resultShow'+key[0].toUpperCase()+key.slice(1)+'",'+"false"+')'))&&
   keys.every(key=>key==="shiny"?dock.includes('if(opts.shiny){'):
     dock.includes('opts.'+key+'&&'))&&
   dock.includes('const metaWidth=metadataVisible?96:highlightWidth;')&&
@@ -3653,7 +3653,7 @@ test("LT62 AUTO refresh icon and long press must never double trigger a search",
   body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
   body.includes('pointercancel')&&
   !menu.includes('now.textContent=')&&
-  dock.includes('badge.textContent=period===0?"":period+"m"')&&
+  dock.includes('badge.textContent=period===0?"":(period===-3?"3s":period+"m")')&&
   dock.includes('button.classList.add("refreshSpinning")')&&
   dock.includes('animation:psRefreshSpin .7s linear 1!important');
 });

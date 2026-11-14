@@ -340,7 +340,7 @@ check("LT62 Refresh: original 16px neutral icon spins only after manual tap; min
  assert.ok(dock.includes('button[data-key="period"] .periodBadge{'));
  assert.ok(dock.includes('left:50%;top:50%;transform:translate(-50%,-50%)'));
  assert.ok(dock.includes('font:400 7px/1 Roboto,Arial,sans-serif!important'));
- assert.ok(dock.includes('badge.textContent=period===0?"":period+"m"'));
+ assert.ok(dock.includes('badge.textContent=period===0?"":(period===-3?"3s":period+"m")'));
  assert.ok(dock.includes('button.classList.add("refreshSpinning")'));
  assert.ok(dock.includes('@keyframes psRefreshSpin{to{transform:rotate(360deg)}}'));
  assert.ok(!dock.includes('button[data-key="period"].requested .quickGlyph{color:#ffdb70'));
@@ -352,7 +352,7 @@ check("LT62 Atualização and More: OFF + five minutes, no AUTO decoration, tran
  assert.ok(auto.includes('row.appendChild(off)'));
  assert.ok(!auto.includes('label.textContent="AUTO"'));
  assert.ok(!auto.includes('className="periodCompactLabel"'));
- assert.ok(auto.includes('for(const value of [3,5,10,15,20])'));
+ assert.ok(auto.includes('for(const value of [-3,3,5,10,15,20])'));
  assert.ok(auto.includes('[...row.children].forEach(tile=>panel.appendChild(tile))'));
  assert.ok(!auto.includes('title.textContent="ATUALIZAÇÃO"'));
  assert.ok(!auto.includes('close.className="choiceClose"'));
@@ -782,7 +782,7 @@ check("LT62 Tamanho: multi-select remains independent of Sex and other filters",
 check("LT62 audit: bridge assignments are executable, not swallowed by // comment",()=>{
  const callback=dock.split("window.onNativeData=")[1]?.split("window.menuSide=",1)[0]||"";
  assert.ok(callback.includes('shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.\n row=Number(r)||46;'));
- assert.ok(callback.includes('period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):5;'));
+ assert.ok(callback.includes('period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3;'));
  assert.ok(callback.includes('spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;'));
  assert.ok(callback.includes('refreshSpriteSizeButtons();'));
  assert.ok(callback.includes('showTimers=!!timers;'));

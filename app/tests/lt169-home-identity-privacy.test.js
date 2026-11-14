@@ -24,7 +24,7 @@ assert.match(prefs,/Somente nesta Home/);
 const render=src.slice(src.indexOf("private void refreshSessionSummary()"),
   src.indexOf("private void askLogout()"));
 assert.match(render,/prefs\.getBoolean\("homeShowPogoAccountName",true\)\?/);
-assert.match(render,/prefs\.getString\("profileDisplayName","Conta conectada"\):"Anônimo"/);
+assert.match(render,/prefs\.getString\("profileDisplayName","Nome indisponível · abrir perfil"\):"Anônimo"/);
 assert.match(render,/prefs\.getBoolean\("homeShowTrainerName",true\)\?trainer:"Anônimo"/);
 assert.match(render,/prefs\.getBoolean\("homeShowTrainerCode",true\)\?/);
 assert.match(render,/"XXXX XXXX XXXX"/);
