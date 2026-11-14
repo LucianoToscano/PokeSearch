@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.33",
-  "code": 54539,
-  "label": 51337,
-  "previous_tag": "v0.03.32-54538",
-  "qa_max_code": 54538,
-  "release_notes": "PokeSearch LT334 (0.03.33) — Corrigido o encolhimento do Assistente Edu ao levantar/jogar a Pokébola. Os quatro quadros #00–03 passam a compor a cabeça, rosto, óculos, tronco, calça e pés da pose canônica #42 com a camada animada do braço e da Pokébola originais, sem reduzir o personagem inteiro. Apenas a camada do gesto recebe transformação uniforme em nearest-neighbor; não há escala anisotrópica, suavização bilinear ou alteração dos 68 PNGs mestres de 512px. O quadro #02 mantém a bola aérea, as oito sequências ociosas, estados contextuais, efeitos, tamanhos P/M/G e fallback permanecem preservados. Código integrado na PR #343 (squash 16ae4e347398d88456fcdeeebdc2bab07577c827); checks Node/Android Core/Java/OTA/APK de teste assinado SUCCESS. A correção é específica à Pokébola e não constitui remasterização de todas as 68 artes; fluidez e junção do braço devem ser conferidas no Samsung físico após a instalação. Assinatura do APK oficial somente pelo workflow protegido, preservando certificado Android permanente e OTA. Atualização no aparelho requer confirmação de instalação."
+  "version": "0.03.34",
+  "code": 54540,
+  "label": 51338,
+  "previous_tag": "v0.03.33-54539",
+  "qa_max_code": 54539,
+  "release_notes": "PokeSearch LT335 (0.03.34) — Assistente Edu: corrigidos cortes de braço na animação da Pokébola (#00–03) e poses jogando no celular (#63–64) com cabeça, olhos, óculos, corpo e pés da referência #42. Nova inspeção independente ◀️ 👬 ▶️ para navegar pelas 68 sprites, congelar quadros, comparar a sprite padrão #42 lado a lado e retomar a animação por toque longo; linhas-guia configuráveis e ocultas por padrão para capturas/vídeos; indicadores estimados de cabeça, óculos, mãos, pés e altura. Não modifica as 68 fontes PNG 512x512, mantém oito sequências, P/M/G, fallback e nitidez sem filtro bilinear. PR #344 integrada em squash 0edf66c850de180f1d9cb1d0b8e6eaa6389113b5. Testes Node, Android Core, Java, OTA e APK beta assinado SUCCESS; dispositivo físico Samsung ainda requer verificação visual. Usar assinatura permanente pelo workflow protegido e verificar SHA do APK público após publicar; instalação no aparelho exige confirmação do Android."
 }
