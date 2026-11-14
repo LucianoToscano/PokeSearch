@@ -21,6 +21,8 @@ public final class PgsAutoCyclePolicyTest {
             "reordered name");
         check(PgsAutoCyclePolicy.shouldPauseForTarget("Brilhante encontrado: Lucario","Lucario",true,true),
             "Portuguese positive");
+        check(PgsAutoCyclePolicy.shouldPauseForTarget("Shiny found: Lucario","Lucario (amostra 2)",true,true),
+            "amostra da especie");
         check(!PgsAutoCyclePolicy.shouldPauseForTarget("Shiny found: Pikachu","Lucario",true,true),
             "another species");
         check(!PgsAutoCyclePolicy.shouldPauseForTarget("Shiny: true","Lucario",true,true),
