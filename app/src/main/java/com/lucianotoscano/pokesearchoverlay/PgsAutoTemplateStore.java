@@ -23,8 +23,16 @@ final class PgsAutoTemplateStore {
     static final class Model {
         String id, name, file;
         boolean enabled, builtIn;
+        final int referenceWidth,referenceHeight;
         Model(String id,String name,String file,boolean enabled,boolean builtIn) {
+            this(id,name,file,enabled,builtIn,WIDTH,HEIGHT);
+        }
+        Model(String id,String name,String file,boolean enabled,boolean builtIn,int w,int h) {
             this.id=id;this.name=name;this.file=file;this.enabled=enabled;this.builtIn=builtIn;
+            // Modelos LT339 são legados 68×52; os novos preservam a dimensão
+            // real escolhida no feed em uma largura de referência de 740px.
+            referenceWidth=Math.max(16,Math.min(92,w));
+            referenceHeight=Math.max(16,Math.min(92,h));
         }
     }
     private static SharedPreferences preferences(Context c) {
@@ -45,7 +53,8 @@ final class PgsAutoTemplateStore {
             for(int i=0;i<data.length();i++) {
                 JSONObject obj=data.getJSONObject(i);
                 result.add(new Model(obj.getString("id"),obj.getString("name"),obj.getString("file"),
-                    obj.optBoolean("enabled",true),obj.optBoolean("builtIn",false)));
+                    obj.optBoolean("enabled",true),obj.optBoolean("builtIn",false),
+                    obj.optInt("referenceWidth",WIDTH),obj.optInt("referenceHeight",HEIGHT)));
             }
         } catch(Exception e) {
             // Falha fechada: não clicar em Pokémon diferentes por engano.
@@ -93,6 +102,14 @@ final class PgsAutoTemplateStore {
         persist(c,models);
     }
     static synchronized void saveSample(Context c,String name,Bitmap cropped) throws IOException {
+        saveSample(c,name,cropped,WIDTH,HEIGHT);
+    }
+    static synchronized void saveSample(Context c,String name,Bitmap cropped,int refWidth,int refHeight)
+        throws IOException {
+        if(cropped==null||cropped.isRecycled()||name==null||name.trim().isEmpty())
+            throw new IOException("Imagem e nome da amostra são obrigatórios.");
+        if(refWidth<16||refWidth>92||refHeight<16||refHeight>92)
+            throw new IOException("Recorte fora de 16 a 92 pixels.");
         List<Model> models=list(c);
         int count=0;for(Model m:models)if(!m.builtIn)count++;
         if(count>=MAX_SAMPLES)throw new IOException("Limite de 50 modelos adicionados; exclua um para continuar.");
@@ -101,7 +118,7 @@ final class PgsAutoTemplateStore {
         try(FileOutputStream out=new FileOutputStream(target)) {
             if(!cropped.compress(Bitmap.CompressFormat.PNG,100,out))throw new IOException("Não foi possível salvar a imagem.");
         } catch(IOException err) {target.delete();throw err;}
-        models.add(new Model(file,name.trim(),file,true,false));
+        models.add(new Model(file,name.trim(),file,true,false,refWidth,refHeight));
         persist(c,models);
     }
     /** Restaura uma amostra de um backup sem sobrescrever qualquer modelo atual. */
@@ -136,7 +153,7 @@ final class PgsAutoTemplateStore {
             try(InputStream in=c.getAssets().open(model.file)) {bmp=BitmapFactory.decodeStream(in);}
         } else bmp=BitmapFactory.decodeFile(new File(c.getFilesDir(),model.file).getAbsolutePath());
         if(bmp==null)throw new IOException("Imagem não encontrada: "+model.name);
-        Bitmap scaled=Bitmap.createScaledBitmap(bmp,WIDTH,HEIGHT,true);
+        Bitmap scaled=Bitmap.createScaledBitmap(bmp,model.referenceWidth,model.referenceHeight,true);
         if(scaled!=bmp)bmp.recycle();
         return scaled;
     }
@@ -146,7 +163,10 @@ final class PgsAutoTemplateStore {
             for(Model m:models) {
                 JSONObject obj=new JSONObject();
                 obj.put("id",m.id);obj.put("name",m.name);obj.put("file",m.file);
-                obj.put("enabled",m.enabled);obj.put("builtIn",m.builtIn);arr.put(obj);
+                obj.put("enabled",m.enabled);obj.put("builtIn",m.builtIn);
+                obj.put("referenceWidth",m.referenceWidth);
+                obj.put("referenceHeight",m.referenceHeight);
+                arr.put(obj);
             }
         } catch(Exception ignored) {return;}
         preferences(c).edit().putString(KEY,arr.toString()).apply();
