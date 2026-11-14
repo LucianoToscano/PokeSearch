@@ -2154,7 +2154,7 @@ public class MainActivity extends Activity {
             boolean secondaryOn=OverlayService.isSecondaryRunning();
             secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
             secondaryOverlayControl.setContentDescription(secondaryOn?
-                "Desativar segunda Pokébola":"Ativar segunda Pokébola");
+                "Desativar Pokébola 2":"Ativar Pokébola 2");
             secondaryOverlayControl.setBackground(null);
         }
     }
