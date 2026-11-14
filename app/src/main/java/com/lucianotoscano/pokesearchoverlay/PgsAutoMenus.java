@@ -114,7 +114,7 @@ final class PgsAutoMenus {
     }
     void toggle(int x,int y){if(toolbar!=null){dismissAll();return;}showToolbar(x,y);}
     void dismissAll(){hidePanel();hideToolbar();}
-    private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}}
+    private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
     boolean isOpen(){return panel!=null||toolbar!=null;}
     void showToolbar(int x,int y){
