@@ -7,13 +7,18 @@ public final class PgsAutoCyclePolicyTest {
     }
     public static void main(String[] args){
         check(PgsAutoCyclePolicy.mapTimeoutSeconds(60)==60,"timeout default");
-        check(PgsAutoCyclePolicy.mapTimeoutSeconds(999)==60,"timeout invalid");
+        check(PgsAutoCyclePolicy.mapTimeoutSeconds(999)==999,"sem teto artificial");
+        check(PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS==25,"padrão 25 segundos");
+        check(PgsAutoCyclePolicy.mapTimeoutSeconds(0)==25,"zero inválido no mapa");
+        check(PgsAutoCyclePolicy.mapTimeoutSeconds(Integer.MAX_VALUE)==Integer.MAX_VALUE,"long safe");
         check(PgsAutoCyclePolicy.shinyCheckSeconds(2)==2,"shiny check 2");
-        check(PgsAutoCyclePolicy.shinyCheckSeconds(120)==2,"check invalid");
+        check(PgsAutoCyclePolicy.shinyCheckSeconds(120)==120,"Sem Shiny sem teto");
+        check(PgsAutoCyclePolicy.shinyCheckSeconds(0)==0,"Sem Shiny permite zero");
         check(!PgsAutoCyclePolicy.mapTimedOut(59000,1000,60),"not yet timeout");
         check(PgsAutoCyclePolicy.mapTimedOut(61000,1000,60),"timeout exact");
         check(!PgsAutoCyclePolicy.readyToAdvance(1999,1000,2),"not 2s");
         check(PgsAutoCyclePolicy.readyToAdvance(3000,1000,2),"2s advance");
+        check(PgsAutoCyclePolicy.readyToAdvance(1000,1000,0),"zero sem espera");
         check(!PgsAutoCyclePolicy.readyToAdvance(9000,0,2),"unknown map");
         check(PgsAutoCyclePolicy.shouldPauseForTarget("Shiny found: Lucario","Lucario",true,true),
             "lucario shiny confirmed");
