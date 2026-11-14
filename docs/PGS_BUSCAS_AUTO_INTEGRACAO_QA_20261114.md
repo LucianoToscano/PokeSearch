@@ -33,3 +33,7 @@
 - Android pede acesso explícito a Acessibilidade e notificações; falha segura quando screenshot/gesto não funciona.
 - Não apagar dados privados do usuário ou instalar outro pacote.
 - Não integrar na main nem publicar OTA/release automática antes de validação física e aprovação do APK assinado.
+
+## Publicação verificada — LT337 (14/11/2026)
+
+As observações de “pendente de merge/release” acima eram o estado da branch no momento da integração. **PR #347 e PR #348 foram integradas.** Release oficial estável [0.03.36-54543](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.36-54543), APK de 49.755.526 bytes, SHA-256 `07aa53ed7258826a4b6ba28bdbcc424f648cfa34ceca2729427a9de4fe5e8c1f`, [workflow oficial #43572689788](https://github.com/LucianoToscano/PokeSearch/actions/runs/43572689788) sucesso, fonte exata `82f85f4a68fa2fe2ed9ddfe9f4b868df31a604d0`. A Home verifica a release mais recente do GitHub e pode oferecer a atualização, sujeito a rede, preferências e consentimento Android. Não declarar instalação silenciosa nem homologação do PGS em Samsung; issue [#350](https://github.com/LucianoToscano/PokeSearch/issues/350) permanece aberta para QA funcional e arte da mão.
