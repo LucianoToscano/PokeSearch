@@ -10,62 +10,21 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.widget.*;
-import org.json.JSONArray;
 import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
-import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 /** Integração nativa de preferências do PGS Buscas; motor de gestos ainda não habilitado. */
 final class PgsBuscasPanel {
-    private static final String PREFS="pgs_buscas_auto_v1",KEY="species";
-    private static List<Species> cached;
-    private static final class Species {
-        final int number;final String name;
-        Species(int n,String s){number=n;name=s;}
-    }
-    static String normalize(String s){
-        return Normalizer.normalize(s.toLowerCase(Locale.ROOT),Normalizer.Form.NFD)
-            .replaceAll("\\p{M}","").replaceAll("[^a-z0-9]","");
-    }
-    private static synchronized List<Species> catalog(Context c){
-        if(cached!=null)return cached;
-        ArrayList<Species> list=new ArrayList<>();
-        try(InputStream in=c.getAssets().open("pokemon_catalog.json")){
-            ByteArrayOutputStream out=new ByteArrayOutputStream();byte[] buf=new byte[4096];int n;
-            while((n=in.read(buf))!=-1)out.write(buf,0,n);
-            JSONArray rows=new JSONArray(out.toString("UTF-8"));
-            for(int i=0;i<rows.length();i++){
-                JSONArray row=rows.optJSONArray(i);
-                if(row!=null&&row.length()>1)list.add(new Species(row.optInt(0),row.optString(1)));
-            }
-        }catch(Exception ignored){}
-        cached=Collections.unmodifiableList(list);return cached;
-    }
+    private static final String PREFS="pgs_buscas_auto_v1";
+    // Home e menu flutuante compartilham o mesmo catalogo, preferencia
+    // e regra de ativacao dos modelos: nenhuma segunda fonte de estado.
     private static List<Integer> selected(Context c){
-        ArrayList<Integer> ids=new ArrayList<>();
-        try{
-            JSONArray data=new JSONArray(c.getSharedPreferences(PREFS,0).getString(KEY,"[]"));
-            for(int i=0;i<data.length()&&ids.size()<50;i++){
-                int id=data.optInt(i);
-                if(id>0&&!ids.contains(id))ids.add(id);
-            }
-        }catch(Exception ignored){}
-        return ids;
-    }
-    private static void save(Context c,List<Integer> ids){
-        JSONArray json=new JSONArray();for(int id:ids)json.put(id);
-        c.getSharedPreferences(PREFS,0).edit().putString(KEY,json.toString()).apply();
+        return PgsAutoCatalog.selected(c);
     }
     private static boolean toggle(Context c,int id){
-        List<Integer> ids=selected(c);
-        if(!ids.contains(id)&&ids.size()>=50)return false;
-        // Única regra de ativação de templates, usada também pelo menu flutuante.
-        PgsAutoCatalog.toggle(c,id);
-        return true;
+        boolean alreadySelected=PgsAutoCatalog.isSelected(c,id);
+        boolean selectedNow=PgsAutoCatalog.toggle(c,id);
+        return alreadySelected||selectedNow; // false somente ao atingir 50
     }
     private static int dp(Context c,int value){
         return Math.round(c.getResources().getDisplayMetrics().density*value);
@@ -125,7 +84,7 @@ final class PgsBuscasPanel {
             refresh[0]=()->{
                 list.removeAllViews();chipRow.removeAllViews();List<Integer> ids=selected(a);
                 for(Integer chosenId:ids){
-                    for(Species p:catalog(a))if(p.number==chosenId){
+                    for(PgsAutoCatalog.Pokemon p:PgsAutoCatalog.all(a))if(p.number==chosenId){
                         Button chip=button(a,p.name+" ×");
                         chipRow.addView(chip);
                         chip.setOnClickListener(v->{toggle(a,p.number);refresh[0].run();});
@@ -133,11 +92,11 @@ final class PgsBuscasPanel {
                     }
                 }
                 heading.setText("🔎 BUSCAS · Selecionados "+ids.size()+"/50");
-                String q=normalize(search.getText().toString());int count=0;
-                for(Species s:catalog(a)){
+                String q=PgsAutoCatalog.normalize(search.getText().toString());int count=0;
+                for(PgsAutoCatalog.Pokemon s:PgsAutoCatalog.all(a)){
                     boolean chosen=ids.contains(s.number);
                     if(q.isEmpty()&&!chosen)continue;
-                    if(!q.isEmpty()&&!normalize(s.name).contains(q)&&!String.valueOf(s.number).startsWith(q))continue;
+                    if(!q.isEmpty()&&!PgsAutoCatalog.normalize(s.name).contains(q)&&!String.valueOf(s.number).startsWith(q))continue;
                     LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);
                     ImageView sprite=new ImageView(a);
                     try(InputStream in=VerifiedSpriteCache.bundledSprite(a,s.number,false)){
@@ -172,8 +131,7 @@ final class PgsBuscasPanel {
                     if(chosen){
                         Button up=button(a,"↑");row.addView(up);
                         up.setOnClickListener(v->{
-                            List<Integer> order=selected(a);int i=order.indexOf(s.number);
-                            if(i>0){Collections.swap(order,i,i-1);save(a,order);}refresh[0].run();
+                            PgsAutoCatalog.move(a,s.number,-1);refresh[0].run();
                         });
                     }
                     list.addView(row);if(++count>=100)break;
