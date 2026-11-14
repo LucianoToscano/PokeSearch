@@ -104,6 +104,10 @@ final class EduSpriteInspector {
         removeComparison();
         if(hadReview)listener.resumed();
     }
+    void setOverlayVisible(boolean visible){
+        if(toolbar!=null)toolbar.setVisibility(visible?View.VISIBLE:View.GONE);
+        if(comparison!=null)comparison.setVisibility(visible?View.VISIBLE:View.GONE);
+    }
     void destroy(){
         removeComparison();
         removeToolbar();
