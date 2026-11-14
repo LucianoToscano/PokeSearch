@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.38",
-  "code": 54545,
-  "label": 51342,
-  "previous_tag": "v0.03.37-54544",
-  "qa_max_code": 54544,
-  "release_notes": "PokeSearch LT339 (0.03.38): cadastro de Lucario/ícones PGS com captura guiada ao abrir o feed, recarga imediata do modelo e correção do fluxo de pesquisa. Busca automática: mapa até 60 s, confirmação de mapa/PokéStops por sinais visuais, espera de 2 s para alerta Shiny da mesma espécie e avanço ao próximo ícone; nova leitura de feed vazio em 3 s. Removidos tempos/reinício redundantes da interface. Notificações do PGS independentes das Pokébolas 1 e 2. Home reorganizada com novos ícones ON/OFF, Weather, modo Claro/Escuro, Conta e estatísticas no menu lateral, Doce Raro compacto, compartilhamento no cabeçalho, popup PGS compacto e captura autorizada do Perfil PoGoCoordinates. Artes PNG/WebP originais preservadas; sem redução de resolução, assinatura permanente e dados preservados. PGSharp e Shiny exigem validação real no Samsung, issue #350; o PGS continua opt-in pela Acessibilidade Android. Atualizador oficial requer confirmação de instalação no Android."
+  "version": "0.03.39",
+  "code": 54546,
+  "label": 51343,
+  "previous_tag": "v0.03.38-54545",
+  "qa_max_code": 54545,
+  "release_notes": "PokeSearch LT340 (0.03.39): correção da Busca Pokémon PGS após teste Samsung. Ícone ON/OFF na Home abre e fecha diretamente o overlay, como Pokébolas 1/2; sem painel intermediário. Busca armada ao abrir PGSharp após habilitação explícita da Acessibilidade. Cadastro de cada sprite com recorte 24/32/44 px e modelos com escala real, miniaturas clicáveis na lupa para excluir/adicionar imagens, prioridade de busca por setas sem aleatoriedade, recarga e início automático após ensino. Correções de estado de janela do próprio PokeSearch e timeout do gesto. Overlay usa artes originais ON/OFF de 21dp em slot 35x30dp, bolinha branca natural sem efeito, indicador piscando verde apenas enquanto aguarda mapa e vermelho em erro. Menus miniatura no padrão das Pokébolas/Doce Raro, notificações PGS 138dp e botões 30dp com ícones de som brancos sem estrela; áudio independente de P1/P2. Tempo mantém 60s mapa/2s após mapa e sequência automática. Recursos, sons, 68 sprites Edu, contas, assinatura permanente e R8 preservados. PGS segue experimental, requer testar feed real PGSharp, gesto, teleportes e aviso Shiny do mesmo alvo no Samsung (issue #350); o Android confirma a instalação, sem instalação silenciosa."
 }
