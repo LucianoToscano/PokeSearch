@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT345 OFICIAL — PokeSearch 0.03.43 / 54550 (14/11/2026)
+
+**PUBLICAÇÃO CONFIRMADA:** [release oficial v0.03.43-54550](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.43-54550), [APK PokeSearch-v0.03.43-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.43-54550/PokeSearch-v0.03.43-LT.apk) com **60.010.180 bytes**, SHA-256 `4d02031c0bb26af2b859990996cbdcc9c3f652492fedbc5e6265c81e47d6f3db`. [Workflow oficial protegido #43642169249](https://github.com/LucianoToscano/PokeSearch/actions/runs/43642169249) concluído **SUCCESS**, incluindo teste de release, R8, certificado, publicação e verificação pública de hash. Implementação: [PR #371](https://github.com/LucianoToscano/PokeSearch/pull/371) squash `8f4fb2299cec85ff0ea8071c238988b6ed1c0186`; solicitação oficial: [PR #372](https://github.com/LucianoToscano/PokeSearch/pull/372) squash `5bce07739cd98b44387d937a4c56e2eb47d62884`.
+
+**O que foi efetivamente integrado:** badges de contas P1/P2 calculados pela borda óptica e posicionados 2px físicos acima da Pokébola; ícones Home harmonizados; valor de Auto 3s em novos perfis, preservando intervalos antigos escolhidos (minutos), sem contornar limites de busca; distância inicialmente oculta; Rank Geral com número # pequeno sob nome, título descongestionado; menu PGS menor, preso à toolbar real, sino+Shiny vetorial interno, X e personalização; mira arrastável para Ponto e PokéStop, deslocamento configurável, gatilhos Mapa/Sem Shiny explícito/Tempo; Encontro com deslizar quando a tela for demonstravelmente reconhecida, senão interrupção segura. Identidades oficiais ausentes não são fabricadas; contas P1/P2 isoladas.
+
+**Bloqueios continuam reais:** OAuth Google/Discord do PoGoCoordinates pode bloquear WebView e exige callback oficial autorizado; app não contorna política. Gesto Android concluído não comprova teleporte no jogo; tocar perto de PokéStop não produz caminhada por GPS, e reconhecimento universal de sprite 3D não foi homologado. Testes em Samsung de mapa, Shiny, aparência real em temas, popup/minimização e Encontro ainda pendentes — [auditoria LT345](LT345_ARK_AUDITORIA_E_ACEITE_20261114.md), [issue #350](https://github.com/LucianoToscano/PokeSearch/issues/350) e [issue LT345 #370](https://github.com/LucianoToscano/PokeSearch/issues/370). Atualização exige aceite de instalação no Android, nunca instalação silenciosa. Release 0.03.42 anterior preservada.
+
+
+
 ## LT345 — implementação na PR #371 (14/11/2026)
 
 **Em desenvolvimento, não considerar oficial até merge e workflow de publicação.** Consulte [auditoria LT345](LT345_ARK_AUDITORIA_E_ACEITE_20261114.md), [issue #370](https://github.com/LucianoToscano/PokeSearch/issues/370) e [PR #371](https://github.com/LucianoToscano/PokeSearch/pull/371).
