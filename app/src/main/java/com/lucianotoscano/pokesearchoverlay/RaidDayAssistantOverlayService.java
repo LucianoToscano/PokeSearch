@@ -978,6 +978,10 @@ public final class RaidDayAssistantOverlayService extends Service {
                                     EduSpriteInspector.PREF_GUIDES,false)?
                                     View.VISIBLE:View.GONE);
                     }
+                    @Override public void closeAssistant(){
+                        // X fecha assistente inteiro; onDestroy remove bolha, painel e inspetor.
+                        stopSelf();
+                    }
                     @Override public void resumed(){
                         eduReviewActive=false;eduReviewComparison=false;
                         resetEduIdle();

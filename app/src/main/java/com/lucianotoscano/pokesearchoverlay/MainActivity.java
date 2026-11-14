@@ -409,8 +409,8 @@ public class MainActivity extends Activity {
     private void refreshPokeballLoginBadges(){
         boolean any=PogoAccountSlots.loggedIn(this,1)||
             PogoAccountSlots.loggedIn(this,2);
-        int art=any?(homeLightMode?R.drawable.login_modo_claro:
-            R.drawable.login_modo_escuro):R.drawable.login_modo_semlogin;
+        int art=any?(homeLightMode?R.drawable.login_modo_escuro:
+            R.drawable.login_modo_claro):R.drawable.login_modo_semlogin;
         for(ImageView badge:pokeballLoginBadges)if(badge!=null){
             badge.setImageResource(art);
             badge.clearColorFilter();
@@ -484,11 +484,11 @@ public class MainActivity extends Activity {
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.VERTICAL);
         // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
-        screen.addView(header,new LinearLayout.LayoutParams(-1,d(120)));
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(96)));
         LinearLayout branding=new LinearLayout(this);
         branding.setOrientation(LinearLayout.HORIZONTAL);
         branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(-1,d(76)));
+        header.addView(branding,new LinearLayout.LayoutParams(-1,d(54)));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
@@ -506,15 +506,17 @@ public class MainActivity extends Activity {
             icon.setPadding(d(1),d(1),d(1),d(1));
             icon.setBackground(null);
             FrameLayout shell=new FrameLayout(this);
-            LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,d(44),1);
+            LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,d(70),1);
             dualOverlayRow.addView(shell,cellLp);
-            shell.addView(icon,new FrameLayout.LayoutParams(-1,-1));
+            shell.setClipChildren(false);
+            shell.setClipToPadding(false);
+            shell.addView(icon,new FrameLayout.LayoutParams(-1,d(44),Gravity.BOTTOM));
             icon.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
             FrameLayout loginHotspot=new FrameLayout(this);
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(23),d(23),Gravity.TOP|Gravity.RIGHT);
+                d(23),d(21),Gravity.TOP|Gravity.RIGHT);
             shell.addView(loginHotspot,hotLp);
             ImageView badge=new ImageView(this);
             badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -528,11 +530,11 @@ public class MainActivity extends Activity {
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
         // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
         // As configurações e modelos ficam somente na lupa do overlay.
-        pgsSearchControl=addHomePreviewIcon(dualOverlayRow,R.drawable.busca_pokemon_off,
+        pgsSearchControl=addHomePreviewIcon(dualOverlayRow,R.drawable.busca_pokemon_overlay_off,
             "Ativar overlay Buscar Pokémon",v->toggleHomePgsOverlay());
         lastPgsSearchState=null; // Após recriar a Home, atualizar o novo ImageView.
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
-        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
+        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(70));
         dualLp.bottomMargin=d(5);
         dualOverlayRow.setVisibility(View.VISIBLE);
         screen.addView(dualOverlayRow,dualLp);
@@ -571,7 +573,7 @@ public class MainActivity extends Activity {
         // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
             -d(35)-d(38)-d(16);
-        int wordmarkWidth=Math.max(d(130),Math.min(d(180),availableBrandWidth));
+        int wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
         brandLabels.addView(brandTitle,
@@ -685,9 +687,10 @@ public class MainActivity extends Activity {
         homeThemeButton.setOnClickListener(v->toggleHomeTheme());
 
         // Só o ícone, sem a faixa de compartilhamento da Home.
-        ImageButton shareIcon=makeIcon(android.R.drawable.ic_menu_share,
+        ImageButton shareIcon=makeIcon(R.drawable.home_share_icon,
             "Compartilhar aplicativo PokeSearch");
-        shareIcon.setColorFilter(homeLightMode?Color.BLACK:Color.WHITE);
+        shareIcon.setColorFilter(homeLightMode?Color.BLACK:Color.WHITE,android.graphics.PorterDuff.Mode.SRC_IN);
+        shareIcon.setImageAlpha(255);
         shareIcon.setBackground(null);
         shareIcon.setPadding(d(5),d(5),d(5),d(5));
         LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(34),d(34));
@@ -2248,7 +2251,7 @@ public class MainActivity extends Activity {
         boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
             pgsSearchControl.setImageResource(on?
-                R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
+                R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off);
             lastPgsSearchState=on;
         }
         pgsSearchControl.setContentDescription(on?
@@ -3046,6 +3049,16 @@ public class MainActivity extends Activity {
                     if(loginAutoReturnQueued&&loginDialog!=null&&
                         loginDialog.isShowing())loginDialog.dismiss();
                 }
+                return;
+            }
+            // O login não basta para descobrir o nome: aguarde o cartão React
+            // hidratar até quatro leituras, mantendo a conta autenticada.
+            // Não usar e-mail, nome do treinador ou dados de outro slot como nome.
+            if(profileCaptureRetryCount<4&&
+               PogoAccountSlots.prefs(this,activeLoginSlot)
+                   .getString("profileDisplayName","").trim().isEmpty()){
+                profileCaptureRetryCount++;
+                view.postDelayed(()->captureOfficialProfile(view,generation),800L);
                 return;
             }
             // Autenticação e treinador são estados INDEPENDENTES. Um perfil

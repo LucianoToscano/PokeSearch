@@ -220,7 +220,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             dp(PgsAutoVisualState.RESULT_SLOT_HEIGHT_DP),Gravity.CENTER);
         bubble.addView(iconSlot,slotLp);
         handView=new ImageView(this);
-        handView.setImageResource(R.drawable.busca_pokemon_overlay_off);
+        handView.setImageResource(R.drawable.busca_pokemon_off);
         handView.setScaleType(ImageView.ScaleType.FIT_CENTER);
         FrameLayout.LayoutParams artLp=new FrameLayout.LayoutParams(
             dp(PgsAutoVisualState.RESULT_ART_DP),
@@ -403,7 +403,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         boolean on=PgsAutoVisualState.active(running,pausedByShiny,pausedByError);
         if(handView!=null&&(!Boolean.valueOf(on).equals(currentArtworkOn))){
             handView.setImageResource(on?
-                R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off);
+                R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
             currentArtworkOn=on;
         }
         setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));

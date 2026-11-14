@@ -31,6 +31,7 @@ final class EduSpriteInspector {
         void selected(int index);
         void comparing(boolean show);
         void resumed();
+        void closeAssistant();
     }
 
     private final Context context;
@@ -258,7 +259,7 @@ final class EduSpriteInspector {
         String[] icons={"◀️","⏯️","🎦","▶️","👬","📐","❌"};
         String[] names={"Anterior","Reproduzir ou pausar",
             "Escolher movimentos agrupados","Próximo","Comparar com padrão",
-            "Linhas de medidas","Ocultar inspetor"};
+            "Linhas de medidas","Fechar assistente Edu"};
         for(int i=0;i<icons.length;i++){
             final int index=i;
             TextView button=control(icons[i],names[i]);
@@ -271,7 +272,7 @@ final class EduSpriteInspector {
                     case 3:change(1);break;
                     case 4:toggleCompare();break;
                     case 5:toggleGuides();break;
-                    case 6:setControlsVisible(false,null,0);break;
+                    case 6:listener.closeAssistant();break;
                 }
             });
         }

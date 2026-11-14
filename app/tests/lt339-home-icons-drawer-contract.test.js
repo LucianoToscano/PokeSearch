@@ -35,7 +35,8 @@ for(const [state,sha] of [
 for(const [name,w,h,expected] of [
  ["busca_pokemon_on",1000,1000,"3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9"],
  ["busca_pokemon_overlay_off",1254,1254,"51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b"],
- ["busca_pokemon_overlay_on",1254,1254,"db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef"]
+ ["busca_pokemon_overlay_on",1254,1254,"66166c7ef5a5524452358ac55d62f8a530dd547f5bc51f2bdeac7e6296832a96"],
+ ["busca_pokemon_off",1254,1254,"db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef"]
 ]){
  const webp=fs.readFileSync(path.join(root,"res/drawable-nodpi",name+".webp"));
  assert.equal(webp.toString("ascii",0,4),"RIFF",name+" RIFF");
@@ -47,23 +48,16 @@ for(const [name,w,h,expected] of [
  assert.equal(fs.existsSync(path.join(root,"res/drawable-nodpi",name+".png")),false,
    "Não distribuir WebP mascarado de PNG");
 }
-{
- const name="busca_pokemon_off";
- const png=fs.readFileSync(path.join(root,"res/drawable-nodpi",name+".png"));
- assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a",name);
- assert.equal(png.readUInt32BE(16),1536);
- assert.equal(png.readUInt32BE(20),1536);
- assert.equal(png[25],6,name+" RGBA");
- assert.equal(crypto.createHash("sha256").update(png).digest("hex"),
-   "657e147f978ff30e124e16b444cac1bdf6e107d00e101f119dcf92a352eee6bb");
-}
+const archived=fs.readFileSync(path.join(root,"assets/ui-originals/busca_pokemon_off_previous_alpha.png"));
+assert.equal(archived.subarray(0,8).toString("hex"),"89504e470d0a1a0a",
+  "PNG transparente antigo preservado, sem distribuir drawable duplicado");
 const original=fs.readFileSync(path.join(root,"assets/ui-originals/busca_pokemon_off_original.jpg"));
 assert.equal(original.subarray(0,3).toString("hex"),"ffd8ff","original é JPEG, não PNG");
 assert.equal(crypto.createHash("sha256").update(original).digest("hex"),
  "1d84fe6975f531797ae4f1364195c90913670c5cebea0ecd0885b1b421445b54");
 const pgs=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/PgsAutoClickService.java"),"utf8");
 const visual=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/PgsAutoVisualState.java"),"utf8");
-assert.match(pgs,/busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off/);
+assert.match(pgs,/busca_pokemon_on:R.drawable.busca_pokemon_off/);
 assert.match(pgs,/PgsAutoVisualState\.RESULT_ART_DP/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
 assert.match(pgs,/coreIndicator\.startAnimation\(pulse\)/);
@@ -80,8 +74,8 @@ assert.match(java,/overlayControl=makeIcon\(R.drawable.home_pokeball_off/);
 assert.match(java,/secondaryOverlayControl=makeIcon\(R.drawable.home_pokeball_off/);
 assert.match(java,/overlayControl.setImageResource\(on\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
 assert.match(java,/secondaryOverlayControl.setImageResource\(secondaryOn\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
-assert.match(java,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_off/);
-assert.match(java,/R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off/);
+assert.match(java,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_overlay_off/);
+assert.match(java,/R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off/);
 assert.match(java,/PgsAutoClickService.isOverlayVisible\(\)/);
 assert.match(java,/v->toggleHomePgsOverlay\(\)/);
 assert.doesNotMatch(java,/PgsBuscasPanel\.show\(this\)/);

@@ -16,7 +16,7 @@
  if(!proof)return JSON.stringify({ok:false,page:"unhydrated"});
  const nodes=Array.from(document.querySelectorAll("p,span,small,strong,div,section,article"))
    .filter(visible);
- const banned=/^(?:profile|member since|upgrade|danger zone|linked accounts|pokemon go accounts|export|search|logout|log out|link|google|discord|pokemon go|settings|account|home)$/i;
+ const banned=/^(?:profile|member since|upgrade|danger zone|linked accounts|pokemon go accounts|export|search|logout|log out|link|google|discord|pokemon go|settings|account|home|connected|linked|manage your account.*)$/i;
  const nameOk=s=>s.length>=3&&s.length<=65&&/^[\p{L}][\p{L} .'-]*[\p{L}]$/u.test(s)&&!banned.test(s)&&!s.includes("@");
  // Profile heading: visible name sits immediately above "Member since".
  // Never fall back to the first arbitrary h1/h2 (e.g. "Danger zone").
@@ -48,6 +48,24 @@
      Math.abs(x.rect.left-anchor.left)<180)
    .sort((a,b)=>b.rect.bottom-a.rect.bottom);
   if(possible.length)displayName=possible[0].name;
+ }
+ // Em algumas versões React o nome fica como irmão de "Member since" no
+ // cartão, sem um retângulo geométrico que o seletor anterior reconheça.
+ // Somente nós visíveis do cartão de perfil: sem cookies ou API privada.
+ if(!displayName&&members.length){
+  let card=members[0].parentElement;
+  for(let depth=0;card&&depth<4&&!displayName;card=card.parentElement,depth++){
+   const label=String(text(card));
+   if(!/Member since/i.test(label)||label.length>260)continue;
+   const elements=Array.from(card.querySelectorAll?
+     card.querySelectorAll("h1,h2,h3,h4,strong,b,span,p"):[]);
+   const candidates=elements.filter(visible)
+     .map(e=>clean(text(e),65))
+     .filter(nameOk)
+     .filter(name=>!/(?:manage your account|connected|linked|provider|upgrade|discord|google|member since)/i.test(name));
+   const unique=Array.from(new Set(candidates));
+   if(unique.length===1)displayName=unique[0];
+  }
  }
  const explicitVia=body.match(/\b(?:Logged in via|Logado via)\s+(Google|Discord)\b/i);
  const provider=explicitVia?explicitVia[1].replace(/^./,x=>x.toUpperCase()):"";

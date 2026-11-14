@@ -24,7 +24,7 @@ assert.match(accessibility,/typeWindowStateChanged\|typeWindowsChanged/);
 assert.match(service,/coreIndicator\.setVisibility\(View\.GONE\)/);
 assert.match(service,/coreIndicator\.setVisibility\(View\.VISIBLE\)/);
 assert.match(service,/next==PgsAutoVisualState\.Core\.WHITE/);
-assert.match(service,/R\.drawable\.busca_pokemon_overlay_on:R\.drawable\.busca_pokemon_overlay_off/);
+assert.match(service,/R\.drawable\.busca_pokemon_on:R\.drawable\.busca_pokemon_off/);
 assert.match(visual,/RESULT_ART_DP=21/);
 assert.match(visual,/CORE_DP=7/);
 assert.match(visual,/PULSE_MS=850L/);
