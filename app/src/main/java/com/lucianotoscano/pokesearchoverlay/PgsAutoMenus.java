@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -125,6 +126,34 @@ final class PgsAutoMenus {
     private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
     boolean isOpen(){return panel!=null||toolbar!=null;}
+    // Toque na bolha com submenu aberto volta à barra, sem desligar buscas.
+    // Com somente a barra aberta, um segundo toque a retrai (padrão P1/P2).
+    void collapseOneLevel(){
+        if(panel!=null)hidePanel();
+        else if(toolbar!=null)hideToolbar();
+    }
+
+    /** Reposiciona janelas EXISTENTES quando a bolha se move/roda a tela.
+     * NUNCA chama dismissAll nem recria menu durante o arraste.
+     */
+    void reanchor(int x,int y){
+        anchorX=x;anchorY=y;
+        if(toolbar==null)return;
+        if(!(toolbar.getLayoutParams() instanceof WindowManager.LayoutParams))return;
+        WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
+        int oldX=lp.x,oldY=lp.y;
+        positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
+        try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
+        if(panel!=null&&panel.getLayoutParams() instanceof WindowManager.LayoutParams){
+            WindowManager.LayoutParams pp=(WindowManager.LayoutParams)panel.getLayoutParams();
+            Point screen=size();
+            int width=pp.width>0?pp.width:panel.getWidth();
+            int height=Math.max(dp(80),panel.getHeight());
+            pp.x=Math.max(dp(8),Math.min(screen.x-width-dp(8),pp.x+lp.x-oldX));
+            pp.y=Math.max(dp(8),Math.min(screen.y-height-dp(8),pp.y+lp.y-oldY));
+            try{wm.updateViewLayout(panel,pp);}catch(Exception ignored){}
+        }
+    }
 
     // LT347: exactly the dock.html controls-window 30dp individual tiles,
     // 16dp artwork, 2dp base gap, 5dp rounded corners; NO enclosing capsule.
@@ -150,6 +179,8 @@ final class PgsAutoMenus {
         for(int i=0;i<icons.length;i++){
             final int n=i;
             ImageButton icon=imageButton(icons[i],descriptions[i],7);
+            // Exact P1/P2 SVG meaning: gear+pencil. Red is reserved for X.
+            if(i==4)icon.setColorFilter(0xFFFF596C);
             int padding=(PgsAutoMenuStyle.CELL_DP-PgsAutoMenuStyle.ART_DP)/2;
             icon.setPadding(dp(padding),dp(padding),dp(padding),dp(padding));
             LinearLayout.LayoutParams tileParams=new LinearLayout.LayoutParams(
@@ -170,9 +201,12 @@ final class PgsAutoMenus {
                         .getString(PgsAutoNotificationPolicy.SHINY,"strong"));
                 shiny.setColorFilter("off".equals(state)?fg():0xFFFFD47B);
                 shiny.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                // Fit sparkle inside bell BODY: 5dp, visually below its crown,
+                // without touching its outline or extending over the rim.
                 FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
-                    dp(8),dp(8),Gravity.CENTER);
-                inner.topMargin=dp(2);
+                    dp(5),dp(5),Gravity.CENTER);
+                inner.topMargin=dp(4);
+                shiny.setClickable(false);shiny.setFocusable(false);
                 tile.addView(shiny,inner);
                 tile.setContentDescription("Notificações e Shiny dentro do sino");
                 tile.setOnClickListener(v->handlers[n].run());
@@ -187,21 +221,29 @@ final class PgsAutoMenus {
         Point screen=size();
         int width=dp(visual.vertical?TOOL_CELL_DP:5*TOOL_CELL_DP+4*gap);
         int height=dp(visual.vertical?5*TOOL_CELL_DP+4*gap:TOOL_CELL_DP);
-        int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),
-            x-width/2+dp(visual.menuOffsetX)));
-        int top=y+dp(PgsAutoVisualState.TOUCH_DP+3+
-            visual.gearMenuGap+visual.menuOffsetY);
-        if(top+height+dp(8)>screen.y)
-            top=Math.max(dp(15),y-height-dp(3));
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,height,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
-        lp.gravity=Gravity.TOP|Gravity.LEFT;lp.x=left;lp.y=top;
+        lp.gravity=Gravity.TOP|Gravity.LEFT;
+        positionToolbar(lp,x,y,visual);
         applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(toolbar,lp);}catch(Exception ignored){toolbar=null;}
     }
+    private void positionToolbar(WindowManager.LayoutParams lp,int x,int y,
+            PgsAutoMenuStyle visual){
+        Point screen=size();
+        int width=lp.width,height=lp.height;
+        lp.x=Math.max(dp(6),Math.min(screen.x-width-dp(6),
+            x-width/2+dp(visual.menuOffsetX)));
+        lp.y=y+dp(PgsAutoVisualState.TOUCH_DP+3+
+            visual.gearMenuGap+visual.menuOffsetY);
+        if(lp.y+height+dp(8)>screen.y)
+            lp.y=Math.max(dp(12),y-height-dp(4));
+        lp.y=Math.max(dp(6),Math.min(screen.y-height-dp(6),lp.y));
+    }
+
     private void applyNativeBlur(WindowManager.LayoutParams lp,int radiusDp){
         // Android can decline cross-app blur; the translucent tile remains
         // legible without needing a separate black background.
@@ -211,14 +253,14 @@ final class PgsAutoMenus {
         }
     }
     private LinearLayout panelRoot(String heading,String right){
-        LinearLayout root=vertical();root.setPadding(dp(10),dp(10),dp(10),dp(10));
+        LinearLayout root=vertical();root.setPadding(dp(7),dp(6),dp(7),dp(7));
         root.setBackground(bg(panelFill(),0x667E91A5,10));
         LinearLayout head=horizontal();
-        TextView title=label(heading,15,true);
-        head.addView(title,new LinearLayout.LayoutParams(0,dp(35),1));
+        TextView title=label(heading,12,true);
+        head.addView(title,new LinearLayout.LayoutParams(0,dp(28),1));
         if(right!=null){TextView meta=label(right,11,true);meta.setTextColor(GOLD);head.addView(meta);}
-        Button exit=button("×",19);
-        LinearLayout.LayoutParams x=new LinearLayout.LayoutParams(dp(32),dp(32));x.leftMargin=dp(7);
+        Button exit=button("×",17);exit.setTextColor(0xFFFF596C);
+        LinearLayout.LayoutParams x=new LinearLayout.LayoutParams(dp(26),dp(27));x.leftMargin=dp(4);
         head.addView(exit,x);exit.setOnClickListener(v->hidePanel());
         root.addView(head);
         return root;
@@ -405,20 +447,95 @@ final class PgsAutoMenus {
                     teach.setOnClickListener(v->{
                         dismissAll();actions.teach(pokemon.name);
                     });
-                    Button up=button("↑",12);
-                    line.addView(up,new LinearLayout.LayoutParams(dp(24),dp(33)));
-                    up.setOnClickListener(v->{
-                        PgsAutoCatalog.move(context,pokemon.number,-1);
-                        render[0].run();
+                    // Único ícone de segurar/arrastar — no lugar das setas.
+                    // O deslocamento é calculado por linhas, preservando a
+                    // ordenação persistida PgsAutoCatalog e os modelos salvos.
+                    ImageButton reorder=imageButton(R.drawable.pgs_drag_handle,
+                        "Segure e arraste para reorganizar "+pokemon.name,6);
+                    reorder.setColorFilter(fg());
+                    line.addView(reorder,new LinearLayout.LayoutParams(dp(28),dp(33)));
+                    reorder.setOnClickListener(v->
+                        Toast.makeText(context,"Segure e arraste o ícone para mudar a ordem",
+                            Toast.LENGTH_SHORT).show());
+                    // TalkBack pode reordenar sem gestos de arraste.
+                    reorder.setAccessibilityDelegate(new View.AccessibilityDelegate(){
+                        @Override public void onInitializeAccessibilityNodeInfo(
+                                View host,android.view.accessibility.AccessibilityNodeInfo info){
+                            super.onInitializeAccessibilityNodeInfo(host,info);
+                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                                .AccessibilityAction.ACTION_SCROLL_FORWARD);
+                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                                .AccessibilityAction.ACTION_SCROLL_BACKWARD);
+                        }
+                        @Override public boolean performAccessibilityAction(
+                                View host,int action,android.os.Bundle args){
+                            if(action==android.view.accessibility.AccessibilityNodeInfo
+                                .ACTION_SCROLL_FORWARD){
+                                PgsAutoCatalog.move(context,pokemon.number,1);
+                                render[0].run();return true;
+                            }
+                            if(action==android.view.accessibility.AccessibilityNodeInfo
+                                .ACTION_SCROLL_BACKWARD){
+                                PgsAutoCatalog.move(context,pokemon.number,-1);
+                                render[0].run();return true;
+                            }
+                            return super.performAccessibilityAction(host,action,args);
+                        }
                     });
-                    Button down=button("↓",12);
-                    line.addView(down,new LinearLayout.LayoutParams(dp(24),dp(33)));
-                    down.setOnClickListener(v->{
-                        PgsAutoCatalog.move(context,pokemon.number,1);
-                        render[0].run();
+                    reorder.setOnTouchListener(new View.OnTouchListener(){
+                        private float downY;
+                        private long downAt;
+                        private boolean moved;
+                        @Override public boolean onTouch(View view,MotionEvent e){
+                            switch(e.getActionMasked()){
+                                case MotionEvent.ACTION_DOWN:
+                                    downY=e.getRawY();
+                                    downAt=android.os.SystemClock.uptimeMillis();
+                                    moved=false;
+                                    view.getParent().requestDisallowInterceptTouchEvent(true);
+                                    return true;
+                                case MotionEvent.ACTION_MOVE:{
+                                    float distance=e.getRawY()-downY;
+                                    if(Math.abs(distance)>dp(6)&&
+                                        android.os.SystemClock.uptimeMillis()-downAt>=110){
+                                        if(!moved)view.performHapticFeedback(
+                                            android.view.HapticFeedbackConstants.LONG_PRESS);
+                                        moved=true;
+                                        view.setTranslationY(Math.max(-dp(100),
+                                            Math.min(dp(100),distance)));
+                                        line.setAlpha(.79f);
+                                    }
+                                    return true;
+                                }
+                                case MotionEvent.ACTION_UP:{
+                                    float distance=e.getRawY()-downY;
+                                    view.setTranslationY(0f);line.setAlpha(1f);
+                                    if(moved){
+                                        int steps=Math.max(-9,Math.min(9,
+                                            Math.round(distance/dp(50f))));
+                                        if(steps!=0){
+                                            for(int step=0;step<Math.abs(steps);step++){
+                                                if(steps<0)PgsAutoCatalog.move(context,pokemon.number,-1);
+                                                else PgsAutoCatalog.move(context,pokemon.number,1);
+                                            }
+                                            render[0].run();
+                                        }
+                                    }else view.performClick();
+                                    return true;
+                                }
+                                case MotionEvent.ACTION_CANCEL:
+                                    view.setTranslationY(0f);line.setAlpha(1f);
+                                    return true;
+                                default:return false;
+                            }
+                        }
                     });
                 }
-                Button choose=button(selected?"−":"＋",14);
+                Button choose=button(selected?"×":"＋",14);
+                if(selected){
+                    choose.setTextColor(0xFFFF596C);
+                    choose.setContentDescription("Remover da lista: "+pokemon.name);
+                }
                 choose.setContentDescription(selected?"Desmarcar "+pokemon.name:"Adicionar "+pokemon.name);
                 line.addView(choose,new LinearLayout.LayoutParams(dp(27),dp(33)));
                 choose.setOnClickListener(v->{
@@ -515,7 +632,7 @@ final class PgsAutoMenus {
         for(int i=0;i<2;i++){
             LinearLayout row=horizontal();
             TextView name=label(names[i],11,false);
-            row.addView(name,new LinearLayout.LayoutParams(0,dp(36),1));
+            row.addView(name,new LinearLayout.LayoutParams(0,dp(29),1));
             EditText edit=new EditText(context);
             edit.setSingleLine(true);edit.setTextSize(12);
             edit.setTextColor(fg());edit.setGravity(Gravity.CENTER);
@@ -525,12 +642,12 @@ final class PgsAutoMenus {
                 PgsAutoCyclePolicy.shinyCheckSeconds(value);
             edit.setText(String.valueOf(value));
             edit.setBackground(bg(TILE,0x557E91A5,6));
-            row.addView(edit,new LinearLayout.LayoutParams(dp(52),dp(33)));
-            root.addView(row,margined(-1,dp(37),5));
+            row.addView(edit,new LinearLayout.LayoutParams(dp(46),dp(28)));
+            root.addView(row,margined(-1,dp(31),2));
             inputs[i]=edit;
         }
         Button apply=button("✓ Salvar",11);
-        root.addView(apply,margined(-1,dp(33),5));
+        root.addView(apply,margined(-1,dp(28),4));
         apply.setOnClickListener(v->{
             try{
                 int[] nums=new int[2];
@@ -550,7 +667,7 @@ final class PgsAutoMenus {
                 Toast.makeText(context,"Digite valores em segundos.",Toast.LENGTH_LONG).show();
             }
         });
-        mount(root,190,172);
+        mount(root,176,145);
     }
 
     void showAppearance(){
@@ -565,16 +682,16 @@ final class PgsAutoMenus {
             prefs.edit().putBoolean("showCountdown",on).apply();
             actions.appearanceChanged();
         });
-        root.addView(timers,margined(-1,dp(36),3));
+        root.addView(timers,margined(-1,dp(30),2));
 
         TextView artTitle=label("Tamanho dos ícones",11,true);
-        root.addView(artTitle,margined(-1,dp(25),5));
+        root.addView(artTitle,margined(-1,dp(20),3));
         LinearLayout scale=horizontal();scale.setGravity(Gravity.CENTER);
         final String saved=prefs.getString("iconScale","M");
         for(String value:new String[]{"P","M","G"}){
             Button option=button(value,12);
             markChosen(option,value.equals(saved));
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(35),1f);
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(29),1f);
             p.leftMargin=dp(3);
             scale.addView(option,p);
             option.setOnClickListener(v->{
@@ -586,11 +703,11 @@ final class PgsAutoMenus {
                 }
             });
         }
-        root.addView(scale,margined(-1,dp(40),2));
+        root.addView(scale,margined(-1,dp(32),2));
         // The Pokébola Editor Visual is the single source of menu appearance.
         // Keep PGS-only choices (icons, countdown and tap indicator) separate.
         TextView inherited=label("Cores e transparência: Editor Visual das Pokébolas",10,false);
-        root.addView(inherited,margined(-1,dp(31),4));
+        root.addView(inherited,margined(-1,dp(24),2));
         CheckBox tapFeedback=new CheckBox(context);
         tapFeedback.setText("Mostrar local do toque");
         tapFeedback.setTextSize(11);tapFeedback.setTextColor(fg());
@@ -598,8 +715,8 @@ final class PgsAutoMenus {
         tapFeedback.setChecked(prefs.getBoolean("showTapIndicator",true));
         tapFeedback.setOnCheckedChangeListener((control,on)->
             prefs.edit().putBoolean("showTapIndicator",on).apply());
-        root.addView(tapFeedback,margined(-1,dp(35),2));
-        mount(root,240,215);
+        root.addView(tapFeedback,margined(-1,dp(30),2));
+        mount(root,210,177);
     }
 
     void showNotifications(){
