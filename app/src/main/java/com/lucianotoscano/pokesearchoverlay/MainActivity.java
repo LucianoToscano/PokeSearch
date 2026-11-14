@@ -370,6 +370,11 @@ public class MainActivity extends Activity {
         icon.setPadding(d(1),d(1),d(1),d(1));
         icon.setContentDescription(description+" · em desenvolvimento");
         icon.setBackground(null);
+        // Nunca exibir um botão sem resposta: prévias sem módulo pronto avisam
+        // claramente, sem disparar toques de outra função ou alterar filtros.
+        icon.setOnClickListener(v->Toast.makeText(this,
+            description+" está em desenvolvimento. Não há ação ativa neste atalho.",
+            Toast.LENGTH_SHORT).show());
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
     }
     private FrameLayout buildHome(){
