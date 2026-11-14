@@ -35,6 +35,9 @@ public final class PgsAutoShinyListener extends NotificationListenerService {
             getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
                 .putString("lastShinyNotice",content.trim()).apply();
             PgsAutoClickService.onPgsharpShiny(content.trim());
+        }else if(PgsAutoShinySignal.isExplicitNegative(content)){
+            // Só evidência textual EXPLÍCITA; não inferir ausência por silêncio.
+            PgsAutoClickService.onPgsharpShiny(content.trim());
         }
     }
 }
