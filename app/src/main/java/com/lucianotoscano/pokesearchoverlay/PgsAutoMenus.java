@@ -262,11 +262,25 @@ final class PgsAutoMenus {
             input.setGravity(Gravity.CENTER);
             input.setBackground(bg(TILE,0xFF4E5F73,6));
             input.setText(String.valueOf(prefs.getInt(keys[i],defaults[i])));
-            fields[i]=input;line.addView(input,new LinearLayout.LayoutParams(dp(76),dp(39)));
+            fields[i]=input;
+            final String preferenceKey=keys[i];
+            input.addTextChangedListener(new TextWatcher(){
+                public void beforeTextChanged(CharSequence str,int start,int count,int after){}
+                public void onTextChanged(CharSequence str,int start,int before,int count){
+                    try{
+                        int n=Integer.parseInt(str.toString().trim());
+                        if(n>=1&&n<=7200)prefs.edit().putInt(preferenceKey,n).apply();
+                    }catch(Exception ignored){}
+                }
+                public void afterTextChanged(Editable editable){}
+            });
+            line.addView(input,new LinearLayout.LayoutParams(dp(76),dp(39)));
             root.addView(line);
         }
         CheckBox loop=new CheckBox(context);loop.setText("Repetir buscas sem pausar");loop.setTextColor(WHITE);
-        loop.setChecked(prefs.getBoolean("repeat",true));root.addView(loop,margined(-1,dp(41),5));
+        loop.setChecked(prefs.getBoolean("repeat",true));
+        loop.setOnCheckedChangeListener((v,on)->prefs.edit().putBoolean("repeat",on).apply());
+        root.addView(loop,margined(-1,dp(41),5));
         Button save=button("✓ Salvar tempos",13);root.addView(save,margined(-1,dp(43),7));
         save.setOnClickListener(v->{
             try{
@@ -312,6 +326,9 @@ final class PgsAutoMenus {
                 });
             }
             root.addView(controls,margined(-1,dp(39),4));
+            Button custom=button("♫ Personalizado · escolher som",11);
+            root.addView(custom,margined(-1,dp(34),4));
+            custom.setOnClickListener(v->showSoundPicker(key));
         }
         CheckBox vibrate=new CheckBox(context);vibrate.setText("Vibrar quando houver shiny");
         vibrate.setTextColor(WHITE);vibrate.setChecked(prefs.getBoolean("shinyVibrate",true));
@@ -334,11 +351,36 @@ final class PgsAutoMenus {
         }
         mount(root);
     }
+    private void showSoundPicker(String key){
+        LinearLayout root=panelRoot("♫ ESCOLHER SOM",null);
+        ScrollView list=new ScrollView(context);
+        LinearLayout content=vertical();
+        for(int i=0;i<PokeSoundLibrary.size();i++){
+            final int index=i;
+            Button b=button(PokeSoundLibrary.LABELS[i],11);
+            content.addView(b,margined(-1,dp(35),2));
+            b.setOnClickListener(v->{
+                context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
+                    .edit().putString(key,"custom").putInt(key+"SoundIndex",index).apply();
+                try{
+                    android.net.Uri uri=PokeSoundLibrary.soundUri(context,index);
+                    android.media.Ringtone tone=android.media.RingtoneManager.getRingtone(context,uri);
+                    if(tone!=null)tone.play();
+                }catch(Exception ignored){}
+                Toast.makeText(context,"Som salvo em "+key,Toast.LENGTH_SHORT).show();
+                showNotifications();
+            });
+        }
+        list.addView(content);root.addView(list,new LinearLayout.LayoutParams(-1,dp(330)));
+        mount(root);
+    }
     private void report(){
         String issue=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE).getString("lastError","sem erro registrado");
         Intent send=new Intent(Intent.ACTION_SEND);send.setType("text/plain");
         send.putExtra(Intent.EXTRA_SUBJECT,"PGS Favoritos Auto 0.7 · relatório");
-        send.putExtra(Intent.EXTRA_TEXT,"PGS Favoritos Auto 0.7\nÚltimo aviso: "+issue+"\nModelo de aparelho: "+Build.MODEL+"\nAndroid: "+Build.VERSION.RELEASE+"\nDescreva o problema aqui:");
+        send.putExtra(Intent.EXTRA_TEXT,BugReport.export(context,
+            "PGS Buscas Auto · estado: "+(PgsAutoClickService.instance==null?"serviço inativo":"serviço ativo")+
+            " · último erro: "+DiagnosticSanitizer.clean(issue)));
         Intent chooser=Intent.createChooser(send,"Reportar PGS Auto");
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try{context.startActivity(chooser);}catch(Exception e){Toast.makeText(context,"Sem aplicativo disponível para reportar.",Toast.LENGTH_LONG).show();}
@@ -347,6 +389,14 @@ final class PgsAutoMenus {
     private void donate(){
         LinearLayout root=panelRoot("♧ DOAR · PokeSearch",null);
         root.addView(label("Pix do projeto PokeSearch. Confira os dados no seu banco antes de doar.",12,false),margined(-1,dp(58),8));
+        ImageView qr=new ImageView(context);
+        qr.setImageResource(R.drawable.support_pix_qr_original);
+        qr.setBackgroundColor(Color.WHITE);
+        qr.setContentDescription("QR Code Pix original do PokeSearch");
+        qr.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams qrLp=new LinearLayout.LayoutParams(dp(205),dp(205));
+        qrLp.gravity=Gravity.CENTER_HORIZONTAL;
+        root.addView(qr,qrLp);
         Button copy=button("⧉ Copiar código Pix do PokeSearch",12);root.addView(copy,margined(-1,dp(48),5));
         copy.setOnClickListener(v->{
             ClipboardManager clipboard=(ClipboardManager)context.getSystemService(Context.CLIPBOARD_SERVICE);
