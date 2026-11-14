@@ -81,6 +81,17 @@ public class MainActivity extends Activity {
     private int profileCaptureRetryCount=0; // bounded React/profile hydration after OAuth
     private boolean profileDiscoveryAttempted=false;
     private android.app.Dialog loginDialog;
+    private boolean loginProfilePageLoadFailed=false;
+    // Prints são permitidos somente em /profile, nunca nas telas de autenticação.
+    private void updateLoginScreenshotProtection(String url,boolean loadedSuccessfully){
+        if(loginDialog==null||!loginDialog.isShowing())return;
+        android.view.Window window=loginDialog.getWindow();
+        if(window==null)return;
+        boolean allow=ProfileScreenshotPolicy.allowsScreenshot(
+            loginPurpose,url,loadedSuccessfully&&!loginProfilePageLoadFailed);
+        if(allow)window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        else window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+    }
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
     private boolean loginDiscoveryStarted=false;
@@ -3109,6 +3120,7 @@ public class MainActivity extends Activity {
         loginSessionNotified=false;
         loginLinkAttempted=false;
         loginDiscoveryStarted=false;
+        loginProfilePageLoadFailed=false;
         website=new WebView(this);
         PogoAccountSlots.attach(website,activeLoginSlot);
         website.setBackgroundColor(Color.rgb(11,13,18));
@@ -3127,6 +3139,10 @@ public class MainActivity extends Activity {
         website.setWebChromeClient(new WebChromeClient());
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
+                if(view==website){
+                    loginProfilePageLoadFailed=false;
+                    updateLoginScreenshotProtection(url,false);
+                }
                 ++loginPageGeneration;
                 loginLinkAttempted=false;
                 loginDiscoveryStarted=false;
@@ -3153,7 +3169,9 @@ public class MainActivity extends Activity {
                 }
             }
             @Override public void onPageFinished(WebView view,String url){
-                if(url==null||view!=website)return;
+                if(view!=website)return;
+                updateLoginScreenshotProtection(url,true);
+                if(url==null)return;
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                      host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
@@ -3177,10 +3195,18 @@ public class MainActivity extends Activity {
                 }
                 checkLoginSession(view,24,generation);
             }
+            @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
+                super.doUpdateVisitedHistory(view,url,isReload);
+                if(view==website &&
+                    !ProfileScreenshotPolicy.allowsScreenshot(loginPurpose,url,true))
+                    updateLoginScreenshotProtection(url,false);
+            }
             @Override public void onReceivedError(WebView view,
                     android.webkit.WebResourceRequest request,
                     android.webkit.WebResourceError error){
                 if(view!=website||request==null||!request.isForMainFrame())return;
+                loginProfilePageLoadFailed=true;
+                updateLoginScreenshotProtection(view.getUrl(),false);
                 if(loginCover!=null)loginCover.setVisibility(View.GONE);
                 int code=error==null?0:error.getErrorCode();
                 BugReport.log(MainActivity.this,"AUTH","Navegação principal · erro "+code);
@@ -3191,6 +3217,8 @@ public class MainActivity extends Activity {
                 if(view!=website||request==null||!request.isForMainFrame()||response==null)return;
                 int status=response.getStatusCode();
                 if(status>=400){
+                    loginProfilePageLoadFailed=true;
+                    updateLoginScreenshotProtection(view.getUrl(),false);
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     BugReport.log(MainActivity.this,"AUTH","Página principal · HTTP "+status);
                 }
@@ -3283,6 +3311,7 @@ public class MainActivity extends Activity {
             loginWaitLabel=null;
             loginFallback=null;
             if(website!=null){website.stopLoading();website.destroy();website=null;}
+            loginProfilePageLoadFailed=false;
             loginDialog=null;
             serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
