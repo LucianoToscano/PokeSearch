@@ -67,7 +67,9 @@ public final class PgsAutoClickService extends AccessibilityService {
     private GradientDrawable coreBackground;
     private PgsAutoVisualState.Core currentCore;
     private Boolean currentArtworkOn;
-    private TextView handBadge;
+    private TextView handBadge,countdownBadge;
+    private String lastStatus="PARADO";
+    private long passengerHoldAt=0L;
 
     private PgsAutoMenus quickMenus;
     private WindowManager.LayoutParams bubbleParams;
@@ -267,7 +269,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(handView!=null)handView.clearAnimation();
         if(coreIndicator!=null)coreIndicator.clearAnimation();
         handView=null;coreIndicator=null;coreBackground=null;
-        currentCore=null;currentArtworkOn=null;handBadge=null;
+        currentCore=null;currentArtworkOn=null;handBadge=null;countdownBadge=null;
         dismissPicker();
         analysis.shutdownNow();
         bubble=null;instance=null;
@@ -312,6 +314,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         FrameLayout.LayoutParams sparkle=new FrameLayout.LayoutParams(dp(19),dp(19),Gravity.TOP|Gravity.RIGHT);
         sparkle.rightMargin=dp(-3);sparkle.topMargin=dp(-5);
         bubble.addView(handBadge,sparkle);
+        countdownBadge=new TextView(this);
+        countdownBadge.setTextSize(9);
+        countdownBadge.setTextColor(Color.WHITE);
+        countdownBadge.setGravity(Gravity.CENTER);
+        countdownBadge.setBackground(roundedCounter());
+        countdownBadge.setVisibility(View.GONE);
+        FrameLayout.LayoutParams counterLp=new FrameLayout.LayoutParams(
+            dp(21),dp(13),Gravity.BOTTOM|Gravity.RIGHT);
+        bubble.addView(countdownBadge,counterLp);
         quickMenus=new PgsAutoMenus(this,windowManager,new PgsAutoMenus.Actions(){
             @Override public void teach(String species){
                 requestTeaching(species);
@@ -319,6 +330,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
+            @Override public void appearanceChanged(){refreshAppearance();}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -377,7 +389,25 @@ public final class PgsAutoClickService extends AccessibilityService {
         });
         try{windowManager.addView(bubble,bubbleParams);}
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
+        refreshAppearance();
         status("PARADO");
+    }
+    private GradientDrawable roundedCounter(){
+        GradientDrawable bg=new GradientDrawable();
+        bg.setColor(0xD9212C3B);bg.setCornerRadius(dp(4));
+        bg.setStroke(dp(1),0x99FFFFFF);
+        return bg;
+    }
+    private void refreshAppearance(){
+        SharedPreferences p=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
+        String size=p.getString("iconScale","M");
+        int dpSize="P".equals(size)?17:"G".equals(size)?25:21;
+        if(handView!=null&&handView.getLayoutParams()!=null){
+            FrameLayout.LayoutParams params=(FrameLayout.LayoutParams)handView.getLayoutParams();
+            params.width=dp(dpSize);params.height=dp(dpSize);
+            handView.setLayoutParams(params);
+        }
+        status(lastStatus);
     }
     public static void closeHand(){
         PgsAutoClickService live=instance;
@@ -432,7 +462,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             bubble=null;
         }
         if(coreIndicator!=null)coreIndicator.clearAnimation();
-        coreIndicator=null;coreBackground=null;handView=null;handBadge=null;
+        coreIndicator=null;coreBackground=null;handView=null;handBadge=null;countdownBadge=null;
         currentCore=null;currentArtworkOn=null;
     }
     public static void restoreBubble(){
@@ -470,6 +500,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         currentCore=next;
     }
     private void status(String value){
+        lastStatus=value;
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
         boolean on=PgsAutoVisualState.active(running,pausedByShiny,pausedByError);
@@ -482,6 +513,18 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(handBadge!=null){
             handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
             handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);
+        }
+        if(countdownBadge!=null){
+            boolean enabled=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+                .getBoolean("showCountdown",false);
+            if(enabled&&running&&awaitingMap){
+                long now=SystemClock.uptimeMillis();
+                long remaining=sceneReadyAt>0?
+                    sceneReadyAt+minSeconds*1000L-now:
+                    clickedAt+maxSeconds*1000L-now;
+                countdownBadge.setText(String.valueOf(Math.max(0,(remaining+999)/1000L)));
+                countdownBadge.setVisibility(View.VISIBLE);
+            }else countdownBadge.setVisibility(View.GONE);
         }
         bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
         bubble.setContentDescription("PGS Busca Pokémon: "+value+
@@ -741,9 +784,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(!running||index!=nextIndex)return;
                 visitedSlots.add(new VisitedSlot(match,screenWidth,screenHeight));
                 currentTargetName=match.name;
-                // A seleção de som PGS independe da Pokébola 1 e 2.
-                notifyConfigured(PgsAutoNotificationPolicy.SEARCH,
-                    "PGS Busca: "+match.name,"Alvo confirmado para teleporte.",false);
+                // Alvo tocado NÃO é Shiny; não duplicar alerta de busca.
                 awaitingMap=true;clickedAt=SystemClock.uptimeMillis();
                 lastColors=null;stableRepeats=0;
                 sceneReadyAt=0;loadedStreak=0;
@@ -751,9 +792,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 status("AGUARDANDO MAPA");
                 // Watchdog próprio: o limite continua valendo mesmo se um frame
                 // Android nunca responder (não ficar preso em tela/carregamento).
-                handler.postDelayed(()->{
-                    if(running&&awaitingMap&&ticket==stamp)
-                        finishMapVisit(stamp,true);
+                handler.postDelayed(new Runnable(){
+                    @Override public void run(){
+                        if(!running||!awaitingMap||ticket!=stamp)return;
+                        if(passengerPromptPresent()){
+                            handler.postDelayed(this,1200L);return;
+                        }
+                        if(PgsAutoCyclePolicy.mapTimedOut(
+                            SystemClock.uptimeMillis(),clickedAt,maxSeconds))
+                            finishMapVisit(stamp,true);
+                        else handler.postDelayed(this,1200L);
+                    }
                 },maxSeconds*1000L);
                 handler.postDelayed(()->checkMap(stamp),1300L);
             });}
@@ -769,6 +818,19 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void checkMap(int stamp){
         if(!running||!awaitingMap||ticket!=stamp)return;
         long now=SystemClock.uptimeMillis();
+        if(passengerPromptPresent()){
+            if(passengerHoldAt==0L)passengerHoldAt=now;
+            status("CONFIRME MANUALMENTE");
+            handler.postDelayed(()->checkMap(stamp),1200L);
+            return;
+        }
+        if(passengerHoldAt!=0L){
+            // O aviso não consome os 60s: o responsável confirma manualmente.
+            long held=now-passengerHoldAt;
+            clickedAt+=held;
+            if(sceneReadyAt!=0L)sceneReadyAt+=held;
+            passengerHoldAt=0L;
+        }
         if(PgsAutoCyclePolicy.mapTimedOut(now,clickedAt,maxSeconds)){
             finishMapVisit(stamp,true);
             return;
@@ -1070,6 +1132,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void halt(String label){
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
+        passengerHoldAt=0L;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */
