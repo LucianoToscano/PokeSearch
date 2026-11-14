@@ -1510,6 +1510,7 @@ public class MainActivity extends Activity {
         ScrollView drawerScroll=new ScrollView(this);
         drawerScroll.setFillViewport(true);
         drawerScroll.setVerticalScrollBarEnabled(false);
+        drawerScroll.setOnClickListener(v->{}); // não fechar ao tocar no interior vazio
         drawerScroll.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,250,254):Color.rgb(31,35,43),
             12,homeLightMode?Color.rgb(173,187,202):Color.rgb(85,95,111)));
