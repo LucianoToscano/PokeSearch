@@ -72,6 +72,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     private long passengerHoldAt=0L;
 
     private PgsAutoMenus quickMenus;
+    private PgsAutoTargetPicker pointPicker;
+    private PgsAutoTargetPolicy.Mode tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
+    private boolean shinyNegativeConfirmed=false;
+    private SharedPreferences targetPrefs(){
+        return getSharedPreferences("pgs_auto_target_v1",MODE_PRIVATE);
+    }
     private WindowManager.LayoutParams bubbleParams;
     private PgsAutoIconDetector detector;
     private FrameLayout picker;
@@ -254,7 +260,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
-        if(!reloadDetector()){
+        if(PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"))==
+                PgsAutoTargetPolicy.Mode.SPRITE&&!reloadDetector()){
             status("SEM MODELO");
             showReason("Ícone não cadastrado para os Pokémon selecionados. "+
                 "Abra a lupa e grave uma imagem do feed do PGSharp.");
@@ -280,6 +287,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         handView=null;coreIndicator=null;coreBackground=null;
         currentCore=null;currentArtworkOn=null;handBadge=null;countdownBadge=null;
         dismissPicker();
+        if(pointPicker!=null){pointPicker.close();pointPicker=null;}
         analysis.shutdownNow();
         bubble=null;instance=null;
         super.onDestroy();
@@ -340,6 +348,11 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
             @Override public void appearanceChanged(){refreshAppearance();}
+            @Override public void choosePoint(String mode){showTargetSelector(mode);}
+            @Override public void selectSprites(){
+                if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
+                status("SPRITES DO FEED");
+            }
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -577,16 +590,22 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void toggle(){
         if(running){halt("PARADO");return;}
-        if(!PgsAutoTemplateStore.pending(this).isEmpty()){
+        tapMode=PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"));
+        if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&
+           !PgsAutoTemplateStore.pending(this).isEmpty()){
             boolean saved=false;
             for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
                 if(PgsAutoCatalog.isSelectedName(this,model.name)){saved=true;break;}
             if(saved)PgsAutoTemplateStore.clearTeaching(this);
             else {queueTeachingWhenReady();return;}
         }
-        if(!reloadDetector()){
+        if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&!reloadDetector()){
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
             status("SEM MODELO");return; // Falha visual: vermelho no centro.
+        }
+        if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE&&!validTarget()){
+            showReason("Mira ausente ou resolução alterada. Segure Buscar Pokémon → Alvo e confirme novamente.");
+            status("CONFIRMAR MIRA");return;
         }
         if(pausedByShiny||pausedByError){
             pausedByShiny=false;pausedByError=false;
@@ -597,7 +616,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         nextIndex=0;total=0;clickedAt=0L;awaitingMap=false;passengerHoldAt=0L;
         lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
-        emptyRetries=0;lastNoIconScan=0;
+        emptyRetries=0;lastNoIconScan=0;shinyNegativeConfirmed=false;
         running=true;
         status("LENDO TELA");
         BugReport.log(this,"PGS","Busca reativada, cooldown mapa "+maxSeconds+
@@ -644,6 +663,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             handler.postDelayed(()->{if(running)scanAndTap();},2500L);return;
         }
         loadSettings();
+        if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){scanFixedTarget();return;}
         if(nextIndex>=total && total>0){
             // Recomeça a leitura do feed automaticamente, sem checkbox
             // "repetir buscas" nem reinício manual redundante.
@@ -902,6 +922,23 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void finishMapVisit(int stamp,boolean timeout){
         if(!running||!awaitingMap||stamp!=ticket)return;
+        if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){
+            if(sceneReadyAt==0L){
+                // Limite não autoriza clique cego em menu/diálogo/carregamento.
+                if(timeout)fail("Cooldown esgotado: mapa não confirmado; nenhum novo toque.");
+                else handler.postDelayed(()->checkMap(stamp),1200L);
+                return;
+            }
+            PgsAutoTargetPolicy.Trigger trigger=PgsAutoTargetPolicy.trigger(
+                targetPrefs().getString("trigger","MAP"));
+            boolean cooled=SystemClock.uptimeMillis()-clickedAt>=maxSeconds*1000L;
+            if(!cooled||!PgsAutoTargetPolicy.shouldRepeat(trigger,true,
+                pausedByShiny,shinyNegativeConfirmed,cooled)){
+                status(trigger==PgsAutoTargetPolicy.Trigger.NO_SHINY&&
+                    !shinyNegativeConfirmed?"AGUARDANDO SEM SHINY":"COOLDOWN MAPA");
+                handler.postDelayed(()->checkMap(stamp),1200L);return;
+            }
+        }
         awaitingMap=false;
         nextIndex++;
         sceneReadyAt=0;loadedStreak=0;lastColors=null;stableRepeats=0;
