@@ -4492,7 +4492,11 @@ body.controls-window #choices.locationPanel .locCooldownPreview.is-visible{
    visualmente, sem ativar filtro indisponível no provedor. */
 body.controls-window #sh.upstreamUnavailable,
 body.controls-window #quickMenuList button[data-key="sh"].upstreamUnavailable{
- opacity:1!important;filter:none!important;color:#fff!important;
+ opacity:1!important;filter:none!important;
+}
+body.controls-window #sh.upstreamUnavailable:not(.shinyOn),
+body.controls-window #quickMenuList button[data-key="sh"].upstreamUnavailable:not(.selected){
+ color:#fff!important;
 }
 
 /* LT218: native Topo Horizontal compact ribbon. This intentionally lives at
