@@ -29,6 +29,9 @@ assert.match(auto,/scheduleArmedStart\(\)/);
 assert.match(auto,/onInterrupt\(\) \{\s*\/\/ Uma perda temporária/);
 
 // Passenger prompt is safety-sensitive: observe, pause, wait MANUAL, never click it.
+const accessibility=fs.readFileSync("app/src/main/res/xml/pgs_auto_accessibility_config.xml","utf8");
+assert.match(accessibility,/android:canRetrieveWindowContent="true"/);
+assert.match(auto,/isGamePackage\(root.getPackageName\(\).toString\(\)\)/);
 assert.match(auto,/normalized\.contains\("sou passageiro"\)/);
 assert.match(auto,/normalized\.contains\("i'm a passenger"\)/);
 assert.match(auto,/status\("CONFIRME MANUALMENTE"\)/);
