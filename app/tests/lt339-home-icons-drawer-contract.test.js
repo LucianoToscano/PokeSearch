@@ -85,7 +85,7 @@ assert.match(java,/homeThemeButton=makeIcon\(homeLightMode\?\s*R.drawable.home_m
 assert.match(java,/homeThemeButton.setOnClickListener\(v->toggleHomeTheme\(\)\)/);
 assert.match(java,/shareIcon.setOnClickListener\(v->sharePokeSearch\(\)\)/);
 assert.match(java,/heart.setOnClickListener\(v->PixSupport.show\(this\)\)/);
-assert.match(java,/rareCandyControl.setPadding\(d\(7\),d\(7\),d\(7\),d\(7\)\)/);
+assert.match(java,/rareCandyControl.setPadding\(d\(1\),d\(1\),d\(1\),d\(1\)\)/);
 assert.match(java,/dualOverlayRow.addView\(rareCandyControl,new LinearLayout.LayoutParams\(0,d\(44\),1\)\)/);
 assert.match(java,/addHomePreviewIcon\(dualOverlayRow,R.drawable.home_quests,"Quests"\)/);
 const home=java.slice(java.indexOf("private FrameLayout buildHome(){"),java.indexOf("/** Callback from UpdateCenter"));
