@@ -42,7 +42,7 @@ final class EduSpriteInspector {
     private WindowManager.LayoutParams toolbarParams,comparisonParams;
     private ImageView leftImage,rightImage;
     private EduSpriteGuideView leftGuides,rightGuides;
-    private TextView indexLabel,rightLabel,measurements;
+    private TextView indexLabel,rightLabel;
     private boolean controlsVisible,guidesVisible,reviewing,showComparison;
     private int selectedIndex=DEFAULT_FRAME;
     private int lastArtSize=-1;
@@ -234,15 +234,11 @@ final class EduSpriteInspector {
         pair.addView(right,rp);
         comparison.addView(pair,new LinearLayout.LayoutParams(-1,
             pairCellSize+dp(19)));
-        measurements=new TextView(context);
-        measurements.setTextSize(9f);
-        measurements.setTextColor(Color.rgb(238,243,251));
-        measurements.setGravity(Gravity.CENTER);
-        measurements.setMaxLines(3);
-        measurements.setContentDescription("Diferenças estimadas de tamanho entre sprites");
-        comparison.addView(measurements,new LinearLayout.LayoutParams(-1,dp(46)));
+        // A comparação é visual: percentuais baseados em cores variam com
+        // expressão, orientação, roupas e objetos e geram falsos alarmes.
+        // O painel deve permanecer compacto e nunca esconder os botões.
         comparisonParams=windowParams(pairCellSize*2+dp(11),
-            pairCellSize+dp(71),true);
+            pairCellSize+dp(25),true);
         wm.addView(comparison,comparisonParams);
         updateComparisonImages();
     }
@@ -280,9 +276,7 @@ final class EduSpriteInspector {
         leftImage.setImageDrawable(reference);
         rightImage.setImageDrawable(chosen);
         rightLabel.setText(String.format(java.util.Locale.ROOT,"Quadro #%02d",selectedIndex));
-        if(measurements!=null)
-            measurements.setText("Estimativas por cor/pose (não são medidas anatômicas):\\n"+
-                EduSpriteMeasurements.compare(reference,chosen));
+
     }
     private void updateComparisonPosition(){
         if(comparison==null)return;
@@ -326,7 +320,7 @@ final class EduSpriteInspector {
             catch(IllegalArgumentException ignored){}
             comparison=null;leftImage=null;rightImage=null;
             leftGuides=null;rightGuides=null;rightLabel=null;
-            measurements=null;
+
         }
     }
     private void removeToolbar(){
