@@ -53,13 +53,17 @@ final class PgsAutoCropSelection extends View {
     }
     private void notifyChanged(){if(changed!=null)changed.run();}
     boolean hasSelection(){return selected;}
+    private float minimumSide(){
+        // O mínimo é em pixels da tela de referência (740), não 12dp.
+        // Um mínimo em dp achatava várias posições do novo slider em 36px+.
+        return Math.max(1f,16f*getWidth()/740f);
+    }
     private float defaultSide(){
-        // Tela de bitmap pode ter resolução diferente do display de toque.
-        return Math.max(12f*density(),referencePx*originalWidth/740f*
-            getWidth()/originalWidth);
+        // A escala da referência acompanha a largura real da screenshot.
+        return Math.max(minimumSide(),referencePx*getWidth()/740f);
     }
     private void position(float cx,float cy){
-        float side=clamp(defaultSide(),12f*density(),
+        float side=clamp(defaultSide(),minimumSide(),
             Math.min(getWidth(),getHeight()));
         float w=mode==Mode.HORIZONTAL?Math.min(getWidth(),side*1.8f):
             mode==Mode.VERTICAL?side/1.8f:
@@ -155,7 +159,7 @@ final class PgsAutoCropSelection extends View {
                 if(crop.right>getWidth())crop.offset(getWidth()-crop.right,0);
                 if(crop.bottom>getHeight())crop.offset(0,getHeight()-crop.bottom);
             }else if(dragging==2){
-                float min=12f*density();
+                float min=minimumSide();
                 float w=clamp(x-crop.left,min,getWidth()-crop.left);
                 float h=clamp(y-crop.top,min,getHeight()-crop.top);
                 if(mode==Mode.SQUARE)w=h=Math.min(w,h);

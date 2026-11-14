@@ -16,6 +16,8 @@ assert.match(ui,/selectedBitmapRect\(\)/);
 assert.match(ui,/PgsAutoTemplateStore\.saveSample/);
 assert.match(crop,/enum Mode \{SQUARE,HORIZONTAL,VERTICAL,FREE\}/);
 assert.match(crop,/drawMagnifier\(canvas\)/);
+assert.match(crop,/private float minimumSide\(\)/);
+assert.doesNotMatch(crop,/Math\.max\(12f\*density\(\),referencePx/);
 assert.match(slider,/case MotionEvent\.ACTION_MOVE/);
 assert.match(slider,/performAccessibilityAction/);
 for(const name of ["confirmar_branco.webp","cancelar_branco.webp",
