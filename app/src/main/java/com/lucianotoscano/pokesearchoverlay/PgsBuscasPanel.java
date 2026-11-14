@@ -114,12 +114,24 @@ final class PgsBuscasPanel {
             heading.setText("🔎 BUSCAS · Selecionados "+selected(a).size()+"/50");
             EditText search=new EditText(a);search.setSingleLine(true);search.setTextColor(foreground(a));
             search.setHint("Nome ou número");search.setHintTextColor(0xFFBFC8D5);content.addView(search);
+            HorizontalScrollView chips=new HorizontalScrollView(a);
+            chips.setHorizontalScrollBarEnabled(false);
+            LinearLayout chipRow=new LinearLayout(a);chipRow.setGravity(Gravity.CENTER_VERTICAL);
+            chips.addView(chipRow);content.addView(chips,new LinearLayout.LayoutParams(-1,dp(a,38)));
             Button clear=button(a,"Limpar seleção");content.addView(clear);
             ScrollView scroll=new ScrollView(a);LinearLayout list=new LinearLayout(a);list.setOrientation(1);
             scroll.addView(list);content.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
             final Runnable[] refresh=new Runnable[1];
             refresh[0]=()->{
-                list.removeAllViews();List<Integer> ids=selected(a);
+                list.removeAllViews();chipRow.removeAllViews();List<Integer> ids=selected(a);
+                for(Integer chosenId:ids){
+                    for(Species p:catalog(a))if(p.number==chosenId){
+                        Button chip=button(a,p.name+" ×");
+                        chipRow.addView(chip);
+                        chip.setOnClickListener(v->{toggle(a,p.number);refresh[0].run();});
+                        break;
+                    }
+                }
                 heading.setText("🔎 BUSCAS · Selecionados "+ids.size()+"/50");
                 String q=normalize(search.getText().toString());int count=0;
                 for(Species s:catalog(a)){
@@ -127,6 +139,16 @@ final class PgsBuscasPanel {
                     if(q.isEmpty()&&!chosen)continue;
                     if(!q.isEmpty()&&!normalize(s.name).contains(q)&&!String.valueOf(s.number).startsWith(q))continue;
                     LinearLayout row=new LinearLayout(a);row.setGravity(Gravity.CENTER_VERTICAL);
+                    ImageView sprite=new ImageView(a);
+                    try(InputStream in=VerifiedSpriteCache.bundledSprite(a,s.number,false)){
+                        if(in!=null){
+                            android.graphics.BitmapFactory.Options opt=new android.graphics.BitmapFactory.Options();
+                            opt.inSampleSize=4;
+                            sprite.setImageBitmap(android.graphics.BitmapFactory.decodeStream(in,null,opt));
+                        }
+                    }catch(Exception ignored){}
+                    sprite.setContentDescription("Sprite de "+s.name);
+                    row.addView(sprite,new LinearLayout.LayoutParams(dp(a,30),dp(a,34)));
                     row.addView(text(a,(chosen?"✓ ":"")+"#"+s.number+" "+s.name),
                         new LinearLayout.LayoutParams(0,dp(a,44),1));
                     Button pick=button(a,chosen?"−":"+");row.addView(pick);
@@ -205,9 +227,10 @@ final class PgsBuscasPanel {
             Button test=button(a,"Testar alerta (sem pausar busca)");
             test.setOnClickListener(v->PgsAutoClickService.testShinyAlert());
             content.addView(test);
+            SharedPreferences alertPrefs=a.getSharedPreferences("pgs_auto_settings_v1",0);
             Switch vibrate=new Switch(a);vibrate.setText("Vibração Shiny");vibrate.setTextColor(foreground(a));
-            vibrate.setChecked(prefs.getBoolean("vibrate",true));
-            vibrate.setOnCheckedChangeListener((v,on)->prefs.edit().putBoolean("vibrate",on).apply());
+            vibrate.setChecked(alertPrefs.getBoolean("shinyVibrate",true));
+            vibrate.setOnCheckedChangeListener((v,on)->alertPrefs.edit().putBoolean("shinyVibrate",on).apply());
             content.addView(vibrate);
         }else{
             heading.setText("••• MAIS");
