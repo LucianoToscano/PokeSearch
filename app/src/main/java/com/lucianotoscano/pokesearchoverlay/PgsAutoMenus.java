@@ -1,21 +1,16 @@
 package com.lucianotoscano.pokesearchoverlay;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.drawable.GradientDrawable;
-import android.os.Build;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -60,8 +55,6 @@ final class PgsAutoMenus {
     private int anchorX,anchorY;
     private static final int BG=0xEC10151F, TILE=0xD9222A38, BORDER=0xFF728095;
     private static final int WHITE=0xFFF4F7FF, SECONDARY=0xFFD0D6E0,GOLD=0xFFFFD47B;
-    // Identical public owner's PokeSearch Pix payload, copied only when asked.
-    private static final String PIX=PixSupport.PAYLOAD;
     PgsAutoMenus(Context c,WindowManager w,Actions a){context=c;wm=w;actions=a;}
     private int dp(float value){return Math.round(value*context.getResources().getDisplayMetrics().density);}
     private Point size(){Point p=new Point();wm.getDefaultDisplay().getRealSize(p);return p;}
