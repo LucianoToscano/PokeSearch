@@ -12,6 +12,7 @@ on:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsBuscasPanel.java'
       - 'app/src/main/AndroidManifest.xml'
       - 'app/tests/pgs-buscas-contracts.test.js'
+      - 'app/tests/PgsAutoShinySignalTest.java'
       - '.github/workflows/pgs-buscas-auto-qa.yml'
   workflow_dispatch:
 permissions:
@@ -42,8 +43,16 @@ jobs:
           set -euo pipefail
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
-      - name: Contratos PGS Buscas
-        run: node app/tests/pgs-buscas-contracts.test.js
+      - name: Contratos PGS Buscas e testes Java de Shiny
+        run: |
+          set -euo pipefail
+          node app/tests/pgs-buscas-contracts.test.js
+          QA_CLASSES="$(mktemp -d)"
+          trap 'rm -rf "$QA_CLASSES"' EXIT
+          javac -encoding UTF-8 -d "$QA_CLASSES" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoShinySignal.java \
+            app/tests/PgsAutoShinySignalTest.java
+          java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoShinySignalTest
       - name: Compilar e gerar APK debug somente para QA
         env:
           POKE_TEST_SIGNING_REQUIRED: 'false'
