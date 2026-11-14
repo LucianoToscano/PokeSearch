@@ -465,7 +465,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
-test("AUTO 3-second default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={-3,0,3,5,10,15,20};")&&service.includes("intervalMinutes==-3?3000L")));
+test("AUTO 3-second default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={-3,0,3,5,10,15,20};")&&service.includes("intervalMinutes==-3?3000L")))
 test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
