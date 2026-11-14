@@ -12,6 +12,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -80,6 +81,18 @@ final class PgsAutoMenus {
         b.setMinWidth(0);b.setMinimumWidth(0);b.setPadding(dp(5),0,dp(5),0);
         b.setBackground(bg(0x55394A5C,0x557E91A5,6));return b;
     }
+    private ImageButton imageButton(int image,String description,int artSize){
+        ImageButton b=new ImageButton(context);
+        b.setImageResource(image);
+        b.setColorFilter(fg());
+        b.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        b.setContentDescription(description);
+        b.setPadding(dp(artSize),dp(artSize),dp(artSize),dp(artSize));
+        b.setMinWidth(0);b.setMinimumWidth(0);
+        b.setMinHeight(0);b.setMinimumHeight(0);
+        b.setBackground(bg(0x55394A5C,0x557E91A5,6));
+        return b;
+    }
     private LinearLayout vertical(){LinearLayout l=new LinearLayout(context);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private LinearLayout horizontal(){LinearLayout l=new LinearLayout(context);l.setGravity(Gravity.CENTER_VERTICAL);return l;}
     private LinearLayout.LayoutParams margined(int w,int h,int top){
@@ -95,19 +108,25 @@ final class PgsAutoMenus {
         LinearLayout bar=horizontal();bar.setPadding(dp(5),dp(4),dp(5),dp(4));
         bar.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,10));
         // PGS: a mesma fileira compacta das Pokébolas, sem submenus redundantes.
-        String[] icons={"⌕","⏱","🔔","×"};
-        String[] descriptions={"Buscas","Tempos da busca","Alertas Buscar Pokémon","Fechar Buscar Pokémon"};
-        Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications,
-            ()->{dismissAll();actions.closeOverlay();}};
-        for(int i=0;i<icons.length;i++){
+        int[] icons={R.drawable.pgs_menu_search,R.drawable.pgs_menu_timer,
+            R.drawable.ic_bell_outline};
+        String[] descriptions={"Buscar Pokémon","Tempos","Notificações"};
+        Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications};
+        for(int i=0;i<3;i++){
             final int n=i;
-            Button b=button(icons[i],i==0?25:i==3?23:21);
-            b.setContentDescription(descriptions[i]);
+            ImageButton icon=imageButton(icons[i],descriptions[i],9);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(44));
             if(i>0)p.leftMargin=dp(4);
-            bar.addView(b,p);
-            b.setOnClickListener(v->handlers[n].run());
+            bar.addView(icon,p);
+            icon.setOnClickListener(v->handlers[n].run());
         }
+        Button close=button("×",23);
+        close.setContentDescription("Fechar Buscar Pokémon");
+        LinearLayout.LayoutParams closeParams=
+            new LinearLayout.LayoutParams(dp(44),dp(44));
+        closeParams.leftMargin=dp(4);
+        bar.addView(close,closeParams);
+        close.setOnClickListener(v->{dismissAll();actions.closeOverlay();});
         toolbar=bar;
         Point screen=size();
         int width=dp(5+4*44+3*4+5),h=dp(54);
@@ -134,11 +153,11 @@ final class PgsAutoMenus {
         root.addView(head);
         return root;
     }
-    private void mount(LinearLayout root){
+    private void mount(LinearLayout root){mount(root,340,520);}
+    private void mount(LinearLayout root,int preferredWidthDp,int estimatedHeightDp){
         hidePanel();panel=root;
-        Point screen=size();int width=Math.min(screen.x-dp(20),dp(340));
-        // The popup uses the same compact 44dp controls as PokeSearch.
-        int estimated=dp(520);
+        Point screen=size();int width=Math.min(screen.x-dp(20),dp(preferredWidthDp));
+        int estimated=dp(estimatedHeightDp);
         int top=anchorY+dp(55);
         if(top+estimated>screen.y-dp(18))top=Math.max(dp(14),anchorY-estimated-dp(10));
         if(top+estimated>screen.y)top=Math.max(dp(14),screen.y-estimated-dp(20));
@@ -295,60 +314,48 @@ final class PgsAutoMenus {
         mount(root);
     }
     void showTime(){
-        LinearLayout root=panelRoot("⏱ TEMPOS · BUSCA",null);
-        root.addView(label("Como funciona:",13,true),margined(-1,dp(28),4));
-        root.addView(label("1. Toca no ícone e aguarda o mapa e os PokéStops.",12,false),
-            margined(-1,dp(37),2));
-        root.addView(label("2. Se em 60 segundos não carregar, segue para o próximo.",12,false),
-            margined(-1,dp(38),2));
-        root.addView(label("3. Se carregar, verifica aviso Shiny da mesma espécie por 2 s.",12,false),
-            margined(-1,dp(43),2));
-        root.addView(label("4. Sem Shiny confirmado, procura automaticamente o próximo.",12,false),
-            margined(-1,dp(43),2));
+        LinearLayout root=panelRoot("⏱ TEMPOS",null);
         SharedPreferences prefs=PgsAutoClickService.cyclePrefs(context);
-        String[] names={"Limite de carregamento do mapa","Espera de Shiny após carregar"};
         String[] keys={"load_timeout","post_load"};
+        String[] names={"Mapa (s)","Após mapa (s)"};
         int[] defaults={60,2},low={20,1},high={120,10};
-        EditText[] fields=new EditText[keys.length];
-        for(int i=0;i<keys.length;i++){
-            LinearLayout line=horizontal();line.setPadding(0,dp(3),0,dp(3));
-            TextView title=label(names[i]+" (segundos)",12,false);
-            line.addView(title,new LinearLayout.LayoutParams(0,dp(54),1));
-            EditText input=new EditText(context);input.setSingleLine(true);input.setTextSize(14);
-            input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-            input.setTextColor(fg());input.setGravity(Gravity.CENTER);
-            input.setBackground(bg(TILE,0xFF4E5F73,6));
+        EditText[] inputs=new EditText[2];
+        for(int i=0;i<2;i++){
+            LinearLayout row=horizontal();
+            TextView name=label(names[i],11,false);
+            row.addView(name,new LinearLayout.LayoutParams(0,dp(36),1));
+            EditText edit=new EditText(context);
+            edit.setSingleLine(true);edit.setTextSize(12);
+            edit.setTextColor(fg());edit.setGravity(Gravity.CENTER);
+            edit.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
             int value=prefs.getInt(keys[i],defaults[i]);
             value=i==0?PgsAutoCyclePolicy.mapTimeoutSeconds(value):
                 PgsAutoCyclePolicy.shinyCheckSeconds(value);
-            input.setText(String.valueOf(value));fields[i]=input;
-            line.addView(input,new LinearLayout.LayoutParams(dp(67),dp(41)));
-            root.addView(line);
+            edit.setText(String.valueOf(value));
+            edit.setBackground(bg(TILE,0x557E91A5,6));
+            row.addView(edit,new LinearLayout.LayoutParams(dp(52),dp(33)));
+            root.addView(row,margined(-1,dp(37),5));
+            inputs[i]=edit;
         }
-        root.addView(label("Sem ícones no feed: tenta novamente a cada 3 s. "+
-            "Sem botão de repetição: o ciclo já é automático.",11,false),
-            margined(-1,dp(51),7));
-        Button save=button("✓ Salvar tempos",13);
-        root.addView(save,margined(-1,dp(42),7));
-        save.setOnClickListener(v->{
+        Button apply=button("✓ Salvar",11);
+        root.addView(apply,margined(-1,dp(33),5));
+        apply.setOnClickListener(v->{
             try{
-                int[] values=new int[fields.length];
-                for(int i=0;i<fields.length;i++){
-                    values[i]=Integer.parseInt(fields[i].getText().toString().trim());
-                    if(values[i]<low[i]||values[i]>high[i]){
-                        Toast.makeText(context,"Mapa: 20–120 s · Shiny: 1–10 s.",
-                            Toast.LENGTH_LONG).show();return;
+                int[] nums=new int[2];
+                for(int i=0;i<2;i++){
+                    nums[i]=Integer.parseInt(inputs[i].getText().toString().trim());
+                    if(nums[i]<low[i]||nums[i]>high[i]){
+                        Toast.makeText(context,"Mapa: 20–120 s · após: 1–10 s",Toast.LENGTH_LONG).show();
+                        return;
                     }
                 }
-                prefs.edit().putInt(keys[0],values[0]).putInt(keys[1],values[1]).apply();
-                Toast.makeText(context,"Tempos salvos para as próximas buscas.",
-                    Toast.LENGTH_SHORT).show();
+                prefs.edit().putInt(keys[0],nums[0]).putInt(keys[1],nums[1]).apply();
                 hidePanel();
             }catch(NumberFormatException error){
-                Toast.makeText(context,"Digite dois tempos em segundos.",Toast.LENGTH_LONG).show();
+                Toast.makeText(context,"Digite valores em segundos.",Toast.LENGTH_LONG).show();
             }
         });
-        mount(root);
+        mount(root,212,180);
     }
     void showNotifications(){
         LinearLayout root=panelRoot("🔔 NOTIFICAÇÕES · PGS",null);
