@@ -43,7 +43,7 @@ assert.match(engine,/if\(notifiedFeedSlots\.size\(\)<150&&notifiedFeedSlots\.add
 assert.match(engine,/notifyConfigured\(PgsAutoNotificationPolicy\.NEW,/);
 assert.match(engine,/notifyConfigured\(PgsAutoNotificationPolicy\.SEARCH,/);
 assert.match(engine,/notifyConfigured\(PgsAutoNotificationPolicy\.SHINY,/);
-assert.match(engine,/if\(!PgsAutoNotificationPolicy\.validKind\(type\)\)/);
+assert.match(engine,/!PgsAutoNotificationPolicy\.validKind\(type\)/);
 assert.match(engine,/testPgsNotification\(String type\)/);
 assert.match(engine,/PgsAutoNotificationPolicy\.channelId\(kind,mode,index\)/);
 assert.match(engine,/manager\.getNotificationChannel\(channelId\)==null/);
