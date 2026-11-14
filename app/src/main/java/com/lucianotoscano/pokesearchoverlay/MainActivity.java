@@ -482,19 +482,19 @@ public class MainActivity extends Activity {
 
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setOrientation(LinearLayout.VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
         // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
-        screen.addView(header,new LinearLayout.LayoutParams(-1,d(96)));
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(58)));
         LinearLayout branding=new LinearLayout(this);
         branding.setOrientation(LinearLayout.HORIZONTAL);
         branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(-1,d(54)));
+        header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
         // Imagens das Pokébolas e atalhos funcionais reutilizam os recursos existentes.
         LinearLayout dualOverlayRow=new LinearLayout(this);
-        dualOverlayRow.setGravity(Gravity.CENTER_VERTICAL);
+        dualOverlayRow.setGravity(Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
         dualOverlayRow.setOrientation(LinearLayout.HORIZONTAL);
         overlayControl=makeIcon(R.drawable.home_pokeball_off,"Pokémon 1");
         secondaryOverlayControl=makeIcon(R.drawable.home_pokeball_off,"Pokémon 2");
@@ -506,7 +506,7 @@ public class MainActivity extends Activity {
             icon.setPadding(d(1),d(1),d(1),d(1));
             icon.setBackground(null);
             FrameLayout shell=new FrameLayout(this);
-            LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,d(70),1);
+            LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,d(60),1);
             dualOverlayRow.addView(shell,cellLp);
             shell.setClipChildren(false);
             shell.setClipToPadding(false);
@@ -516,7 +516,7 @@ public class MainActivity extends Activity {
             });
             FrameLayout loginHotspot=new FrameLayout(this);
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(23),d(21),Gravity.TOP|Gravity.RIGHT);
+                d(23),d(16),Gravity.TOP|Gravity.RIGHT);
             shell.addView(loginHotspot,hotLp);
             ImageView badge=new ImageView(this);
             badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -534,7 +534,7 @@ public class MainActivity extends Activity {
             "Ativar overlay Buscar Pokémon",v->toggleHomePgsOverlay());
         lastPgsSearchState=null; // Após recriar a Home, atualizar o novo ImageView.
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
-        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(70));
+        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(60));
         dualLp.bottomMargin=d(5);
         dualOverlayRow.setVisibility(View.VISIBLE);
         screen.addView(dualOverlayRow,dualLp);
@@ -549,7 +549,7 @@ public class MainActivity extends Activity {
         brand.setImageResource(R.drawable.ps_home_brand_transparent);
         brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brand.setContentDescription("Ícone PokeSearch");
-        branding.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
+        branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)));
         LinearLayout brandLabels=new LinearLayout(this);
         brandLabels.setOrientation(LinearLayout.VERTICAL);
         brandLabels.setPadding(d(6),0,0,0);
@@ -572,7 +572,7 @@ public class MainActivity extends Activity {
         // A data/hora fica AO LADO do ícone de passes. Em telas estreitas,
         // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(35)-d(38)-d(16);
+            -d(28)-d(200)-d(32)-d(16);
         int wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
@@ -589,7 +589,7 @@ public class MainActivity extends Activity {
         LinearLayout controls=new LinearLayout(this);
         controls.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         controls.setOrientation(LinearLayout.HORIZONTAL);
-        header.addView(controls,new LinearLayout.LayoutParams(-1,d(42)));
+        header.addView(controls,new LinearLayout.LayoutParams(-2,d(48)));
 
         // Alternador de tema será agrupado junto de Apoiar e Compartilhar.
 
@@ -601,7 +601,7 @@ public class MainActivity extends Activity {
         rareCandyControl.setContentDescription("Ativar overlay Doce Raro");
         rareCandyControl.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
-        LinearLayout.LayoutParams candyLp=new LinearLayout.LayoutParams(d(34),d(34));
+        LinearLayout.LayoutParams candyLp=new LinearLayout.LayoutParams(d(28),d(28));
         candyLp.leftMargin=d(5);
         controls.addView(rareCandyControl,candyLp);
         rareCandyControl.setOnClickListener(v->toggleRareCandyOverlay());
@@ -620,7 +620,7 @@ public class MainActivity extends Activity {
         raidAssistantControl.setContentDescription("Ativar Edu · Assistente do Dia de Reides");
         raidAssistantControl.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
-        LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(34),d(34));
+        LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(28),d(28));
         guideLp.leftMargin=d(5);
         controls.addView(raidAssistantControl,guideLp);
         raidAssistantControl.setOnClickListener(v->toggleRaidAssistantOverlay());
@@ -651,7 +651,7 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(156,169,183):
                 Color.argb(150,172,193,215)));
         LinearLayout.LayoutParams simulationClockLp=
-            new LinearLayout.LayoutParams(d(65),d(34));
+            new LinearLayout.LayoutParams(d(59),d(32));
         simulationClockLp.leftMargin=d(4);
         controls.addView(eduSimulationClockDisplay,simulationClockLp);
         eduSimulationClockDisplay.setOnClickListener(v->showEduClockOptions());
@@ -667,8 +667,8 @@ public class MainActivity extends Activity {
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
         heart.setBackground(null);
-        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(34),d(34));
-        heartLp.leftMargin=d(5);
+        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(28),d(28));
+        heartLp.leftMargin=d(3);
         controls.addView(heart,heartLp);
         heart.setOnClickListener(v->PixSupport.show(this));
 
@@ -681,8 +681,8 @@ public class MainActivity extends Activity {
         // Os PNGs originais são brancos: usar contraste escuro só no tema claro.
         if(homeLightMode)homeThemeButton.setColorFilter(Color.rgb(31,55,77));
         homeThemeButton.setBackground(null);
-        LinearLayout.LayoutParams themeLp=new LinearLayout.LayoutParams(d(34),d(34));
-        themeLp.leftMargin=d(5);
+        LinearLayout.LayoutParams themeLp=new LinearLayout.LayoutParams(d(28),d(28));
+        themeLp.leftMargin=d(3);
         controls.addView(homeThemeButton,themeLp);
         homeThemeButton.setOnClickListener(v->toggleHomeTheme());
 
@@ -693,8 +693,8 @@ public class MainActivity extends Activity {
         shareIcon.setImageAlpha(255);
         shareIcon.setBackground(null);
         shareIcon.setPadding(d(5),d(5),d(5),d(5));
-        LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(34),d(34));
-        shareIconLp.leftMargin=d(5);
+        LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(28),d(28));
+        shareIconLp.leftMargin=d(3);
         controls.addView(shareIcon,shareIconLp);
         shareIcon.setOnClickListener(v->sharePokeSearch());
 
@@ -702,8 +702,8 @@ public class MainActivity extends Activity {
         menu.setTextSize(18);
         menu.setBackground(null);
         menu.setTextColor(homeLightMode?Color.BLACK:Color.WHITE);
-        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(34),d(34));
-        menuLp.leftMargin=d(5);
+        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(28),d(28));
+        menuLp.leftMargin=d(3);
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
 
@@ -2250,8 +2250,9 @@ public class MainActivity extends Activity {
         if(pgsSearchControl==null)return;
         boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
-            pgsSearchControl.setImageResource(on?
-                R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off);
+            if(on)pgsSearchControl.setImageBitmap(
+                PgsHomeArtwork.transparentOn(this));
+            else pgsSearchControl.setImageResource(R.drawable.busca_pokemon_overlay_off);
             lastPgsSearchState=on;
         }
         pgsSearchControl.setContentDescription(on?
