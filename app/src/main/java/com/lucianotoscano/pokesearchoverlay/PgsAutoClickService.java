@@ -84,6 +84,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return;
         live.handler.post(()->{
+            if(live.running)live.halt("CADASTRANDO");
             PgsAutoTemplateStore.startTeaching(live,species);
             live.queueTeachingWhenReady();
         });
@@ -230,6 +231,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void retryNow(){restartSession();}
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
+            @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
