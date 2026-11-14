@@ -3860,6 +3860,29 @@
           "Verificação das junções e legibilidade no Samsung físico deve ser feita após a instalação."
         ]
       }
+    },
+    {
+      "id": "lt336-edu-shiny-ark-20261114",
+      "minVersionCode": 54541,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.35 — Edu, Shiny visual e ARK",
+      "sections": {
+        "novidades": [
+          "Shiny alterna visualmente entre OFF branco e ON destacado; aviso curto informa indisponibilidade do provedor.",
+          "Pokébola 2 pode selecionar conta visitante independentemente da Pokébola 1."
+        ],
+        "melhorias": [
+          "Comparação de sprites do Edu reposicionada e auditoria técnica das 68 fontes 512×512.",
+          "Comando ARK documentado no Guia Mestre, incluindo envio ao canal oficial de atualização."
+        ],
+        "correcoes": [
+          "Shiny indisponível não aplica filtro na API nem exige treinador; pesquisa normal preservada.",
+          "Removidos indicadores anatômicos estimados que poderiam induzir comparação enganosa."
+        ],
+        "emDesenvolvimento": [
+          "Revisão artística manual das 68 sprites e verificação visual física no Samsung permanecem pendentes."
+        ]
+      }
     }
   ]
 }
