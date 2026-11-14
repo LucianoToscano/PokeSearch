@@ -3995,6 +3995,35 @@
           "Não há instalação silenciosa; o usuário precisa autorizar a atualização no Android."
         ]
       }
+    },
+    {
+      "id": "lt342-design-login-pgs-edu-corrections-20261114",
+      "minVersionCode": 54547,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.40 — Ícones corretos, Home e menus LT342",
+      "sections": {
+        "novidades": [
+          "Quatro artes originais WebP do Buscar Pokémon no mapeamento solicitado: Home Overlay OFF/ON e bolha Busca OFF/ON.",
+          "Ícone Compartilhar com vetor branco no modo escuro e preto no modo claro.",
+          "Botão X do inspetor Edu encerra todo o assistente, não apenas o menu."
+        ],
+        "melhorias": [
+          "Indicadores de login posicionados acima das Pokébolas com espaçamento visual, sem deslocar a fileira.",
+          "Logotipo PokeSearch no tamanho anterior, mantendo proporção 3:1 e sem distorção.",
+          "Menu de seleção da Busca Pokémon menor, com rolagem, sem se sobrepor à barra de atalhos.",
+          "Leitura de nome visível da conta no cartão oficial PoGoCoordinates com até quatro tentativas de hidratação, respeitando contas isoladas e privacidade."
+        ],
+        "correcoes": [
+          "Corrigida a imagem WebP Overlay_On que apontava para outra arte; arquivos do Drive verificados sem recompactação.",
+          "Bolha PGS OFF/ON corrigida, com branco natural no centro e verde/vermelho somente nos estados apropriados.",
+          "Revisados testes antigos que exigiam tamanhos e mapeamentos anteriores, sem remover os testes de segurança."
+        ],
+        "emDesenvolvimento": [
+          "Gestos, teleporte e Shiny do PGSharp precisam de verificação física no Samsung (issue #350).",
+          "Nome e foto após login Google/Discord dependem dos elementos efetivamente disponíveis no site e ainda precisam de confirmação no aparelho.",
+          "A atualização oficial depende da autorização de instalação pelo Android; não ocorre instalação silenciosa."
+        ]
+      }
     }
   ]
 }
