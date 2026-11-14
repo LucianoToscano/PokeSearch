@@ -20,7 +20,7 @@ import java.util.Set;
  * taught before a species can actually be recognized in the PGSharp feed.
  */
 final class PgsAutoCatalog {
-    static final int MAX_SELECTED=50;
+    static final int MAX_SELECTED=10;
     static final class Pokemon {
         final int number;
         final String name;
@@ -68,6 +68,11 @@ final class PgsAutoCatalog {
         ArrayList<Integer> result=new ArrayList<>();
         try{
             JSONArray saved=new JSONArray(prefs.getString(KEY,"[]"));
+            // LT344: preservar o cadastro antigo de até 50 IDs em backup
+            // antes de restringir a lista ativa aos 10 primeiros.
+            if(saved.length()>MAX_SELECTED &&
+                !prefs.contains("species_legacy_backup_lt344"))
+                prefs.edit().putString("species_legacy_backup_lt344",saved.toString()).apply();
             for(int i=0;i<saved.length();i++){
                 int number=saved.optInt(i,-1);
                 if(number>0 && !result.contains(number) && result.size()<MAX_SELECTED)result.add(number);
