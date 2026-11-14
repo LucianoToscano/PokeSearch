@@ -462,8 +462,10 @@ public class MainActivity extends Activity {
             });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
+        // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
+        // As configurações e modelos ficam somente na lupa do overlay.
         pgsSearchControl=addHomePreviewIcon(dualOverlayRow,R.drawable.busca_pokemon_off,
-            "Buscas Pokémon · desativado",v->PgsBuscasPanel.show(this));
+            "Ativar overlay Buscar Pokémon",v->toggleHomePgsOverlay());
         lastPgsSearchState=null; // Após recriar a Home, atualizar o novo ImageView.
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
@@ -2178,17 +2180,29 @@ public class MainActivity extends Activity {
         if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);else startService(intent);
         if(homeRoot!=null)homeRoot.postDelayed(this::refreshHomeOverlay,750);
     }
+    private void toggleHomePgsOverlay(){
+        if(PgsAutoClickService.isOverlayVisible()){
+            PgsAutoClickService.closeHand();
+        }else if(PgsAutoClickService.instance!=null){
+            PgsAutoClickService.restoreBubble();
+        }else{
+            Toast.makeText(this,"Ative PokeSearch · Buscas Auto em Acessibilidade. "+
+                "A bolha aparecerá automaticamente.",Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        }
+        pgsHomeStateHandler.postDelayed(this::refreshHomePgsIcon,250);
+        pgsHomeStateHandler.postDelayed(this::refreshHomePgsIcon,900);
+    }
     private void refreshHomePgsIcon(){
         if(pgsSearchControl==null)return;
-        boolean on=PgsAutoClickService.isSearchActive();
+        boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
             pgsSearchControl.setImageResource(on?
                 R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
             lastPgsSearchState=on;
         }
         pgsSearchControl.setContentDescription(on?
-            "Buscas Pokémon ativas · abrir configurações":
-            "Buscas Pokémon desativadas · abrir configurações");
+            "Desativar overlay Buscar Pokémon":"Ativar overlay Buscar Pokémon");
     }
     private void refreshHomeOverlay(){
         refreshHomePgsIcon();
