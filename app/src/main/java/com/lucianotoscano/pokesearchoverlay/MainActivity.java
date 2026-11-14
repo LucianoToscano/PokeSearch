@@ -38,6 +38,7 @@ import java.util.Locale;
 import android.widget.LinearLayout;
 import android.widget.FrameLayout;
 import android.view.View;
+import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -84,14 +85,13 @@ public class MainActivity extends Activity {
     private android.app.Dialog loginDialog;
     private boolean loginProfilePageLoadFailed=false;
     // Prints são permitidos somente em /profile, nunca nas telas de autenticação.
-    private void updateLoginScreenshotProtection(String url,boolean loadedSuccessfully){
-        if(loginDialog==null||!loginDialog.isShowing())return;
-        android.view.Window window=loginDialog.getWindow();
-        if(window==null)return;
-        boolean allow=ProfileScreenshotPolicy.allowsScreenshot(
-            loginPurpose,url,loadedSuccessfully&&!loginProfilePageLoadFailed);
-        if(allow)window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
-        else window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+    // Capturas permitidas em qualquer tela do PokeSearch, inclusive login.
+    // Restrições de segurança impostas pelo provedor não são controladas por nós.
+    private void allowLoginScreenshots(){
+        if(loginDialog!=null&&loginDialog.getWindow()!=null)
+            loginDialog.getWindow().clearFlags(
+                android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
     }
     private boolean loginSessionNotified=false;
     private boolean loginLinkAttempted=false;
@@ -380,28 +380,45 @@ public class MainActivity extends Activity {
         if(anchor==null)return;
         LinearLayout content=new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(d(10),d(7),d(10),d(7));
+        content.setPadding(d(9),d(6),d(9),d(6));
         content.setBackground(homeSurface(
             homeLightMode?Color.rgb(246,249,252):Color.rgb(29,35,45),
             10,homeLightMode?Color.rgb(154,166,180):Color.rgb(89,109,125)));
         boolean showNames=getSharedPreferences("prefs",MODE_PRIVATE)
             .getBoolean("homeShowPogoAccountName",true);
+        final android.widget.PopupWindow[] popupHolder={null};
         for(int slot=1;slot<=2;slot++){
-            boolean logged=PogoAccountSlots.loggedIn(this,slot);
-            String name=logged&&showNames?
-                PogoAccountSlots.prefs(this,slot)
-                    .getString("profileDisplayName","").trim():"";
-            if(name.isEmpty())name=logged?"Conectada":"Sem login";
-            if(name.length()>35)name=name.substring(0,32)+"…";
-            TextView line=homeText("Conta "+slot+": "+name,12,
+            final int account=slot;
+            boolean available=slot==1||PogoAccountSlots.supportsSecond();
+            boolean logged=available&&PogoAccountSlots.loggedIn(this,slot);
+            String name=logged&&showNames?PogoAccountSlots.prefs(this,slot)
+                .getString("profileDisplayName","").trim():"";
+            if(name.isEmpty())name=logged?"Conectada":available?"Sem login":"Não disponível";
+            if(name.length()>25)name=name.substring(0,22)+"…";
+            LinearLayout row=new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setPadding(d(4),d(5),d(4),d(5));
+            TextView info=homeText("Conta "+slot+": "+name,12,
                 homeLightMode?Color.BLACK:Color.WHITE,false);
-            line.setPadding(d(4),d(4),d(4),d(4));
-            content.addView(line);
+            row.addView(info,new LinearLayout.LayoutParams(0,-2,1));
+            TextView action=homeText(logged?"Perfil ›":"Entrar ›",11,
+                homeLightMode?Color.rgb(10,83,126):Color.rgb(128,208,249),true);
+            action.setPadding(d(4),d(6),d(4),d(6));
+            row.addView(action);
+            row.setContentDescription("Conta "+slot+": "+name+
+                ". Toque para "+(logged?"gerenciar perfil":"entrar"));
+            row.setOnClickListener(v->{
+                if(popupHolder[0]!=null)popupHolder[0].dismiss();
+                preferredLoginProvider="";
+                openLoginDialogForSlot(account,logged?"manage":"login");
+            });
+            content.addView(row,new LinearLayout.LayoutParams(-1,d(42)));
         }
         android.widget.PopupWindow popup=new android.widget.PopupWindow(
-            content,d(238),-2,true);
-        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(
-            Color.TRANSPARENT));
+            content,d(252),-2,true);
+        popupHolder[0]=popup;
+        popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
         popup.setOutsideTouchable(true);
         popup.setElevation(d(5));
         popup.showAsDropDown(anchor,0,d(2));
@@ -419,6 +436,35 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** As dez artes do pacote original 512px; os IDs preservam as ações já existentes. */
+    private boolean setHomePackIcon(ImageView target,int index,String state){
+        if(target==null)return false;
+        android.graphics.Bitmap image=HomeMenuIconPack.image(this,index,state);
+        if(image==null)return false;
+        target.setImageBitmap(image);
+        return true;
+    }
+    private void bindHomePackHover(ImageView target,int index,java.util.function.BooleanSupplier active){
+        target.setOnTouchListener((view,event)->{
+            int action=event.getActionMasked();
+            if(action==MotionEvent.ACTION_DOWN)
+                setHomePackIcon(target,index,
+                    active.getAsBoolean()&&index<=2?"ativo_hover":"hover");
+            else if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL)
+                setHomePackIcon(target,index,
+                    active.getAsBoolean()&&index<=2?"ativo":"normal");
+            return false; // Preservar o onClick original.
+        });
+    }
+    private int previewPackIndex(String description){
+        if("Raids".equals(description))return 5;
+        if("Power Spots".equals(description))return 6;
+        if("Rocket".equals(description))return 7;
+        if("Weather".equals(description))return 8;
+        if("Quests".equals(description))return 9;
+        return 0;
+    }
+
     private ImageView addHomePreviewIcon(LinearLayout row,int drawable,String description,
                                     View.OnClickListener action){
         ImageView icon=new ImageView(this);
@@ -427,6 +473,10 @@ public class MainActivity extends Activity {
         icon.setPadding(d(1),d(1),d(1),d(1));
         icon.setContentDescription(description);
         icon.setBackground(null);
+        if(description.contains("Buscar Pokémon")){
+            setHomePackIcon(icon,3,"normal");
+            bindHomePackHover(icon,3,()->PgsAutoClickService.isOverlayVisible());
+        }
         icon.setOnClickListener(action);
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
         return icon;
@@ -438,6 +488,11 @@ public class MainActivity extends Activity {
         icon.setPadding(d(1),d(1),d(1),d(1));
         icon.setContentDescription(description+" · em desenvolvimento");
         icon.setBackground(null);
+        int packIndex=previewPackIndex(description);
+        if(packIndex>0){
+            setHomePackIcon(icon,packIndex,"normal");
+            bindHomePackHover(icon,packIndex,()->false);
+        }
         // Nunca exibir um botão sem resposta: prévias sem módulo pronto avisam
         // claramente, sem disparar toques de outra função ou alterar filtros.
         icon.setOnClickListener(v->Toast.makeText(this,
@@ -482,19 +537,19 @@ public class MainActivity extends Activity {
 
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        header.setOrientation(LinearLayout.VERTICAL);
+        header.setOrientation(LinearLayout.HORIZONTAL);
         // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
-        screen.addView(header,new LinearLayout.LayoutParams(-1,d(96)));
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(58)));
         LinearLayout branding=new LinearLayout(this);
         branding.setOrientation(LinearLayout.HORIZONTAL);
         branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(-1,d(54)));
+        header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
         // Imagens das Pokébolas e atalhos funcionais reutilizam os recursos existentes.
         LinearLayout dualOverlayRow=new LinearLayout(this);
-        dualOverlayRow.setGravity(Gravity.CENTER_VERTICAL);
+        dualOverlayRow.setGravity(Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
         dualOverlayRow.setOrientation(LinearLayout.HORIZONTAL);
         overlayControl=makeIcon(R.drawable.home_pokeball_off,"Pokémon 1");
         secondaryOverlayControl=makeIcon(R.drawable.home_pokeball_off,"Pokémon 2");
@@ -506,17 +561,20 @@ public class MainActivity extends Activity {
             icon.setPadding(d(1),d(1),d(1),d(1));
             icon.setBackground(null);
             FrameLayout shell=new FrameLayout(this);
-            LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,d(70),1);
+            LinearLayout.LayoutParams cellLp=new LinearLayout.LayoutParams(0,d(60),1);
             dualOverlayRow.addView(shell,cellLp);
             shell.setClipChildren(false);
             shell.setClipToPadding(false);
             shell.addView(icon,new FrameLayout.LayoutParams(-1,d(44),Gravity.BOTTOM));
+            setHomePackIcon(icon,which+1,"normal");
+            bindHomePackHover(icon,which+1,()->
+                which==0?OverlayService.isRunning():OverlayService.isSecondaryRunning());
             icon.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
             FrameLayout loginHotspot=new FrameLayout(this);
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(23),d(21),Gravity.TOP|Gravity.RIGHT);
+                d(23),d(16),Gravity.TOP|Gravity.RIGHT);
             shell.addView(loginHotspot,hotLp);
             ImageView badge=new ImageView(this);
             badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -534,7 +592,7 @@ public class MainActivity extends Activity {
             "Ativar overlay Buscar Pokémon",v->toggleHomePgsOverlay());
         lastPgsSearchState=null; // Após recriar a Home, atualizar o novo ImageView.
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
-        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(70));
+        LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(60));
         dualLp.bottomMargin=d(5);
         dualOverlayRow.setVisibility(View.VISIBLE);
         screen.addView(dualOverlayRow,dualLp);
@@ -549,7 +607,7 @@ public class MainActivity extends Activity {
         brand.setImageResource(R.drawable.ps_home_brand_transparent);
         brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brand.setContentDescription("Ícone PokeSearch");
-        branding.addView(brand,new LinearLayout.LayoutParams(d(38),d(38)));
+        branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)));
         LinearLayout brandLabels=new LinearLayout(this);
         brandLabels.setOrientation(LinearLayout.VERTICAL);
         brandLabels.setPadding(d(6),0,0,0);
@@ -572,7 +630,7 @@ public class MainActivity extends Activity {
         // A data/hora fica AO LADO do ícone de passes. Em telas estreitas,
         // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(35)-d(38)-d(16);
+            -d(28)-d(200)-d(32)-d(16);
         int wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
@@ -589,19 +647,21 @@ public class MainActivity extends Activity {
         LinearLayout controls=new LinearLayout(this);
         controls.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         controls.setOrientation(LinearLayout.HORIZONTAL);
-        header.addView(controls,new LinearLayout.LayoutParams(-1,d(42)));
+        header.addView(controls,new LinearLayout.LayoutParams(-2,d(48)));
 
         // Alternador de tema será agrupado junto de Apoiar e Compartilhar.
 
         // LT175: a launcher for a THIRD, independent floating bubble.
         rareCandyControl=new ImageButton(this);
         rareCandyControl.setImageBitmap(RareCandyOverlayService.loadIcon(this));
+        setHomePackIcon(rareCandyControl,10,"normal");
+        bindHomePackHover(rareCandyControl,10,()->false);
         rareCandyControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         rareCandyControl.setPadding(d(3),d(3),d(3),d(3));
         rareCandyControl.setContentDescription("Ativar overlay Doce Raro");
         rareCandyControl.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
-        LinearLayout.LayoutParams candyLp=new LinearLayout.LayoutParams(d(34),d(34));
+        LinearLayout.LayoutParams candyLp=new LinearLayout.LayoutParams(d(28),d(28));
         candyLp.leftMargin=d(5);
         controls.addView(rareCandyControl,candyLp);
         rareCandyControl.setOnClickListener(v->toggleRareCandyOverlay());
@@ -615,12 +675,14 @@ public class MainActivity extends Activity {
         // Independent, user-selected Pass icon for the MANUAL raid guide.
         raidAssistantControl=new ImageButton(this);
         raidAssistantControl.setImageBitmap(RaidDayAssistantOverlayService.loadArtwork(this));
+        setHomePackIcon(raidAssistantControl,4,"normal");
+        bindHomePackHover(raidAssistantControl,4,()->false);
         raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
         raidAssistantControl.setContentDescription("Ativar Edu · Assistente do Dia de Reides");
         raidAssistantControl.setBackground(homeSurface(
             homeLightMode?Color.rgb(247,251,255):Color.rgb(30,35,45),10,0));
-        LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(34),d(34));
+        LinearLayout.LayoutParams guideLp=new LinearLayout.LayoutParams(d(28),d(28));
         guideLp.leftMargin=d(5);
         controls.addView(raidAssistantControl,guideLp);
         raidAssistantControl.setOnClickListener(v->toggleRaidAssistantOverlay());
@@ -651,7 +713,7 @@ public class MainActivity extends Activity {
             homeLightMode?Color.rgb(156,169,183):
                 Color.argb(150,172,193,215)));
         LinearLayout.LayoutParams simulationClockLp=
-            new LinearLayout.LayoutParams(d(65),d(34));
+            new LinearLayout.LayoutParams(d(59),d(32));
         simulationClockLp.leftMargin=d(4);
         controls.addView(eduSimulationClockDisplay,simulationClockLp);
         eduSimulationClockDisplay.setOnClickListener(v->showEduClockOptions());
@@ -667,8 +729,8 @@ public class MainActivity extends Activity {
         ImageButton heart=makeIcon(R.drawable.ic_heart_outline,"Apoiar o PokeSearch");
         heart.setPadding(d(6),d(6),d(6),d(6));
         heart.setBackground(null);
-        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(34),d(34));
-        heartLp.leftMargin=d(5);
+        LinearLayout.LayoutParams heartLp=new LinearLayout.LayoutParams(d(28),d(28));
+        heartLp.leftMargin=d(3);
         controls.addView(heart,heartLp);
         heart.setOnClickListener(v->PixSupport.show(this));
 
@@ -681,8 +743,8 @@ public class MainActivity extends Activity {
         // Os PNGs originais são brancos: usar contraste escuro só no tema claro.
         if(homeLightMode)homeThemeButton.setColorFilter(Color.rgb(31,55,77));
         homeThemeButton.setBackground(null);
-        LinearLayout.LayoutParams themeLp=new LinearLayout.LayoutParams(d(34),d(34));
-        themeLp.leftMargin=d(5);
+        LinearLayout.LayoutParams themeLp=new LinearLayout.LayoutParams(d(28),d(28));
+        themeLp.leftMargin=d(3);
         controls.addView(homeThemeButton,themeLp);
         homeThemeButton.setOnClickListener(v->toggleHomeTheme());
 
@@ -693,8 +755,8 @@ public class MainActivity extends Activity {
         shareIcon.setImageAlpha(255);
         shareIcon.setBackground(null);
         shareIcon.setPadding(d(5),d(5),d(5),d(5));
-        LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(34),d(34));
-        shareIconLp.leftMargin=d(5);
+        LinearLayout.LayoutParams shareIconLp=new LinearLayout.LayoutParams(d(28),d(28));
+        shareIconLp.leftMargin=d(3);
         controls.addView(shareIcon,shareIconLp);
         shareIcon.setOnClickListener(v->sharePokeSearch());
 
@@ -702,8 +764,8 @@ public class MainActivity extends Activity {
         menu.setTextSize(18);
         menu.setBackground(null);
         menu.setTextColor(homeLightMode?Color.BLACK:Color.WHITE);
-        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(34),d(34));
-        menuLp.leftMargin=d(5);
+        LinearLayout.LayoutParams menuLp=new LinearLayout.LayoutParams(d(28),d(28));
+        menuLp.leftMargin=d(3);
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
 
@@ -2250,8 +2312,10 @@ public class MainActivity extends Activity {
         if(pgsSearchControl==null)return;
         boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
-            pgsSearchControl.setImageResource(on?
-                R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off);
+            if(!setHomePackIcon(pgsSearchControl,3,on?"hover":"normal")){
+                if(on)pgsSearchControl.setImageBitmap(PgsHomeArtwork.transparentOn(this));
+                else pgsSearchControl.setImageResource(R.drawable.busca_pokemon_overlay_off);
+            }
             lastPgsSearchState=on;
         }
         pgsSearchControl.setContentDescription(on?
@@ -2273,12 +2337,14 @@ public class MainActivity extends Activity {
         }
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
-        overlayControl.setImageResource(on?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
+        if(!setHomePackIcon(overlayControl,1,on?"ativo":"normal"))
+            overlayControl.setImageResource(on?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
         overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
         overlayControl.setBackground(null);
         if(secondaryOverlayControl!=null){
             boolean secondaryOn=OverlayService.isSecondaryRunning();
-            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
+            if(!setHomePackIcon(secondaryOverlayControl,2,secondaryOn?"ativo":"normal"))
+                secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar Pokébola 2":"Ativar Pokébola 2");
             secondaryOverlayControl.setBackground(null);
@@ -3229,7 +3295,7 @@ public class MainActivity extends Activity {
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
                 if(view==website){
                     loginProfilePageLoadFailed=false;
-                    updateLoginScreenshotProtection(url,false);
+                    allowLoginScreenshots();
                 }
                 ++loginPageGeneration;
                 loginLinkAttempted=false;
@@ -3259,7 +3325,7 @@ public class MainActivity extends Activity {
             @Override public void onPageFinished(WebView view,String url){
                 if(view!=website)return;
                 // Só liberar se o WebView ainda mostrar a URL concluída.
-                updateLoginScreenshotProtection(url,url!=null&&url.equals(view.getUrl()));
+                allowLoginScreenshots();
                 if(url==null)return;
                 String host=Uri.parse(url).getHost();
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
@@ -3286,16 +3352,14 @@ public class MainActivity extends Activity {
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
                 super.doUpdateVisitedHistory(view,url,isReload);
-                if(view==website &&
-                    !ProfileScreenshotPolicy.allowsScreenshot(loginPurpose,url,true))
-                    updateLoginScreenshotProtection(url,false);
+                if(view==website)allowLoginScreenshots();
             }
             @Override public void onReceivedError(WebView view,
                     android.webkit.WebResourceRequest request,
                     android.webkit.WebResourceError error){
                 if(view!=website||request==null||!request.isForMainFrame())return;
                 loginProfilePageLoadFailed=true;
-                updateLoginScreenshotProtection(view.getUrl(),false);
+                allowLoginScreenshots();
                 if(loginCover!=null)loginCover.setVisibility(View.GONE);
                 int code=error==null?0:error.getErrorCode();
                 BugReport.log(MainActivity.this,"AUTH","Navegação principal · erro "+code);
@@ -3307,7 +3371,7 @@ public class MainActivity extends Activity {
                 int status=response.getStatusCode();
                 if(status>=400){
                     loginProfilePageLoadFailed=true;
-                    updateLoginScreenshotProtection(view.getUrl(),false);
+                    allowLoginScreenshots();
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     BugReport.log(MainActivity.this,"AUTH","Página principal · HTTP "+status);
                 }
@@ -3330,6 +3394,26 @@ public class MainActivity extends Activity {
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
         toolbar.addView(loginName,new LinearLayout.LayoutParams(0,d(48),1));
+        TextView browser=new TextView(this);
+        browser.setText("↗ Site");
+        browser.setTextColor(Color.WHITE);
+        browser.setTextSize(12);
+        browser.setGravity(Gravity.CENTER);
+        browser.setContentDescription("Abrir PoGoCoordinates no navegador do aparelho");
+        toolbar.addView(browser,new LinearLayout.LayoutParams(d(57),d(48)));
+        browser.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle("Login pelo navegador")
+            .setMessage("O Google pode bloquear login dentro do Android WebView. "+
+                "No navegador você pode entrar no site oficial, mas a sessão "+
+                "do navegador não será importada automaticamente para o PokeSearch.")
+            .setPositiveButton("Abrir site",(dialog,which)->{
+                try{
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://pogocoordinates.com/search")));
+                }catch(Exception error){
+                    Toast.makeText(this,"Não foi possível abrir o navegador",Toast.LENGTH_LONG).show();
+                }
+            }).setNegativeButton("Cancelar",null).show());
         TextView done=new TextView(this);
         done.setText("✓ PokeSearch");
         done.setTextColor(Color.rgb(126,212,204));
@@ -3375,7 +3459,7 @@ public class MainActivity extends Activity {
         loginCover=loginWaiting;
         loginRoot.addView(loginStage,new LinearLayout.LayoutParams(-1,0,1));
         loginDialog=new android.app.Dialog(this);
-        if(loginDialog.getWindow()!=null)loginDialog.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+        // Nenhum bloqueio de print criado pelo PokeSearch.
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
         // Dialog consumes Android Back before Activity.onBackPressed().
@@ -3413,9 +3497,19 @@ public class MainActivity extends Activity {
         });
         serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN",false);
         loginDialog.show();
+        // React/Google/Discord podem não expor o seletor ao script. Deixar
+        // a página oficial visível e permitir que o usuário encontre o erro.
+        final WebView startedWebsite=website;
+        startedWebsite.postDelayed(()->{
+            if(startedWebsite!=website||loginDialog==null||!loginDialog.isShowing()||
+                loginSessionNotified)return;
+            if(loginCover!=null)loginCover.setVisibility(View.GONE);
+            if(loginWaitLabel!=null)
+                loginWaitLabel.setText("Entre pela página oficial. Confira qualquer erro exibido.");
+        },2800L);
         android.view.Window loginWindow=loginDialog.getWindow();
         if(loginWindow!=null){
-            loginWindow.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
+            loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE);
             loginWindow.setBackgroundDrawableResource(android.R.color.transparent);
             loginWindow.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             loginWindow.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,

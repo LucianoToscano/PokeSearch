@@ -35,7 +35,7 @@ for(const [state,sha] of [
 for(const [name,w,h,expected] of [
  ["busca_pokemon_on",1000,1000,"3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9"],
  ["busca_pokemon_overlay_off",1254,1254,"51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b"],
- ["busca_pokemon_overlay_on",1254,1254,"66166c7ef5a5524452358ac55d62f8a530dd547f5bc51f2bdeac7e6296832a96"],
+ ["busca_pokemon_overlay_on",1254,1254,"2ef52d0edd1dcf1b5ab78ff80fd24a1eb8e96084494d23ad5fbb63f63b5decc6"],
  ["busca_pokemon_off",1254,1254,"db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef"]
 ]){
  const webp=fs.readFileSync(path.join(root,"res/drawable-nodpi",name+".webp"));
@@ -75,7 +75,7 @@ assert.match(java,/secondaryOverlayControl=makeIcon\(R.drawable.home_pokeball_of
 assert.match(java,/overlayControl.setImageResource\(on\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
 assert.match(java,/secondaryOverlayControl.setImageResource\(secondaryOn\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
 assert.match(java,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_overlay_off/);
-assert.match(java,/R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off/);
+assert.match(java,/setHomePackIcon\(pgsSearchControl,3,on\?"hover":"normal"\)/);
 assert.match(java,/PgsAutoClickService.isOverlayVisible\(\)/);
 assert.match(java,/v->toggleHomePgsOverlay\(\)/);
 assert.doesNotMatch(java,/PgsBuscasPanel\.show\(this\)/);

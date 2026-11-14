@@ -10,19 +10,14 @@
  if(loggedIn)return "authenticated";
  const authDialog=Array.from(document.querySelectorAll('[role="dialog"],[aria-modal="true"]'))
    .filter(visible).some(e=>/google|discord|continue with|log\s*in|sign\s*in|entrar|login/i.test(txt(e)));
- const providerChoices=clickable.some(e=>/^(?:continue|sign\s*in|log\s*in|entrar)\s+(?:with|com)\s+(?:google|discord)\b/i.test(txt(e)));
+ const providerChoices=clickable.some(e=>{
+   const title=txt(e)+(e.getAttribute("aria-label")||"");
+   return /(?:google|discord)/i.test(title)&&
+     /(?:continue|continuar|sign\s*in|log\s*in|login|entrar|google|discord)/i.test(title);
+ });
  if(authDialog||providerChoices){
-   // Only select an official visible provider control on the actual site.
-   // Never construct a direct Google/Discord OAuth URL or bypass its consent UI.
-   if(preferredProvider&&!window.__psProviderClicked){
-     const official=clickable.find(e=>{
-       const name=txt(e)+" "+(e.getAttribute("aria-label")||"");
-       return !e.disabled&&new RegExp("(?:^|\\b)"+preferredProvider+"(?:\\b|$)","i").test(name)&&
-         (/(?:log\s*in|login|sign\s*in|continue|entrar|with|com)/i.test(name)||
-          /^(?:google|discord)\s*$/i.test(txt(e)));
-     });
-     if(official){window.__psProviderClicked=true;official.click();return "triggered";}
-   }
+   // Um clique JS não é um gesto humano confiável para janelas OAuth.
+   // Exibir o controle oficial para o usuário tocar nele normalmente.
    return "ready";
  }
  const login=clickable.find(e=>!e.disabled&&/^(?:log\s*in|sign\s*in|entrar|fazer login)$/i.test(txt(e)));

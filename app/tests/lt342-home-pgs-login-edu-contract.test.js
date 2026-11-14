@@ -15,11 +15,11 @@ const profile=fs.readFileSync(path.join(root,"assets/profile_summary.js"),"utf8"
 
 // Badge acima da Pokébola, gap ~10dp sem mover fileira nem crescer logo.
 assert.match(main,/homeLightMode\?R\.drawable\.login_modo_escuro:\s*R\.drawable\.login_modo_claro/);
-assert.match(main,/d\(23\),d\(21\),Gravity\.TOP\|Gravity\.RIGHT/);
+assert.match(main,/d\(23\),d\(16\),Gravity\.TOP\|Gravity\.RIGHT/);
 assert.match(main,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
-assert.match(main,/LinearLayout\.LayoutParams\(0,d\(70\),1\)/);
-assert.match(main,/screen\.addView\(header,new LinearLayout\.LayoutParams\(-1,d\(96\)\)/);
-assert.match(main,/header\.addView\(branding,new LinearLayout\.LayoutParams\(-1,d\(54\)\)/);
+assert.match(main,/LinearLayout\.LayoutParams\(0,d\(60\),1\)/);
+assert.match(main,/screen\.addView\(header,new LinearLayout\.LayoutParams\(-1,d\(58\)\)/);
+assert.match(main,/header\.addView\(branding,new LinearLayout\.LayoutParams\(0,d\(54\),1f\)\)/);
 assert.match(main,/wordmarkWidth=Math\.max\(d\(104\),Math\.min\(d\(118\),availableBrandWidth\)\)/);
 assert.match(main,/shareIcon=makeIcon\(R\.drawable\.home_share_icon/);
 assert.match(main,/homeLightMode\?Color\.BLACK:Color\.WHITE,android\.graphics\.PorterDuff\.Mode\.SRC_IN/);
@@ -29,14 +29,14 @@ assert.match(main,/menu\.setBackground\(null\)/);
 
 // HOME: overlay artworks. BOLHA PGS: disco frontal ON/OFF.
 assert.match(main,/addHomePreviewIcon\(dualOverlayRow,R\.drawable\.busca_pokemon_overlay_off/);
-assert.match(main,/R\.drawable\.busca_pokemon_overlay_on:R\.drawable\.busca_pokemon_overlay_off/);
+assert.match(main,/PgsHomeArtwork\.transparentOn\(this\)/);
 assert.match(pgs,/handView\.setImageResource\(R\.drawable\.busca_pokemon_off\)/);
 assert.match(pgs,/R\.drawable\.busca_pokemon_on:R\.drawable\.busca_pokemon_off/);
 assert.match(pgs,/coreIndicator\.setVisibility\(View\.GONE\)/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.GREEN/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.RED/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
-assert.match(menu,/mount\(root,138,292\)/);
+assert.match(menu,/mount\(root,138,218\)/);
 assert.match(menu,/mount\(root,286,390\)/);
 assert.match(menu,/toolbar\.setVisibility\(View\.GONE\)/);
 assert.match(menu,/toolbar\.setVisibility\(View\.VISIBLE\)/);
@@ -46,7 +46,7 @@ for(const [name,sha] of Object.entries({
  "busca_pokemon_off.webp":"db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef",
  "busca_pokemon_on.webp":"3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9",
  "busca_pokemon_overlay_off.webp":"51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b",
- "busca_pokemon_overlay_on.webp":"66166c7ef5a5524452358ac55d62f8a530dd547f5bc51f2bdeac7e6296832a96"
+ "busca_pokemon_overlay_on.webp":"2ef52d0edd1dcf1b5ab78ff80fd24a1eb8e96084494d23ad5fbb63f63b5decc6"
 })){
  const data=fs.readFileSync(path.join(root,"res/drawable-nodpi",name));
  assert.equal(data.toString("ascii",0,4),"RIFF");

@@ -34,6 +34,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import java.io.File;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -66,7 +67,9 @@ public final class PgsAutoClickService extends AccessibilityService {
     private GradientDrawable coreBackground;
     private PgsAutoVisualState.Core currentCore;
     private Boolean currentArtworkOn;
-    private TextView handBadge;
+    private TextView handBadge,countdownBadge;
+    private String lastStatus="PARADO";
+    private long passengerHoldAt=0L;
 
     private PgsAutoMenus quickMenus;
     private WindowManager.LayoutParams bubbleParams;
@@ -77,9 +80,71 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean awaitingMap=false;
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
+    private boolean isGamePackage(String pkg){
+        if(pkg==null)return false;
+        return "com.nianticlabs.pokemongo".equals(pkg)||
+            pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
+    }
     private boolean isGameVisible(){
-        return "com.nianticlabs.pokemongo".equals(foreground)||
-            foreground.contains("pgsharp");
+        // Em janelas popup e multitarefa, o evento anterior pode ser de outra
+        // janela. Conferir o pacote efetivamente ativo antes de qualquer toque.
+        AccessibilityNodeInfo root=null;
+        try{
+            root=getRootInActiveWindow();
+            if(root!=null && root.getPackageName()!=null){
+                String pkg=root.getPackageName().toString();
+                if(isGamePackage(pkg)){foreground=pkg;return true;}
+                return false;
+            }
+        }catch(RuntimeException ignored){}
+        finally{if(root!=null)root.recycle();}
+        return isGamePackage(foreground);
+    }
+    private boolean passengerPromptPresent(){
+        // Aviso de velocidade do jogo exige declaração MANUAL do usuário.
+        // Nunca gerar gesto sobre "Sou passageiro" ou "I'm a passenger".
+        AccessibilityNodeInfo root=null;
+        try{
+            root=getRootInActiveWindow();
+            return root!=null&&root.getPackageName()!=null&&
+                isGamePackage(root.getPackageName().toString())&&
+                containsPassengerLabel(root,0);
+        }catch(RuntimeException ignored){return false;}
+        finally{if(root!=null)root.recycle();}
+    }
+    private boolean containsPassengerLabel(AccessibilityNodeInfo node,int depth){
+        if(node==null||depth>12)return false;
+        CharSequence text=node.getText(),desc=node.getContentDescription();
+        String combined=(text==null?"":text.toString())+" "+(desc==null?"":desc.toString());
+        String normalized=combined.toLowerCase(java.util.Locale.ROOT);
+        if(normalized.contains("sou passageiro")||
+           normalized.contains("sou um passageiro")||
+           normalized.contains("i'm a passenger")||
+           normalized.contains("i’m a passenger")||
+           normalized.contains("i am a passenger")||
+           normalized.contains("estou seguro")||
+           normalized.contains("estou em segurança")||
+           normalized.contains("i am safe")||
+           normalized.contains("i'm safe")||
+           normalized.contains("i’m safe"))return true;
+        for(int i=0;i<node.getChildCount();i++){
+            AccessibilityNodeInfo child=node.getChild(i);
+            if(child==null)continue;
+            try{if(containsPassengerLabel(child,depth+1))return true;}
+            finally{child.recycle();}
+        }
+        return false;
+    }
+    private final Runnable armedStartTick=new Runnable(){
+        @Override public void run(){
+            if(!armedByHome||running||teachingInProgress)return;
+            if(isGameVisible())startArmedSearch();
+            if(armedByHome&&!running)handler.postDelayed(this,1000L);
+        }
+    };
+    private void scheduleArmedStart(){
+        handler.removeCallbacks(armedStartTick);
+        if(armedByHome)handler.postDelayed(armedStartTick,600L);
     }
     /** Pedido da Home ou do overlay: só captura o feed quando PGSharp estiver visível. */
     public static void requestTeaching(String species){
@@ -157,6 +222,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
         if(armedByHome&&isGameVisible())startArmedSearch();
+        else scheduleArmedStart();
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -169,13 +235,22 @@ public final class PgsAutoClickService extends AccessibilityService {
         // Nunca sobrescrever o jogo por causa dos menus do próprio PokeSearch.
         if(pkg.equals(getPackageName()))return;
         foreground=pkg;
-        if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
+        if(isGameVisible()&&armedByHome)startArmedSearch();
+        else if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
             queueTeachingWhenReady();
-        else if(isGameVisible()&&armedByHome)startArmedSearch();
+        else if(armedByHome)scheduleArmedStart();
     }
     private void startArmedSearch(){
-        if(!armedByHome||running||teachingInProgress||
-            !PgsAutoTemplateStore.pending(this).isEmpty())return;
+        if(!armedByHome||running||teachingInProgress)return;
+        // Reativar a partir dos modelos SALVOS, sem obrigar nova captura.
+        // Uma seleção de ensino antiga não deve bloquear a retomada.
+        if(!PgsAutoTemplateStore.pending(this).isEmpty()){
+            boolean existing=false;
+            for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
+                if(PgsAutoCatalog.isSelectedName(this,model.name)){existing=true;break;}
+            if(existing)PgsAutoTemplateStore.clearTeaching(this);
+            else {queueTeachingWhenReady();return;}
+        }
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
@@ -187,7 +262,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         toggle();
     }
-    @Override public void onInterrupt() {halt("INTERRUPÇÃO");}
+    @Override public void onInterrupt() {
+        // Uma perda temporária do foco de acessibilidade não equivale a
+        // "desligar": manter modelos e intenção de busca até o retorno do jogo.
+        status("AGUARDANDO JOGO");
+    }
     @Override public void onDestroy() {
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
@@ -199,7 +278,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(handView!=null)handView.clearAnimation();
         if(coreIndicator!=null)coreIndicator.clearAnimation();
         handView=null;coreIndicator=null;coreBackground=null;
-        currentCore=null;currentArtworkOn=null;handBadge=null;
+        currentCore=null;currentArtworkOn=null;handBadge=null;countdownBadge=null;
         dismissPicker();
         analysis.shutdownNow();
         bubble=null;instance=null;
@@ -244,6 +323,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         FrameLayout.LayoutParams sparkle=new FrameLayout.LayoutParams(dp(19),dp(19),Gravity.TOP|Gravity.RIGHT);
         sparkle.rightMargin=dp(-3);sparkle.topMargin=dp(-5);
         bubble.addView(handBadge,sparkle);
+        countdownBadge=new TextView(this);
+        countdownBadge.setTextSize(9);
+        countdownBadge.setTextColor(Color.WHITE);
+        countdownBadge.setGravity(Gravity.CENTER);
+        countdownBadge.setBackground(roundedCounter());
+        countdownBadge.setVisibility(View.GONE);
+        FrameLayout.LayoutParams counterLp=new FrameLayout.LayoutParams(
+            dp(21),dp(13),Gravity.BOTTOM|Gravity.RIGHT);
+        bubble.addView(countdownBadge,counterLp);
         quickMenus=new PgsAutoMenus(this,windowManager,new PgsAutoMenus.Actions(){
             @Override public void teach(String species){
                 requestTeaching(species);
@@ -251,6 +339,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
+            @Override public void appearanceChanged(){refreshAppearance();}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -297,7 +386,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                     int left=display.x-bubbleParams.x-dp(22);
                     quickMenus.toggle(left,bubbleParams.y);
                 }else {
-                    if(quickMenus!=null&&quickMenus.isOpen())quickMenus.dismissAll();
+                    // Toque com menu aberto apenas retrai o menu.
+                    if(quickMenus!=null&&quickMenus.isOpen()){
+                        quickMenus.dismissAll();return true;
+                    }
                     toggle();
                 }
                 return true;
@@ -306,7 +398,25 @@ public final class PgsAutoClickService extends AccessibilityService {
         });
         try{windowManager.addView(bubble,bubbleParams);}
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
+        refreshAppearance();
         status("PARADO");
+    }
+    private GradientDrawable roundedCounter(){
+        GradientDrawable bg=new GradientDrawable();
+        bg.setColor(0xD9212C3B);bg.setCornerRadius(dp(4));
+        bg.setStroke(dp(1),0x99FFFFFF);
+        return bg;
+    }
+    private void refreshAppearance(){
+        SharedPreferences p=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
+        String size=p.getString("iconScale","M");
+        int dpSize="P".equals(size)?17:"G".equals(size)?25:21;
+        if(handView!=null&&handView.getLayoutParams()!=null){
+            FrameLayout.LayoutParams params=(FrameLayout.LayoutParams)handView.getLayoutParams();
+            params.width=dp(dpSize);params.height=dp(dpSize);
+            handView.setLayoutParams(params);
+        }
+        status(lastStatus);
     }
     public static void closeHand(){
         PgsAutoClickService live=instance;
@@ -321,6 +431,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
                 .putBoolean("armFromHome",true).apply();
             if(live.isGameVisible())live.startArmedSearch();
+            else live.scheduleArmedStart();
         });
     }
     /** A Home reflete se a bolha está visível, independente da varredura. */
@@ -360,7 +471,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             bubble=null;
         }
         if(coreIndicator!=null)coreIndicator.clearAnimation();
-        coreIndicator=null;coreBackground=null;handView=null;handBadge=null;
+        coreIndicator=null;coreBackground=null;handView=null;handBadge=null;countdownBadge=null;
         currentCore=null;currentArtworkOn=null;
     }
     public static void restoreBubble(){
@@ -398,6 +509,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         currentCore=next;
     }
     private void status(String value){
+        lastStatus=value;
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
         boolean on=PgsAutoVisualState.active(running,pausedByShiny,pausedByError);
@@ -410,6 +522,18 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(handBadge!=null){
             handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
             handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);
+        }
+        if(countdownBadge!=null){
+            boolean enabled=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+                .getBoolean("showCountdown",false);
+            if(enabled&&running&&awaitingMap){
+                long now=SystemClock.uptimeMillis();
+                long remaining=sceneReadyAt>0?
+                    sceneReadyAt+minSeconds*1000L-now:
+                    clickedAt+maxSeconds*1000L-now;
+                countdownBadge.setText(String.valueOf(Math.max(0,(remaining+999)/1000L)));
+                countdownBadge.setVisibility(View.VISIBLE);
+            }else countdownBadge.setVisibility(View.GONE);
         }
         bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
         bubble.setContentDescription("PGS Busca Pokémon: "+value+
@@ -446,7 +570,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void toggle(){
         if(running){halt("PARADO");return;}
         if(!PgsAutoTemplateStore.pending(this).isEmpty()){
-            queueTeachingWhenReady();return;
+            boolean saved=false;
+            for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
+                if(PgsAutoCatalog.isSelectedName(this,model.name)){saved=true;break;}
+            if(saved)PgsAutoTemplateStore.clearTeaching(this);
+            else {queueTeachingWhenReady();return;}
         }
         if(!reloadDetector()){
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
@@ -496,7 +624,12 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void scanAndTap(){
         if(!running)return;
-        if(!("com.nianticlabs.pokemongo".equals(foreground)||foreground.contains("pgsharp"))){
+        if(passengerPromptPresent()){
+            status("CONFIRME MANUALMENTE");
+            handler.postDelayed(()->{if(running)scanAndTap();},1200L);
+            return;
+        }
+        if(!isGameVisible()){
             status("ABRA O JOGO");
             handler.postDelayed(()->{if(running)scanAndTap();},2500L);return;
         }
@@ -643,7 +776,11 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void tap(int x,int y,int index,PgsAutoIconDetector.Match match,int screenWidth,int screenHeight){
         if(!running)return;
-        if(!("com.nianticlabs.pokemongo".equals(foreground)||foreground.contains("pgsharp"))){
+        if(passengerPromptPresent()){
+            status("CONFIRME MANUALMENTE");
+            handler.postDelayed(this::scanAndTap,1200L);return;
+        }
+        if(!isGameVisible()){
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
         status("TOQUE "+(index+1)+"/"+total);
@@ -656,9 +793,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(!running||index!=nextIndex)return;
                 visitedSlots.add(new VisitedSlot(match,screenWidth,screenHeight));
                 currentTargetName=match.name;
-                // A seleção de som PGS independe da Pokébola 1 e 2.
-                notifyConfigured(PgsAutoNotificationPolicy.SEARCH,
-                    "PGS Busca: "+match.name,"Alvo confirmado para teleporte.",false);
+                // Alvo tocado NÃO é Shiny; não duplicar alerta de busca.
                 awaitingMap=true;clickedAt=SystemClock.uptimeMillis();
                 lastColors=null;stableRepeats=0;
                 sceneReadyAt=0;loadedStreak=0;
@@ -666,9 +801,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 status("AGUARDANDO MAPA");
                 // Watchdog próprio: o limite continua valendo mesmo se um frame
                 // Android nunca responder (não ficar preso em tela/carregamento).
-                handler.postDelayed(()->{
-                    if(running&&awaitingMap&&ticket==stamp)
-                        finishMapVisit(stamp,true);
+                handler.postDelayed(new Runnable(){
+                    @Override public void run(){
+                        if(!running||!awaitingMap||ticket!=stamp)return;
+                        if(!isGameVisible()||passengerPromptPresent()){
+                            handler.postDelayed(this,1200L);return;
+                        }
+                        if(PgsAutoCyclePolicy.mapTimedOut(
+                            SystemClock.uptimeMillis(),clickedAt,maxSeconds))
+                            finishMapVisit(stamp,true);
+                        else handler.postDelayed(this,1200L);
+                    }
                 },maxSeconds*1000L);
                 handler.postDelayed(()->checkMap(stamp),1300L);
             });}
@@ -684,6 +827,19 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void checkMap(int stamp){
         if(!running||!awaitingMap||ticket!=stamp)return;
         long now=SystemClock.uptimeMillis();
+        if(!isGameVisible()||passengerPromptPresent()){
+            if(passengerHoldAt==0L)passengerHoldAt=now;
+            status(isGameVisible()?"CONFIRME MANUALMENTE":"AGUARDANDO JOGO");
+            handler.postDelayed(()->checkMap(stamp),1200L);
+            return;
+        }
+        if(passengerHoldAt!=0L){
+            // O aviso não consome os 60s: o responsável confirma manualmente.
+            long held=now-passengerHoldAt;
+            clickedAt+=held;
+            if(sceneReadyAt!=0L)sceneReadyAt+=held;
+            passengerHoldAt=0L;
+        }
         if(PgsAutoCyclePolicy.mapTimedOut(now,clickedAt,maxSeconds)){
             finishMapVisit(stamp,true);
             return;
@@ -800,6 +956,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             });
         },400L);
     }
+    private Bitmap pickerPreviewBitmap;
     private void showPicker(Bitmap screenshot,String name){
         dismissPicker();
         teachingInProgress=true;
@@ -810,90 +967,121 @@ public final class PgsAutoClickService extends AccessibilityService {
         photo.setImageBitmap(screenshot);
         photo.setScaleType(ImageView.ScaleType.FIT_XY);
         picker.addView(photo,new FrameLayout.LayoutParams(-1,-1));
-        // O tamanho é em pixels da imagem padronizada (740 de largura).
-        // O usuário escolhe o tamanho REAL do ícone, não 68x52 fixos.
-        final int[] refSize={32};
+
+        // Recorte local visível. Tocar apenas POSICIONA; nunca salva sem confirmar.
+        final PgsAutoCropSelection[] selected={null};
+        ImageView preview=new ImageView(this);
+        preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        preview.setContentDescription("Prévia da imagem que será gravada");
+        final Runnable[] updatePreview={null};
+        updatePreview[0]=()->{
+            if(selected[0]==null)return;
+            android.graphics.Rect rect=selected[0].selectedBitmapRect();
+            if(rect==null)return;
+            try{
+                Bitmap copy=Bitmap.createBitmap(screenshot,rect.left,rect.top,
+                    rect.width(),rect.height());
+                Bitmap old=pickerPreviewBitmap;
+                pickerPreviewBitmap=copy;
+                preview.setImageBitmap(copy);
+                if(old!=null&&old!=copy&&!old.isRecycled())old.recycle();
+            }catch(RuntimeException ignored){}
+        };
+        PgsAutoCropSelection crop=new PgsAutoCropSelection(this,
+            screenshot.getWidth(),screenshot.getHeight(),updatePreview[0]);
+        selected[0]=crop;
+        picker.addView(crop,new FrameLayout.LayoutParams(-1,-1));
+
         LinearLayout presets=new LinearLayout(this);
-        presets.setGravity(Gravity.CENTER);
-        presets.setPadding(dp(6),dp(5),dp(6),dp(5));
-        presets.setBackgroundColor(0xDD101720);
+        presets.setGravity(Gravity.CENTER_VERTICAL);
+        presets.setPadding(dp(6),dp(4),dp(6),dp(4));
+        presets.setBackgroundColor(0xEB18212D);
         TextView sizeLabel=new TextView(this);
-        sizeLabel.setTextColor(Color.WHITE);
-        sizeLabel.setTextSize(12);
-        sizeLabel.setText("Recorte: 32 px");
-        presets.addView(sizeLabel,new LinearLayout.LayoutParams(0,dp(42),1));
-        final int[] sizes={24,32,44};
-        for(int val:sizes){
-            Button preset=new Button(this);
-            preset.setAllCaps(false);preset.setText(val+"px");preset.setTextSize(11);
-            preset.setMinWidth(0);preset.setMinimumWidth(0);
-            preset.setPadding(dp(2),0,dp(2),0);
-            LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(dp(69),dp(42));
-            presets.addView(preset,pl);
-            preset.setOnClickListener(v->{
-                refSize[0]=val;
-                sizeLabel.setText("Recorte: "+val+" px");
+        sizeLabel.setText("Recorte 32 px");
+        sizeLabel.setTextColor(Color.WHITE);sizeLabel.setTextSize(11);
+        presets.addView(sizeLabel,new LinearLayout.LayoutParams(0,dp(40),1f));
+        for(int ref:new int[]{24,32,44}){
+            Button size=new Button(this);
+            size.setAllCaps(false);size.setText(ref+"px");size.setTextSize(11);
+            size.setPadding(dp(1),0,dp(1),0);
+            size.setMinimumWidth(0);size.setMinimumHeight(0);
+            LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(dp(57),dp(38));
+            presets.addView(size,pl);
+            size.setOnClickListener(v->{
+                crop.setReferencePx(ref);
+                sizeLabel.setText("Recorte "+ref+" px");
             });
         }
-        FrameLayout.LayoutParams selectors=new FrameLayout.LayoutParams(
-            -1,dp(52),Gravity.TOP);
-        selectors.topMargin=dp(36);
-        picker.addView(presets,selectors);
-        photo.setOnTouchListener((v,event)->{
-            if(event.getAction()!=MotionEvent.ACTION_UP)return true;
-            int x=Math.round(event.getX()*screenshot.getWidth()/Math.max(1,v.getWidth()));
-            int y=Math.round(event.getY()*screenshot.getHeight()/Math.max(1,v.getHeight()));
-            // Permite ensinar um ícone pequeno em QUALQUER ponto da tela.
-            if(x<0||y<0||x>=screenshot.getWidth()||y>=screenshot.getHeight())return true;
-            try {
-                int ref=refSize[0];
-                int rw=Math.max(16,Math.round(ref*screenshot.getWidth()/740f));
-                int rh=rw; // Ícones pequenos: preservar o quadrado, sem esticar.
-                rw=Math.min(rw,screenshot.getWidth());rh=Math.min(rh,screenshot.getHeight());
-                int left=Math.max(0,Math.min(screenshot.getWidth()-rw,x-rw/2));
-                int top=Math.max(0,Math.min(screenshot.getHeight()-rh,y-rh/2));
-                Bitmap piece=Bitmap.createBitmap(screenshot,left,top,rw,rh);
-                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
-                try { PgsAutoTemplateStore.saveSample(this,name,model,ref,ref); }
-                finally {if(piece!=model)piece.recycle();model.recycle();}
-                PgsAutoTemplateStore.clearTeaching(this);
-                dismissPicker();
-                boolean loaded=reloadDetector();
-                status(loaded?"PARADO":"SEM MODELO");
-                Toast.makeText(this,
-                    loaded?name+" gravado. Iniciando a busca no feed...":
-                        name+" salvo. Verifique se está selecionado na lupa.",
-                    Toast.LENGTH_LONG).show();
-                // O usuário já escolheu o Pokémon e tocou a amostra: não
-                // exigir mais um botão oculto para iniciar o primeiro gesto.
-                if(loaded&&isGameVisible()&&!running)
-                    handler.postDelayed(()->{
-                        if(!running&&isGameVisible())toggle();
-                    },350L);
-            }catch(Exception e){showReason("Não foi possível salvar o ícone: "+e.getMessage());}
-            return true;
-        });
-        TextView help=new TextView(this);
-        help.setText("Escolha 24/32/44 px e toque no centro da IMAGEM de "+name+" no feed. Evite pegar o fundo.");
-        help.setTextColor(Color.WHITE);help.setTextSize(13);
-        help.setBackgroundColor(Color.rgb(22,73,93));help.setPadding(dp(10),dp(8),dp(10),dp(8));
-        FrameLayout.LayoutParams hp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
-        hp.bottomMargin=dp(62);picker.addView(help,hp);
-        Button cancel=new Button(this);cancel.setText("Cancelar seleção");
-        cancel.setTextSize(12);cancel.setAllCaps(false);
-        FrameLayout.LayoutParams cp=new FrameLayout.LayoutParams(-1,dp(56),Gravity.BOTTOM);
-        picker.addView(cancel,cp);
+        FrameLayout.LayoutParams presetsLp=new FrameLayout.LayoutParams(
+            -1,dp(48),Gravity.TOP);
+        presetsLp.topMargin=dp(36);
+        picker.addView(presets,presetsLp);
+
+        TextView instructions=new TextView(this);
+        instructions.setText("Toque no ícone 2D de "+name+" no feed. Arraste para mover e use o canto branco para ajustar. Confira a prévia antes de salvar.");
+        instructions.setTextColor(Color.WHITE);instructions.setTextSize(12);
+        instructions.setPadding(dp(8),dp(7),dp(8),dp(7));
+        instructions.setBackgroundColor(0xE322303D);
+        FrameLayout.LayoutParams infoLp=new FrameLayout.LayoutParams(-1,-2,Gravity.BOTTOM);
+        infoLp.bottomMargin=dp(67);
+        picker.addView(instructions,infoLp);
+
+        LinearLayout actions=new LinearLayout(this);
+        actions.setGravity(Gravity.CENTER_VERTICAL);
+        actions.setPadding(dp(6),dp(4),dp(6),dp(4));
+        actions.setBackgroundColor(0xF218212D);
+        actions.addView(preview,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        Button cancel=new Button(this);
+        cancel.setText("Cancelar");cancel.setAllCaps(false);cancel.setTextSize(12);
+        cancel.setMinimumHeight(0);cancel.setMinimumWidth(0);
+        actions.addView(cancel,new LinearLayout.LayoutParams(0,dp(48),1));
+        Button confirm=new Button(this);
+        confirm.setText("✓ Confirmar");confirm.setAllCaps(false);confirm.setTextSize(12);
+        confirm.setMinimumHeight(0);confirm.setMinimumWidth(0);
+        actions.addView(confirm,new LinearLayout.LayoutParams(0,dp(48),1));
+        picker.addView(actions,new FrameLayout.LayoutParams(-1,dp(60),Gravity.BOTTOM));
         cancel.setOnClickListener(v->{
             PgsAutoTemplateStore.clearTeaching(this);
             dismissPicker();status("PARADO");
         });
+        confirm.setOnClickListener(v->{
+            android.graphics.Rect cut=crop.selectedBitmapRect();
+            if(cut==null){
+                Toast.makeText(this,"Toque no ícone para posicionar o recorte.",
+                    Toast.LENGTH_LONG).show();
+                return;
+            }
+            try{
+                int ref=Math.max(16,Math.min(92,
+                    Math.round(cut.width()*740f/screenshot.getWidth())));
+                Bitmap piece=Bitmap.createBitmap(screenshot,cut.left,cut.top,
+                    cut.width(),cut.height());
+                Bitmap model=Bitmap.createScaledBitmap(piece,ref,ref,true);
+                try{PgsAutoTemplateStore.saveSample(this,name,model,ref,ref);}
+                finally{if(piece!=model)piece.recycle();model.recycle();}
+                PgsAutoTemplateStore.clearTeaching(this);
+                dismissPicker();
+                boolean ready=reloadDetector();
+                status(ready?"PARADO":"SEM MODELO");
+                Toast.makeText(this,ready?
+                    name+" gravado. Modelos preservados; retomando busca.":
+                    name+" salvo. Ative-o na lupa para pesquisar.",
+                    Toast.LENGTH_LONG).show();
+                if(ready)handler.postDelayed(()->{
+                    if(!running&&isGameVisible())toggle();
+                },450L);
+            }catch(Exception e){
+                showReason("Não consegui salvar a imagem: "+e.getMessage());
+            }
+        });
+
         WindowManager.LayoutParams params=new WindowManager.LayoutParams(-1,-1,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT);
         params.gravity=Gravity.TOP|Gravity.LEFT;
         try{windowManager.addView(picker,params);}
-        catch(Exception e){dismissPicker();showReason("Não consegui abrir a seleção: "+e.getMessage());}
+        catch(Exception e){dismissPicker();showReason("Não consegui abrir seleção: "+e.getMessage());}
     }
     private void dismissPicker(){
         teachingInProgress=false;
@@ -901,6 +1089,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             try{windowManager.removeView(picker);}catch(Exception ignored){}
             picker=null;
         }
+        if(pickerPreviewBitmap!=null){pickerPreviewBitmap.recycle();pickerPreviewBitmap=null;}
         if(pickerBitmap!=null){pickerBitmap.recycle();pickerBitmap=null;}
         if(bubble!=null)bubble.setVisibility(View.VISIBLE);
     }
@@ -952,6 +1141,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void halt(String label){
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
+        passengerHoldAt=0L;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */

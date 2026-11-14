@@ -70,16 +70,16 @@ t("Hamburger click happens once",menu.clicks,1);
 t("Unknown login remains waiting for manual fallback",run({}).output,"waiting");
 const officialGoogle=el("Continue with Google");
 const googleState={};
-t("Google home button clicks only actual official provider control",
- run({provider:"google",clickable:[officialGoogle]},googleState).output,"triggered");
-t("Official Google button clicked once",officialGoogle.clicks,1);
+t("Google login requires real user touch on official provider control",
+ run({provider:"google",clickable:[officialGoogle]},googleState).output,"ready");
+t("Google OAuth not triggered by synthetic JS event",officialGoogle.clicks,0);
 t("Repeated provider probe does not click again",
  run({provider:"google",clickable:[officialGoogle]},googleState).output,"ready");
-t("Official Google did not receive a second click",officialGoogle.clicks,1);
+t("Google control still awaits a real touch",officialGoogle.clicks,0);
 const officialDiscord=el("Login with Discord");
-t("Discord home button clicks the visible Discord provider",
- run({provider:"discord",clickable:[officialDiscord]}).output,"triggered");
-t("Discord provider clicked",officialDiscord.clicks,1);
+t("Discord provider also requires real user touch",
+ run({provider:"discord",clickable:[officialDiscord]}).output,"ready");
+t("Discord provider not automatically clicked",officialDiscord.clicks,0);
 const unavailable=el("Continue with Google");
 t("Unavailable provider never redirected to a constructed OAuth URL",
  run({provider:"discord",clickable:[unavailable]}).output,"ready");
