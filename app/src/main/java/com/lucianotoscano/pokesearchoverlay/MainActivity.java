@@ -3051,6 +3051,16 @@ public class MainActivity extends Activity {
                 }
                 return;
             }
+            // O login não basta para descobrir o nome: aguarde o cartão React
+            // hidratar até quatro leituras, mantendo a conta autenticada.
+            // Não usar e-mail, nome do treinador ou dados de outro slot como nome.
+            if(profileCaptureRetryCount<4&&
+               PogoAccountSlots.prefs(this,activeLoginSlot)
+                   .getString("profileDisplayName","").trim().isEmpty()){
+                profileCaptureRetryCount++;
+                view.postDelayed(()->captureOfficialProfile(view,generation),800L);
+                return;
+            }
             // Autenticação e treinador são estados INDEPENDENTES. Um perfil
             // sem treinador vinculado não mantém o login aberto nem apaga
             // o nome/foto verificados da conta do site.
