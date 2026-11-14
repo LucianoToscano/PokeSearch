@@ -38,6 +38,7 @@ import java.util.Locale;
 import android.widget.LinearLayout;
 import android.widget.FrameLayout;
 import android.view.View;
+import android.view.MotionEvent;
 import android.widget.TextView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -419,6 +420,35 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** As dez artes do pacote original 512px; os IDs preservam as ações já existentes. */
+    private boolean setHomePackIcon(ImageView target,int index,String state){
+        if(target==null)return false;
+        android.graphics.Bitmap image=HomeMenuIconPack.image(this,index,state);
+        if(image==null)return false;
+        target.setImageBitmap(image);
+        return true;
+    }
+    private void bindHomePackHover(ImageView target,int index,java.util.function.BooleanSupplier active){
+        target.setOnTouchListener((view,event)->{
+            int action=event.getActionMasked();
+            if(action==MotionEvent.ACTION_DOWN)
+                setHomePackIcon(target,index,
+                    active.getAsBoolean()&&index<=2?"ativo_hover":"hover");
+            else if(action==MotionEvent.ACTION_UP||action==MotionEvent.ACTION_CANCEL)
+                setHomePackIcon(target,index,
+                    active.getAsBoolean()&&index<=2?"ativo":"normal");
+            return false; // Preservar o onClick original.
+        });
+    }
+    private int previewPackIndex(String description){
+        if("Raids".equals(description))return 5;
+        if("Power Spots".equals(description))return 6;
+        if("Rocket".equals(description))return 7;
+        if("Weather".equals(description))return 8;
+        if("Quests".equals(description))return 9;
+        return 0;
+    }
+
     private ImageView addHomePreviewIcon(LinearLayout row,int drawable,String description,
                                     View.OnClickListener action){
         ImageView icon=new ImageView(this);
@@ -427,6 +457,10 @@ public class MainActivity extends Activity {
         icon.setPadding(d(1),d(1),d(1),d(1));
         icon.setContentDescription(description);
         icon.setBackground(null);
+        if(description.contains("Buscar Pokémon")){
+            setHomePackIcon(icon,3,"normal");
+            bindHomePackHover(icon,3,()->PgsAutoClickService.isOverlayVisible());
+        }
         icon.setOnClickListener(action);
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
         return icon;
@@ -438,6 +472,11 @@ public class MainActivity extends Activity {
         icon.setPadding(d(1),d(1),d(1),d(1));
         icon.setContentDescription(description+" · em desenvolvimento");
         icon.setBackground(null);
+        int packIndex=previewPackIndex(description);
+        if(packIndex>0){
+            setHomePackIcon(icon,packIndex,"normal");
+            bindHomePackHover(icon,packIndex,()->false);
+        }
         // Nunca exibir um botão sem resposta: prévias sem módulo pronto avisam
         // claramente, sem disparar toques de outra função ou alterar filtros.
         icon.setOnClickListener(v->Toast.makeText(this,
@@ -511,6 +550,9 @@ public class MainActivity extends Activity {
             shell.setClipChildren(false);
             shell.setClipToPadding(false);
             shell.addView(icon,new FrameLayout.LayoutParams(-1,d(44),Gravity.BOTTOM));
+            setHomePackIcon(icon,which+1,"normal");
+            bindHomePackHover(icon,which+1,()->
+                which==0?OverlayService.isRunning():OverlayService.isSecondaryRunning());
             icon.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
@@ -596,6 +638,8 @@ public class MainActivity extends Activity {
         // LT175: a launcher for a THIRD, independent floating bubble.
         rareCandyControl=new ImageButton(this);
         rareCandyControl.setImageBitmap(RareCandyOverlayService.loadIcon(this));
+        setHomePackIcon(rareCandyControl,10,"normal");
+        bindHomePackHover(rareCandyControl,10,()->false);
         rareCandyControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         rareCandyControl.setPadding(d(3),d(3),d(3),d(3));
         rareCandyControl.setContentDescription("Ativar overlay Doce Raro");
@@ -615,6 +659,8 @@ public class MainActivity extends Activity {
         // Independent, user-selected Pass icon for the MANUAL raid guide.
         raidAssistantControl=new ImageButton(this);
         raidAssistantControl.setImageBitmap(RaidDayAssistantOverlayService.loadArtwork(this));
+        setHomePackIcon(raidAssistantControl,4,"normal");
+        bindHomePackHover(raidAssistantControl,4,()->false);
         raidAssistantControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
         raidAssistantControl.setPadding(d(3),d(3),d(3),d(3));
         raidAssistantControl.setContentDescription("Ativar Edu · Assistente do Dia de Reides");
@@ -2250,9 +2296,10 @@ public class MainActivity extends Activity {
         if(pgsSearchControl==null)return;
         boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
-            if(on)pgsSearchControl.setImageBitmap(
-                PgsHomeArtwork.transparentOn(this));
-            else pgsSearchControl.setImageResource(R.drawable.busca_pokemon_overlay_off);
+            if(!setHomePackIcon(pgsSearchControl,3,on?"hover":"normal")){
+                if(on)pgsSearchControl.setImageBitmap(PgsHomeArtwork.transparentOn(this));
+                else pgsSearchControl.setImageResource(R.drawable.busca_pokemon_overlay_off);
+            }
             lastPgsSearchState=on;
         }
         pgsSearchControl.setContentDescription(on?
@@ -2274,12 +2321,14 @@ public class MainActivity extends Activity {
         }
         if(overlayControl==null)return;
         boolean on=OverlayService.isRunning();
-        overlayControl.setImageResource(on?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
+        if(!setHomePackIcon(overlayControl,1,on?"ativo":"normal"))
+            overlayControl.setImageResource(on?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
         overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
         overlayControl.setBackground(null);
         if(secondaryOverlayControl!=null){
             boolean secondaryOn=OverlayService.isSecondaryRunning();
-            secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
+            if(!setHomePackIcon(secondaryOverlayControl,2,secondaryOn?"ativo":"normal"))
+                secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
             secondaryOverlayControl.setContentDescription(secondaryOn?
                 "Desativar Pokébola 2":"Ativar Pokébola 2");
             secondaryOverlayControl.setBackground(null);
