@@ -36,7 +36,17 @@ assert.match(engine,/PgsAutoVisualState\.core\(running,awaitingMap,pausedByError
 assert.match(engine,/isSearchActive\(\)/);
 assert.doesNotMatch(engine,/searchPulseActive|R\.drawable\.pgs_hand_(?:on|off)/);
 assert.match(menus,/OverlayQuickMenus\.panelColor/);
-assert.match(menus,/PixSupport\.PAYLOAD/);
+assert.match(menus,/String\[\] icons=\{"⌕","⏱","🔔","↻","×"\}/);
+assert.doesNotMatch(menus,/showMore\(|••• MAIS|✉ Reportar|♧ Doar|PixSupport\.PAYLOAD/);
+assert.match(menus,/actions\.testNotification\(key\)/);
+assert.match(menus,/pgs_auto_settings_v1/);
+assert.match(engine,/PgsAutoNotificationPolicy\.NEW/);
+assert.match(engine,/PgsAutoNotificationPolicy\.SEARCH/);
+assert.match(engine,/PgsAutoNotificationPolicy\.SHINY/);
+assert.match(engine,/notifyConfigured\(/);
+assert.doesNotMatch(engine,/playShinySound\(/);
+assert.match(read('PgsAutoNotificationPolicy'),/pgs_buscas_/);
+
 assert.match(menus,/Capturar ícone/);
 assert.match(shiny,/NotificationListenerService/);
 assert.match(shiny,/onPgsharpShiny/);
