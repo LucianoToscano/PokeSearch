@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.35",
-  "code": 54541,
-  "label": 51339,
-  "previous_tag": "v0.03.34-54540",
-  "qa_max_code": 54540,
-  "release_notes": "PokeSearch LT336 (0.03.35) — Shiny: botão visual independente, OFF branco, ON destacado, oculto por padrão com opção no menu e aviso curto '✨ Shiny temporariamente indisponível'; a API continua em busca normal, sem exigir treinador ou enviar shiny_only. Pokébola 2: escolha de perfil visitante independente, sem obrigar login para pesquisa pública. Edu: melhorias no posicionamento do comparador com a sprite #42, triagem automatizada de 68 fontes PNG 512×512 e retirada de percentuais anatômicos estimados enganosos. Comando ARK registrado no Guia Mestre incluindo distribuição pelo atualizador do aplicativo. A triagem não substitui correção artística das 68 fontes nem QA físico Samsung. Preservar dados, contas, assinatura permanente, fluxo OTA e exigir confirmação do Android para instalar."
+  "version": "0.03.36",
+  "code": 54543,
+  "label": 51340,
+  "previous_tag": "v0.03.35-54541",
+  "qa_max_code": 54542,
+  "release_notes": "PokeSearch LT337 (0.03.36) — Nova Home compacta com Pokébolas sem fundos e fileira horizontal sem rolagem; menu Buscas Pokémon com seleção de até 50 espécies, prioridade, templates locais e motor experimental opt-in de Acessibilidade com confirmação em dois quadros, 5 segundos após evidência de mapa, timeout de 60 segundos e revarreduras 60/120; alertas Shiny somente quando reconhecida notificação positiva. Menus seguem identidade visual do PokeSearch e o código mantém Pokébolas P1/P2, Edu, Doce Raro, conta e filtros. A automação exige configuração manual de permissão e modelos visuais pelo usuário; não há detecção Shiny visual, QA físico Samsung ainda pendente, nem instalação silenciosa. ARK reconfirmado como autorização do ciclo completo com aprovação dos testes, merge, assinatura oficial, publicação e verificação OTA; Android ainda exige consentimento para instalar."
 }
