@@ -2,6 +2,10 @@
 
 ## ARK LT337 — sem teto artificial de tamanho do APK oficial (14/11/2026)
 
+**Integração concluída:** [PR #351](https://github.com/LucianoToscano/PokeSearch/pull/351) integrada por squash `93d2582befcc6b8ba18747a45613603613e39a21`. Testes Node, regressões LT169, QA Core e preflight do workflow oficial passaram no HEAD da PR `ae5f0b24`; o workflow oficial em `main` não cria novo APK porque `v0.03.36-54543` já está publicado. Não republicar a mesma tag, aguardar uma versão funcional futura. Prompt salvo: `docs/PROMPT_CONTINUIDADE_LT337_ARK_APK_SEM_TETO_20261114.md`.
+
+
+
 **Decisão do responsável:** remover **por enquanto** o limite de tamanho de APK imposto pelo CI de publicação (antes 49 MB e depois 52 MB). Posteriormente executar otimização de recursos para reduzir o APK e, se fizer sentido, restabelecer um orçamento explícito.
 
 - Workflow `.github/workflows/pokesearch-official-release.yml`: remover `test "$APK_BYTES" -lt 52000000`, manter medição `stat -c %s` e log do tamanho efetivo, **sem tamanho máximo arbitrário para aprovação**.
