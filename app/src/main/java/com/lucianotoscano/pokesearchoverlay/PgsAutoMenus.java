@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ final class PgsAutoMenus {
         void closeOverlay();
         void testNotification(String type);
         void modelsChanged();
+        void appearanceChanged();
     }
     private final Context context;
     private final WindowManager wm;
@@ -59,6 +61,12 @@ final class PgsAutoMenus {
     PgsAutoMenus(Context c,WindowManager w,Actions a){context=c;wm=w;actions=a;}
     private int dp(float value){return Math.round(value*context.getResources().getDisplayMetrics().density);}
     private Point size(){Point p=new Point();wm.getDefaultDisplay().getRealSize(p);return p;}
+    private int panelFill(){
+        SharedPreferences p=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE);
+        int percent=Math.max(30,Math.min(100,p.getInt("menuAlphaPercent",90)));
+        int original=OverlayQuickMenus.panelColor(context);
+        return ((percent*255/100)<<24)|(original&0x00FFFFFF);
+    }
     private GradientDrawable bg(int fill,int stroke,int radius){
         GradientDrawable d=new GradientDrawable();d.setColor(fill);d.setCornerRadius(dp(radius));
         if(stroke!=0)d.setStroke(dp(1),stroke);return d;
@@ -120,13 +128,15 @@ final class PgsAutoMenus {
     void showToolbar(int x,int y){
         dismissAll();anchorX=x;anchorY=y;
         LinearLayout bar=horizontal();bar.setPadding(dp(5),dp(4),dp(5),dp(4));
-        bar.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,10));
+        bar.setBackground(bg(panelFill(),0x667E91A5,10));
         // PGS: a mesma fileira compacta das Pokébolas, sem submenus redundantes.
         int[] icons={R.drawable.pgs_menu_search,R.drawable.pgs_menu_timer,
-            R.drawable.ic_bell_outline};
-        String[] descriptions={"Buscar Pokémon","Tempos","Notificações"};
-        Runnable[] handlers={this::showSearch,this::showTime,this::showNotifications};
-        for(int i=0;i<3;i++){
+            R.drawable.ic_bell_outline,R.drawable.pgs_menu_customize};
+        String[] descriptions={"Buscar Pokémon","Tempos","Notificações",
+            "Personalização da Busca Pokémon"};
+        Runnable[] handlers={this::showSearch,this::showTime,
+            this::showNotifications,this::showAppearance};
+        for(int i=0;i<icons.length;i++){
             final int n=i;
             ImageButton icon=imageButton(icons[i],descriptions[i],9);
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(44),dp(44));
@@ -143,7 +153,7 @@ final class PgsAutoMenus {
         close.setOnClickListener(v->{dismissAll();actions.closeOverlay();});
         toolbar=bar;
         Point screen=size();
-        int width=dp(5+4*44+3*4+5),h=dp(54);
+        int width=dp(5+5*44+4*4+5),h=dp(54);
         int left=Math.max(dp(6),Math.min(screen.x-width-dp(6),x-width/2));
         int top=y+dp(53);
         if(top+h+dp(8)>screen.y)top=Math.max(dp(15),y-h-dp(6));
@@ -156,7 +166,7 @@ final class PgsAutoMenus {
     }
     private LinearLayout panelRoot(String heading,String right){
         LinearLayout root=vertical();root.setPadding(dp(10),dp(10),dp(10),dp(10));
-        root.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,10));
+        root.setBackground(bg(panelFill(),0x667E91A5,10));
         LinearLayout head=horizontal();
         TextView title=label(heading,15,true);
         head.addView(title,new LinearLayout.LayoutParams(0,dp(35),1));
@@ -411,19 +421,77 @@ final class PgsAutoMenus {
         });
         mount(root,212,180);
     }
+
+    void showAppearance(){
+        SharedPreferences prefs=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE);
+        LinearLayout root=panelRoot("⚙ PERSONALIZAÇÃO",null);
+        CheckBox timers=new CheckBox(context);
+        timers.setText("Contadores regressivos");
+        timers.setTextSize(11);timers.setTextColor(fg());
+        timers.setButtonTintList(android.content.res.ColorStateList.valueOf(fg()));
+        timers.setChecked(prefs.getBoolean("showCountdown",false));
+        timers.setOnCheckedChangeListener((control,on)->{
+            prefs.edit().putBoolean("showCountdown",on).apply();
+            actions.appearanceChanged();
+        });
+        root.addView(timers,margined(-1,dp(36),3));
+
+        TextView artTitle=label("Tamanho dos ícones",11,true);
+        root.addView(artTitle,margined(-1,dp(25),5));
+        LinearLayout scale=horizontal();scale.setGravity(Gravity.CENTER);
+        final String saved=prefs.getString("iconScale","M");
+        for(String value:new String[]{"P","M","G"}){
+            Button option=button(value,12);
+            markChosen(option,value.equals(saved));
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(35),1f);
+            p.leftMargin=dp(3);
+            scale.addView(option,p);
+            option.setOnClickListener(v->{
+                prefs.edit().putString("iconScale",value).apply();
+                actions.appearanceChanged();
+                for(int n=0;n<scale.getChildCount();n++){
+                    Button b=(Button)scale.getChildAt(n);
+                    markChosen(b,value.equals(b.getText().toString()));
+                }
+            });
+        }
+        root.addView(scale,margined(-1,dp(40),2));
+        TextView alpha=label("Fundo: "+prefs.getInt("menuAlphaPercent",90)+"%",11,true);
+        root.addView(alpha,margined(-1,dp(22),5));
+        SeekBar opacity=new SeekBar(context);
+        opacity.setMax(70);
+        opacity.setProgress(Math.max(0,Math.min(70,prefs.getInt("menuAlphaPercent",90)-30)));
+        opacity.setContentDescription("Transparência do fundo de 30 a 100 por cento");
+        opacity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override public void onProgressChanged(SeekBar seek,int progress,boolean user){
+                int percent=progress+30;
+                alpha.setText("Fundo: "+percent+"%");
+                if(user){
+                    prefs.edit().putInt("menuAlphaPercent",percent).apply();
+                    root.setBackground(bg(panelFill(),0x667E91A5,10));
+                }
+            }
+            @Override public void onStartTrackingTouch(SeekBar seek){}
+            @Override public void onStopTrackingTouch(SeekBar seek){actions.appearanceChanged();}
+        });
+        root.addView(opacity,margined(-1,dp(36),1));
+        mount(root,236,245);
+    }
+
     void showNotifications(){
         // Mesmo padrão compacto do dock.html: 138dp, ícones 30dp,
         // traços brancos das caixas Som / Sem som / OFF, SEM estrela.
         LinearLayout root=vertical();
         root.setPadding(dp(4),dp(4),dp(4),dp(4));
-        root.setBackground(bg(OverlayQuickMenus.panelColor(context),0x667E91A5,8));
+        root.setBackground(bg(panelFill(),0x667E91A5,8));
         TextView head=label("NOTIFICAÇÕES",10,true);
         head.setGravity(Gravity.CENTER);
         root.addView(head,new LinearLayout.LayoutParams(-1,dp(22)));
         SharedPreferences prefs=context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE);
-        String[] names={"Novos Pokémon","Pokémon de Buscas","Shiny"};
-        String[] keys={PgsAutoNotificationPolicy.NEW,
-            PgsAutoNotificationPolicy.SEARCH,PgsAutoNotificationPolicy.SHINY};
+        // Apenas duas categorias: lista atualizada e Shiny do alvo monitorado.
+        // SEARCH antigo fica aceito na migração, mas não gera mais novo alerta.
+        String[] names={"Novos Pokémon","Shiny monitorado"};
+        String[] keys={PgsAutoNotificationPolicy.NEW,PgsAutoNotificationPolicy.SHINY};
         int[] glyphs={R.drawable.pgs_speaker_on,
             R.drawable.pgs_speaker_silent,R.drawable.pgs_speaker_off};
         String[] modes={"default","mute","off"};
@@ -477,7 +545,7 @@ final class PgsAutoMenus {
         vibrate.setOnCheckedChangeListener((view,on)->
             prefs.edit().putBoolean("shinyVibrate",on).apply());
         root.addView(vibrate,new LinearLayout.LayoutParams(-1,dp(31)));
-        mount(root,138,292);
+        mount(root,138,218);
     }
     private void showSoundPicker(String key){
         if(!PgsAutoNotificationPolicy.validKind(key))return;
