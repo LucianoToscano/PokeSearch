@@ -14,7 +14,7 @@ test("P1 and P2 top controls have correct icons and independent callbacks",()=>{
  assert.match(home,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(home,/dualOverlayRow.setVisibility\(View.VISIBLE\)/);
  assert.match(home,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_overlay_off/);
- assert.match(home,/R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off/);
+ assert.match(home,/setHomePackIcon\(pgsSearchControl,3,on\?"hover":"normal"\)/);
 });
 test("official catalog includes over 300 checked varieties",()=>{
  const values=Object.values(resolver.FORM_VARIANTS);
