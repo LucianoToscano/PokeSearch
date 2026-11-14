@@ -1,0 +1,72 @@
+name: PGS Buscas Auto - compilar e auditar APK QA
+on:
+  push:
+    branches:
+      - feature/pgs-buscas-auto-integracao-20261114
+  pull_request:
+    branches:
+      - main
+      - feature/lt337-home-icon-row-20261114
+    paths:
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAuto*.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsBuscasPanel.java'
+      - 'app/src/main/AndroidManifest.xml'
+      - 'app/tests/pgs-buscas-contracts.test.js'
+      - '.github/workflows/pgs-buscas-auto-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pgs-buscas-auto-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: SDK Android 36
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Contratos PGS Buscas
+        run: node app/tests/pgs-buscas-contracts.test.js
+      - name: Compilar e gerar APK debug somente para QA
+        env:
+          POKE_TEST_SIGNING_REQUIRED: 'false'
+        run: |
+          set -euo pipefail
+          gradle :app:compileDebugJavaWithJavac :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
+      - name: Verificar integridade e assinatura do APK
+        run: |
+          set -euo pipefail
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          mkdir -p qa-pgs-buscas
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" | tee qa-pgs-buscas/SIGNATURE.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > qa-pgs-buscas/APK-BADGING.txt
+          grep -q "name='com.lucianotoscano.pokesearch'" qa-pgs-buscas/APK-BADGING.txt
+          cp "$APK" qa-pgs-buscas/PokeSearch-PGS-Buscas-DEBUG-QA.apk
+          (cd qa-pgs-buscas && sha256sum *.apk > SHA256SUMS.txt && sha256sum -c SHA256SUMS.txt)
+          git rev-parse HEAD > qa-pgs-buscas/COMMIT.txt
+          printf 'Build de depuracao: assinatura temporaria de QA; NAO INSTALAR sobre a versao oficial assinada. Nao e release.\n' > qa-pgs-buscas/LEIA-PRIMEIRO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-PGS-Buscas-DEBUG-QA
+          path: qa-pgs-buscas/
+          if-no-files-found: error
+          retention-days: 14
