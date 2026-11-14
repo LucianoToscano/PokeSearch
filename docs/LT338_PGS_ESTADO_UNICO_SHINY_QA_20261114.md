@@ -1,6 +1,6 @@
 # LT338 — Auditoria incremental PGS: estado único e alertas Shiny
 
-**Data:** 14/11/2026. **Base:** main em 87c61905c8712cfa7a1795dfc99cd9a29d1a65f9. **Estado:** correção em QA; não equivale a release publicada.
+**Data:** 14/11/2026. **Base:** main em 87c61905c8712cfa7a1795dfc99cd9a29d1a65f9. **Estado histórico inicial:** correção em QA na PR #352; **estado final:** LT338 **0.03.37 / 54544** oficialmente publicada e verificada em 14/11/2026.
 
 ## Evidências da revisão
 
@@ -43,3 +43,13 @@ A issue #350 permanece aberta: validar no Samsung a interface, 50 espécies, ges
 - Versão proposta \`0.03.37 / code 54544 / label 51341\`, tag futura **somente após sucesso** \`v0.03.37-54544\` e \`previous_tag=v0.03.36-54543\`.
 - Notas embutidas em \`app/src/main/assets/release_notes.json\`; pedido protegido em \`release/official-request.json\`.
 - **Não considerar publicado até** o workflow oficial PASSAR, \`releases/latest\` apontar para o novo APK e assinatura, tamanho e hash público terem sido verificados.
+
+
+## Confirmação final da atualização oficial — LT338
+
+- [PR #353](https://github.com/LucianoToscano/PokeSearch/pull/353) integrada por squash `98a8d367c601e75ef1126afec4fa7bfa84a6a6d0` após QA da própria PR com sucesso.
+- [Workflow protegido #43576475168](https://github.com/LucianoToscano/PokeSearch/actions/runs/43576475168): **completed/success**; geração integral de recursos, compilação Android/R8, assinatura permanente, integridade e verificação pública do SHA-256.
+- [Release estável v0.03.37-54544](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.37-54544): `PokeSearch-v0.03.37-LT.apk`, **49.755.898 bytes**, SHA-256 `dd958b9f0a9305cbb42ea83475fe82b1df2461198951ea10e140d76d887a439e`, `draft=false`, `prerelease=false`, `asset.state=uploaded`.
+- **Disponível para atualizador do app:** `GitHubUpdateCenter` lê `releases/latest`, compara código, nome, assinatura e SHA. Ainda depende de download e confirmação Android; não atestar que já foi instalada.
+- **Issue #350 continua aberta:** QA física Samsung de reconhecimento, gestos, alertas Shiny e ícones originais de mão permanecem pendentes. Nenhuma alegação de homologação de PGSharp real.
+- Não reduziu imagens, nitidez, áudio ou 68 PNGs do Edu; nenhum limite artificial de 52 MB reintroduzido.
