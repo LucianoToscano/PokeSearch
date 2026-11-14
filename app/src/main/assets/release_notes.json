@@ -3883,6 +3883,33 @@
           "Revisão artística manual das 68 sprites e verificação visual física no Samsung permanecem pendentes."
         ]
       }
+    },
+    {
+      "id": "lt337-pgs-buscas-auto-home-20261114",
+      "minVersionCode": 54543,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.36 — Nova Home e PGS Buscas Auto (experimental)",
+      "sections": {
+        "novidades": [
+          "Nova fileira compacta de ícones transparentes na Home, sem rolagem horizontal; Pokébola 1 e 2 preservadas.",
+          "Novo painel Buscas Pokémon com seleção de até 50 espécies, pesquisa offline por nome e número, prioridade e cadastro local dos ícones do feed.",
+          "Mão flutuante opt-in via Acessibilidade para reconhecer ícones de feed cadastrados e solicitar gestos confirmados; funcionalidade experimental e desligada até ativação manual.",
+          "Menus de Tempo, Notificações e Mais, com cronogramas de revarredura e avisos Shiny provenientes de notificações reconhecidas."
+        ],
+        "melhorias": [
+          "Aparência compacta reutiliza o tema, a transparência, a paleta e os raios do PokeSearch.",
+          "Preferências, sprites e sons locais preservados; testes automatizados e pacote Android com assinatura permanente."
+        ],
+        "correcoes": [
+          "Contratos de testes da Home atualizados para novos recursos das Pokébolas; P1/P2 e Doce Raro continuam independentes.",
+          "Modelo visual é exigido antes dos gestos; alertas Shiny não são apresentados como reconhecimento visual."
+        ],
+        "emDesenvolvimento": [
+          "PGS Buscas Auto requer ativação consciente das permissões do Android e cadastro dos ícones; sem modelos, não executa toques.",
+          "Teleporte, compatibilidade com PGSharp e alertas Shiny exigem teste no Samsung; confirmação de instalação pelo Android continua necessária.",
+          "Atalhos novos da Home sem backend integrado mantêm caráter de prévia e ícones provisórios serão refinados."
+        ]
+      }
     }
   ]
 }
