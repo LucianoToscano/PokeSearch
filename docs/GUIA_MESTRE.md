@@ -1,4 +1,13 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+
+## LT341 — Pedido oficial protegido da versão 0.03.39 / 54546 (14/11/2026)
+
+- **Origem já integrada:** [PR #358](https://github.com/LucianoToscano/PokeSearch/pull/358) (LT340) na main `0ab24070a48bd31e6fd2f216855515e4c7de2d20`; [PR #359](https://github.com/LucianoToscano/PokeSearch/pull/359) (LT341) na main `9d4b6a6705b894a2621d18dd846ecaf727119c47`. Nenhuma dessas duas PRs exigiu downgrade ou mudança da assinatura permanente. O conjunto **ainda não aparecia no APK oficial anterior LT339**.
+- **Qualidade verificada:** a PR #359 passou no HEAD `9151d1e00cdc52c41875559dcad50ac149457282` nos workflows Core, Node LT169, OTA LT173, Java LT62, PGS Android QA, Secure beta, LT253 e Node QA, todos `success`. O workflow antigo LT146 na main pode falhar por `AssertionError` da recuperação CDN de sprites enquanto gera pacote de QA antigo; isso **não deve ser tratado como teste físico de Lucario**, nem substituir o gate de release oficial.
+- **Assets originais verificados:** `home_pokeball_off.webp` e `home_pokeball_on.webp`, `login_modo_claro.webp`, `login_modo_escuro.webp`, `login_modo_semlogin.webp` correspondem às artes WebP do Drive por SHA Git (byte a byte). `lixeira_branca.png` e `lixeira_preta.png` também estão em `drawable-nodpi`. Nenhuma recompressão, nenhuma exclusão das artes anteriores; ver `assets/ui-originals`.
+- **Pedido da release:** branch `release/lt341-home-pgs-login-edu-20261114`, `release/official-request.json` monotônico: **0.03.39 / versionCode 54546 / label 51343**, `previous_tag=v0.03.38-54545`, `qa_max_code=54545`. Notas de release embarcadas em `app/src/main/assets/release_notes.json` com `minVersionCode=54546`. A publicação só pode ser confirmada após checks verdes neste pedido, merge, execução do workflow protegido, assinatura permanente, R8/ZIP/digest SHA-256 e tag/asset verificados.
+- **Limites explícitos:** a prova de clique em Lucario e a autenticação Google/Discord com avatar requerem *Samsung e PGSharp reais*. Screenshots anteriores eram do launcher, não do feed. A questão de homologação permanece na [issue #350](https://github.com/LucianoToscano/PokeSearch/issues/350); não anunciar teleporte e Shiny como homologados. Android exige confirmação do usuário para instalar APK. O estado está descrito em `docs/PROMPT_CONTINUIDADE_LT341_ARK_20261114.md`.
+
  
 ## LT341 — Correções UX, Login, Ranks, Doce Raro e Edu (14/11/2026 — QA em andamento)
 

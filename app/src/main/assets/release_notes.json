@@ -3964,6 +3964,37 @@
           "Ativação de Acessibilidade é opt-in. O Android precisa autorizar a instalação da atualização; não há instalação silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt341-pgs-home-login-edu-parity-20261114",
+      "minVersionCode": 54546,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.39 — Correções LT340/LT341",
+      "sections": {
+        "novidades": [
+          "Buscar Pokémon abre o overlay diretamente pela Home, com imagem ON/OFF própria; bolha de resultados usa arte ON/OFF no mesmo porte das Pokébolas.",
+          "Ícones P1 e P2 renovados com os WebPs originais e pequenos indicadores de login; detalhes das duas contas em painel compacto.",
+          "Inspetor do Edu com navegação individual ou por sequências, Play/Pause, comparação, guias e saída.",
+          "Na lupa PGS é possível visualizar, excluir, substituir e acrescentar imagens monitoradas, com prioridade definida pelo usuário."
+        ],
+        "melhorias": [
+          "Reconhecimento do feed PGSharp com modelos de ícones em múltiplos tamanhos, prioridade estável por Pokémon e confirmação real do gesto Android.",
+          "Menus PGS mais compactos e notificações exclusivas em estilo semelhante às Pokébolas.",
+          "Menu Home harmonizado, logo sem compressão, botões Apoiar e Menu sem fundo, compartilhar com contraste por tema.",
+          "Autenticação PoGoCoordinates distingue conta logada de treinador vinculado; coleta apenas nome e foto públicos no perfil oficial."
+        ],
+        "correcoes": [
+          "Correções na ação de seleção de ícones e na detecção do jogo em primeiro plano; mensagem de erro quando um toque não é aceito.",
+          "Rank Geral mostra apenas a posição do ranking à direita; o número da Pokédex aparece menor junto ao nome.",
+          "Botão fechar do Doce Raro encerra o serviço e remove a bolha.",
+          "Ícones de lixeira branca/preta e imagens de login e Pokébolas recuperados do Drive sem perda de qualidade."
+        ],
+        "emDesenvolvimento": [
+          "PGSharp: toque, teleporte, mapa e Shiny reais permanecem pendentes de testes no aparelho; consulte a issue #350.",
+          "Login OAuth Google/Discord e dados de nome/foto dependem da hidratação do site oficial e de validação real no Android.",
+          "Não há instalação silenciosa; o usuário precisa autorizar a atualização no Android."
+        ]
+      }
     }
   ]
 }

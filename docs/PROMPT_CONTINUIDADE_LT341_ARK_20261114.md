@@ -1,5 +1,14 @@
 # PokeSearch — LT341 / ARK — Continuidade e homologação Samsung (14/11/2026)
 
+## Atualização de estado pós-merge da LT341
+- **LT340 aplicada à main:** PR #358, squash `0ab24070a48bd31e6fd2f216855515e4c7de2d20`.
+- **LT341 aplicada à main:** PR #359, squash `9d4b6a6705b894a2621d18dd846ecaf727119c47`.
+- Arte original do Drive **já foi adicionada** pelo PR #359; não duplicar arquivos por importação paralela. Pokébola ON/OFF, três badges de login e lixeiras preta/branca no diretório `drawable-nodpi` com bytes preservados. A branch experimental `feature/lt341-home-login-ranks-edu-candy-ark-20261114` contém somente uma cópia paralela das mesmas cinco artes; não fazer merge para não duplicar recursos.
+- **Pedido de publicação em andamento:** branch `release/lt341-home-pgs-login-edu-20261114`, `release/official-request.json` para 0.03.39 / versionCode 54546 / label 51343, predecessor 0.03.38/54545. Só declarar publicado após checks do pedido, merge e workflow `pokesearch-official-release.yml` success, tag oficial, APK assinado e SHA-256.
+- PR #359 passou QA Core/Node, LT169, LT62 Java, LT173 OTA, PGS Android e Secure Beta. **Não equivale ao teste físico**. A antiga QA LT146 que falhou em `AssertionError` ao reconstruir CDN de sprites 2050/2050 é uma falha de QA a observar, sem dispensar o preflight de release.
+- **Próximo foco em Samsung:** tela do feed do PGSharp *com Lucario visível*, seleção do ícone, alerta de confirmação do toque e status em tempo real, navegação/teleporte. Validar P1/P2/Doce Raro, Rank Geral e menu compactos em tamanhos variados. No login, testar Google e Discord oficialmente em ambas as contas, nome, avatar e fechamento automático após confirmação. Não expor dados pessoais na issue pública.
+
+
 ## Estado de entrada validado
 - Repositório oficial: `LucianoToscano/PokeSearch`.
 - Última publicação confirmada ANTES destas alterações: **LT339, 0.03.38, versionCode 54545**, release `v0.03.38-54545`.
