@@ -121,3 +121,15 @@ Todos os 6 SHA-256 acima identificam os PNGs fornecidos diretamente pelo respons
 - **Homologação obrigatória pendente:** o detector depende do desenho e escala verdadeiros do feed e das permissões Android; o teste com ícone Lucario, detecção de mapa/PokéStops e qualidade das notificações deve ser confirmado em Samsung na issue #350. Para mensagens do PGSharp sem nome da espécie, o motor mantém regra conservadora, não declara falsa detecção. Não inventar sucesso físico.
 
 **Publicação solicitada nesta etapa:** após CI Node/Java, compilação Android/R8, revisão do pedido monotônico, assinatura permanente e integridade verificada, preparar merge/release oficial. Não dispensar esses gates nem alegar instalação no Samsung.
+
+
+## Estado final de publicação — LT339 oficial 0.03.38 (14/11/2026)
+
+**Este registro substitui o estado histórico "EM EDIÇÃO" acima**: após a solicitação explícita de auditoria, correção, merge e atualização pelo responsável, LT339 foi publicada no fluxo oficial.
+
+- [PR #355](https://github.com/LucianoToscano/PokeSearch/pull/355) merge squash `94f994acffd135537bb094639b65ede6382ba163`; sete QAs completos da feature no HEAD `9745526855ce32974619c4656040368f398c3565`, inclusive build PGS Android QA e Secure beta success.
+- [PR #356](https://github.com/LucianoToscano/PokeSearch/pull/356) merge squash `594dffa9539242a273215b41794e9d0d2dbb7c40`, pedido de release monotônico 0.03.38 / versionCode 54545 / label 51342.
+- [Workflow oficial protegido #43586106402](https://github.com/LucianoToscano/PokeSearch/actions/runs/43586106402) **completed/success**, com certificado permanente, validação de recursos, build/assinatura, inspeção ZIP/R8, SHA público e publicação ao GitHub Releases.
+- [Release estável v0.03.38-54545](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.38-54545): `PokeSearch-v0.03.38-LT.apk`, **52.319.460 bytes**, SHA-256 **`b6e3fee8058e149177f5dea2478182ee31673c3564abc1fd0d61cac603440d25`**; `draft=false`, `prerelease=false`, `asset.state=uploaded`.
+- Atualizador integrado lê `releases/latest`: a versão está disponível para atualização mediante download, validação e confirmação do Android. A ferramenta não instala o aplicativo silenciosamente nem confirma a instalação física.
+- **QA físico ainda não concluído:** o usuário deve confirmar a seleção do ícone de Lucario no feed do PGSharp e medir o ciclo 60 s/2 s e notificação Shiny da espécie correta no Samsung. A issue [#350](https://github.com/LucianoToscano/PokeSearch/issues/350) permanece aberta. Avisos Shiny sem nome da espécie não oferecem identidade comprovada; o PokeSearch não reconhece Shiny diretamente pelo Pokémon 3D.
