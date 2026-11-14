@@ -44,6 +44,34 @@ final class EduSpriteInspector {
     private EduSpriteGuideView leftGuides,rightGuides;
     private TextView indexLabel,rightLabel;
     private boolean controlsVisible,guidesVisible,reviewing,showComparison;
+    private boolean groupMode=false,playing=false;
+    private int selectedGroup=0,animationPosition=0;
+    private final boolean[] enabledGroups={true,true,true,true,true,true,true};
+    private static final String[] GROUP_NAMES={
+        "Frente","Direita","Esquerda","Arrastar","Teleporte","Pokébola","Celular"};
+    private static final String[] GROUP_KEYS={
+        "caminhada_frente","caminhada_direita","caminhada_esquerda",
+        "arrastando","teleporte_efeito","pokebola_gesto","edu_jogando"};
+    private final android.os.Handler playbackHandler=new android.os.Handler(
+        android.os.Looper.getMainLooper());
+    private final Runnable playbackTick=new Runnable(){
+        @Override public void run(){
+            if(!playing||!controlsVisible||!reviewing)return;
+            if(groupMode){
+                int[] frames=EduSpriteAtlas.sequence(GROUP_KEYS[selectedGroup]);
+                if(frames.length==0){pausePlayback();return;}
+                animationPosition=(animationPosition+1)%frames.length;
+                selectedIndex=frames[animationPosition];
+                listener.selected(selectedIndex);
+                updateComparisonImages();updateLabel();
+                playbackHandler.postDelayed(this,
+                    Math.max(90,EduSpriteAtlas.durationMs(GROUP_KEYS[selectedGroup])));
+            }else{
+                change(1);
+                playbackHandler.postDelayed(this,260L);
+            }
+        }
+    };
     private int selectedIndex=DEFAULT_FRAME;
     private int lastArtSize=-1;
     private int pairCellSize;
@@ -99,6 +127,7 @@ final class EduSpriteInspector {
         if(rightGuides!=null)rightGuides.setEnabledGuides(enabled);
     }
     void stopReview(){
+        pausePlayback();
         boolean hadReview=reviewing||showComparison;
         showComparison=false;reviewing=false;
         removeComparison();
@@ -109,18 +138,96 @@ final class EduSpriteInspector {
         if(comparison!=null)comparison.setVisibility(visible?View.VISIBLE:View.GONE);
     }
     void destroy(){
+        pausePlayback();
         removeComparison();
         removeToolbar();
     }
 
-    private void change(int increment){
-        if(!reviewing)selectedIndex=clampFrame(listener.currentFrame());
-        selectedIndex=(selectedIndex+increment+EduSpriteAtlas.COLLECTION_COUNT)
-            %EduSpriteAtlas.COLLECTION_COUNT;
-        reviewing=true;
-        listener.selected(selectedIndex);
-        updateComparisonImages();
+    private void pausePlayback(){
+        playing=false;
+        playbackHandler.removeCallbacks(playbackTick);
+    }
+    private void togglePlayback(){
+        if(playing){pausePlayback();updateLabel();return;}
+        if(!reviewing){
+            reviewing=true;
+            selectedIndex=clampFrame(listener.currentFrame());
+        }
+        playing=true;
+        if(groupMode){
+            int[] frames=EduSpriteAtlas.sequence(GROUP_KEYS[selectedGroup]);
+            if(frames.length>0){
+                animationPosition=0;selectedIndex=frames[0];
+                listener.selected(selectedIndex);
+            }
+        }
         updateLabel();
+        playbackHandler.postDelayed(playbackTick,200L);
+    }
+    private void change(int increment){
+        if(groupMode){
+            if(!reviewing)reviewing=true;
+            int index=selectedGroup;
+            for(int tries=0;tries<GROUP_KEYS.length;tries++){
+                index=(index+increment+GROUP_KEYS.length)%GROUP_KEYS.length;
+                if(enabledGroups[index])break;
+            }
+            if(!enabledGroups[index])return;
+            selectedGroup=index;animationPosition=0;
+            int[] frames=EduSpriteAtlas.sequence(GROUP_KEYS[index]);
+            if(frames.length>0){
+                selectedIndex=frames[0];
+                listener.selected(selectedIndex);
+            }
+            if(playing){
+                playbackHandler.removeCallbacks(playbackTick);
+                playbackHandler.postDelayed(playbackTick,
+                    EduSpriteAtlas.durationMs(GROUP_KEYS[selectedGroup]));
+            }
+        }else{
+            if(!reviewing)selectedIndex=clampFrame(listener.currentFrame());
+            selectedIndex=(selectedIndex+increment+EduSpriteAtlas.COLLECTION_COUNT)
+                %EduSpriteAtlas.COLLECTION_COUNT;
+            reviewing=true;
+            listener.selected(selectedIndex);
+        }
+        updateComparisonImages();updateLabel();
+    }
+    private void showGroupChoices(){
+        final boolean[] snapshot=enabledGroups.clone();
+        android.content.Context themed=new android.view.ContextThemeWrapper(
+            context,android.R.style.Theme_Material_Dialog_Alert);
+        android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(themed)
+            .setTitle("Movimentos para reproduzir")
+            .setMultiChoiceItems(GROUP_NAMES,snapshot,(dlg,index,checked)->
+                snapshot[index]=checked)
+            .setNegativeButton("Cancelar",null)
+            .setNeutralButton("Quadros individuais",(dlg,which)->{
+                pausePlayback();groupMode=false;updateLabel();
+            })
+            .setPositiveButton("Usar grupos",(dlg,which)->{
+                int first=-1;
+                for(int i=0;i<snapshot.length;i++)if(snapshot[i]&&first<0)first=i;
+                if(first<0){
+                    pausePlayback();groupMode=false;updateLabel();return;
+                }
+                System.arraycopy(snapshot,0,enabledGroups,0,snapshot.length);
+                groupMode=true;selectedGroup=first;animationPosition=0;
+                reviewing=true;
+                int[] frames=EduSpriteAtlas.sequence(GROUP_KEYS[selectedGroup]);
+                if(frames.length>0){
+                    selectedIndex=frames[0];listener.selected(selectedIndex);
+                }
+                updateComparisonImages();updateLabel();
+                if(!playing)togglePlayback();
+            }).create();
+        if(dialog.getWindow()!=null)dialog.getWindow().setType(
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+        dialog.show();
+    }
+    private void toggleGuides(){
+        if(!showComparison)toggleCompare();
+        setGuidesVisible(!guidesVisible);
     }
     private void toggleCompare(){
         if(!reviewing){
@@ -148,30 +255,46 @@ final class EduSpriteInspector {
         toolbar.setOrientation(LinearLayout.HORIZONTAL);
         toolbar.setPadding(dp(3),dp(3),dp(3),dp(3));
         toolbar.setBackground(bg(0xCB17202C,0xB2718591,14));
-        TextView back=control("◀️","Sprite anterior");
-        TextView duo=control("👬","Comparar com Edu padrão #42; segure para voltar ao automático");
-        TextView next=control("▶️","Próxima sprite");
-        toolbar.addView(back,new LinearLayout.LayoutParams(dp(38),dp(34)));
-        toolbar.addView(duo,new LinearLayout.LayoutParams(dp(38),dp(34)));
-        toolbar.addView(next,new LinearLayout.LayoutParams(dp(38),dp(34)));
+        String[] icons={"◀️","⏯️","🎦","▶️","👬","📐","❌"};
+        String[] names={"Anterior","Reproduzir ou pausar",
+            "Escolher movimentos agrupados","Próximo","Comparar com padrão",
+            "Linhas de medidas","Ocultar inspetor"};
+        for(int i=0;i<icons.length;i++){
+            final int index=i;
+            TextView button=control(icons[i],names[i]);
+            toolbar.addView(button,new LinearLayout.LayoutParams(dp(32),dp(34)));
+            button.setOnClickListener(v->{
+                switch(index){
+                    case 0:change(-1);break;
+                    case 1:togglePlayback();break;
+                    case 2:showGroupChoices();break;
+                    case 3:change(1);break;
+                    case 4:toggleCompare();break;
+                    case 5:toggleGuides();break;
+                    case 6:setControlsVisible(false,null,0);break;
+                }
+            });
+        }
         indexLabel=new TextView(context);
         indexLabel.setTextColor(Color.WHITE);
-        indexLabel.setTextSize(10f);
+        indexLabel.setTextSize(9f);
         indexLabel.setGravity(Gravity.CENTER);
-        toolbar.addView(indexLabel,new LinearLayout.LayoutParams(dp(40),dp(34)));
-        back.setOnClickListener(v->change(-1));
-        duo.setOnClickListener(v->toggleCompare());
-        duo.setOnLongClickListener(v->{stopReview();updateLabel();return true;});
-        next.setOnClickListener(v->change(1));
+        indexLabel.setContentDescription("Auto ou número da sprite. Toque para retornar ao automático.");
+        toolbar.addView(indexLabel,new LinearLayout.LayoutParams(dp(43),dp(34)));
+        indexLabel.setOnClickListener(v->{stopReview();updateLabel();});
         updateLabel();
-        toolbarParams=windowParams(dp(164),dp(42),false);
+        toolbarParams=windowParams(dp(273),dp(42),false);
         wm.addView(toolbar,toolbarParams);
     }
     private void updateLabel(){
-        if(indexLabel!=null)
+        if(indexLabel!=null){
             indexLabel.setText(reviewing?
-                String.format(java.util.Locale.ROOT,"#%02d",selectedIndex):
-                "auto");
+                String.format(java.util.Locale.ROOT,"#%02d",selectedIndex):"Auto");
+            indexLabel.setContentDescription(reviewing?
+                (groupMode?"Grupo "+GROUP_NAMES[selectedGroup]+"; ":"")+
+                    "Quadro "+selectedIndex+"; toque para voltar ao Auto":
+                "Animação automática. Toque para manter o modo Auto.");
+        }
     }
     private TextView control(String symbol,String description){
         TextView b=new TextView(context);
