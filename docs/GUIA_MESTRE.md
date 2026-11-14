@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT339 — Preparação de release oficial (14/11/2026; QA aprovado, publicação pendente)
+
+- **Feature code merged:** [PR #355](https://github.com/LucianoToscano/PokeSearch/pull/355), squash `94f994acffd135537bb094639b65ede6382ba163`, após QA verde no HEAD `9745526855ce32974619c4656040368f398c3565`. Inclui reorganização Home, sprites ON/OFF, perfil PoGoCoordinates print limitado, overlay PGS, captura Lucario e ciclo 60 s mapa / 2 s Shiny da espécie.
+- **CI verde:** QA Core LT211 [#43585423618](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423618); LT169 Node completo [#43585423658](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423658); compilação Java LT62 [#43585423633](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423633); OTA LT173 [#43585423690](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423690); PGS Android QA [#43585423653](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423653); Node QA [#43585423680](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423680); Secure beta QA [#43585423652](https://github.com/LucianoToscano/PokeSearch/actions/runs/43585423652).
+- **Causa e correções auditadas:** cadastro da Home só marcava pendência, sem abrir seleção de screenshot; agora aguarda feed PGSharp, escolhe ícone humano e recarrega modelos. O motor podia repetir a mesma leitura sem reiniciar a fila e dependia de screenshot para concluir timeout; agora watchdog independente e sequência automática. Sinais de mapa exigem marcadores; avisos Shiny sem nome de espécie não confirmam Lucario. Ajustes avançados de tempo reduzem-se a dois valores.
+- **Assets corrigidos sem perda:** três arquivos lossless WebP eram `.png` falsos; erro AAPT corrigido renomeando recursos `.webp` sem recodificação. PNG transparente derivado Home OFF e JPEG original preservados, sprites Edu e sons intactos.
+- **Candidata oficial protegida:** branch `release/lt339-pgs-functional-20261114`, pedido `0.03.38 / versionCode 54545 / label 51342`, predecessor `v0.03.37-54544` e `qa_max_code=54544`, notas no `release_notes.json`. **Somente considerar oficialmente publicada após CI do pedido, merge, workflow oficial com assinatura permanente e verificação do tag, APK e hash.**
+- **Limitação física:** teleporte via PGSharp, detecção de cena e Shiny reais **não estão homologados em Samsung**. A issue [#350](https://github.com/LucianoToscano/PokeSearch/issues/350) permanece aberta para captura de evidências e ajustes por dispositivo. PGS off por padrão até habilitação explícita; não afirmar instalação Android sem confirmação do aparelho.
+
+
 ### LT339 — Captura de tela no Perfil PoGoCoordinates (14/11/2026, somente branch)
 
 - No gerenciamento de conta PoGoCoordinates, a janela `loginDialog` do PokeSearch aplicava `FLAG_SECURE` e impedia capturas até da página oficial de Perfil.
