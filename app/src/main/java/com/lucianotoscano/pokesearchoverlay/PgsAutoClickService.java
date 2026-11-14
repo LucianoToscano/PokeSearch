@@ -487,8 +487,12 @@ public final class PgsAutoClickService extends AccessibilityService {
                     }
                 }
                 if(match==null){
-                    // Feed vazio/posições já visitadas: nova leitura em 3 s,
-                    // sem pausar, sem dormir 60/120 segundos desnecessariamente.
+                    // Recomeça a fila quando a única coisa que resta na tela
+                    // são posições já visitadas. Sem checkbox de repetição.
+                    if(!items.isEmpty()&&++noFreshAttempts>=3){
+                        visitedSlots.clear();notifiedFeedSlots.clear();
+                        nextIndex=0;total=0;noFreshAttempts=0;
+                    }else if(items.isEmpty())noFreshAttempts=0;
                     status("FEED VAZIO · NOVA LEITURA");
                     handler.postDelayed(()->{
                         if(running&&ticket==stamp)scanAndTap();
@@ -648,7 +652,15 @@ public final class PgsAutoClickService extends AccessibilityService {
                 handler.postDelayed(()->checkMap(stamp),1500L);
             }
             @Override public void onError(String msg){
-                if(running&&stamp==ticket)fail("Falha na leitura da tela: "+msg);
+                if(!running||stamp!=ticket)return;
+                // Erro temporário de frame não anula o relógio de 60s.
+                // Se a permissão Android foi negada, pausa com diagnóstico.
+                if(msg.contains("permissão")||msg.contains("recusou a captura"))
+                    fail("Captura bloqueada pelo Android: "+msg);
+                else{
+                    status("AGUARDANDO CAPTURA");
+                    handler.postDelayed(()->checkMap(stamp),1500L);
+                }
             }
         });
     }
