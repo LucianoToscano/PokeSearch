@@ -71,16 +71,28 @@ final class PgsBuscasPanel {
         return Math.round(c.getResources().getDisplayMetrics().density*value);
     }
     private static TextView text(Context c,String value){
-        TextView v=new TextView(c);v.setText(value);v.setTextColor(Color.WHITE);v.setTextSize(13);
+        TextView v=new TextView(c);v.setText(value);v.setTextColor(foreground(c));v.setTextSize(13);
         v.setGravity(Gravity.CENTER_VERTICAL);v.setPadding(dp(c,7),dp(c,6),dp(c,7),dp(c,6));return v;
     }
     private static Button button(Context c,String value){
-        Button b=new Button(c);b.setAllCaps(false);b.setTextSize(12);b.setText(value);return b;
+        Button b=new Button(c);b.setAllCaps(false);b.setTextSize(11);b.setText(value);
+        b.setMinHeight(0);b.setMinimumHeight(0);b.setPadding(dp(c,5),0,dp(c,5),0);
+        b.setTextColor(foreground(c));GradientDrawable bg=new GradientDrawable();
+        bg.setColor(0x55394A5C);bg.setCornerRadius(dp(c,6));
+        bg.setStroke(dp(c,1),0x557E91A5);b.setBackground(bg);return b;
+    }
+    private static int foreground(Context c){
+        try{org.json.JSONObject p=new org.json.JSONObject(c.getSharedPreferences("prefs",0)
+            .getString("visualPrefsJson","{}"));
+            return "light".equals(p.optString("menuBgMode","dark"))?
+                Color.rgb(20,33,48):Color.rgb(244,247,255);
+        }catch(Exception ignored){return Color.WHITE;}
     }
     static void show(Activity a){
         Dialog dialog=new Dialog(a);
-        LinearLayout root=new LinearLayout(a);root.setOrientation(1);root.setPadding(dp(a,8),dp(a,8),dp(a,8),dp(a,8));
-        GradientDrawable bg=new GradientDrawable();bg.setColor(0xF010151F);bg.setCornerRadius(dp(a,12));root.setBackground(bg);
+        LinearLayout root=new LinearLayout(a);root.setOrientation(1);root.setPadding(dp(a,9),dp(a,9),dp(a,9),dp(a,9));
+        GradientDrawable bg=new GradientDrawable();bg.setColor(OverlayQuickMenus.panelColor(a));
+        bg.setCornerRadius(dp(a,10));bg.setStroke(dp(a,1),0x667E91A5);root.setBackground(bg);
         TextView heading=text(a,"🔎 BUSCAS");
         root.addView(heading);
         LinearLayout tabs=new LinearLayout(a);
@@ -100,7 +112,7 @@ final class PgsBuscasPanel {
         content.removeAllViews();SharedPreferences prefs=a.getSharedPreferences(PREFS,0);
         if(tab==0){
             heading.setText("🔎 BUSCAS · Selecionados "+selected(a).size()+"/50");
-            EditText search=new EditText(a);search.setSingleLine(true);search.setTextColor(Color.WHITE);
+            EditText search=new EditText(a);search.setSingleLine(true);search.setTextColor(foreground(a));
             search.setHint("Nome ou número");search.setHintTextColor(0xFFBFC8D5);content.addView(search);
             Button clear=button(a,"Limpar seleção");content.addView(clear);
             ScrollView scroll=new ScrollView(a);LinearLayout list=new LinearLayout(a);list.setOrientation(1);
@@ -149,7 +161,7 @@ final class PgsBuscasPanel {
             for(int i=0;i<keys.length;i++){
                 final String key=keys[i];LinearLayout row=new LinearLayout(a);
                 row.addView(text(a,names[i]+" (s)"),new LinearLayout.LayoutParams(0,dp(a,48),1));
-                EditText input=new EditText(a);input.setInputType(2);input.setTextColor(Color.WHITE);
+                EditText input=new EditText(a);input.setInputType(2);input.setTextColor(foreground(a));
                 input.setText(String.valueOf(prefs.getInt(key,defaults[i])));
                 row.addView(input,new LinearLayout.LayoutParams(dp(a,75),dp(a,48)));
                 input.addTextChangedListener(new TextWatcher(){
@@ -164,14 +176,14 @@ final class PgsBuscasPanel {
                 content.addView(row);
             }
             Switch repeat=new Switch(a);repeat.setText("Repetir automaticamente");
-            repeat.setTextColor(Color.WHITE);repeat.setChecked(prefs.getBoolean("repeat",true));
+            repeat.setTextColor(foreground(a));repeat.setChecked(prefs.getBoolean("repeat",true));
             repeat.setOnCheckedChangeListener((v,on)->prefs.edit().putBoolean("repeat",on).apply());
             content.addView(repeat);
         }else if(tab==2){
             heading.setText("🔔 NOTIFICAÇÕES");
             content.addView(text(a,"Novos Pokémon · Pokémon de Buscas · Shiny"));
             content.addView(text(a,"Alertas dependem de fontes verificadas; não há detecção Shiny ativa."));
-            Switch vibrate=new Switch(a);vibrate.setText("Vibração Shiny");vibrate.setTextColor(Color.WHITE);
+            Switch vibrate=new Switch(a);vibrate.setText("Vibração Shiny");vibrate.setTextColor(foreground(a));
             vibrate.setChecked(prefs.getBoolean("vibrate",true));
             vibrate.setOnCheckedChangeListener((v,on)->prefs.edit().putBoolean("vibrate",on).apply());
             content.addView(vibrate);
