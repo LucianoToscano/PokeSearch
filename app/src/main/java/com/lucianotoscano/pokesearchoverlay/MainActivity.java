@@ -352,6 +352,17 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
     }
+    private void addHomePreviewIcon(LinearLayout row,int drawable,String description,
+                                    View.OnClickListener action){
+        ImageView icon=new ImageView(this);
+        icon.setImageResource(drawable);
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        icon.setPadding(d(1),d(1),d(1),d(1));
+        icon.setContentDescription(description);
+        icon.setBackground(null);
+        icon.setOnClickListener(action);
+        row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
+    }
     private void addHomePreviewIcon(LinearLayout row,int drawable,String description){
         ImageView icon=new ImageView(this);
         icon.setImageResource(drawable);
@@ -423,7 +434,7 @@ public class MainActivity extends Activity {
             });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
-        addHomePreviewIcon(dualOverlayRow,R.drawable.home_search,"Buscas Pokémon");
+        addHomePreviewIcon(dualOverlayRow,R.drawable.home_search,"Buscas Pokémon",v->PgsBuscasPanel.show(this));
         // Passes, Rare Candy e demais atalhos são posicionados após sua criação.
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(48));
         dualLp.bottomMargin=d(5);
