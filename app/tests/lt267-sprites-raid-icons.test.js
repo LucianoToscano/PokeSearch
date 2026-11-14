@@ -68,8 +68,8 @@ assert.equal(new Set(pinnedCostumeKeys).size,140,
  "LT289: original 136 exact GO sprites plus four Singapore Anniversary gender/Shiny variants");
 const lt144EventCount=[...builder.matchAll(/"pm(?:41|94)\.[^"]+\.png":\s*"[a-f0-9]{64}"/g)].length;
 assert.equal(lt144EventCount,4,"Four extra LT144 SHA256-pinned event costumes");
-assert.ok(qaWorkflow.includes("assert len(report['costumes'])==144"),
- "Signed QA must account for 140 PokeMiners and four exact LT144 event assets");
+assert.ok(qaWorkflow.includes("assert len(report['costumes'])>=144"),
+ "Signed QA must retain the 140 historical pinned PNGs and four LT144 event assets, while accepting additional verified costumes");
 assert.ok(qaWorkflow.includes("for dex in (422,423)") &&
  qaWorkflow.includes('for sea in ("EAST","WEST")'),
  "Exact East/West Sea normal/shiny assets required for both species");
