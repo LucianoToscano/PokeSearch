@@ -14,11 +14,11 @@ assert.equal(req.enabled,true);
 // pedidos futuros avancem (sem fixar 0.03.36/54543 para sempre).
 assert.ok(notes.releases.some(x=>x.minVersionCode===54543),
     "As notas oficiais LT337 devem permanecer disponiveis");
-assert.match(req.version,/^0\\.\\d{2}\\.\\d{2}$/);
+assert.match(req.version,/^0\.\d{2}\.\d{2}$/);
 assert.ok(req.version>="0.03.36","Versao publica nao deve retroceder");
 assert.ok(req.code>=54543,"VersionCode nao deve retroceder");
 assert.ok(req.label>=51340,"Label nao deve retroceder");
-const previous=/^v(0\\.\\d{2}\\.\\d{2})-(\\d+)$/.exec(req.previous_tag);
+const previous=/^v(0\.\d{2}\.\d{2})-(\d+)$/.exec(req.previous_tag);
 assert.ok(previous,"A release anterior precisa usar tag oficial");
 assert.ok(req.version>previous[1],"A versao deve superar a ultima release");
 assert.ok(req.code>Number(previous[2]),"O codigo deve superar a ultima release");
