@@ -6,118 +6,122 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.View;
 
-/**
- * Seletor local do ícone 2D, sem salvar no toque: toque para posicionar,
- * arraste para mover e ajuste com o canto inferior direito. Confirmar/Cancelar
- * são responsabilidade do serviço de Acessibilidade.
- */
+/** Recorte PGS: quadrado, horizontal (2:1) ou livre; prévia fora do dedo. */
 final class PgsAutoCropSelection extends View {
+    enum Shape {SQUARE,HORIZONTAL,FREE}
     private final int originalWidth,originalHeight;
     private final Runnable changed;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF crop=new RectF();
-    private int referencePx=32;
+    private int referencePx=32,dragging=0;
     private boolean selected=false;
-    private int dragging=0; // 1=mover, 2=redimensionar
+    private Shape shape=Shape.SQUARE;
     private float prevX,prevY;
-
-    PgsAutoCropSelection(Context context,int width,int height,Runnable onChanged){
-        super(context);
-        originalWidth=Math.max(1,width);
-        originalHeight=Math.max(1,height);
-        changed=onChanged;
-        setContentDescription("Seleção de sprite: toque no ícone, mova ou arraste o canto para ajustar");
+    private long lastPreviewAt=0L;
+    PgsAutoCropSelection(Context c,int width,int height,Runnable notify){
+        super(c);originalWidth=Math.max(1,width);originalHeight=Math.max(1,height);
+        changed=notify;
+        setContentDescription("Recorte de sprite: toque para selecionar, arraste a área, ajuste pela alça branca ou use a lupa");
     }
-    private float clamp(float value,float lo,float hi){
-        return Math.max(lo,Math.min(hi,value));
+    private float clamp(float value,float min,float max){
+        return Math.max(min,Math.min(max,value));
     }
-    void setReferencePx(int value){
-        referencePx=Math.max(16,Math.min(92,value));
-        if(selected && getWidth()>0 && getHeight()>0)position(crop.centerX(),crop.centerY());
-        invalidate();
-        if(changed!=null)changed.run();
+    Shape shape(){return shape;}
+    void setShape(Shape next){
+        if(next==null)return;
+        shape=next;
+        if(selected)position(crop.centerX(),crop.centerY());
+        notifyChanged(true);
+    }
+    void setReferencePx(int n){
+        referencePx=Math.max(16,Math.min(92,n));
+        if(selected)position(crop.centerX(),crop.centerY());
+        notifyChanged(true);
     }
     boolean hasSelection(){return selected;}
+    float centerRatioX(){return selected&&getWidth()>0?crop.centerX()/getWidth():.5f;}
     private float defaultSide(){
-        return Math.max(16f,referencePx*originalWidth/740f)*getWidth()/originalWidth;
+        return Math.max(12f,referencePx*getWidth()/740f);
     }
     private void position(float cx,float cy){
-        float side=Math.max(12f,Math.min(Math.min(getWidth(),getHeight()),defaultSide()));
-        float left=clamp(cx-side/2f,0,Math.max(0,getWidth()-side));
-        float top=clamp(cy-side/2f,0,Math.max(0,getHeight()-side));
-        crop.set(left,top,left+side,top+side);
-        selected=true;
+        float w=Math.max(12f,Math.min(getWidth(),defaultSide()));
+        float h=shape==Shape.HORIZONTAL?w/2f:w;
+        w=Math.min(w,getWidth());h=Math.min(h,getHeight());
+        float left=clamp(cx-w/2,0,Math.max(0,getWidth()-w));
+        float top=clamp(cy-h/2,0,Math.max(0,getHeight()-h));
+        crop.set(left,top,left+w,top+h);selected=true;
     }
     Rect selectedBitmapRect(){
         if(!selected||getWidth()<=0||getHeight()<=0)return null;
-        int side=Math.max(16,Math.min(92,referencePx));
-        int w=Math.max(16,Math.round(side*originalWidth/740f));
-        w=Math.min(w,Math.min(originalWidth,originalHeight));
-        int cx=Math.round(crop.centerX()*originalWidth/getWidth());
-        int cy=Math.round(crop.centerY()*originalHeight/getHeight());
-        int left=Math.max(0,Math.min(originalWidth-w,cx-w/2));
-        int top=Math.max(0,Math.min(originalHeight-w,cy-w/2));
-        return new Rect(left,top,left+w,top+w);
+        int l=Math.max(0,Math.min(originalWidth-1,
+            Math.round(crop.left*originalWidth/getWidth())));
+        int t=Math.max(0,Math.min(originalHeight-1,
+            Math.round(crop.top*originalHeight/getHeight())));
+        int r=Math.max(l+1,Math.min(originalWidth,
+            Math.round(crop.right*originalWidth/getWidth())));
+        int b=Math.max(t+1,Math.min(originalHeight,
+            Math.round(crop.bottom*originalHeight/getHeight())));
+        return new Rect(l,t,r,b);
+    }
+    private void notifyChanged(boolean force){
+        invalidate();long now=SystemClock.uptimeMillis();
+        if(changed!=null&&(force||now-lastPreviewAt>65L)){
+            lastPreviewAt=now;changed.run();
+        }
     }
     @Override protected void onDraw(Canvas canvas){
         super.onDraw(canvas);
         if(!selected)return;
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(0x8C02060E);
+        paint.setStyle(Paint.Style.FILL);paint.setColor(0x9002060E);
         canvas.drawRect(0,0,getWidth(),crop.top,paint);
         canvas.drawRect(0,crop.bottom,getWidth(),getHeight(),paint);
         canvas.drawRect(0,crop.top,crop.left,crop.bottom,paint);
         canvas.drawRect(crop.right,crop.top,getWidth(),crop.bottom,paint);
-        paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(3f*getResources().getDisplayMetrics().density);
-        paint.setColor(Color.WHITE);
-        canvas.drawRoundRect(crop,4f,4f,paint);
-        paint.setStrokeWidth(5f*getResources().getDisplayMetrics().density);
-        float handle=11f*getResources().getDisplayMetrics().density;
-        canvas.drawLine(crop.right-handle,crop.bottom,crop.right,crop.bottom,paint);
-        canvas.drawLine(crop.right,crop.bottom-handle,crop.right,crop.bottom,paint);
-        paint.setStyle(Paint.Style.FILL);
+        float density=getResources().getDisplayMetrics().density;
+        paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(2*density);
+        paint.setColor(Color.WHITE);canvas.drawRoundRect(crop,5*density,5*density,paint);
+        paint.setStyle(Paint.Style.FILL);paint.setColor(0xFFFFFFFF);
+        canvas.drawCircle(crop.right,crop.bottom,6*density,paint);
+        paint.setColor(0xCC213547);canvas.drawCircle(crop.right,crop.bottom,3*density,paint);
     }
-    @Override public boolean onTouchEvent(MotionEvent e){
-        float x=clamp(e.getX(),0,getWidth());
-        float y=clamp(e.getY(),0,getHeight());
-        int action=e.getActionMasked();
+    @Override public boolean onTouchEvent(MotionEvent event){
+        float x=clamp(event.getX(),0,getWidth());
+        float y=clamp(event.getY(),0,getHeight());
+        int action=event.getActionMasked();
         if(action==MotionEvent.ACTION_DOWN){
             float reach=28f*getResources().getDisplayMetrics().density;
-            if(selected && Math.abs(x-crop.right)<reach && Math.abs(y-crop.bottom)<reach){
+            if(selected&&Math.abs(x-crop.right)<reach&&Math.abs(y-crop.bottom)<reach)
                 dragging=2;
-            }else if(selected&&crop.contains(x,y)){
-                dragging=1;
-            }else{
-                position(x,y);dragging=1;
-            }
-            prevX=x;prevY=y;invalidate();return true;
+            else if(selected&&crop.contains(x,y))dragging=1;
+            else{position(x,y);dragging=1;}
+            prevX=x;prevY=y;notifyChanged(true);return true;
         }
         if(action==MotionEvent.ACTION_MOVE){
             if(dragging==1){
-                float dx=x-prevX,dy=y-prevY;
-                crop.offset(dx,dy);
+                crop.offset(x-prevX,y-prevY);
                 if(crop.left<0)crop.offset(-crop.left,0);
                 if(crop.top<0)crop.offset(0,-crop.top);
                 if(crop.right>getWidth())crop.offset(getWidth()-crop.right,0);
                 if(crop.bottom>getHeight())crop.offset(0,getHeight()-crop.bottom);
             }else if(dragging==2){
-                float edge=Math.max(12f*getResources().getDisplayMetrics().density,
-                    Math.max(x-crop.left,y-crop.top));
-                edge=Math.min(edge,Math.min(getWidth()-crop.left,getHeight()-crop.top));
-                crop.right=crop.left+edge;crop.bottom=crop.top+edge;
-                referencePx=Math.max(16,Math.min(92,
-                    Math.round(edge*740f/Math.max(1,getWidth()))));
+                float min=12f*getResources().getDisplayMetrics().density;
+                float w=clamp(x-crop.left,min,getWidth()-crop.left);
+                float h=clamp(y-crop.top,min,getHeight()-crop.top);
+                if(shape==Shape.SQUARE){
+                    float side=Math.min(w,Math.min(getWidth()-crop.left,getHeight()-crop.top));
+                    w=side;h=side;
+                }else if(shape==Shape.HORIZONTAL){
+                    w=Math.min(w,2*(getHeight()-crop.top));h=w/2f;
+                }
+                crop.right=crop.left+w;crop.bottom=crop.top+h;
             }
-            prevX=x;prevY=y;invalidate();return true;
+            prevX=x;prevY=y;notifyChanged(false);return true;
         }
-        if(action==MotionEvent.ACTION_UP){
-            dragging=0;invalidate();
-            if(changed!=null)changed.run();
-            return true;
-        }
+        if(action==MotionEvent.ACTION_UP){dragging=0;notifyChanged(true);return true;}
         if(action==MotionEvent.ACTION_CANCEL){dragging=0;return true;}
         return true;
     }
