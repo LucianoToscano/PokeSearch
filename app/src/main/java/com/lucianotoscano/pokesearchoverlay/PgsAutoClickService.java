@@ -380,7 +380,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     int cycle=Math.max(10,Math.min(7200,cfg.getInt("repeat_interval",120)));
                     boolean repeat=cfg.getBoolean("repeat",true);
                     if(!repeat && nextIndex>0){complete();return;}
-                    int delay=emptyRetries==0?first:emptyRetries==1?Math.max(1,second-first):cycle;
+                    int delay=PgsAutoRetryPolicy.delaySeconds(emptyRetries,first,second,cycle);
                     emptyRetries++;
                     lastNoIconScan=SystemClock.uptimeMillis();
                     status("REBUSCAR "+delay+"s");
