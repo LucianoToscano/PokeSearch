@@ -1,4 +1,7 @@
 # PokeSearch LT344 — Auditoria ARK, CI e aceite físico
+
+**Atualização pós-publicação (14/11/2026):** a versão **0.03.42 / code 54549** foi publicada oficialmente em [v0.03.42-54549](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.42-54549), APK **59.991.436 bytes**, SHA-256 `bb93937b393d469504f7a7fdba18f628933a1da58c784f21a3702b4d95cbd8e3`. [Workflow protegido #43634931326](https://github.com/LucianoToscano/PokeSearch/actions/runs/43634931326) **SUCCESS**. As pendências físicas T01–T28 abaixo **não mudam de status** pelo fato de a release estar assinada; Android não instalou o APK remotamente.
+
 **14/11/2026 • base integrada:** PR [#367](https://github.com/LucianoToscano/PokeSearch/pull/367) / commit `fc24811e92587a1829eb5ed680719cb548fab62d`.
 
 ## Regra de evidência
