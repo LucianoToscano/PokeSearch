@@ -42,7 +42,7 @@ final class EduSpriteInspector {
     private WindowManager.LayoutParams toolbarParams,comparisonParams;
     private ImageView leftImage,rightImage;
     private EduSpriteGuideView leftGuides,rightGuides;
-    private TextView indexLabel,rightLabel;
+    private TextView indexLabel,rightLabel,measurements;
     private boolean controlsVisible,guidesVisible,reviewing,showComparison;
     private int selectedIndex=DEFAULT_FRAME;
     private int lastArtSize=-1;
@@ -219,18 +219,30 @@ final class EduSpriteInspector {
         comparison=new LinearLayout(context);
         comparison.setGravity(Gravity.CENTER);
         comparison.setPadding(dp(4),dp(3),dp(4),dp(3));
-        comparison.setOrientation(LinearLayout.HORIZONTAL);
+        comparison.setOrientation(LinearLayout.VERTICAL);
         comparison.setBackground(bg(0x8C16202D,0xAA618A9B,10));
+        LinearLayout pair=new LinearLayout(context);
+        pair.setGravity(Gravity.CENTER);
+        pair.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout left=createColumn(true);
         LinearLayout right=createColumn(false);
-        comparison.addView(left,new LinearLayout.LayoutParams(pairCellSize,
+        pair.addView(left,new LinearLayout.LayoutParams(pairCellSize,
             pairCellSize+dp(19)));
         LinearLayout.LayoutParams rp=new LinearLayout.LayoutParams(pairCellSize,
             pairCellSize+dp(19));
         rp.leftMargin=dp(3);
-        comparison.addView(right,rp);
+        pair.addView(right,rp);
+        comparison.addView(pair,new LinearLayout.LayoutParams(-1,
+            pairCellSize+dp(19)));
+        measurements=new TextView(context);
+        measurements.setTextSize(9f);
+        measurements.setTextColor(Color.rgb(238,243,251));
+        measurements.setGravity(Gravity.CENTER);
+        measurements.setMaxLines(2);
+        measurements.setContentDescription("Diferenças estimadas de tamanho entre sprites");
+        comparison.addView(measurements,new LinearLayout.LayoutParams(-1,dp(30)));
         comparisonParams=windowParams(pairCellSize*2+dp(11),
-            pairCellSize+dp(25),true);
+            pairCellSize+dp(55),true);
         wm.addView(comparison,comparisonParams);
         updateComparisonImages();
     }
@@ -263,9 +275,13 @@ final class EduSpriteInspector {
     }
     private void updateComparisonImages(){
         if(comparison==null)return;
-        leftImage.setImageDrawable(atlas.frame(42));
-        rightImage.setImageDrawable(atlas.frame(selectedIndex));
+        android.graphics.drawable.Drawable reference=atlas.frame(42);
+        android.graphics.drawable.Drawable chosen=atlas.frame(selectedIndex);
+        leftImage.setImageDrawable(reference);
+        rightImage.setImageDrawable(chosen);
         rightLabel.setText(String.format(java.util.Locale.ROOT,"Quadro #%02d",selectedIndex));
+        if(measurements!=null)
+            measurements.setText(EduSpriteMeasurements.compare(reference,chosen));
     }
     private void updateComparisonPosition(){
         if(comparison==null)return;
@@ -284,6 +300,7 @@ final class EduSpriteInspector {
             catch(IllegalArgumentException ignored){}
             comparison=null;leftImage=null;rightImage=null;
             leftGuides=null;rightGuides=null;rightLabel=null;
+            measurements=null;
         }
     }
     private void removeToolbar(){
