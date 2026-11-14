@@ -554,6 +554,14 @@ public final class RareCandyOverlayService extends Service {
         @android.webkit.JavascriptInterface public void closeCandyMenu(){
             main.post(()->{if(permitted())RareCandyOverlayService.this.closeCandyMenu();});
         }
+        /** Encerrar apenas por ação explícita do X da barra. */
+        @android.webkit.JavascriptInterface public void stopCandyOverlay(){
+            main.post(()->{
+                if(!permitted())return;
+                RareCandyOverlayService.this.closeCandyMenu();
+                stopSelf();
+            });
+        }
         @android.webkit.JavascriptInterface public void refreshCandy(){
             main.post(()->{
                 if(!permitted())return;

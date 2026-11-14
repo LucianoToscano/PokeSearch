@@ -4,8 +4,6 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("n
 const root=path.join(__dirname,"../src/main");
 const java=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
 const files={
- home_pokeball_off:[256,256,"922f1314c60f0c102dcac34669117af24628390d9402e3e6197205fab18fe203"],
- home_pokeball_on:[256,256,"bdd744da75d7f3a118179f88e789f83496ec262b2e1f16590fab8cd4a80fac6e"],
  home_search:[1000,1000,"5e203b9a61b26204d62ba68147bf60a1e823abf1995f8074bbba46401ba4d183"],
  home_weather:[256,256,"3b6b6031a4de92ee06ede025a2c78c6b49e4d19e9331c3367b374702457da768"],
  home_mode_light:[512,512,"40353e440a644d2f44b040aabace3d516c339db2265dc763fc6fa482d4b04c3f"],
@@ -19,6 +17,18 @@ for(const [name,[w,h,expected]] of Object.entries(files)){
  assert.ok([3,6].includes(bytes[25]),name+" transparência");
  if(bytes[25]===3)assert.ok(bytes.includes(Buffer.from("tRNS")),name+" transparência paleta");
  assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"),expected,name+" bytes originais");
+}
+// A LT341 troca a arte de P1/P2 por WebP e preserva os PNGs anteriores intactos.
+for(const [state,sha] of [
+ ["off","922f1314c60f0c102dcac34669117af24628390d9402e3e6197205fab18fe203"],
+ ["on","bdd744da75d7f3a118179f88e789f83496ec262b2e1f16590fab8cd4a80fac6e"]
+]){
+ const saved=fs.readFileSync(path.join(root,"assets/ui-originals","home_pokeball_"+state+"_previous.png"));
+ assert.equal(crypto.createHash("sha256").update(saved).digest("hex"),sha);
+ assert.equal(fs.existsSync(path.join(root,"res/drawable-nodpi","home_pokeball_"+state+".png")),false);
+ const webp=fs.readFileSync(path.join(root,"res/drawable-nodpi","home_pokeball_"+state+".webp"));
+ assert.equal(webp.toString("ascii",0,4),"RIFF");
+ assert.equal(webp.toString("ascii",8,12),"WEBP");
 }
 // Android só deve receber extensão condizente com o formato REAL do arquivo:
 // os três originais são WebP lossless com transparência, sem transcodificar.

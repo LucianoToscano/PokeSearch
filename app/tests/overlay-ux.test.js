@@ -1262,7 +1262,7 @@ test("HOME real Google photo is retried and extracted only from trusted profile"
   p.includes('parsed.hostname.endsWith(".googleusercontent.com")')&&
   main.includes('shownAvatarUrl=""')&&
   main.includes('if(bitmap==null)runOnUiThread')&&
-  main.includes('allowedGoogleAvatar(redirected)')&&
+  main.includes('allowedProfileAvatar(redirected)')&&main.includes('cdn.discordapp.com')&&
   main.includes('avatarReadRetryCount<2')&&
   main.includes('view.postDelayed(()->captureOfficialProfile(view,generation),700L)')&&
   !p.includes('document.cookie')&&!p.includes('localStorage');
@@ -1866,10 +1866,10 @@ test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8")&&
   home.includes("wordmarkWidth/3f")&&
-  home.includes("wordmarkWidth=Math.max(d(55),Math.min(d(156),availableBrandWidth))")&&
+  home.includes("wordmarkWidth=Math.max(d(130),Math.min(d(180),availableBrandWidth))")&&
   home.includes("if(availableBrandWidth<d(55))")&&
   home.includes("brandLabels.setVisibility(View.GONE)")&&
-  home.includes("new LinearLayout.LayoutParams(-1,d(70))");
+  home.includes("new LinearLayout.LayoutParams(-1,d(120))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(-1,d(76)))");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
  const pngs=[

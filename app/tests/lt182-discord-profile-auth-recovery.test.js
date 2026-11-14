@@ -11,7 +11,8 @@ const asset=fs.readFileSync(path.join(__dirname,"../src/main/assets/profile_summ
 
 assert.match(main,/private int profileCaptureRetryCount=0/);
 assert.match(main,/profileCaptureRetryCount=0;\s*if\("\/profile"/);
-assert.match(main,/if\(\+\+profileCaptureRetryCount<=16\)/);
+assert.match(main,/if\(\+\+profileCaptureRetryCount<=8\)/);
+assert.match(main,/if\(\+\+profileCaptureRetryCount<=3/);
 assert.match(main,/if\(view==website&&loginAutoReturnQueued&&profileCaptureInProgress/);
 assert.doesNotMatch(main,/loginDialog\.dismiss\(\);\s*\},6500L\)/);
 assert.match(main,/"unknown"\.equals\(PogoAccountSlots\.prefs\(this,activeLoginSlot\)/);

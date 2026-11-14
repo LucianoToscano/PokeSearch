@@ -179,7 +179,12 @@ public final class PgsAutoClickService extends AccessibilityService {
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
-        if(!reloadDetector()){status("SEM MODELO");return;}
+        if(!reloadDetector()){
+            status("SEM MODELO");
+            showReason("Ícone não cadastrado para os Pokémon selecionados. "+
+                "Abra a lupa e grave uma imagem do feed do PGSharp.");
+            return;
+        }
         toggle();
     }
     @Override public void onInterrupt() {halt("INTERRUPÇÃO");}
@@ -335,6 +340,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     public static String searchStatus(){
         PgsAutoClickService live=instance;
         if(live==null)return "Acessibilidade desligada";
+        if(live.armedByHome&&!live.isGameVisible())
+            return "Abra o feed do PGSharp para iniciar";
         if(live.running&&!live.isGameVisible())return "Abra PGSharp";
         if(live.running&&live.awaitingMap)return "Aguardando mapa";
         if(live.running)return "Procurando ícones";
@@ -534,6 +541,14 @@ public final class PgsAutoClickService extends AccessibilityService {
                     }
                 }
                 if(match==null){
+                    // Diagnóstico eventual: selecionado não significa
+                    // modelo reconhecido na escala atual da tela.
+                    if(items.isEmpty()&&++emptyRetries==6){
+                        Toast.makeText(PgsAutoClickService.this,
+                            "Nenhum ícone reconhecido no feed. Abra a lupa, "+
+                            "confira a miniatura e grave novamente se preciso.",
+                            Toast.LENGTH_LONG).show();
+                    }
                     // Recomeça a fila quando a única coisa que resta na tela
                     // são posições já visitadas. Sem checkbox de repetição.
                     if(!items.isEmpty()&&++noFreshAttempts>=3){

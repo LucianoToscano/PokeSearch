@@ -97,6 +97,16 @@ final class PgsAutoMenus {
         b.setBackground(bg(0x55394A5C,0x557E91A5,6));
         return b;
     }
+    private ImageButton trashButton(String desc){
+        ImageButton icon=new ImageButton(context);
+        icon.setImageResource(fg()==0xFF142130?
+            R.drawable.lixeira_preta:R.drawable.lixeira_branca);
+        icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        icon.setPadding(dp(8),dp(8),dp(8),dp(8));
+        icon.setBackground(bg(0x55394A5C,0x557E91A5,6));
+        icon.setContentDescription(desc);
+        return icon;
+    }
     private LinearLayout vertical(){LinearLayout l=new LinearLayout(context);l.setOrientation(LinearLayout.VERTICAL);return l;}
     private LinearLayout horizontal(){LinearLayout l=new LinearLayout(context);l.setGravity(Gravity.CENTER_VERTICAL);return l;}
     private LinearLayout.LayoutParams margined(int w,int h,int top){
@@ -194,8 +204,10 @@ final class PgsAutoMenus {
             LinearLayout.LayoutParams pp=margined(-1,dp(74),5);
             root.addView(preview,pp);
         }catch(Exception ignored){}
-        Button delete=button("× Excluir imagem",12);
-        root.addView(delete,margined(-1,dp(37),5));
+        ImageButton delete=trashButton("Excluir esta imagem cadastrada");
+        LinearLayout.LayoutParams trashParams=margined(dp(39),dp(37),5);
+        trashParams.gravity=Gravity.CENTER_HORIZONTAL;
+        root.addView(delete,trashParams);
         delete.setOnClickListener(v->{
             // O usuário tocou explicitamente na imagem e solicitou exclusão.
             PgsAutoTemplateStore.delete(context,model.id);
@@ -226,8 +238,7 @@ final class PgsAutoMenus {
             line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
             TextView name=label("Imagem cadastrada",11,false);
             line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
-            Button remove=button("×",16);
-            remove.setContentDescription("Excluir esta imagem");
+            ImageButton remove=trashButton("Excluir esta imagem");
             line.addView(remove,new LinearLayout.LayoutParams(dp(30),dp(35)));
             remove.setOnClickListener(v->showModelActions(pokemon,model));
             rows.addView(line,margined(-1,dp(41),2));

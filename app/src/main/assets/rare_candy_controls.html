@@ -184,7 +184,7 @@ background:var(--visual-menu-readable-button-bg)!important}
 <button id="location" aria-label="Localização e raio" onclick="openPanel('location')" title="Localização"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></button>
 <button id="refresh" aria-label="Toque: atualizar; segure: intervalo" title="Atualizar · segurar: OFF, 3, 5, 10, 15 ou 20 minutos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 7l2 4M4 13l2 4a7 7 0 0 0 12.5-2"/></svg><span id="period" class="autoTime">3m</span></button>
 <button id="infos" aria-label="Mostrar ou ocultar informações" onclick="openPanel('infos')" title="Informações"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6a9 9 0 0 1 9 6 9 9 0 0 1-18 0 9 9 0 0 1 9-6Z"/><circle cx="12" cy="12" r="2.5"/></svg></button>
-<button id="close" title="Fechar menu" aria-label="Recolher opções" onclick="Native.closeCandyMenu()">×</button>
+<button id="close" title="Fechar Doce Raro" aria-label="Fechar overlay Doce Raro" onclick="Native.stopCandyOverlay()">×</button>
 </div>
 <div id="choices" role="group"></div>
 <script>

@@ -1,4 +1,18 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+ 
+## LT341 — Correções UX, Login, Ranks, Doce Raro e Edu (14/11/2026 — QA em andamento)
+
+- **Base protegida:** `main` `0ab24070a48bd31e6fd2f216855515e4c7de2d20`, que já integra PR #358 (LT340 — PGS), sobre a release oficial LT339 `v0.03.38-54545`. A LT340 ainda não tinha APK oficial no início deste ciclo. Branch desta rodada `feature/lt341-home-login-edu-ranks-candy-20261114`.
+- **Home:** novas Pokébolas ON/OFF WebP fornecidas no Drive. Os PNGs anteriores foram preservados integralmente em `app/src/main/assets/ui-originals/home_pokeball_{on,off}_previous.png` para não perder a fonte; WebPs originais nos recursos `drawable-nodpi`. Badge real de login 12dp em cada Pokébola, com imagens Claro/Escuro/SemLogin WebP, popover compacto “Conta 1/Conta 2”; os rótulos extensos não ocupam mais a Home. Cabeçalho com logomarca 3:1 na linha de marca, controles harmonizados em outra linha, coração/☰ sem fundo e Compartilhar preto/branco conforme tema.
+- **Login:** separação entre autenticação de PoGoCoordinates e vínculo de treinador para eliminar espera indevida por estado desconhecido; fallback após 8 verificações de hidratação e conclusão da janela de sessão já autenticada com aviso explícito, sem atribuição enganosa de treinador. Extração somente de DOM visível de `/profile` oficial, nome próximo de `Member since` e foto pública Google/Discord (HTTPS/CDNs permitidos), sem APIs privadas, OAuth tokens nem cópia de cookies. Contas isoladas por `PogoAccountSlots`.
+- **PGS:** as correções LT340 existentes incluem Home ON/OFF direta, overlay de miniatura 35×30dp/21dp com branco sem efeito, verde em loading, vermelho em falha; notificações compactas padrão P1/P2 e prioridade determinística de modelos e espécies. A LT341 complementa com diagnóstico quando a busca está armada sem o jogo/sem modelo e após releituras sem ícones. **Não declarar teleporte funcionando antes de teste físico no feed real**.
+- **Rank Geral:** a lista do explorador mantém o #Dex reduzido ao lado do nome; só o #RG aparece à direita. Nada de dois números diferentes no mesmo canto.
+- **Doce Raro:** o X do controle fecha o serviço real via bridge nativa `stopCandyOverlay` protegida; fechar submenu anterior continua disponível pelas outras ações.
+- **Edu:** auditor das 68 sprites agora tem ◀️ ⏯️ 🎦 ▶️ 👬 📐 ❌ Auto/#, modo por quadro ou sequência com escolha de grupos, play/pause, comparação lado a lado com padrão #42, linhas-guia e retorno automático. A imagem e o atlas originais permanecem inalterados.
+- **Lixeiras:** recursos `lixeira_branca.png` e `lixeira_preta.png` (originais do Drive) em PGS + filtros salvos do dock, com seleção por tema e sem alterar dados ao desmarcar.
+- **Testes e limites:** `app/tests/lt341-home-login-edu-candy-rank-contract.test.js`; contratos LT170/LT327/LT335/LT339 atualizados; aguardam CI e compilação Android. Fotos/nome e encerramento de OAuth exigem verificação real com conta, e o clique de Lucario no PGSharp requer Samsung (issue #350).
+- **Arquivo completo para novo chat:** `docs/PROMPT_CONTINUIDADE_LT341_ARK_20261114.md`. Não baixar qualidade/resolução nem excluir dados. Publicar versão monotônica/assinada apenas quando os gates obrigatórios passarem.
+
 
 ## LT340 — Auditoria corrigida do Buscar Pokémon (14/11/2026, desenvolvimento)
 
