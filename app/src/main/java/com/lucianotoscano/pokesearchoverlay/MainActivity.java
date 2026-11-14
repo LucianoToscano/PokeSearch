@@ -484,11 +484,11 @@ public class MainActivity extends Activity {
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.VERTICAL);
         // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
-        screen.addView(header,new LinearLayout.LayoutParams(-1,d(96)));
+        screen.addView(header,new LinearLayout.LayoutParams(-1,d(120)));
         LinearLayout branding=new LinearLayout(this);
         branding.setOrientation(LinearLayout.HORIZONTAL);
         branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(-1,d(49)));
+        header.addView(branding,new LinearLayout.LayoutParams(-1,d(76)));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
@@ -571,7 +571,7 @@ public class MainActivity extends Activity {
         // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
         int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
             -d(35)-d(38)-d(16);
-        int wordmarkWidth=Math.max(d(130),Math.min(d(205),availableBrandWidth));
+        int wordmarkWidth=Math.max(d(130),Math.min(d(180),availableBrandWidth));
         int wordmarkHeight=Math.round(wordmarkWidth/3f);
         brandTitle.setAdjustViewBounds(false);
         brandLabels.addView(brandTitle,
