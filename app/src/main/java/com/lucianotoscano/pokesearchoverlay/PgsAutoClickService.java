@@ -170,19 +170,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                 PgsAutoTemplateStore.startTeaching(PgsAutoClickService.this,species);
                 handler.postDelayed(()->startTeaching(),350);
             }
-            @Override public void retryNow(){
-                emptyRetries=0;lastNoIconScan=0;
-                if(!running){toggle();return;}
-                awaitingMap=false;ticket++;scanAndTap();
-            }
-            @Override public void closeOverlay(){
-                halt("FECHADO");
-                if(quickMenus!=null)quickMenus.dismissAll();
-                if(bubble!=null){
-                    try{windowManager.removeView(bubble);}catch(Exception ignored){}
-                    bubble=null;
-                }
-            }
+            @Override public void retryNow(){restartSession();}
+            @Override public void closeOverlay(){removeHand();}
             @Override public void testShiny(){testShinyAlert();}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
@@ -236,6 +225,31 @@ public final class PgsAutoClickService extends AccessibilityService {
         try{windowManager.addView(bubble,bubbleParams);}
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir botão de mão",Toast.LENGTH_LONG).show();}
         status("PARADO");
+    }
+    public static void restartSearch(){
+        PgsAutoClickService service=instance;
+        if(service!=null)service.handler.post(service::restartSession);
+    }
+    public static void closeHand(){
+        PgsAutoClickService service=instance;
+        if(service!=null)service.handler.post(service::removeHand);
+    }
+    private void restartSession(){
+        emptyRetries=0;lastNoIconScan=0;visitedSlots.clear();
+        nextIndex=0;total=0;awaitingMap=false;
+        ++ticket;
+        if(!running){toggle();return;}
+        if(!reloadDetector()){fail("Nenhum modelo visual ativo para reiniciar.");return;}
+        status("REINICIANDO");
+        handler.postDelayed(this::scanAndTap,350L);
+    }
+    private void removeHand(){
+        halt("FECHADO");
+        if(quickMenus!=null)quickMenus.dismissAll();
+        if(bubble!=null&&windowManager!=null){
+            try{windowManager.removeView(bubble);}catch(Exception ignored){}
+            bubble=null;
+        }
     }
     public static void restoreBubble(){
         PgsAutoClickService service=instance;
