@@ -5721,11 +5721,13 @@ public class OverlayService extends Service {
             if(!ProviderFeatureFlags.SHINY_AVAILABLE){
                 // Never send shiny_only=true or force a login/trainer link
                 // while the provider is not supporting this feature.
-                shiny=false;shinyVerified=false;
-                overlayPrefs().edit().putBoolean("shiny",false).apply();
+                // Mantém o botão como preferência visual ON/OFF, sem aplicar
+                // shiny_only na API enquanto o provedor não oferecer suporte.
+                shiny=!shiny;shinyVerified=false;
+                overlayPrefs().edit().putBoolean("shiny",shiny).apply();
                 android.widget.Toast.makeText(OverlayService.this,
-                    "✨ Shiny temporariamente indisponível · busca normal liberada",
-                    android.widget.Toast.LENGTH_LONG).show();
+                    "✨ Shiny temporariamente indisponível",
+                    android.widget.Toast.LENGTH_SHORT).show();
                 update();
                 return;
             }
@@ -6162,11 +6164,8 @@ public class OverlayService extends Service {
             Math.min(100,pref.getInt("ivPercentMax",100)));
         // Shiny is paused upstream, not the general search. An old ON value
         // must never strand a guest or a logged-in user behind trainer checks.
-        if(!ProviderFeatureFlags.SHINY_AVAILABLE&&
-           overlayPrefs().getBoolean("shiny",false))
-            overlayPrefs().edit().putBoolean("shiny",false).apply();
-        shiny=ProviderFeatureFlags.SHINY_AVAILABLE&&
-            overlayPrefs().getBoolean("shiny",false);
+        // Estado visual persistido; a busca efetiva permanece sem filtro Shiny.
+        shiny=overlayPrefs().getBoolean("shiny",false);
         if(!shiny)shinyVerified=false;
         update();
         return START_STICKY;
