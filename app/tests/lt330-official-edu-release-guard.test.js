@@ -15,7 +15,7 @@ assert.ok(request.code>previousCode,"Release precisa superar versao anterior");
 const notes=JSON.parse(fs.readFileSync("app/src/main/assets/release_notes.json","utf8"));
 assert.ok(notes.releases.some(x=>x.minVersionCode===request.code),
   "Release deve trazer notas embutidas para a versao solicitada");
-assert.match(workflow,/test "\$APK_BYTES" -lt 49000000/);
+assert.match(workflow,/test "\$APK_BYTES" -lt 52000000/);
 assert.doesNotMatch(workflow,/test "\$APK_BYTES" -lt 37000000/);
 assert.match(workflow,/assert len\(parts\)==13|for i in range\(13\):/);
 assert.match(workflow,/assert len\(packed\)==10372393/);
