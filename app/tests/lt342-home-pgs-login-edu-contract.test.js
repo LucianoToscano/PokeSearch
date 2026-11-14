@@ -46,7 +46,7 @@ for(const [name,sha] of Object.entries({
  "busca_pokemon_off.webp":"db04e55514310df4c7ad46ada7571a0b0bf3fa8f212d8797e434ae22c1f37eef",
  "busca_pokemon_on.webp":"3384542e8e70826aeae1c17b219cacd5c7618e9914949d8de836f350c80e9be9",
  "busca_pokemon_overlay_off.webp":"51ef63deb8589e4cd5c68e2557095e96a0c05da094199e26757d4b1e0b95389b",
- "busca_pokemon_overlay_on.webp":"66166c7ef5a5524452358ac55d62f8a530dd547f5bc51f2bdeac7e6296832a96"
+ "busca_pokemon_overlay_on.webp":"2ef52d0edd1dcf1b5ab78ff80fd24a1eb8e96084494d23ad5fbb63f63b5decc6"
 })){
  const data=fs.readFileSync(path.join(root,"res/drawable-nodpi",name));
  assert.equal(data.toString("ascii",0,4),"RIFF");
