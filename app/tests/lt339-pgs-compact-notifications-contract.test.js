@@ -10,16 +10,16 @@ const policy=read("PgsAutoNotificationPolicy");
 const quick=read("OverlayQuickMenus");
 
 // Barra única, padrão visual da Pokébola. Sem popup extra nem recursos gerais.
-assert.match(ui,/String\[\] icons=\{"⌕","⏱","🔔","↻","×"\}/);
-assert.match(ui,/String\[\] descriptions=\{"Buscas","Tempo","Notificações PGS","Reiniciar buscas","Fechar Busca Pokémon"\}/);
+assert.match(ui,/String\[\] icons=\{"⌕","⏱","🔔","×"\}/);
+assert.match(ui,/String\[\] descriptions=\{"Buscas","Tempos da busca","Alertas Buscar Pokémon","Fechar Buscar Pokémon"\}/);
 assert.match(ui,/Runnable\[\] handlers=\{this::showSearch,this::showTime,this::showNotifications,/);
-assert.match(ui,/actions\.retryNow\(\)/);
+assert.doesNotMatch(ui,/actions\.retryNow\(\)/);
 assert.match(ui,/actions\.closeOverlay\(\)/);
-assert.match(ui,/5\*44\+4\*4/);
+assert.match(ui,/4\*44\+3\*4/);
 assert.match(ui,/LinearLayout\.LayoutParams\(dp\(44\),dp\(44\)\)/);
 assert.match(ui,/OverlayQuickMenus\.panelColor\(context\)/);
 assert.match(quick,/showTone\(/);
-assert.doesNotMatch(ui,/showMore\(|••• MAIS|✉ Reportar|♧ Doar|private void report\(|private void donate\(/);
+assert.doesNotMatch(ui,/showMore\(|••• MAIS|✉ Reportar|♧ Doar|private void report\(|private void donate\(|Repetir buscas sem pausar/);
 assert.doesNotMatch(ui,/PixSupport\.PAYLOAD/);
 
 // Mesmo fluxo de tom: Padrão/Forte/Mudo/Personalizado + prévia + confirmação.
@@ -52,4 +52,6 @@ assert.doesNotMatch(engine,/playShinySound\(/);
 assert.match(engine,/if\(isShiny\)channelId\+=vibrate\?"_vibrate":"_no_vibrate"/);
 assert.match(policy,/return "pgs_buscas_"\+kind/);
 assert.doesNotMatch(policy,/newPokemonSoundUri|favoriteSoundUri|PREF_FAVORITE_TONE|prefs/);
-console.log("LT339 PGS barra/áudio: contratos estáticos OK; Samsung e notificações reais pendentes");
+assert.match(engine,/PgsAutoCyclePolicy\.mapTimedOut/);
+assert.match(engine,/PgsAutoCyclePolicy\.shouldPauseForTarget/);
+console.log("LT339 PGS barra/áudio/ciclo automático: contratos estáticos OK; Android físico pendente");
