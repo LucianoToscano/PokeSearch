@@ -20,11 +20,16 @@ for(const name of names){
 }
 assert.ok(workflow.includes('assert "assets/ui-icons/"+filename not in names'),"APK must not carry legacy duplicate");
 assert.ok(workflow.includes("import sys,zipfile,hashlib,os"),"APK verifier imports OS for archive verification");
-// LT337 includes the native Home + PGS auto modules without removing 68
-// authenticated Edu 512px PNG masters and 35 pinned GO sprites.
-// Actual official APK was 49,755,526 bytes; keep strict 52 MB bound.
-assert.ok(workflow.includes('test "$APK_BYTES" -lt 52000000'),
- "Release must retain a bounded 52 MB APK size gate for LT337");
+// ARK LT337: nenhum teto artificial de tamanho do APK no CI por enquanto.
+// A verificação real da assinatura, dos hashes e dos assets permanece obrigatória.
+assert.ok(workflow.includes('APK_BYTES="$(stat -c %s "$APK")"'),
+ "O tamanho final do APK continua registrado para auditoria");
+assert.ok(workflow.includes("no custom CI size cap"),
+ "O log deve identificar a ausência de limite artificial");
+assert.doesNotMatch(workflow,/test\s+"\$APK_BYTES"\s+-lt\s+\d+/,
+ "Não reintroduzir teto artificial para APK no workflow oficial");
+assert.ok(workflow.includes('test -s "$APK"'),
+ "APK oficial não pode ser vazio");
 assert.ok(workflow.includes('assert len(packed)==10372393'),
  "Release must verify the complete 68-frame Edu archive in the signed APK");
 assert.ok(workflow.includes('assert len(extra)==35'),
@@ -42,4 +47,4 @@ assert.ok(signedQa.includes("image.readUInt32BE(16)!==512"),
 assert.ok(!signedQa.includes("data:image/png;base64,iVBORw0KGgo"),
   "signed QA must not expect old inline Base64 icons");
 console.log("LT267/LT328 APK size PASS: archived 18 originals, removed "+
- oldSize+" unused bytes, 52 MB LT337 guard and 35 pinned GO PNG validations intact");
+ oldSize+" unused bytes, unlimited custom CI APK size, 35 pinned GO PNG validations intact");

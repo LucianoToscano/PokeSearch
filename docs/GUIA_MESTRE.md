@@ -1,5 +1,15 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## ARK LT337 — sem teto artificial de tamanho do APK oficial (14/11/2026)
+
+**Decisão do responsável:** remover **por enquanto** o limite de tamanho de APK imposto pelo CI de publicação (antes 49 MB e depois 52 MB). Posteriormente executar otimização de recursos para reduzir o APK e, se fizer sentido, restabelecer um orçamento explícito.
+
+- Workflow `.github/workflows/pokesearch-official-release.yml`: remover `test "$APK_BYTES" -lt 52000000`, manter medição `stat -c %s` e log do tamanho efetivo, **sem tamanho máximo arbitrário para aprovação**.
+- Atualizar contratos Node `lt267-legacy-icons-size-budget.test.js` e `lt330-official-edu-release-guard.test.js` para verificar que o teto **não** voltou; **não suprimir** as provas de todas as 68 fontes Edu de 512 px, sprites GO, recursos históricos, `test -s`, ZIP, R8, assinatura v2, certificado permanente e SHA-256.
+- A decisão não remove limites técnicos de **GitHub Releases, Android, armazenamento do dispositivo** ou a proteção de download contra arquivos excessivos no `GitHubUpdateCenter`; não liberar instalação de pacote não validado. Tamanho não é mais critério de rejeição do **workflow de build/release**.
+- **Sem alteração de recursos ou código Android nesta operação:** a última release instalada/disponível continua a `v0.03.36-54543` até que uma nova versão com mudança funcional seja publicada. Não emitir release idêntica, não substituir tag imutável nem incrementar `versionCode` só por ajuste no CI.
+- ARK continua autorizado para merge e publicação quando houver nova versão; os testes Node e CI precisam ficar verdes antes de concluir o ajuste. Homologação física Samsung/PGS continua registrada na issue #350.
+
 ## ARK — CONTRATO OPERACIONAL RECONFIRMADO EM 14/11/2026 (AUTORIZAÇÃO PERMANENTE DO RESPONSÁVEL)
 
 **ARK = executar o ciclo completo, sem solicitar uma segunda autorização para corrigir, melhorar, integrar, fazer merge, oficializar e publicar uma atualização.** Dentro dos limites das ferramentas e do sistema de release, a execução deve incluir, nesta ordem: verificar o estado atual de main/PRs/releases; corrigir incompatibilidades; preservar dados e pacote; rodar testes Java/Node/Android/OTA; validar versão monotônica e assinatura original; fazer merge das PRs necessárias; registrar alterações e provas no Guia Mestre; abrir o pedido oficial de release; acompanhar workflow até conclusão; verificar tag, APK, digest SHA-256, certificado, manifesto/OTA do atualizador e comunicar a atualização instalada ou a confirmação Android que ainda falte. Não concluir a tarefa como **entregue ao aplicativo** apenas porque houve commit, PR ou APK de QA.
