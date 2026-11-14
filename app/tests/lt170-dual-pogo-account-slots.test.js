@@ -23,8 +23,10 @@ assert.match(main,/secondAccountGuest\.setVisibility\(connected\|\|!available\?V
 assert.match(main,/secondAccountManage=homeAuthButton\("◉  Discord"/);
 assert.match(main,/openLoginDialogForSlot\(2,"login"\)/);
 assert.match(main,/openLoginDialogForSlot\(slot,"manage"\)/);
-assert.match(main,/overlayAccountLabel1=homeText\("P1 · Conta 1"/);
-assert.match(main,/overlayAccountLabel2=homeText\("P2 · Conta 1"/);
+assert.match(main,/pokeballLoginBadges=new ImageView\[2\]/);
+assert.match(main,/showCompactAccountNames\(loginHotspot\)/);
+assert.match(main,/login_modo_claro/);
+assert.match(main,/login_modo_escuro/);
 assert.match(main,/showPokeballAccountChoice\(secondary\)/);
 assert.match(main,/choosePokeballTrainer\(secondary,slot\)/);
 assert.match(main,/PogoAccountSlots\.hasTrainer\(this,account,code\)/);
