@@ -44,7 +44,11 @@ final class PgsAutoIconDetector {
             List<Float> values=new ArrayList<>();
             int step=Math.max(4,Math.round(width/13f));
             for(int y=1;y<height-1;y+=step)for(int x=1;x<width-1;x+=step){
-                xx.add(x);yy.add(y);values.add((float)gray(bmp.getPixel(x,y)));
+                int pixel=bmp.getPixel(x,y);
+                // Modelo recortado com transparência: ignorar amostras sem
+                // Pokémon para evitar falso matching do fundo do feed.
+                if(Color.alpha(pixel)<80)continue;
+                xx.add(x);yy.add(y);values.add((float)gray(pixel));
             }
             xs=new int[xx.size()];ys=new int[xx.size()];centered=new float[xx.size()];
             float avg=0;for(float value:values)avg+=value;
