@@ -65,7 +65,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     private WindowManager windowManager;
     private FrameLayout bubble;
     private ImageView handView;
-    private boolean searchPulseActive=false;
+    private View coreIndicator;
+    private GradientDrawable coreBackground;
+    private PgsAutoVisualState.Core currentCore;
+    private Boolean currentArtworkOn;
     private TextView handBadge;
 
     private PgsAutoMenus quickMenus;
@@ -135,7 +138,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         
         
         if(handView!=null)handView.clearAnimation();
-        handView=null;handBadge=null;
+        if(coreIndicator!=null)coreIndicator.clearAnimation();
+        handView=null;coreIndicator=null;coreBackground=null;
+        currentCore=null;currentArtworkOn=null;handBadge=null;
         dismissPicker();
         analysis.shutdownNow();
         bubble=null;instance=null;
@@ -146,18 +151,32 @@ public final class PgsAutoClickService extends AccessibilityService {
         windowManager=(WindowManager)getSystemService(WINDOW_SERVICE);
         if(bubble!=null)return;
         bubble=new FrameLayout(this);
-        bubble.setContentDescription("Mão PGS Auto: toque para ligar/desligar; segure para abrir menus");
-        GradientDrawable background=new GradientDrawable();
-        background.setColor(0xB8111824);
-        background.setCornerRadius(dp(11));
-        background.setStroke(dp(1),0x977A899C);
+        bubble.setContentDescription("Busca Pokémon PGS: toque para ligar/desligar; segure para abrir menus");
         bubble.setBackground(null);
+        // Mesma proporção da Pokébola de resultados: slot 35x30 e arte 21dp.
+        // Hitbox de 44x44 mantém arraste e gesto de toque/segurar existentes.
+        FrameLayout iconSlot=new FrameLayout(this);
+        FrameLayout.LayoutParams slotLp=new FrameLayout.LayoutParams(
+            dp(PgsAutoVisualState.RESULT_SLOT_WIDTH_DP),
+            dp(PgsAutoVisualState.RESULT_SLOT_HEIGHT_DP),Gravity.CENTER);
+        bubble.addView(iconSlot,slotLp);
         handView=new ImageView(this);
-        handView.setImageResource(R.drawable.pgs_hand_off);
-
+        handView.setImageResource(R.drawable.busca_pokemon_overlay_off);
         handView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        FrameLayout.LayoutParams icon=new FrameLayout.LayoutParams(dp(34),dp(34),Gravity.CENTER);
-        bubble.addView(handView,icon);
+        FrameLayout.LayoutParams artLp=new FrameLayout.LayoutParams(
+            dp(PgsAutoVisualState.RESULT_ART_DP),
+            dp(PgsAutoVisualState.RESULT_ART_DP),Gravity.CENTER);
+        iconSlot.addView(handView,artLp);
+        coreIndicator=new View(this);
+        coreBackground=new GradientDrawable();
+        coreBackground.setShape(GradientDrawable.OVAL);
+        coreBackground.setColor(Color.WHITE);
+        coreBackground.setStroke(dp(1),0xFFC4CFDB);
+        coreIndicator.setBackground(coreBackground);
+        FrameLayout.LayoutParams coreLp=new FrameLayout.LayoutParams(
+            dp(PgsAutoVisualState.CORE_DP),dp(PgsAutoVisualState.CORE_DP),Gravity.CENTER);
+        iconSlot.addView(coreIndicator,coreLp);
+        currentCore=null;currentArtworkOn=null;
         handBadge=new TextView(this);
         handBadge.setText("✨");handBadge.setTextSize(13);
         handBadge.setGravity(Gravity.CENTER);
@@ -175,7 +194,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void testShiny(){testShinyAlert();}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
-        bubbleParams=new WindowManager.LayoutParams(dp(44),dp(44),
+        bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
@@ -199,8 +218,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(Math.hypot(dx,dy)>dp(9))moved[0]=true;
                 if(moved[0]){
                     Point display=new Point();windowManager.getDefaultDisplay().getRealSize(display);
-                    bubbleParams.x=Math.max(0,Math.min(display.x-dp(44),original[0]-Math.round(dx)));
-                    bubbleParams.y=Math.max(0,Math.min(display.y-dp(44),original[1]+Math.round(dy)));
+                    bubbleParams.x=Math.max(0,Math.min(display.x-dp(PgsAutoVisualState.TOUCH_DP),original[0]-Math.round(dx)));
+                    bubbleParams.y=Math.max(0,Math.min(display.y-dp(PgsAutoVisualState.TOUCH_DP),original[1]+Math.round(dy)));
                     try{windowManager.updateViewLayout(bubble,bubbleParams);}catch(Exception ignored){}
                 }
                 return true;
@@ -223,7 +242,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             return action==MotionEvent.ACTION_CANCEL;
         });
         try{windowManager.addView(bubble,bubbleParams);}
-        catch(Exception e){Toast.makeText(this,"Não foi possível abrir botão de mão",Toast.LENGTH_LONG).show();}
+        catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
         status("PARADO");
     }
     public static void restartSearch(){
@@ -250,30 +269,58 @@ public final class PgsAutoClickService extends AccessibilityService {
             try{windowManager.removeView(bubble);}catch(Exception ignored){}
             bubble=null;
         }
+        if(coreIndicator!=null)coreIndicator.clearAnimation();
+        coreIndicator=null;coreBackground=null;handView=null;handBadge=null;
+        currentCore=null;currentArtworkOn=null;
     }
     public static void restoreBubble(){
         PgsAutoClickService service=instance;
         if(service!=null)service.handler.post(()->service.showBubble());
     }
     private int dp(float n){return (int)(getResources().getDisplayMetrics().density*n+.5f);}
+    /** A Home usa o estado REAL do serviço, nunca uma preferência desatualizada. */
+    public static boolean isSearchActive(){
+        PgsAutoClickService live=instance;
+        return live!=null && PgsAutoVisualState.active(
+            live.running,live.pausedByShiny,live.pausedByError);
+    }
+    private void setCoreState(PgsAutoVisualState.Core next){
+        if(coreIndicator==null||coreBackground==null||currentCore==next)return;
+        // Só o miolo da Pokébola pisca. Não escurecer nem piscar a arte inteira.
+        coreIndicator.clearAnimation();
+        int color=next==PgsAutoVisualState.Core.GREEN?0xFF38E18D:
+            next==PgsAutoVisualState.Core.RED?0xFFFF515B:Color.WHITE;
+        coreBackground.setColor(color);
+        coreBackground.setStroke(dp(1),next==PgsAutoVisualState.Core.WHITE?
+            0xFFC4CFDB:Color.WHITE);
+        if(next!=PgsAutoVisualState.Core.WHITE){
+            android.view.animation.AlphaAnimation pulse=
+                new android.view.animation.AlphaAnimation(.22f,1f);
+            pulse.setDuration(PgsAutoVisualState.PULSE_MS);
+            pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
+            pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
+            coreIndicator.startAnimation(pulse);
+        }else{
+            coreIndicator.setAlpha(1f);
+        }
+        currentCore=next;
+    }
     private void status(String value){
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
-        boolean on=running&&!shiny;
-        if(handView!=null){
-            handView.setImageResource(on?R.drawable.pgs_hand_on:R.drawable.pgs_hand_off);
-            boolean searching=on&&(value.startsWith("PROCURANDO")||value.startsWith("CONFIRMANDO"));
-            if(searching&&!searchPulseActive){
-                android.view.animation.AlphaAnimation pulse=new android.view.animation.AlphaAnimation(1f,.62f);
-                pulse.setDuration(720);pulse.setRepeatMode(android.view.animation.Animation.REVERSE);
-                pulse.setRepeatCount(android.view.animation.Animation.INFINITE);
-                handView.startAnimation(pulse);searchPulseActive=true;
-            }else if(!searching&&searchPulseActive){handView.clearAnimation();searchPulseActive=false;}
+        boolean on=PgsAutoVisualState.active(running,pausedByShiny,pausedByError);
+        if(handView!=null&&(!Boolean.valueOf(on).equals(currentArtworkOn))){
+            handView.setImageResource(on?
+                R.drawable.busca_pokemon_overlay_on:R.drawable.busca_pokemon_overlay_off);
+            currentArtworkOn=on;
         }
-        if(handBadge!=null){handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
-            handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);}
-        bubble.setAlpha(on?1f:.78f);
-        bubble.setContentDescription("PGS Favoritos Auto: "+value+
+        setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
+        if(handBadge!=null){
+            handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
+            handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);
+        }
+        bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
+        bubble.setContentDescription("PGS Busca Pokémon: "+value+
             (on?", ligado":", desligado")+
             ". Toque para ligar/desligar; segure para abrir menus.");
     }
