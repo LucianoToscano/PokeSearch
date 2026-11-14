@@ -342,7 +342,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(running){halt("PARADO");return;}
         if(!reloadDetector()){
             showReason("Nenhum modelo selecionado ou imagem inválida. Abra o PGS Favoritos Auto e marque um Pokémon.");
-            status("PAUSADO");return;
+            status("SEM MODELO");return; // Falha visual: vermelho no centro.
         }
         if(pausedByShiny||pausedByError){
             pausedByShiny=false;pausedByError=false;
