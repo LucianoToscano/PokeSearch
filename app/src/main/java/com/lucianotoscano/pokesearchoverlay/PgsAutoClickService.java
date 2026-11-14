@@ -649,6 +649,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void capture(CaptureCallback callback){
+        if(android.os.Build.VERSION.SDK_INT<30){
+            callback.onError("Captura por Acessibilidade requer Android 11 ou superior.");
+            return;
+        }
         final Executor executor=command->handler.post(command);
         try{
             takeScreenshot(Display.DEFAULT_DISPLAY,executor,new TakeScreenshotCallback(){
