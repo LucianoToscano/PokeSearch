@@ -568,7 +568,7 @@
   const maxPage=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
   const cells=s.kind==="class"?
    '<th class="psrNum">#</th><th class="psrIv">IVs</th><th class="psrLevel">Nv.</th><th class="psrCp">PC</th><th class="psrEff">Eficiência</th>':
-   '<th colspan="4">Pokémon / forma</th><th style="width:22%">Nº / RG</th>';
+   '<th colspan="4">Pokémon / forma</th><th style="width:22%">Rank Geral</th>';
   const spriteFor=name=>{
    const lib=typeof window!=="undefined"?window.PokeSearchOfflineSprite:null;
    const meta=lib?.rankSpriteMeta?.(name)||null;
