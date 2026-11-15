@@ -34,7 +34,7 @@ final class PgsSequenceStore {
         o.put("modelId",s.modelId);o.put("modelName",s.modelName);
         return o;
     }
-    private static PgsSequencePolicy.Step parse(JSONObject o){
+    private static PgsSequencePolicy.Step parse(JSONObject o) throws Exception{
         PgsSequencePolicy.Type kind=PgsSequencePolicy.Type.valueOf(o.getString("kind"));
         return new PgsSequencePolicy.Step(kind,
             (float)o.optDouble("x",Float.NaN),
