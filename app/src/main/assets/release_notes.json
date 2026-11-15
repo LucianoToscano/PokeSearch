@@ -4319,6 +4319,30 @@
           "O aviso Sou passageiro exige confirmação manual quando seguro; OAuth PoGoCoordinates, teleporte real, Shiny e Encontro não são homologados pelo CI."
         ]
       }
+    },
+    {
+      "id": "lt354-ark-pgs-gesture-evidence-20261114",
+      "minVersionCode": 54557,
+      "date": "14/11/2026",
+      "title": "PokeSearch LT354 — diagnóstico do gesto e resposta visual",
+      "sections": {
+        "novidades": [
+          "Relatório local distingue toque aceito, recusado, cancelado e concluído pelo Android, mudança visual e ausência de resposta no jogo."
+        ],
+        "melhorias": [
+          "Para Metagross e demais sprites salvas, nova comparação de cores antes/depois do gesto impede confundir mapa inalterado com novo destino.",
+          "Callbacks antigos não alteram ciclos posteriores; a busca pausa se o mapa não apresentar resposta visível no timeout.",
+          "Avisos 'Sou passageiro' acessíveis também são inspecionados na janela do jogo sob o overlay, sem confirmação automática."
+        ],
+        "correcoes": [
+          "Avanço indevido por mapa estável após um toque que não provocou mudança visual."
+        ],
+        "emDesenvolvimento": [
+          "Reconhecimento físico de Metagross e clique real no PGSharp ainda exigem teste no Samsung. Um delta de pixels ou callback Android não prova teleporte.",
+          "Comparação física dos menus Tempo, Personalização, ancoragem e halo com P1/P2/Doce Raro segue pendente.",
+          "OAuth Google/Discord, Shiny e Encontro continuam sem homologação física."
+        ]
+      }
     }
   ]
 }
