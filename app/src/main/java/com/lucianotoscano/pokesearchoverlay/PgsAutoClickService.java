@@ -412,6 +412,26 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
             @Override public void appearanceChanged(){refreshAppearance();}
+            @Override public void previewTapIndicator(){
+                // Apenas prévia local: nenhum dispatchGesture é enviado.
+                if(!getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+                    .getBoolean("showTapIndicator",true)){
+                    Toast.makeText(PgsAutoClickService.this,
+                        "Ative Mostrar local do toque para ver a prévia.",
+                        Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(tapIndicator==null&&windowManager!=null)
+                    tapIndicator=new PgsAutoTapIndicator(PgsAutoClickService.this,windowManager);
+                if(tapIndicator!=null){
+                    Point screen=new Point();
+                    windowManager.getDefaultDisplay().getRealSize(screen);
+                    tapIndicator.show(screen.x/2,screen.y/2);
+                    Toast.makeText(PgsAutoClickService.this,
+                        "Prévia visual — nenhum toque enviado ao jogo.",
+                        Toast.LENGTH_SHORT).show();
+                }
+            }
             @Override public void choosePoint(String mode){showTargetSelector(mode);}
             @Override public void selectSprites(){
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
