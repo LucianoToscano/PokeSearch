@@ -12,6 +12,16 @@ final class PgsAutoMatchPolicy {
         long small=Math.min((long)aw*ah,(long)bw*bh);
         return small>0 && ((long)overlapW*overlapH)>=small*.60;
     }
+    /** Formas/variantes nativas distintas da mesma espécie nunca são desempates automáticos. */
+    static boolean ambiguousNativeVariants(
+        boolean nativeA,String formA,String variantA,
+        boolean nativeB,String formB,String variantB,float scoreA,float scoreB){
+        if(!nativeA||!nativeB||formA==null||variantA==null||
+            formB==null||variantB==null||!Float.isFinite(scoreA)||!Float.isFinite(scoreB))
+            return false;
+        return (!formA.equals(formB)||!variantA.equals(variantB))&&
+            Math.abs(scoreA-scoreB)<=.035f;
+    }
     static boolean ambiguousDifferentSpecies(
         String speciesA,String speciesB,float scoreA,float scoreB){
         return speciesA!=null&&speciesB!=null&&!speciesA.equals(speciesB)&&
