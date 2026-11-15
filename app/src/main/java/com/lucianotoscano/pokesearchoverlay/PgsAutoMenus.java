@@ -521,8 +521,19 @@ final class PgsAutoMenus {
         }
         root.addView(tabs,margined(-1,dp(30),3));
         if(selectedTab==0)appendCentralPokemon(root);
-        else if(selectedTab==1)appendCentralActions(root);
-        else appendCentralSettings(root);
+        else{
+            // Keep the status and Start visible while actions/settings scroll.
+            LinearLayout body=vertical();
+            if(selectedTab==1)appendCentralActions(body);
+            else appendCentralSettings(body);
+            ScrollView content=new ScrollView(context);
+            content.setFillViewport(false);
+            content.setVerticalScrollBarEnabled(false);
+            content.addView(body);
+            int available=PgsAutoMenuStyle.read(context).popupHeight;
+            root.addView(content,margined(-1,
+                dp(Math.max(55,available-145)),3));
+        }
 
         TextView status=label("Estado: "+PgsAutoClickService.searchStatus(),9,false);
         status.setSingleLine(true);
@@ -1196,8 +1207,6 @@ final class PgsAutoMenus {
         }
         root.addView(adds,margined(-1,dp(29),2));
 
-        ScrollView scroll=new ScrollView(context);
-        scroll.setVerticalScrollBarEnabled(false);
         LinearLayout items=vertical();
         if(steps.isEmpty()){
             TextView empty=label("Toque em + para adicionar a primeira ação. "+
@@ -1288,11 +1297,7 @@ final class PgsAutoMenus {
             });
             items.addView(wait,margined(-1,dp(28),2));
         }
-        scroll.addView(items);
-        int available=PgsAutoMenuStyle.read(context).popupHeight;
-        int height=Math.max(35,Math.min(available<300?85:132,
-            available-205));
-        root.addView(scroll,margined(-1,dp(height),3));
+        root.addView(items,margined(-1,-2,3));
         CheckBox consent=new CheckBox(context);
         consent.setText("Autorizar execução da sequência");
         consent.setTextSize(10);consent.setTextColor(fg());
