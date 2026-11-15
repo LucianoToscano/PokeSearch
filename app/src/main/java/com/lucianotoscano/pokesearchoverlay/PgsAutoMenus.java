@@ -61,6 +61,7 @@ final class PgsAutoMenus {
             chosen?0xFF70E6A6:0x2CFFFFFF,6));
     }
     private int anchorX,anchorY;
+    private int panelEstimatedHeightDp=315;
     private static final int BG=0xEC10151F, TILE=0xD9222A38, BORDER=0x33FFFFFF;
     private static final int WHITE=0xFFF4F7FF, SECONDARY=0xFFD0D6E0,GOLD=0xFFFFD47B;
     PgsAutoMenus(Context c,WindowManager w,Actions a){context=c;wm=w;actions=a;}
@@ -147,16 +148,16 @@ final class PgsAutoMenus {
         if(toolbar==null)return;
         if(!(toolbar.getLayoutParams() instanceof WindowManager.LayoutParams))return;
         WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
-        int oldX=lp.x,oldY=lp.y;
+        // Recompute absolute side selection, not delta: crossing screen center
+        // must flip the toolbar to the other side of the Auto Click bubble.
         positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
         try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
         if(panel!=null&&panel.getLayoutParams() instanceof WindowManager.LayoutParams){
             WindowManager.LayoutParams pp=(WindowManager.LayoutParams)panel.getLayoutParams();
-            Point screen=size();
-            int width=pp.width>0?pp.width:panel.getWidth();
-            int height=Math.max(dp(80),panel.getHeight());
-            pp.x=Math.max(dp(8),Math.min(screen.x-width-dp(8),pp.x+lp.x-oldX));
-            pp.y=Math.max(dp(8),Math.min(screen.y-height-dp(8),pp.y+lp.y-oldY));
+            int width=pp.width>0?pp.width:Math.max(dp(80),panel.getWidth());
+            int height=panel.getHeight()>0?panel.getHeight():dp(panelEstimatedHeightDp);
+            int[] place=positionPanel(width,height);
+            pp.x=place[0];pp.y=place[1];
             try{wm.updateViewLayout(panel,pp);}catch(Exception ignored){}
         }
     }
@@ -247,17 +248,71 @@ final class PgsAutoMenus {
         applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(toolbar,lp);}catch(Exception ignored){toolbar=null;}
     }
+    // LT349b: same adjacent-side policy as Pokébolas. The input x is the
+    // center of the right-gravity bubble, y is its top (absolute screen px).
     private void positionToolbar(WindowManager.LayoutParams lp,int x,int y,
             PgsAutoMenuStyle visual){
         Point screen=size();
-        int width=lp.width,height=lp.height;
-        lp.x=Math.max(dp(6),Math.min(screen.x-width-dp(6),
-            x-width/2+dp(visual.menuOffsetX)));
-        lp.y=y+dp(PgsAutoVisualState.TOUCH_DP+3+
-            visual.gearMenuGap+visual.menuOffsetY);
-        if(lp.y+height+dp(8)>screen.y)
-            lp.y=Math.max(dp(12),y-height-dp(4));
-        lp.y=Math.max(dp(6),Math.min(screen.y-height-dp(6),lp.y));
+        int width=lp.width,height=lp.height,margin=dp(6);
+        int bubbleSize=dp(PgsAutoVisualState.TOUCH_DP);
+        int bubbleLeft=x-bubbleSize/2,bubbleRight=x+bubbleSize/2;
+        int gap=dp(Math.max(3,4+visual.gearMenuGap));
+        int right=bubbleRight+gap,left=bubbleLeft-gap-width;
+        boolean rightFits=right+width<=screen.x-margin;
+        boolean leftFits=left>=margin;
+        boolean preferRight=x<=screen.x/2;
+        int menuX,menuY;
+        if((preferRight&&rightFits)||(!leftFits&&rightFits)){
+            menuX=right;
+            menuY=y+(bubbleSize-height)/2;
+        }else if(leftFits){
+            menuX=left;
+            menuY=y+(bubbleSize-height)/2;
+        }else{
+            // Narrow display: use above/below without covering the bubble.
+            menuX=x-width/2;
+            int above=y-height-dp(4),below=y+bubbleSize+dp(4);
+            menuY=below+height<=screen.y-margin?below:
+                above>=margin?above:Math.max(margin,(screen.y-height)/2);
+        }
+        lp.x=Math.max(margin,Math.min(Math.max(margin,screen.x-width-margin),
+            menuX+dp(visual.menuOffsetX)));
+        lp.y=Math.max(margin,Math.min(Math.max(margin,screen.y-height-margin),
+            menuY+dp(visual.menuOffsetY)));
+    }
+
+    // Popups stay tied to the VISIBLE toolbar and never appear disconnected
+    // from the Auto Click control, even after left/right side flipping.
+    private int[] positionPanel(int width,int height){
+        Point screen=size();
+        int margin=dp(8),gap=dp(4);
+        int barX=anchorX,barY=anchorY;
+        int barW=dp(TOOL_CELL_DP),barH=dp(TOOL_CELL_DP);
+        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
+            WindowManager.LayoutParams bar=(WindowManager.LayoutParams)toolbar.getLayoutParams();
+            barX=bar.x;barY=bar.y;barW=bar.width;barH=bar.height;
+        }
+        int right=barX+barW+gap,left=barX-width-gap;
+        boolean preferRight=anchorX<=screen.x/2;
+        boolean rightFits=right+width<=screen.x-margin;
+        boolean leftFits=left>=margin;
+        int px,py;
+        if((preferRight&&rightFits)||(!leftFits&&rightFits)){
+            px=right;py=barY;
+        }else if(leftFits){
+            px=left;py=barY;
+        }else{
+            // When a 232dp popup cannot fit next to a five-tile toolbar,
+            // use directly below/above it rather than drawing over its icons.
+            px=barX+(barW-width)/2;
+            int below=barY+barH+gap,above=barY-height-gap;
+            py=below+height<=screen.y-margin?below:
+                above>=margin?above:Math.max(margin,screen.y-height-margin);
+        }
+        return new int[]{
+            Math.max(margin,Math.min(Math.max(margin,screen.x-width-margin),px)),
+            Math.max(margin,Math.min(Math.max(margin,screen.y-height-margin),py))
+        };
     }
 
     private void applyNativeBlur(WindowManager.LayoutParams lp,int radiusDp){
@@ -285,27 +340,13 @@ final class PgsAutoMenus {
     private void mount(LinearLayout root){mount(root,240,315);}
     private void mount(LinearLayout root,int preferredWidthDp,int estimatedHeightDp){
         hidePanel();panel=root;
-        // Keep the entire icon bar visible above/beside the popup, even
-        // when a submenu is expanded. The popup is placed below the bar.
         PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
-        Point screen=size();int width=Math.min(screen.x-dp(20),
-            dp(Math.min(preferredWidthDp,visual.popupWidth)));
-        int estimated=dp(Math.min(estimatedHeightDp,visual.popupHeight));
-        // Anchor submenus to the *actual* visible toolbar, not to a stale bubble
-        // coordinate. This keeps the panel attached when the toolbar is clamped
-        // near an edge or rendered above the bubble.
-        int toolbarTop=anchorY;
-        int toolbarLeft=anchorX;
-        int toolbarHeight=dp(54);
-        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
-            WindowManager.LayoutParams anchor=(WindowManager.LayoutParams)toolbar.getLayoutParams();
-            toolbarTop=anchor.y;
-            toolbarLeft=anchor.x+anchor.width/2;
-            toolbarHeight=anchor.height;
-        }
-        int top=toolbarTop+toolbarHeight+dp(4);
-        if(top+estimated>screen.y-dp(18))top=Math.max(dp(14),toolbarTop-estimated-dp(4));
-        if(top+estimated>screen.y)top=Math.max(dp(14),screen.y-estimated-dp(20));
+        Point screen=size();int width=Math.max(dp(80),Math.min(screen.x-dp(20),
+            dp(Math.min(preferredWidthDp,visual.popupWidth))));
+        panelEstimatedHeightDp=Math.min(estimatedHeightDp,visual.popupHeight);
+        // Keep the entire icon bar visible. Popup chooses a lateral side
+        // when there is room; otherwise it appears above or below the bar.
+        int[] placement=positionPanel(width,dp(panelEstimatedHeightDp));
         // A nonmodal overlay must NEVER prevent tapping the game elsewhere.
         // Only menus that actually contain text input take keyboard focus.
         // WATCH_OUTSIDE_TOUCH retracts the popup while delivering the outside
@@ -327,7 +368,7 @@ final class PgsAutoMenus {
             return false;
         });
         lp.gravity=Gravity.LEFT|Gravity.TOP;
-        lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),toolbarLeft-width/2));lp.y=top;
+        lp.x=placement[0];lp.y=placement[1];
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         applyNativeBlur(lp,visual.menuBlur);
         try{wm.addView(panel,lp);}catch(Exception e){
