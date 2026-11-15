@@ -13,6 +13,7 @@ final class PgsAutoHuntSettings {
     static final String MAX_CLICKS="max_clicks";
     static final String MAP_RETRY="map_capture_retry";
     static final String FIX_MAP="retry_map_capture";
+    static final String CLICK_ENABLED="click_confirmed_sprite";
     static final String STOP_IV100="stop_iv100";
     static final String STOP_DITTO="stop_ditto";
     static final String RINGTONE="ringtone";
