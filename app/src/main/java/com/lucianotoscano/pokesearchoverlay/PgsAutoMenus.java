@@ -535,12 +535,18 @@ final class PgsAutoMenus {
         hunt.setContentDescription("Opções Auto Hunt para "+
             PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
         hunt.setOnClickListener(v->showAutoHunt());
-        root.addView(hunt,margined(-1,dp(30),3));
-        Button sequence=button("◎ Sequências · passos e pontos numerados",10);
+        LinearLayout searchTools=horizontal();
+        searchTools.addView(hunt,new LinearLayout.LayoutParams(0,dp(30),1));
+        Button sequence=button("≡",15);
         sequence.setOnClickListener(v->showSequence());
         sequence.setContentDescription(
-            "Abrir editor de sequência, adicionar pontos, gestos e tempos");
-        root.addView(sequence,margined(-1,dp(30),3));
+            "Abrir editor de sequências; adicionar pontos numerados, gestos e tempos");
+        LinearLayout.LayoutParams sequenceLp=
+            new LinearLayout.LayoutParams(dp(34),dp(30));
+        sequenceLp.leftMargin=dp(3);
+        searchTools.addView(sequence,sequenceLp);
+        // LT367 não aumenta a altura do menu Buscar: reutiliza a linha Auto Hunt.
+        root.addView(searchTools,margined(-1,dp(30),3));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -1029,7 +1035,9 @@ final class PgsAutoMenus {
         }
         scroll.addView(items);
         int available=PgsAutoMenuStyle.read(context).popupHeight;
-        int scrollHeight=Math.max(45,Math.min(165,available-220));
+        if(available<280)caption.setVisibility(View.GONE);
+        int scrollHeight=Math.max(30,Math.min(165,
+            available-(caption.getVisibility()==View.GONE?187:213)));
         root.addView(scroll,margined(-1,dp(scrollHeight),3));
 
         CheckBox consent=new CheckBox(context);
