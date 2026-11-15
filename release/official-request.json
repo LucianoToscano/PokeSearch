@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.49",
-  "code": 54556,
-  "label": 51353,
-  "previous_tag": "v0.03.48-54555",
-  "qa_max_code": 54555,
-  "release_notes": "PokeSearch LT353 / 0.03.49 / versionCode 54556. Auditoria baseada em duas capturas Samsung 740×1536 e vídeo curto 11,11s. Menu Tempo corrigido: campos numéricos deixam de cortar 15/5, rótulos e Salvar alinhados; Personalização respeita altura do texto de duas linhas. Painéis nativos medem altura real e herdam cor/transparência do Editor Visual. Reconhecimento PGS: pixels transparentes do Background ON não são confundidos com preto; RGB e variância validam miniaturas; varredura segura nas colunas laterais do feed e confirmação da mesma amostra em 2 capturas. A bolha do próprio app não impede reconhecer a janela ativa/focada do jogo com flagRetrieveInteractiveWindows; submenus pausam o scanner e a barra compacta permanece funcional. No menu Buscar, ◎ prévia local mostra a primeira sprite e confiança sem disparar clique. Efeito de toque branco/ciano em expansão no local do gesto. Logs mostram modelo, confiança, coordenada e resolução antes do dispatchGesture. Preservadas Pokébolas P1/P2, Doce Raro, Edu, modelos, contas, filtros e avisos Sou passageiro com confirmação humana. LT353 PR #391 integrada após sete gates (Node QA, LT169, LT211, Java LT62, OTA LT173, PGS APK QA e Secure beta/R8). LT350 PR #385 permanece draft, fora desta release. Homologação física Samsung, clique real no PGSharp, reconhecimento do feed em tempo real, OAuth, teleporte, Shiny e Encontro permanecem BLOQUEADOS sem evidência. Após instalação, Android pode exigir reativação do serviço de Acessibilidade; nenhuma instalação silenciosa."
+  "version": "0.03.50",
+  "code": 54557,
+  "label": 51354,
+  "previous_tag": "v0.03.49-54556",
+  "qa_max_code": 54556,
+  "release_notes": "PokeSearch LT354 / 0.03.50 / versionCode 54557 / label 51354. Auditoria de diagnóstico de sprite e gesto da Busca Pokémon PGS: estágio de modelo/espécie e confirmação da mesma amostra em duas capturas da LT353 preservados. Agora compara assinatura RGB local do mapa antes e depois do gesto e diferencia aceitação, recusa, cancelamento e conclusão pelo Android de mudança visual e ausência de resposta; evita avançar cegamente para outra sprite quando o mapa não apresenta mudança até o timeout. Callbacks obsoletos são ignorados. Aviso 'Sou passageiro' é conferido também na janela acessível do jogo sob o overlay, mas jamais confirmado automaticamente. Preservados gestos de 90 ms, botão ◎ sem toque, halo branco/ciano passante, geometria do menu, Pokébolas P1/P2, Doce Raro, Edu 68 sprites, modelos PNG, contas, filtros e dados. Código LT354 integrado na PR #394, squash e3e2c6e1d65e4e9a11c192307472180af0ea127c após sete gates verdes: Node QA, LT169, LT211, Java LT62, OTA LT173, PGS APK QA, Secure beta/R8. LT350 PR #385 segue draft, sem integração. IMPORTANTE: callback Android e delta de pixels NÃO comprovam toque ou teleporte no Pokémon GO/PGSharp. Homologação física Samsung de Metagross, gesto, efeito, aparência Tempo/Personalização, OAuth externo, Shiny e Encontro continuam BLOQUEADOS. Não automatizar 'Sou passageiro', confirmar manualmente somente quando seguro; instalação APK depende de autorização Android."
 }
