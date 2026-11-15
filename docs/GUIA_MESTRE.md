@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT352 — marcador de toque visível e mira limpa (candidata)
+
+`PgsAutoTapIndicator` agora força desenho `setWillNotDraw(false)`, usa pulso radial ciano/anel branco de 960ms sem bloquear toques e preserva opção ON/OFF. Uma prévia aparece em Personalização sem enviar gesto. A mira deixa a tela do jogo 100% transparente, com coordenadas e instrução discretas sem faixa, e ✓ à esquerda / × à direita como ícones brancos de fundo invisível. Preserva sliders, recortador, segurança e regras LT349/LT351; testes Samsung ainda **BLOQUEADOS**. Ver [LT352](LT352_ARK_TOUCH_FEEDBACK_TARGET_PICKER_20261114.md).
+
+
 ## LT351 — pausa em «Sou passageiro» com retomada segura (candidata)
 
 Aguardando confirmação humana no jogo, com um aviso visível por ocorrência e retomada após o diálogo desaparecer. Sem clique automático em declaração de segurança. LT349/LT349b já integradas (#382/#384) e última release pública 0.03.46; LT350 PR #385 continua draft até homologação. [Relatório LT351](LT351_ARK_PASSENGER_MANUAL_RESUME_20261114.md).
