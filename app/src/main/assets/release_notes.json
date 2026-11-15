@@ -4213,6 +4213,40 @@
           "Atualização pelo APK exige consentimento do Android; não há instalação silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt349-ark-editor-visual-home-pgs-scanner-20261114",
+      "minVersionCode": 54554,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.47 — LT349: Editor Visual, Buscar Pokémon e scanner de sprites",
+      "sections": {
+        "novidades": [
+          "Editor Visual: botão independente Medidas ON/OFF abaixo de Linhas-guia; mostra dimensões reais em pixels dos menus/guias sem alterar os botões.",
+          "Pokébolas: imagem Icone_Background_On.png do Drive aparece ao ativar Background, retornando ao ícone desligado quando desativa.",
+          "Scanner de sprites: Quadrado, Livre e Vertical agora compartilham três ícones vetoriais delicados de contorno 1,45dp e alinhamento único."
+        ],
+        "melhorias": [
+          "Linhas-guia de menus e resultados persistem no JSON de cada Pokébola, mesmo depois de fechar ou reiniciar o overlay.",
+          "Modos, Filtros, Favoritos, Editor Visual, Filtros salvos e as opções Ordenar, Clima e Forma respeitam a mesma transparência dos demais menus, sem fundo duplicado.",
+          "Lixeiras branca e preta originais importadas da pasta Banco de Imagens no Drive, nas telas WebView e no menu nativo.",
+          "Busca PGS mantém ícones da barra visíveis ao abrir submenus, admite toques fora das janelas e usa bordas brancas muito sutis em vez de azuis.",
+          "A alça de ordenar Pokémon agora tem três traços horizontais; brilho Shiny original fica dentro do sino, em posição central e visível.",
+          "Ícones da Home do assistente Edu e Doce Raro recalculam escala após a largura final da fileira, evitando aparecer minúsculos na abertura."
+        ],
+        "correcoes": [
+          "Recortador: fundo cinza dos grupos inferior/superior com 70% de transparência; arte de Confirmar, Cancelar e Background com 70% do tamanho anterior, mantendo a mesma área de toque.",
+          "Recorte Vertical passa a ter proporção 3:4 na seleção inicial e no redimensionamento, ficando mais largo e baixo sem virar horizontal.",
+          "Três formatos do recortador alinhados em células iguais; barra lateral contínua, prévia, lupa e confirmação permanecem como antes.",
+          "Corrigidas regras de janelas do PGS para reduzir bloqueio de toques externos, ocultação de ícones e contorno azul indevido.",
+          "Preservadas as imagens originais do recortador e todas as preferências, modelos, contas, notificações, Doces Raros e recursos anteriores."
+        ],
+        "emDesenvolvimento": [
+          "As correções foram compiladas e verificadas por oito gates Node/Java/OTA/PGS QA/R8; visual e gestos reais no Samsung continuam BLOQUEADOS até evidência física.",
+          "Toques reconhecidos pelo Android não comprovam teleporte ou interação no Pokémon GO/PGSharp.",
+          "Login Google/Discord do PoGoCoordinates exige autenticação OAuth e callback oficial autorizado do provedor.",
+          "Reconhecimento visual do mapa, Shiny e Encontro continuam sem homologação física; instalar o APK depende da confirmação do Android."
+        ]
+      }
     }
   ]
 }
