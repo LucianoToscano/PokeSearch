@@ -4540,6 +4540,30 @@
           "Avisos 'Sou passageiro' e de segurança da conta exigem confirmação manual. Instalação de APK exige consentimento do Android."
         ]
       }
+    },
+    {
+      "id": "lt362-monitor-home-secure-20261115",
+      "minVersionCode": 54565,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT362 — segurança do monitor e status na Home",
+      "sections": {
+        "novidades": [
+          "Home com estado compacto e independente do monitor sem clique: desligado, observando, favorito visual reconhecido, pausado, modelo ausente ou Acessibilidade necessária."
+        ],
+        "melhorias": [
+          "Preferência explícita do monitor é mantida entre encerramento/reconexão do serviço; cancelar capturas não reativa Acessibilidade sem consentimento.",
+          "PGSharp e Pokemod continuam com modelos próprios, sem exigir instalações simultâneas. TalkBack descreve o estado e alerta quando notificações estão bloqueadas."
+        ],
+        "correcoes": [
+          "Somente os pacotes exatos do Pokémon GO Google Play e Galaxy Store são aceitos como janela do jogo; outros pacotes e gerenciador Pokemod não podem se passar pelo jogo.",
+          "Duas capturas em orientações opostas não confirmam presença visual indevida; monitor passivo permanece separado de gestos e teleporte."
+        ],
+        "emDesenvolvimento": [
+          "Precisão por espécie/forma, Pokemod efetivamente ativo, CPU/bateria, DND e entrega de notificações aguardam testes físicos em Samsung.",
+          "Catálogo nativo de miniaturas de feed permanece vazio; nenhuma sprite proprietária foi copiada. Biblioteca remota assinada, diagnóstico avançado e novas ferramentas ainda exigem implementação, direitos e validação.",
+          "Avisos de segurança da conta e 'Sou passageiro' exigem decisão humana. Instalação do APK depende de consentimento Android."
+        ]
+      }
     }
   ]
 }
