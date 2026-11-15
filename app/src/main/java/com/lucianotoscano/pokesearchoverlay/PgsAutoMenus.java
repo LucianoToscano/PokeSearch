@@ -707,7 +707,7 @@ final class PgsAutoMenus {
         final Runnable[] render={null};
         render[0]=()->{
             rows.removeAllViews();
-            title.setText("Selecionados: "+PgsAutoCatalog.selected(context).size()+"/10");
+            title.setText("Selecionados: "+PgsAutoCatalog.selected(context).size()+"/10 · segure e arraste");
             // LT369: lado da lista Pokemod permanece mesmo após pesquisa/redesenho.
             if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(context))){
                 boolean left=PgsAutoScanRegionPolicy.LEFT.equals(
@@ -1429,6 +1429,10 @@ final class PgsAutoMenus {
             adds.addView(add,lp);
         }
         root.addView(adds,margined(-1,dp(29),2));
+        TextView dragHelp=label("Segure uma etapa e arraste para ordenar",9,false);
+        dragHelp.setSingleLine(true);
+        dragHelp.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(dragHelp,margined(-1,dp(18),1));
 
         LinearLayout items=vertical();
         List<View> stepRows=new ArrayList<>();
