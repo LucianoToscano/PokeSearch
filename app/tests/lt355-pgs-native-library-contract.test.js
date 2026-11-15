@@ -13,13 +13,13 @@ assert.match(native,/device-verified/);assert.match(native,/redistribution-appro
 assert.match(native,/MessageDigest\.getInstance\("SHA-256"\)/);
 assert.match(native,/options\.outWidth==width&&options\.outHeight==height/);
 assert.match(native,/compatibleVersion\.equals\(installedVersion\(context\)\)/);
-assert.match(store,/for\(Model nativeModel:PgsAutoNativeModels\.available\(c\)\)/);
+assert.match(store,/for\(Model nativeModel:PgsAutoNativeModels\.available\(c,PgsAutoCatalog\.selected\(c\)\)\)/);
 assert.match(store,/if\(m\.builtIn\)continue/);
 assert.match(store,/if\(m\.id\.equals\(id\)&&!m\.builtIn\)m\.enabled=enabled/);
 assert.match(store,/int refWidth,int refHeight\) throws IOException/);
 assert.match(store,/Bitmap\.createScaledBitmap\(image,refWidth,refHeight,true\)/);
 assert.match(store,/new Model\(originalId,name\.trim\(\),file,enabled,false,refWidth,refHeight\)/);
-assert.match(menu,/Modelo nativo verificado/);
+assert.match(menu,/Nativa · /); // LT356 mantém identificação e adiciona forma/variante
 assert.match(menu,/if\(!model\.builtIn\)/);
 assert.match(menu,/captura necessária/);
 assert.match(menu,/List<PgsAutoTemplateStore.Model> models=speciesModels;/);

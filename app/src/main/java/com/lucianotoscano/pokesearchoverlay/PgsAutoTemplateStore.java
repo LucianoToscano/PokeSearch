@@ -24,11 +24,17 @@ final class PgsAutoTemplateStore {
         String id, name, file;
         boolean enabled, builtIn;
         final int referenceWidth,referenceHeight;
+        final String nativeForm,nativeVariant;
         Model(String id,String name,String file,boolean enabled,boolean builtIn) {
             this(id,name,file,enabled,builtIn,WIDTH,HEIGHT);
         }
         Model(String id,String name,String file,boolean enabled,boolean builtIn,int w,int h) {
+            this(id,name,file,enabled,builtIn,w,h,"","");
+        }
+        Model(String id,String name,String file,boolean enabled,boolean builtIn,
+              int w,int h,String form,String variant) {
             this.id=id;this.name=name;this.file=file;this.enabled=enabled;this.builtIn=builtIn;
+            this.nativeForm=builtIn?form:"";this.nativeVariant=builtIn?variant:"";
             // Modelos LT339 são legados 68×52; os novos preservam a dimensão
             // real escolhida no feed em uma largura de referência de 740px.
             referenceWidth=Math.max(16,Math.min(92,w));
@@ -38,13 +44,12 @@ final class PgsAutoTemplateStore {
     private static SharedPreferences preferences(Context c) {
         return c.getSharedPreferences(PREF, Context.MODE_PRIVATE);
     }
-    static synchronized List<Model> list(Context c) {
+    /** Somente amostras pessoais: leitura idempotente, sem dependência do catálogo PGS. */
+    static synchronized List<Model> userModels(Context c) {
         SharedPreferences p=preferences(c);
         if (!p.contains(KEY)) {
             ArrayList<Model> defaults=new ArrayList<>();
-
-
-            persist(c,defaults);
+            persist(c,defaults); // primeira instalação mantém estado persistido vazio
             return defaults;
         }
         ArrayList<Model> result=new ArrayList<>();
@@ -52,17 +57,24 @@ final class PgsAutoTemplateStore {
             JSONArray data=new JSONArray(p.getString(KEY,"[]"));
             for(int i=0;i<data.length();i++) {
                 JSONObject obj=data.getJSONObject(i);
-                result.add(new Model(obj.getString("id"),obj.getString("name"),obj.getString("file"),
-                    obj.optBoolean("enabled",true),obj.optBoolean("builtIn",false),
+                // builtIn nunca vem das preferências; versão do APK é fonte da verdade.
+                if(obj.optBoolean("builtIn",false))continue;
+                result.add(new Model(obj.getString("id"),obj.getString("name"),
+                    obj.getString("file"),obj.optBoolean("enabled",true),false,
                     obj.optInt("referenceWidth",WIDTH),obj.optInt("referenceHeight",HEIGHT)));
             }
         } catch(Exception e) {
-            // Falha fechada: não clicar em Pokémon diferentes por engano.
+            // Falha fechada: o arquivo persistido nunca é apagado por leitura ruim.
             return new ArrayList<>();
         }
-        // Native package assets are immutable and never written to user preferences.
-        // Manual templates retain their saved order and always precede native ones.
-        for(Model nativeModel:PgsAutoNativeModels.available(c)){
+        return result;
+    }
+    /** Registra somente modelos nativos para espécies selecionadas (máximo 10).
+     * Em primeira instalação, o catálogo é consultado após migração pessoal.
+     */
+    static synchronized List<Model> list(Context c) {
+        ArrayList<Model> result=new ArrayList<>(userModels(c));
+        for(Model nativeModel:PgsAutoNativeModels.available(c,PgsAutoCatalog.selected(c))){
             boolean duplicate=false;
             for(Model saved:result)if(saved.id.equals(nativeModel.id)){duplicate=true;break;}
             if(!duplicate)result.add(nativeModel);
@@ -84,6 +96,7 @@ final class PgsAutoTemplateStore {
     static synchronized void move(Context c,String id,int direction){
         List<Model> models=list(c);
         for(int i=0;i<models.size();i++)if(models.get(i).id.equals(id)){
+            if(models.get(i).builtIn)return; // a ordem de pacote não é persistida
             int other=i+direction;
             if(other<0||other>=models.size())return;
             java.util.Collections.swap(models,i,other);

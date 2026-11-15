@@ -966,6 +966,15 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void toggle(){
         if(running){halt("PARADO");return;}
+        // O gesto Android pode existir no 9/10, mas a confirmação visual de mapa
+        // depende de takeScreenshot(API 30); nunca iniciar ciclo sem esse requisito.
+        if(android.os.Build.VERSION.SDK_INT<30){
+            status("REQUER ANDROID 11+");
+            showReason("Busca PGS com leitura de sprites/mapa requer Android 11 "+
+                "ou superior. O PGSharp pode abrir no Android 9/10, mas "+
+                "a captura segura do PokeSearch não está disponível.");
+            return;
+        }
         tapMode=PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"));
         if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&
            !PgsAutoTemplateStore.pending(this).isEmpty()){
@@ -1049,12 +1058,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 " "+(first.nativeModel?"NATIVO":"PESSOAL")+
                                 " id "+first.id+
                                 " confiança "+Math.round(first.score*100)+"% no feed "+
-                                first.x+","+first.y+" display "+screenPoint[0]+","+screenPoint[1]);
+                                first.x+","+first.y+" display "+screenPoint[0]+","+screenPoint[1]+
+                                " tempo="+current.lastScanMillis()+"ms, ambíguos="+
+                                current.lastAmbiguousSlots());
                         }
                         Toast.makeText(PgsAutoClickService.this,
                             found.isEmpty()?
-                                "Nenhuma sprite reconhecida nas colunas laterais do feed. "+
-                                "Confira a miniatura e o modelo cadastrado.":
+                                (current.lastAmbiguousSlots()>0?
+                                    "Possíveis sprites de espécies diferentes no mesmo local; "+
+                                    "prévia bloqueada por ambiguidade. Revise os modelos.":
+                                    "Nenhuma sprite reconhecida nas colunas laterais do feed. "+
+                                    "Confira a miniatura e o modelo cadastrado."):
                                 "Prévia sem toque: "+found.size()+" sprite(s). Primeiro: "+
                                 found.get(0).name+" ("+
                                 Math.round(found.get(0).score*100)+"%).",
@@ -1131,7 +1145,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                     if(items.isEmpty()&&++emptyRetries==6){
                         BugReport.log(PgsAutoClickService.this,"PGS",
                             "Sem sprite no feed; modelos úteis "+
-                            detector.templateCount()+"/"+detector.selectedModelCount());
+                            detector.templateCount()+"/"+detector.selectedModelCount()+
+                            ", ambíguos "+detector.lastAmbiguousSlots()+
+                            ", duração "+detector.lastScanMillis()+"ms");
                         Toast.makeText(PgsAutoClickService.this,
                             "Nenhum ícone reconhecido no feed. Abra a lupa, "+
                             "confira a miniatura e grave novamente se preciso.",

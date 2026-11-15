@@ -95,6 +95,8 @@ final class PgsAutoIconDetector {
     private final List<Template> templates=new ArrayList<>();
     private int modelCount=0;
     private int validModelCount=0;
+    private volatile int lastAmbiguousSlots=0;
+    private volatile long lastScanMillis=0L;
     PgsAutoIconDetector(Context context) throws IOException {
         List<PgsAutoTemplateStore.Model> selected=new ArrayList<>();
         for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
@@ -128,7 +130,11 @@ final class PgsAutoIconDetector {
     }
     int templateCount(){return validModelCount;}
     int selectedModelCount(){return modelCount;}
+    int lastAmbiguousSlots(){return lastAmbiguousSlots;}
+    long lastScanMillis(){return lastScanMillis;}
     List<Match> find(Bitmap screenshot){
+        long began=android.os.SystemClock.elapsedRealtime();
+        lastAmbiguousSlots=0;lastScanMillis=0;
         if(templates.isEmpty())return Collections.emptyList();
         float scale=ANALYSIS_WIDTH/(float)screenshot.getWidth();
         int height=Math.max(1,Math.round(screenshot.getHeight()*scale));
@@ -170,15 +176,34 @@ final class PgsAutoIconDetector {
         }
         candidates.sort((a,b)->Float.compare(b.score,a.score));
         List<Candidate> unique=new ArrayList<>();
+        List<Candidate> blocked=new ArrayList<>();
+        int ambiguousSlots=0;
         for(Candidate c:candidates){
+            // Um slot anteriormente ambíguo não pode reaparecer como outro modelo.
             boolean duplicate=false;
-            int x=c.x+c.width/2,y=c.y+c.height/2;
-            for(Candidate seen:unique){
-                int sx=seen.x+seen.width/2,sy=seen.y+seen.height/2;
-                if(Math.abs(sx-x)<30&&Math.abs(sy-y)<32){duplicate=true;break;}
+            for(Candidate denied:blocked){
+                if(PgsAutoMatchPolicy.sameSlot(c.x,c.y,c.width,c.height,
+                    denied.x,denied.y,denied.width,denied.height)){
+                    duplicate=true;break;
+                }
+            }
+            if(duplicate)continue;
+            for(int i=0;i<unique.size();i++){
+                Candidate seen=unique.get(i);
+                if(!PgsAutoMatchPolicy.sameSlot(c.x,c.y,c.width,c.height,
+                    seen.x,seen.y,seen.width,seen.height))continue;
+                if(PgsAutoMatchPolicy.ambiguousDifferentSpecies(
+                    speciesKey(c.name),speciesKey(seen.name),c.score,seen.score)){
+                    unique.remove(i);
+                    blocked.add(seen);
+                    ambiguousSlots++;
+                }
+                duplicate=true;
+                break;
             }
             if(!duplicate)unique.add(c);
         }
+        lastAmbiguousSlots=ambiguousSlots;
         ArrayList<Match> result=new ArrayList<>();
         for(Candidate c:unique){
             result.add(new Match(
@@ -188,6 +213,7 @@ final class PgsAutoIconDetector {
         }
         result.sort(Comparator.comparingInt((Match m)->m.priority)
             .thenComparingInt(m->m.y).thenComparingInt(m->m.x));
+        lastScanMillis=android.os.SystemClock.elapsedRealtime()-began;
         return result;
     }
     private static boolean colorCompatible(int[] raw,int stride,int x,int y,Template t){

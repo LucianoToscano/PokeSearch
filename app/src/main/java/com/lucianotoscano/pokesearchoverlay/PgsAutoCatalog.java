@@ -58,7 +58,7 @@ final class PgsAutoCatalog {
         SharedPreferences prefs=ctx.getSharedPreferences(PREFS,Context.MODE_PRIVATE);
         if(!prefs.contains(KEY)){
             ArrayList<Integer> defaults=new ArrayList<>();
-            for(PgsAutoTemplateStore.Model m:PgsAutoTemplateStore.active(ctx)){
+            for(PgsAutoTemplateStore.Model m:PgsAutoTemplateStore.userModels(ctx)){
                 int id=findNumber(ctx,m.name);
                 if(id>0&&!defaults.contains(id))defaults.add(id);
             }

@@ -4370,6 +4370,35 @@
           "Conservada confirmação MANUAL do aviso Sou passageiro; instalar atualização depende da confirmação do Android."
         ]
       }
+    },
+    {
+      "id": "lt356-global-pgs-index-match-safety-20261115",
+      "minVersionCode": 54559,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT356 — catálogo completo e leitura PGS mais segura",
+      "sections": {
+        "novidades": [
+          "Preparado índice PGS para os 1.025 Pokémon da Pokédex atual e suas formas/variantes: até 4.096 modelos nativos homologados no manifesto, com consulta e validação somente para as até dez espécies selecionadas.",
+          "Os detalhes de modelos nativos mostram forma/variante e a prévia distingue correspondências visuais ambíguas entre espécies."
+        ],
+        "melhorias": [
+          "A biblioteca nativa não é mais ignorada no primeiro uso, mesmo sem preferências anteriores; amostras pessoais continuam separadas e prioritárias.",
+          "A deduplicação de miniaturas considera sobreposição real dos retângulos em vez de distância fixa, preservando sprites adjacentes.",
+          "Diagnóstico local informa quantas posições ficaram ambíguas e o tempo da varredura visual.",
+          "Busca PGS informa antecipadamente a necessidade de Android 11+ para captura segura, embora o jogo possa instalar em sistemas mais antigos."
+        ],
+        "correcoes": [
+          "Removida a recursão de inicialização entre seleção de espécies e modelos nativos.",
+          "Dois modelos de espécies distintas com confiança muito próxima no mesmo local não provocam toque automático.",
+          "Os rótulos de forma/variante usam elipse, mantendo os menus compactos PokeSearch."
+        ],
+        "emDesenvolvimento": [
+          "O manifesto PGS ainda não contém modelos visuais nativos: nenhuma sprite individual de feed foi validada e autorizada para redistribuição a partir do APK de referência.",
+          "Aumento de limite de manifesto não significa processar 1.025 sprites de uma vez; somente os modelos selecionados entram no scanner. Formas específicas precisam de amostras legítimas e testes.",
+          "Homologação física Samsung de reconhecimento, posição do toque, reação do jogo, teleporte, Shiny, Encontro, desempenho e bateria permanece pendente; CI e mudanças RGB não comprovam ação real.",
+          "Atualização de bibliotecas assinadas e remotas exige infraestrutura de assinatura e revogação; não implementada. O aviso 'Sou passageiro' permanece manual e seguro."
+        ]
+      }
     }
   ]
 }
