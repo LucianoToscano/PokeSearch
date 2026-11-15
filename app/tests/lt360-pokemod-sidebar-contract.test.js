@@ -22,7 +22,10 @@ assert.match(detector,/PgsAutoScanRegionPolicy\.lastX/);
 assert.match(detector,/for\(int x=scanFromX;x<=scanToX;x\+=scanStep\)/);
 assert.match(menu,/PgsAutoHostSettings\.setSidebarSide\(context/);
 assert.match(menu,/actions\.modelsChanged\(\)/);
-assert.match(menu,/mount\(root,230,PgsAutoHostPolicy\.POKEMOD\.equals\(current\)\?263:224\)/);
+assert.match(menu,/mount\(root,230,PgsAutoHostPolicy\.POKEMOD\.equals\(current\)\?293:254\)/,
+  "same compact 230dp menu with one local diagnostic row");
+assert.match(menu,/diagnostic\.setOnClickListener\(v->showCompanionDiagnostics\(\)\)/,
+  "new diagnostics stays inside existing compact host menu");
 assert.match(clicker,/Pokemod: recorte apenas o desenho do Pokémon na lista lateral/);
 assert.match(clicker,/Não inclua o círculo, o fundo do mapa ou o botão de radar/);
 assert.match(clicker,/PgsAutoHostPolicy\.mayAutoTap\(/);
