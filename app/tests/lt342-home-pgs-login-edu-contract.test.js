@@ -36,7 +36,8 @@ assert.match(pgs,/coreIndicator\.setVisibility\(View\.GONE\)/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.GREEN/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.RED/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
-assert.match(menu,/mount\(root,138,218\)/);
+assert.match(menu,/mount\(root,180,275\)/); // Monitor passivo dentro do sino
+assert.match(menu,/Monitor sem clique · ON/);
 assert.match(menu,/mount\(root,240,315\)/);
 assert.doesNotMatch(menu,/toolbar\.setVisibility\(View\.GONE\)/);
 assert.match(menu,/FLAG_WATCH_OUTSIDE_TOUCH/);

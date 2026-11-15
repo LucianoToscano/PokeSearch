@@ -4512,6 +4512,34 @@
           "A compatibilidade funcional com a edição Samsung Galaxy Store depende de teste real com Pokemod ativo no jogo; reconhecer o pacote não comprova suporte do injetor."
         ]
       }
+    },
+    {
+      "id": "lt361-passive-favorites-watch-20261115",
+      "minVersionCode": 54564,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT361 — monitoramento de favoritos sem clique",
+      "sections": {
+        "novidades": [
+          "Monitor de favoritos sem clique integrado ao menu compacto de Notificações (sino): OFF por padrão, exige ativação explícita.",
+          "Usa espécies selecionadas na Busca Pokémon e amostras próprias do perfil PGSharp ou Pokemod; observa sem enviar toques ao jogo."
+        ],
+        "melhorias": [
+          "Confirma o mesmo ícone em duas capturas antes de alertar; repete a observação com intervalo de 25 segundos, limite de 18 segundos para rodadas travadas e 10 minutos entre alertas da mesma espécie.",
+          "Agrupa até três favoritos reconhecidos por rodada no canal de Novos Pokémon, respeitando escolha de som/silêncio/desligado e permissões de notificações do Android.",
+          "Suspende capturas fora do jogo ou com menus e avisos de conta abertos; o monitor e o Auto Click não rodam juntos. Mudanças de cliente ou modelo invalidam capturas pendentes.",
+          "Preserva reconhecimento por coluna no Pokemod (esquerda/direita) e feed PGSharp, sem exigir ambos os clientes instalados."
+        ],
+        "correcoes": [
+          "Evita classificar uma miniatura comum como Shiny ou teleporte e não inicia gestos no modo de observação.",
+          "Monitor permanece desligado quando o usuário não fornece consentimento, quando não há modelo selecionado ou se o cliente ainda não foi homologado."
+        ],
+        "emDesenvolvimento": [
+          "Compatibilidade real com Pokemod, acurácia por espécie/forma/variante, CPU/bateria, DND e entrega de notificações ainda requerem testes físicos no Samsung.",
+          "O APK de referência Pokemod é gerenciador/injetor; não foram incorporadas sprites de feed nem códigos privados. Catálogo nativo segue vazio.",
+          "Filtros avançados, diagnóstico de eficiência, biblioteca remota de modelos licenciados assinados e conteúdo de PvP/Raids/Rocket/Quests são etapas futuras e não devem ser anunciadas como implementadas.",
+          "Avisos 'Sou passageiro' e de segurança da conta exigem confirmação manual. Instalação de APK exige consentimento do Android."
+        ]
+      }
     }
   ]
 }

@@ -85,6 +85,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     private FrameLayout picker;
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
+    // Monitor passivo LT361: sessão exclusiva, sem dispatchGesture.
+    private boolean watching=false,watchBusy=false;
+    private int watchTicket=0;
+    private final java.util.HashMap<String,Long> watchLastAlert=
+        new java.util.HashMap<>();
+    private final Runnable watchTick=this::scanWatchOnly;
     private long lastAccountSafetyEventCheck=0L;
     private boolean awaitingMap=false;
     private boolean armedByHome=false;
@@ -285,6 +291,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return;
         live.handler.post(()->{
+            live.stopWatchOnly(true); // Não capturar em paralelo ao tutorial.
             if(live.running)live.halt("CADASTRANDO");
             PgsAutoTemplateStore.startTeaching(live,species);
             live.queueTeachingWhenReady();
@@ -358,9 +365,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
+        if(PgsAutoWatchSettings.enabled(this))startWatchOnly();
         armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
             .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
+        if(watching){
+            armedByHome=false;
+            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",false).apply();
+        }
         if(armedByHome&&isGameVisible())startArmedSearch();
         else scheduleArmedStart();
     }
@@ -447,11 +460,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
-        // Uma perda temporária do foco de acessibilidade não equivale a
-        // "desligar": manter modelos e intenção de busca até o retorno do jogo.
-        status("AGUARDANDO JOGO");
+        // Uma perda temporária do foco de acessibilidade não equivale a "desligar".
+        // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
+        status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
     }
     @Override public void onDestroy() {
+        stopWatchOnly(true);
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
@@ -526,6 +540,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
+            @Override public void setWatchEnabled(boolean enabled){setWatchOnly(enabled);}
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
             @Override public void appearanceChanged(){refreshAppearance();}
             @Override public void previewTapIndicator(){
@@ -549,7 +564,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                 }
             }
             @Override public void previewSprites(){preview();}
-            @Override public void choosePoint(String mode){showTargetSelector(mode);}
+            @Override public void choosePoint(String mode){
+                stopWatchOnly(true);
+                showTargetSelector(mode);
+            }
             @Override public void selectSprites(){
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
                 status("SPRITES DO FEED");
@@ -648,6 +666,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return;
         live.handler.post(()->{
+            live.stopWatchOnly(true); // Home pediu busca; monitor passivo é exclusivo.
             live.showBubble();
             live.armedByHome=true;
             live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
@@ -665,6 +684,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     public static void modelsChanged(){
         PgsAutoClickService live=instance;
         if(live!=null)live.handler.post(()->{
+            live.stopWatchOnly(true); // Nunca migrar sessão para outro perfil.
             if(live.running)live.halt("PARADO");
             live.reloadDetector();
             live.status("PARADO");
@@ -677,6 +697,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             return "Abra o feed de "+
                 PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(live))+
                 " no jogo";
+        if(live.watching)return live.isGameVisible()?
+            "Monitorando favoritos · sem clique":"Monitor pausado · abra o jogo";
         if(live.running&&!live.isGameVisible())return "Abra o jogo";
         if(live.running&&live.awaitingMap)return "Aguardando mapa";
         if(live.running)return "Procurando ícones";
@@ -685,6 +707,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         return "Parado";
     }
     private void removeHand(){
+        stopWatchOnly(true);
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
@@ -707,8 +730,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     /** A Home usa o estado REAL do serviço, nunca uma preferência desatualizada. */
     public static boolean isSearchActive(){
         PgsAutoClickService live=instance;
-        return live!=null && PgsAutoVisualState.active(
-            live.running,live.pausedByShiny,live.pausedByError);
+        return live!=null && (live.watching||PgsAutoVisualState.active(
+            live.running,live.pausedByShiny,live.pausedByError));
     }
     private void setCoreState(PgsAutoVisualState.Core next){
         if(coreIndicator==null||coreBackground==null||currentCore==next)return;
@@ -737,16 +760,20 @@ public final class PgsAutoClickService extends AccessibilityService {
         lastStatus=value;
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
-        boolean on=PgsAutoVisualState.active(running,pausedByShiny,pausedByError);
+        boolean on=watching||PgsAutoVisualState.active(
+            running,pausedByShiny,pausedByError);
         if(handView!=null&&(!Boolean.valueOf(on).equals(currentArtworkOn))){
             handView.setImageResource(on?
                 R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
             currentArtworkOn=on;
         }
-        setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
+        if(watching)setCoreState(PgsAutoVisualState.Core.WHITE);
+        else setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
         if(handBadge!=null){
-            handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
-            handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);
+            handBadge.setText(watching?"◎":shiny?"✨":
+                value.contains("PAUSADO")?"!":"");
+            handBadge.setVisibility(watching||shiny||
+                value.contains("PAUSADO")?View.VISIBLE:View.GONE);
         }
         if(countdownBadge!=null){
             boolean enabled=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
@@ -763,7 +790,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
         bubble.setContentDescription("PGS Busca Pokémon: "+value+
             (on?", ligado":", desligado")+
-            ". Toque para ligar/desligar; segure para abrir menus.");
+            (watching?". Monitor somente leitura: toque para parar.":
+             ". Toque para ligar/desligar; segure para abrir menus."));
     }
     private boolean reloadDetector(){
         try{
@@ -1048,6 +1076,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void toggle(){
+        if(watching){stopWatchOnly(true);return;}
         if(running){halt("PARADO");return;}
         // LT359: PGS é interface padrão; Pokemod exige seleção explícita e
         // modelos próprios. Outros clientes ficam em prévia até homologação.
@@ -1110,8 +1139,253 @@ public final class PgsAutoClickService extends AccessibilityService {
         handler.postDelayed(this::scanAndTap,400);
     }
 
+    /**
+     * LT361 — observação passiva, opt-in. Não chama tap(), scanAndTap(),
+     * GestureDescription nem dispatchGesture. A notificação informa só
+     * presença VISUAL de miniatura, nunca Shiny, encontro ou teleporte.
+     */
+    private void setWatchOnly(boolean enabled){
+        if(enabled)startWatchOnly();
+        else stopWatchOnly(true);
+    }
+    private void startWatchOnly(){
+        if(watching){status("MONITOR · ATIVO");return;}
+        String host=PgsAutoHostSettings.current(this);
+        if(PgsAutoHostPolicy.OTHER.equals(host)){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Outro cliente está em prévia; monitor sem clique ainda não homologado.");
+            return;
+        }
+        if(PgsAutoHostPolicy.POKEMOD.equals(host)&&
+                !PgsAutoHostSettings.pokemodManagerInstalled(this)){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Gerenciador Pokemod não detectado. Configure a interface e o jogo.");
+            return;
+        }
+        if(android.os.Build.VERSION.SDK_INT<30){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Monitor visual exige captura de tela no Android 11+.");
+            return;
+        }
+        if(teachingInProgress||teachingScheduled||
+                !PgsAutoTemplateStore.pending(this).isEmpty()){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Conclua o cadastro da sprite antes de iniciar o monitor.");
+            return;
+        }
+        if(running)halt("BUSCA INTERROMPIDA");
+        armedByHome=false;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("armFromHome",false).apply();
+        if(!reloadDetector()){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            status("MONITOR · SEM SPRITE");
+            return;
+        }
+        watching=true;watchBusy=false;watchTicket++;
+        pausedByShiny=false;pausedByError=false;
+        PgsAutoWatchSettings.setEnabled(this,true);
+        status("MONITOR · SEM CLIQUE");
+        BugReport.log(this,"PGS","LT361 monitor passivo ativado para "+
+            host+"; somente espécies selecionadas e com modelo próprio");
+        handler.removeCallbacks(watchTick);
+        handler.postDelayed(watchTick,600L);
+    }
+    private void stopWatchOnly(boolean clearPreference){
+        handler.removeCallbacks(watchTick);
+        watchTicket++;watchBusy=false;watching=false;
+        if(clearPreference)PgsAutoWatchSettings.setEnabled(this,false);
+        if(!running)status("PARADO");
+    }
+    private void scheduleWatch(long millis){
+        watchBusy=false;
+        handler.removeCallbacks(watchTick);
+        if(watching)handler.postDelayed(watchTick,millis);
+    }
+    private interface WatchFrameResult {
+        void ready(java.util.List<PgsAutoIconDetector.Match> matches,
+            int width,int height,boolean aborted);
+        void failed(String reason);
+    }
+    private void captureWatchFrame(int stamp,WatchFrameResult result){
+        if(!watching||watchTicket!=stamp)return;
+        capture(new CaptureCallback(){
+            @Override public void onBitmap(Bitmap bitmap){
+                if(!watching||watchTicket!=stamp)return;
+                Bitmap copy=null;
+                try{copy=bitmap.copy(Bitmap.Config.ARGB_8888,false);}
+                catch(RuntimeException ignored){}
+                if(copy==null){result.failed("Captura vazia.");return;}
+                final Bitmap frame=copy;
+                final int w=frame.getWidth(),h=frame.getHeight();
+                final PgsAutoIconDetector reader=detector;
+                if(reader==null){frame.recycle();result.failed("Leitor indisponível.");return;}
+                try{
+                    analysis.execute(()->{
+                        java.util.List<PgsAutoIconDetector.Match> matches=null;
+                        boolean aborted=true;
+                        try{
+                            matches=reader.find(frame);
+                            aborted=reader.lastScanAborted();
+                        }catch(RuntimeException failure){
+                            BugReport.log(PgsAutoClickService.this,"PGS",
+                                "LT361 erro de leitura visual: "+
+                                failure.getClass().getSimpleName());
+                        }finally{frame.recycle();}
+                        final java.util.List<PgsAutoIconDetector.Match> seen=matches;
+                        final boolean incomplete=aborted;
+                        handler.post(()->{
+                            if(watching&&watchTicket==stamp)
+                                result.ready(seen,w,h,incomplete);
+                        });
+                    });
+                }catch(RuntimeException unavailable){
+                    frame.recycle();
+                    result.failed("Fila de leitura indisponível.");
+                }
+            }
+            @Override public void onError(String error){
+                if(watching&&watchTicket==stamp)result.failed(error);
+            }
+        });
+    }
+    private void scanWatchOnly(){
+        if(!watching||watchBusy)return;
+        String host=PgsAutoHostSettings.current(this);
+        boolean game=isGameVisible();
+        boolean warnings=game&&
+            (gameAccountSafetyNoticePresent()||passengerPromptPresent());
+        boolean panel=quickMenus!=null&&quickMenus.hasPanel();
+        boolean may=PgsAutoWatchPolicy.mayCapture(
+            watching,host,game,!warnings,detector!=null&&
+            detector.templateCount()>0,running,
+            teachingInProgress||teachingScheduled,panel);
+        if(!may){
+            status(warnings?"MONITOR · AVISO MANUAL":
+                game?"MONITOR · PAUSADO":"MONITOR · ABRA O JOGO");
+            scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+            return;
+        }
+        watchBusy=true;
+        final int stamp=watchTicket;
+        status("MONITOR · LENDO LISTA");
+        // Nem callback de screenshot ausente nem fila travada retém o monitor.
+        handler.postDelayed(()->{
+            if(!watching||!watchBusy||watchTicket!=stamp)return;
+            watchTicket++; // frames atrasados desta rodada são descartados.
+            status("MONITOR · TEMPO LIMITE");
+            scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+        },PgsAutoWatchPolicy.WATCHDOG_MS);
+        captureWatchFrame(stamp,new WatchFrameResult(){
+            @Override public void ready(
+                    java.util.List<PgsAutoIconDetector.Match> first,
+                    int width,int height,boolean aborted){
+                if(!watching||watchTicket!=stamp)return;
+                if(aborted||first==null){
+                    status("MONITOR · LIMITE DA LEITURA");
+                    scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);return;
+                }
+                if(first.isEmpty()){
+                    status("MONITOR · OBSERVANDO");
+                    scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);return;
+                }
+                handler.postDelayed(()->{
+                    if(!watching||watchTicket!=stamp)return;
+                    if(!PgsAutoWatchPolicy.mayCapture(
+                        watching,PgsAutoHostSettings.current(
+                            PgsAutoClickService.this),
+                        isGameVisible(),
+                        !gameAccountSafetyNoticePresent()&&
+                            !passengerPromptPresent(),
+                        detector!=null&&detector.templateCount()>0,
+                        running,teachingInProgress||teachingScheduled,
+                        quickMenus!=null&&quickMenus.hasPanel())){
+                        scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);return;
+                    }
+                    captureWatchFrame(stamp,new WatchFrameResult(){
+                        @Override public void ready(
+                                java.util.List<PgsAutoIconDetector.Match> second,
+                                int secondW,int secondH,boolean secondAborted){
+                            if(!watching||watchTicket!=stamp)return;
+                            if(secondAborted||second==null){
+                                status("MONITOR · LEITURA INCOMPLETA");
+                                scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);
+                                return;
+                            }
+                            // Validar novamente o foreground após o processamento.
+                            if(!isGameVisible()||gameAccountSafetyNoticePresent()||
+                                    passengerPromptPresent()){
+                                status("MONITOR · PAUSADO");
+                                scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+                                return;
+                            }
+                            java.util.HashSet<String> distinct=
+                                new java.util.HashSet<>();
+                            java.util.ArrayList<String> names=
+                                new java.util.ArrayList<>();
+                            final long now=SystemClock.elapsedRealtime();
+                            for(PgsAutoIconDetector.Match a:first){
+                                if(!PgsAutoCatalog.isSelectedName(
+                                    PgsAutoClickService.this,a.name))continue;
+                                String key=host+":"+a.group;
+                                if(!distinct.add(key))continue;
+                                boolean verified=false;
+                                for(PgsAutoIconDetector.Match b:second){
+                                    if(PgsAutoWatchPolicy.sameSprite(a.id,a.group,
+                                        a.x,a.y,width,height,b.id,b.group,
+                                        b.x,b.y,secondW,secondH)){
+                                        verified=true;break;
+                                    }
+                                }
+                                if(!verified)continue;
+                                Long last=watchLastAlert.get(key);
+                                if(!PgsAutoWatchPolicy.mayNotify(true,
+                                    last==null?-1L:last,now))continue;
+                                if(names.size()>=PgsAutoWatchPolicy.
+                                        MAX_ALERT_SPECIES_PER_SCAN)break;
+                                names.add(a.name);
+                                watchLastAlert.put(key,now);
+                            }
+                            if(!names.isEmpty()){
+                                String label=PgsAutoHostPolicy.displayLabel(host);
+                                String body="Na lista: "+String.join(", ",names)+
+                                    ". Presença visual confirmada; nenhum toque.";
+                                notifyConfigured(PgsAutoNotificationPolicy.NEW,
+                                    "PokeSearch · favoritos · "+label,body,false);
+                                BugReport.log(PgsAutoClickService.this,"PGS",
+                                    "LT361 monitor sem gesto: "+names.size()+
+                                    " favorito(s) visuais confirmados em 2 frames");
+                                status("MONITOR · "+names.size()+" FAVORITO(S)");
+                            }else status("MONITOR · OBSERVANDO");
+                            scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);
+                        }
+                        @Override public void failed(String reason){
+                            if(!watching||watchTicket!=stamp)return;
+                            status("MONITOR · SEM CAPTURA");
+                            scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+                        }
+                    });
+                },PgsAutoWatchPolicy.RECONFIRM_DELAY_MS);
+            }
+            @Override public void failed(String reason){
+                if(!watching||watchTicket!=stamp)return;
+                status("MONITOR · SEM CAPTURA");
+                if(reason.contains("permissão")||
+                    reason.contains("recusou a captura")){
+                    stopWatchOnly(true);
+                    showReason("Monitor: captura negada pelo Android. "+
+                        "Revise a permissão de Acessibilidade.");
+                }else scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+            }
+        });
+    }
+
     /** Segure o botão para localizar os ícones sem tocar em nenhum deles. */
     private void preview(){
+        if(watching){
+            Toast.makeText(this,"Desligue o monitor no sino para usar a prévia.",
+                Toast.LENGTH_LONG).show();return;
+        }
         if(running){
             Toast.makeText(this,"Pause a busca antes de testar a prévia.",
                 Toast.LENGTH_LONG).show();return;
