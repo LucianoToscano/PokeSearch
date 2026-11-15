@@ -1381,6 +1381,15 @@ public final class PgsAutoClickService extends AccessibilityService {
             handler.postDelayed(()->{if(running)scanAndTap();},1100L);
             return;
         }
+        // Última guarda de perfil antes do gesto; Match veio do detector
+        // carregado somente com modelos da interface escolhida.
+        if(!PgsAutoHostPolicy.mayAutoTap(
+            PgsAutoHostSettings.current(this),true,
+            !gameAccountSafetyNoticePresent(),match!=null)){
+            fail("Perfil do feed incompatível ou aviso de segurança. "+
+                "Confirme o jogo e a captura sem automatizar nenhum aviso.");
+            return;
+        }
         status("TOQUE "+(index+1)+"/"+total);
         BugReport.log(this,"PGS","Gesto do feed "+match.name+
             " modelo "+match.id+" "+(match.nativeModel?"NATIVO":"PESSOAL")+
