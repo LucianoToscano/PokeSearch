@@ -19,12 +19,12 @@ assert.match(menu,/PgsAutoMenuStyle\.read\(context\)\.popupHeight/);
 assert.match(menu,/mount\(root,238,340\)/);
 for(const key of ["ENABLED","CLICK_ENABLED","WAIT","MAX_CLICKS",
  "STOP_IV100","STOP_DITTO","RINGTONE","VIBRATE","SHOW_COOLDOWN",
- "SHOW_INFO","FIX_MAP","MAP_RETRY"]){
+ "SHOW_INFO","FIX_MAP","MAP_RETRY","PROXIMITY"]){
  assert.ok(menu.includes("PgsAutoHuntSettings."+key),"the "+key+" real setting is shown");
  assert.ok(settings.includes(key+"=")||settings.includes(" "+key+"="),"host setting declared: "+key);
 }
 for(const future of ["Tele por IV100/Shiny","Reiniciar PoGo por falha",
- "Auto Catch / lançar bolas","Zoom máximo / sensor de proximidade"]){
+ "Auto Catch / lançar bolas","Zoom máximo"]){
  assert.ok(menu.includes(future),"unsupported capability is labeled unavailable");
 }
 assert.match(menu,/ACTION_NOTIFICATION_LISTENER_SETTINGS/);
@@ -41,6 +41,13 @@ assert.match(engine,/huntClicks\+\+/);
 assert.match(engine,/PgsAutoHuntPolicy\.mayKeepScanning\(/);
 assert.match(engine,/PgsAutoHuntPolicy\.nextDelayMs\(/);
 assert.match(engine,/mapReadFailures/);
+assert.match(engine,/huntProximityListener/);
+assert.match(engine,/Sensor\.TYPE_PROXIMITY/);
+assert.match(engine,/refreshHuntProximity\(\)/);
+assert.match(engine,/AUTO HUNT · SENSOR COBERTO/);
+assert.match(engine,/huntCountdownTick/);
+assert.match(engine,/huntNextAt/);
+assert.match(menu,/Sensor proximidade · pausar se coberto/);
 assert.match(engine,/PgsAutoHuntSettings\.FIX_MAP/);
 assert.match(engine,/onAutoHuntNotice\(String message\)/);
 assert.match(engine,/PgsAutoHuntPolicy\.explicitNotice\(/);
