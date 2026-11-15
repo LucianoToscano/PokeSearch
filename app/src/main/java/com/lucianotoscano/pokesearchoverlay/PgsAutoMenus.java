@@ -800,8 +800,7 @@ final class PgsAutoMenus {
             if(PgsSmartSearchSettings.HUNT.equals(current)){
                 huntCheckbox(root,hunt,PgsAutoHuntSettings.CLICK_ENABLED,
                     "Tocar na sprite confirmada",false);
-                huntNumeric(root,hunt,PgsAutoHuntSettings.WAIT,
-                    "Espera entre alvos",new int[]{15,35,60,120},35);
+                // Tempo de espera centralizado apenas na aba Ajustes (LT369).
             }
             CheckBox consent=new CheckBox(context);
             consent.setText("Autorizo toques neste perfil");
@@ -813,82 +812,242 @@ final class PgsAutoMenus {
         }
     }
 
+    // LT369: todas as configurações da Busca cabem numa só aba rolável;
+    // nenhuma opção de Tempos/Avisos/Visual/Auto Hunt abre outro menu principal.
     private void appendCentralSettings(LinearLayout root){
+        SharedPreferences prefs=context.getSharedPreferences(
+            "pgs_auto_settings_v1",Context.MODE_PRIVATE);
+        SharedPreferences hunt=PgsAutoHuntSettings.forCurrent(context);
+        SharedPreferences cycles=PgsAutoClickService.cyclePrefs(context);
+
+        TextView times=label("TEMPOS",10,true);
+        root.addView(times,margined(-1,dp(20),2));
         CheckBox automatic=new CheckBox(context);
-        automatic.setText("Preencher tempos padrão automaticamente");
+        automatic.setText("Tempos padrão automáticos");
         automatic.setTextSize(10);automatic.setTextColor(fg());
         automatic.setChecked(PgsSmartSearchSettings.automaticDefaults(context));
         automatic.setOnCheckedChangeListener((b,on)->
             PgsSmartSearchSettings.setAutomaticDefaults(context,on));
-        root.addView(automatic,margined(-1,dp(36),2));
-
-        SharedPreferences hunt=PgsAutoHuntSettings.forCurrent(context);
+        root.addView(automatic,margined(-1,dp(30),1));
         huntNumeric(root,hunt,PgsAutoHuntSettings.WAIT,
             "Espera entre alvos",new int[]{15,35,60,120},35);
-        SharedPreferences cycles=PgsAutoClickService.cyclePrefs(context);
-        int[] mapValues={15,25,35,60,120};
-        int mapCurrent=cycles.getInt("load_timeout",
+        int[] mapChoices={15,25,35,60,120};
+        int currentMap=cycles.getInt("load_timeout",
             PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS);
-        Button map=button("Tempo do mapa: "+mapCurrent+"s ▾",10);
+        Button map=button("Aguardar mapa: "+currentMap+"s ▾",10);
         map.setOnClickListener(v->{
-            int index=0;
-            for(int i=0;i<mapValues.length;i++)
-                if(mapValues[i]==cycles.getInt("load_timeout",25)){
-                    index=i+1;break;
-                }
-            int value=mapValues[index%mapValues.length];
-            cycles.edit().putInt("load_timeout",value)
+            int choice=0;
+            int stored=cycles.getInt("load_timeout",
+                PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS);
+            for(int i=0;i<mapChoices.length;i++)
+                if(mapChoices[i]==stored){choice=i+1;break;}
+            int next=mapChoices[choice%mapChoices.length];
+            cycles.edit().putInt("load_timeout",next)
                 .putBoolean("lt344_timeout_user_set",true).apply();
-            map.setText("Tempo do mapa: "+value+"s ▾");
+            map.setText("Aguardar mapa: "+next+"s ▾");
         });
-        root.addView(map,margined(-1,dp(31),3));
+        root.addView(map,margined(-1,dp(30),2));
+        int[] postValues={0,3,5,10,20,35,60,120};
+        int postStored=cycles.getInt("post_load",
+            PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS);
+        Button post=button("Após mapa/sem Shiny: "+postStored+"s ▾",10);
+        post.setOnClickListener(v->{
+            int choice=0;
+            int saved=cycles.getInt("post_load",
+                PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS);
+            for(int i=0;i<postValues.length;i++)
+                if(postValues[i]==saved){choice=i+1;break;}
+            int next=postValues[choice%postValues.length];
+            cycles.edit().putInt("post_load",next).apply();
+            post.setText("Após mapa/sem Shiny: "+next+"s ▾");
+        });
+        root.addView(post,margined(-1,dp(30),2));
 
-        SharedPreferences alerts=context.getSharedPreferences(
-            "pgs_auto_settings_v1",Context.MODE_PRIVATE);
-        String[] keys={PgsAutoNotificationPolicy.NEW,PgsAutoNotificationPolicy.SHINY};
-        String[] labels={"Notificar novos Pokémon","Notificar Shiny monitorado"};
-        for(int i=0;i<keys.length;i++){
-            final String kind=keys[i];
-            CheckBox notification=new CheckBox(context);
-            notification.setText(labels[i]);notification.setTextSize(10);
-            notification.setTextColor(fg());
-            notification.setChecked(!"off".equals(PgsAutoNotificationPolicy.mode(
-                kind,alerts.getString(kind,
-                    PgsAutoNotificationPolicy.defaultMode(kind)))));
-            notification.setOnCheckedChangeListener((b,on)->
-                alerts.edit().putString(kind,on?"default":"off").apply());
-            root.addView(notification,margined(-1,dp(30),1));
+        TextView alerts=label("NOTIFICAÇÕES",10,true);
+        root.addView(alerts,margined(-1,dp(20),6));
+        appendCentralAlert(root,prefs,"Novos Pokémon",PgsAutoNotificationPolicy.NEW);
+        appendCentralAlert(root,prefs,"Shiny monitorado",PgsAutoNotificationPolicy.SHINY);
+
+        TextView visuals=label("VISUAL",10,true);
+        root.addView(visuals,margined(-1,dp(20),6));
+        CheckBox countdown=new CheckBox(context);
+        countdown.setText("Contador na bolha");
+        countdown.setTextSize(10);countdown.setTextColor(fg());
+        countdown.setChecked(prefs.getBoolean("showCountdown",false));
+        countdown.setOnCheckedChangeListener((b,on)->{
+            prefs.edit().putBoolean("showCountdown",on).apply();
+            actions.appearanceChanged();
+        });
+        root.addView(countdown,margined(-1,dp(28),1));
+        LinearLayout tapRow=horizontal();
+        CheckBox tap=new CheckBox(context);
+        tap.setText("Mostrar efeito do toque");
+        tap.setTextSize(10);tap.setTextColor(fg());
+        tap.setChecked(prefs.getBoolean("showTapIndicator",true));
+        tap.setOnCheckedChangeListener((b,on)->
+            prefs.edit().putBoolean("showTapIndicator",on).apply());
+        tapRow.addView(tap,new LinearLayout.LayoutParams(0,dp(30),1));
+        Button preview=button("◎",14);
+        preview.setContentDescription("Prévia do toque, sem tocar no jogo");
+        preview.setOnClickListener(v->actions.previewTapIndicator());
+        tapRow.addView(preview,new LinearLayout.LayoutParams(dp(30),dp(30)));
+        root.addView(tapRow,margined(-1,dp(30),1));
+        LinearLayout sizes=horizontal();
+        TextView iconSize=label("Ícones:",10,false);
+        sizes.addView(iconSize,new LinearLayout.LayoutParams(dp(50),dp(29)));
+        String current=prefs.getString("iconScale","M");
+        for(String size:new String[]{"P","M","G"}){
+            Button choice=button(size,10);markChosen(choice,size.equals(current));
+            choice.setOnClickListener(v->{
+                prefs.edit().putString("iconScale",size).apply();
+                actions.appearanceChanged();
+                for(int i=1;i<sizes.getChildCount();i++){
+                    Button b=(Button)sizes.getChildAt(i);
+                    markChosen(b,size.equals(b.getText().toString()));
+                }
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(29),1);
+            lp.leftMargin=dp(2);sizes.addView(choice,lp);
         }
-        CheckBox pulse=new CheckBox(context);
-        pulse.setText("Mostrar local do toque");pulse.setTextSize(10);
-        pulse.setTextColor(fg());
-        pulse.setChecked(alerts.getBoolean("showTapIndicator",true));
-        pulse.setOnCheckedChangeListener((b,on)->
-            alerts.edit().putBoolean("showTapIndicator",on).apply());
-        root.addView(pulse,margined(-1,dp(30),1));
+        root.addView(sizes,margined(-1,dp(29),2));
+        TextView sharedStyle=label("Cores, transparência e posição seguem "+
+            "o Editor Visual das Pokébolas 1 e 2.",9,false);
+        sharedStyle.setMaxLines(2);
+        root.addView(sharedStyle,margined(-1,dp(35),3));
 
         Button advanced=button(centralAdvanced?"⌃ Recolher avançado":
-            "⌄ Mais opções",10);
-        advanced.setOnClickListener(v->{centralAdvanced=!centralAdvanced;showCentral(2);});
-        root.addView(advanced,margined(-1,dp(30),3));
-        if(centralAdvanced){
-            LinearLayout row=horizontal();
-            String[] labelsAdvanced={"Alvo","Tempos","Avisos","Visual"};
-            Runnable[] handlers={this::showTargets,this::showTime,
-                this::showNotifications,this::showAppearance};
-            for(int i=0;i<labelsAdvanced.length;i++){
-                final int j=i;
-                Button button=button(labelsAdvanced[i],9);
-                button.setOnClickListener(v->handlers[j].run());
-                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
-                if(i>0)lp.leftMargin=dp(2);
-                row.addView(button,lp);
-            }
-            root.addView(row,margined(-1,dp(28),2));
-            Button huntMore=button("Configurações avançadas do Auto Hunt",9);
-            huntMore.setOnClickListener(v->showAutoHunt());
-            root.addView(huntMore,margined(-1,dp(29),2));
+            "⌄ Ajustes avançados",10);
+        advanced.setOnClickListener(v->{
+            centralAdvanced=!centralAdvanced;showCentral(2);
+        });
+        root.addView(advanced,margined(-1,dp(30),5));
+        if(centralAdvanced)appendCentralAdvanced(root,hunt,cycles);
+    }
+
+    private void appendCentralAlert(LinearLayout root,SharedPreferences prefs,
+        String title,String kind){
+        LinearLayout line=horizontal();
+        TextView name=label(title,10,false);
+        line.addView(name,new LinearLayout.LayoutParams(0,dp(30),1));
+        String saved=PgsAutoNotificationPolicy.mode(kind,prefs.getString(
+            kind,PgsAutoNotificationPolicy.defaultMode(kind)));
+        int[] glyphs={R.drawable.pgs_speaker_on,
+            R.drawable.pgs_speaker_silent,R.drawable.pgs_speaker_off};
+        String[] modes={"default","mute","off"};
+        String[] hints={"Com som","Sem som","Desligado"};
+        ImageButton[] buttons=new ImageButton[3];
+        for(int i=0;i<3;i++){
+            final int index=i;
+            ImageButton icon=imageButton(glyphs[i],title+" · "+hints[i],7);
+            icon.setPadding(dp(7),dp(7),dp(7),dp(7));
+            buttons[i]=icon;
+            markAlertIcon(icon,i==0?
+                ("default".equals(saved)||"strong".equals(saved)||
+                    "custom".equals(saved)):modes[i].equals(saved));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(30),dp(30));
+            if(i>0)lp.leftMargin=dp(2);
+            line.addView(icon,lp);
+            icon.setOnClickListener(v->{
+                prefs.edit().putString(kind,modes[index]).apply();
+                for(int j=0;j<3;j++)markAlertIcon(buttons[j],j==index);
+            });
         }
+        root.addView(line,margined(-1,dp(30),1));
+    }
+
+    private void appendCentralAdvanced(LinearLayout root,
+        SharedPreferences hunt,SharedPreferences cycles){
+        // Custom seconds remain supported instead of rounding saved values to presets.
+        TextView exact=label("TEMPOS EXATOS (SEGUNDOS)",10,true);
+        root.addView(exact,margined(-1,dp(23),3));
+        LinearLayout exactRow=horizontal();
+        EditText map=new EditText(context),after=new EditText(context);
+        EditText[] values={map,after};
+        String[] names={"Mapa","Após mapa"};
+        String[] keys={"load_timeout","post_load"};
+        int[] defaults={PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS,
+            PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS};
+        for(int i=0;i<2;i++){
+            LinearLayout item=vertical();
+            item.addView(label(names[i],9,false),margined(-1,dp(18),0));
+            EditText editor=values[i];
+            editor.setSingleLine(true);editor.setTextSize(11);
+            editor.setTextColor(fg());editor.setGravity(Gravity.CENTER);
+            editor.setSelectAllOnFocus(true);
+            editor.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            editor.setText(String.valueOf(cycles.getInt(keys[i],defaults[i])));
+            PgsAutoMenuStyle style=PgsAutoMenuStyle.read(context);
+            editor.setBackground(bg(style.tileFill(),style.tileStroke(),5));
+            item.addView(editor,margined(-1,dp(31),1));
+            LinearLayout.LayoutParams itemLp=new LinearLayout.LayoutParams(0,dp(53),1);
+            if(i>0)itemLp.leftMargin=dp(3);
+            exactRow.addView(item,itemLp);
+        }
+        root.addView(exactRow,margined(-1,dp(53),2));
+        Button save=button("✓ Salvar tempos",10);
+        save.setOnClickListener(v->{
+            try{
+                int m=Integer.parseInt(map.getText().toString().trim());
+                int a=Integer.parseInt(after.getText().toString().trim());
+                if(m<1||a<0)throw new NumberFormatException();
+                cycles.edit().putInt("load_timeout",m).putInt("post_load",a)
+                    .putBoolean("lt344_timeout_user_set",true).apply();
+                Toast.makeText(context,"Tempos salvos.",Toast.LENGTH_SHORT).show();
+                showCentral(2);
+            }catch(NumberFormatException e){
+                Toast.makeText(context,"Mapa >= 1s e após mapa >= 0s.",
+                    Toast.LENGTH_LONG).show();
+            }
+        });
+        root.addView(save,margined(-1,dp(30),2));
+
+        if(PgsSmartSearchSettings.HUNT.equals(PgsSmartSearchSettings.mode(context))){
+            root.addView(label("AUTO HUNT",10,true),margined(-1,dp(22),5));
+            huntNumeric(root,hunt,PgsAutoHuntSettings.MAX_CLICKS,
+                "Limite de toques",new int[]{1,3,5,10},10);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.STOP_IV100,
+                "Parar no aviso explícito IV100",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.STOP_DITTO,
+                "Parar no aviso explícito Ditto",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.RINGTONE,
+                "Som Auto Hunt",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.VIBRATE,
+                "Vibração Auto Hunt",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.SHOW_COOLDOWN,
+                "Contagem na bolha",false);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.SHOW_INFO,
+                "Exibir nome do alvo",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.FIX_MAP,
+                "Tentar reler o mapa (sem clique)",false);
+            huntNumeric(root,hunt,PgsAutoHuntSettings.MAP_RETRY,
+                "Falhas de imagem",new int[]{0,1,2,3},3);
+            android.hardware.SensorManager sensors=(android.hardware.SensorManager)
+                context.getSystemService(Context.SENSOR_SERVICE);
+            if(sensors!=null&&sensors.getDefaultSensor(
+                    android.hardware.Sensor.TYPE_PROXIMITY)!=null)
+                huntCheckbox(root,hunt,PgsAutoHuntSettings.PROXIMITY,
+                    "Pausar quando sensor coberto",false);
+            else huntUnavailable(root,"Sensor de proximidade",
+                "Dispositivo sem esse sensor");
+        }
+        Button permission=button("Acesso manual às notificações Android",9);
+        permission.setOnClickListener(v->{
+            hidePanel();
+            try{
+                android.content.Intent intent=new android.content.Intent(
+                    android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }catch(Exception e){
+                Toast.makeText(context,"Abra Configurações → Notificações "+
+                    "do Android.",Toast.LENGTH_LONG).show();
+            }
+        });
+        root.addView(permission,margined(-1,dp(30),5));
+        TextView limits=label("Avisos de segurança exigem confirmação humana. "+
+            "Teleporte e captura não são inferidos de toques.",9,false);
+        limits.setMaxLines(3);
+        root.addView(limits,margined(-1,dp(50),2));
     }
 
     private boolean hasCentralSprite(){
