@@ -904,6 +904,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                     }
                 },null);
                 if(!accepted)fail("Android não autorizou o deslizamento.");
+                else if(tapIndicator!=null)
+                    tapIndicator.show(Math.round(size.x*.5f),Math.round(size.y*.78f));
             }
             @Override public void onError(String msg){
                 if(running&&ticket==stamp)fail("Sem prova da tela de encontro: "+msg);
