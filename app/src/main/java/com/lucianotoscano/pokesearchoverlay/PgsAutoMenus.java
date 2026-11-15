@@ -37,6 +37,7 @@ final class PgsAutoMenus {
         void teach(String species);
         void closeOverlay();
         void testNotification(String type);
+        void setWatchEnabled(boolean enabled);
         void modelsChanged();
         void appearanceChanged();
         void previewTapIndicator();
@@ -999,6 +1000,25 @@ final class PgsAutoMenus {
             LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(77));
             root.addView(section,sp);
         }
+        // Monitor passivo é opt-in: reutiliza espécies marcadas na Busca e
+        // o canal Novos Pokémon, mas NUNCA executa gestos.
+        boolean watchEnabled=PgsAutoWatchSettings.enabled(context);
+        Button monitor=button(watchEnabled?
+            "◎ Monitor sem clique · ON":"◎ Monitor sem clique · OFF",10);
+        monitor.setContentDescription(
+            "Monitorar as espécies selecionadas na lista do "+
+            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context))+
+            " sem realizar toques. "+
+            (watchEnabled?"Ativo, toque para desativar.":"Desligado, toque para ativar."));
+        markChosen(monitor,watchEnabled);
+        monitor.setOnClickListener(v->{
+            actions.setWatchEnabled(!watchEnabled);
+            showNotifications(); // Lê o estado realmente aceito pelo serviço.
+        });
+        root.addView(monitor,margined(-1,dp(32),4));
+        TextView help=label("Favoritos da Busca · 2 leituras · a cada 25s",9,false);
+        help.setGravity(Gravity.CENTER);
+        root.addView(help,margined(-1,dp(17),1));
         CheckBox vibrate=new CheckBox(context);
         vibrate.setText("Vibrar Shiny");
         vibrate.setTextSize(10);vibrate.setTextColor(fg());
@@ -1007,7 +1027,7 @@ final class PgsAutoMenus {
         vibrate.setOnCheckedChangeListener((view,on)->
             prefs.edit().putBoolean("shinyVibrate",on).apply());
         root.addView(vibrate,new LinearLayout.LayoutParams(-1,dp(31)));
-        mount(root,138,218);
+        mount(root,180,275);
     }
     private void showSoundPicker(String key){
         if(!PgsAutoNotificationPolicy.validKind(key))return;
