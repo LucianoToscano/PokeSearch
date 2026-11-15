@@ -1,5 +1,7 @@
 # Continuidade PokeSearch após LT356 — todas as espécies
 
+**Versão OFICIAL verificada em 15/11/2026:** **0.03.52 / 54559 / 51356**, [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.52-54559), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.52-54559/PokeSearch-v0.03.52-LT.apk), 61.135.783 bytes, SHA-256 `419a91801e0ea7fd3a411b173b9b3506078952f6aa1b6bea1f911df1793051e7`, [workflow protegido #43674772112](https://github.com/LucianoToscano/PokeSearch/actions/runs/43674772112) **SUCCESS**. Código PR #400 e release PR #401 integrados, com sete gates de implementação verdes. Não supor que o usuário instalou APK nem que o jogo reagiu. Sempre revalidar release atual antes de alterar.
+
 Atue como responsável técnico ARK do repositório `LucianoToscano/PokeSearch`.
 Verifique o HEAD **atual** da `main` e a última release, além de
 `AGENTS.md`, `docs/GUIA_MESTRE.md`,
