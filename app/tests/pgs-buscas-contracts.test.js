@@ -32,7 +32,9 @@ assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,1\)/);
 assert.match(menu,/actions\.teach\(pokemon\.name\)/);
 assert.match(menu,/PgsAutoNotificationPolicy\.SHINY/);
 assert.match(menu,/R\.drawable\.pgs_speaker_silent/);
-assert.match(menu,/mount\(root,138,218\)/);
+assert.match(menu,/mount\\(root,180,275\\)/); // LT361: botão pequeno sem alterar toolbar
+assert.match(menu,/Monitor sem clique · ON/);
+assert.match(menu,/Monitor sem clique · OFF/);
 assert.doesNotMatch(menu,/••• MAIS|private void report\(|private void donate\(/);
 assert.match(engine,/PgsAutoCyclePolicy\.mapTimedOut/);
 assert.match(engine,/PgsAutoCyclePolicy\.readyToAdvance/);
