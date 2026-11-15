@@ -11,6 +11,10 @@ public final class PgsAutoHostPolicyTest {
         check("other".equals(PgsAutoHostPolicy.profile("unknown")),"unknown fails closed");
         check(PgsAutoHostPolicy.isGameWindow("com.nianticlabs.pokemongo"),"game window");
         check(!PgsAutoHostPolicy.isGameWindow("com.pokemod.app.public"),"injector is not game");
+        check(PgsAutoHostPolicy.isGameWindow("com.nianticlabs.pokemongo.ares"),
+            "Samsung Galaxy Store game window");
+        check(!PgsAutoHostPolicy.isGameWindow("com.nianticlabs.pokemongo.ares.fake"),
+            "prevent similar-package spoofing");
         check(PgsAutoHostPolicy.isManagerWindow("com.pokemod.app.public"),"manager identity");
         check(!PgsAutoHostPolicy.templateBelongsTo("pgsharp","pokemod"),"no cross-host sprite");
         check(PgsAutoHostPolicy.templateBelongsTo("pokemod","pokemod"),"same host sprite");
