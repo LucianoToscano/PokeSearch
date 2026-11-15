@@ -19,7 +19,7 @@ assert.match(store,/if\(m\.id\.equals\(id\)&&!m\.builtIn\)m\.enabled=enabled/);
 assert.match(store,/int refWidth,int refHeight\) throws IOException/);
 assert.match(store,/Bitmap\.createScaledBitmap\(image,refWidth,refHeight,true\)/);
 assert.match(store,/new Model\(originalId,name\.trim\(\),file,enabled,false,refWidth,refHeight\)/);
-assert.match(menu,/Modelo nativo verificado/);
+assert.match(menu,/Nativa · /); // LT356 mantém identificação e adiciona forma/variante
 assert.match(menu,/if\(!model\.builtIn\)/);
 assert.match(menu,/captura necessária/);
 assert.match(menu,/List<PgsAutoTemplateStore.Model> models=speciesModels;/);
