@@ -1133,6 +1133,240 @@ public final class PgsAutoClickService extends AccessibilityService {
         handler.postDelayed(this::scanAndTap,400);
     }
 
+    /**
+     * LT361 — observação passiva, opt-in. Não chama tap(), scanAndTap(),
+     * GestureDescription nem dispatchGesture. A notificação informa só
+     * presença VISUAL de miniatura, nunca Shiny, encontro ou teleporte.
+     */
+    private void setWatchOnly(boolean enabled){
+        if(enabled)startWatchOnly();
+        else stopWatchOnly(true);
+    }
+    private void startWatchOnly(){
+        if(watching){status("MONITOR · ATIVO");return;}
+        String host=PgsAutoHostSettings.current(this);
+        if(PgsAutoHostPolicy.OTHER.equals(host)){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Outro cliente está em prévia; monitor sem clique ainda não homologado.");
+            return;
+        }
+        if(PgsAutoHostPolicy.POKEMOD.equals(host)&&
+                !PgsAutoHostSettings.pokemodManagerInstalled(this)){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Gerenciador Pokemod não detectado. Configure a interface e o jogo.");
+            return;
+        }
+        if(android.os.Build.VERSION.SDK_INT<30){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Monitor visual exige captura de tela no Android 11+.");
+            return;
+        }
+        if(teachingInProgress||teachingScheduled||
+                !PgsAutoTemplateStore.pending(this).isEmpty()){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            showReason("Conclua o cadastro da sprite antes de iniciar o monitor.");
+            return;
+        }
+        if(running)halt("BUSCA INTERROMPIDA");
+        armedByHome=false;
+        getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+            .putBoolean("armFromHome",false).apply();
+        if(!reloadDetector()){
+            PgsAutoWatchSettings.setEnabled(this,false);
+            status("MONITOR · SEM SPRITE");
+            return;
+        }
+        watching=true;watchBusy=false;watchTicket++;
+        pausedByShiny=false;pausedByError=false;
+        PgsAutoWatchSettings.setEnabled(this,true);
+        status("MONITOR · SEM CLIQUE");
+        BugReport.log(this,"PGS","LT361 monitor passivo ativado para "+
+            host+"; somente espécies selecionadas e com modelo próprio");
+        handler.removeCallbacks(watchTick);
+        handler.postDelayed(watchTick,600L);
+    }
+    private void stopWatchOnly(boolean clearPreference){
+        handler.removeCallbacks(watchTick);
+        watchTicket++;watchBusy=false;watching=false;
+        if(clearPreference)PgsAutoWatchSettings.setEnabled(this,false);
+        if(!running)status("PARADO");
+    }
+    private void scheduleWatch(long millis){
+        watchBusy=false;
+        handler.removeCallbacks(watchTick);
+        if(watching)handler.postDelayed(watchTick,millis);
+    }
+    private interface WatchFrameResult {
+        void ready(java.util.List<PgsAutoIconDetector.Match> matches,
+            int width,int height,boolean aborted);
+        void failed(String reason);
+    }
+    private void captureWatchFrame(int stamp,WatchFrameResult result){
+        if(!watching||watchTicket!=stamp)return;
+        capture(new CaptureCallback(){
+            @Override public void onBitmap(Bitmap bitmap){
+                if(!watching||watchTicket!=stamp)return;
+                Bitmap copy=null;
+                try{copy=bitmap.copy(Bitmap.Config.ARGB_8888,false);}
+                catch(RuntimeException ignored){}
+                if(copy==null){result.failed("Captura vazia.");return;}
+                final Bitmap frame=copy;
+                final int w=frame.getWidth(),h=frame.getHeight();
+                final PgsAutoIconDetector reader=detector;
+                if(reader==null){frame.recycle();result.failed("Leitor indisponível.");return;}
+                try{
+                    analysis.execute(()->{
+                        java.util.List<PgsAutoIconDetector.Match> matches=null;
+                        boolean aborted=true;
+                        try{
+                            matches=reader.find(frame);
+                            aborted=reader.lastScanAborted();
+                        }catch(RuntimeException failure){
+                            BugReport.log(PgsAutoClickService.this,"PGS",
+                                "LT361 erro de leitura visual: "+
+                                failure.getClass().getSimpleName());
+                        }finally{frame.recycle();}
+                        final java.util.List<PgsAutoIconDetector.Match> seen=matches;
+                        final boolean incomplete=aborted;
+                        handler.post(()->{
+                            if(watching&&watchTicket==stamp)
+                                result.ready(seen,w,h,incomplete);
+                        });
+                    });
+                }catch(RuntimeException unavailable){
+                    frame.recycle();
+                    result.failed("Fila de leitura indisponível.");
+                }
+            }
+            @Override public void onError(String error){
+                if(watching&&watchTicket==stamp)result.failed(error);
+            }
+        });
+    }
+    private void scanWatchOnly(){
+        if(!watching||watchBusy)return;
+        String host=PgsAutoHostSettings.current(this);
+        boolean game=isGameVisible();
+        boolean warnings=game&&
+            (gameAccountSafetyNoticePresent()||passengerPromptPresent());
+        boolean panel=quickMenus!=null&&quickMenus.hasPanel();
+        boolean may=PgsAutoWatchPolicy.mayCapture(
+            watching,host,game,!warnings,detector!=null&&
+            detector.templateCount()>0,running,
+            teachingInProgress||teachingScheduled,panel);
+        if(!may){
+            status(warnings?"MONITOR · AVISO MANUAL":
+                game?"MONITOR · PAUSADO":"MONITOR · ABRA O JOGO");
+            scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+            return;
+        }
+        watchBusy=true;
+        final int stamp=watchTicket;
+        status("MONITOR · LENDO LISTA");
+        captureWatchFrame(stamp,new WatchFrameResult(){
+            @Override public void ready(
+                    java.util.List<PgsAutoIconDetector.Match> first,
+                    int width,int height,boolean aborted){
+                if(!watching||watchTicket!=stamp)return;
+                if(aborted||first==null){
+                    status("MONITOR · LIMITE DA LEITURA");
+                    scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);return;
+                }
+                if(first.isEmpty()){
+                    status("MONITOR · OBSERVANDO");
+                    scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);return;
+                }
+                handler.postDelayed(()->{
+                    if(!watching||watchTicket!=stamp)return;
+                    if(!PgsAutoWatchPolicy.mayCapture(
+                        watching,PgsAutoHostSettings.current(
+                            PgsAutoClickService.this),
+                        isGameVisible(),
+                        !gameAccountSafetyNoticePresent()&&
+                            !passengerPromptPresent(),
+                        detector!=null&&detector.templateCount()>0,
+                        running,teachingInProgress||teachingScheduled,
+                        quickMenus!=null&&quickMenus.hasPanel())){
+                        scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);return;
+                    }
+                    captureWatchFrame(stamp,new WatchFrameResult(){
+                        @Override public void ready(
+                                java.util.List<PgsAutoIconDetector.Match> second,
+                                int secondW,int secondH,boolean secondAborted){
+                            if(!watching||watchTicket!=stamp)return;
+                            if(secondAborted||second==null){
+                                status("MONITOR · LEITURA INCOMPLETA");
+                                scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);
+                                return;
+                            }
+                            // Validar novamente o foreground após o processamento.
+                            if(!isGameVisible()||gameAccountSafetyNoticePresent()||
+                                    passengerPromptPresent()){
+                                status("MONITOR · PAUSADO");
+                                scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+                                return;
+                            }
+                            java.util.HashSet<String> distinct=
+                                new java.util.HashSet<>();
+                            java.util.ArrayList<String> names=
+                                new java.util.ArrayList<>();
+                            final long now=SystemClock.elapsedRealtime();
+                            for(PgsAutoIconDetector.Match a:first){
+                                if(!PgsAutoCatalog.isSelectedName(
+                                    PgsAutoClickService.this,a.name))continue;
+                                String key=host+":"+a.group;
+                                if(!distinct.add(key))continue;
+                                boolean verified=false;
+                                for(PgsAutoIconDetector.Match b:second){
+                                    if(PgsAutoWatchPolicy.sameSprite(a.id,a.group,
+                                        a.x,a.y,width,height,b.id,b.group,
+                                        b.x,b.y,secondW,secondH)){
+                                        verified=true;break;
+                                    }
+                                }
+                                if(!verified)continue;
+                                Long last=watchLastAlert.get(key);
+                                if(!PgsAutoWatchPolicy.mayNotify(true,
+                                    last==null?-1L:last,now))continue;
+                                if(names.size()>=PgsAutoWatchPolicy.
+                                        MAX_ALERT_SPECIES_PER_SCAN)break;
+                                names.add(a.name);
+                                watchLastAlert.put(key,now);
+                            }
+                            if(!names.isEmpty()){
+                                String label=PgsAutoHostPolicy.displayLabel(host);
+                                String body="Na lista: "+String.join(", ",names)+
+                                    ". Presença visual confirmada; nenhum toque.";
+                                notifyConfigured(PgsAutoNotificationPolicy.NEW,
+                                    "PokeSearch · favoritos · "+label,body,false);
+                                BugReport.log(PgsAutoClickService.this,"PGS",
+                                    "LT361 monitor sem gesto: "+names.size()+
+                                    " favorito(s) visuais confirmados em 2 frames");
+                                status("MONITOR · "+names.size()+" FAVORITO(S)");
+                            }else status("MONITOR · OBSERVANDO");
+                            scheduleWatch(PgsAutoWatchPolicy.SCAN_INTERVAL_MS);
+                        }
+                        @Override public void failed(String reason){
+                            if(!watching||watchTicket!=stamp)return;
+                            status("MONITOR · SEM CAPTURA");
+                            scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+                        }
+                    });
+                },PgsAutoWatchPolicy.RECONFIRM_DELAY_MS);
+            }
+            @Override public void failed(String reason){
+                if(!watching||watchTicket!=stamp)return;
+                status("MONITOR · SEM CAPTURA");
+                if(reason.contains("permissão")||
+                    reason.contains("recusou a captura")){
+                    stopWatchOnly(true);
+                    showReason("Monitor: captura negada pelo Android. "+
+                        "Revise a permissão de Acessibilidade.");
+                }else scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+            }
+        });
+    }
+
     /** Segure o botão para localizar os ícones sem tocar em nenhum deles. */
     private void preview(){
         if(watching){
