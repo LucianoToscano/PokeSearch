@@ -160,10 +160,13 @@ final class PgsAutoMenus {
                     return true;
                 case MotionEvent.ACTION_UP:
                     if(!dragging[0])return false; // toque curto continua editando.
-                    int target=nearestRow(ordered,event.getRawY(),from);
+                    // Restaurar a posição ANTES de medir os centros.
+                    // Enquanto a linha segue o dedo, ela pareceria sempre
+                    // o alvo mais próximo, impedindo qualquer reordenação.
                     dragging[0]=false;
                     row.setTranslationY(0f);
                     row.setAlpha(1f);row.setElevation(0f);
+                    int target=nearestRow(ordered,event.getRawY(),from);
                     if(target!=from){
                         if(move.to(target))refresh.run();
                         else Toast.makeText(context,"Não foi possível mover esta etapa.",
