@@ -4590,6 +4590,33 @@
           "O monitor não comprova Shiny, encontro ou teleporte a partir de miniaturas, e os contadores de alerta solicitados não comprovam entrega Android. Instalação de atualização exige autorização do Android."
         ]
       }
+    },
+    {
+      "id": "lt364-pokelist-datahub-20261115",
+      "minVersionCode": 54567,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT364 — Radar PokeList e catálogo Data Hub",
+      "sections": {
+        "novidades": [
+          "Os atalhos Raids, Quests e Rocket da Home agora abrem o Radar PokeList com consultas manuais por categoria, filtros e coordenadas informadas pelo usuário.",
+          "O Radar também permite alternar para Pokémon e Líderes Rocket, exibir resultados válidos e copiar coordenadas sem fazer teleporte.",
+          "Power Spots abre catálogo offline de espécies e formas, classificações de Reides e Max Battles, com importação do APK Data Hub instalado ou selecionado pelo usuário."
+        ],
+        "melhorias": [
+          "Consulta PokeList usa HTTPS, limites de resposta, timeout, deduplicação, descarte de registros expirados e tratamento 401/403/429/Retry-After.",
+          "A Pokédex base já mostra 1.025 espécies; o Data Hub autorizado oferece, quando acessível/importado, 1.440 formas, 20 categorias de Reides e 9 categorias Max Battles. Só os JSONs validados ficam guardados para consulta offline.",
+          "Preservados os ícones, a fileira única da Home, Pokébolas 1/2, Doce Raro, Edu, contas e filtros independentes, Pokemod/PGSharp e o atalho Weather ainda em desenvolvimento."
+        ],
+        "correcoes": [
+          "Atalhos Raids, Quests, Rocket e Power Spots deixam de ser apenas mensagens de função em desenvolvimento.",
+          "ID Rocket é enviado no parâmetro rockets e ID de espécie em mons; o Radar não solicita GPS automático ou permissões adicionais."
+        ],
+        "emDesenvolvimento": [
+          "A disponibilidade real do endpoint PokeList, as unidades de distance e todos os formatos de resposta precisam ser conferidos em rede e aparelho; CI não confirma backend ao vivo.",
+          "Power Spots mostra categorias Max Battles, não locais ativos. Catálogo do Data Hub instalado pode depender da importação pelo seletor de APK se o Android bloquear leitura do arquivo de instalação.",
+          "Não há automação de teleporte, Shiny, encontro ou login em API de terceiros; testes físicos Samsung, DND, TalkBack, 1/5/10 espécies e desempenho continuam pendentes."
+        ]
+      }
     }
   ]
 }
