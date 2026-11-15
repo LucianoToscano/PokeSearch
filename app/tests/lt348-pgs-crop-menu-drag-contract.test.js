@@ -13,7 +13,8 @@ assert.equal(raw.toString("ascii",0,4),"RIFF");
 assert.equal(raw.toString("ascii",8,12),"WEBP");
 assert.equal(crypto.createHash("sha256").update(raw).digest("hex"),
  "00dff29e152f385f30aaa204095bfc1f35f1218143a2f507479a03020720490e");
-assert.ok(service.includes('String[] icons={"icone_quadrado.png","icone_livre.png","icone_vertical.webp"}'));
+assert.match(service,/int\[\] icons=\{R\.drawable\.pgs_crop_square_thin,/);
+assert.match(service,/R\.drawable\.pgs_crop_free_thin,R\.drawable\.pgs_crop_vertical_thin/);
 assert.ok(service.includes('formats.addView(backgroundIcon'));
 assert.match(service,/actions\.addView\(confirm,/);
 assert.match(service,/actions\.addView\(preview,/);
@@ -22,6 +23,10 @@ assert.ok(service.indexOf("actions.addView(confirm") <
           service.indexOf("actions.addView(preview"));
 assert.ok(service.indexOf("actions.addView(preview") <
           service.indexOf("actions.addView(cancel"));
+assert.match(service,/bg\.setColor\(0x4D35373D\)/);
+assert.match(service,/confirm\.setPadding\(dp\(12\),dp\(12\),dp\(12\),dp\(12\)\)/);
+assert.match(service,/backgroundIcon\.setPadding\(dp\(12\),dp\(12\),dp\(12\),dp\(12\)\)/);
+assert.match(crop,/VERTICAL_WIDTH_HEIGHT_RATIO=0\.75f/);
 assert.match(service,/cropControlsBackground\(\)/);
 assert.match(service,/controlsLp.bottomMargin=dp\(21\)/);
 assert.match(service,/new PgsAutoCropSizeSlider\(this,32,crop::setReferencePx\)/);
