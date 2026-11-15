@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT367 — CANDIDATA DE EDITOR VISUAL (NÃO PUBLICADA)
+
+A partir dos exemplos de círculos numerados e barra mínima, foi integrado em branch o Editor de Sequências: menu ≡ ao lado de Auto Hunt sem novo ícone na toolbar, ações Toque, Arrastar, Esperar e clicar em Sprite previamente selecionada do feed. Mira visual confirma posições relativas, com espera/duração ajustável, copiar/colar etapa interna, mover, excluir e prévia transparente não interativa. Execução só após opt-in por PGSharp ou Pokemod + botão próprio; valida pacote oficial, janela segura, duas imagens da sprite, orientação, callback e 12 passos/120s estimados/watchdog 180s. Não garante captura no jogo, e não oferece leitura do clipboard privado. Nenhuma permissão, root, reinício, modificação de conta ou dependência de APIs privadas. Preservar padrões P1/P2, Doce Raro, Edu, OAuth, Radar PokeList, Data Hub, Auto Hunt, LT357, OTAs e signin. Gate CI e release ainda pendentes; Samsung físico/PGSharp/Pokemod não homologados. Auditoria: docs/LT367_EDITOR_SEQUENCIAS_VISUAIS_20261115.md; prompt: docs/LT367_PROMPT_CONTINUIDADE_LT368_20261115.md. Autorização anterior dos APKs/APIs válida, sem perguntar novamente.
+
+
+
 ## LT366 OFICIAL — PokeSearch 0.03.62 / 54569 (15/11/2026)
 
 **PUBLICADO:** PokeSearch **0.03.62**, versionCode **54569**, label **51366**, [release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.62-54569), [APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.62-54569/PokeSearch-v0.03.62-LT.apk), **61.158.659 bytes**, SHA-256 asset GitHub `93f4d809759081af74ad1a4e45f648cadf0353cbb65bac9bbabc6700758610e9`. [Workflow permanente #43758728764](https://github.com/LucianoToscano/PokeSearch/actions/runs/43758728764) **completed/success** no commit `d596dcbaa124aa11af25813f496864864ce24179` (preflight, Node/OTA, assets, R8, APK/signer, release e hash público, limpeza de segredos) com assinatura permanente certificado SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. SHA verificado por GitHub/workflow, **sem recálculo independente do APK baixado**.

@@ -44,6 +44,12 @@ final class PgsAutoMenus {
         void previewSprites();
         void choosePoint(String mode);
         void selectSprites();
+        void sequencePick(String type,int index,boolean destination);
+        void sequencePreview();
+        void sequenceRun();
+        void sequenceStop();
+        void sequenceChanged();
+        boolean sequenceRunning();
     }
     private final Context context;
     private final WindowManager wm;
@@ -529,7 +535,18 @@ final class PgsAutoMenus {
         hunt.setContentDescription("Opções Auto Hunt para "+
             PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
         hunt.setOnClickListener(v->showAutoHunt());
-        root.addView(hunt,margined(-1,dp(30),3));
+        LinearLayout searchTools=horizontal();
+        searchTools.addView(hunt,new LinearLayout.LayoutParams(0,dp(30),1));
+        Button sequence=button("≡",15);
+        sequence.setOnClickListener(v->showSequence());
+        sequence.setContentDescription(
+            "Abrir editor de sequências; adicionar pontos numerados, gestos e tempos");
+        LinearLayout.LayoutParams sequenceLp=
+            new LinearLayout.LayoutParams(dp(34),dp(30));
+        sequenceLp.leftMargin=dp(3);
+        searchTools.addView(sequence,sequenceLp);
+        // LT367 não aumenta a altura do menu Buscar: reutiliza a linha Auto Hunt.
+        root.addView(searchTools,margined(-1,dp(30),3));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -931,6 +948,249 @@ final class PgsAutoMenus {
      * Autohunt compatível por PERFIL visual; o app nunca controla interfaces
      * privadas do PGSharp/Pokemod. Nada desta tela inicia gestos sozinho.
      */
+    /** LT367 — editor original no mesmo popup P1/P2, sem sexta bolha. */
+    private boolean sequenceLandscape(){
+        Point sz=size();return sz.x>=sz.y;
+    }
+    private void sequenceEdited(boolean ok){
+        if(!ok){
+            Toast.makeText(context,"Não foi possível alterar o passo. "+
+                "Confira orientação, limites e perfil.",Toast.LENGTH_LONG).show();
+            return;
+        }
+        actions.sequenceChanged();showSequence();
+    }
+    void showSequence(){
+        String host=PgsAutoHostSettings.current(context);
+        List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(context);
+        boolean rotated=!steps.isEmpty()&&
+            PgsSequenceStore.landscape(context)!=sequenceLandscape();
+        LinearLayout root=panelRoot("◎ SEQUÊNCIAS",
+            PgsAutoHostPolicy.shortLabel(host)+" · "+steps.size()+"/"+
+            PgsSequencePolicy.MAX_STEPS);
+        TextView caption=label(
+            rotated?"Gire a tela para a orientação em que os pontos foram criados":
+            "Pontos normalizados · toques somente após ativação explícita",9,false);
+        caption.setMaxLines(2);
+        root.addView(caption,margined(-1,dp(24),1));
+
+        LinearLayout adds=horizontal();
+        String[] titles={"+ Toque","↗ Arrastar","+ Sprite","+ Espera"};
+        for(int i=0;i<4;i++){
+            final int action=i;
+            Button b=button(titles[i],9);
+            b.setContentDescription("Adicionar etapa: "+titles[i]);
+            b.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host)&&
+                steps.size()<PgsSequencePolicy.MAX_STEPS);
+            b.setOnClickListener(v->{
+                if(action==0){dismissAll();actions.sequencePick("TAP",-1,false);}
+                else if(action==1){dismissAll();actions.sequencePick("SWIPE",-1,false);}
+                else if(action==2)showSequenceSprites(-1);
+                else sequenceEdited(PgsSequenceStore.add(context,
+                    PgsSequencePolicy.waitStep(1000),sequenceLandscape()));
+            });
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
+            if(i>0)p.leftMargin=dp(2);
+            adds.addView(b,p);
+        }
+        root.addView(adds,margined(-1,dp(31),3));
+
+        ScrollView scroll=new ScrollView(context);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout items=vertical();
+        if(steps.isEmpty()){
+            TextView empty=label("Use + para criar passos. Toque no número "+
+                "depois para editar posição, duração e espera.",10,false);
+            empty.setMaxLines(3);
+            items.addView(empty,margined(-1,dp(65),2));
+        }
+        for(int i=0;i<steps.size();i++){
+            final int index=i;
+            PgsSequencePolicy.Step st=steps.get(i);
+            LinearLayout line=horizontal();
+            Button edit=button((i+1)+"  "+st.title()+
+                (st.type==PgsSequencePolicy.Type.WAIT?
+                " · "+st.waitMs/1000f+"s":""),10);
+            edit.setContentDescription("Editar etapa "+(i+1)+" "+st.title());
+            edit.setOnClickListener(v->showSequenceStep(index));
+            line.addView(edit,new LinearLayout.LayoutParams(0,dp(29),1));
+            String[] icons={"↑","↓","×"};
+            for(int j=0;j<3;j++){
+                final int op=j;
+                Button button=button(icons[j],12);
+                button.setContentDescription((op==0?"Subir":op==1?"Descer":"Excluir")+
+                    " etapa "+(i+1));
+                if(op==0&&i==0||op==1&&i==steps.size()-1)
+                    button.setEnabled(false);
+                button.setOnClickListener(v->{
+                    boolean ok=op==0?PgsSequenceStore.move(context,index,-1):
+                        op==1?PgsSequenceStore.move(context,index,1):
+                            PgsSequenceStore.delete(context,index);
+                    sequenceEdited(ok);
+                });
+                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
+                    dp(27),dp(29));p.leftMargin=dp(2);line.addView(button,p);
+            }
+            items.addView(line,margined(-1,dp(29),2));
+        }
+        scroll.addView(items);
+        int available=PgsAutoMenuStyle.read(context).popupHeight;
+        if(available<280)caption.setVisibility(View.GONE);
+        int scrollHeight=Math.max(30,Math.min(165,
+            available-(caption.getVisibility()==View.GONE?187:213)));
+        root.addView(scroll,margined(-1,dp(scrollHeight),3));
+
+        CheckBox consent=new CheckBox(context);
+        consent.setText("Autorizar execução de gestos neste perfil");
+        consent.setTextSize(9);consent.setTextColor(fg());
+        consent.setChecked(PgsSequenceStore.canRun(context));
+        consent.setEnabled(!PgsAutoHostPolicy.OTHER.equals(host));
+        consent.setOnCheckedChangeListener((b,enabled)->{
+            PgsSequenceStore.setRunConsent(context,enabled);
+            if(!enabled)actions.sequenceStop();
+        });
+        root.addView(consent,margined(-1,dp(28),1));
+        LinearLayout controls=horizontal();
+        String[] labels={"◉ Prévia","▷ Executar","▣ Colar"};
+        for(int i=0;i<labels.length;i++){
+            final int key=i;Button btn=button(labels[i],10);
+            btn.setEnabled(!rotated&&!steps.isEmpty()&&
+                !PgsAutoHostPolicy.OTHER.equals(host));
+            if(i==2)btn.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host));
+            btn.setOnClickListener(v->{
+                if(key==0){dismissAll();actions.sequencePreview();}
+                else if(key==1){
+                    if(!PgsSequenceStore.canRun(context)){
+                        Toast.makeText(context,"Ative autorização de execução "+
+                            "para este cliente.",Toast.LENGTH_LONG).show();return;
+                    }
+                    dismissAll();actions.sequenceRun();
+                }else sequenceEdited(PgsSequenceStore.paste(
+                    context,sequenceLandscape()));
+            });
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
+            if(i>0)p.leftMargin=dp(3);controls.addView(btn,p);
+        }
+        root.addView(controls,margined(-1,dp(31),3));
+
+        LinearLayout bottom=horizontal();
+        Button stop=button("■ Parar",10);
+        stop.setOnClickListener(v->{actions.sequenceStop();showSequence();});
+        bottom.addView(stop,new LinearLayout.LayoutParams(0,dp(29),1));
+        Button erase=button("Limpar",10);
+        erase.setContentDescription("Apagar as etapas deste perfil; "+
+            "não modifica modelos de sprites nem contas");
+        erase.setOnClickListener(v->sequenceEdited(PgsSequenceStore.clear(context)));
+        LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(0,dp(29),1);
+        ep.leftMargin=dp(3);bottom.addView(erase,ep);
+        Button back=button("← Buscar",10);
+        back.setOnClickListener(v->showSearch());
+        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(29),1);
+        bp.leftMargin=dp(3);bottom.addView(back,bp);
+        root.addView(bottom,margined(-1,dp(29),3));
+        mount(root,240,338);
+    }
+    private void showSequenceSprites(int editIndex){
+        LinearLayout root=panelRoot("◎ SPRITE", "modelo selecionado");
+        TextView hint=label("Escolha uma miniatura do feed já carregada "+
+            "para o perfil atual. Não reconhecerá Pokémon 3D.",10,false);
+        hint.setMaxLines(3);root.addView(hint,margined(-1,dp(55),2));
+        ScrollView scroll=new ScrollView(context);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout items=vertical();
+        int count=0;
+        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context)){
+            if(!PgsAutoCatalog.isSelectedName(context,model.name))continue;
+            count++;final String id=model.id,name=model.name;
+            Button item=button("◎ "+name,10);
+            item.setOnClickListener(v->{
+                PgsSequencePolicy.Step step=PgsSequencePolicy.sprite(id,name);
+                boolean ok=editIndex>=0?
+                    PgsSequenceStore.replace(context,editIndex,step):
+                    PgsSequenceStore.add(context,step,sequenceLandscape());
+                sequenceEdited(ok);
+            });
+            items.addView(item,margined(-1,dp(29),2));
+        }
+        if(count==0)items.addView(label("Nenhum modelo ativo. "+
+            "Abra Buscar e selecione uma espécie com sprite salva.",10,false));
+        scroll.addView(items);
+        root.addView(scroll,margined(-1,dp(140),3));
+        Button back=button("← Sequência",10);
+        back.setOnClickListener(v->showSequence());
+        root.addView(back,margined(-1,dp(29),4));
+        mount(root,238,265);
+    }
+    void showSequenceStep(int index){
+        List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(context);
+        if(index<0||index>=steps.size()){showSequence();return;}
+        PgsSequencePolicy.Step step=steps.get(index);
+        LinearLayout root=panelRoot("PASSO "+(index+1),step.title());
+        TextView detail=label("Ajuste a etapa sem alterar os outros pontos. "+
+            "Cada alteração interrompe uma execução ativa.",10,false);
+        detail.setMaxLines(2);root.addView(detail,margined(-1,dp(40),2));
+        if(step.type==PgsSequencePolicy.Type.TAP||
+           step.type==PgsSequencePolicy.Type.SWIPE){
+            Button point=button("◎ Posicionar origem",10);
+            point.setOnClickListener(v->{dismissAll();
+                actions.sequencePick("EDIT",index,false);});
+            root.addView(point,margined(-1,dp(31),3));
+            if(step.type==PgsSequencePolicy.Type.SWIPE){
+                Button dest=button("➚ Posicionar destino",10);
+                dest.setOnClickListener(v->{dismissAll();
+                    actions.sequencePick("EDIT",index,true);});
+                root.addView(dest,margined(-1,dp(31),3));
+            }
+        }else if(step.type==PgsSequencePolicy.Type.SPRITE){
+            Button select=button("◎ Alterar sprite salva",10);
+            select.setOnClickListener(v->showSequenceSprites(index));
+            root.addView(select,margined(-1,dp(30),3));
+        }
+        if(step.type==PgsSequencePolicy.Type.TAP||
+           step.type==PgsSequencePolicy.Type.SWIPE){
+            Button length=button("Duração do gesto: "+step.gestureMs+" ms ▾",10);
+            int[] options=step.type==PgsSequencePolicy.Type.TAP?
+                new int[]{90,150,220}:new int[]{200,350,500,800,1200,1800};
+            length.setOnClickListener(v->{
+                int next=0;
+                for(int i=0;i<options.length;i++)
+                    if(options[i]==step.gestureMs){next=(i+1)%options.length;break;}
+                sequenceEdited(PgsSequenceStore.changeGesture(
+                    context,index,options[next]));
+            });
+            root.addView(length,margined(-1,dp(31),3));
+        }
+        Button wait=button((step.type==PgsSequencePolicy.Type.WAIT?
+            "Aguardar: ":"Depois da etapa: ")+step.waitMs+" ms ▾",10);
+        wait.setOnClickListener(v->{
+            int[] options=step.type==PgsSequencePolicy.Type.WAIT?
+                new int[]{500,1000,2000,5000,10000,30000}:
+                new int[]{0,300,600,1000,2000,5000,10000};
+            int next=0;
+            for(int i=0;i<options.length;i++)
+                if(options[i]==step.waitMs){next=(i+1)%options.length;break;}
+            sequenceEdited(PgsSequenceStore.changeWait(
+                context,index,options[next]));
+        });
+        root.addView(wait,margined(-1,dp(31),3));
+        LinearLayout controls=horizontal();
+        Button copy=button("▣ Copiar passo",10);
+        copy.setOnClickListener(v->{
+            if(PgsSequenceStore.copy(context,index)){
+                Toast.makeText(context,"Etapa copiada neste perfil. "+
+                    "Use Colar para duplicar.",Toast.LENGTH_SHORT).show();
+                showSequence();
+            }
+        });
+        controls.addView(copy,new LinearLayout.LayoutParams(0,dp(31),1));
+        Button back=button("← Sequência",10);
+        back.setOnClickListener(v->showSequence());
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
+        p.leftMargin=dp(3);controls.addView(back,p);
+        root.addView(controls,margined(-1,dp(31),5));
+        mount(root,238,285);
+    }
+
     void showAutoHunt(){
         String host=PgsAutoHostSettings.current(context);
         SharedPreferences prefs=PgsAutoHuntSettings.forCurrent(context);

@@ -75,6 +75,15 @@ public final class PgsAutoClickService extends AccessibilityService {
     private PgsAutoMenus quickMenus;
     private PgsAutoTapIndicator tapIndicator;
     private PgsAutoTargetPicker pointPicker;
+    // LT367: editor de sequências não interfere no ciclo do Auto Hunt.
+    private PgsSequenceMarkers sequenceMarkers;
+    private boolean sequenceActive=false;
+    private int sequenceTicket=0,sequenceIndex=0;
+    private int sequenceWidth=0,sequenceHeight=0;
+    private long sequenceStartedAt=0L;
+    private String sequenceProfile="";
+    private List<PgsSequencePolicy.Step> sequencePlan=new ArrayList<>();
+    private PgsAutoIconDetector sequenceDetector;
     private PgsAutoTargetPolicy.Mode tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
     private boolean shinyNegativeConfirmed=false;
     private SharedPreferences targetPrefs(){
@@ -455,6 +464,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         String pkg=event.getPackageName().toString();
         // Notificações de conteúdo do jogo podem aparecer sem trocar a janela.
         if(type==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
+            if(sequenceActive&&isGamePackage(pkg)&&
+                (gameAccountSafetyNoticePresent()||passengerPromptPresent())){
+                stopSequence("SEQUÊNCIA · AVISO HUMANO");
+                return;
+            }
             if(!running||!isGamePackage(pkg))return;
             long now=SystemClock.uptimeMillis();
             // ContentChanged pode chegar várias vezes por segundo no Unity.
@@ -471,6 +485,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         // Acessibilidade pode anunciar NOSSA bolha como janela superior.
         // Nunca sobrescrever o jogo por causa dos menus do próprio PokeSearch.
         if(pkg.equals(getPackageName()))return;
+        if(sequenceActive&&(!isGamePackage(pkg)||!isGameVisible()||
+            gameAccountSafetyNoticePresent()||passengerPromptPresent())){
+            stopSequence("SEQUÊNCIA · JANELA/AVISO ALTERADO");
+            return;
+        }
         foreground=pkg;
         if(running&&isGamePackage(pkg)&&gameAccountSafetyNoticePresent()){
             fail("Aviso de segurança da conta detectado. Revise no jogo "+
@@ -515,6 +534,8 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     @Override public void onConfigurationChanged(android.content.res.Configuration config){
         super.onConfigurationChanged(config);
+        // Nunca reenquadrar pontos gravados durante gesto/rotação em curso.
+        stopSequence("SEQUÊNCIA · ROTAÇÃO");
         // Rotation/resolution: clamp bubble and move the existing menu with it.
         handler.post(()->{
             if(bubble==null||bubbleParams==null||windowManager==null)return;
@@ -531,6 +552,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
+        stopSequence("SEQUÊNCIA · SERVIÇO INTERROMPIDO");
         // Uma perda temporária do foco de acessibilidade não equivale a "desligar".
         // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
         status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
@@ -539,6 +561,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         // Perda do serviço invalida leituras, mas não revoga opt-in do usuário.
         // A Home exibirá falta de Acessibilidade até uma reconexão autorizada.
         stopWatchOnly(false);
+        stopSequence("PARADO");
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
@@ -645,6 +668,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
                 status("SPRITES DO FEED");
             }
+            @Override public void sequencePick(String type,int index,boolean dest){
+                pickSequencePoint(type,index,dest);
+            }
+            @Override public void sequencePreview(){previewSequence();}
+            @Override public void sequenceRun(){startSequence();}
+            @Override public void sequenceStop(){stopSequence("SEQUÊNCIA PARADA");}
+            @Override public void sequenceChanged(){
+                stopSequence("SEQUÊNCIA ALTERADA");
+                if(sequenceMarkers!=null)sequenceMarkers.close();
+            }
+            @Override public boolean sequenceRunning(){return sequenceActive;}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -822,6 +856,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         return "Parado";
     }
     private void removeHand(){
+        stopSequence("SEQUÊNCIA · OVERLAY FECHADO");
         stopWatchOnly(true);
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
@@ -1194,7 +1229,314 @@ public final class PgsAutoClickService extends AccessibilityService {
         });
     }
 
+    /** LT367: abre a mira nativa para os pontos de ações locais. */
+    private boolean sequenceLandscape(){
+        Point p=new Point();windowManager.getDefaultDisplay().getRealSize(p);
+        return p.x>=p.y;
+    }
+    private void pickSequencePoint(String kind,int index,boolean destination){
+        if(running||watching||teachingInProgress||sequenceActive||
+           (!PgsSequenceStore.load(this).isEmpty()&&
+            PgsSequenceStore.landscape(this)!=sequenceLandscape())||
+           PgsAutoHostPolicy.OTHER.equals(PgsAutoHostSettings.current(this))){
+            showReason("Pare o monitor e selecione PGSharp ou Pokemod "+
+                "para editar os pontos.");return;
+        }
+        if(windowManager==null)return;
+        if(sequenceMarkers!=null)sequenceMarkers.close();
+        final boolean landscape=sequenceLandscape();
+        final boolean edit="EDIT".equals(kind);
+        pointPicker=PgsAutoTargetPicker.open(this,windowManager,
+            "SEQUÊNCIA",new PgsAutoTargetPicker.Callback(){
+            @Override public void confirmed(float fx,float fy,int width,int height){
+                pointPicker=null;
+                if((width>=height)!=landscape||sequenceLandscape()!=landscape){
+                    showReason("Orientação alterada; selecione o ponto novamente.");
+                    if(quickMenus!=null)quickMenus.showSequence();return;
+                }
+                if(edit){
+                    boolean ok=PgsSequenceStore.changePoint(
+                        PgsAutoClickService.this,index,fx,fy,destination);
+                    if(!ok)showReason("Ponto inválido para este passo.");
+                    if(quickMenus!=null)quickMenus.showSequence();return;
+                }
+                if("TAP".equals(kind)){
+                    if(!PgsSequenceStore.add(PgsAutoClickService.this,
+                        PgsSequencePolicy.tap(fx,fy),landscape))
+                        showReason("Limite de passos ou orientação incompatível.");
+                    if(quickMenus!=null)quickMenus.showSequence();
+                }else if("SWIPE".equals(kind)){
+                    final float startX=fx,startY=fy;
+                    pointPicker=PgsAutoTargetPicker.open(
+                        PgsAutoClickService.this,windowManager,
+                        "DESTINO DO ARRASTE",new PgsAutoTargetPicker.Callback(){
+                        @Override public void confirmed(float dx,float dy,
+                                int w,int h){
+                            pointPicker=null;
+                            if((w>=h)!=landscape||
+                                sequenceLandscape()!=landscape){
+                                showReason("Orientação mudou durante o arraste.");
+                            }else if(!PgsSequenceStore.add(
+                                PgsAutoClickService.this,
+                                PgsSequencePolicy.swipe(startX,startY,dx,dy),
+                                landscape)){
+                                showReason("Arraste inválido ou limite de passos.");
+                            }
+                            if(quickMenus!=null)quickMenus.showSequence();
+                        }
+                        @Override public void cancelled(){
+                            pointPicker=null;
+                            if(quickMenus!=null)quickMenus.showSequence();
+                        }
+                    });
+                }
+            }
+            @Override public void cancelled(){
+                pointPicker=null;
+                if(quickMenus!=null)quickMenus.showSequence();
+            }
+        });
+    }
+    private void previewSequence(){
+        if(windowManager==null)return;
+        if(sequenceMarkers==null)
+            sequenceMarkers=new PgsSequenceMarkers(this,windowManager);
+        if(sequenceMarkers.visible()){sequenceMarkers.close();return;}
+        List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(this);
+        if(steps.isEmpty()||PgsSequenceStore.landscape(this)!=sequenceLandscape()){
+            showReason("Adicione passos na orientação atual para prévia.");
+            return;
+        }
+        sequenceMarkers.show(steps);
+        status("PRÉVIA · NENHUM GESTO");
+        // A prévia é transparente e NÃO bloqueia toque nem captura do jogo.
+        Toast.makeText(this,"Pontos numerados: prévia sem execução. "+
+            "Abra o editor novamente para ocultar.",Toast.LENGTH_SHORT).show();
+    }
+    private void stopSequence(String reason){
+        boolean wasActive=sequenceActive;
+        sequenceActive=false;sequenceTicket++;sequenceIndex=0;
+        sequencePlan=new ArrayList<>();
+        sequenceDetector=null;sequenceStartedAt=0L;
+        if(sequenceMarkers!=null)sequenceMarkers.close();
+        if(wasActive){
+            status(reason);
+            BugReport.log(this,"PGS","LT367 sequência encerrada: "+reason+
+                "; nenhum efeito no jogo foi confirmado");
+        }
+    }
+    private boolean sequenceGuard(){
+        if(!sequenceActive||windowManager==null)return false;
+        Point dims=new Point();windowManager.getDefaultDisplay().getRealSize(dims);
+        boolean orientationMatches=sequenceWidth==dims.x&&
+            sequenceHeight==dims.y&&
+            (sequenceWidth>=sequenceHeight)==PgsSequenceStore.landscape(this);
+        boolean safe=!gameAccountSafetyNoticePresent()&&
+            !passengerPromptPresent();
+        return SystemClock.uptimeMillis()-sequenceStartedAt<180000L&&
+            PgsSequencePolicy.mayExecute(sequenceProfile,
+                PgsAutoHostSettings.current(this),orientationMatches,
+                PgsSequenceStore.canRun(this),isGameVisible(),safe,
+                running||watching||teachingInProgress||
+                (quickMenus!=null&&quickMenus.isOpen()));
+    }
+    private void startSequence(){
+        if(sequenceActive||running||watching||teachingInProgress||
+            pointPicker!=null)return;
+        if(windowManager==null||android.os.Build.VERSION.SDK_INT<30){
+            showReason("Execução por confirmação visual requer Android 11+.");
+            return;
+        }
+        final String host=PgsAutoHostSettings.current(this);
+        List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(this);
+        if(!PgsSequencePolicy.validSequence(steps)||
+            !PgsSequenceStore.canRun(this)||
+            PgsSequenceStore.landscape(this)!=sequenceLandscape()||
+            PgsAutoHostPolicy.OTHER.equals(host)){
+            showReason("Sequência inválida ou execução não autorizada "+
+                "neste perfil e orientação.");return;
+        }
+        for(PgsSequencePolicy.Step step:steps){
+            if(step.type!=PgsSequencePolicy.Type.SPRITE)continue;
+            boolean found=false;
+            for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(this))
+                if(model.id.equals(step.modelId)&&
+                   PgsAutoCatalog.isSelectedName(this,model.name)){
+                    found=true;break;
+                }
+            if(!found){
+                showReason("Sprite indisponível neste perfil: "+
+                    step.modelName+". Selecione uma imagem salva.");return;
+            }
+        }
+        if(sequenceMarkers!=null)sequenceMarkers.close();
+        Point size=new Point();windowManager.getDefaultDisplay().getRealSize(size);
+        sequenceWidth=size.x;sequenceHeight=size.y;sequenceProfile=host;
+        sequencePlan=new ArrayList<>(steps);
+        sequenceIndex=0;sequenceActive=true;sequenceStartedAt=SystemClock.uptimeMillis();
+        final int stamp=++sequenceTicket;
+        if(!sequenceGuard()){
+            stopSequence("SEQUÊNCIA · VERIFIQUE O JOGO E OS AVISOS");
+            showReason("Abra a janela oficial de Pokémon GO, "+
+                "feche diálogos e confirme as permissões.");return;
+        }
+        status("SEQUÊNCIA · ETAPA 1/"+steps.size());
+        handler.postDelayed(()->sequenceNext(stamp),350L);
+    }
+    private void sequenceNext(int stamp){
+        if(!sequenceActive||stamp!=sequenceTicket)return;
+        if(!sequenceGuard()){
+            stopSequence("SEQUÊNCIA PAUSADA · JOGO/AVISO/PERFIL");
+            return;
+        }
+        if(sequenceIndex>=sequencePlan.size()){
+            int count=sequencePlan.size();
+            stopSequence("SEQUÊNCIA · "+count+" PASSOS CONCLUÍDOS");
+            Toast.makeText(this,
+                "Sequência concluída pelo Android. O resultado no jogo "+
+                "não foi verificado.",Toast.LENGTH_LONG).show();
+            return;
+        }
+        PgsSequencePolicy.Step step=sequencePlan.get(sequenceIndex);
+        status("SEQUÊNCIA "+(sequenceIndex+1)+"/"+sequencePlan.size()+
+            " · "+step.title());
+        if(step.type==PgsSequencePolicy.Type.WAIT){
+            final int at=sequenceIndex;
+            handler.postDelayed(()->{
+                if(sequenceActive&&stamp==sequenceTicket&&at==sequenceIndex){
+                    sequenceIndex++;sequenceNext(stamp);
+                }
+            },step.waitMs);
+        }else if(step.type==PgsSequencePolicy.Type.SPRITE){
+            if(sequenceDetector==null){
+                try{
+                    sequenceDetector=new PgsAutoIconDetector(this);
+                    if(sequenceDetector.templateCount()<1)throw new IOException(
+                        "Nenhuma sprite válida no perfil");
+                }catch(IOException err){
+                    stopSequence("SEQUÊNCIA · MODELO AUSENTE");
+                    showReason("Regrave a miniatura do feed: "+err.getMessage());
+                    return;
+                }
+            }
+            sequenceScanSprite(stamp,step,null,0,0);
+        }else{
+            int x=Math.round(step.x*sequenceWidth);
+            int y=Math.round(step.y*sequenceHeight);
+            int endX=Math.round(step.endX*sequenceWidth);
+            int endY=Math.round(step.endY*sequenceHeight);
+            sequenceGesture(stamp,step,x,y,endX,endY);
+        }
+    }
+    private void sequenceScanSprite(int stamp,PgsSequencePolicy.Step step,
+        PgsAutoIconDetector.Match first,int firstW,int firstH){
+        if(!sequenceActive||stamp!=sequenceTicket||!sequenceGuard())return;
+        capture(new CaptureCallback(){
+            @Override public void onBitmap(Bitmap bitmap){
+                if(!sequenceActive||stamp!=sequenceTicket||!sequenceGuard())return;
+                Bitmap frame=bitmap.copy(Bitmap.Config.ARGB_8888,false);
+                if(frame==null){
+                    stopSequence("SEQUÊNCIA · IMAGEM INDISPONÍVEL");return;
+                }
+                final int w=frame.getWidth(),h=frame.getHeight();
+                analysis.execute(()->{
+                    PgsAutoIconDetector.Match candidate=null;
+                    boolean valid=false;
+                    try{
+                        List<PgsAutoIconDetector.Match> matches=sequenceDetector.find(frame);
+                        valid=!sequenceDetector.lastScanAborted();
+                        if(valid)for(PgsAutoIconDetector.Match match:matches){
+                            if(step.modelId.equals(match.id)&&
+                                (candidate==null||match.score>candidate.score))
+                                candidate=match;
+                        }
+                    }catch(Exception ignored){valid=false;}
+                    finally{frame.recycle();}
+                    final PgsAutoIconDetector.Match result=candidate;
+                    final boolean complete=valid;
+                    handler.post(()->{
+                        if(!sequenceActive||stamp!=sequenceTicket)return;
+                        if(!complete||result==null){
+                            stopSequence("SEQUÊNCIA · SPRITE NÃO CONFIRMADA");
+                            return;
+                        }
+                        if(first==null){
+                            handler.postDelayed(()->sequenceScanSprite(
+                                stamp,step,result,w,h),650L);
+                        }else if(PgsAutoWatchPolicy.sameSprite(
+                            first.id,first.group,first.x,first.y,firstW,firstH,
+                            result.id,result.group,result.x,result.y,w,h)){
+                            int x=Math.round(result.x*(sequenceWidth/(float)w));
+                            int y=Math.round(result.y*(sequenceHeight/(float)h));
+                            if(x<=0||y<=0||x>=sequenceWidth||y>=sequenceHeight){
+                                stopSequence("SEQUÊNCIA · PONTO FORA DA TELA");
+                                return;
+                            }
+                            sequenceGesture(stamp,step,x,y,x,y);
+                        }else stopSequence("SEQUÊNCIA · SPRITE MUDOU");
+                    });
+                });
+            }
+            @Override public void onError(String reason){
+                if(sequenceActive&&stamp==sequenceTicket){
+                    stopSequence("SEQUÊNCIA · CAPTURA FALHOU");
+                    showReason(reason);
+                }
+            }
+        });
+    }
+    private void sequenceGesture(int stamp,PgsSequencePolicy.Step step,
+        int x,int y,int endX,int endY){
+        if(!sequenceActive||stamp!=sequenceTicket)return;
+        if(!sequenceGuard()){
+            stopSequence("SEQUÊNCIA · AVISO OU JOGO FECHADO");
+            return;
+        }
+        final int index=sequenceIndex;
+        Path path=new Path();path.moveTo(x,y);
+        if(step.type==PgsSequencePolicy.Type.SWIPE)path.lineTo(endX,endY);
+        GestureDescription gesture=new GestureDescription.Builder()
+            .addStroke(new GestureDescription.StrokeDescription(
+                path,0,step.gestureMs)).build();
+        boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
+            @Override public void onCompleted(GestureDescription result){
+                handler.post(()->{
+                    if(!sequenceActive||stamp!=sequenceTicket||
+                        sequenceIndex!=index)return;
+                    if(!sequenceGuard()){
+                        stopSequence("SEQUÊNCIA · ESTADO ALTERADO");return;
+                    }
+                    BugReport.log(PgsAutoClickService.this,"PGS",
+                        "LT367 gesto Android concluído em passo "+(index+1)+
+                        "; efeito no Pokémon GO NÃO confirmado");
+                    if(tapIndicator!=null&&getSharedPreferences(
+                        "pgs_auto_settings_v1",MODE_PRIVATE)
+                        .getBoolean("showTapIndicator",true))
+                        tapIndicator.show(x,y);
+                    sequenceIndex++;
+                    handler.postDelayed(()->sequenceNext(stamp),
+                        step.waitMs);
+                });
+            }
+            @Override public void onCancelled(GestureDescription result){
+                handler.post(()->{
+                    if(sequenceActive&&stamp==sequenceTicket)
+                        stopSequence("SEQUÊNCIA · GESTO CANCELADO");
+                });
+            }
+        },null);
+        if(!accepted){stopSequence("SEQUÊNCIA · ANDROID RECUSOU GESTO");return;}
+        handler.postDelayed(()->{
+            if(sequenceActive&&stamp==sequenceTicket&&sequenceIndex==index)
+                stopSequence("SEQUÊNCIA · GESTO SEM CALLBACK");
+        },step.gestureMs+4500L);
+    }
+
     private void toggle(){
+        if(sequenceActive){
+            stopSequence("SEQUÊNCIA INTERROMPIDA PELO USUÁRIO");
+            return;
+        }
         if(watching){stopWatchOnly(true);return;}
         if(running){halt("PARADO");return;}
         // Auto Hunt sem clique reutiliza monitor passivo (2 frames), e a
