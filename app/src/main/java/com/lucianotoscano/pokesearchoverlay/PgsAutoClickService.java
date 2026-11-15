@@ -133,9 +133,25 @@ public final class PgsAutoClickService extends AccessibilityService {
         AccessibilityNodeInfo root=null;
         try{
             root=getRootInActiveWindow();
-            return root!=null&&root.getPackageName()!=null&&
+            if(root!=null&&root.getPackageName()!=null&&
                 isGamePackage(root.getPackageName().toString())&&
-                containsPassengerLabel(root,0);
+                containsPassengerLabel(root,0))return true;
+            // A própria bolha pode ser a raiz ativa: procurar o diálogo
+            // também na janela de aplicação focada, nunca tocar nele.
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> windows=getWindows();
+            if(windows!=null)for(android.view.accessibility.AccessibilityWindowInfo w:windows){
+                if(w==null||w.getType()!=
+                    android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION)continue;
+                if(!w.isActive()&&!w.isFocused())continue;
+                AccessibilityNodeInfo game=null;
+                try{
+                    game=w.getRoot();
+                    if(game!=null&&game.getPackageName()!=null&&
+                        isGamePackage(game.getPackageName().toString())&&
+                        containsPassengerLabel(game,0))return true;
+                }finally{if(game!=null)game.recycle();}
+            }
+            return false;
         }catch(RuntimeException ignored){return false;}
         finally{if(root!=null)root.recycle();}
     }
@@ -265,6 +281,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private int minSeconds=5,maxSeconds=60;
     private int[] lastColors;
+    // LT354: compare a map sample from BEFORE the gesture with subsequent
+    // frames. A stable, unchanged map must never prove a game reaction.
+    private int[] sceneBeforeGesture;
+    private boolean sceneChangedAfterGesture=false,sceneUnchangedLogged=false;
     private long clickedAt=0;
     private long sceneReadyAt=0;
     private int loadedStreak=0;
@@ -972,6 +992,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         nextIndex=0;total=0;clickedAt=0L;awaitingMap=false;passengerHoldAt=0L;
         passengerWarningLatched=false;
         lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
+        sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;shinyNegativeConfirmed=false;
         running=true;
@@ -1148,6 +1169,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                     Bitmap copy=bitmap.copy(Bitmap.Config.ARGB_8888,false);
                     if(copy==null){fail("Não foi possível confirmar a captura.");return;}
                     final int w=bitmap.getWidth(),h=bitmap.getHeight();
+                    // Original frame is still valid here; the capture owner
+                    // recycles it on return, so keep only a tiny color signature.
+                    final int[] beforeGesture=sampleMap(bitmap);
                     final PgsAutoIconDetector current=detector;
                     analysis.execute(()->{
                         List<PgsAutoIconDetector.Match> detected;
@@ -1194,7 +1218,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 notifyConfigured(PgsAutoNotificationPolicy.NEW,
                                     "PGS: novo Pokémon no feed",
                                     found.name+" confirmado na lista de buscas.",false);
-                            tap(x,y,nextIndex,found,w,h);
+                            tap(x,y,nextIndex,found,w,h,beforeGesture);
                         });
                     });
                 }
@@ -1205,7 +1229,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         },430L);
     }
 
-    private void tap(int x,int y,int index,PgsAutoIconDetector.Match match,int screenWidth,int screenHeight){
+    private void tap(int x,int y,int index,PgsAutoIconDetector.Match match,int screenWidth,int screenHeight,int[] beforeGesture){
         if(!running)return;
         if(holdForPassengerPrompt()){
             handler.postDelayed(()->{if(running)scanAndTap();},1200L);return;
@@ -1229,7 +1253,12 @@ public final class PgsAutoClickService extends AccessibilityService {
         final int gestureTicket=ticket;
         boolean accepted=dispatchGesture(gesture,new GestureResultCallback(){
             @Override public void onCompleted(GestureDescription g){handler.post(()->{
-                if(!running||index!=nextIndex)return;
+                if(!running||ticket!=gestureTicket||index!=nextIndex)return;
+                sceneBeforeGesture=beforeGesture;
+                sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
+                BugReport.log(PgsAutoClickService.this,"PGS",
+                    "LT354 estágio GESTO_CONCLUIDO_ANDROID: "+match.id+
+                    " @"+x+","+y+"; resposta do jogo ainda não observada");
                 visitedSlots.add(new VisitedSlot(match,screenWidth,screenHeight));
                 currentTargetName=match.name;
                 // Alvo tocado NÃO é Shiny; não duplicar alerta de busca.
@@ -1255,10 +1284,19 @@ public final class PgsAutoClickService extends AccessibilityService {
                 },maxSeconds*1000L);
                 handler.postDelayed(()->checkMap(stamp),1300L);
             });}
-            @Override public void onCancelled(GestureDescription g){handler.post(()->fail("Toque cancelado pelo Android."));}
+            @Override public void onCancelled(GestureDescription g){handler.post(()->{
+                if(!running||ticket!=gestureTicket)return;
+                BugReport.log(PgsAutoClickService.this,"PGS",
+                    "LT354 estágio GESTO_CANCELADO_ANDROID: "+match.id);
+                fail("Toque cancelado pelo Android.");
+            });}
         },null);
-        if(!accepted)fail("O Android não autorizou o toque de Acessibilidade.");
-        else{
+        if(!accepted){
+            BugReport.log(this,"PGS","LT354 estágio GESTO_RECUSADO_ANDROID: "+match.id);
+            fail("O Android não autorizou o toque de Acessibilidade.");
+        }else{
+            BugReport.log(this,"PGS","LT354 estágio GESTO_ACEITO_ANDROID: "+match.id+
+                " @"+x+","+y+" / display "+windowManager.getDefaultDisplay().getDisplayId());
             if(tapIndicator!=null)tapIndicator.show(x,y);
             handler.postDelayed(()->{
             if(running&&!awaitingMap&&ticket==gestureTicket)
@@ -1297,10 +1335,27 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(lastColors!=null&&difference(lastColors,colors)<=10f)stableRepeats++;
                 else stableRepeats=0;
                 lastColors=colors;
+                if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&
+                   sceneBeforeGesture!=null&&!sceneChangedAfterGesture){
+                    float delta=PgsAutoGestureEvidence.meanColorDelta(sceneBeforeGesture,colors);
+                    if(PgsAutoGestureEvidence.visualChangeCandidate(sceneBeforeGesture,colors)){
+                        sceneChangedAfterGesture=true;
+                        BugReport.log(PgsAutoClickService.this,"PGS",
+                            "LT354 estágio MUDANCA_VISUAL: delta="+Math.round(delta)+
+                            "; indício de reação, NÃO prova teleporte nem clique no jogo");
+                    }else if(!sceneUnchangedLogged&&when-clickedAt>2300L){
+                        sceneUnchangedLogged=true;
+                        BugReport.log(PgsAutoClickService.this,"PGS",
+                            "LT354 estágio SEM_RESPOSTA_VISUAL: mapa sem mudança detectável após callback Android");
+                    }
+                }
                 PgsAutoMapReadiness.Evidence evidence=PgsAutoMapReadiness.analyze(bitmap);
                 // O terreno sozinho não é prova de carregamento. Precisa
                 // estabilidade E indícios de objetos (ginásios/PokéStops).
-                if(stableRepeats>=1 && evidence.scenePopulated)loadedStreak++;
+                if(PgsAutoGestureEvidence.canCountMapAsNew(
+                    tapMode==PgsAutoTargetPolicy.Mode.SPRITE,
+                    sceneChangedAfterGesture,stableRepeats>=1,evidence.scenePopulated))
+                    loadedStreak++;
                 else loadedStreak=0;
                 if(sceneReadyAt==0 && loadedStreak>=2){
                     sceneReadyAt=when;
@@ -1315,7 +1370,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                     status("ESPERA "+Math.max(1,(remaining+999)/1000)+"s");
                 }else{
                     long elapsed=Math.max(0L,(when-clickedAt)/1000L);
-                    status("CARREGANDO "+elapsed+"/"+maxSeconds);
+                    status(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&!sceneChangedAfterGesture?
+                        "SEM RESPOSTA VISÍVEL "+elapsed+"/"+maxSeconds:
+                        "CARREGANDO "+elapsed+"/"+maxSeconds);
                 }
                 handler.postDelayed(()->checkMap(stamp),1500L);
             }
@@ -1334,6 +1391,15 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void finishMapVisit(int stamp,boolean timeout){
         if(!running||!awaitingMap||stamp!=ticket)return;
+        if(PgsAutoGestureEvidence.shouldStopForNoResponse(
+            tapMode==PgsAutoTargetPolicy.Mode.SPRITE,timeout,sceneChangedAfterGesture)){
+            BugReport.log(this,"PGS",
+                "LT354 estágio SEM_RESPOSTA_JOGO: gesto concluído no Android, "+
+                "sem alteração visual antes do timeout; nenhuma nova sprite tocada");
+            fail("Gesto Android concluído, mas o jogo não mostrou mudança visual. "+
+                "Confira prévia ◎, coordenadas, foco e permissões antes de tentar novamente.");
+            return;
+        }
         if(tapMode!=PgsAutoTargetPolicy.Mode.SPRITE){
             if(sceneReadyAt==0L){
                 // Limite não autoriza clique cego em menu/diálogo/carregamento.
@@ -1727,6 +1793,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void halt(String label){
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
         passengerHoldAt=0L;passengerWarningLatched=false;
+        sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */
