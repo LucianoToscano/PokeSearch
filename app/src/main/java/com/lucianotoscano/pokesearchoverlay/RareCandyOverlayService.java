@@ -481,18 +481,10 @@ public final class RareCandyOverlayService extends Service {
     private void syncCandyMenuTheme(){
         if(destroyed||!candyMenuLoaded||candyMenuPanel==null||
                 !allowedMenuUrl(candyMenuPanel.getUrl()))return;
-        String saved=getSharedPreferences("prefs",MODE_PRIVATE)
-            .getString("visualPrefsJson","{}");
-        String mode="dark";
-        int transparency=50,blur=4;
-        try{
-            JSONObject visual=new JSONObject(saved);
-            mode="light".equals(visual.optString("menuBgMode","dark"))?
-                "light":"dark";
-            transparency=Math.max(0,Math.min(100,
-                visual.optInt("menuTransparency",50)));
-            blur=Math.max(0,Math.min(16,visual.optInt("menuBlur",4)));
-        }catch(org.json.JSONException ignored){}
+        JSONObject visual=OverlayVisualTheme.read(this);
+        String mode=OverlayVisualTheme.light(visual)?"light":"dark";
+        int transparency=OverlayVisualTheme.transparency(visual);
+        int blur=OverlayVisualTheme.blur(visual);
         String fingerprint=mode+":"+transparency+":"+blur;
         if(fingerprint.equals(lastCandyMenuTheme))return;
         lastCandyMenuTheme=fingerprint;

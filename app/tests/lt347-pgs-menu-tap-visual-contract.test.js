@@ -18,9 +18,11 @@ assert.equal(prefs.headerTouchHeight,30);
 assert.match(editor,/set\("menu-button-bg",rgba\(current.menuBgMode,current.menuTransparency\)\)/);
 assert.match(dock,/background:#28292cce!important/);
 assert.match(dock,/height:30px!important/);
-assert.match(style,/CELL_DP=30, ART_DP=16, BASE_GAP_DP=2, CORNER_DP=5/);
-assert.match(style,/getSharedPreferences\("prefs",Context.MODE_PRIVATE\)/);
-assert.match(style,/getString\("visualPrefsJson","{}"\)/);
+assert.match(style,/CELL_DP=OverlayVisualTheme\.TILE_DP/);
+assert.match(style,/OverlayVisualTheme\.read\(c\)/);
+const shared=java("OverlayVisualTheme");
+assert.match(shared,/getSharedPreferences\("prefs",Context.MODE_PRIVATE\)/);
+assert.match(shared,/getString\("visualPrefsJson","{}"\)/);
 for(const key of ["menuTransparency","menuBlur","menuItemGap","menuOffsetX",
  "menuOffsetY","gearMenuGap","menuOrientation","menuBgMode","popupWidth","popupHeight"])
  assert.ok(style.includes('"'+key+'"'),"missing canonical setting "+key);

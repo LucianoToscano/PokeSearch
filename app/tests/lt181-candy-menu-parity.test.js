@@ -24,9 +24,11 @@ assert(android.includes('"period".equals(panel)?142:158'),
  "Android keeps compact period and normal Location popup widths");
 assert(android.includes('boolean reference="location-cooldown".equals(panel)'),
  "LT216 reference fits all bands vertically in the existing compact width");
-assert(android.includes('getSharedPreferences("prefs",MODE_PRIVATE)')&&
- android.includes('getString("visualPrefsJson","{}")'),
- "Candy reads the exact same visual preferences as Pokeballs");
+const sharedTheme=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayVisualTheme.java");
+assert(android.includes("OverlayVisualTheme.read(this)")&&
+ sharedTheme.includes('getSharedPreferences("prefs",Context.MODE_PRIVATE)')&&
+ sharedTheme.includes('getString("visualPrefsJson","{}")'),
+ "Candy reads the exact same visual preferences as Pokeballs via the shared theme");
 assert(android.includes("syncCandyMenuTheme()")&&android.includes("if(candyMenuVisible){")&&android.includes("syncCandyMenuTheme();"),
  "Candy theme updates without closing or recreating the overlay");
 assert(android.includes('lastCandyMenuTheme="";syncCandyMenu()'),

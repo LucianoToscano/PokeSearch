@@ -31,28 +31,16 @@ final class OverlayQuickMenus {
         return (int)(c.getResources().getDisplayMetrics().density*value+.5f);
     }
     static int panelColor(Context c){
-        int transparency=50;boolean light=false;
-        try{
-            org.json.JSONObject p=new org.json.JSONObject(c.getSharedPreferences("prefs",0)
-                .getString("visualPrefsJson","{}"));
-            transparency=Math.max(0,Math.min(100,p.optInt("menuTransparency",50)));
-            light="light".equals(p.optString("menuBgMode","dark"));
-        }catch(org.json.JSONException ignored){}
-        int alpha=(int)Math.round(255*(1-Math.pow(transparency/100.0,2.8)));
-        return light?Color.argb(alpha,255,255,255):Color.argb(alpha,15,19,26);
+        return OverlayVisualTheme.panelFill(OverlayVisualTheme.read(c));
     }
     private static int foreground(Context c){
-        try{
-            org.json.JSONObject p=new org.json.JSONObject(c.getSharedPreferences("prefs",0)
-                .getString("visualPrefsJson","{}"));
-            return "light".equals(p.optString("menuBgMode","dark"))?
-                Color.rgb(20,33,48):Color.rgb(244,247,255);
-        }catch(org.json.JSONException ignored){return Color.WHITE;}
+        return OverlayVisualTheme.foreground(
+            OverlayVisualTheme.light(OverlayVisualTheme.read(c)));
     }
     private static GradientDrawable panelBackground(Context c){
         GradientDrawable d=new GradientDrawable();
         d.setColor(panelColor(c));d.setCornerRadius(dp(c,10));
-        d.setStroke(dp(c,1),0x667E91A5);return d;
+        d.setStroke(dp(c,1),OverlayVisualTheme.panelBorder(OverlayVisualTheme.read(c)));return d;
     }
     private static TextView text(Context c,String s,int sp){
         TextView t=new TextView(c);t.setText(s);t.setTextSize(sp);

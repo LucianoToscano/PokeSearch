@@ -26,10 +26,13 @@ assert(source.includes("allowedMenuUrl"),"bridge must be confined to local page"
 assert(source.includes('boolean reference="location-cooldown".equals(panel)'),"full 16-row reference uses own native height");
 assert(source.includes('"period".equals(panel)?142:158'),"original period and location widths remain unchanged");
 assert(menu.includes("grid-template-columns:repeat(4,34px)"));
-assert(menu.includes("grid-auto-rows:30px"));
-assert(menu.includes("gap:2px"));
+assert(menu.includes("grid-auto-rows:var(--ps-overlay-tile-size)"));
+assert(read("assets/overlay_design_tokens.css").includes("--ps-overlay-tile-size:30px;"));
+assert(menu.includes("gap:var(--ps-overlay-gap)"));
+assert(read("assets/overlay_design_tokens.css").includes("--ps-overlay-gap:2px;"));
 assert(menu.includes("background:var(--visual-menu-button-bg)"));
-assert(menu.includes("border-radius:5px"));
+assert(menu.includes("border-radius:var(--ps-overlay-tile-radius)"));
+assert(read("assets/overlay_design_tokens.css").includes("--ps-overlay-tile-radius:5px;"));
 assert(menu.includes("requestHeight(172,false)"));
 assert(menu.includes("new int[]{1,3,5}")===false);
 for(const part of ["choosePeriod(1)","choosePeriod(3)","choosePeriod(5)"]){

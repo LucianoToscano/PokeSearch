@@ -1,14 +1,15 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="stylesheet" href="file:///android_asset/overlay_design_tokens.css">
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:transparent!important;color:#fff;font:10px Roboto,Arial,sans-serif;overflow:hidden}
 button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-#controls{display:grid;grid-template-columns:repeat(4,34px);grid-auto-rows:30px;gap:2px;padding:0;margin:0;align-items:center}
-#controls button{height:30px;width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:5px;font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+#controls{display:grid;grid-template-columns:repeat(4,34px);grid-auto-rows:var(--ps-overlay-tile-size);gap:var(--ps-overlay-gap);padding:0;margin:0;align-items:center}
+#controls button{height:var(--ps-overlay-tile-size);width:100%;min-width:0;padding:0;background:#151b26e6;border:1px solid #ffffff23;border-radius:var(--ps-overlay-tile-radius);font-size:10px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;white-space:nowrap}
 #controls button.active{background:#db2d4bdb}
-#controls button svg{width:16px;height:16px;display:block;pointer-events:none}
+#controls button svg{width:var(--ps-overlay-art-size);height:var(--ps-overlay-art-size);display:block;pointer-events:none}
 #controls button.locOn{background:#1e6150e8;color:#b2ffe0;border-color:#5de7b1a6}
 #controls button .autoTime{font-size:9px;position:absolute;margin-top:20px}
 #controls button#refresh{flex-direction:column;gap:0}
@@ -17,7 +18,7 @@ button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulat
 #controls button#refresh.refreshing svg{animation:candyRefreshSpin .8s linear infinite}
 #controls button#refresh.waiting svg{opacity:.65}
 #controls button#close{font-size:18px;font-weight:800;color:#ff596c;background:#151b26e6;border-color:#ff596c5c}
-#choices{display:none;position:absolute;top:34px;left:0;z-index:12;width:232px;max-width:calc(100vw - 8px);padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
+#choices{display:none;position:absolute;top:var(--ps-overlay-popup-top);left:0;z-index:12;width:232px;max-width:calc(100vw - 8px);padding:5px;background:#151c27f5;border:1px solid #ffffff38;border-radius:10px;box-shadow:0 4px 12px #0008}
 #choices.visible{display:block}
 #choices.locationPanel{width:232px}
 #choices .choiceHeader{padding:5px 7px 7px;color:#b9c7d9;font-weight:700;font-size:11px;letter-spacing:.1px}

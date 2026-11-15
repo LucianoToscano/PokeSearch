@@ -1,3 +1,5 @@
+**LT350 — CONTRATO VISUAL ÚNICO EM QA (14/11/2026, ainda NÃO é Release):** CSS P1/P2 + Candy compartilham `assets/overlay_design_tokens.css`; menus nativos leem `OverlayVisualTheme.java` e `visualPrefsJson`; referência 1080px do proprietário em `docs/LT350_OVERLAY_REFERENCE_1080.json`. Teste Node LT350 e matriz pendente de capturas físicas no Samsung em `docs/LT350_OVERLAY_DESIGN_QA_20261114.md`. Sem alegar homologação, merge, APK ou instalação antes das evidências.
+
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 ## LT349b — posicionamento lateral do Auto Click e alça branca (candidata)

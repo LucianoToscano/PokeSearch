@@ -1,4 +1,5 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<link rel="stylesheet" href="file:///android_asset/overlay_design_tokens.css">
 <style>
 :root{--row:41px;--sprite:45px;--dock:53px;--top-space:0px;--list-limit:430px}
 *{box-sizing:border-box}
@@ -447,8 +448,8 @@ body.controls-window.popup-above #quickMenuList{
  max-height:34px!important;overflow:hidden!important;overscroll-behavior:none;
  background:transparent!important;border:0!important;border-radius:0!important;
  box-shadow:none!important;padding:0 2px!important;margin:0!important;
- grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-template-rows:30px!important;
- grid-auto-flow:column!important;gap:2px!important;align-items:start!important;
+ grid-template-columns:repeat(12,minmax(0,1fr))!important;grid-template-rows:var(--ps-overlay-tile-size)!important;
+ grid-auto-flow:column!important;gap:var(--ps-overlay-gap)!important;align-items:start!important;
 }
 body.controls-window #quickRows,
 body.controls-window #quickUtilities,
@@ -465,7 +466,7 @@ body.controls-window #quickMenuList:not(.quick-horizontal) .quickRow{
  height:30px!important;min-height:30px!important;max-height:30px!important;
  margin:0!important;padding:0!important;gap:0!important;
  background:#28292cce!important;border:1px solid #ffffff2d!important;
- border-radius:5px!important;color:#f2f2f3!important;box-shadow:none!important;
+ border-radius:var(--ps-overlay-tile-radius)!important;color:#f2f2f3!important;box-shadow:none!important;
 }
 body.controls-window #quickMenuList button:active{background:#46504c!important}
 body.controls-window #quickMenuList button.selected{background:#3a5040dc!important;border-color:#85c5ad80!important}
@@ -496,7 +497,7 @@ body.controls-window #quickMenuList [data-key=pokemon] .quickGlyph{color:#fff!im
 body.controls-window #quickMenuList [data-key=pokemon] .quickGlyph,
 body.controls-window #quickMenuList [data-key=appearance] .quickGlyph{color:#f4f6fa!important}
 /* Submenus regain their ORIGINAL narrow popup widths instead of the 276/396dp panel. */
-body.controls-window #choices{top:34px!important;width:220px!important;
+body.controls-window #choices{top:var(--ps-overlay-popup-top)!important;width:220px!important;
  max-width:calc(100vw - 12px)!important;max-height:var(--popup-room,400px)!important;
  overflow-y:auto!important;border:1px solid #ffffff38!important;border-radius:9px!important;
  box-shadow:0 4px 12px #0008!important;padding:5px!important;}

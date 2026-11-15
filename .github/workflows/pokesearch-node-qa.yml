@@ -84,6 +84,13 @@ jobs:
             node "$suite"
             echo "::endgroup::"
           done
+      - name: Validar contrato visual de overlays LT347, LT349 e LT350
+        shell: bash
+        run: |
+          set -euo pipefail
+          node app/tests/lt347-pgs-menu-tap-visual-contract.test.js
+          node app/tests/lt349-visual-opacity-scanner-and-pgs-contract.test.js
+          node app/tests/lt350-overlay-design-contract.test.js
       - name: Validar histórico da Home LT79–LT83
         run: node app/tests/lt83-home-release-notes.test.js
       - name: Validar geometria Java de janela popup isolada sem Gradle

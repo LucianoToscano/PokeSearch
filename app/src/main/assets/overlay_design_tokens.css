@@ -1,0 +1,20 @@
+/* LT350 official PokeSearch overlay geometry: measured WebView CSS pixels.
+ * Keep aligned with OverlayVisualTheme.java and visual_editor.js.
+ * 1080px screenshot pixels are NOT automatically equal to CSS pixels or dp.
+ * Live palette/transparency: --visual-menu-* set by visual_editor.js.
+ */
+:root{
+ --ps-overlay-tile-size:30px;
+ --ps-overlay-art-size:16px;
+ --ps-overlay-gap:2px;
+ --ps-overlay-tile-radius:5px;
+ --ps-overlay-popup-gap:4px;
+ --ps-overlay-popup-top:calc(var(--ps-overlay-tile-size) + var(--ps-overlay-popup-gap));
+ --ps-overlay-title-color:#ebf5ff;
+ --ps-overlay-selected-fill:#2f3b47;
+ --ps-overlay-selected-mark:#6bb5a2;
+ --ps-overlay-confirm-fill:#16644c;
+ --ps-overlay-neutral-fill:#223448;
+ --ps-overlay-input-fill:#131c25;
+}
+/* Never set global opacity, fixed popup dimensions or touch behaviors here. */
