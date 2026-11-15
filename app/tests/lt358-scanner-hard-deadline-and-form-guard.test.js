@@ -1,0 +1,31 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const dir="app/src/main/java/com/lucianotoscano/pokesearchoverlay/";
+const source=n=>fs.readFileSync(dir+n+".java","utf8");
+const detector=source("PgsAutoIconDetector");
+const forms=source("PgsAutoMatchPolicy");
+const native=source("PgsAutoNativeModels");
+const deadline=source("PgsAutoScanDeadlinePolicy");
+const service=source("PgsAutoClickService");
+assert.match(detector,/MAX_SCAN_MILLIS=4500L/);
+assert.match(detector,/MAX_SCAN_CANDIDATES=256/);
+assert.match(detector,/private boolean budgetExpired\(long began\)/);
+assert.match(detector,/PgsAutoScanDeadlinePolicy\.exceeded/);
+assert.match(detector,/if\(budgetExpired\(began\)\)return abortFrame\(began\);/);
+assert.match(detector,/\(\(x\/scanStep\)&31\)==0&&budgetExpired\(began\)/);
+assert.match(detector,/for\(int dy=-4;dy<=4;dy\+\+\)\{\s+if\(budgetExpired\(began\)\)/);
+assert.match(detector,/PgsAutoScanDeadlinePolicy\.candidateLimitExceeded/);
+assert.match(detector,/lastScanAborted=true;/);
+assert.match(detector,/Collections\.emptyList\(\); \/\/ não devolver resultado parcial/);
+assert.match(detector,/PgsAutoMatchPolicy\.ambiguousNativeVariants\(/);
+assert.match(forms,/Math\.abs\(scoreA-scoreB\)<=\.035f/);
+assert.match(detector,/if\(budgetExpired\(began\)\)return abortFrame\(began\);\s+lastScanMillis=/,
+  "post-NMS budget must be checked before exposing matches");
+assert.match(native,/lastDeferredCount=0;\s+if\(selectedSpecies==null/,
+  "changing selected species must clear stale deferred diagnostics");
+assert.match(deadline,/observed<started/);
+assert.match(service,/current\.lastScanAborted\(\)/);
+const manifest=JSON.parse(fs.readFileSync("app/src/main/assets/pgs-native/manifest.json","utf8"));
+assert.deepEqual(manifest.entries,[],"no unlicensed native PGS visual models");
+console.log("LT358 scanner deadline, native-form safety and empty native catalog PASS");
