@@ -4731,6 +4731,33 @@
           "Arrastar marcadores diretamente, condições completas SE/SENÃO, bibliotecas nomeadas e tempos adaptativos baseados em observação real permanecem planejados; não foram homologados nesta versão."
         ]
       }
+    },
+    {
+      "id": "lt369-overlay-unico-arrastar-20261115",
+      "minVersionCode": 54572,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT369 — Busca Pokémon Unificada e Arrastar",
+      "sections": {
+        "novidades": [
+          "Ao segurar o ícone da Busca Pokémon, a Central de Busca abre diretamente em uma única janela com as abas Pokémon, Ação e Ajustes, sem a antiga fileira de cinco atalhos redundantes.",
+          "Segure e arraste a própria linha do Pokémon ou da etapa de sequência para mudar sua prioridade. Não há mais setas de ordenação nem a alça de três barras."
+        ],
+        "melhorias": [
+          "Ajustes reúne tempos, notificações com som/sem som/off, aparência, efeito do toque, contador, tamanhos P/M/G e avançados do Auto Hunt em seções roláveis.",
+          "A seleção PGSharp/Pokemod/Outro e o lado da lista Pokemod ficam na própria aba Pokémon, sem abrir menu de configuração independente.",
+          "Reordenar dá retorno tátil e destaque discreto, salva somente ao soltar, mantém o toque curto de edição e ações acessíveis para TalkBack.",
+          "O painel permanece ancorado diretamente à bolha e utiliza a mesma aparência e preferências oficiais das Pokébolas 1 e 2."
+        ],
+        "correcoes": [
+          "Eliminado o caminho antigo que exibia Buscar, Tempo, Notificações e Personalização como menus separados sobre o painel unificado.",
+          "Eliminada a espera duplicada da aba Ação; agora existe um único controle na aba Ajustes.",
+          "Corrigido o cálculo do destino do arraste antes de salvar a ordem, preservando sprites e etapas existentes."
+        ],
+        "emDesenvolvimento": [
+          "A usabilidade, pressão longa, ordenação, rolagem e TalkBack precisam de homologação real em aparelhos Android e nos dois clientes PGSharp/Pokemod.",
+          "A execução Android não confirma captura ou teleporte; arraste direto de marcadores sobre o jogo e regras SE/SENÃO genéricas seguem como propostas futuras."
+        ]
+      }
     }
   ]
 }
