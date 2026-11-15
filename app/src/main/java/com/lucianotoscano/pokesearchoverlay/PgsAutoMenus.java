@@ -134,7 +134,13 @@ final class PgsAutoMenus {
     private LinearLayout.LayoutParams margined(int w,int h,int top){
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(w,h);p.topMargin=dp(top);return p;
     }
-    void toggle(int x,int y){if(toolbar!=null){dismissAll();return;}showToolbar(x,y);}
+    /** LT369: a bolha abre DIRETAMENTE o único painel, sem a fileira antiga
+     * Buscar/Tempo/Sino/Personalização/Fechar. Tocar outra vez apenas retrai. */
+    void toggle(int x,int y){
+        anchorX=x;anchorY=y;
+        if(isOpen()){dismissAll();return;}
+        showCentral(0);
+    }
     void dismissAll(){hidePanel();hideToolbar();}
     private void hidePanel(){
         stopTonePreview();
@@ -159,13 +165,13 @@ final class PgsAutoMenus {
      */
     void reanchor(int x,int y){
         anchorX=x;anchorY=y;
-        if(toolbar==null)return;
-        if(!(toolbar.getLayoutParams() instanceof WindowManager.LayoutParams))return;
-        WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
-        // Recompute absolute side selection, not delta: crossing screen center
-        // must flip the toolbar to the other side of the Auto Click bubble.
-        positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
-        try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
+        // LT369: a janela principal fica ancorada à bolha diretamente.
+        // Reposicionar nunca abre um segundo menu nem perde campos editados.
+        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
+            WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
+            positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
+            try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
+        }
         if(panel!=null&&panel.getLayoutParams() instanceof WindowManager.LayoutParams){
             WindowManager.LayoutParams pp=(WindowManager.LayoutParams)panel.getLayoutParams();
             int width=pp.width>0?pp.width:Math.max(dp(80),panel.getWidth());
@@ -297,32 +303,23 @@ final class PgsAutoMenus {
 
     // Popups stay tied to the VISIBLE toolbar and never appear disconnected
     // from the Auto Click control, even after left/right side flipping.
+    // LT369: popup no lado do próprio ícone de mão; nenhum toolbar intermediário.
     private int[] positionPanel(int width,int height){
         Point screen=size();
-        int margin=dp(8),gap=dp(4);
-        int barX=anchorX,barY=anchorY;
-        int barW=dp(TOOL_CELL_DP),barH=dp(TOOL_CELL_DP);
-        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
-            WindowManager.LayoutParams bar=(WindowManager.LayoutParams)toolbar.getLayoutParams();
-            barX=bar.x;barY=bar.y;barW=bar.width;barH=bar.height;
-        }
-        int right=barX+barW+gap,left=barX-width-gap;
-        boolean preferRight=anchorX<=screen.x/2;
+        int margin=dp(8),gap=dp(6);
+        int diameter=dp(PgsAutoVisualState.TOUCH_DP);
+        int leftEdge=anchorX-diameter/2;
+        int rightEdge=anchorX+diameter/2;
+        int right=rightEdge+gap,left=leftEdge-gap-width;
         boolean rightFits=right+width<=screen.x-margin;
         boolean leftFits=left>=margin;
-        int px,py;
-        if((preferRight&&rightFits)||(!leftFits&&rightFits)){
-            px=right;py=barY;
-        }else if(leftFits){
-            px=left;py=barY;
-        }else{
-            // When a 232dp popup cannot fit next to a five-tile toolbar,
-            // use directly below/above it rather than drawing over its icons.
-            px=barX+(barW-width)/2;
-            int below=barY+barH+gap,above=barY-height-gap;
-            py=below+height<=screen.y-margin?below:
-                above>=margin?above:Math.max(margin,screen.y-height-margin);
-        }
+        boolean preferRight=anchorX<=screen.x/2;
+        int px;
+        if((preferRight&&rightFits)||(!leftFits&&rightFits))px=right;
+        else if(leftFits)px=left;
+        else px=anchorX-width/2;
+        int py=anchorY;
+        // Nunca perder controles acima/abaixo da borda visível.
         return new int[]{
             Math.max(margin,Math.min(Math.max(margin,screen.x-width-margin),px)),
             Math.max(margin,Math.min(Math.max(margin,screen.y-height-margin),py))
@@ -397,7 +394,7 @@ final class PgsAutoMenus {
             wm.addView(panel,lp);
             final View opened=panel;
             opened.post(()->{
-                if(panel==opened&&toolbar!=null)reanchor(anchorX,anchorY);
+                if(panel==opened)reanchor(anchorX,anchorY);
             });
         }catch(Exception e){
             panel=null;
