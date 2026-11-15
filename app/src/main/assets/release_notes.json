@@ -4343,6 +4343,33 @@
           "OAuth Google/Discord, Shiny e Encontro continuam sem homologação física."
         ]
       }
+    },
+    {
+      "id": "lt355-native-pgs-library-guarded-20261115",
+      "minVersionCode": 54558,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT355 — Biblioteca PGS preparada e reconhecimento mais seguro",
+      "sections": {
+        "novidades": [
+          "Estrutura para adicionar sprites nativas verdadeiras do feed PGSharp, quando autorizadas e homologadas no Samsung; nenhum modelo não validado vem ativado.",
+          "Filtros mostram se a espécie selecionada possui modelo pessoal, nativo verificado ou precisa de captura."
+        ],
+        "melhorias": [
+          "Modelos nativos são separados das amostras pessoais e validados com SHA-256, tamanho da imagem e versão do jogo.",
+          "A prévia ◎ registra se o modelo é pessoal/nativo, confiança e posição, sempre sem tocar no jogo.",
+          "A região lateral se adapta à orientação paisagem; o gesto é bloqueado quando captura e display têm proporções incompatíveis."
+        ],
+        "correcoes": [
+          "Restauração de amostras preserva as dimensões originais declaradas, sem forçar 68×52 em sprites de outros tamanhos.",
+          "Modelos nativos não podem ser excluídos como se fossem imagens pessoais."
+        ],
+        "emDesenvolvimento": [
+          "Este APK não inclui sprites nativas de Metagross ou de outras espécies do feed: o arquivo PGSharp enviado não forneceu modelos individuais verificados e com direitos de redistribuição comprovados.",
+          "Validação em aparelho Samsung de localização da sprite, ponto de toque, reação do PGSharp, teleporte, Shiny, tema e menus permanece pendente.",
+          "Pacotes assinados de modelos nativos por atualização de recursos dependem de revisão de segurança e homologação futuras; a presente versão não baixa nem executa conteúdo do PGSharp.",
+          "Conservada confirmação MANUAL do aviso Sou passageiro; instalar atualização depende da confirmação do Android."
+        ]
+      }
     }
   ]
 }
