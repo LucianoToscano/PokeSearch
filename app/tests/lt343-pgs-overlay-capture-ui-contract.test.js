@@ -35,7 +35,12 @@ assert.match(auto,/isGamePackage\(root.getPackageName\(\).toString\(\)\)/);
 assert.match(auto,/normalized\.contains\("sou passageiro"\)/);
 assert.match(auto,/normalized\.contains\("i'm a passenger"\)/);
 assert.match(auto,/status\("CONFIRME MANUALMENTE"\)/);
-assert.match(auto,/if\(passengerPromptPresent\(\)\)/);
+// LT351: one shared guard pauses every automatic target and resumes after manual confirmation.
+assert.match(auto,/private boolean holdForPassengerPrompt\(\)/);
+assert.match(auto,/if\(holdForPassengerPrompt\(\)\)/);
+assert.match(auto,/passengerWarningLatched/);
+assert.match(auto,/handler\.postDelayed\(\(\)->\{if\(running\)scanAndTap\(\);\},1200L\)/);
+assert.doesNotMatch(auto,/performAction\(AccessibilityNodeInfo\.ACTION_CLICK\).*passenger/i);
 assert.doesNotMatch(auto,/performAction\(AccessibilityNodeInfo\.ACTION_CLICK\)/);
 
 // Crop editor: no touch-to-save; explicit confirm, preview, cancel and adjustable crop.
