@@ -13,8 +13,11 @@ public final class PgsAutoShinyListener extends NotificationListenerService {
     private long previousAt=0;
     @Override public void onNotificationPosted(StatusBarNotification sbn) {
         if(sbn==null||sbn.getNotification()==null)return;
-        String pkg=sbn.getPackageName().toLowerCase(Locale.ROOT);
-        if(!(pkg.contains("pokemongo")||pkg.contains("pgsharp")))return;
+        // LT366: PGSharp/Pokemod compartilham a janela oficial do jogo.
+        // Não aceitar notificações de apps com "pgsharp" no nome como prova
+        // de origem, nem ler conteúdo privado de outros aplicativos.
+        String pkg=sbn.getPackageName();
+        if(!PgsAutoHostPolicy.isGameWindow(pkg))return;
         Bundle values=sbn.getNotification().extras;
         if(values==null)return;
         StringBuilder all=new StringBuilder();
@@ -25,6 +28,9 @@ public final class PgsAutoShinyListener extends NotificationListenerService {
         CharSequence[] lines=values.getCharSequenceArray(Notification.EXTRA_TEXT_LINES);
         if(lines!=null)for(CharSequence s:lines)all.append(s).append(' ');
         String content=all.toString();
+        // IV100/Ditto só provocam pausa se nomearem o alvo atual e houver
+        // Auto Hunt com consentimento ativo. A notificação não realiza toque.
+        PgsAutoClickService.onAutoHuntNotice(content.trim());
         // Somente frase positiva explicita; emoji ou "shiny:" isolados
         // nao sao comprovacao de encontro no feed.
         if(PgsAutoShinySignal.isPositive(content)) {
