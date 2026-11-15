@@ -61,7 +61,11 @@ final class PgsAutoTapIndicator {
                 pen.setStrokeWidth(dp(1.4f));
                 pen.setColor(0xA70B9DFF);
                 canvas.drawCircle(cx,cy,dp(37),pen);
+                // Referência do vídeo LT353: centro branco discreto,
+                // um halo azul suave e anéis concêntricos em expansão.
                 pen.setStyle(Paint.Style.FILL);
+                pen.setColor(0xB6FFFFFF);
+                canvas.drawCircle(cx,cy,dp(7f),pen);
                 pen.setColor(0xF5FFFFFF);
                 canvas.drawCircle(cx,cy,dp(3.5f),pen);
             }
@@ -87,10 +91,10 @@ final class PgsAutoTapIndicator {
             windows.addView(effect,lp);
             active=effect;
             effect.setAlpha(.97f);
-            effect.setScaleX(.77f);
-            effect.setScaleY(.77f);
+            effect.setScaleX(.69f);
+            effect.setScaleY(.69f);
             effect.invalidate();
-            effect.animate().alpha(0f).scaleX(1.16f).scaleY(1.16f)
+            effect.animate().alpha(0f).scaleX(1.24f).scaleY(1.24f)
                 .setInterpolator(new LinearInterpolator())
                 .setDuration(EFFECT_MS).withEndAction(()->{
                     if(active==effect)clear();
