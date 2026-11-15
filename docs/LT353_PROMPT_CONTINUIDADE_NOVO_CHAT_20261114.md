@@ -1,12 +1,12 @@
-# PROMPT DE CONTINUIDADE — POKESEARCH LT353 / PRÓXIMO CHAT
+# PROMPT DE CONTINUIDADE — POKESEARCH LT354 / PRÓXIMO CHAT (APÓS LT353 OFICIAL)
 
 Atue como desenvolvedor principal e auditor Android do PokeSearch no GitHub `LucianoToscano/PokeSearch`. **ARK** significa autorização para investigar, corrigir, testar, documentar, abrir PR, fazer merge quando gates verdes, atualizar o Guia Mestre e publicar uma release monotônica pelo workflow protegido — sem atalhos de assinatura ou instalação silenciosa. Não declare homologação física sem Samsung. **Consultar agora** `docs/GUIA_MESTRE.md`, `docs/PADRAO_OFICIAL_OVERLAYS_POKESEARCH.md`, `docs/LT353_ARK_AUDITORIA_E_ACCEPTANCE_20261114.md` e `AGENTS.md`. Verificar a última release real na API GitHub, não presumir o estado de build a partir de chat.
 
 ## Estado ao iniciar
-- Base técnica anterior: 0.03.48 / versionCode 54555, release `v0.03.48-54555`, PR #390 docs.
+- **Versão oficial atual: 0.03.49 / versionCode 54556 / label 51353**, [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.49-54556); APK assinado de 61.117.546 bytes, SHA-256 `a674de9b13517066ca9542c46043da29595e160e8df6694d92a69be56368e4d8`, workflow protegido #43665785084 = SUCCESS. Código PR #391 squash `7721f9c8` e publicação PR #392 squash `ff1ccd8a`. Base anterior 0.03.48 / 54555.
 - LT350 design system proposta PR #385 estava *draft*, não forçar merge sem comparação das Pokébolas em modo claro/escuro.
 - LT353 corrigiu clipping de campos Tempo, sobreposição em Personalização, altura real dos popups, ROI lateral do feed, pixels transparentes, checagem RGB/modelos válidos, confirmação da mesma amostra, foco Android sob overlays, indicadores de toque e prévia de sprites sem clicar no jogo.
-- **Verificar PR, commits, testes e última versão oficial LT353 no GitHub neste momento**; não assumir que foi publicada se não constar tag e asset público.
+- **LT353 foi oficialmente publicada**, com tag e APK verificados no encerramento deste chat. No próximo chat, conferir novamente `main`, release/latest, commits e PRs (o estado pode ter mudado). Não presumir que a pessoa instalou a atualização no aparelho.
 - Fotos de teste: menu Tempo com valores "15" e "5" cortados; menu Personalização com linhas sobrepostas. Vídeo original 11,11 s mostra halo branco/ciano pulsante no mapa. Não comprova teleporte nem toque real.
 
 ## Prioridade do próximo chat
@@ -19,3 +19,9 @@ Atue como desenvolvedor principal e auditor Android do PokeSearch no GitHub `Luc
 7. No fim, informar alterações realmente realizadas e novo prompt de continuidade.
 
 Não usar cronômetro de cooldown nem brilho de toque como prova de que o jogo recebeu o gesto. Preferir correções incrementais e fail-closed a cliques cegos.
+
+## Provas de publicação LT353
+
+**LT353 OFICIAL — 14/11/2026:** PokeSearch **0.03.49 / versionCode 54556 / label 51353**, [release v0.03.49-54556](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.49-54556), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.49-54556/PokeSearch-v0.03.49-LT.apk) de **61.117.546 bytes**, SHA-256 `a674de9b13517066ca9542c46043da29595e160e8df6694d92a69be56368e4d8`, [workflow protegido #43665785084](https://github.com/LucianoToscano/PokeSearch/actions/runs/43665785084) **SUCCESS** (preflight, regressões, assinatura permanente, APK e hash públicos verificados). Implementação [PR #391](https://github.com/LucianoToscano/PokeSearch/pull/391), squash `7721f9c8e41f300b2a200cf3976b1d8d15da1718`; pedido monotônico [PR #392](https://github.com/LucianoToscano/PokeSearch/pull/392), squash `ff1ccd8a521014ce06f03260f6ac66752b169371`. Corrige menus Tempo/Personalização Samsung, medição da altura real, detecção de sprites com alpha/cor/ROI lateral, confirmação da amostra idêntica em 2 capturas, foco da janela ativa por trás do overlay, prévia ◎ sem gesto e halo branco/ciano. **BLOQUEADO** para aceite físico: localizar efetivamente Metagross no feed, gesto Android e resposta do jogo/PGSharp, rotação/fonte, OAuth Google/Discord, Shiny e Encontro. Em Android, a nova flag de janelas de Acessibilidade pode exigir reativação manual do serviço. LT350 PR #385 continua draft e não foi integrada.
+
+Se o usuário enviar novo print/vídeo da 0.03.49, analisar exaustivamente posição da sprite prevista pela prévia ◎, os campos Tempo, a Personalização, o halo e o status/resultado. Se a miniatura não aparecer na prévia, orientar recorte/escala. Se aparecer e gesto for concluído mas não reagir, investigar callback, janela/oclusão, Accessibility e eventos com coleta de evidência; não afirmar teleporte. O serviço pode precisar ser reativado após atualização da flag `flagRetrieveInteractiveWindows`.

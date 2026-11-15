@@ -1,9 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT353 — auditoria visual e do clique por sprite (candidata)
+## LT353 OFICIAL — 0.03.49 / 54556 (14/11/2026)
 
-As capturas Samsung 740×1536 e vídeo de referência de 11,11s revelaram campos Tempo cortados, texto Personalização sobreposto e efeito ciano desejado. Corrigidos baseline/altura real de menus, detecção com alpha/RGB em faixas laterais do feed, duas capturas da mesma amostra, foco Android sob bolha PGS, diagnósticos e prévia ◎ sem gesto. LT350 PR #385 segue draft. CI e aceite físico necessários antes de declarar publicação. Ver [relatório LT353](LT353_ARK_AUDITORIA_E_ACCEPTANCE_20261114.md) e [prompt de continuidade](LT353_PROMPT_CONTINUIDADE_NOVO_CHAT_20261114.md).
+**LT353 OFICIAL — 14/11/2026:** PokeSearch **0.03.49 / versionCode 54556 / label 51353**, [release v0.03.49-54556](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.49-54556), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.49-54556/PokeSearch-v0.03.49-LT.apk) de **61.117.546 bytes**, SHA-256 `a674de9b13517066ca9542c46043da29595e160e8df6694d92a69be56368e4d8`, [workflow protegido #43665785084](https://github.com/LucianoToscano/PokeSearch/actions/runs/43665785084) **SUCCESS** (preflight, regressões, assinatura permanente, APK e hash públicos verificados). Implementação [PR #391](https://github.com/LucianoToscano/PokeSearch/pull/391), squash `7721f9c8e41f300b2a200cf3976b1d8d15da1718`; pedido monotônico [PR #392](https://github.com/LucianoToscano/PokeSearch/pull/392), squash `ff1ccd8a521014ce06f03260f6ac66752b169371`. Corrige menus Tempo/Personalização Samsung, medição da altura real, detecção de sprites com alpha/cor/ROI lateral, confirmação da amostra idêntica em 2 capturas, foco da janela ativa por trás do overlay, prévia ◎ sem gesto e halo branco/ciano. **BLOQUEADO** para aceite físico: localizar efetivamente Metagross no feed, gesto Android e resposta do jogo/PGSharp, rotação/fonte, OAuth Google/Discord, Shiny e Encontro. Em Android, a nova flag de janelas de Acessibilidade pode exigir reativação manual do serviço. LT350 PR #385 continua draft e não foi integrada.
 
+[Auditoria e evidências LT353](LT353_ARK_AUDITORIA_E_ACCEPTANCE_20261114.md) · [Prompt de continuidade LT354](LT353_PROMPT_CONTINUIDADE_NOVO_CHAT_20261114.md). Compilação não comprova clique real no jogo; confirmar no Samsung.
 
 ## LT352 OFICIAL — 0.03.48 / 54555 (14/11/2026)
 
