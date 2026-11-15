@@ -18,7 +18,7 @@ assert.match(placement,/screen\.x-width-margin/);
 assert.match(placement,/screen\.y-height-margin/);
 assert.match(placement,/private int\[\] positionPanel\(int width,int height\)/);
 assert.match(placement,/int below=barY\+barH\+gap,above=barY-height-gap/);
-assert.match(menu,/int\[\] placement=positionPanel\(width,dp\(panelEstimatedHeightDp\)\)/);
+assert.match(menu,/int\[\] placement=positionPanel\(width,measured\)/);
 assert.match(menu,/lp\.x=placement\[0\];lp\.y=placement\[1\]/);
 assert.match(menu,/void reanchor\(int x,int y\)/);
 assert.match(menu,/int\[\] place=positionPanel\(width,height\)/);

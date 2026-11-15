@@ -40,6 +40,7 @@ final class PgsAutoMenus {
         void modelsChanged();
         void appearanceChanged();
         void previewTapIndicator();
+        void previewSprites();
         void choosePoint(String mode);
         void selectSprites();
     }
@@ -79,6 +80,7 @@ final class PgsAutoMenus {
     private TextView label(String value,int sp,boolean strong){
         TextView t=new TextView(context);t.setText(value);t.setTextSize(sp);
         t.setTextColor(fg());t.setGravity(Gravity.CENTER_VERTICAL);
+        t.setIncludeFontPadding(false);
         if(strong)t.setTypeface(null,android.graphics.Typeface.BOLD);
         return t;
     }
@@ -134,6 +136,9 @@ final class PgsAutoMenus {
     }
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}bellShiny=null;}
     boolean isOpen(){return panel!=null||toolbar!=null;}
+    // A barra compacta pode permanecer visível enquanto a busca funciona;
+    // apenas um submenu com miniaturas pode contaminar a captura.
+    boolean hasPanel(){return panel!=null;}
     // Toque na bolha com submenu aberto volta à barra, sem desligar buscas.
     // Com somente a barra aberta, um segundo toque a retrai (padrão P1/P2).
     void collapseOneLevel(){
@@ -326,7 +331,8 @@ final class PgsAutoMenus {
     }
     private LinearLayout panelRoot(String heading,String right){
         LinearLayout root=vertical();root.setPadding(dp(7),dp(6),dp(7),dp(7));
-        root.setBackground(bg(panelFill(),0x33FFFFFF,10));
+        root.setBackground(bg(panelFill(),
+            PgsAutoMenuStyle.read(context).tileStroke(),10));
         LinearLayout head=horizontal();
         TextView title=label(heading,12,true);
         head.addView(title,new LinearLayout.LayoutParams(0,dp(28),1));
@@ -344,10 +350,17 @@ final class PgsAutoMenus {
         PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
         Point screen=size();int width=Math.max(dp(80),Math.min(screen.x-dp(20),
             dp(Math.min(preferredWidthDp,visual.popupWidth))));
-        panelEstimatedHeightDp=Math.min(estimatedHeightDp,visual.popupHeight);
-        // Keep the entire icon bar visible. Popup chooses a lateral side
-        // when there is room; otherwise it appears above or below the bar.
-        int[] placement=positionPanel(width,dp(panelEstimatedHeightDp));
+        // A altura calculada por estimativa cortava EditTexts (Samsung font scale)
+        // e colocava o painel sobre a barra. Medir o conteúdo real antes do
+        // primeiro posicionamento e reajustar depois do layout/teclado.
+        int maxHeight=Math.max(dp(140),Math.min(screen.y-dp(24),
+            dp(visual.popupHeight)));
+        root.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(maxHeight,View.MeasureSpec.AT_MOST));
+        int measured=Math.max(dp(28),Math.min(maxHeight,root.getMeasuredHeight()));
+        panelEstimatedHeightDp=Math.round(measured/
+            context.getResources().getDisplayMetrics().density);
+        int[] placement=positionPanel(width,measured);
         // A nonmodal overlay must NEVER prevent tapping the game elsewhere.
         // Only menus that actually contain text input take keyboard focus.
         // WATCH_OUTSIDE_TOUCH retracts the popup while delivering the outside
@@ -372,7 +385,13 @@ final class PgsAutoMenus {
         lp.x=placement[0];lp.y=placement[1];
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
         applyNativeBlur(lp,visual.menuBlur);
-        try{wm.addView(panel,lp);}catch(Exception e){
+        try{
+            wm.addView(panel,lp);
+            final View opened=panel;
+            opened.post(()->{
+                if(panel==opened&&toolbar!=null)reanchor(anchorX,anchorY);
+            });
+        }catch(Exception e){
             panel=null;
             if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);
             Toast.makeText(context,"Não foi possível abrir menu: "+e.getMessage(),Toast.LENGTH_LONG).show();
@@ -460,7 +479,17 @@ final class PgsAutoMenus {
             .replace("POKESTOP","PokéStop").replace("POINT","Ponto específico")
             .replace("ENCOUNTER","Encontro")+"  ▾",11);
         target.setOnClickListener(v->showTargets());
-        root.addView(target,margined(-1,dp(32),4));
+        // Prévia de reconhecimento e coordenada SEM clique no jogo; permanece
+        // compacta ao lado de "Alvo" para não crescer o menu Buscar.
+        LinearLayout targetRow=horizontal();
+        targetRow.addView(target,new LinearLayout.LayoutParams(0,dp(32),1));
+        Button probe=button("◎",14);
+        probe.setContentDescription("Prévia das sprites do feed, sem tocar no jogo");
+        LinearLayout.LayoutParams probeParams=new LinearLayout.LayoutParams(dp(33),dp(32));
+        probeParams.leftMargin=dp(4);
+        targetRow.addView(probe,probeParams);
+        probe.setOnClickListener(v->{dismissAll();actions.previewSprites();});
+        root.addView(targetRow,margined(-1,dp(32),4));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -714,22 +743,28 @@ final class PgsAutoMenus {
         for(int i=0;i<2;i++){
             LinearLayout row=horizontal();
             TextView name=label(names[i],11,false);
-            row.addView(name,new LinearLayout.LayoutParams(0,dp(29),1));
+            row.addView(name,new LinearLayout.LayoutParams(0,dp(40),1));
             EditText edit=new EditText(context);
-            edit.setSingleLine(true);edit.setTextSize(12);
+            edit.setSingleLine(true);edit.setTextSize(13);
             edit.setTextColor(fg());edit.setGravity(Gravity.CENTER);
+            edit.setIncludeFontPadding(false);
+            edit.setMinHeight(0);edit.setMinimumHeight(0);
+            edit.setPadding(dp(3),0,dp(3),0);
+            edit.setSelectAllOnFocus(true);
+            edit.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_DONE);
             edit.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
             int value=prefs.getInt(keys[i],defaults[i]);
             value=i==0?PgsAutoCyclePolicy.mapTimeoutSeconds(value):
                 PgsAutoCyclePolicy.shinyCheckSeconds(value);
             edit.setText(String.valueOf(value));
-            edit.setBackground(bg(TILE,0x2CFFFFFF,6));
-            row.addView(edit,new LinearLayout.LayoutParams(dp(46),dp(28)));
-            root.addView(row,margined(-1,dp(31),2));
+            PgsAutoMenuStyle style=PgsAutoMenuStyle.read(context);
+            edit.setBackground(bg(style.tileFill(),style.tileStroke(),6));
+            row.addView(edit,new LinearLayout.LayoutParams(dp(49),dp(38)));
+            root.addView(row,margined(-1,dp(42),3));
             inputs[i]=edit;
         }
         Button apply=button("✓ Salvar",11);
-        root.addView(apply,margined(-1,dp(28),4));
+        root.addView(apply,margined(-1,dp(36),4));
         apply.setOnClickListener(v->{
             try{
                 int[] nums=new int[2];
@@ -749,7 +784,7 @@ final class PgsAutoMenus {
                 Toast.makeText(context,"Digite valores em segundos.",Toast.LENGTH_LONG).show();
             }
         });
-        mount(root,176,145);
+        mount(root,190,182);
     }
 
     void showAppearance(){
@@ -789,7 +824,10 @@ final class PgsAutoMenus {
         // The Pokébola Editor Visual is the single source of menu appearance.
         // Keep PGS-only choices (icons, countdown and tap indicator) separate.
         TextView inherited=label("Cores e transparência: Editor Visual das Pokébolas",10,false);
-        root.addView(inherited,margined(-1,dp(24),2));
+        inherited.setMaxLines(2);
+        inherited.setGravity(Gravity.TOP|Gravity.LEFT);
+        inherited.setLineSpacing(0,1f);
+        root.addView(inherited,margined(-1,-2,4));
         CheckBox tapFeedback=new CheckBox(context);
         tapFeedback.setText("Mostrar local do toque");
         tapFeedback.setTextSize(11);tapFeedback.setTextColor(fg());
@@ -807,8 +845,8 @@ final class PgsAutoMenus {
         preview.setContentDescription("Prévia do efeito de toque (sem clicar no jogo)");
         preview.setOnClickListener(v->actions.previewTapIndicator());
         tapRow.addView(preview,new LinearLayout.LayoutParams(dp(30),dp(30)));
-        root.addView(tapRow,margined(-1,dp(30),2));
-        mount(root,210,177);
+        root.addView(tapRow,margined(-1,dp(40),5));
+        mount(root,220,218);
     }
 
     void showNotifications(){

@@ -17,6 +17,14 @@ import java.util.Locale;
 final class PgsAutoIconDetector {
     private static final int ANALYSIS_WIDTH=740;
     private static final float THRESHOLD=.805f;
+    // O feed de sprites do PGSharp é uma coluna nas bordas; não interpretar
+    // textura do mapa ou botões do centro como miniatura selecionada.
+    private static final float FEED_SIDE_FRACTION=.28f;
+    private static boolean insideFeed(int centerX,int centerY,int width,int height){
+        return centerY>=height*.07f&&centerY<=height*.91f&&
+            (centerX<=width*FEED_SIDE_FRACTION||
+             centerX>=width*(1f-FEED_SIDE_FRACTION));
+    }
     static final class Match {
         final int x,y,priority;
         final float score;
@@ -37,15 +45,25 @@ final class PgsAutoIconDetector {
         final int[] xs,ys;
         final float[] centered;
         final float variance;
+        final float meanRed,meanGreen,meanBlue;
+        boolean usable(){return xs.length>=9&&variance>125f;}
         Template(Bitmap bmp,PgsAutoTemplateStore.Model model,int priority){
             width=bmp.getWidth();height=bmp.getHeight();
             this.priority=priority;id=model.id;name=model.name;
             List<Integer> xx=new ArrayList<>(),yy=new ArrayList<>();
             List<Float> values=new ArrayList<>();
-            int step=Math.max(4,Math.round(width/13f));
+            int step=Math.max(3,Math.round(width/13f));
+            float red=0,green=0,blue=0;
             for(int y=1;y<height-1;y+=step)for(int x=1;x<width-1;x+=step){
-                xx.add(x);yy.add(y);values.add((float)gray(bmp.getPixel(x,y)));
+                int pixel=bmp.getPixel(x,y);
+                // Transparência gerada pelo "Background ON" NÃO é preto no
+                // jogo; pixels transparentes devem ser ignorados no matching.
+                if(Color.alpha(pixel)<112)continue;
+                xx.add(x);yy.add(y);values.add((float)gray(pixel));
+                red+=Color.red(pixel);green+=Color.green(pixel);blue+=Color.blue(pixel);
             }
+            int count=Math.max(1,values.size());
+            meanRed=red/count;meanGreen=green/count;meanBlue=blue/count;
             xs=new int[xx.size()];ys=new int[xx.size()];centered=new float[xx.size()];
             float avg=0;for(float value:values)avg+=value;
             avg/=Math.max(1,values.size());
@@ -69,6 +87,7 @@ final class PgsAutoIconDetector {
     }
     private final List<Template> templates=new ArrayList<>();
     private int modelCount=0;
+    private int validModelCount=0;
     PgsAutoIconDetector(Context context) throws IOException {
         List<PgsAutoTemplateStore.Model> selected=new ArrayList<>();
         for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
@@ -82,19 +101,26 @@ final class PgsAutoIconDetector {
             new float[]{.76f,.88f,1f,1.12f,1.24f};
         for(int i=0;i<selected.size();i++) {
             PgsAutoTemplateStore.Model m=selected.get(i);
-            Bitmap base=PgsAutoTemplateStore.decode(context,m);
+            Bitmap base;
+            try{base=PgsAutoTemplateStore.decode(context,m);}
+            catch(IOException missing){continue;} // outros modelos continuam válidos
+            boolean usable=false;
             try{
                 for(float scale:scales){
                     int w=Math.max(18,Math.round(base.getWidth()*scale));
                     int h=Math.max(16,Math.round(base.getHeight()*scale));
                     Bitmap scaled=Bitmap.createScaledBitmap(base,w,h,true);
-                    try{templates.add(new Template(scaled,m,i));}
-                    finally{if(scaled!=base)scaled.recycle();}
+                    try{
+                        Template t=new Template(scaled,m,i);
+                        if(t.usable()){templates.add(t);usable=true;}
+                    }finally{if(scaled!=base)scaled.recycle();}
                 }
             }finally{base.recycle();}
+            if(usable)validModelCount++;
         }
     }
-    int templateCount(){return modelCount;}
+    int templateCount(){return validModelCount;}
+    int selectedModelCount(){return modelCount;}
     List<Match> find(Bitmap screenshot){
         if(templates.isEmpty())return Collections.emptyList();
         float scale=ANALYSIS_WIDTH/(float)screenshot.getWidth();
@@ -115,6 +141,7 @@ final class PgsAutoIconDetector {
             if(maxX<0||maxY<0)continue;
             for(int y=0;y<=maxY;y+=scanStep){
                 for(int x=0;x<=maxX;x+=scanStep){
+                    if(!insideFeed(x+t.width/2,y+t.height/2,w,h))continue;
                     float preliminary=correlation(lum,w,x,y,t);
                     if(preliminary<.55f)continue;
                     float best=preliminary;int bx=x,by=y;
@@ -127,7 +154,10 @@ final class PgsAutoIconDetector {
                             if(current>best){best=current;bx=xx;by=yy;}
                         }
                     }
-                    if(best>=THRESHOLD)candidates.add(new Candidate(bx,by,t,best));
+                    if(best>=THRESHOLD&&
+                        insideFeed(bx+t.width/2,by+t.height/2,w,h)&&
+                        colorCompatible(raw,w,bx,by,t))
+                        candidates.add(new Candidate(bx,by,t,best));
                 }
             }
         }
@@ -152,6 +182,19 @@ final class PgsAutoIconDetector {
         result.sort(Comparator.comparingInt((Match m)->m.priority)
             .thenComparingInt(m->m.y).thenComparingInt(m->m.x));
         return result;
+    }
+    private static boolean colorCompatible(int[] raw,int stride,int x,int y,Template t){
+        if(t.xs.length<9)return false;
+        long r=0,g=0,b=0;
+        for(int i=0;i<t.xs.length;i++){
+            int pixel=raw[(y+t.ys[i])*stride+x+t.xs[i]];
+            r+=Color.red(pixel);g+=Color.green(pixel);b+=Color.blue(pixel);
+        }
+        float n=t.xs.length;
+        float distance=Math.abs(r/n-t.meanRed)+Math.abs(g/n-t.meanGreen)+
+            Math.abs(b/n-t.meanBlue);
+        // Cor similar em 2 capturas, com tolerância para animação/iluminação.
+        return distance<=125f;
     }
     private static int gray(int c){return(77*Color.red(c)+150*Color.green(c)+29*Color.blue(c))>>8;}
     private static float correlation(int[] lum,int stride,int x,int y,Template t){

@@ -94,19 +94,38 @@ public final class PgsAutoClickService extends AccessibilityService {
             pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
     }
     private boolean isGameVisible(){
-        // Em janelas popup e multitarefa, o evento anterior pode ser de outra
-        // janela. Conferir o pacote efetivamente ativo antes de qualquer toque.
+        // Samsung: uma janela TYPE_ACCESSIBILITY_OVERLAY do próprio PGS
+        // pode ser retornada como root, embora Pokémon GO esteja ativo atrás.
+        // Nunca confiar no cache de foreground quando outro app aparece.
         AccessibilityNodeInfo root=null;
+        String activePackage=null;
         try{
             root=getRootInActiveWindow();
-            if(root!=null && root.getPackageName()!=null){
-                String pkg=root.getPackageName().toString();
-                if(isGamePackage(pkg)){foreground=pkg;return true;}
-                return false;
+            if(root!=null&&root.getPackageName()!=null)
+                activePackage=root.getPackageName().toString();
+            if(isGamePackage(activePackage)){
+                foreground=activePackage;return true;
             }
-        }catch(RuntimeException ignored){}
+            if(activePackage!=null&&!getPackageName().equals(activePackage))
+                return false;
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> windows=getWindows();
+            if(windows!=null)for(android.view.accessibility.AccessibilityWindowInfo w:windows){
+                if(w==null||w.getType()!=
+                    android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION)continue;
+                if(!w.isActive()&&!w.isFocused())continue;
+                AccessibilityNodeInfo game=null;
+                try{
+                    game=w.getRoot();
+                    if(game!=null&&game.getPackageName()!=null&&
+                        isGamePackage(game.getPackageName().toString())){
+                        foreground=game.getPackageName().toString();
+                        return true;
+                    }
+                }finally{if(game!=null)game.recycle();}
+            }
+            return false;
+        }catch(RuntimeException ignored){return false;}
         finally{if(root!=null)root.recycle();}
-        return isGamePackage(foreground);
     }
     private boolean passengerPromptPresent(){
         // Aviso de velocidade do jogo exige declaração MANUAL do usuário.
@@ -432,6 +451,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                         Toast.LENGTH_SHORT).show();
                 }
             }
+            @Override public void previewSprites(){preview();}
             @Override public void choosePoint(String mode){showTargetSelector(mode);}
             @Override public void selectSprites(){
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
@@ -647,8 +667,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             ". Toque para ligar/desligar; segure para abrir menus.");
     }
     private boolean reloadDetector(){
-        try {detector=new PgsAutoIconDetector(this);return detector.templateCount()>0;}
-        catch(IOException e){detector=null;showReason("Não foi possível carregar modelo: "+e.getMessage());return false;}
+        try{
+            detector=new PgsAutoIconDetector(this);
+            if(detector.templateCount()>0)return true;
+            showReason(detector.selectedModelCount()>0?
+                "Modelo selecionado sem pixels úteis ou arquivo ausente. "+
+                "Abra a lupa e recorte a sprite novamente, sem fundo opcional.":
+                "Selecione uma espécie e salve ao menos uma sprite do feed.");
+            return false;
+        }catch(IOException e){
+            detector=null;
+            showReason("Falha ao carregar modelo: "+e.getMessage());
+            return false;
+        }
     }
     /** Compatibilidade LT338: migra temporizadores uma vez e mantém as escolhas novas. */
     static SharedPreferences cyclePrefs(Context context){
@@ -952,13 +983,19 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     /** Segure o botão para localizar os ícones sem tocar em nenhum deles. */
     private void preview(){
-        if(running){Toast.makeText(this,"Toque para pausar antes da prévia",Toast.LENGTH_LONG).show();return;}
-        if(!reloadDetector()){status("SEM MODELO");showReason("Marque pelo menos um Pokémon no aplicativo.");return;}
-        status("ANALISANDO");
-        capture(new CaptureCallback(){
+        if(running){
+            Toast.makeText(this,"Pause a busca antes de testar a prévia.",
+                Toast.LENGTH_LONG).show();return;
+        }
+        if(!reloadDetector()){status("SEM MODELO");return;}
+        // A prévia nunca verifica sprites da NOSSA própria barra/menu.
+        if(quickMenus!=null)quickMenus.dismissAll();
+        status("ANALISANDO FEED");
+        handler.postDelayed(()->capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
                 Bitmap copy=bitmap.copy(Bitmap.Config.ARGB_8888,false);
-                if(copy==null){status("SEM CAPTURA");showReason("Imagem de tela indisponível.");return;}
+                if(copy==null){status("SEM CAPTURA");showReason("Captura vazia.");return;}
+                final int screenWidth=bitmap.getWidth(),screenHeight=bitmap.getHeight();
                 PgsAutoIconDetector current=detector;
                 analysis.execute(()->{
                     List<PgsAutoIconDetector.Match> items;
@@ -966,19 +1003,48 @@ public final class PgsAutoClickService extends AccessibilityService {
                     finally{copy.recycle();}
                     final List<PgsAutoIconDetector.Match> found=items;
                     handler.post(()->{
-                        if(found==null){status("SEM CAPTURA");showReason("Erro na detecção visual.");return;}
+                        if(found==null){
+                            status("SEM CAPTURA");
+                            showReason("Erro na leitura visual das sprites.");return;
+                        }
                         status("ACHEI "+found.size());
+                        if(!found.isEmpty()){
+                            PgsAutoIconDetector.Match first=found.get(0);
+                            Point screen=new Point();
+                            windowManager.getDefaultDisplay().getRealSize(screen);
+                            // Prévia visual SEM dispatchGesture e sem interação no jogo.
+                            if(tapIndicator!=null)tapIndicator.show(
+                                Math.round(first.x*screen.x/(float)screenWidth),
+                                Math.round(first.y*screen.y/(float)screenHeight));
+                            BugReport.log(PgsAutoClickService.this,"PGS",
+                                "Prévia, sem clique: "+first.name+" "+
+                                Math.round(first.score*100)+"% no feed "+first.x+","+first.y);
+                        }
                         Toast.makeText(PgsAutoClickService.this,
-                            "Encontrei "+found.size()+" ícones dos Pokémon selecionados",Toast.LENGTH_LONG).show();
+                            found.isEmpty()?
+                                "Nenhuma sprite reconhecida nas colunas laterais do feed. "+
+                                "Confira a miniatura e o modelo cadastrado.":
+                                "Prévia sem toque: "+found.size()+" sprite(s). Primeiro: "+
+                                found.get(0).name+" ("+
+                                Math.round(found.get(0).score*100)+"%).",
+                            Toast.LENGTH_LONG).show();
                     });
                 });
             }
-            @Override public void onError(String error){status("SEM CAPTURA");showReason(error);}
-        });
+            @Override public void onError(String error){
+                status("SEM CAPTURA");showReason(error);
+            }
+        }),260L);
     }
 
     private void scanAndTap(){
         if(!running)return;
+        // A busca nunca captura miniaturas dos próprios menus PGS.
+        if(quickMenus!=null&&quickMenus.hasPanel()){
+            status("FECHE PAINEL PARA BUSCAR");
+            handler.postDelayed(()->{if(running)scanAndTap();},1100L);
+            return;
+        }
         if(holdForPassengerPrompt()){
             handler.postDelayed(()->{if(running)scanAndTap();},1200L);
             return;
@@ -1032,6 +1098,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                     // Diagnóstico eventual: selecionado não significa
                     // modelo reconhecido na escala atual da tela.
                     if(items.isEmpty()&&++emptyRetries==6){
+                        BugReport.log(PgsAutoClickService.this,"PGS",
+                            "Sem sprite no feed; modelos úteis "+
+                            detector.templateCount()+"/"+detector.selectedModelCount());
                         Toast.makeText(PgsAutoClickService.this,
                             "Nenhum ícone reconhecido no feed. Abra a lupa, "+
                             "confira a miniatura e grave novamente se preciso.",
@@ -1043,13 +1112,19 @@ public final class PgsAutoClickService extends AccessibilityService {
                         visitedSlots.clear();notifiedFeedSlots.clear();
                         nextIndex=0;total=0;noFreshAttempts=0;
                     }else if(items.isEmpty())noFreshAttempts=0;
-                    status("FEED VAZIO · NOVA LEITURA");
+                    status(items.isEmpty()?
+                        "SPRITE NÃO RECONHECIDA · RELENDO":
+                        "FEED SEM NOVOS ALVOS · RELENDO");
                     handler.postDelayed(()->{
                         if(running&&ticket==stamp)scanAndTap();
                     },PgsAutoCyclePolicy.EMPTY_FEED_RETRY_SECONDS*1000L);
                     return;
                 }
                 emptyRetries=0;noFreshAttempts=0;
+                BugReport.log(PgsAutoClickService.this,"PGS",
+                    "Sprite do feed: "+match.name+" id "+match.id+
+                    ", correlação "+Math.round(match.score*100)+"%, posição "+
+                    match.x+","+match.y+" / "+screenWidth+"x"+screenHeight);
                 verifyAndTap(match,screenWidth,screenHeight,stamp);
                     });
                 });
@@ -1083,7 +1158,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                             if(!running||ticket!=stamp)return;
                             PgsAutoIconDetector.Match found=null;
                             if(confirmed!=null)for(PgsAutoIconDetector.Match m:confirmed){
-                                if(!m.group.equals(candidate.group))continue;
+                                if(!m.id.equals(candidate.id)||
+                                   !m.group.equals(candidate.group))continue;
                                 if(Math.abs(m.x/(float)w-candidate.x/(float)width)>.026f)continue;
                                 if(Math.abs(m.y/(float)h-candidate.y/(float)height)>.018f)continue;
                                 if(alreadyVisited(m,w,h))continue;
@@ -1137,9 +1213,16 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(!isGameVisible()){
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
+        if(quickMenus!=null&&quickMenus.hasPanel()){
+            status("FECHE PAINEL PARA BUSCAR");
+            handler.postDelayed(()->{if(running)scanAndTap();},1100L);
+            return;
+        }
         status("TOQUE "+(index+1)+"/"+total);
-        BugReport.log(this,"PGS","Tentativa de gesto no feed, alvo "+(index+1)+
-            "/"+total+"; aguarda callback Android (não confirma teleporte)");
+        BugReport.log(this,"PGS","Gesto do feed "+match.name+
+            " modelo "+match.id+" confiança "+Math.round(match.score*100)+
+            "% @"+x+","+y+" tela "+screenWidth+"x"+screenHeight+
+            " (callback Android não confirma ação no jogo)");
         Path path=new Path();path.moveTo(x,y);
         GestureDescription gesture=new GestureDescription.Builder()
             .addStroke(new GestureDescription.StrokeDescription(path,0,90)).build();

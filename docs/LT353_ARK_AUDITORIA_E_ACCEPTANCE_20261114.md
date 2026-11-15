@@ -1,0 +1,24 @@
+# PokeSearch — LT353 ARK, auditoria baseada em evidências do Samsung
+
+## Fontes examinadas
+- Duas capturas fornecidas pelo responsável: 740×1536 pixels (menu Personalização e menu Tempos), provenientes da versão 0.03.48 / 54555 relatada na conversa. Os valores nos campos de tempo estão cortados; a frase "Cores e transparência: Editor Visual das Pokébolas" ocupa duas linhas mas tinha apenas 24dp reservados.
+- Vídeo original fornecido de 11,111 s, 504×482 px e 59,94 fps: círculos brancos/ciano semi-transparentes no mapa, expansão suave. Ele é referência estética do feedback; não prova onde a automação clicou nem resultado no jogo.
+- Fonte oficial `main` `10540446c520d6135684039ab9f6223f7a982a69` e arquivos `PgsAutoMenus`, `PgsAutoIconDetector`, `PgsAutoClickService`, `PgsAutoTemplateStore`, `PgsAutoTapIndicator`, `pgs_auto_accessibility_config.xml`. Não foram disponibilizadas capturas de diagnóstico exatas do instante em que o serviço tentou tocar a sprite, nem os PNGs privados dos modelos salvos no aparelho.
+
+## Diagnóstico causal
+1. Em `showTime`, `EditText` de 28dp usa métricas nativas/padding Android, motivo provável para cortar os dígitos na vertical. Em `showAppearance`, texto explicativo de 2 linhas com 24dp reservados sobrepõe a linha seguinte. `mount` posicionava pelo `estimatedHeightDp` em vez do conteúdo real.
+2. O detector varria toda a tela em tons de cinza e incluía pixels transparentes da miniatura como se fossem pretos. Isso prejudica modelos gerados com Background ON e pode pontuar texturas do mapa. A confirmação posterior conferia apenas a espécie `group`, não a mesma amostra `id`.
+3. Em Samsung, `getRootInActiveWindow` pode selecionar a bolha PGS (`TYPE_ACCESSIBILITY_OVERLAY`) em vez da janela do jogo. O serviço rejeitava a tela e nunca chegava a `dispatchGesture`. A configuração de acessibilidade não declarava `flagRetrieveInteractiveWindows`.
+4. O menu nativo aberto pode aparecer na captura e suas próprias miniaturas não devem ser confundidas com ícones do feed. A barra compacta pode permanecer, mas o submenu precisa ser fechado para escanear. Antes não havia ação na lista Buscar para prévia de reconhecimento sem clique; `preview()` era inalcançável pelo menu.
+5. O contador de cooldown jamais deve ser interpretado como prova de clique. `dispatchGesture` aceito/completado pelo Android não comprova ação do jogo.
+
+## Correções LT353 implementadas
+- Tempo: campos numéricos de 38dp, baseline sem padding nativo, largura 49dp, teclado numérico com SelectAllOnFocus; linhas de 42dp, Salvar com 36dp. Painel estreito de 190dp.
+- Personalização: texto explicativo com WRAP_CONTENT e no máximo duas linhas, linha de toque de 40dp, altura de referência 218dp; painel de 220dp. Menus usam a borda do estilo `PgsAutoMenuStyle`; medição REAL antes do posicionamento, com segundo ajuste após o layout.
+- Detector: amostragem somente de pixels com alpha ≥112 e variância útil, cor média RGB complementar à correlação, busca em faixas de 28% à esquerda/direita e dentro da zona vertical do feed, sem depender de mapa central. Não usa modelos ausentes/inválidos; mantém dimensões de referência e todos os PNGs e prioridades salvas.
+- Motor: identifica a janela de aplicação ativa/focada sob a própria bolha usando `getWindows()` com `flagRetrieveInteractiveWindows`, falhando fechado se outro aplicativo estiver ativo. Captura não é feita com SUBMENU PGS aberto, mas barra compacta continua permitida. Confirmar exatamente o MESMO modelo `id` e `group` em duas capturas, sem toque cego. Logs de confiança, modelo, posição e resolução. Mensagem distinta para sprite não reconhecida.
+- Prévia: botão ◎ ao lado do seletor de Alvo no menu Buscar, fecha menu, espera compositor, fotografa e destaca PRIMEIRA sprite reconhecida com brilho ciano, mostra espécie e confiança e **NÃO envia `dispatchGesture`**. Botão original de prévia de brilho na Personalização preservado.
+- Brilho: núcleo branco 7dp, anéis azuis/ciano semi-transparentes e expansão 69%→124% em 960ms, como o vídeo de referência; conserva janela `FLAG_NOT_TOUCHABLE`, sem interceptar o jogo.
+
+## Validação obrigatória
+Gates: Node QA, LT169, LT211, Java LT62, OTA LT173, PGS APK QA Android, beta segura R8, release protegida monotônica e integridade do APK/assinatura/SHA-256. Não mexer em LT350 PR #385 (draft sem comparativo físico do tema). Samsung físico **BLOQUEADO** até validação: Android 0.03.49 instalado, Acessibilidade reativada se a permissão de janelas mudou, menu Tempo com dígitos completos, Personalização sem sobreposição, prévia ◎ localizando os sprites reais, botão Buscar sem submenu, efeito no alvo, callback Android e reação no PGSharp. Se a prévia não achar a sprite, não tentar tocar às cegas: exigir um modelo e/ou novo recorte; se localizar mas o jogo não reagir, coletar eventos e logs autorizados antes de mexer na política de gestos. Confirmar aviso "Sou passageiro" somente manualmente quando seguro.
