@@ -16,9 +16,10 @@ spec.loader.exec_module(module)
 
 
 def png():
-    # Teste de formato IHDR de sprite sintética; sem copiar conteúdo de jogo.
-    return b"\x89PNG\\r\\n\\x1a\\n"+b"\x00\\x00\\x00\\x0dIHDR"+struct.pack(">II",32,32)+b"\x08\\x06\\x00\\x00\\x00"+b"\x00"*4
-
+    # IHDR sintético para testar o verificador, sem copiar imagem de terceiros.
+    return (bytes([137,80,78,71,13,10,26,10,0,0,0,13])+
+            b"IHDR"+struct.pack(">II",32,32)+
+            bytes([8,6,0,0,0,0,0,0,0]))
 
 def archive(wrong_manifest=False,missing_image=False):
     data=png()
