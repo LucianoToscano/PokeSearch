@@ -5,7 +5,8 @@ const java=n=>fs.readFileSync("app/src/main/java/com/lucianotoscano/pokesearchov
 const manifest=JSON.parse(fs.readFileSync("app/src/main/assets/pgs-native/manifest.json","utf8"));
 const native=java("PgsAutoNativeModels"),store=java("PgsAutoTemplateStore"),
   menu=java("PgsAutoMenus"),service=java("PgsAutoClickService"),
-  detector=java("PgsAutoIconDetector"),geometry=java("PgsAutoScreenGeometry");
+  detector=java("PgsAutoIconDetector"),geometry=java("PgsAutoScreenGeometry"),
+  region=java("PgsAutoScanRegionPolicy");
 assert.equal(manifest.schema,1);assert.equal(manifest.provider,"pgsharp");
 assert.equal(manifest.providerVersion,"0.435.2");
 assert.deepEqual(manifest.entries,[],"no unlicensed/unverified PGS sprites shipped");
@@ -24,7 +25,8 @@ assert.match(menu,/if\(!model\.builtIn\)/);
 assert.match(menu,/captura necessária/);
 assert.match(menu,/List<PgsAutoTemplateStore.Model> models=speciesModels;/);
 assert.match(detector,/nativeModel=model\.builtIn/);
-assert.match(detector,/width>=height\?\.34f:FEED_SIDE_FRACTION/);
+assert.match(region,/width>=height\?\.34f:\.28f/);
+assert.match(detector,/PgsAutoScanRegionPolicy\.inside\(hostProfile,sidebarSide/);
 assert.match(service,/PgsAutoScreenGeometry\.map\(/);
 assert.match(service,/LT355 estágio PREVIA_SEM_GESTO/);
 assert.match(service,/LT355 estágio GEOMETRIA_INVALIDA/);
