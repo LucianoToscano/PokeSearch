@@ -1,5 +1,7 @@
 # Continuidade PokeSearch após LT355 — prompt para novo chat
 
+**Estado OFICIAL verificado em 15/11/2026:** 0.03.51 / 54558 / 51355, [release v0.03.51-54558](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.51-54558), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.51-54558/PokeSearch-v0.03.51-LT.apk) de 61.135.091 bytes, SHA-256 `236b65d4cd5132f75a368150b17f6bad02156cc3b6eb66b029a029690731110a`, [workflow oficial #43672361588](https://github.com/LucianoToscano/PokeSearch/actions/runs/43672361588) SUCCESS. PR #397 implementação, PR #398 publicação integradas. Nunca inferir que o usuário instalou o APK.
+
 Assuma ARK para o repositório `LucianoToscano/PokeSearch`. Verifique
 o HEAD atual da main e a última GitHub Release, não suponha que o estado
 deste arquivo continua vigente. Consulte `AGENTS.md`,
