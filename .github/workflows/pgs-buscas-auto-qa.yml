@@ -13,6 +13,8 @@ on:
       # LT365: live radar cards must keep PGSharp/Pokemod Android APK compile safe.
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeList*.java'
       - 'app/tests/lt365-pokelist-screenshot-results-contract.test.js'
+      - 'app/tests/lt366-autohunt-profile-contract.test.js'
+      - 'app/tests/PgsAutoHuntPolicyTest.java'
       - 'app/src/main/AndroidManifest.xml'
       - 'app/tests/pgs-buscas-contracts.test.js'
       - 'app/tests/PgsAutoShinySignalTest.java'
@@ -53,6 +55,7 @@ jobs:
           set -euo pipefail
           node app/tests/pgs-buscas-contracts.test.js
           node app/tests/lt365-pokelist-screenshot-results-contract.test.js
+          node app/tests/lt366-autohunt-profile-contract.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \
