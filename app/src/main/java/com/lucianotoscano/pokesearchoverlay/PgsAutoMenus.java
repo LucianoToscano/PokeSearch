@@ -896,7 +896,8 @@ final class PgsAutoMenus {
         box.setOnCheckedChangeListener((view,checked)->{
             prefs.edit().putBoolean(key,checked).apply();
             if(PgsAutoHuntSettings.ENABLED.equals(key)||
-               PgsAutoHuntSettings.CLICK_ENABLED.equals(key))
+               PgsAutoHuntSettings.CLICK_ENABLED.equals(key)||
+               PgsAutoHuntSettings.PROXIMITY.equals(key))
                 PgsAutoClickService.huntSettingsChanged();
         });
         root.addView(box,margined(-1,dp(30),1));
@@ -1036,7 +1037,9 @@ final class PgsAutoMenus {
         // Reservar espaço para cabeçalho e botão Voltar mesmo com a opção
         // de altura reduzida no Editor Visual das Pokébolas.
         int popupHeight=PgsAutoMenuStyle.read(context).popupHeight;
-        int scrollHeight=Math.max(68,Math.min(230,popupHeight-133));
+        if(popupHeight<200)intro.setVisibility(View.GONE);
+        int scrollHeight=Math.max(29,Math.min(230,
+            popupHeight-(intro.getVisibility()==View.GONE?88:133)));
         root.addView(scroll,margined(-1,dp(scrollHeight),4));
         Button back=button("← Buscar Pokémon",10);
         back.setOnClickListener(v->showSearch());
