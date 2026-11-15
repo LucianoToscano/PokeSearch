@@ -32,7 +32,7 @@ assert.match(store,/PgsAutoHostSettings\.current\(c\)/);
 assert.match(store,/new Model\(originalId,name\.trim\(\),file,enabled,false,refWidth,refHeight\)/,
   "legacy backup restore semantics remain");
 assert.match(menu,/showHostProfiles\(\)/);
-assert.match(menu,/new LinearLayout\.LayoutParams\(dp\(39\),dp\(32\)\)/);
+assert.ok(menu.includes("new LinearLayout.LayoutParams(dp(55),dp(26))"),"client selector remains compact");
 assert.match(menu,/actions\.modelsChanged\(\)/);
 assert.match(menu,/Outro · somente prévia/);
 assert.match(service,/PgsAutoHostPolicy\.OTHER\.equals\(hostProfile\)/);

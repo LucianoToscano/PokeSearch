@@ -46,6 +46,7 @@ final class PgsAutoMenus {
         void selectSprites();
         void sequencePick(String type,int index,boolean destination);
         void sequencePreview();
+        void startSearch();
         void sequenceRun();
         void sequenceStop();
         void sequenceChanged();
@@ -497,57 +498,82 @@ final class PgsAutoMenus {
         mount(root,265,265);
     }
 
-    void showSearch(){
-        LinearLayout root=panelRoot("⌕ BUSCAS",PgsAutoCatalog.selected(context).size()+"/10");
-        String currentMode=context.getSharedPreferences("pgs_auto_target_v1",Context.MODE_PRIVATE)
-            .getString("mode","SPRITE");
-        Button target=button("◎ Alvo: "+currentMode.replace("SPRITE","Sprites")
-            .replace("POKESTOP","PokéStop").replace("POINT","Ponto específico")
-            .replace("ENCOUNTER","Encontro")+"  ▾",11);
-        target.setOnClickListener(v->showTargets());
-        // Prévia de reconhecimento e coordenada SEM clique no jogo; permanece
-        // compacta ao lado de "Alvo" para não crescer o menu Buscar.
-        LinearLayout targetRow=horizontal();
-        targetRow.addView(target,new LinearLayout.LayoutParams(0,dp(32),1));
-        // O perfil visual é independente de conta, filtro e alvo. Não infere
-        // injeção ativa apenas porque o gerenciador Pokemod está instalado.
+    // LT368 — Uma janela com três ABAS internas. O overlay mantém a toolbar
+    // original P1/P2: nenhum sexto ícone, painel duplicado ou gesto implícito.
+    private boolean centralAdvanced=false;
+    private int centralStep=-1;
+    void showSearch(){showCentral(0);}
+
+    private void showCentral(int selectedTab){
+        LinearLayout root=panelRoot("BUSCA INTELIGENTE",
+            PgsAutoHostPolicy.shortLabel(PgsAutoHostSettings.current(context)));
+        LinearLayout tabs=horizontal();
+        String[] names={"Pokémon","Ação","Ajustes"};
+        for(int i=0;i<names.length;i++){
+            final int tab=i;
+            Button b=button(names[i],10);
+            markChosen(b,i==selectedTab);
+            b.setContentDescription("Aba "+names[i]);
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(30),1);
+            if(i>0)lp.leftMargin=dp(2);
+            tabs.addView(b,lp);
+            b.setOnClickListener(v->showCentral(tab));
+        }
+        root.addView(tabs,margined(-1,dp(30),3));
+        if(selectedTab==0)appendCentralPokemon(root);
+        else{
+            // Keep the status and Start visible while actions/settings scroll.
+            LinearLayout body=vertical();
+            if(selectedTab==1)appendCentralActions(body);
+            else appendCentralSettings(body);
+            ScrollView content=new ScrollView(context);
+            content.setFillViewport(false);
+            content.setVerticalScrollBarEnabled(false);
+            content.addView(body);
+            int available=PgsAutoMenuStyle.read(context).popupHeight;
+            root.addView(content,margined(-1,
+                dp(Math.max(55,available-145)),3));
+        }
+
+        TextView status=label("Estado: "+PgsAutoClickService.searchStatus(),9,false);
+        status.setSingleLine(true);
+        status.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(status,margined(-1,dp(18),3));
+        LinearLayout footer=horizontal();
+        Button previous=button(selectedTab==0?"◎ Prévia":
+            selectedTab==1?"◎ Prévia":"← Ação",10);
+        previous.setOnClickListener(v->{
+            if(selectedTab==2)showCentral(1);
+            else if(PgsSmartSearchSettings.SEQUENCE.equals(
+                    PgsSmartSearchSettings.mode(context))){
+                dismissAll();actions.sequencePreview();
+            }else{dismissAll();actions.previewSprites();}
+        });
+        footer.addView(previous,new LinearLayout.LayoutParams(0,dp(31),1));
+        Button main=button(selectedTab==0?"→ Ação":
+            actions.sequenceRunning()?"■ Parar":"▷ Iniciar",11);
+        LinearLayout.LayoutParams mainLp=new LinearLayout.LayoutParams(0,dp(31),1);
+        mainLp.leftMargin=dp(3);footer.addView(main,mainLp);
+        main.setOnClickListener(v->{
+            if(selectedTab==0){showCentral(1);return;}
+            if(actions.sequenceRunning()){actions.sequenceStop();showCentral(1);return;}
+            startCentral();
+        });
+        root.addView(footer,margined(-1,dp(31),3));
+        mount(root,240,385);
+    }
+
+    private void appendCentralPokemon(LinearLayout root){
+        LinearLayout info=horizontal();
+        TextView infoText=label("Modelos salvos usados automaticamente",9,false);
+        info.addView(infoText,new LinearLayout.LayoutParams(0,dp(22),1));
         Button host=button(PgsAutoHostPolicy.shortLabel(
-            PgsAutoHostSettings.current(context)),10);
-        host.setContentDescription("Interface do jogo: "+
-            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
+            PgsAutoHostSettings.current(context))+" ▾",9);
+        host.setContentDescription("Selecionar interface do jogo");
         host.setOnClickListener(v->showHostProfiles());
-        LinearLayout.LayoutParams hostParams=
-            new LinearLayout.LayoutParams(dp(39),dp(32));
-        hostParams.leftMargin=dp(3);
-        targetRow.addView(host,hostParams);
-        Button probe=button("◎",14);
-        probe.setContentDescription("Prévia das sprites do feed, sem tocar no jogo");
-        LinearLayout.LayoutParams probeParams=new LinearLayout.LayoutParams(dp(33),dp(32));
-        probeParams.leftMargin=dp(4);
-        targetRow.addView(probe,probeParams);
-        probe.setOnClickListener(v->{dismissAll();actions.previewSprites();});
-        root.addView(targetRow,margined(-1,dp(32),4));
-        // LT366: o submenu reaproveita o popup compacto das Pokébolas,
-        // sem acrescentar sexto ícone à barra oficial de 5 células.
-        Button hunt=button("✦ Auto Hunt · "+
-            PgsAutoHostPolicy.shortLabel(PgsAutoHostSettings.current(context))+
-            (PgsAutoHuntSettings.enabled(context)?" · ON":" · OFF"),10);
-        hunt.setContentDescription("Opções Auto Hunt para "+
-            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
-        hunt.setOnClickListener(v->showAutoHunt());
-        LinearLayout searchTools=horizontal();
-        searchTools.addView(hunt,new LinearLayout.LayoutParams(0,dp(30),1));
-        Button sequence=button("≡",15);
-        sequence.setOnClickListener(v->showSequence());
-        sequence.setContentDescription(
-            "Abrir editor de sequências; adicionar pontos numerados, gestos e tempos");
-        LinearLayout.LayoutParams sequenceLp=
-            new LinearLayout.LayoutParams(dp(34),dp(30));
-        sequenceLp.leftMargin=dp(3);
-        searchTools.addView(sequence,sequenceLp);
-        // LT367 não aumenta a altura do menu Buscar: reutiliza a linha Auto Hunt.
-        root.addView(searchTools,margined(-1,dp(30),3));
-        TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
+        info.addView(host,new LinearLayout.LayoutParams(dp(55),dp(26)));
+        root.addView(info,margined(-1,dp(26),2));
+        TextView title=label("Selecionados: 0/10",10,true);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
         input.setTextColor(fg());input.setHintTextColor(0xFF9CA8B8);
@@ -558,13 +584,14 @@ final class PgsAutoMenus {
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.addView(rows);
-        root.addView(scroll,margined(-1,dp(168),4));
-        // A busca fica no rodapé, abaixo dos modelos, sem botão Limpar Seleção.
-        root.addView(input,margined(-1,dp(33),4));
+        root.addView(title,margined(-1,dp(20),2));
+        // LT368: pesquisa acima da lista, não escondida no rodapé.
+        root.addView(input,margined(-1,dp(33),3));
+        root.addView(scroll,margined(-1,dp(155),3));
         final Runnable[] render={null};
         render[0]=()->{
             rows.removeAllViews();
-            title.setText(PgsAutoCatalog.selected(context).size()+"/10");
+            title.setText("Selecionados: "+PgsAutoCatalog.selected(context).size()+"/10");
             List<PgsAutoCatalog.Pokemon> found=
                 PgsAutoCatalog.search(context,input.getText().toString().trim(),20);
             if(found.isEmpty()){
@@ -734,7 +761,177 @@ final class PgsAutoMenus {
             public void afterTextChanged(Editable s){}
         });
         render[0].run();
-        mount(root,240,290);
+    }
+
+    private void appendCentralActions(LinearLayout root){
+        String current=PgsSmartSearchSettings.mode(context);
+        String[] ids={PgsSmartSearchSettings.MONITOR,PgsSmartSearchSettings.CLICK,
+            PgsSmartSearchSettings.HUNT,PgsSmartSearchSettings.SEQUENCE};
+        String[] names={"◎ Monitorar","⌖ Clicar","✦ Auto Hunt","≡ Sequência"};
+        for(int line=0;line<2;line++){
+            LinearLayout row=horizontal();
+            for(int col=0;col<2;col++){
+                int i=line*2+col;final String chosen=ids[i];
+                Button option=button(names[i],10);
+                markChosen(option,chosen.equals(current));
+                option.setContentDescription("Ao encontrar: "+names[i]+
+                    (chosen.equals(current)?", selecionado":""));
+                option.setOnClickListener(v->{
+                    PgsSmartSearchSettings.selectMode(context,chosen);
+                    centralStep=-1;showCentral(1);
+                });
+                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(30),1);
+                if(col>0)lp.leftMargin=dp(3);
+                row.addView(option,lp);
+            }
+            root.addView(row,margined(-1,dp(30),3));
+        }
+        if(PgsSmartSearchSettings.SEQUENCE.equals(current)){
+            appendCentralSequence(root);
+        }else if(PgsSmartSearchSettings.MONITOR.equals(current)){
+            TextView note=label("Observa a miniatura do feed sem enviar toques. "+
+                "O mapa e a sprite precisam de confirmação visual.",10,false);
+            note.setMaxLines(3);
+            root.addView(note,margined(-1,dp(66),5));
+        }else {
+            SharedPreferences hunt=PgsAutoHuntSettings.forCurrent(context);
+            TextView desc=label(PgsSmartSearchSettings.HUNT.equals(current)?
+                "Auto Hunt inicia no modo observação; toque opcional e autorizado.":
+                "Clique somente após confirmar a sprite do feed em duas leituras.",
+                10,false);
+            desc.setMaxLines(2);root.addView(desc,margined(-1,dp(42),4));
+            if(PgsSmartSearchSettings.HUNT.equals(current)){
+                huntCheckbox(root,hunt,PgsAutoHuntSettings.CLICK_ENABLED,
+                    "Tocar na sprite confirmada",false);
+                huntNumeric(root,hunt,PgsAutoHuntSettings.WAIT,
+                    "Espera entre alvos",new int[]{15,35,60,120},35);
+            }
+            CheckBox consent=new CheckBox(context);
+            consent.setText("Autorizo toques neste perfil");
+            consent.setTextSize(10);consent.setTextColor(fg());
+            consent.setChecked(PgsSmartSearchSettings.gestureConsent(context));
+            consent.setOnCheckedChangeListener((button,on)->
+                PgsSmartSearchSettings.setGestureConsent(context,on));
+            root.addView(consent,margined(-1,dp(32),3));
+        }
+    }
+
+    private void appendCentralSettings(LinearLayout root){
+        CheckBox automatic=new CheckBox(context);
+        automatic.setText("Preencher tempos padrão automaticamente");
+        automatic.setTextSize(10);automatic.setTextColor(fg());
+        automatic.setChecked(PgsSmartSearchSettings.automaticDefaults(context));
+        automatic.setOnCheckedChangeListener((b,on)->
+            PgsSmartSearchSettings.setAutomaticDefaults(context,on));
+        root.addView(automatic,margined(-1,dp(36),2));
+
+        SharedPreferences hunt=PgsAutoHuntSettings.forCurrent(context);
+        huntNumeric(root,hunt,PgsAutoHuntSettings.WAIT,
+            "Espera entre alvos",new int[]{15,35,60,120},35);
+        SharedPreferences cycles=PgsAutoClickService.cyclePrefs(context);
+        int[] mapValues={15,25,35,60,120};
+        int mapCurrent=cycles.getInt("load_timeout",
+            PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS);
+        Button map=button("Tempo do mapa: "+mapCurrent+"s ▾",10);
+        map.setOnClickListener(v->{
+            int index=0;
+            for(int i=0;i<mapValues.length;i++)
+                if(mapValues[i]==cycles.getInt("load_timeout",25)){
+                    index=i+1;break;
+                }
+            int value=mapValues[index%mapValues.length];
+            cycles.edit().putInt("load_timeout",value)
+                .putBoolean("lt344_timeout_user_set",true).apply();
+            map.setText("Tempo do mapa: "+value+"s ▾");
+        });
+        root.addView(map,margined(-1,dp(31),3));
+
+        SharedPreferences alerts=context.getSharedPreferences(
+            "pgs_auto_settings_v1",Context.MODE_PRIVATE);
+        String[] keys={PgsAutoNotificationPolicy.NEW,PgsAutoNotificationPolicy.SHINY};
+        String[] labels={"Notificar novos Pokémon","Notificar Shiny monitorado"};
+        for(int i=0;i<keys.length;i++){
+            final String kind=keys[i];
+            CheckBox notification=new CheckBox(context);
+            notification.setText(labels[i]);notification.setTextSize(10);
+            notification.setTextColor(fg());
+            notification.setChecked(!"off".equals(PgsAutoNotificationPolicy.mode(
+                kind,alerts.getString(kind,
+                    PgsAutoNotificationPolicy.defaultMode(kind)))));
+            notification.setOnCheckedChangeListener((b,on)->
+                alerts.edit().putString(kind,on?"default":"off").apply());
+            root.addView(notification,margined(-1,dp(30),1));
+        }
+        CheckBox pulse=new CheckBox(context);
+        pulse.setText("Mostrar local do toque");pulse.setTextSize(10);
+        pulse.setTextColor(fg());
+        pulse.setChecked(alerts.getBoolean("showTapIndicator",true));
+        pulse.setOnCheckedChangeListener((b,on)->
+            alerts.edit().putBoolean("showTapIndicator",on).apply());
+        root.addView(pulse,margined(-1,dp(30),1));
+
+        Button advanced=button(centralAdvanced?"⌃ Recolher avançado":
+            "⌄ Mais opções",10);
+        advanced.setOnClickListener(v->{centralAdvanced=!centralAdvanced;showCentral(2);});
+        root.addView(advanced,margined(-1,dp(30),3));
+        if(centralAdvanced){
+            LinearLayout row=horizontal();
+            String[] labelsAdvanced={"Alvo","Tempos","Avisos","Visual"};
+            Runnable[] handlers={this::showTargets,this::showTime,
+                this::showNotifications,this::showAppearance};
+            for(int i=0;i<labelsAdvanced.length;i++){
+                final int j=i;
+                Button button=button(labelsAdvanced[i],9);
+                button.setOnClickListener(v->handlers[j].run());
+                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
+                if(i>0)lp.leftMargin=dp(2);
+                row.addView(button,lp);
+            }
+            root.addView(row,margined(-1,dp(28),2));
+            Button huntMore=button("Configurações avançadas do Auto Hunt",9);
+            huntMore.setOnClickListener(v->showAutoHunt());
+            root.addView(huntMore,margined(-1,dp(29),2));
+        }
+    }
+
+    private boolean hasCentralSprite(){
+        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
+            if(PgsAutoCatalog.isSelectedName(context,model.name))return true;
+        return false;
+    }
+    private void startCentral(){
+        String host=PgsAutoHostSettings.current(context);
+        String mode=PgsSmartSearchSettings.mode(context);
+        if(PgsAutoHostPolicy.OTHER.equals(host)){
+            Toast.makeText(context,"Outro cliente: somente prévia. "+
+                "Selecione PGSharp ou Pokemod.",Toast.LENGTH_LONG).show();return;
+        }
+        if(PgsSmartSearchSettings.SEQUENCE.equals(mode)){
+            if(!PgsSequenceStore.canRun(context)){
+                Toast.makeText(context,"Autorize a execução da sequência neste perfil.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            dismissAll();actions.sequenceRun();return;
+        }
+        if(!hasCentralSprite()){
+            Toast.makeText(context,"Selecione um Pokémon com sprite válida "+
+                "para este perfil antes de iniciar.",Toast.LENGTH_LONG).show();return;
+        }
+        if(PgsSmartSearchSettings.MONITOR.equals(mode)){
+            dismissAll();actions.setWatchEnabled(true);return;
+        }
+        boolean click=PgsSmartSearchSettings.CLICK.equals(mode)||
+            PgsAutoHuntSettings.forCurrent(context).getBoolean(
+                PgsAutoHuntSettings.CLICK_ENABLED,false);
+        if(click&&!PgsSmartSearchSettings.gestureConsent(context)){
+            Toast.makeText(context,"Autorize os toques na aba Ação primeiro.",
+                Toast.LENGTH_LONG).show();return;
+        }
+        PgsAutoHuntSettings.forCurrent(context).edit()
+            .putBoolean(PgsAutoHuntSettings.ENABLED,true)
+            .putBoolean(PgsAutoHuntSettings.CLICK_ENABLED,click).apply();
+        dismissAll();
+        actions.startSearch();
     }
     /** Seletor pequeno: não inventa integração nativa com o injetor Pokemod. */
     private void showHostProfiles(){
@@ -960,135 +1157,173 @@ final class PgsAutoMenus {
         }
         actions.sequenceChanged();showSequence();
     }
+    // LT368: o editor é conteúdo da ABA AÇÃO, não uma segunda janela.
+    // A mira e o seletor de sprite usam somente suas superfícies transitórias.
     void showSequence(){
+        PgsSmartSearchSettings.selectMode(context,PgsSmartSearchSettings.SEQUENCE);
+        showCentral(1);
+    }
+    private void appendCentralSequence(LinearLayout root){
         String host=PgsAutoHostSettings.current(context);
         List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(context);
         boolean rotated=!steps.isEmpty()&&
             PgsSequenceStore.landscape(context)!=sequenceLandscape();
-        LinearLayout root=panelRoot("◎ SEQUÊNCIAS",
-            PgsAutoHostPolicy.shortLabel(host)+" · "+steps.size()+"/"+
-            PgsSequencePolicy.MAX_STEPS);
-        TextView caption=label(
-            rotated?"Gire a tela para a orientação em que os pontos foram criados":
-            "Pontos normalizados · toques somente após ativação explícita",9,false);
-        caption.setMaxLines(2);
-        root.addView(caption,margined(-1,dp(24),1));
-
+        if(centralStep>=steps.size())centralStep=-1;
+        TextView summary=label("Sequência · "+steps.size()+"/"+
+            PgsSequencePolicy.MAX_STEPS+" etapas · "+
+            (PgsSequencePolicy.estimatedMs(steps)/1000f)+"s estimados",9,true);
+        summary.setSingleLine(true);
+        summary.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(summary,margined(-1,dp(19),4));
+        if(rotated){
+            TextView warning=label("Orientação diferente. Volte à orientação "+
+                "usada para salvar os pontos.",9,false);
+            warning.setMaxLines(2);
+            root.addView(warning,margined(-1,dp(38),1));
+        }
         LinearLayout adds=horizontal();
-        String[] titles={"+ Toque","↗ Arrastar","+ Sprite","+ Espera"};
-        for(int i=0;i<4;i++){
+        String[] labels={"+ Toque","↗ Arrastar","+ Sprite","+ Espera"};
+        for(int i=0;i<labels.length;i++){
             final int action=i;
-            Button b=button(titles[i],9);
-            b.setContentDescription("Adicionar etapa: "+titles[i]);
-            b.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host)&&
+            Button add=button(labels[i],9);
+            add.setContentDescription("Adicionar etapa: "+labels[i]);
+            add.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host)&&
                 steps.size()<PgsSequencePolicy.MAX_STEPS);
-            b.setOnClickListener(v->{
+            add.setOnClickListener(v->{
                 if(action==0){dismissAll();actions.sequencePick("TAP",-1,false);}
                 else if(action==1){dismissAll();actions.sequencePick("SWIPE",-1,false);}
                 else if(action==2)showSequenceSprites(-1);
-                else sequenceEdited(PgsSequenceStore.add(context,
-                    PgsSequencePolicy.waitStep(1000),sequenceLandscape()));
+                else {
+                    boolean ok=PgsSequenceStore.add(context,
+                        PgsSequencePolicy.waitStep(1000),sequenceLandscape());
+                    if(ok&&!PgsSmartSearchSettings.automaticDefaults(context))
+                        centralStep=PgsSequenceStore.load(context).size()-1;
+                    sequenceEdited(ok);
+                }
             });
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
-            if(i>0)p.leftMargin=dp(2);
-            adds.addView(b,p);
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(29),1);
+            if(i>0)lp.leftMargin=dp(2);
+            adds.addView(add,lp);
         }
-        root.addView(adds,margined(-1,dp(31),3));
+        root.addView(adds,margined(-1,dp(29),2));
 
-        ScrollView scroll=new ScrollView(context);
-        scroll.setVerticalScrollBarEnabled(false);
         LinearLayout items=vertical();
         if(steps.isEmpty()){
-            TextView empty=label("Use + para criar passos. Toque no número "+
-                "depois para editar posição, duração e espera.",10,false);
+            TextView empty=label("Toque em + para adicionar a primeira ação. "+
+                "Pontos são escolhidos na tela do jogo.",10,false);
             empty.setMaxLines(3);
-            items.addView(empty,margined(-1,dp(65),2));
+            items.addView(empty,margined(-1,dp(64),3));
         }
         for(int i=0;i<steps.size();i++){
             final int index=i;
-            PgsSequencePolicy.Step st=steps.get(i);
-            LinearLayout line=horizontal();
-            Button edit=button((i+1)+"  "+st.title()+
-                (st.type==PgsSequencePolicy.Type.WAIT?
-                " · "+st.waitMs/1000f+"s":""),10);
-            edit.setContentDescription("Editar etapa "+(i+1)+" "+st.title());
-            edit.setOnClickListener(v->showSequenceStep(index));
-            line.addView(edit,new LinearLayout.LayoutParams(0,dp(29),1));
-            String[] icons={"↑","↓","×"};
-            for(int j=0;j<3;j++){
+            PgsSequencePolicy.Step step=steps.get(i);
+            Button entry=button((i+1)+". "+step.title()+
+                (step.type==PgsSequencePolicy.Type.WAIT?
+                    " · "+(step.waitMs/1000f)+"s":"")+"  ▾",10);
+            markChosen(entry,centralStep==i);
+            entry.setContentDescription("Etapa "+(i+1)+
+                ". Toque para editar sem sair da aba Ação.");
+            entry.setOnClickListener(v->{
+                centralStep=centralStep==index?-1:index;
+                showCentral(1);
+            });
+            items.addView(entry,margined(-1,dp(28),2));
+            if(centralStep!=i)continue;
+            LinearLayout controls=horizontal();
+            String[] icons={"↑","↓","▣","×"};
+            for(int j=0;j<icons.length;j++){
                 final int op=j;
-                Button button=button(icons[j],12);
-                button.setContentDescription((op==0?"Subir":op==1?"Descer":"Excluir")+
-                    " etapa "+(i+1));
-                if(op==0&&i==0||op==1&&i==steps.size()-1)
-                    button.setEnabled(false);
-                button.setOnClickListener(v->{
+                Button btn=button(icons[j],12);
+                btn.setContentDescription(new String[]{"Subir","Descer",
+                    "Copiar passo","Excluir"}[j]+" etapa "+(index+1));
+                btn.setEnabled(op!=0||index>0);
+                if(op==1&&index==steps.size()-1)btn.setEnabled(false);
+                if(op==3)btn.setTextColor(0xFFFF596C);
+                btn.setOnClickListener(v->{
                     boolean ok=op==0?PgsSequenceStore.move(context,index,-1):
                         op==1?PgsSequenceStore.move(context,index,1):
+                        op==2?PgsSequenceStore.copy(context,index):
                             PgsSequenceStore.delete(context,index);
+                    if(op==0&&ok)centralStep=index-1;
+                    if(op==1&&ok)centralStep=index+1;
+                    if(op==3&&ok)centralStep=-1;
                     sequenceEdited(ok);
                 });
-                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
-                    dp(27),dp(29));p.leftMargin=dp(2);line.addView(button,p);
+                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(27),1);
+                if(j>0)p.leftMargin=dp(2);
+                controls.addView(btn,p);
             }
-            items.addView(line,margined(-1,dp(29),2));
+            items.addView(controls,margined(-1,dp(27),2));
+            if(step.type==PgsSequencePolicy.Type.TAP||
+               step.type==PgsSequencePolicy.Type.SWIPE){
+                Button source=button("◎ Mover origem",9);
+                source.setOnClickListener(v->{dismissAll();
+                    actions.sequencePick("EDIT",index,false);});
+                items.addView(source,margined(-1,dp(28),2));
+                if(step.type==PgsSequencePolicy.Type.SWIPE){
+                    Button target=button("↗ Mover destino",9);
+                    target.setOnClickListener(v->{dismissAll();
+                        actions.sequencePick("EDIT",index,true);});
+                    items.addView(target,margined(-1,dp(28),2));
+                }
+                int[] durations=step.type==PgsSequencePolicy.Type.TAP?
+                    new int[]{90,150,220}:
+                    new int[]{200,350,500,800,1200,1800};
+                Button duration=button("Duração: "+step.gestureMs+" ms ▾",9);
+                duration.setOnClickListener(v->{
+                    int pos=0;
+                    for(int j=0;j<durations.length;j++)
+                        if(durations[j]==step.gestureMs){pos=j+1;break;}
+                    sequenceEdited(PgsSequenceStore.changeGesture(context,index,
+                        durations[pos%durations.length]));
+                });
+                items.addView(duration,margined(-1,dp(28),2));
+            }else if(step.type==PgsSequencePolicy.Type.SPRITE){
+                Button sprite=button("◎ Trocar modelo salvo",9);
+                sprite.setOnClickListener(v->showSequenceSprites(index));
+                items.addView(sprite,margined(-1,dp(28),2));
+            }
+            int[] waits=step.type==PgsSequencePolicy.Type.WAIT?
+                new int[]{500,1000,2000,5000,10000,30000}:
+                new int[]{0,300,600,1000,2000,5000,10000};
+            Button wait=button((step.type==PgsSequencePolicy.Type.WAIT?
+                "Esperar: ":"Após etapa: ")+step.waitMs+" ms ▾",9);
+            wait.setOnClickListener(v->{
+                int pos=0;
+                for(int j=0;j<waits.length;j++)
+                    if(waits[j]==step.waitMs){pos=j+1;break;}
+                sequenceEdited(PgsSequenceStore.changeWait(context,index,
+                    waits[pos%waits.length]));
+            });
+            items.addView(wait,margined(-1,dp(28),2));
         }
-        scroll.addView(items);
-        int available=PgsAutoMenuStyle.read(context).popupHeight;
-        if(available<280)caption.setVisibility(View.GONE);
-        int scrollHeight=Math.max(30,Math.min(165,
-            available-(caption.getVisibility()==View.GONE?187:213)));
-        root.addView(scroll,margined(-1,dp(scrollHeight),3));
-
+        root.addView(items,margined(-1,-2,3));
         CheckBox consent=new CheckBox(context);
-        consent.setText("Autorizar execução de gestos neste perfil");
-        consent.setTextSize(9);consent.setTextColor(fg());
+        consent.setText("Autorizar execução da sequência");
+        consent.setTextSize(10);consent.setTextColor(fg());
         consent.setChecked(PgsSequenceStore.canRun(context));
         consent.setEnabled(!PgsAutoHostPolicy.OTHER.equals(host));
-        consent.setOnCheckedChangeListener((b,enabled)->{
-            PgsSequenceStore.setRunConsent(context,enabled);
-            if(!enabled)actions.sequenceStop();
+        consent.setOnCheckedChangeListener((b,on)->{
+            PgsSequenceStore.setRunConsent(context,on);
+            if(!on)actions.sequenceStop();
         });
-        root.addView(consent,margined(-1,dp(28),1));
-        LinearLayout controls=horizontal();
-        String[] labels={"◉ Prévia","▷ Executar","▣ Colar"};
-        for(int i=0;i<labels.length;i++){
-            final int key=i;Button btn=button(labels[i],10);
-            btn.setEnabled(!rotated&&!steps.isEmpty()&&
-                !PgsAutoHostPolicy.OTHER.equals(host));
-            if(i==2)btn.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host));
-            btn.setOnClickListener(v->{
-                if(key==0){dismissAll();actions.sequencePreview();}
-                else if(key==1){
-                    if(!PgsSequenceStore.canRun(context)){
-                        Toast.makeText(context,"Ative autorização de execução "+
-                            "para este cliente.",Toast.LENGTH_LONG).show();return;
-                    }
-                    dismissAll();actions.sequenceRun();
-                }else sequenceEdited(PgsSequenceStore.paste(
-                    context,sequenceLandscape()));
-            });
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
-            if(i>0)p.leftMargin=dp(3);controls.addView(btn,p);
-        }
-        root.addView(controls,margined(-1,dp(31),3));
-
-        LinearLayout bottom=horizontal();
-        Button stop=button("■ Parar",10);
-        stop.setOnClickListener(v->{actions.sequenceStop();showSequence();});
-        bottom.addView(stop,new LinearLayout.LayoutParams(0,dp(29),1));
-        Button erase=button("Limpar",10);
-        erase.setContentDescription("Apagar as etapas deste perfil; "+
-            "não modifica modelos de sprites nem contas");
-        erase.setOnClickListener(v->sequenceEdited(PgsSequenceStore.clear(context)));
-        LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(0,dp(29),1);
-        ep.leftMargin=dp(3);bottom.addView(erase,ep);
-        Button back=button("← Buscar",10);
-        back.setOnClickListener(v->showSearch());
-        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(29),1);
-        bp.leftMargin=dp(3);bottom.addView(back,bp);
-        root.addView(bottom,margined(-1,dp(29),3));
-        mount(root,240,338);
+        root.addView(consent,margined(-1,dp(30),1));
+        LinearLayout extras=horizontal();
+        Button paste=button("▣ Colar passo",9);
+        paste.setOnClickListener(v->sequenceEdited(
+            PgsSequenceStore.paste(context,sequenceLandscape())));
+        extras.addView(paste,new LinearLayout.LayoutParams(0,dp(28),1));
+        Button clear=button("Limpar etapas",9);
+        clear.setContentDescription("Segure para limpar a sequência deste perfil");
+        clear.setOnClickListener(v->Toast.makeText(context,
+            "Segure para apagar todas as etapas.",Toast.LENGTH_SHORT).show());
+        clear.setOnLongClickListener(v->{
+            centralStep=-1;
+            sequenceEdited(PgsSequenceStore.clear(context));return true;
+        });
+        LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(0,dp(28),1);
+        clp.leftMargin=dp(3);extras.addView(clear,clp);
+        root.addView(extras,margined(-1,dp(28),2));
     }
     private void showSequenceSprites(int editIndex){
         LinearLayout root=panelRoot("◎ SPRITE", "modelo selecionado");
@@ -1121,74 +1356,10 @@ final class PgsAutoMenus {
         root.addView(back,margined(-1,dp(29),4));
         mount(root,238,265);
     }
+    // Passo expandido dentro da mesma aba, sem abrir popup independente.
     void showSequenceStep(int index){
-        List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(context);
-        if(index<0||index>=steps.size()){showSequence();return;}
-        PgsSequencePolicy.Step step=steps.get(index);
-        LinearLayout root=panelRoot("PASSO "+(index+1),step.title());
-        TextView detail=label("Ajuste a etapa sem alterar os outros pontos. "+
-            "Cada alteração interrompe uma execução ativa.",10,false);
-        detail.setMaxLines(2);root.addView(detail,margined(-1,dp(40),2));
-        if(step.type==PgsSequencePolicy.Type.TAP||
-           step.type==PgsSequencePolicy.Type.SWIPE){
-            Button point=button("◎ Posicionar origem",10);
-            point.setOnClickListener(v->{dismissAll();
-                actions.sequencePick("EDIT",index,false);});
-            root.addView(point,margined(-1,dp(31),3));
-            if(step.type==PgsSequencePolicy.Type.SWIPE){
-                Button dest=button("➚ Posicionar destino",10);
-                dest.setOnClickListener(v->{dismissAll();
-                    actions.sequencePick("EDIT",index,true);});
-                root.addView(dest,margined(-1,dp(31),3));
-            }
-        }else if(step.type==PgsSequencePolicy.Type.SPRITE){
-            Button select=button("◎ Alterar sprite salva",10);
-            select.setOnClickListener(v->showSequenceSprites(index));
-            root.addView(select,margined(-1,dp(30),3));
-        }
-        if(step.type==PgsSequencePolicy.Type.TAP||
-           step.type==PgsSequencePolicy.Type.SWIPE){
-            Button length=button("Duração do gesto: "+step.gestureMs+" ms ▾",10);
-            int[] options=step.type==PgsSequencePolicy.Type.TAP?
-                new int[]{90,150,220}:new int[]{200,350,500,800,1200,1800};
-            length.setOnClickListener(v->{
-                int next=0;
-                for(int i=0;i<options.length;i++)
-                    if(options[i]==step.gestureMs){next=(i+1)%options.length;break;}
-                sequenceEdited(PgsSequenceStore.changeGesture(
-                    context,index,options[next]));
-            });
-            root.addView(length,margined(-1,dp(31),3));
-        }
-        Button wait=button((step.type==PgsSequencePolicy.Type.WAIT?
-            "Aguardar: ":"Depois da etapa: ")+step.waitMs+" ms ▾",10);
-        wait.setOnClickListener(v->{
-            int[] options=step.type==PgsSequencePolicy.Type.WAIT?
-                new int[]{500,1000,2000,5000,10000,30000}:
-                new int[]{0,300,600,1000,2000,5000,10000};
-            int next=0;
-            for(int i=0;i<options.length;i++)
-                if(options[i]==step.waitMs){next=(i+1)%options.length;break;}
-            sequenceEdited(PgsSequenceStore.changeWait(
-                context,index,options[next]));
-        });
-        root.addView(wait,margined(-1,dp(31),3));
-        LinearLayout controls=horizontal();
-        Button copy=button("▣ Copiar passo",10);
-        copy.setOnClickListener(v->{
-            if(PgsSequenceStore.copy(context,index)){
-                Toast.makeText(context,"Etapa copiada neste perfil. "+
-                    "Use Colar para duplicar.",Toast.LENGTH_SHORT).show();
-                showSequence();
-            }
-        });
-        controls.addView(copy,new LinearLayout.LayoutParams(0,dp(31),1));
-        Button back=button("← Sequência",10);
-        back.setOnClickListener(v->showSequence());
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
-        p.leftMargin=dp(3);controls.addView(back,p);
-        root.addView(controls,margined(-1,dp(31),5));
-        mount(root,238,285);
+        centralStep=index;
+        showSequence();
     }
 
     void showAutoHunt(){

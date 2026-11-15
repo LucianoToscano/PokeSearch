@@ -9,6 +9,7 @@ import java.util.List;
 final class PgsSequencePolicy {
     static final int MAX_STEPS=12;
     static final long MAX_ESTIMATED_MS=120000L;
+    static final long SPRITE_TIMEOUT_MS=5000L;
     enum Type { TAP, SWIPE, SPRITE, WAIT }
     static final class Step {
         final Type type;
@@ -78,7 +79,7 @@ final class PgsSequencePolicy {
         long sum=0L;
         for(Step s:steps){
             if(s==null)return Long.MAX_VALUE;
-            sum+=(long)s.gestureMs+s.waitMs+(s.type==Type.SPRITE?1800L:0L);
+            sum+=(long)s.gestureMs+s.waitMs+(s.type==Type.SPRITE?SPRITE_TIMEOUT_MS:0L);
         }
         return sum;
     }

@@ -636,7 +636,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
-            @Override public void setWatchEnabled(boolean enabled){setWatchOnly(enabled);}
+            @Override public void setWatchEnabled(boolean enabled){
+                if(enabled)stopSequence("SEQUÊNCIA · MONITOR SELECIONADO");
+                setWatchOnly(enabled);
+            }
+            @Override public void startSearch(){
+                // Called only from explicit Start in the LT368 Central.
+                // Never leave two engines active or use an old POINT target.
+                stopSequence("SEQUÊNCIA · OUTRA AÇÃO SELECIONADA");
+                if(watching)stopWatchOnly(true);
+                if(running)halt("BUSCA RECONFIGURADA");
+                targetPrefs().edit().putString("mode","SPRITE").apply();
+                toggle();
+            }
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
             @Override public void appearanceChanged(){refreshAppearance();}
             @Override public void previewTapIndicator(){
@@ -1419,7 +1431,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                     return;
                 }
             }
-            sequenceScanSprite(stamp,step,null,0,0);
+            sequenceScanSprite(stamp,step,null,0,0,
+                SystemClock.uptimeMillis());
         }else{
             int x=Math.round(step.x*sequenceWidth);
             int y=Math.round(step.y*sequenceHeight);
@@ -1429,11 +1442,25 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
     }
     private void sequenceScanSprite(int stamp,PgsSequencePolicy.Step step,
-        PgsAutoIconDetector.Match first,int firstW,int firstH){
-        if(!sequenceActive||stamp!=sequenceTicket||!sequenceGuard())return;
+        PgsAutoIconDetector.Match first,int firstW,int firstH,long startedAt){
+        if(!sequenceActive||stamp!=sequenceTicket)return;
+        if(!sequenceGuard()){
+            stopSequence("SEQUÊNCIA · JOGO/SEGURANÇA ALTERADOS");return;
+        }
+        if(SystemClock.uptimeMillis()-startedAt>=
+                PgsSequencePolicy.SPRITE_TIMEOUT_MS){
+            stopSequence("SEQUÊNCIA · TEMPO DA SPRITE ESGOTADO");return;
+        }
         capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
-                if(!sequenceActive||stamp!=sequenceTicket||!sequenceGuard())return;
+                if(!sequenceActive||stamp!=sequenceTicket)return;
+                if(!sequenceGuard()){
+                    stopSequence("SEQUÊNCIA · JOGO/SEGURANÇA ALTERADOS");return;
+                }
+                if(SystemClock.uptimeMillis()-startedAt>=
+                        PgsSequencePolicy.SPRITE_TIMEOUT_MS){
+                    stopSequence("SEQUÊNCIA · TEMPO DA SPRITE ESGOTADO");return;
+                }
                 Bitmap frame=bitmap.copy(Bitmap.Config.ARGB_8888,false);
                 if(frame==null){
                     stopSequence("SEQUÊNCIA · IMAGEM INDISPONÍVEL");return;
@@ -1456,13 +1483,25 @@ public final class PgsAutoClickService extends AccessibilityService {
                     final boolean complete=valid;
                     handler.post(()->{
                         if(!sequenceActive||stamp!=sequenceTicket)return;
-                        if(!complete||result==null){
-                            stopSequence("SEQUÊNCIA · SPRITE NÃO CONFIRMADA");
+                        if(!complete){
+                            stopSequence("SEQUÊNCIA · LEITURA INCONCLUSIVA");
+                            return;
+                        }
+                        if(result==null){
+                            // Observe only: no blind tap/restart. Timeout is per step.
+                            if(SystemClock.uptimeMillis()-startedAt>=
+                                    PgsSequencePolicy.SPRITE_TIMEOUT_MS){
+                                stopSequence("SEQUÊNCIA · TEMPO DA SPRITE ESGOTADO");
+                                return;
+                            }
+                            status("SEQUÊNCIA · AGUARDANDO SPRITE DO FEED");
+                            handler.postDelayed(()->sequenceScanSprite(
+                                stamp,step,null,0,0,startedAt),650L);
                             return;
                         }
                         if(first==null){
                             handler.postDelayed(()->sequenceScanSprite(
-                                stamp,step,result,w,h),650L);
+                                stamp,step,result,w,h,startedAt),650L);
                         }else if(PgsAutoWatchPolicy.sameSprite(
                             first.id,first.group,first.x,first.y,firstW,firstH,
                             result.id,result.group,result.x,result.y,w,h)){
@@ -1473,7 +1512,14 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 return;
                             }
                             sequenceGesture(stamp,step,x,y,x,y);
-                        }else stopSequence("SEQUÊNCIA · SPRITE MUDOU");
+                        }else if(SystemClock.uptimeMillis()-startedAt>=
+                                PgsSequencePolicy.SPRITE_TIMEOUT_MS){
+                            stopSequence("SEQUÊNCIA · SPRITE INSTÁVEL");
+                        }else{
+                            // A visual mismatch resets the two-frame confirmation.
+                            handler.postDelayed(()->sequenceScanSprite(
+                                stamp,step,null,0,0,startedAt),650L);
+                        }
                     });
                 });
             }
