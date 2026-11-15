@@ -636,7 +636,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
-            @Override public void setWatchEnabled(boolean enabled){setWatchOnly(enabled);}
+            @Override public void setWatchEnabled(boolean enabled){
+                if(enabled)stopSequence("SEQUÊNCIA · MONITOR SELECIONADO");
+                setWatchOnly(enabled);
+            }
+            @Override public void startSearch(){
+                // Called only from explicit Start in the LT368 Central.
+                // Never leave two engines active or use an old POINT target.
+                stopSequence("SEQUÊNCIA · OUTRA AÇÃO SELECIONADA");
+                if(watching)stopWatchOnly(true);
+                if(running)halt("BUSCA RECONFIGURADA");
+                targetPrefs().edit().putString("mode","SPRITE").apply();
+                toggle();
+            }
             @Override public void modelsChanged(){PgsAutoClickService.modelsChanged();}
             @Override public void appearanceChanged(){refreshAppearance();}
             @Override public void previewTapIndicator(){
