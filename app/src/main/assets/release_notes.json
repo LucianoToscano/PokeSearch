@@ -4213,6 +4213,44 @@
           "Atualização pelo APK exige consentimento do Android; não há instalação silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt349-lt349b-lt351-ark-visual-passenger-20261114",
+      "minVersionCode": 54554,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.47 — LT349/LT349b/LT351",
+      "sections": {
+        "novidades": [
+          "Pokébolas: Background ON usa o ícone original Icone_Background_On.png do Drive; OFF restaura a arte desativada.",
+          "Editor Visual: guias do menu e resultados persistem após fechar; novo Medidas ON/OFF exibe largura e altura dos elementos sem alterar hitboxes.",
+          "Recortador: novos ícones nativos de traço fino e proporção Vertical 3:4, com 70% de transparência nos dois grupos cinza, artes Confirmar/Cancelar/Background menores e controles alinhados.",
+          "Buscar Pokémon: menu da bolha abre à direita ou esquerda conforme espaço livre e segue ancorado ao mover e rotacionar; alça de recorte apenas branca, sem círculo/fundo.",
+          "PGS: aviso 'Sou passageiro' agora mostra notificação e status explícitos uma vez, aguarda confirmação manual e retoma a leitura após desaparecer."
+        ],
+        "melhorias": [
+          "Modos, Filtros, Favoritos, Editor Visual, Filtros salvos, Ordenar, Clima e Forma compartilham o mesmo cálculo de transparência do Editor Visual, inclusive bordas e sombras.",
+          "Ícones de lixeira branca/preta substituídos por artes originais do Banco de Imagens do Google Drive, inclusive menus nativos PGS.",
+          "Opções de guias e medidas permanecem no JSON visual salvo; régua informativa não muda escala dos sprites nem os menus originais.",
+          "Renderização dos ícones Edu e Doce Raro na Home recalcula escala com a largura real após layout, evitando arte excessivamente pequena.",
+          "Buscar Pokémon: barra permanece visível com submenus abertos; controles refinados, bordas neutras e ícone de reordenação discreto de três linhas.",
+          "Confirmação de segurança: o estado de espera evita notificações repetidas e preserva o relógio de carregamento enquanto a pessoa lê o aviso."
+        ],
+        "correcoes": [
+          "Corrigida persistência de Linhas Guias e Medidas em Pokébola 1 e Pokébola 2.",
+          "Corrigidos fundos divergentes de filtros e submenus que ignoravam a opacidade selecionada.",
+          "Corrigidos contraste/espessura dos ícones do scanner, sem excluir modelos de sprites e capturas existentes.",
+          "Corrigido posicionamento lateral da barra PGS ao tocar/arrastar a bolha, com mudança de lado perto da borda da tela.",
+          "Corrigida retomada do modo Ponto Específico: aviso de passageiro não deixa o loop silenciosamente sem nova leitura.",
+          "Corrigido o modo Encontro para aguardar confirmação humana do alerta, em vez de tratar automaticamente o aviso como falha de gesto."
+        ],
+        "emDesenvolvimento": [
+          "LT350 design system compartilhado está proposta na PR #385, em rascunho: não integra esta release até a homologação visual.",
+          "Homologação física de menu, contraste, swipe, ancoragem, slider e detecção do aviso 'Sou passageiro' no Samsung permanece pendente.",
+          "A mensagem 'Sou passageiro' é declaração pessoal de segurança e nunca recebe clique automático. Confirmar manualmente somente se não estiver dirigindo.",
+          "OAuth externo PoGoCoordinates, teleporte real no PGSharp, reconhecimento Shiny e modo Encontro exigem prova no dispositivo; sucesso do CI não os homologa.",
+          "Instalação da atualização requer autorização do Android; nenhuma instalação silenciosa."
+        ]
+      }
     }
   ]
 }
