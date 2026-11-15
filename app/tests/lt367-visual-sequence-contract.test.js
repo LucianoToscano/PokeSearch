@@ -18,7 +18,7 @@ assert.match(menu,/\+ Toque/);
 assert.match(menu,/Arrastar/);
 assert.match(menu,/\+ Sprite/);
 assert.match(menu,/\+ Espera/);
-assert.match(menu,/Copiar passo/);
+assert.match(menu,/PgsSequenceStore\.copy\(context,index\)/);
 assert.match(menu,/Colar/);
 assert.match(menu,/Prévia/);
 assert.match(menu,/▷ Iniciar/);
