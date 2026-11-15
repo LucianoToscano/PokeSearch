@@ -37,8 +37,10 @@ assert.match(menu,/actions\.modelsChanged\(\)/);
 assert.match(menu,/Outro · somente prévia/);
 assert.match(service,/PgsAutoHostPolicy\.OTHER\.equals\(hostProfile\)/);
 assert.match(service,/PgsAutoHostSettings\.pokemodManagerInstalled\(this\)/);
-assert.match(service,/if\(PgsAutoHostPolicy\.POKEMOD\.equals\(PgsAutoHostSettings\.current\(this\)\)\)\s+return PgsAutoHostPolicy\.isGameWindow\(pkg\)/,
-  "Pokemod window must be the game package, never injector/PGSharp lookalikes");
+assert.match(service,/private boolean isGamePackage\(String pkg\)\{[\s\S]*?return PgsAutoHostPolicy\.isGameWindow\(pkg\);/,
+  "Both Pokemod and PGSharp require exact game package, never injector/lookalikes");
+assert.doesNotMatch(service,/\.contains\("pgsharp"\)/,
+  "legacy package substring must not bypass the game allowlist");
 assert.match(service,/PgsAutoHostPolicy\.mayAutoTap\(/);
 assert.match(service,/gameAccountSafetyNoticePresent\(\)/);
 assert.match(service,/holdForPassengerPrompt\(\)/);
