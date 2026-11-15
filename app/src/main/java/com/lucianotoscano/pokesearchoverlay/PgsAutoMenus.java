@@ -989,6 +989,15 @@ final class PgsAutoMenus {
 
             TextView recovery=label("MAPA · RECUPERAÇÃO DE LEITURA",10,true);
             content.addView(recovery,margined(-1,dp(23),5));
+            // Sensor de proximidade Android: apenas pausa; não toca no jogo.
+            android.hardware.SensorManager sensors=(android.hardware.SensorManager)
+                context.getSystemService(Context.SENSOR_SERVICE);
+            if(sensors!=null&&sensors.getDefaultSensor(
+                    android.hardware.Sensor.TYPE_PROXIMITY)!=null)
+                huntCheckbox(content,prefs,PgsAutoHuntSettings.PROXIMITY,
+                    "Sensor proximidade · pausar se coberto",false);
+            else huntUnavailable(content,"Sensor proximidade",
+                "Este aparelho não informa sensor de proximidade");
             huntCheckbox(content,prefs,PgsAutoHuntSettings.FIX_MAP,
                 "Repetir captura se falhar (sem clicar)",false);
             huntNumeric(content,prefs,PgsAutoHuntSettings.MAP_RETRY,
@@ -1021,7 +1030,7 @@ final class PgsAutoMenus {
             "Pode perder sessão e avisos; requer mecanismo Android validado");
         huntUnavailable(content,"Auto Catch / lançar bolas",
             "Encontro, arremesso e captura não foram homologados");
-        huntUnavailable(content,"Zoom máximo / sensor de proximidade",
+        huntUnavailable(content,"Zoom máximo",
             "Ação ainda não ligada ao ciclo visual");
         scroll.addView(content);
         // Reservar espaço para cabeçalho e botão Voltar mesmo com a opção
