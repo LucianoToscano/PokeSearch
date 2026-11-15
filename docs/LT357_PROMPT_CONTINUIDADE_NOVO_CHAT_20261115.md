@@ -1,5 +1,9 @@
 # PokeSearch — Prompt ARK de continuidade após LT357
 
+**ÚLTIMO ESTADO OFICIAL CONFIRMADO EM 15/11/2026:** PokeSearch **0.03.53 / 54560 / label 51357**, [release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.53-54560), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.53-54560/PokeSearch-v0.03.53-LT.apk) de **61.136.587 bytes**, SHA-256 `e9febb73bdb069a735387b179e026d779d294b360ee32c103c03571df542cec7`, [workflow protegido #43678324553](https://github.com/LucianoToscano/PokeSearch/actions/runs/43678324553) SUCCESS. PR #403 implementou LT357; PR #404 solicitou release; workflow inicial #43677713095 falhou por 10 sprites normais/Shiny obrigatórias ausentes da origem; PR #405 implementou recuperação SHA-pinned **somente de sprites de card do próprio APK PokeSearch anterior**, após testes negativos e positivos, e o workflow oficial posterior publicou. **NÃO confundir sprites dos cartões PokeSearch com modelos nativos do feed PGSharp: `assets/pgs-native/manifest.json` continua vazio**. O LT350 PR #385 está draft e permanece fora da main. Verifique tudo novamente ao retomar, inclusive HEAD e novas releases.
+
+**Incidente de release a não repetir:** `app/scripts/build_sprite_bundle.py` deve manter o gate obrigatório para IDs de Samsung e usar somente espelho do mesmo caminho ou APK oficial anterior com SHA-256 fixo, manifesto + hash de cada imagem. Não eliminar os checks nem restaurar imagens genéricas. Teste offline `scripts/test_lt357_sprite_archive_recovery.py` faz parte do QA Core.
+
 Atue como responsável técnico pelo repositório `LucianoToscano/PokeSearch`.
 Leia `AGENTS.md`, `docs/GUIA_MESTRE.md`,
 `docs/PADRAO_OFICIAL_OVERLAYS_POKESEARCH.md`,
