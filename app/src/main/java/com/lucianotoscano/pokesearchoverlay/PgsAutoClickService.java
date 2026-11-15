@@ -1612,6 +1612,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(pokemon.isEmpty()){showReason("Selecione primeiro um Pokémon para cadastrar.");return;}
         if(!isGameVisible()){queueTeachingWhenReady();return;}
         teachingInProgress=true;
+        if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(this)))
+            Toast.makeText(this,
+                "Pokemod: recorte apenas o desenho do Pokémon na lista lateral. "+
+                "Não inclua o círculo, o fundo do mapa ou o botão de radar.",
+                Toast.LENGTH_LONG).show();
         if(quickMenus!=null)quickMenus.dismissAll();
         if(bubble!=null)bubble.setVisibility(View.INVISIBLE);
         // Esconde menus e o botão antes de capturar, evitando que virem modelo.
