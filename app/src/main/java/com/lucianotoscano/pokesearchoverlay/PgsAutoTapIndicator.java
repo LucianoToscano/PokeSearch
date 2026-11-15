@@ -5,40 +5,72 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.LinearInterpolator;
 
-/** Short-lived touch-through marker at an Android-accepted gesture position.
- * It is feedback for the request, NOT proof that the game processed the tap.
+/**
+ * LT352: efeito de toque visível em mapas claros e escuros, sem bloquear
+ * a aplicação e sem afirmar que o Pokémon GO recebeu ou aceitou o gesto.
+ * Somente aparece na coordenada de um gesto solicitado/aceito pelo Android,
+ * ou na prévia explicitamente acionada em Personalização.
  */
 final class PgsAutoTapIndicator {
+    private static final String TAG="PgsTapEffect";
+    private static final long EFFECT_MS=960L;
     private final Context context;
     private final WindowManager windows;
     private View active;
     PgsAutoTapIndicator(Context c,WindowManager wm){context=c;windows=wm;}
-    private int dp(float n){return Math.round(n*context.getResources().getDisplayMetrics().density);}
+    private int dp(float n){
+        return Math.round(n*context.getResources().getDisplayMetrics().density);
+    }
     void show(int x,int y){
         if(!context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
             .getBoolean("showTapIndicator",true))return;
         clear();
-        final int side=dp(46);
-        Point screen=new Point();windows.getDefaultDisplay().getRealSize(screen);
+        final int side=dp(86);
+        Point screen=new Point();
+        windows.getDefaultDisplay().getRealSize(screen);
         if(x<0||y<0||x>=screen.x||y>=screen.y)return;
-        View dot=new View(context){
+        // Uma janela pequena e 100% passante: o marcador nunca captura toques.
+        View effect=new View(context){
             private final Paint pen=new Paint(Paint.ANTI_ALIAS_FLAG);
             @Override protected void onDraw(Canvas canvas){
                 super.onDraw(canvas);
                 float cx=getWidth()/2f,cy=getHeight()/2f;
+                // Disco cyan translúcido inspirado na arte de referência.
+                pen.setStyle(Paint.Style.FILL);
+                pen.setShader(new RadialGradient(cx,cy,dp(40),
+                    new int[]{0x92D9FBFF,0x5B77E9FF,0x1800ADFF,0x0000ADFF},
+                    new float[]{0f,.20f,.70f,1f},Shader.TileMode.CLAMP));
+                canvas.drawCircle(cx,cy,dp(40),pen);
+                pen.setShader(null);
+                // Três anéis finos continuam identificáveis em mapa claro.
                 pen.setStyle(Paint.Style.STROKE);
-                pen.setStrokeWidth(dp(1.5f));pen.setColor(0xAAAEF2FF);
-                canvas.drawCircle(cx,cy,dp(12),pen);
-                pen.setStrokeWidth(dp(1));pen.setColor(0x55FFFFFF);
-                canvas.drawCircle(cx,cy,dp(17),pen);
-                pen.setStyle(Paint.Style.FILL);pen.setColor(0x88FFFFFF);
-                canvas.drawCircle(cx,cy,dp(2.5f),pen);
+                pen.setStrokeWidth(dp(1.6f));
+                pen.setColor(0xECFFFFFF);
+                canvas.drawCircle(cx,cy,dp(13),pen);
+                pen.setStrokeWidth(dp(1.2f));
+                pen.setColor(0xBB72EDFF);
+                canvas.drawCircle(cx,cy,dp(25),pen);
+                pen.setStrokeWidth(dp(1.4f));
+                pen.setColor(0xA70B9DFF);
+                canvas.drawCircle(cx,cy,dp(37),pen);
+                pen.setStyle(Paint.Style.FILL);
+                pen.setColor(0xF5FFFFFF);
+                canvas.drawCircle(cx,cy,dp(3.5f),pen);
             }
         };
+        effect.setWillNotDraw(false);
+        effect.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        effect.setClickable(false);
+        effect.setFocusable(false);
+        effect.setBackgroundColor(0x00000000);
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(side,side,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE|
@@ -46,17 +78,27 @@ final class PgsAutoTapIndicator {
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
             PixelFormat.TRANSLUCENT);
         lp.gravity=Gravity.TOP|Gravity.LEFT;
-        lp.x=Math.max(0,Math.min(screen.x-side,x-side/2));
-        lp.y=Math.max(0,Math.min(screen.y-side,y-side/2));
+        lp.x=x-side/2;
+        lp.y=y-side/2;
+        // Permitir que a área fique parcialmente fora da tela perto das bordas,
+        // sem deslocar o centro visual do ponto tocado.
+        lp.flags|=WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
         try{
-            windows.addView(dot,lp);active=dot;
-            dot.animate().alpha(0f).scaleX(1.22f).scaleY(1.22f)
-                .setDuration(380L).withEndAction(()->{
-                    if(active==dot)clear();
+            windows.addView(effect,lp);
+            active=effect;
+            effect.setAlpha(.97f);
+            effect.setScaleX(.77f);
+            effect.setScaleY(.77f);
+            effect.invalidate();
+            effect.animate().alpha(0f).scaleX(1.16f).scaleY(1.16f)
+                .setInterpolator(new LinearInterpolator())
+                .setDuration(EFFECT_MS).withEndAction(()->{
+                    if(active==effect)clear();
                 }).start();
-        }catch(RuntimeException ignored){
-            try{windows.removeView(dot);}catch(RuntimeException ignoredRemoval){}
-            if(active==dot)active=null;
+        }catch(RuntimeException error){
+            Log.w(TAG,"Efeito de toque indisponível no WindowManager",error);
+            try{windows.removeView(effect);}catch(RuntimeException ignored){}
+            if(active==effect)active=null;
         }
     }
     void clear(){
