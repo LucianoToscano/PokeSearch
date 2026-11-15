@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "analysis": "lt359-pokemod-static-apk-sandbox",
+  "inspectionDate": "2026-11-15",
+  "uploadedApk": {
+    "displayVersion": "Pokemod-v14.2.1",
+    "sha256": "a671a80e9454882bc456ed9d857bb6be2e0c220c34c43c119d6b98bd256851f1",
+    "bytes": 48886418,
+    "zipEntries": 1088,
+    "uncompressedBytes": 63890455,
+    "crc": "valid"
+  },
+  "manifest": {
+    "packageName": "com.pokemod.app.public",
+    "versionName": "14.2.1",
+    "versionCode": 1421999,
+    "minSdk": 28,
+    "targetSdk": 34,
+    "compileSdk": 34,
+    "queriesPackage": [
+      "com.nianticlabs.pokemongo"
+    ],
+    "queriesIntent": [
+      "theappninjas.gpsjoystick.TELEPORT"
+    ],
+    "sensitiveDeclaredPermissions": [
+      "android.permission.MANAGE_EXTERNAL_STORAGE",
+      "android.permission.QUERY_ALL_PACKAGES"
+    ],
+    "exportedAppReceiver": "com.pokemod.app.receivers.DataReceiver"
+  },
+  "formats": {
+    "resPng": 411,
+    "resJpg": 3,
+    "resGif": 2,
+    "ogg": 23,
+    "dex": 2,
+    "nativeLibraries": 9,
+    "androidXml": 507,
+    "unityBundleFiles": 0,
+    "webpFiles": 0,
+    "assetsExecutables": [
+      {
+        "path": "assets/pokemod-injector",
+        "kind": "ELF arm64",
+        "bytes": 23746440
+      },
+      {
+        "path": "assets/busybox-arm64",
+        "bytes": 1478216
+      },
+      {
+        "path": "assets/sqlite3-arm64",
+        "bytes": 709600
+      }
+    ]
+  },
+  "sourceSigning": {
+    "v1CertificateSubject": "O=Pokemod.dev,CN=The Pokemod Group",
+    "v1CertificateSha256": "992dfd6cbc5b3c323996b2ae702414a35db610600264192968f6d565a6a8bdd7",
+    "apkSignatureSchemesIndependentlyVerified": false
+  },
+  "imageStats": {
+    "allRasterImages": 416,
+    "imagesWithin16to92pxBounds": 123,
+    "individualFeedSpeciesSpritesVerified": 0,
+    "licensedFeedSpritesApprovedForTransfer": 0
+  },
+  "sourceAssetsRedistributed": false,
+  "injectorExecuted": false,
+  "rootRequested": false,
+  "physicalDeviceTest": false,
+  "limitations": [
+    "Direct static ZIP, AXML, DEX string-index and image-metadata inspection; no dynamic root injection",
+    "No validated feed sprite atlas or reference set in uploaded manager APK",
+    "No complete source or licensing agreement supplied; APK naming and verbal authorization do not establish sublicense scope",
+    "No independent verification of APK v2/v3 signing schemes",
+    "Other clients require provider-specific template captures and physical calibration"
+  ]
+}
