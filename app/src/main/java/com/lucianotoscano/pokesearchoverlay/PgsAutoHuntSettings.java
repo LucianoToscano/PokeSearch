@@ -20,6 +20,7 @@ final class PgsAutoHuntSettings {
     static final String VIBRATE="vibrate";
     static final String SHOW_INFO="show_info";
     static final String SHOW_COOLDOWN="show_cooldown";
+    static final String PROXIMITY="pause_on_proximity";
     private PgsAutoHuntSettings(){}
 
     static SharedPreferences forCurrent(Context context){
