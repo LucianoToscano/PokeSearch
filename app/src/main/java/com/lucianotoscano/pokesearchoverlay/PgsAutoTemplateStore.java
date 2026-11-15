@@ -60,6 +60,13 @@ final class PgsAutoTemplateStore {
             // Falha fechada: não clicar em Pokémon diferentes por engano.
             return new ArrayList<>();
         }
+        // Native package assets are immutable and never written to user preferences.
+        // Manual templates retain their saved order and always precede native ones.
+        for(Model nativeModel:PgsAutoNativeModels.available(c)){
+            boolean duplicate=false;
+            for(Model saved:result)if(saved.id.equals(nativeModel.id)){duplicate=true;break;}
+            if(!duplicate)result.add(nativeModel);
+        }
         return result;
     }
     static synchronized List<Model> active(Context c) {
@@ -69,7 +76,8 @@ final class PgsAutoTemplateStore {
     }
     static synchronized void setEnabled(Context c,String id,boolean enabled) {
         List<Model> models=list(c);
-        for(Model m:models)if(m.id.equals(id))m.enabled=enabled;
+        for(Model m:models)if(m.id.equals(id)&&!m.builtIn)m.enabled=enabled;
+        // A species selection controls native models: never persist a package asset.
         persist(c,models);
     }
     /** A ordem da lista é a prioridade: o primeiro modelo ativo vence. */
@@ -121,9 +129,22 @@ final class PgsAutoTemplateStore {
         models.add(new Model(file,name.trim(),file,true,false,refWidth,refHeight));
         persist(c,models);
     }
-    /** Restaura uma amostra de um backup sem sobrescrever qualquer modelo atual. */
+    /** Restaura dimensões reais do bitmap quando o backup não tem metadados. */
     static synchronized boolean restoreSample(Context c,String originalId,String name,
                                               Bitmap image,boolean enabled) throws IOException {
+        if(image==null||image.isRecycled())throw new IOException("Imagem de backup inválida.");
+        int w=image.getWidth(),h=image.getHeight();
+        // Backups legados com imagens grandes continuam usando o formato 68x52.
+        if(w<16||w>92||h<16||h>92){w=WIDTH;h=HEIGHT;}
+        return restoreSample(c,originalId,name,image,enabled,w,h);
+    }
+    /** Backups novos preservam a largura e altura de referência sem deformar 24x44, 32x32 etc. */
+    static synchronized boolean restoreSample(Context c,String originalId,String name,
+                                              Bitmap image,boolean enabled,
+                                              int refWidth,int refHeight) throws IOException {
+        if(image==null||image.isRecycled())throw new IOException("Imagem de backup inválida.");
+        if(refWidth<16||refWidth>92||refHeight<16||refHeight>92)
+            throw new IOException("Dimensões de referência inválidas no backup.");
         if(originalId==null||!originalId.matches("[A-Za-z0-9_.-]{1,100}"))
             throw new IOException("Identificador inválido no backup.");
         if(name==null||name.trim().isEmpty()||name.length()>80)
@@ -137,13 +158,13 @@ final class PgsAutoTemplateStore {
         if(count>=MAX_SAMPLES)throw new IOException("Limite de modelos atingido: 50.");
         String file="pokemon_"+UUID.randomUUID().toString()+".png";
         File target=new File(c.getFilesDir(),file);
-        Bitmap scaled=Bitmap.createScaledBitmap(image,WIDTH,HEIGHT,true);
+        Bitmap scaled=Bitmap.createScaledBitmap(image,refWidth,refHeight,true);
         try(FileOutputStream out=new FileOutputStream(target)){
             if(!scaled.compress(Bitmap.CompressFormat.PNG,100,out))
                 throw new IOException("Falha ao gravar imagem restaurada.");
         }catch(IOException error){target.delete();throw error;}
         finally{if(scaled!=image)scaled.recycle();}
-        models.add(new Model(originalId,name.trim(),file,enabled,false));
+        models.add(new Model(originalId,name.trim(),file,enabled,false,refWidth,refHeight));
         persist(c,models);
         return true;
     }
@@ -161,6 +182,7 @@ final class PgsAutoTemplateStore {
         JSONArray arr=new JSONArray();
         try {
             for(Model m:models) {
+                if(m.builtIn)continue; // Assets são fornecidos pela versão APK, não pelo backup.
                 JSONObject obj=new JSONObject();
                 obj.put("id",m.id);obj.put("name",m.name);obj.put("file",m.file);
                 obj.put("enabled",m.enabled);obj.put("builtIn",m.builtIn);

@@ -423,16 +423,19 @@ final class PgsAutoMenus {
             LinearLayout.LayoutParams pp=margined(-1,dp(74),5);
             root.addView(preview,pp);
         }catch(Exception ignored){}
-        ImageButton delete=trashButton("Excluir esta imagem cadastrada");
-        LinearLayout.LayoutParams trashParams=margined(dp(39),dp(37),5);
-        trashParams.gravity=Gravity.CENTER_HORIZONTAL;
-        root.addView(delete,trashParams);
-        delete.setOnClickListener(v->{
-            // O usuário tocou explicitamente na imagem e solicitou exclusão.
-            PgsAutoTemplateStore.delete(context,model.id);
-            actions.modelsChanged();
-            showSearch();
-        });
+        root.addView(label(model.builtIn?"Modelo nativo verificado":"Minha amostra",10,false),
+            margined(-1,dp(18),3));
+        if(!model.builtIn){
+            ImageButton delete=trashButton("Excluir esta imagem cadastrada");
+            LinearLayout.LayoutParams trashParams=margined(dp(39),dp(37),5);
+            trashParams.gravity=Gravity.CENTER_HORIZONTAL;
+            root.addView(delete,trashParams);
+            delete.setOnClickListener(v->{
+                PgsAutoTemplateStore.delete(context,model.id);
+                actions.modelsChanged();
+                showSearch();
+            });
+        }
         Button another=button("＋ Selecionar outra imagem",12);
         root.addView(another,margined(-1,dp(37),4));
         another.setOnClickListener(v->{
@@ -455,11 +458,12 @@ final class PgsAutoMenus {
             catch(Exception ignored){}
             preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
             line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
-            TextView name=label("Imagem cadastrada",11,false);
+            TextView name=label(model.builtIn?"Nativa":"Minha sprite",11,false);
             line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
-            ImageButton remove=trashButton("Excluir esta imagem");
-            line.addView(remove,new LinearLayout.LayoutParams(dp(30),dp(35)));
-            remove.setOnClickListener(v->showModelActions(pokemon,model));
+            Button details=model.builtIn?button("◎",13):trashButton("Excluir esta imagem");
+            details.setContentDescription(model.builtIn?"Ver modelo nativo":"Gerenciar minha sprite");
+            line.addView(details,new LinearLayout.LayoutParams(dp(30),dp(35)));
+            details.setOnClickListener(v->showModelActions(pokemon,model));
             rows.addView(line,margined(-1,dp(41),2));
             line.setOnClickListener(v->showModelActions(pokemon,model));
         }
@@ -527,11 +531,22 @@ final class PgsAutoMenus {
                 dex.setContentDescription(pokemon.name);
                 line.addView(dex,new LinearLayout.LayoutParams(dp(26),dp(35)));
                 int priority=PgsAutoCatalog.selected(context).indexOf(pokemon.number);
-                TextView label=label((priority>=0?(priority+1)+". ":"")+pokemon.name,11,true);
+                List<PgsAutoTemplateStore.Model> speciesModels=
+                    selected?imagesFor(pokemon):new ArrayList<>();
+                boolean hasPersonal=false,hasNative=false;
+                for(PgsAutoTemplateStore.Model item:speciesModels){
+                    if(item.builtIn)hasNative=true;else hasPersonal=true;
+                }
+                String state=hasPersonal?" • minha":hasNative?" • nativa":" • capturar";
+                TextView label=label((priority>=0?(priority+1)+". ":"")+
+                    pokemon.name+(selected?state:""),11,true);
+                label.setContentDescription(pokemon.name+
+                    (selected?(hasPersonal?", modelo pessoal":hasNative?", modelo nativo validado":
+                        ", captura necessária"):", não selecionado"));
                 label.setSingleLine(true);label.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 line.addView(label,new LinearLayout.LayoutParams(0,dp(38),1f));
                 if(selected){
-                    List<PgsAutoTemplateStore.Model> models=imagesFor(pokemon);
+                    List<PgsAutoTemplateStore.Model> models=speciesModels;
                     for(int i=0;i<Math.min(2,models.size());i++){
                         final PgsAutoTemplateStore.Model model=models.get(i);
                         ImageView thumb=new ImageView(context);
@@ -540,8 +555,8 @@ final class PgsAutoMenus {
                         }catch(Exception ignored){}
                         thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         thumb.setBackground(bg(0x66313C4B,0x33FFFFFF,4));
-                        thumb.setContentDescription("Imagem monitorada de "+pokemon.name+
-                            ". Toque para excluir ou selecionar outra.");
+                        thumb.setContentDescription((model.builtIn?"Modelo nativo":"Minha amostra")+
+                            " de "+pokemon.name+". Toque para gerenciar.");
                         line.addView(thumb,new LinearLayout.LayoutParams(dp(27),dp(31)));
                         thumb.setOnClickListener(v->showModelActions(pokemon,model));
                     }

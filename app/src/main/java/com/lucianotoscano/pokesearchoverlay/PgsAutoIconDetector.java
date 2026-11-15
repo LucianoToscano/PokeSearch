@@ -21,17 +21,20 @@ final class PgsAutoIconDetector {
     // textura do mapa ou botões do centro como miniatura selecionada.
     private static final float FEED_SIDE_FRACTION=.28f;
     private static boolean insideFeed(int centerX,int centerY,int width,int height){
+        // Portrait remains strict; a landscape feed may sit slightly inward.
+        float side=width>=height?.34f:FEED_SIDE_FRACTION;
         return centerY>=height*.07f&&centerY<=height*.91f&&
-            (centerX<=width*FEED_SIDE_FRACTION||
-             centerX>=width*(1f-FEED_SIDE_FRACTION));
+            (centerX<=width*side||centerX>=width*(1f-side));
     }
     static final class Match {
         final int x,y,priority;
         final float score;
         final String name,id,group;
-        Match(int x,int y,float score,String id,String name,int priority){
+        final boolean nativeModel;
+        Match(int x,int y,float score,String id,String name,int priority,boolean nativeModel){
             this.x=x;this.y=y;this.score=score;this.id=id;this.name=name;
             this.priority=priority;this.group=speciesKey(name);
+            this.nativeModel=nativeModel;
         }
     }
     static String speciesKey(String name){
@@ -42,6 +45,7 @@ final class PgsAutoIconDetector {
     private static final class Template {
         final int width,height,priority;
         final String id,name;
+        final boolean nativeModel;
         final int[] xs,ys;
         final float[] centered;
         final float variance;
@@ -50,6 +54,7 @@ final class PgsAutoIconDetector {
         Template(Bitmap bmp,PgsAutoTemplateStore.Model model,int priority){
             width=bmp.getWidth();height=bmp.getHeight();
             this.priority=priority;id=model.id;name=model.name;
+            nativeModel=model.builtIn;
             List<Integer> xx=new ArrayList<>(),yy=new ArrayList<>();
             List<Float> values=new ArrayList<>();
             int step=Math.max(3,Math.round(width/13f));
@@ -79,10 +84,12 @@ final class PgsAutoIconDetector {
     private static final class Candidate {
         final int x,y,width,height,priority;
         final String id,name;
+        final boolean nativeModel;
         final float score;
         Candidate(int x,int y,Template t,float score){
             this.x=x;this.y=y;width=t.width;height=t.height;
             priority=t.priority;id=t.id;name=t.name;this.score=score;
+            nativeModel=t.nativeModel;
         }
     }
     private final List<Template> templates=new ArrayList<>();
@@ -177,7 +184,7 @@ final class PgsAutoIconDetector {
             result.add(new Match(
                 Math.round((c.x+c.width/2f)/scale),
                 Math.round((c.y+c.height/2f)/scale),
-                c.score,c.id,c.name,c.priority));
+                c.score,c.id,c.name,c.priority,c.nativeModel));
         }
         result.sort(Comparator.comparingInt((Match m)->m.priority)
             .thenComparingInt(m->m.y).thenComparingInt(m->m.x));

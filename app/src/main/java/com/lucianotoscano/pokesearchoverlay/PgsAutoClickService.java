@@ -1034,12 +1034,22 @@ public final class PgsAutoClickService extends AccessibilityService {
                             Point screen=new Point();
                             windowManager.getDefaultDisplay().getRealSize(screen);
                             // Prévia visual SEM dispatchGesture e sem interação no jogo.
+                            int[] screenPoint=PgsAutoScreenGeometry.map(
+                                first.x,first.y,screenWidth,screenHeight,screen.x,screen.y);
+                            if(screenPoint==null){
+                                status("CALIBRAR TELA");
+                                showReason("Prévia sem toque: proporção da captura diferente "+
+                                    "do display. Reabra o jogo e confira rotação/barras.");
+                                return;
+                            }
                             if(tapIndicator!=null)tapIndicator.show(
-                                Math.round(first.x*screen.x/(float)screenWidth),
-                                Math.round(first.y*screen.y/(float)screenHeight));
+                                screenPoint[0],screenPoint[1]);
                             BugReport.log(PgsAutoClickService.this,"PGS",
-                                "Prévia, sem clique: "+first.name+" "+
-                                Math.round(first.score*100)+"% no feed "+first.x+","+first.y);
+                                "LT355 estágio PREVIA_SEM_GESTO: "+first.name+
+                                " "+(first.nativeModel?"NATIVO":"PESSOAL")+
+                                " id "+first.id+
+                                " confiança "+Math.round(first.score*100)+"% no feed "+
+                                first.x+","+first.y+" display "+screenPoint[0]+","+screenPoint[1]);
                         }
                         Toast.makeText(PgsAutoClickService.this,
                             found.isEmpty()?
@@ -1204,11 +1214,16 @@ public final class PgsAutoClickService extends AccessibilityService {
                             verifyMisses=0;
                             Point size=new Point();
                             windowManager.getDefaultDisplay().getRealSize(size);
-                            int x=Math.round(found.x*size.x/(float)w);
-                            int y=Math.round(found.y*size.y/(float)h);
-                            if(x<0||x>=size.x||y<0||y>=size.y){
-                                fail("Ícone confirmado fora da área de toque.");return;
+                            int[] point=PgsAutoScreenGeometry.map(
+                                found.x,found.y,w,h,size.x,size.y);
+                            if(point==null){
+                                BugReport.log(PgsAutoClickService.this,"PGS",
+                                    "LT355 estágio GEOMETRIA_INVALIDA: captura "+w+"x"+h+
+                                    ", display "+size.x+"x"+size.y+"; sem gesto");
+                                fail("Captura e display com geometria incompatível. "+
+                                    "Confira orientação e barras do Android.");return;
                             }
+                            int x=point[0],y=point[1];
                             // Só registra quando a MESMA imagem foi confirmada 2x.
                             // Slot relativo + espécie evita repetição por revarredura.
                             String evidence=found.group+":"+
@@ -1244,7 +1259,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         status("TOQUE "+(index+1)+"/"+total);
         BugReport.log(this,"PGS","Gesto do feed "+match.name+
-            " modelo "+match.id+" confiança "+Math.round(match.score*100)+
+            " modelo "+match.id+" "+(match.nativeModel?"NATIVO":"PESSOAL")+
+            " confiança "+Math.round(match.score*100)+
             "% @"+x+","+y+" tela "+screenWidth+"x"+screenHeight+
             " (callback Android não confirma ação no jogo)");
         Path path=new Path();path.moveTo(x,y);
