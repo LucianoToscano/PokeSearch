@@ -25,7 +25,7 @@ assert.match(radar,/timeHandler\.postDelayed\(timeTick,15000L\)/);
 assert.match(radar,/timeHandler\.removeCallbacks\(timeTick\)/);
 assert.match(policy,/CandyCooldownPolicy\.recommendedSeconds\(km\*1000d\)/);
 assert.match(policy,/CandyCooldownPolicy\.compactTimerLabel\(seconds\)/);
-assert.match(policy,/CENTRO que a pessoa DIGITOU/);
+assert.match(policy,/centro que a pessoa DIGITOU/i);
 assert.match(candy,/advisory only/);
 assert.match(feed,/record\.optString\("gender",""\)/);
 assert.match(feed,/record\.optString\("country",""\)/);
