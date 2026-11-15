@@ -1114,13 +1114,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 "captura e use a prévia ◎, sem toque automático.");
             return;
         }
-        if(PgsAutoHostPolicy.POKEMOD.equals(hostProfile)&&
-           !PgsAutoHostSettings.pokemodManagerInstalled(this)){
-            status("POKEMOD AUSENTE");
-            showReason("Gerenciador Pokemod não detectado. A instalação do "+
-                "gerenciador não comprova injeção ativa no jogo.");
-            return;
-        }
+        // LT363: Aegis/Atlas e outras configurações visuais não exigem
+        // com.pokemod.app.public. Somente janela do jogo, perfil explícito,
+        // amostras daquele perfil e avisos manuais autorizam a sequência.
         // O gesto Android pode existir no 9/10, mas a confirmação visual de mapa
         // depende de takeScreenshot(API 30); nunca iniciar ciclo sem esse requisito.
         if(android.os.Build.VERSION.SDK_INT<30){
@@ -1183,12 +1179,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             showReason("Outro cliente está em prévia; monitor sem clique ainda não homologado.");
             return;
         }
-        if(PgsAutoHostPolicy.POKEMOD.equals(host)&&
-                !PgsAutoHostSettings.pokemodManagerInstalled(this)){
-            PgsAutoWatchSettings.setEnabled(this,false);
-            showReason("Gerenciador Pokemod não detectado. Configure a interface e o jogo.");
-            return;
-        }
+        // LT363: não exigir app Pokemod Manager; Aegis/Atlas são pacotes
+        // distintos e presença de qualquer um não prova mod ativo.
         if(android.os.Build.VERSION.SDK_INT<30){
             PgsAutoWatchSettings.setEnabled(this,false);
             showReason("Monitor visual exige captura de tela no Android 11+.");
