@@ -1337,8 +1337,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                 lastColors=colors;
                 if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&
                    sceneBeforeGesture!=null&&!sceneChangedAfterGesture){
-                    float delta=difference(sceneBeforeGesture,colors);
-                    if(delta>18f){
+                    float delta=PgsAutoGestureEvidence.meanColorDelta(sceneBeforeGesture,colors);
+                    if(PgsAutoGestureEvidence.visualChangeCandidate(sceneBeforeGesture,colors)){
                         sceneChangedAfterGesture=true;
                         BugReport.log(PgsAutoClickService.this,"PGS",
                             "LT354 estágio MUDANCA_VISUAL: delta="+Math.round(delta)+
@@ -1352,9 +1352,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                 PgsAutoMapReadiness.Evidence evidence=PgsAutoMapReadiness.analyze(bitmap);
                 // O terreno sozinho não é prova de carregamento. Precisa
                 // estabilidade E indícios de objetos (ginásios/PokéStops).
-                boolean responseCandidate=tapMode!=PgsAutoTargetPolicy.Mode.SPRITE||
-                    sceneChangedAfterGesture;
-                if(stableRepeats>=1 && evidence.scenePopulated&&responseCandidate)loadedStreak++;
+                if(PgsAutoGestureEvidence.canCountMapAsNew(
+                    tapMode==PgsAutoTargetPolicy.Mode.SPRITE,
+                    sceneChangedAfterGesture,stableRepeats>=1,evidence.scenePopulated))
+                    loadedStreak++;
                 else loadedStreak=0;
                 if(sceneReadyAt==0 && loadedStreak>=2){
                     sceneReadyAt=when;
@@ -1390,8 +1391,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void finishMapVisit(int stamp,boolean timeout){
         if(!running||!awaitingMap||stamp!=ticket)return;
-        if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&timeout&&
-           !sceneChangedAfterGesture){
+        if(PgsAutoGestureEvidence.shouldStopForNoResponse(
+            tapMode==PgsAutoTargetPolicy.Mode.SPRITE,timeout,sceneChangedAfterGesture)){
             BugReport.log(this,"PGS",
                 "LT354 estágio SEM_RESPOSTA_JOGO: gesto concluído no Android, "+
                 "sem alteração visual antes do timeout; nenhuma nova sprite tocada");
