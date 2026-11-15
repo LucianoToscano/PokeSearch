@@ -561,15 +561,29 @@ final class PgsAutoMenus {
     }
 
     private void appendCentralPokemon(LinearLayout root){
-        LinearLayout info=horizontal();
-        TextView infoText=label("Modelos salvos usados automaticamente",9,false);
-        info.addView(infoText,new LinearLayout.LayoutParams(0,dp(22),1));
-        Button host=button(PgsAutoHostPolicy.shortLabel(
-            PgsAutoHostSettings.current(context))+" ▾",9);
-        host.setContentDescription("Selecionar interface do jogo");
-        host.setOnClickListener(v->showHostProfiles());
-        info.addView(host,new LinearLayout.LayoutParams(dp(55),dp(26)));
-        root.addView(info,margined(-1,dp(26),2));
+        // LT369: selecionar PGSharp/Pokemod é parte da aba Pokémon, não popup.
+        LinearLayout profiles=horizontal();
+        String active=PgsAutoHostSettings.current(context);
+        String[] ids={PgsAutoHostPolicy.PGSHARP,
+            PgsAutoHostPolicy.POKEMOD,PgsAutoHostPolicy.OTHER};
+        String[] names={"PGSharp","Pokemod","Outro"};
+        for(int i=0;i<ids.length;i++){
+            final String profile=ids[i];
+            Button option=button(names[i],10);
+            markChosen(option,profile.equals(active));
+            option.setContentDescription("Cliente "+names[i]+
+                (profile.equals(active)?", selecionado":""));
+            option.setOnClickListener(v->{
+                if(profile.equals(PgsAutoHostSettings.current(context)))return;
+                PgsAutoHostSettings.select(context,profile);
+                actions.modelsChanged(); // invalida modelos da sessão anterior.
+                showCentral(0);
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
+            if(i>0)lp.leftMargin=dp(2);
+            profiles.addView(option,lp);
+        }
+        root.addView(profiles,margined(-1,dp(28),2));
         TextView title=label("Selecionados: 0/10",10,true);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -578,6 +592,19 @@ final class PgsAutoMenus {
         input.setPadding(dp(8),0,dp(8),0);
         input.setBackground(bg(TILE,0x33FFFFFF,7));
         LinearLayout rows=vertical();
+        if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(context))){
+            boolean left=PgsAutoScanRegionPolicy.LEFT.equals(
+                PgsAutoHostSettings.sidebarSide(context));
+            Button side=button(left?"Lista Pokemod: esquerda ▾":
+                "Lista Pokemod: direita ▾",9);
+            side.setOnClickListener(v->{
+                PgsAutoHostSettings.setSidebarSide(context,left?
+                    PgsAutoScanRegionPolicy.RIGHT:PgsAutoScanRegionPolicy.LEFT);
+                actions.modelsChanged();
+                showCentral(0);
+            });
+            rows.addView(side,margined(-1,dp(29),2));
+        }
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.addView(rows);
