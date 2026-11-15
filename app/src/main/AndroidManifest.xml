@@ -30,6 +30,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".CommunityScrapbookActivity" android:exported="false" />
+        <!-- LT364: explicit, user-driven lookup and local authorized APK catalog. -->
+        <activity android:name=".PokeListRadarActivity" android:exported="false" />
+        <activity android:name=".DataHubCatalogActivity" android:exported="false" />
         <activity android:name=".RaidDayCaptureConsentActivity"
             android:exported="false"
             android:theme="@android:style/Theme.Material.Light.Dialog.NoActionBar" />
