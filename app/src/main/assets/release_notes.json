@@ -4703,6 +4703,34 @@
           "Precisão de pontos e gestos, modelos e interface em Samsung/Pokemod/PGSharp, TalkBack, rotação e desempenho ainda precisam de homologação física."
         ]
       }
+    },
+    {
+      "id": "lt368-central-busca-inteligente-20261115",
+      "minVersionCode": 54571,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT368 — Busca Inteligente e Sequências Integradas",
+      "sections": {
+        "novidades": [
+          "A Busca Pokémon agora reúne Pokémon, Ação e Ajustes em três abas internas de um único overlay compacto, sem nova bolha ou menu principal duplicado.",
+          "Escolha Monitorar, Clicar, Auto Hunt ou Sequência Visual diretamente na aba Ação; selecionar uma opção não inicia gestos automaticamente.",
+          "O Editor de Sequências agora aparece dentro da aba Ação, com até 12 etapas numeradas de Toque, Arrastar, Sprite ou Espera, edição contextual e prévia segura."
+        ],
+        "melhorias": [
+          "Pesquisa de Pokémon acima da lista; sprites já salvas e prioridades existentes são reutilizadas de acordo com o cliente PGSharp ou Pokemod.",
+          "Tempos do mapa, espera entre alvos, notificações, efeito visual do toque e opções avançadas ficam agrupados em Ajustes, com padrões seguros e opção de alteração manual.",
+          "Copiar/colar etapa dentro do perfil, reordenar, alterar duração, editar pontos e excluir ações sem abrir outro editor principal; limpar tudo exige toque longo.",
+          "A escolha de ação, os valores padrão e o consentimento de toque são independentes por perfil; a autorização de gestos começa desligada."
+        ],
+        "correcoes": [
+          "A confirmação de uma sprite do feed em sequências agora pode reler apenas a imagem durante um prazo limitado de cinco segundos, interrompendo a ação quando não houver duas leituras estáveis, sem tocar às cegas.",
+          "O início explícito interrompe o motor anterior e valida a existência de sprites selecionadas no perfil; o editor e a prévia continuam respeitando o padrão das Pokébolas.",
+          "O conteúdo de Ação e Ajustes rola dentro do painel, preservando o estado e os controles de início no rodapé."
+        ],
+        "emDesenvolvimento": [
+          "O funcionamento visual em Samsung Android e a interação real com PGSharp/Pokemod ainda exigem ensaios físicos. Callback do Android não comprova captura, encontro ou teleporte.",
+          "Arrastar marcadores diretamente, condições completas SE/SENÃO, bibliotecas nomeadas e tempos adaptativos baseados em observação real permanecem planejados; não foram homologados nesta versão."
+        ]
+      }
     }
   ]
 }
