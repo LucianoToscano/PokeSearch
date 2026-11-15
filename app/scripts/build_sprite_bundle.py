@@ -328,8 +328,10 @@ def fetch(path):
                 break
             except urllib.error.HTTPError as exc:
                 if exc.code in (404, 410):
-                    # Never invent missing sprites / forms.
-                    return None
+                    # A origem RAW pode retornar 404 em mudanças temporárias;
+                    # verificar o MESMO caminho no mirror é seguro. Nunca
+                    # substituir espécie/forma, nem contornar 401/403/429.
+                    break
                 if exc.code in (401, 403, 429):
                     # Respect provider limits: never circumvent authorization/throttles.
                     return None
@@ -340,6 +342,89 @@ def fetch(path):
             if attempt == 0:
                 time.sleep(0.6)
     return None
+
+
+# Fallback APENAS para sprites obrigatórias que já existiam em uma
+# release oficial imutável. NÃO baixar imagens de Pokémon de espécies
+# diferentes e NÃO enfraquecer o gate Samsung.
+OFFICIAL_RECOVERY_APK = (
+    "https://github.com/LucianoToscano/PokeSearch/releases/download/"
+    "v0.03.52-54559/PokeSearch-v0.03.52-LT.apk"
+)
+OFFICIAL_RECOVERY_SHA256 = (
+    "419a91801e0ea7fd3a411b173b9b3506078952f6aa1b6bea1f911df1793051e7"
+)
+MAX_OFFICIAL_APK_BYTES=75*1024*1024
+
+
+def restore_required_from_pinned_archive(archive_data, expected_archive_hash,
+                                         required_ids, dest, misses, hashes):
+    """Recupera apenas IDs obrigatórios do APK exato já publicado.
+
+    Falha fechada em SHA, conteúdo ZIP, manifesto, ID, PNG ou hash. Testável
+    offline com ZIP sintético; não tem dependência de rede.
+    """
+    if hashlib.sha256(archive_data).hexdigest() != expected_archive_hash:
+        raise SystemExit("Archive official sprite fallback hash mismatch")
+    try:
+        with zipfile.ZipFile(io.BytesIO(archive_data)) as archive:
+            if archive.testzip() is not None:
+                raise SystemExit("Damaged official sprite fallback archive")
+            manifest = json.loads(
+                archive.read("assets/pokemon-sprites/manifest.json")
+            )
+            if manifest.get("schema") != "pokesearch-offline-sprites-v1":
+                raise SystemExit("Official fallback sprite manifest invalid")
+            verified=manifest.get("sha256",{})
+            needed=[(kind,dex) for kind in ("base","shiny")
+                    for dex in sorted(set(required_ids).intersection(misses[kind]))]
+            recovered=[]
+            for kind,dex in needed:
+                relative=f"{kind}/{dex}.png"
+                archived=f"assets/pokemon-sprites/{relative}"
+                try:
+                    data=archive.read(archived)
+                except KeyError:
+                    raise SystemExit("Pinned official sprite missing: "+relative)
+                expected=verified.get(relative)
+                actual=hashlib.sha256(data).hexdigest()
+                if not expected or expected!=actual or not verified_png(data):
+                    raise SystemExit("Pinned official sprite verification failed: "+relative)
+                recovered.append((kind,dex,data,actual))
+    except (zipfile.BadZipFile, ValueError, json.JSONDecodeError, KeyError) as bad:
+        raise SystemExit("Cannot verify pinned official sprite archive: "+
+                         type(bad).__name__) from bad
+    # Só escrever no destino depois que todos os arquivos forem validados.
+    for kind,dex,data,digest in recovered:
+        path=dest/kind/f"{dex}.png"
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_bytes(data)
+        hashes[f"{kind}/{dex}.png"]=digest
+        misses[kind].remove(dex)
+    return len(recovered)
+
+
+def restore_missing_required_from_official_release(required_ids, dest,
+                                                    misses, hashes):
+    needed=any(set(required_ids).intersection(misses[kind])
+               for kind in ("base","shiny"))
+    if not needed:
+        return 0
+    request=urllib.request.Request(OFFICIAL_RECOVERY_APK, headers={
+        "User-Agent":"PokeSearch-LT357-pinned-official-sprite-recovery/1"})
+    try:
+        with urllib.request.urlopen(request,timeout=150) as response:
+            content=response.read(MAX_OFFICIAL_APK_BYTES+1)
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise SystemExit("Official pinned sprite archive unavailable: "+
+                         type(exc).__name__) from exc
+    if len(content)>MAX_OFFICIAL_APK_BYTES:
+        raise SystemExit("Official pinned sprite archive oversized")
+    count=restore_required_from_pinned_archive(
+        content,OFFICIAL_RECOVERY_SHA256,required_ids,dest,misses,hashes)
+    print(f"Recovered {count} exact mandatory sprites from SHA256-pinned "
+          "previous official release",flush=True)
+    return count
 
 
 def main():
@@ -391,6 +476,10 @@ def main():
     # The manifest may legitimately omit unknown Dex variants; we never
     # silently replace missing normal/shiny base sprites with wrong species.
     required_ids = {94, 422, 423, 459, 656, 669, 670, 671, 722, 723, 724}
+    # Nunca liberar APK faltando os modelos demonstrados nos Samsung. Se a
+    # PokéAPI/CDN falhar, recuperar só bytes previamente empacotados e
+    # verificados no APK oficial anterior, com digest criptográfico fixo.
+    restore_missing_required_from_official_release(required_ids,dest,misses,hashes)
     missing_required = {kind: sorted(required_ids.intersection(misses[kind]))
                         for kind in ("base", "shiny")}
     if any(missing_required.values()):
