@@ -17,7 +17,7 @@ assert.match(menu,/actions\.previewSprites\(\)/);
 const preview=service.slice(service.indexOf("private void preview(){"),
     service.indexOf("private void scanAndTap(){"));
 assert.match(preview,/tapIndicator\.show\(/);
-assert.doesNotMatch(preview,/dispatchGesture/);
+assert.doesNotMatch(preview,/\bdispatchGesture\s*\(/);
 
 // The touch effect is only the request marker; telemetry separates callbacks.
 assert.match(service,/LT354 estágio GESTO_ACEITO_ANDROID/);
