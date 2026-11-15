@@ -697,19 +697,6 @@ final class PgsAutoMenus {
         input.setPadding(dp(8),0,dp(8),0);
         input.setBackground(bg(TILE,0x33FFFFFF,7));
         LinearLayout rows=vertical();
-        if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(context))){
-            boolean left=PgsAutoScanRegionPolicy.LEFT.equals(
-                PgsAutoHostSettings.sidebarSide(context));
-            Button side=button(left?"Lista Pokemod: esquerda ▾":
-                "Lista Pokemod: direita ▾",9);
-            side.setOnClickListener(v->{
-                PgsAutoHostSettings.setSidebarSide(context,left?
-                    PgsAutoScanRegionPolicy.RIGHT:PgsAutoScanRegionPolicy.LEFT);
-                actions.modelsChanged();
-                showCentral(0);
-            });
-            rows.addView(side,margined(-1,dp(29),2));
-        }
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         scroll.addView(rows);
@@ -721,6 +708,21 @@ final class PgsAutoMenus {
         render[0]=()->{
             rows.removeAllViews();
             title.setText("Selecionados: "+PgsAutoCatalog.selected(context).size()+"/10");
+            // LT369: lado da lista Pokemod permanece mesmo após pesquisa/redesenho.
+            if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(context))){
+                boolean left=PgsAutoScanRegionPolicy.LEFT.equals(
+                    PgsAutoHostSettings.sidebarSide(context));
+                Button side=button(left?"Lista Pokemod: esquerda ▾":
+                    "Lista Pokemod: direita ▾",9);
+                side.setOnClickListener(v->{
+                    PgsAutoHostSettings.setSidebarSide(context,left?
+                        PgsAutoScanRegionPolicy.RIGHT:PgsAutoScanRegionPolicy.LEFT);
+                    actions.modelsChanged();
+                    showCentral(0);
+                });
+                rows.addView(side,margined(-1,dp(29),2));
+            }
+            List<View> speciesRows=new ArrayList<>();
             List<PgsAutoCatalog.Pokemon> found=
                 PgsAutoCatalog.search(context,input.getText().toString().trim(),20);
             if(found.isEmpty()){
@@ -782,89 +784,22 @@ final class PgsAutoMenus {
                     teach.setOnClickListener(v->{
                         dismissAll();actions.teach(pokemon.name);
                     });
-                    // Único ícone de segurar/arrastar — no lugar das setas.
-                    // O deslocamento é calculado por linhas, preservando a
-                    // ordenação persistida PgsAutoCatalog e os modelos salvos.
-                    ImageButton reorder=imageButton(R.drawable.pgs_drag_handle,
-                        "Segure e arraste para reorganizar "+pokemon.name,6);
-                    reorder.setColorFilter(fg());
-                    line.addView(reorder,new LinearLayout.LayoutParams(dp(28),dp(33)));
-                    reorder.setOnClickListener(v->
-                        Toast.makeText(context,"Segure e arraste o ícone para mudar a ordem",
-                            Toast.LENGTH_SHORT).show());
-                    // TalkBack pode reordenar sem gestos de arraste.
-                    reorder.setAccessibilityDelegate(new View.AccessibilityDelegate(){
-                        @Override public void onInitializeAccessibilityNodeInfo(
-                                View host,android.view.accessibility.AccessibilityNodeInfo info){
-                            super.onInitializeAccessibilityNodeInfo(host,info);
-                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
-                                .AccessibilityAction.ACTION_SCROLL_FORWARD);
-                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
-                                .AccessibilityAction.ACTION_SCROLL_BACKWARD);
-                        }
-                        @Override public boolean performAccessibilityAction(
-                                View host,int action,android.os.Bundle args){
-                            if(action==android.view.accessibility.AccessibilityNodeInfo
-                                .ACTION_SCROLL_FORWARD){
-                                PgsAutoCatalog.move(context,pokemon.number,1);
-                                render[0].run();return true;
-                            }
-                            if(action==android.view.accessibility.AccessibilityNodeInfo
-                                .ACTION_SCROLL_BACKWARD){
-                                PgsAutoCatalog.move(context,pokemon.number,-1);
-                                render[0].run();return true;
-                            }
-                            return super.performAccessibilityAction(host,action,args);
-                        }
-                    });
-                    reorder.setOnTouchListener(new View.OnTouchListener(){
-                        private float downY;
-                        private long downAt;
-                        private boolean moved;
-                        @Override public boolean onTouch(View view,MotionEvent e){
-                            switch(e.getActionMasked()){
-                                case MotionEvent.ACTION_DOWN:
-                                    downY=e.getRawY();
-                                    downAt=android.os.SystemClock.uptimeMillis();
-                                    moved=false;
-                                    view.getParent().requestDisallowInterceptTouchEvent(true);
-                                    return true;
-                                case MotionEvent.ACTION_MOVE:{
-                                    float distance=e.getRawY()-downY;
-                                    if(Math.abs(distance)>dp(6)&&
-                                        android.os.SystemClock.uptimeMillis()-downAt>=110){
-                                        if(!moved)view.performHapticFeedback(
-                                            android.view.HapticFeedbackConstants.LONG_PRESS);
-                                        moved=true;
-                                        view.setTranslationY(Math.max(-dp(100),
-                                            Math.min(dp(100),distance)));
-                                        line.setAlpha(.79f);
-                                    }
-                                    return true;
-                                }
-                                case MotionEvent.ACTION_UP:{
-                                    float distance=e.getRawY()-downY;
-                                    view.setTranslationY(0f);line.setAlpha(1f);
-                                    if(moved){
-                                        int steps=Math.max(-9,Math.min(9,
-                                            Math.round(distance/dp(50f))));
-                                        if(steps!=0){
-                                            for(int step=0;step<Math.abs(steps);step++){
-                                                if(steps<0)PgsAutoCatalog.move(context,pokemon.number,-1);
-                                                else PgsAutoCatalog.move(context,pokemon.number,1);
-                                            }
-                                            render[0].run();
-                                        }
-                                    }else view.performClick();
-                                    return true;
-                                }
-                                case MotionEvent.ACTION_CANCEL:
-                                    view.setTranslationY(0f);line.setAlpha(1f);
-                                    return true;
-                                default:return false;
-                            }
-                        }
-                    });
+                    // LT369: nada de alça de três barras. Segurar na própria
+                    // linha/nome permite arrastar entre prioridades selecionadas.
+                    if(input.getText().length()==0){
+                        int from=PgsAutoCatalog.selected(context)
+                            .indexOf(pokemon.number);
+                        speciesRows.add(line);
+                        RowMove reorderTo=target->
+                            PgsAutoCatalog.moveTo(context,pokemon.number,target);
+                        Runnable update=()->{
+                            actions.modelsChanged();
+                            render[0].run();
+                        };
+                        holdToReorder(label,line,speciesRows,from,reorderTo,update);
+                        holdToReorder(dex,line,speciesRows,from,reorderTo,update);
+                        holdToReorder(line,line,speciesRows,from,reorderTo,update);
+                    }
                 }
                 Button choose=button(selected?"×":"＋",14);
                 if(selected){
