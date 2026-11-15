@@ -4673,6 +4673,36 @@
           "Notificações, leitura de espécies, precisão dos toques, DND, consumo e comportamento em Samsung Android precisam de homologação física. Gesto concluído pelo Android não prova captura no jogo."
         ]
       }
+    },
+    {
+      "id": "lt367-visual-sequence-editor-20261115",
+      "minVersionCode": 54570,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT367 — Editor de Sequências Visuais",
+      "sections": {
+        "novidades": [
+          "Novo Editor de Sequências em Buscar Pokémon, pelo ícone ≡ ao lado de Auto Hunt, mantendo a mesma linha e o padrão compacto das Pokébolas.",
+          "Adicione até 12 etapas numeradas: Toque, Arrastar entre dois pontos, Aguardar e Clicar na sprite do feed já selecionada.",
+          "Prévia transparente mostra pontos numerados, ligações e destino dos arrastes sobre a tela sem bloquear o jogo ou executar gestos.",
+          "Copie e cole etapas dentro do editor, mude ordem, apague, edite posições, duração do gesto e tempo de espera."
+        ],
+        "melhorias": [
+          "Sequências salvas localmente por perfil PGSharp ou Pokemod, sem misturar com contas P1/P2 e com autorização de execução desativada por padrão.",
+          "Execução somente após ativação explícita e botão Executar, com espera, limites, callback do Android e parada imediata pela bolha.",
+          "Clique em sprite depende da miniatura já selecionada e de reconhecimento consistente em duas capturas; apenas a janela oficial do jogo pode receber gestos.",
+          "Bloqueio em troca de aplicativo, orientação, diálogos de conta ou Sou passageiro, perda do serviço e eventos de cancelamento."
+        ],
+        "correcoes": [
+          "O botão do editor compartilha a linha Auto Hunt, sem adicionar sexta bolha ou aumentar verticalmente o menu principal.",
+          "Parada de sequência preserva consentimento dos monitores existentes; nenhum passo será reexecutado automaticamente ao reconectar o serviço."
+        ],
+        "emDesenvolvimento": [
+          "Um gesto Android de arrastar NÃO garante captura no Pokémon GO; o app não consegue declarar encontro/captura/teleporte confirmado sem teste físico.",
+          "Copiar/Colar duplica etapas apenas dentro do perfil; não lê o clipboard de terceiros nem cola texto em aplicativos externos.",
+          "Modo avançado de arrastar diretamente marcadores, condições por imagem e biblioteca nomeada de sequências estão planejados para próximas versões.",
+          "Precisão de pontos e gestos, modelos e interface em Samsung/Pokemod/PGSharp, TalkBack, rotação e desempenho ainda precisam de homologação física."
+        ]
+      }
     }
   ]
 }
