@@ -38,3 +38,7 @@ teleporte, shiny ou compatibilidade física. Para atualização remota futura,
 exigir assinatura criptográfica própria + anti-rollback + rollback antes de
 habilitar distribuição de pacotes; não confiar apenas em HTTPS ou hash fornecido
 pelo próprio servidor.
+
+## Atualização LT356 — capacidade e consulta por seleção
+
+A limitação histórica de 48 modelos foi substituída em LT356 pelo índice de até **4096 entradas** globais, com cap de 3 MiB para o manifesto e verificação sob demanda somente para **até dez IDs de espécies** selecionados. O documento acima descreve a implementação LT355; o limite histórico de 48 deve ser interpretado como substituído. A proteção de licença, evidência, versão, SHA-256 e dimensões permanece. O catálogo efetivo da LT356 segue vazio até homologação física e direitos verificáveis.
