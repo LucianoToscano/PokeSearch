@@ -10,6 +10,9 @@ on:
     paths:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAuto*.java'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsBuscasPanel.java'
+      # LT365: live radar cards must keep PGSharp/Pokemod Android APK compile safe.
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeList*.java'
+      - 'app/tests/lt365-pokelist-screenshot-results-contract.test.js'
       - 'app/src/main/AndroidManifest.xml'
       - 'app/tests/pgs-buscas-contracts.test.js'
       - 'app/tests/PgsAutoShinySignalTest.java'
@@ -49,6 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           node app/tests/pgs-buscas-contracts.test.js
+          node app/tests/lt365-pokelist-screenshot-results-contract.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \

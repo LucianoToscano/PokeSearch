@@ -31,6 +31,27 @@ public final class PokeListRadarActivity extends Activity {
     private TextView state,subtitle;
     private LinearLayout results;
     private Button search;
+    private Spinner sortMode;
+    private android.widget.CheckBox onlyIv100;
+    private PokeListFeedClient.Response lastResponse;
+    private PokeListApiPolicy.Query lastQuery;
+    private final android.os.Handler timeHandler=new android.os.Handler(
+        android.os.Looper.getMainLooper());
+    private final java.util.ArrayList<TimedRow> times=new java.util.ArrayList<>();
+    private static final class TimedRow {
+        final PokeListFeedClient.Item item;
+        final TextView text;
+        TimedRow(PokeListFeedClient.Item item,TextView text){
+            this.item=item;this.text=text;
+        }
+    }
+    private final Runnable timeTick=new Runnable(){
+        @Override public void run(){
+            if(destroyed)return;
+            updateVisibleTimes();
+            timeHandler.postDelayed(this,15000L);
+        }
+    };
     private boolean light;
     private int fg,bg,secondary;
     private int d(float v){return Math.round(v*getResources().getDisplayMetrics().density);}
@@ -134,6 +155,28 @@ public final class PokeListRadarActivity extends Activity {
         state=text("Informe latitude e longitude e toque Buscar. "+
             "Não há atualização automática.",11,false);
         panel.addView(state);
+        LinearLayout displayOptions=row();
+        sortMode=new Spinner(this);
+        ArrayAdapter<String> sortAdapter=new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_dropdown_item,
+            new String[]{"Ordem original","Mais próximos do centro",
+                "Desaparecem primeiro","IV maior","PC maior"});
+        sortMode.setAdapter(sortAdapter);
+        sortMode.setContentDescription("Ordenação local dos resultados PokeList");
+        displayOptions.addView(sortMode,new LinearLayout.LayoutParams(0,d(42),1));
+        onlyIv100=new android.widget.CheckBox(this);
+        onlyIv100.setText("IV100");
+        onlyIv100.setTextSize(11);
+        onlyIv100.setTextColor(fg);
+        onlyIv100.setContentDescription("Mostrar somente Pokémon com IV cem");
+        onlyIv100.setOnCheckedChangeListener((button,checked)->renderResults());
+        displayOptions.addView(onlyIv100);
+        panel.addView(displayOptions);
+        sortMode.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> p,
+                  View view,int index,long id){renderResults();}
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
+        });
         results=col();results.setPadding(0,d(8),0,0);
         panel.addView(results);
 
@@ -141,6 +184,12 @@ public final class PokeListRadarActivity extends Activity {
             "não prova Shiny, captura, encontro nem disponibilidade no jogo. "+
             "Itens vencidos são ocultados; horários ausentes são desconhecidos.",10,false);
         footer.setTextColor(secondary);
+        // A distância é relativa ao CENTRO DIGITADO. Cooldown segue a
+        // tabela informativa já usada no Doce Raro, não confirma deslocamento.
+        footer.setText("Fonte: API PokeList · tempo/sexo/país só quando informados. "+
+            "Distância calculada do centro digitado, nunca do personagem. "+
+            "CD é estimativa hipotética, não garantia nem início de contador. "+
+            "Copiar coordenadas não efetua teleporte, encontro ou captura.");
         LinearLayout.LayoutParams footerLp=new LinearLayout.LayoutParams(-1,-2);
         footerLp.topMargin=d(12);panel.addView(footer,footerLp);
     }
@@ -175,6 +224,9 @@ public final class PokeListRadarActivity extends Activity {
         loading=true;search.setEnabled(false);
         nextAllowedElapsed=now+PokeListApiPolicy.MIN_REFRESH_MS;
         state.setText("Consultando PokeList com TLS…");
+        lastResponse=null;
+        lastQuery=null;
+        times.clear();
         results.removeAllViews();
         io.execute(()->{
             try{
@@ -182,7 +234,9 @@ public final class PokeListRadarActivity extends Activity {
                 runOnUiThread(()->{
                     if(destroyed)return;
                     loading=false;search.setEnabled(true);
-                    showResults(response);
+                    lastResponse=response;
+                    lastQuery=q;
+                    renderResults();
                 });
             }catch(Exception error){
                 final String safe;
@@ -211,15 +265,32 @@ public final class PokeListRadarActivity extends Activity {
             }
         });
     }
-    private void showResults(PokeListFeedClient.Response data){
-        state.setText("Exibidos "+data.items.size()+" de "+data.sourceCount+
-            " registros. Vencidos "+data.expired+" · descartados "+data.invalid+
-            ". Limite visual "+PokeListApiPolicy.MAX_VISIBLE+".");
-        if(data.items.isEmpty()){
-            results.addView(text("Nenhum resultado válido nesta consulta.",12,false));
-            return;
-        }
-        for(PokeListFeedClient.Item item:data.items){
+    /** Ações de ordem e filtro são locais, sem reconsultar a API. */
+    private void renderResults(){
+        if(results==null||lastResponse==null||lastQuery==null)return;
+        PokeListFeedClient.Response data=lastResponse;
+        PokeListApiPolicy.Query reference=lastQuery;
+        results.removeAllViews();
+        times.clear();
+        java.util.ArrayList<PokeListFeedClient.Item> ordered=
+            new java.util.ArrayList<>(data.items);
+        int mode=sortMode==null?0:sortMode.getSelectedItemPosition();
+        if(mode==1)ordered.sort(java.util.Comparator.comparingDouble(item->
+            item.hasCoordinates?PokeListResultPolicy.distanceKm(
+                reference.latitude,reference.longitude,item.latitude,item.longitude):
+                Double.POSITIVE_INFINITY));
+        else if(mode==2)ordered.sort(java.util.Comparator.comparingLong(item->
+            item.expiryKnown?item.expiresAt:Long.MAX_VALUE));
+        else if(mode==3)ordered.sort((x,y)->Integer.compare(y.iv,x.iv));
+        else if(mode==4)ordered.sort((x,y)->Integer.compare(y.cp,x.cp));
+        int shown=0,hiddenIv=0,expiredNow=0;
+        long now=System.currentTimeMillis();
+        for(PokeListFeedClient.Item item:ordered){
+            if(item.expiryKnown&&item.expiresAt<=now){expiredNow++;continue;}
+            if(onlyIv100!=null&&onlyIv100.isChecked()&&item.iv!=100){
+                hiddenIv++;continue;
+            }
+            shown++;
             LinearLayout card=col();
             card.setPadding(d(8),d(7),d(8),d(7));
             android.graphics.drawable.GradientDrawable bgCard=
@@ -227,34 +298,79 @@ public final class PokeListRadarActivity extends Activity {
             bgCard.setColor(light?0xFFF9FBFE:0xFF222B3A);
             bgCard.setCornerRadius(d(8));
             card.setBackground(bgCard);
+
+            LinearLayout top=row();
+            TextView numberBadge=text(String.valueOf(shown),11,true);
+            numberBadge.setGravity(Gravity.CENTER);
+            numberBadge.setContentDescription("Resultado "+shown);
+            android.graphics.drawable.GradientDrawable ring=
+                new android.graphics.drawable.GradientDrawable();
+            ring.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            ring.setColor(0x00000000);
+            ring.setStroke(d(2),shown%3==1?0xFF4BD6F5:
+                shown%3==2?0xFFEEE84E:0xFF60DE79);
+            numberBadge.setBackground(ring);
+            top.addView(numberBadge,new LinearLayout.LayoutParams(d(27),d(27)));
             String title=(item.number>0?"#"+item.number+" · ":"")+item.name+
                 (item.form.isEmpty()?"":" · "+item.form);
-            card.addView(text(title,13,true));
+            TextView species=text(title,12,true);
+            LinearLayout.LayoutParams titleLp=new LinearLayout.LayoutParams(0,-2,1);
+            titleLp.leftMargin=d(7);top.addView(species,titleLp);
+            if(item.iv==100){
+                TextView perfect=text("IV100",11,true);
+                perfect.setTextColor(0xFF20BFAE);
+                top.addView(perfect);
+            }
+            card.addView(top);
+
             StringBuilder detail=new StringBuilder();
-            if(item.iv>=0)detail.append("IV ").append(item.iv).append("%  ");
-            if(item.level>=0)detail.append("Nível ").append(item.level).append("  ");
-            if(item.cp>=0)detail.append("PC ").append(item.cp).append("  ");
-            if(!item.kind.isEmpty())detail.append("Rocket ").append(item.kind).append("  ");
+            if(item.iv>=0)detail.append("IV ").append(item.iv).append("% · ");
+            if(item.cp>=0)detail.append("PC ").append(item.cp).append(" · ");
+            if(item.level>=0)detail.append("Nv ").append(item.level).append(" · ");
+            if(!item.gender.isEmpty())detail.append(item.gender).append(" · ");
+            if(!item.country.isEmpty())detail.append(item.country).append(" · ");
+            if(!item.kind.isEmpty())detail.append("Rocket ").append(item.kind).append(" · ");
             if(!item.extra.isEmpty())detail.append(item.extra);
-            if(item.expiryKnown){
-                long remaining=(item.expiresAt-System.currentTimeMillis())/1000L;
-                detail.append("  Expira ~").append(Math.max(0,remaining/60)).append("min");
-            }else detail.append("  Validade não informada");
-            TextView facts=text(detail.toString(),10,false);
+            if(item.shinyIndicated)detail.append(" · ✨ Sinal da API");
+            TextView facts=text(detail.toString().replaceAll(" · $",""),10,false);
             facts.setTextColor(secondary);card.addView(facts);
+
+            TextView despawn=text(PokeListResultPolicy.despawnLabel(
+                item.expiresAt,System.currentTimeMillis()),10,false);
+            despawn.setTextColor(secondary);
+            card.addView(despawn);
+            if(item.expiryKnown)times.add(new TimedRow(item,despawn));
+
             if(item.hasCoordinates){
+                double kilometers=PokeListResultPolicy.distanceKm(
+                    reference.latitude,reference.longitude,item.latitude,item.longitude);
+                TextView distanceInfo=text("Do centro: "+
+                    PokeListResultPolicy.distanceLabel(kilometers)+" · "+
+                    PokeListResultPolicy.cooldownLabel(kilometers),10,false);
+                distanceInfo.setTextColor(secondary);
+                card.addView(distanceInfo);
+
                 String coordinateText=String.format(Locale.ROOT,"%.6f, %.6f",
                     item.latitude,item.longitude);
                 LinearLayout coords=row();
                 TextView position=text(coordinateText,11,false);
                 coords.addView(position,new LinearLayout.LayoutParams(0,-2,1));
                 Button copy=button("Copiar");
-                copy.setContentDescription("Copiar coordenadas de "+item.name);
+                copy.setContentDescription("Copiar coordenadas de "+item.name+
+                    "; não faz teleporte");
                 copy.setOnClickListener(v->{
+                    if(item.expiryKnown&&item.expiresAt<=System.currentTimeMillis()){
+                        state.setText("Esse registro expirou. Faça outra consulta.");
+                        return;
+                    }
                     ClipboardManager clip=(ClipboardManager)
                         getSystemService(Context.CLIPBOARD_SERVICE);
-                    if(clip!=null)clip.setPrimaryClip(
-                        ClipData.newPlainText("Coordenadas PokeList",coordinateText));
+                    if(clip!=null){
+                        clip.setPrimaryClip(
+                            ClipData.newPlainText("Coordenadas PokeList",coordinateText));
+                        state.setText("Coordenadas copiadas manualmente. "+
+                            "Nenhum movimento ou toque no jogo foi executado.");
+                    }
                 });
                 coords.addView(copy,new LinearLayout.LayoutParams(d(77),d(36)));
                 card.addView(coords);
@@ -262,8 +378,36 @@ public final class PokeListRadarActivity extends Activity {
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
             lp.topMargin=d(5);results.addView(card,lp);
         }
+        state.setText("Exibidos "+shown+" · origem "+data.sourceCount+
+            " · expirados "+(data.expired+expiredNow)+" · inválidos "+
+            data.invalid+(hiddenIv>0?" · filtrados por IV "+hiddenIv:"")+
+            ". Ordenação local, sem nova consulta.");
+        if(shown==0)results.addView(text(
+            "Nenhum resultado válido para os filtros atuais.",12,false));
+    }
+
+    private void updateVisibleTimes(){
+        long now=System.currentTimeMillis();
+        for(TimedRow row:times){
+            row.text.setText(PokeListResultPolicy.despawnLabel(
+                row.item.expiresAt,now));
+            if(row.item.expiresAt<=now)
+                row.text.setTextColor(0xFFFF7676);
+        }
+    }
+    @Override protected void onStart(){
+        super.onStart();
+        timeHandler.removeCallbacks(timeTick);
+        timeHandler.postDelayed(timeTick,15000L);
+    }
+    @Override protected void onStop(){
+        timeHandler.removeCallbacks(timeTick);
+        super.onStop();
     }
     @Override protected void onDestroy(){
-        destroyed=true;io.shutdownNow();super.onDestroy();
+        destroyed=true;
+        timeHandler.removeCallbacks(timeTick);
+        io.shutdownNow();
+        super.onDestroy();
     }
 }
