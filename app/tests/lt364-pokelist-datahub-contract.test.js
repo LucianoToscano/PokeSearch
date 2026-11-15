@@ -29,7 +29,8 @@ assert.match(feed,/MAX_BODY_BYTES/);
 assert.match(feed,/expiresAt|expired\(/);
 assert.match(feed,/new HashSet<>\(\)/);
 assert.match(feed,/Retry-After/);
-assert.doesNotMatch(feed,/dispatchGesture|AccessibilityService|FirebaseClient|root|su -c|ProcessBuilder/);
+assert.doesNotMatch(feed,/dispatchGesture|AccessibilityService|FirebaseClient|ProcessBuilder|Runtime\\.getRuntime|\\bsu -c\\b/,
+ "HTTPS-only source reader must not invoke root or accessibility actions");
 assert.match(radar,/newSingleThreadExecutor\(\)/);
 assert.match(radar,/SystemClock\.elapsedRealtime\(\)/);
 assert.match(radar,/nextAllowedElapsed/);
