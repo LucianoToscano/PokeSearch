@@ -1329,7 +1329,14 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(watchBusy)watchMetrics.finish(SystemClock.elapsedRealtime(),lastStatus);
         watchBusy=false;
         handler.removeCallbacks(watchTick);
-        if(watching)handler.postDelayed(watchTick,millis);
+        if(watching){
+            // Monitor Auto Hunt respeita a espera escolhida pelo usuário;
+            // monitor antigo preserva exatamente sua política própria.
+            long delay=huntWatchSession&&PgsAutoHuntSettings.enabled(this)?
+                Math.max(millis,PgsAutoHuntSettings.waitSeconds(this)*1000L):
+                millis;
+            handler.postDelayed(watchTick,delay);
+        }
     }
     private interface WatchFrameResult {
         void ready(java.util.List<PgsAutoIconDetector.Match> matches,
