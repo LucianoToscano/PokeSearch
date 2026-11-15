@@ -423,9 +423,14 @@ final class PgsAutoMenus {
             LinearLayout.LayoutParams pp=margined(-1,dp(74),5);
             root.addView(preview,pp);
         }catch(Exception ignored){}
-        root.addView(label(model.builtIn?
-            "Nativa · "+model.nativeForm+" / "+model.nativeVariant:"Minha amostra",10,false),
-            margined(-1,dp(18),3));
+        TextView modelOrigin=label(model.builtIn?
+            "Nativa · "+model.nativeForm+" / "+model.nativeVariant:"Minha amostra",10,false);
+        modelOrigin.setSingleLine(true);
+        modelOrigin.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        modelOrigin.setContentDescription(model.builtIn?
+            "Modelo nativo validado, forma "+model.nativeForm+", variante "+model.nativeVariant:
+            "Modelo pessoal cadastrado");
+        root.addView(modelOrigin,margined(-1,dp(18),3));
         if(!model.builtIn){
             ImageButton delete=trashButton("Excluir esta imagem cadastrada");
             LinearLayout.LayoutParams trashParams=margined(dp(39),dp(37),5);
@@ -461,6 +466,8 @@ final class PgsAutoMenus {
             line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
             TextView name=label(model.builtIn?
                 "Nativa: "+model.nativeForm+" · "+model.nativeVariant:"Minha sprite",11,false);
+            name.setSingleLine(true);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
             line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
             View details=model.builtIn?button("◎",13):trashButton("Excluir esta imagem");
             details.setContentDescription(model.builtIn?"Ver modelo nativo":"Gerenciar minha sprite");
