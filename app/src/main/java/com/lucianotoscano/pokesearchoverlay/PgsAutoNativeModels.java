@@ -10,36 +10,64 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * LT355: catálogo nativo somente-leitura. Apenas imagens próprias/autorizadas
- * e HOMOLOGADAS no feed podem ser incluídas. Um sprite da Pokédex NÃO é modelo PGS.
- * Os modelos são montados em memória; nunca entram nas preferências pessoais.
+ * LT356: índice de modelos de todas as espécies e variantes, sem varrer milhares
+ * de imagens a cada busca. Só modelos de até 10 espécies selecionadas são
+ * verificados e entregues ao detector. Imagens sempre exigem direitos e QA.
  */
 final class PgsAutoNativeModels {
     private static final String CATALOG="pgs-native/manifest.json";
     private static final String PACKAGE="com.nianticlabs.pokemongo";
-    private static final int MAX_MODELS=48;
-    private static List<PgsAutoTemplateStore.Model> cached;
+    private static final int MAX_MODELS=4096,MAX_MANIFEST_BYTES=3*1024*1024;
+    private static final class Entry {
+        final int dex,width,height;
+        final String species,form,variant,asset,sha256;
+        Entry(int dex,int width,int height,String species,String form,String variant,
+              String asset,String sha256){
+            this.dex=dex;this.width=width;this.height=height;this.species=species;
+            this.form=form;this.variant=variant;this.asset=asset;this.sha256=sha256;
+        }
+        String id(String version){return "native_"+dex+"_"+form+"_"+variant+"_"+version;}
+    }
+    private static Map<Integer,List<Entry>> indexed;
+    private static final Map<String,Boolean> checkedAssets=new HashMap<>();
     private static String compatibleVersion;
     private PgsAutoNativeModels(){}
 
-    static synchronized List<PgsAutoTemplateStore.Model> available(Context context){
-        if(cached==null)readCatalog(context);
-        // Empty library is the default until real, licensed templates are approved.
-        // Avoid repeated PackageManager lookups from every filter row.
-        if(cached.isEmpty())return Collections.emptyList();
-        // Falha fechada: não reconhecer com modelos de build desconhecida.
-        if(compatibleVersion==null||compatibleVersion.isEmpty()||
+    /** Verificação sob demanda: não abrir 1025+ texturas quando só dez espécies são filtradas. */
+    static synchronized List<PgsAutoTemplateStore.Model> available(
+        Context context,List<Integer> selectedSpecies){
+        if(selectedSpecies==null||selectedSpecies.isEmpty())return Collections.emptyList();
+        if(indexed==null)readCatalog(context);
+        if(indexed.isEmpty()||compatibleVersion==null||compatibleVersion.isEmpty()||
             !compatibleVersion.equals(installedVersion(context)))
             return Collections.emptyList();
-        List<PgsAutoTemplateStore.Model> models=new ArrayList<>(cached.size());
-        for(PgsAutoTemplateStore.Model m:cached)
-            models.add(new PgsAutoTemplateStore.Model(m.id,m.name,m.file,true,true,
-                m.referenceWidth,m.referenceHeight));
-        return models;
+        List<PgsAutoTemplateStore.Model> result=new ArrayList<>();
+        Set<Integer> unique=new HashSet<>(selectedSpecies);
+        for(Integer dex:unique){
+            if(dex==null||dex<=0)continue;
+            List<Entry> entries=indexed.get(dex);
+            if(entries==null)continue;
+            for(Entry entry:entries){
+                String key=entry.asset+":"+entry.sha256+":"+entry.width+"x"+entry.height;
+                Boolean ok=checkedAssets.get(key);
+                if(ok==null){
+                    ok=validAsset(context,entry.asset,entry.sha256,entry.width,entry.height);
+                    checkedAssets.put(key,ok);
+                }
+                if(ok)result.add(new PgsAutoTemplateStore.Model(
+                    entry.id(compatibleVersion),entry.species,entry.asset,true,true,
+                    entry.width,entry.height));
+            }
+        }
+        return result;
     }
     private static String installedVersion(Context context){
         try{
@@ -50,13 +78,14 @@ final class PgsAutoNativeModels {
         catch(RuntimeException error){return "";}
     }
     private static void readCatalog(Context context){
-        ArrayList<PgsAutoTemplateStore.Model> models=new ArrayList<>();
+        Map<Integer,List<Entry>> next=new HashMap<>();
         String version="";
         try(InputStream stream=context.getAssets().open(CATALOG)){
             ByteArrayOutputStream output=new ByteArrayOutputStream();
-            byte[] chunk=new byte[4096];int n;
+            byte[] chunk=new byte[8192];int n;
             while((n=stream.read(chunk))!=-1){
-                if(output.size()+n>131072)throw new IllegalArgumentException("Catálogo grande demais");
+                if(output.size()+n>MAX_MANIFEST_BYTES)
+                    throw new IllegalArgumentException("Catálogo nativo excede limite");
                 output.write(chunk,0,n);
             }
             JSONObject manifest=new JSONObject(output.toString("UTF-8"));
@@ -64,55 +93,66 @@ final class PgsAutoNativeModels {
                 !"pgsharp".equals(manifest.optString("provider","")))
                 throw new IllegalArgumentException("Catálogo PGS inválido");
             version=manifest.optString("providerVersion","").trim();
+            if(!version.matches("[0-9]+\\.[0-9]+\\.[0-9]+"))
+                throw new IllegalArgumentException("Versão de feed inválida");
             JSONArray entries=manifest.optJSONArray("entries");
             if(entries==null||entries.length()>MAX_MODELS)
                 throw new IllegalArgumentException("Quantidade inválida");
+            Map<Integer,String> species=new HashMap<>();
+            for(PgsAutoCatalog.Pokemon pokemon:PgsAutoCatalog.all(context))
+                species.put(pokemon.number,pokemon.name);
+            Set<String> uniqueIds=new HashSet<>();
+            Map<String,Integer> imageOwner=new HashMap<>();
             for(int i=0;i<entries.length();i++){
                 JSONObject item=entries.getJSONObject(i);
                 if(!"device-verified".equals(item.optString("validation",""))||
                     !"redistribution-approved".equals(item.optString("rights",""))||
-                    item.optString("evidence","").trim().length()<8)
-                    continue; // Modelo pendente NUNCA é elegível para clique.
-                int dex=item.optInt("dex",-1),w=item.optInt("width",-1),
-                    h=item.optInt("height",-1);
+                    item.optString("evidence","").trim().length()<8)continue;
+                int dex=item.optInt("dex",-1),width=item.optInt("width",-1),
+                    height=item.optInt("height",-1);
                 String form=item.optString("form",""),variant=item.optString("variant",""),
-                    asset=item.optString("asset",""),digest=item.optString("sha256","");
-                if(dex<1||w<16||w>92||h<16||h>92||
+                    asset=item.optString("asset",""),hash=item.optString("sha256","");
+                if(!species.containsKey(dex)||width<16||width>92||
+                    height<16||height>92||
                     !form.matches("[a-z0-9_-]{1,30}")||
                     !variant.matches("[a-z0-9_-]{1,30}")||
                     !asset.matches("pgs-native/models/[a-z0-9_-]{4,100}\\.(png|webp)")||
-                    !digest.matches("[a-f0-9]{64}"))continue;
-                String species=null;
-                for(PgsAutoCatalog.Pokemon pokemon:PgsAutoCatalog.all(context))
-                    if(pokemon.number==dex){species=pokemon.name;break;}
-                if(species==null||!validAsset(context,asset,digest,w,h))continue;
-                String id="native_"+dex+"_"+form+"_"+variant+"_"+version;
-                boolean duplicate=false;
-                for(PgsAutoTemplateStore.Model m:models)if(m.id.equals(id))duplicate=true;
-                if(!duplicate)models.add(new PgsAutoTemplateStore.Model(
-                    id,species,asset,true,true,w,h));
+                    !hash.matches("[a-f0-9]{64}"))continue;
+                String modelKey=dex+":"+form+":"+variant;
+                if(!uniqueIds.add(modelKey))continue;
+                // Mesmos bytes para duas espécies diferentes gerariam ambiguidade.
+                Integer owner=imageOwner.get(hash);
+                if(owner!=null&&owner.intValue()!=dex)continue;
+                imageOwner.put(hash,dex);
+                Entry entry=new Entry(dex,width,height,species.get(dex),
+                    form,variant,asset,hash);
+                List<Entry> bucket=next.get(dex);
+                if(bucket==null){bucket=new ArrayList<>();next.put(dex,bucket);}
+                bucket.add(entry);
             }
-        }catch(Exception error){
-            // Catálogo ausente ou corrompido: nenhum nativo, jamais fallback visual cego.
-            models.clear();version="";
+        }catch(Exception invalid){
+            next.clear();version="";
         }
-        cached=Collections.unmodifiableList(models);
+        checkedAssets.clear();
+        indexed=Collections.unmodifiableMap(next);
         compatibleVersion=version;
     }
+    /** O hash atesta integridade dos bytes empacotados, não a licença declarada. */
     private static boolean validAsset(Context context,String file,String hash,int width,int height){
         try(InputStream in=context.getAssets().open(file)){
             MessageDigest sha=MessageDigest.getInstance("SHA-256");
-            byte[] buffer=new byte[4096];int n,length=0;
-            while((n=in.read(buffer))!=-1){
-                length+=n;if(length>65536)return false;sha.update(buffer,0,n);
+            byte[] buf=new byte[4096];int n,length=0;
+            while((n=in.read(buf))!=-1){
+                length+=n;if(length>65536)return false;
+                sha.update(buf,0,n);
             }
             StringBuilder hex=new StringBuilder();
             for(byte b:sha.digest())hex.append(String.format(Locale.ROOT,"%02x",b&255));
             if(!hash.equals(hex.toString()))return false;
             BitmapFactory.Options options=new BitmapFactory.Options();
             options.inJustDecodeBounds=true;
-            try(InputStream picture=context.getAssets().open(file)){
-                BitmapFactory.decodeStream(picture,null,options);
+            try(InputStream image=context.getAssets().open(file)){
+                BitmapFactory.decodeStream(image,null,options);
             }
             return options.outWidth==width&&options.outHeight==height;
         }catch(Exception invalid){return false;}
