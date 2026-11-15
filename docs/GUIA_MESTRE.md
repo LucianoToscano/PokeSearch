@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT351 — pausa em «Sou passageiro» com retomada segura (candidata)
+
+Aguardando confirmação humana no jogo, com um aviso visível por ocorrência e retomada após o diálogo desaparecer. Sem clique automático em declaração de segurança. LT349/LT349b já integradas (#382/#384) e última release pública 0.03.46; LT350 PR #385 continua draft até homologação. [Relatório LT351](LT351_ARK_PASSENGER_MANUAL_RESUME_20261114.md).
+
+
 ## LT349b — posicionamento lateral do Auto Click e alça branca (candidata)
 
 O menu Buscar Pokémon/Auto Click agora abre **à direita/esquerda da bolha**, igual ao comportamento das Pokébolas, inverte ao atingir a borda e mantém submenu ancorado ao arrastar/rotacionar. A alça no scanner mostra **somente o ícone branco de mover**, sem círculo ou fundo, mantendo toque e recorte. Referência: [LT349b](LT349B_ARK_MENU_LATERAL_ALCA_BRANCA_20261114.md). Só publicar após CI completo, release protegida e hash confirmado; testes Samsung permanecem BLOQUEADOS.

@@ -70,6 +70,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private TextView handBadge,countdownBadge;
     private String lastStatus="PARADO";
     private long passengerHoldAt=0L;
+    private boolean passengerWarningLatched=false;
 
     private PgsAutoMenus quickMenus;
     private PgsAutoTapIndicator tapIndicator;
@@ -119,6 +120,40 @@ public final class PgsAutoClickService extends AccessibilityService {
         }catch(RuntimeException ignored){return false;}
         finally{if(root!=null)root.recycle();}
     }
+    /**
+     * Confirmação de segurança do jogo é sempre humana: NUNCA tocar no
+     * aviso "Sou passageiro". A busca fica em espera, com um único aviso
+     * visível, e retoma a leitura após desaparecer o diálogo.
+     */
+    private boolean holdForPassengerPrompt(){
+        boolean visible=passengerPromptPresent();
+        if(visible){
+            if(!passengerWarningLatched){
+                passengerWarningLatched=true;
+                String message="Aviso do jogo: confirme manualmente apenas se você "+
+                    "for realmente passageiro e não estiver dirigindo. "+
+                    "A busca retomará após a mensagem desaparecer.";
+                Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+                notifyUser("PGS: confirmação manual necessária",
+                    "Sou passageiro: confirme no jogo somente quando for seguro. "+
+                    "Nenhum toque automático será feito nesse aviso.",false);
+                BugReport.log(this,"PGS",
+                    "Confirmação de segurança detectada. Aguardando usuário, sem gesto.");
+            }
+            status("CONFIRME MANUALMENTE");
+            return true;
+        }
+        if(passengerWarningLatched){
+            passengerWarningLatched=false;
+            if(running){
+                status("RETOMANDO BUSCA");
+                BugReport.log(this,"PGS",
+                    "Aviso saiu da tela; retomada da leitura após ação humana");
+            }
+        }
+        return false;
+    }
+
     private boolean containsPassengerLabel(AccessibilityNodeInfo node,int depth){
         if(node==null||depth>12)return false;
         CharSequence text=node.getText(),desc=node.getContentDescription();
@@ -732,7 +767,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         });
     }
     private void tapFixedTarget(int x,int y){
-        if(!running||!isGameVisible()||passengerPromptPresent())return;
+        if(!running)return;
+        if(holdForPassengerPrompt()){
+            handler.postDelayed(()->{if(running)scanAndTap();},1200L);
+            return;
+        }
+        if(!isGameVisible()){
+            handler.postDelayed(()->{if(running)scanAndTap();},1200L);
+            return;
+        }
         final PgsAutoTargetPolicy.Mode action=tapMode;
         final int oldTicket=ticket;
         status("TOQUE · "+action.name());
@@ -805,8 +848,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void checkEncounterThenSwipe(int stamp){
         if(!running||ticket!=stamp)return;
-        if(!isGameVisible()||passengerPromptPresent()){
-            fail("Encontro interrompido por mudança de tela ou aviso.");return;
+        if(holdForPassengerPrompt()){
+            handler.postDelayed(()->checkEncounterThenSwipe(stamp),1200L);
+            return;
+        }
+        if(!isGameVisible()){
+            fail("Encontro interrompido: jogo não está visível.");return;
         }
         capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
@@ -870,6 +917,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         }
         loadSettings();
         nextIndex=0;total=0;clickedAt=0L;awaitingMap=false;passengerHoldAt=0L;
+        passengerWarningLatched=false;
         lastColors=null;stableRepeats=0;sceneReadyAt=0;loadedStreak=0;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;shinyNegativeConfirmed=false;
@@ -909,8 +957,7 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void scanAndTap(){
         if(!running)return;
-        if(passengerPromptPresent()){
-            status("CONFIRME MANUALMENTE");
+        if(holdForPassengerPrompt()){
             handler.postDelayed(()->{if(running)scanAndTap();},1200L);
             return;
         }
@@ -1062,9 +1109,8 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void tap(int x,int y,int index,PgsAutoIconDetector.Match match,int screenWidth,int screenHeight){
         if(!running)return;
-        if(passengerPromptPresent()){
-            status("CONFIRME MANUALMENTE");
-            handler.postDelayed(this::scanAndTap,1200L);return;
+        if(holdForPassengerPrompt()){
+            handler.postDelayed(()->{if(running)scanAndTap();},1200L);return;
         }
         if(!isGameVisible()){
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
@@ -1093,7 +1139,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 handler.postDelayed(new Runnable(){
                     @Override public void run(){
                         if(!running||!awaitingMap||ticket!=stamp)return;
-                        if(!isGameVisible()||passengerPromptPresent()){
+                        if(holdForPassengerPrompt()||!isGameVisible()){
                             handler.postDelayed(this,1200L);return;
                         }
                         if(PgsAutoCyclePolicy.mapTimedOut(
@@ -1119,9 +1165,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void checkMap(int stamp){
         if(!running||!awaitingMap||ticket!=stamp)return;
         long now=SystemClock.uptimeMillis();
-        if(!isGameVisible()||passengerPromptPresent()){
+        boolean passengerWarning=holdForPassengerPrompt();
+        boolean gameVisible=isGameVisible();
+        if(!gameVisible||passengerWarning){
             if(passengerHoldAt==0L)passengerHoldAt=now;
-            status(isGameVisible()?"CONFIRME MANUALMENTE":"AGUARDANDO JOGO");
+            status(passengerWarning?"CONFIRME MANUALMENTE":"AGUARDANDO JOGO");
             handler.postDelayed(()->checkMap(stamp),1200L);
             return;
         }
@@ -1573,7 +1621,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void halt(String label){
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
-        passengerHoldAt=0L;
+        passengerHoldAt=0L;passengerWarningLatched=false;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */
