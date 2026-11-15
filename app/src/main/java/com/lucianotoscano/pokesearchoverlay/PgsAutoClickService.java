@@ -291,6 +291,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return;
         live.handler.post(()->{
+            live.stopWatchOnly(true); // Não capturar em paralelo ao tutorial.
             if(live.running)live.halt("CADASTRANDO");
             PgsAutoTemplateStore.startTeaching(live,species);
             live.queueTeachingWhenReady();
@@ -562,7 +563,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                 }
             }
             @Override public void previewSprites(){preview();}
-            @Override public void choosePoint(String mode){showTargetSelector(mode);}
+            @Override public void choosePoint(String mode){
+                stopWatchOnly(true);
+                showTargetSelector(mode);
+            }
             @Override public void selectSprites(){
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
                 status("SPRITES DO FEED");
@@ -1264,6 +1268,13 @@ public final class PgsAutoClickService extends AccessibilityService {
         watchBusy=true;
         final int stamp=watchTicket;
         status("MONITOR · LENDO LISTA");
+        // Nem callback de screenshot ausente nem fila travada retém o monitor.
+        handler.postDelayed(()->{
+            if(!watching||!watchBusy||watchTicket!=stamp)return;
+            watchTicket++; // frames atrasados desta rodada são descartados.
+            status("MONITOR · TEMPO LIMITE");
+            scheduleWatch(PgsAutoWatchPolicy.PAUSED_RETRY_MS);
+        },PgsAutoWatchPolicy.WATCHDOG_MS);
         captureWatchFrame(stamp,new WatchFrameResult(){
             @Override public void ready(
                     java.util.List<PgsAutoIconDetector.Match> first,
