@@ -7,14 +7,11 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
@@ -41,17 +38,41 @@ final class PgsAutoTargetPicker {
     private int dp(float v){
         return Math.round(v*context.getResources().getDisplayMetrics().density);
     }
-    private static GradientDrawable bg(int fill,int stroke,int radiusPx){
-        GradientDrawable d=new GradientDrawable();
-        d.setColor(fill);d.setStroke(1,stroke);d.setCornerRadius(radiusPx);
-        return d;
-    }
-    private Button button(String text){
-        Button b=new Button(context);b.setText(text);b.setTextColor(Color.WHITE);
-        b.setAllCaps(false);b.setTextSize(12);b.setMinHeight(0);
-        b.setMinimumHeight(0);b.setMinWidth(0);b.setMinimumWidth(0);
-        b.setBackground(bg(0xF0192736,0xFF6D90A7,dp(9)));
-        return b;
+    // Controles sem placa, sem cápsula e sem texto sobre o mapa:
+    // área invisível de 60dp e arte branca com sombra discreta, 30dp.
+    private View actionIcon(boolean confirm,String description){
+        View icon=new View(context){
+            private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
+            @Override protected void onDraw(Canvas canvas){
+                super.onDraw(canvas);
+                float cx=getWidth()/2f,cy=getHeight()/2f;
+                p.setStyle(Paint.Style.STROKE);
+                p.setColor(Color.WHITE);
+                p.setStrokeWidth(dp(3.2f));
+                p.setStrokeCap(Paint.Cap.ROUND);
+                p.setStrokeJoin(Paint.Join.ROUND);
+                p.setShadowLayer(dp(2),0,dp(1),0xCC000000);
+                Path path=new Path();
+                if(confirm){
+                    path.moveTo(cx-dp(13),cy);
+                    path.lineTo(cx-dp(3),cy+dp(10));
+                    path.lineTo(cx+dp(14),cy-dp(11));
+                }else{
+                    path.moveTo(cx-dp(12),cy-dp(12));
+                    path.lineTo(cx+dp(12),cy+dp(12));
+                    path.moveTo(cx+dp(12),cy-dp(12));
+                    path.lineTo(cx-dp(12),cy+dp(12));
+                }
+                canvas.drawPath(path,p);
+                p.clearShadowLayer();
+            }
+        };
+        icon.setWillNotDraw(false);
+        icon.setLayerType(View.LAYER_TYPE_SOFTWARE,null);
+        icon.setContentDescription(description);
+        icon.setClickable(true);
+        icon.setFocusable(true);
+        return icon;
     }
     static PgsAutoTargetPicker open(Context context,WindowManager manager,String mode,Callback callback){
         PgsAutoTargetPicker picker=new PgsAutoTargetPicker(context,manager,callback);
@@ -82,7 +103,7 @@ final class PgsAutoTargetPicker {
         Point dims=new Point();wm.getDefaultDisplay().getRealSize(dims);
         width=dims.x;height=dims.y;
         root=new FrameLayout(context);
-        root.setBackgroundColor(0x28101825);
+        root.setBackgroundColor(Color.TRANSPARENT); // Tela do jogo sem escurecimento.
         root.setOnTouchListener((v,e)->receive(e));
         reticle=new View(context){
             private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -114,37 +135,38 @@ final class PgsAutoTargetPicker {
         root.addView(reticle,new FrameLayout.LayoutParams(dp(72),dp(72)));
         info=new TextView(context);info.setTextColor(Color.WHITE);
         info.setGravity(Gravity.CENTER);info.setTextSize(12);
-        info.setBackground(bg(0xE9213140,0xFF587D93,dp(8)));
+        info.setBackground(null);
+        info.setShadowLayer(dp(2),0,dp(1),0xD0000000);
         FrameLayout.LayoutParams label=new FrameLayout.LayoutParams(
-            -1,dp(38),Gravity.TOP);
-        label.leftMargin=dp(18);label.rightMargin=dp(18);label.topMargin=dp(30);
+            -1,dp(28),Gravity.TOP);
+        label.leftMargin=dp(8);label.rightMargin=dp(8);label.topMargin=dp(39);
         root.addView(info,label);
         TextView hint=new TextView(context);
-        hint.setText("Selecione o centro visual do "+(
-            "POKESTOP".equals(mode)?"PokéStop":"ENCOUNTER".equals(mode)?
-            "Pokémon":"ponto de toque")+".\nA posição será salva apenas ao confirmar.");
-        hint.setGravity(Gravity.CENTER);hint.setTextSize(11);hint.setTextColor(Color.WHITE);
-        hint.setBackground(bg(0xD91A2836,0xFF577E91,dp(8)));
+        hint.setText("Arraste a mira · ✓ confirma · × cancela");
+        hint.setGravity(Gravity.CENTER);hint.setTextSize(10);hint.setTextColor(0xDDFFFFFF);
+        hint.setBackground(null);
+        hint.setShadowLayer(dp(2),0,dp(1),0xD0000000);
         FrameLayout.LayoutParams hintLp=new FrameLayout.LayoutParams(
-            -1,dp(58),Gravity.TOP);hintLp.topMargin=dp(74);
-        hintLp.leftMargin=dp(24);hintLp.rightMargin=dp(24);
+            -1,dp(24),Gravity.TOP);hintLp.topMargin=dp(72);
+        hintLp.leftMargin=dp(12);hintLp.rightMargin=dp(12);
         root.addView(hint,hintLp);
-        LinearLayout actions=new LinearLayout(context);
-        actions.setOrientation(LinearLayout.HORIZONTAL);
-        actions.setPadding(dp(18),dp(6),dp(18),dp(6));
-        Button cancel=button("Cancelar"),save=button("✓ Confirmar mira");
-        LinearLayout.LayoutParams left=new LinearLayout.LayoutParams(0,dp(48),1);
-        left.rightMargin=dp(8);
-        actions.addView(cancel,left);
-        actions.addView(save,new LinearLayout.LayoutParams(0,dp(48),1));
-        FrameLayout.LayoutParams panel=new FrameLayout.LayoutParams(
-            -1,dp(65),Gravity.BOTTOM);panel.bottomMargin=dp(16);
-        root.addView(actions,panel);
-        cancel.setOnClickListener(v->{dismiss();callback.cancelled();});
+        // Apenas ✓ à esquerda e × à direita, sem barras ou fundos.
+        // A área de toque permanece confortável e acessível, porém invisível.
+        View save=actionIcon(true,"Confirmar mira e salvar posição");
+        View cancel=actionIcon(false,"Cancelar mira sem salvar");
+        FrameLayout.LayoutParams saveLp=new FrameLayout.LayoutParams(
+            dp(60),dp(60),Gravity.BOTTOM|Gravity.LEFT);
+        saveLp.leftMargin=dp(28);saveLp.bottomMargin=dp(24);
+        FrameLayout.LayoutParams cancelLp=new FrameLayout.LayoutParams(
+            dp(60),dp(60),Gravity.BOTTOM|Gravity.RIGHT);
+        cancelLp.rightMargin=dp(28);cancelLp.bottomMargin=dp(24);
+        root.addView(save,saveLp);
+        root.addView(cancel,cancelLp);
         save.setOnClickListener(v->{
             float selectedX=x,selectedY=y;
             dismiss();callback.confirmed(selectedX,selectedY,width,height);
         });
+        cancel.setOnClickListener(v->{dismiss();callback.cancelled();});
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(
             -1,-1,WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
