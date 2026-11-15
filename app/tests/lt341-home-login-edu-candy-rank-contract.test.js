@@ -65,8 +65,11 @@ assert.match(profile,/displayName&&context\.includes\(displayName\)/);
 assert.match(profile,/parsed\.hostname==="cdn\.discordapp\.com"/);
 assert.match(profile,/document\.querySelectorAll\("h1,h2,h3,strong,span"\)/);
 assert.doesNotMatch(profile,/document\.cookie|localStorage|getItem\(|access_token/i);
-// PGS arm must not guess that launcher screenshot is PGSharp feed.
-assert.match(pgs,/Abra o feed do PGSharp para iniciar/);
+// O serviço só arma a busca com a janela do jogo real, e agora mostra
+// explicitamente o provedor visual escolhido (PGSharp/Pokemod).
+assert.match(pgs,/if\(live\.armedByHome&&!live\.isGameVisible\(\)\)/);
+assert.match(pgs,/PgsAutoHostPolicy\.displayLabel\(PgsAutoHostSettings\.current\(live\)\)/);
+assert.match(pgs,/if\(live\.running&&!live\.isGameVisible\(\)\)return "Abra o jogo"/);
 assert.match(pgs,/Nenhum ícone reconhecido no feed/);
 assert.match(pgs,/PgsAutoVisualState\.Core\.WHITE/);
 assert.match(pgs,/coreIndicator\.setVisibility\(View\.GONE\)/);
