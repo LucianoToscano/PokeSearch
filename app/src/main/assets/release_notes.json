@@ -4251,6 +4251,39 @@
           "Instalação da atualização requer autorização do Android; nenhuma instalação silenciosa."
         ]
       }
+    },
+    {
+      "id": "lt352-ark-touch-glow-clean-mira-20261114",
+      "minVersionCode": 54555,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.48 — LT352: efeito de toque visível e mira limpa",
+      "sections": {
+        "novidades": [
+          "Novo indicador visual de toque: pulso radial ciano translúcido e três anéis, com centro branco e fade de 960 ms na coordenada do gesto Android solicitado.",
+          "Personalização do PGS: botão compacto para prévia do brilho no centro da tela sem executar clique no jogo.",
+          "Seletor de mira PGS: Confirmar ✓ à esquerda e Cancelar × à direita, agora apenas ícones brancos, sem textos nem caixas cinzas."
+        ],
+        "melhorias": [
+          "O marcador força desenho visível com setWillNotDraw(false), além de invalidar a área; contraste reforçado para mapas claros/escuros e centro mantido na borda.",
+          "O indicador continua completamente transparente a toques (FLAG_NOT_TOUCHABLE) e não pode interceptar controles do jogo.",
+          "A mira fica sobre o mapa sem escurecimento geral: coordenadas e instrução discretas em branco com sombra, sem placas pretas/cinzas.",
+          "As áreas clicáveis invisíveis de ✓ e × preservam 60dp, acessibilidade, arraste da mira e confirmação manual antes de salvar.",
+          "Também há indicador visual no início de deslizes que o Android aceita no modo Encontro."
+        ],
+        "correcoes": [
+          "Corrigida uma causa provável da ausência de efeito: View personalizada sem setWillNotDraw(false) em algumas renderizações Android.",
+          "Corrigida baixa visibilidade do efeito anterior de apenas 380 ms e anéis fracos.",
+          "Removidas faixas opacas da tela de seleção de ponto que cobriam o mapa e prejudicavam o posicionamento.",
+          "Botões grandes Cancelar e Confirmar mira substituídos por ícones menores e sem fundo, preservando ações."
+        ],
+        "emDesenvolvimento": [
+          "CI e compilação Android comprovam o build, mas a visibilidade real do efeito, deslocamento exato em bordas, rotação e ergonomia da mira no Samsung exigem homologação física.",
+          "Brilho visual confirma somente solicitação de gesto Android; não comprova toque/teleporte aceito pelo PGSharp/Pokémon GO.",
+          "LT350 design system permanece na PR #385 em rascunho até homologação visual e não faz parte desta release.",
+          "A confirmação 'Sou passageiro' deve continuar manual e somente quando for seguro, sem tentativa automática.",
+          "OAuth PoGoCoordinates, reconhecimento Shiny e Encontro real continuam dependentes de evidência no dispositivo."
+        ]
+      }
     }
   ]
 }
