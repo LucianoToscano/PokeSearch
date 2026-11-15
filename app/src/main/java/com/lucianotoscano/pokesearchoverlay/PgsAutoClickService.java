@@ -451,6 +451,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                         Toast.LENGTH_SHORT).show();
                 }
             }
+            @Override public void previewSprites(){preview();}
             @Override public void choosePoint(String mode){showTargetSelector(mode);}
             @Override public void selectSprites(){
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
