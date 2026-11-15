@@ -733,10 +733,30 @@ final class PgsAutoMenus {
             });
             root.addView(select,margined(-1,dp(34),3));
         }
-        TextView note=label("Cada interface exige suas próprias capturas. "+
-            "Instalado não comprova mod ativo; aviso de segurança é manual.",9,false);
-        root.addView(note,margined(-1,dp(47),4));
-        mount(root,230,224);
+        if(PgsAutoHostPolicy.POKEMOD.equals(current)){
+            // Configuração no submenu, sem aumentar a fileira principal PGS/PM.
+            String side=PgsAutoHostSettings.sidebarSide(context);
+            boolean left=PgsAutoScanRegionPolicy.LEFT.equals(side);
+            Button sideButton=button(left?"↤ Lista à esquerda · alterar":
+                "Lista à direita ↦ · alterar",10);
+            sideButton.setContentDescription("Lado da lista circular do Pokemod. "+
+                (left?"Esquerda":"Direita")+". Toque para alternar.");
+            sideButton.setOnClickListener(v->{
+                PgsAutoHostSettings.setSidebarSide(context,left?
+                    PgsAutoScanRegionPolicy.RIGHT:PgsAutoScanRegionPolicy.LEFT);
+                actions.modelsChanged();
+                showHostProfiles();
+            });
+            root.addView(sideButton,margined(-1,dp(32),3));
+        }
+        TextView note=label(
+            PgsAutoHostPolicy.POKEMOD.equals(current)?
+                "Reconhece ícones da lista circular, não Pokémon 3D. "+
+                "Confira a prévia ◎ antes do toque; mod ativo não comprovado.":
+                "Cada interface exige suas próprias capturas. "+
+                "Instalado não comprova mod ativo; avisos são manuais.",9,false);
+        root.addView(note,margined(-1,dp(48),4));
+        mount(root,230,PgsAutoHostPolicy.POKEMOD.equals(current)?263:224);
     }
 
     /** Alvos explícitos, separados da busca por sprites do feed. */
