@@ -85,6 +85,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private FrameLayout picker;
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
+    private long lastAccountSafetyEventCheck=0L;
     private boolean awaitingMap=false;
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
@@ -363,7 +364,13 @@ public final class PgsAutoClickService extends AccessibilityService {
         String pkg=event.getPackageName().toString();
         // Notificações de conteúdo do jogo podem aparecer sem trocar a janela.
         if(type==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
-            if(running&&isGamePackage(pkg)&&gameAccountSafetyNoticePresent())
+            if(!running||!isGamePackage(pkg))return;
+            long now=SystemClock.uptimeMillis();
+            // ContentChanged pode chegar várias vezes por segundo no Unity.
+            // Gesto sempre revalida o aviso sem depender desse intervalo.
+            if(now-lastAccountSafetyEventCheck<450L)return;
+            lastAccountSafetyEventCheck=now;
+            if(gameAccountSafetyNoticePresent())
                 fail("Aviso de segurança da conta detectado. Revise no jogo "+
                     "manualmente; nenhuma ação automática será realizada.");
             return;
