@@ -8,10 +8,10 @@ assert.match(policy,/SAMSUNG_GAME_PACKAGE="com\.nianticlabs\.pokemongo\.ares"/,
   "Galaxy Store game has distinct package");
 assert.match(policy,/return GAME_PACKAGE\.equals\(packageName\)\|\|\s*SAMSUNG_GAME_PACKAGE\.equals\(packageName\)/,
   "whitelist exact official Play and Galaxy game packages");
-assert.match(service,/if\(PgsAutoHostPolicy\.POKEMOD\.equals\(PgsAutoHostSettings\.current\(this\)\)\)\s+return PgsAutoHostPolicy\.isGameWindow\(pkg\)/,
-  "Pokemod never treats the manager as game");
-assert.match(service,/return PgsAutoHostPolicy\.isGameWindow\(pkg\)\|\|/,
-  "legacy PGSharp also recognizes official Galaxy Store game");
+assert.match(service,/private boolean isGamePackage\(String pkg\)\{[\s\S]*?return PgsAutoHostPolicy\.isGameWindow\(pkg\);/,
+  "Pokemod and PGSharp use exact game package allowlist");
+assert.doesNotMatch(service,/\.contains\("pgsharp"\)/,
+  "PGSharp substring must never authorize game-window access");
 assert.match(manifest,/<package android:name="com\.nianticlabs\.pokemongo\.ares"\s*\/>/,
   "exact Android package visibility for Galaxy");
 assert.match(manifest,/<package android:name="com\.pokemod\.app\.public"\s*\/>/,
