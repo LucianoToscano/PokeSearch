@@ -13,7 +13,9 @@ assert.match(ui,/PgsAutoMenuStyle\.read\(context\)\.panelFill\(context\)/);
 assert.match(style,/OverlayQuickMenus\.panelColor\(c\)/);
 assert.match(ui,/actions\.closeOverlay\(\)/);
 assert.doesNotMatch(ui,/actions\.retryNow\(\)|••• MAIS|Reportar|Doar|Reiniciar buscas/);
-assert.match(ui,/mount\(root,138,218\)/);
+assert.match(ui,/mount\\(root,180,275\\)/); // LT361: botão pequeno sem alterar toolbar
+assert.match(ui,/Monitor sem clique · ON/);
+assert.match(ui,/Monitor sem clique · OFF/);
 assert.match(ui,/new LinearLayout\.LayoutParams\(dp\(30\),dp\(30\)\)/);
 assert.match(ui,/R\.drawable\.pgs_speaker_on/);
 assert.match(ui,/R\.drawable\.pgs_speaker_silent/);
