@@ -135,6 +135,9 @@ final class PgsAutoMenus {
     }
     private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}bellShiny=null;}
     boolean isOpen(){return panel!=null||toolbar!=null;}
+    // A barra compacta pode permanecer visível enquanto a busca funciona;
+    // apenas um submenu com miniaturas pode contaminar a captura.
+    boolean hasPanel(){return panel!=null;}
     // Toque na bolha com submenu aberto volta à barra, sem desligar buscas.
     // Com somente a barra aberta, um segundo toque a retrai (padrão P1/P2).
     void collapseOneLevel(){
