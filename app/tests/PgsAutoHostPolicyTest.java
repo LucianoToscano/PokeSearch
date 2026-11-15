@@ -24,6 +24,6 @@ public final class PgsAutoHostPolicyTest {
         check(!PgsAutoHostPolicy.mayAutoTap("pokemod",true,true,false),"no own template");
         check(PgsAutoHostPolicy.mayAutoTap("pokemod",true,true,true),"calibrated game only");
         check("PM".equals(PgsAutoHostPolicy.shortLabel("pokemod")),"menu label");
-        System.out.println("LT359 multihost policy 15/15 PASS");
+        System.out.println("LT360 multihost policy with Galaxy Store PASS");
     }
 }
