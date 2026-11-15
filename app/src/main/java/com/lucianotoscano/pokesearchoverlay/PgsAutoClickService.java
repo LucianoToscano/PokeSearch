@@ -2347,6 +2347,39 @@ public final class PgsAutoClickService extends AccessibilityService {
     public static void testShinyAlert(){
         testPgsNotification(PgsAutoNotificationPolicy.SHINY);
     }
+    /**
+     * LT366: notificação somente da janela do JOGO. Palavra isolada não
+     * comprova IV100/Ditto; só paramos se a mensagem menciona o alvo atual
+     * e o serviço já aguardava esse mapa. Não há teleporte por notificação.
+     */
+    public static void onAutoHuntNotice(String message){
+        PgsAutoClickService live=instance;
+        if(live==null||message==null||message.length()>600)return;
+        live.handler.post(()->{
+            if(!live.running||!live.awaitingMap||!live.huntTapSession||
+                !PgsAutoHuntSettings.enabled(live)||!live.isGameVisible()||
+                live.gameAccountSafetyNoticePresent()||live.passengerPromptPresent())return;
+            String kind=PgsAutoHuntPolicy.explicitNotice(
+                message,live.currentTargetName);
+            SharedPreferences prefs=PgsAutoHuntSettings.forCurrent(live);
+            boolean isIv=PgsAutoHuntPolicy.IV100.equals(kind)&&
+                prefs.getBoolean(PgsAutoHuntSettings.STOP_IV100,true);
+            boolean isDitto=PgsAutoHuntPolicy.DITTO.equals(kind)&&
+                prefs.getBoolean(PgsAutoHuntSettings.STOP_DITTO,true);
+            if(!isIv&&!isDitto)return;
+            String title=isIv?"IV100":"Ditto";
+            String target=live.currentTargetName;
+            live.running=false;live.awaitingMap=false;live.huntTapSession=false;
+            live.ticket++;live.armedByHome=false;
+            live.status("AUTO HUNT · "+title+" · PAUSADO");
+            BugReport.log(live,"PGS","LT366 Auto Hunt: alerta textual explícito "+
+                title+" para alvo "+target+"; jogo NÃO verificado");
+            live.notifyConfigured(PgsAutoNotificationPolicy.HUNT,
+                "Auto Hunt pausado · "+title,
+                "Notificação nomeia "+target+". Verifique no jogo. "+
+                "Nenhuma captura ou IV foi confirmada pelo PokeSearch.",true);
+        });
+    }
     public static void onPgsharpShiny(String message){
         PgsAutoClickService live=instance;
         if(live!=null)live.handler.post(()->{
@@ -2418,22 +2451,35 @@ public final class PgsAutoClickService extends AccessibilityService {
             NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
             if(manager==null)return;
             SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
-            String mode=PgsAutoNotificationPolicy.mode(kind,
-                prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
+            boolean isHunt=PgsAutoNotificationPolicy.HUNT.equals(kind);
+            SharedPreferences huntPrefs=isHunt?
+                PgsAutoHuntSettings.forCurrent(this):null;
+            String mode=isHunt?
+                (huntPrefs.getBoolean(PgsAutoHuntSettings.RINGTONE,true)?
+                    "strong":"mute"):
+                PgsAutoNotificationPolicy.mode(kind,
+                    prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
             int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
             if("off".equals(mode))return; // OFF não gera notificação nem som.
             if("custom".equals(mode)&&(index<0||index>=PokeSoundLibrary.size()))
                 mode="default"; // Não criar canal sem som por índice corrompido.
             String channelId=PgsAutoNotificationPolicy.channelId(kind,mode,index);
             boolean isShiny=PgsAutoNotificationPolicy.SHINY.equals(kind);
-            boolean vibrate=isShiny&&prefs.getBoolean("shinyVibrate",true);
-            if(isShiny)channelId+=vibrate?"_vibrate":"_no_vibrate";
+            boolean vibrate=isHunt?
+                huntPrefs.getBoolean(PgsAutoHuntSettings.VIBRATE,true):
+                (isShiny&&prefs.getBoolean("shinyVibrate",true));
+            if(isShiny||isHunt){
+                if(isHunt)channelId+="_"+PgsAutoHostSettings.current(this);
+                channelId+=vibrate?"_vibrate":"_no_vibrate";
+            }
             if(manager.getNotificationChannel(channelId)==null){
-                String titleChannel=isShiny?"PGS · Shiny":
+                String titleChannel=isHunt?"PokeSearch · Auto Hunt · "+
+                    PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(this)):
+                    isShiny?"PGS · Shiny":
                     PgsAutoNotificationPolicy.NEW.equals(kind)?"PGS · Novos Pokémon":
                     "PGS · Pokémon de buscas";
                 NotificationChannel channel=new NotificationChannel(channelId,titleChannel,
-                    isShiny?NotificationManager.IMPORTANCE_HIGH:
+                    (isShiny||isHunt)?NotificationManager.IMPORTANCE_HIGH:
                         NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription("Exclusivo de Buscar Pokémon · não altera P1 ou P2");
                 Uri sound=null;
@@ -2445,7 +2491,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     sound=PokeSoundLibrary.soundUri(this,index);
                 if(sound==null)channel.setSound(null,null);
                 else channel.setSound(sound,new AudioAttributes.Builder()
-                    .setUsage(isShiny?AudioAttributes.USAGE_ALARM:
+                    .setUsage((isShiny||isHunt)?AudioAttributes.USAGE_ALARM:
                         AudioAttributes.USAGE_NOTIFICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
                 channel.enableVibration(vibrate);
