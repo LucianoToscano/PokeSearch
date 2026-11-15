@@ -30,4 +30,21 @@ O aviso `Sou passageiro` era procurado somente na raiz ativa; a bolha de Acessib
 - `app/tests/lt354-pgs-gesture-evidence-contract.test.js`: limites de prévia, correspondência de modelo, callback com ticket, logs de estágios, proteção `Sou passageiro`.
 - Gate LT211 passa a compilar/testar a política Java; gates Node QA, LT169, LT211, Java LT62, OTA LT173, PGS Android QA e beta Secure/R8 são critérios obrigatórios para merge.
 - Nenhuma PR ou tag é prova de QA físico. Não tocar na PR #385 LT350 sem comparação visual física. Preservar dados, assets, 68 sprites Edu, P1/P2, Doce Raro, filtros, contas, Rank, notificações, scanner e assinatura.
-- **Estado inicial deste relatório:** proposta LT354 em branch; gates e versão futura somente devem ser registrados após retornarem da Actions e da API de Releases. Até esse momento, a release oficial permanece 0.03.49.
+- **Atualização final:** **LT354 OFICIAL — 14/11/2026:** PokeSearch **0.03.50 / versionCode 54557 / label 51354** em [v0.03.50-54557](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.50-54557), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.50-54557/PokeSearch-v0.03.50-LT.apk) de **61.117.970 bytes**, SHA-256 `08cd15dce46d29c50e6c76f825ef221c74e15f15a29a30335505cb81426ec118`. [Workflow protegido #43668173306](https://github.com/LucianoToscano/PokeSearch/actions/runs/43668173306) **SUCCESS**: preflight, Node/OTA, assets, R8, assinatura permanente, publicação e digest público confirmados. Implementação [PR #394](https://github.com/LucianoToscano/PokeSearch/pull/394), squash `e3e2c6e1d65e4e9a11c192307472180af0ea127c`; pedido monotônico [PR #395](https://github.com/LucianoToscano/PokeSearch/pull/395), squash `8e1d3c9ad21b678dfca1dc0071f17837a362baa2`. LT354 distingue confirmação da mesma sprite, pedido/callback de gesto Android, alteração visual e ausência de resposta, e interrompe o ciclo quando não há mudança detectável até o timeout; protege callback antigo e preserva confirmação humana de "Sou passageiro". Sete gates de implementação **SUCCESS**: Node QA #43667612865, LT169 #43667612884, LT211 #43667612874, Java LT62 #43667612866, OTA LT173 #43667612856, PGS APK QA #43667612896 e Secure beta/R8 #43667612872. **BLOQUEADO no Samsung físico:** clique/teleporte real PGSharp, localizar Metagross no feed, alinhamento/halo, menus Tempo/Personalização em diferentes fontes e rotações, OAuth Google/Discord, Shiny e Encontro. A PR LT350 #385 segue draft e não foi integrada. Callback Android ou delta RGB não provam toque recebido pelo jogo. Instalação exige confirmação do Android.
+
+## Matriz de execução LT354 (evidência Github)
+
+| Gate | Workflow | Resultado |
+|---|---|---|
+| Node QA | #43667612865 | PASSOU |
+| Node LT169 | #43667612884 | PASSOU |
+| Core LT211 / Java helper | #43667612874 | PASSOU |
+| Java LT62 | #43667612866 | PASSOU |
+| OTA LT173 | #43667612856 | PASSOU |
+| PGS Android QA | #43667612896 | PASSOU |
+| Secure beta / R8 | #43667612872 | PASSOU |
+| Publicação protegida | #43668173306 | PASSOU, tag e hash verificados |
+| Clique real Metagross/PGSharp, teleporte, Shiny, Encontro e OAuth externo | Samsung/provedores | BLOQUEADO: sem evidência física |
+| Aparência Tempo/Personalização, ícones, ancoragem e halo em Samsung | Samsung | BLOQUEADO: sem captura física LT354 |
+
+**Não confundir sucesso de CI ou delta visual com homologação do jogo.** Os artefatos de QA debug/teste não substituem a assinatura permanente da release oficial.
