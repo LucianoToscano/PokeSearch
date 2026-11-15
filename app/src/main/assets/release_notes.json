@@ -4497,7 +4497,8 @@
         "melhorias": [
           "O detector percorre a região lateral escolhida do Pokemod, em vez de analisar a outra lateral e elementos 3D do mapa. O PGSharp conserva a leitura nas duas bordas.",
           "Novo aviso ao cadastrar imagem no Pokemod: recortar somente o Pokémon dentro do círculo, sem fundo claro e sem botão de radar.",
-          "Cálculo proporcional por resolução/retrato/paisagem, testes automáticos e orçamentos do scanner de 4,5 segundos e 256 candidatos preservados."
+          "Cálculo proporcional por resolução/retrato/paisagem, testes automáticos e orçamentos do scanner de 4,5 segundos e 256 candidatos preservados.",
+          "Reconhece também o pacote oficial do Pokémon GO da Samsung Galaxy Store (com.nianticlabs.pokemongo.ares) além da versão Google Play, mantendo correspondência exata da janela do jogo; sem confundir com o gerenciador Pokemod."
         ],
         "correcoes": [
           "Elimina a varredura visual desnecessária da lateral oposta no modo Pokemod.",
@@ -4507,7 +4508,8 @@
           "O APK de referência 14.2.1 é gerenciador/injetor; não foi encontrado um catálogo de miniaturas de feed com licença e validação individual. Nenhum código, áudio, sprite ou módulo nativo foi copiado.",
           "Posição da lista baseada em exemplos visuais: não é homologação física. Testar em Samsung com Pokemod ativo sobre Pokémon GO e confirmar o resultado de qualquer toque antes de atribuir teleporte ou encontro.",
           "Shiny, formas/variantes, desempenho, falsos positivos, monitores sem clique, atualizações remotas assinadas e interações reais necessitam evidência, dados autorizados e desenvolvimento posterior.",
-          "O protocolo de aviso de segurança da conta e 'Sou passageiro' permanece manual. Instalação da atualização depende de consentimento do Android."
+          "O protocolo de aviso de segurança da conta e 'Sou passageiro' permanece manual. Instalação da atualização depende de consentimento do Android.",
+          "A compatibilidade funcional com a edição Samsung Galaxy Store depende de teste real com Pokemod ativo no jogo; reconhecer o pacote não comprova suporte do injetor."
         ]
       }
     }
