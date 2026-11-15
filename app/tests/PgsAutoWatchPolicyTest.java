@@ -13,6 +13,8 @@ public final class PgsAutoWatchPolicyTest {
     public static void main(String[] args){
         check(PgsAutoWatchPolicy.SCAN_INTERVAL_MS>=20000,
             "budgeted polling");
+        check(PgsAutoWatchPolicy.WATCHDOG_MS>=10000&&
+            PgsAutoWatchPolicy.WATCHDOG_MS<25000,"watchdog bounded");
         check(PgsAutoWatchPolicy.ALERT_COOLDOWN_MS>=600000,
             "at least 10 minute dedup");
         check(!can("pokemod",false,true,true,true,false,false,false),
