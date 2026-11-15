@@ -107,10 +107,12 @@ final class PgsAutoIconDetector {
     PgsAutoIconDetector(Context context) throws IOException {
         hostProfile=PgsAutoHostSettings.current(context);
         sidebarSide=PgsAutoHostSettings.sidebarSide(context);
-        List<PgsAutoTemplateStore.Model> selected=new ArrayList<>();
-        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
-            if(PgsAutoCatalog.isSelectedName(context,model.name))selected.add(model);
-        selected.sort(Comparator.comparingInt(m->PgsAutoCatalog.priority(context,m.name)));
+        List<PgsAutoTemplateStore.Model> selected=
+            new ArrayList<>(PgsAutoTemplateStore.activeForSearch(context));
+        // Favorites retain their configured order. Available-only models
+        // use their existing persisted order; no implicit app-wide scan.
+        selected.sort(Comparator.comparingInt(
+            m->PgsAutoCatalog.priority(context,m.name)));
         modelCount=selected.size();
         // O tamanho agora vem da amostra escolhida no feed (24/32/44px),
         // não de um retângulo forçado de 68x52. Variações de zoom são testadas.
