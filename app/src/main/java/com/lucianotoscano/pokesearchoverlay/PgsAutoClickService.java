@@ -291,7 +291,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(pending.isEmpty())return;
         if(!isGameVisible()){
             Toast.makeText(this,
-                "Abra o feed de Pokémon do PGSharp. A seleção do ícone de "+
+                "Abra o feed de "+
+                PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(this))+
+                " no jogo. A seleção do ícone de "+
                 pending+" aparecerá automaticamente.",Toast.LENGTH_LONG).show();
             return;
         }
@@ -667,8 +669,10 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return "Acessibilidade desligada";
         if(live.armedByHome&&!live.isGameVisible())
-            return "Abra o feed do PGSharp para iniciar";
-        if(live.running&&!live.isGameVisible())return "Abra PGSharp";
+            return "Abra o feed de "+
+                PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(live))+
+                " no jogo";
+        if(live.running&&!live.isGameVisible())return "Abra o jogo";
         if(live.running&&live.awaitingMap)return "Aguardando mapa";
         if(live.running)return "Procurando ícones";
         if(live.pausedByError)return "Erro · verificar acesso";
@@ -1040,6 +1044,22 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void toggle(){
         if(running){halt("PARADO");return;}
+        // LT359: PGS é interface padrão; Pokemod exige seleção explícita e
+        // modelos próprios. Outros clientes ficam em prévia até homologação.
+        String hostProfile=PgsAutoHostSettings.current(this);
+        if(PgsAutoHostPolicy.OTHER.equals(hostProfile)){
+            status("SOMENTE PRÉVIA");
+            showReason("Outro aplicativo ainda não homologado: grave uma "+
+                "captura e use a prévia ◎, sem toque automático.");
+            return;
+        }
+        if(PgsAutoHostPolicy.POKEMOD.equals(hostProfile)&&
+           !PgsAutoHostSettings.pokemodManagerInstalled(this)){
+            status("POKEMOD AUSENTE");
+            showReason("Gerenciador Pokemod não detectado. A instalação do "+
+                "gerenciador não comprova injeção ativa no jogo.");
+            return;
+        }
         // O gesto Android pode existir no 9/10, mas a confirmação visual de mapa
         // depende de takeScreenshot(API 30); nunca iniciar ciclo sem esse requisito.
         if(android.os.Build.VERSION.SDK_INT<30){
