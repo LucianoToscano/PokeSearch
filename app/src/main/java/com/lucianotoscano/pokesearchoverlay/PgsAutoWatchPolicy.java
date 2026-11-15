@@ -9,6 +9,7 @@ final class PgsAutoWatchPolicy {
     static final long SCAN_INTERVAL_MS=25000L;
     static final long PAUSED_RETRY_MS=8000L;
     static final long RECONFIRM_DELAY_MS=650L;
+    static final long WATCHDOG_MS=18000L;
     static final long ALERT_COOLDOWN_MS=600000L;
     static final int MAX_ALERT_SPECIES_PER_SCAN=3;
     private PgsAutoWatchPolicy(){}
