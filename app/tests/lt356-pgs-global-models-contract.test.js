@@ -1,0 +1,41 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const base="app/src/main/java/com/lucianotoscano/pokesearchoverlay/";
+const file=n=>fs.readFileSync(base+n+".java","utf8");
+const store=file("PgsAutoTemplateStore"),catalog=file("PgsAutoCatalog"),
+    native=file("PgsAutoNativeModels"),detector=file("PgsAutoIconDetector"),
+    service=file("PgsAutoClickService"),policy=file("PgsAutoMatchPolicy");
+const all=JSON.parse(fs.readFileSync("app/src/main/assets/pokemon_catalog.json","utf8"));
+const numbers=all.map(([id])=>id);
+assert.equal(all.length,1025,"registry must cover all 1025 listed species");
+assert.equal(new Set(numbers).size,all.length,"no duplicated dex IDs");
+assert.equal(Math.min(...numbers),1);assert.equal(Math.max(...numbers),1025);
+assert.equal(all.find(([id])=>id===376)[1],"Metagross");
+assert.equal(all.find(([id])=>id===1025)[1],"Pecharunt");
+assert.match(native,/MAX_MODELS=4096/,"manifest must scale beyond 48 templates");
+assert.match(native,/Map<Integer,List<Entry>> indexed/);
+assert.match(native,/List<Integer> selectedSpecies/);
+assert.match(native,/indexed\.get\(dex\)/);
+assert.match(native,/checkedAssets\.get\(key\)/);
+assert.match(native,/checkedAssets\.put\(key,ok\)/);
+assert.match(native,/rights/);assert.match(native,/evidence/);
+assert.match(native,/device-verified/);assert.match(native,/redistribution-approved/);
+assert.match(native,/!compatibleVersion\.equals\(installedVersion\(context\)\)/);
+assert.match(store,/static synchronized List<Model> userModels\(Context c\)/);
+assert.match(store,/PgsAutoNativeModels\.available\(c,PgsAutoCatalog\.selected\(c\)\)/);
+assert.match(catalog,/PgsAutoTemplateStore\.userModels\(ctx\)/);
+const selected=catalog.slice(catalog.indexOf("static synchronized List<Integer> selected("),catalog.indexOf("private static void persist("));
+assert.doesNotMatch(selected,/PgsAutoTemplateStore\.active\(ctx\)/,
+    "initial selection must not recurse through the native catalog");
+assert.match(store,/if\(m\.builtIn\)continue/);
+assert.match(detector,/PgsAutoMatchPolicy\.sameSlot\(/);
+assert.match(detector,/PgsAutoMatchPolicy\.ambiguousDifferentSpecies\(/);
+assert.doesNotMatch(detector,/Math\.abs\(sx-x\)<30/);
+assert.match(service,/current\.lastAmbiguousSlots\(\)/);
+assert.match(service,/detector\.lastScanMillis\(\)/);
+const preview=service.slice(service.indexOf("private void preview(){"),service.indexOf("private void scanAndTap(){"));
+assert.doesNotMatch(preview,/\bdispatchGesture\s*\(/);
+const m=JSON.parse(fs.readFileSync("app/src/main/assets/pgs-native/manifest.json","utf8"));
+assert.deepEqual(m.entries,[],"no unverified sprites can ship");
+console.log("LT356: all 1025 species, on-demand native index, overlap NMS and fail-closed preview PASS");

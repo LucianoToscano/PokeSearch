@@ -13,7 +13,7 @@ assert.match(native,/device-verified/);assert.match(native,/redistribution-appro
 assert.match(native,/MessageDigest\.getInstance\("SHA-256"\)/);
 assert.match(native,/options\.outWidth==width&&options\.outHeight==height/);
 assert.match(native,/compatibleVersion\.equals\(installedVersion\(context\)\)/);
-assert.match(store,/for\(Model nativeModel:PgsAutoNativeModels\.available\(c\)\)/);
+assert.match(store,/for\(Model nativeModel:PgsAutoNativeModels\.available\(c,PgsAutoCatalog\.selected\(c\)\)\)/);
 assert.match(store,/if\(m\.builtIn\)continue/);
 assert.match(store,/if\(m\.id\.equals\(id\)&&!m\.builtIn\)m\.enabled=enabled/);
 assert.match(store,/int refWidth,int refHeight\) throws IOException/);
