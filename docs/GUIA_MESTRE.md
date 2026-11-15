@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT349b — posicionamento lateral do Auto Click e alça branca (candidata)
+
+O menu Buscar Pokémon/Auto Click agora abre **à direita/esquerda da bolha**, igual ao comportamento das Pokébolas, inverte ao atingir a borda e mantém submenu ancorado ao arrastar/rotacionar. A alça no scanner mostra **somente o ícone branco de mover**, sem círculo ou fundo, mantendo toque e recorte. Referência: [LT349b](LT349B_ARK_MENU_LATERAL_ALCA_BRANCA_20261114.md). Só publicar após CI completo, release protegida e hash confirmado; testes Samsung permanecem BLOQUEADOS.
+
+
 ## LT349 ARK — candidato em homologação
 
 Editor Visual da Pokébola: ícone Background On original, linhas-guia persistentes e opção Medidas ON/OFF, transparência uniforme em Modos, Filtros, Favoritos, Filtros Salvos, Ordenar, Clima, Forma e Editor Visual. Lixeiras originais do Drive. Home: corrige inicialização de escala do Edu/Doce Raro. Busca PGS: barra sempre visível, toques externos liberados, bordas neutras, Shiny dentro do sino e alça com **três traços**. Scanner: ícones vetoriais finos combinando entre si, fundo cinza **70% transparente**, Confirmar/Cancelar/Background com ~70% do tamanho visual anterior e recorte Vertical **3:4**, com slider intacto. Ver [auditoria LT349](LT349_ARK_VISUAL_SCANNER_BUSCA_20261114.md). Não declarar oficial antes do workflow protegido nem testes Samsung homologados.
