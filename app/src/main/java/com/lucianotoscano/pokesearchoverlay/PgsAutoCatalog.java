@@ -126,8 +126,10 @@ final class PgsAutoCatalog {
         return -1;
     }
     static boolean hasTemplate(Context ctx,int number){
+        String profile=PgsAutoHostSettings.current(ctx);
         for(PgsAutoTemplateStore.Model m:PgsAutoTemplateStore.list(ctx))
-            if(findNumber(ctx,m.name)==number)return true;
+            if(PgsAutoHostPolicy.templateBelongsTo(m.hostProfile,profile)&&
+               findNumber(ctx,m.name)==number)return true;
         return false;
     }
     static List<Pokemon> search(Context ctx,String query,int max){
