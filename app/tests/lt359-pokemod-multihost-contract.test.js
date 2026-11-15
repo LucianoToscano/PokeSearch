@@ -32,7 +32,8 @@ assert.match(store,/PgsAutoHostSettings\.current\(c\)/);
 assert.match(store,/new Model\(originalId,name\.trim\(\),file,enabled,false,refWidth,refHeight\)/,
   "legacy backup restore semantics remain");
 assert.match(menu,/showHostProfiles\(\)/);
-assert.ok(menu.includes("new LinearLayout.LayoutParams(dp(55),dp(26))"),"client selector remains compact");
+assert.match(menu,/String\[\] names=\{"PGSharp","Pokemod","Outro"\}/);
+assert.match(menu,/PgsAutoHostSettings\.select\(context,profile\)/);
 assert.match(menu,/actions\.modelsChanged\(\)/);
 assert.match(menu,/Outro · somente prévia/);
 assert.match(service,/PgsAutoHostPolicy\.OTHER\.equals\(hostProfile\)/);
