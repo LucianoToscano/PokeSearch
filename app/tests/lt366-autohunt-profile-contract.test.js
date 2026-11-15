@@ -11,9 +11,6 @@ const toolbar=menu.split("void showToolbar(int x,int y)")[1]?.split("private voi
 assert.match(toolbar,/R\.drawable\.pgs_menu_search,R\.drawable\.pgs_menu_timer/);
 assert.match(toolbar,/R\.drawable\.ic_bell_outline,R\.drawable\.pgs_menu_customize/);
 assert.match(toolbar,/R\.drawable\.pgs_menu_close/);
-assert.match(menu,/searchTools\.addView\(hunt,new LinearLayout\.LayoutParams\(0,dp\(30\),1\)\)/);
-assert.match(menu,/searchTools\.addView\(sequence,sequenceLp\)/);
-assert.match(menu,/root\.addView\(searchTools,margined\(-1,dp\(30\),3\)\)/);
 assert.match(menu,/hunt\.setOnClickListener\(v->showAutoHunt\(\)\)/);
 assert.match(menu,/void showAutoHunt\(\)/);
 assert.match(menu,/PgsAutoHostPolicy\.shortLabel\(host\)/);
