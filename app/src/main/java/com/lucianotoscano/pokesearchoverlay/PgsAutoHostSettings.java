@@ -16,6 +16,17 @@ final class PgsAutoHostSettings {
         context.getSharedPreferences(PREF,Context.MODE_PRIVATE).edit()
             .putString(KEY,PgsAutoHostPolicy.profile(profile)).apply();
     }
+    /** A barra Pokemod pode ser exibida em lados diferentes do mapa. */
+    static String sidebarSide(Context context){
+        return PgsAutoScanRegionPolicy.side(
+            context.getSharedPreferences(PREF,Context.MODE_PRIVATE)
+                .getString("pokemod_sidebar_side",PgsAutoScanRegionPolicy.LEFT));
+    }
+    static void setSidebarSide(Context context,String side){
+        context.getSharedPreferences(PREF,Context.MODE_PRIVATE).edit()
+            .putString("pokemod_sidebar_side",PgsAutoScanRegionPolicy.side(side))
+            .apply();
+    }
     static boolean pokemodManagerInstalled(Context context){
         try{
             context.getPackageManager().getPackageInfo(

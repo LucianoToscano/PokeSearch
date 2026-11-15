@@ -21,14 +21,12 @@ final class PgsAutoIconDetector {
     private static final long MAX_SCAN_MILLIS=4500L;
     private static final int MAX_SCAN_CANDIDATES=256;
     private static final float THRESHOLD=.805f;
-    // O feed de sprites do PGSharp é uma coluna nas bordas; não interpretar
-    // textura do mapa ou botões do centro como miniatura selecionada.
-    private static final float FEED_SIDE_FRACTION=.28f;
-    private static boolean insideFeed(int centerX,int centerY,int width,int height){
-        // Portrait remains strict; a landscape feed may sit slightly inward.
-        float side=width>=height?.34f:FEED_SIDE_FRACTION;
-        return centerY>=height*.07f&&centerY<=height*.91f&&
-            (centerX<=width*side||centerX>=width*(1f-side));
+    // A barra Pokemod está em um único lado. PGSharp continua nas duas bordas.
+    // O PokeSearch nunca tenta identificar os Pokémon 3D no meio do mapa.
+    private final String hostProfile,sidebarSide;
+    private boolean insideFeed(int centerX,int centerY,int width,int height){
+        return PgsAutoScanRegionPolicy.inside(hostProfile,sidebarSide,
+            centerX,centerY,width,height);
     }
     static final class Match {
         final int x,y,priority;
@@ -107,6 +105,8 @@ final class PgsAutoIconDetector {
     private volatile long lastScanMillis=0L;
     private volatile boolean lastScanAborted=false;
     PgsAutoIconDetector(Context context) throws IOException {
+        hostProfile=PgsAutoHostSettings.current(context);
+        sidebarSide=PgsAutoHostSettings.sidebarSide(context);
         List<PgsAutoTemplateStore.Model> selected=new ArrayList<>();
         for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
             if(PgsAutoCatalog.isSelectedName(context,model.name))selected.add(model);
@@ -173,11 +173,17 @@ final class PgsAutoIconDetector {
         for(Template t:templates){
             int maxX=w-t.width,maxY=h-t.height;
             if(maxX<0||maxY<0)continue;
+            // Reduz varredura no Pokemod ao lado configurado sem tocar o mapa.
+            int scanFromX=PgsAutoScanRegionPolicy.firstX(
+                hostProfile,sidebarSide,w,h,t.width);
+            int scanToX=PgsAutoScanRegionPolicy.lastX(
+                hostProfile,sidebarSide,w,h,t.width);
+            if(scanFromX>scanToX)continue;
             int row=0;
             for(int y=0;y<=maxY;y+=scanStep){
                 if((++row&7)==0&&budgetExpired(began))
                     return abortFrame(began);
-                for(int x=0;x<=maxX;x+=scanStep){
+                for(int x=scanFromX;x<=scanToX;x+=scanStep){
                     // Verificar também dentro da linha: um único refinamento pode ser caro.
                     if(((x/scanStep)&31)==0&&budgetExpired(began))
                         return abortFrame(began);
