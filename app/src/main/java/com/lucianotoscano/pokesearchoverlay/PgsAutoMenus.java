@@ -919,7 +919,6 @@ final class PgsAutoMenus {
         PgsAutoHuntSettings.forCurrent(context).edit()
             .putBoolean(PgsAutoHuntSettings.ENABLED,true)
             .putBoolean(PgsAutoHuntSettings.CLICK_ENABLED,click).apply();
-        actions.modelsChanged(); // Para sessão anterior antes de trocar ação.
         dismissAll();
         actions.startSearch();
     }
