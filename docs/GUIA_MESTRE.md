@@ -1,4 +1,11 @@
+**LT350 — CONTRATO VISUAL ÚNICO EM QA (14/11/2026, ainda NÃO é Release):** CSS P1/P2 + Candy compartilham `assets/overlay_design_tokens.css`; menus nativos leem `OverlayVisualTheme.java` e `visualPrefsJson`; referência 1080px do proprietário em `docs/LT350_OVERLAY_REFERENCE_1080.json`. Teste Node LT350 e matriz pendente de capturas físicas no Samsung em `docs/LT350_OVERLAY_DESIGN_QA_20261114.md`. Sem alegar homologação, merge, APK ou instalação antes das evidências.
+
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+
+## LT349b — posicionamento lateral do Auto Click e alça branca (candidata)
+
+O menu Buscar Pokémon/Auto Click agora abre **à direita/esquerda da bolha**, igual ao comportamento das Pokébolas, inverte ao atingir a borda e mantém submenu ancorado ao arrastar/rotacionar. A alça no scanner mostra **somente o ícone branco de mover**, sem círculo ou fundo, mantendo toque e recorte. Referência: [LT349b](LT349B_ARK_MENU_LATERAL_ALCA_BRANCA_20261114.md). Só publicar após CI completo, release protegida e hash confirmado; testes Samsung permanecem BLOQUEADOS.
+
 
 ## LT349 ARK — candidato em homologação
 

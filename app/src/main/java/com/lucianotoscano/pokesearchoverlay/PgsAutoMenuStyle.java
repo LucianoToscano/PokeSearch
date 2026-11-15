@@ -9,7 +9,8 @@ import org.json.JSONObject;
  * menu opacity or rewrites user account/filter settings.
  */
 final class PgsAutoMenuStyle {
-    static final int CELL_DP=30, ART_DP=16, BASE_GAP_DP=2, CORNER_DP=5;
+    static final int CELL_DP=OverlayVisualTheme.TILE_DP, ART_DP=OverlayVisualTheme.ART_DP,
+        BASE_GAP_DP=OverlayVisualTheme.GAP_DP, CORNER_DP=OverlayVisualTheme.RADIUS_DP;
     final int menuTransparency,menuBlur,menuItemGap,menuOffsetX,menuOffsetY;
     final int gearMenuGap,popupWidth,popupHeight;
     final boolean vertical,light,guides;
@@ -27,13 +28,10 @@ final class PgsAutoMenuStyle {
         guides=p.optBoolean("menuGuides",p.optBoolean("showGuides",false));
     }
     static PgsAutoMenuStyle read(Context c){
-        String raw=c.getSharedPreferences("prefs",Context.MODE_PRIVATE)
-            .getString("visualPrefsJson","{}");
-        try{return new PgsAutoMenuStyle(new JSONObject(raw));}
-        catch(Exception ignored){return new PgsAutoMenuStyle(new JSONObject());}
+        return new PgsAutoMenuStyle(OverlayVisualTheme.read(c));
     }
     private static int bounded(int v,int lo,int hi){return Math.min(hi,Math.max(lo,v));}
-    int foreground(){return light?Color.rgb(21,34,49):Color.rgb(242,247,252);}
+    int foreground(){return OverlayVisualTheme.foreground(light);}
     int tileFill(){
         // #28292cce is the verified dock.html controls-window dark tile at 50.
         // The user transparency slider is honored without an extra PGS layer.

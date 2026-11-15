@@ -1,0 +1,60 @@
+{
+  "schema": "pokesearch-overlay-reference-v1",
+  "status": "NEEDS_PHYSICAL_CALIBRATION",
+  "source": "Valores de screenshot fornecidos pelo proprietário em 14/11/2026. CSS px e Android dp exigem medição em dispositivo.",
+  "referenceWidthPx": 1080,
+  "scaleFormula": "k = screenWidthPhysicalPx / 1080",
+  "barButtonPx": [
+    87,
+    77
+  ],
+  "barRadiusPx": 10,
+  "barGapPx": 9,
+  "barFill": "#747479",
+  "barOutlinePx": 1,
+  "barCapsule": false,
+  "popover": {
+    "offsetBelowPx": 12,
+    "radiusPx": 13,
+    "paddingVerticalPx": 11,
+    "paddingHorizontalPx": 22,
+    "width": "content",
+    "list": "#2d3037",
+    "controls": "#797a7f",
+    "header": "#262d37",
+    "headerHeightPx": 51
+  },
+  "text": {
+    "color": "#ebf5ff",
+    "bodyPx": 24,
+    "hintPx": 22,
+    "titlePx": 26,
+    "maxTitlePx": 28
+  },
+  "row": {
+    "minHeightPx": 60,
+    "maxHeightPx": 63,
+    "active": "#2f3b47",
+    "leftMarkPx": 4,
+    "leftMarkColor": "#6bb5a2",
+    "chevron": "›"
+  },
+  "controls": {
+    "iconPx": 77,
+    "chipHeightPx": 58,
+    "gapPx": 9,
+    "fill": "#818085",
+    "active": "#44454a",
+    "confirm": "#16644c",
+    "neutral": "#223448",
+    "closePx": 48,
+    "inputFill": "#131c25",
+    "inputHeightPx": 76,
+    "maxPx": 78,
+    "checkboxMaxPx": 24
+  },
+  "exceptions": [
+    "Bar width 87px exempt from generic max 78px",
+    "Do not confuse screenshot pixel units with WebView CSS px and native dp"
+  ]
+}
