@@ -8679,7 +8679,7 @@ function refreshQuickMenuStates(){
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
   if(id==="bg"){
    const on=searchSettings.backgroundOnly===true;
-   button.setAttribute("aria-pressed",String(on));
+   if(id==="bg")button.setAttribute("aria-pressed",String(on));
    if(button.dataset.backgroundArtActive!==String(on)){
     const old=button.querySelector(".quickGlyph");
     if(old)old.replaceWith(iconForQuick("bg","▧"));
