@@ -4428,6 +4428,32 @@
           "Avisos 'Sou passageiro' e de segurança da conta dependem de intervenção humana; nenhuma confirmação/consentimento é automatizada."
         ]
       }
+    },
+    {
+      "id": "lt358-scanner-deadline-native-forms-20261115",
+      "minVersionCode": 54561,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT358 — proteção adicional do scanner PGS",
+      "sections": {
+        "novidades": [
+          "Auditoria LT358 documenta critérios por espécie, forma e variante e pré-requisitos de uma futura biblioteca de modelos nativos assinada, ainda não habilitada."
+        ],
+        "melhorias": [
+          "O scanner agora verifica o orçamento de 4,5 segundos durante processamento, rolagem por linhas e refinamento de candidatos, descartando integralmente capturas incompletas.",
+          "Modelos nativos de formas ou variantes diferentes com confiança quase idêntica no mesmo slot são considerados ambíguos e não autorizam toque.",
+          "O contador de variantes adiadas é limpo ao alterar filtros, evitando diagnóstico antigo."
+        ],
+        "correcoes": [
+          "Corrigidos pontos em que um refinamento extenso podia ultrapassar o orçamento antes de a varredura verificar novamente o tempo disponível.",
+          "Adicionados testes específicos de prazos, limite de candidatos e ambiguidade de formas, sem alterar amostras pessoais."
+        ],
+        "emDesenvolvimento": [
+          "O catálogo de sprites nativas do feed permanece vazio. Nenhuma imagem proprietária do PGSharp foi incorporada.",
+          "Atualização remota de modelos assinados, antirollback, rotação de chaves e homologação das licenças são projeto futuro, não função já ativa.",
+          "A integração/teleporte e o reconhecimento real por espécie, formas, Shiny e Encontro ainda dependem de testes físicos Samsung.",
+          "Avisos de segurança e 'Sou passageiro' jamais são confirmados automaticamente; callback Android não comprova reação do jogo."
+        ]
+      }
     }
   ]
 }

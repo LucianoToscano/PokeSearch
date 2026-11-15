@@ -46,6 +46,8 @@ final class PgsAutoNativeModels {
     /** Verificação sob demanda: não abrir 1025+ texturas quando só dez espécies são filtradas. */
     static synchronized List<PgsAutoTemplateStore.Model> available(
         Context context,List<Integer> selectedSpecies){
+        // Não mostrar diagnóstico de variantes antigas após filtro/versão mudar.
+        lastDeferredCount=0;
         if(selectedSpecies==null||selectedSpecies.isEmpty())return Collections.emptyList();
         if(indexed==null)readCatalog(context);
         if(indexed.isEmpty()||compatibleVersion==null||compatibleVersion.isEmpty()||
