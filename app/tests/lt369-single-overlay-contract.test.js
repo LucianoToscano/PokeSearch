@@ -46,6 +46,11 @@ assert.match(menu,/private void holdToReorder\(View touch,View row,List<View> or
 assert.match(menu,/row\.performHapticFeedback/);
 assert.match(menu,/row\.setTranslationY\(event\.getRawY\(\)-downY\[0\]\)/);
 assert.match(menu,/nearestRow\(ordered,event\.getRawY\(\),from\)/);
+const drag=menu.split("private void holdToReorder(View touch")[1]
+    .split("private void markAlertIcon")[0];
+assert.ok(drag.indexOf("row.setTranslationY(0f)") <
+          drag.indexOf("int target=nearestRow(ordered,event.getRawY(),from)"),
+    "the dragged row must reset before finding destination");
 assert.match(menu,/holdToReorder\(label,line,speciesRows,from/);
 assert.match(menu,/holdToReorder\(entry,entry,stepRows,index/);
 assert.match(menu,/ACTION_SCROLL_FORWARD/);
