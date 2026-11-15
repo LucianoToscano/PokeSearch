@@ -13,7 +13,7 @@ assert.match(states,/PAUSED="paused"/);
 assert.match(states,/OFF="off"/);
 assert.match(service,/public static String monitorHomeState\(Context context\)/);
 assert.match(service,/PgsAutoWatchUiPolicy\.resolve\(/);
-assert.match(service,/stopWatchOnly\(false\);\s*halt\("PARADO"\)/,
+assert.match(service,/stopWatchOnly\(false\);\s*stopSequence\("PARADO"\);\s*halt\("PARADO"\)/,
     "destroy should invalidate captures but preserve explicit opt-in for reconnect");
 assert.doesNotMatch(service,/\.contains\("pgsharp"\)/,
     "no unrelated foreground package may pretend to be the game");
