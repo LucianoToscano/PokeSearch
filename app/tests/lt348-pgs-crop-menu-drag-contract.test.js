@@ -58,6 +58,6 @@ assert.match(gear,/QUICK_SVG\.appearance/);
 assert.match(gear,/android:viewportWidth="32"/);
 assert.match(move,/LT349: exact three stacked horizontal drag grip/);
 assert.match(menus,/icon\.setColorFilter\(0xFFFF596C\)/);
-assert.match(menus,/dp\(6\),dp\(6\),Gravity\.CENTER/);
+assert.match(menus,/dp\(8\),dp\(8\),Gravity\.CENTER/);
 assert.match(menus,/toolbar\.getLayoutParams\(\) instanceof WindowManager\.LayoutParams/);
 console.log("LT348: original vertical WebP, compact crop groups, drag, anchored PGS, red X, accessibility PASS");
