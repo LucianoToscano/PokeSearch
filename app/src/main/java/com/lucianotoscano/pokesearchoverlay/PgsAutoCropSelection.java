@@ -122,15 +122,14 @@ final class PgsAutoCropSelection extends View {
     private void drawMoveHandle(Canvas canvas){
         PointF center=moveHandleCenter();
         float cx=center.x,cy=center.y,d=density(),arm=9f*d,tip=3f*d;
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(0xC91A2632);
-        canvas.drawCircle(cx,cy,17f*d,paint);
+        // LT349b: ONLY the thin white four-direction glyph. No circle,
+        // outline, grey backing or dark fill around this drag handle.
+        // The invisible 22dp touch radius in onTouchEvent remains unchanged.
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(1.5f*d);
+        paint.setStrokeWidth(1.65f*d);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeJoin(Paint.Join.ROUND);
-        paint.setColor(0xF5FFFFFF);
-        canvas.drawCircle(cx,cy,16f*d,paint);
+        paint.setColor(0xFFFFFFFF);
         canvas.drawLine(cx-arm,cy,cx+arm,cy,paint);
         canvas.drawLine(cx,cy-arm,cx,cy+arm,paint);
         canvas.drawLine(cx-arm,cy,cx-arm+tip,cy-tip,paint);
