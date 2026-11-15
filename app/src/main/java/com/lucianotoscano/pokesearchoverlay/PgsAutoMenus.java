@@ -99,6 +99,111 @@ final class PgsAutoMenus {
         PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
         b.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));return b;
     }
+    /** LT369: arraste direto na linha após pressão longa, sem setas/≡.
+     * Nenhum gesto é enviado ao jogo. A alteração só é persistida no soltar.
+     * Os comandos acessíveis substituem setas visíveis no TalkBack. */
+    private interface RowMove {boolean to(int index);}
+    private ScrollView parentScroll(View view){
+        android.view.ViewParent parent=view.getParent();
+        while(parent!=null){
+            if(parent instanceof ScrollView)return (ScrollView)parent;
+            parent=parent.getParent();
+        }
+        return null;
+    }
+    private int nearestRow(List<View> rows,float fingerY,int previous){
+        int target=previous;
+        float best=Float.MAX_VALUE;
+        for(int i=0;i<rows.size();i++){
+            View row=rows.get(i);
+            if(!row.isShown()||row.getHeight()<=0)continue;
+            int[] screen=new int[2];
+            row.getLocationOnScreen(screen);
+            float center=screen[1]+row.getHeight()/2f;
+            float distance=Math.abs(fingerY-center);
+            if(distance<best){best=distance;target=i;}
+        }
+        return target;
+    }
+    private void holdToReorder(View touch,View row,List<View> ordered,
+        int from,RowMove move,Runnable refresh){
+        final float[] downY={0f};
+        final boolean[] dragging={false};
+        touch.setClickable(true);
+        touch.setLongClickable(true);
+        touch.setOnLongClickListener(v->{
+            dragging[0]=true;
+            row.setAlpha(.83f);
+            row.setElevation(dp(8));
+            row.performHapticFeedback(
+                android.view.HapticFeedbackConstants.LONG_PRESS);
+            android.view.ViewParent p=touch.getParent();
+            if(p!=null)p.requestDisallowInterceptTouchEvent(true);
+            return true;
+        });
+        touch.setOnTouchListener((v,event)->{
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    downY[0]=event.getRawY();
+                    return false; // Android mantém toque curto e long press nativos.
+                case MotionEvent.ACTION_MOVE:
+                    if(!dragging[0])return false;
+                    row.setTranslationY(event.getRawY()-downY[0]);
+                    ScrollView scroll=parentScroll(touch);
+                    if(scroll!=null){
+                        int[] loc=new int[2];scroll.getLocationOnScreen(loc);
+                        if(event.getRawY()<loc[1]+dp(24))
+                            scroll.scrollBy(0,-dp(12));
+                        else if(event.getRawY()>loc[1]+scroll.getHeight()-dp(24))
+                            scroll.scrollBy(0,dp(12));
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if(!dragging[0])return false; // toque curto continua editando.
+                    int target=nearestRow(ordered,event.getRawY(),from);
+                    dragging[0]=false;
+                    row.setTranslationY(0f);
+                    row.setAlpha(1f);row.setElevation(0f);
+                    if(target!=from){
+                        if(move.to(target))refresh.run();
+                        else Toast.makeText(context,"Não foi possível mover esta etapa.",
+                            Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    if(!dragging[0])return false;
+                    dragging[0]=false;
+                    row.setTranslationY(0f);
+                    row.setAlpha(1f);row.setElevation(0f);
+                    return true;
+                default:return false;
+            }
+        });
+        touch.setAccessibilityDelegate(new View.AccessibilityDelegate(){
+            @Override public void onInitializeAccessibilityNodeInfo(View host,
+                android.view.accessibility.AccessibilityNodeInfo info){
+                super.onInitializeAccessibilityNodeInfo(host,info);
+                info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                    .AccessibilityAction.ACTION_SCROLL_FORWARD);
+                info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                    .AccessibilityAction.ACTION_SCROLL_BACKWARD);
+            }
+            @Override public boolean performAccessibilityAction(View host,
+                int action,android.os.Bundle args){
+                int target=action==
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD?
+                        from+1:action==
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD?
+                        from-1:-1;
+                if(target>=0&&target<ordered.size()){
+                    if(move.to(target)){refresh.run();return true;}
+                    return false;
+                }
+                return super.performAccessibilityAction(host,action,args);
+            }
+        });
+    }
+
     private void markAlertIcon(ImageButton icon,boolean active){
         PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
         icon.setBackground(bg(active?0x773A504B:v.tileFill(),
