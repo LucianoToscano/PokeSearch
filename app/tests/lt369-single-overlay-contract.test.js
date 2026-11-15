@@ -15,6 +15,11 @@ assert.match(start,/if\(isOpen\(\)\)/);
 assert.match(central,/String\[\] names=\{"Pokémon","Ação","Ajustes"\}/);
 assert.match(central,/mount\(root,240,385\)/);
 assert.match(menu,/LT369: popup no lado do próprio ícone de mão/);
+assert.match(menu,/LT369: selecionar PGSharp\/Pokemod é parte da aba Pokémon/);
+const pokemon=menu.split("private void appendCentralPokemon(LinearLayout root)")[1].split("private void appendCentralActions")[0];
+assert.match(pokemon,/PgsAutoHostSettings\.select\(context,profile\)/);
+assert.match(pokemon,/PgsAutoHostSettings\.setSidebarSide/);
+assert.doesNotMatch(pokemon,/showHostProfiles\(\)/);
 assert.match(menu,/if\(panel==opened\)reanchor\(anchorX,anchorY\)/);
 // Keep same bubble single-tap retract and long press for menu.
 assert.match(service,/quickMenus\.collapseOneLevel\(\)/);
