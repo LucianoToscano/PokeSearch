@@ -1146,135 +1146,179 @@ final class PgsAutoMenus {
         }
         actions.sequenceChanged();showSequence();
     }
+    // LT368: o editor é conteúdo da ABA AÇÃO, não uma segunda janela.
+    // A mira e o seletor de sprite usam somente suas superfícies transitórias.
     void showSequence(){
+        PgsSmartSearchSettings.selectMode(context,PgsSmartSearchSettings.SEQUENCE);
+        showCentral(1);
+    }
+    private void appendCentralSequence(LinearLayout root){
         String host=PgsAutoHostSettings.current(context);
         List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(context);
         boolean rotated=!steps.isEmpty()&&
             PgsSequenceStore.landscape(context)!=sequenceLandscape();
-        LinearLayout root=panelRoot("◎ SEQUÊNCIAS",
-            PgsAutoHostPolicy.shortLabel(host)+" · "+steps.size()+"/"+
-            PgsSequencePolicy.MAX_STEPS);
-        TextView caption=label(
-            rotated?"Gire a tela para a orientação em que os pontos foram criados":
-            "Pontos normalizados · toques somente após ativação explícita",9,false);
-        caption.setMaxLines(2);
-        root.addView(caption,margined(-1,dp(24),1));
-
+        if(centralStep>=steps.size())centralStep=-1;
+        TextView summary=label("Sequência · "+steps.size()+"/"+
+            PgsSequencePolicy.MAX_STEPS+" etapas · "+
+            (PgsSequencePolicy.estimatedMs(steps)/1000f)+"s estimados",9,true);
+        summary.setSingleLine(true);
+        summary.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(summary,margined(-1,dp(19),4));
+        if(rotated){
+            TextView warning=label("Orientação diferente. Volte à orientação "+
+                "usada para salvar os pontos.",9,false);
+            warning.setMaxLines(2);
+            root.addView(warning,margined(-1,dp(38),1));
+        }
         LinearLayout adds=horizontal();
-        String[] titles={"+ Toque","↗ Arrastar","+ Sprite","+ Espera"};
-        for(int i=0;i<4;i++){
+        String[] labels={"+ Toque","↗ Arrastar","+ Sprite","+ Espera"};
+        for(int i=0;i<labels.length;i++){
             final int action=i;
-            Button b=button(titles[i],9);
-            b.setContentDescription("Adicionar etapa: "+titles[i]);
-            b.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host)&&
+            Button add=button(labels[i],9);
+            add.setContentDescription("Adicionar etapa: "+labels[i]);
+            add.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host)&&
                 steps.size()<PgsSequencePolicy.MAX_STEPS);
-            b.setOnClickListener(v->{
+            add.setOnClickListener(v->{
                 if(action==0){dismissAll();actions.sequencePick("TAP",-1,false);}
                 else if(action==1){dismissAll();actions.sequencePick("SWIPE",-1,false);}
                 else if(action==2)showSequenceSprites(-1);
-                else sequenceEdited(PgsSequenceStore.add(context,
-                    PgsSequencePolicy.waitStep(1000),sequenceLandscape()));
+                else {
+                    boolean ok=PgsSequenceStore.add(context,
+                        PgsSequencePolicy.waitStep(1000),sequenceLandscape());
+                    if(ok&&!PgsSmartSearchSettings.automaticDefaults(context))
+                        centralStep=PgsSequenceStore.load(context).size()-1;
+                    sequenceEdited(ok);
+                }
             });
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
-            if(i>0)p.leftMargin=dp(2);
-            adds.addView(b,p);
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(29),1);
+            if(i>0)lp.leftMargin=dp(2);
+            adds.addView(add,lp);
         }
-        root.addView(adds,margined(-1,dp(31),3));
+        root.addView(adds,margined(-1,dp(29),2));
 
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
         LinearLayout items=vertical();
         if(steps.isEmpty()){
-            TextView empty=label("Use + para criar passos. Toque no número "+
-                "depois para editar posição, duração e espera.",10,false);
+            TextView empty=label("Toque em + para adicionar a primeira ação. "+
+                "Pontos são escolhidos na tela do jogo.",10,false);
             empty.setMaxLines(3);
-            items.addView(empty,margined(-1,dp(65),2));
+            items.addView(empty,margined(-1,dp(64),3));
         }
         for(int i=0;i<steps.size();i++){
             final int index=i;
-            PgsSequencePolicy.Step st=steps.get(i);
-            LinearLayout line=horizontal();
-            Button edit=button((i+1)+"  "+st.title()+
-                (st.type==PgsSequencePolicy.Type.WAIT?
-                " · "+st.waitMs/1000f+"s":""),10);
-            edit.setContentDescription("Editar etapa "+(i+1)+" "+st.title());
-            edit.setOnClickListener(v->showSequenceStep(index));
-            line.addView(edit,new LinearLayout.LayoutParams(0,dp(29),1));
-            String[] icons={"↑","↓","×"};
-            for(int j=0;j<3;j++){
+            PgsSequencePolicy.Step step=steps.get(i);
+            Button entry=button((i+1)+". "+step.title()+
+                (step.type==PgsSequencePolicy.Type.WAIT?
+                    " · "+(step.waitMs/1000f)+"s":"")+"  ▾",10);
+            markChosen(entry,centralStep==i);
+            entry.setContentDescription("Etapa "+(i+1)+
+                ". Toque para editar sem sair da aba Ação.");
+            entry.setOnClickListener(v->{
+                centralStep=centralStep==index?-1:index;
+                showCentral(1);
+            });
+            items.addView(entry,margined(-1,dp(28),2));
+            if(centralStep!=i)continue;
+            LinearLayout controls=horizontal();
+            String[] icons={"↑","↓","▣","×"};
+            for(int j=0;j<icons.length;j++){
                 final int op=j;
-                Button button=button(icons[j],12);
-                button.setContentDescription((op==0?"Subir":op==1?"Descer":"Excluir")+
-                    " etapa "+(i+1));
-                if(op==0&&i==0||op==1&&i==steps.size()-1)
-                    button.setEnabled(false);
-                button.setOnClickListener(v->{
+                Button btn=button(icons[j],12);
+                btn.setContentDescription(new String[]{"Subir","Descer",
+                    "Copiar passo","Excluir"}[j]+" etapa "+(index+1));
+                btn.setEnabled(op!=0||index>0);
+                if(op==1&&index==steps.size()-1)btn.setEnabled(false);
+                if(op==3)btn.setTextColor(0xFFFF596C);
+                btn.setOnClickListener(v->{
                     boolean ok=op==0?PgsSequenceStore.move(context,index,-1):
                         op==1?PgsSequenceStore.move(context,index,1):
+                        op==2?PgsSequenceStore.copy(context,index):
                             PgsSequenceStore.delete(context,index);
+                    if(op==0&&ok)centralStep=index-1;
+                    if(op==1&&ok)centralStep=index+1;
+                    if(op==3&&ok)centralStep=-1;
                     sequenceEdited(ok);
                 });
-                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(
-                    dp(27),dp(29));p.leftMargin=dp(2);line.addView(button,p);
+                LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(27),1);
+                if(j>0)p.leftMargin=dp(2);
+                controls.addView(btn,p);
             }
-            items.addView(line,margined(-1,dp(29),2));
+            items.addView(controls,margined(-1,dp(27),2));
+            if(step.type==PgsSequencePolicy.Type.TAP||
+               step.type==PgsSequencePolicy.Type.SWIPE){
+                Button source=button("◎ Mover origem",9);
+                source.setOnClickListener(v->{dismissAll();
+                    actions.sequencePick("EDIT",index,false);});
+                items.addView(source,margined(-1,dp(28),2));
+                if(step.type==PgsSequencePolicy.Type.SWIPE){
+                    Button target=button("↗ Mover destino",9);
+                    target.setOnClickListener(v->{dismissAll();
+                        actions.sequencePick("EDIT",index,true);});
+                    items.addView(target,margined(-1,dp(28),2));
+                }
+                int[] durations=step.type==PgsSequencePolicy.Type.TAP?
+                    new int[]{90,150,220}:
+                    new int[]{200,350,500,800,1200,1800};
+                Button duration=button("Duração: "+step.gestureMs+" ms ▾",9);
+                duration.setOnClickListener(v->{
+                    int pos=0;
+                    for(int j=0;j<durations.length;j++)
+                        if(durations[j]==step.gestureMs){pos=j+1;break;}
+                    sequenceEdited(PgsSequenceStore.changeGesture(context,index,
+                        durations[pos%durations.length]));
+                });
+                items.addView(duration,margined(-1,dp(28),2));
+            }else if(step.type==PgsSequencePolicy.Type.SPRITE){
+                Button sprite=button("◎ Trocar modelo salvo",9);
+                sprite.setOnClickListener(v->showSequenceSprites(index));
+                items.addView(sprite,margined(-1,dp(28),2));
+            }
+            int[] waits=step.type==PgsSequencePolicy.Type.WAIT?
+                new int[]{500,1000,2000,5000,10000,30000}:
+                new int[]{0,300,600,1000,2000,5000,10000};
+            Button wait=button((step.type==PgsSequencePolicy.Type.WAIT?
+                "Esperar: ":"Após etapa: ")+step.waitMs+" ms ▾",9);
+            wait.setOnClickListener(v->{
+                int pos=0;
+                for(int j=0;j<waits.length;j++)
+                    if(waits[j]==step.waitMs){pos=j+1;break;}
+                sequenceEdited(PgsSequenceStore.changeWait(context,index,
+                    waits[pos%waits.length]));
+            });
+            items.addView(wait,margined(-1,dp(28),2));
         }
         scroll.addView(items);
         int available=PgsAutoMenuStyle.read(context).popupHeight;
-        if(available<280)caption.setVisibility(View.GONE);
-        int scrollHeight=Math.max(30,Math.min(165,
-            available-(caption.getVisibility()==View.GONE?187:213)));
-        root.addView(scroll,margined(-1,dp(scrollHeight),3));
-
+        int height=Math.max(35,Math.min(available<300?85:132,
+            available-205));
+        root.addView(scroll,margined(-1,dp(height),3));
         CheckBox consent=new CheckBox(context);
-        consent.setText("Autorizar execução de gestos neste perfil");
-        consent.setTextSize(9);consent.setTextColor(fg());
+        consent.setText("Autorizar execução da sequência");
+        consent.setTextSize(10);consent.setTextColor(fg());
         consent.setChecked(PgsSequenceStore.canRun(context));
         consent.setEnabled(!PgsAutoHostPolicy.OTHER.equals(host));
-        consent.setOnCheckedChangeListener((b,enabled)->{
-            PgsSequenceStore.setRunConsent(context,enabled);
-            if(!enabled)actions.sequenceStop();
+        consent.setOnCheckedChangeListener((b,on)->{
+            PgsSequenceStore.setRunConsent(context,on);
+            if(!on)actions.sequenceStop();
         });
-        root.addView(consent,margined(-1,dp(28),1));
-        LinearLayout controls=horizontal();
-        String[] labels={"◉ Prévia","▷ Executar","▣ Colar"};
-        for(int i=0;i<labels.length;i++){
-            final int key=i;Button btn=button(labels[i],10);
-            btn.setEnabled(!rotated&&!steps.isEmpty()&&
-                !PgsAutoHostPolicy.OTHER.equals(host));
-            if(i==2)btn.setEnabled(!rotated&&!PgsAutoHostPolicy.OTHER.equals(host));
-            btn.setOnClickListener(v->{
-                if(key==0){dismissAll();actions.sequencePreview();}
-                else if(key==1){
-                    if(!PgsSequenceStore.canRun(context)){
-                        Toast.makeText(context,"Ative autorização de execução "+
-                            "para este cliente.",Toast.LENGTH_LONG).show();return;
-                    }
-                    dismissAll();actions.sequenceRun();
-                }else sequenceEdited(PgsSequenceStore.paste(
-                    context,sequenceLandscape()));
-            });
-            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
-            if(i>0)p.leftMargin=dp(3);controls.addView(btn,p);
-        }
-        root.addView(controls,margined(-1,dp(31),3));
-
-        LinearLayout bottom=horizontal();
-        Button stop=button("■ Parar",10);
-        stop.setOnClickListener(v->{actions.sequenceStop();showSequence();});
-        bottom.addView(stop,new LinearLayout.LayoutParams(0,dp(29),1));
-        Button erase=button("Limpar",10);
-        erase.setContentDescription("Apagar as etapas deste perfil; "+
-            "não modifica modelos de sprites nem contas");
-        erase.setOnClickListener(v->sequenceEdited(PgsSequenceStore.clear(context)));
-        LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(0,dp(29),1);
-        ep.leftMargin=dp(3);bottom.addView(erase,ep);
-        Button back=button("← Buscar",10);
-        back.setOnClickListener(v->showSearch());
-        LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(0,dp(29),1);
-        bp.leftMargin=dp(3);bottom.addView(back,bp);
-        root.addView(bottom,margined(-1,dp(29),3));
-        mount(root,240,338);
+        root.addView(consent,margined(-1,dp(30),1));
+        LinearLayout extras=horizontal();
+        Button paste=button("▣ Colar passo",9);
+        paste.setOnClickListener(v->sequenceEdited(
+            PgsSequenceStore.paste(context,sequenceLandscape())));
+        extras.addView(paste,new LinearLayout.LayoutParams(0,dp(28),1));
+        Button clear=button("Limpar etapas",9);
+        clear.setContentDescription("Segure para limpar a sequência deste perfil");
+        clear.setOnClickListener(v->Toast.makeText(context,
+            "Segure para apagar todas as etapas.",Toast.LENGTH_SHORT).show());
+        clear.setOnLongClickListener(v->{
+            centralStep=-1;
+            sequenceEdited(PgsSequenceStore.clear(context));return true;
+        });
+        LinearLayout.LayoutParams clp=new LinearLayout.LayoutParams(0,dp(28),1);
+        clp.leftMargin=dp(3);extras.addView(clear,clp);
+        root.addView(extras,margined(-1,dp(28),2));
     }
     private void showSequenceSprites(int editIndex){
         LinearLayout root=panelRoot("◎ SPRITE", "modelo selecionado");
@@ -1307,74 +1351,10 @@ final class PgsAutoMenus {
         root.addView(back,margined(-1,dp(29),4));
         mount(root,238,265);
     }
+    // Passo expandido dentro da mesma aba, sem abrir popup independente.
     void showSequenceStep(int index){
-        List<PgsSequencePolicy.Step> steps=PgsSequenceStore.load(context);
-        if(index<0||index>=steps.size()){showSequence();return;}
-        PgsSequencePolicy.Step step=steps.get(index);
-        LinearLayout root=panelRoot("PASSO "+(index+1),step.title());
-        TextView detail=label("Ajuste a etapa sem alterar os outros pontos. "+
-            "Cada alteração interrompe uma execução ativa.",10,false);
-        detail.setMaxLines(2);root.addView(detail,margined(-1,dp(40),2));
-        if(step.type==PgsSequencePolicy.Type.TAP||
-           step.type==PgsSequencePolicy.Type.SWIPE){
-            Button point=button("◎ Posicionar origem",10);
-            point.setOnClickListener(v->{dismissAll();
-                actions.sequencePick("EDIT",index,false);});
-            root.addView(point,margined(-1,dp(31),3));
-            if(step.type==PgsSequencePolicy.Type.SWIPE){
-                Button dest=button("➚ Posicionar destino",10);
-                dest.setOnClickListener(v->{dismissAll();
-                    actions.sequencePick("EDIT",index,true);});
-                root.addView(dest,margined(-1,dp(31),3));
-            }
-        }else if(step.type==PgsSequencePolicy.Type.SPRITE){
-            Button select=button("◎ Alterar sprite salva",10);
-            select.setOnClickListener(v->showSequenceSprites(index));
-            root.addView(select,margined(-1,dp(30),3));
-        }
-        if(step.type==PgsSequencePolicy.Type.TAP||
-           step.type==PgsSequencePolicy.Type.SWIPE){
-            Button length=button("Duração do gesto: "+step.gestureMs+" ms ▾",10);
-            int[] options=step.type==PgsSequencePolicy.Type.TAP?
-                new int[]{90,150,220}:new int[]{200,350,500,800,1200,1800};
-            length.setOnClickListener(v->{
-                int next=0;
-                for(int i=0;i<options.length;i++)
-                    if(options[i]==step.gestureMs){next=(i+1)%options.length;break;}
-                sequenceEdited(PgsSequenceStore.changeGesture(
-                    context,index,options[next]));
-            });
-            root.addView(length,margined(-1,dp(31),3));
-        }
-        Button wait=button((step.type==PgsSequencePolicy.Type.WAIT?
-            "Aguardar: ":"Depois da etapa: ")+step.waitMs+" ms ▾",10);
-        wait.setOnClickListener(v->{
-            int[] options=step.type==PgsSequencePolicy.Type.WAIT?
-                new int[]{500,1000,2000,5000,10000,30000}:
-                new int[]{0,300,600,1000,2000,5000,10000};
-            int next=0;
-            for(int i=0;i<options.length;i++)
-                if(options[i]==step.waitMs){next=(i+1)%options.length;break;}
-            sequenceEdited(PgsSequenceStore.changeWait(
-                context,index,options[next]));
-        });
-        root.addView(wait,margined(-1,dp(31),3));
-        LinearLayout controls=horizontal();
-        Button copy=button("▣ Copiar passo",10);
-        copy.setOnClickListener(v->{
-            if(PgsSequenceStore.copy(context,index)){
-                Toast.makeText(context,"Etapa copiada neste perfil. "+
-                    "Use Colar para duplicar.",Toast.LENGTH_SHORT).show();
-                showSequence();
-            }
-        });
-        controls.addView(copy,new LinearLayout.LayoutParams(0,dp(31),1));
-        Button back=button("← Sequência",10);
-        back.setOnClickListener(v->showSequence());
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(31),1);
-        p.leftMargin=dp(3);controls.addView(back,p);
-        root.addView(controls,margined(-1,dp(31),5));
-        mount(root,238,285);
+        centralStep=index;
+        showSequence();
     }
 
     void showAutoHunt(){
