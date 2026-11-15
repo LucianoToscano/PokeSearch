@@ -460,6 +460,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
+        // Uma perda temporária do foco de acessibilidade não equivale a "desligar".
         // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
         status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
     }
@@ -766,8 +767,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                 R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
             currentArtworkOn=on;
         }
-        setCoreState(watching?PgsAutoVisualState.Core.WHITE:
-            PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
+        if(watching)setCoreState(PgsAutoVisualState.Core.WHITE);
+        else setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
         if(handBadge!=null){
             handBadge.setText(watching?"◎":shiny?"✨":
                 value.contains("PAUSADO")?"!":"");
