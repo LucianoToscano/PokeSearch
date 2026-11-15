@@ -36,7 +36,10 @@ for(const x of ["R.drawable.pgs_menu_customize","R.drawable.pgs_shiny_spark",
 assert.match(pulse,/FLAG_NOT_TOUCHABLE/);
 assert.match(pulse,/FLAG_NOT_FOCUSABLE/);
 assert.match(pulse,/TYPE_ACCESSIBILITY_OVERLAY/);
-assert.match(pulse,/setDuration\(380L\)/);
+// LT352 extends the same safe indicator; a longer pulse remains touch-through.
+assert.match(pulse,/EFFECT_MS=960L/);
+assert.match(pulse,/setDuration\(EFFECT_MS\)/);
+assert.match(pulse,/setWillNotDraw\(false\)/);
 assert.match(pulse,/showTapIndicator",true/);
 assert.match(svc,/tapIndicator.show\(x,y\)/);
 assert.match(svc,/tapIndicator\.clear\(\)/);
