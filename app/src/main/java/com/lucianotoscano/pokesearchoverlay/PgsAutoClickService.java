@@ -88,6 +88,9 @@ public final class PgsAutoClickService extends AccessibilityService {
     // Monitor passivo LT361: sessão exclusiva, sem dispatchGesture.
     private boolean watching=false,watchBusy=false;
     private int watchTicket=0;
+    // LT363: métricas locais temporárias; sem capturas, conta, GPS ou rede.
+    private final PgsWatchSessionDiagnostics watchMetrics=
+        new PgsWatchSessionDiagnostics();
     private final java.util.HashMap<String,Long> watchLastAlert=
         new java.util.HashMap<>();
     private final Runnable watchTick=this::scanWatchOnly;
@@ -692,6 +695,12 @@ public final class PgsAutoClickService extends AccessibilityService {
      * LT362: só informa o estado do monitor passivo à Home.
      * Nunca consulta estado de gesto/teleporte para classificá-lo como favorito.
      */
+    /** Snapshot RAM, solicitado apenas ao abrir o diagnóstico. */
+    public static String monitorDiagnostics(){
+        PgsAutoClickService live=instance;
+        return live==null?"Serviço de Acessibilidade desconectado; sem métricas.": 
+            live.watchMetrics.summary();
+    }
     public static String monitorHomeState(Context context){
         boolean optedIn=PgsAutoWatchSettings.enabled(context);
         PgsAutoClickService live=instance;
@@ -1212,10 +1221,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void stopWatchOnly(boolean clearPreference){
         handler.removeCallbacks(watchTick);
         watchTicket++;watchBusy=false;watching=false;
+        watchMetrics.cancel(); // descarte também a rodada de métricas antiga.
         if(clearPreference)PgsAutoWatchSettings.setEnabled(this,false);
         if(!running)status("PARADO");
     }
     private void scheduleWatch(long millis){
+        if(watchBusy)watchMetrics.finish(SystemClock.elapsedRealtime(),lastStatus);
         watchBusy=false;
         handler.removeCallbacks(watchTick);
         if(watching)handler.postDelayed(watchTick,millis);
@@ -1285,6 +1296,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             return;
         }
         watchBusy=true;
+        watchMetrics.begin(SystemClock.elapsedRealtime());
         final int stamp=watchTicket;
         status("MONITOR · LENDO LISTA");
         // Nem callback de screenshot ausente nem fila travada retém o monitor.
@@ -1341,6 +1353,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 new java.util.HashSet<>();
                             java.util.ArrayList<String> names=
                                 new java.util.ArrayList<>();
+                            int visuallyConfirmed=0;
                             final long now=SystemClock.elapsedRealtime();
                             for(PgsAutoIconDetector.Match a:first){
                                 if(!PgsAutoCatalog.isSelectedName(
@@ -1356,6 +1369,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                                     }
                                 }
                                 if(!verified)continue;
+                                visuallyConfirmed++;
                                 Long last=watchLastAlert.get(key);
                                 if(!PgsAutoWatchPolicy.mayNotify(true,
                                     last==null?-1L:last,now))continue;
@@ -1364,6 +1378,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 names.add(a.name);
                                 watchLastAlert.put(key,now);
                             }
+                            // O número solicitado não comprova entrega Android/DND.
+                            watchMetrics.observe(first.size(),visuallyConfirmed,names.size());
                             if(!names.isEmpty()){
                                 String label=PgsAutoHostPolicy.displayLabel(host);
                                 String body="Na lista: "+String.join(", ",names)+
