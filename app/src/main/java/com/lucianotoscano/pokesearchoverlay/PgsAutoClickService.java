@@ -96,14 +96,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
     private boolean isGamePackage(String pkg){
-        if(pkg==null)return false;
-        // Pokemod injeta no jogo oficial: não tocar no gerenciador nem em
-        // aplicativos de terceiros com nomes parecidos com PGSharp.
-        if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(this)))
-            return PgsAutoHostPolicy.isGameWindow(pkg);
-        // Preserva comportamento do perfil PGSharp anterior à LT359.
-        return PgsAutoHostPolicy.isGameWindow(pkg)||
-            pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
+        // LT362: ambos os perfis só podem ler a janela do jogo oficial.
+        // Nome contendo "pgsharp" não é prova de identidade do processo.
+        // O gerenciador do Pokemod também nunca é a janela do jogo.
+        return PgsAutoHostPolicy.isGameWindow(pkg);
     }
     private boolean isGameVisible(){
         // Samsung: uma janela TYPE_ACCESSIBILITY_OVERLAY do próprio PGS
@@ -465,7 +461,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
     }
     @Override public void onDestroy() {
-        stopWatchOnly(true);
+        // Perda do serviço invalida leituras, mas não revoga opt-in do usuário.
+        // A Home exibirá falta de Acessibilidade até uma reconexão autorizada.
+        stopWatchOnly(false);
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
@@ -689,6 +687,26 @@ public final class PgsAutoClickService extends AccessibilityService {
             live.reloadDetector();
             live.status("PARADO");
         });
+    }
+    /**
+     * LT362: só informa o estado do monitor passivo à Home.
+     * Nunca consulta estado de gesto/teleporte para classificá-lo como favorito.
+     */
+    public static String monitorHomeState(Context context){
+        boolean optedIn=PgsAutoWatchSettings.enabled(context);
+        PgsAutoClickService live=instance;
+        if(live==null)return PgsAutoWatchUiPolicy.resolve(
+            optedIn,false,false,false,false,false);
+        boolean hasModel=live.detector!=null&&live.detector.templateCount()>0;
+        boolean gameVisible=optedIn&&live.watching&&live.isGameVisible();
+        boolean safe=gameVisible&&
+            !live.gameAccountSafetyNoticePresent()&&
+            !live.passengerPromptPresent()&&
+            !(live.quickMenus!=null&&live.quickMenus.hasPanel())&&
+            !live.running&&!live.teachingInProgress&&!live.teachingScheduled;
+        boolean confirmed=live.lastStatus.contains("FAVORITO(S)");
+        return PgsAutoWatchUiPolicy.resolve(
+            optedIn,true,live.watching,hasModel,safe,confirmed);
     }
     public static String searchStatus(){
         PgsAutoClickService live=instance;

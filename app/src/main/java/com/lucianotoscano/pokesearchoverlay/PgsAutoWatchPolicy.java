@@ -27,6 +27,8 @@ final class PgsAutoWatchPolicy {
             int widthB,int heightB){
         if(idA==null||groupA==null||idB==null||groupB==null||
             widthA<=0||heightA<=0||widthB<=0||heightB<=0)return false;
+        // Não confirmar uma miniatura atravessando rotação retrato/paisagem.
+        if((widthA>=heightA)!=(widthB>=heightB))return false;
         return idA.equals(idB)&&groupA.equals(groupB)&&
             Math.abs(xA/(float)widthA-xB/(float)widthB)<=.026f&&
             Math.abs(yA/(float)heightA-yB/(float)heightB)<=.018f;
