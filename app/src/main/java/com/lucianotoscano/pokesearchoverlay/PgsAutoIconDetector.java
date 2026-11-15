@@ -50,6 +50,7 @@ final class PgsAutoIconDetector {
         final int width,height,priority;
         final String id,name;
         final boolean nativeModel;
+        final String nativeForm,nativeVariant;
         final int[] xs,ys;
         final float[] centered;
         final float variance;
@@ -59,6 +60,7 @@ final class PgsAutoIconDetector {
             width=bmp.getWidth();height=bmp.getHeight();
             this.priority=priority;id=model.id;name=model.name;
             nativeModel=model.builtIn;
+            nativeForm=model.nativeForm;nativeVariant=model.nativeVariant;
             List<Integer> xx=new ArrayList<>(),yy=new ArrayList<>();
             List<Float> values=new ArrayList<>();
             int step=Math.max(3,Math.round(width/13f));
@@ -89,11 +91,13 @@ final class PgsAutoIconDetector {
         final int x,y,width,height,priority;
         final String id,name;
         final boolean nativeModel;
+        final String nativeForm,nativeVariant;
         final float score;
         Candidate(int x,int y,Template t,float score){
             this.x=x;this.y=y;width=t.width;height=t.height;
             priority=t.priority;id=t.id;name=t.name;this.score=score;
             nativeModel=t.nativeModel;
+            nativeForm=t.nativeForm;nativeVariant=t.nativeVariant;
         }
     }
     private final List<Template> templates=new ArrayList<>();
@@ -138,10 +142,20 @@ final class PgsAutoIconDetector {
     int lastAmbiguousSlots(){return lastAmbiguousSlots;}
     long lastScanMillis(){return lastScanMillis;}
     boolean lastScanAborted(){return lastScanAborted;}
+    private boolean budgetExpired(long began){
+        return PgsAutoScanDeadlinePolicy.exceeded(
+            began,android.os.SystemClock.elapsedRealtime(),MAX_SCAN_MILLIS);
+    }
+    private List<Match> abortFrame(long began){
+        lastScanAborted=true;
+        lastScanMillis=Math.max(0L,android.os.SystemClock.elapsedRealtime()-began);
+        return Collections.emptyList(); // não devolver resultado parcial para gesto.
+    }
     List<Match> find(Bitmap screenshot){
         long began=android.os.SystemClock.elapsedRealtime();
         lastAmbiguousSlots=0;lastScanMillis=0;lastScanAborted=false;
-        if(templates.isEmpty())return Collections.emptyList();
+        if(templates.isEmpty()||screenshot==null||screenshot.isRecycled())
+            return Collections.emptyList();
         float scale=ANALYSIS_WIDTH/(float)screenshot.getWidth();
         int height=Math.max(1,Math.round(screenshot.getHeight()*scale));
         Bitmap reduced=Bitmap.createScaledBitmap(screenshot,ANALYSIS_WIDTH,height,true);
@@ -150,6 +164,7 @@ final class PgsAutoIconDetector {
         if(reduced!=screenshot)reduced.recycle();
         int[] lum=new int[raw.length];
         for(int i=0;i<raw.length;i++)lum[i]=gray(raw[i]);
+        if(budgetExpired(began))return abortFrame(began);
         ArrayList<Candidate> candidates=new ArrayList<>();
         // Pode ficar lento com muitos modelos; roda numa thread auxiliar.
         // Passos menores para ícones pequenos; posição final é refinada
@@ -160,19 +175,20 @@ final class PgsAutoIconDetector {
             if(maxX<0||maxY<0)continue;
             int row=0;
             for(int y=0;y<=maxY;y+=scanStep){
-                if((++row&7)==0&&
-                    android.os.SystemClock.elapsedRealtime()-began>MAX_SCAN_MILLIS){
-                    lastScanAborted=true;
-                    lastScanMillis=android.os.SystemClock.elapsedRealtime()-began;
-                    return Collections.emptyList();
-                }
+                if((++row&7)==0&&budgetExpired(began))
+                    return abortFrame(began);
                 for(int x=0;x<=maxX;x+=scanStep){
+                    // Verificar também dentro da linha: um único refinamento pode ser caro.
+                    if(((x/scanStep)&31)==0&&budgetExpired(began))
+                        return abortFrame(began);
                     if(!insideFeed(x+t.width/2,y+t.height/2,w,h))continue;
                     float preliminary=correlation(lum,w,x,y,t);
                     if(preliminary<.55f)continue;
+                    if(budgetExpired(began))return abortFrame(began);
                     float best=preliminary;int bx=x,by=y;
                     // Refina com passos de 1px sem assumir posição fixa.
                     for(int dy=-4;dy<=4;dy++){
+                        if(budgetExpired(began))return abortFrame(began);
                         for(int dx=-4;dx<=4;dx++){
                             int xx=x+dx,yy=y+dy;
                             if(xx<0||yy<0||xx+t.width>w||yy+t.height>h)continue;
@@ -185,20 +201,21 @@ final class PgsAutoIconDetector {
                         colorCompatible(raw,w,bx,by,t))
                         {
                             candidates.add(new Candidate(bx,by,t,best));
-                            if(candidates.size()>MAX_SCAN_CANDIDATES){
-                                lastScanAborted=true;
-                                lastScanMillis=android.os.SystemClock.elapsedRealtime()-began;
-                                return Collections.emptyList();
-                            }
+                            if(PgsAutoScanDeadlinePolicy.candidateLimitExceeded(
+                                candidates.size(),MAX_SCAN_CANDIDATES))
+                                return abortFrame(began);
                         }
                 }
             }
         }
+        if(budgetExpired(began))return abortFrame(began);
         candidates.sort((a,b)->Float.compare(b.score,a.score));
         List<Candidate> unique=new ArrayList<>();
         List<Candidate> blocked=new ArrayList<>();
-        int ambiguousSlots=0;
+        int ambiguousSlots=0,processed=0;
         for(Candidate c:candidates){
+            if((++processed&31)==0&&budgetExpired(began))
+                return abortFrame(began);
             // Um slot anteriormente ambíguo não pode reaparecer como outro modelo.
             boolean duplicate=false;
             for(Candidate denied:blocked){
@@ -213,7 +230,11 @@ final class PgsAutoIconDetector {
                 if(!PgsAutoMatchPolicy.sameSlot(c.x,c.y,c.width,c.height,
                     seen.x,seen.y,seen.width,seen.height))continue;
                 if(PgsAutoMatchPolicy.ambiguousDifferentSpecies(
-                    speciesKey(c.name),speciesKey(seen.name),c.score,seen.score)){
+                    speciesKey(c.name),speciesKey(seen.name),c.score,seen.score)||
+                    PgsAutoMatchPolicy.ambiguousNativeVariants(
+                        c.nativeModel,c.nativeForm,c.nativeVariant,
+                        seen.nativeModel,seen.nativeForm,seen.nativeVariant,
+                        c.score,seen.score)){
                     unique.remove(i);
                     blocked.add(seen);
                     ambiguousSlots++;
@@ -233,6 +254,7 @@ final class PgsAutoIconDetector {
         }
         result.sort(Comparator.comparingInt((Match m)->m.priority)
             .thenComparingInt(m->m.y).thenComparingInt(m->m.x));
+        if(budgetExpired(began))return abortFrame(began);
         lastScanMillis=android.os.SystemClock.elapsedRealtime()-began;
         return result;
     }
