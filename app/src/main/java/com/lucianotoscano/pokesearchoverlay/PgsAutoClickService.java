@@ -1443,10 +1443,24 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void sequenceScanSprite(int stamp,PgsSequencePolicy.Step step,
         PgsAutoIconDetector.Match first,int firstW,int firstH,long startedAt){
-        if(!sequenceActive||stamp!=sequenceTicket||!sequenceGuard())return;
+        if(!sequenceActive||stamp!=sequenceTicket)return;
+        if(!sequenceGuard()){
+            stopSequence("SEQUÊNCIA · JOGO/SEGURANÇA ALTERADOS");return;
+        }
+        if(SystemClock.uptimeMillis()-startedAt>=
+                PgsSequencePolicy.SPRITE_TIMEOUT_MS){
+            stopSequence("SEQUÊNCIA · TEMPO DA SPRITE ESGOTADO");return;
+        }
         capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
-                if(!sequenceActive||stamp!=sequenceTicket||!sequenceGuard())return;
+                if(!sequenceActive||stamp!=sequenceTicket)return;
+                if(!sequenceGuard()){
+                    stopSequence("SEQUÊNCIA · JOGO/SEGURANÇA ALTERADOS");return;
+                }
+                if(SystemClock.uptimeMillis()-startedAt>=
+                        PgsSequencePolicy.SPRITE_TIMEOUT_MS){
+                    stopSequence("SEQUÊNCIA · TEMPO DA SPRITE ESGOTADO");return;
+                }
                 Bitmap frame=bitmap.copy(Bitmap.Config.ARGB_8888,false);
                 if(frame==null){
                     stopSequence("SEQUÊNCIA · IMAGEM INDISPONÍVEL");return;
