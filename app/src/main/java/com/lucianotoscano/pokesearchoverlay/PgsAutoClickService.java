@@ -101,6 +101,57 @@ public final class PgsAutoClickService extends AccessibilityService {
     private int huntClicks=0,mapReadFailures=0;
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
+    // LT366: sensor Android opcional, acionado somente durante a sessão
+    // Auto Hunt. Proximidade coberta apenas PARA; nunca retoma sozinha.
+    private android.hardware.SensorManager huntSensorManager;
+    private android.hardware.Sensor huntProximitySensor;
+    private boolean huntProximityListening=false;
+    private final android.hardware.SensorEventListener huntProximityListener=
+        new android.hardware.SensorEventListener(){
+            @Override public void onSensorChanged(android.hardware.SensorEvent event){
+                if(event==null||event.sensor==null||event.values==null||
+                   event.values.length==0||!huntProximityListening)return;
+                float near=event.values[0];
+                if(!Float.isFinite(near)||near<0f||
+                   near>=event.sensor.getMaximumRange())return;
+                boolean active=huntTapSession||huntWatchSession;
+                if(!active)return;
+                if(huntTapSession)halt("AUTO HUNT · SENSOR COBERTO");
+                else if(huntWatchSession){
+                    stopWatchOnly(true);
+                    status("AUTO HUNT · SENSOR COBERTO");
+                }
+                notifyConfigured(PgsAutoNotificationPolicy.HUNT,
+                    "Auto Hunt pausado por proximidade",
+                    "Sensor do aparelho coberto. Retome manualmente quando desejar.",
+                    true);
+            }
+            @Override public void onAccuracyChanged(
+                    android.hardware.Sensor sensor,int accuracy){}
+        };
+    private void refreshHuntProximity(){
+        boolean desired=PgsAutoHuntSettings.enabled(this)&&
+            PgsAutoHuntSettings.forCurrent(this).getBoolean(
+                PgsAutoHuntSettings.PROXIMITY,false)&&
+            (huntTapSession||huntWatchSession);
+        if(!desired){
+            if(huntProximityListening&&huntSensorManager!=null)
+                huntSensorManager.unregisterListener(huntProximityListener);
+            huntProximityListening=false;return;
+        }
+        if(huntProximityListening)return;
+        if(huntSensorManager==null)
+            huntSensorManager=(android.hardware.SensorManager)
+                getSystemService(Context.SENSOR_SERVICE);
+        if(huntSensorManager==null)return;
+        if(huntProximitySensor==null)huntProximitySensor=
+            huntSensorManager.getDefaultSensor(
+                android.hardware.Sensor.TYPE_PROXIMITY);
+        if(huntProximitySensor==null)return;
+        huntProximityListening=huntSensorManager.registerListener(
+            huntProximityListener,huntProximitySensor,
+            android.hardware.SensorManager.SENSOR_DELAY_NORMAL,handler);
+    }
     private boolean isGamePackage(String pkg){
         // LT362: ambos os perfis só podem ler a janela do jogo oficial.
         // Nome contendo "pgsharp" não é prova de identidade do processo.
@@ -698,6 +749,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 live.stopWatchOnly(true);
                 live.status("AUTO HUNT · DESATIVADO");
             }
+            live.refreshHuntProximity();
         });
     }
     public static void modelsChanged(){
@@ -1133,6 +1185,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                PgsAutoHuntSettings.CLICK_ENABLED,false)){
             startWatchOnly();
             if(watching)huntWatchSession=true;
+            refreshHuntProximity();
             return;
         }
         // LT359: PGS é interface padrão; Pokemod exige seleção explícita e
@@ -1188,6 +1241,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         huntTapSession=PgsAutoHuntSettings.enabled(this);
         huntClicks=0;mapReadFailures=0;
         running=true;
+        refreshHuntProximity();
         status("LENDO TELA");
         BugReport.log(this,"PGS","Busca reativada, cooldown mapa "+maxSeconds+
             "s, Sem Shiny "+minSeconds+"s; aguardando ícones do feed");
@@ -1244,6 +1298,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void stopWatchOnly(boolean clearPreference){
         huntWatchSession=false;
+        refreshHuntProximity();
         handler.removeCallbacks(watchTick);
         watchTicket++;watchBusy=false;watching=false;
         watchMetrics.cancel(); // descarte também a rodada de métricas antiga.
@@ -2328,6 +2383,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";
         huntTapSession=false;huntClicks=0;mapReadFailures=0;
+        refreshHuntProximity();
         status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */
@@ -2370,6 +2426,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             String title=isIv?"IV100":"Ditto";
             String target=live.currentTargetName;
             live.running=false;live.awaitingMap=false;live.huntTapSession=false;
+            live.refreshHuntProximity();
             live.ticket++;live.armedByHome=false;
             live.status("AUTO HUNT · "+title+" · PAUSADO");
             BugReport.log(live,"PGS","LT366 Auto Hunt: alerta textual explícito "+
