@@ -28,6 +28,9 @@ final class PgsAutoNativeModels {
 
     static synchronized List<PgsAutoTemplateStore.Model> available(Context context){
         if(cached==null)readCatalog(context);
+        // Empty library is the default until real, licensed templates are approved.
+        // Avoid repeated PackageManager lookups from every filter row.
+        if(cached.isEmpty())return Collections.emptyList();
         // Falha fechada: não reconhecer com modelos de build desconhecida.
         if(compatibleVersion==null||compatibleVersion.isEmpty()||
             !compatibleVersion.equals(installedVersion(context)))
