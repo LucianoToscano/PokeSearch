@@ -19,15 +19,19 @@ import org.json.JSONObject;
  */
 final class PokeListFeedClient {
     static final class Item {
-        final String name,id,form,kind,extra;
+        final String name,id,form,kind,extra,gender,country;
+        final boolean shinyIndicated;
         final int number,iv,cp,level;
         final double latitude,longitude;
         final boolean hasCoordinates,expiryKnown;
         final long expiresAt;
         Item(String id,String name,String form,String kind,String extra,
+             String gender,String country,boolean shinyIndicated,
              int number,int iv,int cp,int level,double lat,double lng,
              boolean hasCoordinates,boolean expiryKnown,long expiresAt){
             this.id=id;this.name=name;this.form=form;this.kind=kind;this.extra=extra;
+            this.gender=gender;this.country=country;
+            this.shinyIndicated=shinyIndicated;
             this.number=number;this.iv=iv;this.cp=cp;this.level=level;
             this.latitude=lat;this.longitude=lng;this.hasCoordinates=hasCoordinates;
             this.expiryKnown=expiryKnown;this.expiresAt=expiresAt;
@@ -117,7 +121,14 @@ final class PokeListFeedClient {
                 String form=PokeListApiPolicy.safeLabel(record.optString("form",""));
                 String kind=PokeListApiPolicy.safeLabel(record.optString("rocket_type",""));
                 String extra=PokeListApiPolicy.safeLabel(record.optString("quest",""));
-                result.add(new Item(id,name,form,kind,extra,number,iv,cp,level,
+                // Optional fields; no gender/flag/shiny inferred when absent.
+                String gender=PokeListResultPolicy.genderLabel(
+                    record.optString("gender",""));
+                String country=PokeListResultPolicy.countryLabel(
+                    record.optString("country",""));
+                boolean shinyHint=record.optBoolean("shiny",false);
+                result.add(new Item(id,name,form,kind,extra,gender,country,shinyHint,
+                    number,iv,cp,level,
                     lat,lng,coordinate,expiryKnown,expiry));
                 if(result.size()>=PokeListApiPolicy.MAX_VISIBLE)break;
             }
