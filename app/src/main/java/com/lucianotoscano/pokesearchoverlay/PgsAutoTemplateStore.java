@@ -24,7 +24,7 @@ final class PgsAutoTemplateStore {
         String id, name, file;
         boolean enabled, builtIn;
         final int referenceWidth,referenceHeight;
-        final String nativeForm,nativeVariant;
+        final String nativeForm,nativeVariant,hostProfile;
         Model(String id,String name,String file,boolean enabled,boolean builtIn) {
             this(id,name,file,enabled,builtIn,WIDTH,HEIGHT);
         }
@@ -33,8 +33,14 @@ final class PgsAutoTemplateStore {
         }
         Model(String id,String name,String file,boolean enabled,boolean builtIn,
               int w,int h,String form,String variant) {
+            this(id,name,file,enabled,builtIn,w,h,form,variant,PgsAutoHostPolicy.PGSHARP);
+        }
+        Model(String id,String name,String file,boolean enabled,boolean builtIn,
+              int w,int h,String form,String variant,String hostProfile) {
             this.id=id;this.name=name;this.file=file;this.enabled=enabled;this.builtIn=builtIn;
             this.nativeForm=builtIn?form:"";this.nativeVariant=builtIn?variant:"";
+            this.hostProfile=builtIn?PgsAutoHostPolicy.PGSHARP:
+                PgsAutoHostPolicy.profile(hostProfile);
             // Modelos LT339 são legados 68×52; os novos preservam a dimensão
             // real escolhida no feed em uma largura de referência de 740px.
             referenceWidth=Math.max(16,Math.min(92,w));
@@ -61,7 +67,8 @@ final class PgsAutoTemplateStore {
                 if(obj.optBoolean("builtIn",false))continue;
                 result.add(new Model(obj.getString("id"),obj.getString("name"),
                     obj.getString("file"),obj.optBoolean("enabled",true),false,
-                    obj.optInt("referenceWidth",WIDTH),obj.optInt("referenceHeight",HEIGHT)));
+                    obj.optInt("referenceWidth",WIDTH),obj.optInt("referenceHeight",HEIGHT),
+                    "","",obj.optString("hostProfile",PgsAutoHostPolicy.PGSHARP)));
             }
         } catch(Exception e) {
             // Falha fechada: o arquivo persistido nunca é apagado por leitura ruim.
@@ -74,6 +81,8 @@ final class PgsAutoTemplateStore {
      */
     static synchronized List<Model> list(Context c) {
         ArrayList<Model> result=new ArrayList<>(userModels(c));
+        // Catálogo homologado PGSharp não se mistura a miniaturas do Pokemod.
+        if(PgsAutoHostPolicy.PGSHARP.equals(PgsAutoHostSettings.current(c)))
         for(Model nativeModel:PgsAutoNativeModels.available(c,PgsAutoCatalog.selected(c))){
             boolean duplicate=false;
             for(Model saved:result)if(saved.id.equals(nativeModel.id)){duplicate=true;break;}
@@ -83,7 +92,9 @@ final class PgsAutoTemplateStore {
     }
     static synchronized List<Model> active(Context c) {
         List<Model> selected=new ArrayList<>();
-        for(Model m:list(c))if(m.enabled)selected.add(m);
+        String selectedProfile=PgsAutoHostSettings.current(c);
+        for(Model m:list(c))if(m.enabled&&PgsAutoHostPolicy.templateBelongsTo(
+                m.hostProfile,selectedProfile))selected.add(m);
         return selected;
     }
     static synchronized void setEnabled(Context c,String id,boolean enabled) {
@@ -139,7 +150,9 @@ final class PgsAutoTemplateStore {
         try(FileOutputStream out=new FileOutputStream(target)) {
             if(!cropped.compress(Bitmap.CompressFormat.PNG,100,out))throw new IOException("Não foi possível salvar a imagem.");
         } catch(IOException err) {target.delete();throw err;}
-        models.add(new Model(file,name.trim(),file,true,false,refWidth,refHeight));
+        // Captura fica vinculada ao provedor visual atual; nunca reusar entre clientes.
+        models.add(new Model(file,name.trim(),file,true,false,refWidth,refHeight,
+            "","",PgsAutoHostSettings.current(c)));
         persist(c,models);
     }
     /** Restaura dimensões reais do bitmap quando o backup não tem metadados. */
@@ -201,6 +214,7 @@ final class PgsAutoTemplateStore {
                 obj.put("enabled",m.enabled);obj.put("builtIn",m.builtIn);
                 obj.put("referenceWidth",m.referenceWidth);
                 obj.put("referenceHeight",m.referenceHeight);
+                obj.put("hostProfile",m.hostProfile);
                 arr.put(obj);
             }
         } catch(Exception ignored) {return;}
