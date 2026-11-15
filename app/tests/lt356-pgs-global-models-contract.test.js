@@ -17,6 +17,9 @@ assert.match(native,/MAX_MODELS=4096/,"manifest must scale beyond 48 templates")
 assert.match(native,/Map<Integer,List<Entry>> indexed/);
 assert.match(native,/List<Integer> selectedSpecies/);
 assert.match(native,/indexed\.get\(dex\)/);
+assert.match(native,/PgsAutoModelSelectionPolicy\.selectedOnly\(/);
+assert.match(service,/VERSION\.SDK_INT<30/);
+assert.match(service,/Busca PGS com leitura de sprites\/mapa requer Android 11/);
 assert.match(native,/checkedAssets\.get\(key\)/);
 assert.match(native,/checkedAssets\.put\(key,ok\)/);
 assert.match(native,/rights/);assert.match(native,/evidence/);

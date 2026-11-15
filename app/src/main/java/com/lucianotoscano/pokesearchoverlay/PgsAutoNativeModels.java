@@ -50,8 +50,8 @@ final class PgsAutoNativeModels {
             !compatibleVersion.equals(installedVersion(context)))
             return Collections.emptyList();
         List<PgsAutoTemplateStore.Model> result=new ArrayList<>();
-        Set<Integer> unique=new HashSet<>(selectedSpecies);
-        for(Integer dex:unique){
+        for(Integer dex:PgsAutoModelSelectionPolicy.selectedOnly(
+            selectedSpecies,PgsAutoCatalog.MAX_SELECTED)){
             if(dex==null||dex<=0)continue;
             List<Entry> entries=indexed.get(dex);
             if(entries==null)continue;

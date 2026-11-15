@@ -966,6 +966,15 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void toggle(){
         if(running){halt("PARADO");return;}
+        // O gesto Android pode existir no 9/10, mas a confirmação visual de mapa
+        // depende de takeScreenshot(API 30); nunca iniciar ciclo sem esse requisito.
+        if(android.os.Build.VERSION.SDK_INT<30){
+            status("REQUER ANDROID 11+");
+            showReason("Busca PGS com leitura de sprites/mapa requer Android 11 "+
+                "ou superior. O PGSharp pode abrir no Android 9/10, mas "+
+                "a captura segura do PokeSearch não está disponível.");
+            return;
+        }
         tapMode=PgsAutoTargetPolicy.mode(targetPrefs().getString("mode","SPRITE"));
         if(tapMode==PgsAutoTargetPolicy.Mode.SPRITE&&
            !PgsAutoTemplateStore.pending(this).isEmpty()){
