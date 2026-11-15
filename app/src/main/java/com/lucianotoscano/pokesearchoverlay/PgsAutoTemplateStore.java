@@ -97,6 +97,25 @@ final class PgsAutoTemplateStore {
                 m.hostProfile,selectedProfile))selected.add(m);
         return selected;
     }
+    /**
+     * LT370: "todos disponíveis" means already validated and enabled models,
+     * never every Pokédex icon. A bounded subset avoids huge frame scans.
+     * Native PGSharp entries are still limited to the catalog actually shipped.
+     */
+    static synchronized List<Model> activeForSearch(Context c){
+        ArrayList<Model> found=new ArrayList<>();
+        boolean all=PgsSmartSearchSettings.SCOPE_ALL.equals(
+            PgsSmartSearchSettings.scope(c));
+        for(Model m:active(c)){
+            if(!all&&!PgsAutoCatalog.isSelectedName(c,m.name))continue;
+            found.add(m);
+            if(found.size()>=PgsAutoCatalog.MAX_SELECTED)break;
+        }
+        return found;
+    }
+    static synchronized int readyForSearch(Context c){
+        return activeForSearch(c).size();
+    }
     static synchronized void setEnabled(Context c,String id,boolean enabled) {
         List<Model> models=list(c);
         for(Model m:models)if(m.id.equals(id)&&!m.builtIn)m.enabled=enabled;
