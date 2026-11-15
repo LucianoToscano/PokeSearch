@@ -54,8 +54,11 @@ final class PokeListApiPolicy {
         }
         String url(long nowMs){
             if(nowMs<=0L)throw new IllegalArgumentException("Tempo inválido");
-            StringBuilder b=new StringBuilder(BASE).append("?type=").append(type)
-                .append("&mons=").append(monIds).append("&lat=")
+            StringBuilder b=new StringBuilder(BASE).append("?type=").append(type);
+            if("rocket".equals(type)||"rocket_leader".equals(type))
+                b.append("&mons=&rockets=").append(monIds);
+            else b.append("&mons=").append(monIds);
+            b.append("&lat=")
                 .append(String.format(Locale.ROOT,"%.6f",latitude))
                 .append("&lng=").append(String.format(Locale.ROOT,"%.6f",longitude))
                 .append("&distance=").append(distance);
