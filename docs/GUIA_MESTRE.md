@@ -1,5 +1,11 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT363 — CANDIDATA, NÃO PUBLICADA (15/11/2026)
+
+**Base:** LT362 oficial 0.03.58/54565, main inicial `1b0600a3ed885c08935a8bc7e1160d802ff58012`. Inspeção direta de APKs PokeList, Data Hub, PGTools, Pokemod Aegis/Atlas e ZIPs, sem execução de código/APIs de terceiros. **Alterações na branch `feat/lt363-companion-diagnostics`:** corrigir obrigatoriedade indevida de `com.pokemod.app.public` para o perfil Pokemod no monitor e Auto Click (continua exigindo jogo oficial, modelo e confirmação), painel de consulta local de oito pacotes exatos, cinco novas `queries` pontuais, métricas temporárias somente RAM sem salvar captura, testes Java/Node e documentação. **Não é prova de injeção ativa nem de integração com API de terceiros.** Catálogo do feed `pgs-native/manifest.json` continua vazio. P1/P2, Doce Raro, Edu, OAuth, contas, filtros, assinador, OTA e PR LT350 #385 draft preservados. Até gates/merge/publicação, a LT362 continua sendo última versão oficial. [Auditoria LT363](LT363_AUDITORIA_APKS_COMPATIBILIDADE_20261115.md) · [Prompt LT364](LT363_PROMPT_CONTINUIDADE_LT364_20261115.md).
+
+
+
 ## LT362 OFICIAL — 0.03.58 / 54565 (15/11/2026)
 
 **PUBLICADO:** PokeSearch **0.03.58 / versionCode 54565 / label 51362**, [release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.58-54565), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.58-54565/PokeSearch-v0.03.58-LT.apk), **61.139.515 bytes**, digest SHA-256 `19fcc7b8531509c7d258b593f9a50e7897e21b35d3ac54148fdb07f8d4221e19` registrado pelo asset GitHub. Workflow permanente [#43690440347](https://github.com/LucianoToscano/PokeSearch/actions/runs/43690440347) **completed/success**: preflight/publish, assets Samsung, Node, R8, certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, APK, signer, upload, hash público e limpeza segura. `main` de publicação `4aaaaf441b6c56140edcd38122b86e2855716268`.

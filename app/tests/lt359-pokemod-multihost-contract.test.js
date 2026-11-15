@@ -36,7 +36,8 @@ assert.match(menu,/new LinearLayout\.LayoutParams\(dp\(39\),dp\(32\)\)/);
 assert.match(menu,/actions\.modelsChanged\(\)/);
 assert.match(menu,/Outro · somente prévia/);
 assert.match(service,/PgsAutoHostPolicy\.OTHER\.equals\(hostProfile\)/);
-assert.match(service,/PgsAutoHostSettings\.pokemodManagerInstalled\(this\)/);
+assert.doesNotMatch(service,/PgsAutoHostSettings\.pokemodManagerInstalled\(this\)/,
+  "Pokemod manager is not prerequisite to monitor or calibrated scanner");
 assert.match(service,/private boolean isGamePackage\(String pkg\)\{[\s\S]*?return PgsAutoHostPolicy\.isGameWindow\(pkg\);/,
   "Both Pokemod and PGSharp require exact game package, never injector/lookalikes");
 assert.doesNotMatch(service,/\.contains\("pgsharp"\)/,

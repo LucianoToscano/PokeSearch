@@ -1,0 +1,28 @@
+package com.lucianotoscano.pokesearchoverlay;
+import java.util.HashSet;
+public final class PgsCompanionPolicyTest {
+    private static void yes(boolean ok,String label){if(!ok)throw new AssertionError(label);}
+    public static void main(String[] args){
+        PgsCompanionPolicy.Spec[] entries=PgsCompanionPolicy.entries();
+        yes(entries.length==8,"eight exact companion IDs");
+        HashSet<String> unique=new HashSet<>();
+        for(PgsCompanionPolicy.Spec s:entries){
+            yes(unique.add(s.packageName),"duplicate "+s.packageName);
+            yes(!PgsCompanionPolicy.installationProvesActive(s.packageName),
+                "installation never proves active client");
+            yes(!PgsCompanionPolicy.externalApiApproved(s.packageName),
+                "no third-party service authorized by metadata");
+        }
+        yes(PgsCompanionPolicy.isOfficialGame("com.nianticlabs.pokemongo"),"Play");
+        yes(PgsCompanionPolicy.isOfficialGame("com.nianticlabs.pokemongo.ares"),"Galaxy");
+        yes(!PgsCompanionPolicy.isOfficialGame("com.pokemod.aegis"),"Aegis not game");
+        yes(!PgsCompanionPolicy.isOfficialGame("net.pgtools.auto"),"PGTools not game");
+        yes(!PgsCompanionPolicy.isOfficialGame("com.antvn.pokelist"),"PokeList not game");
+        yes(!PgsCompanionPolicy.isOfficialGame("com.nianticlabs.pokemongo.fake"),"spoof");
+        yes("2.5.3".equals(PgsCompanionPolicy.safeVersion("2.5.3")),"version");
+        yes("1a".equals(PgsCompanionPolicy.safeVersion("<1a>")),"no formatting abuse");
+        PgsCompanionPolicy.entries()[0]=null;
+        yes(PgsCompanionPolicy.entries()[0]!=null,"defensive array");
+        System.out.println("LT363 exact companion packages and no implicit APIs PASS");
+    }
+}

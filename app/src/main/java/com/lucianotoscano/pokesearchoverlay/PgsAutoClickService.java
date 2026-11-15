@@ -88,6 +88,9 @@ public final class PgsAutoClickService extends AccessibilityService {
     // Monitor passivo LT361: sessão exclusiva, sem dispatchGesture.
     private boolean watching=false,watchBusy=false;
     private int watchTicket=0;
+    // LT363: métricas locais temporárias; sem capturas, conta, GPS ou rede.
+    private final PgsWatchSessionDiagnostics watchMetrics=
+        new PgsWatchSessionDiagnostics();
     private final java.util.HashMap<String,Long> watchLastAlert=
         new java.util.HashMap<>();
     private final Runnable watchTick=this::scanWatchOnly;
@@ -692,6 +695,12 @@ public final class PgsAutoClickService extends AccessibilityService {
      * LT362: só informa o estado do monitor passivo à Home.
      * Nunca consulta estado de gesto/teleporte para classificá-lo como favorito.
      */
+    /** Snapshot RAM, solicitado apenas ao abrir o diagnóstico. */
+    public static String monitorDiagnostics(){
+        PgsAutoClickService live=instance;
+        return live==null?"Serviço de Acessibilidade desconectado; sem métricas.": 
+            live.watchMetrics.summary();
+    }
     public static String monitorHomeState(Context context){
         boolean optedIn=PgsAutoWatchSettings.enabled(context);
         PgsAutoClickService live=instance;
@@ -1105,13 +1114,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 "captura e use a prévia ◎, sem toque automático.");
             return;
         }
-        if(PgsAutoHostPolicy.POKEMOD.equals(hostProfile)&&
-           !PgsAutoHostSettings.pokemodManagerInstalled(this)){
-            status("POKEMOD AUSENTE");
-            showReason("Gerenciador Pokemod não detectado. A instalação do "+
-                "gerenciador não comprova injeção ativa no jogo.");
-            return;
-        }
+        // LT363: Aegis/Atlas e outras configurações visuais não exigem
+        // com.pokemod.app.public. Somente janela do jogo, perfil explícito,
+        // amostras daquele perfil e avisos manuais autorizam a sequência.
         // O gesto Android pode existir no 9/10, mas a confirmação visual de mapa
         // depende de takeScreenshot(API 30); nunca iniciar ciclo sem esse requisito.
         if(android.os.Build.VERSION.SDK_INT<30){
@@ -1174,12 +1179,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             showReason("Outro cliente está em prévia; monitor sem clique ainda não homologado.");
             return;
         }
-        if(PgsAutoHostPolicy.POKEMOD.equals(host)&&
-                !PgsAutoHostSettings.pokemodManagerInstalled(this)){
-            PgsAutoWatchSettings.setEnabled(this,false);
-            showReason("Gerenciador Pokemod não detectado. Configure a interface e o jogo.");
-            return;
-        }
+        // LT363: não exigir app Pokemod Manager; Aegis/Atlas são pacotes
+        // distintos e presença de qualquer um não prova mod ativo.
         if(android.os.Build.VERSION.SDK_INT<30){
             PgsAutoWatchSettings.setEnabled(this,false);
             showReason("Monitor visual exige captura de tela no Android 11+.");
@@ -1212,10 +1213,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void stopWatchOnly(boolean clearPreference){
         handler.removeCallbacks(watchTick);
         watchTicket++;watchBusy=false;watching=false;
+        watchMetrics.cancel(); // descarte também a rodada de métricas antiga.
         if(clearPreference)PgsAutoWatchSettings.setEnabled(this,false);
         if(!running)status("PARADO");
     }
     private void scheduleWatch(long millis){
+        if(watchBusy)watchMetrics.finish(SystemClock.elapsedRealtime(),lastStatus);
         watchBusy=false;
         handler.removeCallbacks(watchTick);
         if(watching)handler.postDelayed(watchTick,millis);
@@ -1285,6 +1288,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             return;
         }
         watchBusy=true;
+        watchMetrics.begin(SystemClock.elapsedRealtime());
         final int stamp=watchTicket;
         status("MONITOR · LENDO LISTA");
         // Nem callback de screenshot ausente nem fila travada retém o monitor.
@@ -1341,6 +1345,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 new java.util.HashSet<>();
                             java.util.ArrayList<String> names=
                                 new java.util.ArrayList<>();
+                            int visuallyConfirmed=0;
                             final long now=SystemClock.elapsedRealtime();
                             for(PgsAutoIconDetector.Match a:first){
                                 if(!PgsAutoCatalog.isSelectedName(
@@ -1356,6 +1361,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                                     }
                                 }
                                 if(!verified)continue;
+                                visuallyConfirmed++;
                                 Long last=watchLastAlert.get(key);
                                 if(!PgsAutoWatchPolicy.mayNotify(true,
                                     last==null?-1L:last,now))continue;
@@ -1364,6 +1370,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 names.add(a.name);
                                 watchLastAlert.put(key,now);
                             }
+                            // O número solicitado não comprova entrega Android/DND.
+                            watchMetrics.observe(first.size(),visuallyConfirmed,names.size());
                             if(!names.isEmpty()){
                                 String label=PgsAutoHostPolicy.displayLabel(host);
                                 String body="Na lista: "+String.join(", ",names)+

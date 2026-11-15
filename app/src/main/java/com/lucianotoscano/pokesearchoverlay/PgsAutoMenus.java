@@ -724,12 +724,8 @@ final class PgsAutoMenus {
             select.setOnClickListener(v->{
                 PgsAutoHostSettings.select(context,value);
                 actions.modelsChanged(); // interrompe ciclo e reconstrói modelos.
-                if(PgsAutoHostPolicy.POKEMOD.equals(value)&&
-                   !PgsAutoHostSettings.pokemodManagerInstalled(context))
-                    Toast.makeText(context,
-                        "Gerenciador Pokemod não detectado. Instale/abra o jogo "+
-                        "antes de reconhecer a interface.",
-                        Toast.LENGTH_LONG).show();
+                // LT363: seleção do perfil não depende de manager ou Aegis/Atlas.
+                // O diagnóstico separado mostra quais pacotes existem no aparelho.
                 showSearch();
             });
             root.addView(select,margined(-1,dp(34),3));
@@ -757,7 +753,61 @@ final class PgsAutoMenus {
                 "Cada interface exige suas próprias capturas. "+
                 "Instalado não comprova mod ativo; avisos são manuais.",9,false);
         root.addView(note,margined(-1,dp(48),4));
-        mount(root,230,PgsAutoHostPolicy.POKEMOD.equals(current)?263:224);
+        // Diagnóstico somente sob demanda, sem nova bolha na Home.
+        Button diagnostic=button("ⓘ Compatibilidade · diagnóstico",10);
+        diagnostic.setContentDescription(
+            "Abrir diagnóstico local dos clientes e do monitor sem clique.");
+        diagnostic.setOnClickListener(v->showCompanionDiagnostics());
+        root.addView(diagnostic,margined(-1,dp(30),3));
+        mount(root,230,PgsAutoHostPolicy.POKEMOD.equals(current)?293:254);
+    }
+
+    /**
+     * LT363: inventário local de PACOTES EXATOS (não indica injeção ativa).
+     * Nenhuma comunicação com serviços, endpoints, root ou outros processos.
+     */
+    private void showCompanionDiagnostics(){
+        LinearLayout root=panelRoot("COMPATIBILIDADE",null);
+        String selected=PgsAutoHostSettings.current(context);
+        TextView intro=label("Perfil: "+PgsAutoHostPolicy.displayLabel(selected)+
+            " · consulta local de instalação",9,false);
+        root.addView(intro,margined(-1,dp(25),2));
+        ScrollView scroll=new ScrollView(context);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout items=vertical();
+        for(PgsCompanionPolicy.Spec spec:PgsCompanionPolicy.entries()){
+            LinearLayout row=horizontal();
+            TextView name=label(spec.label,9,true);
+            name.setSingleLine(true);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            row.addView(name,new LinearLayout.LayoutParams(0,dp(25),1));
+            TextView state=label(PgsCompanionDiagnostics.status(context,spec),8,false);
+            state.setGravity(Gravity.CENTER_VERTICAL|Gravity.RIGHT);
+            state.setSingleLine(true);
+            state.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            row.addView(state,new LinearLayout.LayoutParams(dp(105),dp(25)));
+            items.addView(row);
+        }
+        scroll.addView(items);
+        root.addView(scroll,margined(-1,dp(150),2));
+        TextView templates=label("Favoritos selecionados: "+
+            PgsAutoCatalog.selected(context).size()+"/10 · amostras ativas: "+
+            PgsAutoTemplateStore.active(context).size(),9,false);
+        root.addView(templates,margined(-1,dp(30),3));
+        TextView metrics=label(PgsAutoClickService.monitorDiagnostics(),9,false);
+        metrics.setMaxLines(4);
+        metrics.setContentDescription("Métricas temporárias do monitor sem clique. "+
+            PgsAutoClickService.monitorDiagnostics());
+        root.addView(metrics,margined(-1,dp(66),2));
+        TextView warning=label(
+            "Instalado ≠ ativo. Nenhum APK externo autoriza toque, "+
+            "API privada ou leitura de dados de conta.",9,false);
+        warning.setMaxLines(3);
+        root.addView(warning,margined(-1,dp(34),2));
+        Button back=button("← Interfaces",10);
+        back.setOnClickListener(v->showHostProfiles());
+        root.addView(back,margined(-1,dp(30),3));
+        mount(root,235,382);
     }
 
     /** Alvos explícitos, separados da busca por sprites do feed. */
