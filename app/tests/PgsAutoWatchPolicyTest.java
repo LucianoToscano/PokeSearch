@@ -49,6 +49,9 @@ public final class PgsAutoWatchPolicyTest {
         check(!PgsAutoWatchPolicy.sameSprite("m1","species",32,220,740,1600,
             "m1","species",32,220,0,1600),
             "invalid size fails closed");
+        check(!PgsAutoWatchPolicy.sameSprite("m1","species",60,60,740,1600,
+            "m1","species",60,60,1600,740),
+            "portrait to landscape never confirms a stale screenshot");
         check(PgsAutoWatchPolicy.mayNotify(true,-1L,100L),
             "initial selected favorite");
         check(!PgsAutoWatchPolicy.mayNotify(false,-1L,100L),
