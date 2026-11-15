@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.50",
-  "code": 54557,
-  "label": 51354,
-  "previous_tag": "v0.03.49-54556",
-  "qa_max_code": 54556,
-  "release_notes": "PokeSearch LT354 / 0.03.50 / versionCode 54557 / label 51354. Auditoria de diagnóstico de sprite e gesto da Busca Pokémon PGS: estágio de modelo/espécie e confirmação da mesma amostra em duas capturas da LT353 preservados. Agora compara assinatura RGB local do mapa antes e depois do gesto e diferencia aceitação, recusa, cancelamento e conclusão pelo Android de mudança visual e ausência de resposta; evita avançar cegamente para outra sprite quando o mapa não apresenta mudança até o timeout. Callbacks obsoletos são ignorados. Aviso 'Sou passageiro' é conferido também na janela acessível do jogo sob o overlay, mas jamais confirmado automaticamente. Preservados gestos de 90 ms, botão ◎ sem toque, halo branco/ciano passante, geometria do menu, Pokébolas P1/P2, Doce Raro, Edu 68 sprites, modelos PNG, contas, filtros e dados. Código LT354 integrado na PR #394, squash e3e2c6e1d65e4e9a11c192307472180af0ea127c após sete gates verdes: Node QA, LT169, LT211, Java LT62, OTA LT173, PGS APK QA, Secure beta/R8. LT350 PR #385 segue draft, sem integração. IMPORTANTE: callback Android e delta de pixels NÃO comprovam toque ou teleporte no Pokémon GO/PGSharp. Homologação física Samsung de Metagross, gesto, efeito, aparência Tempo/Personalização, OAuth externo, Shiny e Encontro continuam BLOQUEADOS. Não automatizar 'Sou passageiro', confirmar manualmente somente quando seguro; instalação APK depende de autorização Android."
+  "version": "0.03.51",
+  "code": 54558,
+  "label": 51355,
+  "previous_tag": "v0.03.50-54557",
+  "qa_max_code": 54557,
+  "release_notes": "PokeSearch LT355 / 0.03.51 / versionCode 54558 / label 51355. Estrutura para modelos nativos de miniaturas do feed PGSharp com origem autorizada, versão do jogo exata, SHA-256, dimensões e evidência de validação. IMPORTANTE: o catálogo desta versão é intencionalmente VAZIO; nenhuma sprite nativa de Metagross/PGSharp foi copiada do APK analisado ou homologada. As amostras pessoais existentes continuam intactas e têm prioridade na lista. Corrigida restauração preservando dimensões originais e alpha; filtros compactos mostram minha/nativa/capturar e prévia sem gesto indica fonte, confiança e posição. Adicionada verificação conservadora de geometria captura-display: bloqueia toque com proporção incompatível. ROI lateral de feed ajustada em paisagem, pacote Android do jogo visível apenas para conferir versão. Preservados Pokébolas P1/P2, Doce Raro, Edu, filtros, dados, feedback toque e aviso Sou passageiro sempre manual. PR #397 integrada, 7 gates de implementação passaram: Node #43671835493, LT169 #43671835470, LT211 #43671835588, LT62 #43671835565, OTA #43671835439, PGS APK #43671835422, Secure beta/R8 #43671835430. Sem teste físico no Samsung não há prova de reconhecimento Metagross, gesto recebido pelo jogo, teleporte, Shiny, Encontro ou paridade de menus; não afirmar aceite físico. Pacotes remotos assinados de sprites ainda não implementados. LT350 PR #385 permanece draft e fora da main. Instalação exige confirmação Android."
 }
