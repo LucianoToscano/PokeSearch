@@ -75,6 +75,15 @@ public final class PgsAutoClickService extends AccessibilityService {
     private PgsAutoMenus quickMenus;
     private PgsAutoTapIndicator tapIndicator;
     private PgsAutoTargetPicker pointPicker;
+    // LT367: editor de sequências não interfere no ciclo do Auto Hunt.
+    private PgsSequenceMarkers sequenceMarkers;
+    private boolean sequenceActive=false;
+    private int sequenceTicket=0,sequenceIndex=0;
+    private int sequenceWidth=0,sequenceHeight=0;
+    private long sequenceStartedAt=0L;
+    private String sequenceProfile="";
+    private List<PgsSequencePolicy.Step> sequencePlan=new ArrayList<>();
+    private PgsAutoIconDetector sequenceDetector;
     private PgsAutoTargetPolicy.Mode tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
     private boolean shinyNegativeConfirmed=false;
     private SharedPreferences targetPrefs(){
@@ -515,6 +524,8 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     @Override public void onConfigurationChanged(android.content.res.Configuration config){
         super.onConfigurationChanged(config);
+        // Nunca reenquadrar pontos gravados durante gesto/rotação em curso.
+        stopSequence("SEQUÊNCIA · ROTAÇÃO");
         // Rotation/resolution: clamp bubble and move the existing menu with it.
         handler.post(()->{
             if(bubble==null||bubbleParams==null||windowManager==null)return;
@@ -531,6 +542,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
+        stopSequence("SEQUÊNCIA · SERVIÇO INTERROMPIDO");
         // Uma perda temporária do foco de acessibilidade não equivale a "desligar".
         // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
         status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
@@ -539,6 +551,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         // Perda do serviço invalida leituras, mas não revoga opt-in do usuário.
         // A Home exibirá falta de Acessibilidade até uma reconexão autorizada.
         stopWatchOnly(false);
+        stopSequence("PARADO");
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
@@ -645,6 +658,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(running)halt("ALVO ALTERADO");tapMode=PgsAutoTargetPolicy.Mode.SPRITE;
                 status("SPRITES DO FEED");
             }
+            @Override public void sequencePick(String type,int index,boolean dest){
+                pickSequencePoint(type,index,dest);
+            }
+            @Override public void sequencePreview(){previewSequence();}
+            @Override public void sequenceRun(){startSequence();}
+            @Override public void sequenceStop(){stopSequence("SEQUÊNCIA PARADA");}
+            @Override public void sequenceChanged(){
+                stopSequence("SEQUÊNCIA ALTERADA");
+                if(sequenceMarkers!=null)sequenceMarkers.close();
+            }
+            @Override public boolean sequenceRunning(){return sequenceActive;}
         });
         SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
         bubbleParams=new WindowManager.LayoutParams(dp(PgsAutoVisualState.TOUCH_DP),dp(PgsAutoVisualState.TOUCH_DP),
@@ -1195,6 +1219,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void toggle(){
+        if(sequenceActive){
+            stopSequence("SEQUÊNCIA INTERROMPIDA PELO USUÁRIO");
+            return;
+        }
         if(watching){stopWatchOnly(true);return;}
         if(running){halt("PARADO");return;}
         // Auto Hunt sem clique reutiliza monitor passivo (2 frames), e a
