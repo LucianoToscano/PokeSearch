@@ -1,6 +1,6 @@
 # LT368 — Central de Busca Inteligente e Editor de Sequências Integrado
 
-Data: 15/11/2026. Base: LT367 0.03.63 / versionCode 54570. Este documento descreve **implementação candidata em branch**, NÃO uma release publicada.
+Data: 15/11/2026. Base: LT367 0.03.63 / versionCode 54570. **LT368 oficial publicada**: versão 0.03.64 / versionCode 54571 / label 51368. [Release e APK](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.64-54571).
 
 ## Objetivo e decisões de UX
 
@@ -40,3 +40,11 @@ Reutilizar `PgsAutoMenuStyle` / `prefs.visualPrefsJson` / `OverlayQuickMenus`. T
 4. Nenhuma publicação oficial ou APK assinado de produção pode ser afirmado antes dos workflows e do release real.
 
 **Arquivos principais:** `PgsAutoMenus.java`, `PgsAutoClickService.java`, `PgsSmartSearchSettings.java`, `PgsSequencePolicy.java`, contratos LT366/LT367/LT368 e workflow PGS QA.
+
+## ARK LT368 — fechamento oficial (15/11/2026)
+
+- **PUBLICADO:** [v0.03.64-54571](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.64-54571), APK `PokeSearch-v0.03.64-LT.apk` de **61.176.383 bytes**, SHA-256 `5b2c046c2bf860e4050ce2157131cae9b6d550a8e49c512608b67759fa99ceff`; API GitHub retornou asset uploaded e release pública não-draft; [workflow #43770160211](https://github.com/LucianoToscano/PokeSearch/actions/runs/43770160211) success no SHA `f85c0db3366c514fa63e763e5900f14a634e7f5f` com verificação de assinatura e digest, sem download independente nesta sessão.
+- **CÓDIGO:** PR #438 squash `1b6b7f421f443ffe4ce21db1fd03d63a69447730`, sete gates green no head final `d40f32d5bf9e0904e47a049bd6c225c39ebb6dc7`: Node #43769245944, LT169 #43769245948, LT211 #43769245962, Java LT62 #43769245968, OTA #43769245938, PGS APK QA #43769245959, Secure beta #43769245971.
+- **VERSÃO:** PR #439 squash `f85c0db3366c514fa63e763e5900f14a634e7f5f`, inclui request 0.03.64 e notas internas `release_notes.json` para 54571. O teste LT169 inicialmente detectou a ausência das notas, corrigida antes do merge; CI de request aprovado.
+- **FÍSICO PENDENTE:** cenários em Samsung Android 11/13/14, PGSharp/Pokemod independentes, toque/arraste, reconhecimento em duas leituras, P/M/G, TalkBack, consumo e resultado real no jogo seguem sem homologação; issue #350. Não inferir teleporte ou captura de callback Android.
+- **PRÓXIMO:** [ARK LT369](LT368_PROMPT_CONTINUIDADE_LT369_20261115.md); revalidar latest no próximo chat. `versionCode` futuro deve ser superior a **54571**, mantendo assinatura permanente e fluxo oficial.
