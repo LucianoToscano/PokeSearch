@@ -14,6 +14,9 @@ on:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeList*.java'
       - 'app/tests/lt365-pokelist-screenshot-results-contract.test.js'
       - 'app/tests/lt366-autohunt-profile-contract.test.js'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsSequence*.java'
+      - 'app/tests/lt367-visual-sequence-contract.test.js'
+      - 'app/tests/PgsSequencePolicyTest.java'
       - 'app/tests/PgsAutoHuntPolicyTest.java'
       - 'app/src/main/AndroidManifest.xml'
       - 'app/tests/pgs-buscas-contracts.test.js'
@@ -56,6 +59,7 @@ jobs:
           node app/tests/pgs-buscas-contracts.test.js
           node app/tests/lt365-pokelist-screenshot-results-contract.test.js
           node app/tests/lt366-autohunt-profile-contract.test.js
+          node app/tests/lt367-visual-sequence-contract.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \
