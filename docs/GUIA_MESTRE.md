@@ -1,14 +1,14 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
-## LT352 — marcador de toque visível e mira limpa (candidata)
+## LT352 OFICIAL — 0.03.48 / 54555 (14/11/2026)
 
-`PgsAutoTapIndicator` agora força desenho `setWillNotDraw(false)`, usa pulso radial ciano/anel branco de 960ms sem bloquear toques e preserva opção ON/OFF. Uma prévia aparece em Personalização sem enviar gesto. A mira deixa a tela do jogo 100% transparente, com coordenadas e instrução discretas sem faixa, e ✓ à esquerda / × à direita como ícones brancos de fundo invisível. Preserva sliders, recortador, segurança e regras LT349/LT351; testes Samsung ainda **BLOQUEADOS**. Ver [LT352](LT352_ARK_TOUCH_FEEDBACK_TARGET_PICKER_20261114.md).
+**LT352 OFICIAL — 14/11/2026:** PokeSearch **0.03.48 / versionCode 54555 / label 51352**, [release v0.03.48-54555](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.48-54555), [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.48-54555/PokeSearch-v0.03.48-LT.apk) com **61.116.582 bytes**, SHA-256 `5fd2ad5a82a99c3c0ed3440abe802a3166d4771beff33f896a9674352a0be390`, [workflow protegido #43660871901](https://github.com/LucianoToscano/PokeSearch/actions/runs/43660871901) **SUCCESS** (preflight, validações, build assinada e publicação do asset confirmado). Código [PR #388](https://github.com/LucianoToscano/PokeSearch/pull/388), squash `cbdeff5a377f795de910a048d85705b41e1fe7c3`; pedido oficial [PR #389](https://github.com/LucianoToscano/PokeSearch/pull/389), squash `9a5048a1351dfae42a58efc9c05f28c56de8e307`. Indicador ciano radial com três anéis, 960ms, `setWillNotDraw(false)`, opcional e `FLAG_NOT_TOUCHABLE` ao gesto aceito pelo Android; botão de prévia sem toque real; mira sem placas cinzas e ✓ esquerdo / × direito brancos. **A PR #385 LT350 permanece draft** aguardando aceite físico. **BLOQUEADO**: visibilidade e posição real do efeito no Samsung, ergonomia/clipping em rotação, OAuth Google/Discord, teleporte/PGSharp, Shiny e Encontro; CI não comprova ação aceita pelo jogo.
 
+Ver [relatório LT352](LT352_ARK_TOUCH_FEEDBACK_TARGET_PICKER_20261114.md). O marcador é feedback de gesto Android solicitado, não prova resposta do Pokémon GO. A instalação requer confirmação Android.
 
-## LT351 — pausa em «Sou passageiro» com retomada segura (candidata)
+## LT349 + LT349b + LT351 OFICIAIS — 0.03.47 / 54554
 
-Aguardando confirmação humana no jogo, com um aviso visível por ocorrência e retomada após o diálogo desaparecer. Sem clique automático em declaração de segurança. LT349/LT349b já integradas (#382/#384) e última release pública 0.03.46; LT350 PR #385 continua draft até homologação. [Relatório LT351](LT351_ARK_PASSENGER_MANUAL_RESUME_20261114.md).
-
+**LT349/LT349b/LT351 OFICIAIS — 14/11/2026:** versão **0.03.47 / code 54554** publicada em [v0.03.47-54554](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.47-54554), [workflow #43659171395](https://github.com/LucianoToscano/PokeSearch/actions/runs/43659171395) SUCCESS. Código das PRs #382, #384, #386, pedido protegido #387. Corrige transparência/guias/Medidas, scanner e lateral PGS; "Sou passageiro" sempre confirmado manualmente, apenas avisa e retoma depois de dispensado pela pessoa. Aceite físico no Samsung continua BLOQUEADO.
 
 ## LT349b — posicionamento lateral do Auto Click e alça branca (candidata)
 
