@@ -99,6 +99,16 @@ public final class PgsAutoClickService extends AccessibilityService {
     // LT366: cada sessão registra explicitamente seu perfil e consentimento.
     private boolean huntTapSession=false,huntWatchSession=false;
     private int huntClicks=0,mapReadFailures=0;
+    private long huntNextAt=0L;
+    private final Runnable huntCountdownTick=new Runnable(){
+        @Override public void run(){
+            if(!running||!huntTapSession||huntNextAt<=0L)return;
+            long remaining=huntNextAt-SystemClock.uptimeMillis();
+            if(remaining<=0L)return;
+            status("PRÓXIMO EM "+((remaining+999L)/1000L)+"s");
+            handler.postDelayed(this,1000L);
+        }
+    };
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
     // LT366: sensor Android opcional, acionado somente durante a sessão
@@ -418,7 +428,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
-        if(PgsAutoWatchSettings.enabled(this))startWatchOnly();
+        if(PgsAutoWatchSettings.enabled(this)){
+            startWatchOnly();
+            if(watching&&PgsAutoHuntSettings.enabled(this)&&
+                !PgsAutoHuntSettings.forCurrent(this).getBoolean(
+                    PgsAutoHuntSettings.CLICK_ENABLED,false)){
+                huntWatchSession=true;
+                refreshHuntProximity();
+            }
+        }
         armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
             .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
@@ -878,11 +896,12 @@ public final class PgsAutoClickService extends AccessibilityService {
                     PgsAutoHuntSettings.SHOW_COOLDOWN,false):
                 getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
                     .getBoolean("showCountdown",false);
-            if(enabled&&running&&awaitingMap){
+            if(enabled&&running&&(awaitingMap||
+                (huntTapSession&&huntNextAt>SystemClock.uptimeMillis()))){
                 long now=SystemClock.uptimeMillis();
-                long remaining=sceneReadyAt>0?
+                long remaining=awaitingMap?(sceneReadyAt>0?
                     sceneReadyAt+minSeconds*1000L-now:
-                    clickedAt+maxSeconds*1000L-now;
+                    clickedAt+maxSeconds*1000L-now):huntNextAt-now;
                 countdownBadge.setText(String.valueOf(Math.max(0,(remaining+999)/1000L)));
                 countdownBadge.setVisibility(View.VISIBLE);
             }else countdownBadge.setVisibility(View.GONE);
@@ -1239,7 +1258,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;shinyNegativeConfirmed=false;
         huntTapSession=PgsAutoHuntSettings.enabled(this);
-        huntClicks=0;mapReadFailures=0;
+        huntClicks=0;mapReadFailures=0;huntNextAt=0L;
+        handler.removeCallbacks(huntCountdownTick);
         running=true;
         refreshHuntProximity();
         status("LENDO TELA");
@@ -1576,6 +1596,8 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void scanAndTap(){
         if(!running)return;
+        huntNextAt=0L;
+        handler.removeCallbacks(huntCountdownTick);
         if(huntTapSession&&!PgsAutoHuntPolicy.mayKeepScanning(true,
                 huntClicks,PgsAutoHuntSettings.maxClicks(this))){
             halt("AUTO HUNT · LIMITE DE TOQUES");
@@ -2006,6 +2028,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         BugReport.log(this,"PGS",timeout?
             "Cooldown mapa esgotado sem evidência suficiente de mapa pronto; relendo feed":
             "Mapa com objetos estabilizado; Sem Shiny concluído; próximo ícone");
+        huntNextAt=huntTapSession?SystemClock.uptimeMillis()+huntDelay:0L;
+        handler.removeCallbacks(huntCountdownTick);
+        if(huntNextAt>0L)handler.postDelayed(huntCountdownTick,1000L);
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
             if(nextIndex>=limit){
@@ -2382,7 +2407,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         passengerHoldAt=0L;passengerWarningLatched=false;
         sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
         ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";
-        huntTapSession=false;huntClicks=0;mapReadFailures=0;
+        huntTapSession=false;huntClicks=0;mapReadFailures=0;huntNextAt=0L;
+        handler.removeCallbacks(huntCountdownTick);
         refreshHuntProximity();
         status(label);
     }
@@ -2426,6 +2452,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             String title=isIv?"IV100":"Ditto";
             String target=live.currentTargetName;
             live.running=false;live.awaitingMap=false;live.huntTapSession=false;
+            live.huntNextAt=0L;
+            live.handler.removeCallbacks(live.huntCountdownTick);
             live.refreshHuntProximity();
             live.ticket++;live.armedByHome=false;
             live.status("AUTO HUNT · "+title+" · PAUSADO");
