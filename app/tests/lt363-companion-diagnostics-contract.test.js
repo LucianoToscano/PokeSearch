@@ -19,6 +19,8 @@ assert.match(policy,/externalApiApproved\(String packageName\)\{return false;\}/
 assert.doesNotMatch(manifest,/android\.permission\.(QUERY_ALL_PACKAGES|ACCESS_SUPERUSER|MANAGE_EXTERNAL_STORAGE)/);
 assert.match(menus,/private void showCompanionDiagnostics\(\)/);
 assert.match(menus,/showCompanionDiagnostics\(\)/);
+assert.doesNotMatch(scan,/PgsAutoHostSettings\.pokemodManagerInstalled\(this\)/,
+ "Pokemod manager is never a prerequisite to watch or calibrated scan");
 assert.match(scan,/watchMetrics\.begin\(SystemClock\.elapsedRealtime\(\)\)/);
 assert.match(scan,/watchMetrics\.finish\(SystemClock\.elapsedRealtime\(\),lastStatus\)/);
 assert.match(metrics,/Alertas solicitados/);
