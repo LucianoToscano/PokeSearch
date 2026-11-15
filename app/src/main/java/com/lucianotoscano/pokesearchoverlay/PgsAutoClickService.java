@@ -91,6 +91,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean teachingScheduled=false,teachingInProgress=false;
     private boolean isGamePackage(String pkg){
         if(pkg==null)return false;
+        // Pokemod injeta no jogo oficial: não tocar no gerenciador nem em
+        // aplicativos de terceiros com nomes parecidos com PGSharp.
+        if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(this)))
+            return PgsAutoHostPolicy.isGameWindow(pkg);
+        // Preserva comportamento do perfil PGSharp anterior à LT359.
         return "com.nianticlabs.pokemongo".equals(pkg)||
             pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
     }
