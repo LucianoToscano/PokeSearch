@@ -4564,6 +4564,32 @@
           "Avisos de segurança da conta e 'Sou passageiro' exigem decisão humana. Instalação do APK depende de consentimento Android."
         ]
       }
+    },
+    {
+      "id": "lt363-companion-privacy-diagnostics-20261115",
+      "minVersionCode": 54566,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT363 — compatibilidade e diagnóstico multicliente",
+      "sections": {
+        "novidades": [
+          "Menu de Interfaces do Buscar Pokémon com diagnóstico compacto, solicitado pelo usuário, para identificar versões instaladas de Pokémon GO Play/Galaxy, Pokemod Manager, Aegis, Atlas, PokeList, Data Hub e PGTools sem acessar dados privados.",
+          "Diagnóstico do monitor sem clique apresenta leituras, tempo, candidatos, confirmações visuais, interrupções e alertas solicitados, apenas na memória da sessão."
+        ],
+        "melhorias": [
+          "Perfil Pokemod deixa de exigir que o gerenciador com.pokemod.app.public esteja instalado. Permite configurar modelos próprios para ambientes com Aegis, Atlas ou outra interface Pokemod compatível, sem afirmar que o mod está ativo.",
+          "Consulta de aplicativos usa somente pacotes exatos, cinco entradas de visibilidade pontual e nenhuma autorização de root, injetor, API privada ou lista ampla de apps.",
+          "Mantida separação entre monitor sem gesto e Auto Click; cada perfil continua com modelos e geometrias próprios."
+        ],
+        "correcoes": [
+          "Removido o bloqueio incorreto de iniciar monitor ou scanner apenas pela ausência do gerenciador Pokemod.",
+          "Diferenciadas instalações detectadas de injeção ou compatibilidade funcional comprovada, preservando avisos manuais de segurança."
+        ],
+        "emDesenvolvimento": [
+          "Não foram incorporados dados, código, sprite, som ou backend de terceiros; o catálogo de miniaturas nativas de feed permanece sem imagens homologadas.",
+          "Testes físicos Samsung com Pokemod/Aegis/Atlas e PGSharp, precisão por espécie/forma/variante, TalkBack, notificações, DND, CPU/RAM/bateria e efeitos no jogo ainda exigem validação real.",
+          "O monitor não comprova Shiny, encontro ou teleporte a partir de miniaturas, e os contadores de alerta solicitados não comprovam entrega Android. Instalação de atualização exige autorização do Android."
+        ]
+      }
     }
   ]
 }
