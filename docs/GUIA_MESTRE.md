@@ -1,5 +1,10 @@
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
+## LT353 — auditoria visual e do clique por sprite (candidata)
+
+As capturas Samsung 740×1536 e vídeo de referência de 11,11s revelaram campos Tempo cortados, texto Personalização sobreposto e efeito ciano desejado. Corrigidos baseline/altura real de menus, detecção com alpha/RGB em faixas laterais do feed, duas capturas da mesma amostra, foco Android sob bolha PGS, diagnósticos e prévia ◎ sem gesto. LT350 PR #385 segue draft. CI e aceite físico necessários antes de declarar publicação. Ver [relatório LT353](LT353_ARK_AUDITORIA_E_ACCEPTANCE_20261114.md) e [prompt de continuidade](LT353_PROMPT_CONTINUIDADE_NOVO_CHAT_20261114.md).
+
+
 ## LT352 OFICIAL — 0.03.48 / 54555 (14/11/2026)
 
 **LT352 OFICIAL — 14/11/2026:** PokeSearch **0.03.48 / versionCode 54555 / label 51352**, [release v0.03.48-54555](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.48-54555), [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.48-54555/PokeSearch-v0.03.48-LT.apk) com **61.116.582 bytes**, SHA-256 `5fd2ad5a82a99c3c0ed3440abe802a3166d4771beff33f896a9674352a0be390`, [workflow protegido #43660871901](https://github.com/LucianoToscano/PokeSearch/actions/runs/43660871901) **SUCCESS** (preflight, validações, build assinada e publicação do asset confirmado). Código [PR #388](https://github.com/LucianoToscano/PokeSearch/pull/388), squash `cbdeff5a377f795de910a048d85705b41e1fe7c3`; pedido oficial [PR #389](https://github.com/LucianoToscano/PokeSearch/pull/389), squash `9a5048a1351dfae42a58efc9c05f28c56de8e307`. Indicador ciano radial com três anéis, 960ms, `setWillNotDraw(false)`, opcional e `FLAG_NOT_TOUCHABLE` ao gesto aceito pelo Android; botão de prévia sem toque real; mira sem placas cinzas e ✓ esquerdo / × direito brancos. **A PR #385 LT350 permanece draft** aguardando aceite físico. **BLOQUEADO**: visibilidade e posição real do efeito no Samsung, ergonomia/clipping em rotação, OAuth Google/Discord, teleporte/PGSharp, Shiny e Encontro; CI não comprova ação aceita pelo jogo.
