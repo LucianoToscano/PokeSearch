@@ -1038,6 +1038,12 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void scanAndTap(){
         if(!running)return;
+        // A busca nunca captura miniaturas dos próprios menus PGS.
+        if(quickMenus!=null&&quickMenus.isOpen()){
+            status("FECHE MENU PARA BUSCAR");
+            handler.postDelayed(()->{if(running)scanAndTap();},1100L);
+            return;
+        }
         if(holdForPassengerPrompt()){
             handler.postDelayed(()->{if(running)scanAndTap();},1200L);
             return;
@@ -1091,6 +1097,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                     // Diagnóstico eventual: selecionado não significa
                     // modelo reconhecido na escala atual da tela.
                     if(items.isEmpty()&&++emptyRetries==6){
+                        BugReport.log(PgsAutoClickService.this,"PGS",
+                            "Sem sprite no feed; modelos úteis "+
+                            detector.templateCount()+"/"+detector.selectedModelCount());
                         Toast.makeText(PgsAutoClickService.this,
                             "Nenhum ícone reconhecido no feed. Abra a lupa, "+
                             "confira a miniatura e grave novamente se preciso.",
@@ -1102,13 +1111,19 @@ public final class PgsAutoClickService extends AccessibilityService {
                         visitedSlots.clear();notifiedFeedSlots.clear();
                         nextIndex=0;total=0;noFreshAttempts=0;
                     }else if(items.isEmpty())noFreshAttempts=0;
-                    status("FEED VAZIO · NOVA LEITURA");
+                    status(items.isEmpty()?
+                        "SPRITE NÃO RECONHECIDA · RELENDO":
+                        "FEED SEM NOVOS ALVOS · RELENDO");
                     handler.postDelayed(()->{
                         if(running&&ticket==stamp)scanAndTap();
                     },PgsAutoCyclePolicy.EMPTY_FEED_RETRY_SECONDS*1000L);
                     return;
                 }
                 emptyRetries=0;noFreshAttempts=0;
+                BugReport.log(PgsAutoClickService.this,"PGS",
+                    "Sprite do feed: "+match.name+" id "+match.id+
+                    ", correlação "+Math.round(match.score*100)+"%, posição "+
+                    match.x+","+match.y+" / "+screenWidth+"x"+screenHeight);
                 verifyAndTap(match,screenWidth,screenHeight,stamp);
                     });
                 });
@@ -1142,7 +1157,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                             if(!running||ticket!=stamp)return;
                             PgsAutoIconDetector.Match found=null;
                             if(confirmed!=null)for(PgsAutoIconDetector.Match m:confirmed){
-                                if(!m.group.equals(candidate.group))continue;
+                                if(!m.id.equals(candidate.id)||
+                                   !m.group.equals(candidate.group))continue;
                                 if(Math.abs(m.x/(float)w-candidate.x/(float)width)>.026f)continue;
                                 if(Math.abs(m.y/(float)h-candidate.y/(float)height)>.018f)continue;
                                 if(alreadyVisited(m,w,h))continue;
@@ -1196,9 +1212,16 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(!isGameVisible()){
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
+        if(quickMenus!=null&&quickMenus.isOpen()){
+            status("FECHE MENU PARA BUSCAR");
+            handler.postDelayed(()->{if(running)scanAndTap();},1100L);
+            return;
+        }
         status("TOQUE "+(index+1)+"/"+total);
-        BugReport.log(this,"PGS","Tentativa de gesto no feed, alvo "+(index+1)+
-            "/"+total+"; aguarda callback Android (não confirma teleporte)");
+        BugReport.log(this,"PGS","Gesto do feed "+match.name+
+            " modelo "+match.id+" confiança "+Math.round(match.score*100)+
+            "% @"+x+","+y+" tela "+screenWidth+"x"+screenHeight+
+            " (callback Android não confirma ação no jogo)");
         Path path=new Path();path.moveTo(x,y);
         GestureDescription gesture=new GestureDescription.Builder()
             .addStroke(new GestureDescription.StrokeDescription(path,0,90)).build();
