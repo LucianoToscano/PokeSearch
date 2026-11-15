@@ -4617,6 +4617,33 @@
           "Não há automação de teleporte, Shiny, encontro ou login em API de terceiros; testes físicos Samsung, DND, TalkBack, 1/5/10 espécies e desempenho continuam pendentes."
         ]
       }
+    },
+    {
+      "id": "lt365-pokelist-iv100-distance-despawn-20261115",
+      "minVersionCode": 54568,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT365 — resultados PokeList detalhados",
+      "sections": {
+        "novidades": [
+          "O Radar PokeList destaca IV100 e mostra cartões compactos com número de resultado, espécie, forma, PC, nível, validade e coordenadas copiáveis.",
+          "Ordenação local por proximidade ao centro digitado, horário de desaparecimento, IV ou PC, com filtro opcional IV100 sem realizar novas consultas à API.",
+          "Horário de desaparecimento e contagem local atualizados a cada 15 segundos sem solicitar dados em segundo plano."
+        ],
+        "melhorias": [
+          "Quando a resposta PokeList inclui sexo, país ou sinal booleano Shiny, o Radar exibe esses campos identificados como provenientes da API; dados ausentes não são inventados.",
+          "Distância calculada entre centro digitado e alvo mostrado, com cooldown apenas informativo reaproveitando a tabela local já existente do Doce Raro.",
+          "Cópia manual bloqueada quando um registro informado como válido já expirou; copiar coordenadas nunca afirma ou executa teleporte."
+        ],
+        "correcoes": [
+          "A ordenação, o filtro IV100 e o contador local agora não reconsultam o servidor nem iniciam cliques no jogo.",
+          "Mais informações de IV/PC/nível e validade em cartões legíveis, sem adicionar uma nova bolha ou modificar os ícones existentes."
+        ],
+        "emDesenvolvimento": [
+          "O backend PokeList em produção, seus campos opcionais reais e precisão dos eventos precisam de confirmação em rede e Samsung físico; a compilação CI não prova respostas online.",
+          "A captura Auto Hunt, teleporte, reinício de jogo, cliques automáticos e confirmação de Shiny/IV pelo jogo não foram ativados por estas imagens.",
+          "Cooldown mostrado é referência hipotética da distância a partir do centro de busca, não sinal de deslocamento ou período de segurança garantido."
+        ]
+      }
     }
   ]
 }
