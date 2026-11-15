@@ -39,6 +39,7 @@ final class PgsAutoMenus {
         void testNotification(String type);
         void modelsChanged();
         void appearanceChanged();
+        void previewTapIndicator();
         void choosePoint(String mode);
         void selectSprites();
     }
@@ -796,7 +797,17 @@ final class PgsAutoMenus {
         tapFeedback.setChecked(prefs.getBoolean("showTapIndicator",true));
         tapFeedback.setOnCheckedChangeListener((control,on)->
             prefs.edit().putBoolean("showTapIndicator",on).apply());
-        root.addView(tapFeedback,margined(-1,dp(30),2));
+        // Pequena prévia do efeito: não envia nenhum toque ao jogo.
+        LinearLayout tapRow=horizontal();
+        tapRow.setGravity(Gravity.CENTER_VERTICAL);
+        tapRow.addView(tapFeedback,new LinearLayout.LayoutParams(0,dp(30),1));
+        Button preview=button("◎",14);
+        preview.setBackground(null);
+        preview.setTextColor(fg());
+        preview.setContentDescription("Prévia do efeito de toque (sem clicar no jogo)");
+        preview.setOnClickListener(v->actions.previewTapIndicator());
+        tapRow.addView(preview,new LinearLayout.LayoutParams(dp(30),dp(30)));
+        root.addView(tapRow,margined(-1,dp(30),2));
         mount(root,210,177);
     }
 
