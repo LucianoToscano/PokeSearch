@@ -896,7 +896,7 @@ final class PgsAutoMenus {
         String current=PgsSmartSearchSettings.mode(context);
         String[] ids={PgsSmartSearchSettings.MONITOR,PgsSmartSearchSettings.CLICK,
             PgsSmartSearchSettings.HUNT,PgsSmartSearchSettings.SEQUENCE};
-        String[] names={"◎ Monitorar","⌖ Clicar","✦ Auto Hunt","≡ Sequência"};
+        String[] names={"◎ Monitorar","⌖ Clicar","✦ Auto Hunt","Sequência"};
         for(int line=0;line<2;line++){
             LinearLayout row=horizontal();
             for(int col=0;col<2;col++){
@@ -1496,6 +1496,7 @@ final class PgsAutoMenus {
         root.addView(adds,margined(-1,dp(29),2));
 
         LinearLayout items=vertical();
+        List<View> stepRows=new ArrayList<>();
         if(steps.isEmpty()){
             TextView empty=label("Toque em + para adicionar a primeira ação. "+
                 "Pontos são escolhidos na tela do jogo.",10,false);
@@ -1510,31 +1511,30 @@ final class PgsAutoMenus {
                     " · "+(step.waitMs/1000f)+"s":"")+"  ▾",10);
             markChosen(entry,centralStep==i);
             entry.setContentDescription("Etapa "+(i+1)+
-                ". Toque para editar sem sair da aba Ação.");
+                ". Toque para editar; segure a linha e arraste para reordenar.");
             entry.setOnClickListener(v->{
                 centralStep=centralStep==index?-1:index;
                 showCentral(1);
             });
             items.addView(entry,margined(-1,dp(28),2));
+            stepRows.add(entry);
+            holdToReorder(entry,entry,stepRows,index,
+                target->!actions.sequenceRunning()&&
+                    PgsSequenceStore.moveTo(context,index,target),
+                ()->{centralStep=-1;sequenceEdited(true);});
             if(centralStep!=i)continue;
             LinearLayout controls=horizontal();
-            String[] icons={"↑","↓","▣","×"};
+            String[] icons={"▣ Copiar","× Excluir"};
             for(int j=0;j<icons.length;j++){
                 final int op=j;
-                Button btn=button(icons[j],12);
-                btn.setContentDescription(new String[]{"Subir","Descer",
-                    "Copiar passo","Excluir"}[j]+" etapa "+(index+1));
-                btn.setEnabled(op!=0||index>0);
-                if(op==1&&index==steps.size()-1)btn.setEnabled(false);
-                if(op==3)btn.setTextColor(0xFFFF596C);
+                Button btn=button(icons[j],10);
+                btn.setContentDescription((op==0?"Copiar":"Excluir")+
+                    " etapa "+(index+1));
+                if(op==1)btn.setTextColor(0xFFFF596C);
                 btn.setOnClickListener(v->{
-                    boolean ok=op==0?PgsSequenceStore.move(context,index,-1):
-                        op==1?PgsSequenceStore.move(context,index,1):
-                        op==2?PgsSequenceStore.copy(context,index):
-                            PgsSequenceStore.delete(context,index);
-                    if(op==0&&ok)centralStep=index-1;
-                    if(op==1&&ok)centralStep=index+1;
-                    if(op==3&&ok)centralStep=-1;
+                    boolean ok=op==0?PgsSequenceStore.copy(context,index):
+                        PgsSequenceStore.delete(context,index);
+                    if(op==1&&ok)centralStep=-1;
                     sequenceEdited(ok);
                 });
                 LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(27),1);
