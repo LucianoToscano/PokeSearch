@@ -22,7 +22,7 @@ assert.match(store,/new Model\(originalId,name\.trim\(\),file,enabled,false,refW
 assert.match(menu,/Modelo nativo verificado/);
 assert.match(menu,/if\(!model\.builtIn\)/);
 assert.match(menu,/captura necessária/);
-assert.match(menu,/selected\?speciesModels/);
+assert.match(menu,/List<PgsAutoTemplateStore.Model> models=speciesModels;/);
 assert.match(detector,/nativeModel=model\.builtIn/);
 assert.match(detector,/width>=height\?\.34f:FEED_SIDE_FRACTION/);
 assert.match(service,/PgsAutoScreenGeometry\.map\(/);
