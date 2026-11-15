@@ -464,6 +464,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         String pkg=event.getPackageName().toString();
         // Notificações de conteúdo do jogo podem aparecer sem trocar a janela.
         if(type==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
+            if(sequenceActive&&isGamePackage(pkg)&&
+                (gameAccountSafetyNoticePresent()||passengerPromptPresent())){
+                stopSequence("SEQUÊNCIA · AVISO HUMANO");
+                return;
+            }
             if(!running||!isGamePackage(pkg))return;
             long now=SystemClock.uptimeMillis();
             // ContentChanged pode chegar várias vezes por segundo no Unity.
@@ -480,6 +485,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         // Acessibilidade pode anunciar NOSSA bolha como janela superior.
         // Nunca sobrescrever o jogo por causa dos menus do próprio PokeSearch.
         if(pkg.equals(getPackageName()))return;
+        if(sequenceActive&&(!isGamePackage(pkg)||!isGameVisible()||
+            gameAccountSafetyNoticePresent()||passengerPromptPresent())){
+            stopSequence("SEQUÊNCIA · JANELA/AVISO ALTERADO");
+            return;
+        }
         foreground=pkg;
         if(running&&isGamePackage(pkg)&&gameAccountSafetyNoticePresent()){
             fail("Aviso de segurança da conta detectado. Revise no jogo "+
@@ -846,6 +856,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         return "Parado";
     }
     private void removeHand(){
+        stopSequence("SEQUÊNCIA · OVERLAY FECHADO");
         stopWatchOnly(true);
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
@@ -1225,6 +1236,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void pickSequencePoint(String kind,int index,boolean destination){
         if(running||watching||teachingInProgress||sequenceActive||
+           (!PgsSequenceStore.load(this).isEmpty()&&
+            PgsSequenceStore.landscape(this)!=sequenceLandscape())||
            PgsAutoHostPolicy.OTHER.equals(PgsAutoHostSettings.current(this))){
             showReason("Pare o monitor e selecione PGSharp ou Pokemod "+
                 "para editar os pontos.");return;
