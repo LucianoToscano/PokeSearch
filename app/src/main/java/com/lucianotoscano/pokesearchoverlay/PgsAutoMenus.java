@@ -460,7 +460,7 @@ final class PgsAutoMenus {
             line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
             TextView name=label(model.builtIn?"Nativa":"Minha sprite",11,false);
             line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
-            Button details=model.builtIn?button("◎",13):trashButton("Excluir esta imagem");
+            View details=model.builtIn?button("◎",13):trashButton("Excluir esta imagem");
             details.setContentDescription(model.builtIn?"Ver modelo nativo":"Gerenciar minha sprite");
             line.addView(details,new LinearLayout.LayoutParams(dp(30),dp(35)));
             details.setOnClickListener(v->showModelActions(pokemon,model));
