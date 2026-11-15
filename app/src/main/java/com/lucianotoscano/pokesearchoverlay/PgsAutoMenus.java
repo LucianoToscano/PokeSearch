@@ -424,12 +424,14 @@ final class PgsAutoMenus {
             root.addView(preview,pp);
         }catch(Exception ignored){}
         TextView modelOrigin=label(model.builtIn?
-            "Nativa · "+model.nativeForm+" / "+model.nativeVariant:"Minha amostra",10,false);
+            "Nativa · "+model.nativeForm+" / "+model.nativeVariant:
+            "Minha amostra · "+PgsAutoHostPolicy.displayLabel(model.hostProfile),10,false);
         modelOrigin.setSingleLine(true);
         modelOrigin.setEllipsize(android.text.TextUtils.TruncateAt.END);
         modelOrigin.setContentDescription(model.builtIn?
             "Modelo nativo validado, forma "+model.nativeForm+", variante "+model.nativeVariant:
-            "Modelo pessoal cadastrado");
+            "Modelo pessoal cadastrado no perfil "+
+                PgsAutoHostPolicy.displayLabel(model.hostProfile));
         root.addView(modelOrigin,margined(-1,dp(18),3));
         if(!model.builtIn){
             ImageButton delete=trashButton("Excluir esta imagem cadastrada");
@@ -465,7 +467,8 @@ final class PgsAutoMenus {
             preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
             line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
             TextView name=label(model.builtIn?
-                "Nativa: "+model.nativeForm+" · "+model.nativeVariant:"Minha sprite",11,false);
+                "Nativa: "+model.nativeForm+" · "+model.nativeVariant:
+                "Minha sprite · "+PgsAutoHostPolicy.shortLabel(model.hostProfile),11,false);
             name.setSingleLine(true);
             name.setEllipsize(android.text.TextUtils.TruncateAt.END);
             line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
@@ -496,6 +499,17 @@ final class PgsAutoMenus {
         // compacta ao lado de "Alvo" para não crescer o menu Buscar.
         LinearLayout targetRow=horizontal();
         targetRow.addView(target,new LinearLayout.LayoutParams(0,dp(32),1));
+        // O perfil visual é independente de conta, filtro e alvo. Não infere
+        // injeção ativa apenas porque o gerenciador Pokemod está instalado.
+        Button host=button(PgsAutoHostPolicy.shortLabel(
+            PgsAutoHostSettings.current(context)),10);
+        host.setContentDescription("Interface do jogo: "+
+            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
+        host.setOnClickListener(v->showHostProfiles());
+        LinearLayout.LayoutParams hostParams=
+            new LinearLayout.LayoutParams(dp(39),dp(32));
+        hostParams.leftMargin=dp(3);
+        targetRow.addView(host,hostParams);
         Button probe=button("◎",14);
         probe.setContentDescription("Prévia das sprites do feed, sem tocar no jogo");
         LinearLayout.LayoutParams probeParams=new LinearLayout.LayoutParams(dp(33),dp(32));
@@ -692,7 +706,37 @@ final class PgsAutoMenus {
         render[0].run();
         mount(root,240,290);
     }
-    /** Alvos explícitos, separados da busca por sprites do feed PGSharp. */
+    /** Seletor pequeno: não inventa integração nativa com o injetor Pokemod. */
+    private void showHostProfiles(){
+        LinearLayout root=panelRoot("INTERFACE DO FEED",null);
+        String current=PgsAutoHostSettings.current(context);
+        String[] ids={PgsAutoHostPolicy.PGSHARP,
+            PgsAutoHostPolicy.POKEMOD,PgsAutoHostPolicy.OTHER};
+        String[] names={"PGSharp","Pokemod","Outro · somente prévia"};
+        for(int i=0;i<ids.length;i++){
+            final String value=ids[i];
+            Button select=button(names[i],11);
+            markChosen(select,value.equals(current));
+            select.setOnClickListener(v->{
+                PgsAutoHostSettings.select(context,value);
+                actions.modelsChanged(); // interrompe ciclo e reconstrói modelos.
+                if(PgsAutoHostPolicy.POKEMOD.equals(value)&&
+                   !PgsAutoHostSettings.pokemodManagerInstalled(context))
+                    Toast.makeText(context,
+                        "Gerenciador Pokemod não detectado. Instale/abra o jogo "+
+                        "antes de reconhecer a interface.",
+                        Toast.LENGTH_LONG).show();
+                showSearch();
+            });
+            root.addView(select,margined(-1,dp(34),3));
+        }
+        TextView note=label("Cada interface exige suas próprias capturas. "+
+            "Instalado não comprova mod ativo; aviso de segurança é manual.",9,false);
+        root.addView(note,margined(-1,dp(47),4));
+        mount(root,230,224);
+    }
+
+    /** Alvos explícitos, separados da busca por sprites do feed. */
     void showTargets(){
         SharedPreferences prefs=context.getSharedPreferences("pgs_auto_target_v1",Context.MODE_PRIVATE);
         String chosen=prefs.getString("mode","SPRITE");
