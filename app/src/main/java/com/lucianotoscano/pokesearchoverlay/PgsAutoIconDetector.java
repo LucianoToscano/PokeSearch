@@ -141,6 +141,7 @@ final class PgsAutoIconDetector {
             if(maxX<0||maxY<0)continue;
             for(int y=0;y<=maxY;y+=scanStep){
                 for(int x=0;x<=maxX;x+=scanStep){
+                    if(!insideFeed(x+t.width/2,y+t.height/2,w,h))continue;
                     float preliminary=correlation(lum,w,x,y,t);
                     if(preliminary<.55f)continue;
                     float best=preliminary;int bx=x,by=y;
