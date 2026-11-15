@@ -752,6 +752,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean reloadDetector(){
         try{
             detector=new PgsAutoIconDetector(this);
+            int deferred=PgsAutoNativeModels.deferredCount();
+            if(deferred>0)BugReport.log(this,"PGS",
+                "LT357: "+deferred+" variantes nativas adiadas pelo limite "+
+                "de recursos; não são modelos ativos, sem clique cego");
             if(detector.templateCount()>0)return true;
             showReason(detector.selectedModelCount()>0?
                 "Modelo selecionado sem pixels úteis ou arquivo ausente. "+

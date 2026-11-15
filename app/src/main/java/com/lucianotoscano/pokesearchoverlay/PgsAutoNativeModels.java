@@ -39,7 +39,9 @@ final class PgsAutoNativeModels {
     private static Map<Integer,List<Entry>> indexed;
     private static final Map<String,Boolean> checkedAssets=new HashMap<>();
     private static String compatibleVersion;
+    private static int lastDeferredCount=0;
     private PgsAutoNativeModels(){}
+    static synchronized int deferredCount(){return lastDeferredCount;}
 
     /** Verificação sob demanda: não abrir 1025+ texturas quando só dez espécies são filtradas. */
     static synchronized List<PgsAutoTemplateStore.Model> available(
@@ -50,21 +52,33 @@ final class PgsAutoNativeModels {
             !compatibleVersion.equals(installedVersion(context)))
             return Collections.emptyList();
         List<PgsAutoTemplateStore.Model> result=new ArrayList<>();
+        lastDeferredCount=0;
+        int totalAttempts=0;
         for(Integer dex:PgsAutoModelSelectionPolicy.selectedOnly(
             selectedSpecies,PgsAutoCatalog.MAX_SELECTED)){
             if(dex==null||dex<=0)continue;
             List<Entry> entries=indexed.get(dex);
             if(entries==null)continue;
+            int attempts=0,speciesModels=0;
             for(Entry entry:entries){
+                if(!PgsAutoRuntimeBudgetPolicy.mayVerify(
+                    attempts,totalAttempts,speciesModels,result.size())){
+                    lastDeferredCount+=entries.size()-attempts;
+                    break; // nunca verificar infinitas variantes sem limite.
+                }
+                attempts++;totalAttempts++;
                 String key=entry.asset+":"+entry.sha256+":"+entry.width+"x"+entry.height;
                 Boolean ok=checkedAssets.get(key);
                 if(ok==null){
                     ok=validAsset(context,entry.asset,entry.sha256,entry.width,entry.height);
                     checkedAssets.put(key,ok);
                 }
-                if(ok)result.add(new PgsAutoTemplateStore.Model(
-                    entry.id(compatibleVersion),entry.species,entry.asset,true,true,
-                    entry.width,entry.height,entry.form,entry.variant));
+                if(ok){
+                    result.add(new PgsAutoTemplateStore.Model(
+                        entry.id(compatibleVersion),entry.species,entry.asset,true,true,
+                        entry.width,entry.height,entry.form,entry.variant));
+                    speciesModels++;
+                }
             }
         }
         return result;
