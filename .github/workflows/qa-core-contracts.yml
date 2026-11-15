@@ -55,5 +55,7 @@ jobs:
           for t in app/tests/*.test.js; do
             node "$t"
           done
+      - name: Validate exact SHA-pinned previous official sprite recovery
+        run: python3 scripts/test_lt357_sprite_archive_recovery.py
       - name: Validate OTA manifest builder
         run: python3 scripts/test_ota_builder.py
