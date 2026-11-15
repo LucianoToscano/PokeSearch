@@ -4454,6 +4454,35 @@
           "Avisos de segurança e 'Sou passageiro' jamais são confirmados automaticamente; callback Android não comprova reação do jogo."
         ]
       }
+    },
+    {
+      "id": "lt359-pokemod-multiclient-host-profiles-20261115",
+      "minVersionCode": 54562,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT359 — compatibilidade experimental Pokemod e outros clientes",
+      "sections": {
+        "novidades": [
+          "Seletor compacto PGS / PM / OUT na busca de sprites para escolher PGSharp, Pokemod ou outro cliente em estudo.",
+          "Auditoria estática do gerenciador Pokemod 14.2.1 com inventário de formatos, permissões e limites de licenciamento. Nenhum binário ou sprite de terceiros incorporado."
+        ],
+        "melhorias": [
+          "Amostras pessoais agora são associadas à interface usada na captura: sprites cadastradas no PGSharp não são usadas automaticamente no Pokemod, e vice-versa.",
+          "Modelos legados sem identificação de provedor permanecem vinculados ao PGSharp, sem exclusão ou migração destrutiva.",
+          "Busca do Pokemod exige escolha explícita, gerenciador instalado, jogo em primeiro plano e miniatura correspondente capturada para esse perfil. Instalado não comprova o mod ativo.",
+          "Clientes não homologados não recebem gestos automáticos; consultas de pacotes seguem pontuais, sem permissões amplas nem root novo."
+        ],
+        "correcoes": [
+          "Evita falsa indicação de miniaturas disponíveis quando elas foram cadastradas em outro perfil visual.",
+          "Revalida aviso de segurança da conta e perfil antes do gesto, preservando confirmação manual de 'Sou passageiro'."
+        ],
+        "emDesenvolvimento": [
+          "A compatibilidade real com Pokemod e clientes adicionais permanece pendente de QA física no Samsung, com as interfaces ativas e captura de sprites de feed legítimas.",
+          "O APK Pokemod fornecido contém gerenciador/injetor; não disponibilizou biblioteca individual de miniaturas verificadas e com direitos de redistribuição. Catálogo nativo continua vazio.",
+          "Biblioteca remota de modelos assinados, antirrollback, revogação, Shiny/Encontro, detecção real de teleporte e desempenho dependem de licenças, testes e implementação futura.",
+          "Callbacks Android, presença do gerenciador, texto do jogo e delta RGB não são prova de teleporte nem de injeção ativa.",
+          "Pokébolas 1/2, Doce Raro, Edu, contas, filtros, alertas e overlays continuam com contratos existentes; aceite físico ainda necessário."
+        ]
+      }
     }
   ]
 }
