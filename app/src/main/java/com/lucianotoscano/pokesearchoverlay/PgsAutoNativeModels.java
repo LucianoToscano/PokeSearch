@@ -64,7 +64,7 @@ final class PgsAutoNativeModels {
                 }
                 if(ok)result.add(new PgsAutoTemplateStore.Model(
                     entry.id(compatibleVersion),entry.species,entry.asset,true,true,
-                    entry.width,entry.height));
+                    entry.width,entry.height,entry.form,entry.variant));
             }
         }
         return result;

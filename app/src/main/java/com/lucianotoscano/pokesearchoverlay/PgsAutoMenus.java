@@ -423,7 +423,8 @@ final class PgsAutoMenus {
             LinearLayout.LayoutParams pp=margined(-1,dp(74),5);
             root.addView(preview,pp);
         }catch(Exception ignored){}
-        root.addView(label(model.builtIn?"Modelo nativo verificado":"Minha amostra",10,false),
+        root.addView(label(model.builtIn?
+            "Nativa · "+model.nativeForm+" / "+model.nativeVariant:"Minha amostra",10,false),
             margined(-1,dp(18),3));
         if(!model.builtIn){
             ImageButton delete=trashButton("Excluir esta imagem cadastrada");
@@ -458,7 +459,8 @@ final class PgsAutoMenus {
             catch(Exception ignored){}
             preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
             line.addView(preview,new LinearLayout.LayoutParams(dp(35),dp(35)));
-            TextView name=label(model.builtIn?"Nativa":"Minha sprite",11,false);
+            TextView name=label(model.builtIn?
+                "Nativa: "+model.nativeForm+" · "+model.nativeVariant:"Minha sprite",11,false);
             line.addView(name,new LinearLayout.LayoutParams(0,dp(35),1));
             View details=model.builtIn?button("◎",13):trashButton("Excluir esta imagem");
             details.setContentDescription(model.builtIn?"Ver modelo nativo":"Gerenciar minha sprite");

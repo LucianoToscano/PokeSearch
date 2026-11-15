@@ -24,11 +24,17 @@ final class PgsAutoTemplateStore {
         String id, name, file;
         boolean enabled, builtIn;
         final int referenceWidth,referenceHeight;
+        final String nativeForm,nativeVariant;
         Model(String id,String name,String file,boolean enabled,boolean builtIn) {
             this(id,name,file,enabled,builtIn,WIDTH,HEIGHT);
         }
         Model(String id,String name,String file,boolean enabled,boolean builtIn,int w,int h) {
+            this(id,name,file,enabled,builtIn,w,h,"","");
+        }
+        Model(String id,String name,String file,boolean enabled,boolean builtIn,
+              int w,int h,String form,String variant) {
             this.id=id;this.name=name;this.file=file;this.enabled=enabled;this.builtIn=builtIn;
+            this.nativeForm=builtIn?form:"";this.nativeVariant=builtIn?variant:"";
             // Modelos LT339 são legados 68×52; os novos preservam a dimensão
             // real escolhida no feed em uma largura de referência de 740px.
             referenceWidth=Math.max(16,Math.min(92,w));

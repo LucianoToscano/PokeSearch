@@ -38,4 +38,8 @@ const preview=service.slice(service.indexOf("private void preview(){"),service.i
 assert.doesNotMatch(preview,/\bdispatchGesture\s*\(/);
 const m=JSON.parse(fs.readFileSync("app/src/main/assets/pgs-native/manifest.json","utf8"));
 assert.deepEqual(m.entries,[],"no unverified sprites can ship");
+assert.match(store,/final String nativeForm,nativeVariant/);
+assert.match(native,/entry\.width,entry\.height,entry\.form,entry\.variant/);
+const menu=file("PgsAutoMenus");
+assert.match(menu,/model\.nativeForm/);
 console.log("LT356: all 1025 species, on-demand native index, overlap NMS and fail-closed preview PASS");
