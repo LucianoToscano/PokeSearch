@@ -85,6 +85,12 @@ public final class PgsAutoClickService extends AccessibilityService {
     private FrameLayout picker;
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
+    // Monitor passivo LT361: sessão exclusiva, sem dispatchGesture.
+    private boolean watching=false,watchBusy=false;
+    private int watchTicket=0;
+    private final java.util.HashMap<String,Long> watchLastAlert=
+        new java.util.HashMap<>();
+    private final Runnable watchTick=this::scanWatchOnly;
     private long lastAccountSafetyEventCheck=0L;
     private boolean awaitingMap=false;
     private boolean armedByHome=false;
@@ -358,9 +364,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
+        if(PgsAutoWatchSettings.enabled(this))startWatchOnly();
         armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
             .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
+        if(watching){
+            armedByHome=false;
+            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
+                .putBoolean("armFromHome",false).apply();
+        }
         if(armedByHome&&isGameVisible())startArmedSearch();
         else scheduleArmedStart();
     }
@@ -447,11 +459,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
-        // Uma perda temporária do foco de acessibilidade não equivale a
-        // "desligar": manter modelos e intenção de busca até o retorno do jogo.
-        status("AGUARDANDO JOGO");
+        // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
+        status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
     }
     @Override public void onDestroy() {
+        stopWatchOnly(true);
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
         if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
@@ -648,6 +660,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         PgsAutoClickService live=instance;
         if(live==null)return;
         live.handler.post(()->{
+            live.stopWatchOnly(true); // Home pediu busca; monitor passivo é exclusivo.
             live.showBubble();
             live.armedByHome=true;
             live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
@@ -665,6 +678,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     public static void modelsChanged(){
         PgsAutoClickService live=instance;
         if(live!=null)live.handler.post(()->{
+            live.stopWatchOnly(true); // Nunca migrar sessão para outro perfil.
             if(live.running)live.halt("PARADO");
             live.reloadDetector();
             live.status("PARADO");
@@ -677,6 +691,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             return "Abra o feed de "+
                 PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(live))+
                 " no jogo";
+        if(live.watching)return live.isGameVisible()?
+            "Monitorando favoritos · sem clique":"Monitor pausado · abra o jogo";
         if(live.running&&!live.isGameVisible())return "Abra o jogo";
         if(live.running&&live.awaitingMap)return "Aguardando mapa";
         if(live.running)return "Procurando ícones";
@@ -685,6 +701,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         return "Parado";
     }
     private void removeHand(){
+        stopWatchOnly(true);
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
             .putBoolean("armFromHome",false).apply();
@@ -707,8 +724,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     /** A Home usa o estado REAL do serviço, nunca uma preferência desatualizada. */
     public static boolean isSearchActive(){
         PgsAutoClickService live=instance;
-        return live!=null && PgsAutoVisualState.active(
-            live.running,live.pausedByShiny,live.pausedByError);
+        return live!=null && (live.watching||PgsAutoVisualState.active(
+            live.running,live.pausedByShiny,live.pausedByError));
     }
     private void setCoreState(PgsAutoVisualState.Core next){
         if(coreIndicator==null||coreBackground==null||currentCore==next)return;
@@ -737,16 +754,20 @@ public final class PgsAutoClickService extends AccessibilityService {
         lastStatus=value;
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
-        boolean on=PgsAutoVisualState.active(running,pausedByShiny,pausedByError);
+        boolean on=watching||PgsAutoVisualState.active(
+            running,pausedByShiny,pausedByError);
         if(handView!=null&&(!Boolean.valueOf(on).equals(currentArtworkOn))){
             handView.setImageResource(on?
                 R.drawable.busca_pokemon_on:R.drawable.busca_pokemon_off);
             currentArtworkOn=on;
         }
-        setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
+        setCoreState(watching?PgsAutoVisualState.Core.WHITE:
+            PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
         if(handBadge!=null){
-            handBadge.setText(shiny?"✨":value.contains("PAUSADO")?"!":"");
-            handBadge.setVisibility(shiny||value.contains("PAUSADO")?View.VISIBLE:View.GONE);
+            handBadge.setText(watching?"◎":shiny?"✨":
+                value.contains("PAUSADO")?"!":"");
+            handBadge.setVisibility(watching||shiny||
+                value.contains("PAUSADO")?View.VISIBLE:View.GONE);
         }
         if(countdownBadge!=null){
             boolean enabled=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
@@ -763,7 +784,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
         bubble.setContentDescription("PGS Busca Pokémon: "+value+
             (on?", ligado":", desligado")+
-            ". Toque para ligar/desligar; segure para abrir menus.");
+            (watching?". Monitor somente leitura: toque para parar.":
+             ". Toque para ligar/desligar; segure para abrir menus."));
     }
     private boolean reloadDetector(){
         try{
@@ -1048,6 +1070,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void toggle(){
+        if(watching){stopWatchOnly(true);return;}
         if(running){halt("PARADO");return;}
         // LT359: PGS é interface padrão; Pokemod exige seleção explícita e
         // modelos próprios. Outros clientes ficam em prévia até homologação.
@@ -1112,6 +1135,10 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     /** Segure o botão para localizar os ícones sem tocar em nenhum deles. */
     private void preview(){
+        if(watching){
+            Toast.makeText(this,"Desligue o monitor no sino para usar a prévia.",
+                Toast.LENGTH_LONG).show();return;
+        }
         if(running){
             Toast.makeText(this,"Pause a busca antes de testar a prévia.",
                 Toast.LENGTH_LONG).show();return;
