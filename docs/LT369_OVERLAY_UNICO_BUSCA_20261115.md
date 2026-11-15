@@ -1,6 +1,6 @@
 # LT369 — Correção: um único menu de Busca Pokémon
 
-Data: 15/11/2026. Base: LT368 oficial 0.03.64 / versionCode 54571.
+Data: 15/11/2026. Base: LT368 oficial 0.03.64 / versionCode 54571. **LT369 publicada oficialmente**: versão 0.03.65 / versionCode 54572 / label 51369 — [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.65-54572).
 
 ## Motivo
 
@@ -41,3 +41,11 @@ O novo contrato `lt369-single-overlay-contract.test.js` assegura abertura direta
 ## Publicação
 
 **Estado inicial:** branch de implementação, NÃO release publicada. A próxima atualização só pode usar `versionCode >54571`, assinador oficial e pedido por `release/official-request.json`. Após a publicação, atualizar este documento e `AGENTS.md` com SHA, APK e workflow efetivamente verificados.
+
+## ARK LT369 — fechamento oficial (15/11/2026)
+
+- **PUBLICADO:** [v0.03.65-54572](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.65-54572), APK `PokeSearch-v0.03.65-LT.apk` de **61.172.771 bytes**, SHA-256 asset GitHub `bd75824dc7f3912e1b631ed59cc638038ea0c3e665dfc0eaee0e167f03a75c7e`. A API GitHub confirmou release `latest` pública e asset `uploaded`, sem recálculo independente do APK nesta sessão. Workflow permanente [#43773646619](https://github.com/LucianoToscano/PokeSearch/actions/runs/43773646619) `completed/success`, source `36557a2d9afd787b3c58d0c4d53fb88fc6a821d4`.
+- **CÓDIGO:** [PR #441](https://github.com/LucianoToscano/PokeSearch/pull/441), squash `99699ade65f01cc0342e385a001c2c2f04814817`. Head `f2ae374a00f08b8cd42b95bfe73f828866867db8` aprovado em 7/7 gates: Node #43772988615, LT169 #43772988613, LT211 #43772988616, Java #43772988631, OTA #43772988589, PGS APK #43772988655, Secure beta/R8 #43772988632.
+- **PEDIDO:** [PR #442](https://github.com/LucianoToscano/PokeSearch/pull/442), squash `36557a2d9afd787b3c58d0c4d53fb88fc6a821d4`; notas `release_notes.json` incluídas no APK, versionCode monotônico, certificado permanente preservado. Workflow oficial executa verificação de hash e assinatura, conforme configuração do repositório.
+- **TESTE FÍSICO PENDENTE:** visual em Samsung e outros Android 11/13/14, clientes PGSharp/Pokemod separadamente, toque longo, arrastar/soltar em listas extensas e curtas, rolagem, TalkBack, rotação e posição na tela; callbacks de gesto não comprovam captura ou teleporte. Os seletores transitórios de sprites/cortes e diálogos do sistema continuam necessários, mesmo com a Central principal unificada.
+- **CONTINUIDADE:** [ARK LT370](LT369_PROMPT_CONTINUIDADE_LT370_20261115.md). Próxima release deve ter `versionCode > 54572` e manter assinatura original e QA protegido.
