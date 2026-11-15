@@ -15,6 +15,17 @@ A LT368 incluiu abas Pokémon, Ação e Ajustes, mas o gesto da bolha continuava
 5. Removemos a escolha duplicada de espera da aba Ação; o valor só aparece em Ajustes.
 6. Preservados os métodos antigos de toolbar e submenu no código como legado **sem chamadas pelo fluxo normal de interação**. A remoção do código morto e a migração completa de destinos avançados de alvo continuam para futura auditoria, sem promessa de que todos os diálogos transitórios (modelo/sprite/perfil) já são inline. Nenhum atalho de início ou toque automático foi acrescentado.
 
+## LT369 — gesto de organização sem alça (solicitação adicional)
+
+- O usuário **segura a própria linha do Pokémon ou da etapa de sequência e arrasta** para mudar a ordem, sem ↑/↓ nem ícone ≡ de três barras.
+- Pressão longa gera retorno tátil discreto, elevação e transparência temporárias, com a lista rolando nas bordas quando necessário; soltar confirma e persiste **uma única** movimentação, cancelar restaura a posição. Um toque curto na etapa continua abrindo a edição.
+- A lista vazia/filtrada preserva o comportamento de pesquisa: prioridades dos Pokémon só são reordenadas na lista completa de selecionados, não nos resultados de pesquisa misturados.
+- A origem/destino são calculados pelo centro real das linhas visíveis, não por um número fixo de pixels; isso respeita dimensões e densidades da tela.
+- TalkBack possui ações de avançar/recuar na linha como alternativa a arrastar, sem mostrar setas na tela.
+- As operações `PgsAutoCatalog.moveTo` e `PgsSequenceStore.moveTo` preservam modelos, orientação, preferências e os limites existentes. Reordenar não executa gesto no jogo.
+- O ícone antigo continua disponível como recurso histórico do projeto, mas **não é desenhado na lista**.
+- Validação física de arrastar, rolagem e acessibilidade ainda é necessária.
+
 ## Restrições
 
 - Não trocar nem duplicar `PgsAutoClickService`; não apagar sprites, preferências, sequências, contas ou modelos.
