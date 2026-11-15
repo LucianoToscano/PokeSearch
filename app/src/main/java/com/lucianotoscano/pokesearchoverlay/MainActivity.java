@@ -185,6 +185,8 @@ public class MainActivity extends Activity {
             EduClockSettingsActivity.class));
     }
     private TextView sessionHint;
+    // Estado informativo separado da automação por gesto; sem botão adicional.
+    private TextView homeWatchStatus;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
     private ScrollView communityHomeScroll;
@@ -627,6 +629,13 @@ public class MainActivity extends Activity {
         dualLp.bottomMargin=d(5);
         dualOverlayRow.setVisibility(View.VISIBLE);
         screen.addView(dualOverlayRow,dualLp);
+        // LT362: linha discreta, sem painel cinza, ícones extras ou comando de gesto.
+        homeWatchStatus=homeText("",10,
+            homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),false);
+        homeWatchStatus.setGravity(Gravity.CENTER);
+        homeWatchStatus.setSingleLine(true);
+        homeWatchStatus.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        screen.addView(homeWatchStatus,new LinearLayout.LayoutParams(-1,d(18)));
         // Rótulos enormes removidos: badge 12dp sobre cada Pokébola.
         // A identidade aparece somente no popover compacto ao tocar.
         overlayAccountLabel1=null;overlayAccountLabel2=null;
@@ -2358,6 +2367,22 @@ public class MainActivity extends Activity {
         }
         pgsSearchControl.setContentDescription(on?
             "Desativar overlay Buscar Pokémon":"Ativar overlay Buscar Pokémon");
+        if(homeWatchStatus!=null){
+            String watchState=PgsAutoClickService.monitorHomeState(this);
+            String summary=PgsAutoWatchUiPolicy.label(watchState);
+            String client=PgsAutoHostPolicy.shortLabel(PgsAutoHostSettings.current(this));
+            boolean notificationsBlocked=android.os.Build.VERSION.SDK_INT>=33&&
+                PgsAutoWatchSettings.enabled(this)&&
+                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=
+                    android.content.pm.PackageManager.PERMISSION_GRANTED;
+            homeWatchStatus.setText("◎ "+client+" · Monitor: "+summary+
+                (notificationsBlocked?" · avisos bloqueados":""));
+            homeWatchStatus.setContentDescription("Monitor de favoritos sem clique, "+
+                PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(this))+
+                ": "+summary+(notificationsBlocked?
+                ". Permissão de notificações bloqueada.":"")+
+                ". Configure no sino da bolha Buscar Pokémon.");
+        }
     }
     private void refreshHomeOverlay(){
         refreshHomePgsIcon();
