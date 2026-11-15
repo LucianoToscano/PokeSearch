@@ -4231,14 +4231,16 @@
           "Lixeiras branca e preta originais importadas da pasta Banco de Imagens no Drive, nas telas WebView e no menu nativo.",
           "Busca PGS mantém ícones da barra visíveis ao abrir submenus, admite toques fora das janelas e usa bordas brancas muito sutis em vez de azuis.",
           "A alça de ordenar Pokémon agora tem três traços horizontais; brilho Shiny original fica dentro do sino, em posição central e visível.",
-          "Ícones da Home do assistente Edu e Doce Raro recalculam escala após a largura final da fileira, evitando aparecer minúsculos na abertura."
+          "Ícones da Home do assistente Edu e Doce Raro recalculam escala após a largura final da fileira, evitando aparecer minúsculos na abertura.",
+          "LT349b: Auto Click abre a barra de cinco ícones ao lado da bolha (direita/esquerda conforme espaço), com inversão nas bordas e submenus ancorados ao arrastar ou rotacionar."
         ],
         "correcoes": [
           "Recortador: fundo cinza dos grupos inferior/superior com 70% de transparência; arte de Confirmar, Cancelar e Background com 70% do tamanho anterior, mantendo a mesma área de toque.",
           "Recorte Vertical passa a ter proporção 3:4 na seleção inicial e no redimensionamento, ficando mais largo e baixo sem virar horizontal.",
           "Três formatos do recortador alinhados em células iguais; barra lateral contínua, prévia, lupa e confirmação permanecem como antes.",
           "Corrigidas regras de janelas do PGS para reduzir bloqueio de toques externos, ocultação de ícones e contorno azul indevido.",
-          "Preservadas as imagens originais do recortador e todas as preferências, modelos, contas, notificações, Doces Raros e recursos anteriores."
+          "Preservadas as imagens originais do recortador e todas as preferências, modelos, contas, notificações, Doces Raros e recursos anteriores.",
+          "LT349b: alça de arrastar do scanner agora exibe somente o símbolo fino branco, sem círculo, fundo ou aro; área tocável invisível preservada."
         ],
         "emDesenvolvimento": [
           "As correções foram compiladas e verificadas por oito gates Node/Java/OTA/PGS QA/R8; visual e gestos reais no Samsung continuam BLOQUEADOS até evidência física.",
