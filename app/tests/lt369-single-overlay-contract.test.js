@@ -39,5 +39,23 @@ assert.doesNotMatch(actions,/huntNumeric\(root,hunt,PgsAutoHuntSettings.WAIT/);
 // The old functions may stay as inactive compatibility code in LT369 but are
 // NEVER reachable from toggle or the three main tabs.
 assert.match(style,/static final int CELL_DP=30, ART_DP=16, BASE_GAP_DP=2, CORNER_DP=5/);
+// LT369: long press and drag, no three-bar grip or visible arrows.
+const catalog=fs.readFileSync(root+"PgsAutoCatalog.java","utf8");
+const store=fs.readFileSync(root+"PgsSequenceStore.java","utf8");
+assert.match(menu,/private void holdToReorder\(View touch,View row,List<View> ordered/);
+assert.match(menu,/row\.performHapticFeedback/);
+assert.match(menu,/row\.setTranslationY\(event\.getRawY\(\)-downY\[0\]\)/);
+assert.match(menu,/nearestRow\(ordered,event\.getRawY\(\),from\)/);
+assert.match(menu,/holdToReorder\(label,line,speciesRows,from/);
+assert.match(menu,/holdToReorder\(entry,entry,stepRows,index/);
+assert.match(menu,/ACTION_SCROLL_FORWARD/);
+assert.match(menu,/ACTION_SCROLL_BACKWARD/);
+assert.match(menu,/PgsAutoCatalog\.moveTo\(context,pokemon\.number,target\)/);
+assert.match(menu,/PgsSequenceStore\.moveTo\(context,index,target\)/);
+assert.match(catalog,/static synchronized boolean moveTo\(Context ctx,int number,int target\)/);
+assert.match(store,/static synchronized boolean moveTo\(Context c,int from,int target\)/);
+assert.doesNotMatch(menu,/R\.drawable\.pgs_drag_handle/);
+assert.doesNotMatch(menu,/String\[\] icons=\{"↑","↓"/);
+assert.doesNotMatch(menu,/≡ Sequência/);
 assert.doesNotMatch(menu,/Runtime\.getRuntime\(\)\.exec|ProcessBuilder|forceStopPackage/);
 console.log("LT369 single hand popup, three tabs, inline time/alerts/visual/hunt PASS");
