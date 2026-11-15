@@ -16,6 +16,10 @@ import java.util.Locale;
  */
 final class PgsAutoIconDetector {
     private static final int ANALYSIS_WIDTH=740;
+    // Orçamento local para impedir consumo ilimitado de CPU com dezenas de
+    // variantes ativas. Um frame incompleto NUNCA é usado para tocar.
+    private static final long MAX_SCAN_MILLIS=4500L;
+    private static final int MAX_SCAN_CANDIDATES=256;
     private static final float THRESHOLD=.805f;
     // O feed de sprites do PGSharp é uma coluna nas bordas; não interpretar
     // textura do mapa ou botões do centro como miniatura selecionada.
@@ -97,6 +101,7 @@ final class PgsAutoIconDetector {
     private int validModelCount=0;
     private volatile int lastAmbiguousSlots=0;
     private volatile long lastScanMillis=0L;
+    private volatile boolean lastScanAborted=false;
     PgsAutoIconDetector(Context context) throws IOException {
         List<PgsAutoTemplateStore.Model> selected=new ArrayList<>();
         for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
@@ -132,9 +137,10 @@ final class PgsAutoIconDetector {
     int selectedModelCount(){return modelCount;}
     int lastAmbiguousSlots(){return lastAmbiguousSlots;}
     long lastScanMillis(){return lastScanMillis;}
+    boolean lastScanAborted(){return lastScanAborted;}
     List<Match> find(Bitmap screenshot){
         long began=android.os.SystemClock.elapsedRealtime();
-        lastAmbiguousSlots=0;lastScanMillis=0;
+        lastAmbiguousSlots=0;lastScanMillis=0;lastScanAborted=false;
         if(templates.isEmpty())return Collections.emptyList();
         float scale=ANALYSIS_WIDTH/(float)screenshot.getWidth();
         int height=Math.max(1,Math.round(screenshot.getHeight()*scale));
@@ -152,7 +158,14 @@ final class PgsAutoIconDetector {
         for(Template t:templates){
             int maxX=w-t.width,maxY=h-t.height;
             if(maxX<0||maxY<0)continue;
+            int row=0;
             for(int y=0;y<=maxY;y+=scanStep){
+                if((++row&7)==0&&
+                    android.os.SystemClock.elapsedRealtime()-began>MAX_SCAN_MILLIS){
+                    lastScanAborted=true;
+                    lastScanMillis=android.os.SystemClock.elapsedRealtime()-began;
+                    return Collections.emptyList();
+                }
                 for(int x=0;x<=maxX;x+=scanStep){
                     if(!insideFeed(x+t.width/2,y+t.height/2,w,h))continue;
                     float preliminary=correlation(lum,w,x,y,t);
@@ -170,7 +183,14 @@ final class PgsAutoIconDetector {
                     if(best>=THRESHOLD&&
                         insideFeed(bx+t.width/2,by+t.height/2,w,h)&&
                         colorCompatible(raw,w,bx,by,t))
-                        candidates.add(new Candidate(bx,by,t,best));
+                        {
+                            candidates.add(new Candidate(bx,by,t,best));
+                            if(candidates.size()>MAX_SCAN_CANDIDATES){
+                                lastScanAborted=true;
+                                lastScanMillis=android.os.SystemClock.elapsedRealtime()-began;
+                                return Collections.emptyList();
+                            }
+                        }
                 }
             }
         }
