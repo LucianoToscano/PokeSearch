@@ -54,3 +54,16 @@
 - Preservar P1/P2, Rare Candy, Edu, filtros, favoritos, contas, status OTA, Samsung required-card sprite fallback SHA-pinned LT357 e PR LT350 #385 draft.
 
 **Estado de entrada**: LT359 oficial **0.03.55 / versionCode 54562 / label 51359**, `main` inicial `79821b47c8bfd9578f7766e9d4b7979b61c62b4b`. Ao completar: sete gates verdes no head final, merge seguro, publicação monotônica por workflow protegido e verificação pública do SHA. Não publicar relatório de QA físico como PASS sem dispositivo real.
+
+
+## Achado complementar — Pokémon GO da Samsung Galaxy Store
+
+A reabertura dos índices de strings do `classes.dex` do APK Pokemod revelou `POKEMON_GO_SAMSUNG` e `nianticlabs.pokemongo.ares`. A página pública **da própria Samsung Galaxy Store** confirma que Pokémon GO distribuído por ela usa o pacote Android **`com.nianticlabs.pokemongo.ares`** ([Galaxy Store](https://galaxystore.samsung.com/detail/com.nianticlabs.pokemongo.ares?langCd=pt)). A distribuição Google Play utiliza `com.nianticlabs.pokemongo`. São **dois identificadores exatos e legítimos**; isso não comprova que o módulo do Pokemod foi injetado em qualquer um deles, nem que um determinado build é compatível.
+
+### Correção implementada (sem root)
+- `PgsAutoHostPolicy.SAMSUNG_GAME_PACKAGE` e `isGameWindow` aceitam **somente** os pacotes oficiais Play e Galaxy; gerenciador `com.pokemod.app.public`, prefixos e sufixos parecidos continuam bloqueados.
+- `PgsAutoClickService.isGamePackage` usa essa allowlist para ambos os perfis, respeitando o perfil visual único e avisos humanos.
+- `AndroidManifest.xml` adiciona `<queries><package android:name="com.nianticlabs.pokemongo.ares"/></queries>`, visibilidade **pontual**, sem `QUERY_ALL_PACKAGES` ou permissões de root.
+- Testes `PgsAutoHostPolicyTest.java` e `lt360-samsung-galaxy-package-contract.test.js` cobrem Galaxy, Play, nomes falsos e limites de permissões.
+
+**Aceitação Samsung Galaxy Store ainda BLOQUEADA**: abrir de verdade, Pokemod ativo, Acessibilidade, captura, lista visual e reação real de toque. Não confundir o nome do pacote com homologação do jogo ou da modificação.

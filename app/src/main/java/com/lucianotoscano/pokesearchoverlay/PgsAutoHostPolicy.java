@@ -10,6 +10,8 @@ import java.util.Locale;
 final class PgsAutoHostPolicy {
     static final String PGSHARP="pgsharp",POKEMOD="pokemod",OTHER="other";
     static final String GAME_PACKAGE="com.nianticlabs.pokemongo";
+    // Pokémon GO distribuído pela Samsung Galaxy Store (package oficial).
+    static final String SAMSUNG_GAME_PACKAGE="com.nianticlabs.pokemongo.ares";
     static final String POKEMOD_MANAGER="com.pokemod.app.public";
     private PgsAutoHostPolicy(){}
 
@@ -20,7 +22,8 @@ final class PgsAutoHostPolicy {
         return OTHER; // configuração desconhecida nunca autoriza gesto
     }
     static boolean isGameWindow(String packageName){
-        return GAME_PACKAGE.equals(packageName);
+        return GAME_PACKAGE.equals(packageName)||
+            SAMSUNG_GAME_PACKAGE.equals(packageName);
     }
     static boolean isManagerWindow(String packageName){
         return POKEMOD_MANAGER.equals(packageName);

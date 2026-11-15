@@ -10,6 +10,8 @@
     <!-- LT355: Package visibility for exact installed game build compatibility. -->
     <queries>
         <package android:name="com.nianticlabs.pokemongo" />
+        <!-- Samsung Galaxy Store: consulta exata, nunca QUERY_ALL_PACKAGES. -->
+        <package android:name="com.nianticlabs.pokemongo.ares" />
         <!-- Consulta pontual do gerenciador Pokemod; sem QUERY_ALL_PACKAGES/root. -->
         <package android:name="com.pokemod.app.public" />
     </queries>

@@ -96,7 +96,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(this)))
             return PgsAutoHostPolicy.isGameWindow(pkg);
         // Preserva comportamento do perfil PGSharp anterior à LT359.
-        return "com.nianticlabs.pokemongo".equals(pkg)||
+        return PgsAutoHostPolicy.isGameWindow(pkg)||
             pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
     }
     private boolean isGameVisible(){

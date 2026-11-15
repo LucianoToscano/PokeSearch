@@ -27,3 +27,6 @@ Reconsultar **na hora** `main`, `releases/latest`, SHA público, certificado e w
 
 ## Referências originais 
 `docs/LT360_AUDITORIA_POKEMOD_LISTA_LATERAL_20261115.md`, `docs/LT359_INVENTARIO_TECNICO_POKEMOD_20261115.json` e `https://pokemod.dev/pt` (funcionalidades declaradas pelo fornecedor; não prova de API).
+
+## Achado extra a preservar — Samsung Galaxy Store
+`classes.dex` Pokemod 14.2.1 contém `POKEMON_GO_SAMSUNG` e referência `nianticlabs.pokemongo.ares`; a [Galaxy Store](https://galaxystore.samsung.com/detail/com.nianticlabs.pokemongo.ares?langCd=pt) confirma pacote oficial `com.nianticlabs.pokemongo.ares`. `PgsAutoHostPolicy.isGameWindow` deve permitir exclusivamente ele e `com.nianticlabs.pokemongo` sem aceitar o gerenciador Pokemod, prefixos falsos, `QUERY_ALL_PACKAGES` ou root. Testar ambos os builds fisicamente, independente de qual mod está instalado. Não confundir suporte ao identificador com suporte funcional do módulo.
