@@ -218,7 +218,7 @@ final class PgsAutoMenus {
                 // the central 16dp inset of the 30dp tile. These 6dp sparkles
                 // occupy the bowl at y≈13.5dp, above its bottom y≈18.3dp.
                 FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
-                    dp(6),dp(6),Gravity.CENTER);
+                    dp(8),dp(8),Gravity.CENTER);
                 inner.topMargin=dp(-2);
                 shiny.setClickable(false);shiny.setFocusable(false);
                 bellShiny=shiny;
