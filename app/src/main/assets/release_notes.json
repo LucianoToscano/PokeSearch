@@ -4284,6 +4284,41 @@
           "OAuth PoGoCoordinates, reconhecimento Shiny e Encontro real continuam dependentes de evidência no dispositivo."
         ]
       }
+    },
+    {
+      "id": "lt353-ark-pgs-menu-sprite-tap-audit-20261114",
+      "minVersionCode": 54556,
+      "date": "14/11/2026",
+      "title": "PokeSearch 0.03.49 — LT353: menus legíveis e diagnóstico de sprites",
+      "sections": {
+        "novidades": [
+          "Menu Buscar Pokémon: botão ◎ de prévia de sprites ao lado de Alvo. Destaca a primeira miniatura reconhecida e mostra espécie/confiança, sem clicar no jogo.",
+          "Reconhecimento de sprites do feed PGS: detecção em colunas laterais, tratamento correto de transparência do recorte Background ON e checagem adicional de cor RGB.",
+          "Efeito de toque refinado como no vídeo de referência: pequeno núcleo branco, halo ciano e anéis translúcidos em expansão."
+        ],
+        "melhorias": [
+          "Menu Tempo: campos numéricos mais altos, sem clipping de números no Samsung; Salvar e rótulos alinhados.",
+          "Personalização: texto de transparência recebe altura real, sem sobreposição com Mostrar local do toque.",
+          "Popups nativos PGS usam medidas reais de conteúdo antes de ancorar e conservam transparência/borda do Editor Visual das Pokébolas.",
+          "Motor verifica a janela do jogo sob a bolha do próprio PokeSearch, usando lista de janelas interativas; jamais confia em app anterior se outra janela está ativa.",
+          "A barra compacta pode permanecer aberta durante a busca; submenus com miniaturas pausam a captura para impedir falsos toques nos controles.",
+          "A busca exige a MESMA amostra reconhecida em duas capturas, registrando confiança, espécie, coordenada e resolução nos diagnósticos.",
+          "Modelos antigos, imagens PNG, estilos de recorte, configuração de acessibilidade e seleção de espécies são preservados."
+        ],
+        "correcoes": [
+          "Corrigidas causas prováveis da ausência de clique em sprites escolhidas: foco no próprio overlay, amostras transparentes tratadas como preto, falsos positivos no centro do mapa e confirmação de modelo pela espécie em vez da amostra.",
+          "Quando um modelo não tem pixels úteis ou arquivo válido, o PGS informa o problema em vez de permanecer sem feedback.",
+          "Corrigido posicionamento dos painéis de Tempo e Personalização em telas com escala de fonte Samsung.",
+          "Atualizados testes legados LT348 e LT349b para validar o novo dimensionamento de menus sem perder regras de ancoragem e alça."
+        ],
+        "emDesenvolvimento": [
+          "A prévia e os contratos de código não comprovam toque aceito pelo Pokémon GO/PGSharp. Reação real do jogo, detecção no Samsung e posição do halo continuam BLOQUEADOS sem teste físico.",
+          "Para testar a nova flag de janelas da Acessibilidade, o Android pode exigir desativar e reativar o serviço PokeSearch · Buscas Auto após atualizar.",
+          "Se ◎ não localizar Metagross no feed lateral, regravar o modelo e validar a região e escala antes de qualquer clique automático.",
+          "LT350 design system PR #385 permanece em rascunho e fora desta release até comparação física dos overlays P1/P2/Doce Raro.",
+          "O aviso Sou passageiro exige confirmação manual quando seguro; OAuth PoGoCoordinates, teleporte real, Shiny e Encontro não são homologados pelo CI."
+        ]
+      }
     }
   ]
 }

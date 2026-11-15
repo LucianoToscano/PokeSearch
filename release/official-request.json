@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.48",
-  "code": 54555,
-  "label": 51352,
-  "previous_tag": "v0.03.47-54554",
-  "qa_max_code": 54554,
-  "release_notes": "PokeSearch LT352 — 0.03.48 / 54555. Corrigida a invisibilidade do indicador de toque do PGS: setWillNotDraw(false), invalidate, glow radial ciano com três anéis e centro branco de 960 ms, sinalizando a coordenada de gesto solicitado/aceito pelo Android sem bloquear toques. Nova prévia do efeito no submenu Personalização, sem enviar gesto ao jogo. A tela de mira do Ponto Específico/PokéStop/Encontro remove o escurecimento global e as faixas cinzas, mantendo coordenadas e instrução curtas com sombra discreta. Confirmar mira agora é somente ícone ✓ branco no lado esquerdo e Cancelar apenas × branco à direita, sem texto/caixa/fundo; áreas tocáveis invisíveis de 60dp, confirmação explícita, lupa/arraste e persistência existentes preservados. Indicador também marca início de swipe aceito em Encontro. Correção LT352 PR #388, sete gates Node/LT169/LT211/LT62/OTA/PGS QA/Secure beta R8 aprovados antes do merge. Proteções LT349/LT351, opções ON/OFF, modelos, contas e assinaturas preservadas. LT350 PR #385 permanece draft, fora desta release. A captura no Samsung, posicionamento/visibilidade do pulso, interação/teleporte no jogo e OAuth externo seguem BLOQUEADOS até teste físico. Efeito nunca significa confirmação de ação no jogo; alertas Sou passageiro exigem confirmação humana. Instalação do APK exige confirmação Android."
+  "version": "0.03.49",
+  "code": 54556,
+  "label": 51353,
+  "previous_tag": "v0.03.48-54555",
+  "qa_max_code": 54555,
+  "release_notes": "PokeSearch LT353 / 0.03.49 / versionCode 54556. Auditoria baseada em duas capturas Samsung 740×1536 e vídeo curto 11,11s. Menu Tempo corrigido: campos numéricos deixam de cortar 15/5, rótulos e Salvar alinhados; Personalização respeita altura do texto de duas linhas. Painéis nativos medem altura real e herdam cor/transparência do Editor Visual. Reconhecimento PGS: pixels transparentes do Background ON não são confundidos com preto; RGB e variância validam miniaturas; varredura segura nas colunas laterais do feed e confirmação da mesma amostra em 2 capturas. A bolha do próprio app não impede reconhecer a janela ativa/focada do jogo com flagRetrieveInteractiveWindows; submenus pausam o scanner e a barra compacta permanece funcional. No menu Buscar, ◎ prévia local mostra a primeira sprite e confiança sem disparar clique. Efeito de toque branco/ciano em expansão no local do gesto. Logs mostram modelo, confiança, coordenada e resolução antes do dispatchGesture. Preservadas Pokébolas P1/P2, Doce Raro, Edu, modelos, contas, filtros e avisos Sou passageiro com confirmação humana. LT353 PR #391 integrada após sete gates (Node QA, LT169, LT211, Java LT62, OTA LT173, PGS APK QA e Secure beta/R8). LT350 PR #385 permanece draft, fora desta release. Homologação física Samsung, clique real no PGSharp, reconhecimento do feed em tempo real, OAuth, teleporte, Shiny e Encontro permanecem BLOQUEADOS sem evidência. Após instalação, Android pode exigir reativação do serviço de Acessibilidade; nenhuma instalação silenciosa."
 }
