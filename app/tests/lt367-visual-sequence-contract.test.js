@@ -21,7 +21,7 @@ assert.match(menu,/\+ Espera/);
 assert.match(menu,/Copiar passo/);
 assert.match(menu,/Colar/);
 assert.match(menu,/Prévia/);
-assert.match(menu,/Executar/);
+assert.match(menu,/▷ Iniciar/);
 assert.match(menu,/PgsSequenceStore\.setRunConsent/);
 assert.match(menu,/sequencePick\("SWIPE"/);
 assert.match(menu,/sequencePick\("TAP"/);
