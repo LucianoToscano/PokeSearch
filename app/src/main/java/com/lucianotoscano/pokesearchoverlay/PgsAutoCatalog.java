@@ -105,6 +105,17 @@ final class PgsAutoCatalog {
             Collections.swap(nums,i,j);persist(ctx,nums);
         }
     }
+    /** Reordena espécies selecionadas sem mexer nas sprites gravadas. */
+    static synchronized boolean moveTo(Context ctx,int number,int target){
+        ArrayList<Integer> ids=new ArrayList<>(selected(ctx));
+        int from=ids.indexOf(number);
+        if(from<0||target<0||target>=ids.size())return false;
+        if(from==target)return true;
+        ids.remove(from);
+        ids.add(target,number);
+        persist(ctx,ids);
+        return true;
+    }
     static boolean isSelected(Context ctx,int number){return selected(ctx).contains(number);}
     static boolean isSelectedName(Context ctx,String name){
         int id=findNumber(ctx,name);

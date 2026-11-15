@@ -89,6 +89,16 @@ final class PgsSequenceStore {
         java.util.Collections.swap(items,index,next);
         return save(c,items,landscape(c));
     }
+    /** Mover etapa ao destino em uma única gravação validada (LT369). */
+    static synchronized boolean moveTo(Context c,int from,int target){
+        List<PgsSequencePolicy.Step> list=load(c);
+        if(from<0||target<0||from>=list.size()||target>=list.size())
+            return false;
+        if(from==target)return true;
+        PgsSequencePolicy.Step step=list.remove(from);
+        list.add(target,step);
+        return save(c,list,landscape(c));
+    }
     static synchronized boolean delete(Context c,int index){
         List<PgsSequencePolicy.Step> items=load(c);
         if(index<0||index>=items.size())return false;

@@ -99,6 +99,114 @@ final class PgsAutoMenus {
         PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
         b.setBackground(bg(v.tileFill(),v.tileStroke(),PgsAutoMenuStyle.CORNER_DP));return b;
     }
+    /** LT369: arraste direto na linha após pressão longa, sem setas/≡.
+     * Nenhum gesto é enviado ao jogo. A alteração só é persistida no soltar.
+     * Os comandos acessíveis substituem setas visíveis no TalkBack. */
+    private interface RowMove {boolean to(int index);}
+    private ScrollView parentScroll(View view){
+        android.view.ViewParent parent=view.getParent();
+        while(parent!=null){
+            if(parent instanceof ScrollView)return (ScrollView)parent;
+            parent=parent.getParent();
+        }
+        return null;
+    }
+    private int nearestRow(List<View> rows,float fingerY,int previous){
+        int target=previous;
+        float best=Float.MAX_VALUE;
+        for(int i=0;i<rows.size();i++){
+            View row=rows.get(i);
+            if(!row.isShown()||row.getHeight()<=0)continue;
+            int[] screen=new int[2];
+            row.getLocationOnScreen(screen);
+            float center=screen[1]+row.getHeight()/2f;
+            float distance=Math.abs(fingerY-center);
+            if(distance<best){best=distance;target=i;}
+        }
+        return target;
+    }
+    private void holdToReorder(View touch,View row,List<View> ordered,
+        int from,RowMove move,Runnable refresh){
+        final float[] downY={0f};
+        final boolean[] dragging={false};
+        touch.setClickable(true);
+        touch.setLongClickable(true);
+        touch.setOnLongClickListener(v->{
+            dragging[0]=true;
+            row.setAlpha(.83f);
+            row.setElevation(dp(8));
+            row.performHapticFeedback(
+                android.view.HapticFeedbackConstants.LONG_PRESS);
+            android.view.ViewParent p=touch.getParent();
+            if(p!=null)p.requestDisallowInterceptTouchEvent(true);
+            return true;
+        });
+        touch.setOnTouchListener((v,event)->{
+            switch(event.getActionMasked()){
+                case MotionEvent.ACTION_DOWN:
+                    downY[0]=event.getRawY();
+                    return false; // Android mantém toque curto e long press nativos.
+                case MotionEvent.ACTION_MOVE:
+                    if(!dragging[0])return false;
+                    row.setTranslationY(event.getRawY()-downY[0]);
+                    ScrollView scroll=parentScroll(touch);
+                    if(scroll!=null){
+                        int[] loc=new int[2];scroll.getLocationOnScreen(loc);
+                        if(event.getRawY()<loc[1]+dp(24))
+                            scroll.scrollBy(0,-dp(12));
+                        else if(event.getRawY()>loc[1]+scroll.getHeight()-dp(24))
+                            scroll.scrollBy(0,dp(12));
+                    }
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if(!dragging[0])return false; // toque curto continua editando.
+                    // Restaurar a posição ANTES de medir os centros.
+                    // Enquanto a linha segue o dedo, ela pareceria sempre
+                    // o alvo mais próximo, impedindo qualquer reordenação.
+                    dragging[0]=false;
+                    row.setTranslationY(0f);
+                    row.setAlpha(1f);row.setElevation(0f);
+                    int target=nearestRow(ordered,event.getRawY(),from);
+                    if(target!=from){
+                        if(move.to(target))refresh.run();
+                        else Toast.makeText(context,"Não foi possível mover esta etapa.",
+                            Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    if(!dragging[0])return false;
+                    dragging[0]=false;
+                    row.setTranslationY(0f);
+                    row.setAlpha(1f);row.setElevation(0f);
+                    return true;
+                default:return false;
+            }
+        });
+        touch.setAccessibilityDelegate(new View.AccessibilityDelegate(){
+            @Override public void onInitializeAccessibilityNodeInfo(View host,
+                android.view.accessibility.AccessibilityNodeInfo info){
+                super.onInitializeAccessibilityNodeInfo(host,info);
+                info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                    .AccessibilityAction.ACTION_SCROLL_FORWARD);
+                info.addAction(android.view.accessibility.AccessibilityNodeInfo
+                    .AccessibilityAction.ACTION_SCROLL_BACKWARD);
+            }
+            @Override public boolean performAccessibilityAction(View host,
+                int action,android.os.Bundle args){
+                int target=action==
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD?
+                        from+1:action==
+                    android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD?
+                        from-1:-1;
+                if(target>=0&&target<ordered.size()){
+                    if(move.to(target)){refresh.run();return true;}
+                    return false;
+                }
+                return super.performAccessibilityAction(host,action,args);
+            }
+        });
+    }
+
     private void markAlertIcon(ImageButton icon,boolean active){
         PgsAutoMenuStyle v=PgsAutoMenuStyle.read(context);
         icon.setBackground(bg(active?0x773A504B:v.tileFill(),
@@ -134,7 +242,13 @@ final class PgsAutoMenus {
     private LinearLayout.LayoutParams margined(int w,int h,int top){
         LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(w,h);p.topMargin=dp(top);return p;
     }
-    void toggle(int x,int y){if(toolbar!=null){dismissAll();return;}showToolbar(x,y);}
+    /** LT369: a bolha abre DIRETAMENTE o único painel, sem a fileira antiga
+     * Buscar/Tempo/Sino/Personalização/Fechar. Tocar outra vez apenas retrai. */
+    void toggle(int x,int y){
+        anchorX=x;anchorY=y;
+        if(isOpen()){dismissAll();return;}
+        showCentral(0);
+    }
     void dismissAll(){hidePanel();hideToolbar();}
     private void hidePanel(){
         stopTonePreview();
@@ -159,13 +273,13 @@ final class PgsAutoMenus {
      */
     void reanchor(int x,int y){
         anchorX=x;anchorY=y;
-        if(toolbar==null)return;
-        if(!(toolbar.getLayoutParams() instanceof WindowManager.LayoutParams))return;
-        WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
-        // Recompute absolute side selection, not delta: crossing screen center
-        // must flip the toolbar to the other side of the Auto Click bubble.
-        positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
-        try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
+        // LT369: a janela principal fica ancorada à bolha diretamente.
+        // Reposicionar nunca abre um segundo menu nem perde campos editados.
+        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
+            WindowManager.LayoutParams lp=(WindowManager.LayoutParams)toolbar.getLayoutParams();
+            positionToolbar(lp,x,y,PgsAutoMenuStyle.read(context));
+            try{wm.updateViewLayout(toolbar,lp);}catch(Exception ignored){}
+        }
         if(panel!=null&&panel.getLayoutParams() instanceof WindowManager.LayoutParams){
             WindowManager.LayoutParams pp=(WindowManager.LayoutParams)panel.getLayoutParams();
             int width=pp.width>0?pp.width:Math.max(dp(80),panel.getWidth());
@@ -297,32 +411,23 @@ final class PgsAutoMenus {
 
     // Popups stay tied to the VISIBLE toolbar and never appear disconnected
     // from the Auto Click control, even after left/right side flipping.
+    // LT369: popup no lado do próprio ícone de mão; nenhum toolbar intermediário.
     private int[] positionPanel(int width,int height){
         Point screen=size();
-        int margin=dp(8),gap=dp(4);
-        int barX=anchorX,barY=anchorY;
-        int barW=dp(TOOL_CELL_DP),barH=dp(TOOL_CELL_DP);
-        if(toolbar!=null&&toolbar.getLayoutParams() instanceof WindowManager.LayoutParams){
-            WindowManager.LayoutParams bar=(WindowManager.LayoutParams)toolbar.getLayoutParams();
-            barX=bar.x;barY=bar.y;barW=bar.width;barH=bar.height;
-        }
-        int right=barX+barW+gap,left=barX-width-gap;
-        boolean preferRight=anchorX<=screen.x/2;
+        int margin=dp(8),gap=dp(6);
+        int diameter=dp(PgsAutoVisualState.TOUCH_DP);
+        int leftEdge=anchorX-diameter/2;
+        int rightEdge=anchorX+diameter/2;
+        int right=rightEdge+gap,left=leftEdge-gap-width;
         boolean rightFits=right+width<=screen.x-margin;
         boolean leftFits=left>=margin;
-        int px,py;
-        if((preferRight&&rightFits)||(!leftFits&&rightFits)){
-            px=right;py=barY;
-        }else if(leftFits){
-            px=left;py=barY;
-        }else{
-            // When a 232dp popup cannot fit next to a five-tile toolbar,
-            // use directly below/above it rather than drawing over its icons.
-            px=barX+(barW-width)/2;
-            int below=barY+barH+gap,above=barY-height-gap;
-            py=below+height<=screen.y-margin?below:
-                above>=margin?above:Math.max(margin,screen.y-height-margin);
-        }
+        boolean preferRight=anchorX<=screen.x/2;
+        int px;
+        if((preferRight&&rightFits)||(!leftFits&&rightFits))px=right;
+        else if(leftFits)px=left;
+        else px=anchorX-width/2;
+        int py=anchorY;
+        // Nunca perder controles acima/abaixo da borda visível.
         return new int[]{
             Math.max(margin,Math.min(Math.max(margin,screen.x-width-margin),px)),
             Math.max(margin,Math.min(Math.max(margin,screen.y-height-margin),py))
@@ -397,7 +502,7 @@ final class PgsAutoMenus {
             wm.addView(panel,lp);
             final View opened=panel;
             opened.post(()->{
-                if(panel==opened&&toolbar!=null)reanchor(anchorX,anchorY);
+                if(panel==opened)reanchor(anchorX,anchorY);
             });
         }catch(Exception e){
             panel=null;
@@ -564,15 +669,29 @@ final class PgsAutoMenus {
     }
 
     private void appendCentralPokemon(LinearLayout root){
-        LinearLayout info=horizontal();
-        TextView infoText=label("Modelos salvos usados automaticamente",9,false);
-        info.addView(infoText,new LinearLayout.LayoutParams(0,dp(22),1));
-        Button host=button(PgsAutoHostPolicy.shortLabel(
-            PgsAutoHostSettings.current(context))+" ▾",9);
-        host.setContentDescription("Selecionar interface do jogo");
-        host.setOnClickListener(v->showHostProfiles());
-        info.addView(host,new LinearLayout.LayoutParams(dp(55),dp(26)));
-        root.addView(info,margined(-1,dp(26),2));
+        // LT369: selecionar PGSharp/Pokemod é parte da aba Pokémon, não popup.
+        LinearLayout profiles=horizontal();
+        String active=PgsAutoHostSettings.current(context);
+        String[] ids={PgsAutoHostPolicy.PGSHARP,
+            PgsAutoHostPolicy.POKEMOD,PgsAutoHostPolicy.OTHER};
+        String[] names={"PGSharp","Pokemod","Outro"};
+        for(int i=0;i<ids.length;i++){
+            final String profile=ids[i];
+            Button option=button(names[i],10);
+            markChosen(option,profile.equals(active));
+            option.setContentDescription("Cliente "+names[i]+
+                (profile.equals(active)?", selecionado":""));
+            option.setOnClickListener(v->{
+                if(profile.equals(PgsAutoHostSettings.current(context)))return;
+                PgsAutoHostSettings.select(context,profile);
+                actions.modelsChanged(); // invalida modelos da sessão anterior.
+                showCentral(0);
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
+            if(i>0)lp.leftMargin=dp(2);
+            profiles.addView(option,lp);
+        }
+        root.addView(profiles,margined(-1,dp(28),2));
         TextView title=label("Selecionados: 0/10",10,true);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -591,7 +710,22 @@ final class PgsAutoMenus {
         final Runnable[] render={null};
         render[0]=()->{
             rows.removeAllViews();
-            title.setText("Selecionados: "+PgsAutoCatalog.selected(context).size()+"/10");
+            title.setText("Selecionados: "+PgsAutoCatalog.selected(context).size()+"/10 · segure e arraste");
+            // LT369: lado da lista Pokemod permanece mesmo após pesquisa/redesenho.
+            if(PgsAutoHostPolicy.POKEMOD.equals(PgsAutoHostSettings.current(context))){
+                boolean left=PgsAutoScanRegionPolicy.LEFT.equals(
+                    PgsAutoHostSettings.sidebarSide(context));
+                Button side=button(left?"Lista Pokemod: esquerda ▾":
+                    "Lista Pokemod: direita ▾",9);
+                side.setOnClickListener(v->{
+                    PgsAutoHostSettings.setSidebarSide(context,left?
+                        PgsAutoScanRegionPolicy.RIGHT:PgsAutoScanRegionPolicy.LEFT);
+                    actions.modelsChanged();
+                    showCentral(0);
+                });
+                rows.addView(side,margined(-1,dp(29),2));
+            }
+            List<View> speciesRows=new ArrayList<>();
             List<PgsAutoCatalog.Pokemon> found=
                 PgsAutoCatalog.search(context,input.getText().toString().trim(),20);
             if(found.isEmpty()){
@@ -653,89 +787,22 @@ final class PgsAutoMenus {
                     teach.setOnClickListener(v->{
                         dismissAll();actions.teach(pokemon.name);
                     });
-                    // Único ícone de segurar/arrastar — no lugar das setas.
-                    // O deslocamento é calculado por linhas, preservando a
-                    // ordenação persistida PgsAutoCatalog e os modelos salvos.
-                    ImageButton reorder=imageButton(R.drawable.pgs_drag_handle,
-                        "Segure e arraste para reorganizar "+pokemon.name,6);
-                    reorder.setColorFilter(fg());
-                    line.addView(reorder,new LinearLayout.LayoutParams(dp(28),dp(33)));
-                    reorder.setOnClickListener(v->
-                        Toast.makeText(context,"Segure e arraste o ícone para mudar a ordem",
-                            Toast.LENGTH_SHORT).show());
-                    // TalkBack pode reordenar sem gestos de arraste.
-                    reorder.setAccessibilityDelegate(new View.AccessibilityDelegate(){
-                        @Override public void onInitializeAccessibilityNodeInfo(
-                                View host,android.view.accessibility.AccessibilityNodeInfo info){
-                            super.onInitializeAccessibilityNodeInfo(host,info);
-                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
-                                .AccessibilityAction.ACTION_SCROLL_FORWARD);
-                            info.addAction(android.view.accessibility.AccessibilityNodeInfo
-                                .AccessibilityAction.ACTION_SCROLL_BACKWARD);
-                        }
-                        @Override public boolean performAccessibilityAction(
-                                View host,int action,android.os.Bundle args){
-                            if(action==android.view.accessibility.AccessibilityNodeInfo
-                                .ACTION_SCROLL_FORWARD){
-                                PgsAutoCatalog.move(context,pokemon.number,1);
-                                render[0].run();return true;
-                            }
-                            if(action==android.view.accessibility.AccessibilityNodeInfo
-                                .ACTION_SCROLL_BACKWARD){
-                                PgsAutoCatalog.move(context,pokemon.number,-1);
-                                render[0].run();return true;
-                            }
-                            return super.performAccessibilityAction(host,action,args);
-                        }
-                    });
-                    reorder.setOnTouchListener(new View.OnTouchListener(){
-                        private float downY;
-                        private long downAt;
-                        private boolean moved;
-                        @Override public boolean onTouch(View view,MotionEvent e){
-                            switch(e.getActionMasked()){
-                                case MotionEvent.ACTION_DOWN:
-                                    downY=e.getRawY();
-                                    downAt=android.os.SystemClock.uptimeMillis();
-                                    moved=false;
-                                    view.getParent().requestDisallowInterceptTouchEvent(true);
-                                    return true;
-                                case MotionEvent.ACTION_MOVE:{
-                                    float distance=e.getRawY()-downY;
-                                    if(Math.abs(distance)>dp(6)&&
-                                        android.os.SystemClock.uptimeMillis()-downAt>=110){
-                                        if(!moved)view.performHapticFeedback(
-                                            android.view.HapticFeedbackConstants.LONG_PRESS);
-                                        moved=true;
-                                        view.setTranslationY(Math.max(-dp(100),
-                                            Math.min(dp(100),distance)));
-                                        line.setAlpha(.79f);
-                                    }
-                                    return true;
-                                }
-                                case MotionEvent.ACTION_UP:{
-                                    float distance=e.getRawY()-downY;
-                                    view.setTranslationY(0f);line.setAlpha(1f);
-                                    if(moved){
-                                        int steps=Math.max(-9,Math.min(9,
-                                            Math.round(distance/dp(50f))));
-                                        if(steps!=0){
-                                            for(int step=0;step<Math.abs(steps);step++){
-                                                if(steps<0)PgsAutoCatalog.move(context,pokemon.number,-1);
-                                                else PgsAutoCatalog.move(context,pokemon.number,1);
-                                            }
-                                            render[0].run();
-                                        }
-                                    }else view.performClick();
-                                    return true;
-                                }
-                                case MotionEvent.ACTION_CANCEL:
-                                    view.setTranslationY(0f);line.setAlpha(1f);
-                                    return true;
-                                default:return false;
-                            }
-                        }
-                    });
+                    // LT369: nada de alça de três barras. Segurar na própria
+                    // linha/nome permite arrastar entre prioridades selecionadas.
+                    if(input.getText().length()==0){
+                        int from=PgsAutoCatalog.selected(context)
+                            .indexOf(pokemon.number);
+                        speciesRows.add(line);
+                        RowMove reorderTo=target->
+                            PgsAutoCatalog.moveTo(context,pokemon.number,target);
+                        Runnable update=()->{
+                            actions.modelsChanged();
+                            render[0].run();
+                        };
+                        holdToReorder(label,line,speciesRows,from,reorderTo,update);
+                        holdToReorder(dex,line,speciesRows,from,reorderTo,update);
+                        holdToReorder(line,line,speciesRows,from,reorderTo,update);
+                    }
                 }
                 Button choose=button(selected?"×":"＋",14);
                 if(selected){
@@ -767,7 +834,7 @@ final class PgsAutoMenus {
         String current=PgsSmartSearchSettings.mode(context);
         String[] ids={PgsSmartSearchSettings.MONITOR,PgsSmartSearchSettings.CLICK,
             PgsSmartSearchSettings.HUNT,PgsSmartSearchSettings.SEQUENCE};
-        String[] names={"◎ Monitorar","⌖ Clicar","✦ Auto Hunt","≡ Sequência"};
+        String[] names={"◎ Monitorar","⌖ Clicar","✦ Auto Hunt","Sequência"};
         for(int line=0;line<2;line++){
             LinearLayout row=horizontal();
             for(int col=0;col<2;col++){
@@ -803,8 +870,7 @@ final class PgsAutoMenus {
             if(PgsSmartSearchSettings.HUNT.equals(current)){
                 huntCheckbox(root,hunt,PgsAutoHuntSettings.CLICK_ENABLED,
                     "Tocar na sprite confirmada",false);
-                huntNumeric(root,hunt,PgsAutoHuntSettings.WAIT,
-                    "Espera entre alvos",new int[]{15,35,60,120},35);
+                // Tempo de espera centralizado apenas na aba Ajustes (LT369).
             }
             CheckBox consent=new CheckBox(context);
             consent.setText("Autorizo toques neste perfil");
@@ -816,82 +882,242 @@ final class PgsAutoMenus {
         }
     }
 
+    // LT369: todas as configurações da Busca cabem numa só aba rolável;
+    // nenhuma opção de Tempos/Avisos/Visual/Auto Hunt abre outro menu principal.
     private void appendCentralSettings(LinearLayout root){
+        SharedPreferences prefs=context.getSharedPreferences(
+            "pgs_auto_settings_v1",Context.MODE_PRIVATE);
+        SharedPreferences hunt=PgsAutoHuntSettings.forCurrent(context);
+        SharedPreferences cycles=PgsAutoClickService.cyclePrefs(context);
+
+        TextView times=label("TEMPOS",10,true);
+        root.addView(times,margined(-1,dp(20),2));
         CheckBox automatic=new CheckBox(context);
-        automatic.setText("Preencher tempos padrão automaticamente");
+        automatic.setText("Tempos padrão automáticos");
         automatic.setTextSize(10);automatic.setTextColor(fg());
         automatic.setChecked(PgsSmartSearchSettings.automaticDefaults(context));
         automatic.setOnCheckedChangeListener((b,on)->
             PgsSmartSearchSettings.setAutomaticDefaults(context,on));
-        root.addView(automatic,margined(-1,dp(36),2));
-
-        SharedPreferences hunt=PgsAutoHuntSettings.forCurrent(context);
+        root.addView(automatic,margined(-1,dp(30),1));
         huntNumeric(root,hunt,PgsAutoHuntSettings.WAIT,
             "Espera entre alvos",new int[]{15,35,60,120},35);
-        SharedPreferences cycles=PgsAutoClickService.cyclePrefs(context);
-        int[] mapValues={15,25,35,60,120};
-        int mapCurrent=cycles.getInt("load_timeout",
+        int[] mapChoices={15,25,35,60,120};
+        int currentMap=cycles.getInt("load_timeout",
             PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS);
-        Button map=button("Tempo do mapa: "+mapCurrent+"s ▾",10);
+        Button map=button("Aguardar mapa: "+currentMap+"s ▾",10);
         map.setOnClickListener(v->{
-            int index=0;
-            for(int i=0;i<mapValues.length;i++)
-                if(mapValues[i]==cycles.getInt("load_timeout",25)){
-                    index=i+1;break;
-                }
-            int value=mapValues[index%mapValues.length];
-            cycles.edit().putInt("load_timeout",value)
+            int choice=0;
+            int stored=cycles.getInt("load_timeout",
+                PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS);
+            for(int i=0;i<mapChoices.length;i++)
+                if(mapChoices[i]==stored){choice=i+1;break;}
+            int next=mapChoices[choice%mapChoices.length];
+            cycles.edit().putInt("load_timeout",next)
                 .putBoolean("lt344_timeout_user_set",true).apply();
-            map.setText("Tempo do mapa: "+value+"s ▾");
+            map.setText("Aguardar mapa: "+next+"s ▾");
         });
-        root.addView(map,margined(-1,dp(31),3));
+        root.addView(map,margined(-1,dp(30),2));
+        int[] postValues={0,3,5,10,20,35,60,120};
+        int postStored=cycles.getInt("post_load",
+            PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS);
+        Button post=button("Após mapa/sem Shiny: "+postStored+"s ▾",10);
+        post.setOnClickListener(v->{
+            int choice=0;
+            int saved=cycles.getInt("post_load",
+                PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS);
+            for(int i=0;i<postValues.length;i++)
+                if(postValues[i]==saved){choice=i+1;break;}
+            int next=postValues[choice%postValues.length];
+            cycles.edit().putInt("post_load",next).apply();
+            post.setText("Após mapa/sem Shiny: "+next+"s ▾");
+        });
+        root.addView(post,margined(-1,dp(30),2));
 
-        SharedPreferences alerts=context.getSharedPreferences(
-            "pgs_auto_settings_v1",Context.MODE_PRIVATE);
-        String[] keys={PgsAutoNotificationPolicy.NEW,PgsAutoNotificationPolicy.SHINY};
-        String[] labels={"Notificar novos Pokémon","Notificar Shiny monitorado"};
-        for(int i=0;i<keys.length;i++){
-            final String kind=keys[i];
-            CheckBox notification=new CheckBox(context);
-            notification.setText(labels[i]);notification.setTextSize(10);
-            notification.setTextColor(fg());
-            notification.setChecked(!"off".equals(PgsAutoNotificationPolicy.mode(
-                kind,alerts.getString(kind,
-                    PgsAutoNotificationPolicy.defaultMode(kind)))));
-            notification.setOnCheckedChangeListener((b,on)->
-                alerts.edit().putString(kind,on?"default":"off").apply());
-            root.addView(notification,margined(-1,dp(30),1));
+        TextView alerts=label("NOTIFICAÇÕES",10,true);
+        root.addView(alerts,margined(-1,dp(20),6));
+        appendCentralAlert(root,prefs,"Novos Pokémon",PgsAutoNotificationPolicy.NEW);
+        appendCentralAlert(root,prefs,"Shiny monitorado",PgsAutoNotificationPolicy.SHINY);
+
+        TextView visuals=label("VISUAL",10,true);
+        root.addView(visuals,margined(-1,dp(20),6));
+        CheckBox countdown=new CheckBox(context);
+        countdown.setText("Contador na bolha");
+        countdown.setTextSize(10);countdown.setTextColor(fg());
+        countdown.setChecked(prefs.getBoolean("showCountdown",false));
+        countdown.setOnCheckedChangeListener((b,on)->{
+            prefs.edit().putBoolean("showCountdown",on).apply();
+            actions.appearanceChanged();
+        });
+        root.addView(countdown,margined(-1,dp(28),1));
+        LinearLayout tapRow=horizontal();
+        CheckBox tap=new CheckBox(context);
+        tap.setText("Mostrar efeito do toque");
+        tap.setTextSize(10);tap.setTextColor(fg());
+        tap.setChecked(prefs.getBoolean("showTapIndicator",true));
+        tap.setOnCheckedChangeListener((b,on)->
+            prefs.edit().putBoolean("showTapIndicator",on).apply());
+        tapRow.addView(tap,new LinearLayout.LayoutParams(0,dp(30),1));
+        Button preview=button("◎",14);
+        preview.setContentDescription("Prévia do toque, sem tocar no jogo");
+        preview.setOnClickListener(v->actions.previewTapIndicator());
+        tapRow.addView(preview,new LinearLayout.LayoutParams(dp(30),dp(30)));
+        root.addView(tapRow,margined(-1,dp(30),1));
+        LinearLayout sizes=horizontal();
+        TextView iconSize=label("Ícones:",10,false);
+        sizes.addView(iconSize,new LinearLayout.LayoutParams(dp(50),dp(29)));
+        String current=prefs.getString("iconScale","M");
+        for(String size:new String[]{"P","M","G"}){
+            Button choice=button(size,10);markChosen(choice,size.equals(current));
+            choice.setOnClickListener(v->{
+                prefs.edit().putString("iconScale",size).apply();
+                actions.appearanceChanged();
+                for(int i=1;i<sizes.getChildCount();i++){
+                    Button b=(Button)sizes.getChildAt(i);
+                    markChosen(b,size.equals(b.getText().toString()));
+                }
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(29),1);
+            lp.leftMargin=dp(2);sizes.addView(choice,lp);
         }
-        CheckBox pulse=new CheckBox(context);
-        pulse.setText("Mostrar local do toque");pulse.setTextSize(10);
-        pulse.setTextColor(fg());
-        pulse.setChecked(alerts.getBoolean("showTapIndicator",true));
-        pulse.setOnCheckedChangeListener((b,on)->
-            alerts.edit().putBoolean("showTapIndicator",on).apply());
-        root.addView(pulse,margined(-1,dp(30),1));
+        root.addView(sizes,margined(-1,dp(29),2));
+        TextView sharedStyle=label("Cores, transparência e posição seguem "+
+            "o Editor Visual das Pokébolas 1 e 2.",9,false);
+        sharedStyle.setMaxLines(2);
+        root.addView(sharedStyle,margined(-1,dp(35),3));
 
         Button advanced=button(centralAdvanced?"⌃ Recolher avançado":
-            "⌄ Mais opções",10);
-        advanced.setOnClickListener(v->{centralAdvanced=!centralAdvanced;showCentral(2);});
-        root.addView(advanced,margined(-1,dp(30),3));
-        if(centralAdvanced){
-            LinearLayout row=horizontal();
-            String[] labelsAdvanced={"Alvo","Tempos","Avisos","Visual"};
-            Runnable[] handlers={this::showTargets,this::showTime,
-                this::showNotifications,this::showAppearance};
-            for(int i=0;i<labelsAdvanced.length;i++){
-                final int j=i;
-                Button button=button(labelsAdvanced[i],9);
-                button.setOnClickListener(v->handlers[j].run());
-                LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
-                if(i>0)lp.leftMargin=dp(2);
-                row.addView(button,lp);
-            }
-            root.addView(row,margined(-1,dp(28),2));
-            Button huntMore=button("Configurações avançadas do Auto Hunt",9);
-            huntMore.setOnClickListener(v->showAutoHunt());
-            root.addView(huntMore,margined(-1,dp(29),2));
+            "⌄ Ajustes avançados",10);
+        advanced.setOnClickListener(v->{
+            centralAdvanced=!centralAdvanced;showCentral(2);
+        });
+        root.addView(advanced,margined(-1,dp(30),5));
+        if(centralAdvanced)appendCentralAdvanced(root,hunt,cycles);
+    }
+
+    private void appendCentralAlert(LinearLayout root,SharedPreferences prefs,
+        String title,String kind){
+        LinearLayout line=horizontal();
+        TextView name=label(title,10,false);
+        line.addView(name,new LinearLayout.LayoutParams(0,dp(30),1));
+        String saved=PgsAutoNotificationPolicy.mode(kind,prefs.getString(
+            kind,PgsAutoNotificationPolicy.defaultMode(kind)));
+        int[] glyphs={R.drawable.pgs_speaker_on,
+            R.drawable.pgs_speaker_silent,R.drawable.pgs_speaker_off};
+        String[] modes={"default","mute","off"};
+        String[] hints={"Com som","Sem som","Desligado"};
+        ImageButton[] buttons=new ImageButton[3];
+        for(int i=0;i<3;i++){
+            final int index=i;
+            ImageButton icon=imageButton(glyphs[i],title+" · "+hints[i],7);
+            icon.setPadding(dp(7),dp(7),dp(7),dp(7));
+            buttons[i]=icon;
+            markAlertIcon(icon,i==0?
+                ("default".equals(saved)||"strong".equals(saved)||
+                    "custom".equals(saved)):modes[i].equals(saved));
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(dp(30),dp(30));
+            if(i>0)lp.leftMargin=dp(2);
+            line.addView(icon,lp);
+            icon.setOnClickListener(v->{
+                prefs.edit().putString(kind,modes[index]).apply();
+                for(int j=0;j<3;j++)markAlertIcon(buttons[j],j==index);
+            });
         }
+        root.addView(line,margined(-1,dp(30),1));
+    }
+
+    private void appendCentralAdvanced(LinearLayout root,
+        SharedPreferences hunt,SharedPreferences cycles){
+        // Custom seconds remain supported instead of rounding saved values to presets.
+        TextView exact=label("TEMPOS EXATOS (SEGUNDOS)",10,true);
+        root.addView(exact,margined(-1,dp(23),3));
+        LinearLayout exactRow=horizontal();
+        EditText map=new EditText(context),after=new EditText(context);
+        EditText[] values={map,after};
+        String[] names={"Mapa","Após mapa"};
+        String[] keys={"load_timeout","post_load"};
+        int[] defaults={PgsAutoCyclePolicy.DEFAULT_MAP_TIMEOUT_SECONDS,
+            PgsAutoCyclePolicy.DEFAULT_SHINY_CHECK_SECONDS};
+        for(int i=0;i<2;i++){
+            LinearLayout item=vertical();
+            item.addView(label(names[i],9,false),margined(-1,dp(18),0));
+            EditText editor=values[i];
+            editor.setSingleLine(true);editor.setTextSize(11);
+            editor.setTextColor(fg());editor.setGravity(Gravity.CENTER);
+            editor.setSelectAllOnFocus(true);
+            editor.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            editor.setText(String.valueOf(cycles.getInt(keys[i],defaults[i])));
+            PgsAutoMenuStyle style=PgsAutoMenuStyle.read(context);
+            editor.setBackground(bg(style.tileFill(),style.tileStroke(),5));
+            item.addView(editor,margined(-1,dp(31),1));
+            LinearLayout.LayoutParams itemLp=new LinearLayout.LayoutParams(0,dp(53),1);
+            if(i>0)itemLp.leftMargin=dp(3);
+            exactRow.addView(item,itemLp);
+        }
+        root.addView(exactRow,margined(-1,dp(53),2));
+        Button save=button("✓ Salvar tempos",10);
+        save.setOnClickListener(v->{
+            try{
+                int m=Integer.parseInt(map.getText().toString().trim());
+                int a=Integer.parseInt(after.getText().toString().trim());
+                if(m<1||a<0)throw new NumberFormatException();
+                cycles.edit().putInt("load_timeout",m).putInt("post_load",a)
+                    .putBoolean("lt344_timeout_user_set",true).apply();
+                Toast.makeText(context,"Tempos salvos.",Toast.LENGTH_SHORT).show();
+                showCentral(2);
+            }catch(NumberFormatException e){
+                Toast.makeText(context,"Mapa >= 1s e após mapa >= 0s.",
+                    Toast.LENGTH_LONG).show();
+            }
+        });
+        root.addView(save,margined(-1,dp(30),2));
+
+        if(PgsSmartSearchSettings.HUNT.equals(PgsSmartSearchSettings.mode(context))){
+            root.addView(label("AUTO HUNT",10,true),margined(-1,dp(22),5));
+            huntNumeric(root,hunt,PgsAutoHuntSettings.MAX_CLICKS,
+                "Limite de toques",new int[]{1,3,5,10},10);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.STOP_IV100,
+                "Parar no aviso explícito IV100",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.STOP_DITTO,
+                "Parar no aviso explícito Ditto",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.RINGTONE,
+                "Som Auto Hunt",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.VIBRATE,
+                "Vibração Auto Hunt",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.SHOW_COOLDOWN,
+                "Contagem na bolha",false);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.SHOW_INFO,
+                "Exibir nome do alvo",true);
+            huntCheckbox(root,hunt,PgsAutoHuntSettings.FIX_MAP,
+                "Tentar reler o mapa (sem clique)",false);
+            huntNumeric(root,hunt,PgsAutoHuntSettings.MAP_RETRY,
+                "Falhas de imagem",new int[]{0,1,2,3},3);
+            android.hardware.SensorManager sensors=(android.hardware.SensorManager)
+                context.getSystemService(Context.SENSOR_SERVICE);
+            if(sensors!=null&&sensors.getDefaultSensor(
+                    android.hardware.Sensor.TYPE_PROXIMITY)!=null)
+                huntCheckbox(root,hunt,PgsAutoHuntSettings.PROXIMITY,
+                    "Pausar quando sensor coberto",false);
+            else huntUnavailable(root,"Sensor de proximidade",
+                "Dispositivo sem esse sensor");
+        }
+        Button permission=button("Acesso manual às notificações Android",9);
+        permission.setOnClickListener(v->{
+            hidePanel();
+            try{
+                android.content.Intent intent=new android.content.Intent(
+                    android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }catch(Exception e){
+                Toast.makeText(context,"Abra Configurações → Notificações "+
+                    "do Android.",Toast.LENGTH_LONG).show();
+            }
+        });
+        root.addView(permission,margined(-1,dp(30),5));
+        TextView limits=label("Avisos de segurança exigem confirmação humana. "+
+            "Teleporte e captura não são inferidos de toques.",9,false);
+        limits.setMaxLines(3);
+        root.addView(limits,margined(-1,dp(50),2));
     }
 
     private boolean hasCentralSprite(){
@@ -1206,8 +1432,13 @@ final class PgsAutoMenus {
             adds.addView(add,lp);
         }
         root.addView(adds,margined(-1,dp(29),2));
+        TextView dragHelp=label("Segure uma etapa e arraste para ordenar",9,false);
+        dragHelp.setSingleLine(true);
+        dragHelp.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        root.addView(dragHelp,margined(-1,dp(18),1));
 
         LinearLayout items=vertical();
+        List<View> stepRows=new ArrayList<>();
         if(steps.isEmpty()){
             TextView empty=label("Toque em + para adicionar a primeira ação. "+
                 "Pontos são escolhidos na tela do jogo.",10,false);
@@ -1222,31 +1453,30 @@ final class PgsAutoMenus {
                     " · "+(step.waitMs/1000f)+"s":"")+"  ▾",10);
             markChosen(entry,centralStep==i);
             entry.setContentDescription("Etapa "+(i+1)+
-                ". Toque para editar sem sair da aba Ação.");
+                ". Toque para editar; segure a linha e arraste para reordenar.");
             entry.setOnClickListener(v->{
                 centralStep=centralStep==index?-1:index;
                 showCentral(1);
             });
             items.addView(entry,margined(-1,dp(28),2));
+            stepRows.add(entry);
+            holdToReorder(entry,entry,stepRows,index,
+                target->!actions.sequenceRunning()&&
+                    PgsSequenceStore.moveTo(context,index,target),
+                ()->{centralStep=-1;sequenceEdited(true);});
             if(centralStep!=i)continue;
             LinearLayout controls=horizontal();
-            String[] icons={"↑","↓","▣","×"};
+            String[] icons={"▣ Copiar","× Excluir"};
             for(int j=0;j<icons.length;j++){
                 final int op=j;
-                Button btn=button(icons[j],12);
-                btn.setContentDescription(new String[]{"Subir","Descer",
-                    "Copiar passo","Excluir"}[j]+" etapa "+(index+1));
-                btn.setEnabled(op!=0||index>0);
-                if(op==1&&index==steps.size()-1)btn.setEnabled(false);
-                if(op==3)btn.setTextColor(0xFFFF596C);
+                Button btn=button(icons[j],10);
+                btn.setContentDescription((op==0?"Copiar":"Excluir")+
+                    " etapa "+(index+1));
+                if(op==1)btn.setTextColor(0xFFFF596C);
                 btn.setOnClickListener(v->{
-                    boolean ok=op==0?PgsSequenceStore.move(context,index,-1):
-                        op==1?PgsSequenceStore.move(context,index,1):
-                        op==2?PgsSequenceStore.copy(context,index):
-                            PgsSequenceStore.delete(context,index);
-                    if(op==0&&ok)centralStep=index-1;
-                    if(op==1&&ok)centralStep=index+1;
-                    if(op==3&&ok)centralStep=-1;
+                    boolean ok=op==0?PgsSequenceStore.copy(context,index):
+                        PgsSequenceStore.delete(context,index);
+                    if(op==1&&ok)centralStep=-1;
                     sequenceEdited(ok);
                 });
                 LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(27),1);

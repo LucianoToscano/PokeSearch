@@ -44,8 +44,8 @@ assert.match(detector,/new float\[\]\{\.76f,\.88f,1f,1\.12f,1\.24f\}/);
 assert.match(menu,/showModelActions\(/);
 assert.match(menu,/showAllModels\(/);
 assert.match(menu,/PgsAutoTemplateStore\.delete\(context,model\.id\)/);
-assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,-1\)/);
-assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,1\)/);
+assert.match(menu,/PgsAutoCatalog\.moveTo\(context,pokemon\.number,target\)/);
+assert.match(menu,/holdToReorder\(label,line,speciesRows,from/);
 assert.match(menu,/mount\(root,180,275\)/); // LT361: botão pequeno sem alterar toolbar
 assert.match(menu,/Monitor sem clique · ON/);
 assert.match(menu,/Monitor sem clique · OFF/);
