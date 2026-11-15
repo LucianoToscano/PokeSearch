@@ -1039,8 +1039,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void scanAndTap(){
         if(!running)return;
         // A busca nunca captura miniaturas dos próprios menus PGS.
-        if(quickMenus!=null&&quickMenus.isOpen()){
-            status("FECHE MENU PARA BUSCAR");
+        if(quickMenus!=null&&quickMenus.hasPanel()){
+            status("FECHE PAINEL PARA BUSCAR");
             handler.postDelayed(()->{if(running)scanAndTap();},1100L);
             return;
         }
@@ -1212,8 +1212,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(!isGameVisible()){
             status("ABRA O JOGO");handler.postDelayed(this::scanAndTap,1500L);return;
         }
-        if(quickMenus!=null&&quickMenus.isOpen()){
-            status("FECHE MENU PARA BUSCAR");
+        if(quickMenus!=null&&quickMenus.hasPanel()){
+            status("FECHE PAINEL PARA BUSCAR");
             handler.postDelayed(()->{if(running)scanAndTap();},1100L);
             return;
         }
