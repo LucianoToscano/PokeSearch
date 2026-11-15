@@ -13,7 +13,7 @@ assert.match(menu,/showSequence\(\)/);
 assert.match(menu,/void showSequenceStep\(int index\)/);
 assert.match(menu,/showSequenceSprites\(int editIndex\)/);
 assert.match(menu,/PgsAutoMenuStyle\.read\(context\)\.popupHeight/);
-assert.match(menu,/mount\(root,240,338\)/);
+assert.ok(menu.includes("private void appendCentralSequence(LinearLayout root)"));
 assert.match(menu,/\+ Toque/);
 assert.match(menu,/Arrastar/);
 assert.match(menu,/\+ Sprite/);
