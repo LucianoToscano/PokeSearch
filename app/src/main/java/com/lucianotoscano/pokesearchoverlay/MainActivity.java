@@ -501,19 +501,41 @@ public class MainActivity extends Activity {
         icon.setImageResource(drawable);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setPadding(d(1),d(1),d(1),d(1));
-        icon.setContentDescription(description+" · em desenvolvimento");
+        boolean live="Raids".equals(description)||"Quests".equals(description)||
+            "Rocket".equals(description)||"Power Spots".equals(description);
+        icon.setContentDescription(description+
+            (live?" · abrir ferramenta PokeSearch":" · em desenvolvimento"));
         icon.setBackground(null);
         int packIndex=previewPackIndex(description);
         if(packIndex>0){
             setHomePackIcon(icon,packIndex,"normal");
             bindHomePackHover(icon,packIndex,()->false);
         }
-        // Nunca exibir um botão sem resposta: prévias sem módulo pronto avisam
-        // claramente, sem disparar toques de outra função ou alterar filtros.
-        icon.setOnClickListener(v->Toast.makeText(this,
-            description+" está em desenvolvimento. Não há ação ativa neste atalho.",
-            Toast.LENGTH_SHORT).show());
+        // LT364: preservar os ícones e a fileira oficial, mas tornar os
+        // atalhos Raids/Quests/Rocket funcionais via consulta PokeList manual.
+        // Power Spots abre o catálogo OFFLINE de classificações Max Battles.
+        icon.setOnClickListener(v->{
+            if("Raids".equals(description))openPokeListRadar("raid");
+            else if("Quests".equals(description))openPokeListRadar("quest");
+            else if("Rocket".equals(description))openPokeListRadar("rocket");
+            else if("Power Spots".equals(description))openDataHubCatalog();
+            else Toast.makeText(this,description+
+                " está em desenvolvimento. Não há ação ativa neste atalho.",
+                Toast.LENGTH_SHORT).show();
+        });
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
+    }
+    private void openPokeListRadar(String category){
+        android.content.Intent intent=new android.content.Intent(
+            this,PokeListRadarActivity.class);
+        intent.putExtra("type",category);
+        startActivity(intent);
+    }
+    private void openDataHubCatalog(){
+        android.content.Intent intent=new android.content.Intent(
+            this,DataHubCatalogActivity.class);
+        intent.putExtra("mode","power_spots");
+        startActivity(intent);
     }
     private FrameLayout buildHome(){
         homeLightMode=getSharedPreferences("prefs",0).getBoolean("homeLightMode",false);
