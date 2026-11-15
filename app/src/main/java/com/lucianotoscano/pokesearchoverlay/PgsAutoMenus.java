@@ -44,6 +44,12 @@ final class PgsAutoMenus {
         void previewSprites();
         void choosePoint(String mode);
         void selectSprites();
+        void sequencePick(String type,int index,boolean destination);
+        void sequencePreview();
+        void sequenceRun();
+        void sequenceStop();
+        void sequenceChanged();
+        boolean sequenceRunning();
     }
     private final Context context;
     private final WindowManager wm;
@@ -530,6 +536,11 @@ final class PgsAutoMenus {
             PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
         hunt.setOnClickListener(v->showAutoHunt());
         root.addView(hunt,margined(-1,dp(30),3));
+        Button sequence=button("◎ Sequências · passos e pontos numerados",10);
+        sequence.setOnClickListener(v->showSequence());
+        sequence.setContentDescription(
+            "Abrir editor de sequência, adicionar pontos, gestos e tempos");
+        root.addView(sequence,margined(-1,dp(30),3));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
