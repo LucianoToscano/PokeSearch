@@ -46,6 +46,7 @@ final class PgsAutoMenus {
     private final WindowManager wm;
     private final Actions actions;
     private View toolbar,panel;
+    private ImageView bellShiny;
     private android.media.Ringtone tonePreview;
     private void stopTonePreview(){
         if(tonePreview!=null){
@@ -57,10 +58,10 @@ final class PgsAutoMenus {
         b.setSelected(chosen);
         b.setTextColor(chosen?0xFF70E6A6:fg());
         b.setBackground(bg(chosen?0xAA295E49:0x55394A5C,
-            chosen?0xFF70E6A6:0x557E91A5,6));
+            chosen?0xFF70E6A6:0x2CFFFFFF,6));
     }
     private int anchorX,anchorY;
-    private static final int BG=0xEC10151F, TILE=0xD9222A38, BORDER=0xFF728095;
+    private static final int BG=0xEC10151F, TILE=0xD9222A38, BORDER=0x33FFFFFF;
     private static final int WHITE=0xFFF4F7FF, SECONDARY=0xFFD0D6E0,GOLD=0xFFFFD47B;
     PgsAutoMenus(Context c,WindowManager w,Actions a){context=c;wm=w;actions=a;}
     private int dp(float value){return Math.round(value*context.getResources().getDisplayMetrics().density);}
@@ -107,7 +108,7 @@ final class PgsAutoMenus {
     }
     private ImageButton trashButton(String desc){
         ImageButton icon=new ImageButton(context);
-        icon.setImageResource(fg()==0xFF142130?
+        icon.setImageResource(PgsAutoMenuStyle.read(context).light?
             R.drawable.lixeira_preta:R.drawable.lixeira_branca);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
         icon.setPadding(dp(8),dp(8),dp(8),dp(8));
@@ -123,8 +124,13 @@ final class PgsAutoMenus {
     }
     void toggle(int x,int y){if(toolbar!=null){dismissAll();return;}showToolbar(x,y);}
     void dismissAll(){hidePanel();hideToolbar();}
-    private void hidePanel(){stopTonePreview();if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);}
-    private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}}
+    private void hidePanel(){
+        stopTonePreview();
+        if(panel!=null){try{wm.removeView(panel);}catch(Exception ignored){}panel=null;}
+        if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);
+        refreshBellShiny();
+    }
+    private void hideToolbar(){if(toolbar!=null){try{wm.removeView(toolbar);}catch(Exception ignored){}toolbar=null;}bellShiny=null;}
     boolean isOpen(){return panel!=null||toolbar!=null;}
     // Toque na bolha com submenu aberto volta à barra, sem desligar buscas.
     // Com somente a barra aberta, um segundo toque a retrai (padrão P1/P2).
@@ -153,6 +159,18 @@ final class PgsAutoMenus {
             pp.y=Math.max(dp(8),Math.min(screen.y-height-dp(8),pp.y+lp.y-oldY));
             try{wm.updateViewLayout(panel,pp);}catch(Exception ignored){}
         }
+    }
+
+
+    /** Shiny sits in the empty bell bowl, not over the bell's lower rim. */
+    private void refreshBellShiny(){
+        if(bellShiny==null)return;
+        String state=PgsAutoNotificationPolicy.mode(
+            PgsAutoNotificationPolicy.SHINY,
+            context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
+                .getString(PgsAutoNotificationPolicy.SHINY,"strong"));
+        bellShiny.setVisibility("off".equals(state)?View.GONE:View.VISIBLE);
+        bellShiny.setColorFilter(0xFFFFD47B);
     }
 
     // LT347: exactly the dock.html controls-window 30dp individual tiles,
@@ -195,18 +213,16 @@ final class PgsAutoMenus {
                 tile.addView(icon,new FrameLayout.LayoutParams(-1,-1));
                 ImageView shiny=new ImageView(context);
                 shiny.setImageResource(R.drawable.pgs_shiny_spark);
-                String state=PgsAutoNotificationPolicy.mode(
-                    PgsAutoNotificationPolicy.SHINY,
-                    context.getSharedPreferences("pgs_auto_settings_v1",Context.MODE_PRIVATE)
-                        .getString(PgsAutoNotificationPolicy.SHINY,"strong"));
-                shiny.setColorFilter("off".equals(state)?fg():0xFFFFD47B);
                 shiny.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                // Fit sparkle inside bell BODY: 5dp, visually below its crown,
-                // without touching its outline or extending over the rim.
+                // Bell outline drawable 24-unit viewport is painted inside
+                // the central 16dp inset of the 30dp tile. These 6dp sparkles
+                // occupy the bowl at y≈13.5dp, above its bottom y≈18.3dp.
                 FrameLayout.LayoutParams inner=new FrameLayout.LayoutParams(
-                    dp(5),dp(5),Gravity.CENTER);
-                inner.topMargin=dp(4);
+                    dp(8),dp(8),Gravity.CENTER);
+                inner.topMargin=dp(-2);
                 shiny.setClickable(false);shiny.setFocusable(false);
+                bellShiny=shiny;
+                refreshBellShiny();
                 tile.addView(shiny,inner);
                 tile.setContentDescription("Notificações e Shiny dentro do sino");
                 tile.setOnClickListener(v->handlers[n].run());
@@ -254,7 +270,7 @@ final class PgsAutoMenus {
     }
     private LinearLayout panelRoot(String heading,String right){
         LinearLayout root=vertical();root.setPadding(dp(7),dp(6),dp(7),dp(7));
-        root.setBackground(bg(panelFill(),0x667E91A5,10));
+        root.setBackground(bg(panelFill(),0x33FFFFFF,10));
         LinearLayout head=horizontal();
         TextView title=label(heading,12,true);
         head.addView(title,new LinearLayout.LayoutParams(0,dp(28),1));
@@ -269,8 +285,8 @@ final class PgsAutoMenus {
     private void mount(LinearLayout root){mount(root,240,315);}
     private void mount(LinearLayout root,int preferredWidthDp,int estimatedHeightDp){
         hidePanel();panel=root;
-        // Nunca deixar a barra visível por trás do submenu translúcido.
-        if(toolbar!=null)toolbar.setVisibility(View.GONE);
+        // Keep the entire icon bar visible above/beside the popup, even
+        // when a submenu is expanded. The popup is placed below the bar.
         PgsAutoMenuStyle visual=PgsAutoMenuStyle.read(context);
         Point screen=size();int width=Math.min(screen.x-dp(20),
             dp(Math.min(preferredWidthDp,visual.popupWidth)));
@@ -290,11 +306,26 @@ final class PgsAutoMenus {
         int top=toolbarTop+toolbarHeight+dp(4);
         if(top+estimated>screen.y-dp(18))top=Math.max(dp(14),toolbarTop-estimated-dp(4));
         if(top+estimated>screen.y)top=Math.max(dp(14),screen.y-estimated-dp(20));
+        // A nonmodal overlay must NEVER prevent tapping the game elsewhere.
+        // Only menus that actually contain text input take keyboard focus.
+        // WATCH_OUTSIDE_TOUCH retracts the popup while delivering the outside
+        // tap to the underlying app without creating an invisible blocker.
+        int flags=WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+        if(!hasTextInput(root))
+            flags|=WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         WindowManager.LayoutParams lp=new WindowManager.LayoutParams(width,
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            flags,
             PixelFormat.TRANSLUCENT);
+        root.setOnTouchListener((v,event)->{
+            if(event.getActionMasked()==MotionEvent.ACTION_OUTSIDE){
+                hidePanel();
+                return false; // Outside tap still belongs to the game/app.
+            }
+            return false;
+        });
         lp.gravity=Gravity.LEFT|Gravity.TOP;
         lp.x=Math.max(dp(10),Math.min(screen.x-width-dp(10),toolbarLeft-width/2));lp.y=top;
         lp.softInputMode=WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
@@ -304,6 +335,15 @@ final class PgsAutoMenus {
             if(toolbar!=null)toolbar.setVisibility(View.VISIBLE);
             Toast.makeText(context,"Não foi possível abrir menu: "+e.getMessage(),Toast.LENGTH_LONG).show();
         }
+    }
+    private boolean hasTextInput(View root){
+        if(root instanceof EditText)return true;
+        if(root instanceof android.view.ViewGroup){
+            android.view.ViewGroup group=(android.view.ViewGroup)root;
+            for(int i=0;i<group.getChildCount();i++)
+                if(hasTextInput(group.getChildAt(i)))return true;
+        }
+        return false;
     }
     private List<PgsAutoTemplateStore.Model> imagesFor(PgsAutoCatalog.Pokemon p){
         List<PgsAutoTemplateStore.Model> result=new ArrayList<>();
@@ -385,7 +425,7 @@ final class PgsAutoMenus {
         input.setTextColor(fg());input.setHintTextColor(0xFF9CA8B8);
         input.setHint("Nome ou #");
         input.setPadding(dp(8),0,dp(8),0);
-        input.setBackground(bg(TILE,0x667E91A5,7));
+        input.setBackground(bg(TILE,0x33FFFFFF,7));
         LinearLayout rows=vertical();
         ScrollView scroll=new ScrollView(context);
         scroll.setVerticalScrollBarEnabled(false);
@@ -407,7 +447,7 @@ final class PgsAutoMenus {
                 boolean selected=PgsAutoCatalog.isSelected(context,pokemon.number);
                 LinearLayout line=horizontal();
                 line.setPadding(dp(3),dp(2),dp(3),dp(2));
-                line.setBackground(bg(TILE,0x557E91A5,7));
+                line.setBackground(bg(TILE,0x2CFFFFFF,7));
                 rows.addView(line,margined(-1,dp(47),3));
                 ImageView dex=new ImageView(context);
                 try(java.io.InputStream in=VerifiedSpriteCache.bundledSprite(context,pokemon.number,false)){
@@ -428,7 +468,7 @@ final class PgsAutoMenus {
                             thumb.setImageBitmap(PgsAutoTemplateStore.decode(context,model));
                         }catch(Exception ignored){}
                         thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                        thumb.setBackground(bg(0x66313C4B,0xFF728095,4));
+                        thumb.setBackground(bg(0x66313C4B,0x33FFFFFF,4));
                         thumb.setContentDescription("Imagem monitorada de "+pokemon.name+
                             ". Toque para excluir ou selecionar outra.");
                         line.addView(thumb,new LinearLayout.LayoutParams(dp(27),dp(31)));
@@ -641,7 +681,7 @@ final class PgsAutoMenus {
             value=i==0?PgsAutoCyclePolicy.mapTimeoutSeconds(value):
                 PgsAutoCyclePolicy.shinyCheckSeconds(value);
             edit.setText(String.valueOf(value));
-            edit.setBackground(bg(TILE,0x557E91A5,6));
+            edit.setBackground(bg(TILE,0x2CFFFFFF,6));
             row.addView(edit,new LinearLayout.LayoutParams(dp(46),dp(28)));
             root.addView(row,margined(-1,dp(31),2));
             inputs[i]=edit;
@@ -724,7 +764,7 @@ final class PgsAutoMenus {
         // traços brancos das caixas Som / Sem som / OFF, SEM estrela.
         LinearLayout root=vertical();
         root.setPadding(dp(4),dp(4),dp(4),dp(4));
-        root.setBackground(bg(panelFill(),0x667E91A5,8));
+        root.setBackground(bg(panelFill(),0x33FFFFFF,8));
         TextView head=label("NOTIFICAÇÕES",10,true);
         head.setGravity(Gravity.CENTER);
         root.addView(head,new LinearLayout.LayoutParams(-1,dp(22)));

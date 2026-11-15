@@ -46,35 +46,71 @@ final class HomeMenuIconPack {
         if(bitmap!=null)cache.put(key,bitmap);
         return bitmap;
     }
-    /** Equaliza as áreas visíveis SEM reduzir, recortar ou recomprimir os PNG 512px. */
+    // LT349: row ImageViews may initially have zero/narrow width before the
+    // weighted Home toolbar settles. Recompute on actual layout changes rather
+    // than leaving a tiny matrix frozen from the first frame.
+    private static final java.util.WeakHashMap<android.widget.ImageView,
+        android.view.View.OnLayoutChangeListener> artworkListeners=new java.util.WeakHashMap<>();
+    private static final java.util.WeakHashMap<Bitmap,android.graphics.Rect>
+        visibleBounds=new java.util.WeakHashMap<>();
+
+    /** Equaliza a arte visível em toda mudança de medida, sem resample. */
     static void fitVisibleArtwork(android.widget.ImageView view,Bitmap image){
         if(view==null||image==null||image.isRecycled())return;
         view.setScaleType(android.widget.ImageView.ScaleType.MATRIX);
-        view.post(()->{
-            if(image.isRecycled()||!(view.getDrawable() instanceof
-                    android.graphics.drawable.BitmapDrawable))return;
-            Bitmap shown=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
-            if(shown!=image)return; // Evitar hover atrasado substituindo outro estado.
-            int w=view.getWidth(),h=view.getHeight();
-            if(w<=0||h<=0)return;
-            int l=image.getWidth(),t=image.getHeight(),r=0,b=0;
-            // Examinar somente alpha; dados originais não são modificados.
-            final int step=2, alphaThreshold=64; // ignorar apenas halos translúcidos
-            for(int y=0;y<image.getHeight();y+=step)
-                for(int x=0;x<image.getWidth();x+=step)
-                    if(android.graphics.Color.alpha(image.getPixel(x,y))>alphaThreshold){
-                        if(x<l)l=x;if(x>r)r=x;
-                        if(y<t)t=y;if(y>b)b=y;
+        if(!artworkListeners.containsKey(view)){
+            android.view.View.OnLayoutChangeListener listener=(v,left,top,right,bottom,
+                    oldLeft,oldTop,oldRight,oldBottom)->{
+                if((right-left)!=(oldRight-oldLeft)||
+                   (bottom-top)!=(oldBottom-oldTop)){
+                    if(v instanceof android.widget.ImageView){
+                        android.widget.ImageView iv=(android.widget.ImageView)v;
+                        if(iv.getDrawable() instanceof
+                                android.graphics.drawable.BitmapDrawable){
+                            Bitmap now=((android.graphics.drawable.BitmapDrawable)
+                                iv.getDrawable()).getBitmap();
+                            applyVisibleMatrix(iv,now);
+                        }
                     }
-            if(r<l||b<t){view.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);return;}
-            float width=Math.max(1,r-l+1),height=Math.max(1,b-t+1);
-            float scale=Math.min((w*.97f)/width,(h*.97f)/height);
-            android.graphics.Matrix matrix=new android.graphics.Matrix();
-            matrix.setScale(scale,scale);
-            matrix.postTranslate(w*.5f-(l+r)*.5f*scale,
-                h*.5f-(t+b)*.5f*scale);
-            view.setImageMatrix(matrix);
-        });
+                }
+            };
+            artworkListeners.put(view,listener);
+            view.addOnLayoutChangeListener(listener);
+        }
+        view.post(()->applyVisibleMatrix(view,image));
+    }
+    private static void applyVisibleMatrix(android.widget.ImageView view,Bitmap image){
+        if(image==null||image.isRecycled()||
+            !(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable))return;
+        Bitmap shown=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+        if(shown!=image)return;
+        int w=view.getWidth()-view.getPaddingLeft()-view.getPaddingRight();
+        int h=view.getHeight()-view.getPaddingTop()-view.getPaddingBottom();
+        if(w<=0||h<=0)return;
+        android.graphics.Rect bounds=visibleBounds.get(image);
+        if(bounds==null){
+            int l=image.getWidth(),t=image.getHeight(),r=-1,b=-1;
+            for(int y=0;y<image.getHeight();y+=2){
+                for(int x=0;x<image.getWidth();x+=2){
+                    if(android.graphics.Color.alpha(image.getPixel(x,y))>64){
+                        l=Math.min(l,x);r=Math.max(r,x);
+                        t=Math.min(t,y);b=Math.max(b,y);
+                    }
+                }
+            }
+            if(r<l||b<t)return;
+            bounds=new android.graphics.Rect(l,t,r+1,b+1);
+            visibleBounds.put(image,bounds);
+        }
+        // Layout width/height, NEVER placeholder width from inflation time.
+        float scale=Math.min(w*.97f/Math.max(1,bounds.width()),
+            h*.97f/Math.max(1,bounds.height()));
+        android.graphics.Matrix matrix=new android.graphics.Matrix();
+        matrix.setScale(scale,scale);
+        matrix.postTranslate(view.getPaddingLeft()+w*.5f-bounds.centerX()*scale,
+            view.getPaddingTop()+h*.5f-bounds.centerY()*scale);
+        view.setScaleType(android.widget.ImageView.ScaleType.MATRIX);
+        view.setImageMatrix(matrix);
     }
     /**
      * Topo ÓPTICO da imagem da Pokébola em pixels físicos, no pai.

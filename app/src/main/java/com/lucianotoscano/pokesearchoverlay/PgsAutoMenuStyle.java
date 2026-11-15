@@ -41,9 +41,11 @@ final class PgsAutoMenuStyle {
         return light?Color.argb(a,248,250,252):Color.argb(a,40,41,44);
     }
     int tileStroke(){
-        if(guides)return 0xFF70B8F2;
+        // Guide outlines must remain subtle white/neutral (never blue) and
+        // become fully invisible at 100% menu transparency, like the tiles.
         int a=bounded(Math.round(45f*(100-menuTransparency)/50f),0,255);
-        return light?Color.argb(a,49,69,91):Color.argb(a,255,255,255);
+        if(guides)a=Math.min(a,51);
+        return light?Color.argb(a,21,34,49):Color.argb(a,255,255,255);
     }
     int itemGapDp(){return BASE_GAP_DP+menuItemGap;}
     int panelFill(Context c){return OverlayQuickMenus.panelColor(c);}

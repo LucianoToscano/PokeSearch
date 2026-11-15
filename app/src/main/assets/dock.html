@@ -4810,6 +4810,87 @@ body.result-window .spawnInfo{
  width:calc(96px - var(--result-highlight-width,0px))!important;
  max-width:calc(96px - var(--result-highlight-width,0px))!important;
 }
+
+/* LT349: identical slider alpha for Modos, Filtros, Favoritos,
+   Editor Visual and Saved Filters; never double-paint nested option lists. */
+body.controls-window #choices.standardPanel,
+body.popup-window.controls-window #choices.standardPanel,
+body.controls-window #choices.morePanel,
+body.popup-window.controls-window #choices.morePanel,
+body.controls-window #choices.visualPanel,
+body.popup-window.controls-window #choices.visualPanel,
+body.controls-window #choices.modeCascade .modeCascadeRail,
+body.controls-window #choices.modeCascade .modeCascadeEditor,
+body.controls-window #choices.filterCascade .filterCascadeRail,
+body.controls-window #choices.filterCascade .filterCascadeEditor,
+body.controls-window #choices.filterCascade .generalPresetFlyout,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeRail,
+body.popup-window.controls-window #choices.modeCascade .modeCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeRail,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor,
+body.popup-window.controls-window #choices.filterCascade .generalPresetFlyout {
+ background:var(--visual-menu-bg,rgba(15,19,26,.50))!important;
+ border-color:var(--visual-menu-border,#ffffff26)!important;
+ box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0004)!important;
+ backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+ -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+}
+body.controls-window #choices.filterCascade,
+body.popup-window.controls-window #choices.filterCascade,
+body.controls-window #choices.modeCascade,
+body.popup-window.controls-window #choices.modeCascade{
+ background:transparent!important;box-shadow:none!important;
+ border:0!important;backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.controls-window #choices.filterCascade .filterCascadeEditor .filterFormEditor,
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionList,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .filterFormEditor,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems{
+ background:transparent!important;
+ box-shadow:none!important;border:0!important;
+ padding:0!important;margin:0!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionItem:not(.chosen),
+body.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems button:not(.chosen),
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .extraOptionItem:not(.chosen),
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor #officialFormItems button:not(.chosen){
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+ border-color:var(--visual-menu-border,#ffffff26)!important;
+ box-shadow:none!important;
+}
+body.controls-window #quickMenuList .quickRow,
+body.controls-window #quickMenuList .quickFooterAction,
+body.controls-window #choices.filterCascade .generalPresetRow .generalPresetLoad,
+body.controls-window #choices.filterCascade .generalPresetDefault{
+ background:var(--visual-menu-button-bg,rgba(15,19,26,.50))!important;
+}
+body.controls-window #quickMenuList .quickGlyph.backgroundOnArt img{
+ display:block;width:21px;height:21px;object-fit:contain;
+ max-width:100%;max-height:100%;pointer-events:none;
+}
+body.visual-measurements.controls-window #quickMenuList .quickRow,
+body.visual-measurements.controls-window #quickMenuList .quickFooterAction,
+body.visual-measurements.controls-window #choices,
+body.visual-measurements.result-window #shell {
+ position:relative!important;
+}
+body.visual-measurements.controls-window #quickMenuList .quickRow::after,
+body.visual-measurements.controls-window #quickMenuList .quickFooterAction::after,
+body.visual-measurements.controls-window #choices::after,
+body.visual-measurements.result-window #shell::after{
+ content:attr(data-visual-measure);
+ display:block!important;position:absolute!important;
+ bottom:1px;right:1px;z-index:20;
+ width:max-content;max-width:100%;height:auto;
+ padding:1px 2px;border-radius:2px;
+ background:rgba(0,0,0,.74)!important;color:#f8f9fa!important;
+ font:700 7px/1.05 monospace!important;
+ white-space:nowrap;pointer-events:none!important;
+ text-align:right;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -5136,6 +5217,7 @@ window.setResultsCollapsed=collapsed=>{
 let lastHeight=0;
 let fitPending=false;
 function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{fitPending=false;
+ if(typeof window.visualMeasurementsRefresh==="function")window.visualMeasurementsRefresh();
  const shell=document.getElementById("shell");
  let h=Math.ceil(shell.getBoundingClientRect().height)+1;
  if(controlsWindow)h=window.visualPrefs?.menuOrientation==="vertical"?384:34; // 12 fixed 30px tiles in a single column.
@@ -8131,6 +8213,14 @@ function iconForQuick(id, fallback){
   }
   return glyph;
  }
+ if(id==="bg"&&searchSettings.backgroundOnly===true){
+  // Original owner PNG, only while the Background filter is enabled.
+  const img=document.createElement("img");
+  img.src="file:///android_asset/ui-icons/Icone_Background_On.png";
+  img.alt="";img.setAttribute("aria-hidden","true");
+  glyph.classList.add("backgroundOnArt");
+  glyph.appendChild(img);return glyph;
+ }
  const sourceId=QUICK_SOURCE_ICONS[id];
  const source=sourceId?document.querySelector("#"+sourceId+" svg"):null;
  if(source){glyph.appendChild(source.cloneNode(true));return glyph;}
@@ -8512,7 +8602,10 @@ function renderQuickMenu(){
    button.dataset.modeArtKey=art.path+"|"+art.ivBadge+"|"+art.ivText;
   }
   if(renderedId==="sh")button.setAttribute("aria-pressed",String(shiny));
-  if(renderedId==="bg")button.setAttribute("aria-pressed",String(searchSettings.backgroundOnly===true));
+  if(renderedId==="bg"){
+   button.setAttribute("aria-pressed",String(searchSettings.backgroundOnly===true));
+   button.dataset.backgroundArtActive=String(searchSettings.backgroundOnly===true);
+  }
   const label=document.createElement("span");label.className="quickName";label.textContent=name;
   const state=document.createElement("span");state.className="quickState";state.textContent=quickState(renderedId);
   button.append(glyph,label);
@@ -8584,7 +8677,15 @@ function refreshQuickMenuStates(){
    }
   }
   if(id==="sh")button.setAttribute("aria-pressed",String(shiny));
-   if(id==="bg")button.setAttribute("aria-pressed",String(searchSettings.backgroundOnly===true));
+  if(id==="bg"){
+   const on=searchSettings.backgroundOnly===true;
+   if(id==="bg")button.setAttribute("aria-pressed",String(on));
+   if(button.dataset.backgroundArtActive!==String(on)){
+    const old=button.querySelector(".quickGlyph");
+    if(old)old.replaceWith(iconForQuick("bg","▧"));
+    button.dataset.backgroundArtActive=String(on);
+   }
+  }
   if(["mode","filters","location","pokemon","bell","appearance","more"].includes(id)){
    // Keep the state renderer safe when historical standalone tests
    // execute it without bootstrapping the separate toolbar WebView.

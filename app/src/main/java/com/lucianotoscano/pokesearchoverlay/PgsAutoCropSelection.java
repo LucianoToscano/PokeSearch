@@ -20,6 +20,7 @@ import android.view.View;
  */
 final class PgsAutoCropSelection extends View {
     enum Mode {SQUARE,HORIZONTAL,VERTICAL,FREE}
+    private static final float VERTICAL_WIDTH_HEIGHT_RATIO=0.75f; // 3:4 portrait, not a tall sliver
     private final int originalWidth,originalHeight;
     private final Runnable changed;
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
@@ -36,7 +37,7 @@ final class PgsAutoCropSelection extends View {
         super(context);
         originalWidth=Math.max(1,width);originalHeight=Math.max(1,height);
         changed=onChanged;
-        setContentDescription("Seleção assistida com lupa fora do dedo. Quadrado, Horizontal e Livre.");
+        setContentDescription("Seleção assistida com lupa fora do dedo. Quadrado, Vertical, Horizontal e Livre.");
     }
     void setPreviewBitmap(Bitmap bitmap){screenshot=bitmap;invalidate();}
     void setMode(Mode value){
@@ -67,9 +68,11 @@ final class PgsAutoCropSelection extends View {
         float side=clamp(defaultSide(),minimumSide(),
             Math.min(getWidth(),getHeight()));
         float w=mode==Mode.HORIZONTAL?Math.min(getWidth(),side*1.8f):
-            mode==Mode.VERTICAL?side/1.8f:
+            mode==Mode.VERTICAL?side:
             mode==Mode.FREE?Math.min(getWidth(),side*1.3f):side;
-        float h=mode==Mode.VERTICAL?Math.min(getHeight(),side*1.8f):side;
+        float h=mode==Mode.VERTICAL?
+            Math.min(getHeight(),w/VERTICAL_WIDTH_HEIGHT_RATIO):side;
+        if(mode==Mode.VERTICAL)w=h*VERTICAL_WIDTH_HEIGHT_RATIO;
         float left=clamp(cx-w/2f,0,Math.max(0,getWidth()-w));
         float top=clamp(cy-h/2f,0,Math.max(0,getHeight()-h));
         crop.set(left,top,left+w,top+h);selected=true;
@@ -211,7 +214,10 @@ final class PgsAutoCropSelection extends View {
                 else if(mode==Mode.HORIZONTAL){
                     h=Math.min(h,w/1.8f);w=Math.min(getWidth()-crop.left,h*1.8f);
                 }else if(mode==Mode.VERTICAL){
-                    w=Math.min(w,h/1.8f);h=Math.min(getHeight()-crop.top,w*1.8f);
+                    w=Math.min(w,h*VERTICAL_WIDTH_HEIGHT_RATIO);
+                    h=Math.min(getHeight()-crop.top,
+                        w/VERTICAL_WIDTH_HEIGHT_RATIO);
+                    w=h*VERTICAL_WIDTH_HEIGHT_RATIO;
                 }
                 crop.right=crop.left+w;crop.bottom=crop.top+h;
             }
