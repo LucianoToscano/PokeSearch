@@ -96,8 +96,72 @@ public final class PgsAutoClickService extends AccessibilityService {
     private final Runnable watchTick=this::scanWatchOnly;
     private long lastAccountSafetyEventCheck=0L;
     private boolean awaitingMap=false;
+    // LT366: cada sessão registra explicitamente seu perfil e consentimento.
+    private boolean huntTapSession=false,huntWatchSession=false;
+    private int huntClicks=0,mapReadFailures=0;
+    private long huntNextAt=0L;
+    private final Runnable huntCountdownTick=new Runnable(){
+        @Override public void run(){
+            if(!running||!huntTapSession||huntNextAt<=0L)return;
+            long remaining=huntNextAt-SystemClock.uptimeMillis();
+            if(remaining<=0L)return;
+            status("PRÓXIMO EM "+((remaining+999L)/1000L)+"s");
+            handler.postDelayed(this,1000L);
+        }
+    };
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
+    // LT366: sensor Android opcional, acionado somente durante a sessão
+    // Auto Hunt. Proximidade coberta apenas PARA; nunca retoma sozinha.
+    private android.hardware.SensorManager huntSensorManager;
+    private android.hardware.Sensor huntProximitySensor;
+    private boolean huntProximityListening=false;
+    private final android.hardware.SensorEventListener huntProximityListener=
+        new android.hardware.SensorEventListener(){
+            @Override public void onSensorChanged(android.hardware.SensorEvent event){
+                if(event==null||event.sensor==null||event.values==null||
+                   event.values.length==0||!huntProximityListening)return;
+                float near=event.values[0];
+                if(!Float.isFinite(near)||near<0f||
+                   near>=event.sensor.getMaximumRange())return;
+                boolean active=huntTapSession||huntWatchSession;
+                if(!active)return;
+                if(huntTapSession)halt("AUTO HUNT · SENSOR COBERTO");
+                else if(huntWatchSession){
+                    stopWatchOnly(true);
+                    status("AUTO HUNT · SENSOR COBERTO");
+                }
+                notifyConfigured(PgsAutoNotificationPolicy.HUNT,
+                    "Auto Hunt pausado por proximidade",
+                    "Sensor do aparelho coberto. Retome manualmente quando desejar.",
+                    true);
+            }
+            @Override public void onAccuracyChanged(
+                    android.hardware.Sensor sensor,int accuracy){}
+        };
+    private void refreshHuntProximity(){
+        boolean desired=PgsAutoHuntSettings.enabled(this)&&
+            PgsAutoHuntSettings.forCurrent(this).getBoolean(
+                PgsAutoHuntSettings.PROXIMITY,false)&&
+            (huntTapSession||huntWatchSession);
+        if(!desired){
+            if(huntProximityListening&&huntSensorManager!=null)
+                huntSensorManager.unregisterListener(huntProximityListener);
+            huntProximityListening=false;return;
+        }
+        if(huntProximityListening)return;
+        if(huntSensorManager==null)
+            huntSensorManager=(android.hardware.SensorManager)
+                getSystemService(Context.SENSOR_SERVICE);
+        if(huntSensorManager==null)return;
+        if(huntProximitySensor==null)huntProximitySensor=
+            huntSensorManager.getDefaultSensor(
+                android.hardware.Sensor.TYPE_PROXIMITY);
+        if(huntProximitySensor==null)return;
+        huntProximityListening=huntSensorManager.registerListener(
+            huntProximityListener,huntProximitySensor,
+            android.hardware.SensorManager.SENSOR_DELAY_NORMAL,handler);
+    }
     private boolean isGamePackage(String pkg){
         // LT362: ambos os perfis só podem ler a janela do jogo oficial.
         // Nome contendo "pgsharp" não é prova de identidade do processo.
@@ -364,7 +428,15 @@ public final class PgsAutoClickService extends AccessibilityService {
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
         showBubble();
-        if(PgsAutoWatchSettings.enabled(this))startWatchOnly();
+        if(PgsAutoWatchSettings.enabled(this)){
+            startWatchOnly();
+            if(watching&&PgsAutoHuntSettings.enabled(this)&&
+                !PgsAutoHuntSettings.forCurrent(this).getBoolean(
+                    PgsAutoHuntSettings.CLICK_ENABLED,false)){
+                huntWatchSession=true;
+                refreshHuntProximity();
+            }
+        }
         armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
             .getBoolean("armFromHome",false);
         if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
@@ -682,6 +754,22 @@ public final class PgsAutoClickService extends AccessibilityService {
         return live!=null&&live.bubble!=null&&
             live.bubble.getVisibility()==View.VISIBLE;
     }
+    /** Reage imediatamente quando a pessoa revoga o Auto Hunt/click ativo. */
+    public static void huntSettingsChanged(){
+        PgsAutoClickService live=instance;
+        if(live==null)return;
+        live.handler.post(()->{
+            if(live.huntTapSession&&(!PgsAutoHuntSettings.enabled(live)||
+                !PgsAutoHuntSettings.forCurrent(live).getBoolean(
+                    PgsAutoHuntSettings.CLICK_ENABLED,false)))
+                live.halt("AUTO HUNT · DESATIVADO");
+            if(live.huntWatchSession&&!PgsAutoHuntSettings.enabled(live)){
+                live.stopWatchOnly(true);
+                live.status("AUTO HUNT · DESATIVADO");
+            }
+            live.refreshHuntProximity();
+        });
+    }
     public static void modelsChanged(){
         PgsAutoClickService live=instance;
         if(live!=null)live.handler.post(()->{
@@ -803,13 +891,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 value.contains("PAUSADO")?View.VISIBLE:View.GONE);
         }
         if(countdownBadge!=null){
-            boolean enabled=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
-                .getBoolean("showCountdown",false);
-            if(enabled&&running&&awaitingMap){
+            boolean enabled=huntTapSession?
+                PgsAutoHuntSettings.forCurrent(this).getBoolean(
+                    PgsAutoHuntSettings.SHOW_COOLDOWN,false):
+                getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
+                    .getBoolean("showCountdown",false);
+            if(enabled&&running&&(awaitingMap||
+                (huntTapSession&&huntNextAt>SystemClock.uptimeMillis()))){
                 long now=SystemClock.uptimeMillis();
-                long remaining=sceneReadyAt>0?
+                long remaining=awaitingMap?(sceneReadyAt>0?
                     sceneReadyAt+minSeconds*1000L-now:
-                    clickedAt+maxSeconds*1000L-now;
+                    clickedAt+maxSeconds*1000L-now):huntNextAt-now;
                 countdownBadge.setText(String.valueOf(Math.max(0,(remaining+999)/1000L)));
                 countdownBadge.setVisibility(View.VISIBLE);
             }else countdownBadge.setVisibility(View.GONE);
@@ -1105,6 +1197,16 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void toggle(){
         if(watching){stopWatchOnly(true);return;}
         if(running){halt("PARADO");return;}
+        // Auto Hunt sem clique reutiliza monitor passivo (2 frames), e a
+        // autorização de clique precisa ser dada NESTE perfil explicitamente.
+        if(PgsAutoHuntSettings.enabled(this)&&
+           !PgsAutoHuntSettings.forCurrent(this).getBoolean(
+               PgsAutoHuntSettings.CLICK_ENABLED,false)){
+            startWatchOnly();
+            if(watching)huntWatchSession=true;
+            refreshHuntProximity();
+            return;
+        }
         // LT359: PGS é interface padrão; Pokemod exige seleção explícita e
         // modelos próprios. Outros clientes ficam em prévia até homologação.
         String hostProfile=PgsAutoHostSettings.current(this);
@@ -1155,7 +1257,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
         visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;currentTargetName="";
         emptyRetries=0;lastNoIconScan=0;shinyNegativeConfirmed=false;
+        huntTapSession=PgsAutoHuntSettings.enabled(this);
+        huntClicks=0;mapReadFailures=0;huntNextAt=0L;
+        handler.removeCallbacks(huntCountdownTick);
         running=true;
+        refreshHuntProximity();
         status("LENDO TELA");
         BugReport.log(this,"PGS","Busca reativada, cooldown mapa "+maxSeconds+
             "s, Sem Shiny "+minSeconds+"s; aguardando ícones do feed");
@@ -1211,6 +1317,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         handler.postDelayed(watchTick,600L);
     }
     private void stopWatchOnly(boolean clearPreference){
+        huntWatchSession=false;
+        refreshHuntProximity();
         handler.removeCallbacks(watchTick);
         watchTicket++;watchBusy=false;watching=false;
         watchMetrics.cancel(); // descarte também a rodada de métricas antiga.
@@ -1221,7 +1329,14 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(watchBusy)watchMetrics.finish(SystemClock.elapsedRealtime(),lastStatus);
         watchBusy=false;
         handler.removeCallbacks(watchTick);
-        if(watching)handler.postDelayed(watchTick,millis);
+        if(watching){
+            // Monitor Auto Hunt respeita a espera escolhida pelo usuário;
+            // monitor antigo preserva exatamente sua política própria.
+            long delay=huntWatchSession&&PgsAutoHuntSettings.enabled(this)?
+                Math.max(millis,PgsAutoHuntSettings.waitSeconds(this)*1000L):
+                millis;
+            handler.postDelayed(watchTick,delay);
+        }
     }
     private interface WatchFrameResult {
         void ready(java.util.List<PgsAutoIconDetector.Match> matches,
@@ -1488,6 +1603,13 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void scanAndTap(){
         if(!running)return;
+        huntNextAt=0L;
+        handler.removeCallbacks(huntCountdownTick);
+        if(huntTapSession&&!PgsAutoHuntPolicy.mayKeepScanning(true,
+                huntClicks,PgsAutoHuntSettings.maxClicks(this))){
+            halt("AUTO HUNT · LIMITE DE TOQUES");
+            return;
+        }
         // A busca nunca captura miniaturas dos próprios menus PGS.
         if(quickMenus!=null&&quickMenus.hasPanel()){
             status("FECHE PAINEL PARA BUSCAR");
@@ -1675,6 +1797,12 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     private void tap(int x,int y,int index,PgsAutoIconDetector.Match match,int screenWidth,int screenHeight,int[] beforeGesture){
         if(!running)return;
+        if(huntTapSession&&
+           !PgsAutoHuntSettings.forCurrent(this).getBoolean(
+               PgsAutoHuntSettings.CLICK_ENABLED,false)){
+            halt("AUTO HUNT · TOQUE DESATIVADO");
+            return;
+        }
         if(holdForPassengerPrompt()){
             handler.postDelayed(()->{if(running)scanAndTap();},1200L);return;
         }
@@ -1695,7 +1823,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 "Confirme o jogo e a captura sem automatizar nenhum aviso.");
             return;
         }
-        status("TOQUE "+(index+1)+"/"+total);
+        status("TOQUE "+(index+1)+"/"+total+
+            (huntTapSession&&PgsAutoHuntSettings.forCurrent(this).getBoolean(
+                PgsAutoHuntSettings.SHOW_INFO,true)?" · "+match.name:""));
         BugReport.log(this,"PGS","Gesto do feed "+match.name+
             " modelo "+match.id+" "+(match.nativeModel?"NATIVO":"PESSOAL")+
             " confiança "+Math.round(match.score*100)+
@@ -1714,9 +1844,11 @@ public final class PgsAutoClickService extends AccessibilityService {
                     "LT354 estágio GESTO_CONCLUIDO_ANDROID: "+match.id+
                     " @"+x+","+y+"; resposta do jogo ainda não observada");
                 visitedSlots.add(new VisitedSlot(match,screenWidth,screenHeight));
+                if(huntTapSession)huntClicks++;
                 currentTargetName=match.name;
                 // Alvo tocado NÃO é Shiny; não duplicar alerta de busca.
                 awaitingMap=true;clickedAt=SystemClock.uptimeMillis();
+                mapReadFailures=0;
                 lastColors=null;stableRepeats=0;
                 sceneReadyAt=0;loadedStreak=0;
                 final int stamp=++ticket;
@@ -1784,6 +1916,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
                 if(!running||!awaitingMap||ticket!=stamp)return;
+                mapReadFailures=0;
                 long when=SystemClock.uptimeMillis();
                 int[] colors=sampleMap(bitmap);
                 if(lastColors!=null&&difference(lastColors,colors)<=10f)stableRepeats++;
@@ -1837,6 +1970,17 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(msg.contains("permissão")||msg.contains("recusou a captura"))
                     fail("Captura bloqueada pelo Android: "+msg);
                 else{
+                    // LT366: apenas reCAPTURA visual limitada, nunca reinicia
+                    // o jogo, não faz toque cego nem contorna segurança.
+                    if(huntTapSession&&PgsAutoHuntSettings.forCurrent(
+                            PgsAutoClickService.this).getBoolean(
+                                PgsAutoHuntSettings.FIX_MAP,false)&&
+                        ++mapReadFailures>PgsAutoHuntSettings.mapCaptureRetries(
+                            PgsAutoClickService.this)){
+                        fail("Captura do mapa falhou repetidamente; revise "+
+                            "Acessibilidade e o jogo antes de continuar.");
+                        return;
+                    }
                     status("AGUARDANDO CAPTURA");
                     handler.postDelayed(()->checkMap(stamp),1500L);
                 }
@@ -1874,10 +2018,26 @@ public final class PgsAutoClickService extends AccessibilityService {
         awaitingMap=false;
         nextIndex++;
         sceneReadyAt=0;loadedStreak=0;lastColors=null;stableRepeats=0;
-        status(timeout?"TEMPO ESGOTADO":"PRÓXIMO");
+        if(huntTapSession&&!PgsAutoHuntPolicy.mayKeepScanning(true,huntClicks,
+                PgsAutoHuntSettings.maxClicks(this))){
+            int completed=huntClicks;
+            halt("AUTO HUNT · LIMITE "+completed);
+            notifyConfigured(PgsAutoNotificationPolicy.HUNT,
+                "Auto Hunt · limite alcançado",
+                "Interrompido após "+completed+
+                " gesto(s) aceitos pelo Android; nenhuma captura confirmada.",false);
+            return;
+        }
+        long huntDelay=PgsAutoHuntPolicy.nextDelayMs(
+            huntTapSession,PgsAutoHuntSettings.waitSeconds(this));
+        status(timeout?"TEMPO ESGOTADO":
+            (huntTapSession?"PRÓXIMO EM "+(huntDelay/1000)+"s":"PRÓXIMO"));
         BugReport.log(this,"PGS",timeout?
             "Cooldown mapa esgotado sem evidência suficiente de mapa pronto; relendo feed":
             "Mapa com objetos estabilizado; Sem Shiny concluído; próximo ícone");
+        huntNextAt=huntTapSession?SystemClock.uptimeMillis()+huntDelay:0L;
+        handler.removeCallbacks(huntCountdownTick);
+        if(huntNextAt>0L)handler.postDelayed(huntCountdownTick,1000L);
         handler.postDelayed(()->{
             if(!running||ticket!=stamp)return;
             if(nextIndex>=limit){
@@ -1885,7 +2045,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 notifiedFeedSlots.clear();
             }
             scanAndTap();
-        },500L);
+        },huntDelay);
     }
     private int[] sampleMap(Bitmap bitmap){
         int cols=14,rows=11, i=0;
@@ -2253,7 +2413,11 @@ public final class PgsAutoClickService extends AccessibilityService {
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
         passengerHoldAt=0L;passengerWarningLatched=false;
         sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
-        ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";status(label);
+        ticket++;nextIndex=0;total=0;visitedSlots.clear();notifiedFeedSlots.clear();noFreshAttempts=0;verifyMisses=0;emptyRetries=0;currentTargetName="";
+        huntTapSession=false;huntClicks=0;mapReadFailures=0;huntNextAt=0L;
+        handler.removeCallbacks(huntCountdownTick);
+        refreshHuntProximity();
+        status(label);
     }
     /** Teste local por categoria, nunca simula detecção real. */
     public static void testPgsNotification(String type){
@@ -2271,6 +2435,42 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     public static void testShinyAlert(){
         testPgsNotification(PgsAutoNotificationPolicy.SHINY);
+    }
+    /**
+     * LT366: notificação somente da janela do JOGO. Palavra isolada não
+     * comprova IV100/Ditto; só paramos se a mensagem menciona o alvo atual
+     * e o serviço já aguardava esse mapa. Não há teleporte por notificação.
+     */
+    public static void onAutoHuntNotice(String message){
+        PgsAutoClickService live=instance;
+        if(live==null||message==null||message.length()>600)return;
+        live.handler.post(()->{
+            if(!live.running||!live.awaitingMap||!live.huntTapSession||
+                !PgsAutoHuntSettings.enabled(live)||!live.isGameVisible()||
+                live.gameAccountSafetyNoticePresent()||live.passengerPromptPresent())return;
+            String kind=PgsAutoHuntPolicy.explicitNotice(
+                message,live.currentTargetName);
+            SharedPreferences prefs=PgsAutoHuntSettings.forCurrent(live);
+            boolean isIv=PgsAutoHuntPolicy.IV100.equals(kind)&&
+                prefs.getBoolean(PgsAutoHuntSettings.STOP_IV100,true);
+            boolean isDitto=PgsAutoHuntPolicy.DITTO.equals(kind)&&
+                prefs.getBoolean(PgsAutoHuntSettings.STOP_DITTO,true);
+            if(!isIv&&!isDitto)return;
+            String title=isIv?"IV100":"Ditto";
+            String target=live.currentTargetName;
+            live.running=false;live.awaitingMap=false;live.huntTapSession=false;
+            live.huntNextAt=0L;
+            live.handler.removeCallbacks(live.huntCountdownTick);
+            live.refreshHuntProximity();
+            live.ticket++;live.armedByHome=false;
+            live.status("AUTO HUNT · "+title+" · PAUSADO");
+            BugReport.log(live,"PGS","LT366 Auto Hunt: alerta textual explícito "+
+                title+" para alvo "+target+"; jogo NÃO verificado");
+            live.notifyConfigured(PgsAutoNotificationPolicy.HUNT,
+                "Auto Hunt pausado · "+title,
+                "Notificação nomeia "+target+". Verifique no jogo. "+
+                "Nenhuma captura ou IV foi confirmada pelo PokeSearch.",true);
+        });
     }
     public static void onPgsharpShiny(String message){
         PgsAutoClickService live=instance;
@@ -2343,22 +2543,35 @@ public final class PgsAutoClickService extends AccessibilityService {
             NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
             if(manager==null)return;
             SharedPreferences prefs=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
-            String mode=PgsAutoNotificationPolicy.mode(kind,
-                prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
+            boolean isHunt=PgsAutoNotificationPolicy.HUNT.equals(kind);
+            SharedPreferences huntPrefs=isHunt?
+                PgsAutoHuntSettings.forCurrent(this):null;
+            String mode=isHunt?
+                (huntPrefs.getBoolean(PgsAutoHuntSettings.RINGTONE,true)?
+                    "strong":"mute"):
+                PgsAutoNotificationPolicy.mode(kind,
+                    prefs.getString(kind,PgsAutoNotificationPolicy.defaultMode(kind)));
             int index=prefs.getInt(kind+"SoundIndex",PgsAutoNotificationPolicy.SHINY.equals(kind)?21:0);
             if("off".equals(mode))return; // OFF não gera notificação nem som.
             if("custom".equals(mode)&&(index<0||index>=PokeSoundLibrary.size()))
                 mode="default"; // Não criar canal sem som por índice corrompido.
             String channelId=PgsAutoNotificationPolicy.channelId(kind,mode,index);
             boolean isShiny=PgsAutoNotificationPolicy.SHINY.equals(kind);
-            boolean vibrate=isShiny&&prefs.getBoolean("shinyVibrate",true);
-            if(isShiny)channelId+=vibrate?"_vibrate":"_no_vibrate";
+            boolean vibrate=isHunt?
+                huntPrefs.getBoolean(PgsAutoHuntSettings.VIBRATE,true):
+                (isShiny&&prefs.getBoolean("shinyVibrate",true));
+            if(isShiny||isHunt){
+                if(isHunt)channelId+="_"+PgsAutoHostSettings.current(this);
+                channelId+=vibrate?"_vibrate":"_no_vibrate";
+            }
             if(manager.getNotificationChannel(channelId)==null){
-                String titleChannel=isShiny?"PGS · Shiny":
+                String titleChannel=isHunt?"PokeSearch · Auto Hunt · "+
+                    PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(this)):
+                    isShiny?"PGS · Shiny":
                     PgsAutoNotificationPolicy.NEW.equals(kind)?"PGS · Novos Pokémon":
                     "PGS · Pokémon de buscas";
                 NotificationChannel channel=new NotificationChannel(channelId,titleChannel,
-                    isShiny?NotificationManager.IMPORTANCE_HIGH:
+                    (isShiny||isHunt)?NotificationManager.IMPORTANCE_HIGH:
                         NotificationManager.IMPORTANCE_DEFAULT);
                 channel.setDescription("Exclusivo de Buscar Pokémon · não altera P1 ou P2");
                 Uri sound=null;
@@ -2370,7 +2583,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                     sound=PokeSoundLibrary.soundUri(this,index);
                 if(sound==null)channel.setSound(null,null);
                 else channel.setSound(sound,new AudioAttributes.Builder()
-                    .setUsage(isShiny?AudioAttributes.USAGE_ALARM:
+                    .setUsage((isShiny||isHunt)?AudioAttributes.USAGE_ALARM:
                         AudioAttributes.USAGE_NOTIFICATION)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
                 channel.enableVibration(vibrate);

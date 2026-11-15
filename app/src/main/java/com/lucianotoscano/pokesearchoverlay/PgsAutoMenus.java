@@ -521,6 +521,15 @@ final class PgsAutoMenus {
         targetRow.addView(probe,probeParams);
         probe.setOnClickListener(v->{dismissAll();actions.previewSprites();});
         root.addView(targetRow,margined(-1,dp(32),4));
+        // LT366: o submenu reaproveita o popup compacto das Pokébolas,
+        // sem acrescentar sexto ícone à barra oficial de 5 células.
+        Button hunt=button("✦ Auto Hunt · "+
+            PgsAutoHostPolicy.shortLabel(PgsAutoHostSettings.current(context))+
+            (PgsAutoHuntSettings.enabled(context)?" · ON":" · OFF"),10);
+        hunt.setContentDescription("Opções Auto Hunt para "+
+            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)));
+        hunt.setOnClickListener(v->showAutoHunt());
+        root.addView(hunt,margined(-1,dp(30),3));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -872,6 +881,170 @@ final class PgsAutoMenus {
             "avisos de segurança exigem toque manual. Tocar perto não move GPS.",9,false);
         root.addView(note,margined(-1,dp(49),4));
         mount(root,248,440);
+    }
+
+    /** LT366: mesmas cores, opacidade, células e regras de tamanho das Pokébolas. */
+    private void huntCheckbox(LinearLayout root,SharedPreferences prefs,
+            String key,String title,boolean fallback){
+        CheckBox box=new CheckBox(context);
+        box.setText(title);
+        box.setTextSize(10);
+        box.setTextColor(fg());
+        box.setButtonTintList(android.content.res.ColorStateList.valueOf(fg()));
+        box.setPadding(dp(2),0,dp(2),0);
+        box.setChecked(prefs.getBoolean(key,fallback));
+        box.setOnCheckedChangeListener((view,checked)->{
+            prefs.edit().putBoolean(key,checked).apply();
+            if(PgsAutoHuntSettings.ENABLED.equals(key)||
+               PgsAutoHuntSettings.CLICK_ENABLED.equals(key)||
+               PgsAutoHuntSettings.PROXIMITY.equals(key))
+                PgsAutoClickService.huntSettingsChanged();
+        });
+        root.addView(box,margined(-1,dp(30),1));
+    }
+    private void huntNumeric(LinearLayout root,SharedPreferences prefs,
+            String key,String title,int[] options,int fallback){
+        int saved=prefs.getInt(key,fallback),pos=0;
+        for(int i=0;i<options.length;i++)if(options[i]==saved){pos=i;break;}
+        final int[] idx={pos};
+        Button button=button(title+": "+options[idx[0]]+
+            ("wait_seconds".equals(key)?"s":"")+" ▾",10);
+        button.setContentDescription("Alterar "+title+"; valor atual "+
+            options[idx[0]]);
+        button.setOnClickListener(v->{
+            idx[0]=(idx[0]+1)%options.length;
+            prefs.edit().putInt(key,options[idx[0]]).apply();
+            button.setText(title+": "+options[idx[0]]+
+                ("wait_seconds".equals(key)?"s":"")+" ▾");
+            button.setContentDescription("Alterar "+title+
+                "; valor atual "+options[idx[0]]);
+        });
+        root.addView(button,margined(-1,dp(30),2));
+    }
+    private void huntUnavailable(LinearLayout root,String label,String reason){
+        TextView row=label(label+" · indisponível",10,false);
+        row.setTextColor(0xFF9EAAB6);
+        row.setContentDescription(label+". Indisponível. "+reason);
+        root.addView(row,margined(-1,dp(23),2));
+    }
+    /**
+     * Autohunt compatível por PERFIL visual; o app nunca controla interfaces
+     * privadas do PGSharp/Pokemod. Nada desta tela inicia gestos sozinho.
+     */
+    void showAutoHunt(){
+        String host=PgsAutoHostSettings.current(context);
+        SharedPreferences prefs=PgsAutoHuntSettings.forCurrent(context);
+        LinearLayout root=panelRoot("✦ AUTO HUNT",
+            PgsAutoHostPolicy.shortLabel(host));
+        TextView intro=label("Configurações exclusivas de "+
+            PgsAutoHostPolicy.displayLabel(host)+" · busca iniciada manualmente",9,false);
+        intro.setMaxLines(2);
+        root.addView(intro,margined(-1,dp(35),2));
+        ScrollView scroll=new ScrollView(context);
+        scroll.setVerticalScrollBarEnabled(false);
+        LinearLayout content=vertical();
+
+        if(PgsAutoHostPolicy.OTHER.equals(host)){
+            TextView preview=label("Outro cliente: somente prévia. "+
+                "Selecione PGSharp ou Pokemod em Buscar → Interface.",10,false);
+            preview.setMaxLines(3);
+            content.addView(preview,margined(-1,dp(65),4));
+        }else{
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.ENABLED,
+                "Auto Hunt · opt-in",false);
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.CLICK_ENABLED,
+                "Tocar sprite confirmada (exige 2 leituras)",false);
+            huntNumeric(content,prefs,PgsAutoHuntSettings.WAIT,
+                "Espera entre alvos",new int[]{15,35,60,120},35);
+            huntNumeric(content,prefs,PgsAutoHuntSettings.MAX_CLICKS,
+                "Limite de toques por sessão",new int[]{1,3,5,10},10);
+
+            TextView stop=label("PARAR AO RECEBER AVISO EXPLÍCITO",10,true);
+            root.setContentDescription("Auto Hunt · opções compactas do "+
+                PgsAutoHostPolicy.displayLabel(host));
+            content.addView(stop,margined(-1,dp(26),5));
+            CheckBox shiny=new CheckBox(context);
+            shiny.setText("Shiny · pausa de segurança obrigatória");
+            shiny.setTextSize(10);shiny.setTextColor(fg());
+            shiny.setChecked(true);shiny.setEnabled(false);
+            content.addView(shiny,margined(-1,dp(28),1));
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.STOP_IV100,
+                "IV100 · alvo nomeado na notificação",true);
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.STOP_DITTO,
+                "Ditto · aviso de encontro explícito",true);
+            TextView warning=label("Só pausa se a notificação nomear "+
+                "o alvo atual. IV/espécie não são inferidos de ícones.",9,false);
+            warning.setMaxLines(2);
+            content.addView(warning,margined(-1,dp(36),1));
+
+            TextView alerts=label("ALERTAS E INFORMAÇÕES",10,true);
+            content.addView(alerts,margined(-1,dp(22),5));
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.RINGTONE,
+                "Som nos avisos de Auto Hunt",true);
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.VIBRATE,
+                "Vibrar nos avisos de Auto Hunt",true);
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.SHOW_COOLDOWN,
+                "Contagem de espera na bolha",false);
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.SHOW_INFO,
+                "Nome do alvo no feedback",true);
+
+            TextView recovery=label("MAPA · RECUPERAÇÃO DE LEITURA",10,true);
+            content.addView(recovery,margined(-1,dp(23),5));
+            // Sensor de proximidade Android: apenas pausa; não toca no jogo.
+            android.hardware.SensorManager sensors=(android.hardware.SensorManager)
+                context.getSystemService(Context.SENSOR_SERVICE);
+            if(sensors!=null&&sensors.getDefaultSensor(
+                    android.hardware.Sensor.TYPE_PROXIMITY)!=null)
+                huntCheckbox(content,prefs,PgsAutoHuntSettings.PROXIMITY,
+                    "Sensor proximidade · pausar se coberto",false);
+            else huntUnavailable(content,"Sensor proximidade",
+                "Este aparelho não informa sensor de proximidade");
+            huntCheckbox(content,prefs,PgsAutoHuntSettings.FIX_MAP,
+                "Repetir captura se falhar (sem clicar)",false);
+            huntNumeric(content,prefs,PgsAutoHuntSettings.MAP_RETRY,
+                "Falhas de leitura aceitas",new int[]{0,1,2,3},3);
+            TextView mapHelp=label("Avisos da conta e falta de reação "+
+                "visual sempre pausam. Nenhum restart automático.",9,false);
+            mapHelp.setMaxLines(2);
+            content.addView(mapHelp,margined(-1,dp(34),1));
+            Button notification=button("⚙ Acesso a notificações do Android",10);
+            notification.setOnClickListener(v->{
+                hidePanel();
+                try{
+                    android.content.Intent intent=new android.content.Intent(
+                        android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                }catch(Exception e){
+                    Toast.makeText(context,
+                        "Abra Configurações → Acesso a notificações e habilite "+
+                        "o PokeSearch manualmente.",Toast.LENGTH_LONG).show();
+                }
+            });
+            content.addView(notification,margined(-1,dp(35),5));
+        }
+        TextView future=label("INTEGRAÇÕES QUE EXIGEM CONFIRMAÇÃO DO JOGO",10,true);
+        content.addView(future,margined(-1,dp(24),6));
+        huntUnavailable(content,"Tele por IV100/Shiny",
+            "Não há API de teleporte validada para os dois clientes");
+        huntUnavailable(content,"Reiniciar PoGo por falha",
+            "Pode perder sessão e avisos; requer mecanismo Android validado");
+        huntUnavailable(content,"Auto Catch / lançar bolas",
+            "Encontro, arremesso e captura não foram homologados");
+        huntUnavailable(content,"Zoom máximo",
+            "Ação ainda não ligada ao ciclo visual");
+        scroll.addView(content);
+        // Reservar espaço para cabeçalho e botão Voltar mesmo com a opção
+        // de altura reduzida no Editor Visual das Pokébolas.
+        int popupHeight=PgsAutoMenuStyle.read(context).popupHeight;
+        if(popupHeight<200)intro.setVisibility(View.GONE);
+        int scrollHeight=Math.max(29,Math.min(230,
+            popupHeight-(intro.getVisibility()==View.GONE?88:133)));
+        root.addView(scroll,margined(-1,dp(scrollHeight),4));
+        Button back=button("← Buscar Pokémon",10);
+        back.setOnClickListener(v->showSearch());
+        root.addView(back,margined(-1,dp(31),4));
+        mount(root,238,340);
     }
 
     void showTime(){

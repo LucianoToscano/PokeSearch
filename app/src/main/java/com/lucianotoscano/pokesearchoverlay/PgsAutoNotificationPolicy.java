@@ -6,14 +6,15 @@ package com.lucianotoscano.pokesearchoverlay;
  * em canais Android ja criados (som de NotificationChannel e imutavel).
  */
 final class PgsAutoNotificationPolicy {
-    static final String NEW="newSound", SEARCH="searchSound", SHINY="shinyMode";
+    static final String NEW="newSound", SEARCH="searchSound", SHINY="shinyMode",
+        HUNT="huntEvent";
     private PgsAutoNotificationPolicy(){}
 
     static boolean validKind(String kind){
-        return NEW.equals(kind)||SEARCH.equals(kind)||SHINY.equals(kind);
+        return NEW.equals(kind)||SEARCH.equals(kind)||SHINY.equals(kind)||HUNT.equals(kind);
     }
     static String defaultMode(String kind){
-        return SHINY.equals(kind)?"strong":"mute";
+        return (SHINY.equals(kind)||HUNT.equals(kind))?"strong":"mute";
     }
     static String mode(String kind,String value){
         if(!validKind(kind))return "mute";
@@ -35,6 +36,7 @@ final class PgsAutoNotificationPolicy {
         if(NEW.equals(kind))return 2101;
         if(SEARCH.equals(kind))return 2102;
         if(SHINY.equals(kind))return 2103;
+        if(HUNT.equals(kind))return 2104;
         throw new IllegalArgumentException("Notificacao PGS desconhecida");
     }
 }
