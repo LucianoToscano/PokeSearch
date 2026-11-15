@@ -408,8 +408,11 @@ final class PgsAutoMenus {
     }
     private List<PgsAutoTemplateStore.Model> imagesFor(PgsAutoCatalog.Pokemon p){
         List<PgsAutoTemplateStore.Model> result=new ArrayList<>();
+        String profile=PgsAutoHostSettings.current(context);
         for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.list(context))
-            if(PgsAutoCatalog.findNumber(context,model.name)==p.number)result.add(model);
+            if(PgsAutoHostPolicy.templateBelongsTo(model.hostProfile,profile)&&
+                PgsAutoCatalog.findNumber(context,model.name)==p.number)
+                result.add(model);
         return result;
     }
 
