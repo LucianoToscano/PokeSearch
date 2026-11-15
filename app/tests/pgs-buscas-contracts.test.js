@@ -27,8 +27,8 @@ assert.match(store,/model\.referenceWidth/); // metadata used by store decode
 assert.match(menu,/imagesFor\(PgsAutoCatalog\.Pokemon p\)/);
 assert.match(menu,/showModelActions\(/);
 assert.match(menu,/PgsAutoTemplateStore\.delete\(context,model\.id\)/);
-assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,-1\)/);
-assert.match(menu,/PgsAutoCatalog\.move\(context,pokemon\.number,1\)/);
+assert.match(menu,/PgsAutoCatalog\.moveTo\(context,pokemon\.number,target\)/);
+assert.match(menu,/holdToReorder\(label,line,speciesRows,from/);
 assert.match(menu,/actions\.teach\(pokemon\.name\)/);
 assert.match(menu,/PgsAutoNotificationPolicy\.SHINY/);
 assert.match(menu,/R\.drawable\.pgs_speaker_silent/);
