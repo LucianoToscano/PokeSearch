@@ -40,6 +40,7 @@ final class PgsAutoMenus {
         void modelsChanged();
         void appearanceChanged();
         void previewTapIndicator();
+        void previewSprites();
         void choosePoint(String mode);
         void selectSprites();
     }
@@ -478,7 +479,17 @@ final class PgsAutoMenus {
             .replace("POKESTOP","PokéStop").replace("POINT","Ponto específico")
             .replace("ENCOUNTER","Encontro")+"  ▾",11);
         target.setOnClickListener(v->showTargets());
-        root.addView(target,margined(-1,dp(32),4));
+        // Prévia de reconhecimento e coordenada SEM clique no jogo; permanece
+        // compacta ao lado de "Alvo" para não crescer o menu Buscar.
+        LinearLayout targetRow=horizontal();
+        targetRow.addView(target,new LinearLayout.LayoutParams(0,dp(32),1));
+        Button probe=button("◎",14);
+        probe.setContentDescription("Prévia das sprites do feed, sem tocar no jogo");
+        LinearLayout.LayoutParams probeParams=new LinearLayout.LayoutParams(dp(33),dp(32));
+        probeParams.leftMargin=dp(4);
+        targetRow.addView(probe,probeParams);
+        probe.setOnClickListener(v->{dismissAll();actions.previewSprites();});
+        root.addView(targetRow,margined(-1,dp(32),4));
         TextView title=(TextView)((LinearLayout)root.getChildAt(0)).getChildAt(1);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
