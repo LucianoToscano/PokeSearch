@@ -11,7 +11,12 @@ const toolbar=menu.split("void showToolbar(int x,int y)")[1]?.split("private voi
 assert.match(toolbar,/R\.drawable\.pgs_menu_search,R\.drawable\.pgs_menu_timer/);
 assert.match(toolbar,/R\.drawable\.ic_bell_outline,R\.drawable\.pgs_menu_customize/);
 assert.match(toolbar,/R\.drawable\.pgs_menu_close/);
-assert.match(menu,/hunt\.setOnClickListener\(v->showAutoHunt\(\)\)/);
+// LT368: o modo Auto Hunt fica na aba Ação, sem menu extra principal.
+assert.match(menu,/void showSearch\\(\\)\\{showCentral\\(0\\);\\}/);
+assert.match(menu,/appendCentralActions\\(root\\)/);
+assert.match(menu,/PgsSmartSearchSettings\\.HUNT/);
+assert.match(menu,/PgsSmartSearchSettings\\.SEQUENCE/);
+assert.match(menu,/private void startCentral\\(\\)/);
 assert.match(menu,/void showAutoHunt\(\)/);
 assert.match(menu,/PgsAutoHostPolicy\.shortLabel\(host\)/);
 assert.match(menu,/PgsAutoMenuStyle\.read\(context\)\.popupHeight/);
