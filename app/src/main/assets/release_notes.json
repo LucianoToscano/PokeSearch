@@ -4644,6 +4644,35 @@
           "Cooldown mostrado é referência hipotética da distância a partir do centro de busca, não sinal de deslocamento ou período de segurança garantido."
         ]
       }
+    },
+    {
+      "id": "lt366-auto-hunt-multiclient-20261115",
+      "minVersionCode": 54569,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT366 — Auto Hunt PGSharp e Pokemod",
+      "sections": {
+        "novidades": [
+          "Novo submenu Auto Hunt dentro de Buscar Pokémon com o mesmo padrão compacto dos menus das Pokébolas; barra de cinco ícones mantida.",
+          "Configurações independentes por cliente PGSharp ou Pokemod, com Auto Hunt desligado por padrão e autorização de toque também desligada por padrão.",
+          "Tempo de espera por alvo de 15/35/60/120 segundos e limite de 1/3/5/10 toques por sessão, além de contagem de espera na bolha.",
+          "Pausa opcional por avisos textuais IV100 ou Ditto do jogo quando a notificação nomeia exatamente o Pokémon que está sendo verificado; parada Shiny de segurança mantida.",
+          "Sensor de proximidade pode interromper a sessão ao ser coberto, sem retomada automática."
+        ],
+        "melhorias": [
+          "Sem opt-in de toque, o Auto Hunt usa monitor visual passivo de duas leituras; com opt-in reaproveita a verificação visual do feed e os bloqueios de segurança existentes.",
+          "Novos alertas com toque/vibração usam canal Android próprio de Auto Hunt, separado dos canais de Pokébolas e dos outros alertas.",
+          "Opção de releitura limitada da imagem do mapa em caso de falha, sem reiniciar Pokémon GO, repetir cliques cegamente ou ignorar avisos da conta.",
+          "Acesso a notificações agora pode ser aberto diretamente nas Configurações do Android, sem concessão automática de permissão."
+        ],
+        "correcoes": [
+          "Monitor e sessão com toques obedecem parâmetros da interface selecionada, sem compartilhar Auto Hunt entre Pokemod e PGSharp.",
+          "Ao atingir limite de toques, desativar o consentimento ou cobrir o sensor, a sessão é interrompida e só retorna por ação do usuário."
+        ],
+        "emDesenvolvimento": [
+          "Teleporte em notificações IV100/Shiny, Auto Catch, lançamento de bolas, zoom automático e reinício do jogo continuam identificados como indisponíveis até validação real dos dois clientes.",
+          "Notificações, leitura de espécies, precisão dos toques, DND, consumo e comportamento em Samsung Android precisam de homologação física. Gesto concluído pelo Android não prova captura no jogo."
+        ]
+      }
     }
   ]
 }
