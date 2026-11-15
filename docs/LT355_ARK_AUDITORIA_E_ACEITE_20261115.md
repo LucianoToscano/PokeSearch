@@ -53,7 +53,7 @@ foi copiado para o PokeSearch.
 - LT62 Java Android #43671495284 **SUCCESS**
 - OTA LT173 #43671495290 **SUCCESS**
 - PGS Android QA #43671495226 **SUCCESS**
-- Secure beta/R8 #43671495270 — conferir conclusão antes do merge.
+- Secure beta/R8 (último HEAD) #43671835430 **SUCCESS**.
 Os dois primeiros testes LT355 falharam por **contrato novo incorreto**
 (`/selected?speciesModels/`, expressão não existente), corrigido sem
 alterar a lógica implementada; o HEAD com fix é `40a3abbea8af352814244e1d718ae8ec333e2ea2`.
@@ -80,3 +80,9 @@ uma entrada com PNG/WebP autorizado, digest correto, dimensões e aceite no feed
 Nenhum CI substitui a homologação no Samsung. Atualização nunca é instalada
 silenciosamente. Após sete gates verdes, o processo protegido de release pode
 publicar estas correções conservadoras, com as limitações acima explícitas.
+
+## Publicação oficial verificada — 15/11/2026
+
+**LT355 OFICIAL — 15/11/2026:** PokeSearch **0.03.51 / versionCode 54558 / label 51355** publicado em [v0.03.51-54558](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.51-54558). [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.51-54558/PokeSearch-v0.03.51-LT.apk): **61.135.091 bytes**, SHA-256 `236b65d4cd5132f75a368150b17f6bad02156cc3b6eb66b029a029690731110a`; [workflow protegido #43672361588](https://github.com/LucianoToscano/PokeSearch/actions/runs/43672361588) **SUCCESS** (preflight, compilação R8, assinatura permanente, publicação pública e digest). Implementação [PR #397](https://github.com/LucianoToscano/PokeSearch/pull/397), squash `88a774dfce43896d32e70e0b31fb7ce48591ae70`; pedido oficial [PR #398](https://github.com/LucianoToscano/PokeSearch/pull/398), squash `492fdffa137b2bdef03e54c1b20a7db1bd50a69d`. Sete gates da implementação **SUCCESS**: Node QA #43671835493, LT169 #43671835470, LT211 #43671835588, Java LT62 #43671835565, OTA #43671835439, PGS QA APK #43671835422, Secure beta/R8 #43671835430. A LT355 criou o catálogo de templates PGS nativos somente-leitura e seguros (verificação de direitos, evidência, SHA-256, dimensões e versão), preservou amostras pessoais e suas proporções no restore, expôs estados minha/nativa/capturar no menu compacto, separou fonte/confiança na prévia sem gesto e bloqueou gestos quando captura/display são incompatíveis. **CATÁLOGO INICIAL VAZIO**: o APK PGSharp enviado não forneceu miniaturas individuais de Metagross homologadas e com direitos de redistribuição; NÃO afirmar que existem sprites PGSharp nativas prontas. **BLOQUEADO para aceite físico Samsung:** Metagross no feed, gesto recebido pelo PGSharp, teleporte, Shiny, Encontro, fidelidade visual de menus e latência/bateria; qualquer callback Android ou delta de cor não prova reação do jogo. Aviso "Sou passageiro" só humano. LT350 PR #385 permanece draft. Instalação não é automática: Android exige confirmação.
+
+**Nota:** publicação de infraestrutura segura não constitui fornecimento de modelos de Metagross nem homologação do clique físico no jogo. O pacote oficial passa a ser referência; LT350 continua em draft.
