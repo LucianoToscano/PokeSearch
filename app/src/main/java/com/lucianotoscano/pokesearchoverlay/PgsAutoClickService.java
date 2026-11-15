@@ -666,8 +666,19 @@ public final class PgsAutoClickService extends AccessibilityService {
             ". Toque para ligar/desligar; segure para abrir menus.");
     }
     private boolean reloadDetector(){
-        try {detector=new PgsAutoIconDetector(this);return detector.templateCount()>0;}
-        catch(IOException e){detector=null;showReason("Não foi possível carregar modelo: "+e.getMessage());return false;}
+        try{
+            detector=new PgsAutoIconDetector(this);
+            if(detector.templateCount()>0)return true;
+            showReason(detector.selectedModelCount()>0?
+                "Modelo selecionado sem pixels úteis ou arquivo ausente. "+
+                "Abra a lupa e recorte a sprite novamente, sem fundo opcional.":
+                "Selecione uma espécie e salve ao menos uma sprite do feed.");
+            return false;
+        }catch(IOException e){
+            detector=null;
+            showReason("Falha ao carregar modelo: "+e.getMessage());
+            return false;
+        }
     }
     /** Compatibilidade LT338: migra temporizadores uma vez e mantém as escolhas novas. */
     static SharedPreferences cyclePrefs(Context context){
@@ -971,13 +982,19 @@ public final class PgsAutoClickService extends AccessibilityService {
 
     /** Segure o botão para localizar os ícones sem tocar em nenhum deles. */
     private void preview(){
-        if(running){Toast.makeText(this,"Toque para pausar antes da prévia",Toast.LENGTH_LONG).show();return;}
-        if(!reloadDetector()){status("SEM MODELO");showReason("Marque pelo menos um Pokémon no aplicativo.");return;}
-        status("ANALISANDO");
-        capture(new CaptureCallback(){
+        if(running){
+            Toast.makeText(this,"Pause a busca antes de testar a prévia.",
+                Toast.LENGTH_LONG).show();return;
+        }
+        if(!reloadDetector()){status("SEM MODELO");return;}
+        // A prévia nunca verifica sprites da NOSSA própria barra/menu.
+        if(quickMenus!=null)quickMenus.dismissAll();
+        status("ANALISANDO FEED");
+        handler.postDelayed(()->capture(new CaptureCallback(){
             @Override public void onBitmap(Bitmap bitmap){
                 Bitmap copy=bitmap.copy(Bitmap.Config.ARGB_8888,false);
-                if(copy==null){status("SEM CAPTURA");showReason("Imagem de tela indisponível.");return;}
+                if(copy==null){status("SEM CAPTURA");showReason("Captura vazia.");return;}
+                final int screenWidth=bitmap.getWidth(),screenHeight=bitmap.getHeight();
                 PgsAutoIconDetector current=detector;
                 analysis.execute(()->{
                     List<PgsAutoIconDetector.Match> items;
@@ -985,15 +1002,38 @@ public final class PgsAutoClickService extends AccessibilityService {
                     finally{copy.recycle();}
                     final List<PgsAutoIconDetector.Match> found=items;
                     handler.post(()->{
-                        if(found==null){status("SEM CAPTURA");showReason("Erro na detecção visual.");return;}
+                        if(found==null){
+                            status("SEM CAPTURA");
+                            showReason("Erro na leitura visual das sprites.");return;
+                        }
                         status("ACHEI "+found.size());
+                        if(!found.isEmpty()){
+                            PgsAutoIconDetector.Match first=found.get(0);
+                            Point screen=new Point();
+                            windowManager.getDefaultDisplay().getRealSize(screen);
+                            // Prévia visual SEM dispatchGesture e sem interação no jogo.
+                            if(tapIndicator!=null)tapIndicator.show(
+                                Math.round(first.x*screen.x/(float)screenWidth),
+                                Math.round(first.y*screen.y/(float)screenHeight));
+                            BugReport.log(PgsAutoClickService.this,"PGS",
+                                "Prévia, sem clique: "+first.name+" "+
+                                Math.round(first.score*100)+"% no feed "+first.x+","+first.y);
+                        }
                         Toast.makeText(PgsAutoClickService.this,
-                            "Encontrei "+found.size()+" ícones dos Pokémon selecionados",Toast.LENGTH_LONG).show();
+                            found.isEmpty()?
+                                "Nenhuma sprite reconhecida nas colunas laterais do feed. "+
+                                "Confira a miniatura e o modelo cadastrado.":
+                                "Prévia sem toque: "+found.size()+" sprite(s). Primeiro: "+
+                                found.get(0).name+" ("+
+                                Math.round(found.get(0).score*100)+"%).",
+                            Toast.LENGTH_LONG).show();
                     });
                 });
             }
-            @Override public void onError(String error){status("SEM CAPTURA");showReason(error);}
-        });
+            @Override public void onError(String error){
+                status("SEM CAPTURA");showReason(error);
+            }
+        }),260L);
     }
 
     private void scanAndTap(){
