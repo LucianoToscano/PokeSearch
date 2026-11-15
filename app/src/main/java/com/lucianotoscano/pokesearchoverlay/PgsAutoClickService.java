@@ -85,6 +85,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private FrameLayout picker;
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
+    private long lastAccountSafetyEventCheck=0L;
     private boolean awaitingMap=false;
     private boolean armedByHome=false;
     private boolean teachingScheduled=false,teachingInProgress=false;
@@ -127,6 +128,49 @@ public final class PgsAutoClickService extends AccessibilityService {
         }catch(RuntimeException ignored){return false;}
         finally{if(root!=null)root.recycle();}
     }
+    /**
+     * Inspeciona somente a janela do jogo, nunca outros apps nem o próprio
+     * overlay. Aviso Unity pode não expor texto acessível: cobertura parcial.
+     */
+    private boolean gameAccountSafetyNoticePresent(){
+        AccessibilityNodeInfo root=null;
+        try{
+            root=getRootInActiveWindow();
+            if(root!=null&&root.getPackageName()!=null&&
+                isGamePackage(root.getPackageName().toString())&&
+                containsAccountSafetyNotice(root,0))return true;
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> windows=getWindows();
+            if(windows!=null)for(android.view.accessibility.AccessibilityWindowInfo window:windows){
+                if(window==null||window.getType()!=
+                    android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION)continue;
+                if(!window.isActive()&&!window.isFocused())continue;
+                AccessibilityNodeInfo game=null;
+                try{
+                    game=window.getRoot();
+                    if(game!=null&&game.getPackageName()!=null&&
+                        isGamePackage(game.getPackageName().toString())&&
+                        containsAccountSafetyNotice(game,0))return true;
+                }finally{if(game!=null)game.recycle();}
+            }
+            return false;
+        }catch(RuntimeException blocked){return false;}
+        finally{if(root!=null)root.recycle();}
+    }
+    private boolean containsAccountSafetyNotice(AccessibilityNodeInfo node,int depth){
+        if(node==null||depth>12)return false;
+        if(PgsAutoSafetyNoticePolicy.accountSafetyNotice(
+            node.getText()==null?"":node.getText().toString())||
+            PgsAutoSafetyNoticePolicy.accountSafetyNotice(
+            node.getContentDescription()==null?"":node.getContentDescription().toString()))
+            return true;
+        for(int i=0;i<node.getChildCount();i++){
+            AccessibilityNodeInfo child=node.getChild(i);
+            if(child==null)continue;
+            try{if(containsAccountSafetyNotice(child,depth+1))return true;}
+            finally{child.recycle();}
+        }
+        return false;
+    }
     private boolean passengerPromptPresent(){
         // Aviso de velocidade do jogo exige declaração MANUAL do usuário.
         // Nunca gerar gesto sobre "Sou passageiro" ou "I'm a passenger".
@@ -161,6 +205,14 @@ public final class PgsAutoClickService extends AccessibilityService {
      * visível, e retoma a leitura após desaparecer o diálogo.
      */
     private boolean holdForPassengerPrompt(){
+        // Bloquear imediatamente antes de QUALQUER gesto, além de avisos
+        // disparados por eventos de acessibilidade. Não auto-dismissar.
+        if(gameAccountSafetyNoticePresent()){
+            if(running)fail("Aviso de segurança da conta no jogo. "+
+                "Revisão manual necessária; toque automático bloqueado.");
+            else status("REVISE AVISO DA CONTA");
+            return true;
+        }
         boolean visible=passengerPromptPresent();
         if(visible){
             if(!passengerWarningLatched){
@@ -309,13 +361,31 @@ public final class PgsAutoClickService extends AccessibilityService {
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         if(event==null||event.getPackageName()==null)return;
         int type=event.getEventType();
+        String pkg=event.getPackageName().toString();
+        // Notificações de conteúdo do jogo podem aparecer sem trocar a janela.
+        if(type==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
+            if(!running||!isGamePackage(pkg))return;
+            long now=SystemClock.uptimeMillis();
+            // ContentChanged pode chegar várias vezes por segundo no Unity.
+            // Gesto sempre revalida o aviso sem depender desse intervalo.
+            if(now-lastAccountSafetyEventCheck<450L)return;
+            lastAccountSafetyEventCheck=now;
+            if(gameAccountSafetyNoticePresent())
+                fail("Aviso de segurança da conta detectado. Revise no jogo "+
+                    "manualmente; nenhuma ação automática será realizada.");
+            return;
+        }
         if(type!=AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
             type!=AccessibilityEvent.TYPE_WINDOWS_CHANGED)return;
-        String pkg=event.getPackageName().toString();
         // Acessibilidade pode anunciar NOSSA bolha como janela superior.
         // Nunca sobrescrever o jogo por causa dos menus do próprio PokeSearch.
         if(pkg.equals(getPackageName()))return;
         foreground=pkg;
+        if(running&&isGamePackage(pkg)&&gameAccountSafetyNoticePresent()){
+            fail("Aviso de segurança da conta detectado. Revise no jogo "+
+                "manualmente; nenhuma ação automática será realizada.");
+            return;
+        }
         if(isGameVisible()&&armedByHome)startArmedSearch();
         else if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
             queueTeachingWhenReady();
@@ -689,6 +759,10 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean reloadDetector(){
         try{
             detector=new PgsAutoIconDetector(this);
+            int deferred=PgsAutoNativeModels.deferredCount();
+            if(deferred>0)BugReport.log(this,"PGS",
+                "LT357: "+deferred+" variantes nativas adiadas pelo limite "+
+                "de recursos; não são modelos ativos, sem clique cego");
             if(detector.templateCount()>0)return true;
             showReason(detector.selectedModelCount()>0?
                 "Modelo selecionado sem pixels úteis ou arquivo ausente. "+
@@ -1037,6 +1111,11 @@ public final class PgsAutoClickService extends AccessibilityService {
                             status("SEM CAPTURA");
                             showReason("Erro na leitura visual das sprites.");return;
                         }
+                        if(current.lastScanAborted()){
+                            status("LIMITE DO SCANNER");
+                            showReason("Análise de sprites excedeu limite de tempo ou "+
+                                "candidatos. Reduza o número de modelos por espécie.");return;
+                        }
                         status("ACHEI "+found.size());
                         if(!found.isEmpty()){
                             PgsAutoIconDetector.Match first=found.get(0);
@@ -1124,6 +1203,11 @@ public final class PgsAutoClickService extends AccessibilityService {
                     handler.post(()->{
                 if(!running||ticket!=stamp)return;
                 if(items==null){fail("Erro ao reconhecer os modelos visuais.");return;}
+                if(current.lastScanAborted()){
+                    fail("Scanner PGS excedeu o limite de tempo ou candidatos. "+
+                        "Reduza os modelos ativos e confira a prévia ◎.");
+                    return;
+                }
                 if(total==0 && !items.isEmpty()){
                     total=limit;
                     Toast.makeText(PgsAutoClickService.this,
@@ -1207,6 +1291,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                         handler.post(()->{
                             if(!running||ticket!=stamp)return;
                             PgsAutoIconDetector.Match found=null;
+                            if(current.lastScanAborted()){
+                                fail("Confirmação visual lenta demais; nenhum gesto realizado.");
+                                return;
+                            }
                             if(confirmed!=null)for(PgsAutoIconDetector.Match m:confirmed){
                                 if(!m.id.equals(candidate.id)||
                                    !m.group.equals(candidate.group))continue;

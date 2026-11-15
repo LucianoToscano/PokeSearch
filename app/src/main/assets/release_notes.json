@@ -4399,6 +4399,35 @@
           "Atualização de bibliotecas assinadas e remotas exige infraestrutura de assinatura e revogação; não implementada. O aviso 'Sou passageiro' permanece manual e seguro."
         ]
       }
+    },
+    {
+      "id": "lt357-full-apk-resource-audit-safety-budget-20261115",
+      "minVersionCode": 54560,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT357 — proteção da conta e orçamento do scanner",
+      "sections": {
+        "novidades": [
+          "Proteção adicional de Acessibilidade para interromper a automação diante de avisos de alerta, suspensão ou banimento da conta do jogo, quando o texto estiver disponível à Acessibilidade; nenhuma mensagem é confirmada automaticamente.",
+          "Auditoria estática ampliada de todos os 2.203 arquivos do APK de referência, índices Unity, 15 idiomas e 66 arquivos de localização de segurança/permissões."
+        ],
+        "melhorias": [
+          "Orçamento de 4,5 segundos e 256 candidatos por captura: análises incompletas são abortadas e nunca resultam em toque.",
+          "Limites de recursos para biblioteca nativa: até 12 modelos aprovados por espécie, 64 simultâneos e 100 tentativas de validação de arquivo, preservando um índice global com até 4.096 entradas.",
+          "Eventos repetitivos do Unity passam por limite de frequência na inspeção de segurança, sem dispensar a checagem imediatamente antes de cada gesto.",
+          "O diagnóstico avisa quando modelos nativos excederem o orçamento, para orientar a configuração de espécies e variantes."
+        ],
+        "correcoes": [
+          "O scanner deixa de tratar um frame visual interrompido por orçamento de CPU como uma busca normal sem resultados.",
+          "Avisos de integridade da conta disponíveis na árvore de Acessibilidade passam a suspender a busca, em vez de permitir novos gestos sobre o jogo."
+        ],
+        "emDesenvolvimento": [
+          "A deteção de avisos no Unity é limitada à árvore de Acessibilidade: uma tela desenhada apenas em GPU pode não expor texto; não há garantia de detectar todos os avisos ou idiomas.",
+          "O catálogo de imagens nativas continua VAZIO; o APK de referência não forneceu miniaturas individuais do feed com compatibilidade e licença de redistribuição comprovadas.",
+          "Cópia de sons, texturas, fontes, imagens, traduções extensas e código de terceiros não foi feita. Arquivos remotos e bundles não equivalem a modelos de feed disponíveis offline.",
+          "Benchmark de CPU, RAM, bateria, modelos, reconhecimento/teleporte real, Shiny, Encontro e validação visual no Samsung continuam pendentes. CI e callback de gesto não comprovam ação no jogo.",
+          "Avisos 'Sou passageiro' e de segurança da conta dependem de intervenção humana; nenhuma confirmação/consentimento é automatizada."
+        ]
+      }
     }
   ]
 }

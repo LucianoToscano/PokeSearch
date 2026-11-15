@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "analysis": "lt357-static-apk-zip-inventory",
+  "inspectionDate": "2026-11-15",
+  "sourceSha256": "ed8a7676995088bee463186f6f561f0e400ac43db9c9c1cb346a891c7542a67e",
+  "zip": {
+    "bytes": 211243984,
+    "uncompressedBytes": 568277353,
+    "entries": 2203,
+    "crc": "valid"
+  },
+  "formats": {
+    "androidPng": 437,
+    "unityBundles": 168,
+    "nativeArm64SharedObjects": 28,
+    "dex": 3
+  },
+  "addressables": {
+    "internalIds": 4548,
+    "remoteBundleRefs": 723,
+    "localRuntimeBundleRefs": 163
+  },
+  "localization": {
+    "mainLanguages": 15,
+    "mainKeyValuePairsPerLanguage": 43327,
+    "pokemonNameLanguages": 15,
+    "numericSpeciesIds": [
+      1,
+      1025
+    ],
+    "specializedJson": 66,
+    "specializedGroups": {
+      "DeleteAccount": 21,
+      "AddressBookImport": 15,
+      "AdvsyncPermissions": 15,
+      "ModerationEnforcement": 15
+    }
+  },
+  "sourceAssetsRedistributed": false,
+  "gameFeedTemplateCountVerified": 0,
+  "limitations": [
+    "Static archive inspection only",
+    "Unity binary assets not fully decoded",
+    "Remote assets not downloaded",
+    "No device execution",
+    "No proof of redistribution rights"
+  ]
+}
