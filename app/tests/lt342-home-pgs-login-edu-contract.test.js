@@ -38,7 +38,7 @@ assert.match(pgs,/PgsAutoVisualState\.Core\.RED/);
 assert.match(pgs,/setCoreState\(PgsAutoVisualState\.core\(running,awaitingMap,pausedByError,value\)\)/);
 assert.match(menu,/mount\(root,138,218\)/);
 assert.match(menu,/mount\(root,240,315\)/);
-assert.match(menu,/toolbar\.setVisibility\(View\.GONE\)/);
+assert.doesNotMatch(menu,/toolbar\.setVisibility\(View\.GONE\)/);\nassert.match(menu,/FLAG_WATCH_OUTSIDE_TOUCH/);
 assert.match(menu,/toolbar\.setVisibility\(View\.VISIBLE\)/);
 
 // Originais preservados em formatos verdadeiros e sem recompactação.
