@@ -94,19 +94,38 @@ public final class PgsAutoClickService extends AccessibilityService {
             pkg.toLowerCase(java.util.Locale.ROOT).contains("pgsharp");
     }
     private boolean isGameVisible(){
-        // Em janelas popup e multitarefa, o evento anterior pode ser de outra
-        // janela. Conferir o pacote efetivamente ativo antes de qualquer toque.
+        // Samsung: uma janela TYPE_ACCESSIBILITY_OVERLAY do próprio PGS
+        // pode ser retornada como root, embora Pokémon GO esteja ativo atrás.
+        // Nunca confiar no cache de foreground quando outro app aparece.
         AccessibilityNodeInfo root=null;
+        String activePackage=null;
         try{
             root=getRootInActiveWindow();
-            if(root!=null && root.getPackageName()!=null){
-                String pkg=root.getPackageName().toString();
-                if(isGamePackage(pkg)){foreground=pkg;return true;}
-                return false;
+            if(root!=null&&root.getPackageName()!=null)
+                activePackage=root.getPackageName().toString();
+            if(isGamePackage(activePackage)){
+                foreground=activePackage;return true;
             }
-        }catch(RuntimeException ignored){}
+            if(activePackage!=null&&!getPackageName().equals(activePackage))
+                return false;
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> windows=getWindows();
+            if(windows!=null)for(android.view.accessibility.AccessibilityWindowInfo w:windows){
+                if(w==null||w.getType()!=
+                    android.view.accessibility.AccessibilityWindowInfo.TYPE_APPLICATION)continue;
+                if(!w.isActive()&&!w.isFocused())continue;
+                AccessibilityNodeInfo game=null;
+                try{
+                    game=w.getRoot();
+                    if(game!=null&&game.getPackageName()!=null&&
+                        isGamePackage(game.getPackageName().toString())){
+                        foreground=game.getPackageName().toString();
+                        return true;
+                    }
+                }finally{if(game!=null)game.recycle();}
+            }
+            return false;
+        }catch(RuntimeException ignored){return false;}
         finally{if(root!=null)root.recycle();}
-        return isGamePackage(foreground);
     }
     private boolean passengerPromptPresent(){
         // Aviso de velocidade do jogo exige declaração MANUAL do usuário.
