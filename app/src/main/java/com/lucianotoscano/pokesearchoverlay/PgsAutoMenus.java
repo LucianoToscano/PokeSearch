@@ -724,12 +724,8 @@ final class PgsAutoMenus {
             select.setOnClickListener(v->{
                 PgsAutoHostSettings.select(context,value);
                 actions.modelsChanged(); // interrompe ciclo e reconstrói modelos.
-                if(PgsAutoHostPolicy.POKEMOD.equals(value)&&
-                   !PgsAutoHostSettings.pokemodManagerInstalled(context))
-                    Toast.makeText(context,
-                        "Gerenciador Pokemod não detectado. Instale/abra o jogo "+
-                        "antes de reconhecer a interface.",
-                        Toast.LENGTH_LONG).show();
+                // LT363: seleção do perfil não depende de manager ou Aegis/Atlas.
+                // O diagnóstico separado mostra quais pacotes existem no aparelho.
                 showSearch();
             });
             root.addView(select,margined(-1,dp(34),3));
