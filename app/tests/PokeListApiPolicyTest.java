@@ -11,7 +11,9 @@ public final class PokeListApiPolicyTest {
                 .url(1763190000000L);
             assertTrue(url.startsWith("https://moonani.com/PokeList/api.v2.php?type="+type),
                 "fixed HTTPS host and exact type");
-            assertTrue(url.contains("mons=25,150"),"stable dedup");
+            assertTrue(url.contains(
+                ("rocket".equals(type)||"rocket_leader".equals(type)?
+                    "rockets=25,150":"mons=25,150")),"stable dedup by source");
             assertTrue(url.contains("lat=-5.915000&lng=-35.205000"),"root locale");
             if(!"pokemon".equals(type))assertTrue(!url.contains("ivMin"),
                 "No Pokémon-only filter on other sources");
