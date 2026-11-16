@@ -4947,6 +4947,33 @@
           "Instalação de atualizações continua exigindo aprovação do Android."
         ]
       }
+    },
+    {
+      "id": "lt379-novidades-internas-historico-fix-20261116",
+      "minVersionCode": 54580,
+      "date": "16/11/2026",
+      "title": "PokeSearch LT379 — Novidades dentro do aplicativo",
+      "sections": {
+        "novidades": [
+          "O número da versão na Home abre diretamente a janela Novidades / Histórico de atualizações dentro do PokeSearch, sem navegador ou site externo.",
+          "Histórico completo de novidades com carregamento incremental: primeiras 12 versões e opção Ver versões anteriores."
+        ],
+        "melhorias": [
+          "Leitura offline do catálogo de novidades cresce com limite seguro de 2 MiB e preserva todas as versões históricas, mesmo sem internet.",
+          "Notas de versões seguem organizadas de mais recentes para mais antigas e com temas claros/escuros existentes."
+        ],
+        "correcoes": [
+          "Corrigida falha que fazia o leitor ignorar release_notes.json após ultrapassar 96 KB; catálogo oficial já ultrapassa 326 KB com 198 entradas.",
+          "Rodapé deixa de redirecionar ao GitHub: usa o mesmo diálogo nativo já disponível em Menu > Novidades.",
+          "Revisados testes que exigiam incorretamente uma URL externa ou o limite legado de 96 KB, protegendo a intenção explícita do usuário.",
+          "Preservados P1/P2, Conta 1/Conta 2/Visitante, Auto Hunt OFF ao iniciar, sprites/modelos, filtros, Busca Inteligente, Monitor, overlays e assinatura/OTA."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física pendente em Samsung Android 11–14: abertura de Novidades por rodapé/menu, paginação, TalkBack, primeira instalação, atualização e uso offline.",
+          "Verificar a interação entre notas embarcadas no APK e eventual recurso OTA mais recente ou mais antigo; manter assinatura e verificação de integridade.",
+          "Instalação de atualização exige consentimento do Android. Detecção, supervisão, caminhada externa, tentativa e captura confirmada continuam estados distintos."
+        ]
+      }
     }
   ]
 }
