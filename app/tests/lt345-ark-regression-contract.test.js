@@ -10,7 +10,7 @@ const dock=asset("dock.html"),explorer=asset("pvp_rank_explorer.js");
 assert.match(activity,/visibleTop=HomeMenuIconPack\.opticalTopInParentPx\(icon\)/);
 assert.match(activity,/int desiredTop=visibleTop-2-height/);
 assert.match(activity,/placement\.topMargin=desiredTop/);
-assert.match(activity,/visibleCenterX=HomeMenuIconPack\.opticalCenterXInParentPx\(icon\)/);
+assert.match(activity,/visibleCenterX=HomeMenuIconPack\.opticalPokeballButtonXInParentPx\(icon\)/);
 assert.match(activity,/placement\.leftMargin=desiredLeft/);
 assert.match(activity,/PogoAccountSlots\.bindAccountOnly\(this,secondary,account\)/);
 assert.match(iconPack,/getImageMatrix\(\)\.mapPoints\(top\)/);
