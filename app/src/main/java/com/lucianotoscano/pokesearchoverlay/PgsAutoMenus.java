@@ -1000,8 +1000,8 @@ final class PgsAutoMenus {
         tips.setMaxLines(4);
         root.addView(tips,margined(-1,dp(62),2));
         TextView diagnostic=label(actions.nightSupervisorDiagnostics(),9,false);
-        diagnostic.setMaxLines(7);
-        root.addView(diagnostic,margined(-1,dp(100),2));
+        diagnostic.setMaxLines(9);
+        root.addView(diagnostic,margined(-1,-2,2));
         Button start=button(active?"■ Parar supervisão":
             "▷ Iniciar supervisão noturna",10);
         start.setContentDescription(active?
