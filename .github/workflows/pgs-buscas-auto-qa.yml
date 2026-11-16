@@ -18,6 +18,8 @@ on:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsSmartSearchSettings.java'
       - 'app/tests/lt368-smart-central-contract.test.js'
       - 'app/tests/lt369-single-overlay-contract.test.js'
+      - 'app/tests/lt370-pas-pac-assist-contract.test.js'
+      - 'app/tests/PgsAutoHostProbePolicyTest.java'
       - 'app/tests/lt367-visual-sequence-contract.test.js'
       - 'app/tests/PgsSequencePolicyTest.java'
       - 'app/tests/PgsAutoHuntPolicyTest.java'
@@ -65,18 +67,23 @@ jobs:
           node app/tests/lt367-visual-sequence-contract.test.js
           node app/tests/lt368-smart-central-contract.test.js
           node app/tests/lt369-single-overlay-contract.test.js
+          node app/tests/lt370-pas-pac-assist-contract.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \
             app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoShinySignal.java \
             app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoCyclePolicy.java \
             app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoNotificationPolicy.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoHostPolicy.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsAutoHostProbePolicy.java \
             app/tests/PgsAutoShinySignalTest.java \
             app/tests/PgsAutoCyclePolicyTest.java \
-            app/tests/PgsAutoNotificationPolicyTest.java
+            app/tests/PgsAutoNotificationPolicyTest.java \
+            app/tests/PgsAutoHostProbePolicyTest.java
           java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoShinySignalTest
           java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoCyclePolicyTest
           java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoNotificationPolicyTest
+          java -cp "$QA_CLASSES" com.lucianotoscano.pokesearchoverlay.PgsAutoHostProbePolicyTest
       - name: Compilar e gerar APK debug somente para QA
         env:
           POKE_TEST_SIGNING_REQUIRED: 'false'
