@@ -8563,12 +8563,11 @@ function bindRefreshGesture(button){
  let hold=null,longTriggered=false,pressed=false,x=0,y=0;
  const cancel=()=>{if(hold!==null){clearTimeout(hold);hold=null;}};
  const open=()=>{cancel();if(longTriggered)return;
-  longTriggered=true;
-  if(choiceOpen==="period")closeChoices();else{
-   toggleChoices("period");
-   if(typeof Native!=="undefined"&&typeof Native.tutorialRefreshHeld==="function")
-    Native.tutorialRefreshHeld();
-  }
+  const opening=choiceOpen!=="period";
+  longTriggered=true;if(choiceOpen==="period")closeChoices();else toggleChoices("period");
+  if(opening&&typeof Native!=="undefined"&&
+     typeof Native.tutorialRefreshHeld==="function")
+   Native.tutorialRefreshHeld();
  };
  button.addEventListener("pointerdown",e=>{
   if(e.button!==0)return;

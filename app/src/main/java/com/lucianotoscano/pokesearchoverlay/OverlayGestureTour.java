@@ -164,8 +164,7 @@ final class OverlayGestureTour {
     }
     private void describeStep(){
         if(skip==null||index>=steps.length)return;
-        String instruction=steps[index].instruction.replace('
-',' ');
+        String instruction=steps[index].instruction.replace('\n',' ');
         skip.setContentDescription("Tutorial: "+instruction+". Pular tutorial.");
         skip.announceForAccessibility("Tutorial. "+instruction);
     }
