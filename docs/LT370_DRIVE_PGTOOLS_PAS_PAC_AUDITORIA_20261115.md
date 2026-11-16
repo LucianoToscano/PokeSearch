@@ -1,7 +1,7 @@
 # PokeSearch LT370 — Auditoria de fontes do Drive e Busca Inteligente estilo PaS/PaC
 
 Data: 15/11/2026. Pasta consultada (leitura apenas): https://drive.google.com/drive/folders/1Rra1dB-jKrZyHtxxm6ciB3Iy0DmuB09w
-Base do aplicativo: LT369 0.03.65 / versionCode 54572. **Este documento é código candidato em branch, NÃO APK oficial publicado.**
+Base: LT369 0.03.65 / versionCode 54572. **LT370 foi publicada oficialmente** como 0.03.66 / versionCode 54573 / label 51370. [Release pública](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.66-54573).
 
 ## Evidências inspecionadas
 
@@ -45,3 +45,10 @@ P2. Histórico estatístico opt-in, exportação/importação local de filtros e
 - **Não aplicar código de injeção, bypass de avisos, root, permissões novas ou ativos proprietários** dos APKs de referência.
 - Auditoria é estática: não inspecionou o funcionamento real dos apps terceiros, nem validou direitos autorais só pelo nome "Autorizado".
 - Gate obrigatório: Node, Java, LT169/LT211, OTA, QA APK, R8 no mesmo SHA; testes Android físicos separados. Nenhuma publicação oficial é concluída neste documento.
+
+## ARK LT370 — fechamento oficial (15/11/2026)
+
+- **RELEASE CONFIRMADA:** [v0.03.66-54573](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.66-54573), APK [PokeSearch-v0.03.66-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.66-54573/PokeSearch-v0.03.66-LT.apk), 61.173.419 bytes; hash SHA-256 informado pela API do GitHub `70eadf91f37a6c4363e70778c7d6e3d1bbcb61bbff015cf58d39b6835d5e52dc`; sem download e recálculo local nesta sessão. [Workflow oficial #43779984816](https://github.com/LucianoToscano/PokeSearch/actions/runs/43779984816) `completed/success` no SHA `8303bd2f722319c6316ff8b7ebc732df791c4a9a`.
+- **CÓDIGO:** PR #444 integrada, squash `1b21e89c8ba34196f070de8f37ce37c062c4efe2`, 7/7 gates aprovados no SHA `ce7eda406296cd6b5678d3d91de0a3460cbabf35`: Node #43779097515, LT169 #43779097573, LT211 #43779097539, Java #43779097674, OTA #43779097576, PGS APK QA #43779097522, Secure beta/R8 #43779097537. PR #445 integrou release request + notas internas.
+- **NÃO HOMOLOGADO EM APARELHO:** PGSharp/Pokemod, reconhecimento de host, sinal Shiny, marcadores de encontro, densidades, tempos e ações reais exigem avaliação separada. Não alegar PaS/PaC completos, acerto de Shiny sem notificação explícita, captura lançada ou confirmada.
+- **CONTINUIDADE:** [LT371](LT370_PROMPT_CONTINUIDADE_LT371_20261115.md), próxima versão code >54573, preservando assinatura permanente e dados. 
