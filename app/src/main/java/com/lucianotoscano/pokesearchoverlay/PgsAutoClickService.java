@@ -712,6 +712,9 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void setWatchEnabled(boolean enabled){
+                if(enabled&&nightSupervisorActive){
+                    showReason("Pare o modo noturno antes de iniciar outro motor.");return;
+                }
                 if(enabled)stopSequence("SEQUÊNCIA · MONITOR SELECIONADO");
                 setWatchOnly(enabled);
             }
@@ -730,7 +733,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 return PgsAutoClickService.this.nightSupervisorActive;
             }
             @Override public void startSmartSearch(String goal){
-                stopNightSupervisor(true,"Busca Inteligente acionada.");
+                if(nightSupervisorActive){
+                    showReason("Pare a supervisão noturna antes de iniciar toques.");return;
+                }
                 stopSequence("SEQUÊNCIA · BUSCA INTELIGENTE SELECIONADA");
                 if(watching)stopWatchOnly(true);
                 if(running)halt("BUSCA RECONFIGURADA");
@@ -739,7 +744,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 toggle();
             }
             @Override public void startSearch(){
-                stopNightSupervisor(true,"Busca com gestos acionada.");
+                if(nightSupervisorActive){
+                    showReason("Pare a supervisão noturna antes de iniciar toques.");return;
+                }
                 smartGoalSession=null;
                 // Called only from explicit Start in the LT368 Central.
                 // Never leave two engines active or use an old POINT target.
@@ -784,7 +791,13 @@ public final class PgsAutoClickService extends AccessibilityService {
                 pickSequencePoint(type,index,dest);
             }
             @Override public void sequencePreview(){previewSequence();}
-            @Override public void sequenceRun(){startSequence();}
+            @Override public void sequenceRun(){
+                if(nightSupervisorActive){
+                    showReason("Pare a supervisão noturna antes de executar sequência.");
+                    return;
+                }
+                startSequence();
+            }
             @Override public void sequenceStop(){stopSequence("SEQUÊNCIA PARADA");}
             @Override public void sequenceChanged(){
                 stopSequence("SEQUÊNCIA ALTERADA");
