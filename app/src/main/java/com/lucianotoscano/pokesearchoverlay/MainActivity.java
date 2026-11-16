@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
-    private String loginPurpose="login"; // login | manage
+    private String loginPurpose="login"; // login | manage | sync
     private boolean trainerLinkRequested=false,trainerLinkStarted=false;
     private long trainerLinkObserveDeadline=0L;
     private int activeLoginSlot=1;
@@ -3047,8 +3047,8 @@ public class MainActivity extends Activity {
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
-                if("manage".equals(loginPurpose)){
-                    // The management screen may also complete a new Discord OAuth.
+                if("manage".equals(loginPurpose)||"sync".equals(loginPurpose)){
+                    // Management and resync read the actual first-party profile.
                     // Confirm the session and read the actual first-party profile.
                     profileCaptureInProgress=true;
                     profileCaptureRetryCount=0;
@@ -3093,7 +3093,7 @@ public class MainActivity extends Activity {
                     view.loadUrl("https://pogocoordinates.com/profile");
                     return;
                 }
-                if(!"manage".equals(loginPurpose)&&attemptsLeft<=23&&
+                if("login".equals(loginPurpose)&&attemptsLeft<=23&&
                    observedLoginProvider.isEmpty()&&
                    !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
@@ -3114,7 +3114,7 @@ public class MainActivity extends Activity {
     }
     private void captureOfficialProfile(WebView view,int generation){
         if(view!=website||loginDialog==null||!loginDialog.isShowing()||
-           !("manage".equals(loginPurpose)||loginAutoReturnQueued)||
+           !("manage".equals(loginPurpose)||"sync".equals(loginPurpose)||loginAutoReturnQueued)||
            !profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
         String host=current.getHost();
@@ -3291,6 +3291,24 @@ public class MainActivity extends Activity {
                 trainerLinkStarted=false;
                 trainerLinkRequested=false;
             }
+            // Manual sync requires a verified member name. This flow must not
+            // initiate trainer linking or pretend an incomplete profile is ready.
+            if("sync".equals(loginPurpose)){
+                String verifiedName=PogoAccountSlots.prefs(this,activeLoginSlot)
+                    .getString("profileDisplayName","").trim();
+                profileCaptureInProgress=false;
+                refreshSessionSummary();
+                if(verifiedName.isEmpty()){
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    if(loginWaitLabel!=null)
+                        loginWaitLabel.setText("Nome ainda não confirmado. Confira o perfil oficial.");
+                    return;
+                }
+                PogoAccountSlots.cookieManager(activeLoginSlot).flush();
+                if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+                return;
+            }
             profileCaptureInProgress=false;
             refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
@@ -3378,12 +3396,14 @@ public class MainActivity extends Activity {
     private void openLoginDialog(boolean shinyRequest){activeLoginSlot=1;openLoginDialog(shinyRequest,"login");}
     private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
-        loginPurpose="manage".equals(purpose)?"manage":"login";
+        loginPurpose="manage".equals(purpose)?"manage":
+            "sync".equals(purpose)?"sync":"login";
         if(!"manage".equals(loginPurpose))trainerLinkRequested=false;
         trainerLinkStarted=false;
         trainerLinkObserveDeadline=0L;
         loginStartedForShiny=shinyRequest;
-        profileCaptureInProgress="manage".equals(loginPurpose);
+        profileCaptureInProgress="manage".equals(loginPurpose)||
+            "sync".equals(loginPurpose);
         profileDiscoveryAttempted=false;
         profileCaptureRetryCount=0;
         if(shinyRequest)preferredLoginProvider="";
@@ -3454,8 +3474,8 @@ public class MainActivity extends Activity {
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
-                if("manage".equals(loginPurpose)){
-                    // Manage can be opened during an expired session. Confirm
+                if("manage".equals(loginPurpose)||"sync".equals(loginPurpose)){
+                    // Manage/sync can be opened during an expired session. Confirm
                     // Discord/Google OAuth instead of assuming the cached card.
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if("/profile".equals(Uri.parse(url).getPath())&&
@@ -3507,7 +3527,8 @@ public class MainActivity extends Activity {
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
         loginName.setText("PoGoCoordinates · Conta "+activeLoginSlot+
-            ("manage".equals(loginPurpose)?" · Perfil":" · Login"));
+            (("manage".equals(loginPurpose)||"sync".equals(loginPurpose))?
+                " · Perfil":" · Login"));
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
