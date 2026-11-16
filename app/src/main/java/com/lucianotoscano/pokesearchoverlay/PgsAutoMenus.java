@@ -46,6 +46,8 @@ final class PgsAutoMenus {
         void selectSprites();
         void sequencePick(String type,int index,boolean destination);
         void sequencePreview();
+        void autoDetectHost();
+        void startSmartSearch(String goal);
         void startSearch();
         void sequenceRun();
         void sequenceStop();
@@ -607,6 +609,7 @@ final class PgsAutoMenus {
     // original P1/P2: nenhum sexto ícone, painel duplicado ou gesto implícito.
     private boolean centralAdvanced=false;
     private int centralStep=-1;
+    private boolean centralManualHost=false;
     void showSearch(){showCentral(0);}
 
     private void showCentral(int selectedTab){
@@ -625,20 +628,19 @@ final class PgsAutoMenus {
             b.setOnClickListener(v->showCentral(tab));
         }
         root.addView(tabs,margined(-1,dp(30),3));
-        if(selectedTab==0)appendCentralPokemon(root);
-        else{
-            // Keep the status and Start visible while actions/settings scroll.
-            LinearLayout body=vertical();
-            if(selectedTab==1)appendCentralActions(body);
-            else appendCentralSettings(body);
-            ScrollView content=new ScrollView(context);
-            content.setFillViewport(false);
-            content.setVerticalScrollBarEnabled(false);
-            content.addView(body);
-            int available=PgsAutoMenuStyle.read(context).popupHeight;
-            root.addView(content,margined(-1,
-                dp(Math.max(55,available-145)),3));
-        }
+        // LT370: one vertical scrolling area for ALL tabs, no nested scroll.
+        // Status and Start remain fixed below it on compact screens.
+        LinearLayout body=vertical();
+        if(selectedTab==0)appendCentralPokemon(body);
+        else if(selectedTab==1)appendCentralActions(body);
+        else appendCentralSettings(body);
+        ScrollView content=new ScrollView(context);
+        content.setFillViewport(false);
+        content.setVerticalScrollBarEnabled(false);
+        content.addView(body);
+        int available=PgsAutoMenuStyle.read(context).popupHeight;
+        root.addView(content,margined(-1,
+            dp(Math.max(55,available-145)),3));
 
         TextView status=label("Estado: "+PgsAutoClickService.searchStatus(),9,false);
         status.setSingleLine(true);
@@ -669,7 +671,24 @@ final class PgsAutoMenus {
     }
 
     private void appendCentralPokemon(LinearLayout root){
-        // LT369: selecionar PGSharp/Pokemod é parte da aba Pokémon, não popup.
+        // LT370: automatic recognition is an optional two-frame visual probe.
+        // Manual host profiles stay behind a compact fall-back expander.
+        LinearLayout autoRow=horizontal();
+        TextView hostLabel=label("Interface: "+
+            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)),9,false);
+        hostLabel.setSingleLine(true);
+        hostLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        autoRow.addView(hostLabel,new LinearLayout.LayoutParams(0,dp(28),1));
+        Button auto=button("◎ Detectar",9);
+        auto.setContentDescription("Tentar detectar visualmente a interface do jogo");
+        auto.setOnClickListener(v->{dismissAll();actions.autoDetectHost();});
+        autoRow.addView(auto,new LinearLayout.LayoutParams(dp(72),dp(28)));
+        root.addView(autoRow,margined(-1,dp(28),2));
+        Button manual=button(centralManualHost?"⌃ Esconder seleção manual":
+            "⌄ Interface incorreta? Selecionar manualmente",9);
+        manual.setOnClickListener(v->{centralManualHost=!centralManualHost;showCentral(0);});
+        root.addView(manual,margined(-1,dp(27),2));
+        if(centralManualHost){
         LinearLayout profiles=horizontal();
         String active=PgsAutoHostSettings.current(context);
         String[] ids={PgsAutoHostPolicy.PGSHARP,
@@ -692,6 +711,32 @@ final class PgsAutoMenus {
             profiles.addView(option,lp);
         }
         root.addView(profiles,margined(-1,dp(28),2));
+        }
+        LinearLayout scopeRow=horizontal();
+        String scope=PgsSmartSearchSettings.scope(context);
+        String[] scopes={PgsSmartSearchSettings.SCOPE_ALL,
+            PgsSmartSearchSettings.SCOPE_FAVORITES};
+        String[] descriptions={"Disponíveis (até 10)","Meus favoritos"};
+        for(int i=0;i<2;i++){
+            final String value=scopes[i];
+            Button select=button(descriptions[i],9);
+            markChosen(select,scope.equals(value));
+            select.setContentDescription("Buscar: "+descriptions[i]);
+            select.setOnClickListener(v->{
+                PgsSmartSearchSettings.selectScope(context,value);
+                actions.modelsChanged();showCentral(0);
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
+            if(i>0)lp.leftMargin=dp(3);
+            scopeRow.addView(select,lp);
+        }
+        root.addView(scopeRow,margined(-1,dp(28),2));
+        int ready=PgsAutoTemplateStore.readyForSearch(context);
+        TextView diagnostic=label(ready>0?
+            "Modelos disponíveis nesta busca: "+ready+" (máximo 10 por leitura)":
+            "Sem miniaturas de feed válidas. Cadastre uma no Scanner.",9,false);
+        diagnostic.setMaxLines(2);
+        root.addView(diagnostic,margined(-1,dp(37),1));
         TextView title=label("Selecionados: 0/10",10,true);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
@@ -700,13 +745,11 @@ final class PgsAutoMenus {
         input.setPadding(dp(8),0,dp(8),0);
         input.setBackground(bg(TILE,0x33FFFFFF,7));
         LinearLayout rows=vertical();
-        ScrollView scroll=new ScrollView(context);
-        scroll.setVerticalScrollBarEnabled(false);
-        scroll.addView(rows);
         root.addView(title,margined(-1,dp(20),2));
-        // LT368: pesquisa acima da lista, não escondida no rodapé.
+        // Search stays above the species list; the single parent scroll
+        // keeps the bottom Start button visible on any configured size.
         root.addView(input,margined(-1,dp(33),3));
-        root.addView(scroll,margined(-1,dp(155),3));
+        root.addView(rows,margined(-1,-2,3));
         final Runnable[] render={null};
         render[0]=()->{
             rows.removeAllViews();
@@ -830,7 +873,71 @@ final class PgsAutoMenus {
         render[0].run();
     }
 
+    // LT370: simple PaS/PaC-inspired goals reuse ONE validated engine.
+    // They do not imply automatic ball throwing or guaranteed Shiny evidence.
+    private boolean showAdvancedActions=false;
     private void appendCentralActions(LinearLayout root){
+        if(showAdvancedActions){appendLegacyActions(root);return;}
+        root.addView(label("OBJETIVO DA BUSCA",10,true),margined(-1,dp(22),2));
+        String current=PgsSmartSearchSettings.goal(context);
+        String[] goals={PgsSmartSearchSettings.GOAL_SHINY,
+            PgsSmartSearchSettings.GOAL_CATCH,PgsSmartSearchSettings.GOAL_BOTH};
+        String[] labels={"✨ Procurar Shiny","◎ Auxiliar encontros",
+            "✨ Procurar + auxiliar"};
+        for(int i=0;i<goals.length;i++){
+            final String goal=goals[i];
+            Button choice=button(labels[i],10);
+            choice.setContentDescription("Objetivo: "+labels[i]);
+            markChosen(choice,goal.equals(current));
+            choice.setOnClickListener(v->{
+                PgsSmartSearchSettings.selectGoal(context,goal);
+                showCentral(1);
+            });
+            root.addView(choice,margined(-1,dp(30),3));
+        }
+        String warning=PgsSmartSearchSettings.GOAL_SHINY.equals(current)?
+            "Consulta o feed e pausa somente diante de aviso Shiny explícito "+
+            "da espécie; exige acesso às notificações do jogo.":
+            PgsSmartSearchSettings.GOAL_CATCH.equals(current)?
+            "Abre alvos confirmados; avisa ao reconhecer o encontro. "+
+            "Captura, bolas e frutas continuam manuais.":
+            "Combina aviso Shiny com encontro assistido. "+
+            "Sem arremesso automático e sem capturas presumidas.";
+        TextView explanation=label(warning,9,false);
+        explanation.setMaxLines(4);
+        root.addView(explanation,margined(-1,dp(59),3));
+        CheckBox repeat=new CheckBox(context);
+        repeat.setText("Continuar procurando após cada ciclo");
+        repeat.setTextSize(10);repeat.setTextColor(fg());
+        repeat.setChecked(PgsSmartSearchSettings.repeat(context));
+        repeat.setOnCheckedChangeListener((b,on)->
+            PgsSmartSearchSettings.setRepeat(context,on));
+        root.addView(repeat,margined(-1,dp(31),2));
+        huntNumeric(root,PgsAutoHuntSettings.forCurrent(context),
+            PgsAutoHuntSettings.MAX_CLICKS,"Máximo de interações",
+            new int[]{1,3,5,10},10);
+        CheckBox consent=new CheckBox(context);
+        consent.setText("Autorizo tocar nas sprites confirmadas");
+        consent.setTextSize(10);consent.setTextColor(fg());
+        consent.setChecked(PgsSmartSearchSettings.gestureConsent(context));
+        consent.setOnCheckedChangeListener((b,on)->
+            PgsSmartSearchSettings.setGestureConsent(context,on));
+        root.addView(consent,margined(-1,dp(34),2));
+        TextView status=label("Assistência de captura: não comprovada no jogo. "+
+            "Teste a prévia antes de iniciar.",9,false);
+        status.setMaxLines(2);
+        root.addView(status,margined(-1,dp(37),2));
+        Button editor=button("⌄ Avançado: monitor, Auto Hunt e sequências",9);
+        editor.setOnClickListener(v->{
+            showAdvancedActions=true;showCentral(1);
+        });
+        root.addView(editor,margined(-1,dp(29),3));
+    }
+
+    private void appendLegacyActions(LinearLayout root){
+        Button back=button("⌃ Voltar à Busca Inteligente",9);
+        back.setOnClickListener(v->{showAdvancedActions=false;showCentral(1);});
+        root.addView(back,margined(-1,dp(29),2));
         String current=PgsSmartSearchSettings.mode(context);
         String[] ids={PgsSmartSearchSettings.MONITOR,PgsSmartSearchSettings.CLICK,
             PgsSmartSearchSettings.HUNT,PgsSmartSearchSettings.SEQUENCE};
@@ -1121,8 +1228,8 @@ final class PgsAutoMenus {
     }
 
     private boolean hasCentralSprite(){
-        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
-            if(PgsAutoCatalog.isSelectedName(context,model.name))return true;
+        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.activeForSearch(context))
+            return true;
         return false;
     }
     private void startCentral(){
@@ -1131,6 +1238,31 @@ final class PgsAutoMenus {
         if(PgsAutoHostPolicy.OTHER.equals(host)){
             Toast.makeText(context,"Outro cliente: somente prévia. "+
                 "Selecione PGSharp ou Pokemod.",Toast.LENGTH_LONG).show();return;
+        }
+        if(!showAdvancedActions){
+            int models=PgsAutoTemplateStore.readyForSearch(context);
+            if(models<=0){
+                Toast.makeText(context,"Nenhuma miniatura válida neste cliente. "+
+                    "Cadastre uma sprite ou selecione um modelo disponível.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            if(!PgsSmartSearchSettings.gestureConsent(context)){
+                Toast.makeText(context,"Autorize os gestos na aba Ação. "+
+                    "Selecionar objetivo não inicia toques.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            String goal=PgsSmartSearchSettings.goal(context);
+            if(!PgsSmartSearchSettings.GOAL_CATCH.equals(goal) &&
+                !PgsAutoShinyListener.hasAccess(context)){
+                Toast.makeText(context,"Para avisos Shiny, habilite o acesso "+
+                    "às notificações do jogo nas configurações do Android.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            PgsAutoHuntSettings.forCurrent(context).edit()
+                .putBoolean(PgsAutoHuntSettings.ENABLED,true)
+                .putBoolean(PgsAutoHuntSettings.CLICK_ENABLED,true).apply();
+            dismissAll();actions.startSmartSearch(goal);
+            return;
         }
         if(PgsSmartSearchSettings.SEQUENCE.equals(mode)){
             if(!PgsSequenceStore.canRun(context)){
