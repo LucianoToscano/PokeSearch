@@ -26,7 +26,8 @@ const footer=main.split("TextView footer=homeText(")[1]?.split("screen.addView(f
 assert.ok(footer.includes("ReleaseNotes.showHistory(this)"));
 assert.ok(!footer.includes("Intent.ACTION_VIEW")&&!footer.includes("github.com"));
 const codes=catalog.releases.map(r=>r.minVersionCode);
-assert.ok(codes.at(-1)>=54579,"Latest release notes must include official installed version");
+const releaseRequest=JSON.parse(fs.readFileSync("release/official-request.json","utf8"));
+assert.equal(codes.at(-1),releaseRequest.code,"Latest notes must match monotonic official request");
 assert.ok(codes.every((n,i)=>Number.isInteger(n)&&(i===0||n>codes[i-1])));
 assert.equal(new Set(catalog.releases.map(r=>r.id)).size,catalog.releases.length);
 assert.ok(catalog.releases.at(-1).sections.novidades.length>0);
