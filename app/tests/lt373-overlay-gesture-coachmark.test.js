@@ -20,7 +20,12 @@ check(engine,/Path hand=new Path/,"vector transparent animated hand");
 check(engine,/SystemClock\.uptimeMillis\(\)/,"animated ring/touch frames");
 check(engine,/postInvalidateDelayed\(85\)/,"bounded animation redraw");
 check(engine,/Pular/,"single skip chip");
-check(engine,/prefs\.edit\(\)\.putBoolean\(DONE_KEY,true\)/,"persistent per-overlay completion");
+check(engine,/prefs\.edit\(\)\.putBoolean\(completionKey,true\)/,"persistent completion");
+check(engine,/POKEBALL_PREFS="overlay_tutorial_install"/,"one installation-wide preference store");
+check(engine,/POKEBALL_DONE_KEY="gestureCoachV3PokeballCompleted"/,"one-time V3 testing migration");
+check(engine,/completionKey=kind==Kind.POKEBALL\?POKEBALL_DONE_KEY:DONE_KEY/,"P1/P2 share completion key");
+check(engine,/kind==Kind.POKEBALL&&activeTour.kind==Kind.POKEBALL/,"second ball cannot steal lesson");
+check(ball,/getSharedPreferences\(OverlayGestureTour.POKEBALL_PREFS,MODE_PRIVATE\)/,"same prefs for P1 and P2");
 assert.doesNotMatch(engine,/dispatchGesture|performClick\(|AccessibilityNodeInfo|setMockLocation/,
  "no synthetic touches, no game inspection or GPS");
 // Preserve each account by relying on its native preference provider.
@@ -46,8 +51,11 @@ check(search,/quickMenus\.toggle\(left,bubbleParams\.y\);\s*if\(quickMenus\.isOp
 check(search,/quickMenus\.collapseOneLevel\(\);\s*coach\(OverlayGestureTour.HIDE_MENU\)/,"PGS real menu retract");
 check(engine,/Do not require that potentially destructive action/,"no compelled auto search");
 check(home,/Rever tutorial interativo dos overlays/,"home replay UI");
-for(const key of ['"prefs"','"prefs_secondary"','"rare_candy_overlay"','"pgs_auto_settings_v1"'])
- assert.ok(home.includes(key),"replay contains "+key);
+check(home,/remove\(OverlayGestureTour.POKEBALL_DONE_KEY\)/,"manual replay clears shared tutorial");
+check(home,/if\(OverlayService.isRunning\(\)\)[\s\S]*else if\(OverlayService.isSecondaryRunning\(\)\)/,
+ "replay selects P1 OR P2");
+for(const key of ['"rare_candy_overlay"','"pgs_auto_settings_v1"'])
+ assert.ok(home.includes(key),"replay preserves "+key);
 check(dock,/function reportRefreshCoachTarget\(\)/,"real refresh DOM tile locator");
 check(dock,/Native\.tutorialRefreshAnchor\(bounds\.left,bounds\.top,bounds\.width,bounds\.height\)/,
  "native receives measured CSS bounds");

@@ -55,6 +55,7 @@ check("first-ever onboarding upgrades old Toast help to real gesture coachmarks"
   assert.ok(native.includes('pref.edit().putBoolean("gestureHelpV1Shown",true).apply()'));
   assert.ok(native.includes('handler.postDelayed(()->beginGestureTour(false),1900L);'));
   assert.ok(native.includes('OverlayGestureTour.Kind.POKEBALL'));
+  assert.ok(native.includes('getSharedPreferences(OverlayGestureTour.POKEBALL_PREFS,MODE_PRIVATE)'));
   assert.ok(!native.includes("👆 Pokébola: toque = resultados"));
   assert.ok(!native.includes("👆 ↻: toque = atualizar"));
 });

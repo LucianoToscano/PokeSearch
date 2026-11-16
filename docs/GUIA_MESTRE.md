@@ -1,3 +1,5 @@
+**LT373.1 — Tutorial de primeiro uso compartilhado P1/P2:** flag `overlay_tutorial_install/gestureCoachV3PokeballCompleted` por instalação, Pular marca ambas. Exibe uma única vez em P1 ou P2, inclusive uma vez em usuários existentes nesta versão de teste, sem se repetir nas próximas. Replay manual em Preferências. QA físico e release oficial sujeitos aos gates obrigatórios.
+
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
 
 ## LT373 — Tutorial guiado animado sobre overlays reais (QA, não publicado — 16/11/2026)

@@ -4,6 +4,11 @@
 ## Objetivo aprovado na conversa
 Na primeira abertura real de Pokébola 1, Pokébola 2, Doce Raro ou Busca Pokémon, escurecer a tela com uma janela visual **não clicável**, deixar claro somente o **controle já existente**, apontar para ele com linha pontilhada, anel de brilho e dedo animado. Mudar o texto apenas após a pessoa fazer o toque/long press VERDADEIRO. A animação nunca toca sozinha. A arte é desenhada em Canvas com fundo transparente, não recria o ícone nem substitui a imagem do app.
 
+## LT373.1 — regra de primeiro uso para P1 e P2 (16/11/2026)
+A mesma explicação **aparece em uma única Pokébola**, na primeira abertura de P1 ou P2. Pular ou concluir marca `overlay_tutorial_install/gestureCoachV3PokeballCompleted`, persistente e compartilhado entre P1 e P2. Se P1 e P2 iniciarem simultaneamente, P2 não poderá interromper a lição em P1. A chave V3 faz o tutorial aparecer **uma vez nesta versão de teste também para quem já tinha instalado o aplicativo**. Nas próximas versões a chave NÃO deve ser renomeada. O replay em Preferências é voluntário e exibe somente um tutorial por vez.
+
+Doce Raro e Busca Pokémon mantêm os seus tutoriais independentes de primeiro uso.
+
 ## Fluxos efetivamente codificados
 | Alvo | Primeiro gesto | Segundo gesto | Terceiro gesto | Quarto gesto | Complemento |
 |---|---|---|---|---|---|

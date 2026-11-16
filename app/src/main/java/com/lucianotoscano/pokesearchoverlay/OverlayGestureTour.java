@@ -27,6 +27,11 @@ import android.widget.Toast;
  */
 final class OverlayGestureTour {
     static final String DONE_KEY="gestureCoachV2Completed";
+    // P1/P2 share one installation-level completion record, never two tours.
+    // V3 intentionally makes the tutorial visible ONCE on this QA upgrade.
+    // Keep the V3 key stable for all later versions.
+    static final String POKEBALL_PREFS="overlay_tutorial_install";
+    static final String POKEBALL_DONE_KEY="gestureCoachV3PokeballCompleted";
     // Only one full-screen coachmark may be shown across P1/P2/Candy/Search.
     // Otherwise two untrusted alpha windows would exceed the Android touch limit.
     private static OverlayGestureTour activeTour;
@@ -49,6 +54,7 @@ final class OverlayGestureTour {
     private final Context context;
     private final WindowManager manager;
     private final SharedPreferences prefs;
+    private final String completionKey;
     private final int windowType;
     private final Kind kind;
     private final Target target;
@@ -63,6 +69,7 @@ final class OverlayGestureTour {
     OverlayGestureTour(Context ctx,WindowManager wm,SharedPreferences state,int type,
                        Kind kind,boolean resultsVisible,Target realTarget){
         context=ctx;manager=wm;prefs=state;windowType=type;this.kind=kind;target=realTarget;
+        completionKey=kind==Kind.POKEBALL?POKEBALL_DONE_KEY:DONE_KEY;
         density=Math.max(1,(int)(ctx.getResources().getDisplayMetrics().density*1000));
         if(kind==Kind.POKEBALL){
             Step a=new Step(resultsVisible?"Toque na Pokébola para\nrecolher os resultados":
@@ -97,9 +104,14 @@ final class OverlayGestureTour {
     private int dp(float n){return Math.round(n*density/1000f);}
     boolean active(){return visible;}
     void start(boolean replay){
-        if(!replay&&prefs.getBoolean(DONE_KEY,false))return;
+        if(!replay&&prefs.getBoolean(completionKey,false))return;
         if(visible)close(false);
-        if(activeTour!=null&&activeTour!=this)activeTour.close(false);
+        if(activeTour!=null&&activeTour!=this){
+            // Never let P2 replace the SAME active P1 lesson, or vice versa.
+            if(kind==Kind.POKEBALL&&activeTour.kind==Kind.POKEBALL&&
+                activeTour.active())return;
+            activeTour.close(false);
+        }
         if(manager==null||target==null||target.bounds()==null)return;
         index=0;refreshBounds=null;
         artwork=new TourArt(context);
@@ -174,7 +186,7 @@ final class OverlayGestureTour {
         if(artwork!=null)artwork.invalidate();
     }
     void close(boolean completed){
-        if(completed)prefs.edit().putBoolean(DONE_KEY,true).apply();
+        if(completed)prefs.edit().putBoolean(completionKey,true).apply();
         visible=false;
         if(activeTour==this)activeTour=null;
         if(artwork!=null){

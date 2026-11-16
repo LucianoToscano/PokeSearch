@@ -413,7 +413,8 @@ public class OverlayService extends Service {
     private void beginGestureTour(boolean replay){
         if(stopped||loginPaused||pickerOpen||grip==null||wm==null)return;
         if(gestureTour!=null)gestureTour.close(false);
-        gestureTour=new OverlayGestureTour(this,wm,overlayPrefs(),
+        gestureTour=new OverlayGestureTour(this,wm,
+            getSharedPreferences(OverlayGestureTour.POKEBALL_PREFS,MODE_PRIVATE),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             OverlayGestureTour.Kind.POKEBALL,!resultCollapsed,()->{
                 if(grip==null||!grip.isAttachedToWindow())return null;
@@ -6159,6 +6160,8 @@ public class OverlayService extends Service {
            intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=-3;
         schedulePeriodic();
         if(initialStart){
+            // First opening of either Pokéball per installation; V3 lets
+            // existing installations test this new walkthrough exactly once.
             // The old two automatic Toasts are replaced by real coachmarks.
             if(!pref.getBoolean("gestureHelpV1Shown",false))
                 pref.edit().putBoolean("gestureHelpV1Shown",true).apply();

@@ -10,3 +10,7 @@ Checar P1/P2 resultado inicialmente aberto/fechado; avançar só após estado re
 Salvar screenshots/logs reais de cada passo em T01-T11 do relatório LT373. Verificar TalkBack, botões de Pular/Rever e redução de movimento. Usar uma única instância global do coachmark; evitar obscuração acima de 0,8 entre overlays. Confirmar que as pontes locais nunca são expostas a URLs externas, não copiar binários de terceiros.
 
 Preservar todas as funcionalidades e estados anteriores; não inventar APK homologado. Se o físico for BLOQUEADO, manter a PR draft, atualizar AGENTS/Guia/ARK e gerar prompt seguinte, sem merge ou Release. Versão oficial só incrementa >54574 depois de aprovação integral.
+
+
+## LT373.1 — condição obrigatória para publicar
+P1/P2 devem apresentar um único tutorial em sua primeira abertura. A preferência `overlay_tutorial_install/gestureCoachV3PokeballCompleted` é global às Pokébolas e persistente; nunca mudar esse sufixo em versões futuras. Pular ou concluir evita nova aparição, inclusive se abrir P2. A chave nova V3 permite exibir UMA vez a quem já instalou a versão anterior para testar. Replay manual apenas via Preferências. Validar com dois overlays abertos e no mesmo aparelho físico; APK assinado e publicação só após gates e integridade oficial.

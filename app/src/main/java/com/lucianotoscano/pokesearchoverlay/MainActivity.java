@@ -3775,18 +3775,20 @@ public class MainActivity extends Activity {
         replayCoach.setText("👆 Rever tutorial interativo dos overlays");
         replayCoach.setAllCaps(false);replayCoach.setTextSize(12);
         replayCoach.setOnClickListener(v->{
-            for(String name:new String[]{"prefs","prefs_secondary",
-                    "rare_candy_overlay","pgs_auto_settings_v1"})
+            getSharedPreferences(OverlayGestureTour.POKEBALL_PREFS,MODE_PRIVATE)
+                .edit().remove(OverlayGestureTour.POKEBALL_DONE_KEY).apply();
+            for(String name:new String[]{"rare_candy_overlay","pgs_auto_settings_v1"})
                 getSharedPreferences(name,MODE_PRIVATE).edit()
                     .remove(OverlayGestureTour.DONE_KEY).apply();
             String action="com.lucianotoscano.pokesearchoverlay.REPLAY_GESTURE_TOUR";
+            // Manual replay opens one tour (P1 preferred); never two Pokéballs.
             if(OverlayService.isRunning())
                 startService(new Intent(this,OverlayService.class).setAction(action));
-            if(OverlayService.isSecondaryRunning())
+            else if(OverlayService.isSecondaryRunning())
                 startService(new Intent(this,SecondaryOverlayService.class).setAction(action));
-            if(RareCandyOverlayService.isRunning())
+            else if(RareCandyOverlayService.isRunning())
                 startService(new Intent(this,RareCandyOverlayService.class).setAction(action));
-            PgsAutoClickService.replayGestureTour();
+            else PgsAutoClickService.replayGestureTour();
             Toast.makeText(this,
                 "Tutoriais reativados. Abra o overlay desejado e siga o dedo animado.",
                 Toast.LENGTH_LONG).show();
