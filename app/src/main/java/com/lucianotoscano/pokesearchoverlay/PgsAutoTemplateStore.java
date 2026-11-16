@@ -80,9 +80,12 @@ final class PgsAutoTemplateStore {
      * Em primeira instalação, o catálogo é consultado após migração pessoal.
      */
     static synchronized List<Model> list(Context c) {
+        return listForProfile(c,PgsAutoHostSettings.current(c));
+    }
+    static synchronized List<Model> listForProfile(Context c,String host) {
         ArrayList<Model> result=new ArrayList<>(userModels(c));
         // Catálogo homologado PGSharp não se mistura a miniaturas do Pokemod.
-        if(PgsAutoHostPolicy.PGSHARP.equals(PgsAutoHostSettings.current(c)))
+        if(PgsAutoHostPolicy.PGSHARP.equals(PgsAutoHostPolicy.profile(host)))
         for(Model nativeModel:PgsAutoNativeModels.available(c,PgsAutoCatalog.selected(c))){
             boolean duplicate=false;
             for(Model saved:result)if(saved.id.equals(nativeModel.id)){duplicate=true;break;}
@@ -103,10 +106,15 @@ final class PgsAutoTemplateStore {
      * Native PGSharp entries are still limited to the catalog actually shipped.
      */
     static synchronized List<Model> activeForSearch(Context c){
-        ArrayList<Model> found=new ArrayList<>();
         boolean all=PgsSmartSearchSettings.SCOPE_ALL.equals(
             PgsSmartSearchSettings.scope(c));
-        for(Model m:active(c)){
+        return activeForProfile(c,PgsAutoHostSettings.current(c),all);
+    }
+    static synchronized List<Model> activeForProfile(Context c,String host,boolean all){
+        ArrayList<Model> found=new ArrayList<>();
+        for(Model m:listForProfile(c,host)){
+            if(!m.enabled||!PgsAutoHostPolicy.templateBelongsTo(m.hostProfile,host))
+                continue;
             if(!all&&!PgsAutoCatalog.isSelectedName(c,m.name))continue;
             found.add(m);
             if(found.size()>=PgsAutoCatalog.MAX_SELECTED)break;
