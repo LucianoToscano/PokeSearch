@@ -7,7 +7,7 @@ package com.lucianotoscano.pokesearchoverlay;
 final class PgsNightSupervisorPolicy {
     static final long CHECK_INTERVAL_MS=30000L;
     static final int MAX_MISSING_GAME_CHECKS=2;
-    enum Decision { KEEP, STOP_SAFETY, STOP_GAME_MISSING, STOP_PROFILE, STOP_ENGINE }
+    enum Decision { KEEP, STOP_SAFETY, STOP_GAME_MISSING, STOP_PROFILE, STOP_ENGINE, STOP_NOTIFICATIONS }
     private PgsNightSupervisorPolicy(){}
     static boolean canStart(String profile,boolean gameVisible,
         boolean warning,boolean notificationsOn,boolean alreadyBusy){
@@ -17,12 +17,19 @@ final class PgsNightSupervisorPolicy {
     }
     static Decision check(String initialProfile,String currentProfile,
         boolean gameVisible,boolean warning,boolean engineBusy,int missingChecks){
+        return check(initialProfile,currentProfile,gameVisible,warning,engineBusy,
+            missingChecks,true);
+    }
+    static Decision check(String initialProfile,String currentProfile,
+        boolean gameVisible,boolean warning,boolean engineBusy,int missingChecks,
+        boolean notificationsEnabled){
         if(!PgsAutoHostPolicy.PGSHARP.equals(
                 PgsAutoHostPolicy.profile(initialProfile))||
             !PgsAutoHostPolicy.PGSHARP.equals(
                 PgsAutoHostPolicy.profile(currentProfile)))
             return Decision.STOP_PROFILE;
         if(warning)return Decision.STOP_SAFETY;
+        if(!notificationsEnabled)return Decision.STOP_NOTIFICATIONS;
         if(engineBusy)return Decision.STOP_ENGINE;
         if(!gameVisible&&missingChecks>=MAX_MISSING_GAME_CHECKS)
             return Decision.STOP_GAME_MISSING;

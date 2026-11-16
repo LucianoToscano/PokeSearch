@@ -50,6 +50,7 @@ final class PgsAutoMenus {
         void startNightSupervisor();
         void stopNightSupervisor();
         boolean nightSupervisorActive();
+        String nightSupervisorSummary();
         void startSmartSearch(String goal);
         void startSearch();
         void sequenceRun();
@@ -981,6 +982,13 @@ final class PgsAutoMenus {
             "a sessão. A supervisão não controla o cliente externo.",9,false);
         tips.setMaxLines(4);
         root.addView(tips,margined(-1,dp(62),2));
+        // Inside the existing scroll view; no new popup, toolbar or overlay.
+        TextView diagnostic=label("DIAGNÓSTICO · Caminhada externa e captura não confirmadas\n"+
+            actions.nightSupervisorSummary(),9,false);
+        diagnostic.setMaxLines(10);
+        diagnostic.setContentDescription("Diagnóstico somente leitura do modo noturno. "+
+            actions.nightSupervisorSummary());
+        root.addView(diagnostic,margined(-1,-2,2));
         boolean active=actions.nightSupervisorActive();
         Button start=button(active?"■ Parar supervisão":
             "▷ Iniciar supervisão noturna",10);
