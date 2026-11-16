@@ -610,10 +610,8 @@ public class MainActivity extends Activity {
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
             FrameLayout loginHotspot=new FrameLayout(this);
-            // A imagem da Pokébola inclui transparência: a borda vermelha visível
-            // fica abaixo do topo do ImageView. Descemos a arte do seletor
-            // preservando alinhamento ao centro branco da Pokébola.
-            // A borda óptica é conferida no Samsung; pixels são físicos, não dp.
+            // Seletor independente do OAuth; alinhar à silhueta real do ícone,
+            // não ao centro do ImageView quando a arte tiver padding assimétrico.
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
                 d(30),d(21),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             shell.addView(loginHotspot,hotLp);
@@ -625,19 +623,30 @@ public class MainActivity extends Activity {
             pokeballLoginBadges[i]=badge;
             loginHotspot.setContentDescription("Escolher Conta 1 ou 2 para Pokébola "+(i+1));
             loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
-            // Alinhar o canto inferior do badge a 2 pixels *físicos* acima
-            // da primeira linha visível da Pokébola (não do ImageView).
-            // A matriz já foi enfileirada em fitVisibleArtwork; aqui ela é
-            // lida só após o layout. Não altera a área visual da Pokébola.
-            icon.post(()->{
+            // LT376e: ambos os eixos seguem a arte óptica calculada em
+            // coordenadas do próprio shell, não o centro nominal de 512px.
+            // Recalcular após mudanças reais de largura/densidade na Home.
+            final Runnable alignBadge=()->{
                 int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
-                if(visibleTop<0||!loginHotspot.isAttachedToWindow())return;
+                int visibleCenterX=HomeMenuIconPack.opticalCenterXInParentPx(icon);
+                if(visibleTop<0||visibleCenterX<0||!loginHotspot.isAttachedToWindow())return;
                 FrameLayout.LayoutParams placement=
                     (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
-                placement.height=d(18);
-                placement.topMargin=visibleTop-2-placement.height;
-                placement.gravity=Gravity.TOP|Gravity.CENTER_HORIZONTAL;
+                int height=d(18);
+                int desiredLeft=visibleCenterX-d(15);
+                int desiredTop=visibleTop-2-height;
+                if(placement.leftMargin==desiredLeft&&placement.topMargin==desiredTop&&
+                    placement.height==height&&placement.gravity==(Gravity.TOP|Gravity.LEFT))return;
+                placement.width=d(30);
+                placement.height=height;
+                placement.leftMargin=desiredLeft;
+                placement.topMargin=desiredTop;
+                placement.gravity=Gravity.TOP|Gravity.LEFT;
                 loginHotspot.setLayoutParams(placement);
+            };
+            icon.post(alignBadge);
+            icon.addOnLayoutChangeListener((v,l,t,r,b,oldL,oldT,oldR,oldB)->{
+                if((r-l)!=(oldR-oldL)||(b-t)!=(oldB-oldT))icon.post(alignBadge);
             });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
