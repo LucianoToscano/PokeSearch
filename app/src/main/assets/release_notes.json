@@ -4786,6 +4786,32 @@
           "As funções precisam de testes físicos separados com PGSharp/Pokemod e Android 11/13/14; compilação automática não prova ações no jogo."
         ]
       }
+    },
+    {
+      "id": "lt371-night-supervisor-20261115",
+      "minVersionCode": 54574,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT371 — Supervisão Noturna do PGSharp",
+      "sections": {
+        "novidades": [
+          "Nova seção compacta Modo Noturno na aba Ação: depois de configurar Autowalk e Virtual Go Plus diretamente no PGSharp, confirme o preparo e ative somente a supervisão pelo PokeSearch.",
+          "Indicador lunar na bolha para mostrar que o monitoramento noturno está ativo, sem atribuir caminhada ou captura ao PokeSearch."
+        ],
+        "melhorias": [
+          "Verificação local a cada 30 segundos: se o jogo sair da tela, surgir aviso humano, mudar o cliente ou iniciar outro motor do PokeSearch, a supervisão para e solicita intervenção.",
+          "Proteção contra toques concorrentes: Busca Inteligente, Monitor, Sequência e toque curto da bolha não iniciam o motor de gestos do PokeSearch enquanto a supervisão estiver ativa.",
+          "Confirmações de Autowalk e Virtual Go Plus não são persistidas para a sessão seguinte; são lembretes manuais, não verificações de conexão."
+        ],
+        "correcoes": [
+          "Aviso explícito ao parar: desligar a supervisão não desliga Autowalk nem Virtual Go Plus do PGSharp.",
+          "Notificações e jogo em primeiro plano obrigatórios no início; nenhum clique automático em avisos de segurança ou confirmação de passageiro."
+        ],
+        "emDesenvolvimento": [
+          "PGSharp fornece a caminhada e as tentativas de captura nesta configuração. O PokeSearch não ativa, desativa, verifica VGP nem confirma capturas; exige recursos externos disponíveis no cliente.",
+          "Pokemod e outros clientes ainda não têm automação noturna de movimento + captura homologada; modo indisponível até testes reais.",
+          "O sistema Android pode suspender serviços ou desligar a tela; supervisão não garante funcionamento noturno contínuo. Falta teste físico em Android 11/13/14."
+        ]
+      }
     }
   ]
 }
