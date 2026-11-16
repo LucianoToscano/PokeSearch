@@ -18,14 +18,14 @@ assert.match(service,/stopWatchOnly\(false\);\s*stopSequence\("PARADO"\);\s*halt
 assert.doesNotMatch(service,/\.contains\("pgsharp"\)/,
     "no unrelated foreground package may pretend to be the game");
 assert.match(service,/return PgsAutoHostPolicy\.isGameWindow\(pkg\);/);
-assert.match(home,/homeWatchStatus=homeText\(/);
-assert.match(home,/PgsAutoClickService\.monitorHomeState\(this\)/);
-assert.match(home,/PgsAutoWatchUiPolicy\.label\(watchState\)/);
-assert.match(home,/setContentDescription\("Monitor de favoritos sem clique/);
+// LT378 hides the diagnostic row ONLY in Home; the monitor stays in PGS menus.
+assert.doesNotMatch(home,/homeWatchStatus/);
+assert.match(service,/public static String monitorHomeState\(Context context\)/);
+assert.match(service,/private void setWatchOnly\(boolean enabled\)/);
 assert.match(service,/private void scanWatchOnly\(\)/);
 const block=service.slice(service.indexOf("private void setWatchOnly(boolean enabled)"),
     service.indexOf("/** Segure o botão para localizar os ícones"));
 assert.doesNotMatch(block,/\b(dispatchGesture|scanAndTap|tap)\s*\(/,
     "passive watcher still has zero gesture calls");
 assert.match(host,/SAMSUNG_GAME_PACKAGE="com\.nianticlabs\.pokemongo\.ares"/);
-console.log("LT362 home status, exact foreground and no-gesture contract PASS");
+console.log("LT362 monitor preserved in menus, hidden on Home, exact foreground, no-gesture PASS");
