@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.71",
-  "code": 54578,
-  "label": 51377,
-  "previous_tag": "v0.03.70-54577",
-  "qa_max_code": 54577,
-  "release_notes": "PokeSearch LT377 — Pokébolas P1/P2 usam busca pública em modo Visitante sem exigir login, inclusive Conta 2 desconectada. Seletor Conta: Visitante, Conta 1 e Conta 2, nomes/fotos apenas se confirmados no perfil oficial. Login Google/Discord usa controles oficiais PoGoCoordinates; verificação de /profile pode retornar ao PokeSearch após autenticação confirmada. Logout individual mantém overlays em funcionamento e atualiza sessão; perfis/cookies continuam isolados, sem importar OAuth do navegador. Seleção de treinadores retirada da interface da Pokébola e dados legados preservados. Testes QA 7/7 na PR #458 HEAD 398a6be3b3be4618df9c7817d0567a1f114617fe, mais LT253; Samsung Android 11–14, OAuth real, avatar, menu, acessibilidade, PGSharp/Pokemod separadamente ainda sem validação física. Busca supervisionada não é caminhada nem captura confirmada; atualização exige aprovação do Android."
+  "version": "0.03.72",
+  "code": 54579,
+  "label": 51378,
+  "previous_tag": "v0.03.71-54578",
+  "qa_max_code": 54578,
+  "release_notes": "LT378 — Home minimalista: removidos o texto do logotipo PokeSearch, o subtítulo POKÉMON GO, a faixa PGS Monitor: desligado e o sufixo PoGoCoordinates /search, sem deixar espaço vazio. Emblema, acessos do menu e controles permanecem. O rodapé com a versão abre a página oficial da release correspondente no GitHub. Auto Hunt/Buscar Pokémon inicia desligado na conexão de Acessibilidade: sem abrir bolha nem começar monitor/varredura sozinho; só uma ação explícita do usuário inicia o recurso, com proteção contra armamento antigo. Preservadas contas P1/P2/Visitante, sprites, modelos, filtros, favorited, sequências, monitor, login PoGoCoordinates, OTA, assinatura e dados. QA 7/7 no HEAD PR #461 de9663d6859bff0788155efba3feca184001d486 (Node, LT169, LT211, Java, LT173, PGS APK debug, Secure beta/R8). Homologação física Android 11-14/Samsung, OAuth e PGSharp/Pokemod separadamente ainda pendente; monitor não comprova captura; instalação exige confirmação Android."
 }
