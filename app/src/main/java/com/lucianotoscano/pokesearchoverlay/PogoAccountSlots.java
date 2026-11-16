@@ -26,8 +26,10 @@ final class PogoAccountSlots {
         return WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE);
     }
     static boolean supportsGuest(Context context){
-        // Never borrow an authenticated default cookie jar for Visitante.
-        return supportsSecond()||!loggedIn(context,1);
+        // A dedicated Visitante slot requires its OWN WebView profile.
+        // On older single-profile WebViews, P1/P2 may still search as guests
+        // through a disconnected Conta 1; never share a live signed-in jar.
+        return supportsSecond();
     }
     static SharedPreferences prefs(Context context,int slot){
         return context.getSharedPreferences(slot==0?"pogo_guest":
@@ -113,9 +115,8 @@ final class PogoAccountSlots {
     /** Call before settings/evaluateJavascript/navigation on the fresh WebView. */
     static void attach(WebView web,int slot){
         if(slot==0){
-            if(supportsSecond())WebViewCompat.setProfile(web,NAME_GUEST);
-            else if(loggedIn(web.getContext(),1))
-                throw new IllegalStateException("Visitor cannot share signed-in profile");
+            if(!supportsSecond())throw new IllegalStateException("Isolated visitor profile unavailable");
+            WebViewCompat.setProfile(web,NAME_GUEST);
         }else if(slot==2){
             if(!supportsSecond())throw new IllegalStateException("No separate WebView profiles");
             WebViewCompat.setProfile(web,NAME_2);
@@ -123,7 +124,7 @@ final class PogoAccountSlots {
     }
     static CookieManager cookieManager(int slot){
         if(slot==0){
-            if(!supportsSecond())return CookieManager.getInstance();
+            if(!supportsSecond())throw new IllegalStateException("Isolated visitor profile unavailable");
             return ProfileStore.getInstance().getOrCreateProfile(NAME_GUEST)
                 .getCookieManager();
         }
