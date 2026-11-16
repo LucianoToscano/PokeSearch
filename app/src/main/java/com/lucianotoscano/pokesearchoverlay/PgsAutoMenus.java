@@ -627,20 +627,19 @@ final class PgsAutoMenus {
             b.setOnClickListener(v->showCentral(tab));
         }
         root.addView(tabs,margined(-1,dp(30),3));
-        if(selectedTab==0)appendCentralPokemon(root);
-        else{
-            // Keep the status and Start visible while actions/settings scroll.
-            LinearLayout body=vertical();
-            if(selectedTab==1)appendCentralActions(body);
-            else appendCentralSettings(body);
-            ScrollView content=new ScrollView(context);
-            content.setFillViewport(false);
-            content.setVerticalScrollBarEnabled(false);
-            content.addView(body);
-            int available=PgsAutoMenuStyle.read(context).popupHeight;
-            root.addView(content,margined(-1,
-                dp(Math.max(55,available-145)),3));
-        }
+        // LT370: one vertical scrolling area for ALL tabs, no nested scroll.
+        // Status and Start remain fixed below it on compact screens.
+        LinearLayout body=vertical();
+        if(selectedTab==0)appendCentralPokemon(body);
+        else if(selectedTab==1)appendCentralActions(body);
+        else appendCentralSettings(body);
+        ScrollView content=new ScrollView(context);
+        content.setFillViewport(false);
+        content.setVerticalScrollBarEnabled(false);
+        content.addView(body);
+        int available=PgsAutoMenuStyle.read(context).popupHeight;
+        root.addView(content,margined(-1,
+            dp(Math.max(55,available-145)),3));
 
         TextView status=label("Estado: "+PgsAutoClickService.searchStatus(),9,false);
         status.setSingleLine(true);
@@ -716,7 +715,7 @@ final class PgsAutoMenus {
         String scope=PgsSmartSearchSettings.scope(context);
         String[] scopes={PgsSmartSearchSettings.SCOPE_ALL,
             PgsSmartSearchSettings.SCOPE_FAVORITES};
-        String[] descriptions={"Todos c/ modelo","Meus favoritos"};
+        String[] descriptions={"Disponíveis (até 10)","Meus favoritos"};
         for(int i=0;i<2;i++){
             final String value=scopes[i];
             Button select=button(descriptions[i],9);
@@ -745,13 +744,11 @@ final class PgsAutoMenus {
         input.setPadding(dp(8),0,dp(8),0);
         input.setBackground(bg(TILE,0x33FFFFFF,7));
         LinearLayout rows=vertical();
-        ScrollView scroll=new ScrollView(context);
-        scroll.setVerticalScrollBarEnabled(false);
-        scroll.addView(rows);
         root.addView(title,margined(-1,dp(20),2));
-        // LT368: pesquisa acima da lista, não escondida no rodapé.
+        // Search stays above the species list; the single parent scroll
+        // keeps the bottom Start button visible on any configured size.
         root.addView(input,margined(-1,dp(33),3));
-        root.addView(scroll,margined(-1,dp(155),3));
+        root.addView(rows,margined(-1,-2,3));
         final Runnable[] render={null};
         render[0]=()->{
             rows.removeAllViews();
