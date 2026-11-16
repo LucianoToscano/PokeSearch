@@ -640,6 +640,7 @@ public final class PgsAutoClickService extends AccessibilityService {
                 if(enabled)stopSequence("SEQUÊNCIA · MONITOR SELECIONADO");
                 setWatchOnly(enabled);
             }
+            @Override public void autoDetectHost(){probeActiveFeedHost();}
             @Override public void startSearch(){
                 // Called only from explicit Start in the LT368 Central.
                 // Never leave two engines active or use an old POINT target.
@@ -1987,6 +1988,146 @@ public final class PgsAutoClickService extends AccessibilityService {
                 status("SEM CAPTURA");showReason(error);
             }
         }),260L);
+    }
+
+    // LT370: visual probe, not APK/package inspection. Both hosts are
+    // assessed against the SAME screenshot with their own saved templates.
+    // Two stable frames are required; ambiguous or absent -> manual choice.
+    private interface HostProbeFrame {
+        void ready(java.util.List<PgsAutoIconDetector.Match> pg,
+            java.util.List<PgsAutoIconDetector.Match> pm,int w,int h);
+        void failed(String reason);
+    }
+    private void probeActiveFeedHost(){
+        if(android.os.Build.VERSION.SDK_INT<30){
+            showReason("Identificação visual exige Android 11+.");return;
+        }
+        if(!isGameVisible()||gameAccountSafetyNoticePresent()||
+            passengerPromptPresent()||running||watching||sequenceActive||
+            teachingInProgress||teachingScheduled){
+            showReason("Abra o feed do jogo, sem avisos, e pause outras "+
+                "automações antes de detectar a interface.");return;
+        }
+        try{
+            final PgsAutoIconDetector pg=new PgsAutoIconDetector(
+                this,PgsAutoHostPolicy.PGSHARP,true);
+            final PgsAutoIconDetector pm=new PgsAutoIconDetector(
+                this,PgsAutoHostPolicy.POKEMOD,true);
+            if(!PgsAutoHostProbePolicy.safeToProbe(true,false,false,
+                pg.templateCount(),pm.templateCount())){
+                showReason("Detecção visual indisponível: falta miniatura "+
+                    "validada de PGSharp ou Pokemod. Escolha manualmente "+
+                    "e cadastre uma imagem do feed.");return;
+            }
+            if(quickMenus!=null)quickMenus.dismissAll();
+            status("AUTO · IDENTIFICANDO INTERFACE");
+            captureHostProbeFrame(pg,pm,new HostProbeFrame(){
+                @Override public void ready(
+                    java.util.List<PgsAutoIconDetector.Match> firstPg,
+                    java.util.List<PgsAutoIconDetector.Match> firstPm,int w,int h){
+                    handler.postDelayed(()->{
+                        if(!isGameVisible()||gameAccountSafetyNoticePresent()||
+                            passengerPromptPresent()){
+                            status("AUTO · JOGO INDISPONÍVEL");return;
+                        }
+                        captureHostProbeFrame(pg,pm,new HostProbeFrame(){
+                            @Override public void ready(
+                                java.util.List<PgsAutoIconDetector.Match> secondPg,
+                                java.util.List<PgsAutoIconDetector.Match> secondPm,
+                                int nextW,int nextH){
+                                boolean foundPg=stableHostMatch(firstPg,secondPg,
+                                    w,h,nextW,nextH);
+                                boolean foundPm=stableHostMatch(firstPm,secondPm,
+                                    w,h,nextW,nextH);
+                                String result=PgsAutoHostProbePolicy.choose(
+                                    foundPg,foundPm);
+                                if(PgsAutoHostPolicy.OTHER.equals(result)){
+                                    status("AUTO · NÃO IDENTIFICADA");
+                                    showReason("Interface ambígua ou sem modelo "+
+                                        "compatível em duas leituras. "+
+                                        "Selecione manualmente; nenhum toque enviado.");
+                                    return;
+                                }
+                                PgsAutoHostSettings.select(
+                                    PgsAutoClickService.this,result);
+                                PgsAutoClickService.modelsChanged();
+                                status("AUTO · "+PgsAutoHostPolicy.displayLabel(result));
+                                Toast.makeText(PgsAutoClickService.this,
+                                    "Interface reconhecida visualmente: "+
+                                    PgsAutoHostPolicy.displayLabel(result)+
+                                    ". Abra a bolha para continuar.",
+                                    Toast.LENGTH_LONG).show();
+                            }
+                            @Override public void failed(String reason){
+                                status("AUTO · NÃO IDENTIFICADA");
+                                showReason(reason);
+                            }
+                        });
+                    },650L);
+                }
+                @Override public void failed(String reason){
+                    status("AUTO · SEM CAPTURA");
+                    showReason(reason);
+                }
+            });
+        }catch(java.io.IOException|RuntimeException unavailable){
+            showReason("Não foi possível carregar modelos visuais para identificar "+
+                "a interface; seleção manual continua disponível.");
+        }
+    }
+    private boolean stableHostMatch(
+        java.util.List<PgsAutoIconDetector.Match> first,
+        java.util.List<PgsAutoIconDetector.Match> second,
+        int firstW,int firstH,int secondW,int secondH){
+        if(first==null||second==null)return false;
+        for(PgsAutoIconDetector.Match a:first)
+            for(PgsAutoIconDetector.Match b:second)
+                if(PgsAutoWatchPolicy.sameSprite(a.id,a.group,a.x,a.y,
+                    firstW,firstH,b.id,b.group,b.x,b.y,secondW,secondH))
+                    return true;
+        return false;
+    }
+    private void captureHostProbeFrame(PgsAutoIconDetector pg,
+        PgsAutoIconDetector pm,HostProbeFrame callback){
+        capture(new CaptureCallback(){
+            @Override public void onBitmap(Bitmap bitmap){
+                Bitmap frame;
+                try{frame=bitmap.copy(Bitmap.Config.ARGB_8888,false);}
+                catch(RuntimeException unavailable){frame=null;}
+                if(frame==null){callback.failed("Captura vazia.");return;}
+                final Bitmap copy=frame;
+                final int width=copy.getWidth(),height=copy.getHeight();
+                try{
+                    analysis.execute(()->{
+                        java.util.List<PgsAutoIconDetector.Match> pgMatches=null;
+                        java.util.List<PgsAutoIconDetector.Match> pmMatches=null;
+                        boolean complete=false;
+                        try{
+                            pgMatches=pg.find(copy);
+                            if(!pg.lastScanAborted()){
+                                pmMatches=pm.find(copy);
+                                complete=!pm.lastScanAborted();
+                            }
+                        }catch(RuntimeException ignored){}
+                        finally{copy.recycle();}
+                        final java.util.List<PgsAutoIconDetector.Match> p=pgMatches,
+                            m=pmMatches;
+                        final boolean ok=complete;
+                        handler.post(()->{
+                            if(!ok)callback.failed("Leitura visual incompleta; "+
+                                "reduza modelos ou selecione manualmente.");
+                            else callback.ready(p,m,width,height);
+                        });
+                    });
+                }catch(RuntimeException rejected){
+                    copy.recycle();
+                    callback.failed("Scanner de interface indisponível.");
+                }
+            }
+            @Override public void onError(String reason){
+                callback.failed("Captura da interface falhou: "+reason);
+            }
+        });
     }
 
     private void scanAndTap(){
