@@ -3084,6 +3084,15 @@ public class MainActivity extends Activity {
                     }
                 },6500L);
             }else{
+                // A stale session should show the REAL provider login promptly.
+                // Never trap a manual sync behind 24 invisible polling attempts.
+                if("sync".equals(loginPurpose)&&"login necessário".equals(auth)){
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    if(loginWaitLabel!=null)
+                        loginWaitLabel.setText("Sessão expirada. Entre pelo site oficial para sincronizar.");
+                    return;
+                }
                 // Search does not expose a Shiny badge for unlinked trainers.
                 // On an ambiguous, hydrated page, visit the official profile once.
                 if("não confirmado".equals(auth)&&!profileDiscoveryAttempted&&
