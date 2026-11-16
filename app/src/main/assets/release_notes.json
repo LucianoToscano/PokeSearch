@@ -4892,6 +4892,34 @@
           "A instalação da atualização requer confirmação do usuário pelo Android; os testes automatizados não comprovam funcionamento físico nem login final."
         ]
       }
+    },
+    {
+      "id": "lt377-guest-pogocoordinates-login-20261116",
+      "minVersionCode": 54578,
+      "date": "16/11/2026",
+      "title": "PokeSearch LT377 — Visitante e login opcional PoGoCoordinates",
+      "sections": {
+        "novidades": [
+          "Pokébolas P1 e P2 permitem busca pública sem login; Conta 2 não bloqueia mais o overlay por estar desconectada.",
+          "Seletor com três opções: Conta: Visitante, Conta 1 e Conta 2, identificando nome oficial apenas quando a sessão confirma o perfil.",
+          "Modo Visitante independente quando Android WebView oferece perfis isolados; ausência de suporte é informada sem misturar cookies."
+        ],
+        "melhorias": [
+          "O login Google/Discord permanece pelo fluxo oficial do site; o PokeSearch pode validar o perfil oficial /profile após um link visível, sincronizar nome/foto e retornar ao app quando a autenticação for confirmada.",
+          "Logout individual mantém as Pokébolas operando e atualiza a sessão para busca pública; filtros e preferências permanecem.",
+          "Seleção de treinadores removida da interface de escolha de conta; dados legados preservados sem exigir vínculo."
+        ],
+        "correcoes": [
+          "Removida a mensagem que exigia conectar a Conta 2 para abrir a Pokébola, sem flexibilizar isolamento de sessões ou validar falsamente OAuth.",
+          "Estados sem login exibem Visitante e busca liberada, sem tratar um avatar ou uma página de busca como prova de autenticação.",
+          "Preservados alinhamento dos seletores, overlays compactos, sprites Minior, P/M/G, tutorial P1/P2, filtros, Favoritos, Busca Inteligente, Sequências, Modo Noturno, OTA e assinaturas."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física pendente: login Google/Discord, retornos automáticos, duas sessões WebView, expiração e foto, em Samsung Android 11–14.",
+          "Perfis WebView independentes dependem do suporte WebView MULTI_PROFILE. No WebView antigo, use uma Pokébola em conta desconectada para busca visitante quando o perfil separado estiver indisponível.",
+          "Desfoque, cooldown, favoritos, acessibilidade, Minior e integração com PGSharp/Pokemod separadamente requerem prova em aparelho real. Supervisão, caminhada, tentativa e captura confirmada não se confundem."
+        ]
+      }
     }
   ]
 }
