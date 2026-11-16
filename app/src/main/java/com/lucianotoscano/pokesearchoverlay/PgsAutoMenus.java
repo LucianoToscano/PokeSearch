@@ -46,6 +46,7 @@ final class PgsAutoMenus {
         void selectSprites();
         void sequencePick(String type,int index,boolean destination);
         void sequencePreview();
+        void autoDetectHost();
         void startSearch();
         void sequenceRun();
         void sequenceStop();
@@ -607,6 +608,7 @@ final class PgsAutoMenus {
     // original P1/P2: nenhum sexto ícone, painel duplicado ou gesto implícito.
     private boolean centralAdvanced=false;
     private int centralStep=-1;
+    private boolean centralManualHost=false;
     void showSearch(){showCentral(0);}
 
     private void showCentral(int selectedTab){
@@ -669,7 +671,24 @@ final class PgsAutoMenus {
     }
 
     private void appendCentralPokemon(LinearLayout root){
-        // LT369: selecionar PGSharp/Pokemod é parte da aba Pokémon, não popup.
+        // LT370: automatic recognition is an optional two-frame visual probe.
+        // Manual host profiles stay behind a compact fall-back expander.
+        LinearLayout autoRow=horizontal();
+        TextView hostLabel=label("Interface: "+
+            PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(context)),9,false);
+        hostLabel.setSingleLine(true);
+        hostLabel.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        autoRow.addView(hostLabel,new LinearLayout.LayoutParams(0,dp(28),1));
+        Button auto=button("◎ Detectar",9);
+        auto.setContentDescription("Tentar detectar visualmente a interface do jogo");
+        auto.setOnClickListener(v->{dismissAll();actions.autoDetectHost();});
+        autoRow.addView(auto,new LinearLayout.LayoutParams(dp(72),dp(28)));
+        root.addView(autoRow,margined(-1,dp(28),2));
+        Button manual=button(centralManualHost?"⌃ Esconder seleção manual":
+            "⌄ Interface incorreta? Selecionar manualmente",9);
+        manual.setOnClickListener(v->{centralManualHost=!centralManualHost;showCentral(0);});
+        root.addView(manual,margined(-1,dp(27),2));
+        if(centralManualHost){
         LinearLayout profiles=horizontal();
         String active=PgsAutoHostSettings.current(context);
         String[] ids={PgsAutoHostPolicy.PGSHARP,
@@ -692,6 +711,32 @@ final class PgsAutoMenus {
             profiles.addView(option,lp);
         }
         root.addView(profiles,margined(-1,dp(28),2));
+        }
+        LinearLayout scopeRow=horizontal();
+        String scope=PgsSmartSearchSettings.scope(context);
+        String[] scopes={PgsSmartSearchSettings.SCOPE_ALL,
+            PgsSmartSearchSettings.SCOPE_FAVORITES};
+        String[] descriptions={"Todos c/ modelo","Meus favoritos"};
+        for(int i=0;i<2;i++){
+            final String value=scopes[i];
+            Button select=button(descriptions[i],9);
+            markChosen(select,scope.equals(value));
+            select.setContentDescription("Buscar: "+descriptions[i]);
+            select.setOnClickListener(v->{
+                PgsSmartSearchSettings.selectScope(context,value);
+                actions.modelsChanged();showCentral(0);
+            });
+            LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(28),1);
+            if(i>0)lp.leftMargin=dp(3);
+            scopeRow.addView(select,lp);
+        }
+        root.addView(scopeRow,margined(-1,dp(28),2));
+        int ready=PgsAutoTemplateStore.readyForSearch(context);
+        TextView diagnostic=label(ready>0?
+            "Modelos disponíveis nesta busca: "+ready+" (máximo 10 por leitura)":
+            "Sem miniaturas de feed válidas. Cadastre uma no Scanner.",9,false);
+        diagnostic.setMaxLines(2);
+        root.addView(diagnostic,margined(-1,dp(37),1));
         TextView title=label("Selecionados: 0/10",10,true);
         EditText input=new EditText(context);
         input.setTextSize(13);input.setSingleLine(true);
