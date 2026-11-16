@@ -1813,13 +1813,15 @@ public class OverlayService extends Service {
         OtaAssets.checkAsync(this);
         // No second account may accidentally use the default cookie profile.
         final int selectedAccount=PogoAccountSlots.assigned(this,isSecondaryOverlay());
-        if(selectedAccount==2&&(!PogoAccountSlots.supportsSecond()||
-           !PogoAccountSlots.loggedIn(this,2))){
+        if((selectedAccount==2&&!PogoAccountSlots.supportsSecond())||
+           (selectedAccount==0&&!PogoAccountSlots.supportsGuest(this))){
+            // Never share authenticated default WebView cookies with Visitante.
             android.widget.Toast.makeText(this,
-                "Conecte a Conta 2 antes de usar esta Pokébola",
+                "Perfil independente indisponível neste Android WebView",
                 android.widget.Toast.LENGTH_LONG).show();
             stopSelf();return;
         }
+        // Both Pokébolas can perform public searches without authentication.
         // Independent app-wide maintenance and per-version stop for both overlays.
         if(!AppAvailability.isAllowed(this)){stopSelf();return;}
         if (!IntegrityGuard.verify(this)) {
