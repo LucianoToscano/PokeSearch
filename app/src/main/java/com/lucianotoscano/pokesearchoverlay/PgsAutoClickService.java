@@ -898,7 +898,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
         refreshAppearance();
         status("PARADO");
-        handler.postDelayed(()->beginGestureTour(false),1500L);
+        // LT375d: tutorial automático somente na Pokébola P1/P2.
+        // Preserve SEARCH coachmark code for a future opt-in release.
     }
     private GradientDrawable roundedCounter(){
         GradientDrawable bg=new GradientDrawable();

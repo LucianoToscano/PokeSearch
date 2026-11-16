@@ -36,7 +36,7 @@ assert.ok(editor.includes('const movable=movableMenuIds()'));
 assert.ok(editor.includes('const locked=id==="appearance"'));
 assert.ok(editor.includes("line.dataset.key=id"));
 assert.ok(editor.includes('eye.disabled=locked'));
-assert.ok(editor.includes("line.append(eye,handle)"),"two controls replace arrows");
+assert.ok(editor.includes("line.append(handle,name,eye)"),"two controls replace arrows");
 assert.ok(!editor.includes('className="orderUp"')&&!editor.includes('className="orderDown"'));
 assert.ok(editor.includes("bindAppearanceReorder(commands,panel)"));
 const gestures=dock.split("function bindAppearanceReorder(commands,panel){")[1]?.split("function renderAppearanceChoices(){")[0]||"";

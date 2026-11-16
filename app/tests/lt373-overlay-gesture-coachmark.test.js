@@ -15,6 +15,9 @@ check(engine,/lp\.alpha=\.72f/,"Android 12 safe untrusted touch opacity");
 check(engine,/private static OverlayGestureTour activeTour/,"no stacked dimmers across features");
 check(engine,/Path\.FillType\.EVEN_ODD/,"transparent hole centered on actual icon");
 check(ball,/grip.getLocationOnScreen/,"manual bounds from real Pokeball grip");
+check(ball,/grip.getWidth\(\)-art/,"spotlight targets visible 21dp icon inside wider touch hitbox");
+check(engine,/desired.offset\(-origin\[0\],-origin\[1\]\)/,"local canvas and screenshot share one screen origin");
+check(ball,/menuPanel.getLocationOnScreen\(windowOrigin\)/,"refresh tile screen origin follows popup shifts");
 check(engine,/DashPathEffect/,"dotted guide");
 check(engine,/Path hand=new Path/,"vector transparent animated hand");
 check(engine,/SystemClock\.uptimeMillis\(\)/,"animated ring/touch frames");
@@ -50,12 +53,15 @@ check(search,/TYPE_ACCESSIBILITY_OVERLAY/,"trusted accessibility window");
 check(search,/quickMenus\.toggle\(left,bubbleParams\.y\);\s*if\(quickMenus\.isOpen\(\)\)coach/,"PGS real hold");
 check(search,/quickMenus\.collapseOneLevel\(\);\s*coach\(OverlayGestureTour.HIDE_MENU\)/,"PGS real menu retract");
 check(engine,/Do not require that potentially destructive action/,"no compelled auto search");
-check(home,/Rever tutorial interativo dos overlays/,"home replay UI");
+check(home,/Rever tutorial da Pokébola/,"home replay UI only for Pokébola");
 check(home,/remove\(OverlayGestureTour.POKEBALL_DONE_KEY\)/,"manual replay clears shared tutorial");
 check(home,/if\(OverlayService.isRunning\(\)\)[\s\S]*else if\(OverlayService.isSecondaryRunning\(\)\)/,
  "replay selects P1 OR P2");
-for(const key of ['"rare_candy_overlay"','"pgs_auto_settings_v1"'])
- assert.ok(home.includes(key),"replay preserves "+key);
+// LT375d: Candy and Search keep their code for later, but never auto-display now.
+assert.doesNotMatch(candy,/main\.postDelayed\(\(\)->beginGestureTour\(false\)/);
+assert.doesNotMatch(search,/handler\.postDelayed\(\(\)->beginGestureTour\(false\)/);
+assert.doesNotMatch(home,/PgsAutoClickService\.replayGestureTour\(\)/);
+assert.doesNotMatch(home,/remove\(OverlayGestureTour\.DONE_KEY\)/);
 check(dock,/function reportRefreshCoachTarget\(\)/,"real refresh DOM tile locator");
 check(dock,/Native\.tutorialRefreshAnchor\(bounds\.left,bounds\.top,bounds\.width,bounds\.height\)/,
  "native receives measured CSS bounds");

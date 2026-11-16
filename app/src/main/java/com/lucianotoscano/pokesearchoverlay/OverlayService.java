@@ -197,6 +197,7 @@ public class OverlayService extends Service {
     private int visualMenuOffsetX=0,visualMenuOffsetY=0,
         visualResultsOffsetX=0,visualResultsOffsetY=0,
         visualGearMenuGap=0,visualMenuItemGap=0,visualResultGapBetween=31,
+        visualMenuBlurPx=4,
         visualHeaderY=0,visualHeaderX=0,visualHeaderTouchWidth=35,
         visualHeaderTouchHeight=30,visualHeaderAfterGap=0;
     private int visualMenuBaseDp(){
@@ -249,6 +250,7 @@ public class OverlayService extends Service {
             visualResultsOffsetY=o.optInt("resultsOffsetY",0);
             visualGearMenuGap=o.optInt("gearMenuGap",0);
             visualMenuItemGap=o.optInt("menuItemGap",0);
+            visualMenuBlurPx=Math.max(0,Math.min(16,o.optInt("menuBlur",4)));
             visualResultGapBetween=o.optInt("resultGapBetween",31);
             visualHeaderY=o.optInt("headerIconY",0);
             visualHeaderX=o.optInt("headerOffsetX",0);
@@ -256,6 +258,31 @@ public class OverlayService extends Service {
             visualHeaderTouchHeight=o.optInt("headerTouchHeight",30);
             visualHeaderAfterGap=o.optInt("headerAfterGap",0);
         }catch(org.json.JSONException ignored){}
+    }
+    // LT375d: WebView backdrop-filter cannot read pixels of a foreign app.
+    // Android 12+ can optionally blur across native windows. This is a
+    // guarded, system-dependent effect: do NOT simulate it using screenshots,
+    // MediaProjection, accessibility capture or a fake opaque backdrop.
+    private boolean nativeMenuBlurAvailable(){
+        return android.os.Build.VERSION.SDK_INT>=31&&wm!=null&&
+            wm.isCrossWindowBlurEnabled();
+    }
+    private void updateNativeMenuBlur(){
+        if(android.os.Build.VERSION.SDK_INT<31||menuParams==null||
+            menuRoot==null||wm==null)return;
+        // Blur-behind is a system effect behind the window; toggle only
+        // while the real menu is open. Honor the Editor Visual slider (0=off).
+        boolean use=menuExpanded&&visualMenuBlurPx>0&&nativeMenuBlurAvailable();
+        int radius=use?dp(visualMenuBlurPx):0;
+        boolean old=(menuParams.flags&WindowManager.LayoutParams.FLAG_BLUR_BEHIND)!=0;
+        if(old==use&&menuParams.getBlurBehindRadius()==radius)return;
+        if(use)menuParams.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+        else menuParams.flags&=~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+        menuParams.setBlurBehindRadius(radius);
+        if(menuRoot.isAttachedToWindow()){
+            try{wm.updateViewLayout(menuRoot,menuParams);}
+            catch(RuntimeException e){recordFailure("desfoque nativo do menu",e);}
+        }
     }
     private void broadcastVisualPrefs(){
         String jsCode="window.onVisualPrefs&&window.onVisualPrefs("+visualPrefsJson+")";
@@ -292,6 +319,7 @@ public class OverlayService extends Service {
             }catch(org.json.JSONException ignored){changedGuides=true;}
             visualPrefsJson=next;
             readVisualRuntime();
+            updateNativeMenuBlur();
             android.content.SharedPreferences.Editor edit=overlayPrefs().edit()
                 .putString("visualPrefsJson",visualPrefsJson);
             if(changedGuides)edit.commit();
@@ -379,9 +407,10 @@ public class OverlayService extends Service {
             int width=perCard*columns+gap*(columns-1)+2;
             return Math.max(38,Math.min(usable,width));
         }
-        // 38dp reserves room for the existing 35dp mode/header hitbox;
-        // every Pokémon tile itself remains exactly 30dp wide.
-        return Math.max(38,resultTileDp()+resultMetadataWidthDp);
+        // LT375: the legacy 38dp minimum protected an OLD header hitbox
+        // that is now GONE. Reserve the data column only when it is visible.
+        // Never change the existing sprite tile/pitch/spacing.
+        return resultTileDp()+resultMetadataWidthDp;
     }
     private String resultDisplayOptionsJson(){
         return "{\"count\":"+resultShowCount+
@@ -420,8 +449,13 @@ public class OverlayService extends Service {
                 if(grip==null||!grip.isAttachedToWindow())return null;
                 int[] location=new int[2];
                 grip.getLocationOnScreen(location);
-                return new android.graphics.Rect(location[0],location[1],
-                    location[0]+grip.getWidth(),location[1]+grip.getHeight());
+                // The visible original Pokébola PNG is 21dp, centred within
+                // the larger 53×30dp native gesture hitbox. Spotlight must
+                // follow the visible art, not the transparent touch edges.
+                int art=dp(21);
+                int left=location[0]+Math.max(0,(grip.getWidth()-art)/2);
+                int top=location[1]+Math.max(0,(dp(30)-art)/2);
+                return new android.graphics.Rect(left,top,left+art,top+art);
             });
         gestureTour.start(replay);
     }
@@ -1283,7 +1317,12 @@ public class OverlayService extends Service {
         if(right||left){
             menuLeft=!right;
             menuParams.x=right?params.x+dp(dockDp())+gap:params.x-width-gap;
-            rowY=params.y;
+            // Default to the -10dp proximity already confirmed by the user.
+            // Preserve any explicit offset chosen in Editor Visual.
+            if(!visualMenuVertical&&visualMenuOffsetX==0)
+                menuParams.x+=menuLeft?dp(10):-dp(10);
+            // Align centres of the 34dp menu hitbox and 30dp visible ball.
+            rowY=params.y+(!visualMenuVertical?(dp(30)-dp(menuBase))/2:0);
         }else{
             // Keep the one-row toolbar next to, never ON TOP of, the gear.
             menuLeft=params.x+dp(dockDp())/2>screen/2;
@@ -1298,20 +1337,14 @@ public class OverlayService extends Service {
         menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),
             menuParams.x+dp(visualMenuOffsetX)));
         rowY=Math.max(0,Math.min(Math.max(0,bottom-dp(menuBase)),rowY+dp(visualMenuOffsetY)));
-        // The menu and Pokémon are separate native overlays. Avoid covering
-        // visible sprites or the other Pokéball's menu, but keep the current
-        // 30dp buttons and all dimensions unchanged. Prefer the nearest
-        // side-by-side or above/below position that really fits on screen.
+        // LT375: the results list MUST NOT move the menu vertically.
+        // Its transparent/padded bounds previously looked like a physical
+        // obstacle. Keep both native windows independent; avoid only the
+        // other Pokéball's genuinely opened toolbar, if present.
         int[] otherMenu=otherMenuBounds();
-        int[] visibleResults=null;
-        if(resultParams!=null&&resultRoot!=null&&!resultCollapsed&&!minimized&&
-                resultRoot.getVisibility()==View.VISIBLE){
-            visibleResults=new int[]{resultParams.x,resultParams.y,
-                resultParams.width,resultParams.height};
-        }
         int[] safePosition=OverlayPlacementPolicy.avoid(
             menuParams.x,rowY,width,dp(menuBase),screen,bottom,dp(4),
-            new int[][]{visibleResults,otherMenu});
+            new int[][]{otherMenu});
         menuParams.x=safePosition[0];
         rowY=safePosition[1];
         menuLeft=menuParams.x+width<=params.x;
@@ -3877,6 +3910,7 @@ public class OverlayService extends Service {
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
+        updateNativeMenuBlur();
         // Position first and send one sync for this open/close transition.
         // Future drags still synchronize from updateMenuPosition().
         deferMenuSync=true;
@@ -4346,12 +4380,15 @@ public class OverlayService extends Service {
         pickerOpen=true;
         hideDetails();
         try{
+            // Center on the live toolbar instead of the reordered star icon.
+            int menuCenterX=menuParams==null?anchorX:
+                menuParams.x+menuParams.width/2;
             favoritePickerDialog=PokemonPicker.show(OverlayService.this,()->{
                 if(!stopped)update();
             },()->{
                 pickerOpen=false;favoritePickerDialog=null;
                 if(!stopped)update();
-            },anchorX,anchorY,
+            },menuCenterX,anchorY,
                 menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp)),
                 menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp))+dp(visualMenuBaseDp()),
                 isSecondaryOverlay());
@@ -5815,14 +5852,22 @@ public class OverlayService extends Service {
             }
             startVerifiedShinySearch(generation,0);
         });}
+        @JavascriptInterface public boolean crossWindowBlurAvailable(){
+            return OverlayService.this.nativeMenuBlurAvailable();
+        }
         @JavascriptInterface public void tutorialRefreshAnchor(float x,float y,
                 float width,float height){
             handler.post(()->{
                 if(gestureTour==null||!gestureTour.active()||!menuExpanded||
                     menuParams==null||width<12||height<12||
                     x<0||y<0||x>850||y>850||width>250||height>250)return;
-                int left=menuParams.x+dp(Math.round(x));
-                int top=menuParams.y+dp(Math.round(y));
+                if(menuPanel==null||!menuPanel.isAttachedToWindow())return;
+                // Same SCREEN coordinates as the Pokébola guide. The menu
+                // WebView can be inset vertically when a popup opens above.
+                int[] windowOrigin=new int[2];
+                menuPanel.getLocationOnScreen(windowOrigin);
+                int left=windowOrigin[0]+dp(Math.round(x));
+                int top=windowOrigin[1]+dp(Math.round(y));
                 gestureTour.setRefreshBounds(new android.graphics.Rect(left,top,
                     left+dp(Math.round(width)),top+dp(Math.round(height))));
             });

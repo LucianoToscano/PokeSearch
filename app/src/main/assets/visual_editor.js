@@ -144,22 +144,26 @@ window.onVisualEditorPreview=function(area){
   measurementScheduled=true;
   requestAnimationFrame(()=>{
    measurementScheduled=false;
-   const label=(node)=>{
+   const label=(node,compact=false)=>{
     if(!node||!node.getBoundingClientRect)return;
     const rect=node.getBoundingClientRect();
     if(rect.width<=0||rect.height<=0)return;
-    node.setAttribute("data-visual-measure",
-     Math.round(rect.width)+"×"+Math.round(rect.height)+" px");
+    // Compact 34×30 inside a 34px tile; full dimensions on wide panels.
+    const w=Math.round(rect.width),h=Math.round(rect.height);
+    node.setAttribute("data-visual-measure",w+"×"+h+(compact?"":" px"));
+    node.setAttribute("aria-description","Medidas: "+w+" por "+h+" pixels");
    };
    if(controlsWindow){
     label(document.getElementById("quickMenuList"));
     label(document.getElementById("choices"));
     document.querySelectorAll("#quickMenuList .quickRow,#quickMenuList .quickFooterAction")
-     .forEach(label);
+     .forEach(node=>label(node,true));
    }
    if(resultWindow){
-    label(document.getElementById("shell"));
-    document.querySelectorAll("#spawns .spawn").forEach(label);
+    // The native 24–40px sprite strip cannot host a full-width badge.
+    label(document.getElementById("shell"),true);
+    document.querySelectorAll("#spawns .spawn")
+     .forEach(node=>node.removeAttribute("data-visual-measure"));
    }
   });
  }
@@ -391,7 +395,13 @@ function renderVisualEditor(){
    addSlider(panel,"menuTransparency","Transparência única dos menus","%");
    addSlider(panel,"menuBlur","Desfoque dos painéis"," px");
    const info=document.createElement("p");info.className="uxNote";
-   info.textContent="50% de transparência base. Camada de contraste mantém as opções legíveis quando o desfoque não funciona sobre outros apps.";
+   // This preference is 50% by default, independent of blur strength.
+   // Cross-app blur requires Android 12+ and system/GPU permission.
+   const blurSupported=!!(window.Native&&typeof Native.crossWindowBlurAvailable==="function"&&
+    Native.crossWindowBlurAvailable());
+   info.textContent=blurSupported?
+    "50% de transparência base. Desfoque nativo disponível: ajuste os px acima. O Android pode desativá-lo para economizar energia.":
+    "50% de transparência base. Desfoque nativo indisponível neste Android; a superfície semitransparente mantém os menus legíveis.";
    panel.appendChild(info);
    btn(panel,"Linhas-guia menu: "+(current.menuGuides?"ON":"OFF"),()=>{
     change("menuGuides",!current.menuGuides);renderVisualEditor();

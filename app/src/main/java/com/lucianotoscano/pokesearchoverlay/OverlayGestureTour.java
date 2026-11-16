@@ -223,6 +223,14 @@ final class OverlayGestureTour {
             if(desired==null||desired.isEmpty())return;
             int width=getWidth(),height=getHeight();
             if(width<=0||height<=0)return;
+            // LT375d: the target is measured in SCREEN coordinates, while
+            // this full-screen pass-through window draws in LOCAL coordinates.
+            // Samsung status/navigation insets made the old circle drift
+            // away from the Pokébola. Use the same screen reference frame
+            // for both native windows, then convert to this canvas origin.
+            int[] origin=new int[2];
+            getLocationOnScreen(origin);
+            desired.offset(-origin[0],-origin[1]);
             int gap=dp(6);
             RectF hole=new RectF(
                 Math.max(1,desired.left-gap),Math.max(1,desired.top-gap),
@@ -295,27 +303,46 @@ final class OverlayGestureTour {
             for(int i=0;i<lines.length;i++)text(c,lines[i],card.centerX(),textY+i*dp(20),13);
             text(c,(index+1)+" / "+steps.length,card.centerX(),
                 card.bottom-dp(9),10);
-            // Small original outlined hand: transparent asset-like vector art.
-            float bob=dp(4)*(float)Math.sin(tick/300.0);
-            c.save();c.translate(cx+dp(12),cy+dp(7)+bob);
+            // LT375d: original compact, anatomically clear pointing hand.
+            // One long index finger, curled middle/ring fingers and a thumb;
+            // keep the fingertip centred on the true highlighted icon.
+            float bob=animated?dp(2)*(float)Math.sin(tick/340.0):0f;
+            c.save();
+            c.translate(cx,cy+dp(9)+bob);
+            c.scale(.72f,.72f);
             Path hand=new Path();
-            hand.moveTo(-dp(5),-dp(2));
-            hand.cubicTo(-dp(16),-dp(8),-dp(19),dp(8),-dp(14),dp(18));
-            hand.lineTo(-dp(12),dp(42));
-            hand.cubicTo(-dp(23),dp(30),-dp(30),dp(35),-dp(25),dp(49));
-            hand.lineTo(-dp(7),dp(77));
-            hand.cubicTo(dp(3),dp(91),dp(34),dp(83),dp(41),dp(67));
-            hand.lineTo(dp(47),dp(43));
-            hand.cubicTo(dp(47),dp(32),dp(32),dp(31),dp(27),dp(40));
-            hand.cubicTo(dp(27),dp(25),dp(13),dp(23),dp(8),dp(31));
-            hand.lineTo(dp(4),dp(3));
-            hand.cubicTo(dp(3),-dp(3),-dp(2),-dp(5),-dp(5),-dp(2));
+            hand.moveTo(-dp(7),dp(40));
+            hand.lineTo(-dp(7),-dp(10));
+            hand.cubicTo(-dp(7),-dp(21),dp(8),-dp(21),dp(8),-dp(10));
+            hand.lineTo(dp(8),dp(32));
+            hand.cubicTo(dp(12),dp(24),dp(23),dp(25),dp(25),dp(36));
+            hand.cubicTo(dp(30),dp(30),dp(39),dp(33),dp(40),dp(43));
+            hand.cubicTo(dp(47),dp(37),dp(56),dp(44),dp(53),dp(55));
+            hand.lineTo(dp(47),dp(78));
+            hand.cubicTo(dp(44),dp(92),dp(29),dp(98),dp(17),dp(91));
+            hand.lineTo(-dp(2),dp(87));
+            hand.cubicTo(-dp(12),dp(85),-dp(18),dp(80),-dp(24),dp(70));
+            hand.lineTo(-dp(34),dp(54));
+            hand.cubicTo(-dp(42),dp(42),-dp(30),dp(33),-dp(22),dp(41));
+            hand.lineTo(-dp(7),dp(55));
             hand.close();
-            paint.setStyle(Paint.Style.FILL);paint.setColor(0xEB122235);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0xEB1D3046);
             c.drawPath(hand,paint);
             paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(dp(2.2f));paint.setColor(Color.WHITE);
-            c.drawPath(hand,paint);c.restore();
+            paint.setStrokeJoin(Paint.Join.ROUND);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+            paint.setStrokeWidth(dp(3));
+            paint.setColor(0xFFF4FBFF);
+            c.drawPath(hand,paint);
+            // Fingernail and knuckle folds make the pointed index legible,
+            // even on small devices and at the end of the tap animation.
+            paint.setColor(0xFFAFD0E0);
+            paint.setStrokeWidth(dp(1.5f));
+            c.drawLine(-dp(3),-dp(9),dp(3),-dp(9),paint);
+            c.drawLine(dp(19),dp(41),dp(23),dp(54),paint);
+            c.drawLine(dp(34),dp(46),dp(36),dp(57),paint);
+            c.restore();
             if(visible&&animated)postInvalidateDelayed(85);
         }
     }

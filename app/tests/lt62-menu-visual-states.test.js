@@ -285,7 +285,7 @@ check("LT62 Personalização: short labels, fixed-size sprites and aligned menu 
  const body=dock.split("function renderAppearanceChoices(){")[1]?.split('document.addEventListener("pointerdown",event=>{')[0]||"";
  assert.ok(body.includes('link("Info Pokémon","info")'));
  assert.ok(body.includes('link("Editor Visual","visual")'));
- assert.ok(body.includes('help.textContent="Menus · segure ≡ para arrastar"'));
+ assert.ok(body.includes('help.textContent="Menus · segure ⋮⋮ para arrastar"'));
  assert.ok(body.includes('reset.className="resetMenuLayout"'));
  assert.ok(body.includes('reset.textContent="↺"'));
  assert.ok(body.includes('commands.className="appearanceCommands"'));
@@ -688,7 +688,8 @@ check("LT62 Location: title paste, no close X, inline km and compact panel",()=>
  assert.ok(location.includes('fieldRow.append(field)'));
  assert.ok(location.includes('const radiusWrap=make("span","locRadiusInputWrap")'));
  assert.ok(location.includes('radiusWrap.append(radiusField,unit)'));
- assert.ok(location.includes('const unit=make("span","locRadiusUnit","km")'));
+ assert.ok(location.includes('const unit=make("button","locRadiusUnit","km");unit.type="button"'));
+  assert.ok(location.includes("unit.onclick=renderLocationCooldownTable"));
  assert.ok(!location.includes('const close=make("button","choiceClose","×")'));
  assert.ok(dock.includes('width:min(208px,calc(100vw - 14px))!important'));
 });

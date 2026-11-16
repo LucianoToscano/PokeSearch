@@ -49,8 +49,8 @@ test("More only scrolls when content is clipped",()=>{
  assert.ok(css.includes('overflow-x:hidden!important;overflow-y:auto!important;'));
  assert.ok(dock.includes('pane.scrollHeight>next+1'));
 });
-test("Favorites anchored near tapped star with outside touches preserved",()=>{
- assert.ok(picker.includes('final int margin=dp(activity,8),gap=dp(activity,8);'));
+test("Favorites anchored near the actual toolbar with outside touches preserved",()=>{
+ assert.ok(picker.includes('final int margin=dp(activity,8),gap=dp(activity,3);'));
  assert.ok(picker.includes('FavoritePanelGeometry.adjacentToToolbar('));
  assert.ok(picker.includes('root.addOnLayoutChangeListener('));
  assert.ok(picker.includes('FLAG_NOT_TOUCH_MODAL'));

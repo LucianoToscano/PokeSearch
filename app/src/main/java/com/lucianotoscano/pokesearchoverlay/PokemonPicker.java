@@ -637,7 +637,7 @@ public final class PokemonPicker {
             final int screen=activity.getResources().getDisplayMetrics().widthPixels;
             final int displayH=activity.getResources().getDisplayMetrics().heightPixels;
             final int preferredWidth=Math.min(screen-dp(activity,22),dp(activity,348));
-            final int margin=dp(activity,8),gap=dp(activity,8);
+            final int margin=dp(activity,8),gap=dp(activity,3);
             // Keep the existing P1 prefs file and historic key names for upgrades.
             // The P2 suffix is applied ONLY to window position, never favorites.
             final SharedPreferences positionPrefs=activity.getSharedPreferences("prefs",0);
@@ -672,7 +672,9 @@ public final class PokemonPicker {
                         screen,displayH,preferredWidth,actualHeight,margin);
                     // An older LT209 position must never reopen over toolbar.
                     if(!FavoritePanelGeometry.overlapsToolbar(
-                        candidate[1],actualHeight,barTop,barBottom))xy=candidate;
+                            candidate[1],actualHeight,barTop,barBottom)&&
+                        FavoritePanelGeometry.nearAnchor(candidate,xy,dp(activity,12)))
+                        xy=candidate;
                 }
                 android.view.WindowManager.LayoutParams lp=window.getAttributes();
                 if(lp.gravity== (Gravity.TOP|Gravity.LEFT) &&

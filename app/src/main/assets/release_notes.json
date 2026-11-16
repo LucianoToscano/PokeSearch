@@ -4837,6 +4837,32 @@
           "Animações, toque pass-through, tamanho/rotação, acessibilidade e compatibilidade Android 11/13/14 requerem avaliação visual no aparelho; testes automatizados não substituem homologação física."
         ]
       }
+    },
+    {
+      "id": "lt375-p1-p2-visual-revisao-20261116",
+      "minVersionCode": 54576,
+      "date": "16/11/2026",
+      "title": "PokeSearch LT375 — Correções visuais das Pokébolas",
+      "sections": {
+        "novidades": [
+          "Editor Visual com medidas compactas mais legíveis e explicação sobre suporte do desfoque nativo no Android 12+.",
+          "Tutorial da Pokébola com círculo alinhado à arte e novo indicador de dedo; somente P1/P2 exibem a orientação automaticamente."
+        ],
+        "melhorias": [
+          "Localização: tabela de distâncias/cooldown organizada, opções aplicadas ao campo KM pelo toque.",
+          "Favoritos, Background, filtros, abas Padrão/Inverso e opções ⋯ seguem o mesmo desenho compacto e alinhamento da barra.",
+          "A barra flutuante permanece centrada na Pokébola, sem ser empurrada pelos resultados; medidas e guia roxa não ocupam espaço fantasma."
+        ],
+        "correcoes": [
+          "Minior volta à escala visual padronizada; em casos com imagem sem medição de transparência é aplicado ajuste limitado, sem trocar a sprite.",
+          "Rótulos de medidas deixam de se sobrepor aos botões ou às sprites; fundo permanece 50% transparente por padrão, com desfoque nativo opcional quando disponível.",
+          "Tutorias de Busca Pokémon e Doce Raro deixam de aparecer automaticamente nesta etapa; o tutorial compartilhado de P1/P2 continua com botão Pular e opção Rever."
+        ],
+        "emDesenvolvimento": [
+          "Testes físicos Android 11/12/13/14, Minior em formas diversas, P/M/G, gesto real, acessibilidade e desempenho de desfoque ainda pendentes.",
+          "O desfoque entre janelas depende do suporte do aparelho e pode afetar todo o fundo da janela; onde indisponível utiliza-se fallback semitransparente. Atualização não comprova instalação automática."
+        ]
+      }
     }
   ]
 }

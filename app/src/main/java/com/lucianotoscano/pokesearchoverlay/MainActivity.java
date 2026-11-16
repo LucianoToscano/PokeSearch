@@ -3769,28 +3769,22 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Consultando versões oficiais…",Toast.LENGTH_SHORT).show();
         });
         body.addView(checkUpdates,new LinearLayout.LayoutParams(-1,d(42)));
-        // LT373: replay is opt-in. Reuse the real live overlays and their
-        // own private completion flags; do not reset filters or accounts.
+        // LT375d: only the P1/P2 Pokébola tutorial is active at present.
+        // Do not reset Candy/Search onboarding flags or start their coachmarks.
         Button replayCoach=new Button(this);
-        replayCoach.setText("👆 Rever tutorial interativo dos overlays");
+        replayCoach.setText("👆 Rever tutorial da Pokébola");
         replayCoach.setAllCaps(false);replayCoach.setTextSize(12);
         replayCoach.setOnClickListener(v->{
             getSharedPreferences(OverlayGestureTour.POKEBALL_PREFS,MODE_PRIVATE)
                 .edit().remove(OverlayGestureTour.POKEBALL_DONE_KEY).apply();
-            for(String name:new String[]{"rare_candy_overlay","pgs_auto_settings_v1"})
-                getSharedPreferences(name,MODE_PRIVATE).edit()
-                    .remove(OverlayGestureTour.DONE_KEY).apply();
             String action="com.lucianotoscano.pokesearchoverlay.REPLAY_GESTURE_TOUR";
-            // Manual replay opens one tour (P1 preferred); never two Pokéballs.
+            // Prefer P1, otherwise P2; never start two simultaneous lessons.
             if(OverlayService.isRunning())
                 startService(new Intent(this,OverlayService.class).setAction(action));
             else if(OverlayService.isSecondaryRunning())
                 startService(new Intent(this,SecondaryOverlayService.class).setAction(action));
-            else if(RareCandyOverlayService.isRunning())
-                startService(new Intent(this,RareCandyOverlayService.class).setAction(action));
-            else PgsAutoClickService.replayGestureTour();
-            Toast.makeText(this,
-                "Tutoriais reativados. Abra o overlay desejado e siga o dedo animado.",
+            else Toast.makeText(this,
+                "Tutorial preparado. Abra uma Pokébola para visualizar.",
                 Toast.LENGTH_LONG).show();
         });
         body.addView(replayCoach,new LinearLayout.LayoutParams(-1,d(42)));

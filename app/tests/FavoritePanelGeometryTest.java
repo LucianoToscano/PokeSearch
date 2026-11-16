@@ -42,6 +42,19 @@ public final class FavoritePanelGeometryTest {
         if(FavoritePanelGeometry.overlapsToolbar(532,270,810,852))
             throw new AssertionError("pane safely above toolbar must remain valid");
         checks+=3;
-        System.out.println("PASS LT210 FavoritePanelGeometry: "+checks+" placement, overlap and drag tests");
+        if(!FavoritePanelGeometry.nearAnchor(new int[]{50,860},
+                new int[]{50,860},12))
+            throw new AssertionError("near saved placement must be reusable");
+        if(!FavoritePanelGeometry.nearAnchor(new int[]{61,870},
+                new int[]{50,860},12))
+            throw new AssertionError("small position differences are okay");
+        if(FavoritePanelGeometry.nearAnchor(new int[]{350,360},
+                new int[]{50,860},12))
+            throw new AssertionError("far stored position cannot override toolbar");
+        if(FavoritePanelGeometry.nearAnchor(new int[]{50,810},
+                new int[]{50,860},12))
+            throw new AssertionError("overlapping vertical saved position rejected");
+        checks+=4;
+        System.out.println("PASS LT210/LT375b FavoritePanelGeometry: "+checks+" placement, overlap and drag tests");
     }
 }
