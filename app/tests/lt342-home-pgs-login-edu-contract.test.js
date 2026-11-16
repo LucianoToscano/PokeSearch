@@ -20,7 +20,8 @@ assert.match(main,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\
 assert.match(main,/LinearLayout\.LayoutParams\(0,d\(60\),1\)/);
 assert.match(main,/screen\.addView\(header,new LinearLayout\.LayoutParams\(-1,d\(58\)\)/);
 assert.match(main,/header\.addView\(branding,new LinearLayout\.LayoutParams\(0,d\(54\),1f\)\)/);
-assert.match(main,/wordmarkWidth=Math\.max\(d\(104\),Math\.min\(d\(118\),availableBrandWidth\)\)/);
+assert.doesNotMatch(main,/wordmarkWidth=Math\.max|brandTitle|brandSubtitle/);
+assert.match(main,/branding\.addView\(brand,new LinearLayout\.LayoutParams\(d\(32\),d\(32\)\)\)/);
 assert.match(main,/shareIcon=makeIcon\(R\.drawable\.home_share_icon/);
 assert.match(main,/homeLightMode\?Color\.BLACK:Color\.WHITE,android\.graphics\.PorterDuff\.Mode\.SRC_IN/);
 assert.match(main,/shareIcon\.setImageAlpha\(255\)/);
