@@ -159,8 +159,12 @@ public final class FastDevConsoleActivity extends Activity {
         }finally{c.disconnect();}
     }
     private static Preview latest() throws Exception {
-        JSONArray all=new JSONArray(readText(open(API),512*1024));
         Preview best=null;
+        // Many official LT releases can push the Preview release out of the
+        // first API page. Search up to six bounded pages, stopping once found.
+        for(int page=1;page<=6;page++){
+        JSONArray all=new JSONArray(readText(open(API+"&page="+page),700*1024));
+        if(all.length()==0)break;
         for(int i=0;i<all.length();i++){
             JSONObject release=all.optJSONObject(i);
             if(release==null||release.optBoolean("draft",true)||
@@ -183,6 +187,8 @@ public final class FastDevConsoleActivity extends Activity {
                 if(best==null||best.code<number)best=new Preview((int)number,link,
                     sha.substring(7).toLowerCase(Locale.ROOT),size);
             }
+        }
+        if(best!=null)break;
         }
         return best;
     }
