@@ -8547,12 +8547,28 @@ function renderMoreChoices(){
  }
  fit();
 }
+// LT373: locate the REAL refresh tile for the native coachmark spotlight.
+function reportRefreshCoachTarget(){
+ if(!controlsWindow||typeof Native==="undefined"||
+    typeof Native.tutorialRefreshAnchor!=="function")return;
+ const tile=document.querySelector('#quickMenuList button[data-key="period"]');
+ if(!tile||tile.hidden)return;
+ const bounds=tile.getBoundingClientRect();
+ if(bounds.width>=12&&bounds.height>=12)
+  Native.tutorialRefreshAnchor(bounds.left,bounds.top,bounds.width,bounds.height);
+}
+window.reportRefreshCoachTarget=reportRefreshCoachTarget;
 // Long press never sends manual refresh, including Android synthesized click.
 function bindRefreshGesture(button){
  let hold=null,longTriggered=false,pressed=false,x=0,y=0;
  const cancel=()=>{if(hold!==null){clearTimeout(hold);hold=null;}};
  const open=()=>{cancel();if(longTriggered)return;
-  longTriggered=true;if(choiceOpen==="period")closeChoices();else toggleChoices("period");};
+  const opening=choiceOpen!=="period";
+  longTriggered=true;if(choiceOpen==="period")closeChoices();else toggleChoices("period");
+  if(opening&&typeof Native!=="undefined"&&
+     typeof Native.tutorialRefreshHeld==="function")
+   Native.tutorialRefreshHeld();
+ };
  button.addEventListener("pointerdown",e=>{
   if(e.button!==0)return;
   cancel();longTriggered=false;pressed=true;x=e.clientX;y=e.clientY;
@@ -8633,6 +8649,7 @@ function renderQuickMenu(){
  }
  refreshQuickMenuStates();
  fit();
+ reportRefreshCoachTarget();
 }
 // A sound channel is audibly available only with Android permission and,
 // for favorites, at least one Pokémon on the watch list.

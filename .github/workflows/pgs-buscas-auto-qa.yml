@@ -20,6 +20,12 @@ on:
       - 'app/tests/lt369-single-overlay-contract.test.js'
       - 'app/tests/lt370-pas-pac-assist-contract.test.js'
       - 'app/tests/lt371-night-supervisor-contract.test.js'
+      # LT373: coachmarks are shared by three overlay services, not a second UI.
+      - 'app/tests/lt373-overlay-gesture-coachmark.test.js'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayGestureTour.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/RareCandyOverlayService.java'
+      - 'app/src/main/assets/dock.html'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PgsNightSupervisorPolicy.java'
       - 'app/tests/PgsNightSupervisorPolicyTest.java'
       - 'app/tests/PgsAutoHostProbePolicyTest.java'
@@ -72,6 +78,7 @@ jobs:
           node app/tests/lt369-single-overlay-contract.test.js
           node app/tests/lt370-pas-pac-assist-contract.test.js
           node app/tests/lt371-night-supervisor-contract.test.js
+          node app/tests/lt373-overlay-gesture-coachmark.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \

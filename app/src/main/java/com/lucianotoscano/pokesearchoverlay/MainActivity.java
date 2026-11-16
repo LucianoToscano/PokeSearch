@@ -3769,6 +3769,31 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Consultando versões oficiais…",Toast.LENGTH_SHORT).show();
         });
         body.addView(checkUpdates,new LinearLayout.LayoutParams(-1,d(42)));
+        // LT373: replay is opt-in. Reuse the real live overlays and their
+        // own private completion flags; do not reset filters or accounts.
+        Button replayCoach=new Button(this);
+        replayCoach.setText("👆 Rever tutorial interativo dos overlays");
+        replayCoach.setAllCaps(false);replayCoach.setTextSize(12);
+        replayCoach.setOnClickListener(v->{
+            getSharedPreferences(OverlayGestureTour.POKEBALL_PREFS,MODE_PRIVATE)
+                .edit().remove(OverlayGestureTour.POKEBALL_DONE_KEY).apply();
+            for(String name:new String[]{"rare_candy_overlay","pgs_auto_settings_v1"})
+                getSharedPreferences(name,MODE_PRIVATE).edit()
+                    .remove(OverlayGestureTour.DONE_KEY).apply();
+            String action="com.lucianotoscano.pokesearchoverlay.REPLAY_GESTURE_TOUR";
+            // Manual replay opens one tour (P1 preferred); never two Pokéballs.
+            if(OverlayService.isRunning())
+                startService(new Intent(this,OverlayService.class).setAction(action));
+            else if(OverlayService.isSecondaryRunning())
+                startService(new Intent(this,SecondaryOverlayService.class).setAction(action));
+            else if(RareCandyOverlayService.isRunning())
+                startService(new Intent(this,RareCandyOverlayService.class).setAction(action));
+            else PgsAutoClickService.replayGestureTour();
+            Toast.makeText(this,
+                "Tutoriais reativados. Abra o overlay desejado e siga o dedo animado.",
+                Toast.LENGTH_LONG).show();
+        });
+        body.addView(replayCoach,new LinearLayout.LayoutParams(-1,d(42)));
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
             "Alertar ao encontrar favorito nos filtros confirmados",true);

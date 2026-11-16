@@ -69,6 +69,23 @@ public final class RareCandyOverlayService extends Service {
     private SharedPreferences prefs;
     private WindowManager wm;
     private FrameLayout bubbleWindow;
+    private OverlayGestureTour gestureTour;
+    private void beginGestureTour(boolean replay){
+        if(destroyed||wm==null||prefs==null||bubbleWindow==null)return;
+        if(gestureTour!=null)gestureTour.close(false);
+        gestureTour=new OverlayGestureTour(this,wm,prefs,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            OverlayGestureTour.Kind.CANDY,visible,()->{
+                if(bubbleWindow==null||!bubbleWindow.isAttachedToWindow())return null;
+                int[] xy=new int[2];bubbleWindow.getLocationOnScreen(xy);
+                return new android.graphics.Rect(xy[0],xy[1],
+                    xy[0]+bubbleWindow.getWidth(),xy[1]+bubbleWindow.getHeight());
+            });
+        gestureTour.start(replay);
+    }
+    private void coach(String event){
+        if(gestureTour!=null)gestureTour.onEvent(event);
+    }
     private LinearLayout resultsShell,resultsList;
     private FrameLayout candyMenuRoot;
     private WebView candyMenuPanel;
@@ -249,6 +266,7 @@ public final class RareCandyOverlayService extends Service {
         accountBindingPrefs.registerOnSharedPreferenceChangeListener(candyAccountListener);
         attachSource();
         main.post(tick);
+        main.postDelayed(()->beginGestureTour(false),1600L);
     }
     private void createBubble(){
         bubbleWindow=new FrameLayout(this);
@@ -269,7 +287,13 @@ public final class RareCandyOverlayService extends Service {
         candyGrip.setBackgroundColor(Color.TRANSPARENT);
         candyGrip.setClickable(true);
         candyGrip.setContentDescription("Doce Raro: toque para resultados; segure para menu; arraste para mover");
-        candyGrip.setOnClickListener(v->toggleResults());
+        candyGrip.setOnClickListener(v->{
+            // First short tap on an open menu RETRACTS that menu, like P1/P2.
+            if(candyMenuVisible){
+                closeCandyMenu();
+                coach(OverlayGestureTour.HIDE_MENU);
+            }else toggleResults();
+        });
         bubbleWindow.addView(candyGrip,new FrameLayout.LayoutParams(-1,-1));
         bubbleParams=new WindowManager.LayoutParams(dp(BUBBLE_DP),dp(BUBBLE_DP),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
@@ -289,6 +313,8 @@ public final class RareCandyOverlayService extends Service {
                 if(destroyed||moved)return;
                 held=true;
                 toggleCandyMenu();
+                coach(candyMenuVisible?OverlayGestureTour.SHOW_MENU:
+                    OverlayGestureTour.HIDE_MENU);
             };
             @Override public boolean onTouch(View view,MotionEvent event){
                 switch(event.getActionMasked()){
@@ -407,6 +433,8 @@ public final class RareCandyOverlayService extends Service {
     }
     private void toggleResults(){
         visible=!visible;
+        coach(visible?OverlayGestureTour.SHOW_RESULTS:
+            OverlayGestureTour.HIDE_RESULTS);
         if(resultsShell!=null)resultsShell.setVisibility(visible?View.VISIBLE:View.GONE);
         if(candyMenuVisible&&!visible)closeCandyMenu();
         if(visible){
@@ -1408,6 +1436,9 @@ public final class RareCandyOverlayService extends Service {
             }
         };
     @Override public int onStartCommand(Intent i,int flags,int startId){
+        if(i!=null&&"com.lucianotoscano.pokesearchoverlay.REPLAY_GESTURE_TOUR".equals(i.getAction())){
+            main.post(()->beginGestureTour(true));return START_STICKY;
+        }
         if(i!=null&&ACTION_VISUAL_PICKUP_CONFIRMED.equals(i.getAction())){
             String point=i.getStringExtra(EXTRA_VISUAL_COORDS);
             long copiedAt=i.getLongExtra(EXTRA_VISUAL_COPIED_AT,0L);
@@ -1439,6 +1470,7 @@ public final class RareCandyOverlayService extends Service {
         if(prefs!=null)prefs.edit().putBoolean("candyAutoPickupOptIn",false).apply();
         stopService(new Intent(this,CandyScreenCaptureService.class));
         destroyed=true;running=false;
+        if(gestureTour!=null){gestureTour.close(false);gestureTour=null;}
         if(accountBindingPrefs!=null)
             accountBindingPrefs.unregisterOnSharedPreferenceChangeListener(candyAccountListener);
         ++generation;main.removeCallbacksAndMessages(null);

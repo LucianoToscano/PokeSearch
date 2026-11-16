@@ -1,4 +1,11 @@
+**LT373.1 — Tutorial de primeiro uso compartilhado P1/P2:** flag `overlay_tutorial_install/gestureCoachV3PokeballCompleted` por instalação, Pular marca ambas. Exibe uma única vez em P1 ou P2, inclusive uma vez em usuários existentes nesta versão de teste, sem se repetir nas próximas. Replay manual em Preferências. QA físico e release oficial sujeitos aos gates obrigatórios.
+
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
+
+## LT373 — Tutorial guiado animado sobre overlays reais (QA, não publicado — 16/11/2026)
+
+Branch `feature/lt373-interactive-overlay-tutorial-20261116`: motor nativo `OverlayGestureTour`, máscara escura com hole transparente no ícone verdadeiro, mão vetorial animada e seta pontilhada; observa toque, retração e long press reais, sem simulação de gestos. P1/P2 independentes, Doce Raro, Busca Pokémon e ↻ dentro das Pokébolas; a Busca não exige clique curto que ativaria busca. Pular e Rever em Preferências, flags de conclusão em arquivos separados, única camada por vez, `FLAG_NOT_TOUCHABLE` alpha 0.72, sem nova permissão. **QA Android físico, versão vertical, ↻ reordenado e TalkBack pendentes; não afirmar publicação.** A LT371 0.03.67/54574 continua versão oficial; LT372 PR #452 é QA separada. [Auditoria e testes](LT373_TUTORIAL_INTERATIVO_COACHMARK_20261116.md) · [ARK LT374](LT373_PROMPT_CONTINUIDADE_LT374_20261116.md).
+
 
 ## LT371 OFICIAL — Modo Noturno supervisionado — 0.03.67/54574
 

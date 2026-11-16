@@ -22,7 +22,7 @@ assert.match(alpha,/if\(outside\[i\]\)pixels\[i\]=Color\.TRANSPARENT/);
 assert.match(alpha,/isDarkBackdrop/);
 
 // Menu open: tapping bubble retracts WITHOUT toggling live search.
-assert.match(auto,/if\(quickMenus!=null&&quickMenus\.isOpen\(\)\)\{\s*quickMenus\.collapseOneLevel\(\);return true;\s*\}\s*toggle\(\)/);
+assert.match(auto,/if\(quickMenus!=null&&quickMenus\.isOpen\(\)\)\{\s*quickMenus\.collapseOneLevel\(\);\s*coach\(OverlayGestureTour\.HIDE_MENU\);\s*return true;\s*\}\s*toggle\(\)/);
 assert.match(auto,/PgsAutoTemplateStore\.active\(this\)/);
 assert.match(auto,/if\(existing\)PgsAutoTemplateStore\.clearTeaching\(this\)/);
 assert.match(auto,/scheduleArmedStart\(\)/);

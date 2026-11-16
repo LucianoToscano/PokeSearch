@@ -4812,6 +4812,31 @@
           "O sistema Android pode suspender serviços ou desligar a tela; supervisão não garante funcionamento noturno contínuo. Falta teste físico em Android 11/13/14."
         ]
       }
+    },
+    {
+      "id": "lt374-tutorial-unico-overlays-20261116",
+      "minVersionCode": 54575,
+      "date": "16/11/2026",
+      "title": "PokeSearch LT374 — Tutorial Interativo uma vez por instalação",
+      "sections": {
+        "novidades": [
+          "Primeira abertura da Pokébola 1 ou 2 ensina os gestos diretamente no ícone real, com brilho, dedo animado, seta pontilhada e botão Pular.",
+          "Aprenda a abrir e recolher resultados, segurar para opções e manter pressionado ↻ para escolher o intervalo de atualização automática."
+        ],
+        "melhorias": [
+          "P1 e P2 compartilham a conclusão do tutorial, sem repetir a mesma explicação nas duas Pokébolas.",
+          "Excepcionalmente nesta atualização, o tutorial aparecerá uma vez para usuários que já tinham instalado o app, para teste. Não se repete em próximas atualizações.",
+          "Rever tutorial interativo dos overlays continua disponível nas Preferências, somente quando solicitado pelo usuário.",
+          "Doce Raro e Busca Pokémon mantêm seus tutoriais específicos, exibidos uma vez no primeiro uso."
+        ],
+        "correcoes": [
+          "Impedida a duplicação do tutorial ao abrir simultaneamente P1 e P2. O botão Pular encerra a orientação das duas.",
+          "Preservados ícones e menus compactos originais, filtros, favoritos, contas independentes, sequências e monitoramento."
+        ],
+        "emDesenvolvimento": [
+          "Animações, toque pass-through, tamanho/rotação, acessibilidade e compatibilidade Android 11/13/14 requerem avaliação visual no aparelho; testes automatizados não substituem homologação física."
+        ]
+      }
     }
   ]
 }

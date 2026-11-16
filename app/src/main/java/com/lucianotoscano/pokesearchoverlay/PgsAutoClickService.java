@@ -73,6 +73,28 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean passengerWarningLatched=false;
 
     private PgsAutoMenus quickMenus;
+    private OverlayGestureTour gestureTour;
+    private void beginGestureTour(boolean replay){
+        if(windowManager==null||bubble==null||!bubble.isAttachedToWindow())return;
+        if(gestureTour!=null)gestureTour.close(false);
+        gestureTour=new OverlayGestureTour(this,windowManager,
+            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE),
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            OverlayGestureTour.Kind.SEARCH,false,()->{
+                if(bubble==null||!bubble.isAttachedToWindow())return null;
+                int[] xy=new int[2];bubble.getLocationOnScreen(xy);
+                return new android.graphics.Rect(xy[0],xy[1],
+                    xy[0]+bubble.getWidth(),xy[1]+bubble.getHeight());
+            });
+        gestureTour.start(replay);
+    }
+    public static void replayGestureTour(){
+        PgsAutoClickService current=instance;
+        if(current!=null)current.handler.post(()->current.beginGestureTour(true));
+    }
+    private void coach(String event){
+        if(gestureTour!=null)gestureTour.onEvent(event);
+    }
     private PgsAutoTapIndicator tapIndicator;
     private PgsAutoTargetPicker pointPicker;
     // LT367: editor de sequências não interfere no ciclo do Auto Hunt.
@@ -639,6 +661,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         stopSequence("PARADO");
         halt("PARADO");
         if(quickMenus!=null)quickMenus.dismissAll();
+        if(gestureTour!=null){gestureTour.close(false);gestureTour=null;}
         if(tapIndicator!=null){tapIndicator.clear();tapIndicator=null;}
         if(bubble!=null&&windowManager!=null) {
             try {windowManager.removeView(bubble);}catch(Exception ignored){}
@@ -857,10 +880,13 @@ public final class PgsAutoClickService extends AccessibilityService {
                     Point display=new Point();windowManager.getDefaultDisplay().getRealSize(display);
                     int left=display.x-bubbleParams.x-dp(22);
                     quickMenus.toggle(left,bubbleParams.y);
+                    if(quickMenus.isOpen())coach(OverlayGestureTour.SHOW_MENU);
                 }else {
                     // Toque com menu aberto apenas retrai o menu.
                     if(quickMenus!=null&&quickMenus.isOpen()){
-                        quickMenus.collapseOneLevel();return true;
+                        quickMenus.collapseOneLevel();
+                        coach(OverlayGestureTour.HIDE_MENU);
+                        return true;
                     }
                     toggle();
                 }
@@ -872,6 +898,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         catch(Exception e){Toast.makeText(this,"Não foi possível abrir o botão Busca Pokémon",Toast.LENGTH_LONG).show();}
         refreshAppearance();
         status("PARADO");
+        handler.postDelayed(()->beginGestureTour(false),1500L);
     }
     private GradientDrawable roundedCounter(){
         GradientDrawable bg=new GradientDrawable();
@@ -992,6 +1019,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         halt("FECHADO");
         if(tapIndicator!=null)tapIndicator.clear();
         if(quickMenus!=null)quickMenus.dismissAll();
+        if(gestureTour!=null){gestureTour.close(false);gestureTour=null;}
         if(bubble!=null&&windowManager!=null){
             try{windowManager.removeView(bubble);}catch(Exception ignored){}
             bubble=null;

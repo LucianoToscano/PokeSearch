@@ -15,7 +15,11 @@ assert(home.includes("controls.addView(rareCandyControl,candyLp)"));
 assert(source.includes("BUBBLE_DP=45, CANDY_ART_DP=20"),"artwork must match compact Pokémon result sprite");
 assert(source.includes("bubbleWindow.setBackgroundColor(Color.TRANSPARENT)"),"no candy tile/background");
 assert(source.includes("candyGrip.setOnTouchListener"),"native grip owns candy gestures");
-assert(source.includes("candyGrip.setOnClickListener(v->toggleResults())"));
+// LT373: the same REAL grip still toggles results, but its first short tap
+// when options are already open must retract that menu (P1/P2 parity).
+assert(source.includes("candyGrip.setOnClickListener(v->{"));
+assert(source.includes("if(candyMenuVisible){\n                closeCandyMenu();"));
+assert(source.includes("else toggleResults();"));
 assert(source.includes("bubbleWindow.addView(site,0"),"remote WebView remains below native grip");
 assert(source.includes("bubbleWindow.addView(candyGrip"),"same principle as Pokébola grip");
 assert(!source.includes("bubbleWindow.setOnTouchListener"),"do not intercept touch in parent");
