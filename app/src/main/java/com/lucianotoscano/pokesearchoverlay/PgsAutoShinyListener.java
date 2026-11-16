@@ -1,6 +1,9 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.service.notification.NotificationListenerService;
@@ -9,6 +12,15 @@ import java.util.Locale;
 
 /** Recebe avisos do PGSharp / Pokémon GO sem enviar mensagens a servidores. */
 public final class PgsAutoShinyListener extends NotificationListenerService {
+    /** Check actual Android permission; a screenshot never grants notification access. */
+    static boolean hasAccess(Context context){
+        try{
+            NotificationManager manager=(NotificationManager)
+                context.getSystemService(Context.NOTIFICATION_SERVICE);
+            return manager!=null&&manager.isNotificationListenerAccessGranted(
+                new ComponentName(context,PgsAutoShinyListener.class));
+        }catch(RuntimeException unavailable){return false;}
+    }
     private String previousMessage="";
     private long previousAt=0;
     @Override public void onNotificationPosted(StatusBarNotification sbn) {
