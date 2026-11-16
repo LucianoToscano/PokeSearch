@@ -1,6 +1,12 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.Manifest;
+import android.content.Context;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
@@ -18,6 +24,14 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.core.content.FileProvider;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
+import java.util.concurrent.TimeUnit;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.File;
@@ -40,6 +54,7 @@ public final class FastDevConsoleActivity extends Activity {
         "https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-";
     private static final String ASSET = "PokeSearch-FastDev-Preview.apk";
     private static final long MAX_APK = 180_000_000L;
+    private static final String CHANNEL="fastdev-preview-updates";
     private final ExecutorService io=Executors.newSingleThreadExecutor();
     private final Handler main=new Handler(Looper.getMainLooper());
     private TextView status;
@@ -80,6 +95,7 @@ public final class FastDevConsoleActivity extends Activity {
             "A versão FastDev usa somente pré-releases de testes publicados.");
         root.addView(note);
         setContentView(scroll);
+        scheduleUpdateChecks();
         check(); // lightweight foreground check; no silent installation
     }
     private void button(LinearLayout root,String text,View.OnClickListener action) {
@@ -142,7 +158,7 @@ public final class FastDevConsoleActivity extends Activity {
             return bytes.toString(StandardCharsets.UTF_8.name());
         }finally{c.disconnect();}
     }
-    private Preview latest() throws Exception {
+    private static Preview latest() throws Exception {
         JSONArray all=new JSONArray(readText(open(API),512*1024));
         Preview best=null;
         for(int i=0;i<all.length();i++){
@@ -169,6 +185,50 @@ public final class FastDevConsoleActivity extends Activity {
             }
         }
         return best;
+    }
+    /** Background discovery notifies; Android installer is always user-driven. */
+    private void scheduleUpdateChecks() {
+        try {
+            Constraints constraints=new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED).build();
+            PeriodicWorkRequest request=new PeriodicWorkRequest.Builder(
+                PollWorker.class,30,TimeUnit.MINUTES).setConstraints(constraints).build();
+            WorkManager.getInstance(getApplicationContext()).enqueueUniquePeriodicWork(
+                "fastdev-preview-updates",ExistingPeriodicWorkPolicy.KEEP,request);
+        }catch(RuntimeException ignored){}
+    }
+    public static final class PollWorker extends Worker {
+        public PollWorker(Context context,WorkerParameters parameters) {
+            super(context,parameters);
+        }
+        @Override public Result doWork() {
+            try {
+                Preview newer=latest();
+                if(newer==null)return Result.success();
+                Context ctx=getApplicationContext();
+                if(Build.VERSION.SDK_INT>=33 &&
+                   ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=
+                       PackageManager.PERMISSION_GRANTED)return Result.success();
+                NotificationManager manager=(NotificationManager)ctx.getSystemService(
+                    Context.NOTIFICATION_SERVICE);
+                if(manager==null)return Result.success();
+                if(Build.VERSION.SDK_INT>=26)
+                    manager.createNotificationChannel(new NotificationChannel(
+                        CHANNEL,"FastDev — versões de teste",NotificationManager.IMPORTANCE_DEFAULT));
+                Intent open=new Intent(ctx,FastDevConsoleActivity.class);
+                int flags=PendingIntent.FLAG_UPDATE_CURRENT;
+                if(Build.VERSION.SDK_INT>=23)flags|=PendingIntent.FLAG_IMMUTABLE;
+                PendingIntent tap=PendingIntent.getActivity(ctx,0,open,flags);
+                Notification.Builder note=Build.VERSION.SDK_INT>=26
+                    ?new Notification.Builder(ctx,CHANNEL):new Notification.Builder(ctx);
+                note.setSmallIcon(android.R.drawable.stat_sys_download_done)
+                    .setContentTitle("Atualização FastDev disponível")
+                    .setContentText("Versão "+newer.code+" — toque para atualizar")
+                    .setAutoCancel(true).setContentIntent(tap);
+                manager.notify(34577,note.build());
+                return Result.success();
+            }catch(Exception ignored){return Result.retry();}
+        }
     }
     private static String digest(byte[] bytes) throws Exception {
         MessageDigest md=MessageDigest.getInstance("SHA-256");md.update(bytes);
