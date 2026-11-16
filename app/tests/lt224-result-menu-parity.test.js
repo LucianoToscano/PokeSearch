@@ -25,7 +25,10 @@ assert.match(dock,/\(resultWindow\?2:additionalResultGapPx\(vp\.resultGapBetween
 assert.match(native,/private int resultTileDp\(\)\{[\s\S]*?return spriteSize==55\?40:spriteSize==45\?32:24;/);
 assert.match(native,/int perCard=resultTileDp\(\)\+resultMetadataWidthDp/);
 assert.match(native,/int gap=2; \/\/ same 2dp gap as quick-menu tiles/);
-assert.match(native,/return Math\.max\(38,resultTileDp\(\)\+resultMetadataWidthDp\)/);
+// LT375: the 38dp minimum belonged to the now-hidden results header.
+ // The old sprite artwork and 2dp pitch are still strictly unchanged.
+assert.match(native,/return resultTileDp\(\)\+resultMetadataWidthDp;/);
+assert.match(dock,/const resultContentWidth=\(resultLayout\?\.sprite\|\|spriteSize\)\+metaWidth/);
 assert.match(native,/int headerRail=Math\.max\(38,resultTileDp\(\)\)/);
 assert.match(editor,/P 24×24 dp · M 32×32 dp · G 40×40 dp/);
 assert.match(editor,/Sprites centralizadas a 88%/);

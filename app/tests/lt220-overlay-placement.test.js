@@ -14,11 +14,15 @@ assert.match(native,/OPEN_MENU_BOUNDS\[isSecondaryOverlay\(\)\?1:0\]=null/);
 assert.match(native,/if\(!show\)clearMenuBounds\(\)/);
 assert.match(native,/@Override public void onDestroy\(\)\{\s*clearMenuBounds\(\)/);
 
-// Menus avoid THEIR OWN sprite window and the OTHER PokeBall's toolbar,
-// without resizing either. Recalculate as result geometry changes.
-assert.match(native,/int\[\] visibleResults=null/);
-assert.match(native,/int\[\] otherMenu=otherMenuBounds\(\)/);
-assert.match(native,/OverlayPlacementPolicy\.avoid\([\s\S]*?new int\[\]\[\]\{visibleResults,otherMenu\}/);
+// LT375: the previous invisible result-window padding displaced the menu.
+// P1/P2 menus are centered on their Pokeball even when sprites are showing;
+// ONLY the other open menu is a collision obstacle. Sprite geometry is intact.
+const menuSource=native.slice(native.indexOf("private void updateMenuPosition(){"),
+ native.indexOf("private void resizeMenu(",native.indexOf("private void updateMenuPosition(){")));
+assert.match(menuSource,/int\[\] otherMenu=otherMenuBounds\(\)/);
+assert.match(menuSource,/new int\[\]\[\]\{otherMenu\}/);
+assert.doesNotMatch(menuSource,/visibleResults|resultParams|resultRoot|resultCollapsed/);
+assert.match(menuSource,/rowY=params\.y\+\(!visualMenuVertical\?\(dp\(30\)-dp\(menuBase\)\)\/2:0\)/);
 assert.match(native,/publishMenuBounds\(menuParams\.x,rowY,width,rowHeight\)/);
 assert.match(native,/if\(menuExpanded\)updateMenuPosition\(\)/);
 assert.match(pure,/static int\[\] avoid\(/);
