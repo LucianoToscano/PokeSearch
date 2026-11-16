@@ -6,6 +6,7 @@ on:
       - 'app/**'
       - 'scripts/fastdev.cjs'
       - 'scripts/fastdev.test.cjs'
+      - 'scripts/fastdev-audit.cjs'
       - 'gradle.properties'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
@@ -42,7 +43,10 @@ jobs:
       - name: Validate FastDev selector
         run: |
           node --check scripts/fastdev.cjs
+          node --check scripts/fastdev-audit.cjs
           node --test scripts/fastdev.test.cjs
+      - name: Inventory historical workflows without deleting them
+        run: node scripts/fastdev-audit.cjs
       - name: Run only affected smoke contracts (full QA remains mandatory)
         shell: bash
         run: |
