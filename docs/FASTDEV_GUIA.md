@@ -1,5 +1,7 @@
 # PokeSearch FastDev — desenvolvimento sem publicar APK a cada ajuste
 
+> **Nova implementação (16/11/2026):** assinatura permanente, atualização OTA dedicada, código crescente, sandbox Live HTML e ADB: [FASTDEV_OTA_LIVE_ADB_20261116.md](FASTDEV_OTA_LIVE_ADB_20261116.md). As instruções anteriores para APK com chave debug efêmera abaixo descrevem o estágio histórico inicial e não são o procedimento atual recomendado. O novo modo assinado só será operacional após cadastrar os secrets privados `fastdev-signing`.
+
 Status: infraestrutura de desenvolvimento, SEM atualização pública do aplicativo. Nunca declarar CI ou homologação física PASS sem execução e evidência. O comando ARK do proprietário mantém as obrigações de merge, QA e publicação protegida, conforme AGENTS.md.
 
 ## Execução automática pelo assistente, sem cliques no Actions
