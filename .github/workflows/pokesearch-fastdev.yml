@@ -13,6 +13,9 @@ on:
       - 'scripts/fastdev-audit.cjs'
       - 'scripts/fastdev-request.cjs'
       - 'scripts/fastdev-request.test.cjs'
+      - 'scripts/fastdev-version.test.cjs'
+      - 'scripts/fastdev-adb.sh'
+      - 'scripts/fastdev-signing-setup.sh'
       - 'fastdev/preview-request.json'
       - 'gradle.properties'
       - 'build.gradle.kts'
@@ -56,6 +59,7 @@ jobs:
           node --test scripts/fastdev.test.cjs
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
+          node --test scripts/fastdev-version.test.cjs
       - name: Select a validated on-demand request without release signing
         id: select-mode
         shell: bash
