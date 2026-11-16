@@ -36,6 +36,9 @@ public final class PgsNightSupervisorPolicyTest {
     eq(PgsNightSupervisorPolicy.Decision.STOP_ENGINE,
       PgsNightSupervisorPolicy.check("pgsharp","pgsharp",true,false,true,0),
       "another engine");
-    System.out.println("LT371 night supervisor policy 12/12 PASS");
+    eq(PgsNightSupervisorPolicy.Decision.STOP_NOTIFICATIONS,
+      PgsNightSupervisorPolicy.check("pgsharp","pgsharp",true,false,false,0,false),
+      "permission revoked after start");
+    System.out.println("LT372 night supervisor policy 13/13 PASS");
   }
 }
