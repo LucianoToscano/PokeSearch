@@ -1811,15 +1811,16 @@ test("HOME-03 opens the Home drawer on right and uses original transparent PNG",
   main.includes("R.drawable.ps_home_brand_transparent")&&
   main.includes('openLoginDialog(false,"manage")');
 })());
-test("HOME-04 keeps transparent brand left, controls right and plain outside background",(()=>{
+test("HOME-04 keeps original brand icon without wordmark, controls right and plain background",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.home_pokeball_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
-  home.includes("R.drawable.ps_home_official_wordmark")&&
-  home.includes('brandTitle.setContentDescription("PokeSearch")')&&
+  !home.includes("R.drawable.ps_home_official_wordmark")&&
+  !home.includes('brandTitle.setContentDescription("PokeSearch")')&&
+  home.includes('PremiumAccess.controlled())brand.setOnLongClickListener')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
