@@ -77,7 +77,7 @@
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
         <provider android:name="androidx.core.content.FileProvider"
-            android:authorities="com.lucianotoscano.pokesearch.updates"
+            android:authorities="${applicationId}.updates"
             android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/update_file_paths" />
