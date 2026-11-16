@@ -14,8 +14,9 @@ testCase("temporary LT74 preview no longer intercepts real updates",()=>{
     "Teste: botão acionado.","footer.setOnLongClickListener"])
    assert.ok(!main.includes(token),"unexpected preview: "+token);
 });
-testCase("dynamic installed version remains visible in compact footer",()=>{
- assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search"'));
+testCase("dynamic installed version remains visible with its GitHub release link",()=>{
+ assert.ok(main.includes("footer.setOnClickListener(v->{"));
+ assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+" LT"'));
  assert.ok(main.includes("screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));"));
 });
 testCase("Home network check remains asynchronous",()=>{
