@@ -92,6 +92,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     private WindowManager.LayoutParams bubbleParams;
     private PgsAutoIconDetector detector;
     private String smartGoalSession=null; // only active for explicit LT370 smart start
+    // LT371: read-only supervisor; it does NOT enable/disable PGSharp VGP/Autowalk.
+    private boolean nightSupervisorActive=false;
+    private int nightMissingGameChecks=0;
+    private String nightSupervisorProfile="";
+    private final Runnable nightSupervisorTick=this::checkNightSupervisor;
     private FrameLayout picker;
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
@@ -149,6 +154,73 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void onAccuracyChanged(
                     android.hardware.Sensor sensor,int accuracy){}
         };
+    /** External PGSharp native Autowalk and VGP run independently.
+     * No dispatchGesture, root, GPS, private API, or fake catch results. */
+    private void startNightSupervisor(){
+        android.app.NotificationManager manager=(android.app.NotificationManager)
+            getSystemService(NOTIFICATION_SERVICE);
+        boolean notifications=manager!=null&&manager.areNotificationsEnabled();
+        boolean game=isGameVisible();
+        boolean notice=game&&(gameAccountSafetyNoticePresent()||
+            passengerPromptPresent());
+        String profile=PgsAutoHostSettings.current(this);
+        if(!PgsNightSupervisorPolicy.canStart(profile,game,notice,
+                notifications,running||watching||sequenceActive||
+                teachingInProgress||teachingScheduled)){
+            showReason("Modo Noturno: requer PGSharp, jogo em primeiro plano, "+
+                "notificações permitidas e nenhum outro motor ativo. "+
+                "Avisos do jogo precisam de confirmação humana.");
+            return;
+        }
+        nightSupervisorActive=true;
+        nightSupervisorProfile=profile;
+        nightMissingGameChecks=0;
+        handler.removeCallbacks(nightSupervisorTick);
+        status("🌙 SUPERVISÃO NOTURNA");
+        notifyUser("PokeSearch · supervisão noturna iniciada",
+            "Apenas monitoramento: Autowalk e Virtual Go Plus precisam "+
+            "estar ativos no PGSharp. PokeSearch não comanda nem desliga esses recursos.",
+            false);
+        handler.postDelayed(nightSupervisorTick,
+            PgsNightSupervisorPolicy.CHECK_INTERVAL_MS);
+    }
+    private void stopNightSupervisor(boolean alert,String reason){
+        if(!nightSupervisorActive)return;
+        nightSupervisorActive=false;
+        nightSupervisorProfile="";
+        nightMissingGameChecks=0;
+        handler.removeCallbacks(nightSupervisorTick);
+        status("🌙 SUPERVISÃO PARADA");
+        if(alert)notifyUser("PokeSearch · atenção ao modo noturno",
+            reason+" O PokeSearch interrompeu apenas a supervisão. "+
+            "Verifique e desligue Autowalk/Virtual Go Plus diretamente no PGSharp.",
+            true);
+    }
+    private void checkNightSupervisor(){
+        if(!nightSupervisorActive)return;
+        boolean game=isGameVisible();
+        boolean warning=game&&(gameAccountSafetyNoticePresent()||
+            passengerPromptPresent());
+        nightMissingGameChecks=game?0:nightMissingGameChecks+1;
+        PgsNightSupervisorPolicy.Decision decision=
+            PgsNightSupervisorPolicy.check(nightSupervisorProfile,
+                PgsAutoHostSettings.current(this),game,warning,
+                running||watching||sequenceActive,nightMissingGameChecks);
+        if(decision!=PgsNightSupervisorPolicy.Decision.KEEP){
+            String detail;
+            switch(decision){
+                case STOP_SAFETY:detail="Aviso de segurança detectado.";break;
+                case STOP_GAME_MISSING:detail="Pokémon GO saiu da tela ou foi bloqueado.";break;
+                case STOP_PROFILE:detail="Perfil PGSharp alterado.";break;
+                default:detail="Outro mecanismo do PokeSearch foi iniciado.";
+            }
+            stopNightSupervisor(true,detail);
+            return;
+        }
+        status(game?"🌙 SUPERVISÃO NOTURNA":"🌙 VERIFICANDO JOGO");
+        handler.postDelayed(nightSupervisorTick,
+            PgsNightSupervisorPolicy.CHECK_INTERVAL_MS);
+    }
     private void refreshHuntProximity(){
         boolean desired=PgsAutoHuntSettings.enabled(this)&&
             PgsAutoHuntSettings.forCurrent(this).getBoolean(
@@ -559,6 +631,8 @@ public final class PgsAutoClickService extends AccessibilityService {
         status(watching?"MONITOR · AGUARDANDO JOGO":"AGUARDANDO JOGO");
     }
     @Override public void onDestroy() {
+        // Supervisão encerra junto ao serviço; jamais tentar reiniciar o jogo.
+        stopNightSupervisor(false,"Serviço interrompido.");
         // Perda do serviço invalida leituras, mas não revoga opt-in do usuário.
         // A Home exibirá falta de Acessibilidade até uma reconexão autorizada.
         stopWatchOnly(false);
@@ -638,11 +712,30 @@ public final class PgsAutoClickService extends AccessibilityService {
             @Override public void closeOverlay(){removeHand();}
             @Override public void testNotification(String type){testPgsNotification(type);}
             @Override public void setWatchEnabled(boolean enabled){
+                if(enabled&&nightSupervisorActive){
+                    showReason("Pare o modo noturno antes de iniciar outro motor.");return;
+                }
                 if(enabled)stopSequence("SEQUÊNCIA · MONITOR SELECIONADO");
                 setWatchOnly(enabled);
             }
             @Override public void autoDetectHost(){probeActiveFeedHost();}
+            @Override public void startNightSupervisor(){
+                PgsAutoClickService.this.startNightSupervisor();
+            }
+            @Override public void stopNightSupervisor(){
+                PgsAutoClickService.this.stopNightSupervisor(
+                    false,"Interrompida manualmente.");
+                Toast.makeText(PgsAutoClickService.this,
+                    "Supervisão parada. Desligue Autowalk e VGP no PGSharp.",
+                    Toast.LENGTH_LONG).show();
+            }
+            @Override public boolean nightSupervisorActive(){
+                return PgsAutoClickService.this.nightSupervisorActive;
+            }
             @Override public void startSmartSearch(String goal){
+                if(nightSupervisorActive){
+                    showReason("Pare a supervisão noturna antes de iniciar toques.");return;
+                }
                 stopSequence("SEQUÊNCIA · BUSCA INTELIGENTE SELECIONADA");
                 if(watching)stopWatchOnly(true);
                 if(running)halt("BUSCA RECONFIGURADA");
@@ -651,6 +744,9 @@ public final class PgsAutoClickService extends AccessibilityService {
                 toggle();
             }
             @Override public void startSearch(){
+                if(nightSupervisorActive){
+                    showReason("Pare a supervisão noturna antes de iniciar toques.");return;
+                }
                 smartGoalSession=null;
                 // Called only from explicit Start in the LT368 Central.
                 // Never leave two engines active or use an old POINT target.
@@ -695,7 +791,13 @@ public final class PgsAutoClickService extends AccessibilityService {
                 pickSequencePoint(type,index,dest);
             }
             @Override public void sequencePreview(){previewSequence();}
-            @Override public void sequenceRun(){startSequence();}
+            @Override public void sequenceRun(){
+                if(nightSupervisorActive){
+                    showReason("Pare a supervisão noturna antes de executar sequência.");
+                    return;
+                }
+                startSequence();
+            }
             @Override public void sequenceStop(){stopSequence("SEQUÊNCIA PARADA");}
             @Override public void sequenceChanged(){
                 stopSequence("SEQUÊNCIA ALTERADA");
@@ -865,6 +967,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     public static String searchStatus(){
         PgsAutoClickService live=instance;
         if(live==null)return "Acessibilidade desligada";
+        if(live.nightSupervisorActive)
+            return "🌙 Supervisão noturna · recursos externos do PGSharp";
         if(live.armedByHome&&!live.isGameVisible())
             return "Abra o feed de "+
                 PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(live))+
@@ -879,6 +983,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         return "Parado";
     }
     private void removeHand(){
+        stopNightSupervisor(true,"Overlay do PokeSearch fechado.");
         stopSequence("SEQUÊNCIA · OVERLAY FECHADO");
         stopWatchOnly(true);
         armedByHome=false;
@@ -933,7 +1038,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         lastStatus=value;
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
-        boolean on=watching||PgsAutoVisualState.active(
+        boolean on=nightSupervisorActive||watching||PgsAutoVisualState.active(
             running,pausedByShiny,pausedByError);
         if(handView!=null&&(!Boolean.valueOf(on).equals(currentArtworkOn))){
             handView.setImageResource(on?
@@ -943,9 +1048,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(watching)setCoreState(PgsAutoVisualState.Core.WHITE);
         else setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
         if(handBadge!=null){
-            handBadge.setText(watching?"◎":shiny?"✨":
+            handBadge.setText(nightSupervisorActive?"☾":watching?"◎":shiny?"✨":
                 value.contains("PAUSADO")?"!":"");
-            handBadge.setVisibility(watching||shiny||
+            handBadge.setVisibility(nightSupervisorActive||watching||shiny||
                 value.contains("PAUSADO")?View.VISIBLE:View.GONE);
         }
         if(countdownBadge!=null){
@@ -965,7 +1070,9 @@ public final class PgsAutoClickService extends AccessibilityService {
             }else countdownBadge.setVisibility(View.GONE);
         }
         bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
-        bubble.setContentDescription("PGS Busca Pokémon: "+value+
+        bubble.setContentDescription((nightSupervisorActive?
+            "PGS: supervisão noturna, sem comprovação de captura. ":
+            "PGS Busca Pokémon: ")+value+
             (on?", ligado":", desligado")+
             (watching?". Monitor somente leitura: toque para parar.":
              ". Toque para ligar/desligar; segure para abrir menus."));
@@ -1590,6 +1697,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void toggle(){
+        if(nightSupervisorActive){
+            showReason("Supervisão noturna ativa. Não iniciar toques do PokeSearch "+
+                "junto ao Virtual Go Plus. Pare a supervisão no menu primeiro.");
+            return;
+        }
         if(sequenceActive){
             stopSequence("SEQUÊNCIA INTERROMPIDA PELO USUÁRIO");
             return;
