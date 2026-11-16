@@ -8,6 +8,12 @@
  const loggedIn=clickable.some(e=>/^(log\s*out|sign\s*out|sair|desconectar)$/i.test(txt(e)))||
    /(?:^|\n)\s*Shiny for your account\b/i.test(String(document.body&&document.body.innerText||""));
  if(loggedIn)return "authenticated";
+ // A visible first-party Profile link is a navigation HINT, not auth proof.
+ const profileHint=clickable.some(e=>
+   /^(?:https:\/\/pogocoordinates\.com)?\/profile(?:[?#]|$)/i
+     .test(String(e.getAttribute("href")||"")));
+ if(profileHint&&(typeof location==="undefined"||location.pathname!=="/profile"))
+   return "profile-hint";
  const authDialog=Array.from(document.querySelectorAll('[role="dialog"],[aria-modal="true"]'))
    .filter(visible).some(e=>/google|discord|continue with|log\s*in|sign\s*in|entrar|login/i.test(txt(e)));
  const providerChoices=clickable.some(e=>{
