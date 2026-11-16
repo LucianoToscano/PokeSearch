@@ -2280,6 +2280,23 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void checkMap(int stamp){
+        // LT370 PaC-style ASSIST: only a confirmed encounter-window marker
+        // may pause for MANUAL capture. We never throw balls from an assumed UI.
+        String smartGoal=PgsSmartSearchSettings.goal(this);
+        if(running&&awaitingMap&&stamp==ticket&&
+            (PgsSmartSearchSettings.GOAL_CATCH.equals(smartGoal)||
+             PgsSmartSearchSettings.GOAL_BOTH.equals(smartGoal))&&
+            isGameVisible()&&!gameAccountSafetyNoticePresent()&&
+            !passengerPromptPresent()&&encounterWindowConfirmed()){
+            String name=currentTargetName;
+            halt("ENCONTRO VISÍVEL · CAPTURA MANUAL");
+            notifyConfigured(PgsAutoNotificationPolicy.NEW,
+                "PokeSearch · encontro assistido",
+                "Tela de encontro identificada para "+
+                    (name==null||name.isEmpty()?"o alvo":name)+
+                    ". Capture manualmente; resultado ainda não verificado.",false);
+            return;
+        }
         if(!running||!awaitingMap||ticket!=stamp)return;
         long now=SystemClock.uptimeMillis();
         boolean passengerWarning=holdForPassengerPrompt();
@@ -2402,6 +2419,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                     !shinyNegativeConfirmed?"AGUARDANDO SEM SHINY":"COOLDOWN MAPA");
                 handler.postDelayed(()->checkMap(stamp),1200L);return;
             }
+        }
+        if(huntTapSession&&!PgsSmartSearchSettings.repeat(this)&&huntClicks>=1){
+            halt("CICLO ÚNICO · RESULTADO NÃO CONFIRMADO");
+            return;
         }
         awaitingMap=false;
         nextIndex++;
