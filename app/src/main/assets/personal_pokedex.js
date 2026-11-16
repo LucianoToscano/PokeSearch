@@ -182,7 +182,7 @@ function showDetail(id){
   el("other-info").innerHTML=
     '<div class="note">Obtido em: '+escapeHtml(date)+
     '<br>Forma: '+escapeHtml(cleanForm(p)||"Padrão")+
-    '<br>Vestimenta: '+(p.costume?"Código "+p.costume:"Sem traje cadastrado")+
+    '<br>Vestimenta: '+(p.costume?"Código "+p.costume+" (sprite-base ilustrativa; traje não certificado)":"Sem traje cadastrado")+
     '<br>Fundo original: '+(hasBackground(p)?"Código "+p.backgroundId:"Não registrado")+
     '<br>Tags: '+escapeHtml(tags||"Nenhuma")+
     '<br>Pokébola: '+number(p.pokeball)+
