@@ -2758,7 +2758,7 @@ test("RELEASE-NOTES-08 metadata is integrity checked within the APK",
  releaseNotesJava.includes('OtaAssets.open(a,ASSET)'));
 test("RELEASE-NOTES-09 the reader fails closed on missing or corrupt notes",
  releaseNotesJava.includes('return new JSONArray(); // Release notes must never prevent the Home from opening.')&&
- releaseNotesJava.includes('out.size()+size>96000'));
+ releaseNotesJava.includes('out.size()+size>MAX_NOTES_BYTES'));
 test("RELEASE-NOTES-10 no unverified physical claims; audited fixes are versioned",()=>{
  const old=releaseNotesData.releases.filter(e=>e.minVersionCode<54258);
  const current=releaseNotesData.releases.find(e=>e.minVersionCode===54258);
