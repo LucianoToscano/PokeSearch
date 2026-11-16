@@ -1,3 +1,6 @@
+## LT374 OFICIAL — Tutorial interativo P1/P2 (16/11/2026)
+PokeSearch `0.03.68 (54575)`, [APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.68-54575), publicado com certificado permanente e hash validado no workflow #43924017565. A conclusão das duas Pokébolas compartilha `overlay_tutorial_install/gestureCoachV3PokeballCompleted`; só a primeira aberta ensina os gestos, Pular encerra em ambas e não repete após upgrades. Usuários existentes recebem UMA exibição excepcional nesta atualização para testar. Replay manual via Preferências; Doce Raro e Busca independentes. CI 7/7 aprovado; homologação Android física pendente. [ARK](LT374_ARK_RELEASE_OFICIAL_20261116.md) · [próximo prompt](LT375_PROMPT_CONTINUIDADE_TUTORIAL_FISICO_20261116.md).
+
 **LT373.1 — Tutorial de primeiro uso compartilhado P1/P2:** flag `overlay_tutorial_install/gestureCoachV3PokeballCompleted` por instalação, Pular marca ambas. Exibe uma única vez em P1 ou P2, inclusive uma vez em usuários existentes nesta versão de teste, sem se repetir nas próximas. Replay manual em Preferências. QA físico e release oficial sujeitos aos gates obrigatórios.
 
 # PokeSearch — GUIA MESTRE ATUAL (RESUMIDO)
