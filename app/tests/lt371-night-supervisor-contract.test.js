@@ -13,10 +13,10 @@ assert.match(menu,/nightWalkAcknowledged&&nightCatchAcknowledged/);
 assert.match(menu,/Autowalk e Virtual Go Plus fazem /);
 assert.match(menu,/A supervisão não controla o cliente externo/);
 assert.match(menu,/Pokemod exige integração própria validada/);
-assert.match(menu,/actions\.startNightSupervisor\(\)/);
+assert.match(menu,/actions\.startNightSupervisor\(\s*nightWalkAcknowledged,nightCatchAcknowledged\)/);
 assert.match(menu,/actions\.stopNightSupervisor\(\)/);
 assert.match(menu,/actions\.nightSupervisorActive\(\)/);
-assert.match(svc,/private void startNightSupervisor\(\)/);
+assert.match(svc,/private void startNightSupervisor\(boolean userWalk,boolean userPlus\)/);
 assert.match(svc,/manager\.areNotificationsEnabled\(\)/);
 assert.match(svc,/PgsNightSupervisorPolicy\.canStart\(/);
 assert.match(svc,/PgsNightSupervisorPolicy\.check\(/);
@@ -28,7 +28,7 @@ assert.match(svc,/stopNightSupervisor\(false,"Serviço interrompido."\)/);
 assert.match(svc,/if\(nightSupervisorActive\)\{\s*showReason\("Pare a supervisão noturna antes de iniciar toques\."/);
 assert.match(svc,/Pare a supervisão noturna antes de executar sequência/);
 assert.match(svc,/Supervisão noturna ativa\. Não iniciar toques do PokeSearch/);
-const segment=svc.split("private void startNightSupervisor()")[1]
+const segment=svc.split("private void startNightSupervisor(boolean userWalk,boolean userPlus)")[1]
   .split("private void refreshHuntProximity()")[0];
 assert.doesNotMatch(segment,/dispatchGesture|\.tap\(|\.swipe\(|forceStopPackage|setMockLocation|Runtime\.getRuntime/);
 assert.match(policy,/MAX_MISSING_GAME_CHECKS=2/);
