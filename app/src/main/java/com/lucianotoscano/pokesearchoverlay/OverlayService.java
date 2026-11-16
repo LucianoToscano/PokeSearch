@@ -4346,12 +4346,15 @@ public class OverlayService extends Service {
         pickerOpen=true;
         hideDetails();
         try{
+            // Center on the live toolbar instead of the reordered star icon.
+            int menuCenterX=menuParams==null?anchorX:
+                menuParams.x+menuParams.width/2;
             favoritePickerDialog=PokemonPicker.show(OverlayService.this,()->{
                 if(!stopped)update();
             },()->{
                 pickerOpen=false;favoritePickerDialog=null;
                 if(!stopped)update();
-            },anchorX,anchorY,
+            },menuCenterX,anchorY,
                 menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp)),
                 menuParams==null?-1:menuParams.y+dp(Math.max(0,popupOffsetDp))+dp(visualMenuBaseDp()),
                 isSecondaryOverlay());

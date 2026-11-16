@@ -30,3 +30,15 @@ A regra histórica **LT349** aparece no fim do stylesheet e volta a definir `bac
 
 ## Governança
 Branch `fix/lt375-pokeball-background-sort-more-ui`. Testes `app/tests/lt375-pokeball-menu-visual-contract.test.js` + regressões antigas. Não modificar `OverlayService`, `OverlayGestureTour`, contas, filtros/sort, OAuth, Doce Raro, PGS, assinatura permanente, release-notes nem versionCode oficial. A versão pública permanece LT374 até solicitação explícita de publicação e todos os gates necessários. Registrar evidências de CI/PR depois de executadas. A próxima intervenção deve usar as correções reais adicionais enviadas pelo usuário.
+
+## LT375b — novos ajustes solicitados (16/11/2026)
+Referências: quatro capturas Android encaminhadas pelo usuário em 16/11 mostram guia de cooldown (16 faixas), Favoritos distante do menu, Personalização com hamburger ≡ e botão Reset com fundo, e alça referência ⋮⋮ de seis pontos.
+
+1. **Localização — tabela clicável:** as 16 faixas agora são botões de duas colunas alinhadas, com `aria-label` incluindo o raio selecionado. Selecionar uma faixa **fecha apenas a tabela**, volta ao menu Localização e preenche `locRadiusValue` + slider **sem aplicar a busca nem declarar cooldown**. Como o raio existente aceita apenas km inteiros, seleciona o **limite superior da faixa** (até 4km -> 4, até 24km -> 24); faixas inferiores a 1km arredondam para 1km. A confirmação remota ainda depende do botão Aplicar. Edições não salvas de coordenadas são preservadas.
+2. **Atalho km:** unidade dentro do campo de raio, deslocada 2px para baixo, passa de span passivo a button com o mesmo guia do título Localização, sem adicionar linha ou ícone.
+3. **Favoritos:** `OverlayService.showFavoritePicker` usa o centro da barra real P1/P2, não a posição de estrela que pode ser reordenada. `PokemonPicker` reduz distância visual de 8dp para **3dp**. Um arrasto antigo salvo só é restaurado se estiver a no máximo **12dp** do ponto correto e sem sobrepor a barra; o arraste manual na sessão continua funcionando. `FavoritePanelGeometry.nearAnchor` é puro e testável em JVM.
+4. **Personalização:** mover menus usa alça `⋮⋮` **à esquerda** do nome; checkbox à direita. Permanecem long press de 220ms, captura de ponteiro, reordenação persistente e setas do teclado. Reset mantém callback, ícone ↺ e acessibilidade, mas fica com background/borda/sombra **transparentes**.
+
+**Testes adicionais:** `lt375b-location-favorites-personalization.test.js`, `FavoritePanelGeometryTest.java` ampliado, workflow PGS ligado a alterações de `PokemonPicker`/`FavoritePanelGeometry`. Código isolado em `dock.html`, `OverlayService`, `PokemonPicker` e `FavoritePanelGeometry`; sem alterar filtros salvos, contas, assinatura, modo noturno ou o tutorial V3.
+
+**Risco conhecido:** a tabela mostra tempos de referência para deslocamento, não cronômetro real, e agora é também seletor do raio de busca. Em testes físicos devem ser avaliados toque nas faixas, indicador km e captura/arraste do ⋮⋮, além da posição dos Favoritos em P1/P2, temas e bordas do Android. Sem homologação física, manter QA e não publicar automaticamente.

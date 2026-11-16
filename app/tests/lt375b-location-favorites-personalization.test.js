@@ -1,0 +1,54 @@
+"use strict";
+const assert=require("node:assert/strict");
+const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
+const base=path.join(__dirname,"../src/main");
+const dock=fs.readFileSync(path.join(base,"assets/dock.html"),"utf8");
+const picker=fs.readFileSync(path.join(base,"java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java"),"utf8");
+const geometry=fs.readFileSync(path.join(base,"java/com/lucianotoscano/pokesearchoverlay/FavoritePanelGeometry.java"),"utf8");
+const service=fs.readFileSync(path.join(base,"java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+const section=(start,end)=>{const a=dock.indexOf(start),b=dock.indexOf(end,a+start.length);assert.ok(a>=0&&b>a,start);return dock.slice(a,b)};
+const source=section("const LOCATION_COOLDOWN_REFERENCE=Object.freeze([","let locationDraftBeforeCooldown=null;");
+const ctx={};vm.runInNewContext(source+";this.radius=LOCATION_COOLDOWN_RADIUS_KM;",ctx);
+assert.deepEqual(JSON.parse(JSON.stringify(ctx.radius)),
+ [1,1,1,1,4,9,24,29,64,80,99,249,499,749,999,1000],
+ "tier values are upper bounds, meter rows ceil to 1km, max 1000km");
+const table=section("function renderLocationCooldownTable(){","function renderLocationChoices(){");
+assert.match(table,/document.createElement\("button"\);line.type="button"/);
+assert.match(table,/line.className="locCooldownEntry"/);
+assert.match(table,/line.onclick=\(\)=>\{/);
+assert.match(table,/locationDraftBeforeCooldown.radius=String\(selectedKm\)/);
+assert.match(table,/locationDraftBeforeCooldown.slider=String\(selectedKm\)/);
+assert.match(table,/locationDraftBeforeCooldown.radiusDirty=true/);
+assert.match(table,/renderLocationChoices\(\)/);
+assert.doesNotMatch(table,/Native\.setLocation\(|Native\.startCooldown\(|Native\.refresh\(/,
+ "a tier selection only fills the local KM field; the user still presses Apply");
+const editor=section("function renderLocationChoices(){","let requestedInterval=null;");
+assert.match(editor,/const unit=make\("button","locRadiusUnit","km"\);unit.type="button"/);
+assert.match(editor,/unit.onclick=renderLocationCooldownTable/);
+assert.match(editor,/titleAction.onclick=renderLocationCooldownTable/);
+assert.match(editor,/if\(draft.radiusDirty\)\{[\s\S]*?slide.value=draft.slider/);
+assert.match(editor,/apply.onclick=submit/);
+assert.match(dock,/body\.popup-window\.controls-window #choices\.locationCooldownTable button\.locCooldownEntry/);
+assert.match(dock,/grid-template-columns:minmax\(0,1fr\) 53px!important/);
+assert.match(dock,/button\.locRadiusUnit\{[\s\S]*?top:calc\(50% \+ 2px\)!important/);
+assert.match(dock,/pointer-events:auto!important;cursor:pointer!important/);
+assert.match(picker,/final int margin=dp\(activity,8\),gap=dp\(activity,3\)/);
+assert.match(picker,/FavoritePanelGeometry\.nearAnchor\(candidate,xy,dp\(activity,12\)\)/);
+assert.match(geometry,/static boolean nearAnchor\(int\[\] saved,int\[\] anchor,int tolerance\)/);
+assert.match(picker,/FavoritePanelGeometry\.adjacentToToolbar\(/);
+assert.match(picker,/View.OnTouchListener freePanelDrag=\(v,e\)->\{/);
+assert.match(service,/int menuCenterX=menuParams==null\?anchorX:/);
+assert.match(service,/menuParams.x\+menuParams.width\/2/);
+assert.match(service,/\},menuCenterX,anchorY,/);
+assert.match(dock,/help.textContent="Menus · segure ⋮⋮ para arrastar"/);
+assert.match(dock,/handle\.className="orderHandle";handle\.textContent="⋮⋮"/);
+assert.match(dock,/line\.append\(handle,name,eye\);commands.appendChild\(line\)/);
+assert.match(dock,/commands\.addEventListener\("pointerdown",event=>\{/);
+assert.match(dock,/handle\.addEventListener\("keydown",event=>\{/);
+assert.match(dock,/grid-template-columns:24px minmax\(0,1fr\) 27px!important/);
+assert.match(dock,/body\.popup-window\.controls-window #choices\.appearanceCompact button\.resetMenuLayout\{/);
+const last=dock.slice(dock.indexOf("/* LT375b: precise clickable cooldown"));
+assert.match(last,/button\.resetMenuLayout\{\s*background:transparent!important;border:0!important;box-shadow:none!important/);
+assert.ok(dock.includes('reset.onclick=()=>{appearanceScrollTop=0;quickPrefs=defaultQuickPrefs();saveQuickPrefs();renderAppearanceChoices();}'),
+ "reset still works; only its background is removed");
+console.log("LT375b — cooldown table, KM link, anchored Favorites and drag grip PASS");

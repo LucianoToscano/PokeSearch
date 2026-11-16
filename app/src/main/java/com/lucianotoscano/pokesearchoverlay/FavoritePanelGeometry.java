@@ -28,6 +28,11 @@ final class FavoritePanelGeometry {
         int y=preferBelow?toolbarBottom+gap:toolbarTop-gap-panelH;
         return onScreen(anchorX-panelW/2,y,displayW,displayH,panelW,panelH,margin);
     }
+    static boolean nearAnchor(int[] saved,int[] anchor,int tolerance){
+        return saved!=null&&anchor!=null&&saved.length>=2&&anchor.length>=2&&
+            Math.abs(saved[0]-anchor[0])<=tolerance&&
+            Math.abs(saved[1]-anchor[1])<=tolerance;
+    }
     static boolean overlapsToolbar(int top,int height,int toolbarTop,int toolbarBottom){
         return toolbarTop>=0 && toolbarBottom>toolbarTop &&
             top<toolbarBottom && top+height>toolbarTop;

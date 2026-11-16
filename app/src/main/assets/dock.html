@@ -4992,6 +4992,78 @@ body.popup-window.controls-window #choices.morePanel>.quickMoreAction{
   -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
   backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
 }
+/* LT375b: precise clickable cooldown reference; no fake overlay. */
+body.controls-window #choices.locationCooldownTable .locCooldownHead,
+body.controls-window #choices.locationCooldownTable button.locCooldownEntry,
+body.popup-window.controls-window #choices.locationCooldownTable .locCooldownHead,
+body.popup-window.controls-window #choices.locationCooldownTable button.locCooldownEntry{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 53px!important;
+ width:100%!important;min-width:0!important;box-sizing:border-box!important;
+ align-items:center!important;column-gap:4px!important;
+ padding:2px 6px!important;margin:0!important;
+ text-align:center!important;line-height:17px!important;
+}
+body.controls-window #choices.locationCooldownTable button.locCooldownEntry,
+body.popup-window.controls-window #choices.locationCooldownTable button.locCooldownEntry{
+ min-height:21px!important;cursor:pointer!important;
+ background:transparent!important;border:0!important;border-radius:4px!important;
+ color:var(--visual-menu-fg,#f2f7fc)!important;
+ font:500 10px/17px Roboto,Arial,sans-serif!important;
+}
+body.controls-window #choices.locationCooldownTable button.locCooldownEntry:nth-child(even),
+body.popup-window.controls-window #choices.locationCooldownTable button.locCooldownEntry:nth-child(even){
+ background:rgba(255,255,255,.045)!important;
+}
+body.controls-window #choices.locationCooldownTable button.locCooldownEntry:active,
+body.popup-window.controls-window #choices.locationCooldownTable button.locCooldownEntry:active{
+ background:var(--visual-menu-button-bg,#28292cce)!important;
+ outline:1px solid var(--visual-menu-border,#ffffff48)!important;
+}
+body.controls-window #choices.locationCooldownTable button.locCooldownEntry span,
+body.controls-window #choices.locationCooldownTable .locCooldownHead span,
+body.popup-window.controls-window #choices.locationCooldownTable button.locCooldownEntry span,
+body.popup-window.controls-window #choices.locationCooldownTable .locCooldownHead span{
+ text-align:center!important;min-width:0!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap button.locRadiusUnit,
+body.popup-window.controls-window #choices.locationPanel .locRadiusInputWrap button.locRadiusUnit{
+ position:absolute!important;right:6px!important;top:calc(50% + 2px)!important;
+ transform:translateY(-50%)!important;z-index:2!important;
+ width:20px!important;min-width:20px!important;height:22px!important;min-height:22px!important;
+ line-height:22px!important;margin:0!important;padding:0!important;
+ border:0!important;border-radius:3px!important;background:transparent!important;
+ box-shadow:none!important;color:var(--visual-menu-fg,#edf3fa)!important;
+ font:600 10px/22px Roboto,Arial,sans-serif!important;
+ opacity:.85!important;pointer-events:auto!important;cursor:pointer!important;
+}
+body.controls-window #choices.locationPanel .locRadiusInputWrap button.locRadiusUnit:focus-visible,
+body.popup-window.controls-window #choices.locationPanel .locRadiusInputWrap button.locRadiusUnit:focus-visible{
+ outline:1px solid var(--visual-menu-border,#ffffff48)!important;
+}
+/* LT375b: six-dot drag handle at LEFT; no menu-like hamburger glyph. */
+body.controls-window #choices.appearanceCompact .uxAdjust,
+body.popup-window.controls-window #choices.appearanceCompact .uxAdjust{
+ grid-template-columns:24px minmax(0,1fr) 27px!important;align-items:center!important;column-gap:5px!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust .orderHandle,
+body.popup-window.controls-window #choices.appearanceCompact .uxAdjust .orderHandle{
+ grid-column:1!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;width:24px!important;min-width:24px!important;
+ height:26px!important;margin:0!important;padding:0!important;
+ font:700 19px/1 Roboto,Arial,sans-serif!important;letter-spacing:-3px!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ cursor:grab!important;touch-action:none!important;user-select:none!important;
+}
+body.controls-window #choices.appearanceCompact .uxAdjust .commandName,
+body.popup-window.controls-window #choices.appearanceCompact .uxAdjust .commandName{grid-column:2!important;min-width:0!important}
+body.controls-window #choices.appearanceCompact .uxAdjust .orderVisibility,
+body.popup-window.controls-window #choices.appearanceCompact .uxAdjust .orderVisibility{grid-column:3!important}
+body.controls-window #choices.appearanceCompact button.resetMenuLayout,
+body.popup-window.controls-window #choices.appearanceCompact button.resetMenuLayout{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ color:var(--visual-menu-fg,#eff3f6)!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -6430,6 +6502,8 @@ const LOCATION_COOLDOWN_REFERENCE=Object.freeze([
  ["250 - 499 km","1h"],["500 - 749 km","1h 15m"],
  ["750 - 999 km","1h 30m"],[">= 1000 km","2h"]
 ]);
+// The integer KM input selects the upper edge of a cooldown band.
+const LOCATION_COOLDOWN_RADIUS_KM=Object.freeze([1,1,1,1,4,9,24,29,64,80,99,249,499,749,999,1000]);
 // The reference table describes distance between game actions, not search
 // radius. The slider only previews the hypothetical distance tier; it NEVER
 // starts, cancels or enforces a cooldown.
@@ -6469,12 +6543,28 @@ function renderLocationCooldownTable(){
  const right=document.createElement("span");right.textContent="Cooldown";
  headings.append(left,right);panel.append(back,headings);
  const rows=document.createElement("div");rows.className="locCooldownRows";
- for(const [distance,wait] of LOCATION_COOLDOWN_REFERENCE){
-  const line=document.createElement("div");line.className="locCooldownEntry";
+ LOCATION_COOLDOWN_REFERENCE.forEach(([distance,wait],index)=>{
+  const line=document.createElement("button");line.type="button";
+  line.className="locCooldownEntry";
+  const selectedKm=LOCATION_COOLDOWN_RADIUS_KM[index];
+  line.setAttribute("aria-label",distance+" · "+wait+" de referência. Definir raio "+selectedKm+" km");
+  line.title="Usar "+selectedKm+" km como raio de busca; não inicia cooldown";
   const d=document.createElement("span");d.textContent=distance;
   const t=document.createElement("span");t.textContent=wait;
-  line.append(d,t);rows.appendChild(line);
- }
+  line.append(d,t);
+  line.onclick=()=>{
+   // Retain unsaved coordinates and apply only to the local radius draft.
+   if(!locationDraftBeforeCooldown)locationDraftBeforeCooldown={
+    coords:locationCoords,radius:String(locationRadius),
+    slider:String(locationRadius),coordDirty:false,radiusDirty:true
+   };
+   locationDraftBeforeCooldown.radius=String(selectedKm);
+   locationDraftBeforeCooldown.slider=String(selectedKm);
+   locationDraftBeforeCooldown.radiusDirty=true;
+   renderLocationChoices();
+  };
+  rows.appendChild(line);
+ });
  panel.appendChild(rows);
  panel.scrollTop=0;fit();
 }
@@ -6534,7 +6624,10 @@ function renderLocationChoices(){
  radiusField.setAttribute("aria-label","Raio em quilômetros; campo numérico de 0 a 1000");
  radiusField.onfocus=()=>{if(controlsWindow)Native.locationEditor(true);};
  radiusField.onblur=()=>{if(controlsWindow)Native.locationEditor(false);};
- const unit=make("span","locRadiusUnit","km");
+ const unit=make("button","locRadiusUnit","km");unit.type="button";
+ unit.title="Ver tabela de distâncias e cooldown";
+ unit.setAttribute("aria-label","km · abrir o mesmo guia de Localização");
+ unit.onclick=renderLocationCooldownTable;
  const radiusWrap=make("span","locRadiusInputWrap");
  radiusWrap.append(radiusField,unit);
  label.append(labelName,radiusWrap);
@@ -9248,7 +9341,7 @@ function renderAppearanceChoices(){
  renderSpriteSizeButtons(panel);
  const heading=document.createElement("div");heading.className="uxSubheading";
  heading.classList.add("menuOrganizerHeading");
- const help=document.createElement("span");help.textContent="Menus · segure ≡ para arrastar";
+ const help=document.createElement("span");help.textContent="Menus · segure ⋮⋮ para arrastar";
  const reset=document.createElement("button");reset.type="button";reset.className="resetMenuLayout";
  reset.textContent="↺";reset.title="Restaurar organização padrão dos menus";
  reset.setAttribute("aria-label","Restaurar ordem e visibilidade padrão dos menus");
@@ -9264,7 +9357,7 @@ function renderAppearanceChoices(){
   line.dataset.key=id;
   const name=document.createElement("span");name.className="commandName";
   name.textContent=APPEARANCE_SHORT_NAMES[id]||action[2];
-  name.title=action[2];line.appendChild(name);
+  name.title=action[2];
   const hidden=quickPrefs.hidden.includes(id);
   const locked=id==="appearance"; // Personalização must always stay accessible.
   const eye=document.createElement("button");eye.type="button";
@@ -9276,7 +9369,7 @@ function renderAppearanceChoices(){
    quickPrefs.hidden=hidden?quickPrefs.hidden.filter(x=>x!==id):[...quickPrefs.hidden,id];
    saveQuickPrefs();renderAppearanceChoices();};
   const handle=document.createElement("button");handle.type="button";
-  handle.className="orderHandle";handle.textContent="≡";
+  handle.className="orderHandle";handle.textContent="⋮⋮";
   handle.title="Segure e arraste para mudar a posição";
   handle.setAttribute("aria-label","Segure e arraste para mover "+action[2]+
    "; pelo teclado use as setas para cima ou para baixo");
@@ -9287,7 +9380,7 @@ function renderAppearanceChoices(){
    event.preventDefault();appearanceScrollTop=panel.scrollTop;
    if(moveMenuCommand(id,direction))renderAppearanceChoices();
   });
-  line.append(eye,handle);commands.appendChild(line);
+  line.append(handle,name,eye);commands.appendChild(line);
  }
  panel.appendChild(commands);
  bindAppearanceReorder(commands,panel);
