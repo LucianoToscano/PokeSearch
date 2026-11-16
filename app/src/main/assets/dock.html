@@ -4891,6 +4891,107 @@ body.visual-measurements.result-window #shell::after{
  white-space:nowrap;pointer-events:none!important;
  text-align:right;
 }
+/* LT375-P1P2-PIXEL-PARITY: state changes may recolor the glyph, never
+   enlarge the Background tile or inject an oversized active PNG. Use the same
+   neutral fill, border, shadow and slot geometry for OFF and ON. */
+body.controls-window #quickMenuList button[data-key="bg"],
+body.controls-window #quickMenuList button[data-key="bg"].selected,
+body.controls-window.visual-light-menu #quickMenuList button[data-key="bg"],
+body.popup-window.controls-window #quickMenuList button[data-key="bg"]{
+  box-sizing:border-box!important;min-width:0!important;width:100%!important;
+  height:30px!important;min-height:30px!important;max-height:30px!important;
+  margin:0!important;padding:0!important;
+  background:var(--visual-menu-button-bg,#28292cce)!important;
+  border:1px solid var(--visual-menu-border,#ffffff48)!important;
+  border-radius:7px!important;
+  box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0004)!important;
+  background-clip:padding-box!important;
+}
+body.controls-window #quickMenuList button[data-key="bg"] .quickGlyph,
+body.controls-window #quickMenuList button[data-key="bg"] .quickGlyph.backgroundOnArt{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;flex:0 0 18px!important;
+  width:18px!important;min-width:18px!important;max-width:18px!important;
+  height:18px!important;min-height:18px!important;max-height:18px!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+}
+body.controls-window #quickMenuList button[data-key="bg"] .quickGlyph.backgroundOnArt img{
+  display:block!important;box-sizing:border-box!important;
+  width:16px!important;min-width:16px!important;max-width:16px!important;
+  height:16px!important;min-height:16px!important;max-height:16px!important;
+  object-fit:contain!important;object-position:center!important;
+  margin:0!important;padding:0!important;border:0!important;
+  background:transparent!important;pointer-events:none!important;
+}
+/* Vertical toolbar keeps its original 29px row height (same ON/OFF). */
+body.controls-window.visual-menu-vertical #quickMenuList button[data-key="bg"],
+body.controls-window.visual-menu-vertical #quickMenuList button[data-key="bg"].selected{
+  box-sizing:border-box!important;flex:0 0 29px!important;
+  height:29px!important;min-height:29px!important;max-height:29px!important;
+}
+/* LT375-SORT-TABS: Padrão/Inverso are two independent small menu tiles.
+   No extra wrapper backing: each inherits the same live Editor Visual alpha. */
+body.controls-window #choices.filterCascade .filterCascadeEditor .sortDirectionSwitch,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor .sortDirectionSwitch{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  column-gap:clamp(2px,var(--visual-menu-gap,3px),16px)!important;
+  row-gap:0!important;width:100%!important;min-width:0!important;
+  padding:0!important;margin:0 0 3px!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor button.sortDirectionButton,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor button.sortDirectionButton{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;min-width:0!important;width:100%!important;
+  height:25px!important;min-height:25px!important;max-height:25px!important;
+  padding:3px 2px!important;margin:0!important;
+  background:var(--visual-menu-button-bg,#28292cce)!important;
+  color:var(--visual-menu-fg,#f2f7fc)!important;
+  border:1px solid var(--visual-menu-border,#ffffff48)!important;
+  border-radius:7px!important;box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0004)!important;
+  background-clip:padding-box!important;white-space:nowrap!important;
+}
+body.controls-window #choices.filterCascade .filterCascadeEditor button.sortDirectionButton.chosen,
+body.popup-window.controls-window #choices.filterCascade .filterCascadeEditor button.sortDirectionButton.chosen{
+  background:var(--visual-menu-button-bg,#28292cce)!important;
+  border-color:#82d4b0!important;
+  color:var(--visual-menu-fg,#f2f7fc)!important;
+}
+/* LT375-MORE-SEPARATE-TILES: the late LT349 shared-alpha rule formerly
+   repainted #choices.morePanel as one continuous gray rectangle. Keep only
+   each actual Report/Donate/Close button filled. This override MUST be after
+   the generic LT349 rule, and must cover the detached popup WebView as well. */
+body.controls-window #choices.morePanel,
+body.popup-window.controls-window #choices.morePanel,
+body.controls-window.popup-above #choices.morePanel,
+body.popup-window.controls-window.popup-above #choices.morePanel,
+body.controls-window.visual-menu-vertical #choices.morePanel,
+body.popup-window.controls-window.visual-menu-vertical #choices.morePanel{
+  display:flex!important;flex-direction:column!important;
+  row-gap:clamp(2px,var(--visual-menu-gap,3px),16px)!important;
+  column-gap:0!important;padding:0!important;margin:0!important;
+  background:transparent!important;background-color:transparent!important;
+  background-image:none!important;border:0!important;border-radius:0!important;
+  box-shadow:none!important;backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+body.controls-window #choices.morePanel>.quickMoreAction,
+body.popup-window.controls-window #choices.morePanel>.quickMoreAction{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;flex:0 0 30px!important;
+  height:30px!important;min-height:30px!important;max-height:30px!important;
+  margin:0!important;padding:0!important;
+  background:var(--visual-menu-button-bg,#28292cce)!important;
+  border:1px solid var(--visual-menu-border,#ffffff48)!important;
+  border-radius:7px!important;
+  box-shadow:var(--visual-menu-tile-shadow,0 1px 3px #0004)!important;
+  color:var(--visual-menu-fg,#f2f7fc)!important;
+  background-clip:padding-box!important;
+  -webkit-backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+  backdrop-filter:blur(var(--visual-menu-blur,4px))!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
