@@ -2378,8 +2378,11 @@ public class MainActivity extends Activity {
         }else if(PgsAutoClickService.instance!=null){
             PgsAutoClickService.activateFromHome();
         }else{
+            // One-shot intent for the Accessibility permission handoff.
+            // An old saved preference must never auto-start Auto Hunt.
             getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
-                .putBoolean("armFromHome",true).apply();
+                .putBoolean("armFromHome",true)
+                .putLong("armFromHomeAtMs",System.currentTimeMillis()).apply();
             Toast.makeText(this,"Ative PokeSearch · Buscas Auto em Acessibilidade. "+
                 "A bolha aparecerá automaticamente.",Toast.LENGTH_LONG).show();
             startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
