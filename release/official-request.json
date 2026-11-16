@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.69",
-  "code": 54576,
-  "label": 51375,
-  "previous_tag": "v0.03.68-54575",
-  "qa_max_code": 54575,
-  "release_notes": "PokeSearch LT375 — Correções visuais dos overlays P1/P2: Background consistente ligado/desligado, Ordenar Padrão/Inverso com fundos compactos, opções ⋯ em tiles separados, Localização com tabela de cooldown selecionável e KM clicável, Favoritos ancorados ao menu, alça ⋮⋮ em Personalização e Reset sem fundo. Barra alinhada à Pokébola sem deslocar os resultados; guia roxa contrai quando não há informações. Minior ajustado para a escala visual padrão sem substituir sprites. Editor Visual com medidas curtas, legíveis, sem cobrir Pokémon; transparência inicial de 50%, desfoque entre janelas nativo opcional em Android 12+ quando suportado. Tutorial automático somente nas Pokébolas 1/2, com círculo centralizado na arte visível, novo desenho de mão, botão Pular e opção Rever. Preservados filtros, contas, Busca Inteligente, sequências, Pokemod e PGSharp. Sete gates de QA automatizada aprovados na PR #454; homologação física de Minior, gestos e efeito de blur em aparelhos Android ainda pendente. Instalação da atualização exige aprovação do Android."
+  "version": "0.03.70",
+  "code": 54577,
+  "label": 51376,
+  "previous_tag": "v0.03.69-54576",
+  "qa_max_code": 54576,
+  "release_notes": "PokeSearch LT376 — Correções de overlays compactos e login PoGoCoordinates. Localização: lista integral de 16 faixas sem rolagem interna; Favoritos alinhados à barra sem encobrir resultados; alça real de seis pontos (2×3). Desfoque aplicado também à janela de popup quando Android 12+ permitir; mantém transparência quando o sistema desabilitar. Contas PoGoCoordinates 1/2 com ações Atualizar perfil e Sair site separadas, maior espaço para nome/foto, leitura do perfil oficial sem exigir treinador Pokémon GO vinculado, sem copiar cookies entre contas. Ícones de seleção das contas alinhados ao botão central da arte das Pokébolas. Preservados filtros, sprites, Minior, tutoriais, Busca Inteligente, Sequências, Modo Noturno e compatibilidade PGSharp/Pokemod usados separadamente. QA automatizado 7/7 aprovado na PR #455; testes físicos Samsung Android 11–14, login OAuth Google/Discord real, fotos, menus, blur e PGSharp/Pokemod permanecem pendentes. Supervisão não confirma captura; instalação exige consentimento do Android."
 }
