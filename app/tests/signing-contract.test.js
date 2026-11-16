@@ -32,7 +32,7 @@ check("versionCode derives from the workflow run number", () => {
   assert.ok(workflow.includes("POKE_TEST_VERSION_CODE=$((54000 + GITHUB_RUN_NUMBER))"));
   assert.ok(workflow.includes("POKE_TEST_VERSION_LABEL=$((51000 + GITHUB_RUN_NUMBER))"));
   assert.match(gradle, /testVersionLabel/);
-  assert.match(gradle, /versionCode = testVersionCode \?: 51/);
+  assert.match(gradle, /versionCode = testVersionCode \?: fastDevCode \?: 51/);
 });
 check("publish only a signed and verified APK", () => {
   assert.match(workflow, /apksigner" verify --verbose --print-certs/);
