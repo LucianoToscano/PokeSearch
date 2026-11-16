@@ -3665,7 +3665,7 @@ public class MainActivity extends Activity {
             loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         }
         website.requestFocus();
-        website.loadUrl("manage".equals(loginPurpose)?
+        website.loadUrl(("manage".equals(loginPurpose)||"sync".equals(loginPurpose))?
             "https://pogocoordinates.com/profile":"https://pogocoordinates.com/search");
     }
     @Override protected void onNewIntent(Intent intent){
