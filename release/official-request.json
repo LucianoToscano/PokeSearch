@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.68",
-  "code": 54575,
-  "label": 51374,
-  "previous_tag": "v0.03.67-54574",
-  "qa_max_code": 54574,
-  "release_notes": "PokeSearch LT374 — Tutorial Interativo. As Pokébolas P1/P2 compartilham um único tutorial exibido apenas na primeira abertura de uma delas. Instruções nos ícones reais mostram toque para resultados, segurar para opções e segurar ↻ para intervalos; fundo transparente no alvo, dedo animado e botão Pular. Nesta versão, inclusive quem já usava o PokeSearch verá o tutorial uma vez para teste; nas futuras atualizações ele não reaparece automaticamente. Replay somente manual em Preferências. Doce Raro e Busca Pokémon mantêm seus tutoriais independentes. Mantidos filtros, contas, menus compactos e recursos anteriores. Os testes automatizados aprovam a lógica, mas toque pass-through e telas Android ainda precisam de validação física."
+  "version": "0.03.69",
+  "code": 54576,
+  "label": 51375,
+  "previous_tag": "v0.03.68-54575",
+  "qa_max_code": 54575,
+  "release_notes": "PokeSearch LT375 — Correções visuais dos overlays P1/P2: Background consistente ligado/desligado, Ordenar Padrão/Inverso com fundos compactos, opções ⋯ em tiles separados, Localização com tabela de cooldown selecionável e KM clicável, Favoritos ancorados ao menu, alça ⋮⋮ em Personalização e Reset sem fundo. Barra alinhada à Pokébola sem deslocar os resultados; guia roxa contrai quando não há informações. Minior ajustado para a escala visual padrão sem substituir sprites. Editor Visual com medidas curtas, legíveis, sem cobrir Pokémon; transparência inicial de 50%, desfoque entre janelas nativo opcional em Android 12+ quando suportado. Tutorial automático somente nas Pokébolas 1/2, com círculo centralizado na arte visível, novo desenho de mão, botão Pular e opção Rever. Preservados filtros, contas, Busca Inteligente, sequências, Pokemod e PGSharp. Sete gates de QA automatizada aprovados na PR #454; homologação física de Minior, gestos e efeito de blur em aparelhos Android ainda pendente. Instalação da atualização exige aprovação do Android."
 }
