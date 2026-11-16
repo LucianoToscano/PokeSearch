@@ -677,12 +677,25 @@ public final class PokemonPicker {
                         xy=candidate;
                 }
                 android.view.WindowManager.LayoutParams lp=window.getAttributes();
-                if(lp.gravity== (Gravity.TOP|Gravity.LEFT) &&
-                    lp.x==xy[0]&&lp.y==xy[1]&&lastHeight[0]==actualHeight)return;
+                int targetX=xy[0],targetY=xy[1];
+                // Some Samsung overlay Dialogs apply a window/decor offset
+                // after show() and setLayout(). Correct using the panel's
+                // ACTUAL on-screen bounds, not only the desired LayoutParams.
+                // This also detects a dialog visually covering the toolbar
+                // although its nominal Y appears correctly adjacent.
+                if(root.isShown()&&root.isAttachedToWindow()&&
+                    root.getWidth()>0&&root.getHeight()>0){
+                    int[] actualOnScreen=new int[2];
+                    root.getLocationOnScreen(actualOnScreen);
+                    targetX=lp.x+(xy[0]-actualOnScreen[0]);
+                    targetY=lp.y+(xy[1]-actualOnScreen[1]);
+                }
+                if(lp.gravity==(Gravity.TOP|Gravity.LEFT)&&
+                    lp.x==targetX&&lp.y==targetY&&lastHeight[0]==actualHeight)return;
                 repositioning[0]=true;
                 try{
                     lp.gravity=Gravity.TOP|Gravity.LEFT;
-                    lp.x=xy[0];lp.y=xy[1];window.setAttributes(lp);
+                    lp.x=targetX;lp.y=targetY;window.setAttributes(lp);
                     lastHeight[0]=actualHeight;
                 }finally{repositioning[0]=false;}
             };
