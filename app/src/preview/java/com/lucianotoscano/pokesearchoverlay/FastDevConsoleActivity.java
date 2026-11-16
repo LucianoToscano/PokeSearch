@@ -185,6 +185,9 @@ public final class FastDevConsoleActivity extends Activity {
             return info.signingInfo.getApkContentsSigners();
         return info.signatures;
     }
+    private static long version(PackageInfo info) {
+        return Build.VERSION.SDK_INT>=28 ? info.getLongVersionCode() : info.versionCode;
+    }
     private void validateApk(File apk,Preview preview) throws Exception {
         PackageManager pm=getPackageManager();
         int flags=Build.VERSION.SDK_INT>=28
@@ -192,8 +195,8 @@ public final class FastDevConsoleActivity extends Activity {
         PackageInfo archive=pm.getPackageArchiveInfo(apk.getAbsolutePath(),flags);
         PackageInfo installed=pm.getPackageInfo(getPackageName(),flags);
         if(archive==null||!getPackageName().equals(archive.packageName)||
-            archive.getLongVersionCode()!=preview.code||
-            archive.getLongVersionCode()<=installed.getLongVersionCode())
+            version(archive)!=preview.code||
+            version(archive)<=version(installed))
             throw new SecurityException("APK não corresponde ao pacote/versão FastDev");
         Signature[] a=signatures(archive), b=signatures(installed);
         if(a==null||b==null||a.length!=1||b.length!=1||
