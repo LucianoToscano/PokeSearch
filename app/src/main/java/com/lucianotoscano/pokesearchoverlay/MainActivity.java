@@ -186,7 +186,6 @@ public class MainActivity extends Activity {
     }
     private TextView sessionHint;
     // Estado informativo separado da automação por gesto; sem botão adicional.
-    private TextView homeWatchStatus;
     private View homeDrawerLayer;
     private View tributeOverlay, communityHomePanel;
     private ScrollView communityHomeScroll;
@@ -663,13 +662,8 @@ public class MainActivity extends Activity {
         dualLp.bottomMargin=d(5);
         dualOverlayRow.setVisibility(View.VISIBLE);
         screen.addView(dualOverlayRow,dualLp);
-        // LT362: linha discreta, sem painel cinza, ícones extras ou comando de gesto.
-        homeWatchStatus=homeText("",10,
-            homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),false);
-        homeWatchStatus.setGravity(Gravity.CENTER);
-        homeWatchStatus.setSingleLine(true);
-        homeWatchStatus.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        screen.addView(homeWatchStatus,new LinearLayout.LayoutParams(-1,d(18)));
+        // LT378: no PGS Monitor banner or reserved row in Home.
+        // The monitor and its diagnostics remain accessible in PGS menus.
         // Rótulos enormes removidos: badge 12dp sobre cada Pokébola.
         // A identidade aparece somente no popover compacto ao tocar.
         overlayAccountLabel1=null;overlayAccountLabel2=null;
@@ -682,15 +676,9 @@ public class MainActivity extends Activity {
         brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
         brand.setContentDescription("Ícone PokeSearch");
         branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)));
-        LinearLayout brandLabels=new LinearLayout(this);
-        brandLabels.setOrientation(LinearLayout.VERTICAL);
-        brandLabels.setPadding(d(6),0,0,0);
-        ImageView brandTitle=new ImageView(this);
-        brandTitle.setImageResource(R.drawable.ps_home_official_wordmark);
-        brandTitle.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        brandTitle.setContentDescription("PokeSearch");
-        // Protected builds only; server validates the admin claim, not the display name.
-        if(PremiumAccess.controlled())brandTitle.setOnLongClickListener(v->{
+        // LT378: Keep the original left app emblem, hide only the wordmark and
+        // the POKÉMON GO subtitle. Preserve the protected admin shortcut.
+        if(PremiumAccess.controlled())brand.setOnLongClickListener(v->{
             if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
             else PremiumGoogleLogin.signIn(this,(ok,message)->{
                 if(ok)PremiumAdminDialog.show(this);
@@ -698,24 +686,6 @@ public class MainActivity extends Activity {
             });
             return true;
         });
-        TextView brandSubtitle=homeText("POKÉMON GO",9,
-            homeLightMode?Color.rgb(53,79,98):Color.rgb(178,202,230),true);
-        // Original wordmark: 2172 × 724 (3:1). Avoid fixed 118×36 squeezing.
-        // A data/hora fica AO LADO do ícone de passes. Em telas estreitas,
-        // priorizar controles tocáveis em vez de comprimir ou cortar o relógio.
-        int availableBrandWidth=getResources().getDisplayMetrics().widthPixels
-            -d(28)-d(200)-d(32)-d(16);
-        int wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth));
-        int wordmarkHeight=Math.round(wordmarkWidth/3f);
-        brandTitle.setAdjustViewBounds(false);
-        brandLabels.addView(brandTitle,
-            new LinearLayout.LayoutParams(wordmarkWidth,wordmarkHeight));
-        brandLabels.addView(brandSubtitle);
-        branding.addView(brandLabels,new LinearLayout.LayoutParams(-2,-2));
-        if(availableBrandWidth<d(55)){
-            // Pequenos telefones exibem o emblema no lugar do título comprimido.
-            brandLabels.setVisibility(View.GONE);
-        }
 
         // Relógio, Apoiar, tema, compartilhar e menu ficam na linha inferior.
         LinearLayout controls=new LinearLayout(this);
@@ -1277,13 +1247,26 @@ public class MainActivity extends Activity {
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         // LT73: show the installed APK's real version; no manual version strings.
-        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT  •  PoGoCoordinates /search",10,
+        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
         footer.setBackground(homeSurface(
             homeLightMode?Color.argb(200,248,251,255):Color.argb(135,9,23,42),
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
+        footer.setClickable(true);
+        footer.setContentDescription("Versão instalada "+BuildConfig.VERSION_NAME+
+            ". Toque para ver o release oficial correspondente no GitHub.");
+        footer.setOnClickListener(v->{
+            // Link matches the installed APK, never a guessed 'latest' version.
+            String officialTag="v"+BuildConfig.VERSION_NAME+"-"+BuildConfig.VERSION_CODE;
+            Uri uri=Uri.parse("https://github.com/LucianoToscano/PokeSearch/releases/tag/"+officialTag);
+            try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
+            catch(android.content.ActivityNotFoundException error){
+                Toast.makeText(this,"Nenhum navegador disponível para abrir a release",
+                    Toast.LENGTH_SHORT).show();
+            }
+        });
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
         // Mission icon floats above the footer, without stealing space from
         // header controls, update alerts, counters or trainer details.
@@ -2416,22 +2399,6 @@ public class MainActivity extends Activity {
         }
         pgsSearchControl.setContentDescription(on?
             "Desativar overlay Buscar Pokémon":"Ativar overlay Buscar Pokémon");
-        if(homeWatchStatus!=null){
-            String watchState=PgsAutoClickService.monitorHomeState(this);
-            String summary=PgsAutoWatchUiPolicy.label(watchState);
-            String client=PgsAutoHostPolicy.shortLabel(PgsAutoHostSettings.current(this));
-            boolean notificationsBlocked=android.os.Build.VERSION.SDK_INT>=33&&
-                PgsAutoWatchSettings.enabled(this)&&
-                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=
-                    android.content.pm.PackageManager.PERMISSION_GRANTED;
-            homeWatchStatus.setText("◎ "+client+" · Monitor: "+summary+
-                (notificationsBlocked?" · avisos bloqueados":""));
-            homeWatchStatus.setContentDescription("Monitor de favoritos sem clique, "+
-                PgsAutoHostPolicy.displayLabel(PgsAutoHostSettings.current(this))+
-                ": "+summary+(notificationsBlocked?
-                ". Permissão de notificações bloqueada.":"")+
-                ". Configure no sino da bolha Buscar Pokémon.");
-        }
     }
     private void refreshHomeOverlay(){
         refreshHomePgsIcon();
