@@ -40,7 +40,7 @@ Estado: implementação da infraestrutura no repositório; publicação OTA só 
 - Sem secrets FastDev configurados, a job de assinatura deve **falhar**, não cair para debug efêmero nem publicar APK instável.
 - Confirmação de instalação Android continua necessária fora do ADB previamente autorizado.
 - Não confiar em preview para OAuth/Firebase que possam depender do applicationId e certificado da produção.
-- O algoritmo de descoberta atual consulta os 30 releases mais recentes; se releases oficiais ocuparem toda a janela, será preciso criar índice de canal dedicado/paginação antes de depender dele em escala.
+- O algoritmo de descoberta percorre até seis páginas de 30 releases públicos, interrompendo ao encontrar o Preview mais recente; em repos com mais de 180 publicações desde o último Preview, ainda pode ser necessário um índice dedicado. A API do GitHub possui rate limit e pode atrasar notificações.
 - O Live Preview não injeta recursos nas janelas reais dos overlays; é um laboratório visual. Evoluir para hot-reload nativo somente com bridges isoladas e testes físicos.
 - A visualização de HTML não elimina a necessidade de compilar Java/Android quando estes arquivos forem modificados.
 - Runners GitHub hospedados são efêmeros; cache Gradle pode ajudar, mas runner self-hosted exige computador e manutenção. Comparar tempos de build antes e depois.
