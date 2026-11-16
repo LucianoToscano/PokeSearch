@@ -203,7 +203,7 @@ public final class PersonalPokedexActivity extends Activity {
                 if(closing)return;
                 pendingSlot=slot(requestedSlot);
                 Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.setType("application/json");
+                intent.setType("*/*"); // Some document providers label JSON as octet-stream.
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{
                     "application/json","text/plain","application/octet-stream"});
