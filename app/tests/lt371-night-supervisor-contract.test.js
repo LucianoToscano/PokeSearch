@@ -25,6 +25,9 @@ assert.match(svc,/private final Runnable nightSupervisorTick=this::checkNightSup
 assert.match(svc,/Autowalk\/Virtual Go Plus diretamente no PGSharp/);
 assert.match(svc,/O PokeSearch interrompeu apenas a supervisão/);
 assert.match(svc,/stopNightSupervisor\(false,"Serviço interrompido."\)/);
+assert.match(svc,/if\(nightSupervisorActive\)\{\s*showReason\("Pare a supervisão noturna antes de iniciar toques\."/);
+assert.match(svc,/Pare a supervisão noturna antes de executar sequência/);
+assert.match(svc,/Supervisão noturna ativa\. Não iniciar toques do PokeSearch/);
 const segment=svc.split("private void startNightSupervisor()")[1]
   .split("private void refreshHuntProximity()")[0];
 assert.doesNotMatch(segment,/dispatchGesture|\.tap\(|\.swipe\(|forceStopPackage|setMockLocation|Runtime\.getRuntime/);
