@@ -1141,9 +1141,9 @@ public class MainActivity extends Activity {
             Color.rgb(51,67,92)));
         LinearLayout secondAccountActions=new LinearLayout(this);
         secondAccountActions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams secondActionLp=new LinearLayout.LayoutParams(-1,d(39));
-        secondActionLp.topMargin=d(7);
-        secondAccountConnected.addView(secondAccountActions,secondActionLp);
+        LinearLayout.LayoutParams secondAccountActionsLp=new LinearLayout.LayoutParams(-1,d(39));
+        secondAccountActionsLp.topMargin=d(7);
+        secondAccountConnected.addView(secondAccountActions,secondAccountActionsLp);
         Button secondSyncProfile=homeAuthButton("↻  Atualizar perfil",
             Color.rgb(35,65,83),Color.WHITE);
         secondSyncProfile.setContentDescription("Sincronizar nome e foto oficiais da Conta 2");
