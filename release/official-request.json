@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.70",
-  "code": 54577,
-  "label": 51376,
-  "previous_tag": "v0.03.69-54576",
-  "qa_max_code": 54576,
-  "release_notes": "PokeSearch LT376 — Correções de overlays compactos e login PoGoCoordinates. Localização: lista integral de 16 faixas sem rolagem interna; Favoritos alinhados à barra sem encobrir resultados; alça real de seis pontos (2×3). Desfoque aplicado também à janela de popup quando Android 12+ permitir; mantém transparência quando o sistema desabilitar. Contas PoGoCoordinates 1/2 com ações Atualizar perfil e Sair site separadas, maior espaço para nome/foto, leitura do perfil oficial sem exigir treinador Pokémon GO vinculado, sem copiar cookies entre contas. Ícones de seleção das contas alinhados ao botão central da arte das Pokébolas. Preservados filtros, sprites, Minior, tutoriais, Busca Inteligente, Sequências, Modo Noturno e compatibilidade PGSharp/Pokemod usados separadamente. QA automatizado 7/7 aprovado na PR #455; testes físicos Samsung Android 11–14, login OAuth Google/Discord real, fotos, menus, blur e PGSharp/Pokemod permanecem pendentes. Supervisão não confirma captura; instalação exige consentimento do Android."
+  "version": "0.03.71",
+  "code": 54578,
+  "label": 51377,
+  "previous_tag": "v0.03.70-54577",
+  "qa_max_code": 54577,
+  "release_notes": "PokeSearch LT377 — Pokébolas P1/P2 usam busca pública em modo Visitante sem exigir login, inclusive Conta 2 desconectada. Seletor Conta: Visitante, Conta 1 e Conta 2, nomes/fotos apenas se confirmados no perfil oficial. Login Google/Discord usa controles oficiais PoGoCoordinates; verificação de /profile pode retornar ao PokeSearch após autenticação confirmada. Logout individual mantém overlays em funcionamento e atualiza sessão; perfis/cookies continuam isolados, sem importar OAuth do navegador. Seleção de treinadores retirada da interface da Pokébola e dados legados preservados. Testes QA 7/7 na PR #458 HEAD 398a6be3b3be4618df9c7817d0567a1f114617fe, mais LT253; Samsung Android 11–14, OAuth real, avatar, menu, acessibilidade, PGSharp/Pokemod separadamente ainda sem validação física. Busca supervisionada não é caminhada nem captura confirmada; atualização exige aprovação do Android."
 }
