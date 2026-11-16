@@ -91,6 +91,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private WindowManager.LayoutParams bubbleParams;
     private PgsAutoIconDetector detector;
+    private String smartGoalSession=null; // only active for explicit LT370 smart start
     private FrameLayout picker;
     private Bitmap pickerBitmap;
     private boolean running=false, pausedByShiny=false, pausedByError=false;
@@ -641,7 +642,16 @@ public final class PgsAutoClickService extends AccessibilityService {
                 setWatchOnly(enabled);
             }
             @Override public void autoDetectHost(){probeActiveFeedHost();}
+            @Override public void startSmartSearch(String goal){
+                stopSequence("SEQUÊNCIA · BUSCA INTELIGENTE SELECIONADA");
+                if(watching)stopWatchOnly(true);
+                if(running)halt("BUSCA RECONFIGURADA");
+                smartGoalSession=PgsSmartSearchSettings.normalizedGoal(goal);
+                targetPrefs().edit().putString("mode","SPRITE").apply();
+                toggle();
+            }
             @Override public void startSearch(){
+                smartGoalSession=null;
                 // Called only from explicit Start in the LT368 Central.
                 // Never leave two engines active or use an old POINT target.
                 stopSequence("SEQUÊNCIA · OUTRA AÇÃO SELECIONADA");
@@ -2423,7 +2433,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void checkMap(int stamp){
         // LT370 PaC-style ASSIST: only a confirmed encounter-window marker
         // may pause for MANUAL capture. We never throw balls from an assumed UI.
-        String smartGoal=PgsSmartSearchSettings.goal(this);
+        String smartGoal=smartGoalSession;
         if(running&&awaitingMap&&stamp==ticket&&
             (PgsSmartSearchSettings.GOAL_CATCH.equals(smartGoal)||
              PgsSmartSearchSettings.GOAL_BOTH.equals(smartGoal))&&
@@ -2561,7 +2571,8 @@ public final class PgsAutoClickService extends AccessibilityService {
                 handler.postDelayed(()->checkMap(stamp),1200L);return;
             }
         }
-        if(huntTapSession&&!PgsSmartSearchSettings.repeat(this)&&huntClicks>=1){
+        if(huntTapSession&&smartGoalSession!=null&&
+            !PgsSmartSearchSettings.repeat(this)&&huntClicks>=1){
             halt("CICLO ÚNICO · RESULTADO NÃO CONFIRMADO");
             return;
         }
@@ -2960,6 +2971,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         notifyUser("Varredura concluída","Visitei "+nextIndex+" ícone(s) reconhecidos. O feed pode ter mudado durante a sequência.",false);
     }
     private void halt(String label){
+        smartGoalSession=null;
         running=false;awaitingMap=false;pausedByShiny=false;pausedByError=false;
         passengerHoldAt=0L;passengerWarningLatched=false;
         sceneBeforeGesture=null;sceneChangedAfterGesture=false;sceneUnchangedLogged=false;
