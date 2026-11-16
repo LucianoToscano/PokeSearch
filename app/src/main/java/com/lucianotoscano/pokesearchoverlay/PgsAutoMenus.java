@@ -913,6 +913,9 @@ final class PgsAutoMenus {
         repeat.setOnCheckedChangeListener((b,on)->
             PgsSmartSearchSettings.setRepeat(context,on));
         root.addView(repeat,margined(-1,dp(31),2));
+        huntNumeric(root,PgsAutoHuntSettings.forCurrent(context),
+            PgsAutoHuntSettings.MAX_CLICKS,"Máximo de interações",
+            new int[]{1,3,5,10},10);
         CheckBox consent=new CheckBox(context);
         consent.setText("Autorizo tocar nas sprites confirmadas");
         consent.setTextSize(10);consent.setTextColor(fg());
