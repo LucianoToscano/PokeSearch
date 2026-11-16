@@ -47,6 +47,9 @@ final class PgsAutoMenus {
         void sequencePick(String type,int index,boolean destination);
         void sequencePreview();
         void autoDetectHost();
+        void startNightSupervisor();
+        void stopNightSupervisor();
+        boolean nightSupervisorActive();
         void startSmartSearch(String goal);
         void startSearch();
         void sequenceRun();
@@ -876,6 +879,9 @@ final class PgsAutoMenus {
     // LT370: simple PaS/PaC-inspired goals reuse ONE validated engine.
     // They do not imply automatic ball throwing or guaranteed Shiny evidence.
     private boolean showAdvancedActions=false;
+    private boolean nightExpanded=false;
+    // One-time acknowledgments only, never persist assumptions about VGP link.
+    private boolean nightWalkAcknowledged=false,nightCatchAcknowledged=false;
     private void appendCentralActions(LinearLayout root){
         if(showAdvancedActions){appendLegacyActions(root);return;}
         root.addView(label("OBJETIVO DA BUSCA",10,true),margined(-1,dp(22),2));
@@ -932,6 +938,63 @@ final class PgsAutoMenus {
             showAdvancedActions=true;showCentral(1);
         });
         root.addView(editor,margined(-1,dp(29),3));
+        // LT371: a compact standalone PGSharp supervisor, not a fake bot.
+        Button night=button(nightExpanded?
+            "☾ Recolher modo noturno":"☾ Modo noturno · PGSharp",10);
+        night.setOnClickListener(v->{nightExpanded=!nightExpanded;showCentral(1);});
+        root.addView(night,margined(-1,dp(30),4));
+        if(nightExpanded)appendNightMode(root);
+    }
+
+    private void appendNightMode(LinearLayout root){
+        TextView description=label("Autowalk e Virtual Go Plus fazem "+
+            "movimento/captura NO PGSharp. O PokeSearch apenas supervisiona "+
+            "o jogo; não ativa, não verifica a conexão nem desliga os recursos.",9,false);
+        description.setMaxLines(5);
+        root.addView(description,margined(-1,dp(76),2));
+        if(!PgsAutoHostPolicy.PGSHARP.equals(
+                PgsAutoHostSettings.current(context))){
+            TextView unavailable=label("Este modo externo só foi documentado "+
+                "para PGSharp. Pokemod exige integração própria validada.",9,false);
+            unavailable.setMaxLines(3);
+            root.addView(unavailable,margined(-1,dp(52),2));
+            return;
+        }
+        CheckBox walk=new CheckBox(context);
+        walk.setText("Já ativei Autowalk no PGSharp");
+        walk.setTextSize(10);walk.setTextColor(fg());
+        walk.setChecked(nightWalkAcknowledged);
+        walk.setOnCheckedChangeListener((b,on)->{
+            nightWalkAcknowledged=on;showCentral(1);
+        });
+        root.addView(walk,margined(-1,dp(31),1));
+        CheckBox plus=new CheckBox(context);
+        plus.setText("Já conectei Virtual Go Plus no jogo");
+        plus.setTextSize(10);plus.setTextColor(fg());
+        plus.setChecked(nightCatchAcknowledged);
+        plus.setOnCheckedChangeListener((b,on)->{
+            nightCatchAcknowledged=on;showCentral(1);
+        });
+        root.addView(plus,margined(-1,dp(31),1));
+        TextView tips=label("Confira Pokébolas, mochila livre, jogo visível, "+
+            "alertas habilitados e ventilação. Tela bloqueada pode interromper "+
+            "a sessão. A supervisão não controla o cliente externo.",9,false);
+        tips.setMaxLines(4);
+        root.addView(tips,margined(-1,dp(62),2));
+        boolean active=actions.nightSupervisorActive();
+        Button start=button(active?"■ Parar supervisão":
+            "▷ Iniciar supervisão noturna",10);
+        start.setContentDescription(active?
+            "Parar supervisão do PokeSearch; Autowalk e Virtual Go Plus "+
+                "continuam ligados no PGSharp":
+            "Iniciar supervisão visual, sem controlar caminhada ou captura");
+        start.setEnabled(active||(nightWalkAcknowledged&&nightCatchAcknowledged));
+        start.setOnClickListener(v->{
+            if(active)actions.stopNightSupervisor();
+            else actions.startNightSupervisor();
+            showCentral(1);
+        });
+        root.addView(start,margined(-1,dp(32),3));
     }
 
     private void appendLegacyActions(LinearLayout root){
