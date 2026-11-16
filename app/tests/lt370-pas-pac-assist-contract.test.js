@@ -25,7 +25,7 @@ assert.match(shiny,/isNotificationListenerAccessGranted/);
 assert.match(svc,/smartGoalSession=PgsSmartSearchSettings\.normalizedGoal\(goal\)/);
 assert.match(svc,/smartGoalSession=null/);
 assert.match(svc,/ENCONTRO VISÍVEL · CAPTURA MANUAL/);
-assert.match(svc,/Captura manualmente; resultado ainda não verificado/);
+assert.match(svc,/Capture manualmente; resultado ainda não verificado/);
 assert.match(svc,/!PgsSmartSearchSettings\.repeat\(this\)/);
 // All available means only real, enabled, client-matching image models.
 assert.match(store,/activeForSearch\(Context c\)/);
