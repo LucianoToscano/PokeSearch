@@ -26,7 +26,7 @@ assert.match(auto,/if\(quickMenus!=null&&quickMenus\.isOpen\(\)\)\{\s*quickMenus
 assert.match(auto,/PgsAutoTemplateStore\.active\(this\)/);
 assert.match(auto,/if\(existing\)PgsAutoTemplateStore\.clearTeaching\(this\)/);
 assert.match(auto,/scheduleArmedStart\(\)/);
-assert.match(auto,/onInterrupt\(\) \{\s*stopSequence\("SEQUÊNCIA · SERVIÇO INTERROMPIDO"\);\s*\/\/ Uma perda temporária/);
+assert.match(auto,/onInterrupt\(\) \{\s*stopNightSupervisor\(true,"Acessibilidade interrompida\."\);\s*stopSequence\("SEQUÊNCIA · SERVIÇO INTERROMPIDO"\);\s*\/\/ Uma perda temporária/);
 
 // Passenger prompt is safety-sensitive: observe, pause, wait MANUAL, never click it.
 const accessibility=fs.readFileSync("app/src/main/res/xml/pgs_auto_accessibility_config.xml","utf8");
