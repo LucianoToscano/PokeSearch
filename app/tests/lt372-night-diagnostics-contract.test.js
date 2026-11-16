@@ -23,7 +23,7 @@ assert.match(menu,/nightWalkAcknowledged,nightCatchAcknowledged\)/);
 assert.match(policy,/STOP_NOTIFICATIONS/);
 assert.match(policy,/if\(!notificationsOn\)return Decision\.STOP_NOTIFICATIONS/);
 assert.match(diag,/Caminhada externa:/);
-assert.match(diag,/Tentativa de captura: nao observada/);
+assert.match(diag,/Tentativa de captura: não observada/);
 assert.match(diag,/Captura confirmada: nenhuma evidência/);
 assert.match(diag,/boolean stale\(long nowMs,long intervalMs\)/);
 assert.doesNotMatch(diag,/dispatchGesture|setMockLocation|forceStopPackage|catchCounter|captureCount/);
