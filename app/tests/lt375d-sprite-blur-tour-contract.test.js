@@ -22,7 +22,7 @@ match(dock,/window\.PokeSearchSpriteScale\?\.enhanceProviderTile/,"exact native 
 match(dock,/width:var\(--result-art-size,21\.12px\)!important/,"same P/M/G artwork slot for everybody");
 // Measurements on narrow toolbar tiles must be compact and legible.
 match(editor,/const label=\(node,compact=false\)/,"compact measurements supported");
-match(editor,/Math\.round\(rect\.height\)\+\(compact\?"":" px"\)/,"no overflowing px suffix on 30px tiles");
+match(editor,/w\+"×"\+h\+\(compact\?"":" px"\)/,"no overflowing px suffix on 30px tiles");
 match(editor,/forEach\(node=>label\(node,true\)\)/,"per-tile compact badges");
 match(dock,/body\.visual-measurements\.result-window #shell::after\{/,"result-column black measurement plate removed");
 match(dock,/font:700 7\.4px\/9px monospace!important/,"toolbar labels sized for tile geometry");

@@ -20,7 +20,8 @@ assert.ok(js.includes('const typeIcons=document.getElementById("types").innerHTM
 assert.ok(js.includes('document.getElementById("artColumn")?.classList?.toggle?.("gengarSprite"'),"Gengar detail conditional");
 assert.ok(compact.includes("#artColumn.gengarSprite #img{transform:scale(.78);"),"only Gengar detail art shrinks");
 assert.ok(dock.includes("dexNumber===94?0.67:0.86"),"Gengar in list is 22% smaller");
-assert.ok(dock.includes("const artFit=/^\\s*minior"),"existing Minior rule preserved");
+assert.ok(dock.includes("const artFit=dexNumber===94?0.67:0.86"),"Minior now uses normal scale; Gengar retained");
+assert.ok(dock.includes('psSourceMeasured!=="1"'),"only unmeasured Minior is visually corrected");
 assert.ok(detail.includes("#major .statValue.red{color:#ff9bb0}"),"keep raw IV original color");
 assert.ok(detail.includes("#headerActions #timer.pulse .timerClock"),"clock remains independent");
 assert.ok(detail.includes("id=\"evolutions\" hidden"),"evolution section preserved");

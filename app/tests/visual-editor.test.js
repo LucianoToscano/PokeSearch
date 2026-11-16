@@ -315,11 +315,11 @@ test("Final cascade reintroduces 1px borders on regular, selected and light menu
   assert.equal(hits[hits.length-1].border.trim(),wanted,selector);
  }
 });
-test("Minior art receives additional consistent scaling in the 10-sprite list",()=>{
- assert.ok(dock.includes('const artFit=/^'));
- assert.ok(dock.includes('minior(?:'));
- assert.ok(dock.includes('?0.67:0.86;'));
- assert.ok(dock.includes('const artFit='));
+test("Minior matches normal sprite scale; unknown alpha uses a bounded fallback",()=>{
+ assert.ok(dock.includes("const artFit=dexNumber===94?0.67:0.86"));
+ assert.ok(dock.includes("const minior=Number(String(sourceCard?.number"));
+ assert.ok(dock.includes('psSourceMeasured!=="1"'));
+ assert.ok(dock.includes('setProperty("--tile-alpha-zoom","1.65")'));
  assert.ok(dock.includes('--visual-art-fit:'));
  assert.ok(dock.includes('width:calc(var(--sprite) * var(--visual-art-fit,0.86))!important;'));
 });
