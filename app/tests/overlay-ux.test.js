@@ -70,7 +70,7 @@ test("LT62 popup receives picker/filter events, focus and P/M/G state updates",(
 
 test("Favorites picker is service-safe and focusable",picker.includes("TYPE_APPLICATION_OVERLAY")&&picker.includes("Runnable dismissed"));
 
-test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
+test("LT375b Favorites stay nonmodal and aligned with toolbar",()=>{
  const bridge=service.split("private void showFavoritePicker(int anchorX,int anchorY)")[1]
    ?.split("public class Bridge{")[0]||"";
  const publicApi=service.split("@JavascriptInterface public void openWatchList()")[1]
@@ -78,7 +78,8 @@ test("LT62/LT68 Favorites stay nonmodal and anchored to their star icon",()=>{
  const longPress=service.split("final Runnable dockLongPress=()->{")[1]?.split("};")[0]||"";
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
-  bridge.includes("},anchorX,anchorY,")&&
+  bridge.includes("},menuCenterX,anchorY,")&&
+  bridge.includes("menuParams.x+menuParams.width/2")&&
   publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&

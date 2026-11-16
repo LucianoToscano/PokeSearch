@@ -285,7 +285,7 @@ check("LT62 Personalização: short labels, fixed-size sprites and aligned menu 
  const body=dock.split("function renderAppearanceChoices(){")[1]?.split('document.addEventListener("pointerdown",event=>{')[0]||"";
  assert.ok(body.includes('link("Info Pokémon","info")'));
  assert.ok(body.includes('link("Editor Visual","visual")'));
- assert.ok(body.includes('help.textContent="Menus · segure ≡ para arrastar"'));
+ assert.ok(body.includes('help.textContent="Menus · segure ⋮⋮ para arrastar"'));
  assert.ok(body.includes('reset.className="resetMenuLayout"'));
  assert.ok(body.includes('reset.textContent="↺"'));
  assert.ok(body.includes('commands.className="appearanceCommands"'));
