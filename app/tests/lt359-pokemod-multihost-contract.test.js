@@ -27,7 +27,7 @@ assert.doesNotMatch(manifest,/android\.permission\.(QUERY_ALL_PACKAGES|MANAGE_EX
 assert.match(store,/obj\.optString\("hostProfile",PgsAutoHostPolicy\.PGSHARP\)/);
 assert.match(store,/obj\.put\("hostProfile",m\.hostProfile\)/);
 assert.match(store,/PgsAutoHostPolicy\.templateBelongsTo\(/);
-assert.match(store,/PgsAutoHostPolicy\.PGSHARP\.equals\(PgsAutoHostSettings\.current\(c\)\)/);
+assert.ok(store.includes("PgsAutoHostPolicy.PGSHARP.equals(PgsAutoHostPolicy.profile(host))"));
 assert.match(store,/PgsAutoHostSettings\.current\(c\)/);
 assert.match(store,/new Model\(originalId,name\.trim\(\),file,enabled,false,refWidth,refHeight\)/,
   "legacy backup restore semantics remain");
