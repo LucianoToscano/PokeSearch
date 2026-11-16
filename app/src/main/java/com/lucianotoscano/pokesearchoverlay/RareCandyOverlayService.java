@@ -266,7 +266,8 @@ public final class RareCandyOverlayService extends Service {
         accountBindingPrefs.registerOnSharedPreferenceChangeListener(candyAccountListener);
         attachSource();
         main.post(tick);
-        main.postDelayed(()->beginGestureTour(false),1600L);
+        // LT375d: defer Candy onboarding; only Pokébola is automatic.
+        // The original Candy gesture handlers and tutorial code stay intact.
     }
     private void createBubble(){
         bubbleWindow=new FrameLayout(this);

@@ -197,6 +197,7 @@ public class OverlayService extends Service {
     private int visualMenuOffsetX=0,visualMenuOffsetY=0,
         visualResultsOffsetX=0,visualResultsOffsetY=0,
         visualGearMenuGap=0,visualMenuItemGap=0,visualResultGapBetween=31,
+        visualMenuBlurPx=4,
         visualHeaderY=0,visualHeaderX=0,visualHeaderTouchWidth=35,
         visualHeaderTouchHeight=30,visualHeaderAfterGap=0;
     private int visualMenuBaseDp(){
@@ -249,6 +250,7 @@ public class OverlayService extends Service {
             visualResultsOffsetY=o.optInt("resultsOffsetY",0);
             visualGearMenuGap=o.optInt("gearMenuGap",0);
             visualMenuItemGap=o.optInt("menuItemGap",0);
+            visualMenuBlurPx=Math.max(0,Math.min(16,o.optInt("menuBlur",4)));
             visualResultGapBetween=o.optInt("resultGapBetween",31);
             visualHeaderY=o.optInt("headerIconY",0);
             visualHeaderX=o.optInt("headerOffsetX",0);
@@ -256,6 +258,31 @@ public class OverlayService extends Service {
             visualHeaderTouchHeight=o.optInt("headerTouchHeight",30);
             visualHeaderAfterGap=o.optInt("headerAfterGap",0);
         }catch(org.json.JSONException ignored){}
+    }
+    // LT375d: WebView backdrop-filter cannot read pixels of a foreign app.
+    // Android 12+ can optionally blur across native windows. This is a
+    // guarded, system-dependent effect: do NOT simulate it using screenshots,
+    // MediaProjection, accessibility capture or a fake opaque backdrop.
+    private boolean nativeMenuBlurAvailable(){
+        return android.os.Build.VERSION.SDK_INT>=31&&wm!=null&&
+            wm.isCrossWindowBlurEnabled();
+    }
+    private void updateNativeMenuBlur(){
+        if(android.os.Build.VERSION.SDK_INT<31||menuParams==null||
+            menuRoot==null||wm==null)return;
+        // Blur-behind is a system effect behind the window; toggle only
+        // while the real menu is open. Honor the Editor Visual slider (0=off).
+        boolean use=menuExpanded&&visualMenuBlurPx>0&&nativeMenuBlurAvailable();
+        int radius=use?dp(visualMenuBlurPx):0;
+        boolean old=(menuParams.flags&WindowManager.LayoutParams.FLAG_BLUR_BEHIND)!=0;
+        if(old==use&&menuParams.getBlurBehindRadius()==radius)return;
+        if(use)menuParams.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+        else menuParams.flags&=~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+        menuParams.setBlurBehindRadius(radius);
+        if(menuRoot.isAttachedToWindow()){
+            try{wm.updateViewLayout(menuRoot,menuParams);}
+            catch(RuntimeException e){recordFailure("desfoque nativo do menu",e);}
+        }
     }
     private void broadcastVisualPrefs(){
         String jsCode="window.onVisualPrefs&&window.onVisualPrefs("+visualPrefsJson+")";
@@ -292,6 +319,7 @@ public class OverlayService extends Service {
             }catch(org.json.JSONException ignored){changedGuides=true;}
             visualPrefsJson=next;
             readVisualRuntime();
+            updateNativeMenuBlur();
             android.content.SharedPreferences.Editor edit=overlayPrefs().edit()
                 .putString("visualPrefsJson",visualPrefsJson);
             if(changedGuides)edit.commit();
@@ -421,8 +449,13 @@ public class OverlayService extends Service {
                 if(grip==null||!grip.isAttachedToWindow())return null;
                 int[] location=new int[2];
                 grip.getLocationOnScreen(location);
-                return new android.graphics.Rect(location[0],location[1],
-                    location[0]+grip.getWidth(),location[1]+grip.getHeight());
+                // The visible original Pokébola PNG is 21dp, centred within
+                // the larger 53×30dp native gesture hitbox. Spotlight must
+                // follow the visible art, not the transparent touch edges.
+                int art=dp(21);
+                int left=location[0]+Math.max(0,(grip.getWidth()-art)/2);
+                int top=location[1]+Math.max(0,(dp(30)-art)/2);
+                return new android.graphics.Rect(left,top,left+art,top+art);
             });
         gestureTour.start(replay);
     }
@@ -3877,6 +3910,7 @@ public class OverlayService extends Service {
         }else{
             if(menuRoot!=null)menuRoot.setVisibility(View.GONE);
         }
+        updateNativeMenuBlur();
         // Position first and send one sync for this open/close transition.
         // Future drags still synchronize from updateMenuPosition().
         deferMenuSync=true;
@@ -5818,14 +5852,22 @@ public class OverlayService extends Service {
             }
             startVerifiedShinySearch(generation,0);
         });}
+        @JavascriptInterface public boolean crossWindowBlurAvailable(){
+            return OverlayService.this.nativeMenuBlurAvailable();
+        }
         @JavascriptInterface public void tutorialRefreshAnchor(float x,float y,
                 float width,float height){
             handler.post(()->{
                 if(gestureTour==null||!gestureTour.active()||!menuExpanded||
                     menuParams==null||width<12||height<12||
                     x<0||y<0||x>850||y>850||width>250||height>250)return;
-                int left=menuParams.x+dp(Math.round(x));
-                int top=menuParams.y+dp(Math.round(y));
+                if(menuPanel==null||!menuPanel.isAttachedToWindow())return;
+                // Same SCREEN coordinates as the Pokébola guide. The menu
+                // WebView can be inset vertically when a popup opens above.
+                int[] windowOrigin=new int[2];
+                menuPanel.getLocationOnScreen(windowOrigin);
+                int left=windowOrigin[0]+dp(Math.round(x));
+                int top=windowOrigin[1]+dp(Math.round(y));
                 gestureTour.setRefreshBounds(new android.graphics.Rect(left,top,
                     left+dp(Math.round(width)),top+dp(Math.round(height))));
             });

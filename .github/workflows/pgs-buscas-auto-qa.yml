@@ -24,6 +24,7 @@ on:
       - 'app/tests/lt373-overlay-gesture-coachmark.test.js'
       - 'app/tests/lt375-pokeball-menu-visual-contract.test.js'
       - 'app/tests/lt375-menu-result-anchor-contract.test.js'
+      - 'app/tests/lt375d-sprite-blur-tour-contract.test.js'
       - 'app/tests/lt375b-location-favorites-personalization.test.js'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/FavoritePanelGeometry.java'
@@ -86,6 +87,7 @@ jobs:
           node app/tests/lt373-overlay-gesture-coachmark.test.js
           node app/tests/lt375-pokeball-menu-visual-contract.test.js
           node app/tests/lt375-menu-result-anchor-contract.test.js
+          node app/tests/lt375d-sprite-blur-tour-contract.test.js
           node app/tests/lt375b-location-favorites-personalization.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT

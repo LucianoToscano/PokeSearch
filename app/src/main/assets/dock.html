@@ -5064,6 +5064,31 @@ body.popup-window.controls-window #choices.appearanceCompact button.resetMenuLay
  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
  color:var(--visual-menu-fg,#eff3f6)!important;
 }
+/* LT375d: readable measurements, no compressed/overlapping black bar. */
+body.visual-measurements.controls-window #quickMenuList .quickRow::after,
+body.visual-measurements.controls-window #quickMenuList .quickFooterAction::after{
+  content:attr(data-visual-measure)!important;box-sizing:border-box!important;
+  position:absolute!important;top:auto!important;bottom:0!important;
+  left:50%!important;right:auto!important;transform:translateX(-50%)!important;
+  max-width:calc(100% - 2px)!important;width:max-content!important;
+  padding:1px!important;margin:0!important;border-radius:2px!important;
+  background:#111a25e8!important;color:#fff!important;
+  font:700 7.4px/9px monospace!important;letter-spacing:-.45px!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important;
+  pointer-events:none!important;z-index:24!important;
+}
+body.visual-measurements.controls-window #choices::after{
+  content:attr(data-visual-measure)!important;
+  top:auto!important;bottom:5px!important;right:5px!important;left:auto!important;
+  width:max-content!important;max-width:calc(100% - 10px)!important;
+  padding:3px 5px!important;border-radius:5px!important;
+  font:700 9px/12px monospace!important;white-space:nowrap!important;
+  background:#121b27eb!important;color:#f8fcff!important;pointer-events:none!important;
+}
+body.visual-measurements.result-window #shell::after{
+  /* Tiny sprite rail cannot show the full-size black measurements. */
+  content:none!important;display:none!important;
+}
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -6882,6 +6907,13 @@ function attachSpriteFeedback(){
       window.PokeSearchSpriteScale?.enhanceProviderTile?.(
        img,sourceCard?.imageFromSite===true?sourceCard.imageAlphaBounds:null,
        verifiedEvent,verifiedProvider);
+      // Only unmeasurable Minior images with generous transparent padding
+      // receive a limited visual correction; exact measured alpha takes over.
+      const minior=Number(String(sourceCard?.number||sourceCard?.dex||"").replace("#",""))===774||
+       /^\s*minior(?:\s|\(|$)/i.test(String(sourceCard?.name||""));
+      if(minior&&img.dataset?.psSourceMeasured!=="1"&&
+         Number(img.style.getPropertyValue("--tile-alpha-zoom")||1)<1.55)
+        img.style.setProperty("--tile-alpha-zoom","1.65");
      }
     }
    }
@@ -7903,11 +7935,11 @@ function draw(){
   const imageUrl=verifiedSiteArt?art.src:(nativeArt||art.src);
   const originalUrl=art.original;
   const hasImage=/^(file:\/\/\/android_asset\/pokemon-sprites\/|https:\/\/|data:image\/(?:png|webp|gif|jpeg);base64,)/i.test(imageUrl);
-  // Fixed-size art box for everyone; extra reduction only for Minior's
-  // unusually full artwork. Never alter its species identity or image URL.
+  // LT375d: Minior uses the same art-slot scale as other Pokémon.
+  // The old 0.67 special-case made its Meteor/Core sprite appear tiny.
+  // Preserve exact image/form identity and existing Gengar costume policy.
   const dexNumber=Number(String(c.number||c.dex||"").replace("#",""));
-  const artFit=/^\s*minior(?:\s|\(|$)/i.test(String(c.name||""))?0.67:
-   dexNumber===94?0.67:0.86; // Gengar needs reduced visual fill; keep original sprite file.
+  const artFit=dexNumber===94?0.67:0.86;
   // Halloween Gengar costume often fills the entire image unlike regular #94.
   const gengarName=/\bgengar\b/i.test(String(c.name||""));
   const gengarSpecies=dexNumber===94||(gengarName&&(dexNumber===0||!Number.isFinite(dexNumber)));
