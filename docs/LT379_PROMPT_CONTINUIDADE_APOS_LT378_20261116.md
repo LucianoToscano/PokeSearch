@@ -6,7 +6,7 @@ Continue o aplicativo Android PokeSearch sem recriar o projeto ou apagar ferrame
 
 - GitHub `LucianoToscano/PokeSearch`, branch principal `main`.
 - LT378 código integrado por PR #461 (squash `9d2e06df00033485a9ec865e04e0c367e9059a09`) e pedido de publicação por PR #462 (squash `5aa764a0f330cacc51598ada03cabdc9b65e2b7b`).
-- Versão solicitada: `0.03.72`, `versionCode 54579`, label `51378`, tag esperada `v0.03.72-54579`. **Consultar GitHub releases/latest e workflow #43975405288 para confirmar publicação, certificado e SHA-256; jamais presumir sucesso com base no arquivo local.**
+- Versão oficial **publicada**: `0.03.72`, `versionCode 54579`, label `51378`, tag `v0.03.72-54579` e APK `PokeSearch-v0.03.72-LT.apk`, SHA-256 `4d1f99f92e81544d13714e18d72edfdb6c6026c929ef9aed69f850cefafc3f0e` (workflow oficial #43975405288 `completed/success`, `2026-11-16T23:04:12Z`). **Verificar novamente GitHub releases/latest e assinatura antes da próxima atualização; nunca inferir versão pelo arquivo local somente.**
 - QA de código PR #461 **7/7 SUCCESS** no HEAD `de9663d6859bff0788155efba3feca184001d486`; QA de publicação PR #462 também condicionado aos gates. Fonte do relatório: `docs/LT378_AUDITORIA_HOME_AUTOHUNT_20261116.md`. Preservar PR #457 da Pokédex separada se ainda não mesclada.
 
 ## Leitura mandatória antes de qualquer mudança
