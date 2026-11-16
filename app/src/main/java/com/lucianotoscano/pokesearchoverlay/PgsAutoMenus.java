@@ -830,7 +830,68 @@ final class PgsAutoMenus {
         render[0].run();
     }
 
+    // LT370: simple PaS/PaC-inspired goals reuse ONE validated engine.
+    // They do not imply automatic ball throwing or guaranteed Shiny evidence.
+    private boolean showAdvancedActions=false;
     private void appendCentralActions(LinearLayout root){
+        if(showAdvancedActions){appendLegacyActions(root);return;}
+        root.addView(label("OBJETIVO DA BUSCA",10,true),margined(-1,dp(22),2));
+        String current=PgsSmartSearchSettings.goal(context);
+        String[] goals={PgsSmartSearchSettings.GOAL_SHINY,
+            PgsSmartSearchSettings.GOAL_CATCH,PgsSmartSearchSettings.GOAL_BOTH};
+        String[] labels={"✨ Procurar Shiny","◎ Auxiliar encontros",
+            "✨ Procurar + auxiliar"};
+        for(int i=0;i<goals.length;i++){
+            final String goal=goals[i];
+            Button choice=button(labels[i],10);
+            choice.setContentDescription("Objetivo: "+labels[i]);
+            markChosen(choice,goal.equals(current));
+            choice.setOnClickListener(v->{
+                PgsSmartSearchSettings.selectGoal(context,goal);
+                showCentral(1);
+            });
+            root.addView(choice,margined(-1,dp(30),3));
+        }
+        String warning=PgsSmartSearchSettings.GOAL_SHINY.equals(current)?
+            "Consulta o feed e pausa somente diante de aviso Shiny explícito "+
+            "da espécie; exige acesso às notificações do jogo.":
+            PgsSmartSearchSettings.GOAL_CATCH.equals(current)?
+            "Abre alvos confirmados; avisa ao reconhecer o encontro. "+
+            "Captura, bolas e frutas continuam manuais.":
+            "Combina aviso Shiny com encontro assistido. "+
+            "Sem arremesso automático e sem capturas presumidas.";
+        TextView explanation=label(warning,9,false);
+        explanation.setMaxLines(4);
+        root.addView(explanation,margined(-1,dp(59),3));
+        CheckBox repeat=new CheckBox(context);
+        repeat.setText("Continuar procurando após cada ciclo");
+        repeat.setTextSize(10);repeat.setTextColor(fg());
+        repeat.setChecked(PgsSmartSearchSettings.repeat(context));
+        repeat.setOnCheckedChangeListener((b,on)->
+            PgsSmartSearchSettings.setRepeat(context,on));
+        root.addView(repeat,margined(-1,dp(31),2));
+        CheckBox consent=new CheckBox(context);
+        consent.setText("Autorizo tocar nas sprites confirmadas");
+        consent.setTextSize(10);consent.setTextColor(fg());
+        consent.setChecked(PgsSmartSearchSettings.gestureConsent(context));
+        consent.setOnCheckedChangeListener((b,on)->
+            PgsSmartSearchSettings.setGestureConsent(context,on));
+        root.addView(consent,margined(-1,dp(34),2));
+        TextView status=label("Assistência de captura: não comprovada no jogo. "+
+            "Teste a prévia antes de iniciar.",9,false);
+        status.setMaxLines(2);
+        root.addView(status,margined(-1,dp(37),2));
+        Button editor=button("⌄ Avançado: monitor, Auto Hunt e sequências",9);
+        editor.setOnClickListener(v->{
+            showAdvancedActions=true;showCentral(1);
+        });
+        root.addView(editor,margined(-1,dp(29),3));
+    }
+
+    private void appendLegacyActions(LinearLayout root){
+        Button back=button("⌃ Voltar à Busca Inteligente",9);
+        back.setOnClickListener(v->{showAdvancedActions=false;showCentral(1);});
+        root.addView(back,margined(-1,dp(29),2));
         String current=PgsSmartSearchSettings.mode(context);
         String[] ids={PgsSmartSearchSettings.MONITOR,PgsSmartSearchSettings.CLICK,
             PgsSmartSearchSettings.HUNT,PgsSmartSearchSettings.SEQUENCE};
@@ -1121,8 +1182,8 @@ final class PgsAutoMenus {
     }
 
     private boolean hasCentralSprite(){
-        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.active(context))
-            if(PgsAutoCatalog.isSelectedName(context,model.name))return true;
+        for(PgsAutoTemplateStore.Model model:PgsAutoTemplateStore.activeForSearch(context))
+            return true;
         return false;
     }
     private void startCentral(){
@@ -1131,6 +1192,31 @@ final class PgsAutoMenus {
         if(PgsAutoHostPolicy.OTHER.equals(host)){
             Toast.makeText(context,"Outro cliente: somente prévia. "+
                 "Selecione PGSharp ou Pokemod.",Toast.LENGTH_LONG).show();return;
+        }
+        if(!showAdvancedActions){
+            int models=PgsAutoTemplateStore.readyForSearch(context);
+            if(models<=0){
+                Toast.makeText(context,"Nenhuma miniatura válida neste cliente. "+
+                    "Cadastre uma sprite ou selecione um modelo disponível.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            if(!PgsSmartSearchSettings.gestureConsent(context)){
+                Toast.makeText(context,"Autorize os gestos na aba Ação. "+
+                    "Selecionar objetivo não inicia toques.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            String goal=PgsSmartSearchSettings.goal(context);
+            if(!PgsSmartSearchSettings.GOAL_CATCH.equals(goal) &&
+                !PgsAutoShinyListener.hasAccess(context)){
+                Toast.makeText(context,"Para avisos Shiny, habilite o acesso "+
+                    "às notificações do jogo nas configurações do Android.",
+                    Toast.LENGTH_LONG).show();return;
+            }
+            PgsAutoHuntSettings.forCurrent(context).edit()
+                .putBoolean(PgsAutoHuntSettings.ENABLED,true)
+                .putBoolean(PgsAutoHuntSettings.CLICK_ENABLED,true).apply();
+            dismissAll();actions.startSearch();
+            return;
         }
         if(PgsSmartSearchSettings.SEQUENCE.equals(mode)){
             if(!PgsSequenceStore.canRun(context)){
