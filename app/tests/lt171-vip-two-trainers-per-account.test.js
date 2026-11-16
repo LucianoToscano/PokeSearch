@@ -55,7 +55,8 @@ assert.match(slots,/hasTrainer\(context,account,verified\)/);
 assert.match(slots,/JSONArray list=new JSONArray\(prefs\(context,slot\)\.getString\("profileTrainerList","\[\]"\)\)/);
 const chooser=main.slice(main.indexOf("private void showPokeballAccountChoice("),
  main.indexOf("private void choosePokeballTrainer(",main.indexOf("private void showPokeballAccountChoice(")));
-assert.match(chooser,/int trainers1=selectableTrainerCount\(PogoAccountSlots\.prefs\(this,1\)\)/);
-assert.match(chooser,/int trainers2=selectableTrainerCount\(PogoAccountSlots\.prefs\(this,2\)\)/);
-assert.match(chooser,/choosePokeballTrainer\(secondary,slot\)/);
+// Historical trainer data remains supported but no longer appears in the active chooser.
+assert.doesNotMatch(chooser,/selectableTrainerCount|choosePokeballTrainer/);
+assert.match(chooser,/Conta: Visitante/);
+assert.match(chooser,/PogoAccountSlots\.bindAccountOnly\(this,secondary,slot\)/);
 console.log("LT170 VIP matrix: Account1 two verified trainers, Account2 one; P1/P2 independently assign both PASS");

@@ -18,19 +18,25 @@ import org.json.JSONObject;
  */
 final class PogoAccountSlots {
     static final String NAME_2="pokesearch_pogocoordinates_account_2";
+    static final String NAME_GUEST="pokesearch_pogocoordinates_visitor";
     static final String CHANGE="com.lucianotoscano.pokesearchoverlay.ACCOUNT_BINDING_CHANGED";
     private PogoAccountSlots(){}
 
     static boolean supportsSecond(){
         return WebViewFeature.isFeatureSupported(WebViewFeature.MULTI_PROFILE);
     }
+    static boolean supportsGuest(Context context){
+        // Never borrow an authenticated default cookie jar for Visitante.
+        return supportsSecond()||!loggedIn(context,1);
+    }
     static SharedPreferences prefs(Context context,int slot){
-        return context.getSharedPreferences(slot==2?"pogo_account_2":"prefs",Context.MODE_PRIVATE);
+        return context.getSharedPreferences(slot==0?"pogo_guest":
+            slot==2?"pogo_account_2":"prefs",Context.MODE_PRIVATE);
     }
     static int assigned(Context context,boolean secondary){
         int selected=context.getSharedPreferences("prefs",Context.MODE_PRIVATE)
             .getInt(secondary?"pogoOverlayAccount2":"pogoOverlayAccount1",1);
-        return selected==2?2:1;
+        return selected==0?0:selected==2?2:1;
     }
     static int overlayNumber(boolean secondary){return secondary?2:1;}
     static String trainerSetting(boolean secondary){
@@ -60,7 +66,9 @@ final class PogoAccountSlots {
      * Never merge the isolated WebView cookies for account 1 vs account 2.
      */
     static void bindAccountOnly(Context context,boolean secondary,int account){
-        if(account!=1&&account!=2)throw new IllegalArgumentException("account");
+        if(account!=0&&account!=1&&account!=2)throw new IllegalArgumentException("account");
+        if(account==0&&!supportsGuest(context))
+            throw new IllegalStateException("Visitor cannot share signed-in cookies");
         if(account==2&&!supportsSecond())
             throw new IllegalStateException("WebView does not support isolated account 2");
         context.getSharedPreferences("prefs",Context.MODE_PRIVATE).edit()
@@ -71,10 +79,11 @@ final class PogoAccountSlots {
         context.sendBroadcast(changed);
     }
     static boolean loggedIn(Context context,int slot){
-        return "autenticada".equals(prefs(context,slot).getString("sessionStatus",""));
+        return slot!=0&&"autenticada".equals(prefs(context,slot).getString("sessionStatus",""));
     }
     static String trainer(Context context,boolean secondary){
         int slot=assigned(context,secondary);
+        if(slot==0)return "";
         SharedPreferences account=prefs(context,slot);
         SharedPreferences binding=context.getSharedPreferences("prefs",Context.MODE_PRIVATE);
         String key=trainerSetting(secondary);
@@ -103,12 +112,21 @@ final class PogoAccountSlots {
     }
     /** Call before settings/evaluateJavascript/navigation on the fresh WebView. */
     static void attach(WebView web,int slot){
-        if(slot==2){
+        if(slot==0){
+            if(supportsSecond())WebViewCompat.setProfile(web,NAME_GUEST);
+            else if(loggedIn(web.getContext(),1))
+                throw new IllegalStateException("Visitor cannot share signed-in profile");
+        }else if(slot==2){
             if(!supportsSecond())throw new IllegalStateException("No separate WebView profiles");
             WebViewCompat.setProfile(web,NAME_2);
         }
     }
     static CookieManager cookieManager(int slot){
+        if(slot==0){
+            if(!supportsSecond())return CookieManager.getInstance();
+            return ProfileStore.getInstance().getOrCreateProfile(NAME_GUEST)
+                .getCookieManager();
+        }
         if(slot==1)return CookieManager.getInstance();
         if(!supportsSecond())throw new IllegalStateException("No separate WebView profiles");
         Profile profile=ProfileStore.getInstance().getOrCreateProfile(NAME_2);
