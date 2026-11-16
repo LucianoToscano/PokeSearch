@@ -71,7 +71,7 @@ final class PgsNightSessionDiagnostics {
         info.append("Caminhada externa: ").append(walkDeclared?
             "declarada, movimento não verificado":"não verificada").append('\n');
         info.append("Tentativa de captura: não observada");
-        if(plusDeclared)info.append(" (VGP declarado, conexao não verificada)");
+        if(plusDeclared)info.append(" (VGP declarado, conexão não verificada)");
         info.append('\n');
         info.append("Captura confirmada: nenhuma evidência no jogo");
         if(!active&&!lastStopReason.isEmpty())
