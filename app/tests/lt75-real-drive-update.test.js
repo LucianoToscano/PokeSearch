@@ -14,8 +14,8 @@ testCase("temporary LT74 preview no longer intercepts real updates",()=>{
     "Teste: botão acionado.","footer.setOnLongClickListener"])
    assert.ok(!main.includes(token),"unexpected preview: "+token);
 });
-testCase("dynamic installed version remains visible with its GitHub release link",()=>{
- assert.ok(main.includes("footer.setOnClickListener(v->{"));
+testCase("dynamic installed version remains visible with in-app Novidades link",()=>{
+ assert.ok(main.includes("footer.setOnClickListener(v->ReleaseNotes.showHistory(this))"));
  assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+" LT"'));
  assert.ok(main.includes("screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));"));
 });
