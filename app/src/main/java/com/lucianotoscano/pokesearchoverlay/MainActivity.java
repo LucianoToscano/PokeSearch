@@ -531,6 +531,9 @@ public class MainActivity extends Activity {
         intent.putExtra("type",category);
         startActivity(intent);
     }
+    private void openPersonalPokedex(){
+        startActivity(new android.content.Intent(this,PersonalPokedexActivity.class));
+    }
     private void openDataHubCatalog(){
         android.content.Intent intent=new android.content.Intent(
             this,DataHubCatalogActivity.class);
@@ -1780,6 +1783,7 @@ public class MainActivity extends Activity {
                 addHomeDrawerItem(drawer,"★","Conta Premium · Gerenciar / Sair",
                     this::showPremiumAccountOptions);
         }else{
+            addHomeDrawerItem(drawer,"▦","Minha Pokédex",this::openPersonalPokedex);
             addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
             addHomeDrawerItem(drawer,"◉","Conta",this::showHomeAccountMenu);
             addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
