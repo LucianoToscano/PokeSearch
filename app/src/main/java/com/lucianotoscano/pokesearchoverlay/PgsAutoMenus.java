@@ -47,6 +47,7 @@ final class PgsAutoMenus {
         void sequencePick(String type,int index,boolean destination);
         void sequencePreview();
         void autoDetectHost();
+        void startSmartSearch(String goal);
         void startSearch();
         void sequenceRun();
         void sequenceStop();
@@ -1257,7 +1258,7 @@ final class PgsAutoMenus {
             PgsAutoHuntSettings.forCurrent(context).edit()
                 .putBoolean(PgsAutoHuntSettings.ENABLED,true)
                 .putBoolean(PgsAutoHuntSettings.CLICK_ENABLED,true).apply();
-            dismissAll();actions.startSearch();
+            dismissAll();actions.startSmartSearch(goal);
             return;
         }
         if(PgsSmartSearchSettings.SEQUENCE.equals(mode)){
