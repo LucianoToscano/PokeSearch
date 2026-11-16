@@ -531,26 +531,24 @@ public final class PgsAutoClickService extends AccessibilityService {
         createChannel();
         try { detector=new PgsAutoIconDetector(this); }
         catch(IOException e) { showReason("Leitor visual indisponível: "+e.getMessage()); }
-        showBubble();
-        if(PgsAutoWatchSettings.enabled(this)){
-            startWatchOnly();
-            if(watching&&PgsAutoHuntSettings.enabled(this)&&
-                !PgsAutoHuntSettings.forCurrent(this).getBoolean(
-                    PgsAutoHuntSettings.CLICK_ENABLED,false)){
-                huntWatchSession=true;
-                refreshHuntProximity();
-            }
+        // LT378: enabling Accessibility does NOT turn on the Auto Hunt
+        // bubble, passive monitor or any scan. P1/P2 follow the same OFF
+        // startup rule. Keep templates, species, filters and user preferences.
+        PgsAutoWatchSettings.setEnabled(this,false);
+        SharedPreferences startup=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE);
+        long tappedAt=startup.getLong("armFromHomeAtMs",0L);
+        long now=System.currentTimeMillis();
+        boolean freshTap=tappedAt>0L&&now>=tappedAt&&now-tappedAt<=120000L;
+        armedByHome=startup.getBoolean("armFromHome",false)&&freshTap;
+        // One-shot permission handoff: never revive a stale persisted arm.
+        startup.edit().putBoolean("armFromHome",false)
+            .remove("armFromHomeAtMs").apply();
+        if(armedByHome){
+            // Only a recent deliberate Home tap may display/start the search.
+            showBubble();
+            if(isGameVisible())startArmedSearch();
+            else scheduleArmedStart();
         }
-        armedByHome=getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE)
-            .getBoolean("armFromHome",false);
-        if(!PgsAutoTemplateStore.pending(this).isEmpty())queueTeachingWhenReady();
-        if(watching){
-            armedByHome=false;
-            getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
-                .putBoolean("armFromHome",false).apply();
-        }
-        if(armedByHome&&isGameVisible())startArmedSearch();
-        else scheduleArmedStart();
     }
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -592,7 +590,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             return;
         }
         if(isGameVisible()&&armedByHome)startArmedSearch();
-        else if(isGameVisible()&&!PgsAutoTemplateStore.pending(this).isEmpty())
+        else if(isGameVisible()&&bubble!=null&&
+                !PgsAutoTemplateStore.pending(this).isEmpty())
             queueTeachingWhenReady();
         else if(armedByHome)scheduleArmedStart();
     }
@@ -930,7 +929,8 @@ public final class PgsAutoClickService extends AccessibilityService {
             live.showBubble();
             live.armedByHome=true;
             live.getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
-                .putBoolean("armFromHome",true).apply();
+                .putBoolean("armFromHome",true)
+                .putLong("armFromHomeAtMs",System.currentTimeMillis()).apply();
             if(live.isGameVisible())live.startArmedSearch();
             else live.scheduleArmedStart();
         });
@@ -1016,7 +1016,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         stopWatchOnly(true);
         armedByHome=false;
         getSharedPreferences("pgs_auto_settings_v1",MODE_PRIVATE).edit()
-            .putBoolean("armFromHome",false).apply();
+            .putBoolean("armFromHome",false).remove("armFromHomeAtMs").apply();
         halt("FECHADO");
         if(tapIndicator!=null)tapIndicator.clear();
         if(quickMenus!=null)quickMenus.dismissAll();
