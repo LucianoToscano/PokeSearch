@@ -391,21 +391,23 @@ public class MainActivity extends Activity {
         boolean showNames=getSharedPreferences("prefs",MODE_PRIVATE)
             .getBoolean("homeShowPogoAccountName",true);
         final android.widget.PopupWindow[] window={null};
-        for(int slot=1;slot<=2;slot++){
+        for(int slot=0;slot<=2;slot++){
             final int account=slot;
-            boolean available=slot==1||PogoAccountSlots.supportsSecond();
-            boolean logged=available&&PogoAccountSlots.loggedIn(this,slot);
+            boolean available=slot==0?PogoAccountSlots.supportsGuest(this):
+                slot==1||PogoAccountSlots.supportsSecond();
+            boolean logged=slot!=0&&available&&PogoAccountSlots.loggedIn(this,slot);
             String name=logged&&showNames?PogoAccountSlots.prefs(this,slot)
                 .getString("profileDisplayName","").trim():"";
-            if(name.isEmpty())name=logged?"Nome indisponível":available?"Sem login":"Indisponível";
+            if(name.isEmpty())name=slot==0?"Visitante":
+                logged?"Nome indisponível":available?"Sem Login":"Indisponível";
             if(name.length()>24)name=name.substring(0,21)+"…";
             TextView option=homeText((slot==assigned?"✓ ":"   ")+
-                "Conta "+slot+": "+name,12,
+                (slot==0?"Conta: Visitante":"Conta "+slot+": "+name),12,
                 homeLightMode?Color.rgb(18,38,53):Color.WHITE,slot==assigned);
             option.setPadding(d(8),d(9),d(8),d(9));
             option.setEnabled(available);
             option.setAlpha(available?1f:.55f);
-            option.setContentDescription("Usar Conta "+slot+" na Pokébola "+
+            option.setContentDescription("Usar "+(slot==0?"Visitante":"Conta "+slot)+" na Pokébola "+
                 (secondary?"2":"1")+(slot==assigned?", selecionada":""));
             option.setOnClickListener(v->{
                 if(window[0]!=null)window[0].dismiss();
@@ -445,7 +447,8 @@ public class MainActivity extends Activity {
                 R.drawable.login_modo_claro):R.drawable.login_modo_semlogin;
             badge.setImageResource(art);
             badge.clearColorFilter();
-            badge.setContentDescription("Pokébola "+(i+1)+" usando Conta "+assigned+
+            badge.setContentDescription("Pokébola "+(i+1)+" usando "+
+                (assigned==0?"Visitante":"Conta "+assigned)+
                 (logged?" conectada":" sem login"));
         }
     }
@@ -1505,8 +1508,9 @@ public class MainActivity extends Activity {
             if(label==null)continue;
             int slot=PogoAccountSlots.assigned(this,secondary);
             if(!ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE){
-                label.setText((secondary?"P2":"P1")+" · Conta "+slot+
-                    (PogoAccountSlots.loggedIn(this,slot)?" · Logado":" · Visitante"));
+                label.setText((secondary?"P2":"P1")+" · "+
+                    (slot==0?"Visitante":"Conta "+slot+
+                    (PogoAccountSlots.loggedIn(this,slot)?" · Logado":" · Visitante")));
             }else{
                 String chosen=PogoAccountSlots.trainer(this,secondary);
                 label.setText((secondary?"P2":"P1")+" · Conta "+slot+
@@ -1517,52 +1521,46 @@ public class MainActivity extends Activity {
         }
     }
     private void showPokeballAccountChoice(boolean secondary){
+        // LT377: identity is optional; trainer selection is retired from UI.
         int assigned=PogoAccountSlots.assigned(this,secondary);
-        int trainers1=selectableTrainerCount(PogoAccountSlots.prefs(this,1));
-        int trainers2=selectableTrainerCount(PogoAccountSlots.prefs(this,2));
-        String[] choices=ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE?
-            new String[]{
-                "Conta 1 · "+trainers1+" treinador"+(trainers1==1?"":"es"),
-                "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?
-                    trainers2+" treinador"+(trainers2==1?"":"es"):"Entrar primeiro")
-            }:new String[]{
-                "Conta 1 · "+(PogoAccountSlots.loggedIn(this,1)?"Logado":"Visitante"),
-                "Conta 2 · "+(PogoAccountSlots.loggedIn(this,2)?"Logado":
-                    PogoAccountSlots.supportsSecond()?"Visitante":"Indisponível")
-            };
+        boolean guestAvailable=PogoAccountSlots.supportsGuest(this);
+        boolean secondAvailable=PogoAccountSlots.supportsSecond();
+        String name1=PogoAccountSlots.prefs(this,1).getString("profileDisplayName","").trim();
+        String name2=PogoAccountSlots.prefs(this,2).getString("profileDisplayName","").trim();
+        boolean showNames=getSharedPreferences("prefs",MODE_PRIVATE)
+            .getBoolean("homeShowPogoAccountName",true);
+        String[] choices={
+            guestAvailable?"Conta: Visitante":"Conta: Visitante · indisponível",
+            "Conta 1: "+(PogoAccountSlots.loggedIn(this,1)?
+                (showNames&&!name1.isEmpty()?name1:"Conectada"):"Sem Login"),
+            "Conta 2: "+(PogoAccountSlots.loggedIn(this,2)?
+                (showNames&&!name2.isEmpty()?name2:"Conectada"):
+                secondAvailable?"Sem Login":"Indisponível")
+        };
         new AlertDialog.Builder(this)
             .setTitle(secondary?"Pokébola 2 · Conta":"Pokébola 1 · Conta")
-            .setSingleChoiceItems(choices,assigned-1,(dialog,which)->{
+            .setSingleChoiceItems(choices,assigned,(dialog,which)->{
                 dialog.dismiss();
-                int slot=which+1;
-                if(slot==2&&!PogoAccountSlots.supportsSecond()){
-                    Toast.makeText(this,PogoAccountSlots.supportsSecond()?
-                        "Conecte a Conta 2 antes de selecionar treinador":
-                        "Perfil independente indisponível neste WebView",
-                        Toast.LENGTH_LONG).show();
-                    return;
+                int slot=which;
+                if((slot==0&&!PogoAccountSlots.supportsGuest(this))||
+                   (slot==2&&!PogoAccountSlots.supportsSecond())){
+                    Toast.makeText(this,"Seu WebView não permite isolar esta conta",
+                        Toast.LENGTH_LONG).show();return;
                 }
-                if(ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&
-                   PogoAccountSlots.loggedIn(this,slot)){
-                    choosePokeballTrainer(secondary,slot);
-                }else{
-                    // Account assignment is not a trainer selection. Preserve
-                    // independent P1/P2 account choices without Shiny prompts.
-                    PogoAccountSlots.bindAccountOnly(this,secondary,slot);
-                    Class<?> service=secondary?SecondaryOverlayService.class:
-                        OverlayService.class;
-                    boolean running=secondary?OverlayService.isSecondaryRunning():
-                        OverlayService.isRunning();
-                    if(running){
-                        stopService(new Intent(this,service));
-                        getWindow().getDecorView().postDelayed(()->{
-                            Intent intent=new Intent(this,service);
-                            if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);
-                            else startService(intent);
-                        },350L);
-                    }
-                    refreshSessionSummary();
+                PogoAccountSlots.bindAccountOnly(this,secondary,slot);
+                Class<?> service=secondary?SecondaryOverlayService.class:OverlayService.class;
+                boolean running=secondary?OverlayService.isSecondaryRunning():
+                    OverlayService.isRunning();
+                if(running){
+                    stopService(new Intent(this,service));
+                    getWindow().getDecorView().postDelayed(()->{
+                        Intent intent=new Intent(this,service);
+                        if(Build.VERSION.SDK_INT>=26)startForegroundService(intent);
+                        else startService(intent);
+                    },350L);
                 }
+                refreshPokeballLoginBadges();
+                refreshSessionSummary();
             }).setNegativeButton("Cancelar",null).show();
     }
     private void choosePokeballTrainer(boolean secondary,int account){
@@ -1676,11 +1674,9 @@ public class MainActivity extends Activity {
         openLoginDialog(false,purpose);
     }
     private void logoutSecondAccount(){
-        if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==2)
-            stopService(new Intent(this,OverlayService.class));
-        if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==2)
-            stopService(new Intent(this,SecondaryOverlayService.class));
+        // Logout changes authentication, not the ability to use either Pokébola.
         PogoAccountSlots.logout(this,2,()->runOnUiThread(()->{
+            refreshOverlaysAfterSlotLogout(2);
             refreshSessionSummary();
             Toast.makeText(this,"Conta 2 desconectada",Toast.LENGTH_SHORT).show();
         }));
@@ -2905,7 +2901,7 @@ public class MainActivity extends Activity {
         if(trainerAction!=null)trainerAction.setText(linked?"Remover":
             "unlinked".equals(prefs.getString("profileTrainerState","unknown"))?"Vincular":"Gerenciar");
         if(sessionSummary!=null)sessionSummary.setText(logged?
-            "● Sessão identificada · PoGoCoordinates":"○ Login necessário");
+            "● Conta conectada · PoGoCoordinates":"○ Visitante · busca liberada");
     }
     private void askLogout(){
         new AlertDialog.Builder(this)
@@ -2916,16 +2912,10 @@ public class MainActivity extends Activity {
             .show();
     }
     private void logoutLocalSession(){
-        // The user may be signed into TWO separate providers simultaneously.
-        // Never remove Account 2 cookies or stop its independent Pokébola.
-        if(OverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==1)
-            stopService(new Intent(this,OverlayService.class));
-        if(RareCandyOverlayService.isRunning()&&PogoAccountSlots.assigned(this,false)==1)
-            stopService(new Intent(this,RareCandyOverlayService.class));
-        if(OverlayService.isSecondaryRunning()&&PogoAccountSlots.assigned(this,true)==1)
-            stopService(new Intent(this,SecondaryOverlayService.class));
+        // Preserve active P1/P2 searches; reload public results after cookie removal.
         if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
         PogoAccountSlots.logout(this,1,()->runOnUiThread(()->{
+            refreshOverlaysAfterSlotLogout(1);
             refreshSessionSummary();
             Toast.makeText(this,"Conta 1 desconectada",Toast.LENGTH_SHORT).show();
         }));
@@ -2997,6 +2987,13 @@ public class MainActivity extends Activity {
     private void serviceAction(String action,boolean authConfirmed){
         sendActionToRunningOverlay(OverlayService.class,action,authConfirmed);
         sendActionToRunningOverlay(SecondaryOverlayService.class,action,authConfirmed);
+    }
+    private void refreshOverlaysAfterSlotLogout(int slot){
+        final String action="com.lucianotoscano.pokesearchoverlay.REFRESH_LOGIN";
+        if(PogoAccountSlots.assigned(this,false)==slot)
+            sendActionToRunningOverlay(OverlayService.class,action,false);
+        if(PogoAccountSlots.assigned(this,true)==slot)
+            sendActionToRunningOverlay(SecondaryOverlayService.class,action,false);
     }
     private void notifyOverlaySessionReady(){
         PogoAccountSlots.cookieManager(activeLoginSlot).flush();
@@ -3322,10 +3319,7 @@ public class MainActivity extends Activity {
             refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
                loginDialog!=null&&loginDialog.isShowing()){
-                if("unlinked".equals(PogoAccountSlots.prefs(this,activeLoginSlot)
-                        .getString("profileTrainerState","unknown")))
-                    Toast.makeText(this,"Login autorizado. Para usar Shiny, toque em Vincular e associe seu treinador no PoGoCoordinates.",
-                        Toast.LENGTH_LONG).show();
+                // Authentication now represents only a PoGoCoordinates account.
                 loginDialog.dismiss();
             }
         });
@@ -3387,7 +3381,13 @@ public class MainActivity extends Activity {
         view.evaluateJavascript(script,result->{
             if(view!=website||loginLinkAttempted||loginDialog==null||
                !loginDialog.isShowing())return;
-            if(result!=null&&result.contains("\"authenticated\"")){
+            if(result!=null&&result.contains("\"profile-hint\"")){
+                // A visible first-party link is only a hint to verify /profile.
+                loginLinkAttempted=true;
+                profileDiscoveryAttempted=true;
+                if(loginWaitLabel!=null)loginWaitLabel.setText("Verificando sessão oficial…");
+                view.loadUrl("https://pogocoordinates.com/profile");
+            }else if(result!=null&&result.contains("\"authenticated\"")){
                 // The independent session probe will return to PokeSearch.
                 loginLinkAttempted=true;
             }else if(result!=null&&result.contains("\"ready\"")){
