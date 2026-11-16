@@ -1682,6 +1682,11 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     private void toggle(){
+        if(nightSupervisorActive){
+            showReason("Supervisão noturna ativa. Não iniciar toques do PokeSearch "+
+                "junto ao Virtual Go Plus. Pare a supervisão no menu primeiro.");
+            return;
+        }
         if(sequenceActive){
             stopSequence("SEQUÊNCIA INTERROMPIDA PELO USUÁRIO");
             return;
