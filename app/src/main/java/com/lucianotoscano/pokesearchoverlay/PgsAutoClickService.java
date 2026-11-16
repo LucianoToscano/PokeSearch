@@ -1038,7 +1038,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         lastStatus=value;
         if(bubble==null)return;
         boolean shiny=pausedByShiny||value.contains("SHINY");
-        boolean on=watching||PgsAutoVisualState.active(
+        boolean on=nightSupervisorActive||watching||PgsAutoVisualState.active(
             running,pausedByShiny,pausedByError);
         if(handView!=null&&(!Boolean.valueOf(on).equals(currentArtworkOn))){
             handView.setImageResource(on?
@@ -1048,9 +1048,9 @@ public final class PgsAutoClickService extends AccessibilityService {
         if(watching)setCoreState(PgsAutoVisualState.Core.WHITE);
         else setCoreState(PgsAutoVisualState.core(running,awaitingMap,pausedByError,value));
         if(handBadge!=null){
-            handBadge.setText(watching?"◎":shiny?"✨":
+            handBadge.setText(nightSupervisorActive?"☾":watching?"◎":shiny?"✨":
                 value.contains("PAUSADO")?"!":"");
-            handBadge.setVisibility(watching||shiny||
+            handBadge.setVisibility(nightSupervisorActive||watching||shiny||
                 value.contains("PAUSADO")?View.VISIBLE:View.GONE);
         }
         if(countdownBadge!=null){
@@ -1070,7 +1070,9 @@ public final class PgsAutoClickService extends AccessibilityService {
             }else countdownBadge.setVisibility(View.GONE);
         }
         bubble.setAlpha(1f); // Estado OFF fica na arte, não num quadrado translúcido.
-        bubble.setContentDescription("PGS Busca Pokémon: "+value+
+        bubble.setContentDescription((nightSupervisorActive?
+            "PGS: supervisão noturna, sem comprovação de captura. ":
+            "PGS Busca Pokémon: ")+value+
             (on?", ligado":", desligado")+
             (watching?". Monitor somente leitura: toque para parar.":
              ". Toque para ligar/desligar; segure para abrir menus."));
