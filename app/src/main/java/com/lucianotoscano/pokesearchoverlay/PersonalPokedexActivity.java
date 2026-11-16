@@ -40,6 +40,7 @@ public final class PersonalPokedexActivity extends Activity {
     private static final int MAX_IMPORT_BYTES=24*1024*1024;
     private static final int MAX_POKEMON=10000;
     private static final Pattern LARGE_ID=Pattern.compile("(\"id\"\\s*:\\s*)(\\d{16,20})(?=\\s*[,}])");
+    private static final Pattern TAG_ARRAY=Pattern.compile("(\\\"pokemonTagIds\\\"\\s*:\\s*\\[)([^\\]]*)(\\])");
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private WebView view;
     private volatile boolean closing=false;
@@ -69,7 +70,15 @@ public final class PersonalPokedexActivity extends Activity {
         // Android JSONObject can round unsigned 64-bit Pokémon IDs. Quote the
         // exact lexical tokens BEFORE JSON parsing; never coerce them to double.
         Matcher matcher=LARGE_ID.matcher(raw);
-        JSONObject source=new JSONObject(matcher.replaceAll("$1\"$2\""));
+        String stableIds=matcher.replaceAll("$1\"$2\"");
+        Matcher tagMatch=TAG_ARRAY.matcher(stableIds);
+        StringBuffer normalized=new StringBuffer(stableIds.length());
+        while(tagMatch.find()){
+            String numbers=tagMatch.group(2).replaceAll("(?<![0-9])([0-9]{16,20})(?![0-9])","\"$1\"");
+            tagMatch.appendReplacement(normalized,Matcher.quoteReplacement(tagMatch.group(1)+numbers+tagMatch.group(3)));
+        }
+        tagMatch.appendTail(normalized);
+        JSONObject source=new JSONObject(normalized.toString());
         JSONArray original=source.optJSONArray("pokemons");
         if(original==null||original.length()>MAX_POKEMON)
             throw new IOException("Lista Pokémon ausente ou excessiva.");
@@ -183,6 +192,11 @@ public final class PersonalPokedexActivity extends Activity {
             try(FileInputStream in=new FileInputStream(target)){
                 return new String(bounded(in,MAX_IMPORT_BYTES),StandardCharsets.UTF_8);
             }catch(Exception ignored){return "{}";}
+        }
+        @JavascriptInterface public String getCatalog(){
+            try(InputStream in=getAssets().open("pokemon_catalog.json")){
+                return new String(bounded(in,120000),StandardCharsets.UTF_8);
+            }catch(Exception ignored){return "[]";}
         }
         @JavascriptInterface public void chooseJson(int requestedSlot){
             runOnUiThread(()->{
