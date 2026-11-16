@@ -1,3 +1,13 @@
+# ESTADO MAIS RECENTE PARA AUDITORIAS DE OUTRAS IAs — 16/11/2026
+
+**ATENÇÃO:** o texto histórico abaixo cita LT337, LT323 e 0.03.36 como "atuais" no contexto de 14/11/2026; NÃO usá-los como estado corrente. Em 16/11/2026, a última release verificada era **v0.03.72-54579**, workflow oficial **#43975405288** SUCCESS e main **5aa764a0f330cacc51598ada03cabdc9b65e2b7b**. Consultar sempre GitHub Releases/latest e main novamente.
+
+**Leia PRIMEIRO o dossiê de auditoria independente:** [docs/LT379_AUDITORIA_INDEPENDENTE_PARA_OUTRAS_IAS_20261116.md](docs/LT379_AUDITORIA_INDEPENDENTE_PARA_OUTRAS_IAS_20261116.md) e o [Prompt Mestre LT380](docs/LT380_PROMPT_MESTRE_NOVO_CHAT_20261116.md).
+
+**Defeito P0 detectado:** toque no rodapé da Home apontava incorretamente para GitHub em vez das Novidades internas; leitor nativo rejeitava histórico com **198 entradas** por limite de **96.000 bytes**, apesar de o JSON ter mais de **318.000 caracteres**. Correções e testes LT379 na branch `fix/lt379-novidades-internas-historico-20261116`. Uma PR ou CI verde não equivale a APK publicado nem teste físico. Não reiniciar o projeto, apagar dados, alterar assinatura ou inventar OAuth.
+
+---
+
 # LEIA PRIMEIRO — ARK: AUTORIZAÇÃO EXECUTIVA DO PROJETO (14/11/2026)
 
 ## Status de manutenção após LT337 — APK sem teto de CI (14/11/2026)
