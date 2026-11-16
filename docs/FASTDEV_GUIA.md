@@ -2,6 +2,12 @@
 
 Status: infraestrutura de desenvolvimento, SEM atualização pública do aplicativo. Nunca declarar CI ou homologação física PASS sem execução e evidência. O comando ARK do proprietário mantém as obrigações de merge, QA e publicação protegida, conforme AGENTS.md.
 
+## Execução automática pelo assistente, sem cliques no Actions
+
+Para solicitar um teste Preview do SHA atual de uma branch, o assistente altera somente fastdev/preview-request.json nessa branch: schema 1, modo apk-preview (ou visual/fast), e request_id novo a cada solicitação. O push dessa única solicitação aciona o workflow FastDev naquele commit, sem segredos de assinatura, sem GitHub Release e sem incrementar a versão pública. Este é o caminho recomendado quando o proprietário pede para gerar um Preview, sem depender do botão Run workflow. A branch pode ser de desenvolvimento ou main; conferir SOURCE_COMMIT.txt antes de usar. O mesmo arquivo pode ser alterado novamente para repetir o Preview. Não editar release/official-request.json para testes.
+
+O arquivo de solicitação é validado por scripts/fastdev-request.cjs; mudanças inválidas falham. Este gatilho só age dentro do repositório, e não concede a forks acesso a secrets. A assinatura do Preview permanece a debug isolada, inapropriada para atualizar a instalação pública. Uma solicitação de Preview não constitui autorização de ARK oficial.
+
 ## Três modos independentes
 
 1. **fast (padrão):** o workflow PokeSearch FastDev roda em PRs que alteram app/ ou a própria infraestrutura. Usa scripts/fastdev.cjs para mapear arquivos alterados a testes Node apropriados. Se não reconhece um arquivo, executa smoke conservador e sinaliza que os gates completos continuam necessários. NÃO gera APK, não faz merge, não assina.
