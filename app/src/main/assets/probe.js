@@ -1720,7 +1720,8 @@ if(action==="session"){
  // On the official profile page, the section pair is only present for an
  // authenticated account. A linked Pokemon trainer is NOT required.
  const profileProof=location.pathname==="/profile"&&
-   /\bLinked accounts\b/i.test(body)&&/\bPokemon GO accounts\b/i.test(body);
+   /\bLinked accounts\b/i.test(body)&&
+   (/\bMember since\b/i.test(body)||/\bPokemon GO accounts\b/i.test(body));
  // Do not infer "authenticated" merely from an absent login button:
  // hidden mobile menus and partially hydrated React can be ambiguous.
  const auth=loggedIn||profileProof||accountBadge?"autenticada":
