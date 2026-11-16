@@ -79,7 +79,7 @@ test("LT375b Favorites stay nonmodal and aligned with toolbar",()=>{
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
   bridge.includes("},menuCenterX,anchorY,")&&
-  bridge.includes("menuParams.x+menuParams.width/2")&&
+  bridge.includes("menuParams.x+preferredPanelWidth/2")&&
   publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
@@ -1967,7 +1967,7 @@ test("HOME-01 never invents trainer data or changes remote account on local remo
  return update.includes('code.matches("[0-9]{12}")')&&
   update.includes('trainerPanel.setVisibility(')&&
   update.includes('ProviderFeatureFlags.TRAINER_SELECTION_AVAILABLE&&logged')&&
-  update.includes('prefs.getString("profileDisplayName","Nome indisponível · abrir perfil")')&&
+  update.includes('displayName.isEmpty()?"Perfil não sincronizado":displayName')&&
   main.includes("A remoção precisa ser confirmada no perfil oficial")&&
   main.includes('readAsset("profile_summary.js")')&&
   main.includes('.remove("profileTrainerName").remove("profileTrainerCode")');

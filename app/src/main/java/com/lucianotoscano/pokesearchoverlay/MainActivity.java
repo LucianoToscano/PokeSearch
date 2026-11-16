@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
     private TextView sessionSummary;
     private boolean loginStartedForShiny=false;
     private boolean loginAutoReturnQueued=false;
-    private String loginPurpose="login"; // login | manage
+    private String loginPurpose="login"; // login | manage | sync
     private boolean trainerLinkRequested=false,trainerLinkStarted=false;
     private long trainerLinkObserveDeadline=0L;
     private int activeLoginSlot=1;
@@ -610,10 +610,8 @@ public class MainActivity extends Activity {
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
             FrameLayout loginHotspot=new FrameLayout(this);
-            // A imagem da Pokébola inclui transparência: a borda vermelha visível
-            // fica abaixo do topo do ImageView. Descemos a arte do seletor
-            // preservando alinhamento ao centro branco da Pokébola.
-            // A borda óptica é conferida no Samsung; pixels são físicos, não dp.
+            // Seletor independente do OAuth; alinhar à silhueta real do ícone,
+            // não ao centro do ImageView quando a arte tiver padding assimétrico.
             FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
                 d(30),d(21),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
             shell.addView(loginHotspot,hotLp);
@@ -625,19 +623,30 @@ public class MainActivity extends Activity {
             pokeballLoginBadges[i]=badge;
             loginHotspot.setContentDescription("Escolher Conta 1 ou 2 para Pokébola "+(i+1));
             loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
-            // Alinhar o canto inferior do badge a 2 pixels *físicos* acima
-            // da primeira linha visível da Pokébola (não do ImageView).
-            // A matriz já foi enfileirada em fitVisibleArtwork; aqui ela é
-            // lida só após o layout. Não altera a área visual da Pokébola.
-            icon.post(()->{
+            // LT376e: ambos os eixos seguem a arte óptica calculada em
+            // coordenadas do próprio shell, não o centro nominal de 512px.
+            // Recalcular após mudanças reais de largura/densidade na Home.
+            final Runnable alignBadge=()->{
                 int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
-                if(visibleTop<0||!loginHotspot.isAttachedToWindow())return;
+                int visibleCenterX=HomeMenuIconPack.opticalPokeballButtonXInParentPx(icon);
+                if(visibleTop<0||visibleCenterX<0||!loginHotspot.isAttachedToWindow())return;
                 FrameLayout.LayoutParams placement=
                     (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
-                placement.height=d(18);
-                placement.topMargin=visibleTop-2-placement.height;
-                placement.gravity=Gravity.TOP|Gravity.CENTER_HORIZONTAL;
+                int height=d(18);
+                int desiredLeft=visibleCenterX-d(15);
+                int desiredTop=visibleTop-2-height;
+                if(placement.leftMargin==desiredLeft&&placement.topMargin==desiredTop&&
+                    placement.height==height&&placement.gravity==(Gravity.TOP|Gravity.LEFT))return;
+                placement.width=d(30);
+                placement.height=height;
+                placement.leftMargin=desiredLeft;
+                placement.topMargin=desiredTop;
+                placement.gravity=Gravity.TOP|Gravity.LEFT;
                 loginHotspot.setLayoutParams(placement);
+            };
+            icon.post(alignBadge);
+            icon.addOnLayoutChangeListener((v,l,t,r,b,oldL,oldT,oldR,oldB)->{
+                if((r-l)!=(oldR-oldL)||(b-t)!=(oldB-oldT))icon.post(alignBadge);
             });
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
@@ -939,9 +948,21 @@ public class MainActivity extends Activity {
         identity.addView(accountProvider);
         Button logout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
         logout.setBackground(homeSurface(Color.rgb(27,36,52),13,Color.rgb(51,67,92)));
-        LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        // LT376e: action buttons have their own compact row. Previously
+        // "Sair site" stole width from the name and displayed "Nome indis...".
+        LinearLayout accountActions=new LinearLayout(this);
+        accountActions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionsLp=new LinearLayout.LayoutParams(-1,d(39));
+        actionsLp.topMargin=d(7);
+        connectedPanel.addView(accountActions,actionsLp);
+        Button syncProfile=homeAuthButton("↻  Atualizar perfil",
+            Color.rgb(35,65,83),Color.WHITE);
+        syncProfile.setContentDescription("Sincronizar nome e foto oficiais da Conta 1");
+        accountActions.addView(syncProfile,new LinearLayout.LayoutParams(0,d(37),1f));
+        syncProfile.setOnClickListener(v->openLoginDialogForSlot(1,"sync"));
+        LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(91),d(37));
         logoutLp.leftMargin=d(7);
-        accountRow.addView(logout,logoutLp);
+        accountActions.addView(logout,logoutLp);
         logout.setOnClickListener(v->askLogout());
 
         trainerPanel=new LinearLayout(this);
@@ -1118,9 +1139,19 @@ public class MainActivity extends Activity {
         secondAccountLogout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
         secondAccountLogout.setBackground(homeSurface(Color.rgb(27,36,52),13,
             Color.rgb(51,67,92)));
-        LinearLayout.LayoutParams secondLogoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        LinearLayout secondAccountActions=new LinearLayout(this);
+        secondAccountActions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams secondAccountActionsLp=new LinearLayout.LayoutParams(-1,d(39));
+        secondAccountActionsLp.topMargin=d(7);
+        secondAccountConnected.addView(secondAccountActions,secondAccountActionsLp);
+        Button secondSyncProfile=homeAuthButton("↻  Atualizar perfil",
+            Color.rgb(35,65,83),Color.WHITE);
+        secondSyncProfile.setContentDescription("Sincronizar nome e foto oficiais da Conta 2");
+        secondAccountActions.addView(secondSyncProfile,new LinearLayout.LayoutParams(0,d(37),1f));
+        secondSyncProfile.setOnClickListener(v->openLoginDialogForSlot(2,"sync"));
+        LinearLayout.LayoutParams secondLogoutLp=new LinearLayout.LayoutParams(d(91),d(37));
         secondLogoutLp.leftMargin=d(7);
-        secondIdentityRow.addView(secondAccountLogout,secondLogoutLp);
+        secondAccountActions.addView(secondAccountLogout,secondLogoutLp);
         secondAccountLogout.setOnClickListener(v->new AlertDialog.Builder(this)
             .setTitle("Desconectar somente a Conta 2?")
             .setMessage("A Conta 1 permanecerá conectada.")
@@ -1404,7 +1435,7 @@ public class MainActivity extends Activity {
         boolean showTrainer=privacy.getBoolean("homeShowTrainerName",true);
         boolean showCode=privacy.getBoolean("homeShowTrainerCode",true);
         String account=two.getString("profileDisplayName","").trim();
-        if(account.isEmpty())account="Nome indisponível · abrir perfil";
+        if(account.isEmpty())account="Perfil não sincronizado";
         String trainer=two.getString("profileTrainerName","");
         String code=two.getString("profileTrainerCode","");
         boolean linked=connected&&code.matches("[0-9]{12}")&&!trainer.isEmpty()&&
@@ -2803,9 +2834,11 @@ public class MainActivity extends Activity {
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
         if(sessionHint!=null)sessionHint.setText(
             "Busca normal com ou sem login · Shiny temporariamente indisponível");
-        if(accountDisplay!=null)accountDisplay.setText(
-            prefs.getBoolean("homeShowPogoAccountName",true)?
-                prefs.getString("profileDisplayName","Nome indisponível · abrir perfil"):"Anônimo");
+        if(accountDisplay!=null){
+            String displayName=prefs.getString("profileDisplayName","").trim();
+            accountDisplay.setText(prefs.getBoolean("homeShowPogoAccountName",true)?
+                (displayName.isEmpty()?"Perfil não sincronizado":displayName):"Anônimo");
+        }
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
@@ -3014,8 +3047,8 @@ public class MainActivity extends Activity {
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
                     .remove("profileTrainerLevel").apply();
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
-                if("manage".equals(loginPurpose)){
-                    // The management screen may also complete a new Discord OAuth.
+                if("manage".equals(loginPurpose)||"sync".equals(loginPurpose)){
+                    // Management and resync read the actual first-party profile.
                     // Confirm the session and read the actual first-party profile.
                     profileCaptureInProgress=true;
                     profileCaptureRetryCount=0;
@@ -3051,6 +3084,15 @@ public class MainActivity extends Activity {
                     }
                 },6500L);
             }else{
+                // A stale session should show the REAL provider login promptly.
+                // Never trap a manual sync behind 24 invisible polling attempts.
+                if("sync".equals(loginPurpose)&&"login necessário".equals(auth)){
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    if(loginWaitLabel!=null)
+                        loginWaitLabel.setText("Sessão expirada. Entre pelo site oficial para sincronizar.");
+                    return;
+                }
                 // Search does not expose a Shiny badge for unlinked trainers.
                 // On an ambiguous, hydrated page, visit the official profile once.
                 if("não confirmado".equals(auth)&&!profileDiscoveryAttempted&&
@@ -3060,7 +3102,7 @@ public class MainActivity extends Activity {
                     view.loadUrl("https://pogocoordinates.com/profile");
                     return;
                 }
-                if(!"manage".equals(loginPurpose)&&attemptsLeft<=23&&
+                if("login".equals(loginPurpose)&&attemptsLeft<=23&&
                    observedLoginProvider.isEmpty()&&
                    !loginDiscoveryStarted&&!loginLinkAttempted){
                     loginDiscoveryStarted=true;
@@ -3081,7 +3123,7 @@ public class MainActivity extends Activity {
     }
     private void captureOfficialProfile(WebView view,int generation){
         if(view!=website||loginDialog==null||!loginDialog.isShowing()||
-           !("manage".equals(loginPurpose)||loginAutoReturnQueued)||
+           !("manage".equals(loginPurpose)||"sync".equals(loginPurpose)||loginAutoReturnQueued)||
            !profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
         String host=current.getHost();
@@ -3258,6 +3300,24 @@ public class MainActivity extends Activity {
                 trainerLinkStarted=false;
                 trainerLinkRequested=false;
             }
+            // Manual sync requires a verified member name. This flow must not
+            // initiate trainer linking or pretend an incomplete profile is ready.
+            if("sync".equals(loginPurpose)){
+                String verifiedName=PogoAccountSlots.prefs(this,activeLoginSlot)
+                    .getString("profileDisplayName","").trim();
+                profileCaptureInProgress=false;
+                refreshSessionSummary();
+                if(verifiedName.isEmpty()){
+                    if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    if(loginWaitLabel!=null)
+                        loginWaitLabel.setText("Nome ainda não confirmado. Confira o perfil oficial.");
+                    return;
+                }
+                PogoAccountSlots.cookieManager(activeLoginSlot).flush();
+                if(loginDialog!=null&&loginDialog.isShowing())loginDialog.dismiss();
+                return;
+            }
             profileCaptureInProgress=false;
             refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
@@ -3345,12 +3405,14 @@ public class MainActivity extends Activity {
     private void openLoginDialog(boolean shinyRequest){activeLoginSlot=1;openLoginDialog(shinyRequest,"login");}
     private void openLoginDialog(boolean shinyRequest,String purpose){
         if(loginDialog!=null&&loginDialog.isShowing())return;
-        loginPurpose="manage".equals(purpose)?"manage":"login";
+        loginPurpose="manage".equals(purpose)?"manage":
+            "sync".equals(purpose)?"sync":"login";
         if(!"manage".equals(loginPurpose))trainerLinkRequested=false;
         trainerLinkStarted=false;
         trainerLinkObserveDeadline=0L;
         loginStartedForShiny=shinyRequest;
-        profileCaptureInProgress="manage".equals(loginPurpose);
+        profileCaptureInProgress="manage".equals(loginPurpose)||
+            "sync".equals(loginPurpose);
         profileDiscoveryAttempted=false;
         profileCaptureRetryCount=0;
         if(shinyRequest)preferredLoginProvider="";
@@ -3421,8 +3483,8 @@ public class MainActivity extends Activity {
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
-                if("manage".equals(loginPurpose)){
-                    // Manage can be opened during an expired session. Confirm
+                if("manage".equals(loginPurpose)||"sync".equals(loginPurpose)){
+                    // Manage/sync can be opened during an expired session. Confirm
                     // Discord/Google OAuth instead of assuming the cached card.
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if("/profile".equals(Uri.parse(url).getPath())&&
@@ -3474,7 +3536,8 @@ public class MainActivity extends Activity {
         toolbar.setBackgroundColor(Color.rgb(20,24,31));
         TextView loginName=new TextView(this);
         loginName.setText("PoGoCoordinates · Conta "+activeLoginSlot+
-            ("manage".equals(loginPurpose)?" · Perfil":" · Login"));
+            (("manage".equals(loginPurpose)||"sync".equals(loginPurpose))?
+                " · Perfil":" · Login"));
         loginName.setTextColor(Color.WHITE);
         loginName.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         loginName.setTextSize(15);
@@ -3602,7 +3665,7 @@ public class MainActivity extends Activity {
             loginWindow.clearFlags(android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         }
         website.requestFocus();
-        website.loadUrl("manage".equals(loginPurpose)?
+        website.loadUrl(("manage".equals(loginPurpose)||"sync".equals(loginPurpose))?
             "https://pogocoordinates.com/profile":"https://pogocoordinates.com/search");
     }
     @Override protected void onNewIntent(Intent intent){

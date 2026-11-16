@@ -26,6 +26,9 @@ on:
       - 'app/tests/lt375-menu-result-anchor-contract.test.js'
       - 'app/tests/lt375d-sprite-blur-tour-contract.test.js'
       - 'app/tests/lt375b-location-favorites-personalization.test.js'
+      - 'app/tests/lt376-popup-location-favorites-dots-blur.test.js'
+      - 'app/tests/lt376e-profile-login-selector.test.js'
+      - 'app/src/main/assets/profile_summary.js'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokemonPicker.java'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/FavoritePanelGeometry.java'
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayGestureTour.java'
@@ -89,6 +92,8 @@ jobs:
           node app/tests/lt375-menu-result-anchor-contract.test.js
           node app/tests/lt375d-sprite-blur-tour-contract.test.js
           node app/tests/lt375b-location-favorites-personalization.test.js
+          node app/tests/lt376-popup-location-favorites-dots-blur.test.js
+          node app/tests/lt376e-profile-login-selector.test.js
           QA_CLASSES="$(mktemp -d)"
           trap 'rm -rf "$QA_CLASSES"' EXIT
           javac -encoding UTF-8 -d "$QA_CLASSES" \

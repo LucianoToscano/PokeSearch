@@ -17,11 +17,11 @@ assert.match(onPageStart,/loginCover.setVisibility\(site&&!returningFromProvider
 assert.doesNotMatch(onPageStart,/loginCover.setVisibility\(site\?View.VISIBLE:View.GONE\)/);
 // The profile may only be requested after confirmed authentication, or during
 // initial discovery before any external provider was visited.
-const premature=check.split('if("não confirmado".equals(auth)')[1]?.split("if(!\"manage\".equals(loginPurpose)",1)[0]||"";
+const premature=check.split('if("não confirmado".equals(auth)')[1]?.split('if("login".equals(loginPurpose)',1)[0]||"";
 assert.match(premature,/observedLoginProvider.isEmpty\(\)/);
 assert.match(premature,/profileDiscoveryAttempted=true/);
 assert.match(check,/observedLoginProvider.isEmpty\(\)&&\s*!loginDiscoveryStarted/);
-assert.match(check,/if\("manage".equals\(loginPurpose\)\)\{/);
+assert.match(check,/if\("manage"\.equals\(loginPurpose\)\|\|"sync"\.equals\(loginPurpose\)\)\{/);
 assert.match(check,/profileCaptureInProgress=true/);
 assert.match(check,/captureOfficialProfile\(view,pageGeneration\)/);
 assert.match(onFinish,/if\(!loginSessionNotified\)checkLoginSession\(view,24,generation\)/);

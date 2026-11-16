@@ -137,6 +137,94 @@ final class HomeMenuIconPack {
         return view.getTop()+view.getPaddingTop()+Math.round(top[1]);
     }
 
+    /** Horizontal center of the ACTUALLY visible artwork in parent pixels.
+     * A 512px source may include asymmetric transparent padding; the middle
+     * of its ImageView is not necessarily the center of the Pokébola. */
+    static int opticalCenterXInParentPx(android.widget.ImageView view){
+        if(view==null||view.getWidth()<=0||
+            !(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable))
+            return -1;
+        Bitmap bitmap=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+        if(bitmap==null||bitmap.isRecycled())return -1;
+        android.graphics.Rect bounds=visibleBounds.get(bitmap);
+        if(bounds==null){
+            applyVisibleMatrix(view,bitmap);
+            bounds=visibleBounds.get(bitmap);
+        }
+        if(bounds==null)return -1;
+        float[] center={bounds.exactCenterX(),bounds.exactCenterY()};
+        view.getImageMatrix().mapPoints(center);
+        return view.getLeft()+view.getPaddingLeft()+Math.round(center[0]);
+    }
+
+    // LT376e: alpha bounds may include optical sparkle/shadow outside the
+    // actual Pokébola. Locate the bright center BUTTON (bounded on both
+    // sides by its dark ring), not just the bitmap silhouette center.
+    // Fallback to the alpha center when the artwork has no reliable ring.
+    private static final java.util.WeakHashMap<Bitmap,Float> buttonCenters=
+        new java.util.WeakHashMap<>();
+    static int opticalPokeballButtonXInParentPx(android.widget.ImageView view){
+        int fallback=opticalCenterXInParentPx(view);
+        if(view==null||fallback<0||
+            !(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable))
+            return fallback;
+        Bitmap bitmap=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+        if(bitmap==null||bitmap.isRecycled())return fallback;
+        Float cached=buttonCenters.get(bitmap);
+        if(cached==null){
+            float found=Float.NaN;
+            android.graphics.Rect box=visibleBounds.get(bitmap);
+            if(box!=null){
+                int width=box.width(),height=box.height();
+                float score=Float.MAX_VALUE;
+                final int x0=box.left+width/9,x1=box.right-width/9;
+                final int y0=box.top+Math.round(height*.37f);
+                final int y1=box.top+Math.round(height*.64f);
+                for(int y=y0;y<y1;y+=2){
+                    int begin=-1;
+                    for(int x=x0;x<=x1;x++){
+                        boolean light=false;
+                        if(x<x1){
+                            int pixel=bitmap.getPixel(x,y);
+                            int r=android.graphics.Color.red(pixel),
+                                g=android.graphics.Color.green(pixel),
+                                b=android.graphics.Color.blue(pixel);
+                            light=android.graphics.Color.alpha(pixel)>150&&
+                                r>185&&g>185&&b>185&&
+                                Math.max(r,Math.max(g,b))-Math.min(r,Math.min(g,b))<75;
+                        }
+                        if(light){if(begin<0)begin=x;continue;}
+                        if(begin<0)continue;
+                        int run=x-begin;
+                        float center=(begin+x-1)*.5f;
+                        if(run>=width*.028f&&run<=width*.25f&&
+                            Math.abs(center-box.exactCenterX())<=width*.28f){
+                            int offset=Math.max(2,width/125);
+                            int left=bitmap.getPixel(Math.max(box.left,begin-offset),y);
+                            int right=bitmap.getPixel(Math.min(box.right-1,x+offset-1),y);
+                            int leftBrightness=(android.graphics.Color.red(left)+
+                                android.graphics.Color.green(left)+android.graphics.Color.blue(left))/3;
+                            int rightBrightness=(android.graphics.Color.red(right)+
+                                android.graphics.Color.green(right)+android.graphics.Color.blue(right))/3;
+                            if(leftBrightness<135&&rightBrightness<135){
+                                float candidate=Math.abs(center-box.exactCenterX())+
+                                    1.5f*Math.abs(y-box.exactCenterY());
+                                if(candidate<score){score=candidate;found=center;}
+                            }
+                        }
+                        begin=-1;
+                    }
+                }
+            }
+            cached=found;
+            buttonCenters.put(bitmap,cached);
+        }
+        if(Float.isNaN(cached))return fallback;
+        float[] mapped={cached,bitmap.getHeight()*.5f};
+        view.getImageMatrix().mapPoints(mapped);
+        return view.getLeft()+view.getPaddingLeft()+Math.round(mapped[0]);
+    }
+
     private static void load(Context context){
         for(int i=1;i<=5;i++){
             String file="menu_icons_512_"+i+".zip";

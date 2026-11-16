@@ -12,7 +12,12 @@
  const isProfile=location.pathname==="/profile";
  if(!isProfile)return JSON.stringify({ok:false,page:"not-profile"});
  const body=String(document.body&&document.body.innerText||"");
- const proof=/\bLinked accounts\b/i.test(body)&&/\bPokemon GO accounts\b/i.test(body);
+ // An authenticated React profile exposes the member identity and linked
+ // providers even when the optional Pokémon GO trainer section is absent.
+ // Requiring "Pokemon GO accounts" made valid Google profiles look blank.
+ // The separate trainer parser below remains strict (unknown unless proven).
+ const proof=/\bLinked accounts\b/i.test(body)&&
+   (/\bMember since\b/i.test(body)||/\bPokemon GO accounts\b/i.test(body));
  if(!proof)return JSON.stringify({ok:false,page:"unhydrated"});
  const nodes=Array.from(document.querySelectorAll("p,span,small,strong,div,section,article"))
    .filter(visible);

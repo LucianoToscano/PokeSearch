@@ -268,20 +268,40 @@ public class OverlayService extends Service {
             wm.isCrossWindowBlurEnabled();
     }
     private void updateNativeMenuBlur(){
-        if(android.os.Build.VERSION.SDK_INT<31||menuParams==null||
-            menuRoot==null||wm==null)return;
-        // Blur-behind is a system effect behind the window; toggle only
-        // while the real menu is open. Honor the Editor Visual slider (0=off).
+        if(android.os.Build.VERSION.SDK_INT<31||wm==null)return;
+        // The toolbar and the popup are TWO distinct native overlay windows.
+        // LT375 updated only menuParams (the thin toolbar); the actual Editor
+        // Visual/Location/Filters pane lives in popupParams, so its backdrop
+        // was never blurred. Apply the system-approved radius to both, but
+        // keep the popup off when it is hidden.
         boolean use=menuExpanded&&visualMenuBlurPx>0&&nativeMenuBlurAvailable();
         int radius=use?dp(visualMenuBlurPx):0;
-        boolean old=(menuParams.flags&WindowManager.LayoutParams.FLAG_BLUR_BEHIND)!=0;
-        if(old==use&&menuParams.getBlurBehindRadius()==radius)return;
-        if(use)menuParams.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
-        else menuParams.flags&=~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
-        menuParams.setBlurBehindRadius(radius);
-        if(menuRoot.isAttachedToWindow()){
-            try{wm.updateViewLayout(menuRoot,menuParams);}
-            catch(RuntimeException e){recordFailure("desfoque nativo do menu",e);}
+        if(menuParams!=null&&menuRoot!=null){
+            boolean old=(menuParams.flags&WindowManager.LayoutParams.FLAG_BLUR_BEHIND)!=0;
+            if(old!=use||menuParams.getBlurBehindRadius()!=radius){
+                if(use)menuParams.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                else menuParams.flags&=~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                menuParams.setBlurBehindRadius(radius);
+                if(menuRoot.isAttachedToWindow()){
+                    try{wm.updateViewLayout(menuRoot,menuParams);}
+                    catch(RuntimeException e){recordFailure("desfoque nativo da barra",e);}
+                }
+            }
+        }
+        if(popupParams!=null&&popupRoot!=null){
+            boolean popupUse=use&&!popupKind.isEmpty()&&
+                popupRoot.getVisibility()==View.VISIBLE;
+            int popupRadius=popupUse?radius:0;
+            boolean old=(popupParams.flags&WindowManager.LayoutParams.FLAG_BLUR_BEHIND)!=0;
+            if(old!=popupUse||popupParams.getBlurBehindRadius()!=popupRadius){
+                if(popupUse)popupParams.flags|=WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                else popupParams.flags&=~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+                popupParams.setBlurBehindRadius(popupRadius);
+                if(popupRoot.isAttachedToWindow()){
+                    try{wm.updateViewLayout(popupRoot,popupParams);}
+                    catch(RuntimeException e){recordFailure("desfoque nativo do painel",e);}
+                }
+            }
         }
     }
     private void broadcastVisualPrefs(){
@@ -1549,6 +1569,7 @@ public class OverlayService extends Service {
             popupPanel.clearFocus();
             js(popupPanel,popupLoaded,"window.hideNativePopup&&window.hideNativePopup()");
         }
+        updateNativeMenuBlur(); // Remove blur flag from the hidden popup.
     }
     private void openIndependentPopup(String kind,int x,int y){
         openIndependentPopup(kind,x,y,0);
@@ -1599,6 +1620,7 @@ public class OverlayService extends Service {
             try{
                 wm.updateViewLayout(popupRoot,popupParams);
                 popupRoot.setVisibility(View.VISIBLE);
+                updateNativeMenuBlur(); // The visible pane is a separate window.
             }catch(Exception ex){recordFailure("medir popup inicial",ex);return;}
         }
         if(popupLoaded)js(popupPanel,true,
@@ -4381,8 +4403,12 @@ public class OverlayService extends Service {
         hideDetails();
         try{
             // Center on the live toolbar instead of the reordered star icon.
+            // Anchor Favorites to the toolbar's LEFT edge instead of
+            // centering a wider dialog over the left results sprite rail.
+            // PokemonPicker clamps this to the display and may choose above.
+            int preferredPanelWidth=Math.min(metrics().widthPixels-dp(22),dp(348));
             int menuCenterX=menuParams==null?anchorX:
-                menuParams.x+menuParams.width/2;
+                menuParams.x+preferredPanelWidth/2;
             favoritePickerDialog=PokemonPicker.show(OverlayService.this,()->{
                 if(!stopped)update();
             },()->{
