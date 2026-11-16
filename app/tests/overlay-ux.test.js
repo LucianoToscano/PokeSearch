@@ -79,7 +79,7 @@ test("LT375b Favorites stay nonmodal and aligned with toolbar",()=>{
  return bridge.includes("pickerOpen=true;")&&bridge.includes("PokemonPicker.show(OverlayService.this")&&
   bridge.includes("pickerOpen=false;")&&bridge.includes("if(!stopped)update();")&&
   bridge.includes("},menuCenterX,anchorY,")&&
-  bridge.includes("menuParams.x+menuParams.width/2")&&
+  bridge.includes("menuParams.x+preferredPanelWidth/2")&&
   publicApi.includes("showFavoritePicker(menuParams==null?-1:")&&
   publicApi.includes("showFavoritePicker(anchorX,anchorY)")&&
   !bridge.includes("root.setVisibility(View.GONE)")&&
