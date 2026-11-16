@@ -6,7 +6,7 @@ Continue o PokeSearch sem reiniciar nem substituir os componentes anteriores.
 
 - Repositório: `LucianoToscano/PokeSearch`; branch principal `main`.
 - Linha LT377 integrada por PR #458 (código Visitante/contas), PR #459 (solicitação da publicação e blindagem de cookies).
-- Versão **candidata** `0.03.71`, `versionCode 54578`, label `51377`, release prevista `v0.03.71-54578`. Verifique `releases/latest` e workflow oficial antes de tratar como publicada; não infira sucesso pelo número de versão no repositório.
+- Versão **oficial confirmada** `0.03.71`, `versionCode 54578`, label `51377`, release pública `v0.03.71-54578`, APK `PokeSearch-v0.03.71-LT.apk`, SHA-256 `5bcdb1e358e746b3038bc1b7ceb2a7f38cdd03b8063943b56cebfadc3f96cf27`, publicada em 16/11/2026 às 22:08:02 UTC. Verifique novamente `releases/latest` e workflow oficial em toda nova sessão.
 - Workflow oficial LT377: https://github.com/LucianoToscano/PokeSearch/actions/runs/43966395928; SHA de publicação `7a33a72f6033027f3a6e0a20707eac7179faf1c1`. Obter a conclusão e os metadados do APK diretamente do GitHub.
 - QA código LT377: PR #458 HEAD `398a6be3b3be4618df9c7817d0567a1f114617fe`, 7/7 success, extra LT253 success. QA release PR #459 HEAD `011c34878d23daccf6613b5178fd528b952a140d`, preflight e gates aprovados.
 - Não misturar a PR #457 da Pokédex pessoal com os ajustes de autenticação.
