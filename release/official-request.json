@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.72",
-  "code": 54579,
-  "label": 51378,
-  "previous_tag": "v0.03.71-54578",
-  "qa_max_code": 54578,
-  "release_notes": "LT378 — Home minimalista: removidos o texto do logotipo PokeSearch, o subtítulo POKÉMON GO, a faixa PGS Monitor: desligado e o sufixo PoGoCoordinates /search, sem deixar espaço vazio. Emblema, acessos do menu e controles permanecem. O rodapé com a versão abre a página oficial da release correspondente no GitHub. Auto Hunt/Buscar Pokémon inicia desligado na conexão de Acessibilidade: sem abrir bolha nem começar monitor/varredura sozinho; só uma ação explícita do usuário inicia o recurso, com proteção contra armamento antigo. Preservadas contas P1/P2/Visitante, sprites, modelos, filtros, favorited, sequências, monitor, login PoGoCoordinates, OTA, assinatura e dados. QA 7/7 no HEAD PR #461 de9663d6859bff0788155efba3feca184001d486 (Node, LT169, LT211, Java, LT173, PGS APK debug, Secure beta/R8). Homologação física Android 11-14/Samsung, OAuth e PGSharp/Pokemod separadamente ainda pendente; monitor não comprova captura; instalação exige confirmação Android."
+  "version": "0.03.73",
+  "code": 54580,
+  "label": 51379,
+  "previous_tag": "v0.03.72-54579",
+  "qa_max_code": 54579,
+  "release_notes": "LT379 — Corrigida a tela Novidades do PokeSearch: toque na versão da Home abre Histórico de atualizações NATIVO, sem encaminhar ao GitHub. Corrigido limite de 96 KB que descartava as 198 entradas do release_notes.json (326.454 bytes UTF-8); limite seguro de 2 MiB e carregamento incremental de 12 releases por página. O acesso por Menu > Novidades permanece. Testes Node #43979040919, LT169 #43979042143, LT211 #43979041153, LT62 Java #43979040888, LT173 OTA #43979040918, FastDev #43979040906 e Secure beta/R8 #43979040999 — todos SUCCESS no HEAD PR #464 90382870a0f31fbc9bec84fdcbaeadffac1fece3. Mantidos P1/P2, Conta 1/Conta 2/Visitante, Auto Hunt desativado por padrão, modelos/sprites, filtros, Busca Inteligente, monitor, personalizações, OTA e assinatura permanente. Testes físicos Samsung Android 11–14, comportamento de OTA com notas antigas, TalkBack e navegação offline ainda pendentes. Instalador requer confirmação Android."
 }
