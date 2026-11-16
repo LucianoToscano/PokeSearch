@@ -105,10 +105,18 @@ final class PgsAutoIconDetector {
     private volatile long lastScanMillis=0L;
     private volatile boolean lastScanAborted=false;
     PgsAutoIconDetector(Context context) throws IOException {
-        hostProfile=PgsAutoHostSettings.current(context);
+        this(context,PgsAutoHostSettings.current(context),
+            PgsSmartSearchSettings.SCOPE_ALL.equals(
+                PgsSmartSearchSettings.scope(context)));
+    }
+    /** Explicit provider only for bounded visual diagnosis. No profile switch here. */
+    PgsAutoIconDetector(Context context,String visualHost,boolean all)
+            throws IOException {
+        hostProfile=PgsAutoHostPolicy.profile(visualHost);
         sidebarSide=PgsAutoHostSettings.sidebarSide(context);
         List<PgsAutoTemplateStore.Model> selected=
-            new ArrayList<>(PgsAutoTemplateStore.activeForSearch(context));
+            new ArrayList<>(PgsAutoTemplateStore.activeForProfile(
+                context,hostProfile,all));
         // Favorites retain their configured order. Available-only models
         // use their existing persisted order; no implicit app-wide scan.
         selected.sort(Comparator.comparingInt(
