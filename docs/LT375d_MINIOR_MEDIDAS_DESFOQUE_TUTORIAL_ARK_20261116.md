@@ -23,10 +23,10 @@ Data: 16/11/2026. Branch de QA `fix/lt375-pokeball-background-sort-more-ui`; PR 
 ## Matriz de QA
 | Teste | Critério | Estado inicial |
 | --- | --- | --- |
-| Node LT375d + LT373 | contratos nativos/JS e regressões de onboarding | Pendente até CI |
-| Node LT169 + core LT211 | resto dos menus, templates, filtros e editor | Pendente até CI |
-| Java LT62 | Android compila depois de `setBlurBehindRadius` | Pendente até CI |
-| OTA LT173 e APK QA PGS | mesmo commit, assets e build debug íntegros | Pendente até CI |
+| Node LT375d + LT373 | contratos nativos/JS e regressões de onboarding | **PASS código 2e61ea3 (16/11/2026)** |
+| Node LT169 + core LT211 | resto dos menus, templates, filtros e editor | **PASS código 2e61ea3 (16/11/2026)** |
+| Java LT62 | Android compila depois de `setBlurBehindRadius` | **PASS código 2e61ea3 (16/11/2026)** |
+| OTA LT173 e APK QA PGS | mesmo commit, assets e build debug íntegros | **PASS código 2e61ea3 (16/11/2026)** |
 | Android 11 | desfoque não nativo e aviso correto, sem travar | Pendente físico |
 | Android 12/13/14 | blur nativo opcional, resposta ao slider, 50% alfa | Pendente físico |
 | P1/P2 e editor P/M/G | alvo do círculo, apontador, medidas legíveis | Pendente físico |
@@ -38,3 +38,18 @@ A revisão por código e CI não substitui capturas reais de um aparelho Android
 
 ## ARK / Rollback
 Não alterar `release/official-request.json`, versionCode, certificados, cadeias P1/P2, rotinas de captura ou dados de conta. Correções da mesma PR sobre Localização, Favoritos, Personalização, Background, Ordenar e ⋯ continuam preservadas. Se o blur nativo interferir com visibilidade ou desempenho em Samsung, a primeira medida é desativar a opção no Editor Visual (`menuBlur=0`) e comparar com modo sem desfoque; nunca tornar o jogo inoperável. Próximo prompt: `docs/LT376_PROMPT_CONTINUIDADE_VISUAL_20261116.md`.
+
+
+## Evidência final de CI — LT375d — 16/11/2026
+Commit de código aprovado: `2e61ea327faf04614f5c0db9160a72f41d20282d`. Gates obrigatórios concluídos SUCCESS no mesmo SHA:
+- Node QA: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817727
+- LT169: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940818147
+- LT211: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817739
+- LT62 Android Java: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817620
+- LT173 OTA + Android: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817606
+- PGS debug QA: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817733 — `PokeSearch-PGS-Buscas-DEBUG-QA` artifact ID `14260844359` (ZIP 59.540.576 bytes); NÃO oficial.
+- LT253 suplementar: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817757 — PASS.
+- Secure beta/R8: https://github.com/LucianoToscano/PokeSearch/actions/runs/43940817579 — SKIPPED porque a PR está em draft.
+
+Estado: **6/7 gates obrigatórios** aprovados, não 7/7. Builds QA NÃO provam visual no aparelho, touch-through nem suporte nativo de blur, que pode ser desativado pelo Android. Teste físico Android 11/12/13/14, animação/dedo, alvo na Pokébola e Minior continuam PENDENTES.
+PR #454 ainda em rascunho, sem merge e sem APK oficial novo. Última release pública: `v0.03.68-54575`.
