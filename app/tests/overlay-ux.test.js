@@ -1811,15 +1811,16 @@ test("HOME-03 opens the Home drawer on right and uses original transparent PNG",
   main.includes("R.drawable.ps_home_brand_transparent")&&
   main.includes('openLoginDialog(false,"manage")');
 })());
-test("HOME-04 keeps transparent brand left, controls right and plain outside background",(()=>{
+test("HOME-04 keeps original brand icon without wordmark, controls right and plain background",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.home_pokeball_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
-  home.includes("R.drawable.ps_home_official_wordmark")&&
-  home.includes('brandTitle.setContentDescription("PokeSearch")')&&
+  !home.includes("R.drawable.ps_home_official_wordmark")&&
+  !home.includes('brandTitle.setContentDescription("PokeSearch")')&&
+  home.includes('PremiumAccess.controlled())brand.setOnLongClickListener')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
@@ -1859,17 +1860,16 @@ test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible 
   dock.includes('button.classList.toggle("bell-star-silent",');
 });
 
-test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()=>{
+test("LT54-ICON-01 launcher keeps adaptive artwork; LT378 Home uses emblem only",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8")&&
-  home.includes("wordmarkWidth/3f")&&
-  home.includes("wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth))")&&
-  home.includes("if(availableBrandWidth<d(55))")&&
-  home.includes("brandLabels.setVisibility(View.GONE)")&&
+  home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
+  home.includes("branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)))")&&
+  !home.includes("brandLabels")&&!home.includes("wordmarkWidth")&&
   home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f))");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
