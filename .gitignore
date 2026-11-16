@@ -39,3 +39,6 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# FastDev locally generated private keystore material
+.fastdev-secrets/
