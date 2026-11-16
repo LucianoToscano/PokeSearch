@@ -5,7 +5,7 @@ Atue como engenheiro Android sênior, auditor UX/UI e responsável pela seguran�
 ## Estado da base
 
 - **LT370:** implementação integrada pela [PR #444](https://github.com/LucianoToscano/PokeSearch/pull/444), squash `1b21e89c8ba34196f070de8f37ce37c062c4efe2`; todos os 7 gates green no head `ce7eda406296cd6b5678d3d91de0a3460cbabf35`: Node #43779097515, LT169 #43779097573, LT211 #43779097539, Java LT62 #43779097674, OTA #43779097576, PGS QA #43779097522, Secure beta/R8 #43779097537.
-- Solicitação de versão **0.03.66 / versionCode 54573 / label 51370** foi criada na branch de release; **verificar** tag, APK, hash SHA-256, assinatura original e workflow oficial antes de afirmar publicação. Não copiar SHA de versões anteriores.
+- **LT370 OFICIAL PUBLICADA:** **0.03.66 / versionCode 54573 / label 51370**, [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.66-54573), [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.66-54573/PokeSearch-v0.03.66-LT.apk) **61.173.419 bytes**, SHA-256 da API GitHub `70eadf91f37a6c4363e70778c7d6e3d1bbcb61bbff015cf58d39b6835d5e52dc`, [workflow oficial #43779984816](https://github.com/LucianoToscano/PokeSearch/actions/runs/43779984816) completed/success no SHA `8303bd2f722319c6316ff8b7ebc732df791c4a9a`. Hash confirmado por metadados GitHub, sem recálculo independente. O Android exige confirmação de instalação.
 - Branch inclui `release/official-request.json` e `app/src/main/assets/release_notes.json` LT370 com descrição honesta dos limites.
 
 ## Implementado
@@ -36,4 +36,4 @@ Atue como engenheiro Android sênior, auditor UX/UI e responsável pela seguran�
 
 ## ARK
 
-Auditar `main` e GitHub Releases → nova branch → mudanças pequenas com regressões e APK QA → 7/7 gates concluídos com sucesso no mesmo SHA → merge → request de versão monotônico (versionCode > 54573 se LT370 publicada) → preflight → workflow oficial com R8, assinatura original, APK e hash público → registrar em `AGENTS.md` e `GUIA_MESTRE.md`. Separar sempre implementado/testado/publicado/homologado no Android.
+Auditar `main` e GitHub Releases → nova branch → mudanças pequenas com regressões e APK QA → 7/7 gates concluídos com sucesso no mesmo SHA → merge → request de versão monotônico (versionCode > 54573; LT370 publicada) → preflight → workflow oficial com R8, assinatura original, APK e hash público → registrar em `AGENTS.md` e `GUIA_MESTRE.md`. Separar sempre implementado/testado/publicado/homologado no Android.
