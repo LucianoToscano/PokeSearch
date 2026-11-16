@@ -1,5 +1,9 @@
 name: PokeSearch FastDev - smoke, visual, isolated APK Preview
 on:
+  push:
+    branches: ['**']
+    paths:
+      - 'fastdev/preview-request.json'
   pull_request:
     branches: [main]
     paths:
@@ -7,6 +11,9 @@ on:
       - 'scripts/fastdev.cjs'
       - 'scripts/fastdev.test.cjs'
       - 'scripts/fastdev-audit.cjs'
+      - 'scripts/fastdev-request.cjs'
+      - 'scripts/fastdev-request.test.cjs'
+      - 'fastdev/preview-request.json'
       - 'gradle.properties'
       - 'build.gradle.kts'
       - 'settings.gradle.kts'
@@ -30,6 +37,8 @@ jobs:
     name: FastDev advisory smoke (no APK)
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    outputs:
+      selected_mode: ${{ steps.select-mode.outputs.mode }}
     steps:
       - name: Exact source checkout with diff history
         uses: actions/checkout@v4
@@ -45,6 +54,26 @@ jobs:
           node --check scripts/fastdev.cjs
           node --check scripts/fastdev-audit.cjs
           node --test scripts/fastdev.test.cjs
+          node --check scripts/fastdev-request.cjs
+          node --test scripts/fastdev-request.test.cjs
+      - name: Select a validated on-demand request without release signing
+        id: select-mode
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          DISPATCH_MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT" == "push" ]]; then
+            MODE="$(node scripts/fastdev-request.cjs fastdev/preview-request.json)"
+          elif [[ "$EVENT" == "workflow_dispatch" ]]; then
+            MODE="$DISPATCH_MODE"
+          else
+            MODE="fast"
+          fi
+          case "$MODE" in fast|visual|apk-preview) ;; *) echo "Invalid mode" >&2; exit 1 ;; esac
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Selected opt-in FastDev mode: $MODE"
       - name: Inventory historical workflows without deleting them
         run: node scripts/fastdev-audit.cjs
       - name: Run only affected smoke contracts (full QA remains mandatory)
@@ -59,7 +88,7 @@ jobs:
 
   visual:
     name: Real HTML screenshots (not physical Android)
-    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'visual'
+    if: needs.quick.outputs.selected_mode == 'visual'
     needs: quick
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -89,7 +118,7 @@ jobs:
 
   apk-preview:
     name: Isolated debug APK (never an official release)
-    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'apk-preview'
+    if: needs.quick.outputs.selected_mode == 'apk-preview'
     needs: quick
     runs-on: ubuntu-24.04
     timeout-minutes: 60
