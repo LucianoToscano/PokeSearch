@@ -1,3 +1,6 @@
+## LT375c QA — Menu sem deslocamento por resultados (16/11/2026)
+Em P1/P2, o posicionamento da barra passa a derivar da Pokébola, não da janela de resultados que podia deslocá-la; X aproxima 10dp por padrão na horizontal sem somar ajustes de usuário existentes, Y centra a barra. Janela/guia roxa de resultados só reservam metadados quando visíveis, removendo largura mínima de cabeçalho antigo. As sprites, seus tamanhos e espaçamentos permanecem idênticos. [Auditoria](LT375_CORRECOES_VISUAIS_P1_P2_20261116.md). Teste físico pendente.
+
 ## LT375 — QA visual P1/P2 Background, Ordenar e Mais (16/11/2026; não publicada)
 Em `dock.html`, Background ON usa o PNG original contido em 16 CSS px e a mesma área de botão 30px (29px no menu vertical) sem modificar tamanho do tile quando alternado; Filtros > Ordenar usa duas tabs Padrão/Inverso não coladas, cada uma com `--visual-menu-button-bg`, gap configurado e destaque apenas na borda ativa. O submenu vertical ⋯ remove o fundo compartilhado do `#choices.morePanel` causado por seletor LT349 mais tardio; cada ação Reportar/Apoiar/Fechar retém seu próprio tema, borda, sombra e espaçamento vertical. Nenhuma lógica de filtro/ícone/conta/gesto foi alterada. [Relatório QA LT375](LT375_CORRECOES_VISUAIS_P1_P2_20261116.md). CI e teste físico Samsung pendentes; Release pública permanece 0.03.68 / 54575 até autorização.
 

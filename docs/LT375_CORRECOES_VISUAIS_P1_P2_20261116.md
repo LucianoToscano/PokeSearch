@@ -42,3 +42,15 @@ Referências: quatro capturas Android encaminhadas pelo usuário em 16/11 mostra
 **Testes adicionais:** `lt375b-location-favorites-personalization.test.js`, `FavoritePanelGeometryTest.java` ampliado, workflow PGS ligado a alterações de `PokemonPicker`/`FavoritePanelGeometry`. Código isolado em `dock.html`, `OverlayService`, `PokemonPicker` e `FavoritePanelGeometry`; sem alterar filtros salvos, contas, assinatura, modo noturno ou o tutorial V3.
 
 **Risco conhecido:** a tabela mostra tempos de referência para deslocamento, não cronômetro real, e agora é também seletor do raio de busca. Em testes físicos devem ser avaliados toque nas faixas, indicador km e captura/arraste do ⋮⋮, além da posição dos Favoritos em P1/P2, temas e bordas do Android. Sem homologação física, manter QA e não publicar automaticamente.
+
+
+## LT375c — Guia roxa e âncora da barra, sem tocar nas sprites (16/11/2026)
+Solicitação visual adicional: a guia pontilhada roxa da lista ainda ocupava a largura mínima antiga de 38dp, mesmo com todos os campos opcionais ocultos. Além disso, a posição da barra flutuante sofria deslocamento quando havia sprites visíveis, porque a janela dos resultados era considerada obstáculo pela política de posicionamento. O usuário confirmou manualmente que `menuOffsetX=-10` aproxima a barra da Pokébola da forma desejada.
+
+Correções de escopo estrito:
+- A janela de resultados vertical e seu `#shell` usam a largura **real da sprite + metadados efetivamente visíveis**, sem reserva de 38dp destinada ao cabeçalho antigo (agora escondido). Guia roxa acompanha o conteúdo; se nomes/IV/metadados voltarem a ser habilitados, os 96px opcionais voltam normalmente. Nenhum tamanho, arte, altura, distribuição ou intervalo das sprites foi modificado.
+- `updateMenuPosition()` fixa a linha horizontal pelo **centro da Pokébola nativa**, independente do retângulo dos resultados. Somente a outra barra realmente aberta continua sendo obstáculo. Não muda `positionResultsUnderPokeball`, `ResultsSpacingPolicy`, a lista nem seus gestos.
+- Na horizontal, o menu ganha aproximação **padrão de 10dp em direção à Pokébola**, com espelhamento automático no lado esquerdo. Se existe `visualMenuOffsetX` diferente de zero, prevalece o valor escolhido pelo usuário; o ajuste manual -10 anterior não se soma a outro -10. Respeita os limites da tela.
+- Teste Node `app/tests/lt375-menu-result-anchor-contract.test.js` verifica que os obstáculos não incluem resultados, que o centro deriva da Pokébola e que o CSS/Java concordam sobre largura dinâmica sem mexer nas sprites.
+
+**Pendente:** screenshot/filmagem física após o patch, alternando (a) sprites visíveis e ocultas, (b) todos os campos de informação OFF/ON, (c) tamanho P/M/G e (d) uma ou duas Pokébolas, com preferência personalizada de X. Nenhum resultado físico foi alegado como aprovado; a versão pública permanece LT374 0.03.68 / 54575. PR #454 em QA; não publicar automaticamente.

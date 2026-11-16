@@ -379,9 +379,10 @@ public class OverlayService extends Service {
             int width=perCard*columns+gap*(columns-1)+2;
             return Math.max(38,Math.min(usable,width));
         }
-        // 38dp reserves room for the existing 35dp mode/header hitbox;
-        // every Pokémon tile itself remains exactly 30dp wide.
-        return Math.max(38,resultTileDp()+resultMetadataWidthDp);
+        // LT375: the legacy 38dp minimum protected an OLD header hitbox
+        // that is now GONE. Reserve the data column only when it is visible.
+        // Never change the existing sprite tile/pitch/spacing.
+        return resultTileDp()+resultMetadataWidthDp;
     }
     private String resultDisplayOptionsJson(){
         return "{\"count\":"+resultShowCount+
@@ -1283,7 +1284,12 @@ public class OverlayService extends Service {
         if(right||left){
             menuLeft=!right;
             menuParams.x=right?params.x+dp(dockDp())+gap:params.x-width-gap;
-            rowY=params.y;
+            // Default to the -10dp proximity already confirmed by the user.
+            // Preserve any explicit offset chosen in Editor Visual.
+            if(!visualMenuVertical&&visualMenuOffsetX==0)
+                menuParams.x+=menuLeft?dp(10):-dp(10);
+            // Align centres of the 34dp menu hitbox and 30dp visible ball.
+            rowY=params.y+(!visualMenuVertical?(dp(30)-dp(menuBase))/2:0);
         }else{
             // Keep the one-row toolbar next to, never ON TOP of, the gear.
             menuLeft=params.x+dp(dockDp())/2>screen/2;
@@ -1298,20 +1304,14 @@ public class OverlayService extends Service {
         menuParams.x=Math.max(0,Math.min(Math.max(0,screen-width),
             menuParams.x+dp(visualMenuOffsetX)));
         rowY=Math.max(0,Math.min(Math.max(0,bottom-dp(menuBase)),rowY+dp(visualMenuOffsetY)));
-        // The menu and Pokémon are separate native overlays. Avoid covering
-        // visible sprites or the other Pokéball's menu, but keep the current
-        // 30dp buttons and all dimensions unchanged. Prefer the nearest
-        // side-by-side or above/below position that really fits on screen.
+        // LT375: the results list MUST NOT move the menu vertically.
+        // Its transparent/padded bounds previously looked like a physical
+        // obstacle. Keep both native windows independent; avoid only the
+        // other Pokéball's genuinely opened toolbar, if present.
         int[] otherMenu=otherMenuBounds();
-        int[] visibleResults=null;
-        if(resultParams!=null&&resultRoot!=null&&!resultCollapsed&&!minimized&&
-                resultRoot.getVisibility()==View.VISIBLE){
-            visibleResults=new int[]{resultParams.x,resultParams.y,
-                resultParams.width,resultParams.height};
-        }
         int[] safePosition=OverlayPlacementPolicy.avoid(
             menuParams.x,rowY,width,dp(menuBase),screen,bottom,dp(4),
-            new int[][]{visibleResults,otherMenu});
+            new int[][]{otherMenu});
         menuParams.x=safePosition[0];
         rowY=safePosition[1];
         menuLeft=menuParams.x+width<=params.x;

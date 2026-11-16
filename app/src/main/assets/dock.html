@@ -7755,9 +7755,12 @@ function draw(){
  const highlightWidth=resultDisplayOptions.highlights?12:0;
  const metaWidth=metadataVisible?96:highlightWidth;
  document.documentElement.style.setProperty("--result-highlight-width",highlightWidth+"px");
+ // The purple guide follows only actual sprites and optional data,
+ // never the absent 38px legacy header. Sprite dimensions stay unchanged.
+ const resultContentWidth=(resultLayout?.sprite||spriteSize)+metaWidth;
  document.documentElement.style.setProperty("--results-width",
   resultWindow&&window.visualPrefs?.resultsOrientation==="horizontal"?"calc(100vw - 2px)":
-  Math.max(38,resultWindow?resultLayout.sprite+metaWidth:spriteSize+8+metaWidth)+"px");
+  (resultWindow?resultContentWidth:spriteSize+8+metaWidth)+"px");
  document.documentElement.style.setProperty("--visual-meta-width",metaWidth+"px");
  if(resultWindow&&displayedMetadataWidth!==metaWidth){
   displayedMetadataWidth=metaWidth;
