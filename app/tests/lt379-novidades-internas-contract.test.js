@@ -1,0 +1,35 @@
+"use strict";
+// LT379: keep internal Novidades functional as the append-only catalog grows.
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const root="app/src/main/";
+const main=fs.readFileSync(root+"java/com/lucianotoscano/pokesearchoverlay/MainActivity.java","utf8");
+const notes=fs.readFileSync(root+"java/com/lucianotoscano/pokesearchoverlay/ReleaseNotes.java","utf8");
+const raw=fs.readFileSync(root+"assets/release_notes.json");
+const catalog=JSON.parse(raw.toString("utf8"));
+assert.equal(catalog.schema,"pokesearch-release-notes-v1");
+assert.ok(raw.length>96000,"Regression fixture: catalog must exceed old broken 96k cap");
+const maxBytes=2*1024*1024;
+assert.ok(raw.length<maxBytes,"The catalog must fit the bounded native reader");
+assert.match(notes,/private static final int MAX_NOTES_BYTES = 2 \* 1024 \* 1024;/);
+assert.match(notes,/out\.size\(\)\+size>MAX_NOTES_BYTES/);
+assert.doesNotMatch(notes,/out\.size\(\)\+size>96000/);
+assert.match(notes,/private static final int HISTORY_PAGE_SIZE = 12;/);
+assert.match(notes,/private static void addHistoryPage\(/);
+assert.match(notes,/int end=Math\.min\(offset\+HISTORY_PAGE_SIZE,releases\.length\(\)\)/);
+assert.match(notes,/addHistoryPage\(activity,body,releases,light,end\)/);
+assert.match(notes,/else if \(history\) \{\s*addHistoryPage\(activity,body,releases,light,0\)/);
+assert.match(notes,/static void showHistory\(Activity activity\)/);
+assert.match(main,/footer\.setOnClickListener\(v->ReleaseNotes\.showHistory\(this\)\)/);
+assert.match(main,/addHomeDrawerItem\(drawer,"✦","Novidades",\(\)->ReleaseNotes\.showHistory\(this\)\)/);
+const footer=main.split("TextView footer=homeText(")[1]?.split("screen.addView(footer",1)[0]||"";
+assert.ok(footer.includes("ReleaseNotes.showHistory(this)"));
+assert.ok(!footer.includes("Intent.ACTION_VIEW")&&!footer.includes("github.com"));
+const codes=catalog.releases.map(r=>r.minVersionCode);
+assert.equal(codes.at(-1),54579);
+assert.ok(codes.every((n,i)=>Number.isInteger(n)&&(i===0||n>codes[i-1])));
+assert.equal(new Set(catalog.releases.map(r=>r.id)).size,catalog.releases.length);
+assert.ok(catalog.releases.at(-1).sections.novidades.length>0);
+assert.match(notes,/return new JSONArray\(\); \/\/ Release notes must never prevent the Home from opening\./);
+console.log("LT379 PASS: native Novidades, "+catalog.releases.length+
+  " entries, "+raw.length+" bytes, bounded reader and paginated offline history");
