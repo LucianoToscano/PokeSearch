@@ -8,12 +8,12 @@ const menu=read("PgsAutoMenus"),engine=read("PgsAutoClickService"),
   hunt=read("PgsAutoHuntSettings"),style=read("PgsAutoMenuStyle");
 assert.match(menu,/void showSearch\(\)\{showCentral\(0\);\}/);
 assert.match(menu,/String\[\] names=\{"Pokémon","Ação","Ajustes"\}/);
-assert.match(menu,/appendCentralPokemon\(root\)/);
+assert.ok(menu.includes("appendCentralPokemon(body)"));
 assert.match(menu,/appendCentralActions\(body\)/);
 assert.match(menu,/appendCentralSettings\(body\)/);
 assert.match(menu,/private void appendCentralSequence\(LinearLayout root\)/);
 assert.match(menu,/root\.addView\(input,margined\(-1,dp\(33\),3\)\)/);
-assert.match(menu,/root\.addView\(scroll,margined\(-1,dp\(155\),3\)\)/);
+assert.ok(menu.includes("root.addView(rows,margined(-1,-2,3));"));
 assert.match(menu,/PgsAutoClickService\.searchStatus\(\)/);
 assert.match(menu,/actions\.startSearch\(\)/);
 assert.match(menu,/actions\.setWatchEnabled\(true\)/);
