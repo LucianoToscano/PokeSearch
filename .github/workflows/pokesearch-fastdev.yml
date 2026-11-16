@@ -1,0 +1,141 @@
+name: PokeSearch FastDev - smoke, visual, isolated APK Preview
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'scripts/fastdev.cjs'
+      - 'scripts/fastdev.test.cjs'
+      - 'scripts/fastdev-audit.cjs'
+      - 'gradle.properties'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - '.github/workflows/pokesearch-fastdev.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'FastDev operation (preview is NOT an official update)'
+        type: choice
+        required: true
+        default: fast
+        options: [fast, visual, apk-preview]
+permissions:
+  contents: read
+concurrency:
+  group: fastdev-${{ github.event.pull_request.number || github.ref }}-${{ inputs.mode || 'fast' }}
+  cancel-in-progress: true
+
+jobs:
+  quick:
+    name: FastDev advisory smoke (no APK)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Exact source checkout with diff history
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate FastDev selector
+        run: |
+          node --check scripts/fastdev.cjs
+          node --check scripts/fastdev-audit.cjs
+          node --test scripts/fastdev.test.cjs
+      - name: Inventory historical workflows without deleting them
+        run: node scripts/fastdev-audit.cjs
+      - name: Run only affected smoke contracts (full QA remains mandatory)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            node scripts/fastdev.cjs --base "${{ github.event.pull_request.base.sha }}"
+          else
+            node scripts/fastdev.cjs --base origin/main
+          fi
+
+  visual:
+    name: Real HTML screenshots (not physical Android)
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'visual'
+    needs: quick
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned visual runner
+        run: |
+          npm install --no-save --no-audit --no-fund --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Screenshot actual PokeSearch detail.html at P/M/G
+        env:
+          LT253_VISUAL_OUTPUT: fastdev-visual-evidence
+        run: node app/tests/lt253-visual-screenshots.cjs
+      - name: Preserve visual images even on assertion failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-FastDev-Visual-${{ github.run_id }}
+          path: fastdev-visual-evidence/*.png
+          retention-days: 10
+          if-no-files-found: warn
+
+  apk-preview:
+    name: Isolated debug APK (never an official release)
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'apk-preview'
+    needs: quick
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android 36 (no protected signing keys)
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build only the isolated preview package
+        run: gradle --no-daemon --build-cache :app:assemblePreview --stacktrace
+      - name: Verify isolated package, debug certificate and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fastdev-apk
+          APK=app/build/outputs/apk/preview/app-preview.apk
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$AAPT" dump badging "$APK" | grep -F "package: name='com.lucianotoscano.pokesearch.preview'"
+          "$SIGNER" verify --verbose --print-certs "$APK" | tee fastdev-apk/SIGNING-REPORT.txt
+          CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' fastdev-apk/SIGNING-REPORT.txt | tr -d '\r' | head -1)"
+          test -n "$CERT"
+          test "$CERT" != "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
+          cp "$APK" fastdev-apk/PokeSearch-FastDev-Preview.apk
+          (cd fastdev-apk && sha256sum PokeSearch-FastDev-Preview.apk > SHA256SUMS.txt)
+          git rev-parse HEAD > fastdev-apk/SOURCE_COMMIT.txt
+          printf '%s\n' 'ISOLATED DEBUG PREVIEW: not R8, not production-signed, not an OTA release.' > fastdev-apk/README.txt
+          cat fastdev-apk/SHA256SUMS.txt
+      - name: Upload APK for manual phone testing, without publishing
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-FastDev-APK-Preview-${{ github.run_id }}
+          path: fastdev-apk/
+          retention-days: 10
+          if-no-files-found: error

@@ -165,6 +165,19 @@ android {
                     "\"$officialTestCertificateSha256\"")
             }
         }
+        // FastDev only: an isolated debug APK that can coexist with the official app.
+        // Never use the protected production keystore or public versionCode for preview.
+        create("preview") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".preview"
+            versionNameSuffix = "-preview"
+            matchingFallbacks += listOf("debug")
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = true
+            isMinifyEnabled = false
+            isShrinkResources = false
+            buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
+        }
         getByName("release") {
             // Off by default, even for official releases; only isolated signed QA can opt in.
             buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "$controlledDistribution")
