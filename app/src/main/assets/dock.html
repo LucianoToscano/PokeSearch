@@ -5089,6 +5089,46 @@ body.visual-measurements.result-window #shell::after{
   /* Tiny sprite rail cannot show the full-size black measurements. */
   content:none!important;display:none!important;
 }
+
+/* LT376: the cooldown reference has exactly 16 always-visible rows; it
+   does not inherit scroll/max-height restrictions from the location editor.
+   Native popup height is measured from its full natural content in fit(). */
+body.controls-window #choices.locationPanel.locationCooldownTable,
+body.popup-window.controls-window #choices.locationPanel.locationCooldownTable{
+  box-sizing:border-box!important;height:max-content!important;
+  max-height:none!important;overflow:visible!important;overflow-y:visible!important;
+}
+body.controls-window #choices.locationCooldownTable .locCooldownRows,
+body.popup-window.controls-window #choices.locationCooldownTable .locCooldownRows{
+  display:block!important;height:auto!important;max-height:none!important;
+  overflow:visible!important;
+}
+body.controls-window #choices.locationCooldownTable button.locCooldownEntry,
+body.popup-window.controls-window #choices.locationCooldownTable button.locCooldownEntry{
+  box-sizing:border-box!important;height:18px!important;min-height:18px!important;
+  max-height:18px!important;padding:0 6px!important;line-height:16px!important;
+}
+/* LT376: draw six separate round pixels, not a pair of font glyphs that
+   some Samsung fonts render as three thick bars. The existing accessible
+   label and pointer/keyboard drag controls remain on the button itself. */
+body.controls-window #choices.appearanceCompact .uxAdjust .orderHandle,
+body.popup-window.controls-window #choices.appearanceCompact .uxAdjust .orderHandle{
+  font-size:0!important;letter-spacing:0!important;
+}
+body.controls-window #choices.appearanceCompact .orderHandleDots,
+body.popup-window.controls-window #choices.appearanceCompact .orderHandleDots{
+  display:grid!important;grid-template-columns:repeat(2,3px)!important;
+  grid-template-rows:repeat(3,3px)!important;gap:2px 3px!important;
+  width:9px!important;height:13px!important;align-content:center!important;
+  pointer-events:none!important;
+}
+body.controls-window #choices.appearanceCompact .orderHandleDots i,
+body.popup-window.controls-window #choices.appearanceCompact .orderHandleDots i{
+  display:block!important;width:3px!important;height:3px!important;
+  border:0!important;border-radius:50%!important;
+  background:currentColor!important;pointer-events:none!important;
+}
+
 </style></head><body>
 <div id="shell">
  <button id="gear" aria-label="Alternar resultados; segure 600 ms para menu" aria-expanded="false"><span class="resultModeStack" aria-hidden="true"><img id="dockModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="dockCapturePulse" class="capturePulse"></span><span id="dockIndicatorValue" class="modeIndicator value"></span><span id="dockIndicatorShiny" class="modeIndicator shiny">✨</span><span id="dockIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="dockSpawnCount" aria-hidden="true"></span></button>
@@ -9405,6 +9445,11 @@ function renderAppearanceChoices(){
    saveQuickPrefs();renderAppearanceChoices();};
   const handle=document.createElement("button");handle.type="button";
   handle.className="orderHandle";handle.textContent="⋮⋮";
+   // Text is a fallback/contract; visible grip is six real, round dots.
+   const gripDots=document.createElement("span");
+   gripDots.className="orderHandleDots";gripDots.setAttribute("aria-hidden","true");
+   for(let dot=0;dot<6;dot++)gripDots.appendChild(document.createElement("i"));
+   handle.appendChild(gripDots);
   handle.title="Segure e arraste para mudar a posição";
   handle.setAttribute("aria-label","Segure e arraste para mover "+action[2]+
    "; pelo teclado use as setas para cima ou para baixo");
