@@ -28,6 +28,10 @@ import java.io.InputStream;
  */
 public final class ReleaseNotes {
     private static final String ASSET = "release_notes.json";
+    // The append-only history exceeds 300 KiB since LT378. Keep a bounded
+    // parser consistent with signed OTA max-file rules (3 MiB).
+    private static final int MAX_NOTES_BYTES = 2 * 1024 * 1024;
+    private static final int HISTORY_PAGE_SIZE = 12;
     private static final String PREFS = "prefs";
     private static final String LAST_OPENED_VERSION = "releaseNotesLastOpenedVersion";
     private static final String PENDING_VERSION = "releaseNotesPendingVersion";
@@ -55,7 +59,7 @@ public final class ReleaseNotes {
             byte[] buffer=new byte[4096];
             int size;
             while ((size=in.read(buffer))!=-1) {
-                if (out.size()+size>96000) return new JSONArray();
+                if (out.size()+size>MAX_NOTES_BYTES) return new JSONArray();
                 out.write(buffer,0,size);
             }
             JSONObject root=new JSONObject(out.toString("UTF-8"));
@@ -170,6 +174,29 @@ public final class ReleaseNotes {
         }
     }
 
+    /** Render history in bounded pages to avoid thousands of TextViews on the UI thread. */
+    private static void addHistoryPage(Activity activity,LinearLayout body,
+                                       JSONArray releases,boolean light,int offset) {
+        int end=Math.min(offset+HISTORY_PAGE_SIZE,releases.length());
+        for (int i=offset;i<end;i++) {
+            JSONObject entry=releases.optJSONObject(i);
+            if (entry!=null) renderEntry(activity,body,entry,light,true);
+        }
+        if (end>=releases.length()) return;
+        int remaining=releases.length()-end;
+        int foreground=light?Color.rgb(25,77,103):Color.rgb(169,219,255);
+        TextView more=text(activity,"Ver versões anteriores ("+remaining+")",14,foreground,true);
+        more.setGravity(Gravity.CENTER);
+        more.setPadding(dp(activity,6),dp(activity,14),dp(activity,6),dp(activity,14));
+        more.setContentDescription("Carregar mais "+Math.min(HISTORY_PAGE_SIZE,remaining)+
+            " versões anteriores do PokeSearch");
+        more.setOnClickListener(v->{
+            body.removeView(more);
+            addHistoryPage(activity,body,releases,light,end);
+        });
+        body.addView(more);
+    }
+
     private static void showDialog(Activity activity,JSONArray releases,
                                    boolean history,Runnable onDismiss) {
         boolean light=activity.getSharedPreferences(PREFS,0)
@@ -203,10 +230,12 @@ public final class ReleaseNotes {
                 13,subtle,false);
             empty.setPadding(0,dp(activity,15),0,dp(activity,15));
             body.addView(empty);
+        } else if (history) {
+            addHistoryPage(activity,body,releases,light,0);
         } else {
             for (int i=0;i<releases.length();i++) {
                 JSONObject entry=releases.optJSONObject(i);
-                if (entry!=null) renderEntry(activity,body,entry,light,history);
+                if (entry!=null) renderEntry(activity,body,entry,light,false);
             }
         }
         scroll.addView(body);

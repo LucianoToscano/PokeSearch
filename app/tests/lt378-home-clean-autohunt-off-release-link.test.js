@@ -16,10 +16,10 @@ assert.doesNotMatch(home,/homeText\("POKÉMON GO"/);
 assert.doesNotMatch(main,/homeWatchStatus/);
 assert.match(main,/TextView footer=homeText\("PokeSearch v"\+BuildConfig\.VERSION_NAME\+" LT"/);
 assert.doesNotMatch(home,/PoGoCoordinates \/search/);
-assert.match(home,/footer\.setOnClickListener\(v->\{/);
-assert.match(home,/Uri\.parse\("https:\/\/github\.com\/LucianoToscano\/PokeSearch\/releases\/tag\/"\+officialTag\)/);
-assert.match(home,/String officialTag="v"\+BuildConfig\.VERSION_NAME\+"-"\+BuildConfig\.VERSION_CODE/);
-assert.match(home,/startActivity\(new Intent\(Intent\.ACTION_VIEW,uri\)\)/);
+assert.ok(home.includes("footer.setOnClickListener(v->ReleaseNotes.showHistory(this));"));
+assert.ok(!home.includes("github.com/LucianoToscano/PokeSearch/releases/tag/"));
+assert.ok(home.includes("Novidades e o histórico de atualizações do PokeSearch"));
+assert.ok(main.includes('addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this))'));
 assert.match(watch,/static void setEnabled\(Context context,boolean enabled\)/);
 const connected=pgs.split("@Override public void onServiceConnected() {")[1]
   .split("@Override public void onAccessibilityEvent(",1)[0];
