@@ -38,7 +38,8 @@ assert.match(geometry,/static boolean nearAnchor\(int\[\] saved,int\[\] anchor,i
 assert.match(picker,/FavoritePanelGeometry\.adjacentToToolbar\(/);
 assert.match(picker,/View.OnTouchListener freePanelDrag=\(v,e\)->\{/);
 assert.match(service,/int menuCenterX=menuParams==null\?anchorX:/);
-assert.match(service,/menuParams.x\+menuParams.width\/2/);
+assert.match(service,/int preferredPanelWidth=Math\.min\(metrics\(\)\.widthPixels-dp\(22\),dp\(348\)\)/);
+assert.match(service,/menuParams\.x\+preferredPanelWidth\/2/);
 assert.match(service,/\},menuCenterX,anchorY,/);
 assert.match(dock,/help.textContent="Menus · segure ⋮⋮ para arrastar"/);
 assert.match(dock,/handle\.className="orderHandle";handle\.textContent="⋮⋮"/);
