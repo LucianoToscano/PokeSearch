@@ -1256,17 +1256,10 @@ public class MainActivity extends Activity {
         footer.setPadding(d(9),d(5),d(9),d(5));
         footer.setClickable(true);
         footer.setContentDescription("Versão instalada "+BuildConfig.VERSION_NAME+
-            ". Toque para ver o release oficial correspondente no GitHub.");
-        footer.setOnClickListener(v->{
-            // Link matches the installed APK, never a guessed 'latest' version.
-            String officialTag="v"+BuildConfig.VERSION_NAME+"-"+BuildConfig.VERSION_CODE;
-            Uri uri=Uri.parse("https://github.com/LucianoToscano/PokeSearch/releases/tag/"+officialTag);
-            try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}
-            catch(android.content.ActivityNotFoundException error){
-                Toast.makeText(this,"Nenhum navegador disponível para abrir a release",
-                    Toast.LENGTH_SHORT).show();
-            }
-        });
+            ". Toque para abrir as Novidades e o histórico de atualizações do PokeSearch.");
+        // LT379: same native, offline dialog as Menu > Novidades.
+        // Never open GitHub, a WebView, OAuth or the browser from this footer.
+        footer.setOnClickListener(v->ReleaseNotes.showHistory(this));
         screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));
         // Mission icon floats above the footer, without stealing space from
         // header controls, update alerts, counters or trainer details.
