@@ -688,7 +688,8 @@ check("LT62 Location: title paste, no close X, inline km and compact panel",()=>
  assert.ok(location.includes('fieldRow.append(field)'));
  assert.ok(location.includes('const radiusWrap=make("span","locRadiusInputWrap")'));
  assert.ok(location.includes('radiusWrap.append(radiusField,unit)'));
- assert.ok(location.includes('const unit=make("span","locRadiusUnit","km")'));
+ assert.ok(location.includes('const unit=make("button","locRadiusUnit","km");unit.type="button"'));
+  assert.ok(location.includes("unit.onclick=renderLocationCooldownTable"));
  assert.ok(!location.includes('const close=make("button","choiceClose","×")'));
  assert.ok(dock.includes('width:min(208px,calc(100vw - 14px))!important'));
 });
