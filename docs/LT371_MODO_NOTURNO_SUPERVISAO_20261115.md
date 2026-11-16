@@ -1,7 +1,7 @@
 # LT371 — Modo Noturno: supervisão do Autowalk + Virtual Go Plus (PGSharp)
 
 Data: 15/11/2026. Base LT370 oficial 0.03.66 / versionCode 54573.
-**Estado do código: integrado à main pela PR #448, 7/7 CI aprovados. Pedido oficial 0.03.67/54574 integrado pela PR #449; publicação verificada separadamente no ARK. Captura própria e homologação física continuam NÃO concluídas.**
+**Estado: LT371 OFICIAL PUBLICADA — PokeSearch 0.03.67 / versionCode 54574 / label 51371. [Release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.67-54574). Código integrado e 7/7 CI green; captura própria e homologação física NÃO foram concluídas.**
 Origem: [Issue #447](https://github.com/LucianoToscano/PokeSearch/issues/447), investigações #162 (PGSharp movimento) e #350 (QA Android).
 
 ## Objetivo do usuário
@@ -38,10 +38,18 @@ Somente com evidência legal e técnica para cada cliente: classificador de esta
 - Workflows: PGS Buscas Android QA, core Node/Java, LT169/LT211, OTA, Secure/R8, todos aprovados no mesmo SHA antes de merge.
 - Teste físico com **PGSharp Standard**, VGP conectado, AutoWalk andando, alertas críticos e 2h de jogo visível (não afirmar testes físicos se não executados). Verificar Android 11/13/14; Pokemod apenas auditoria futura.
 
-**Publicação:** branch experimental. Próxima versão oficial exige versionCode >54573, certificado original e release pública com hash, além de validação do modo real.
+**Publicação:** LT371 confirmada em 15/11/2026 horário de Fortaleza. Próxima versão oficial precisa de versionCode >54574, assinador permanente e QA. A validação física do modo real continua pendente.
 
 ## Registro do código LT371 (verificado)
 
 - [PR #448](https://github.com/LucianoToscano/PokeSearch/pull/448) integrada; squash `f86e083b8889f7bca7f2c97abfb8956db8a34b49`; 7 gates green no head `23425a9ec1a36826199fd67ac645edf273eaadb1`: Node #43784223271, LT169 #43784223098, LT211 #43784223089, Java #43784223113, OTA #43784223158, PGS APK QA #43784223154, Secure beta/R8 #43784223188.
-- [PR #449](https://github.com/LucianoToscano/PokeSearch/pull/449) integrada, squash `8d7fb07711cc5f614bdf02b68eace0567edf7aa7`, pedido `0.03.67 / 54574 / 51371`. Preflight e gates da PR green; [workflow oficial #43786477267](https://github.com/LucianoToscano/PokeSearch/actions/runs/43786477267) iniciado. Publicação precisa de verificação separada de status, assinatura, tag, asset e digest.
+- [PR #449](https://github.com/LucianoToscano/PokeSearch/pull/449) integrada, squash `8d7fb07711cc5f614bdf02b68eace0567edf7aa7`, pedido `0.03.67 / 54574 / 51371`. Preflight e gates green; [workflow oficial #43786477267](https://github.com/LucianoToscano/PokeSearch/actions/runs/43786477267) **completed/success**; release pública sem draft/prerelease e APK com digest informado.
 - Não existem testes físicos de PGSharp/Pokemod no repositório capazes de provar que Autowalk/VGP realmente se moveram/capturaram. Supervisão não envia comandos ao jogo.
+
+## ARK LT371 — recibo da publicação verificada
+
+- [Release pública v0.03.67-54574](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.67-54574), não draft/prerelease, publicada em **16/11/2026 às 01:33:13 UTC** (15/11/2026 às 22:33:13 em Fortaleza).
+- [APK oficial PokeSearch-v0.03.67-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.67-54574/PokeSearch-v0.03.67-LT.apk), **61173971 bytes**, SHA-256 `9a65eebd3b92d9973df3ce7db2a3a9d6e6fe1b9f56c9c738c1abbffdbc31be4a` apresentado pela API pública do GitHub, **não** recalculado por download independente.
+- [Workflow permanente #43786477267](https://github.com/LucianoToscano/PokeSearch/actions/runs/43786477267) `completed/success`, código `8d7fb07711cc5f614bdf02b68eace0567edf7aa7`; assinador oficial conferido pelo próprio workflow.
+- Código [PR #448](https://github.com/LucianoToscano/PokeSearch/pull/448), pedido [PR #449](https://github.com/LucianoToscano/PokeSearch/pull/449), 7 gates da implementação green no mesmo commit. Registro ARK [prompt de continuidade LT372](LT371_PROMPT_CONTINUIDADE_LT372_20261115.md).
+- **Não comprovado:** que o aparelho do usuário recebeu a atualização, que o modo permaneceu ativo a noite toda, que VGP realmente capturou Pokémon, que o Pokemod suporte equivalência ou que a supervisão possa desligar Autowalk/VGP. O usuário precisa instalar/confirmar a versão Android e testar fisicamente.
