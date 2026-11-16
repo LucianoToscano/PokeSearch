@@ -419,8 +419,10 @@ check("Unified Pokébola touch contract: short tap results or closes menu, hold 
   'handler.removeCallbacks(dockLongPress);',
   'if(minimized)minimize(false);',
   'menu(!menuExpanded);',
-  'else if(menuExpanded)menu(false);',
-  'else toggleResultsCollapsed();',
+  'else if(menuExpanded){',
+  'menu(false); // Short tap always closes open menu.',
+  'gestureTourAction(OverlayGestureTour.HIDE_MENU);',
+  'toggleResultsCollapsed();  // Otherwise short tap toggles results.',
   'if(!dragged&&!dockHeld[0])',
   'if(Math.abs(dx)+Math.abs(dy)>dp(4))',
   'if(dragged){'
