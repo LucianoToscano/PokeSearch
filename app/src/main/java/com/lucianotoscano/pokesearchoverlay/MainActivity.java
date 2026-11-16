@@ -948,9 +948,21 @@ public class MainActivity extends Activity {
         identity.addView(accountProvider);
         Button logout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
         logout.setBackground(homeSurface(Color.rgb(27,36,52),13,Color.rgb(51,67,92)));
-        LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        // LT376e: action buttons have their own compact row. Previously
+        // "Sair site" stole width from the name and displayed "Nome indis...".
+        LinearLayout accountActions=new LinearLayout(this);
+        accountActions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams actionsLp=new LinearLayout.LayoutParams(-1,d(39));
+        actionsLp.topMargin=d(7);
+        connectedPanel.addView(accountActions,actionsLp);
+        Button syncProfile=homeAuthButton("↻  Atualizar perfil",
+            Color.rgb(35,65,83),Color.WHITE);
+        syncProfile.setContentDescription("Sincronizar nome e foto oficiais da Conta 1");
+        accountActions.addView(syncProfile,new LinearLayout.LayoutParams(0,d(37),1f));
+        syncProfile.setOnClickListener(v->openLoginDialogForSlot(1,"sync"));
+        LinearLayout.LayoutParams logoutLp=new LinearLayout.LayoutParams(d(91),d(37));
         logoutLp.leftMargin=d(7);
-        accountRow.addView(logout,logoutLp);
+        accountActions.addView(logout,logoutLp);
         logout.setOnClickListener(v->askLogout());
 
         trainerPanel=new LinearLayout(this);
@@ -1127,9 +1139,19 @@ public class MainActivity extends Activity {
         secondAccountLogout=homeAuthButton("⇥  Sair site",Color.rgb(28,37,54),Color.WHITE);
         secondAccountLogout.setBackground(homeSurface(Color.rgb(27,36,52),13,
             Color.rgb(51,67,92)));
-        LinearLayout.LayoutParams secondLogoutLp=new LinearLayout.LayoutParams(d(88),d(37));
+        LinearLayout secondAccountActions=new LinearLayout(this);
+        secondAccountActions.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams secondActionLp=new LinearLayout.LayoutParams(-1,d(39));
+        secondActionLp.topMargin=d(7);
+        secondAccountConnected.addView(secondAccountActions,secondActionLp);
+        Button secondSyncProfile=homeAuthButton("↻  Atualizar perfil",
+            Color.rgb(35,65,83),Color.WHITE);
+        secondSyncProfile.setContentDescription("Sincronizar nome e foto oficiais da Conta 2");
+        secondAccountActions.addView(secondSyncProfile,new LinearLayout.LayoutParams(0,d(37),1f));
+        secondSyncProfile.setOnClickListener(v->openLoginDialogForSlot(2,"sync"));
+        LinearLayout.LayoutParams secondLogoutLp=new LinearLayout.LayoutParams(d(91),d(37));
         secondLogoutLp.leftMargin=d(7);
-        secondIdentityRow.addView(secondAccountLogout,secondLogoutLp);
+        secondAccountActions.addView(secondAccountLogout,secondLogoutLp);
         secondAccountLogout.setOnClickListener(v->new AlertDialog.Builder(this)
             .setTitle("Desconectar somente a Conta 2?")
             .setMessage("A Conta 1 permanecerá conectada.")
@@ -1413,7 +1435,7 @@ public class MainActivity extends Activity {
         boolean showTrainer=privacy.getBoolean("homeShowTrainerName",true);
         boolean showCode=privacy.getBoolean("homeShowTrainerCode",true);
         String account=two.getString("profileDisplayName","").trim();
-        if(account.isEmpty())account="Nome indisponível · abrir perfil";
+        if(account.isEmpty())account="Perfil não sincronizado";
         String trainer=two.getString("profileTrainerName","");
         String code=two.getString("profileTrainerCode","");
         boolean linked=connected&&code.matches("[0-9]{12}")&&!trainer.isEmpty()&&
@@ -2812,9 +2834,11 @@ public class MainActivity extends Activity {
         if(connectedPanel!=null)connectedPanel.setVisibility(logged?View.VISIBLE:View.GONE);
         if(sessionHint!=null)sessionHint.setText(
             "Busca normal com ou sem login · Shiny temporariamente indisponível");
-        if(accountDisplay!=null)accountDisplay.setText(
-            prefs.getBoolean("homeShowPogoAccountName",true)?
-                prefs.getString("profileDisplayName","Nome indisponível · abrir perfil"):"Anônimo");
+        if(accountDisplay!=null){
+            String displayName=prefs.getString("profileDisplayName","").trim();
+            accountDisplay.setText(prefs.getBoolean("homeShowPogoAccountName",true)?
+                (displayName.isEmpty()?"Perfil não sincronizado":displayName):"Anônimo");
+        }
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
