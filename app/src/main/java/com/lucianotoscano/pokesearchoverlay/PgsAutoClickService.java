@@ -96,6 +96,9 @@ public final class PgsAutoClickService extends AccessibilityService {
     private boolean nightSupervisorActive=false;
     private int nightMissingGameChecks=0;
     private String nightSupervisorProfile="";
+    // LT372: in-memory evidence only; never treat a heartbeat as Autowalk or catch proof.
+    private final PgsNightSessionDiagnostics nightSession=
+        new PgsNightSessionDiagnostics();
     private final Runnable nightSupervisorTick=this::checkNightSupervisor;
     private FrameLayout picker;
     private Bitmap pickerBitmap;
@@ -175,6 +178,7 @@ public final class PgsAutoClickService extends AccessibilityService {
         nightSupervisorActive=true;
         nightSupervisorProfile=profile;
         nightMissingGameChecks=0;
+        nightSession.start(SystemClock.elapsedRealtime(),notifications);
         handler.removeCallbacks(nightSupervisorTick);
         status("🌙 SUPERVISÃO NOTURNA");
         notifyUser("PokeSearch · supervisão noturna iniciada",
@@ -186,6 +190,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
     private void stopNightSupervisor(boolean alert,String reason){
         if(!nightSupervisorActive)return;
+        nightSession.stop(SystemClock.elapsedRealtime(),reason);
         nightSupervisorActive=false;
         nightSupervisorProfile="";
         nightMissingGameChecks=0;
@@ -202,16 +207,24 @@ public final class PgsAutoClickService extends AccessibilityService {
         boolean warning=game&&(gameAccountSafetyNoticePresent()||
             passengerPromptPresent());
         nightMissingGameChecks=game?0:nightMissingGameChecks+1;
+        android.app.NotificationManager manager=(android.app.NotificationManager)
+            getSystemService(NOTIFICATION_SERVICE);
+        boolean notifications=manager!=null&&manager.areNotificationsEnabled();
+        nightSession.observe(SystemClock.elapsedRealtime(),game,
+            notifications,nightMissingGameChecks);
         PgsNightSupervisorPolicy.Decision decision=
             PgsNightSupervisorPolicy.check(nightSupervisorProfile,
                 PgsAutoHostSettings.current(this),game,warning,
-                running||watching||sequenceActive,nightMissingGameChecks);
+                running||watching||sequenceActive,nightMissingGameChecks,
+                notifications);
         if(decision!=PgsNightSupervisorPolicy.Decision.KEEP){
             String detail;
             switch(decision){
                 case STOP_SAFETY:detail="Aviso de segurança detectado.";break;
                 case STOP_GAME_MISSING:detail="Pokémon GO saiu da tela ou foi bloqueado.";break;
                 case STOP_PROFILE:detail="Perfil PGSharp alterado.";break;
+                case STOP_NOTIFICATIONS:
+                    detail="Notificações do Android foram desativadas.";break;
                 default:detail="Outro mecanismo do PokeSearch foi iniciado.";
             }
             stopNightSupervisor(true,detail);
@@ -625,6 +638,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
+        // A suspended AccessibilityService cannot truthfully supervise gameplay.
+        stopNightSupervisor(true,"Acessibilidade interrompida pelo Android.");
         stopSequence("SEQUÊNCIA · SERVIÇO INTERROMPIDO");
         // Uma perda temporária do foco de acessibilidade não equivale a "desligar".
         // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
@@ -731,6 +746,9 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
             @Override public boolean nightSupervisorActive(){
                 return PgsAutoClickService.this.nightSupervisorActive;
+            }
+            @Override public String nightSupervisorSummary(){
+                return nightSession.summary(SystemClock.elapsedRealtime());
             }
             @Override public void startSmartSearch(String goal){
                 if(nightSupervisorActive){
