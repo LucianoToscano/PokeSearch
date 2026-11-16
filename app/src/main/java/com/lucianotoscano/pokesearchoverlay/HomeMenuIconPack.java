@@ -137,6 +137,26 @@ final class HomeMenuIconPack {
         return view.getTop()+view.getPaddingTop()+Math.round(top[1]);
     }
 
+    /** Horizontal center of the ACTUALLY visible artwork in parent pixels.
+     * A 512px source may include asymmetric transparent padding; the middle
+     * of its ImageView is not necessarily the center of the Pokébola. */
+    static int opticalCenterXInParentPx(android.widget.ImageView view){
+        if(view==null||view.getWidth()<=0||
+            !(view.getDrawable() instanceof android.graphics.drawable.BitmapDrawable))
+            return -1;
+        Bitmap bitmap=((android.graphics.drawable.BitmapDrawable)view.getDrawable()).getBitmap();
+        if(bitmap==null||bitmap.isRecycled())return -1;
+        android.graphics.Rect bounds=visibleBounds.get(bitmap);
+        if(bounds==null){
+            applyVisibleMatrix(view,bitmap);
+            bounds=visibleBounds.get(bitmap);
+        }
+        if(bounds==null)return -1;
+        float[] center={bounds.exactCenterX(),bounds.exactCenterY()};
+        view.getImageMatrix().mapPoints(center);
+        return view.getLeft()+view.getPaddingLeft()+Math.round(center[0]);
+    }
+
     private static void load(Context context){
         for(int i=1;i<=5;i++){
             String file="menu_icons_512_"+i+".zip";
