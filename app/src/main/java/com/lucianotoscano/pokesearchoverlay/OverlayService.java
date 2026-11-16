@@ -408,6 +408,25 @@ public class OverlayService extends Service {
     private WindowManager.LayoutParams params,detailParams,menuParams,resultParams,popupParams;
     private FrameLayout root,detailRoot,menuRoot,resultRoot,popupRoot;
     private View grip,visualEditorDragGrip;
+    // LT373: passive spotlight + real-gesture progression, never a synthetic tap.
+    private OverlayGestureTour gestureTour;
+    private void beginGestureTour(boolean replay){
+        if(stopped||loginPaused||pickerOpen||grip==null||wm==null)return;
+        if(gestureTour!=null)gestureTour.close(false);
+        gestureTour=new OverlayGestureTour(this,wm,overlayPrefs(),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            OverlayGestureTour.Kind.POKEBALL,!resultCollapsed,()->{
+                if(grip==null||!grip.isAttachedToWindow())return null;
+                int[] location=new int[2];
+                grip.getLocationOnScreen(location);
+                return new android.graphics.Rect(location[0],location[1],
+                    location[0]+grip.getWidth(),location[1]+grip.getHeight());
+            });
+        gestureTour.start(replay);
+    }
+    private void gestureTourAction(String gesture){
+        if(gestureTour!=null)gestureTour.onEvent(gesture);
+    }
     private boolean visualEditorNativeDragging=false;
     private WebView panel,detailPanel,website,menuPanel,resultPanel,popupPanel;
     private androidx.webkit.WebViewAssetLoader otaWebLoader;
@@ -1851,6 +1870,8 @@ public class OverlayService extends Service {
             dockHeld[0]=true;
             if(minimized)minimize(false);
             menu(!menuExpanded);
+            gestureTourAction(menuExpanded?OverlayGestureTour.SHOW_MENU:
+                OverlayGestureTour.HIDE_MENU);
         };
         grip.setOnTouchListener((v,event)->{
             if(event.getActionMasked()==MotionEvent.ACTION_DOWN)
@@ -1942,8 +1963,14 @@ public class OverlayService extends Service {
                     }
                     if(!dragged&&!dockHeld[0]){
                         if(minimized)minimize(false);
-                        else if(menuExpanded)menu(false); // Short tap always closes open menu.
-                        else toggleResultsCollapsed();  // Otherwise short tap toggles results.
+                        else if(menuExpanded){
+                            menu(false); // Short tap always closes open menu.
+                            gestureTourAction(OverlayGestureTour.HIDE_MENU);
+                        }else{
+                            toggleResultsCollapsed();  // Otherwise short tap toggles results.
+                            gestureTourAction(resultCollapsed?OverlayGestureTour.HIDE_RESULTS:
+                                OverlayGestureTour.SHOW_RESULTS);
+                        }
                     }
                     // Long press or drag never triggers a second short-tap action.
                     return true;
@@ -3857,6 +3884,13 @@ public class OverlayService extends Service {
         String edge=JSONObject.quote(menuLeft?"left":"right");
         js(panel,panelLoaded,"window.syncMenu("+show+","+edge+","+menuPadDp+")");
         js(menuPanel,menuLoaded,"window.syncMenu("+show+","+edge+",0)");
+        if(show&&gestureTour!=null&&gestureTour.active()){
+            handler.postDelayed(()->{
+                if(menuExpanded&&!stopped)
+                    js(menuPanel,menuLoaded,
+                        "window.reportRefreshCoachTarget&&window.reportRefreshCoachTarget()");
+            },350L);
+        }
         moveDetail();
     }
     private void minimize(boolean yes){
@@ -5780,6 +5814,21 @@ public class OverlayService extends Service {
             }
             startVerifiedShinySearch(generation,0);
         });}
+        @JavascriptInterface public void tutorialRefreshAnchor(float x,float y,
+                float width,float height){
+            handler.post(()->{
+                if(gestureTour==null||!gestureTour.active()||!menuExpanded||
+                    menuParams==null||width<12||height<12||
+                    x<0||y<0||x>850||y>850||width>250||height>250)return;
+                int left=menuParams.x+dp(Math.round(x));
+                int top=menuParams.y+dp(Math.round(y));
+                gestureTour.setRefreshBounds(new android.graphics.Rect(left,top,
+                    left+dp(Math.round(width)),top+dp(Math.round(height))));
+            });
+        }
+        @JavascriptInterface public void tutorialRefreshHeld(){
+            handler.post(()->gestureTourAction(OverlayGestureTour.REFRESH_HOLD));
+        }
         @JavascriptInterface public void refresh(){handler.post(()->{
             android.widget.Toast.makeText(OverlayService.this,
                 "↻ Atualização solicitada",android.widget.Toast.LENGTH_SHORT).show();
@@ -5975,6 +6024,10 @@ public class OverlayService extends Service {
     }
     @Override public int onStartCommand(Intent i,int flags,int id){
         String action=i==null||i.getAction()==null?"":i.getAction();
+        if("com.lucianotoscano.pokesearchoverlay.REPLAY_GESTURE_TOUR".equals(action)){
+            handler.post(()->beginGestureTour(true));
+            return START_STICKY;
+        }
         if(PgsFilterImport.ACTION.equals(action)){
             // Only an explicitly selected, sanitised filter from the app's
             // private file is applied. Services are non-exported, so another
@@ -6024,6 +6077,7 @@ public class OverlayService extends Service {
         }
         if("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN".equals(action)){
             closeIndependentPopup();
+            if(gestureTour!=null){gestureTour.close(false);gestureTour=null;}
             loginPaused=true;
             guardSubmittedSearchBeforeReplacement();
             ++requestGeneration;
@@ -6104,20 +6158,11 @@ public class OverlayService extends Service {
         if(intervalMinutes!=-3&&intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
            intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=-3;
         schedulePeriodic();
-        if(initialStart&&!pref.getBoolean("gestureHelpV1Shown",false)){
-            pref.edit().putBoolean("gestureHelpV1Shown",true).apply();
-            handler.postDelayed(()->{
-                if(!stopped&&!loginPaused)
-                    android.widget.Toast.makeText(OverlayService.this,
-                        "👆 Pokébola: toque = resultados · segure = menu · arraste = mover",
-                        android.widget.Toast.LENGTH_LONG).show();
-            },1100L);
-            handler.postDelayed(()->{
-                if(!stopped&&!loginPaused)
-                    android.widget.Toast.makeText(OverlayService.this,
-                        "👆 ↻: toque = atualizar · segure = escolher intervalo",
-                        android.widget.Toast.LENGTH_LONG).show();
-            },4200L);
+        if(initialStart){
+            // The old two automatic Toasts are replaced by real coachmarks.
+            if(!pref.getBoolean("gestureHelpV1Shown",false))
+                pref.edit().putBoolean("gestureHelpV1Shown",true).apply();
+            handler.postDelayed(()->beginGestureTour(false),1900L);
         }
         spriteSize=pref.getInt("spriteSize",45);
         if(spriteSize!=35&&spriteSize!=45&&spriteSize!=55)spriteSize=45;
@@ -6228,6 +6273,7 @@ public class OverlayService extends Service {
             missionScreenOffRegistered = false;
         }
         stopped=true;
+        if(gestureTour!=null){gestureTour.close(false);gestureTour=null;}
         verifiedEncounterCoords.clear(); // no disk persistence or sensitive leak
         if(isSecondaryOverlay())secondaryRunning=false;
         else running=false;

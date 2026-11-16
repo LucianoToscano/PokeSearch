@@ -3769,6 +3769,29 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Consultando versões oficiais…",Toast.LENGTH_SHORT).show();
         });
         body.addView(checkUpdates,new LinearLayout.LayoutParams(-1,d(42)));
+        // LT373: replay is opt-in. Reuse the real live overlays and their
+        // own private completion flags; do not reset filters or accounts.
+        Button replayCoach=new Button(this);
+        replayCoach.setText("👆 Rever tutorial interativo dos overlays");
+        replayCoach.setAllCaps(false);replayCoach.setTextSize(12);
+        replayCoach.setOnClickListener(v->{
+            for(String name:new String[]{"prefs","prefs_secondary",
+                    "rare_candy_overlay","pgs_auto_settings_v1"})
+                getSharedPreferences(name,MODE_PRIVATE).edit()
+                    .remove(OverlayGestureTour.DONE_KEY).apply();
+            String action="com.lucianotoscano.pokesearchoverlay.REPLAY_GESTURE_TOUR";
+            if(OverlayService.isRunning())
+                startService(new Intent(this,OverlayService.class).setAction(action));
+            if(OverlayService.isSecondaryRunning())
+                startService(new Intent(this,SecondaryOverlayService.class).setAction(action));
+            if(RareCandyOverlayService.isRunning())
+                startService(new Intent(this,RareCandyOverlayService.class).setAction(action));
+            PgsAutoClickService.replayGestureTour();
+            Toast.makeText(this,
+                "Tutoriais reativados. Abra o overlay desejado e siga o dedo animado.",
+                Toast.LENGTH_LONG).show();
+        });
+        body.addView(replayCoach,new LinearLayout.LayoutParams(-1,d(42)));
         settingAlertMode(body,prefs);
         settingCheckbox(body,prefs,WatchAlerts.PREF_ENABLED,
             "Alertar ao encontrar favorito nos filtros confirmados",true);
