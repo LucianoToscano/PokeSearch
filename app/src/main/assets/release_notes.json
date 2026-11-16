@@ -4920,6 +4920,33 @@
           "Desfoque, cooldown, favoritos, acessibilidade, Minior e integração com PGSharp/Pokemod separadamente requerem prova em aparelho real. Supervisão, caminhada, tentativa e captura confirmada não se confundem."
         ]
       }
+    },
+    {
+      "id": "lt378-home-clean-autohunt-off-release-link-20261116",
+      "minVersionCode": 54579,
+      "date": "16/11/2026",
+      "title": "PokeSearch LT378 — Home limpa, Auto Hunt desligado e link da versão",
+      "sections": {
+        "novidades": [
+          "Toque no rodapé com o número da versão abre a release correspondente ao APK instalado no GitHub.",
+          "Auto Hunt / Buscar Pokémon não exibe mais bolha nem retoma buscas ou monitoramento apenas porque o serviço de Acessibilidade se conectou."
+        ],
+        "melhorias": [
+          "Home mantém o emblema original do PokeSearch, removendo a logomarca escrita e o subtítulo POKÉMON GO; controles de relógio, tema, apoio e menu permanecem.",
+          "Rodapé exibe apenas PokeSearch e a versão instalada, sem PoGoCoordinates /search.",
+          "O atalho administrativo por pressão longa foi preservado no emblema original."
+        ],
+        "correcoes": [
+          "Removido da Home o status PGS Monitor: desligado sem reservar altura invisível; monitor passivo e diagnóstico continuam disponíveis nos menus.",
+          "Pedidos antigos de ativação do Auto Hunt deixam de ligar a busca sozinhos após reiniciar; somente um toque recente e explícito pode concluir a autorização de Acessibilidade.",
+          "Preservados sprites, modelos, filtros, contas independentes, Pokébolas P1/P2, Busca Inteligente, Sequências, tutorias, Modo Noturno, OTA e assinatura."
+        ],
+        "emDesenvolvimento": [
+          "Validação física pendente em Android 11–14 e Samsung: Home sem espaços, comportamento de Acessibilidade/Auto Hunt em reinícios, troca de conta, toque real no link de release e clientes PGSharp/Pokemod separadamente.",
+          "Busca iniciada pelo usuário não comprova caminhada ou captura de Pokémon; exigir evidência de captura confirmada.",
+          "Instalação de atualizações continua exigindo aprovação do Android."
+        ]
+      }
     }
   ]
 }
