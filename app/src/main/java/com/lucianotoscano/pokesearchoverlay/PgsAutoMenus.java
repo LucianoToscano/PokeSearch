@@ -47,9 +47,10 @@ final class PgsAutoMenus {
         void sequencePick(String type,int index,boolean destination);
         void sequencePreview();
         void autoDetectHost();
-        void startNightSupervisor();
+        void startNightSupervisor(boolean walkDeclared,boolean plusDeclared);
         void stopNightSupervisor();
         boolean nightSupervisorActive();
+        String nightSupervisorDiagnostics();
         void startSmartSearch(String goal);
         void startSearch();
         void sequenceRun();
@@ -880,10 +881,15 @@ final class PgsAutoMenus {
     // They do not imply automatic ball throwing or guaranteed Shiny evidence.
     private boolean showAdvancedActions=false;
     private boolean nightExpanded=false;
+    private boolean nightLastReportedActive=false;
     // One-time acknowledgments only, never persist assumptions about VGP link.
     private boolean nightWalkAcknowledged=false,nightCatchAcknowledged=false;
     private void appendCentralActions(LinearLayout root){
-        if(showAdvancedActions){appendLegacyActions(root);return;}
+        if(showAdvancedActions){
+            appendLegacyActions(root);
+            appendNightModeToggle(root);
+            return;
+        }
         root.addView(label("OBJETIVO DA BUSCA",10,true),margined(-1,dp(22),2));
         String current=PgsSmartSearchSettings.goal(context);
         String[] goals={PgsSmartSearchSettings.GOAL_SHINY,
@@ -938,7 +944,11 @@ final class PgsAutoMenus {
             showAdvancedActions=true;showCentral(1);
         });
         root.addView(editor,margined(-1,dp(29),3));
-        // LT371: a compact standalone PGSharp supervisor, not a fake bot.
+        appendNightModeToggle(root);
+    }
+
+    // Um mesmo painel compacto atende os objetivos simples e avancados.
+    private void appendNightModeToggle(LinearLayout root){
         Button night=button(nightExpanded?
             "☾ Recolher modo noturno":"☾ Modo noturno · PGSharp",10);
         night.setOnClickListener(v->{nightExpanded=!nightExpanded;showCentral(1);});
@@ -947,6 +957,12 @@ final class PgsAutoMenus {
     }
 
     private void appendNightMode(LinearLayout root){
+        boolean active=actions.nightSupervisorActive();
+        if(nightLastReportedActive&&!active){
+            nightWalkAcknowledged=false;
+            nightCatchAcknowledged=false;
+        }
+        nightLastReportedActive=active;
         TextView description=label("Autowalk e Virtual Go Plus fazem "+
             "movimento/captura NO PGSharp. O PokeSearch apenas supervisiona "+
             "o jogo; não ativa, não verifica a conexão nem desliga os recursos.",9,false);
@@ -964,6 +980,7 @@ final class PgsAutoMenus {
         walk.setText("Já ativei Autowalk no PGSharp");
         walk.setTextSize(10);walk.setTextColor(fg());
         walk.setChecked(nightWalkAcknowledged);
+        walk.setEnabled(!active);
         walk.setOnCheckedChangeListener((b,on)->{
             nightWalkAcknowledged=on;showCentral(1);
         });
@@ -972,6 +989,7 @@ final class PgsAutoMenus {
         plus.setText("Já conectei Virtual Go Plus no jogo");
         plus.setTextSize(10);plus.setTextColor(fg());
         plus.setChecked(nightCatchAcknowledged);
+        plus.setEnabled(!active);
         plus.setOnCheckedChangeListener((b,on)->{
             nightCatchAcknowledged=on;showCentral(1);
         });
@@ -981,7 +999,9 @@ final class PgsAutoMenus {
             "a sessão. A supervisão não controla o cliente externo.",9,false);
         tips.setMaxLines(4);
         root.addView(tips,margined(-1,dp(62),2));
-        boolean active=actions.nightSupervisorActive();
+        TextView diagnostic=label(actions.nightSupervisorDiagnostics(),9,false);
+        diagnostic.setMaxLines(9);
+        root.addView(diagnostic,margined(-1,-2,2));
         Button start=button(active?"■ Parar supervisão":
             "▷ Iniciar supervisão noturna",10);
         start.setContentDescription(active?
@@ -990,8 +1010,13 @@ final class PgsAutoMenus {
             "Iniciar supervisão visual, sem controlar caminhada ou captura");
         start.setEnabled(active||(nightWalkAcknowledged&&nightCatchAcknowledged));
         start.setOnClickListener(v->{
-            if(active)actions.stopNightSupervisor();
-            else actions.startNightSupervisor();
+            if(active){
+                actions.stopNightSupervisor();
+                nightWalkAcknowledged=false;
+                nightCatchAcknowledged=false;
+                nightLastReportedActive=false;
+            } else actions.startNightSupervisor(
+                nightWalkAcknowledged,nightCatchAcknowledged);
             showCentral(1);
         });
         root.addView(start,margined(-1,dp(32),3));

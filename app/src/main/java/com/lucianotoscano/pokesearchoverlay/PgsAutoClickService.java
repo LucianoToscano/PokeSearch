@@ -94,6 +94,8 @@ public final class PgsAutoClickService extends AccessibilityService {
     private String smartGoalSession=null; // only active for explicit LT370 smart start
     // LT371: read-only supervisor; it does NOT enable/disable PGSharp VGP/Autowalk.
     private boolean nightSupervisorActive=false;
+    private final PgsNightSessionDiagnostics nightDiagnostics=
+        new PgsNightSessionDiagnostics();
     private int nightMissingGameChecks=0;
     private String nightSupervisorProfile="";
     private final Runnable nightSupervisorTick=this::checkNightSupervisor;
@@ -156,10 +158,18 @@ public final class PgsAutoClickService extends AccessibilityService {
         };
     /** External PGSharp native Autowalk and VGP run independently.
      * No dispatchGesture, root, GPS, private API, or fake catch results. */
-    private void startNightSupervisor(){
+    private boolean nightNotificationsAllowed(){
         android.app.NotificationManager manager=(android.app.NotificationManager)
             getSystemService(NOTIFICATION_SERVICE);
-        boolean notifications=manager!=null&&manager.areNotificationsEnabled();
+        return manager!=null&&manager.areNotificationsEnabled();
+    }
+    private void startNightSupervisor(boolean userWalk,boolean userPlus){
+        if(!userWalk||!userPlus){
+            showReason("Confirme manualmente Autowalk e Virtual Go Plus antes "
+                +"de iniciar a supervisão. Não são verificações automáticas.");
+            return;
+        }
+        boolean notifications=nightNotificationsAllowed();
         boolean game=isGameVisible();
         boolean notice=game&&(gameAccountSafetyNoticePresent()||
             passengerPromptPresent());
@@ -173,6 +183,7 @@ public final class PgsAutoClickService extends AccessibilityService {
             return;
         }
         nightSupervisorActive=true;
+        nightDiagnostics.start(SystemClock.elapsedRealtime(),userWalk,userPlus);
         nightSupervisorProfile=profile;
         nightMissingGameChecks=0;
         handler.removeCallbacks(nightSupervisorTick);
@@ -187,6 +198,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     private void stopNightSupervisor(boolean alert,String reason){
         if(!nightSupervisorActive)return;
         nightSupervisorActive=false;
+        nightDiagnostics.stop(reason);
         nightSupervisorProfile="";
         nightMissingGameChecks=0;
         handler.removeCallbacks(nightSupervisorTick);
@@ -202,16 +214,19 @@ public final class PgsAutoClickService extends AccessibilityService {
         boolean warning=game&&(gameAccountSafetyNoticePresent()||
             passengerPromptPresent());
         nightMissingGameChecks=game?0:nightMissingGameChecks+1;
+        nightDiagnostics.sampled(SystemClock.elapsedRealtime(),game,warning);
         PgsNightSupervisorPolicy.Decision decision=
             PgsNightSupervisorPolicy.check(nightSupervisorProfile,
                 PgsAutoHostSettings.current(this),game,warning,
-                running||watching||sequenceActive,nightMissingGameChecks);
+                running||watching||sequenceActive,nightMissingGameChecks,
+                nightNotificationsAllowed());
         if(decision!=PgsNightSupervisorPolicy.Decision.KEEP){
             String detail;
             switch(decision){
                 case STOP_SAFETY:detail="Aviso de segurança detectado.";break;
                 case STOP_GAME_MISSING:detail="Pokémon GO saiu da tela ou foi bloqueado.";break;
                 case STOP_PROFILE:detail="Perfil PGSharp alterado.";break;
+                case STOP_NOTIFICATIONS:detail="Permissão de notificações removida.";break;
                 default:detail="Outro mecanismo do PokeSearch foi iniciado.";
             }
             stopNightSupervisor(true,detail);
@@ -625,6 +640,7 @@ public final class PgsAutoClickService extends AccessibilityService {
     }
 
     @Override public void onInterrupt() {
+        stopNightSupervisor(true,"Acessibilidade interrompida.");
         stopSequence("SEQUÊNCIA · SERVIÇO INTERROMPIDO");
         // Uma perda temporária do foco de acessibilidade não equivale a "desligar".
         // Nenhum gesto/captura enquanto a janela ativa não é o jogo.
@@ -719,8 +735,10 @@ public final class PgsAutoClickService extends AccessibilityService {
                 setWatchOnly(enabled);
             }
             @Override public void autoDetectHost(){probeActiveFeedHost();}
-            @Override public void startNightSupervisor(){
-                PgsAutoClickService.this.startNightSupervisor();
+            @Override public void startNightSupervisor(
+                    boolean walkDeclared,boolean plusDeclared){
+                PgsAutoClickService.this.startNightSupervisor(
+                    walkDeclared,plusDeclared);
             }
             @Override public void stopNightSupervisor(){
                 PgsAutoClickService.this.stopNightSupervisor(
@@ -731,6 +749,9 @@ public final class PgsAutoClickService extends AccessibilityService {
             }
             @Override public boolean nightSupervisorActive(){
                 return PgsAutoClickService.this.nightSupervisorActive;
+            }
+            @Override public String nightSupervisorDiagnostics(){
+                return nightDiagnostics.summary(SystemClock.elapsedRealtime());
             }
             @Override public void startSmartSearch(String goal){
                 if(nightSupervisorActive){
