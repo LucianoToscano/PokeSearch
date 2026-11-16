@@ -4758,6 +4758,34 @@
           "A execução Android não confirma captura ou teleporte; arraste direto de marcadores sobre o jogo e regras SE/SENÃO genéricas seguem como propostas futuras."
         ]
       }
+    },
+    {
+      "id": "lt370-busca-pas-pac-assistida-20261115",
+      "minVersionCode": 54573,
+      "date": "15/11/2026",
+      "title": "PokeSearch LT370 — Busca Inteligente e Assistência ao Encontro",
+      "sections": {
+        "novidades": [
+          "Na aba Ação, três objetivos simples: Procurar Shiny, Auxiliar encontros ou combinar os dois. Editor de Sequências, Monitor e Auto Hunt existentes permanecem disponíveis no avançado.",
+          "Botão Detectar tenta identificar visualmente PGSharp/Pokemod em duas leituras estáveis, sem depender da instalação do gerenciador do jogo. Havendo ambiguidade, a seleção manual continua disponível.",
+          "Escopo da busca: modelos reais do feed disponíveis (até dez por leitura) ou apenas Pokémon favoritos, com indicação de modelos cadastrados."
+        ],
+        "melhorias": [
+          "Somente inicia buscas com consentimento de toques no cliente atual, modelos disponíveis e, para Procurar Shiny, permissão de notificação do Android.",
+          "Limite de interações e repetição opcional direto na Busca Inteligente, sem duplicar o motor de gestos.",
+          "As três abas da Central compartilham uma única área rolável, com rodapé e status sempre acessíveis."
+        ],
+        "correcoes": [
+          "Sessões inteligentes isoladas dos modos legados para não acionar a lógica de captura assistida ao usar sequências ou ferramentas antigas.",
+          "Em encontro visualmente identificado, o PokeSearch pausa e notifica para captura MANUAL, sem supor que uma Pokébola foi lançada nem que o Pokémon foi capturado.",
+          "Reconhecimento de Shiny só recebe sinais positivos explícitos do jogo; sem evidência confiável, não classifica o encontro como Shiny."
+        ],
+        "emDesenvolvimento": [
+          "PGTools PaC completo não está implementado: ainda faltam reconhecimento validado de bolas e frutas, arremesso e confirmação visual da captura. A versão oferece assistência ao encontro.",
+          "O catálogo nativo de miniaturas PGSharp ainda não está preenchido: models requerem capturas do feed autorizadas e validadas. Detecção automática de cliente depende de modelos próprios.",
+          "As funções precisam de testes físicos separados com PGSharp/Pokemod e Android 11/13/14; compilação automática não prova ações no jogo."
+        ]
+      }
     }
   ]
 }
