@@ -1860,17 +1860,16 @@ test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible 
   dock.includes('button.classList.toggle("bell-star-silent",');
 });
 
-test("LT54-ICON-01 launcher uses adaptive artwork and responsive 3:1 header",(()=>{
+test("LT54-ICON-01 launcher keeps adaptive artwork; LT378 Home uses emblem only",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8")&&
-  home.includes("wordmarkWidth/3f")&&
-  home.includes("wordmarkWidth=Math.max(d(104),Math.min(d(118),availableBrandWidth))")&&
-  home.includes("if(availableBrandWidth<d(55))")&&
-  home.includes("brandLabels.setVisibility(View.GONE)")&&
+  home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
+  home.includes("branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)))")&&
+  !home.includes("brandLabels")&&!home.includes("wordmarkWidth")&&
   home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f))");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
