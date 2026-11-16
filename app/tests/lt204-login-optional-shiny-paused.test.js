@@ -57,7 +57,8 @@ check("P1 and P2 can independently select accounts, including separate guest pro
  const only=slots.slice(slots.indexOf("static void bindAccountOnly"),slots.indexOf("static boolean loggedIn"));
  assert.ok(!only.includes("trainerSetting("));
  assert.ok(!only.includes("loggedIn("));
- assert.match(main,/PogoAccountSlots\.supportsSecond\(\)\?"Visitante":"Indisponível"/);
+ assert.match(main,/PogoAccountSlots\.supportsGuest\(this\)/);
+ assert.match(main,/slot==0\?"Conta: Visitante":"Conta "\+slot/);
  assert.match(main,/ProviderFeatureFlags\.TRAINER_SELECTION_AVAILABLE&&/);
 });
 console.log("LT204 "+count+"/"+count+" PASS");
