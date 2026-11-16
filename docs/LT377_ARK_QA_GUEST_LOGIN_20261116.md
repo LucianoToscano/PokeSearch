@@ -40,6 +40,7 @@ Não confundir supervisão do app com caminhada de outro aplicativo, tentativa d
 ## Estado ARK e pendências
 
 - Integrados código e pedido oficial monotônico `0.03.71`, `versionCode 54578`, label `51377` (anterior: `0.03.70`, 54577).
-- Workflow protegido pós-merge: https://github.com/LucianoToscano/PokeSearch/actions/runs/43966395928 — **verificação pública e certificado aguardando evidência final** no momento deste registro provisório.
-- Não declarar publicação concluída sem `completed/success` da execução pós-merge e sem release pública, hash/assinatura certificados.
+- **Workflow pós-merge #43966395928** [completed/success](https://github.com/LucianoToscano/PokeSearch/actions/runs/43966395928): jobs `preflight` e `publish` success, incluindo `Build signed protected release`, `Validate APK and signer`, `Release to all app users` e `Verify public release and hash` success.
+- **Release pública oficial** [v0.03.71-54578](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.71-54578), `draft=false`, `prerelease=false`, `published_at=2026-11-16T22:08:02Z`. APK `PokeSearch-v0.03.71-LT.apk`, 61.196.251 bytes, `uploaded`, digest GitHub SHA-256 `5bcdb1e358e746b3038bc1b7ceb2a7f38cdd03b8063943b56cebfadc3f96cf27`. O workflow oficial validou certificado permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e` e assinatura v2, pacote, versão e integridade (não alegar recomputação independente local). Fonte publicada `7a33a72f6033027f3a6e0a20707eac7179faf1c1`.
+- ARK concluído quanto a merge, QA automatizado e distribuição oficial, permanecendo **pendentes** os testes Android físicos / OAuth Google/Discord.
 - PR #457 da Pokédex pessoal não foi integrada nestas alterações.
