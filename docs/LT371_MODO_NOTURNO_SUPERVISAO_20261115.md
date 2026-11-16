@@ -1,7 +1,7 @@
 # LT371 — Modo Noturno: supervisão do Autowalk + Virtual Go Plus (PGSharp)
 
 Data: 15/11/2026. Base LT370 oficial 0.03.66 / versionCode 54573.
-**Estado: implementação candidata em branch, NÃO release nem captura própria homologada.**
+**Estado do código: integrado à main pela PR #448, 7/7 CI aprovados. Pedido oficial 0.03.67/54574 integrado pela PR #449; publicação verificada separadamente no ARK. Captura própria e homologação física continuam NÃO concluídas.**
 Origem: [Issue #447](https://github.com/LucianoToscano/PokeSearch/issues/447), investigações #162 (PGSharp movimento) e #350 (QA Android).
 
 ## Objetivo do usuário
@@ -39,3 +39,9 @@ Somente com evidência legal e técnica para cada cliente: classificador de esta
 - Teste físico com **PGSharp Standard**, VGP conectado, AutoWalk andando, alertas críticos e 2h de jogo visível (não afirmar testes físicos se não executados). Verificar Android 11/13/14; Pokemod apenas auditoria futura.
 
 **Publicação:** branch experimental. Próxima versão oficial exige versionCode >54573, certificado original e release pública com hash, além de validação do modo real.
+
+## Registro do código LT371 (verificado)
+
+- [PR #448](https://github.com/LucianoToscano/PokeSearch/pull/448) integrada; squash `f86e083b8889f7bca7f2c97abfb8956db8a34b49`; 7 gates green no head `23425a9ec1a36826199fd67ac645edf273eaadb1`: Node #43784223271, LT169 #43784223098, LT211 #43784223089, Java #43784223113, OTA #43784223158, PGS APK QA #43784223154, Secure beta/R8 #43784223188.
+- [PR #449](https://github.com/LucianoToscano/PokeSearch/pull/449) integrada, squash `8d7fb07711cc5f614bdf02b68eace0567edf7aa7`, pedido `0.03.67 / 54574 / 51371`. Preflight e gates da PR green; [workflow oficial #43786477267](https://github.com/LucianoToscano/PokeSearch/actions/runs/43786477267) iniciado. Publicação precisa de verificação separada de status, assinatura, tag, asset e digest.
+- Não existem testes físicos de PGSharp/Pokemod no repositório capazes de provar que Autowalk/VGP realmente se moveram/capturaram. Supervisão não envia comandos ao jogo.
