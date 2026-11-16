@@ -628,7 +628,7 @@ public class MainActivity extends Activity {
             // Recalcular após mudanças reais de largura/densidade na Home.
             final Runnable alignBadge=()->{
                 int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
-                int visibleCenterX=HomeMenuIconPack.opticalCenterXInParentPx(icon);
+                int visibleCenterX=HomeMenuIconPack.opticalPokeballButtonXInParentPx(icon);
                 if(visibleTop<0||visibleCenterX<0||!loginHotspot.isAttachedToWindow())return;
                 FrameLayout.LayoutParams placement=
                     (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
