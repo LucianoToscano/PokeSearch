@@ -37,3 +37,11 @@ Chave de variante: speciesId + formId + costumeId + gender + shiny + alignment. 
 
 ## QA e pendências
 Branch proposta: feat/lt377-inventario-pessoal-json. Implementação preparada: activity SAF, arquivos HTML/JS, entrada no menu lateral, teste de contratos JS. Ainda pendentes: APK compilado e testado em dispositivo real, comparação pixel a pixel com screenshots, integração de bases de trajes/fundos por ID e rankings PvP por exemplar, validação de licenças das imagens e otimização de datasets offline. Não declarar essas etapas realizadas sem prova. Esta etapa **não contém ARK, merge ou publicação oficial**.
+
+
+## Conferência de IDs com WatWowMap (16/11/2026)
+Consulta direta aos arquivos estáticos atuais da branch main do fornecedor:
+- location-cards.json: **278 registros, ID máximo 424**. Entre os **51 IDs distintos** de fundos encontrados no JSON de teste, **50 possuem correspondência exata por ID**; **ID 340 ficou sem correspondência** nesta revisão. Isto NÃO significa que as 278 artes estejam disponíveis/licenciadas; apenas metadados.
+- costumes.json: **87 registros**. Os **12 IDs distintos** de trajes presentes no exemplo (1, 11, 49, 57, 58, 70, 71, 74, 75, 78, 79 e 85) tiveram correspondência.
+- Não confundir o número de 180 itens exibido em um resumo de busca indexado com a contagem de **278** confirmada no JSON obtido diretamente. Registrar hashes/versões ao importar.
+- A raiz do projeto de dados foi observada sem arquivo LICENSE. Antes de distribuir cópia do dataset ou das artes do jogo no APK, verificar licença/autorização e condições aplicáveis; nesta PR só há link/documentação e código original.
