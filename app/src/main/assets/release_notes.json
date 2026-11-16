@@ -4863,6 +4863,35 @@
           "O desfoque entre janelas depende do suporte do aparelho e pode afetar todo o fundo da janela; onde indisponível utiliza-se fallback semitransparente. Atualização não comprova instalação automática."
         ]
       }
+    },
+    {
+      "id": "lt376-overlays-login-pogocoordinates-20261116",
+      "minVersionCode": 54577,
+      "date": "16/11/2026",
+      "title": "PokeSearch LT376 — Contas PoGoCoordinates e menus compactos",
+      "sections": {
+        "novidades": [
+          "Contas PoGoCoordinates 1 e 2 com ações separadas para Atualizar perfil e Sair site, sem comprimir o nome no cartão.",
+          "Sincronização do perfil oficial a partir de /profile, mantendo sessões WebView independentes e respeitando a privacidade na Home."
+        ],
+        "melhorias": [
+          "Localização: referência de 16 faixas de distância e cooldown sem rolagem interna, mantendo a seleção que aplica o raio no campo KM.",
+          "Favoritos: painel reposicionado acima ou abaixo da barra, com correção pela posição real da janela Android e sem deslocar os resultados.",
+          "Personalização: alça de reordenação exibida como seis pontos circulares reais, em duas colunas de três, com suporte a arraste e teclado.",
+          "Seletores das contas das Pokébolas alinhados ao botão central visível da arte usando a matriz do PNG, com fallback para o centro óptico."
+        ],
+        "correcoes": [
+          "Leitura do nome e da foto do perfil PoGoCoordinates desacoplada da presença opcional de treinador Pokémon GO; nenhum vínculo de treinador é presumido.",
+          "Desfoque nativo solicitado também na janela independente do menu quando permitido pelo Android 12 ou superior; mantém transparência quando indisponível.",
+          "Estados de sincronização e autenticação mais claros, preservando contas, filtros, Busca Inteligente, Sequências, tutoriais e sprites existentes."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física do login Google/Discord e foto nas duas contas, alinhamento dos seletores, favoritos, lista de localização, toque, Minior, tutorial e acessibilidade Android 11–14 permanece pendente.",
+          "O desfoque de outras janelas depende do suporte e das configurações do Android; não funciona quando o sistema desabilita o recurso.",
+          "PGSharp e Pokemod devem ser validados separadamente em aparelhos reais. Supervisão, caminhada externa, tentativa e captura confirmada são estados distintos; o PokeSearch não deve alegar captura sem prova.",
+          "A instalação da atualização requer confirmação do usuário pelo Android; os testes automatizados não comprovam funcionamento físico nem login final."
+        ]
+      }
     }
   ]
 }
