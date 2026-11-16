@@ -2045,6 +2045,13 @@ public final class PgsAutoClickService extends AccessibilityService {
                                 java.util.List<PgsAutoIconDetector.Match> secondPg,
                                 java.util.List<PgsAutoIconDetector.Match> secondPm,
                                 int nextW,int nextH){
+                                if(instance!=PgsAutoClickService.this||
+                                    running||watching||sequenceActive||
+                                    !isGameVisible()||gameAccountSafetyNoticePresent()||
+                                    passengerPromptPresent()||w!=nextW||h!=nextH){
+                                    status("AUTO · CANCELADO POR MUDANÇA DO JOGO");
+                                    return; // never switch profiles on stale evidence
+                                }
                                 boolean foundPg=stableHostMatch(firstPg,secondPg,
                                     w,h,nextW,nextH);
                                 boolean foundPm=stableHostMatch(firstPm,secondPm,
