@@ -24,7 +24,7 @@ for(const marker of ["clipboard.append(paste,copy)","title.appendChild(clipboard
 assert.doesNotMatch(main,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribute\)/);
 assert.match(main,/shareIcon\.setOnClickListener\(v->sharePokeSearch\(\)\)/);
 assert.doesNotMatch(main,/screen\.addView\(thanks,thanksLp\)/);
-assert.match(main,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
+assert.match(main,/addHomeDrawerItem\(drawer,"♥","Agradecimentos",this::openTribute\)/);
 assert.match(tribute,/R\.drawable\.pokesearch_agradecimento_comunidade/);
 assert.match(tribute,/FileProvider\.getUriForFile/);
 console.log("PASS LT103: native and CSS compact popup, preserved filters and integrated thanks");
