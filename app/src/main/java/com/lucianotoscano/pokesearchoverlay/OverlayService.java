@@ -6007,19 +6007,34 @@ public class OverlayService extends Service {
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
         @JavascriptInterface public void openGuestLogin(){handler.post(()->{
-            if(stopped)return;
-            final boolean secondary=isSecondaryOverlay();
-            final int assigned=PogoAccountSlots.assigned(OverlayService.this,secondary);
-            if(PogoAccountSlots.loggedIn(OverlayService.this,assigned))return;
-            Intent login=new Intent(OverlayService.this,MainActivity.class);
-            login.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN");
-            login.putExtra("pogoAccountSlot",assigned==2?2:1);
-            login.putExtra("pogoOverlayNumber",secondary?2:1);
-            login.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
-                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            try{startActivity(login);}
-            catch(Exception e){recordFailure("abrir login público",e);
-                diagnosticError("Não foi possível abrir o login PoGoCoordinates.");}
+            if(stopped||!guestResultLimitConfirmed)return;
+            android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(
+                OverlayService.this)
+                .setTitle("Mais resultados no PoGoCoordinates")
+                .setMessage("No modo visitante, o site exibe até 5 resultados. "+
+                    "Entrar no PoGoCoordinates libera até 10, conforme as regras "+
+                    "do próprio site. Deseja fazer login agora?")
+                .setNegativeButton("Agora não",null)
+                .setPositiveButton("Entrar",(d,which)->{
+                    final boolean secondary=isSecondaryOverlay();
+                    final int assigned=PogoAccountSlots.assigned(
+                        OverlayService.this,secondary);
+                    if(PogoAccountSlots.loggedIn(OverlayService.this,assigned))return;
+                    Intent login=new Intent(OverlayService.this,MainActivity.class);
+                    login.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN");
+                    login.putExtra("pogoAccountSlot",assigned==2?2:1);
+                    login.putExtra("pogoOverlayNumber",secondary?2:1);
+                    login.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    try{startActivity(login);}
+                    catch(Exception e){recordFailure("abrir login público",e);
+                        diagnosticError("Não foi possível abrir o login PoGoCoordinates.");}
+                }).create();
+            if(dialog.getWindow()!=null)
+                dialog.getWindow().setType(Build.VERSION.SDK_INT>=26?
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:
+                    WindowManager.LayoutParams.TYPE_PHONE);
+            dialog.show();
         });}
         @JavascriptInterface public void confirmCooldownCapture(int sourceIndex){handler.post(()->OverlayService.this.confirmCooldownCapture(sourceIndex));}
         @JavascriptInterface public void toggleCooldown(){handler.post(OverlayService.this::toggleCooldown);}
