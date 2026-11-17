@@ -5229,6 +5229,35 @@
           "A publicação preserva as configurações e exige confirmação de instalação do Android."
         ]
       }
+    },
+    {
+      "id": "lt398-pokedex-pessoal-pgsstats-20261117",
+      "minVersionCode": 54590,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT398 — Minha Pokédex e inventário pessoal",
+      "sections": {
+        "novidades": [
+          "Nova Minha Pokédex: toque no ícone já existente na Home para abrir o inventário privado, sem alterar os ícones originais.",
+          "Importação local do arquivo PGSStats.json; duas coleções independentes, abas Tags, Pokémon e Ovos, com capacidade, seleção e busca.",
+          "Grade compacta com sprites, PC, IVs, PS, favoritos, Shiny, sombras, trajes, fundos e categorias especiais.",
+          "Ficha individual com avaliação de IVs, nomes dos golpes, origem registrada, etiquetas e fundos decorativos próprios.",
+          "Comparação por ranking de IV nas ligas Grande, Ultra e Mestra com o snapshot PvPoke existente; ausência de forma exata é indicada sem inventar rank."
+        ],
+        "melhorias": [
+          "Catálogo offline relaciona 537 golpes em português, 278 códigos de fundos e 87 trajes, sem incluir imagens proprietárias externas.",
+          "Identificadores extensos de Pokémon e tags mantidos como texto exato na importação; nenhuma credencial, localização ou conta é enviada.",
+          "Ordenação por PC, data, IV, número, nome, PS e favoritos; navegação entre exemplares por botões anterior e próximo."
+        ],
+        "correcoes": [
+          "Fundo original registrado no JSON e fundo decorativo escolhido no PokeSearch aparecem separados, sem atribuir alterações ao jogo.",
+          "Ovos ficam em aba própria e deixam de entrar na contagem de Pokémon importados."
+        ],
+        "emDesenvolvimento": [
+          "Imagens oficiais de todos os trajes e fundos dependem de fontes autorizadas e validação individual por variante.",
+          "Homologação física da importação e aparência no Samsung Android 17, TalkBack e comparação de screenshots permanece pendente.",
+          "Trocas, vendas, leilões e publicação de inventário não fazem parte desta atualização."
+        ]
+      }
     }
   ]
 }
