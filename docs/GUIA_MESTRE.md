@@ -3381,3 +3381,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - [Release pública v0.03.78-54585](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.78-54585): APK `PokeSearch-v0.03.78-LT.apk`, 61.251.587 bytes, SHA-256 `a11a89a4923106db1c421318572727af2d307b91f10c7c7799a50478c23c3ded`, signer permanente confirmado no workflow.
 - **QA físico Android 11–17/Samsung, badges Shiny/fundos/histórico P1/P2, toque/legibilidade e reordenação futura pendentes**. Não confundir testes CI com homologação real. Módulos não implementados mostram apenas aviso de preparação.
 - [Auditoria e continuidade LT393/394](LT393_ARK_HOME_16_MODULOS_OFICIAL_00378_20261117.md).
+
+
+## LT394 — correções da Home 4×4 e release oficial 0.03.79 LT (17/11/2026)
+
+- Correções solicitadas no Samsung: **Pokébolas OFF brancas e sem números/IVs na Home**, Pokédex **original ampliada**, Comunidade **original sem canto cortado**, Quests sem corte inferior, Rocket branco; 16 módulos, serviços, fundo, perfil e ícones restantes preservados.
+- Código PR [#494](https://github.com/LucianoToscano/PokeSearch/pull/494) integrada em `66abd14aaa93f72750a1a5a8d85ea0de89bfbd3f`, CI Node QA/LT169/LT211/LT62/LT173 e beta APK/R8 aprovados. Atlas PNG interno SHA-256 `cd26911b8a11143ebccde08e922e892bec33373513f56a264a45d8df5b1c874f`.
+- PR oficial [#495](https://github.com/LucianoToscano/PokeSearch/pull/495) integrada em `5a297b35dd3b868d0e1365741dbb837805e77aef`; workflow protegido [#44046883034](https://github.com/LucianoToscano/PokeSearch/actions/runs/44046883034) **completed/success**.
+- [Release v0.03.79-54586](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.79-54586), APK `PokeSearch-v0.03.79-LT.apk`, **61.382.027 bytes**, SHA-256 `f6b84ab4a623fe878a018d86104d89ec213e486727ba975449673a531f72ac93`, asset `uploaded`, assinatura permanente do workflow; versão 0.03.78 preservada.
+- **Pendente homologação física** Samsung Android 17/11–17, mudança de estado P1/P2 e modo claro/escuro. Não afirmar badge Shiny/fundos/histórico totalmente espelhados sem teste físico.
+- [Auditoria ARK LT394 / continuidade LT395](LT394_ARK_HOME_OFICIAL_00379_20261117.md).
