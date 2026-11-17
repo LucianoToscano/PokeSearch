@@ -2420,6 +2420,16 @@
   // The validated official search card may already show the exact costume,
   // regional form or normal sprite. Prefer it in DOM mode, preserving a
   // verified local asset of the SAME variant as the only fallback.
+  // LT391: #129 Magikarp and #580 Ducklett are standard species whose
+  // verified base sprites are packaged in both result and detail WebViews.
+  // Prefer these deterministic local assets to transient site thumbnails,
+  // but ONLY after validating Dex, species, form and costume identity.
+  const knownDex=dexOf(card);
+  if((knownDex===129||knownDex===580)&&verifiedBase(card)){
+    const shiny=card.shiny===true;
+    return {src:LOCAL+(shiny?"shiny/":"base/")+knownDex+".png",
+      original:RAW+(shiny?"shiny/":"")+knownDex+".png",offline:true};
+  }
   const sourceExact=card?.imageFromSite===true&&/^https:\/\//i.test(image)&&
     !/\s/.test(image)&&image.length<=1600;
   // The nondefault East Sea form needs its own bundled asset even when
@@ -2442,16 +2452,6 @@
      verifiedBase(card)?LOCAL+(card.shiny===true?"shiny/":"base/")+dex+".png":"";
    return {src:image,original:backup,offline:!!backup,
      providerExact:true,officialCostume:!!costumeArt?.officialCostume};
-  }
-  // LT391: #129 Magikarp and #580 Ducklett are standard species whose
-  // verified base sprites are packaged in both result and detail WebViews.
-  // Prefer these deterministic local assets to transient site thumbnails,
-  // but ONLY after validating Dex, species, form and costume identity.
-  const knownDex=dexOf(card);
-  if((knownDex===129||knownDex===580)&&verifiedBase(card)){
-    const shiny=card.shiny===true;
-    return {src:LOCAL+(shiny?"shiny/":"base/")+knownDex+".png",
-      original:RAW+(shiny?"shiny/":"")+knownDex+".png",offline:true};
   }
   // LT267: prefer the exact pinned Pokémon GO icon for known plumage and
   // Diwali costumes to generic PokeAPI form art. The real site image above
