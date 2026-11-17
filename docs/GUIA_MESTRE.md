@@ -1,3 +1,13 @@
+## LT407 — PokeSearch v0.03.92 LT OFICIAL (17/11/2026)
+
+**ARK LT407 PUBLICADO:** [release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.92-54599) com [APK oficial assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.92-54599/PokeSearch-v0.03.92-LT.apk) — **v0.03.92 LT / versionCode 54599 / label 51407**, publicado 17/11/2026 às 22:50:33 UTC. Asset uploaded **61.749.810 bytes**, SHA-256 `937e2ded83797ae23df195d3435bea0b5400493652053c88ca015427e09acf06`; [workflow #44193252703](https://github.com/LucianoToscano/PokeSearch/actions/runs/44193252703) completed/success, verificação de assinatura permanente `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, R8, SHA/asset e limpeza de segredos. Código [PR #532](https://github.com/LucianoToscano/PokeSearch/pull/532) squash `eca9865d`, publicação [PR #533](https://github.com/LucianoToscano/PokeSearch/pull/533) squash `8dd44e4`, testes Node/LT169/LT211/LT62/LT173/R8 aprovados.
+
+Por decisão expressa do proprietário, **somente o PokeSearch oficial é distribuível**. Removidos FastDev/DEV/Preview da branch `main`: workflows, scripts, sourceSet Android Preview, configuração Gradle, pacote alternativo e atualizações paralelas; QA interno preservado **sem publicar APK de QA**. Permanecem como pendências administrativas do GitHub **42+ releases antigas FastDev, 15 branches históricas e credenciais/ambiente FastDev**, que não se apagam por commits e para as quais este conector não possui exclusão. Não apagar a chave oficial.
+
+Inventários, PGSStats SAF, ícones, resultados, fundos, notas, sprites LT406 e overlays P1/P2 preservados no escopo do código. **Sem homologação física Samsung Android 17 / prova de todas as sprites**. Ver [ARK LT407](ARK_LT407_SOMENTE_OFICIAL_20261117.md), [auditoria LT407](LT407_AUDITORIA_REMOCAO_FASTDEV_OFICIAL_ONLY_20261117.md) e [LT408](LT408_PROMPT_CONTINUIDADE_APOS_LT407_20261117.md).
+
+---
+
 ## LT407 — Política de exclusividade do PokeSearch oficial (em homologação)
 
 Pelo pedido do proprietário, a candidata retira FastDev, versão DEV, APK paralelo e manifesto OTA DEV da árvore do projeto. Preserva apenas a identidade e publicação oficial, assinada pelo workflow protegido. A exclusão de código não apaga automaticamente releases/tags antigos nem secrets do GitHub. Ver [auditoria](LT407_AUDITORIA_REMOCAO_FASTDEV_OFICIAL_ONLY_20261117.md).

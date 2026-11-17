@@ -62,23 +62,29 @@ assert.equal(sha("ui-icons/shadow-symbol-lt267.png"),"62cdf7dd642c2077204c8275fe
 for(const file of ["mega-symbol.png","shadow-symbol-lt267.png"])
  assert.ok(workflow.includes('"'+file+'": "'+sha("ui-icons/"+file)+'"'),file+" SHA pinned in signed APK");
 assert.ok(read("sprite_visual_scale.js").includes("clamp(.78/occupancy,.76,2.2)"),"small silhouette zoom bounded");
-const qaWorkflow=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt146-signed-update-qa.yml"),"utf8");
+// The historical LT146 QA workflow was removed. Verify all immutable source
+// pins and the CURRENT protected official APK gate instead.
 const pinnedCostumeKeys=[...builder.matchAll(/"costumes\/([^"]+)"\s*:\s*\(/g)].map(m=>m[1]);
 assert.equal(new Set(pinnedCostumeKeys).size,140,
- "LT289: original 136 exact GO sprites plus four Singapore Anniversary gender/Shiny variants");
+ "LT289: 136 original GO sprites plus four Singapore Anniversary variants");
 const lt144EventCount=[...builder.matchAll(/"pm(?:41|94)\.[^"]+\.png":\s*"[a-f0-9]{64}"/g)].length;
 assert.equal(lt144EventCount,4,"Four extra LT144 SHA256-pinned event costumes");
-assert.ok(qaWorkflow.includes("assert len(report['costumes'])>=144"),
- "Signed QA must retain the 140 historical pinned PNGs and four LT144 event assets, while accepting additional verified costumes");
-assert.ok(qaWorkflow.includes("for dex in (422,423)") &&
- qaWorkflow.includes('for sea in ("EAST","WEST")'),
- "Exact East/West Sea normal/shiny assets required for both species");
-for(const name of ["pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png",
-"pm94.cFALL_2023_NOEVOLVE.icon.png","pm94.cFALL_2023_NOEVOLVE.s.icon.png"]){
- assert.ok(qaWorkflow.includes('"'+name+'":'),"Immutable LT144 event required by signed QA: "+name);
+assert.ok(workflow.includes('assert len(extra)==35'),
+ "Official signed APK must include all supplemental LT328 sprites");
+assert.ok(workflow.includes('assert blob==expected_sha'),
+ "Official signed APK must verify every supplemental Git blob");
+assert.ok(workflow.includes('if filename in legacy:'),
+ "Official signed APK must preserve immutable original LT144 assets");
+assert.ok(workflow.includes('assert hashlib.sha256(png).hexdigest()==legacy[filename]'),
+ "Official signed APK must verify legacy sprite SHA256");
+for(const color of ["BLUE","GREEN","WHITE","YELLOW"]){
+ for(const shiny of [false,true]){
+  const name="pm931.f"+color+(shiny?".s":"")+".icon.png";
+  assert.ok(workflow.includes('"'+name+'"'),"Signed APK checks Squawkabilly variant "+name);
+ }
 }
-assert.ok(qaWorkflow.includes('assert hashlib.sha256((root/key).read_bytes()).hexdigest()==report[\'costumes\'][key]'),
- "Signed QA must verify each exact Diwali/Squawk sprite against manifest SHA256");
-assert.ok(qaWorkflow.includes("for color in (\"BLUE\",\"GREEN\",\"WHITE\",\"YELLOW\")"),
- "All four Squawk colours, including Shiny, must be covered by QA");
+for(const name of ["pm41.fHALLOWEEN_2026_01.icon.png","pm41.fHALLOWEEN_2026_01.s.icon.png",
+ "pm94.cFALL_2023_NOEVOLVE.icon.png","pm94.cFALL_2023_NOEVOLVE.s.icon.png"]){
+ assert.ok(builder.includes('"'+name+'"'),"Immutable LT144 sprite recorded in build sources: "+name);
+}
 console.log("LT267 PASS: pinned 10 source sprites, four Squawk colours & shiny, Diwali, site first, 2 user icons, Cup and Raid labels");

@@ -17,6 +17,15 @@ for(const name of names){
  assert.ok(workflow.includes('"'+name+'": "'+sha+'"'),"Exact original SHA still pinned");
  const current=name.replace("-lt266.png","-lt267.png");
  assert.ok(fs.existsSync(path.join(base,current)),"Current revised art shipped");
+ const revised=fs.readFileSync(path.join(base,current));
+ assert.equal(revised.subarray(0,8).toString("hex"),"89504e470d0a1a0a","Revised PNG signature");
+ assert.equal(revised.readUInt32BE(16),512,"Revised type must stay 512px wide");
+ assert.equal(revised.readUInt32BE(20),512,"Revised type must stay 512px tall");
+ assert.equal(revised[25],6,"Revised type RGBA alpha preserved");
+ const revisedSha=crypto.createHash("sha256").update(revised).digest("hex");
+ assert.ok(workflow.includes('"'+current+'": "'+revisedSha+'"'),
+   "Official signed APK verifier must pin revised type SHA-256");
+
 }
 assert.ok(workflow.includes('assert "assets/ui-icons/"+filename not in names'),"APK must not carry legacy duplicate");
 assert.ok(workflow.includes("import sys,zipfile,hashlib,os"),"APK verifier imports OS for archive verification");
@@ -39,12 +48,13 @@ assert.ok(workflow.includes('assert blob==expected_sha'),
 assert.ok(workflow.includes('test "$ACTUAL" = "$POKE_RELEASE_CERT_SHA256"'),
  "Permanent Android signing fingerprint must still match");
 assert.ok(oldSize>5000000,"Measured multi-megabyte waste removed from shipping assets");
-const signedQa=fs.readFileSync(path.join(__dirname,"../../.github/workflows/lt146-signed-update-qa.yml"),"utf8");
-assert.ok(signedQa.includes("LT267 QA: 18 transparent local types and exact pinned digests PASS"),
-  "signed QA must validate local LT267 PNGs and pinned SHA256");
-assert.ok(signedQa.includes("image.readUInt32BE(16)!==512"),
-  "signed QA must reject wrong-size or missing LT267 PNGs");
-assert.ok(!signedQa.includes("data:image/png;base64,iVBORw0KGgo"),
-  "signed QA must not expect old inline Base64 icons");
+// Historical LT146 QA has been retired. The current protected official
+// release itself verifies every revised 512px icon against the exact SHA.
+assert.ok(workflow.includes('assert image[16:24]==bytes.fromhex("0000020000000200")'),
+ "Official APK verification rejects wrong-size LT267 PNGs");
+assert.ok(workflow.includes('assert image[25]==6'),
+ "Official APK verification retains alpha channel");
+assert.ok(workflow.includes('assert hashlib.sha256(image).hexdigest()==digest'),
+ "Official APK verification hashes all revised types");
 console.log("LT267/LT328 APK size PASS: archived 18 originals, removed "+
  oldSize+" unused bytes, unlimited custom CI APK size, 35 pinned GO PNG validations intact");
