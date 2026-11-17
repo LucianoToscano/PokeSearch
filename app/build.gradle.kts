@@ -128,6 +128,8 @@ android {
         buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
         buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-luc.netlify.app/api/premium\"")
         buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
+        // Preview-only exception, never enabled in official LT builds.
+        buildConfigField("boolean", "DEV_PREVIEW", "false")
         versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null) (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}") else "0.51-beta"
     }
@@ -173,6 +175,7 @@ android {
             versionNameSuffix = " DEV"
             matchingFallbacks += listOf("debug")
             signingConfig = signingConfigs.getByName("debug")
+            buildConfigField("boolean", "DEV_PREVIEW", "true")
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
