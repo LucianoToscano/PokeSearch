@@ -15,6 +15,7 @@ const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokem
              selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
              bgCached:new Set(),backgroundTarget:null,bgQuery:"",
              spriteIndex:null,spriteCached:new Set(),spriteMatchCache:new Map(),spriteStats:{},
+             bundledSpriteAvailability:new Map(),
              editingPokemon:null,editingTagId:null,suppressCardClick:false};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
@@ -165,8 +166,21 @@ function spriteLocalUrl(key){
  if(typeof key!=="string"||!/^[al]:[A-Za-z0-9_.-]+\.png$/.test(key))return "";
  return "https://pokesearch.local/sprite/"+key[0]+"/"+key.slice(2);
 }
+function bundledSpriteExists(uri){
+ if(!uri.startsWith("file:///android_asset/"))return false;
+ const asset=uri.slice("file:///android_asset/".length);
+ if(!/^pokemon-sprites\/(?:base|shiny|forms|costumes)\/[A-Za-z0-9_.-]{1,150}\.png$/.test(asset))return false;
+ if(!state.bundledSpriteAvailability.has(asset)){
+  let available=false;
+  try{available=bridge.hasBundledSprite(asset)===true;}catch(_){}
+  state.bundledSpriteAvailability.set(asset,available);
+ }
+ return state.bundledSpriteAvailability.get(asset);
+}
 function safeSprite(p){
  const exact=visualMatch(p);
+ // Numeric form IDs unknown to the catalog must not be replaced by base art.
+ if(Number(p.form)>0&&!state.spriteIndex?.forms.has(Number(p.form)))return "";
  if(exact.key&&state.spriteCached.has(exact.key))return spriteLocalUrl(exact.key);
  const lib=window.PokeSearchOfflineSprite,delivery=window.PokeSearchSpriteDelivery;
  // Restore the packaged sprites for independently verified default forms:
@@ -189,9 +203,10 @@ function safeSprite(p){
       uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
       uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
     if(valid&&((!p.costume&&!Number(p.form)&&!form)||defaultById||
-      (art&&typeof art==="object"&&
-       (art.exactCostume||art.officialForm||art.offline||art.providerExact))))
-      return uri;
+       (art&&typeof art==="object"&&
+        (art.exactCostume||art.officialForm||art.offline||art.providerExact)))&&
+       (!uri.startsWith("file:///android_asset/")||bundledSpriteExists(uri)))
+       return uri;
    }
   }catch(_){}
  }
@@ -201,11 +216,48 @@ function safeSprite(p){
  if(exact.key)return delivery?.remoteUrl(exact.key,state.spriteIndex)||"";
  return "";
 }
+function spriteFallbackSources(p,current){
+ const found=visualMatch(p),sources=[];
+ const remote=found.key?
+   window.PokeSearchSpriteDelivery?.remoteUrl(found.key,state.spriteIndex)||"":"";
+ if(remote&&remote!==current)sources.push(remote);
+ // PokeAPI's ordinary art is a fallback only for independently audited defaults.
+ const knownDefault=Number(p.costume)===0&&
+   (Number(p.form)===0&&!formVariant(p)||
+    window.PokeSearchSpriteDelivery?.auditedDefault({
+     species:p.species,name:speciesName(p),form:p.form,shiny:p.shiny,
+     costume:p.costume
+    },state.spriteIndex,found));
+ if(knownDefault&&Number(p.species)>0){
+   const base="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+
+     (p.shiny?"shiny/":"")+Number(p.species)+".png";
+   if(base!==current&&!sources.includes(base))sources.push(base);
+ }
+ return sources;
+}
+window.pokeSpriteRetry=img=>{
+ let remaining=[];
+ try{remaining=JSON.parse(img.dataset.spriteBackups||"[]");}catch(_){}
+ if(!Array.isArray(remaining))remaining=[];
+ if(remaining.length){
+   const next=remaining.shift();
+   img.dataset.spriteBackups=JSON.stringify(remaining);
+   img.src=next;
+   return;
+ }
+ const placeholder=document.createElement("span");
+ placeholder.className=img.className+" no-art";
+ placeholder.textContent="◇";
+ placeholder.setAttribute("aria-label","Sprite indisponível");
+ img.replaceWith(placeholder);
+};
 function artHtml(p,css){
-  const uri=safeSprite(p),name=escapeHtml(speciesName(p));
-  if(!uri)return '<span class="'+css+' no-art" aria-label="Sprite indisponível">◇</span>';
-  return '<img class="'+css+'" src="'+escapeHtml(uri)+'" alt="'+name+
-    '" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'◇\'))">';
+ const uri=safeSprite(p),name=escapeHtml(speciesName(p));
+ if(!uri)return '<span class="'+css+' no-art" aria-label="Sprite indisponível">◇</span>';
+ const backups=escapeHtml(JSON.stringify(spriteFallbackSources(p,uri)));
+ return '<img class="'+css+'" src="'+escapeHtml(uri)+'" alt="'+name+
+   '" data-sprite-backups="'+backups+
+   '" loading="lazy" onerror="window.pokeSpriteRetry(this)">';
 }
 function filterPokemon(p,key=state.filter){
   switch(key){
