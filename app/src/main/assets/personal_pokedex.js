@@ -493,6 +493,8 @@ function openBackgroundGallery(target){
  refreshBackgrounds();
 }
 function loadSlot(){
+  confirmDeleteAll=false;confirmDeleteSelection=false;confirmTagDelete=false;
+  el("delete-all").textContent="Limpar inventário";
   let data={};
   try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
   state.all=Array.isArray(data.pokemons)?data.pokemons:[];
@@ -674,6 +676,7 @@ el("grid").addEventListener("click",e=>{
      const id=b.dataset.id;
      if(state.selectedIds.has(id))state.selectedIds.delete(id);
      else state.selectedIds.add(id);
+     confirmDeleteSelection=false;
      renderSelection();render();
    }else showDetail(b.dataset.id);
 });
@@ -958,6 +961,7 @@ el("grid").addEventListener("pointerdown",e=>{
    if(!pressId)return;
    state.selecting=true;state.selectedIds.clear();state.selectedIds.add(pressId);
    state.suppressCardClick=true;renderSelection();render();
+   setTimeout(()=>{state.suppressCardClick=false;},650);
    notice("Seleção múltipla ativa · toque em outros para marcar.");
    cancelPress();
  },480);
