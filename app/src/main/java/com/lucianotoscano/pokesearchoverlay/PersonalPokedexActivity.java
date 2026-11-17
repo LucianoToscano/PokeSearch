@@ -66,6 +66,12 @@ public final class PersonalPokedexActivity extends Activity {
     private static int number(JSONObject obj,String key,int maximum) {
         return Math.max(0,Math.min(maximum,obj.optInt(key,0)));
     }
+    private static JSONObject displayMega(JSONObject p){
+        JSONObject display=p.optJSONObject("pokemonDisplay");
+        if(display==null)return new JSONObject();
+        JSONObject mega=display.optJSONObject("megaEvolutionLevel");
+        return mega==null?new JSONObject():mega;
+    }
     static JSONObject compact(String raw) throws Exception {
         // Android JSONObject can round unsigned 64-bit Pokémon IDs. Quote the
         // exact lexical tokens BEFORE JSON parsing; never coerce them to double.
@@ -118,6 +124,8 @@ public final class PersonalPokedexActivity extends Activity {
             individual.put("weightKg",Math.max(0,Math.min(1000000,p.optDouble("weightKg",0))));
             individual.put("favorite",p.optBoolean("favorite",false));
             individual.put("hasMegaEvolved",p.optBoolean("hasMegaEvolved",false));
+            JSONObject mega=displayMega(p);
+            individual.put("megaLevel",mega.optInt("level",0));
             individual.put("hatchedFromEgg",p.optBoolean("hatchedFromEgg",false));
             individual.put("buddyKm",Math.max(0,Math.min(100000,p.optDouble("buddyKmWalked",0))));
             individual.put("lucky",p.optBoolean("isLucky",false));
@@ -224,6 +232,11 @@ public final class PersonalPokedexActivity extends Activity {
             try(InputStream in=getAssets().open("pokemon_catalog.json")){
                 return new String(bounded(in,120000),StandardCharsets.UTF_8);
             }catch(Exception ignored){return "[]";}
+        }
+        @JavascriptInterface public String getMetaCatalog(){
+            try(InputStream in=getAssets().open("pokedex_catalog_meta.json")){
+                return new String(bounded(in,180000),StandardCharsets.UTF_8);
+            }catch(Exception ignored){return "{}";}
         }
         @JavascriptInterface public void chooseJson(int requestedSlot){
             runOnUiThread(()->{
