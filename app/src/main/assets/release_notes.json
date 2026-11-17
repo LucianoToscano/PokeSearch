@@ -5173,6 +5173,34 @@
           "Módulos ainda não implementados permanecem identificados como em preparação; espelhamento completo dos efeitos especiais das Pokébolas depende de testes no aparelho."
         ]
       }
+    },
+    {
+      "id": "lt396-quest-community-contours-actually-restored-20261117",
+      "minVersionCode": 54588,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT396 — Ícones Quests e Comunidade restaurados",
+      "sections": {
+        "novidades": [
+          "Borda circular inferior de Quests reconstruída diretamente no ícone original, eliminando o corte que não podia ser corrigido apenas com padding.",
+          "Contorno direito de Comunidade recuperado, preservando o mesmo desenho original e os dois rostos.",
+          "Assistente mantém o personagem conhecido, com cores mais discretas apenas na Home."
+        ],
+        "melhorias": [
+          "Margens e escalas de Quests e Comunidade corrigidas após restaurar os pixels que faltavam na arte.",
+          "A grade de 16 módulos, a Pokédex original, as Pokébolas sem indicadores numéricos e o menu lateral compacto continuam preservados.",
+          "Teste automatizado confere os pixels restaurados e a integridade das imagens, além das verificações Android existentes."
+        ],
+        "correcoes": [
+          "Corrigida a causa dos recortes: falta de pixels nos arquivos originais, anteriormente confundida com problema exclusivo de alinhamento.",
+          "Somente os ícones Quests e Comunidade foram alterados no atlas; os demais desenhos permanecem intactos.",
+          "O Assistente flutuante permanece com sua arte original colorida, pois a harmonização aplica-se apenas à Home."
+        ],
+        "emDesenvolvimento": [
+          "Validação visual física da nova Home em Samsung Android 17 e dispositivos com outras dimensões e densidades ainda pendente.",
+          "Testar contraste da nova apresentação do Assistente em claro e escuro, toques e acessibilidade.",
+          "Os módulos futuros continuam como recursos em preparação; nenhuma nova função de captura ou banco de dados foi adicionada."
+        ]
+      }
     }
   ]
 }
