@@ -12,6 +12,8 @@ on:
       - 'app/**'
       - 'scripts/fastdev.cjs'
       - 'scripts/fastdev.test.cjs'
+      - 'scripts/fastdev-manifest.cjs'
+      - 'scripts/fastdev-manifest.test.cjs'
       - 'scripts/fastdev-audit.cjs'
       - 'scripts/fastdev-request.cjs'
       - 'scripts/fastdev-request.test.cjs'
