@@ -19,7 +19,9 @@ test("Guest 5/10 badge must originate from official DOM evidence, not local gues
 test("P1/P2 guest badge is a single compact end-of-list login action",()=>{
  assert.match(dock,/<button id="guestUnlock" type="button" hidden/);
  assert.match(dock,/onclick="Native\.openGuestLogin\(\)"/);
- assert.match(dock,/<span>\+5<\/span>/);
+ assert.match(dock,/<text x="18" y="19">\+5<\/text>/);
+ assert.match(dock,/background:transparent!important/);
+ assert.doesNotMatch(dock,/<span>\+5<\/span>/);
  assert.match(dock,/guestUnlock\.hidden=!show/);
  assert.match(dock,/guestLimited&&cards\.length>0&&!resultsStale&&/);
  assert.match(dock,/const tail=guestUnlock&&!guestUnlock\.hidden\?guestUnlock:/);
@@ -54,6 +56,6 @@ test("Existing upstream rate limiting remains authoritative: no cookie resets, f
  assert.match(probe,/if\(limit\)return JSON\.stringify\(\{ok:false,status:"Taxa Limitada PoGoCoordinates"/);
  assert.match(service,/deliverCoordsRestricted\(limitType,result\.optInt\("retrySeconds",0\)\)/);
  assert.match(service,/noteProviderRateLimit/);
- assert.match(service,/if\(authorizedApiQaSelected\(\)&&apiProviderBackoffUntil\(\)>0L\)/);
+ assert.match(service,/if\(authorizedApiQaSelected\(\)&&!guestPublicSearch&&apiProviderBackoffUntil\(\)>0L\)/);
  assert.doesNotMatch(service,/removeAllCookies\(null\)|deleteAllData\(\).*rate|WebStorage\.getInstance\(\)\.deleteAllData/);
 });

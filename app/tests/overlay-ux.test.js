@@ -28,7 +28,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("Atualização offers OFF, 3 seconds, and existing minute presets without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [-3,3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
+test("Atualização offers OFF and 3/5/10/15/20 minutes only, no 3-second interval",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&!dock.includes('for(const value of [-3,3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?384:34;')&&
@@ -467,7 +467,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
-test("AUTO 3-second default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={-3,0,3,5,10,15,20};")&&service.includes("intervalMinutes==-3?3000L"));
+test("AUTO defaults to 3 minutes and migrates former 3-second interval",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={0,3,5,10,15,20};")&&service.includes("private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=3")&&service.includes("private long autoRefreshDelayMs(){return Math.max(0L,intervalMinutes)*60000L;}")&&service.includes('pref.getInt("intervalMinutes",3)')&&!service.includes("intervalMinutes==-3?3000L"));
 test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
@@ -615,8 +615,8 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3")&&
-    service.includes('if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5')&&
+    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):3;")&&
+    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(periodic,autoRefreshDelayMs())'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
@@ -1695,7 +1695,8 @@ test("Mode switches retry transitional old cards and map-link extraction",()=>{
   service.includes('if((loading||(!empty&&found==0))&&attempt<24)')&&
   service.includes('if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0)')&&
   read("assets/probe.js").includes('elements("button,a,[role=button]")')&&
-  read("assets/probe.js").includes('if(!chosen||seen.has(chosen))continue;');
+  read("assets/probe.js").includes('if(!node||seen.has(node))continue;')&&
+  read("assets/probe.js").includes('const anchors=elements(');
 });
 test("PL-02 stale previews keep their confirmed source and never fire new alerts",()=>{
  const cache=service.split("private boolean restoreFilterPreview(){")[1]?.split("    private int rawAttack")[0]||"";
@@ -3660,7 +3661,7 @@ test("LT62 AUTO refresh icon and long press must never double trigger a search",
   body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
   body.includes('pointercancel')&&
   !menu.includes('now.textContent=')&&
-  dock.includes('badge.textContent=period===0?"":(period===-3?"3s":period+"m")')&&
+  dock.includes('badge.textContent=period===0?"":period+"m"')&&
   dock.includes('button.classList.add("refreshSpinning")')&&
   dock.includes('animation:psRefreshSpin .7s linear 1!important');
 });

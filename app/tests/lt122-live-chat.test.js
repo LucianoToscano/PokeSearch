@@ -42,12 +42,12 @@ check("no global anonymous writes; immutable per-author message and strict typed
  assert.match(m["$messageId"].createdAt[".validate"],/now/);
  assert.equal(m["$messageId"]["$other"][".validate"],false);
 });
-check("visible by default but can be hidden without touching overlays",()=>{
- assert.match(stage,/getBoolean\("communityLiveChatVisible",true\)/);
+check("chat hidden by default, can be enabled without touching overlays",()=>{
+ assert.match(stage,/getBoolean\("communityLiveChatVisibleLT390",false\)/);
  assert.match(stage,/CommunityScrapbookOnline\.homePanel/);
  assert.match(home,/Chat ao vivo/);
  assert.match(home,/Ocultar Chat/);
- assert.match(home,/putBoolean\("communityLiveChatVisible"/);
+ assert.match(home,/putBoolean\("communityLiveChatVisibleLT390"/);
  assert.doesNotMatch(home,/Ocultar protótipo Mural/);
 });
 console.log("LT122 "+tests+"/"+tests+" PASS");

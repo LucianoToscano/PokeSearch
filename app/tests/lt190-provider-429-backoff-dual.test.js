@@ -50,8 +50,10 @@ async function main(){
  assert.ok(!JSON.stringify(r).includes("SHOULD_NOT_LEAK"));
  assert.ok(java.includes('API_RATE_BACKOFF_PREF="pogoApiSearchBackoffUntilMs"'));
  assert.ok(java.includes('getSharedPreferences("prefs",MODE_PRIVATE)'));
- assert.ok(java.includes('response.optInt("retryAfterSeconds",60)'));
- assert.ok(java.includes('if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L)'));
+ assert.ok(java.includes('response.optInt("retryAfterSeconds",0)'));
+ assert.ok(java.includes('if(suggestedSeconds<1||suggestedSeconds>86400)return;'));
+ assert.ok(!java.includes('API_RATE_BACKOFF_DEFAULT_MS=60_000L'));
+ assert.ok(java.includes('if(authorizedApiQaSelected()&&!guestPublicSearch&&apiProviderBackoffUntil()>0L)'));
  assert.ok(java.includes('handler.removeCallbacks(providerRateLimitResume)'));
  assert.ok(java.includes('isSecondaryOverlay()?3_000L:0L'));
  assert.ok(java.includes('if("rate-limited".equals(reason))'));
