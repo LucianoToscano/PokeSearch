@@ -19,6 +19,12 @@ final class PokedexLocalEdits {
     private static final int LIMIT=24*1024*1024;
     private PokedexLocalEdits(){}
 
+    private static java.util.List<String> keys(JSONObject object){
+        java.util.ArrayList<String> result=new java.util.ArrayList<>();
+        java.util.Iterator<String> iter=object.keys();
+        while(iter.hasNext())result.add(iter.next());
+        return result;
+    }
     private static File dir(Context ctx){return new File(ctx.getFilesDir(),"pokedex_personal");}
     private static File file(Context ctx,int slot,String suffix){
         return new File(dir(ctx),"slot"+(slot==2?2:1)+suffix+".json");
@@ -95,7 +101,7 @@ final class PokedexLocalEdits {
     }
     private static JSONObject sanitized(JSONObject fields,JSONObject base) throws Exception{
         JSONObject out=new JSONObject();
-        for(String key:fields.keySet()){
+        for(String key:keys(fields)){
             if("nickname".equals(key)){out.put(key,label(fields.optString(key),64));continue;}
             if("favorite".equals(key)||"bestBuddy".equals(key)){
                 Object val=fields.opt(key);
@@ -125,7 +131,7 @@ final class PokedexLocalEdits {
         return out;
     }
     private static void overlay(JSONObject target,JSONObject changes)throws Exception{
-        for(String k:changes.keySet())target.put(k,changes.opt(k));
+        for(String k:keys(changes))target.put(k,changes.opt(k));
     }
     private static JSONObject newPokemon(String id,int species) throws Exception {
         JSONObject p=new JSONObject();
@@ -194,7 +200,7 @@ final class PokedexLocalEdits {
             }
             if(ids.add(key))merged.put(row);
         }
-        for(String key:added.keySet()){
+        for(String key:keys(added)){
             JSONObject row=added.optJSONObject(key);
             if(row!=null&&!deleted.has(key)&&ids.add(key))merged.put(row);
         }
@@ -209,7 +215,7 @@ final class PokedexLocalEdits {
             if(tagNames.has(key))row.put("name",tagNames.optString(key));
             mergedTags.put(row);known.add(key);
         }
-        for(String key:tagNames.keySet()){
+        for(String key:keys(tagNames)){
             if(known.contains(key)||deletedTags.has(key))continue;
             JSONObject row=new JSONObject();row.put("id",key);
             row.put("name",tagNames.optString(key));mergedTags.put(row);
