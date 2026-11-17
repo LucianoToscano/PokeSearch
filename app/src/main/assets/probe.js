@@ -1012,27 +1012,27 @@ if(action==="describeFilters"){
 }
 
 function cardRoots(){
- // Only use actions visible inside the PoGoCoordinates result pane.
- // On responsive layouts one ancestor may contain five guest entries;
- // never mistake that shared ancestor for an individual encounter.
+ // LT392: mobile visitor cards need not contain a literal LOCATION label.
+ // Keep the largest individual encounter ancestor, including its IV badge.
  const resultAction=e=>/^(?:Get coords|Open in Maps)$/i.test(text(e));
  const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&resultAction(e));
  const cards=[],seen=new Set();
  for(const action of actions){
-  // Preserve the immediate result wrapper when React has only partly
-  // hydrated labels. Downstream IV, filter and freshness gates still reject
-  // anything that cannot be verified.
-  let chosen=action.parentElement;
-  for(let node=action,depth=0;node&&depth<10;node=node.parentElement,depth++){
+  let chosen=null;
+  for(let node=action.parentElement,depth=0;node&&depth<13;node=node.parentElement,depth++){
    const t=text(node);
-   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
-      !/\bCP\b/i.test(t)||t.length>=2500)continue;
+   if(t.length>3500)break;
    const controls=Array.from(node.querySelectorAll("button,a,[role=button]"))
     .filter(e=>vis(e)&&resultAction(e));
-   // A single card can have Get coords and Open in Maps, but an enclosing
-   // multi-card grid cannot be trusted as one result.
    const dexLabels=t.match(/#\s*\d{1,4}\b/g)||[];
-   if(controls.length<=2&&dexLabels.length<=1){chosen=node;break;}
+   const coords=controls.filter(e=>/^Get coords$/i.test(text(e)));
+   // Never pick a grid containing two or more encounter identities.
+   if(dexLabels.length>1||coords.length>1)break;
+   const hasCp=/\bCP\b/i.test(t);
+   const hasStats=/\b(?:IV|LVL|LEVEL|DESPAWN|LOCATION)\b/i.test(t)||
+     /\d{1,3}(?:[.,]\d+)?\s*%/.test(t);
+   if(dexLabels.length===1&&hasCp&&hasStats&&controls.length<=4)
+    chosen=node;
   }
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
@@ -1128,7 +1128,19 @@ function parseCard(box,sourceIndex){
  const ivMatch=ivText.match(/(\d{1,3}(?:[.,]\d{1,8})?)\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
  const exactRaw=ivMatch?[ivMatch[2],ivMatch[3],ivMatch[4]].join("/"):
    ((ivText.match(/(?:^|[^\d])(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})(?:[^\d]|$)/)||[])[1]||"").replace(/\s/g,"");
- const labeledPct=(ivText.match(/(?:^|\n)\s*IV(?:\s*(?:%|percent(?:age)?))?\s*[:·•=-]?\s*(\d{1,3}(?:[.,]\d{1,8})?)\s*%/i)||[])[1]||"";
+ const explicitPct=(ivText.match(/(?:^|\n)\s*IV(?:\s*(?:%|percent(?:age)?))?\s*[:·•=-]?\s*(\d{1,3}(?:[.,]\d{1,8})?)\s*%/i)||[])[1]||"";
+ // LT392: the provider can show a SINGLE numeric IV badge on mobile.
+ // A percentage is accepted only from this uniquely bounded card,
+ // only if it agrees with a possible integer 0..45 IV sum.
+ const cardPercents=Array.from(body.matchAll(/(?:^|[^\d])([0-9]{1,3}(?:[.,][0-9]{1,8})?)\s*%/g))
+  .map(match=>match[1].replace(",","."));
+ const singleCardPercent=cardPercents.length===1&&
+  Array.from({length:46},(_,sum)=>sum).some(sum=>{
+   const exact=sum*100/45,observed=Number(cardPercents[0]);
+   return observed===Math.round(exact)||observed===Number(exact.toFixed(1))||
+    observed===Number(exact.toFixed(2))||Math.abs(observed-exact)<=0.0001;
+  })?cardPercents[0]:"";
+ const labeledPct=explicitPct||(ivMatch?ivMatch[1]:singleCardPercent);
  // Only 100% and 0% determine a unique 15/15/15 or 0/0/0 spread.
  // They can be reconstructed from an explicit per-card IV badge; never
  // reconstruct arbitrary spreads from the search form or unlabeled numbers.
@@ -1361,7 +1373,11 @@ function collect(){
  const submission=window.__pokeSearchSubmission;
  if(submission&&!submission.observedUpdate&&visibleResultSignature()!==submission.before)
   submission.observedUpdate=true;
- const resultChanged=!submission||submission.observedUpdate===true;
+ // A provider loading cycle may complete with identical cards.
+ // Never infer freshness solely from elapsed time or cached data.
+ if(submission&&loading)submission.observedBusy=true;
+ const resultChanged=!submission||submission.observedUpdate===true||
+   (submission.observedBusy===true&&!loading);
  // A still-visible card from the previous query is not proof of this Search.
  // Identical legitimate result sets may require a new site DOM transition.
  const resultFreshnessPending=found.length>0&&!resultChanged;
@@ -1796,8 +1812,14 @@ if(action==="submitSearch"){
  if(!b)return JSON.stringify({ok:false,reason:"Botão Search não localizado"});
  if(b.disabled||b.getAttribute("aria-disabled")==="true")
   return JSON.stringify({ok:false,reason:"Botão Search indisponível"});
- window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};
+ window.__pokeSearchSubmission={
+  before:visibleResultSignature(),observedUpdate:false,observedBusy:false
+ };
  b.click();
+ // The provider may turn busy on synchronously and off before first poll.
+ if(!!document.querySelector('[aria-busy="true"],[role="progressbar"]')||
+    !!oneButton("Searching")||!!oneButton("Loading")||b.disabled)
+   window.__pokeSearchSubmission.observedBusy=true;
  return JSON.stringify({ok:true,stage:"submitted"});
 }
 if(action==="search"){
