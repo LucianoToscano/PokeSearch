@@ -1,4 +1,4 @@
-# POK ESEARCH — Continuidade LT405 após ARK LT404
+# POKESEARCH — Continuidade LT405 após ARK LT404
 
 Base oficial publicada: **PokeSearch v0.03.89 LT**, versionCode **54596**, release https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.89-54596. Branch `main`. Leia `AGENTS.md`, `docs/GUIA_MESTRE.md`, `docs/LT404_AUDITORIA_OAUTH_AUTO_SYNC_20261117.md` e `docs/ARK_LT404_LOGIN_OAUTH_OFICIAL_20261117.md`.
 
