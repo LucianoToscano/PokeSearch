@@ -54,7 +54,8 @@ assert.match(ui,/function safeSprite\(/);
 assert.match(java,/new PokedexSpriteStore/);
 assert.match(java,/individual\.put\("megaFormsCount"/);
 assert.match(java,/https:\/\/pokesearch\.local\/sprite\//);
-assert.match(store,/PINNED_COMMIT="db10df75d6f6f92018d9786af0aecc4ef"/);
+assert.match(store,new RegExp('PINNED_COMMIT="'+manifest.commit+'"'),
+ "Native sprite cache must accept the same pinned commit as the shipped catalog");
 assert.match(store,/gitSha\(pending,transferred\)/);
 assert.match(store,/getFilesDir\(\),"pokedex_sprites"/);
 assert.match(html,/pokedex_sprite_catalog\.js/);
