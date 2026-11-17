@@ -420,6 +420,16 @@ public final class PersonalPokedexActivity extends Activity {
         view.postDelayed(syncTicker,180000);
     }
     private final class InventoryBridge {
+        // Asset exists? Never pass a missing file:///android_asset URL to WebView.
+        // The check is allowlisted and cannot inspect another app's storage.
+        @JavascriptInterface public boolean hasBundledSprite(String asset){
+            if(asset==null||!asset.matches(
+                "pokemon-sprites/(?:base|shiny|forms|costumes)/[A-Za-z0-9_.-]{1,150}\\.png"))
+                return false;
+            try(InputStream input=getAssets().open(asset)){
+                return input.read()>=0;
+            }catch(IOException ignored){return false;}
+        }
         @JavascriptInterface public String editInventory(int requestedSlot,String operation,String payload){
             return PokedexLocalEdits.execute(PersonalPokedexActivity.this,slot(requestedSlot),operation,payload);
         }
