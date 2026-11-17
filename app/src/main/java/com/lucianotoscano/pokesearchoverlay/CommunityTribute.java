@@ -119,7 +119,7 @@ final class CommunityTribute {
                 byte[] bytes=new byte[16384];int n;
                 while((n=in.read(bytes))!=-1)out.write(bytes,0,n);
             }
-            Uri uri=FileProvider.getUriForFile(a,"com.lucianotoscano.pokesearch.updates",file);
+            Uri uri=FileProvider.getUriForFile(a,a.getPackageName()+".updates",file);
             Intent send=new Intent(Intent.ACTION_SEND);
             send.setType("image/webp");send.putExtra(Intent.EXTRA_STREAM,uri);
             send.putExtra(Intent.EXTRA_SUBJECT,"💙 Agradecimentos • PokeSearch");
