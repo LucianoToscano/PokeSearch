@@ -22,7 +22,7 @@ assert.match(home,/@Override protected void onResume\(\)[\s\S]{0,220}?allowLogin
 assert.match(home,/@Override public void onWindowFocusChanged\(boolean hasFocus\)[\s\S]{0,260}?if\(hasFocus\)allowLoginScreenshots\(\);/);
 assert.match(home,/loginDialog\.setOnShowListener\(shown->allowLoginScreenshots\(\)\);/);
 assert.match(home,/allowLoginScreenshots\(\);\s*loginDialog\.show\(\);\s*allowLoginScreenshots\(\);/);
-assert.doesNotMatch(home,/\\.(?:addFlags|setFlags)\([^;\n]*FLAG_SECURE/);
+assert.doesNotMatch(home,/\.(?:addFlags|setFlags)\([^;\n]*FLAG_SECURE/);
 // Badge de login: selecionar Conta 1/2 é ação real, não lista apenas informativa.
 assert.match(home,/private void showCompactAccountNames\(View anchor,boolean secondary\)/);
 assert.match(home,/for\(int slot=0;slot<=2;slot\+\+\)/);
