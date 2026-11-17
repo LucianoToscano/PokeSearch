@@ -144,6 +144,7 @@ public class MainActivity extends Activity {
     private ImageView overlayControl,secondaryOverlayControl,pgsSearchControl;
     private Boolean lastPgsSearchState;
     private String homePrimaryModeCache,homeSecondaryModeCache;
+    private final TextView[] homeModeBadges=new TextView[2];
     private boolean pgsHomeStatePolling=false;
     private final android.os.Handler pgsHomeStateHandler=
         new android.os.Handler(android.os.Looper.getMainLooper());
@@ -604,7 +605,22 @@ public class MainActivity extends Activity {
         tile.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
         tile.setOrientation(LinearLayout.VERTICAL);
         tile.setBackground(null);
-        tile.addView(artwork,new LinearLayout.LayoutParams(-1,d(51)));
+        if(index<=1){
+            FrameLayout artGroup=new FrameLayout(this);
+            artGroup.addView(artwork,new FrameLayout.LayoutParams(-1,d(51)));
+            TextView valueBadge=homeText("",8,Color.rgb(26,29,33),true);
+            valueBadge.setGravity(Gravity.CENTER);
+            valueBadge.setBackground(null);
+            valueBadge.setClickable(false);
+            FrameLayout.LayoutParams badgeLp=
+                new FrameLayout.LayoutParams(-1,d(12),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
+            badgeLp.bottomMargin=d(4);
+            artGroup.addView(valueBadge,badgeLp);
+            homeModeBadges[index]=valueBadge;
+            tile.addView(artGroup,new LinearLayout.LayoutParams(-1,d(51)));
+        }else{
+            tile.addView(artwork,new LinearLayout.LayoutParams(-1,d(51)));
+        }
         TextView title=homeText(label,9,
             homeLightMode?Color.rgb(19,46,70):Color.WHITE,true);
         title.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
@@ -650,6 +666,14 @@ public class MainActivity extends Activity {
             OverlayService.isRunning();
         icon.setAlpha(active?1f:.86f);
         String badge=HomeFloatingModeIcon.label(this,secondary);
+        TextView valueBadge=homeModeBadges[secondary?1:0];
+        if(valueBadge!=null){
+            valueBadge.setText(badge);
+            valueBadge.setVisibility(badge.isEmpty()?View.GONE:View.VISIBLE);
+            valueBadge.setTextSize(badge.length()>4?6:8);
+            valueBadge.setTextColor("hundo".equals(mode)?Color.rgb(240,75,112):
+                "nundo".equals(mode)?Color.rgb(0,207,232):Color.rgb(24,26,29));
+        }
         icon.setContentDescription((active?"Desativar ":"Ativar ")+
             "Pokébola "+(secondary?"2":"1")+
             (badge.isEmpty()?"":" · filtro "+badge));
