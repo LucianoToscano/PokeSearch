@@ -4974,6 +4974,33 @@
           "Instalação de atualização exige consentimento do Android. Detecção, supervisão, caminhada externa, tentativa e captura confirmada continuam estados distintos."
         ]
       }
+    },
+    {
+      "id": "lt389-login-visitante-home-compacta-ark-20261117",
+      "minVersionCode": 54581,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT389 — Login, Visitante e Home compacta",
+      "sections": {
+        "novidades": [
+          "Os dois cartões grandes de login saíram da Home. O ícone do PoGoCoordinates abre um menu compacto com Conta 1, Conta 2 e modo visitante.",
+          "No modo visitante, quando o site confirmar o limite, um indicador discreto 🔒 +5 ao final dos resultados explica como entrar para ver até dez resultados."
+        ],
+        "melhorias": [
+          "Login Google/Discord usa a página oficial visível e ações explícitas; o PokeSearch não trata o redirecionamento OAuth, isoladamente, como sessão confirmada.",
+          "Uma atualização de nome/foto mantém o último perfil verificado durante a hidratação; novos logins invalidam vínculos antigos de treinador até comprovação do perfil.",
+          "O botão com latitude/longitude disponibilizado pelo site pode ser lido no cartão Pokémon correspondente, sem requisitar coordenadas de outro cartão."
+        ],
+        "correcoes": [
+          "O aviso ! dos resultados volta a aceitar toque e explica o motivo do erro; falhas de rede não aparecem como ausência silenciosa de Pokémon.",
+          "Busca comum sem login usa a página pública real sem autenticação; contas e cookies das Pokébolas continuam isolados.",
+          "Preservados overlays P1/P2 compactos, sprites, filtros, favoritos, Auto Hunt OFF, Novidades internas, atualização OTA e assinatura permanente."
+        ],
+        "emDesenvolvimento": [
+          "Login Google/Discord e OAuth/MFA reais, atualização de avatar, duas contas isoladas, TalkBack, Samsung Android 11–14 e compatibilidade de apps exigem homologação física.",
+          "Se o Google recusar OAuth no WebView, abrir no navegador externo não transfere automaticamente a sessão para o PokeSearch. Não contornar proteção do provedor.",
+          "A liberação de novas coordenadas depende das restrições do PoGoCoordinates. HTTP 429/rate limit não deve ser contornado apagando cookies, cache ou histórico."
+        ]
+      }
     }
   ]
 }
