@@ -76,6 +76,7 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 </style>
 <link rel="stylesheet" href="personal_pokedex_enhanced.css">
 <link rel="stylesheet" href="personal_pokedex_lt399.css">
+<link rel="stylesheet" href="personal_pokedex_lt400.css">
 </head>
 <body>
 <div id="app">
@@ -88,6 +89,7 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <div class="segment"><button id="slot1" class="active">Inventário 1</button><button id="slot2">Inventário 2</button></div></header>
 <section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON</button></section>
 <div class="inventory-tools">
+ <button type="button" id="sprites-open" class="tool-button"><span aria-hidden="true">◈</span> Sprites <small id="sprite-cache-count">0</small></button>
  <button type="button" id="backgrounds-open" class="tool-button"><span aria-hidden="true">▧</span> Fundos <small id="background-cache-count">0/263</small></button>
  <button type="button" id="history-open" class="tool-button"><span aria-hidden="true">◷</span> Histórico</button>
  <button type="button" id="select-toggle" class="tool-button"><span aria-hidden="true">▣</span> Comparar</button>
@@ -126,6 +128,10 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <div class="pvp-ranks" id="pvp-ranks"></div>
 <div class="note" id="pvp-note">Ranking estimado a partir do instantâneo local PvPoke, não substitui simulação de confrontos.</div>
 </div>
+<div class="group"><h3>Imagem do Pokémon</h3>
+<div id="sprite-availability" class="note">Verificando a variante…</div>
+<button type="button" id="download-this-sprite" class="preset">Baixar sprite desta forma</button>
+</div>
 <div class="group"><h3>Movimentos registrados</h3><div id="moves"></div></div>
 <div class="group"><h3>Informações do Pokémon</h3><div id="other-info"></div></div>
 <div class="detail-arrows"><button id="detail-prev" aria-label="Pokémon anterior">‹ Anterior</button><button id="detail-next" aria-label="Próximo Pokémon">Próximo ›</button></div>
@@ -139,6 +145,23 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
 <p class="note">Informações importadas do arquivo local, não sincronizadas automaticamente com Pokémon GO. Identificadores de trajes/fundos permanecem registrados mesmo sem arte específica disponível.</p>
 </div></div>
+<div id="sprite-panel" class="overlay-sheet" hidden>
+ <div class="modal-card">
+  <div class="modal-title"><h2>Banco visual de Pokémon GO</h2><button type="button" id="sprites-close" aria-label="Fechar">×</button></div>
+  <p class="modal-help">Índice de Pokémon, formas, trajes, diferenças de gênero e Shiny. Os arquivos são de terceiros: o APK contém só os identificadores. O download pessoal é opcional, diretamente da fonte, e usa armazenamento privado do Android.</p>
+  <div id="sprite-status" class="modal-status">Verificando cache visual…</div>
+  <div id="sprite-collection-coverage" class="modal-help"></div>
+  <div class="sprite-download-actions">
+   <button type="button" id="sprites-download-collection" class="preset">Baixar sprites do inventário</button>
+   <button type="button" id="sprites-download-all" class="preset">Baixar coleção GO completa</button>
+   <button type="button" id="sprites-download-legacy" class="preset">Baixar imagens legadas</button>
+   <button type="button" id="sprites-cancel" class="preset">Interromper</button>
+   <button type="button" id="sprites-clear" class="preset">Limpar imagens baixadas</button>
+  </div>
+  <p class="modal-help">GO completo: 3.850 PNG, aproximadamente 119 MB; imagens legadas: 2.213 PNG, aproximadamente 58 MB. Imagens realmente disponíveis podem variar por forma, traje, evento e espécie. Nenhum download é iniciado automaticamente.</p>
+  <div id="sprite-catalog-preview" class="sprite-catalog-preview"></div>
+ </div>
+</div>
 <div id="background-panel" class="overlay-sheet" hidden>
  <div class="modal-card">
  <div class="modal-title"><h2>Galeria de fundos</h2><button type="button" id="backgrounds-close" aria-label="Fechar">×</button></div>
@@ -177,6 +200,7 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 </div>
 <div id="notice" role="status"></div>
 <script src="sprite_offline.js"></script>
+<script src="pokedex_sprite_catalog.js"></script>
 <script src="pvpoke-iv-gamemaster.js"></script>
 <script src="pvp_rank_explorer.js"></script>
 <script src="pokedex_tag_shapes.js"></script>
