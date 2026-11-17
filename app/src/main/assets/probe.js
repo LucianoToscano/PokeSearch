@@ -1114,12 +1114,28 @@ function exactCardSpriteAlphaBounds(img,url){
 
 function parseCard(box,sourceIndex){
  const body=text(box),lines=body.split(/\n+/).map(clean).filter(Boolean);
- const ivMatch=body.match(/(\d{1,3}(?:[.,]\d{1,8})?)\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
- const raw=ivMatch?[ivMatch[2],ivMatch[3],ivMatch[4]].join("/"):
-    ((body.match(/(?:^|[^\d])(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})(?:[^\d]|$)/)||[])[1]||"").replace(/\s/g,"");
- const labeledPct=(body.match(/(?:^|\n)\s*IV\s*:?\s*(\d{1,3}(?:[.,]\d{1,8})?)\s*%/i)||[])[1]||"";
- // A source-observed IV% wins over a derived badge. A contradictory
- // explicit IV: 99% and raw 0/15/15 must be rejected, not disguised as 67%.
+ // LT391: cards may paint their visible IV badge as a one-line label,
+ // a separate adjacent value, or an accessible title instead of "100% (15/15/15)".
+ // Read ONLY visible nodes inside THIS encounter; never infer IV from Search filters.
+ const ivLabels=Array.from(box.querySelectorAll("[aria-label],[title],[data-iv],[data-iv-percent]"))
+  .filter(vis).slice(0,72).map(el=>{
+   const a=String(el.getAttribute("aria-label")||el.getAttribute("title")||"").slice(0,100);
+   const p=String(el.getAttribute("data-iv-percent")||"").slice(0,18);
+   const raw=String(el.getAttribute("data-iv")||"").slice(0,25);
+   return a+"\n"+(p?"IV "+p+(p.includes("%")?"":"%"):"")+(raw?"\nIV "+raw:"");
+  }).join("\n");
+ const ivText=body+"\n"+ivLabels;
+ const ivMatch=ivText.match(/(\d{1,3}(?:[.,]\d{1,8})?)\s*%\s*[\(（]\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{1,2})\s*[\)）]/);
+ const exactRaw=ivMatch?[ivMatch[2],ivMatch[3],ivMatch[4]].join("/"):
+   ((ivText.match(/(?:^|[^\d])(\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})(?:[^\d]|$)/)||[])[1]||"").replace(/\s/g,"");
+ const labeledPct=(ivText.match(/(?:^|\n)\s*IV(?:\s*(?:%|percent(?:age)?))?\s*[:·•=-]?\s*(\d{1,3}(?:[.,]\d{1,8})?)\s*%/i)||[])[1]||"";
+ // Only 100% and 0% determine a unique 15/15/15 or 0/0/0 spread.
+ // They can be reconstructed from an explicit per-card IV badge; never
+ // reconstruct arbitrary spreads from the search form or unlabeled numbers.
+ const canonicalPct=Number(labeledPct.replace(",","."));
+ const raw=exactRaw||(labeledPct&&(canonicalPct===100?"15/15/15":
+   canonicalPct===0?"0/0/0":""))||"";
+ // Conflicting explicit data is still rejected by verifiedCardIv() below.
  const percent=labeledPct||(ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):""));
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
      m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
