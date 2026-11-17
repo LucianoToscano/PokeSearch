@@ -29,10 +29,15 @@
    const rawName=String(p.formName||"");
    const speciesNorm=norm(p.name||p.speciesName||"");
    const rawNorm=norm(rawName);
-   const useForm=rawNorm&&!["UNSET","DEFAULT"].includes(rawNorm);
-   // formId 0 is FORM_UNSET, never a valid replacement for an explicit name.
-   const form=useForm?(formId>0?formIds.get(formId)||null:
-     (rawNorm==="NORMAL"?null:formsByName.get(rawNorm)||null)):null;
+   // PGSharp PGSStats exports numeric form IDs, frequently without formName.
+   // Never silently downgrade an explicit numeric variant to base artwork.
+   const indexedForm=formId>0?formIds.get(formId)||null:null;
+   if(formId>0&&!indexedForm)
+     return {key:null,reason:"form-id-unmapped",dex};
+   const useForm=!!indexedForm||
+     (!!rawNorm&&!["UNSET","DEFAULT"].includes(rawNorm));
+   const form=indexedForm||
+     (useForm?(rawNorm==="NORMAL"?null:formsByName.get(rawNorm)||null):null);
    let suffix="",formUnknown=false;
    if(useForm){
     if(form){
