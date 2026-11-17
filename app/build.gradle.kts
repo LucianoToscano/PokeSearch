@@ -41,8 +41,8 @@ if (chatGoogleClientId.isNotEmpty() && !Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.go
 // separately monotonic Android versionCode for safe side-by-side upgrades.
 // Read the official release contract at build time; never hardcode an old LT.
 val officialVersionRequest = file("../release/official-request.json")
-val fastDevDisplayVersion = (groovy.json.JsonSlurper().parse(officialVersionRequest) as Map<*, *>)
-    ["version"]?.toString()?.takeIf { Regex("0\\.\\d{2}\\.\\d{2}").matches(it) }
+val fastDevDisplayVersion = (groovy.json.JsonSlurper().parse(officialVersionRequest) as Map<*, *>)["version"]
+    ?.toString()?.takeIf { Regex("0\\.\\d{2}\\.\\d{2}").matches(it) }
     ?: throw org.gradle.api.GradleException("Missing official 0.XX.XX version for FastDev display")
 // FastDev uses an independent monotonic version code. The build lane supplies it.
 val fastDevCode = System.getenv("POKE_FASTDEV_VERSION_CODE")?.let { value ->
