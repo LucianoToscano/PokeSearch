@@ -14,7 +14,7 @@ assert.match(activity,/visibleCenterX=HomeMenuIconPack\.opticalPokeballButtonXIn
 assert.match(activity,/placement\.leftMargin=desiredLeft/);
 assert.match(activity,/PogoAccountSlots\.bindAccountOnly\(this,secondary,account\)/);
 assert.match(iconPack,/getImageMatrix\(\)\.mapPoints\(top\)/);
-assert.match(service,/autoRefreshDelayMs\(\)\{return intervalMinutes==-3\?3000L/);
+assert.match(service,/autoRefreshDelayMs\(\)\{return Math\.max\(0L,intervalMinutes\)\*60000L/);
 assert.match(service,/if\(!pref\.getBoolean\("intervalExplicit",false\)\)\{/);
 assert.match(service,/resultShowDistance=prefs\.getBoolean\("resultShowDistance",false\)/);
 assert.match(dock,/location:false,distance:false,shiny:false/);
