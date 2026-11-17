@@ -1212,11 +1212,13 @@ function parseCard(box,sourceIndex){
   const altKey=compact(alt.replace(/\b(?:sprite|image|pokemon|pokémon)\b/gi,""));
   const byName=speciesKey&&(
    altKey===speciesKey||altKey===speciesKey+"SHINY"||
-   altKey==="SHINY"+speciesKey||altKey.startsWith(speciesKey+"HALLOWEEN")||
+   altKey==="SHINY"+speciesKey||altKey===speciesKey+encounterDex||altKey.startsWith(speciesKey+"HALLOWEEN")||
    altKey.startsWith(speciesKey+"COSTUME"));
   const byDex=encounterDex>=1&&encounterDex<=1025&&
    new RegExp("(?:^|[/_.-])(?:pm|pokemon)?0*"+encounterDex+"(?=[/_.-]|$)","i").test(url);
   if(!byName&&!byDex)return false;
+  // Image URLs can contain the right Dex but a contradictory species alt.
+  if(altKey&&/[A-Z]/.test(altKey)&&!byName)return false;
   const shinyEvidence=/(?:\/shiny\/|\.s\.icon\.|[-_.]shiny[-_.]|shiny[-_.]|SHINY)/i.test(url+" "+alt);
   if(isSpriteShiny&&!shinyEvidence)return false;
   if(!isSpriteShiny&&shinyEvidence)return false;
