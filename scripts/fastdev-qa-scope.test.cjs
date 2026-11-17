@@ -8,7 +8,7 @@ test("pure preview implementation and FastDev automation omit irrelevant beta/R8
   "app/src/preview/java/com/lucianotoscano/pokesearchoverlay/FastDevApplication.java",
   "app/src/preview/java/com/lucianotoscano/pokesearchoverlay/FastDevConsoleActivity.java",
   "scripts/fastdev-automatic-home.test.cjs",
-  "scripts/fastdev-qa-scope.cjs",
+  "scripts/fastdev-manifest.test.cjs",
   ".github/workflows/pokesearch-fastdev.yml",
   "docs/FASTDEV_GUIA.md",
   "fastdev/latest.json"
