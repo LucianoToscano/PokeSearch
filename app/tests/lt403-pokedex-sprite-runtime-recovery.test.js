@@ -20,7 +20,7 @@ assert.match(ui,/window\.pokeSpriteRetry\(this\)/);
 new vm.Script(ui);
 // Run the original UI's sprite functions against the exact production catalog,
 // without needing a browser, network, Android SDK or a player's PGSStats.
-const section=ui.slice(ui.indexOf("function bundledSpriteExists("),
+const section=ui.slice(ui.indexOf("function spriteLocalUrl("),
   ui.indexOf("function filterPokemon("));
 assert.ok(section.includes("function safeSprite("));
 const state={spriteIndex:index,spriteCached:new Set(),
