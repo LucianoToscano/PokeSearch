@@ -2617,17 +2617,43 @@ public class MainActivity extends Activity {
     }
     private String shownAvatarUrl="";
     private String shownSecondAvatarUrl="";
+    private long profileCaptureStartedAt=0L;
+    private String profileCaptureFailureReason="profile_unhydrated";
+
+    // A manual resync must refresh even if the CDN keeps an unchanged URL.
+    private void refreshSyncedAvatar(int slot){
+        SharedPreferences prefs=PogoAccountSlots.prefs(this,slot);
+        String url=prefs.getString("profileAvatarUrl","");
+        if(!allowedProfileAvatar(url))return;
+        if(slot==2)refreshSecondGoogleAvatar(url,true);
+        else refreshGoogleAvatar(url,true);
+    }
     private int secondAvatarRequestGeneration=0;
-    private void refreshGoogleAvatar(String url){
+    private void refreshGoogleAvatar(String url){refreshGoogleAvatar(url,false);}
+    private void refreshGoogleAvatar(String url,boolean force){
         if(accountAvatar==null)return;
         final String next=allowedProfileAvatar(url)?url:"";
-        if(shownAvatarUrl.equals(next))return;
+        if(!force&&shownAvatarUrl.equals(next))return;
+        boolean sameUrl=shownAvatarUrl.equals(next);
         shownAvatarUrl=next;
         final int avatarRequestId=++avatarRequestGeneration;
-        accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
-        accountAvatar.setColorFilter(Color.rgb(183,201,229));
-        accountAvatar.setPadding(d(11),d(11),d(11),d(11));
-        if(next.isEmpty())return;
+        final SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,1);
+        final String avatarName=slotPrefs.getString("profileDisplayName","").trim();
+        if(!sameUrl){
+            accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+            accountAvatar.setColorFilter(Color.rgb(183,201,229));
+            accountAvatar.setPadding(d(11),d(11),d(11),d(11));
+            if(!next.isEmpty()){
+                android.graphics.Bitmap saved=ProfileAvatarCache.load(this,1,avatarName,next);
+                if(saved!=null){
+                    accountAvatar.clearColorFilter();
+                    accountAvatar.setPadding(0,0,0,0);
+                    accountAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    accountAvatar.setImageBitmap(saved);
+                }
+            }
+        }
+        if(next.isEmpty()||avatarName.isEmpty())return;
         new Thread(()->{
             android.graphics.Bitmap bitmap=null;
             java.net.HttpURLConnection connection=null;
@@ -2673,33 +2699,57 @@ public class MainActivity extends Activity {
                 if(bitmap==null)runOnUiThread(()->{
                     // Includes early returns on HTTP failure/redirect/size.
                     // Do not permanently cache a failed URL on the new Home.
-                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==avatarRequestGeneration&&next.equals(shownAvatarUrl))shownAvatarUrl="";
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==avatarRequestGeneration&&
+                       next.equals(shownAvatarUrl)){
+                        shownAvatarUrl="";
+                        PogoAccountSlots.prefs(this,1).edit()
+                            .putString("profileAvatarState","unavailable").apply();
+                        BugReport.log(this,"HOME","avatar_http_failed · Conta 1");
+                    }
                 });
             }
             final android.graphics.Bitmap photo=bitmap;
             if(photo!=null)runOnUiThread(()->{
                 if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=avatarRequestGeneration||
                      accountAvatar==null||!shownAvatarUrl.equals(next)||
-                    !"autenticada".equals(getSharedPreferences("prefs",0)
-                        .getString("sessionStatus","")))return;
+                    !"autenticada".equals(slotPrefs.getString("sessionStatus",""))||
+                    !avatarName.equals(slotPrefs.getString("profileDisplayName",""))||
+                    !next.equals(slotPrefs.getString("profileAvatarUrl","")))return;
                 accountAvatar.clearColorFilter();
                 accountAvatar.setPadding(0,0,0,0);
                 accountAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 accountAvatar.setImageBitmap(photo);
+                ProfileAvatarCache.save(this,1,avatarName,next,photo);
+                slotPrefs.edit().putString("profileAvatarState","loaded").apply();
             });
         },"PokeSearch-Google-Avatar").start();
     }
 
-    private void refreshSecondGoogleAvatar(String url){
+    private void refreshSecondGoogleAvatar(String url){refreshSecondGoogleAvatar(url,false);}
+    private void refreshSecondGoogleAvatar(String url,boolean force){
         if(secondAvatar==null)return;
         final String next=allowedProfileAvatar(url)?url:"";
-        if(shownSecondAvatarUrl.equals(next))return;
+        if(!force&&shownSecondAvatarUrl.equals(next))return;
+        boolean sameUrl=shownSecondAvatarUrl.equals(next);
         shownSecondAvatarUrl=next;
         final int avatarRequestId=++secondAvatarRequestGeneration;
-        secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
-        secondAvatar.setColorFilter(Color.rgb(183,201,229));
-        secondAvatar.setPadding(d(11),d(11),d(11),d(11));
-        if(next.isEmpty())return;
+        final SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,2);
+        final String avatarName=slotPrefs.getString("profileDisplayName","").trim();
+        if(!sameUrl){
+            secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+            secondAvatar.setColorFilter(Color.rgb(183,201,229));
+            secondAvatar.setPadding(d(11),d(11),d(11),d(11));
+            if(!next.isEmpty()){
+                android.graphics.Bitmap saved=ProfileAvatarCache.load(this,2,avatarName,next);
+                if(saved!=null){
+                    secondAvatar.clearColorFilter();
+                    secondAvatar.setPadding(0,0,0,0);
+                    secondAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    secondAvatar.setImageBitmap(saved);
+                }
+            }
+        }
+        if(next.isEmpty()||avatarName.isEmpty())return;
         new Thread(()->{
             android.graphics.Bitmap bitmap=null;
             java.net.HttpURLConnection connection=null;
@@ -2745,19 +2795,28 @@ public class MainActivity extends Activity {
                 if(bitmap==null)runOnUiThread(()->{
                     // Includes early returns on HTTP failure/redirect/size.
                     // Do not permanently cache a failed URL on the new Home.
-                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==secondAvatarRequestGeneration&&next.equals(shownSecondAvatarUrl))shownSecondAvatarUrl="";
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==secondAvatarRequestGeneration&&
+                       next.equals(shownSecondAvatarUrl)){
+                        shownSecondAvatarUrl="";
+                        PogoAccountSlots.prefs(this,2).edit()
+                            .putString("profileAvatarState","unavailable").apply();
+                        BugReport.log(this,"HOME","avatar_http_failed · Conta 2");
+                    }
                 });
             }
             final android.graphics.Bitmap photo=bitmap;
             if(photo!=null)runOnUiThread(()->{
                 if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=secondAvatarRequestGeneration||
                      secondAvatar==null||!shownSecondAvatarUrl.equals(next)||
-                    !"autenticada".equals(PogoAccountSlots.prefs(this,2)
-                        .getString("sessionStatus","")))return;
+                    !"autenticada".equals(slotPrefs.getString("sessionStatus",""))||
+                    !avatarName.equals(slotPrefs.getString("profileDisplayName",""))||
+                    !next.equals(slotPrefs.getString("profileAvatarUrl","")))return;
                 secondAvatar.clearColorFilter();
                 secondAvatar.setPadding(0,0,0,0);
                 secondAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 secondAvatar.setImageBitmap(photo);
+                ProfileAvatarCache.save(this,2,avatarName,next,photo);
+                slotPrefs.edit().putString("profileAvatarState","loaded").apply();
             });
         },"PokeSearch-Google-Avatar-2").start();
     }
