@@ -67,6 +67,12 @@ function plan(changedFiles) {
       // real profile regressions while keeping full Android QA for the PR.
       PROFILE_NATIVE.forEach(t => selected.add(t));
       broad = true;
+    } else if (file === "app/src/preview/java/com/lucianotoscano/pokesearchoverlay/FastDevConsoleActivity.java" ||
+               file === "scripts/fastdev-manifest.cjs" ||
+               file === "scripts/fastdev-manifest.test.cjs" ||
+               file === "fastdev/latest.json") {
+      selected.add("scripts/fastdev-manifest.test.cjs");
+      selected.add("scripts/fastdev-version.test.cjs");
     } else if (file === "app/src/main/assets/release_notes.json") {
       selected.add("app/tests/lt83-home-release-notes.test.js");
     } else if (file === "scripts/test_ota_builder.py") {
