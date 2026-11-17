@@ -5431,6 +5431,31 @@
           "Teste físico Samsung Android 17 com Google 2FA, Discord e sessão expirada continua necessário para validar a experiência real."
         ]
       }
+    },
+    {
+      "id": "lt405-pokedex-sprites-fonte-alternativa-20261117",
+      "minVersionCode": 54597,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT405 — Sprites da Minha Pokédex recuperadas",
+      "sections": {
+        "novidades": [
+          "A Minha Pokédex volta a usar imagens em alta resolução para espécies de forma normal, mesmo quando o servidor do catálogo Pokémon GO não responde.",
+          "A imagem exata do catálogo Pokémon GO continua como alternativa para cada Pokémon; a tela tenta espelhos HTTPS permitidos antes de exibir imagem indisponível."
+        ],
+        "melhorias": [
+          "Tratamento diferenciado para formas normais identificadas pelo ID numérico do PGSStats, Shiny, formas especiais, trajes e diferenças visuais de gênero.",
+          "A sprite exata já baixada no cache privado continua prioritária; todos os arquivos e inventários existentes são preservados.",
+          "Preservados os dois inventários, edição individual, tags, seleção múltipla, fundos, notas, PGSStats SAF, Home e overlays P1/P2."
+        ],
+        "correcoes": [
+          "Corrigida regressão visual que deixava Mewtwo, Garchomp, Metagross, Hydreigon, Rhyperior, Goodra, Haxorus, Conkeldurr e outros Pokémon com losangos na grade.",
+          "Não utiliza sprite de forma-base genérica para formas desconhecidas, Mewtwo Armored, Giratina Altered, Goodra Hisuian, Zacian Hero, trajes nem fêmeas com aparência própria."
+        ],
+        "emDesenvolvimento": [
+          "Ainda não foi feita homologação no Samsung Android 17 com conexão real e arquivo PGSStats atualizado. Algumas imagens especiais precisam de internet ou cache e podem continuar sem arquivo.",
+          "A cobertura visual total não é garantida; arte não verificada não é substituída por variante incorreta. Edições são apenas locais ao PokeSearch, nunca dentro do Pokémon GO."
+        ]
+      }
     }
   ]
 }
