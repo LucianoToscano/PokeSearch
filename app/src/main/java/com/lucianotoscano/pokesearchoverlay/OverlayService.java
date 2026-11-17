@@ -512,6 +512,8 @@ public class OverlayService extends Service {
     private boolean displayedApiResults=false;
     // Set only after a verified first-party public Search exposes its 5/10 banner.
     private boolean guestResultLimitConfirmed=false;
+    // Display-only site cards in an anonymous session never become verified filter matches.
+    private boolean guestSitePreviewActive=false;
     private int displayedApiSearchId=-1;
     // Provider 429 is an upstream limit, never a permission to switch accounts,
     // force DOM searches, or retry until accepted. Both Pokeballs share this
@@ -1255,7 +1257,7 @@ public class OverlayService extends Service {
                  ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+","+
                 (guestResultLimitConfirmed&&
                  !PogoAccountSlots.loggedIn(this,PogoAccountSlots.assigned(this,
-                     isSecondaryOverlay())))+")";
+                     isSecondaryOverlay())))+","+guestSitePreviewActive+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(popupPanel,popupLoaded,data);
@@ -3194,6 +3196,7 @@ public class OverlayService extends Service {
             // An explicitly empty response is NOT trustworthy unless the requested
             // site settings are still confirmed; keep old cards instead.
             if(!r.optBoolean("criteriaConfirmed",false)){
+                if(showGuestSitePreview(r,"filter-unconfirmed"))return;
                 searchInProgress=false;
                 searchFailure("⚠ Filtro não confirmado",
                     "Busca ignorada: "+r.optString("criteriaReason","controles não confirmados")+
@@ -3210,6 +3213,7 @@ public class OverlayService extends Service {
             // Search while React switches GL/UL or IV modes. A verified filter
             // form alone is not proof that those visible cards were refreshed.
             if(r.optBoolean("resultFreshnessPending",false)){
+                if(attempt>=3&&showGuestSitePreview(r,"repeated"))return;
                 if(attempt<24){
                     pollSearch(generation,attempt+1,manual);
                     return;
@@ -3235,6 +3239,8 @@ public class OverlayService extends Service {
                 return;
             }
             if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0){
+                // Guest snapshots are visible without claiming the requested IV.
+                if(attempt>=3&&showGuestSitePreview(r,"iv-unconfirmed"))return;
                 // Switching GL/UL/IV leaves old cards visible briefly. Retry
                 // rather than treating them as definitive results of the new mode.
                 if(attempt<24){pollSearch(generation,attempt+1,manual);return;}
@@ -3733,7 +3739,83 @@ public class OverlayService extends Service {
             recordFailure("confirmar limpeza de filtros",error);
         }
     }
+    /**
+     * LT392: the public site can return five REAL encounter cards whose IV does
+     * not match the selected PokeSearch filter, or whose React filter state is
+     * inconclusive. Display the site's cards rather than a lonely exclamation
+     * mark. This is NOT a validated IV/Top/Raw search: never enter the verified
+     * cache, filters, history, alert pipeline or automatic capture.
+     *
+     * Coordinates are still requested from the matching LIVE site card through
+     * the existing sourceIndex/name/CP/Dex identity checks and provider quota.
+     */
+    private boolean showGuestSitePreview(JSONObject source,String reason){
+        int account=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+        if(PogoAccountSlots.loggedIn(this,account))return false;
+        JSONArray input=source.optJSONArray("sitePreviewCards");
+        if(input==null||input.length()==0)return false;
+        JSONArray displayed=new JSONArray();
+        long now=System.currentTimeMillis();
+        for(int i=0;i<input.length()&&displayed.length()<5;i++){
+            JSONObject item=input.optJSONObject(i);
+            if(item==null)continue;
+            String dex=item.optString("number","").trim();
+            String species=item.optString("name","").trim();
+            String cp=item.optString("cp","").trim();
+            int index=item.optInt("sourceIndex",-1);
+            if(!dex.matches("#?[0-9]{1,4}")||species.isEmpty()||
+                species.equalsIgnoreCase("Pokémon")||
+                !cp.matches("[0-9]{1,5}")||index<0||index>99)continue;
+            try{
+                JSONObject card=new JSONObject(item.toString());
+                card.put("sampledAt",now);
+                long expiry=expiration(card);
+                if(expiry<=now)continue;
+                if(expiry!=Long.MAX_VALUE)card.put("expiresAtMs",expiry);
+                card.put("evidenceSource","public-site-preview");
+                card.put("evidenceVerified",false);
+                card.put("evidencePartial",true);
+                card.put("filterMatchVerified",false);
+                card.put("sitePreview",true);
+                displayed.put(card);
+            }catch(org.json.JSONException e){
+                recordFailure("prévia pública do cartão",e);
+            }
+        }
+        if(displayed.length()==0)return false;
+        // Keep order and sourceIndex exactly as they appear on the provider.
+        // No notifications, history or carry-over of authenticated API cards.
+        results=displayed.toString();
+        displayedApiResults=false;
+        guestSitePreviewActive=true;
+        guestResultLimitConfirmed=source.optBoolean("guestLimitBanner",false);
+        verifiedFavoriteResultsGeneration=-1;
+        shownMode=mode;
+        shownConfigJson=filterConfigJson();
+        shownShiny=shiny&&shinyVerified;
+        resultsStale=false;
+        searchPhase="updated";
+        searchInProgress=false;
+        locationVerified=false;
+        selected=-1;
+        hideDetails();
+        armNextDespawn(displayed);
+        String detail="O site público mostra "+displayed.length()+
+            " Pokémon; o filtro "+mode+" não foi confirmado para esses encontros. "+
+            ("repeated".equals(reason)?"A lista não mudou após atualizar. ":"")+
+            "Os IVs exibidos são os do próprio site; nenhum foi classificado "+
+            "como IV 100% sem comprovação.";
+        overlayPrefs().edit().putString("lastError",detail).apply();
+        BugReport.log(this,"GUEST_SITE_PREVIEW",
+            (isSecondaryOverlay()?"P2":"P1")+" visible="+displayed.length()+
+            " found="+source.optInt("found",0)+" reason="+reason+
+            " mode="+mode+" alerts=off");
+        status("⚠ "+displayed.length()+
+            " Pokémon do site · filtro não confirmado · toque para detalhes");
+        return true;
+    }
     private void applyCollectedResults(JSONObject r){
+        guestSitePreviewActive=false;
         BugReport.log(this,"RESULTS","Modo "+mode+" • válidos "+
             (r.optJSONArray("cards")==null?0:r.optJSONArray("cards").length())+
             " • encontrados "+r.optInt("found",0));
