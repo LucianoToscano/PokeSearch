@@ -1020,7 +1020,7 @@ function cardRoots(){
   const t=text(node);
   return t.length>=24&&t.length<1900&&/#\s*\d{1,4}\b/.test(t)&&
    /CP/i.test(t)&&
-   /(?:\bDESPAWN\b|\b\d{1,2}:\d{2}\b)/i.test(t)&&
+   /(?:DESPAWN|\d{1,2}:\d{2})/i.test(t)&&
    /(?:\bIV\b|\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})/i.test(t);
  };
  const closestEncounter=start=>{
