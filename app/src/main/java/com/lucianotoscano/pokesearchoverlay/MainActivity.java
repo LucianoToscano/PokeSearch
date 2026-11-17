@@ -102,6 +102,7 @@ public class MainActivity extends Activity {
     private View loginCover;
     private TextView loginWaitLabel,loginFallback;
     private int loginPageGeneration=0;
+    private int loginRecoveryProbeGeneration=-1;
     private String pendingReportText="";
     private String alertToneTarget="";
     private String alertToneSpecies="";
@@ -3989,6 +3990,7 @@ public class MainActivity extends Activity {
         loginLinkAttempted=false;
         loginDiscoveryStarted=false;
         loginProfilePageLoadFailed=false;
+        loginRecoveryProbeGeneration=-1;
         website=new WebView(this);
         PogoAccountSlots.attach(website,activeLoginSlot);
         website.setBackgroundColor(Color.rgb(11,13,18));
@@ -4010,6 +4012,7 @@ public class MainActivity extends Activity {
                 // LT404: React/OAuth may hydrate AFTER onPageFinished. Schedule
                 // a bounded first-party session probe without clicking providers.
                 if(view!=website||progress<95||observedLoginProvider.isEmpty()||
+                   loginRecoveryProbeGeneration==loginPageGeneration||
                    loginSessionNotified||loginAutoReturnQueued||
                    loginDialog==null||!loginDialog.isShowing())return;
                 Uri address=Uri.parse(view.getUrl()==null?"":view.getUrl());
@@ -4017,6 +4020,7 @@ public class MainActivity extends Activity {
                 if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
                     host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
                 final int generation=loginPageGeneration;
+                loginRecoveryProbeGeneration=generation;
                 view.postDelayed(()->checkLoginSession(view,18,generation),1400L);
             }
         });
@@ -4027,6 +4031,7 @@ public class MainActivity extends Activity {
                     allowLoginScreenshots();
                 }
                 ++loginPageGeneration;
+                loginRecoveryProbeGeneration=-1;
                 loginLinkAttempted=false;
                 loginDiscoveryStarted=false;
                 Uri current=Uri.parse(url==null?"":url);
@@ -4093,8 +4098,10 @@ public class MainActivity extends Activity {
                     if(host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
                         host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"))&&
                        !observedLoginProvider.isEmpty()&&!loginSessionNotified&&
+                       loginRecoveryProbeGeneration!=loginPageGeneration&&
                        !loginAutoReturnQueued&&loginDialog!=null&&loginDialog.isShowing()){
                         final int generation=loginPageGeneration;
+                        loginRecoveryProbeGeneration=generation;
                         view.postDelayed(()->checkLoginSession(view,18,generation),1100L);
                     }
                 }
