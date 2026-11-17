@@ -37,6 +37,13 @@ if (chatGoogleClientId.isNotEmpty() && !Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.go
 
 // Stable internal-test signing is optional for local development, but mandatory
 // for the CI distribution workflow. Never store the keystore or passwords in Git.
+// FastDev shares the public *visible* version (0.03.73) but retains a
+// separately monotonic Android versionCode for safe side-by-side upgrades.
+// Read the official release contract at build time; never hardcode an old LT.
+val officialVersionRequest = file("../release/official-request.json")
+val fastDevDisplayVersion = (groovy.json.JsonSlurper().parse(officialVersionRequest) as Map<*, *>)["version"]
+    ?.toString()?.takeIf { Regex("0\\.\\d{2}\\.\\d{2}").matches(it) }
+    ?: throw org.gradle.api.GradleException("Missing official 0.XX.XX version for FastDev display")
 // FastDev uses an independent monotonic version code. The build lane supplies it.
 val fastDevCode = System.getenv("POKE_FASTDEV_VERSION_CODE")?.let { value ->
     val parsed = value.toIntOrNull() ?: throw org.gradle.api.GradleException("FastDev version must be numeric")
@@ -151,7 +158,7 @@ android {
         versionCode = testVersionCode ?: fastDevCode ?: 51
         versionName = if (testVersionCode != null)
             (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}")
-            else if (fastDevCode != null) "fastdev.$fastDevCode" else "0.51-beta"
+            else if (fastDevCode != null) fastDevDisplayVersion else "0.51-beta"
         buildConfigField("boolean", "FASTDEV_PREVIEW", "false")
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
@@ -203,7 +210,9 @@ android {
         create("preview") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".preview"
-            versionNameSuffix = "-preview"
+            // Android package info and Home show PokeSearch v0.03.73 DEV;
+            // the independent 10000xx versionCode stays internal for OTA.
+            versionNameSuffix = " Dev"
             matchingFallbacks += listOf("debug")
             signingConfig = if (fastDevSigned) signingConfigs.getByName("fastdevPersistent")
                 else signingConfigs.getByName("debug")

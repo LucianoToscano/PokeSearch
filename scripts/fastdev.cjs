@@ -28,7 +28,8 @@ const LOGIN = [
 const PROFILE = [
   "app/tests/lt182-discord-profile-auth-recovery.test.js",
   "app/tests/lt376e-profile-login-selector.test.js",
-  "app/tests/lt381-profile-sync.test.js"
+  "app/tests/lt381-profile-sync.test.js",
+  "app/tests/lt385-home-login-pogocoordinates-icons.test.js"
 ];
 const PROFILE_NATIVE = [
   ...BASIC,
@@ -62,6 +63,8 @@ function plan(changedFiles) {
       LOGIN.forEach(t => selected.add(t));
     } else if (file === "app/src/main/assets/profile_summary.js") {
       PROFILE.forEach(t => selected.add(t));
+    } else if (/^app\/src\/main\/res\/drawable-nodpi\/(home_pogocoordinates_(on|off)|login_modo_(claro|escuro|semlogin))\.webp$/.test(file)) {
+      selected.add("app/tests/lt385-home-login-pogocoordinates-icons.test.js");
     } else if (/^app\/src\/main\/java\/com\/lucianotoscano\/pokesearchoverlay\/(MainActivity|PogoAccountSlots|ProfileAvatarCache)\.java$/.test(file)) {
       // Native files have a wide blast radius; include both smoke and
       // real profile regressions while keeping full Android QA for the PR.

@@ -129,6 +129,7 @@ public class MainActivity extends Activity {
         for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
     }
     private ImageButton homeThemeButton;
+    private ImageView homeLoginProfileShortcut,homePogoCoordinatesShortcut;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
     private View guestHeading;
@@ -449,6 +450,34 @@ public class MainActivity extends Activity {
             badge.setContentDescription("Pokébola "+(i+1)+" usando "+
                 (assigned==0?"Visitante":"Conta "+assigned)+
                 (logged?" conectada":" sem login"));
+        }
+    }
+
+    /** LT385: header identity indicators mirror real PoGoCoordinates sessions.
+     * The first shortcut is a profile/account manager, the second opens the
+     * official PoGoCoordinates site in the isolated slot 1 login WebView.
+     * Never infer authentication from an avatar, theme, or drawable alone. */
+    private void refreshHomeHeaderProfileIcons(){
+        boolean account1=PogoAccountSlots.loggedIn(this,1);
+        boolean account2=PogoAccountSlots.supportsSecond()&&
+            PogoAccountSlots.loggedIn(this,2);
+        if(homeLoginProfileShortcut!=null){
+            boolean signedIn=account1||account2;
+            homeLoginProfileShortcut.setImageResource(signedIn?
+                (homeLightMode?R.drawable.login_modo_escuro:
+                               R.drawable.login_modo_claro):
+                R.drawable.login_modo_semlogin);
+            homeLoginProfileShortcut.setContentDescription(signedIn?
+                "Login e Perfil · conta conectada · gerenciar contas":
+                "Login e Perfil · sem login · conectar conta");
+        }
+        if(homePogoCoordinatesShortcut!=null){
+            homePogoCoordinatesShortcut.setImageResource(account1?
+                R.drawable.home_pogocoordinates_on:
+                R.drawable.home_pogocoordinates_off);
+            homePogoCoordinatesShortcut.setContentDescription(account1?
+                "PoGoCoordinates · Conta 1 conectada · abrir perfil oficial":
+                "PoGoCoordinates · Conta 1 desconectada · entrar no site");
         }
     }
 
@@ -783,6 +812,30 @@ public class MainActivity extends Activity {
         heartLp.leftMargin=d(3);
         controls.addView(heart,heartLp);
         heart.setOnClickListener(v->PixSupport.show(this));
+
+        // LT385 · Atalhos delicados ao lado do botão de doação.
+        // Artes oficiais recebidas do proprietário; mesma geometria da Home.
+        // Perfil mostra o seletor das contas; PoGoCoordinates abre o site
+        // oficial no WebView da Conta 1, sem navegador externo ou novo cookie.
+        homeLoginProfileShortcut=new ImageView(this);
+        homeLoginProfileShortcut.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homeLoginProfileShortcut.setPadding(d(1),d(1),d(1),d(1));
+        homeLoginProfileShortcut.setBackground(null);
+        LinearLayout.LayoutParams profileLp=new LinearLayout.LayoutParams(d(28),d(28));
+        profileLp.leftMargin=d(3);
+        controls.addView(homeLoginProfileShortcut,profileLp);
+        homeLoginProfileShortcut.setOnClickListener(v->showHomeAccountMenu());
+
+        homePogoCoordinatesShortcut=new ImageView(this);
+        homePogoCoordinatesShortcut.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homePogoCoordinatesShortcut.setPadding(d(1),d(1),d(1),d(1));
+        homePogoCoordinatesShortcut.setBackground(null);
+        LinearLayout.LayoutParams pogoLp=new LinearLayout.LayoutParams(d(28),d(28));
+        pogoLp.leftMargin=d(3);
+        controls.addView(homePogoCoordinatesShortcut,pogoLp);
+        homePogoCoordinatesShortcut.setOnClickListener(v->openLoginDialogForSlot(1,
+            PogoAccountSlots.loggedIn(this,1)?"manage":"login"));
+        refreshHomeHeaderProfileIcons();
 
         // O ícone indica o modo que será ativado ao tocar.
         homeThemeButton=makeIcon(homeLightMode?
@@ -1247,7 +1300,8 @@ public class MainActivity extends Activity {
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         // LT73: show the installed APK's real version; no manual version strings.
-        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT",10,
+        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+
+            (BuildConfig.FASTDEV_PREVIEW?"":" LT"),10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
         footer.setBackground(homeSurface(
@@ -1255,7 +1309,8 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         footer.setClickable(true);
-        footer.setContentDescription("Versão instalada "+BuildConfig.VERSION_NAME+
+        footer.setContentDescription("PokeSearch versão "+BuildConfig.VERSION_NAME+
+            (BuildConfig.FASTDEV_PREVIEW?"":" LT")+
             ". Toque para abrir as Novidades e o histórico de atualizações do PokeSearch.");
         // LT379: same native, offline dialog as Menu > Novidades.
         // Never open GitHub, a WebView, OAuth or the browser from this footer.
@@ -1759,6 +1814,13 @@ public class MainActivity extends Activity {
         TextView online=null,installations=null;
         if(accountPage){
             addHomeDrawerItem(drawer,"‹","Voltar ao menu",this::showHomeMenu);
+            addHomeDrawerItem(drawer,"◉","Conta 1 · Login / Perfil",()->
+                openLoginDialogForSlot(1,
+                    PogoAccountSlots.loggedIn(this,1)?"manage":"login"));
+            if(PogoAccountSlots.supportsSecond())
+                addHomeDrawerItem(drawer,"◉","Conta 2 · Login / Perfil",()->
+                    openLoginDialogForSlot(2,
+                        PogoAccountSlots.loggedIn(this,2)?"manage":"login"));
             addHomeDrawerItem(drawer,"◉","Pokébola 1 · Conta",
                 ()->showPokeballAccountChoice(false));
             addHomeDrawerItem(drawer,"◉","Pokébola 2 · Conta",
@@ -2863,6 +2925,7 @@ public class MainActivity extends Activity {
     private void refreshSessionSummary(){
         refreshSecondAccountSummary();
         refreshPokeballLoginBadges();
+        refreshHomeHeaderProfileIcons();
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
         if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);

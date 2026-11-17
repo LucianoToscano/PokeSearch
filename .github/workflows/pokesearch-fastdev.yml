@@ -253,7 +253,12 @@ jobs:
           unzip -t "$APK" >/dev/null
           AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
           SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.lucianotoscano.pokesearch.preview' versionCode='$POKE_FASTDEV_VERSION_CODE'"
+          # Dev and LT share their human-readable 0.XX.XX version.
+          # The Android Preview versionCode remains a separate increasing number.
+          EXPECTED_PUBLIC_VERSION="$(node -p "require('./release/official-request.json').version")"
+          BADGING="$("$AAPT" dump badging "$APK")"
+          printf '%s\n' "$BADGING" | grep -F "package: name='com.lucianotoscano.pokesearch.preview' versionCode='$POKE_FASTDEV_VERSION_CODE' versionName='$EXPECTED_PUBLIC_VERSION Dev'"
+          printf '%s\n' "$BADGING" | grep -F "application-label:'PokeSearch Dev'"
           "$SIGNER" verify --verbose --print-certs "$APK" | tee fastdev-apk/SIGNING-REPORT.txt
           CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' fastdev-apk/SIGNING-REPORT.txt | tr -d '\r' | head -1)"
           test -n "$CERT"
@@ -280,8 +285,9 @@ jobs:
           test "$GITHUB_REF" = "refs/heads/main"
           test "$GITHUB_REPOSITORY" = "LucianoToscano/PokeSearch"
           ! gh release view "$APK_TAG" >/dev/null 2>&1
+          PUBLIC_VERSION="$(node -p "require('./release/official-request.json').version")"
           gh release create "$APK_TAG" fastdev-apk/PokeSearch-FastDev-Preview.apk \
-            --prerelease --target "$GITHUB_SHA" --title "FastDev $POKE_FASTDEV_VERSION_CODE (somente testes)" \
+            --prerelease --target "$GITHUB_SHA" --title "PokeSearch v${PUBLIC_VERSION} Dev · build $POKE_FASTDEV_VERSION_CODE" \
             --notes "Preview assinado, pacote separado e atualização opcional. SHA source: $GITHUB_SHA. Não é a release oficial."
           gh release view "$APK_TAG" --json isPrerelease,isDraft,tagName,assets \
             --jq '{prerelease:.isPrerelease,draft:.isDraft,tag:.tagName,assets:[.assets[].name]}'

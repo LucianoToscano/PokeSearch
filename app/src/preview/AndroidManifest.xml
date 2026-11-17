@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <application
         android:name=".FastDevApplication"
-        android:label="PokeSearch FastDev"
+        android:label="PokeSearch Dev"
         tools:replace="android:label">
         <!-- MainActivity keeps the ONLY launcher filter from the main manifest.
              No separate console/sandbox icon or intermediate welcome screen. -->

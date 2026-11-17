@@ -12,7 +12,7 @@ test("Preview uses the real PokeSearch MainActivity launcher, never console or L
  assert.match(mainManifest,/activity android:name="\.MainActivity" android:exported="true"/);
  assert.match(mainManifest,/android.intent.category.LAUNCHER/);
  assert.match(previewManifest,/android:name="\.FastDevApplication"/);
- assert.match(previewManifest,/android:label="PokeSearch FastDev"/);
+ assert.match(previewManifest,/android:label="PokeSearch Dev"/);
  assert.match(previewManifest,/android:name="\.FastDevConsoleActivity"\s+android:exported="true"/);
  assert.doesNotMatch(previewManifest,/android.intent.category.LAUNCHER|android.intent.action.MAIN/);
  assert.doesNotMatch(previewManifest,/FastDevLiveActivity/);
