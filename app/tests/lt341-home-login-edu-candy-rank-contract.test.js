@@ -42,9 +42,10 @@ assert.match(activity,/login_modo_claro/);
 assert.match(activity,/login_modo_escuro/);
 assert.match(activity,/login_modo_semlogin/);
 assert.doesNotMatch(activity,/overlayAccountLabel1=homeText\("P1 · Conta 1"/);
-assert.match(activity,/branding\.addView\(brand/);
+// LT386: decorative brand removed, the protected admin shortcut survives on ☰.
+assert.doesNotMatch(activity,/branding\.addView\(brand/);
 assert.doesNotMatch(activity,/branding\.addView\(brandLabels/);
-assert.match(activity,/PremiumAccess\.controlled\(\)\)brand\.setOnLongClickListener/);
+assert.match(activity,/PremiumAccess\.controlled\(\)\)menu\.setOnLongClickListener/);
 assert.match(activity,/header\.setOrientation\(LinearLayout\.HORIZONTAL\)/);
 assert.doesNotMatch(activity,/wordmarkWidth=Math\.max|brandTitle|brandSubtitle/);
 assert.match(activity,/heart\.setBackground\(null\)/);
