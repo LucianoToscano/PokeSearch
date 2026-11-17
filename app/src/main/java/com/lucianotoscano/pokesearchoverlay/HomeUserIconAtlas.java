@@ -7,10 +7,10 @@ import java.io.InputStream;
 
 /**
  * LT393: 4x4 atlas of the ORIGINAL owner-submitted Iconehome artwork.
- * Grid indices are stable (0..15). Empty cells correspond to the two
- * dynamic Pokeballs, Assistant and Rocket (not in the submitted ZIP).
- * The source file is a resized app-display derivative; it is not a
- * generated replacement icon and no external image host is required.
+ * Grid indices are stable (0..15). LT394 fills cells 0/1 with the owner's
+ * white OFF Pokéball, cell 7 with the requested monochrome Rocket artwork,
+ * and provides safe optical margins for Quests and Comunidade.
+ * The visual assets are bundled offline and require no external host.
  */
 final class HomeUserIconAtlas {
     private static final String ASSET="home-user-icons-atlas.png";
@@ -21,8 +21,7 @@ final class HomeUserIconAtlas {
     private HomeUserIconAtlas(){}
 
     static synchronized Bitmap icon(Context context,int position){
-        if(position<0||position>=16||position==0||position==1||
-            position==3||position==7)return null;
+        if(position<0||position>=16||position==3)return null;
         if(cached[position]!=null&&!cached[position].isRecycled())
             return cached[position];
         if(!attempted){
