@@ -2,7 +2,7 @@
 // An opt-in preview request is a source-controlled commit, not a release request.
 // No secrets, release signing, version bump or public APK can be triggered here.
 const fs = require("node:fs");
-const MODES = new Set(["fast", "visual", "apk-preview"]);
+const MODES = new Set(["fast", "visual", "java-check", "apk-preview"]);
 function validate(data) {
   if (!data || data.schema !== 1 || !MODES.has(data.mode) ||
       typeof data.request_id !== "string" ||
