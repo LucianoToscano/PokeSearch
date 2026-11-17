@@ -67,3 +67,26 @@ test("LT392 PoGoCoordinates hub contains independent P1/P2 account selectors",()
  assert.match(chooser,/PogoAccountSlots\.bindAccountOnly\(this,secondary,slot\)/);
  assert.match(chooser,/if\(returnToHub\)showPogoAccountHub\(\)/);
 });
+
+test("LT392 public search always provides actual site cards separately from IV-verified matches",()=>{
+ assert.match(probe,/const sitePreviewCards=found\.filter/);
+ assert.match(probe,/sitePreviewCards,found:found\.length/);
+ assert.match(probe,/\.slice\(0,5\)/);
+ const java=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/OverlayService.java"),"utf8");
+ assert.match(java,/showGuestSitePreview\(r,"iv-unconfirmed"\)/);
+ assert.match(java,/showGuestSitePreview\(r,"repeated"\)/);
+ assert.match(java,/card\.put\("filterMatchVerified",false\)/);
+ assert.match(java,/card\.put\("evidenceVerified",false\)/);
+ assert.match(java,/verifiedFavoriteResultsGeneration=-1/);
+ const start=java.indexOf("private boolean showGuestSitePreview(");
+ const end=java.indexOf("private void applyCollectedResults(",start);
+ const preview=java.slice(start,end);
+ assert.doesNotMatch(preview,/recordNewResults\(|rememberConfirmedPreview\(/);
+});
+test("LT392 reviewable site preview never displays filter 100% badge as proven IV",()=>{
+ const dock=fs.readFileSync(path.join(root,"assets/dock.html"),"utf8");
+ assert.match(dock,/guestSitePreviewActive\?"SITE":selectedIcon\.ivBadge/);
+ assert.match(dock,/guestSitePreviewActive&&resultWindow\?"!"/);
+ assert.match(dock,/empty\.title=status\|\|"Aguardando busca"/);
+ assert.match(dock,/guestPreviewVisible=false/);
+});
