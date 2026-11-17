@@ -2406,6 +2406,21 @@
   return {...goFileSource(file),officialForm:!specialCostume,
     officialCostume:!!specialCostume};
  }
+
+ // Generic "Pokemon" labels must never make a Toxtricity image stand for
+ // Ducklett, or a neighboring sprite stand for Magikarp. The independent
+ // Dex table is available locally. Do not infer a species from an image.
+ function normalizeEncounterIdentity(card){
+  if(!card||typeof card!=="object")return card;
+  const dex=dexOf(card),species=BASE_SPECIES[dex];
+  if(!species||!/^(?:pok[eé]mon|pokemon|unknown|desconhecido)(?:\s*#?\d{1,4})?$/i.test(String(card.name||"").trim()))return card;
+  const spelling={29:"Nidoran♀",32:"Nidoran♂",83:"Farfetch'd",122:"Mr. Mime",
+   439:"Mime Jr.",669:"Flabébé",772:"Type: Null"};
+  const label=spelling[dex]||species[0]+species.slice(1).toLowerCase();
+  // A sprite on a generic/ambiguous site row is not an identity proof.
+  // Preserve explicit form/costume metadata for exact-form fallback.
+  return {...card,name:label,image:"",imageFromSite:false};
+ }
  function resolve(card){
   const image=String(card?.image||"");
   const costumeArt=exactCostume(card);
@@ -2598,6 +2613,6 @@
  }
  function rankSprite(rawName){return rankSpriteMeta(rawName).src;}
 
- return Object.freeze({resolve,rankSprite,rankSpriteMeta,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
+ return Object.freeze({resolve,normalizeEncounterIdentity,rankSprite,rankSpriteMeta,goExactIcon,verifiedBase,verifiedSpeciesIdentity,verifiedBundledData,exactBundledData,bundledExactForArt,bundledGoCostumeSource,
   verifiedGalarianZigzagoon,FORM_VARIANTS,FORM_ALIASES,COSTUME_FILES,exactCostume,exactSeasonalForm,exactWestSeaForm});
 });
