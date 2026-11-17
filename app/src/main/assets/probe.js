@@ -1144,7 +1144,7 @@ function parseCard(box,sourceIndex){
  // Conflicting explicit data is still rejected by verifiedCardIv() below.
  const percent=labeledPct||(ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):""));
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
-     m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
+     m=body.match(new RegExp("(?:^|\\b)"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
  const heading=box.querySelector("h2,h3,h4,h5,[class*=font-semibold],[class*=font-bold]");
  let title=heading?text(heading):"";
  if(!title||title.length>85||/^(?:CP|IV|LVL)$/i.test(title)){
