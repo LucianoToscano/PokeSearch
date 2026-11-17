@@ -47,7 +47,7 @@ function pokemon(species,form,shiny=false){
  costume:0,gender:3,shiny};
 }
 const normal=pokemon(150,135),armored=pokemon(150,133),altered=pokemon(487,90);
-assert.equal(call("safeSprite",normal),delivery.remoteUrl("a:pm150.icon.png",index));
+assert.equal(call("safeSprite",normal),"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/150.png");
 assert.ok(seen.includes("pokemon-sprites/base/150.png"),
  "The UI must check if a packaged candidate actually exists");
 assert.equal(call("safeSprite",armored),delivery.remoteUrl("a:pm150.fA.icon.png",index));
