@@ -20,6 +20,7 @@ test("any shipping, shared, signing or unknown change ALWAYS retains full beta Q
  "app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java",
  "app/build.gradle.kts","gradle.properties","app/src/debug/AndroidManifest.xml",
  "scripts/build-official.cjs","release/official-request.json",
+ "scripts/fastdev-qa-scope.cjs","scripts/fastdev-qa-scope.test.cjs",
  ".github/workflows/secure-release.yml",".github/workflows/pokesearch-official-release.yml",
  "README.md",""]){
    assert.equal(requiresBeta(["app/src/preview/AndroidManifest.xml",file]),true,file);
