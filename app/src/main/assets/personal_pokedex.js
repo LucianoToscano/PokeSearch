@@ -10,7 +10,7 @@ const filterDefs=[
 ];
 const presets=[["default","Padrão"],["aurora","Aurora"],["sunset","Pôr do sol"],
                ["ocean","Oceano"],["night","Noite"]];
-const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),
+const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokemon",eggs:[],capacity:0,tagId:null,meta:{moves:new Map(),backgrounds:new Map(),costumes:new Map()},
              query:"",filter:"all",sort:"cp",limit:96,selected:null};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
@@ -26,12 +26,38 @@ const isShadow=p=>Number(p.alignment)===2;
 const isPurified=p=>Number(p.alignment)===1;
 const nameOf=p=>String(p.nickname||"").trim()||speciesName(p);
 const cleanForm=p=>p.formName&&p.formName!=="Unset"?p.formName:"";
+function formVariant(p){
+ const raw=cleanForm(p).replace(/[^a-z0-9]/gi,"").toUpperCase();
+ const dexName=speciesName(p).replace(/[^a-z0-9]/gi,"").toUpperCase();
+ const suffix=raw.startsWith(dexName)?raw.slice(dexName.length):raw;
+ return ["","NORMAL","UNSET","DEFAULT"].includes(suffix)?"":suffix;
+}
+const backgroundMeta=p=>state.meta.backgrounds.get(Number(p.backgroundId));
+const costumeMeta=p=>state.meta.costumes.get(Number(p.costume));
+const isSpecialBg=p=>(backgroundMeta(p)?.type||"")==="SPECIAL_BACKGROUND";
+const isLocationBg=p=>hasBackground(p)&&!isSpecialBg(p);
+function availableMetaName(type,id){
+ const m=state.meta[type].get(Number(id));
+ return m?.name||"Código "+id;
+}
+function loadMeta(){
+ try{
+  const data=JSON.parse(bridge.getMetaCatalog()||"{}");
+  state.meta.moves=new Map((data.moves||[]).map(r=>[r[0],{name:r[1],type:r[2],fast:!!r[3],pvp:r[4],energy:r[5],power:r[6]}]));
+  state.meta.backgrounds=new Map((data.backgrounds||[]).map(r=>[r[0],{name:r[1],type:r[2]}]));
+  state.meta.costumes=new Map((data.costumes||[]).map(r=>[r[0],{name:r[1],noEvolve:!!r[2]}]));
+ }catch(_){}
+}
 function safeSprite(p){
   const lib=window.PokeSearchOfflineSprite;
   if(!lib||typeof lib.resolve!=="function")return "";
   try{
-    const art=lib.resolve({number:Number(p.species),name:speciesName(p),
-      form:cleanForm(p),shiny:!!p.shiny});
+    const exactForm=formVariant(p);
+    const costume=costumeMeta(p);
+    const card={number:Number(p.species),name:speciesName(p),form:exactForm,
+      shiny:!!p.shiny,gender:p.gender===2?"female":"male"};
+    if(p.costume&&costume){card.costume=costume.name;card.costume_id=p.costume;}
+    const art=lib.resolve(card);
     const uri=typeof art==="string"?art:art&&art.src;
     if(typeof uri!=="string")return "";
     // The canonical PokeSearch sprite map produces these two vetted sources.
@@ -59,6 +85,14 @@ function filterPokemon(p){
   case "favorite":return !!p.favorite;
   case "tagged":return !!(p.tags&&p.tags.length);
   case "traded":return !!p.traded;
+  case "tag":return (p.tags||[]).some(t=>String(t)===state.tagId);
+  case "mega":return !!p.hasMegaEvolved;
+  case "event":return (p.events||[]).length>0;
+  case "bgLocal":return isLocationBg(p);
+  case "bgSpecial":return isSpecialBg(p);
+  case "dynamax":return Number(p.breadMode)===1;
+  case "gigantamax":return Number(p.breadMode)===2;
+  case "hatched":return !!p.hatchedFromEgg;
   default:return true;
   }
 }
@@ -75,6 +109,8 @@ function compare(a,b){
   case "iv":return ivValue(b)-ivValue(a)||(b.cp||0)-(a.cp||0);
   case "number":return a.species-b.species||(b.cp||0)-(a.cp||0);
   case "name":return speciesName(a).localeCompare(speciesName(b),"pt-BR");
+  case "hp":return (b.maxStamina||0)-(a.maxStamina||0);
+  case "favorite":return Number(!!b.favorite)-Number(!!a.favorite)||(b.cp||0)-(a.cp||0);
   default:return (b.cp||0)-(a.cp||0);
   }
 }
@@ -89,6 +125,62 @@ function renderStats(){
   el("m-shiny").textContent=number(all.filter(p=>p.shiny).length);
   el("m-hundo").textContent=number(all.filter(isHundo).length);
   el("m-bg").textContent=number(all.filter(hasBackground).length);
+}
+function renderTabs(){
+ el("app").classList.toggle("tab-tags",state.tab==="tags");
+ el("app").classList.toggle("tab-eggs",state.tab==="eggs");
+ document.querySelectorAll("[data-tab]").forEach(b=>{
+  b.classList.toggle("active",b.dataset.tab===state.tab);
+  b.setAttribute("aria-selected",String(b.dataset.tab===state.tab));
+ });
+ el("tags-panel").hidden=state.tab!=="tags";
+ el("eggs-panel").hidden=state.tab!=="eggs";
+ el("tab-tags-count").textContent=number(state.tags.size);
+ el("tab-pokemon-count").textContent=number(state.all.length)+(state.capacity?" / "+number(state.capacity):"");
+ el("tab-eggs-count").textContent=number(state.eggs.length);
+}
+function svgShape(key){
+ const row=window.PokeSearchTagShapes?.[key];
+ if(!row)return '<span aria-hidden="true">★</span>';
+ return '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+row[0]+' '+row[1]+'"><path d="'+escapeHtml(row[2])+'"/></svg>';
+}
+const categoryDefs=[
+ ["shiny","Brilhante","brilhante","#f0cf70"],
+ ["lucky","Sortudo","sortudo","#eac492"],
+ ["shadow","Sombroso","sombroso","#a88acc"],
+ ["purified","Purificado","purificado","#92d5d3"],
+ ["event","Evento","evento","#dea5cf"],
+ ["traded","Trocado","trocado","#8bd3c1"],
+ ["mega","Megaevoluiu","megaevoluiu","#bc6690"],
+ ["bgLocal","Fundo de localidade","fundo_de_localidade","#86d7ee"],
+ ["bgSpecial","Fundo especial","fundo_especial","#88b2e7"],
+ ["dynamax","Dinamax","dinamax","#e91293"],
+ ["gigantamax","Gigamax","gigamax","#b20073"],
+ ["hundo","IV 100%","brilhante","#edb2a3"],
+ ["costume","Vestimenta","evento","#d2b3d6"],
+ ["hatched","Chocado","chocado","#86cda6"],
+ ["favorite","Favoritos","brilhante","#a9d4be"],
+ ["tagged","Etiquetas","evento","#8bb7da"]
+];
+function renderTags(){
+ el("tag-categories").innerHTML=categoryDefs.map(([key,label,icon,color])=>{
+  const count=state.all.filter(p=>{const filter=state.filter;state.filter=key;const ok=filterPokemon(p);state.filter=filter;return ok}).length;
+  return '<button class="category" data-category="'+key+'" aria-label="'+escapeHtml(label)+': '+number(count)+'"><span class="bubble" style="background:'+color+'">'+svgShape(icon)+'</span><span class="label">'+escapeHtml(label)+'</span><span class="count">'+number(count)+'</span></button>';
+ }).join("");
+ el("personal-tags").innerHTML=Array.from(state.tags.entries()).map(([key,name])=>{
+  const count=state.all.filter(p=>(p.tags||[]).includes(key)).length;
+  return '<button class="personal-tag" data-tag="'+escapeHtml(key)+'"><i class="dot"></i><span class="tag-name">'+escapeHtml(name)+'</span><span class="tag-count">'+number(count)+'</span></button>';
+ }).join("")||'<p class="pane-sub">Nenhuma etiqueta no arquivo importado.</p>';
+}
+function renderEggs(){
+ el("egg-grid").innerHTML=state.eggs.length?state.eggs.map((egg,i)=>{
+  const distance=egg.distance?decimal(egg.distance,0)+" km":"Distância indisponível";
+  return '<div class="egg"><div class="egg-art" aria-hidden="true">◈</div><strong>'+escapeHtml(distance)+'</strong><span>'+(egg.incubating?"Incubando":"Não incubado")+'</span></div>';
+ }).join(""):'<p class="pane-sub">Nenhum ovo no arquivo importado.</p>';
+}
+function setTab(name){
+ if(!["tags","pokemon","eggs"].includes(name))return;
+ state.tab=name;renderTabs();
 }
 function summaryTime(){
   const s=state.snapshotTime;
@@ -128,6 +220,8 @@ function loadSlot(){
   let data={};
   try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
   state.all=Array.isArray(data.pokemons)?data.pokemons:[];
+  state.eggs=Array.isArray(data.eggs)?data.eggs:[];
+  state.capacity=Number(data.capacity)||0;
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
   state.query="";state.filter="all";state.limit=96;
@@ -135,7 +229,7 @@ function loadSlot(){
   el("slot1").classList.toggle("active",state.slot===1);
   el("slot2").classList.toggle("active",state.slot===2);
   el("collection-title").textContent="Inventário "+state.slot;
-  summaryTime();renderFilters();renderStats();render();
+  summaryTime();renderFilters();renderStats();render();renderTabs();renderTags();renderEggs();
 }
 function hbar(label,v){
   return '<div class="ivrow"><span>'+escapeHtml(label)+'</span><div class="ivbar"><i style="width:'+
