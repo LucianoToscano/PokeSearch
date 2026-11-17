@@ -7,6 +7,20 @@ const source=fs.readFileSync(root+"personal_pokedex.js","utf8");
 const manifest=JSON.parse(fs.readFileSync(root+"pokedex_sprite_manifest.json","utf8"));
 const catalog=require("../src/main/assets/pokedex_sprite_catalog.js").create(manifest);
 const delivery=require("../src/main/assets/pokedex_sprite_delivery.js");
+// LT406: the native catalog must accept the shipped 40-character commit pin.
+const nativeStore=fs.readFileSync(
+ "app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokedexSpriteStore.java","utf8");
+const nativePin=nativeStore.match(/private static final String PINNED_COMMIT="([0-9a-f]{40})";/);
+assert.ok(nativePin,"Android sprite store needs a full SHA pin");
+assert.equal(nativePin[1],manifest.commit,
+ "Android store must accept the bundled manifest or numeric forms lose their artwork");
+const deliveryCode=fs.readFileSync(root+"pokedex_sprite_delivery.js","utf8");
+const deliveryPin=deliveryCode.match(/const PIN="([0-9a-f]{40})";/);
+assert.ok(deliveryPin,"Web sprite provider needs a full SHA pin");
+assert.equal(deliveryPin[1],manifest.commit,
+ "Android, manifest and WebView must all reference the same PokeMiners commit");
+assert.ok(manifest.files.length>=3850&&manifest.legacy.length>=2213,
+ "The sprite catalog must not be silently emptied");
 new vm.Script(source);
 const start=source.indexOf("function spriteLocalUrl(");
 const end=source.indexOf("function filterPokemon(");
