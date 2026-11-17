@@ -22,3 +22,6 @@
 .tag-edit{border:1px solid #bddcd1;background:#effaf3;color:var(--ink);
  font-size:11px;padding:4px 9px;border-radius:16px;margin:0 0 0 5px}
 @media(max-width:380px){.lt402-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lt402-diff{border-top:1px solid #d5e9df;margin-top:9px;padding:8px 0}
+.lt402-diff summary{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
+.lt402-diff ul{padding:4px 0 4px 18px;max-height:220px;overflow:auto;font-size:12px;line-height:1.7}
