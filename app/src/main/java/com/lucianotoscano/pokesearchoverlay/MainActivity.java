@@ -1405,6 +1405,21 @@ public class MainActivity extends Activity {
         holder.setVisibility(View.VISIBLE);
     }
 
+    // Compact last-success indicator: distinguish verified profile from
+    // pending name hydration and avatar-only failures without widening cards.
+    private String profileSyncLabel(SharedPreferences account){
+        String status=account.getString("profileSyncState","");
+        if("pending".equals(status))return " · Sincronizando perfil…";
+        if("error".equals(status))return " · Perfil indisponível";
+        String avatar=account.getString("profileAvatarState","");
+        if("unavailable".equals(avatar))return " · Foto indisponível";
+        if("pending".equals(avatar))return " · Foto pendente";
+        long timestamp=account.getLong("profileLastSyncedAt",0L);
+        if(timestamp<=0||timestamp>System.currentTimeMillis())return "";
+        String pattern=System.currentTimeMillis()-timestamp<86_400_000L?"HH:mm":"dd/MM";
+        return " · ✓ "+new SimpleDateFormat(pattern,Locale.getDefault()).format(new Date(timestamp));
+    }
+
     private void refreshSecondAccountSummary(){
         boolean available=PogoAccountSlots.supportsSecond();
         SharedPreferences two=PogoAccountSlots.prefs(this,2);
@@ -1439,15 +1454,10 @@ public class MainActivity extends Activity {
         refreshSecondGoogleAvatar(connected?two.getString("profileAvatarUrl",""):"");
         if(secondAccountProvider!=null){
             String provider=two.getString("profileProvider","");
-            String status=two.getString("profileSyncState","");
             String base="Google".equals(provider)?"G  Logado via Google":
                 "Discord".equals(provider)?"◉  Logado via Discord":
                 "Conectado ao PoGoCoordinates";
-            secondAccountProvider.setText(base+
-                ("pending".equals(status)?" · Sincronizando perfil…":
-                 "error".equals(status)?" · Perfil indisponível":
-                 "unavailable".equals(two.getString("profileAvatarState",""))?" · Foto indisponível":
-                 "pending".equals(two.getString("profileAvatarState",""))?" · Foto pendente":""));
+            secondAccountProvider.setText(base+profileSyncLabel(two));
         }
         if(secondAvatarFrame!=null)
             secondAvatarFrame.setImageDrawable(homeAvatarOutline(linked?team:""));
@@ -2868,15 +2878,10 @@ public class MainActivity extends Activity {
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
-            String status=prefs.getString("profileSyncState","");
             String base="Google".equals(provider)?"G  Logado via Google":
                 "Discord".equals(provider)?"◉  Logado via Discord":
                 "Conectado ao PoGoCoordinates";
-            accountProvider.setText(base+
-                ("pending".equals(status)?" · Sincronizando perfil…":
-                 "error".equals(status)?" · Perfil indisponível":
-                 "unavailable".equals(prefs.getString("profileAvatarState",""))?" · Foto indisponível":
-                 "pending".equals(prefs.getString("profileAvatarState",""))?" · Foto pendente":""));
+            accountProvider.setText(base+profileSyncLabel(prefs));
         }
         String trainer=prefs.getString("profileTrainerName",""),
             code=prefs.getString("profileTrainerCode","");
@@ -3208,6 +3213,7 @@ public class MainActivity extends Activity {
                         .putString("profileDisplayName",name)
                         .putString("profileSyncState","verified")
                         .putLong("profileLastSyncedAt",System.currentTimeMillis());
+                    if(newIdentity)edit.remove("profileProvider");
                     String provider=profile.optString("provider","");
                     // Linked Google/Discord provider is NOT proof of the
                     // provider used this time. Only observed OAuth is.
