@@ -1,0 +1,11 @@
+"use strict";
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const root=path.resolve(__dirname,"../.."),read=p=>fs.readFileSync(path.join(root,p),"utf8");
+for(const p of [".github/workflows/pokesearch-fastdev.yml",".github/workflows/pokesearch-fastdev-branch.yml",".github/workflows/pokesearch-preview-compile.yml","app/src/preview/AndroidManifest.xml","fastdev/latest.json","fastdev/preview-request.json","scripts/fastdev.cjs","scripts/fastdev-manifest.cjs","docs/FASTDEV_GUIA.md"]) assert.ok(!fs.existsSync(path.join(root,p)),p+" still present");
+for(const p of ["app/build.gradle.kts","app/src/main/java/com/lucianotoscano/pokesearchoverlay/IntegrityGuard.java","app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java","app/src/main/java/com/lucianotoscano/pokesearchoverlay/GitHubUpdateCenter.java"]) assert.doesNotMatch(read(p),/FASTDEV_PREVIEW|POKE_FASTDEV|\.preview|FastDev/i,p+" DEV remnant");
+const gradle=read("app/build.gradle.kts");
+assert.match(gradle,/versionCode = testVersionCode \?: 51/);
+assert.doesNotMatch(gradle,/create\("preview"\)|applicationIdSuffix/);
+assert.match(read(".github/workflows/pokesearch-official-release.yml"),/environment: official-updates/);
+assert.doesNotMatch(read(".github/workflows/secure-release.yml"),/fastdev|Preview-only|steps\.scope/i);
+console.log("LT407: official-only channel, no FastDev/DEV APK or Preview workflow");

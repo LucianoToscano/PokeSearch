@@ -15,7 +15,7 @@ assert.match(home,/PremiumAccess\.controlled\(\)\)menu\.setOnLongClickListener/)
 assert.doesNotMatch(home,/homeText\("POKÉMON GO"/);
 assert.doesNotMatch(main,/homeWatchStatus/);
 assert.match(main,/TextView footer=homeText\("PokeSearch v"\+BuildConfig\.VERSION_NAME\+/);
-assert.match(main,/BuildConfig\.FASTDEV_PREVIEW\?"":" LT"/);
+assert.match(main,/BuildConfig\.VERSION_NAME\+\s*" LT"/);
 assert.doesNotMatch(home,/PoGoCoordinates \/search/);
 assert.ok(home.includes("footer.setOnClickListener(v->ReleaseNotes.showHistory(this));"));
 assert.ok(!home.includes("github.com/LucianoToscano/PokeSearch/releases/tag/"));

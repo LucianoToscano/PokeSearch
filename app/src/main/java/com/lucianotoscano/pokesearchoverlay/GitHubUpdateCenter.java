@@ -126,7 +126,6 @@ public final class GitHubUpdateCenter {
             "pokesearch-"+r.versionCode+".apk").length()==r.size;
     }
     public static void schedule(Context c) {
-        if (BuildConfig.FASTDEV_PREVIEW) return; // Official OTA is disabled only in isolated Preview.
         try {
             Constraints constraints=new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED).build();
@@ -158,12 +157,10 @@ public final class GitHubUpdateCenter {
         }
     }
     public static void checkManual(MainActivity activity) {
-        if (BuildConfig.FASTDEV_PREVIEW) return;
         lastCheck=0L;
         check(activity);
     }
     public static void check(MainActivity activity) {
-        if (BuildConfig.FASTDEV_PREVIEW) return;
         long now=android.os.SystemClock.elapsedRealtime();
         if(lastCheck!=0&&now>=lastCheck&&now-lastCheck<MIN_INTERVAL_MS){
             Release r=cached;

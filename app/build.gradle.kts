@@ -37,33 +37,7 @@ if (chatGoogleClientId.isNotEmpty() && !Regex("[0-9]+-[A-Za-z0-9_-]+\\.apps\\.go
 
 // Stable internal-test signing is optional for local development, but mandatory
 // for the CI distribution workflow. Never store the keystore or passwords in Git.
-// FastDev shares the public *visible* version (0.03.73) but retains a
-// separately monotonic Android versionCode for safe side-by-side upgrades.
-// Read the official release contract at build time; never hardcode an old LT.
-val officialVersionRequest = file("../release/official-request.json")
-val fastDevDisplayVersion = (groovy.json.JsonSlurper().parse(officialVersionRequest) as Map<*, *>)["version"]
-    ?.toString()?.takeIf { Regex("0\\.\\d{2}\\.\\d{2}").matches(it) }
-    ?: throw org.gradle.api.GradleException("Missing official 0.XX.XX version for FastDev display")
-// FastDev uses an independent monotonic version code. The build lane supplies it.
-val fastDevCode = System.getenv("POKE_FASTDEV_VERSION_CODE")?.let { value ->
-    val parsed = value.toIntOrNull() ?: throw org.gradle.api.GradleException("FastDev version must be numeric")
-    if (parsed !in 1_000_000..2_000_000_000)
-        throw org.gradle.api.GradleException("FastDev version outside safe Android range")
-    parsed
-}
-val fastDevKeyFile = System.getenv("POKE_FASTDEV_KEYSTORE")?.takeIf { it.isNotBlank() }
-val fastDevStorePassword = System.getenv("POKE_FASTDEV_STORE_PASSWORD")
-val fastDevKeyAlias = System.getenv("POKE_FASTDEV_KEY_ALIAS")
-val fastDevKeyPassword = System.getenv("POKE_FASTDEV_KEY_PASSWORD")
-val fastDevSigningFields = listOf(fastDevKeyFile, fastDevStorePassword, fastDevKeyAlias, fastDevKeyPassword)
-val fastDevSigned = fastDevSigningFields.all { !it.isNullOrBlank() }
-val fastDevRequired = System.getenv("POKE_FASTDEV_SIGNING_REQUIRED") == "true"
-if ((fastDevRequired || fastDevSigningFields.any { !it.isNullOrBlank() }) && !fastDevSigned)
-    throw org.gradle.api.GradleException("FastDev requires all four dedicated signing secrets")
-if (fastDevRequired && fastDevCode == null)
-    throw org.gradle.api.GradleException("Monotonic FastDev version code is required")
-if (fastDevSigned && !file(fastDevKeyFile!!).isFile)
-    throw org.gradle.api.GradleException("Dedicated FastDev keystore file not restored")
+// Only the protected official release sets the public Android version.
 val testVersionCode = System.getenv("POKE_TEST_VERSION_CODE")?.let { value ->
     val parsed = value.toIntOrNull()
         ?: throw org.gradle.api.GradleException("POKE_TEST_VERSION_CODE must be numeric")
@@ -155,11 +129,10 @@ android {
         buildConfigField("String", "PREMIUM_GOOGLE_WEB_CLIENT_ID", "\"$premiumGoogleWebClientId\"")
         buildConfigField("String", "PREMIUM_BACKEND_URL", "\"https://pokesearch-premium-luc.netlify.app/api/premium\"")
         buildConfigField("boolean", "CONTROLLED_DISTRIBUTION", "false")
-        versionCode = testVersionCode ?: fastDevCode ?: 51
+        versionCode = testVersionCode ?: 51
         versionName = if (testVersionCode != null)
             (publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}")
-            else if (fastDevCode != null) fastDevDisplayVersion else "0.51-beta"
-        buildConfigField("boolean", "FASTDEV_PREVIEW", "false")
+            else "0.51-beta"
     }
     // Sideloaded beta: keep tested overlay behavior on target 32. Play Store publishing needs a separate target SDK migration.
     lint { disable += "ExpiredTargetSdkVersion" }
@@ -184,16 +157,6 @@ android {
             }
         }
     }
-    if (fastDevSigned) {
-        signingConfigs {
-            create("fastdevPersistent") {
-                storeFile = file(fastDevKeyFile!!)
-                storePassword = fastDevStorePassword
-                keyAlias = fastDevKeyAlias
-                keyPassword = fastDevKeyPassword
-            }
-        }
-    }
     buildTypes {
         getByName("debug") {
             if (testSigningComplete) {
@@ -204,23 +167,6 @@ android {
                 buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256",
                     "\"$officialTestCertificateSha256\"")
             }
-        }
-        // FastDev only: an isolated debug APK that can coexist with the official app.
-        // Never use the protected production keystore or public versionCode for preview.
-        create("preview") {
-            initWith(getByName("debug"))
-            applicationIdSuffix = ".preview"
-            // Android package info and Home show PokeSearch v0.03.73 DEV;
-            // the independent 10000xx versionCode stays internal for OTA.
-            versionNameSuffix = " Dev"
-            matchingFallbacks += listOf("debug")
-            signingConfig = if (fastDevSigned) signingConfigs.getByName("fastdevPersistent")
-                else signingConfigs.getByName("debug")
-            buildConfigField("boolean", "FASTDEV_PREVIEW", "true")
-            isDebuggable = true
-            isMinifyEnabled = false
-            isShrinkResources = false
-            buildConfigField("String", "EXPECTED_SIGNING_CERT_SHA256", "\"\"")
         }
         getByName("release") {
             // Off by default, even for official releases; only isolated signed QA can opt in.

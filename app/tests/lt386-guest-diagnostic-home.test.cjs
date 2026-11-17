@@ -9,7 +9,8 @@ const service=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/Overl
 const home=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
 const dock=read("app/src/main/assets/dock.html");
 const transport=read("app/src/main/assets/api_browser_transport.js");
-const signing=read(".github/workflows/pokesearch-fastdev.yml");
+const official=read(".github/workflows/pokesearch-official-release.yml");
+const gradle=read("app/build.gradle.kts");
 
 test("P1/P2 share a guest-safe ordinary search and preserve the independent slot",()=>{
  assert.match(service,/PogoAccountSlots\.assigned\(this,isSecondaryOverlay\(\)\)/);
@@ -54,10 +55,11 @@ test("Home has no PokeSearch logo and retains profile and provider icons beside 
   assert.ok(fs.existsSync(path.join(root,"app/src/main/res/drawable-nodpi",asset)),asset);
  assert.match(home,/if\(PremiumAccess\.controlled\(\)\)menu\.setOnLongClickListener/);
 });
-test("FastDev remains a protected, separately signed Preview with 4 secret references",()=>{
- assert.match(signing,/environment: fastdev-signing/);
- for(const secret of ["POKE_FASTDEV_KEYSTORE_B64","POKE_FASTDEV_STORE_PASSWORD","POKE_FASTDEV_KEY_ALIAS","POKE_FASTDEV_KEY_PASSWORD"])
-  assert.ok(signing.includes("secrets."+secret),secret);
- assert.match(signing,/EXPECTED_FASTDEV_CERT/);
- assert.match(signing,/github\.ref == 'refs\/heads\/main'/);
+test("only the official PokeSearch release remains distributable",()=>{
+ assert.match(official,/environment: official-updates/);
+ assert.match(official,/POKE_RELEASE_CERT_SHA256/);
+ assert.match(gradle,/applicationId = "com\\.lucianotoscano\\.pokesearch"/);
+ assert.doesNotMatch(gradle,/create\\("preview"\\)|FASTDEV_PREVIEW|POKE_FASTDEV/);
+ assert.ok(!fs.existsSync(path.join(root,".github/workflows/pokesearch-fastdev.yml")));
+ assert.ok(!fs.existsSync(path.join(root,"fastdev/latest.json")));
 });
