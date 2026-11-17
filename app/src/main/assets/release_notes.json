@@ -5323,6 +5323,34 @@
           "As contagens Evento/Megaevoluiu do jogo podem usar regras diferentes das disponíveis no instantâneo PGSStats; indicadores do app mostram apenas dados confirmáveis."
         ]
       }
+    },
+    {
+      "id": "lt401-restaurar-sprites-formas-pgsstats-20261117",
+      "minVersionCode": 54593,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT401 — Correção de sprites ausentes na Minha Pokédex",
+      "sections": {
+        "novidades": [
+          "A Minha Pokédex agora reconhece IDs numéricos de forma enviados pelo PGSStats.json, mesmo sem nome de forma.",
+          "Imagens exatas catalogadas podem ser mostradas sob demanda pela internet, sem exigir baixar previamente toda a biblioteca."
+        ],
+        "melhorias": [
+          "Quando a forma Normal é confirmada pelos metadados, a imagem já instalada é reutilizada sem conexão.",
+          "Mewtwo Armored e Normal, Giratina Altered, Zacian/Zamazenta Hero, Landorus Incarnate e outras variantes recebem correspondência própria.",
+          "As imagens baixadas para o cache privado permanecem prioritárias; os downloads opcionais da coleção continuam disponíveis."
+        ],
+        "correcoes": [
+          "Corrigidos os losangos que substituíam sprites após a LT400, especialmente quando formName vinha vazio no PGSStats.",
+          "IDs de formas desconhecidas não são convertidos em imagens de forma base, protegendo variantes, Shiny e trajes.",
+          "A WebView carrega apenas imagens PNG da origem PokeMiners em commit fixo e de fontes PokeAPI já autorizadas."
+        ],
+        "emDesenvolvimento": [
+          "As imagens de formas sem recurso catalogado continuam indisponíveis; não exibimos sprites incorretas.",
+          "Formas não armazenadas localmente precisam de internet para a exibição automática, ou de download privado manual.",
+          "Homologação visual no aparelho Samsung Android 17 ainda é necessária; a publicação valida compilação e integridade, não captura de tela física.",
+          "Sincronização contínua do PGSStats e exclusões locais ainda estão em desenvolvimento separado."
+        ]
+      }
     }
   ]
 }
