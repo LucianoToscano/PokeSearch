@@ -88,10 +88,23 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 </nav>
 <div class="segment"><button id="slot1" class="active">Inventário 1</button><button id="slot2">Inventário 2</button></div></header>
 <section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON</button></section>
+<section class="source-sync" aria-label="Atualização do PGSStats">
+ <div class="source-sync-actions">
+  <button type="button" id="link-stats" class="sync-button">Vincular PGSStats.json</button>
+  <button type="button" id="refresh-stats" class="sync-button" disabled>Atualizar agora</button>
+  <button type="button" id="unlink-stats" class="sync-button" disabled>Desvincular</button>
+ </div>
+ <div class="source-sync-detail">
+  <label><input id="auto-sync" type="checkbox" disabled> Verificar atualizações automaticamente</label>
+  <small id="source-status">Nenhum arquivo vinculado · escolha um PGSStats.json para começar.</small>
+ </div>
+ <p class="source-caution">Sincroniza só o inventário local. Não altera o arquivo do PGSharp nem transfere Pokémon no jogo.</p>
+</section>
 <div class="inventory-tools">
  <button type="button" id="sprites-open" class="tool-button"><span aria-hidden="true">◈</span> Sprites <small id="sprite-cache-count">0</small></button>
  <button type="button" id="backgrounds-open" class="tool-button"><span aria-hidden="true">▧</span> Fundos <small id="background-cache-count">0/263</small></button>
  <button type="button" id="history-open" class="tool-button"><span aria-hidden="true">◷</span> Histórico</button>
+ <button type="button" id="hidden-open" class="tool-button"><span aria-hidden="true">◌</span> Ocultos <small id="hidden-count">0</small></button>
  <button type="button" id="select-toggle" class="tool-button"><span aria-hidden="true">▣</span> Comparar</button>
 </div>
 <div id="selection-strip" class="selection-strip" hidden>
@@ -139,12 +152,25 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <textarea id="personal-note" class="personal-note" rows="3" maxlength="500" placeholder="Ex.: guardar para PvP ou evoluir depois…"></textarea>
 <button type="button" id="save-note" class="preset">Salvar anotação</button>
 <p class="note">Salva somente neste aparelho, separadamente do arquivo importado.</p></div>
+<div class="group">
+ <h3>Gerenciar este exemplar</h3>
+ <button type="button" id="hide-current" class="preset">Excluir do inventário local</button>
+ <p class="note">Oculta apenas este exemplar da Minha Pokédex e pode ser desfeito em Ocultos. Nunca transfere ou exclui no Pokémon GO.</p>
+</div>
 <div class="group"><h3>Fundo da ficha · Apenas decorativo</h3><div class="actions" id="presets"></div>
 <div id="background-availability" class="note"></div>
 <button type="button" id="background-gallery-for-pokemon" class="preset">Escolher outro fundo da galeria</button>
 <p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
-<p class="note">Informações importadas do arquivo local, não sincronizadas automaticamente com Pokémon GO. Identificadores de trajes/fundos permanecem registrados mesmo sem arte específica disponível.</p>
+<p class="note">As informações refletem a última exportação JSON lida. Uma ausência entre exportações não comprova transferência. Trajes e fundos permanecem registrados mesmo sem a arte específica disponível.</p>
 </div></div>
+<div id="hidden-panel" class="overlay-sheet" hidden>
+ <div class="modal-card">
+  <div class="modal-title"><h2>Pokémon ocultos localmente</h2><button type="button" id="hidden-close" aria-label="Fechar">×</button></div>
+  <p class="modal-help">Apenas a visualização no PokeSearch é alterada; esta lista não altera o PGSharp nem os Pokémon do jogo. Exemplares ausentes na exportação não são automaticamente considerados transferidos.</p>
+  <div id="hidden-rows" class="history-rows"></div>
+  <button type="button" id="hidden-restore-all" class="preset">Restaurar todos os ocultos</button>
+ </div>
+</div>
 <div id="sprite-panel" class="overlay-sheet" hidden>
  <div class="modal-card">
   <div class="modal-title"><h2>Banco visual de Pokémon GO</h2><button type="button" id="sprites-close" aria-label="Fechar">×</button></div>
