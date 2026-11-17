@@ -7,7 +7,7 @@ const gear=fs.readFileSync("app/src/main/res/drawable/pgs_menu_customize.xml","u
 
 // Home alignment: logo and compact controls on same visual line, badges 2dp above balls.
 assert.match(home,/header\.setOrientation\(LinearLayout\.HORIZONTAL\)/);
-assert.match(home,/header\.addView\(branding,new LinearLayout\.LayoutParams\(0,d\(54\),1f\)\)/);
+assert.match(home,/header\.setGravity\(Gravity\.RIGHT\|Gravity\.CENTER_VERTICAL\)/);
 assert.match(home,/header\.addView\(controls,new LinearLayout\.LayoutParams\(-2,d\(48\)\)\)/);
 assert.match(home,/d\(30\),d\(21\),Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
 assert.match(home,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
