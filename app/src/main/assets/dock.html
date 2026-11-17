@@ -5347,7 +5347,7 @@ let displayedMetadataWidth=0;
 // Temporary upstream pause. Keep the original Shiny code and icons for
 // later verified reactivation; ordinary guest/logged searches stay active.
 const PROVIDER_SHINY_AVAILABLE=false;
-let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=3,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off",guestLimited=false;
+let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",guestSitePreviewActive=false,row=46,menuOpen=false,choiceOpen="",period=3,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off",guestLimited=false;
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],pokemonSavedSelections:[],pokemonFilterEnabled:true,form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
@@ -7948,10 +7948,12 @@ function draw(){
  // Only the independent results WebView owns the Pokémon list and its taps.
  if(resultWindow)document.getElementById("spawns").innerHTML=cards.map((c,i)=>{
   const verifiedPercent=verifiedSpawnIvPercent(c);
+  // Preview cards reflect their OWN IV, never the 100%-filter Pokébola badge.
+  const previewIcon=c.sitePreview===true;
   const evidence=window.PokeSearchResultEvidence?.assess(c,{
    stale:resultsStale,searching:searchActive
   },{ivVerified:verifiedPercent!==null});
-  const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
+  const label=[c.name,previewIcon?"Resultado do site, filtro não confirmado":"",verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
   const evidenceTitle=""; // Repetitive provenance diagnostics stay off the visible and spoken cards.
   const evidenceFlag=resultDisplayOptions.highlights&&evidence?.warning&&evidence.icon?
    '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
@@ -8084,10 +8086,13 @@ function draw(){
  // Pokébola counter; otherwise 0 is shown centered directly below it.
  // No duplicate numbers or hidden empty result; same logic on P1 and P2.
  const emptyResult=!cards.length;
- empty.style.display=emptyResult&&(!resultWindow||!resultDisplayOptions.count)?
-  "block":"none";
+ // In public-site preview, preserve all sprites and add a small clickable
+ // warning BELOW them. The user can inspect why the configured IV did not match.
+ empty.style.display=guestSitePreviewActive&&resultWindow?
+   "block":emptyResult&&(!resultWindow||!resultDisplayOptions.count)?
+    "block":"none";
  const waiting=nextQueryAt>Date.now();
- empty.textContent=emptyResult&&
+ empty.textContent=guestSitePreviewActive&&resultWindow?"!":emptyResult&&
   !["error","searching","filling"].includes(activeSearchPhase)?
   "0":activeSearchPhase==="error"?"!":"…";
  empty.title=status||"Aguardando busca";
@@ -8119,14 +8124,14 @@ function draw(){
    image.src=selectedIcon.path;
   }
   const primaryBadge=document.getElementById("modeIndicatorValue");
-  primaryBadge.textContent=selectedIcon.ivBadge;
-  primaryBadge.classList.toggle("visible",!!selectedIcon.ivBadge);
+  primaryBadge.textContent=guestSitePreviewActive?"SITE":selectedIcon.ivBadge;
+  primaryBadge.classList.toggle("visible",guestSitePreviewActive||!!selectedIcon.ivBadge);
    primaryBadge.classList.toggle("long",String(selectedIcon.ivBadge||"").length>4);
   primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo");
-  primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo");
+  primaryBadge.classList.toggle("perfect",!guestSitePreviewActive&&selectedIcon.family==="hundo");
   document.getElementById("modeIndicatorShiny").classList.toggle("visible",selectedIcon.shinyBadge);
   document.getElementById("modeIndicatorBackground").classList.toggle("visible",selectedIcon.backgroundBadge);
-  const label=(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+(activeSearchPhase==="filling"?"Preenchendo filtros · ":activeSearchPhase==="searching"?"Buscando · ":activeSearchPhase==="error"?"⚠ Falha na busca · ":"")+selectedIcon.title+
+  const label=(guestSitePreviewActive?"⚠ Lista pública do site · filtro não confirmado · ":"")+(hasHistory&&resultsStale?"⚠ Resultados anteriores · ":"")+(activeSearchPhase==="filling"?"Preenchendo filtros · ":activeSearchPhase==="searching"?"Buscando · ":activeSearchPhase==="error"?"⚠ Falha na busca · ":"")+selectedIcon.title+
       ((iconMode==="gl"||iconMode==="ul")?" · PvP top "+(iconMode==="gl"?iconSettings.glRank:iconSettings.ulRank):"")+
       (!hasHistory&&shinyPending?" · Shiny aguardando confirmação":"");
   header.title=label+(waiting?" · próxima consulta em "+Math.ceil((nextQueryAt-Date.now())/1000)+"s":"")+
@@ -8207,11 +8212,12 @@ function releaseUiTimers(){
  if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
 }
 window.addEventListener("pagehide",releaseUiTimers);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false,guestLimitVisible=false)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false,guestLimitVisible=false,guestPreviewVisible=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
  cards=Array.isArray(a)?a.slice(0,10).map(card=>window.PokeSearchOfflineSprite?.normalizeEncounterIdentity?.(card)||card):[]; // Preserve provider cap; only fix verifiable Dex display
  guestLimited=guestLimitVisible===true;
+ guestSitePreviewActive=guestPreviewVisible===true;
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
