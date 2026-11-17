@@ -1,15 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application>
-        <activity android:name=".FastDevConsoleActivity"
-            android:exported="true"
-            android:label="PokeSearch FastDev">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".FastDevLiveActivity"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:name=".FastDevApplication"
+        android:label="PokeSearch FastDev"
+        tools:replace="android:label">
+        <!-- MainActivity keeps the ONLY launcher filter from the main manifest.
+             No separate console/sandbox icon or intermediate welcome screen. -->
+        <activity
+            android:name=".FastDevConsoleActivity"
             android:exported="false"
-            android:label="FastDev Live Preview" />
+            android:label="Atualizações FastDev" />
     </application>
 </manifest>
