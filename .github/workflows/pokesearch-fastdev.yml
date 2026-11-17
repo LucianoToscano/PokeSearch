@@ -73,6 +73,7 @@ jobs:
           node --test scripts/fastdev.test.cjs
           node --test scripts/fastdev-branch-contract.test.cjs
           node --test scripts/fastdev-automatic-home.test.cjs
+          node --test scripts/fastdev-qa-scope.test.cjs
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
           node --test scripts/fastdev-version.test.cjs
