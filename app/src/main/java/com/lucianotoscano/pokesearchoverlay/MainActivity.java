@@ -1893,22 +1893,20 @@ public class MainActivity extends Activity {
         if(name.isEmpty())return "Conectada · perfil pendente";
         return name+("verified".equals(sync)?"":" · sincronização pendente");
     }
+    // Optional compact fallback for older account entry points. The primary
+    // hub already shows login/profile/logout in the same rounded menu.
     private void showPogoAccountActions(int slot){
-        final boolean connected=PogoAccountSlots.loggedIn(this,slot);
-        final String[] actions=connected?
-            new String[]{"Abrir perfil oficial","Atualizar nome e foto","Desconectar esta conta"}:
-            new String[]{"Entrar com Google","Entrar com Discord","Usar busca visitante"};
+        boolean connected=PogoAccountSlots.loggedIn(this,slot);
+        String[] options=connected?new String[]{"Abrir perfil oficial","Desconectar esta conta"}:
+            new String[]{"Entrar pelo PoGoCoordinates"};
         new AlertDialog.Builder(this)
             .setTitle("Conta "+slot+" · "+pogoAccountSummary(slot))
-            .setItems(actions,(dialog,which)->{
+            .setItems(options,(dialog,which)->{
                 if(!connected){
-                    if(which==2)return;
-                    preferredLoginProvider=which==0?"google":"discord";
+                    preferredLoginProvider="";
                     openLoginDialogForSlot(slot,"login");
                 }else if(which==0){
                     openLoginDialogForSlot(slot,"manage");
-                }else if(which==1){
-                    openLoginDialogForSlot(slot,"sync");
                 }else if(slot==2){
                     new AlertDialog.Builder(this).setTitle("Sair da Conta 2?")
                         .setMessage("A Conta 1 e os filtros serão preservados.")
