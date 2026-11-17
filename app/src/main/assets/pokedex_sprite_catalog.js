@@ -104,7 +104,8 @@
    const map=variant==="a"?primary:variant==="l"?legacy:null;
    return safe(filename)?map?.get(filename)||null:null;
   };
-  return Object.freeze({classify,idStatus,entry,primary,legacy,forms:formIds,costumes});
+  const isCostumeForm=id=>formIds.get(Number(id))?.[3]===1;
+  return Object.freeze({classify,idStatus,isCostumeForm,entry,primary,legacy,forms:formIds,costumes});
  }
  return Object.freeze({create,norm});
 });
