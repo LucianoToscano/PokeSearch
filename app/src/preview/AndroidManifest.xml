@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Branding applies only to :app:assemblePreview; official LT remains intact. -->
+    <application android:label="PokeSearch DEV"
+        tools:replace="android:label" />
+</manifest>
