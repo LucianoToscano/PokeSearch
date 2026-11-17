@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.86",
-  "code": 54593,
-  "label": 51401,
-  "previous_tag": "v0.03.85-54592",
-  "qa_max_code": 54592,
-  "release_notes": "HOTFIX LT401 — Corrige a regressão de sprites ausentes na Minha Pokédex, vista como losangos em Mewtwo, Giratina, Zacian, Zamazenta, Landorus e outras variantes. O PGSStats.json usa IDs numéricos de form sem formName; o resolvedor anterior ignorava o ID, classificava incorretamente como base e recusava fallback offline. Agora o catálogo reconhece forma por ID mesmo sem texto, preserva diferenciação de forma, traje, Shiny e gênero, usa imagem base instalada apenas para Normal comprovado e permite carregar imagem exata da fonte PokeMiners em commit fixo se não estiver em cache. Nenhum PNG de terceiros embutido no APK; imagens externas sob demanda, nunca envio de dados da conta. Cache privado e downloads opcionais continuam funcionando. Preserva Home/ícones/P1/P2, contas, captura, fundos, inventários, históricos e assinatura permanente. PR #515: Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados. QA visual físico no Samsung Android 17 ainda pendente. Integração separada de sincronização automática PGSStats não pertence a este hotfix."
+  "version": "0.03.87",
+  "code": 54594,
+  "label": 51402,
+  "previous_tag": "v0.03.86-54593",
+  "qa_max_code": 54593,
+  "release_notes": "ARK LT402 — Minha Pokédex pessoal editável nos inventários 1 e 2: adicionar registros, editar apelido, PC/PS/IV, três ataques (incluindo segundo carregado), favoritos, melhor amigo e corações; criar, renomear e excluir tags; seleção múltipla via toque prolongado, aplicar tags e excluir em lote, limpar inventário com confirmação e desfazer a última exclusão. Histórico detalha registros novos, alterados e ausentes em cada importação. Importação/exportação JSON pelo Android e sincronização automática opt-in a partir de arquivo PGSStats.json com permissão SAF do usuário, ao abrir a Pokédex e a cada 3 minutos enquanto a tela permanece ativa. Edições locais são reaplicadas nas reimportações, sem escrever no PGSharp ou Pokémon GO. Corrigida proteção contra sprite base aplicada a formas numéricas não confirmadas. Preservados ícones, design original, filtros, notas, fundos, dois inventários, Home e overlays P1/P2. PR de código #517 squash cf675b5199bf0c163c12d0beaeb39df5b2ee1d3b: Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados. QA físico Samsung Android 17 e validação de todas as imagens/formas ainda pendentes; imagens exatas dependem de cache ou rede. Canal público exclusivo: release estável com assinatura permanente, nunca FastDev."
 }

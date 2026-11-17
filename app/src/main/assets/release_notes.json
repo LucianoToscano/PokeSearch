@@ -5351,6 +5351,38 @@
           "Sincronização contínua do PGSStats e exclusões locais ainda estão em desenvolvimento separado."
         ]
       }
+    },
+    {
+      "id": "lt402-inventario-local-edicao-sync-20261117",
+      "minVersionCode": 54594,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT402 — Minha Pokédex: editar, organizar e sincronizar",
+      "sections": {
+        "novidades": [
+          "Minha Pokédex permite adicionar Pokémon manualmente e editar apelido, PC, PS, IVs, ataques rápido e carregados, segundo ataque carregado, favorito, melhor amigo e corações registrados localmente.",
+          "Pressionar um Pokémon ativa seleção múltipla para aplicar etiquetas ou excluir registros em lote. A comparação continua limitada a três Pokémon.",
+          "Criar, renomear e excluir tags pessoais; limpar o inventário com confirmação e desfazer a última exclusão.",
+          "Importar e exportar inventários em JSON por meio do seletor seguro de documentos do Android.",
+          "Vincular opcionalmente um PGSStats.json autorizado e verificar atualizações ao abrir a Pokédex ou a cada três minutos enquanto a tela está ativa.",
+          "Ver a identificação individual de Pokémon novos, alterados e ausentes no arquivo da última importação."
+        ],
+        "melhorias": [
+          "Os inventários 1 e 2 permanecem separados; notas, fundos, filtros e histórico são preservados.",
+          "Edições pessoais e exclusões locais são reaplicadas quando um arquivo de PGSStats atualizado é importado.",
+          "Ações extras ficam no menu recolhível Gerenciar para preservar a barra e o estilo da Pokédex.",
+          "Aplicação de tags e exclusão de diversos Pokémon sem limite de três; comparação limitada a até três."
+        ],
+        "correcoes": [
+          "Regra de segurança visual mais rigorosa para evitar usar arte base em formas numéricas que não sejam comprovadamente a forma padrão.",
+          "Compatibilidade com org.json do Android, conferida na compilação Java, e estabilidade dos testes de inventário.",
+          "Sincronização lê somente o URI de documento autorizado pelo usuário; não acessa a pasta privada de outro aplicativo."
+        ],
+        "emDesenvolvimento": [
+          "Sprites ausentes, sem arte exata catalogada ou não disponíveis em cache/rede, ainda podem aparecer como placeholder; não há promessa de 100% de cobertura.",
+          "Sincronização automática só ocorre durante a abertura/uso da tela de Pokédex, caso o arquivo vinculado esteja acessível; não altera Pokémon GO nem executa ações dentro do jogo.",
+          "Homologação física Samsung Android 17, ciclo de atualização real, duração de seleção, acessibilidade e verificação individual de sprites/PGSStats no aparelho ainda pendentes."
+        ]
+      }
     }
   ]
 }
