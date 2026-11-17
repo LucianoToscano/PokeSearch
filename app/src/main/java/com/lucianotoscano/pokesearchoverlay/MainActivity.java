@@ -144,7 +144,6 @@ public class MainActivity extends Activity {
     private ImageView overlayControl,secondaryOverlayControl,pgsSearchControl;
     private Boolean lastPgsSearchState;
     private String homePrimaryModeCache,homeSecondaryModeCache;
-    private final TextView[] homeModeBadges=new TextView[2];
     private boolean pgsHomeStatePolling=false;
     private final android.os.Handler pgsHomeStateHandler=
         new android.os.Handler(android.os.Looper.getMainLooper());
@@ -605,22 +604,9 @@ public class MainActivity extends Activity {
         tile.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
         tile.setOrientation(LinearLayout.VERTICAL);
         tile.setBackground(null);
-        if(index<=1){
-            FrameLayout artGroup=new FrameLayout(this);
-            artGroup.addView(artwork,new FrameLayout.LayoutParams(-1,d(51)));
-            TextView valueBadge=homeText("",8,Color.rgb(26,29,33),true);
-            valueBadge.setGravity(Gravity.CENTER);
-            valueBadge.setBackground(null);
-            valueBadge.setClickable(false);
-            FrameLayout.LayoutParams badgeLp=
-                new FrameLayout.LayoutParams(-1,d(12),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
-            badgeLp.bottomMargin=d(4);
-            artGroup.addView(valueBadge,badgeLp);
-            homeModeBadges[index]=valueBadge;
-            tile.addView(artGroup,new LinearLayout.LayoutParams(-1,d(51)));
-        }else{
-            tile.addView(artwork,new LinearLayout.LayoutParams(-1,d(51)));
-        }
+        // LT394: every Home icon occupies exactly one image slot.
+        // P1/P2 show only their dynamic artwork, never rank, IV or % badges.
+        tile.addView(artwork,new LinearLayout.LayoutParams(-1,d(51)));
         TextView title=homeText(label,9,
             homeLightMode?Color.rgb(19,46,70):Color.WHITE,true);
         title.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
@@ -648,35 +634,36 @@ public class MainActivity extends Activity {
     }
     private void refreshHomePokeballImage(ImageView icon,boolean secondary){
         if(icon==null)return;
-        String mode=HomeFloatingModeIcon.family(this,secondary);
-        String previous=secondary?homeSecondaryModeCache:homePrimaryModeCache;
-        if(!mode.equals(previous)){
-            android.graphics.Bitmap sameAsFloating=
-                HomeFloatingModeIcon.icon(this,secondary);
-            if(sameAsFloating!=null){
-                icon.setImageBitmap(sameAsFloating);
-                icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            }else if(!setHomePackIcon(icon,secondary?2:1,"normal")){
-                icon.setImageResource(R.drawable.home_pokeball_off);
-            }
-            if(secondary)homeSecondaryModeCache=mode;
-            else homePrimaryModeCache=mode;
-        }
+        // In the Home, OFF always means the user's WHITE, unselected Pokéball.
+        // Only an actually running overlay mirrors the floating result icon;
+        // never show IV/0%/100%/rank badges or historic selection while OFF.
         boolean active=secondary?OverlayService.isSecondaryRunning():
             OverlayService.isRunning();
-        icon.setAlpha(active?1f:.86f);
-        String badge=HomeFloatingModeIcon.label(this,secondary);
-        TextView valueBadge=homeModeBadges[secondary?1:0];
-        if(valueBadge!=null){
-            valueBadge.setText(badge);
-            valueBadge.setVisibility(badge.isEmpty()?View.GONE:View.VISIBLE);
-            valueBadge.setTextSize(badge.length()>4?6:8);
-            valueBadge.setTextColor("hundo".equals(mode)?Color.rgb(240,75,112):
-                "nundo".equals(mode)?Color.rgb(0,207,232):Color.rgb(24,26,29));
+        String key=active?"on:"+HomeFloatingModeIcon.family(this,secondary):"off";
+        String previous=secondary?homeSecondaryModeCache:homePrimaryModeCache;
+        if(!key.equals(previous)){
+            android.graphics.Bitmap selected=active?
+                HomeFloatingModeIcon.icon(this,secondary):
+                HomeUserIconAtlas.icon(this,secondary?1:0);
+            if(selected!=null){
+                icon.setImageBitmap(selected);
+            }else if(!active){
+                // Fallback must remain visually neutral even if atlas fails.
+                icon.setImageResource(R.drawable.home_pokeball_off);
+                icon.setColorFilter(Color.WHITE,android.graphics.PorterDuff.Mode.SRC_IN);
+            }else{
+                icon.clearColorFilter();
+                if(!setHomePackIcon(icon,secondary?2:1,"normal"))
+                    icon.setImageResource(R.drawable.home_pokeball_on);
+            }
+            if(selected!=null)icon.clearColorFilter();
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            if(secondary)homeSecondaryModeCache=key;
+            else homePrimaryModeCache=key;
         }
+        icon.setAlpha(1f);
         icon.setContentDescription((active?"Desativar ":"Ativar ")+
-            "Pokébola "+(secondary?"2":"1")+
-            (badge.isEmpty()?"":" · filtro "+badge));
+            "Pokébola "+(secondary?"2":"1"));
         icon.setBackground(null);
     }
 
