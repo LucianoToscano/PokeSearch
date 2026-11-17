@@ -10,7 +10,7 @@ const filterDefs=[
 ];
 const presets=[["default","Padrão"],["aurora","Aurora"],["sunset","Pôr do sol"],
                ["ocean","Oceano"],["night","Noite"]];
-const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokemon",eggs:[],capacity:0,tagId:null,meta:{moves:new Map(),backgrounds:new Map(),costumes:new Map()},
+const state={slot:1,all:[],rawAll:[],hiddenIds:new Set(),filtered:[],tags:new Map(),names:new Map(),tab:"pokemon",eggs:[],capacity:0,tagId:null,meta:{moves:new Map(),backgrounds:new Map(),costumes:new Map()},
              query:"",filter:"all",activeFilters:new Set(),sort:"cp",limit:96,selected:null,
              selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
              bgCached:new Set(),backgroundTarget:null,bgQuery:"",
@@ -243,6 +243,41 @@ function renderFilters(){
     '<button class="filter '+((!state.activeFilters.size&&key==="all")||state.activeFilters.has(key)?"active":"")+
     '" data-filter="'+key+'">'+label+'</button>').join("");
 }
+function renderSourceStatus(info){
+ let status=info||{};
+ if(!info)try{status=JSON.parse(bridge.getSourceStatus?.(state.slot)||"{}");}catch(_){}
+ const linked=!!status.linked;
+ el("auto-sync").disabled=!linked;
+ el("auto-sync").checked=linked&&!!status.auto;
+ el("refresh-stats").disabled=!linked||!!status.busy;
+ el("unlink-stats").disabled=!linked;
+ el("link-stats").textContent=linked?"Trocar arquivo vinculado":"Vincular PGSStats.json";
+ const update=status.lastSync?new Date(status.lastSync).toLocaleString("pt-BR"):"Ainda não sincronizado";
+ el("source-status").textContent=linked?
+  (status.name||"PGSStats.json")+" · "+(status.auto?"Automático":"Manual")+
+  " · "+update+(status.error?" · "+status.error:"")+(status.busy?" · Verificando…":""):
+  "Nenhum arquivo vinculado. Use Vincular PGSStats.json para manter o inventário atualizado.";
+}
+window.pokeSourceUpdated=function(slot,status){
+ if(Number(slot)!==state.slot)return;
+ renderSourceStatus(status);
+};
+function refreshHiddenCount(){
+ const visible=state.rawAll.filter(p=>state.hiddenIds.has(p.id));
+ el("hidden-count").textContent=number(visible.length);
+ return visible;
+}
+function openHiddenPanel(){
+ const hidden=refreshHiddenCount();
+ el("hidden-rows").innerHTML=hidden.length?hidden.map(p=>
+  '<div class="hidden-row"><div><strong>'+escapeHtml(speciesName(p))+
+  '</strong><small> PC '+number(p.cp)+' · IV '+p.attack+'/'+p.defense+'/'+p.hpIv+
+  '</small></div><button type="button" data-restore-id="'+escapeHtml(p.id)+
+  '">Restaurar</button></div>').join("") :
+  '<p class="pane-sub">Nenhum Pokémon oculto nesta exportação.</p>';
+ el("hidden-restore-all").disabled=!hidden.length;
+ el("hidden-panel").hidden=false;
+}
 function renderStats(){
   const all=state.all;
   el("m-total").textContent=number(all.length);
@@ -473,22 +508,34 @@ function openBackgroundGallery(target){
  el("background-panel").hidden=false;
  refreshBackgrounds();
 }
-function loadSlot(){
-  let data={};
-  try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
-  state.all=Array.isArray(data.pokemons)?data.pokemons:[];
-  state.eggs=Array.isArray(data.eggs)?data.eggs:[];
-  state.capacity=Number(data.capacity)||0;
-  state.snapshotTime=data.snapshotTime||"";
-  state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
-  state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
-  state.spriteMatchCache.clear();
-  state.selecting=false;state.selectedIds.clear();renderSelection();
-  el("search").value="";
-  el("slot1").classList.toggle("active",state.slot===1);
-  el("slot2").classList.toggle("active",state.slot===2);
-  el("collection-title").textContent="Inventário "+state.slot;
-  summaryTime();renderFilters();renderStats();render();renderTabs();renderTags();renderEggs();renderSpriteCoverage();
+function loadSlot(preserve=false){
+   let data={};
+   try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
+   state.rawAll=Array.isArray(data.pokemons)?data.pokemons:[];
+   let hidden=[];
+   try{hidden=JSON.parse(bridge.getHiddenIds?.(state.slot)||"[]");}catch(_){}
+   state.hiddenIds=new Set(hidden.map(String));
+   state.all=state.rawAll.filter(p=>!state.hiddenIds.has(p.id));
+   state.eggs=Array.isArray(data.eggs)?data.eggs:[];
+   state.capacity=Number(data.capacity)||0;
+   state.snapshotTime=data.snapshotTime||"";
+   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
+   if(!preserve){
+    state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
+    state.selecting=false;state.selectedIds.clear();renderSelection();
+    el("search").value="";
+   }
+   state.spriteMatchCache.clear();
+   el("slot1").classList.toggle("active",state.slot===1);
+   el("slot2").classList.toggle("active",state.slot===2);
+   el("collection-title").textContent="Inventário "+state.slot;
+   summaryTime();renderSourceStatus();refreshHiddenCount();
+   renderFilters();renderStats();render();renderTabs();renderTags();renderEggs();renderSpriteCoverage();
+   if(state.selected){
+    const id=state.selected.id;
+    if(!state.all.some(p=>p.id===id))hideDetail();
+    else if(preserve)showDetail(id);
+   }
 }
 function hbar(label,v){
   return '<div class="ivrow"><span>'+escapeHtml(label)+'</span><div class="ivbar"><i style="width:'+
@@ -522,6 +569,7 @@ function showDetail(id){
  const p=state.all.find(x=>x.id===id);
  if(!p)return;
  state.selected=p;
+ el("hide-current").textContent="Excluir do inventário local";
  const preset=bridge.getDecoration(state.slot,p.id);
  applyHeroBackground(p,preset);
  el("hero-title").innerHTML="<small>PC</small> "+number(p.cp);
@@ -607,7 +655,7 @@ function notice(message){
   clearTimeout(notice.timer);notice.timer=setTimeout(()=>box.style.display="none",5000);
 }
 window.pokeImportCompleted=function(message,ok){
-  if(ok)loadSlot();
+  if(ok)loadSlot(true);
   notice(message);
 };
 function closeSort(){
@@ -615,7 +663,7 @@ function closeSort(){
  layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
 }
 function closeOverlay(){
- for(const id of ["compare-panel","history-panel","background-panel","sprite-panel"]){
+ for(const id of ["compare-panel","history-panel","background-panel","sprite-panel","hidden-panel"]){
   const panel=el(id);
   if(!panel.hidden){panel.hidden=true;state.backgroundTarget=null;return true;}
  }
@@ -632,6 +680,43 @@ el("back").addEventListener("click",()=>bridge.closeScreen());
 el("slot1").addEventListener("click",()=>{hideDetail();state.slot=1;loadSlot()});
 el("slot2").addEventListener("click",()=>{hideDetail();state.slot=2;loadSlot()});
 el("import").addEventListener("click",()=>bridge.chooseJson(state.slot));
+el("link-stats").addEventListener("click",()=>bridge.linkJson?.(state.slot));
+el("refresh-stats").addEventListener("click",()=>bridge.refreshLinked?.(state.slot));
+el("unlink-stats").addEventListener("click",()=>{
+ bridge.unlinkSource?.(state.slot);renderSourceStatus();
+ notice("Fonte desvinculada. O inventário importado foi mantido.");
+});
+el("auto-sync").addEventListener("change",e=>{
+ bridge.setAutoSync?.(state.slot,!!e.target.checked);
+ renderSourceStatus();
+});
+el("hidden-open").addEventListener("click",openHiddenPanel);
+el("hidden-close").addEventListener("click",()=>el("hidden-panel").hidden=true);
+el("hidden-rows").addEventListener("click",e=>{
+ const b=e.target.closest("[data-restore-id]");if(!b)return;
+ bridge.setHidden?.(state.slot,b.dataset.restoreId,false);
+ loadSlot(true);openHiddenPanel();
+});
+el("hidden-restore-all").addEventListener("click",()=>{
+ bridge.restoreAllHidden?.(state.slot);
+ loadSlot(true);openHiddenPanel();
+ notice("Pokémon ocultos restaurados na visualização local.");
+});
+let hideConfirmation="";
+el("hide-current").addEventListener("click",()=>{
+ if(!state.selected)return;
+ const id=state.selected.id;
+ if(hideConfirmation!==id){
+  hideConfirmation=id;
+  el("hide-current").textContent="Confirmar exclusão local";
+  notice("Toque novamente para ocultar este exemplar. Ele NÃO será transferido no jogo.");
+  return;
+ }
+ hideConfirmation="";
+ bridge.setHidden?.(state.slot,id,true);
+ hideDetail();loadSlot(true);
+ notice("Pokémon ocultado somente neste inventário. Restaurável em Ocultos.");
+});
 el("help").addEventListener("click",()=>notice(
   "Importação manual e local. Nenhum JSON é enviado para outros usuários ou servidores. Cada inventário é independente."));
 el("filters").addEventListener("click",e=>{
