@@ -172,6 +172,7 @@ final class PokedexLocalEdits {
     static synchronized JSONObject replay(Context ctx,int slot,JSONObject imported) throws Exception{
         JSONObject local=read(file(ctx,slot,"-local"));
         JSONObject edits=object(local,"edits"),added=object(local,"added");
+        JSONObject deletedTags=object(local,"deletedTags");
         JSONObject deleted=object(local,"deleted");
         JSONArray rows=array(imported,"pokemons"),merged=new JSONArray();
         Set<String> ids=new HashSet<>();
@@ -182,6 +183,15 @@ final class PokedexLocalEdits {
             if(deleted.has(key))continue;
             JSONObject patch=edits.optJSONObject(key);
             if(patch!=null)overlay(row,patch);
+            JSONArray rowTags=row.optJSONArray("tags");
+            if(rowTags!=null&&deletedTags.length()>0){
+                JSONArray kept=new JSONArray();
+                for(int t=0;t<rowTags.length();t++){
+                    String tag=rowTags.optString(t);
+                    if(!deletedTags.has(tag))kept.put(tag);
+                }
+                row.put("tags",kept);
+            }
             if(ids.add(key))merged.put(row);
         }
         for(String key:added.keySet()){
@@ -189,7 +199,7 @@ final class PokedexLocalEdits {
             if(row!=null&&!deleted.has(key)&&ids.add(key))merged.put(row);
         }
         imported.put("pokemons",merged);updateCount(imported);
-        JSONObject tagNames=object(local,"tagNames"),deletedTags=object(local,"deletedTags");
+        JSONObject tagNames=object(local,"tagNames");
         JSONArray tags=array(imported,"tags"),mergedTags=new JSONArray();
         Set<String> known=new HashSet<>();
         for(int i=0;i<tags.length();i++){
@@ -245,9 +255,18 @@ final class PokedexLocalEdits {
             out.put("name",label(t.optString("name"),45));tags.put(out);
         }
         safe.put("tags",tags);
-        JSONArray eggs=backup.optJSONArray("eggs");
-        safe.put("eggs",eggs==null?new JSONArray():
-            new JSONArray(eggs.toString().substring(0,Math.min(eggs.toString().length(),100000))));
+        JSONArray eggs=backup.optJSONArray("eggs"),safeEggs=new JSONArray();
+        if(eggs!=null)for(int i=0;i<Math.min(500,eggs.length());i++){
+            JSONObject egg=eggs.optJSONObject(i);
+            if(egg!=null){
+                JSONObject e=new JSONObject();
+                e.put("distance",Math.max(0,Math.min(1000,egg.optDouble("distance",0))));
+                e.put("incubating",egg.optBoolean("incubating",false));
+                e.put("type",Math.max(0,Math.min(50,egg.optInt("type",0))));
+                safeEggs.put(e);
+            }
+        }
+        safe.put("eggs",safeEggs);
         return safe;
     }
     static synchronized String execute(Context ctx,int slot,String action,String raw){
@@ -256,6 +275,10 @@ final class PokedexLocalEdits {
                 throw new IllegalArgumentException("Solicitação grande demais.");
             JSONObject request=new JSONObject(raw);
             JSONObject current=read(file(ctx,slot,""));
+            if(current.optInt("schema",0)!=1){
+                current.put("schema",1);current.put("snapshotTime","Edição pessoal");
+                current.put("capacity",0);current.put("eggs",new JSONArray());
+            }
             JSONObject local=read(file(ctx,slot,"-local"));
             JSONArray rows=array(current,"pokemons"),tags=array(current,"tags");
             JSONObject edits=object(local,"edits"),added=object(local,"added");
