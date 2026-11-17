@@ -3303,3 +3303,14 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **Migração inicial:** o app FastDev antigo não lê o manifesto novo; instalar uma vez o APK 1000039 **por cima**, sem desinstalar. Teste físico de atualização e OAuth ainda pendente. APK oficial PokeSearch 0.03.73/54580 preservado, nenhum ARK oficial.
 - [Registro integral LT383](LT383_FASTDEV_HTTP403_OTA_20261116.md).
 
+
+## LT384 — FastDev Home real e OTA automático (16/11/2026)
+
+- **Pedido atendido:** console FastDev com botões e sandbox `Live Preview (HTML)` removidos do fluxo de abertura; variante Preview inicia a `MainActivity` real, com rótulo PokeSearch FastDev. Atalhos do antigo console redirecionam para Home.
+- PR [#475](https://github.com/LucianoToscano/PokeSearch/pull/475) **MERGED**, squash `35be32eddd6548dc55ba58dfbac32080ef5c5c78`, CI de código `8470d2b3b994b8f200688c497861f807ac579ea3`. Atualizações são consultadas e baixadas automaticamente após abrir o app, com SHA-256/certificado/pacote/versão e throttle; o Android ainda exige consentimento na instalação.
+- `pokesearch-fastdev.yml` publica Preview assinado automaticamente após merge com fontes da aplicação na main; `secure-release.yml` conserva QA beta/R8 em fontes comuns e pula somente PR exclusivamente Preview após verificação fail-closed de escopo. Não acelera o tempo físico de compilação Java.
+- **QA:** FastDev PR #44001038705, core LT211 #44001038391, full Node LT169 #44001038819, Preview Java #44001038518 e beta/R8 #44001038479: todos SUCCESS. Build FastDev disparado automaticamente [#44001429317](https://github.com/LucianoToscano/PokeSearch/actions/runs/44001429317) SUCCESS, sem solicitação manual separada.
+- **Distribuição:** [FastDev 1000041](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000041), [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000041/PokeSearch-FastDev-Preview.apk), pacote `com.lucianotoscano.pokesearch.preview`, 62.321.028 bytes, SHA-256 `fa0d6305bb8270a33bd106bda891f24496f1648f8a2996ca752298c66b235f67`, cert FastDev `e712422729f6ec3c66646f752f4cfb88c4e0d4141404a3a1c271c7a6f0aaa4ea`. Manifesto público validado, SOURCE_COMMIT `35be32eddd6548dc55ba58dfbac32080ef5c5c78`.
+- **Instalação física:** baixar e instalar por cima do FastDev atual uma vez. QA físico de início direto, OTA e persistência de dados **pendente**. Release oficial 0.03.73/54580 preservada; não houve publicação oficial.
+- [Auditoria LT384](LT384_FASTDEV_HOME_AUTO_UPDATE_20261116.md).
+
