@@ -34,7 +34,9 @@ test("development and public display the SAME 0.XX.XX number with distinct Dev/L
  const activity=fs.readFileSync("app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java","utf8");
  const manifest=fs.readFileSync("app/src/preview/AndroidManifest.xml","utf8");
  assert.match(official.version,/^0\.\d{2}\.\d{2}$/);
- assert.equal(official.version,"0.03.73");
+ // Version is read from the canonical request, never pinned to a past release.
+ assert.ok(official.code>=54580);
+ assert.match(official.version,/^0\.\d{2}\.\d{2}$/);
  assert.match(gradle,/val officialVersionRequest = file\("\.\.\/release\/official-request\.json"\)/);
  assert.match(gradle,/val fastDevDisplayVersion = \(groovy\.json\.JsonSlurper\(\)\.parse\(officialVersionRequest\)/);
  assert.match(gradle,/else if \(fastDevCode != null\) fastDevDisplayVersion/);
