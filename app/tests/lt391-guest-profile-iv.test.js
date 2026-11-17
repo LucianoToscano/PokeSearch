@@ -14,7 +14,7 @@ const cache=read("java/com/lucianotoscano/pokesearchoverlay/ProfileAvatarCache.j
 
 test("LT391: IV source must be a visible per-encounter badge, never the search form",()=>{
  assert.match(probe,/const ivLabels=Array\.from\(box\.querySelectorAll/);
- assert.match(probe,/\.filter\(vis\)\.slice\(0,72\)/);
+ assert.match(probe,/getClientRects&&el\.getClientRects\(\)\.length/);
  assert.match(probe,/const ivText=body\+/);
  assert.match(probe,/canonicalPct===100\?"15\/15\/15"/);
  assert.match(probe,/canonicalPct===0\?"0\/0\/0"/);
