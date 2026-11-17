@@ -1018,7 +1018,7 @@ function cardRoots(){
  const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&resultAction(e));
  const cards=[],seen=new Set();
  for(const action of actions){
-  let chosen=null;
+  let chosen=action.parentElement;
   for(let node=action.parentElement,depth=0;node&&depth<13;node=node.parentElement,depth++){
    const t=text(node);
    if(t.length>3500)break;
