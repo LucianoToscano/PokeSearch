@@ -10,7 +10,7 @@ assert.equal(img.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
 assert.equal(img.readUInt32BE(16),1024);
 assert.equal(img.readUInt32BE(20),1024);
 assert.equal(crypto.createHash("sha256").update(img).digest("hex"),
- "0038a203fa074002ef8bb710662d32e9c8231a6f90e5914a120b4c6fa8e909e6",
+ "abdebce91043c4576fcedf3e64f63492a9e18f5d600246090a5032f6d54976af",
  "LT395: ship the revised, owner-original atlas with safer Quests/Community margins");
 assert.match(loader,/position==3\)return null;/);
 assert.doesNotMatch(loader,/position==0\|\|position==1|position==7\)return null/);
