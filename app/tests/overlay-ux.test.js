@@ -1805,22 +1805,25 @@ test("HOME-03 authenticates using official profile only after session proof",(()
   profile.includes('trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown"')&&
   !profile.includes("document.cookie");
 })());
-test("HOME-03 opens the Home drawer on right and uses original transparent PNG",(()=>{
+test("HOME-03 opens the right Home drawer and keeps account management without its former logo",(()=>{
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void exportHomeData(){")[0]||"";
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return menu.includes("Gravity.RIGHT|Gravity.TOP")&&
-  main.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("R.drawable.ps_home_brand_transparent")&&
+  home.includes('homeLoginProfileShortcut.setOnClickListener(v->showHomeAccountMenu())')&&
   main.includes('openLoginDialog(false,"manage")');
 })());
-test("HOME-04 keeps original brand icon without wordmark, controls right and plain background",(()=>{
+test("HOME-04 has logo-free header, right controls, preserved actions and protected admin gesture",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("R.drawable.ps_home_brand_transparent")&&
+ return !home.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("branding.addView(")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.home_pokeball_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
   !home.includes("R.drawable.ps_home_official_wordmark")&&
   !home.includes('brandTitle.setContentDescription("PokeSearch")')&&
-  home.includes('PremiumAccess.controlled())brand.setOnLongClickListener')&&
+  home.includes('PremiumAccess.controlled())menu.setOnLongClickListener')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
@@ -1860,17 +1863,18 @@ test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible 
   dock.includes('button.classList.toggle("bell-star-silent",');
 });
 
-test("LT54-ICON-01 launcher keeps adaptive artwork; LT378 Home uses emblem only",(()=>{
+test("LT54-ICON-01 launcher retains adaptive artwork; LT386 Home removes the decorative emblem only",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8")&&
-  home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
-  home.includes("branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)))")&&
+  !home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
+  !home.includes("branding.addView(brand,")&&
   !home.includes("brandLabels")&&!home.includes("wordmarkWidth")&&
-  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f))");
+  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&
+  home.includes("header.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL)");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
  const pngs=[
@@ -2502,8 +2506,9 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   home.includes("R.drawable.home_mode_light")&&
   home.includes("R.drawable.home_mode_dark")&&
   home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
-  home.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
+  home.includes("homeLoginProfileShortcut.setOnClickListener")&&
   home.includes("auth.setBackground(homeSurface(")&&
   main.includes("refreshSessionSummary();")&&
   main.includes("refreshHomeOverlay();")&&
