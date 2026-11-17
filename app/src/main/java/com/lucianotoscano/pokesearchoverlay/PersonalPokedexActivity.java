@@ -106,7 +106,8 @@ public final class PersonalPokedexActivity extends Activity {
     }
     private static String gitBlobSha(File file,long declaredSize) throws Exception{
         MessageDigest digest=MessageDigest.getInstance("SHA-1");
-        digest.update(("blob "+declaredSize+"\\0").getBytes(StandardCharsets.UTF_8));
+        digest.update(("blob "+declaredSize).getBytes(StandardCharsets.UTF_8));
+        digest.update((byte)0);
         try(InputStream in=new FileInputStream(file)){
             byte[] buffer=new byte[16384];int n;
             while((n=in.read(buffer))!=-1)digest.update(buffer,0,n);
