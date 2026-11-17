@@ -1,8 +1,50 @@
 # FastDev estável — OTA, Live HTML, ADB e assinatura separada (16/11/2026)
 
-Estado: implementação da infraestrutura no repositório; publicação OTA só fica operacional depois de provisionar o keystore privado dedicado no GitHub. Não afirmar que há Preview assinado com nova chave ou instalação em Samsung sem evidência. Não modificar a release oficial em função deste trabalho.
+Estado atual: **assinatura permanente configurada e dois APKs FastDev publicados e verificados**. Último Preview: `fastdev.1000027-preview / versionCode 1000027`. A atualização física em Android ainda precisa de confirmação do proprietário; não houve acesso ao celular nesta sessão. A release oficial foi preservada.
 
-## Verificação de ativação no Work — 16/11/2026
+## Entrega permanente verificada — 16/11/2026
+
+- Keystore PKCS#12 exclusivo FastDev, RSA 3072, alias fixo `pokesearch-fastdev`; backup privado no Meu Drive enviado com autorização expressa, permissões restritas ao proprietário e restauração conferida por download. Não gerar outra chave.
+- Environment `fastdev-signing` criado. Os quatro secrets `POKE_FASTDEV_KEYSTORE_B64`, `POKE_FASTDEV_STORE_PASSWORD`, `POKE_FASTDEV_KEY_ALIAS`, `POKE_FASTDEV_KEY_PASSWORD` e a variável pública `POKE_FASTDEV_CERT_SHA256` foram cadastrados pelo proprietário com o provisionador no Windows. As duas execuções CI restauraram a chave, compararam o certificado e assinaram/verificaram o APK, comprovando operacionalmente os valores sem divulgá-los. As permissões da integração Work para listar/gravar secrets continuam limitadas; o cadastro local resolveu essa dependência.
+- **Certificado público SHA-256:** `e712422729f6ec3c66646f752f4cfb88c4e0d4141404a3a1c271c7a6f0aaa4ea`.
+- **Pacote permanente:** `com.lucianotoscano.pokesearch.preview`, distinto do oficial.
+
+| Evidência | Primeiro APK | Segundo APK |
+|---|---|---|
+| versionName | `fastdev.1000024-preview` | `fastdev.1000027-preview` |
+| versionCode | `1000024` | `1000027` |
+| Pré-release pública, não draft | [fastdev-1000024](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000024) | [fastdev-1000027](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000027) |
+| Download APK | [PokeSearch-FastDev-Preview.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000024/PokeSearch-FastDev-Preview.apk) | [PokeSearch-FastDev-Preview.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000027/PokeSearch-FastDev-Preview.apk) |
+| Workflow `success` | [#43988278555, tentativa 2](https://github.com/LucianoToscano/PokeSearch/actions/runs/43988278555) | [#43992092238](https://github.com/LucianoToscano/PokeSearch/actions/runs/43992092238) |
+| SOURCE_COMMIT | `0a421b29c0d5e5b0f391adbf3e6bf50ec0e57642` | `3b716a900422b002da63114cedeaf65725895634` |
+| Bytes APK | `62304544` | `62304544` |
+| SHA-256 APK | `096d805a207dca1e8b0e614a427d5e4ed3e8c6e42aee78e171b4ced51740487d` | `b358f7f63f3765270fbaf566d0bb552729bb4c43eb692bfba02287dfe2c0ffbf` |
+| Artifact QA | `14288740293` | `14287123413` |
+| Bytes ZIP QA | `59557536` | `59557531` |
+| SHA-256 ZIP QA | `8599ecb796331b16ff59f86f64e879d2292bd511b8ae1d3a4f1a5949c8417019` | `9e5e1cfc32b13133a69846611e12479945b486a77c5afe675aef0f545a6394e1` |
+
+**Verificação independente do runner:** ambos os APKs foram baixados das URLs públicas; os hashes e tamanhos coincidem com os digests da API GitHub. ZIP/APK íntegros; `aapt` Android 36 confirmou pacote e versões; `apksigner verify --verbose --print-certs` confirmou assinatura v2 válida, um único assinante e o certificado permanente esperado em ambos. Os ZIPs dos artifacts também foram baixados, tiveram hash/tamanho/integridade verificados e contêm exatamente os mesmos APKs e os SOURCE_COMMIT da tabela. Não confundir artifacts beta/R8 de QA com os artifacts FastDev dessa tabela.
+
+**Versionamento e atualizador:** `1000027 > 1000024`, pacote e certificado idênticos. O JSON público foi confrontado com o contrato de descoberta do Java: a instalação `1000024` tem como candidata `1000027`; a `1000027` não tem atualização mais recente. Os assets possuem nome, URL, digest e tamanho aceitos pelo atualizador. A revisão técnica confirmou HTTPS/hosts restritos, limite de tamanho, SHA-256, pacote, versão e assinante antes de abrir o instalador com FileProvider. Essa análise e o confronto de metadados **não são execução do atualizador no Android**. Instalação, abertura do instalador e preservação real das preferências no aparelho continuam pendentes de teste físico.
+
+**Código e checks:** [PR #470](https://github.com/LucianoToscano/PokeSearch/pull/470) integrada em `3b716a900422b002da63114cedeaf65725895634`, com `request_id: fastdev-permanent-ota-sequence-20261116-02`, após [FastDev](https://github.com/LucianoToscano/PokeSearch/actions/runs/43991710961), [Node completo](https://github.com/LucianoToscano/PokeSearch/actions/runs/43991710871) e [beta/R8](https://github.com/LucianoToscano/PokeSearch/actions/runs/43991710870) passarem no HEAD `4100f423a4bcf68cb002d5cf9eb756e7b5efe32f`. Sete testes direcionados locais desta solicitação passaram; a etapa anterior já havia validado 13 FastDev + 645 contratos smoke e nove testes do provisionador.
+
+**Tempos observados:** compilação Preview de 38s e 30s; jobs de APK de 91s e 65s. São duas medições reais, não um benchmark controlado de cache. Cache Gradle/build cache e smoke direcionado permanecem ativos. O preflight da assinatura roda antes do setup Android e interrompe configuração ausente sem compilar. Live HTML e ADB Wi-Fi/install `-r -t` permanecem disponíveis. Runner persistente não foi necessário diante dos tempos observados e exigiria manutenção/isolamento próprios.
+
+**Oficial preservado:** a API `releases/latest` continua em `v0.03.73-54580`, APK de `61197315` bytes com digest `30a1de9982486858e7e25268f13049b0b96f2bab1a4834c8f080069f6454d0c4`. Nenhum arquivo de `app/src/main`, Gradle oficial, segredo oficial ou `release/official-request.json` foi alterado nesta ativação.
+
+### Teste mínimo no celular
+
+1. Para testar a sequência já publicada, instalar inicialmente o APK `1000024` pelo link acima. Para apenas começar na versão mais recente, instalar diretamente `1000027`.
+2. Abrir o atalho **PokeSearch FastDev**. Para testar preservação, usar o aplicativo de testes e salvar uma preferência antes da atualização.
+3. Na `1000024`, tocar **Verificar atualização FastDev**, depois **Instalar atualização encontrada**. Autorizar essa fonte de instalação se o Android solicitar e confirmar a atualização no instalador do sistema.
+4. Confirmar `1000027` e a preferência salva. Não desinstalar durante o teste. O aplicativo oficial deve permanecer instalado e independente.
+5. Nas próximas builds, repetir a consulta pelo painel; WorkManager também faz descoberta periódica sujeita a notificações, bateria e Doze. A confirmação do instalador Android continua necessária; não existe atualização silenciosa.
+
+## Histórico da ativação no Work — 16/11/2026
+
+Os registros abaixo descrevem os bloqueios anteriores à entrega. A seção de entrega acima é o estado atual comprovado.
+
 
 **Retomada após cadastro no Windows:** o proprietário executou o provisionador e confirmou os quatro secrets e o fingerprint `e712422729f6ec3c66646f752f4cfb88c4e0d4141404a3a1c271c7a6f0aaa4ea` no environment `fastdev-signing`. Solicitada repetição da job que falhou por falta de configuração e preparado pedido `fastdev-permanent-ota-sequence-20261116-02` para a segunda compilação. Os registros de bloqueio abaixo descrevem a fase anterior; a assinatura real e a publicação devem ser comprovadas pelas execuções correspondentes antes de declarar conclusão.
 
@@ -17,7 +59,7 @@ Estado: implementação da infraestrutura no repositório; publicação OTA só 
 - Cache de tarefas Gradle e smoke por arquivos alterados já estão ativos; Live HTML e `adb install -r -t` já existem. Runner persistente não foi habilitado: falta máquina privada e comparação de tempos que justifique manutenção. Não há dispositivo ADB disponível. Não houve benchmark de build com cache aquecido; o benefício comprovado do preflight é evitar todo o setup Android na configuração ausente.
 - Última release oficial consultada: `v0.03.73-54580`, APK SHA-256 `30a1de9982486858e7e25268f13049b0b96f2bab1a4834c8f080069f6454d0c4`. Nenhuma tag `fastdev-` encontrada. `release/official-request.json`, versão oficial e secrets oficiais não foram alterados.
 
-**Para retomar:** cadastrar a chave já criada a partir do backup privado, sem gerar outra. Liberar escrita de Environments/Secrets/Variables para a conexão efetivamente usada pelo Work ou executar o provisionador na máquina do proprietário. Depois solicitar nova compilação pelo JSON, conferir certificado/pacote/versão/hash/asset público e gerar uma segunda versão se necessário para validar a sequência. Fingerprint e backup não substituem esses critérios: APK, pré-release, versionCode crescente e OTA ponta a ponta continuam pendentes.
+**Retomada histórica concluída:** o proprietário cadastrou a chave existente no Windows; as duas builds e pré-releases foram verificadas na seção de entrega. Permanece pendente somente a homologação física de atualização e preservação das configurações. Não gerar outra chave.
 
 ## O que muda
 
@@ -32,7 +74,7 @@ Estado: implementação da infraestrutura no repositório; publicação OTA só 
 - O script `scripts/fastdev-adb.sh` simplifica pareamento, conexão e `adb install -r -t` para preservar os dados do Preview enquanto a chave e package ID não mudarem.
 - O workflow permite um runner persistente opcional por variável `POKE_FASTDEV_RUNNER_LABEL` no GitHub. O padrão é `ubuntu-24.04`. Configurar runner próprio só com uma máquina privada e confiável, após avaliar manutenção, disco e isolamento. O cache Gradle permanece habilitado sem ativar configuration cache.
 
-## Preparação inicial obrigatória (única vez)
+## Referência de preparação inicial (já concluída nesta ativação)
 
 **Estas ações precisam ser feitas na máquina de confiança do proprietário, pois o conector GitHub deste projeto não oferece operação para gravar GitHub Secrets:**
 
