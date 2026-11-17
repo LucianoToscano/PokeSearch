@@ -177,11 +177,29 @@ function bundledSpriteExists(uri){
  }
  return state.bundledSpriteAvailability.get(asset);
 }
+// PokeAPI official artwork restores the original Pokédex baseline for proven
+// ordinary/default Pokémon. GO images remain exact for forms, costumes and
+// species with a visually different female form.
+function verifiedOrdinaryArtwork(p,exact){
+ const dex=Number(p.species),delivery=window.PokeSearchSpriteDelivery;
+ if(!Number.isInteger(dex)||dex<1||dex>1025||Number(p.costume)>0)return "";
+ const id=Number(p.form)||0,variant=formVariant(p);
+ if(id>0&&!delivery?.auditedDefault({
+   species:dex,name:speciesName(p),form:id,shiny:!!p.shiny,
+   costume:p.costume
+  },state.spriteIndex,exact))return "";
+ if(!id&&variant)return "";
+ const genderInfo=state.spriteIndex?.idStatus(dex);
+ if(Number(p.gender)===2&&(!genderInfo||genderInfo.genderDifferent))return "";
+ return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/"+
+   (p.shiny?"shiny/":"")+dex+".png";
+}
 function safeSprite(p){
  const exact=visualMatch(p);
  // Numeric form IDs unknown to the catalog must not be replaced by base art.
  if(Number(p.form)>0&&!state.spriteIndex?.forms.has(Number(p.form)))return "";
  if(exact.key&&state.spriteCached.has(exact.key))return spriteLocalUrl(exact.key);
+ const verifiedBase=verifiedOrdinaryArtwork(p,exact);
  const lib=window.PokeSearchOfflineSprite,delivery=window.PokeSearchSpriteDelivery;
  // Restore the packaged sprites for independently verified default forms:
  // PGSStats carries numeric IDs but usually has no formName at all.
@@ -205,33 +223,41 @@ function safeSprite(p){
     if(valid&&((!p.costume&&!Number(p.form)&&!form)||defaultById||
        (art&&typeof art==="object"&&
         (art.exactCostume||art.officialForm||art.offline||art.providerExact)))&&
-       (!uri.startsWith("file:///android_asset/")||bundledSpriteExists(uri)))
+       (!uri.startsWith("file:///android_asset/")||bundledSpriteExists(uri))){
+       // An exact packaged asset wins; for ordinary forms prefer the
+       // large verified artwork to an unstable pixel/remote legacy URL.
+       if(verifiedBase&&!uri.startsWith("file:///android_asset/"))
+         return verifiedBase;
        return uri;
+      }
    }
   }catch(_){}
  }
- // If no exact image was packaged, display its VERIFIED online variant
- // directly. Only actual manifest entries can produce remote URLs; do not
- // silently use a different form, Shiny, gender or costume.
+ // Basic Pokémon no longer depend on a 3,850-image GO remote collection.
+ // The exact GO sprite remains a fallback if PokeAPI is unavailable.
+ if(verifiedBase)return verifiedBase;
+ // Nondefault variants must still resolve to the exact GO manifest entry.
  if(exact.key)return delivery?.remoteUrl(exact.key,state.spriteIndex)||"";
  return "";
 }
 function spriteFallbackSources(p,current){
  const found=visualMatch(p),sources=[];
- const remote=found.key?
+ const add=uri=>{
+  if(uri&&uri!==current&&!sources.includes(uri))sources.push(uri);
+ };
+ const go=found.key?
    window.PokeSearchSpriteDelivery?.remoteUrl(found.key,state.spriteIndex)||"":"";
- if(remote&&remote!==current)sources.push(remote);
- // PokeAPI's ordinary art is a fallback only for independently audited defaults.
- const knownDefault=Number(p.costume)===0&&
-   (Number(p.form)===0&&!formVariant(p)||
-    window.PokeSearchSpriteDelivery?.auditedDefault({
-     species:p.species,name:speciesName(p),form:p.form,shiny:p.shiny,
-     costume:p.costume
-    },state.spriteIndex,found));
- if(knownDefault&&Number(p.species)>0){
-   const base="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/"+
-     (p.shiny?"shiny/":"")+Number(p.species)+".png";
-   if(base!==current&&!sources.includes(base))sources.push(base);
+ const art=verifiedOrdinaryArtwork(p,found);
+ // 1. Exact GO image; 2. the verified ordinary artwork on a second CDN;
+ // 3. legacy ordinary sprite from PokeAPI. Nothing is swapped across forms.
+ add(go);
+ if(art){
+  add(art);
+  add(art.replace("https://raw.githubusercontent.com/PokeAPI/sprites/master/",
+    "https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/"));
+  const dex=Number(p.species),rel="sprites/pokemon/"+(p.shiny?"shiny/":"")+dex+".png";
+  add("https://raw.githubusercontent.com/PokeAPI/sprites/master/"+rel);
+  add("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/"+rel);
  }
  return sources;
 }
