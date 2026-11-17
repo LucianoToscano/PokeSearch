@@ -57,12 +57,33 @@ public final class IntegrityGuard {
         }catch(Exception e){return false;}
     }
     public static boolean verify(Context c) {
-        if(c==null||!PACKAGE.equals(c.getPackageName())||!matchesPix(PixSupport.PAYLOAD))return false;
+        // Only the explicitly isolated Preview variant is allowed to use the
+        // separate DEV package. The official LT package and signer rules stay
+        // unchanged. Never infer a DEV build from the installed package alone.
+        final String packageName=BuildConfig.DEV_PREVIEW?PACKAGE+".preview":PACKAGE;
+        if(c==null||!packageName.equals(c.getPackageName())||!matchesPix(PixSupport.PAYLOAD))return false;
         try{
             PackageManager pm=c.getPackageManager();
             int mode=Build.VERSION.SDK_INT>=28?PackageManager.GET_SIGNING_CERTIFICATES:PackageManager.GET_SIGNATURES;
-            PackageInfo info=pm.getPackageInfo(PACKAGE,mode);
+            PackageInfo info=pm.getPackageInfo(packageName,mode);
             long vc=Build.VERSION.SDK_INT>=28?info.getLongVersionCode():info.versionCode;
+            if(BuildConfig.DEV_PREVIEW){
+                // Preview APKs are debug-signed by the isolated DEV workflow.
+                // Validate their own package, build mode, version, sole signer
+                // presence, and every pinned local asset. Do not trust a
+                // preview signature as if it were the public LT certificate.
+                if(vc<1000058L||
+                    (c.getApplicationInfo().flags&ApplicationInfo.FLAG_DEBUGGABLE)==0||
+                    (BuildConfig.EXPECTED_SIGNING_CERT_SHA256!=null&&
+                     !BuildConfig.EXPECTED_SIGNING_CERT_SHA256.isEmpty()))return false;
+                Signature[] previewSignatures;
+                if(Build.VERSION.SDK_INT>=28){
+                    SigningInfo signing=info.signingInfo;
+                    if(signing==null)return false;
+                    previewSignatures=signing.getApkContentsSigners();
+                }else previewSignatures=info.signatures;
+                return previewSignatures!=null&&previewSignatures.length==1&&assetsMatch(c);
+            }
             byte[] expected=fromHex(BuildConfig.EXPECTED_SIGNING_CERT_SHA256);
             if(expected==null)
                 return vc==51&&(c.getApplicationInfo().flags&ApplicationInfo.FLAG_DEBUGGABLE)!=0;
