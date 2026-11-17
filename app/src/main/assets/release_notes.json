@@ -5029,6 +5029,36 @@
           "Instalar o APK requer aprovação do Android. Requisições recusadas por HTTP 429 não podem ser forçadas pelo botão manual."
         ]
       }
+    },
+    {
+      "id": "lt391-retorno-fonte-lt379-iv100-login-visitante-home-20261117",
+      "minVersionCode": 54583,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT391 — Contas, resultados e IV100",
+      "sections": {
+        "novidades": [
+          "Menu compacto de contas no ícone PoGoCoordinates: nome, foto em cache quando confirmada, entrada pelo site e botão Sair por conta.",
+          "Chat inicialmente oculto para liberar espaço na Home; pode ser reativado no menu."
+        ],
+        "melhorias": [
+          "Sem conta, as buscas são automaticamente visitantes; o site permite até cinco resultados públicos, não uma quantidade garantida.",
+          "Para atualizar, toque diretamente no ícone ↻ sem esperar o próximo ciclo AUTO de 3 minutos; a opção 3 segundos não aparece mais.",
+          "Resultados com cards enxutos e 🔒+5 transparente, sem mensagens técnicas repetitivas."
+        ],
+        "correcoes": [
+          "Melhorada a leitura de IV100 quando o cartão oficial apresenta porcentagem explícita, inclusive badge acessível: 100% confirma o único spread 15/15/15.",
+          "Quando cinco cartões não mostram IV verificável, o aviso ! explica o motivo em vez de afirmar que não havia Pokémon; resultados não comprovados não recebem selo falso de IV100.",
+          "Identificação e sprites #129 Magikarp e #580 Ducklett revisadas em cards com nome genérico.",
+          "Nome e avatar válidos são preservados durante a hidratação do perfil até confirmação de identidade diferente; contas 1 e 2 continuam isoladas.",
+          "Avisos de API e limites de coordenadas mantêm as restrições reais do provedor e não são confundidos com contagem de Pokémon."
+        ],
+        "emDesenvolvimento": [
+          "Pendente comprovação física Android 11–14, Samsung P1/P2, identidade/foto Google e Discord com MFA, modos retrato/paisagem e TalkBack.",
+          "Comparar cinco resultados reais no site com a extração do app, incluindo filtro IV100 e listagens parciais. O site pode retornar 1 ou zero encontros válidos.",
+          "Limites HTTP 429 e quantidade de coordenadas dependem do PoGoCoordinates. Limpar histórico não deve ser usado para contornar restrições do provedor.",
+          "Atualizações e instalação do APK precisam da confirmação do Android. Sem homologação de aparelho, testes de CI não comprovam interação real."
+        ]
+      }
     }
   ]
 }
