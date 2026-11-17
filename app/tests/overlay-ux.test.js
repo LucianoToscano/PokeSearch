@@ -399,7 +399,8 @@ test("Menu occupies separate window rather than wide sprite dock",service.includ
 test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp())')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login launched from overlay returns to gameplay with PokeSearch only on successful authentication",
- main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
+ main.includes('if(authenticatedNow&&(fromOverlay||guestOverlay>0)&&')&&
+ main.includes('(OverlayService.isRunning()||OverlayService.isSecondaryRunning()))')&&
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
@@ -1684,7 +1685,7 @@ test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",(
  const probe=read("assets/probe.js");
  return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,100):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
-  probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
+  probe.includes('siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
   service.includes('BugReport.log(this,"RESULTS_PARTIAL"')&&
   service.includes(' • leitura parcial');
@@ -1805,22 +1806,25 @@ test("HOME-03 authenticates using official profile only after session proof",(()
   profile.includes('trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown"')&&
   !profile.includes("document.cookie");
 })());
-test("HOME-03 opens the Home drawer on right and uses original transparent PNG",(()=>{
+test("HOME-03 opens the right Home drawer and keeps account management without its former logo",(()=>{
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void exportHomeData(){")[0]||"";
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return menu.includes("Gravity.RIGHT|Gravity.TOP")&&
-  main.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("R.drawable.ps_home_brand_transparent")&&
+  home.includes('homeLoginProfileShortcut.setOnClickListener(v->showHomeAccountMenu())')&&
   main.includes('openLoginDialog(false,"manage")');
 })());
-test("HOME-04 keeps original brand icon without wordmark, controls right and plain background",(()=>{
+test("HOME-04 has logo-free header, right controls, preserved actions and protected admin gesture",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("R.drawable.ps_home_brand_transparent")&&
+ return !home.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("branding.addView(")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.home_pokeball_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
   !home.includes("R.drawable.ps_home_official_wordmark")&&
   !home.includes('brandTitle.setContentDescription("PokeSearch")')&&
-  home.includes('PremiumAccess.controlled())brand.setOnLongClickListener')&&
+  home.includes('PremiumAccess.controlled())menu.setOnLongClickListener')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
@@ -1860,17 +1864,18 @@ test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible 
   dock.includes('button.classList.toggle("bell-star-silent",');
 });
 
-test("LT54-ICON-01 launcher keeps adaptive artwork; LT378 Home uses emblem only",(()=>{
+test("LT54-ICON-01 launcher retains adaptive artwork; LT386 Home removes the decorative emblem only",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8")&&
-  home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
-  home.includes("branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)))")&&
+  !home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
+  !home.includes("branding.addView(brand,")&&
   !home.includes("brandLabels")&&!home.includes("wordmarkWidth")&&
-  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f))");
+  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&
+  home.includes("header.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL)");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
  const pngs=[
@@ -2502,8 +2507,9 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   home.includes("R.drawable.home_mode_light")&&
   home.includes("R.drawable.home_mode_dark")&&
   home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
-  home.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
+  home.includes("homeLoginProfileShortcut.setOnClickListener")&&
   home.includes("auth.setBackground(homeSurface(")&&
   main.includes("refreshSessionSummary();")&&
   main.includes("refreshHomeOverlay();")&&
@@ -2867,7 +2873,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   confirmed.includes("submittedSearchGeneration==requestGeneration")&&
   confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
   confirmed.includes("!searchInProgress&&!resultsStale")&&
-  dock.includes("filtersConfirmed=false)=>{")&&
+  dock.includes("filtersConfirmed=false,guestLimitVisible=false)=>{")&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
   phase.includes("dirty?\"● Falta aplicar\"")&&

@@ -9,9 +9,9 @@ const watch=fs.readFileSync(root+"PgsAutoWatchSettings.java","utf8");
 const home=main.split("private FrameLayout buildHome(){")[1]
   .split("private Button homeAuthButton(",1)[0];
 assert.ok(home,"Home build section is present");
-assert.match(home,/brand\.setImageResource\(R\.drawable\.ps_home_brand_transparent\)/);
+assert.doesNotMatch(home,/brand\.setImageResource\(R\.drawable\.ps_home_brand_transparent\)/);
 assert.doesNotMatch(home,/ps_home_official_wordmark|brandSubtitle|brandTitle|homeWatchStatus/);
-assert.match(home,/PremiumAccess\.controlled\(\)\)brand\.setOnLongClickListener/);
+assert.match(home,/PremiumAccess\.controlled\(\)\)menu\.setOnLongClickListener/);
 assert.doesNotMatch(home,/homeText\("POKÉMON GO"/);
 assert.doesNotMatch(main,/homeWatchStatus/);
 assert.match(main,/TextView footer=homeText\("PokeSearch v"\+BuildConfig\.VERSION_NAME\+/);

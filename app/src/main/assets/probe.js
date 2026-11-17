@@ -1324,6 +1324,9 @@ function collect(){
  });
  const countLabel=(t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1];
  const siteCount=Number(countLabel||0);
+ // Provider-owned UI: five anonymous results vs ten available after login.
+ // Display evidence only. Never invent locked results or change the quota.
+ const guestLimitBanner=/\bShowing\s+5\s+results\s*[—–-]\s*log\s*in\s+to\s+see\s+10\b/i.test(t);
  // An explicit zero has to come from the result UI, not a dropdown's empty state.
  // Require a new result state since this Search was submitted when using SPA state.
  const submission=window.__pokeSearchSubmission;
@@ -1345,7 +1348,7 @@ function collect(){
  const expectedVisible=siteCount>0?Math.min(siteCount,100):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
+ return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,resultFreshnessPending,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
@@ -1457,9 +1460,16 @@ if(action.startsWith("readCoords:")){
  }
  const href=button.getAttribute("href")||"";
  let decoded=href;try{decoded=decodeURIComponent(href)}catch(_){}
- // Only parse the matched card's own LOCATION context or its own maps link.
+ // Guest cards may reveal a sibling coordinate button beside Open in Maps.
+ // Read only the exact card's own pair; never use page-wide matches.
+ const exactPair=/^[-+]?\d{1,2}(?:\.\d{1,12})?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d{1,12})?$/;
+ const siblings=controls.filter(e=>e!==button).map(e=>text(e).trim())
+   .filter(t=>exactPair.test(t)).map(coordinate).filter(Boolean);
+ const distinct=[...new Set(siblings)];
+ if(distinct.length>1)
+  return JSON.stringify({ok:false,status:"Coordenadas divergentes no cartão selecionado"});
  const locationText=nextLabelValue(target.node,"LOCATION");
- const m=coordinate(locationText)||coordinate(decoded);
+ const m=(distinct[0]||"")||coordinate(decoded)||coordinate(locationText);
  return m?JSON.stringify({ok:true,coords:m,status:"Coordenadas obtidas"}):
   JSON.stringify({ok:false,pending:true,status:"O site ainda não exibiu coordenadas deste Pokémon"});
 }

@@ -70,6 +70,9 @@ public class MainActivity extends Activity {
     private boolean trainerLinkRequested=false,trainerLinkStarted=false;
     private long trainerLinkObserveDeadline=0L;
     private int activeLoginSlot=1;
+    // Explicit CTA in a guest overlay may bind only that overlay after
+    // first-party authentication has actually been confirmed.
+    private int pendingPublicLoginOverlay=0;
     private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
     private final ImageView[] pokeballLoginBadges=new ImageView[2];
     private TextView secondAccountUnavailable,secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
@@ -309,8 +312,10 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
         handleShinyLoginIntent(getIntent());
+        handlePublicLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction())&&
+           !"com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN".equals(getIntent().getAction())&&
             !"com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction())&&
             !"com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
             root.post(this::showQuickGuide);
@@ -606,12 +611,9 @@ public class MainActivity extends Activity {
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.HORIZONTAL);
-        // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
+        // LT386: Home sem logomarca; os controles continuam alinhados à direita.
+        header.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(58)));
-        LinearLayout branding=new LinearLayout(this);
-        branding.setOrientation(LinearLayout.HORIZONTAL);
-        branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
@@ -699,22 +701,8 @@ public class MainActivity extends Activity {
         refreshPokeballLoginBadges();
         // Conta Premium / Gerenciar / Sair vão para Menu > Conta.
 
-        // HOME-02: icon only at top left; compact actions on the right.
-        ImageView brand=new ImageView(this);
-        brand.setImageResource(R.drawable.ps_home_brand_transparent);
-        brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        brand.setContentDescription("Ícone PokeSearch");
-        branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)));
-        // LT378: Keep the original left app emblem, hide only the wordmark and
-        // the POKÉMON GO subtitle. Preserve the protected admin shortcut.
-        if(PremiumAccess.controlled())brand.setOnLongClickListener(v->{
-            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
-            else PremiumGoogleLogin.signIn(this,(ok,message)->{
-                if(ok)PremiumAdminDialog.show(this);
-                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
-            });
-            return true;
-        });
+        // Sem a logo: os atalhos de perfil e PoGoCoordinates ficam ao
+        // lado do botão Apoiar, sem ícone decorativo no canto superior.
 
         // Relógio, Apoiar, tema, compartilhar e menu ficam na linha inferior.
         LinearLayout controls=new LinearLayout(this);
@@ -833,8 +821,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams pogoLp=new LinearLayout.LayoutParams(d(28),d(28));
         pogoLp.leftMargin=d(3);
         controls.addView(homePogoCoordinatesShortcut,pogoLp);
-        homePogoCoordinatesShortcut.setOnClickListener(v->openLoginDialogForSlot(1,
-            PogoAccountSlots.loggedIn(this,1)?"manage":"login"));
+        homePogoCoordinatesShortcut.setContentDescription("Contas PoGoCoordinates · abrir menu de login e perfil");
+        homePogoCoordinatesShortcut.setOnClickListener(v->showPogoAccountHub());
         refreshHomeHeaderProfileIcons();
 
         // O ícone indica o modo que será ativado ao tocar.
@@ -871,6 +859,16 @@ public class MainActivity extends Activity {
         menuLp.leftMargin=d(3);
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
+        // Preserve o acesso administrativo oculto que antes era um
+        // gesto longo na marca removida.
+        if(PremiumAccess.controlled())menu.setOnLongClickListener(v->{
+            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
+            else PremiumGoogleLogin.signIn(this,(ok,message)->{
+                if(ok)PremiumAdminDialog.show(this);
+                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+            });
+            return true;
+        });
 
         // HOME-04: compact reference card, fed only by verified profile fields.
         LinearLayout auth=new LinearLayout(this);
@@ -881,6 +879,10 @@ public class MainActivity extends Activity {
             20,homeLightMode?Color.rgb(175,188,204):Color.rgb(77,84,96)));
         auth.setElevation(d(5));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
+        // LT388: account controls belong in the existing header account drawer.
+        // Keep their views/state alive for session hydration but remove their
+        // height from Home. INVISIBLE would still reserve a large blank area.
+        auth.setVisibility(View.GONE);
 
         LinearLayout accountHeading=new LinearLayout(this);
         guestHeading=accountHeading;
@@ -1100,6 +1102,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams secondLp=new LinearLayout.LayoutParams(-1,-2);
         secondLp.topMargin=d(10);
         screen.addView(secondAccount,secondLp);
+        // LT388: do not render a second full login card on the Home feed.
+        secondAccount.setVisibility(View.GONE);
         // Full account card mirrors the hierarchy and dimensions of Conta 1.
         // None of these widgets borrow account-1 profile/identity preferences.
         TextView secondTitle=homeText("PoGoCoordinates · Conta 2",12,
@@ -1779,6 +1783,64 @@ public class MainActivity extends Activity {
         showHomeDrawerPage(false);
     }
     /** Aba Conta com aparência idêntica ao menu lateral, sem duplicar a autenticação. */
+    // LT389: this small native account hub replaces the two oversized cards
+    // on Home. No WebView or OAuth begins until the owner chooses an action.
+    private void showPogoAccountHub(){
+        String one=pogoAccountSummary(1);
+        String two=PogoAccountSlots.supportsSecond()?pogoAccountSummary(2):
+            "Não disponível neste Android";
+        CharSequence[] accounts={"Conta 1  ·  "+one,"Conta 2  ·  "+two,
+            "Continuar como visitante"};
+        new AlertDialog.Builder(this)
+            .setTitle("PoGoCoordinates · Contas")
+            .setItems(accounts,(dialog,which)->{
+                if(which==2){
+                    Toast.makeText(this,"Busca pública sem login disponível nas Pokébolas",
+                        Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(which==1&&!PogoAccountSlots.supportsSecond()){
+                    Toast.makeText(this,"Seu WebView não isola uma segunda conta",
+                        Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showPogoAccountActions(which+1);
+            })
+            .setNegativeButton("Fechar",null).show();
+    }
+    private String pogoAccountSummary(int slot){
+        SharedPreferences account=PogoAccountSlots.prefs(this,slot);
+        if(!PogoAccountSlots.loggedIn(this,slot))return "Visitante / desconectada";
+        String name=account.getString("profileDisplayName","").trim();
+        String sync=account.getString("profileSyncState","");
+        if(name.isEmpty())return "Conectada · perfil pendente";
+        return name+("verified".equals(sync)?"":" · sincronização pendente");
+    }
+    private void showPogoAccountActions(int slot){
+        final boolean connected=PogoAccountSlots.loggedIn(this,slot);
+        final String[] actions=connected?
+            new String[]{"Abrir perfil oficial","Atualizar nome e foto","Desconectar esta conta"}:
+            new String[]{"Entrar com Google","Entrar com Discord","Usar busca visitante"};
+        new AlertDialog.Builder(this)
+            .setTitle("Conta "+slot+" · "+pogoAccountSummary(slot))
+            .setItems(actions,(dialog,which)->{
+                if(!connected){
+                    if(which==2)return;
+                    preferredLoginProvider=which==0?"google":"discord";
+                    openLoginDialogForSlot(slot,"login");
+                }else if(which==0){
+                    openLoginDialogForSlot(slot,"manage");
+                }else if(which==1){
+                    openLoginDialogForSlot(slot,"sync");
+                }else if(slot==2){
+                    new AlertDialog.Builder(this).setTitle("Sair da Conta 2?")
+                        .setMessage("A Conta 1 e os filtros serão preservados.")
+                        .setNegativeButton("Cancelar",null)
+                        .setPositiveButton("Sair",(d,w)->logoutSecondAccount()).show();
+                }else askLogout();
+            })
+            .setNegativeButton("Voltar",(d,w)->showPogoAccountHub()).show();
+    }
     private void showHomeAccountMenu(){
         if(homeRoot!=null)showHomeDrawerPage(true);
     }
@@ -3078,6 +3140,19 @@ public class MainActivity extends Activity {
             });
         }
     }
+    private void handlePublicLoginIntent(Intent intent){
+        if(intent==null||!"com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN"
+            .equals(intent.getAction()))return;
+        final int requested=intent.getIntExtra("pogoOverlayNumber",0);
+        if(requested!=1&&requested!=2)return;
+        final int requestedSlot=intent.getIntExtra("pogoAccountSlot",1);
+        final int slot=requestedSlot==2&&PogoAccountSlots.supportsSecond()?2:1;
+        getWindow().getDecorView().post(()->{
+            if(loginDialog!=null&&loginDialog.isShowing())return;
+            pendingPublicLoginOverlay=requested;
+            openLoginDialogForSlot(slot,"login");
+        });
+    }
     private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
         boolean enabled=serviceType==OverlayService.class?
             OverlayService.isRunning():OverlayService.isSecondaryRunning();
@@ -3140,27 +3215,25 @@ public class MainActivity extends Activity {
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
                 SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
-                // Only a reconfirmation without a fresh OAuth navigation may
-                // preserve a previously verified member. New login/account
-                // change must hide the old identity until /profile confirms it.
+                // A newly confirmed OAuth session may belong to another account.
+                // Preserve name/avatar until /profile confirms a different
+                // identity, but never carry a trainer link to a new OAuth.
                 boolean sameSessionResync=("sync".equals(loginPurpose)||
                     "manage".equals(loginPurpose))&&observedLoginProvider.isEmpty()&&
                     "autenticada".equals(slotPrefs.getString("sessionStatus",""))&&
                     !slotPrefs.getString("profileDisplayName","").trim().isEmpty();
                 SharedPreferences.Editor sessionEdit=slotPrefs.edit()
                     .putString("sessionStatus","autenticada")
-                    .putString("profileSyncState","pending")
-                    .putString("profileTrainerState","unknown")
-                    .remove("profileTrainerName").remove("profileTrainerCode")
-                    .remove("profileTrainerDetails").remove("profileTrainerTeam")
-                    .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-                    .remove("profileTrainerLevel");
+                    .putString("profileSyncState","pending");
                 if(!sameSessionResync){
-                    sessionEdit.remove("profileAvatarUrl").remove("profileDisplayName")
-                        .remove("profileProvider").putString("profileAvatarState","missing")
-                        .remove("profileLastSyncedAt");
-                    ProfileAvatarCache.clear(this,activeLoginSlot);
+                    sessionEdit.putString("profileTrainerState","unknown")
+                        .remove("profileTrainerName").remove("profileTrainerCode")
+                        .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                        .remove("profileTrainerList").remove("profileSelectedTrainerCode")
+                        .remove("profileTrainerLevel");
                 }
+                // Do not erase previously verified name/photo preemptively:
+                // a slow React hydration is not proof of account replacement.
                 sessionEdit.apply();
                 profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
                 profileCaptureFailureReason="profile_unhydrated";
@@ -3386,7 +3459,8 @@ public class MainActivity extends Activity {
                     PogoAccountSlots.prefs(this,activeLoginSlot).edit()
                         .putString("profileSyncState","error").apply();
                     BugReport.log(this,"HOME",profileCaptureFailureReason+
-                        " · Conta "+activeLoginSlot);
+                        " · Conta "+activeLoginSlot+" · tentativas="+tryNumber+
+                        " · elapsedMs="+elapsed);
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
                     if(loginWaitLabel!=null)loginWaitLabel.setText(
@@ -3661,6 +3735,9 @@ public class MainActivity extends Activity {
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
+                // A real user must be able to tap Google/Discord in the site.
+                // Hiding it behind a spinner makes OAuth appear frozen.
+                if(loginCover!=null)loginCover.setVisibility(View.GONE);
                 checkLoginSession(view,24,generation);
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
@@ -3800,11 +3877,21 @@ public class MainActivity extends Activity {
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginProfilePageLoadFailed=false;
             loginDialog=null;
+            final int guestOverlay=pendingPublicLoginOverlay;
+            pendingPublicLoginOverlay=0;
+            if(authenticatedNow&&guestOverlay>0&&
+               PogoAccountSlots.loggedIn(this,activeLoginSlot)){
+                final boolean secondary=guestOverlay==2;
+                // Never override a different assignment made while login ran.
+                if(PogoAccountSlots.assigned(this,secondary)==0)
+                    PogoAccountSlots.bindAccountOnly(this,secondary,activeLoginSlot);
+            }
             serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
-            if(authenticatedNow&&fromOverlay&&OverlayService.isRunning()){
+            if(authenticatedNow&&(fromOverlay||guestOverlay>0)&&
+               (OverlayService.isRunning()||OverlayService.isSecondaryRunning())){
                 // Return to Pokémon GO with the PokeSearch overlay visible.
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
             }
@@ -3840,6 +3927,7 @@ public class MainActivity extends Activity {
         syncMissionBadge();
         setIntent(intent);
         handleShinyLoginIntent(intent);
+        handlePublicLoginIntent(intent);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openPicker);
         if("com.lucianotoscano.pokesearchoverlay.OPEN_SETTINGS".equals(intent.getAction()))

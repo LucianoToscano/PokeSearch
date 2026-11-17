@@ -73,10 +73,14 @@ test("Discord public avatar is accepted without reading secrets",()=>{
  assert.equal(p.avatarUrl,"https://cdn.discordapp.com/avatars/123/a.png");
  assert.doesNotMatch(js,/document\.cookie|localStorage|sessionStorage|access_token/);
 });
-test("fresh OAuth resets old identity but same-session refresh retains verified name",()=>{
+test("fresh OAuth clears stale trainer; name and avatar remain cached until a different identity is verified",()=>{
  assert.match(main,/boolean sameSessionResync=/);
  assert.match(main,/observedLoginProvider\.isEmpty\(\)/);
- assert.match(main,/if\(!sameSessionResync\)\{[\s\S]*?remove\("profileAvatarUrl"\)\.remove\("profileDisplayName"\)/);
+ assert.match(main,/if\(!sameSessionResync\)\{[\s\S]*?putString\("profileTrainerState","unknown"\)/);
+ assert.match(main,/\.remove\("profileTrainerList"\)/);
+ const auth=main.split('if("autenticada".equals(auth)){')[1].split("profileCaptureStartedAt=")[0];
+ assert.doesNotMatch(auth,/remove\("profileAvatarUrl"\)|remove\("profileDisplayName"\)/);
+ assert.match(main,/if\(newIdentity\)ProfileAvatarCache\.clear\(this,activeLoginSlot\)/);
  assert.match(main,/profileCaptureStartedAt=android\.os\.SystemClock\.uptimeMillis\(\)/);
 });
 test("partial DOM name causes bounded retries, never sync success",()=>{
