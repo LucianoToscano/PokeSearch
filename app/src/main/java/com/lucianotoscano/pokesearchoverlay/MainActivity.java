@@ -87,9 +87,9 @@ public class MainActivity extends Activity {
     private boolean profileDiscoveryAttempted=false;
     private android.app.Dialog loginDialog;
     private boolean loginProfilePageLoadFailed=false;
-    // Prints são permitidos somente em /profile, nunca nas telas de autenticação.
-    // Capturas permitidas em qualquer tela do PokeSearch, inclusive login.
-    // Restrições de segurança impostas pelo provedor não são controladas por nós.
+    // LT403: para diagnosticar falhas OAuth, screenshots/gravações ficam liberadas
+    // temporariamente em TODAS as janelas do PokeSearch, inclusive login.
+    // Apps/telas externas Google/Discord e Android controlam suas próprias flags.
     private void allowLoginScreenshots(){
         if(loginDialog!=null&&loginDialog.getWindow()!=null)
             loginDialog.getWindow().clearFlags(
@@ -259,6 +259,8 @@ public class MainActivity extends Activity {
     }
     @Override public void onWindowFocusChanged(boolean hasFocus){
         super.onWindowFocusChanged(hasFocus);
+        // Reaplicar ao voltar de um seletor OAuth externo ou troca de janelas.
+        if(hasFocus)allowLoginScreenshots();
         syncMissionClock(hasFocus);
     }
     private String pendingExportText="";
@@ -298,6 +300,8 @@ public class MainActivity extends Activity {
     }
     @Override public void onCreate(Bundle b){
         super.onCreate(b);
+        // Liberar a captura antes da Home, do diálogo e do primeiro WebView.
+        allowLoginScreenshots();
         OtaAssets.checkAsync(this);
         if (!IntegrityGuard.verify(this)) {
             BugReport.log(this,"SECURITY","Falha de integridade do pacote");
@@ -3413,6 +3417,8 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume(){
         super.onResume();
+        // OAuth pode alternar Activity; a nossa janela nunca deve voltar segura.
+        allowLoginScreenshots();
         missionResumed=true;
         syncMissionClock(hasWindowFocus());
         FirebaseStats.setHomeVisible(this,true);
@@ -4168,6 +4174,7 @@ public class MainActivity extends Activity {
         // Nenhum bloqueio de print criado pelo PokeSearch.
         loginDialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
         loginDialog.setContentView(loginRoot);
+        loginDialog.setOnShowListener(shown->allowLoginScreenshots());
         // Dialog consumes Android Back before Activity.onBackPressed().
         // Navigate OAuth/WebView history instead of prematurely closing login.
         loginDialog.setOnKeyListener((dialog,keyCode,event)->{
@@ -4212,7 +4219,9 @@ public class MainActivity extends Activity {
             }
         });
         serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_BEGIN",false);
+        allowLoginScreenshots();
         loginDialog.show();
+        allowLoginScreenshots();
         // React/Google/Discord podem não expor o seletor ao script. Deixar
         // a página oficial visível e permitir que o usuário encontre o erro.
         final WebView startedWebsite=website;
