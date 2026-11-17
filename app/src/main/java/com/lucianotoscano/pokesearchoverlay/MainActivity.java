@@ -579,6 +579,10 @@ public class MainActivity extends Activity {
         intent.putExtra("type",category);
         startActivity(intent);
     }
+    /** LT398: separate private collection; never reuses scanner, login or overlay. */
+    private void openPersonalPokedex(){
+        startActivity(new android.content.Intent(this,PersonalPokedexActivity.class));
+    }
     private void openDataHubCatalog(){
         android.content.Intent intent=new android.content.Intent(
             this,DataHubCatalogActivity.class);
@@ -852,6 +856,7 @@ public class MainActivity extends Activity {
         };
         // The earlier row still contains the classic launchers only.
         // New modules must not accidentally start an unrelated overlay.
+        homeModuleIcons[11].setOnClickListener(v->openPersonalPokedex());
         homeModuleIcons[15].setOnClickListener(v->showCommunityHomeOptions());
         LinearLayout launcherGrid=new LinearLayout(this);
         launcherGrid.setOrientation(LinearLayout.VERTICAL);
@@ -2205,6 +2210,7 @@ public class MainActivity extends Activity {
         }else{
             addHomeDrawerGroup(drawer,"PRINCIPAL");
             addHomeDrawerItem(drawer,"◉","Conta",this::showHomeAccountMenu);
+            addHomeDrawerItem(drawer,"▦","Minha Pokédex",this::openPersonalPokedex);
             addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
             addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
             addHomeDrawerItem(drawer,"◇","Filtros PGSharp",this::showSavedPgsFilters);
