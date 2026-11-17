@@ -3412,3 +3412,14 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - [PokeSearch oficial v0.03.81-54588](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.81-54588), APK `PokeSearch-v0.03.81-LT.apk`, **61.381.903 bytes**, SHA-256 `7e794b1a70d9e87f7e10f40a8b7cdb08e98439c6779372df0cb0f8eaf9a9462c`. Instala sobre v0.03.80 LT da mesma assinatura, sem desinstalar.
 - **Pendente teste físico Samsung Android 17 e dispositivos Android 11–17.** Registrar screenshot e homologar visualmente antes de declarar pixel-perfect.
 - [Auditoria ARK LT396 e continuidade LT397](LT396_ARK_HOME_ICONES_OFICIAL_00381_20261117.md).
+
+
+## LT397 — Assistente, Grupo e Trocas com artes do proprietário — v0.03.82 LT (17/11/2026)
+
+- Foram substituídos **somente** os 3 ícones da Home: Assistente (índice 3), Trocas (13), Grupo (índice 15, módulo Comunidade). Originais fornecidos: `Assistente.png`, `Trocas.png` e `icone_jogo_em_grupo.webp`; nome, ações e 16 módulos preservados.
+- Recursos normalizados e centralizados proporcionalmente sem redesenho: `app/src/main/assets/home-lt397-owner-icons.png` (768×256), SHA-256 `aec9248bfab9f74e058e990fbea079840010db75afc071737fa9ddddd96928ba`; arte anterior de 13 outros módulos inalterada.
+- Código [PR #503](https://github.com/LucianoToscano/PokeSearch/pull/503) integrada em `10d5fe338a4e8db824e52550ffc849a36c98285a`; Node QA, LT169, LT211, LT62, LT173, FastDev e beta/R8 passaram.
+- Release [PR #504](https://github.com/LucianoToscano/PokeSearch/pull/504) integrada em `097e6188e724c7d7758be499d7690e2c3d46e31e`; [workflow oficial #44064078726](https://github.com/LucianoToscano/PokeSearch/actions/runs/44064078726) **completed/success**.
+- [Release pública v0.03.82-54589](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.82-54589), APK `PokeSearch-v0.03.82-LT.apk`, **61.442.014 bytes**, SHA-256 `b69f00c18529ace18257fac52b19eb10b60328854cb9000250fcef06899cc250`, assinado com certificado permanente. Atualiza LT anterior de mesma assinatura sem desinstalação.
+- **Homologação física Samsung Android 17, tema claro/escuro e outros tamanhos pendente.** O teste de fonte/CI não comprova a visualização no aparelho.
+- [ARK LT397 e continuidade LT398](LT397_ARK_HOME_ICONES_OFICIAL_00382_20261117.md).
