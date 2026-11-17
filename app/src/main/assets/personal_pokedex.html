@@ -75,6 +75,7 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 @media(min-width:560px){#grid{grid-template-columns:repeat(4,1fr)}}
 </style>
 <link rel="stylesheet" href="personal_pokedex_enhanced.css">
+<link rel="stylesheet" href="personal_pokedex_lt399.css">
 </head>
 <body>
 <div id="app">
@@ -86,6 +87,16 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 </nav>
 <div class="segment"><button id="slot1" class="active">Inventário 1</button><button id="slot2">Inventário 2</button></div></header>
 <section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON</button></section>
+<div class="inventory-tools">
+ <button type="button" id="backgrounds-open" class="tool-button"><span aria-hidden="true">▧</span> Fundos <small id="background-cache-count">0/263</small></button>
+ <button type="button" id="history-open" class="tool-button"><span aria-hidden="true">◷</span> Histórico</button>
+ <button type="button" id="select-toggle" class="tool-button"><span aria-hidden="true">▣</span> Comparar</button>
+</div>
+<div id="selection-strip" class="selection-strip" hidden>
+ <strong id="selection-count">0 selecionados</strong>
+ <button type="button" id="selection-clear">Limpar</button>
+ <button type="button" id="selection-compare" disabled>Comparar Pokémon</button>
+</div>
 <section class="metrics"><div class="metric"><strong id="m-total">0</strong><span>Pokémon</span></div><div class="metric"><strong id="m-shiny">0</strong><span>Shiny</span></div><div class="metric"><strong id="m-hundo">0</strong><span>100% IV</span></div><div class="metric"><strong id="m-bg">0</strong><span>Fundos</span></div></section>
 <div class="search-row"><input id="search" class="search" placeholder="⌕  Buscar Pokémon, número ou forma…" aria-label="Buscar Pokémon"><select id="sort" class="sort" aria-label="Ordenar"><option value="cp">Maior PC</option><option value="recent">Mais recente</option><option value="iv">Maior IV</option><option value="number">Nº Pokédex</option><option value="name">Nome</option><option value="hp">PS</option><option value="favorite">Favoritos</option></select></div>
 <div class="sort-more-row"><button type="button" id="sort-trigger" class="sort-trigger" aria-expanded="false">☷ Ordenar <span id="sort-label">Maior PC</span></button><span id="privacy-state">● Inventário privado</span></div>
@@ -118,9 +129,45 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <div class="group"><h3>Movimentos registrados</h3><div id="moves"></div></div>
 <div class="group"><h3>Informações do Pokémon</h3><div id="other-info"></div></div>
 <div class="detail-arrows"><button id="detail-prev" aria-label="Pokémon anterior">‹ Anterior</button><button id="detail-next" aria-label="Próximo Pokémon">Próximo ›</button></div>
-<div class="group"><h3>Fundo da ficha · Apenas decorativo</h3><div class="actions" id="presets"></div><p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
+<div class="group"><h3>Minha anotação particular</h3>
+<textarea id="personal-note" class="personal-note" rows="3" maxlength="500" placeholder="Ex.: guardar para PvP ou evoluir depois…"></textarea>
+<button type="button" id="save-note" class="preset">Salvar anotação</button>
+<p class="note">Salva somente neste aparelho, separadamente do arquivo importado.</p></div>
+<div class="group"><h3>Fundo da ficha · Apenas decorativo</h3><div class="actions" id="presets"></div>
+<div id="background-availability" class="note"></div>
+<button type="button" id="background-gallery-for-pokemon" class="preset">Escolher outro fundo da galeria</button>
+<p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
 <p class="note">Informações importadas do arquivo local, não sincronizadas automaticamente com Pokémon GO. Identificadores de trajes/fundos permanecem registrados mesmo sem arte específica disponível.</p>
 </div></div>
+<div id="background-panel" class="overlay-sheet" hidden>
+ <div class="modal-card">
+ <div class="modal-title"><h2>Galeria de fundos</h2><button type="button" id="backgrounds-close" aria-label="Fechar">×</button></div>
+ <p class="modal-help">263 imagens conhecidas do Pokémon GO · aproximadamente 114,6 MB. O download é opcional, privado e ocorre diretamente do acervo PokeMiners; os direitos das imagens permanecem com seus titulares.</p>
+ <div id="bg-status" class="modal-status">Verificando fundos disponíveis…</div>
+ <div class="actions">
+ <button type="button" class="preset" id="backgrounds-download">Baixar todos</button>
+ <button type="button" class="preset" id="backgrounds-cancel">Cancelar</button>
+ <button type="button" class="preset" id="backgrounds-clear">Apagar cache</button>
+ </div>
+ <label for="background-search" class="modal-help">Buscar fundo por evento, local ou ID</label>
+ <input id="background-search" class="search" placeholder="Ex.: São Paulo, GoFest, 2026…">
+ <div class="note" id="background-hint"></div>
+ <div id="background-list" class="background-list"></div>
+ </div>
+</div>
+<div id="history-panel" class="overlay-sheet" hidden>
+ <div class="modal-card">
+ <div class="modal-title"><h2>Histórico do inventário</h2><button type="button" id="history-close" aria-label="Fechar">×</button></div>
+ <p class="modal-help">Comparação local entre arquivos importados. Um Pokémon ausente não significa necessariamente transferido.</p>
+ <div id="history-rows" class="history-rows"></div>
+ </div>
+</div>
+<div id="compare-panel" class="overlay-sheet" hidden>
+ <div class="modal-card">
+ <div class="modal-title"><h2>Comparar Pokémon</h2><button type="button" id="compare-close" aria-label="Fechar">×</button></div>
+ <div id="compare-content" class="compare-content"></div>
+ </div>
+</div>
 <div id="sort-backdrop" class="sort-backdrop" hidden>
   <div class="sort-drawer" role="dialog" aria-modal="true" aria-label="Ordenar coleção">
     <h2>Ordenar Pokémon</h2>
