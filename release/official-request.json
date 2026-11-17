@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.82",
-  "code": 54589,
-  "label": 51397,
-  "previous_tag": "v0.03.81-54588",
-  "qa_max_code": 54588,
-  "release_notes": "LT397 — Três ícones da Home substituídos exatamente pelos arquivos enviados pelo proprietário: Assistente.png (novo personagem branco no módulo Assistente), icone_jogo_em_grupo.webp (Grupo como ícone do módulo Comunidade, mantendo seu nome e suas opções), Trocas.png (novo símbolo no módulo Trocas). Os desenhos foram apenas recortados nas margens transparentes, redimensionados proporcionalmente e centralizados em três células 256x256 transparentes de um recurso interno PNG 768x256. A grade permanece com 16 módulos em 4x4; tamanho visual uniforme em caixas 51dp, mesmo alinhamento de rótulos e padding balanceado dos três novos módulos. Sem alteração do ícone flutuante do Assistente nem das funções atuais de Comunidade/Trocas. Os outros 13 ícones, incluindo Quests corrigido, Pokédex original e Pokébolas brancas OFF e sem IV na Home, seguem preservados. Arquivo embarcado com SHA-256 aec9248bfab9f74e058e990fbea079840010db75afc071737fa9ddddd96928ba. Novo teste LT397 verifica integridade, margens reais em alpha, correspondência das células e ações. Node QA, LT169, LT211, LT62 Android Java, LT173 OTA, FastDev smoke e beta R8 passaram na PR #503. A homologação física de alinhamento, legibilidade e toque no Samsung SM-S928B Android 17 e em outros aparelhos continua pendente; CI não equivale a teste físico. Assinatura permanente e SHA-256 público da release oficial, com instalação confirmada pelo Android."
+  "version": "0.03.83",
+  "code": 54590,
+  "label": 51398,
+  "previous_tag": "v0.03.82-54589",
+  "qa_max_code": 54589,
+  "release_notes": "LT398 — Minha Pokédex pessoal no app oficial. Importação manual e privada do PGSStats.json com Inventários 1/2 independentes; abas Tags/Pokémon/Ovos, grade familiar, fichas com CP/IV/PS/favoritos/Shiny/Sombroso/Purificado, 537 nomes de golpes pt-BR, 278 metadados de fundo, 87 vestimentas, eventos, ordenação e avaliação 0–3 estrelas. Ranking teórico de IV Grande/Ultra/Mestra com snapshot PvPoke 2026-10-19; variantes ausentes indicadas sem projeção. Fundos decorativos próprios não são fundos conquistados no jogo. Ícone Pokédex atual passa a abrir o inventário; os 16 ícones da Home, Pokébolas, Community, Quests e Assistente preservados. Sem troca/venda/leilão, sem envio de dados pessoais e sem download de imagens proprietárias. Gates Node, LT169, LT211, LT62, LT173, PGS e Secure beta/R8 passaram na PR #506; revisão e testes físicos Samsung SM-S928B Android 17, acessibilidade, importação real no APK oficial, imagens de trajes/fundos e validação visual continuam pendentes."
 }
