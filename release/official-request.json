@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.73",
-  "code": 54580,
-  "label": 51379,
-  "previous_tag": "v0.03.72-54579",
-  "qa_max_code": 54579,
-  "release_notes": "LT379 — Corrigida a tela Novidades do PokeSearch: toque na versão da Home abre Histórico de atualizações NATIVO, sem encaminhar ao GitHub. Corrigido limite de 96 KB que descartava as 198 entradas do release_notes.json (326.454 bytes UTF-8); limite seguro de 2 MiB e carregamento incremental de 12 releases por página. O acesso por Menu > Novidades permanece. Testes Node #43979040919, LT169 #43979042143, LT211 #43979041153, LT62 Java #43979040888, LT173 OTA #43979040918, FastDev #43979040906 e Secure beta/R8 #43979040999 — todos SUCCESS no HEAD PR #464 90382870a0f31fbc9bec84fdcbaeadffac1fece3. Mantidos P1/P2, Conta 1/Conta 2/Visitante, Auto Hunt desativado por padrão, modelos/sprites, filtros, Busca Inteligente, monitor, personalizações, OTA e assinatura permanente. Testes físicos Samsung Android 11–14, comportamento de OTA com notas antigas, TalkBack e navegação offline ainda pendentes. Instalador requer confirmação Android."
+  "version": "0.03.74",
+  "code": 54581,
+  "label": 51389,
+  "previous_tag": "v0.03.73-54580",
+  "qa_max_code": 54580,
+  "release_notes": "LT389 — Home compacta e contas PoGoCoordinates acessíveis pelo ícone no cabeçalho, com seletor Conta 1/Conta 2/Visitante e ações explícitas de Google/Discord, perfil e logout. Login oficial WebView sem spinner bloqueando os controles; ao confirmar a sessão, nome/foto já verificados são preservados durante hidratação de /profile e vínculo antigo de treinador é invalidado no OAuth novo. Busca visitante usa resultados públicos com aviso 🔒 +5 quando o site informa limite de 5, cópia segura de coordenadas expostas pelo cartão correto e erros ! explicáveis ao toque. Preservados isolamento WebView, bloqueios de taxa 429, filtros, sprites, P1/P2, Auto Hunt OFF, Novidades internas, OTA e assinatura permanente. PR #477 integrada em 0343b14b4a4b6c34a0e5b934a5ce2e51afa1c017 após Node QA, LT169, LT211, LT62, LT173, PGS QA, FastDev e beta/R8 SUCCESS no HEAD 61785aed3fae76131c681981225b54b889e024ef. Homologação física de Google/Discord, MFA, foto, dois perfis e Samsung Android 11–14 permanece pendente; Chrome externo não compartilha automaticamente sessão com WebView. Instalação exige confirmação Android."
 }
