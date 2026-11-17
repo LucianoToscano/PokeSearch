@@ -331,13 +331,16 @@ function render(){
     el("grid").innerHTML=displayed.map(p=>{
       const max=p.maxStamina||0,health=max?Math.min(100,Math.round(100*(p.stamina||0)/max)):100;
       const chosen=state.selectedIds.has(p.id);
-       const flags=[p.shiny?"✨":"",p.favorite?"⭐":"",hasBackground(p)?"🖼️":"",
-         p.costume?"🎩":"",isShadow(p)?"◈":""].filter(Boolean).join("");
+       const flags=[p.favorite?"⭐":"",hasBackground(p)?"🖼️":"",p.costume?"🎩":""].filter(Boolean).join("");
+       const overlays=(isShadow(p)?'<span class="shadow-flame" aria-label="Sombroso">♨</span>':"")+
+         (isPurified(p)?'<span class="purified-star" aria-label="Purificado">✦</span>':"")+
+         (p.shiny?'<span class="status-shiny" aria-label="Brilhante">✦</span>':"")+
+         (p.costume?'<span class="species-form-badge">T</span>':"");
       return '<button type="button" class="mon '+(chosen?"selected":"")+'" data-id="'+p.id+'" aria-label="'+
         escapeHtml(speciesName(p))+' PC '+number(p.cp)+'">'+
         (state.selecting?'<span class="selection-indicator" aria-hidden="true">'+(chosen?"✓":"")+'</span>':"")+ 
         '<div class="cp"><small>PC</small>'+number(p.cp)+'</div>'+
-        '<div class="pic">'+artHtml(p,"sprite")+
+        '<div class="pic">'+artHtml(p,"sprite")+overlays+
         '<span class="flags">'+flags+'</span></div>'+
         '<div class="name">'+escapeHtml(speciesName(p))+'</div>'+
         '<div class="iv"><b>'+p.attack+'</b><b>'+p.defense+'</b><b>'+p.hpIv+'</b></div>'+
@@ -520,6 +523,7 @@ function showDetail(id){
  applyHeroBackground(p,preset);
  el("hero-title").innerHTML="<small>PC</small> "+number(p.cp);
  el("hero-sprite").innerHTML=artHtml(p,"hero-img").replace('loading="lazy"','loading="eager"');
+ renderSpriteStatus(p);
  el("decor-label").textContent=preset==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
  el("detail-name").textContent=speciesName(p);
  el("detail-sub").textContent=(p.nickname?"Apelido: "+p.nickname+" · ":"")+"Pokédex #"+p.species+
@@ -541,7 +545,7 @@ function showDetail(id){
  if(p.costume)chips.push("🎩 "+availableMetaName("costumes",p.costume));
  if(hasBackground(p))chips.push("🖼 "+availableMetaName("backgrounds",p.backgroundId));
  if(p.traded)chips.push("Recebido por troca");
- if(p.hasMegaEvolved)chips.push("Megaevoluiu");
+ if(isMegaRegistered(p))chips.push("Megaevolução registrada");
  if(p.breadMode===1)chips.push("Dinamax");
  if(p.breadMode===2)chips.push("Gigamax");
  if(p.events?.length)chips.push("Evento");
@@ -707,6 +711,27 @@ el("selection-compare").addEventListener("click",compareSelected);
 el("compare-close").addEventListener("click",()=>{el("compare-panel").hidden=true;});
 el("history-open").addEventListener("click",openHistory);
 el("history-close").addEventListener("click",()=>{el("history-panel").hidden=true;});
+el("sprites-open").addEventListener("click",openSpritePanel);
+el("sprites-close").addEventListener("click",()=>{el("sprite-panel").hidden=true;});
+el("sprites-download-collection").addEventListener("click",()=>requestSprites("collection"));
+el("sprites-download-all").addEventListener("click",()=>requestSprites("all"));
+el("sprites-download-legacy").addEventListener("click",()=>requestSprites("legacy"));
+el("sprites-cancel").addEventListener("click",()=>bridge.cancelSpriteDownload());
+let spriteClearConfirmation=false;
+el("sprites-clear").addEventListener("click",()=>{
+ if(!spriteClearConfirmation){
+  spriteClearConfirmation=true;el("sprites-clear").textContent="Confirmar limpeza";
+  notice("Toque novamente para excluir apenas as imagens baixadas.");
+  return;
+ }
+ spriteClearConfirmation=false;el("sprites-clear").textContent="Limpar imagens baixadas";
+ bridge.clearSpriteCache();refreshSpriteCache();
+});
+el("download-this-sprite").addEventListener("click",()=>{
+ if(!state.selected)return;
+ const exact=visualMatch(state.selected);
+ if(exact.key)requestSprites("collection",[exact.key]);
+});
 el("backgrounds-open").addEventListener("click",()=>openBackgroundGallery(null));
 el("background-gallery-for-pokemon").addEventListener("click",()=>{
  if(state.selected)openBackgroundGallery(state.selected.id);
