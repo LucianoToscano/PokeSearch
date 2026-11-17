@@ -606,12 +606,9 @@ public class MainActivity extends Activity {
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.HORIZONTAL);
-        // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
+        // LT386: Home sem logomarca; os controles continuam alinhados à direita.
+        header.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(58)));
-        LinearLayout branding=new LinearLayout(this);
-        branding.setOrientation(LinearLayout.HORIZONTAL);
-        branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
@@ -699,22 +696,8 @@ public class MainActivity extends Activity {
         refreshPokeballLoginBadges();
         // Conta Premium / Gerenciar / Sair vão para Menu > Conta.
 
-        // HOME-02: icon only at top left; compact actions on the right.
-        ImageView brand=new ImageView(this);
-        brand.setImageResource(R.drawable.ps_home_brand_transparent);
-        brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        brand.setContentDescription("Ícone PokeSearch");
-        branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)));
-        // LT378: Keep the original left app emblem, hide only the wordmark and
-        // the POKÉMON GO subtitle. Preserve the protected admin shortcut.
-        if(PremiumAccess.controlled())brand.setOnLongClickListener(v->{
-            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
-            else PremiumGoogleLogin.signIn(this,(ok,message)->{
-                if(ok)PremiumAdminDialog.show(this);
-                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
-            });
-            return true;
-        });
+        // Sem a logo: os atalhos de perfil e PoGoCoordinates ficam ao
+        // lado do botão Apoiar, sem ícone decorativo no canto superior.
 
         // Relógio, Apoiar, tema, compartilhar e menu ficam na linha inferior.
         LinearLayout controls=new LinearLayout(this);
@@ -871,6 +854,16 @@ public class MainActivity extends Activity {
         menuLp.leftMargin=d(3);
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
+        // Preserve o acesso administrativo oculto que antes era um
+        // gesto longo na marca removida.
+        if(PremiumAccess.controlled())menu.setOnLongClickListener(v->{
+            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
+            else PremiumGoogleLogin.signIn(this,(ok,message)->{
+                if(ok)PremiumAdminDialog.show(this);
+                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+            });
+            return true;
+        });
 
         // HOME-04: compact reference card, fed only by verified profile fields.
         LinearLayout auth=new LinearLayout(this);
