@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.77",
-  "code": 54584,
-  "label": 51392,
-  "previous_tag": "v0.03.76-54583",
-  "qa_max_code": 54583,
-  "release_notes": "LT392 — Busca visitante sem login interpretando cartões móveis do PoGoCoordinates sem exigir o rótulo LOCATION; leitor de cada encontro com Pokédex/CP/IV individual, incluindo badge visível de 67%, 76%, 44% ou 100% quando matematicamente consistente. Não confundir cinco cartões lidos com cinco Pokémon correspondentes a um filtro IV100; não inferir 100% apenas pelo filtro do formulário. Ciclo Search/Searching com mudança comprovada evita tratar resultados antigos como uma pesquisa nova; preservados alertas e cota verdadeira do site, incluindo HTTP 429. Home limpa: retirado o ícone de conta sobre as Pokébolas 1/2; no menu PoGoCoordinates há ícones P1 e P2 para selecionar, independentemente, Visitante, Conta 1 ou Conta 2 com perfis WebView isolados. Preservados login pelo site, fotos/nomes verificados, filtros, sprites, overlays compactos e AUTO 3 min. Node QA #44035120300, LT169 #44035120475, LT211 #44035120287, LT62 #44035120294, LT173 #44035120285, PGS #44035120302, FastDev smoke #44035120342 e beta/R8 #44035120361 aprovados na PR #488 SHA db01103a9f6ad94f9f158de6f16c489b1ff9c097. QA físico Samsung/Android 11–17, OAuth Google/Discord, 5 cartões reais e atualização manual continuam pendentes; tests de CI não demonstram homologação do celular. Não contornar limitação visitante ou 429."
+  "version": "0.03.78",
+  "code": 54585,
+  "label": 51393,
+  "previous_tag": "v0.03.77-54584",
+  "qa_max_code": 54584,
+  "release_notes": "LT393 — Nova Home do PokeSearch com 16 módulos em quatro linhas e quatro colunas, sem Extra, todos com medidas e importância visual iguais. Artes Iconehome fornecidas pelo proprietário e atlas transparente incluído no próprio APK; P1/P2 exibem imagens dinâmicas ligadas à configuração de busca flutuante e valores IV/rank quando aplicáveis. Mantidos wallpaper, data/hora, perfil, hub PoGoCoordinates, compartilhamento, modo claro/escuro, suporte, atualização, auto hunt e as ações existentes de Raids, Power Spots, Quests, Rocket, Assistente e Rare Candy. Ferramentas novas não implementadas apresentam aviso honesto, sem simular inventário, scanner ou trocas. Sem alterar filtros, sessão, cópia de credenciais, cotas 429 ou resultados. CI LT393 (Node, LT169, LT211, LT62, LT173, beta Android/R8) aprovado na PR #491. Homologação física Android Samsung, dimensões/gestos, Shiny e badges visuais especiais do overlay ainda pendente; ícones da Home acompanham a base e valores dos filtros, não há comprovação de espelhamento pixel a pixel. Atualização oficial utiliza assinatura permanente e pede consentimento de instalação Android."
 }
