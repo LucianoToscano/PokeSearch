@@ -1058,7 +1058,7 @@ function cardRoots(){
 // not a verified empty response until result DOM has changed since Search.
 function visibleResultSignature(){
  const body=text(document.body);
- const count=(body.match(/\bShowing\s+\d+\s+spawns?\b/i)||[])[0]||"";
+ const count=(body.match(/\bShowing\s+\d+\s+(?:spawns?|results)\b/i)||[])[0]||"";
  const cards=cardRoots().map(item=>text(item.node).slice(0,700)).join("\u001e");
  // A real no-spawns message may replace cards without a "Showing 0" label.
  // Record only its presence, not the surrounding account/location text.
@@ -1351,7 +1351,7 @@ function collect(){
   return body.length<500&&emptyMessage.test(body)&&
    !region.querySelector('[role=listbox],[cmdk-list],[role=dialog]');
  });
- const countLabel=(t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1];
+ const countLabel=(t.match(/\bShowing\s+(\d+)\s+(?:spawns?|results)\b/i)||[])[1];
  const siteCount=Number(countLabel||0);
  // Provider-owned UI: five anonymous results vs ten available after login.
  // Display evidence only. Never invent locked results or change the quota.
