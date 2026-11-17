@@ -8,7 +8,7 @@ const pgs=java("PgsAutoClickService"),menu=java("PgsAutoMenus");
 const iconPack=java("HomeMenuIconPack"),policy=java("PgsAutoTargetPolicy");
 const dock=asset("dock.html"),explorer=asset("pvp_rank_explorer.js");
 assert.match(activity,/setHomePackIcon\(ball,number,"normal"\)/);
-assert.match(activity,/int desiredTop=visibleTop-2-height/);
+assert.match(activity,/showPokeballAccountChoice\(secondary,true\)/);
 assert.match(activity,/placement\.topMargin=desiredTop/);
 assert.match(activity,/visibleCenterX=HomeMenuIconPack\.opticalPokeballButtonXInParentPx\(icon\)/);
 assert.match(activity,/placement\.leftMargin=desiredLeft/);
