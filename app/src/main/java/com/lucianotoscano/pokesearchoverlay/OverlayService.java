@@ -5822,7 +5822,7 @@ public class OverlayService extends Service {
                         catch(Exception e){recordFailure("abrir relatório da busca",e);}
                     }).create();
                 if(dialog.getWindow()!=null)
-                    dialog.getWindow().setType(Build.VERSION.SDK_INT>=26?
+                    dialog.getWindow().setType(android.os.Build.VERSION.SDK_INT>=26?
                         WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:
                         WindowManager.LayoutParams.TYPE_PHONE);
                 dialog.show();
