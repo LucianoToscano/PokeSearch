@@ -13,9 +13,11 @@ test("Preview uses the real PokeSearch MainActivity launcher, never console or L
  assert.match(mainManifest,/android.intent.category.LAUNCHER/);
  assert.match(previewManifest,/android:name="\.FastDevApplication"/);
  assert.match(previewManifest,/android:label="PokeSearch FastDev"/);
- assert.match(previewManifest,/android:name="\.FastDevConsoleActivity"\s+android:exported="false"/);
+ assert.match(previewManifest,/android:name="\.FastDevConsoleActivity"\s+android:exported="true"/);
  assert.doesNotMatch(previewManifest,/android.intent.category.LAUNCHER|android.intent.action.MAIN/);
  assert.doesNotMatch(previewManifest,/FastDevLiveActivity/);
+ assert.match(updater,/Intent home=new Intent\(this,MainActivity\.class\)/);
+ assert.match(updater,/startActivity\(home\);/);
 });
 test("Preview-only application initiates OTA from MainActivity without touching official build",()=>{
  assert.match(app,/extends Application/);
