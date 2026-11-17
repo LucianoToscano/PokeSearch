@@ -143,6 +143,7 @@ public class MainActivity extends Activity {
     private TextView accountDisplay, accountProvider, trainerDisplay, trainerDetails, trainerCode;
     private ImageView overlayControl,secondaryOverlayControl,pgsSearchControl;
     private Boolean lastPgsSearchState;
+    private String homePrimaryModeCache,homeSecondaryModeCache;
     private boolean pgsHomeStatePolling=false;
     private final android.os.Handler pgsHomeStateHandler=
         new android.os.Handler(android.os.Looper.getMainLooper());
@@ -150,6 +151,8 @@ public class MainActivity extends Activity {
         @Override public void run(){
             if(!pgsHomeStatePolling)return;
             refreshHomePgsIcon();
+            refreshHomePokeballImage(overlayControl,false);
+            refreshHomePokeballImage(secondaryOverlayControl,true);
             pgsHomeStateHandler.postDelayed(this,1000L);
         }
     };
@@ -540,7 +543,7 @@ public class MainActivity extends Activity {
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
         return icon;
     }
-    private void addHomePreviewIcon(LinearLayout row,int drawable,String description){
+    private ImageView addHomePreviewIcon(LinearLayout row,int drawable,String description){
         ImageView icon=new ImageView(this);
         icon.setImageResource(drawable);
         icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -568,6 +571,7 @@ public class MainActivity extends Activity {
                 Toast.LENGTH_SHORT).show();
         });
         row.addView(icon,new LinearLayout.LayoutParams(0,d(44),1));
+        return icon;
     }
     private void openPokeListRadar(String category){
         android.content.Intent intent=new android.content.Intent(
@@ -581,6 +585,77 @@ public class MainActivity extends Activity {
         intent.putExtra("mode","power_spots");
         startActivity(intent);
     }
+    /** LT393: every module is a peer in the same four-column launcher grid. */
+    private void addHomeGridCell(LinearLayout row,ImageView artwork,int index,String label){
+        if(artwork.getParent() instanceof android.view.ViewGroup)
+            ((android.view.ViewGroup)artwork.getParent()).removeView(artwork);
+        android.graphics.Bitmap submitted=HomeUserIconAtlas.icon(this,index);
+        if(submitted!=null){
+            artwork.setImageBitmap(submitted);
+            // Avoid old hover handlers switching the owner's new PNGs back
+            // to the previous colorful ten-icon pack on touch.
+            artwork.setOnTouchListener(null);
+        }
+        if(index==0||index==1)artwork.setOnTouchListener(null);
+        artwork.setBackground(null);
+        artwork.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        artwork.setPadding(d(7),d(1),d(7),d(1));
+        LinearLayout tile=new LinearLayout(this);
+        tile.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+        tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setBackground(null);
+        tile.addView(artwork,new LinearLayout.LayoutParams(-1,d(51)));
+        TextView title=homeText(label,9,
+            homeLightMode?Color.rgb(19,46,70):Color.WHITE,true);
+        title.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+        title.setMaxLines(2);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        title.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        LinearLayout.LayoutParams textLp=new LinearLayout.LayoutParams(-1,d(27));
+        textLp.topMargin=d(2);
+        tile.addView(title,textLp);
+        tile.setContentDescription(label);
+        tile.setOnClickListener(v->artwork.performClick());
+        row.addView(tile,new LinearLayout.LayoutParams(0,d(83),1f));
+    }
+    private ImageView futureHomeModule(String title){
+        ImageView icon=new ImageView(this);
+        icon.setBackground(null);
+        icon.setContentDescription(title+" · ferramenta em preparação");
+        icon.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage("A interface deste módulo está reservada na Home. "+
+                "O recurso completo ainda não foi implementado; nenhuma "+
+                "informação ou operação foi simulada.")
+            .setPositiveButton("OK",null).show());
+        return icon;
+    }
+    private void refreshHomePokeballImage(ImageView icon,boolean secondary){
+        if(icon==null)return;
+        String mode=HomeFloatingModeIcon.family(this,secondary);
+        String previous=secondary?homeSecondaryModeCache:homePrimaryModeCache;
+        if(!mode.equals(previous)){
+            android.graphics.Bitmap sameAsFloating=
+                HomeFloatingModeIcon.icon(this,secondary);
+            if(sameAsFloating!=null){
+                icon.setImageBitmap(sameAsFloating);
+                icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            }else if(!setHomePackIcon(icon,secondary?2:1,"normal")){
+                icon.setImageResource(R.drawable.home_pokeball_off);
+            }
+            if(secondary)homeSecondaryModeCache=mode;
+            else homePrimaryModeCache=mode;
+        }
+        boolean active=secondary?OverlayService.isSecondaryRunning():
+            OverlayService.isRunning();
+        icon.setAlpha(active?1f:.86f);
+        String badge=HomeFloatingModeIcon.label(this,secondary);
+        icon.setContentDescription((active?"Desativar ":"Ativar ")+
+            "Pokébola "+(secondary?"2":"1")+
+            (badge.isEmpty()?"":" · filtro "+badge));
+        icon.setBackground(null);
+    }
+
     private FrameLayout buildHome(){
         homeLightMode=getSharedPreferences("prefs",0).getBoolean("homeLightMode",false);
         updateHomeSystemBars();
@@ -664,7 +739,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams dualLp=new LinearLayout.LayoutParams(-1,d(60));
         dualLp.bottomMargin=d(5);
         dualOverlayRow.setVisibility(View.VISIBLE);
-        screen.addView(dualOverlayRow,dualLp);
+        // LT393: staging row only; all artwork is reparented into a 4×4 grid.
+        // No separate, oversized Pokeball section is added to the Home.
         // LT378: no PGS Monitor banner or reserved row in Home.
         // The monitor and its diagnostics remain accessible in PGS menus.
         // Rótulos enormes removidos: badge 12dp sobre cada Pokébola.
@@ -731,13 +807,52 @@ public class MainActivity extends Activity {
         addHomePreviewIcon(dualOverlayRow,R.drawable.home_rocket,"Rocket");
         addHomePreviewIcon(dualOverlayRow,R.drawable.home_weather,"Weather");
         dualOverlayRow.addView(rareCandyControl,new LinearLayout.LayoutParams(0,d(44),1));
-        // Force final geometry after the weighted row has received its width.
-        dualOverlayRow.post(()->{
-            if(raidAssistantControl!=null)
-                setHomePackIcon(raidAssistantControl,4,"normal");
-            if(rareCandyControl!=null)
-                setHomePackIcon(rareCandyControl,10,"normal");
+        // Owner's selected Iconehome artwork; each module uses identical
+        // touch geometry, without cards, orphan cells or placeholder Extra.
+        String[] homeModuleNames={
+            "Pokébola 1","Pokébola 2","Auto Hunt","Assistente",
+            "Raids","Power Spots","Quests","Rocket",
+            "Weather","Rare Candy","PvP","Pokédex",
+            "Scanner","Trocas","Calculadora","Comunidade"
+        };
+        ImageView[] homeModuleIcons={
+            overlayControl,secondaryOverlayControl,pgsSearchControl,raidAssistantControl,
+            (ImageView)dualOverlayRow.getChildAt(4),
+            (ImageView)dualOverlayRow.getChildAt(5),
+            (ImageView)dualOverlayRow.getChildAt(6),
+            (ImageView)dualOverlayRow.getChildAt(7),
+            (ImageView)dualOverlayRow.getChildAt(8),rareCandyControl,
+            futureHomeModule("Batalhas PvP"),futureHomeModule("Pokédex / Inventário"),
+            futureHomeModule("Scanner Pokémon"),futureHomeModule("Trocas, Vendas e Leilões"),
+            futureHomeModule("Calculadora"),futureHomeModule("Comunidade")
+        };
+        // The earlier row still contains the classic launchers only.
+        // New modules must not accidentally start an unrelated overlay.
+        homeModuleIcons[15].setOnClickListener(v->{
+            if(CommunityScrapbookStage1.isEnabled(this))scrollToCommunity();
+            else new AlertDialog.Builder(this).setTitle("Comunidade")
+                .setMessage("O fórum da Comunidade ainda está em preparação. "+
+                    "O chat experimental pode ser habilitado no menu lateral.")
+                .setPositiveButton("OK",null).show();
         });
+        LinearLayout launcherGrid=new LinearLayout(this);
+        launcherGrid.setOrientation(LinearLayout.VERTICAL);
+        launcherGrid.setBackground(null);
+        for(int line=0;line<4;line++){
+            LinearLayout lineRow=new LinearLayout(this);
+            lineRow.setOrientation(LinearLayout.HORIZONTAL);
+            lineRow.setGravity(Gravity.CENTER_HORIZONTAL);
+            launcherGrid.addView(lineRow,new LinearLayout.LayoutParams(-1,d(83)));
+            for(int col=0;col<4;col++){
+                int at=line*4+col;
+                addHomeGridCell(lineRow,homeModuleIcons[at],at,homeModuleNames[at]);
+            }
+        }
+        LinearLayout.LayoutParams gridLp=new LinearLayout.LayoutParams(-1,-2);
+        gridLp.topMargin=d(8);
+        gridLp.bottomMargin=d(3);
+        screen.addView(launcherGrid,gridLp);
+        homePrimaryModeCache=null;homeSecondaryModeCache=null;
 
         // LT308 · único relógio de referência do Edu, ajustável para testes.
         // Compacto, de duas linhas e sem um novo menu na tela.
@@ -2613,7 +2728,12 @@ public class MainActivity extends Activity {
         if(pgsSearchControl==null)return;
         boolean on=PgsAutoClickService.isOverlayVisible();
         if(lastPgsSearchState==null||lastPgsSearchState.booleanValue()!=on){
-            if(!setHomePackIcon(pgsSearchControl,3,on?"hover":"normal")){
+            android.graphics.Bitmap userIcon=HomeUserIconAtlas.icon(this,2);
+            if(userIcon!=null){
+                pgsSearchControl.setImageBitmap(userIcon);
+                pgsSearchControl.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                pgsSearchControl.setAlpha(on?1f:.86f);
+            }else if(!setHomePackIcon(pgsSearchControl,3,on?"hover":"normal")){
                 if(on)pgsSearchControl.setImageBitmap(PgsHomeArtwork.transparentOn(this));
                 else pgsSearchControl.setImageResource(R.drawable.busca_pokemon_overlay_off);
             }
@@ -2637,19 +2757,8 @@ public class MainActivity extends Activity {
                 "Desativar overlay Doce Raro":"Ativar overlay Doce Raro");
         }
         if(overlayControl==null)return;
-        boolean on=OverlayService.isRunning();
-        if(!setHomePackIcon(overlayControl,1,on?"ativo":"normal"))
-            overlayControl.setImageResource(on?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
-        overlayControl.setContentDescription(on?"Desativar Pokébola 1":"Ativar Pokébola 1");
-        overlayControl.setBackground(null);
-        if(secondaryOverlayControl!=null){
-            boolean secondaryOn=OverlayService.isSecondaryRunning();
-            if(!setHomePackIcon(secondaryOverlayControl,2,secondaryOn?"ativo":"normal"))
-                secondaryOverlayControl.setImageResource(secondaryOn?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off);
-            secondaryOverlayControl.setContentDescription(secondaryOn?
-                "Desativar Pokébola 2":"Ativar Pokébola 2");
-            secondaryOverlayControl.setBackground(null);
-        }
+        refreshHomePokeballImage(overlayControl,false);
+        refreshHomePokeballImage(secondaryOverlayControl,true);
     }
     private void openProviderLogin(String provider){
         activeLoginSlot=1;
