@@ -475,7 +475,7 @@ def main():
     # base images for the demonstrated failures or common seasonal forms.
     # The manifest may legitimately omit unknown Dex variants; we never
     # silently replace missing normal/shiny base sprites with wrong species.
-    required_ids = {94, 422, 423, 459, 656, 669, 670, 671, 722, 723, 724}
+    required_ids = {94, 129, 422, 423, 459, 580, 656, 669, 670, 671, 722, 723, 724}
     # Nunca liberar APK faltando os modelos demonstrados nos Samsung. Se a
     # PokéAPI/CDN falhar, recuperar só bytes previamente empacotados e
     # verificados no APK oficial anterior, com digest criptográfico fixo.
