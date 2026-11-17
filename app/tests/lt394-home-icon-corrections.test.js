@@ -10,8 +10,8 @@ assert.equal(img.subarray(0,8).toString("hex"),"89504e470d0a1a0a");
 assert.equal(img.readUInt32BE(16),1024);
 assert.equal(img.readUInt32BE(20),1024);
 assert.equal(crypto.createHash("sha256").update(img).digest("hex"),
- "cd26911b8a11143ebccde08e922e892bec33373513f56a264a45d8df5b1c874f",
- "The exact reviewed owner-art atlas must ship, not the old clipped art");
+ "0038a203fa074002ef8bb710662d32e9c8231a6f90e5914a120b4c6fa8e909e6",
+ "LT395: ship the revised, owner-original atlas with safer Quests/Community margins");
 assert.match(loader,/position==3\)return null;/);
 assert.doesNotMatch(loader,/position==0\|\|position==1|position==7\)return null/);
 assert.match(code,/HomeUserIconAtlas\.icon\(this,secondary\?1:0\)/);
