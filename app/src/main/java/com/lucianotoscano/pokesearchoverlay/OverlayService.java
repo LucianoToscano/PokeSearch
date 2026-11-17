@@ -2645,7 +2645,13 @@ public class OverlayService extends Service {
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
         if(stopped||loginPaused)return;
-        if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L){
+        // Ordinary public searches use the first-party website when the
+        // selected profile is a visitor or an account without a confirmed
+        // session. Do not call an authenticated API for a guest.
+        final int searchSlot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+        final boolean guestPublicSearch=!shiny&&
+            !PogoAccountSlots.loggedIn(this,searchSlot);
+        if(authorizedApiQaSelected()&&!guestPublicSearch&&apiProviderBackoffUntil()>0L){
             scheduleProviderRateLimitResume();
             long remaining=(apiProviderBackoffUntil()-System.currentTimeMillis()+999L)/1000L;
             String waitText=remaining>=3600L?(remaining+3599L)/3600L+"h":
@@ -2660,7 +2666,7 @@ public class OverlayService extends Service {
             }
             return;
         }
-        if(!authorizedApiQaSelected()){
+        if(!authorizedApiQaSelected()||guestPublicSearch){
             try{
                 if(isInvertedWildSort(new JSONObject(extraFiltersJson).optString("sortBy",""))){
                     searchFailure("⚠ Ordenação inversa exige API",
@@ -2697,13 +2703,15 @@ public class OverlayService extends Service {
         handler.removeCallbacks(searchWatchdog);
         handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
         status(manual?"Busca manual iniciada...":"Atualizando...");
-        if(authorizedApiQaSelected()){
+        if(authorizedApiQaSelected()&&!guestPublicSearch){
             // No DOM Search is also dispatched: each generation uses one source.
             if(authorizedApiCollector==null)
                 authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
             performAuthorizedApiSearch(generation,manual);
             return;
         }
+        if(guestPublicSearch)
+            status("Visitante · conferindo busca pública no PoGoCoordinates...");
         execute("session",session->continueVerifiedSearchSession(generation,manual,session,0));
     }
     // Keep the second (in-search) auth proof as careful as the Shiny tap.
@@ -5788,8 +5796,40 @@ public class OverlayService extends Service {
             try{startActivity(intent);}catch(Exception e){recordFailure("abrir preferências",e);}
         });}
         @JavascriptInterface public void showStatus(){handler.post(()->{
-            android.widget.Toast.makeText(OverlayService.this,
-                status==null?"Aguardando busca":status,android.widget.Toast.LENGTH_LONG).show();
+            String summary=status==null||status.trim().isEmpty()?
+                "Aguardando busca":status;
+            if(!"error".equals(searchPhase)){
+                android.widget.Toast.makeText(OverlayService.this,summary,
+                    android.widget.Toast.LENGTH_LONG).show();
+                return;
+            }
+            String detail=overlayPrefs().getString("lastError","");
+            String explanation=summary+(detail==null||detail.isEmpty()||
+                "Nenhum".equals(detail)?"":"\n\nMotivo: "+detail);
+            try{
+                android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(
+                    OverlayService.this)
+                    .setTitle("Aviso da Pokébola "+(isSecondaryOverlay()?"2":"1"))
+                    .setMessage(explanation)
+                    .setPositiveButton("Entendi",(d,which)->{})
+                    .setNeutralButton("Reportar problema",(d,which)->{
+                        Intent report=new Intent(OverlayService.this,MainActivity.class);
+                        report.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT");
+                        report.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        try{startActivity(report);}
+                        catch(Exception e){recordFailure("abrir relatório da busca",e);}
+                    }).create();
+                if(dialog.getWindow()!=null)
+                    dialog.getWindow().setType(Build.VERSION.SDK_INT>=26?
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:
+                        WindowManager.LayoutParams.TYPE_PHONE);
+                dialog.show();
+            }catch(RuntimeException e){
+                recordFailure("mostrar motivo da busca",e);
+                android.widget.Toast.makeText(OverlayService.this,explanation,
+                    android.widget.Toast.LENGTH_LONG).show();
+            }
         });}
         @JavascriptInterface public void openReport(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
