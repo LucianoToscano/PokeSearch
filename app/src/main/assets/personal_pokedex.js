@@ -503,7 +503,8 @@ function loadSlot(){
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
    renderTagSelection();
-   el("sync-status").textContent=bridge.getSyncStatus(state.slot);
+   el("sync-status").textContent=typeof bridge.getSyncStatus==="function"?
+    bridge.getSyncStatus(state.slot):"Arquivo local não vinculado";
   state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
   state.spriteMatchCache.clear();
   state.selecting=false;state.selectedIds.clear();renderSelection();
