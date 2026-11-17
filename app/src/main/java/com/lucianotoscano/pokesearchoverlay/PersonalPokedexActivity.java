@@ -604,6 +604,10 @@ public final class PersonalPokedexActivity extends Activity {
             for(String id:ids)next.put(id);
             p.edit().putString("slot"+selected,next.toString()).apply();
         }
+        @JavascriptInterface public void restoreAllHidden(int requestedSlot){
+            getSharedPreferences(HIDDEN_SETTINGS,MODE_PRIVATE).edit()
+                .remove("slot"+slot(requestedSlot)).apply();
+        }
         @JavascriptInterface public void setAutoSync(int requestedSlot,boolean enabled){
             int selected=slot(requestedSlot);
             String uri=sourcePrefs().getString(sourceKey(selected,"uri"),"");
