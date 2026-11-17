@@ -68,7 +68,7 @@ public final class PersonalPokedexActivity extends Activity {
     private volatile boolean closing=false;
     private int pendingSlot=1;
     private boolean pendingLink=false;
-    private final AtomicBoolean sourceSyncBusy=new AtomicBoolean(false);
+    private final AtomicBoolean[] sourceSyncBusy={new AtomicBoolean(false),new AtomicBoolean(false),new AtomicBoolean(false)};
     private final Handler sourceHandler=new Handler(Looper.getMainLooper());
     private final Runnable sourceTicker=new Runnable(){
         @Override public void run(){
@@ -98,7 +98,7 @@ public final class PersonalPokedexActivity extends Activity {
             out.put("name",p.getString(sourceKey(selected,"name"),""));
             out.put("lastSync",p.getLong(sourceKey(selected,"last"),0L));
             out.put("error",p.getString(sourceKey(selected,"error"),""));
-            out.put("busy",sourceSyncBusy.get());
+            out.put("busy",sourceSyncBusy[slot(selected)].get());
         }catch(Exception ignored){}
         return out.toString();
     }
@@ -140,7 +140,7 @@ public final class PersonalPokedexActivity extends Activity {
         recordImportHistory(selected,compact,previous);
     }
     private void enqueueRefresh(int selected,boolean requested){
-        if(!sourceSyncBusy.compareAndSet(false,true))return;
+        if(!sourceSyncBusy[slot(selected)].compareAndSet(false,true))return;
         worker.execute(()->{
             try{
                 SharedPreferences prefs=sourcePrefs();
@@ -154,7 +154,7 @@ public final class PersonalPokedexActivity extends Activity {
                 String digest=sha256(bytes);
                 String previous=prefs.getString(sourceKey(selected,"sha"),"");
                 if(digest.equals(previous)){
-                    if(requested)notifyWeb("Arquivo verificado: nenhuma alteração.",false);
+                    if(requested)notifySourceWeb(selected,"Arquivo verificado: nenhuma alteração.",false);
                     prefs.edit().putString(sourceKey(selected,"error"),"").apply();
                     return;
                 }
@@ -163,13 +163,13 @@ public final class PersonalPokedexActivity extends Activity {
                 prefs.edit().putString(sourceKey(selected,"sha"),digest)
                     .putLong(sourceKey(selected,"last"),System.currentTimeMillis())
                     .putString(sourceKey(selected,"error"),"").apply();
-                notifyWeb("Sincronizado: "+compact.optInt("count")+" Pokémon no arquivo.",true);
+                notifySourceWeb(selected,"Sincronizado: "+compact.optInt("count")+" Pokémon no arquivo.",true);
             }catch(Exception e){
                 String message="Fonte indisponível. Se o PGSharp substituiu o arquivo, escolha-o novamente.";
                 sourcePrefs().edit().putString(sourceKey(selected,"error"),message).apply();
-                if(requested)notifyWeb(message,false);
+                if(requested)notifySourceWeb(selected,message,false);
             }finally{
-                sourceSyncBusy.set(false);
+                sourceSyncBusy[slot(selected)].set(false);
                 emitSourceStatus(selected);
             }
         });
@@ -742,6 +742,13 @@ public final class PersonalPokedexActivity extends Activity {
             for(int i=0;i<Math.min(existing.length(),9);i++)compact.put(existing.getJSONObject(i));
             settings.edit().putString("slot"+selected,compact.toString()).apply();
         }catch(Exception ignored){}
+    }
+    private void notifySourceWeb(int selected,String message,boolean ok){
+        runOnUiThread(()->{
+            if(closing||view==null)return;
+            view.evaluateJavascript("window.pokeSourceImportCompleted&&window.pokeSourceImportCompleted("+
+                selected+","+JSONObject.quote(message)+","+(ok?"true":"false")+");",null);
+        });
     }
     private void notifyWeb(String message,boolean ok){
         runOnUiThread(()->{
