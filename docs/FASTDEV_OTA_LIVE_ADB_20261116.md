@@ -2,6 +2,18 @@
 
 Estado: implementação da infraestrutura no repositório; publicação OTA só fica operacional depois de provisionar o keystore privado dedicado no GitHub. Não afirmar que há Preview assinado com nova chave ou instalação em Samsung sem evidência. Não modificar a release oficial em função deste trabalho.
 
+## Verificação de ativação no Work — 16/11/2026
+
+- Base consultada: `main` em `413e418ccf7ecadc2c7d41c1aa03bcd31d171995`, PR #467 integrada. A API de releases não retornou tags `fastdev-`; a última oficial permanece `v0.03.73-54580`.
+- O environment `fastdev-signing` não existia na consulta inicial. A conexão GitHub respondeu HTTP 403 à criação do environment e à leitura de nomes de secrets/variables; o navegador do Work também não iniciou. Permissão administrativa do proprietário no repositório não implica essas permissões no token da integração. Não presumir que uma chave inexiste enquanto o inventário estiver bloqueado, nem criar uma substituta.
+- A conexão Drive conseguiu gravar um arquivo de teste em Meu Drive; a leitura de permissões confirmou `shared=false` e uma única permissão de proprietário. Isso estabelece um destino durável privado para o backup, mas **nenhum keystore ou senha foi gerado ou enviado** nesta verificação. Não colocar credenciais na pasta pública de APKs; verificar permissões e restaurabilidade do backup real antes de usá-lo no CI.
+- O novo preflight executa logo após o checkout, antes de Java/Gradle/SDK. Informa todos os nomes ausentes sem imprimir valores, rejeita fingerprint inválido e o certificado oficial. A restauração da chave e as verificações criptográficas do APK continuam obrigatórias. A melhoria evita todo o setup Android quando a configuração está incompleta; não houve benchmark de build com cache aquecido.
+- Testes locais: 13 testes FastDev aprovados, além de 487 contratos UX, 144 probe e 14 assinatura; sintaxe Bash e ordem/YAML do pipeline verificadas. O teste de preflight cobre configurações ausentes/parciais, fingerprint inválido/oficial e ausência de valores privados na saída.
+- Auditoria do atualizador: descoberta limitada a pré-releases `fastdev-NNNNNNN`, asset exato, digest/tamanho e versão superior; download HTTPS com hosts/redirects limitados; SHA-256, pacote, versionCode e certificado comparado ao instalado antes de abrir FileProvider/instalador Android. Não há limpeza de dados nem desinstalação automática. O app oficial está desabilitado como canal OTA apenas na variante Preview. Essas evidências são revisão de código e contratos, **não um teste de instalação ou atualização em Android físico**.
+- Cache de tarefas Gradle e seleção de smoke por arquivos alterados já estão ativos; Live HTML e `adb install -r -t` já existem. Não habilitar runner persistente sem máquina privada, comparação de tempos e avaliação de manutenção. Nenhum dispositivo ADB foi disponibilizado nesta sessão.
+
+Para retomar: liberar na conexão GitHub escrita de Environments/Secrets/Variables, inventariar a configuração existente, recuperar a chave se houver; só na ausência confirmada, gerar PKCS#12 e senha forte, gravar e verificar o backup privado no Drive e cadastrar os quatro secrets e o fingerprint. Uma solicitação `apk-preview` com `request_id` novo continua falhando fechada enquanto esses requisitos não forem atendidos. Não anunciar APK, certificado, pré-release ou atualização comprovados antes da execução bem-sucedida.
+
 ## O que muda
 
 - A variante Android `preview` mantém applicationId **com.lucianotoscano.pokesearch.preview**, separada da versão oficial.

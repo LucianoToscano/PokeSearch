@@ -16,6 +16,8 @@ on:
       - 'scripts/fastdev-version.test.cjs'
       - 'scripts/fastdev-adb.sh'
       - 'scripts/fastdev-signing-setup.sh'
+      - 'scripts/fastdev-signing-preflight.sh'
+      - 'scripts/fastdev-signing-preflight.test.cjs'
       - 'fastdev/preview-request.json'
       - 'gradle.properties'
       - 'build.gradle.kts'
@@ -60,6 +62,8 @@ jobs:
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
           node --test scripts/fastdev-version.test.cjs
+          bash -n scripts/fastdev-signing-preflight.sh
+          node --test scripts/fastdev-signing-preflight.test.cjs
       - name: Select a validated on-demand request without release signing
         id: select-mode
         shell: bash
@@ -121,7 +125,7 @@ jobs:
           if-no-files-found: warn
 
   apk-preview:
-    name: Isolated debug APK (never an official release)
+    name: Isolated permanently signed APK (never an official release)
     # Publish only from trusted main, never PR/fork or arbitrary branch.
     if: needs.quick.outputs.selected_mode == 'apk-preview' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: quick
@@ -141,6 +145,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Validate dedicated signing configuration before SDK setup
+        shell: bash
+        env:
+          FASTDEV_KEYSTORE_B64: ${{ secrets.POKE_FASTDEV_KEYSTORE_B64 }}
+        run: bash scripts/fastdev-signing-preflight.sh
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -160,9 +169,6 @@ jobs:
           FASTDEV_KEYSTORE_B64: ${{ secrets.POKE_FASTDEV_KEYSTORE_B64 }}
         run: |
           set -euo pipefail
-          for key in FASTDEV_KEYSTORE_B64 POKE_FASTDEV_STORE_PASSWORD POKE_FASTDEV_KEY_ALIAS POKE_FASTDEV_KEY_PASSWORD EXPECTED_FASTDEV_CERT; do
-            test -n "$(printenv "$key")" || { echo "::error::Missing FastDev signing secret or fingerprint: $key"; exit 1; }
-          done
           umask 077
           printf '%s' "$FASTDEV_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/fastdev-release.p12"
           chmod 600 "$RUNNER_TEMP/fastdev-release.p12"
@@ -179,7 +185,7 @@ jobs:
           start=$SECONDS
           gradle --no-daemon --build-cache :app:assemblePreview --stacktrace
           echo "Preview compilation: $((SECONDS-start)) seconds" >> "$GITHUB_STEP_SUMMARY"
-      - name: Verify isolated package, debug certificate and checksum
+      - name: Verify isolated package, permanent certificate and checksum
         shell: bash
         run: |
           set -euo pipefail
