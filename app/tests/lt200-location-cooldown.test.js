@@ -58,7 +58,7 @@ check("Unchanged location Apply bypasses local timer but retains provider backof
  assert.match(set,/OverlayService\.this\.refresh\(true\)/);
  assert.ok(!set.includes("nextScheduledSearchAtMs<=System.currentTimeMillis()"));
  assert.match(set,/queuedManualRefresh=true/);
- assert.match(service,/if\(authorizedApiQaSelected\(\)&&apiProviderBackoffUntil\(\)>0L\)/);
+ assert.match(service,/if\(authorizedApiQaSelected\(\)&&!guestPublicSearch&&apiProviderBackoffUntil\(\)>0L\)/);
 });
 check("Non-location network errors never pretend coordinates were rejected",()=>{
  const state=inside(dock,"function currentLocationUiState(){","function locationPanelFeedback(){");
