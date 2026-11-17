@@ -74,29 +74,64 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 #notice{position:fixed;z-index:15;bottom:12px;left:14px;right:14px;text-align:center;background:#275f66;color:white;padding:13px;border-radius:12px;display:none;box-shadow:0 8px 30px #0b343750}
 @media(min-width:560px){#grid{grid-template-columns:repeat(4,1fr)}}
 </style>
+<link rel="stylesheet" href="personal_pokedex_enhanced.css">
 </head>
 <body>
 <div id="app">
 <header><div class="title-row"><button class="back" id="back" aria-label="Voltar à home">‹</button><h1>Minha Pokédex</h1><button class="round" id="help">Privacidade</button></div>
+<nav class="inventory-tabs" aria-label="Páginas da coleção">
+<button type="button" class="inventory-tab" data-tab="tags">TAGS<small id="tab-tags-count">0</small></button>
+<button type="button" class="inventory-tab active" data-tab="pokemon">POKÉMON<small id="tab-pokemon-count">0</small></button>
+<button type="button" class="inventory-tab" data-tab="eggs">OVOS<small id="tab-eggs-count">0</small></button>
+</nav>
 <div class="segment"><button id="slot1" class="active">Inventário 1</button><button id="slot2">Inventário 2</button></div></header>
 <section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON</button></section>
 <section class="metrics"><div class="metric"><strong id="m-total">0</strong><span>Pokémon</span></div><div class="metric"><strong id="m-shiny">0</strong><span>Shiny</span></div><div class="metric"><strong id="m-hundo">0</strong><span>100% IV</span></div><div class="metric"><strong id="m-bg">0</strong><span>Fundos</span></div></section>
-<div class="search-row"><input id="search" class="search" placeholder="⌕  Buscar Pokémon, número ou forma…" aria-label="Buscar Pokémon"><select id="sort" class="sort" aria-label="Ordenar"><option value="cp">Maior PC</option><option value="recent">Mais recente</option><option value="iv">Maior IV</option><option value="number">Nº Pokédex</option><option value="name">Nome</option></select></div>
+<div class="search-row"><input id="search" class="search" placeholder="⌕  Buscar Pokémon, número ou forma…" aria-label="Buscar Pokémon"><select id="sort" class="sort" aria-label="Ordenar"><option value="cp">Maior PC</option><option value="recent">Mais recente</option><option value="iv">Maior IV</option><option value="number">Nº Pokédex</option><option value="name">Nome</option><option value="hp">PS</option><option value="favorite">Favoritos</option></select></div>
+<div class="sort-more-row"><button type="button" id="sort-trigger" class="sort-trigger" aria-expanded="false">☷ Ordenar <span id="sort-label">Maior PC</span></button><span id="privacy-state">● Inventário privado</span></div>
 <div class="filters" id="filters" aria-label="Filtrar inventário"></div>
 <div class="result-note" id="result-note"></div>
 <div id="grid" aria-live="polite"></div><button id="more" class="more" hidden>Mostrar mais</button>
+<section id="tags-panel" class="other-panel" hidden>
+  <h2 class="section-heading">Pesquisar por categoria</h2>
+  <div id="tag-categories" class="tag-categories"></div>
+  <h2 class="section-heading">Minhas etiquetas</h2>
+  <div id="personal-tags" class="user-tags"></div>
+</section>
+<section id="eggs-panel" class="other-panel" hidden>
+  <h2 class="section-heading">Ovos do inventário</h2>
+  <p class="pane-sub">Informações registradas no momento da exportação.</p>
+  <div id="egg-grid" class="egg-grid"></div>
+</section>
 </div>
 <div id="detail"><div id="hero" class="hero"><button id="detail-back" class="hero-back" aria-label="Voltar à lista">‹</button><div id="hero-title" class="hero-title"></div><div id="hero-sprite"></div><span id="decor-label" class="decor-label"></span></div><div class="sheet">
-<h2 id="detail-name"></h2><div class="sub" id="detail-sub"></div><div class="health"><i id="health-bar"></i></div><div class="sub" id="health-text"></div>
+<h2 id="detail-name"></h2><div class="sub" id="detail-sub"></div><div class="detail-gender" id="detail-gender"></div><div class="health"><i id="health-bar"></i></div><div class="sub" id="health-text"></div>
 <div class="triad"><div><strong id="detail-weight"></strong><span>PESO</span></div><div><strong id="detail-iv"></strong><span>IV TOTAL</span></div><div><strong id="detail-height"></strong><span>ALTURA</span></div></div>
 <div class="chips" id="badges"></div>
-<div class="group"><h3>Avaliação individual</h3><div id="individual-bars"></div></div>
+<div class="group appraisal-group">
+<h3>Avaliação individual</h3><div id="appraisal-level"></div><div id="individual-bars"></div>
+</div>
+<div class="group"><h3>Ranqueamento PvP por IV</h3>
+<div class="pvp-ranks" id="pvp-ranks"></div>
+<div class="note" id="pvp-note">Ranking estimado a partir do instantâneo local PvPoke, não substitui simulação de confrontos.</div>
+</div>
 <div class="group"><h3>Movimentos registrados</h3><div id="moves"></div></div>
 <div class="group"><h3>Informações do Pokémon</h3><div id="other-info"></div></div>
+<div class="detail-arrows"><button id="detail-prev" aria-label="Pokémon anterior">‹ Anterior</button><button id="detail-next" aria-label="Próximo Pokémon">Próximo ›</button></div>
 <div class="group"><h3>Fundo da ficha · Apenas decorativo</h3><div class="actions" id="presets"></div><p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
 <p class="note">Informações importadas do arquivo local, não sincronizadas automaticamente com Pokémon GO. Identificadores de trajes/fundos permanecem registrados mesmo sem arte específica disponível.</p>
 </div></div>
+<div id="sort-backdrop" class="sort-backdrop" hidden>
+  <div class="sort-drawer" role="dialog" aria-modal="true" aria-label="Ordenar coleção">
+    <h2>Ordenar Pokémon</h2>
+    <div id="sort-choices"></div>
+    <button type="button" id="sort-cancel" class="sort-dismiss">Fechar</button>
+  </div>
+</div>
 <div id="notice" role="status"></div>
 <script src="sprite_offline.js"></script>
+<script src="pvpoke-iv-gamemaster.js"></script>
+<script src="pvp_rank_explorer.js"></script>
+<script src="pokedex_tag_shapes.js"></script>
 <script src="personal_pokedex.js"></script>
 </body></html>
