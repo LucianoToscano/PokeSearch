@@ -7,6 +7,7 @@ const fs=require("node:fs");
 const branch=fs.readFileSync(".github/workflows/pokesearch-fastdev-branch.yml","utf8");
 const preview=fs.readFileSync(".github/workflows/pokesearch-fastdev.yml","utf8");
 const official=fs.readFileSync(".github/workflows/pokesearch-official-release.yml","utf8");
+const beta=fs.readFileSync(".github/workflows/secure-release.yml","utf8");
 const {plan}=require("./fastdev.cjs");
 
 test("FastDev source branch pushes get their own smoke lane",()=>{
@@ -41,4 +42,17 @@ test("profile and native changes select useful targeted feedback while remaining
  assert.ok(native.tests.includes("app/tests/lt381-profile-sync.test.js"));
  assert.ok(native.tests.includes("app/tests/signing-contract.test.js"));
  assert.ok(native.fullQaRequired);
+});
+
+test("Java compilation is opt-in and cannot produce an APK",()=>{
+ assert.match(preview,/options: \[fast, visual, java-check, apk-preview\]/);
+ assert.match(preview,/name: Android Java compile on demand \(no APK\)/);
+ assert.match(preview,/selected_mode == 'java-check' && github\.event_name != 'pull_request'/);
+ assert.match(preview,/:app:compileDebugJavaWithJavac/);
+ assert.match(preview,/Java check must never package an APK/);
+});
+test("stale heavyweight beta runs are canceled after newer PR commits",()=>{
+ assert.match(beta,/group: secure-beta-\$\{\{ github\.event\.pull_request\.number \|\| github\.ref \}\}/);
+ assert.match(beta,/cancel-in-progress: true/);
+ assert.match(beta,/gradle --no-daemon :app:testDebugUnitTest :app:assembleRelease/);
 });
