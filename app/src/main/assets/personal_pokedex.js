@@ -29,7 +29,11 @@ const hasBackground=p=>Number(p.backgroundId)>0;
 const isShadow=p=>Number(p.alignment)===1;
 const isPurified=p=>Number(p.alignment)===2;
 const nameOf=p=>String(p.nickname||"").trim()||speciesName(p);
-const cleanForm=p=>p.formName&&p.formName!=="Unset"?p.formName:"";
+const cleanForm=p=>{
+ const row=state.spriteIndex?.forms.get(Number(p.form));
+ const raw=String(row?.[1]||p.formName||"").trim();
+ return ["","UNSET","NORMAL","DEFAULT"].includes(raw.toUpperCase())?"":raw;
+};
 function formVariant(p){
  const raw=cleanForm(p).replace(/[^a-z0-9]/gi,"").toUpperCase();
  const dexName=speciesName(p).replace(/[^a-z0-9]/gi,"").toUpperCase();
@@ -163,27 +167,38 @@ function spriteLocalUrl(key){
 function safeSprite(p){
  const exact=visualMatch(p);
  if(exact.key&&state.spriteCached.has(exact.key))return spriteLocalUrl(exact.key);
- const lib=window.PokeSearchOfflineSprite;
- if(!lib||typeof lib.resolve!=="function")return "";
- try{
-  const form=formVariant(p),costume=costumeMeta(p);
-  const card={number:Number(p.species),name:speciesName(p),
-   form,form_id:p.form,shiny:!!p.shiny,
-   gender:p.gender===2?"female":"male"};
-  if(p.costume){card.costume_id=p.costume;card.costume=costume?.name||"";}
-  const art=lib.resolve(card);
-  const uri=typeof art==="string"?art:art?.src;
-  if(typeof uri!=="string")return "";
-  const valid=uri.startsWith("file:///android_asset/")||
-   uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
-   uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
-  if(!valid)return "";
-  if(p.costume||form){
-   if(!(art&&typeof art==="object"&&
-     (art.exactCostume||art.officialForm||art.offline||art.providerExact)))return "";
-  }
-  return uri;
- }catch(_){return "";}
+ const lib=window.PokeSearchOfflineSprite,delivery=window.PokeSearchSpriteDelivery;
+ // Restore the packaged sprites for independently verified default forms:
+ // PGSStats carries numeric IDs but usually has no formName at all.
+ if(lib&&typeof lib.resolve==="function"){
+  try{
+   const form=formVariant(p),costume=costumeMeta(p);
+   const defaultById=!!delivery?.auditedDefault({
+    species:p.species,name:speciesName(p),form:p.form,shiny:p.shiny,
+    costume:p.costume
+   },state.spriteIndex,exact);
+   const card={number:Number(p.species),name:speciesName(p),
+    form,form_id:defaultById?0:p.form,shiny:!!p.shiny,
+    gender:p.gender===2?"female":"male"};
+   if(p.costume){card.costume_id=p.costume;card.costume=costume?.name||"";}
+   const art=lib.resolve(card);
+   const uri=typeof art==="string"?art:art?.src;
+   if(typeof uri==="string"){
+    const valid=uri.startsWith("file:///android_asset/")||
+      uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
+      uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
+    if(valid&&(!p.costume&&!form||defaultById||
+      (art&&typeof art==="object"&&
+       (art.exactCostume||art.officialForm||art.offline||art.providerExact))))
+      return uri;
+   }
+  }catch(_){}
+ }
+ // If no exact image was packaged, display its VERIFIED online variant
+ // directly. Only actual manifest entries can produce remote URLs; do not
+ // silently use a different form, Shiny, gender or costume.
+ if(exact.key)return delivery?.remoteUrl(exact.key,state.spriteIndex)||"";
+ return "";
 }
 function artHtml(p,css){
   const uri=safeSprite(p),name=escapeHtml(speciesName(p));
