@@ -55,17 +55,22 @@ final class HomeFloatingModeIcon {
     static String label(Context context,boolean secondary){
         SharedPreferences p=prefs(context,secondary);
         String family=normalized(p);
-        switch(family){
-            case "hundo":return "100%";
-            case "nundo":return "0%";
-            case "gl":return "GL";
-            case "ul":return "UL";
-            case "ml":return "ML";
-            case "cup":return "CUP";
-            case "percent":return "%";
-            case "custom":return "IV";
-            default:return "";
+        String mode=p.getString("mode","raw").toLowerCase(Locale.ROOT);
+        // Match dock.html/getResultIcon's small value badge, not a new rank.
+        if("hundo".equals(family))return "100%";
+        if("nundo".equals(family))return "0%";
+        if("raw".equals(mode)&&"custom".equals(family))
+            return p.getInt("rawAttack",0)+"/"+
+                p.getInt("rawDefense",0)+"/"+p.getInt("rawStamina",0);
+        if("percent".equals(family))
+            return p.getInt("ivPercentMin",0)+"–"+
+                p.getInt("ivPercentMax",100)+"%";
+        if("gl".equals(family)||"ul".equals(family)){
+            int rank=p.getInt("gl".equals(family)?"glRank":"ulRank",0);
+            return rank>=1&&rank<=50?"#"+rank:"";
         }
+        if("cup".equals(family))return "CUP";
+        return "";
     }
     static synchronized Bitmap icon(Context context,boolean secondary){
         String family=family(context,secondary);
