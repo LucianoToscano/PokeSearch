@@ -3314,3 +3314,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **Instalação física:** baixar e instalar por cima do FastDev atual uma vez. QA físico de início direto, OTA e persistência de dados **pendente**. Release oficial 0.03.73/54580 preservada; não houve publicação oficial.
 - [Auditoria LT384](LT384_FASTDEV_HOME_AUTO_UPDATE_20261116.md).
 
+
+## LT385 — Nomes públicos LT e desenvolvimento Dev (16/11/2026)
+
+- **Convenção imutável de nomes visíveis:** o canal público mostra **PokeSearch v0.03.73 LT**, enquanto o canal de desenvolvimento mostra **PokeSearch v0.03.73 Dev**. O Dev deriva `0.03.73` de `release/official-request.json`, usa `versionNameSuffix=" Dev"` e o aplicativo separado aparece como `PokeSearch Dev`. O código Android Dev `10000xx` não deve substituir o nome público na UI.
+- PR [#476](https://github.com/LucianoToscano/PokeSearch/pull/476) integrada no commit `507061e0f0132bf4af768e76ec7ebdf9b6f4a85f`; acrescenta atalhos Login/Perfil e PoGoCoordinates após Doação, com as imagens fornecidas pelo proprietário. A base Home e os recursos `src/main` seguem compartilhados.
+- **QA:** FastDev, Node, LT169, LT211, LT62 Java, LT173 OTA, compilação Preview e beta/R8 isolada passaram. [Build Preview automática #44005259401](https://github.com/LucianoToscano/PokeSearch/actions/runs/44005259401) SUCCESS, com validação `aapt` confirmando `versionName='0.03.73 Dev'` e `application-label='PokeSearch Dev'`.
+- APK [FastDev 1000057](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000057/PokeSearch-FastDev-Preview.apk), SHA-256 `a2ab7dbfce22c286d4b8181376680724e0b3803f0c192ad91cce871cfd0a9b92`, assinatura permanente Dev verificada, manifesto OTA sincronizado.
+- **A versão oficial 0.03.73 / versionCode 54580 não foi alterada.** Teste visual no aparelho ainda pendente. Como os pacotes Android são distintos, preferências/contas/tema não migram automaticamente; usar a mesma Home não significa copiar dados privados do outro aplicativo.
+- [Registro detalhado LT385](LT385_DEV_PARIDADE_VERSAO_20261116.md).
+
