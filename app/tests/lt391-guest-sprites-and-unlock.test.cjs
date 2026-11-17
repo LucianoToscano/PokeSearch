@@ -50,6 +50,8 @@ test("Ducklett #580 and Magikarp #129 share exact local image in results and det
    const unknown=sprite.resolve({number:"#"+dex,name,form:"UNKNOWN_COSTUME",image:""});
    assert.notEqual(unknown.src,"file:///android_asset/pokemon-sprites/base/"+dex+".png");
  }
+ const builder=read("app/scripts/build_sprite_bundle.py");
+ assert.match(builder,/required_ids = \{94, 129, 422, 423, 459, 580,/);
  assert.match(dock,/PokeSearchOfflineSprite\.resolve\(c\)/);
  assert.match(detail,/PokeSearchOfflineSprite\.resolve\(c\)/);
  assert.match(probe,/knownVisitorNames=\{129:"Magikarp",580:"Ducklett"\}/);
