@@ -25,3 +25,15 @@
 .lt402-diff{border-top:1px solid #d5e9df;margin-top:9px;padding:8px 0}
 .lt402-diff summary{font-size:13px;font-weight:700;color:var(--ink);cursor:pointer}
 .lt402-diff ul{padding:4px 0 4px 18px;max-height:220px;overflow:auto;font-size:12px;line-height:1.7}
+
+.lt402-management{flex:1 1 120px;position:relative;min-width:120px}
+.lt402-management summary{list-style:none;cursor:pointer;display:flex;align-items:center;
+ justify-content:center;min-height:35px;border:1px solid #cce6da;border-radius:10px;
+ color:var(--ink);background:#f5fbf7;font-weight:600;font-size:12px;padding:6px}
+.lt402-management summary::-webkit-details-marker{display:none}
+.lt402-management-actions{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:7px;padding:9px 0 0;min-width:220px}
+.lt402-management-actions button{min-height:37px}
+.personal-tag .tag-filter{display:flex;align-items:center;gap:8px;flex:1;min-width:0;
+ text-align:left;padding:0;border:0;background:transparent;color:inherit;font:inherit}
+@media(max-width:420px){.lt402-management-actions{grid-template-columns:1fr;min-width:180px}}
