@@ -115,18 +115,19 @@ test('existing results preserve P/M/G geometry and show warnings only',()=>{
  assert.match(dock,/<script src="result_evidence\.js"><\/script>/);
  assert.match(dock,/evidence\?\.warning&&evidence\.icon/);
  assert.match(dock,/stale:resultsStale,searching:searchActive/);
- assert.match(dock,/const accessibleLabel=\[label,evidenceTitle,/);
+ assert.match(dock,/const accessibleLabel=\[label,/);
+ assert.doesNotMatch(dock,/const evidenceTitle=evidence\?\.explanation/);
  assert.match(dock,/resultDisplayOptions\.highlights\?opportunity\?\.label:null/);
  assert.match(dock,/resultEvidenceFlag/);
  assert.match(dock,/--result-tile-size/);
  assert.match(java,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
 });
-test('detail reuses existing info grid and can expand evidence without a modal',()=>{
- assert.match(detail,/<script src="result_evidence\.js"><\/script>/);
- assert.match(detail,/toggleResultEvidence\(\)/);
- assert.match(detail,/evidence\.details\.slice\(1\)/);
- assert.match(detail,/evidenceHtml\+/);
- assert.match(detail,/#info #psEvidenceDetails\[hidden\]/);
+test('detail contains only the actual encounter data; verbose provenance is not rendered',()=>{
+ assert.match(detail,/item\("Distância",c\.distance\)/);
+ assert.match(detail,/infoLabel">Local:/);
+ assert.doesNotMatch(detail,/toggleResultEvidence\(\)/);
+ assert.doesNotMatch(detail,/psEvidenceButton|psEvidenceDetails|evidenceHtml/);
+ assert.match(dock,/evidence\?\.warning&&evidence\.icon/);
 });
 test('read-only evidence module has no GPS, API request or notification calls',()=>{
  const src=read('src/main/assets/result_evidence.js');
