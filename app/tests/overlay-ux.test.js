@@ -1695,7 +1695,8 @@ test("Mode switches retry transitional old cards and map-link extraction",()=>{
   service.includes('if((loading||(!empty&&found==0))&&attempt<24)')&&
   service.includes('if(found>0&&r.optJSONArray("cards")!=null&&r.optJSONArray("cards").length()==0)')&&
   read("assets/probe.js").includes('elements("button,a,[role=button]")')&&
-  read("assets/probe.js").includes('if(!chosen||seen.has(chosen))continue;');
+  read("assets/probe.js").includes('if(!node||seen.has(node))continue;')&&
+  read("assets/probe.js").includes('const anchors=elements(');
 });
 test("PL-02 stale previews keep their confirmed source and never fire new alerts",()=>{
  const cache=service.split("private boolean restoreFilterPreview(){")[1]?.split("    private int rawAttack")[0]||"";
