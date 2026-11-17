@@ -48,7 +48,7 @@ assert.match(favorites,/final int panelAlpha=\(int\)Math\.round\(255\.0\*\(1-tra
 assert.match(favorites,/rowBg\.setColor\(Color\.TRANSPARENT\)/);
 assert.match(pack,/addOnLayoutChangeListener\(listener\)/);
 assert.match(pack,/view\.post\(\(\)->applyVisibleMatrix\(view,image\)\)/);
-assert.match(home,/dualOverlayRow\.post\(\(\)->\{/);
+assert.match(home,/screen\.addView\(launcherGrid,gridLp\)/);
 assert.doesNotMatch(home,/rareCandyControl\.setScaleType\(ImageView\.ScaleType\.FIT_CENTER\)/);
 assert.doesNotMatch(home,/raidAssistantControl\.setScaleType\(ImageView\.ScaleType\.FIT_CENTER\)/);
 assert.match(grip,/M5,7 L19,7 M5,12 L19,12 M5,17 L19,17/);
