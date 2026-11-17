@@ -140,8 +140,11 @@ final class PogoAccountSlots {
         for(String key:new String[]{"profileDisplayName","profileProvider","profileAvatarUrl",
             "profileTrainerName","profileTrainerCode","profileTrainerDetails",
             "profileTrainerState","profileTrainerList","profileSelectedTrainerCode",
-            "profileTrainerTeam","profileTrainerLevel"})edit.remove(key);
+            "profileTrainerTeam","profileTrainerLevel","profileSyncState",
+            "profileAvatarState","profileLastSyncedAt"})edit.remove(key);
         edit.apply();
+        // Never let a disconnected profile's cached picture survive logout.
+        ProfileAvatarCache.clear(context,slot);
         CookieManager cookies=cookieManager(slot);
         cookies.removeAllCookies(success->{
             cookies.flush();
