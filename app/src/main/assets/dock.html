@@ -7952,7 +7952,7 @@ function draw(){
    stale:resultsStale,searching:searchActive
   },{ivVerified:verifiedPercent!==null});
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
-  const evidenceTitle=evidence?.explanation||"";
+  const evidenceTitle=""; // Repetitive provenance diagnostics stay off the visible and spoken cards.
   const evidenceFlag=resultDisplayOptions.highlights&&evidence?.warning&&evidence.icon?
    '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
   // Rank Classe and Rank Geral are already derived and species-validated here;
