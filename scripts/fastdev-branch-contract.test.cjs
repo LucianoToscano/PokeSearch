@@ -23,8 +23,12 @@ test("source-only branch lane has no Android build, signing or publication",()=>
  assert.doesNotMatch(branch,/^\s+environment:/m);
  assert.match(branch,/contents: read/);
 });
-test("permanent signed preview only runs from explicit main request",()=>{
+test("permanent signed Preview is automatic only after trusted main source merges",()=>{
  assert.match(preview,/push:\n    branches: \[main\]\n    paths:\n      - 'fastdev\/preview-request\.json'/);
+ assert.match(preview,/      - 'app\/src\/main\/\*\*'/);
+ assert.match(preview,/      - 'app\/src\/preview\/\*\*'/);
+ assert.match(preview,/MODE="apk-preview"/);
+ assert.match(preview,/github\.ref == 'refs\/heads\/main'/);
  assert.match(preview,/if: needs\.quick\.outputs\.selected_mode == 'apk-preview' && github\.ref == 'refs\/heads\/main' && github\.event_name != 'pull_request'/);
  assert.match(preview,/environment: fastdev-signing/);
  assert.match(preview,/EXPECTED_FASTDEV_CERT/);
