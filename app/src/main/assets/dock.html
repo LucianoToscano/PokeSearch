@@ -310,9 +310,33 @@ body.result-window #empty{box-sizing:border-box!important;
  margin:0!important;padding:0!important;text-align:center!important;
  font:750 11px/16px Roboto,Arial,sans-serif!important;
  color:#d6e1ec!important;letter-spacing:0!important;
- text-shadow:0 1px 2px #000b!important;pointer-events:none!important}
+ text-shadow:0 1px 2px #000b!important;
+ pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important}
 body.result-window.results-collapsed #spawns,
-body.result-window.results-collapsed #empty{display:none!important}
+body.result-window.results-collapsed #empty,
+body.result-window.results-collapsed #guestUnlock{display:none!important}
+/* LT387: one tiny end-of-list hint, never a fabricated sixth encounter. */
+#guestUnlock{display:none}
+/* Visitor capacity hint: integrated glyph, no grey rectangular tile.
+   The transparent 45dp touch target stays attached to the last sprite. */
+body.result-window #guestUnlock:not([hidden]){box-sizing:border-box!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:0!important;width:var(--sprite)!important;height:21px!important;
+ min-height:21px!important;max-width:var(--sprite)!important;
+ margin:0!important;padding:0!important;
+ background:transparent!important;color:#d9eaf9!important;
+ border:0!important;border-radius:0!important;
+ font:800 10px/1 Roboto,Arial,sans-serif!important;
+ cursor:pointer!important;touch-action:manipulation!important;
+ filter:drop-shadow(0 1px 2px #1524378a)}
+body.result-window #guestUnlock .guestUnlockGlyph{display:inline-flex;align-items:center;
+ justify-content:center;width:15px;height:16px;flex:0 0 15px}
+body.result-window #guestUnlock svg{display:block;width:15px;height:15px;
+ stroke:currentColor;fill:none;stroke-width:1.8}
+body.result-window #guestUnlock .guestUnlockCount{display:inline-block;
+ font:900 11px/1 Roboto,Arial,sans-serif;letter-spacing:-.7px;margin-left:-1px}
+body.result-window #guestUnlock:focus-visible{outline:1px solid #a6d5fb;outline-offset:1px}
+body.dock-window #guestUnlock,body.controls-window #guestUnlock{display:none!important}
 
 /* LT62 ONE-POKEBALL: the only visible header lives on the native dock. */
 body.dock-window #gear{position:relative!important;overflow:visible!important}
@@ -5135,7 +5159,7 @@ body.popup-window.controls-window #choices.appearanceCompact .orderHandleDots i{
  <div id="menu"><div id="quickHead"><strong>⚙ PokeSearch</strong><button id="quickBack" type="button" aria-label="Voltar ou recolher">✕</button></div><div id="quickMenuList"><div id="quickRows"></div><div id="quickUtilities"></div><div id="quickFooter"></div></div><div id="controls">
   <button id="cycle" title="Modos · Raw IV, % IV, Grande Liga e Ultra Liga" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('mode')">100%</button>
   <button id="sh" title="Shiny only · ativação opcional" onclick="Native.shiny()"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M14 3.2c.65 3.8 2.7 7 6.8 8.3-4.2 1.3-6.15 4.6-6.8 8.6-.8-4-2.8-7.3-6.9-8.6 4.15-1.3 6.1-4.5 6.9-8.3Z"/><path d="M5.2 3c.35 1.8 1.1 2.7 2.8 3.2-1.7.55-2.45 1.55-2.8 3.2-.4-1.65-1.15-2.65-2.8-3.2C4.05 5.7 4.8 4.8 5.2 3Z"/><path d="M4.3 11.8c.38 2 1.5 3.2 3.5 3.8-2 .6-3.1 1.8-3.5 3.8-.45-2-1.6-3.2-3.6-3.8 2-.6 3.15-1.8 3.6-3.8Z"/><path d="M19.9 17.5c.4 1.6 1.2 2.5 2.8 3-1.6.5-2.4 1.4-2.8 3-.4-1.6-1.2-2.5-2.8-3 1.6-.5 2.4-1.4 2.8-3Z"/></svg></button>
-  <button id="period" aria-label="Atualização automática, 3 segundos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">3s</span></button>
+  <button id="period" aria-label="Atualização automática, 3 minutos" aria-haspopup="true" aria-expanded="false" onclick="toggleChoices('period')"><span class="autoLabel">AUTO</span><span class="autoTime">3m</span></button>
   <button id="manualRefresh" aria-label="Atualizar resultados agora" onclick="manualRefreshTap()">↻</button>
   <button id="size" title="Tamanho P / M / G" onclick="Native.cycleSpriteSize()">M</button>
   <button id="clock" title="Mostrar ou ocultar tempo de despawn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
@@ -5149,6 +5173,10 @@ body.popup-window.controls-window #choices.appearanceCompact .orderHandleDots i{
  <div id="locBadge" role="status" aria-live="polite"></div>
  <button id="resultHeader" title="Recolher ou expandir os Pokémon · arraste para mover" aria-label="Recolher ou expandir resultados" aria-expanded="true" onclick="Native.toggleResultsCollapsed()"><span id="resultIconStack" class="resultModeStack" aria-hidden="true"><img id="resultModeIcon" alt="" src="file:///android_asset/result-icons/base/base-custom.png"><span id="capturePulse" class="capturePulse" aria-hidden="true"></span><span id="modeIndicatorValue" class="modeIndicator value"></span><span id="modeIndicatorShiny" class="modeIndicator shiny">✨</span><span id="modeIndicatorBackground" class="modeIndicator background"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1 10V2h10v8Zm1.2-1h7.5L7.4 5.9 5.9 7.5 4.3 5.8ZM7.6 4.7a1 1 0 0 1 0-2 1 1 0 0 1 0 2Z" fill="currentColor"/></svg></span></span><span id="resultSpawnCount" aria-hidden="true"></span></button>
  <div id="spawns"></div>
+ <button id="guestUnlock" type="button" hidden
+   aria-label="Ver até dez resultados: entre no PoGoCoordinates"
+   title="O visitante vê até 5 resultados. Toque para entrar e ver até 10."
+   onclick="Native.openGuestLogin()"><span class="guestUnlockGlyph"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><span class="guestUnlockCount">+5</span></button>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
 </div>
@@ -5319,7 +5347,7 @@ let displayedMetadataWidth=0;
 // Temporary upstream pause. Keep the original Shiny code and icons for
 // later verified reactivation; ordinary guest/logged searches stay active.
 const PROVIDER_SHINY_AVAILABLE=false;
-let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=-3,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off";
+let cards=[],active=-1,mode="raw",shiny=false,shinyPending=false,status="",activeSearchPhase="idle",row=46,menuOpen=false,choiceOpen="",period=3,spriteSize=45,showTimers=false,generalAlerts=false,hasFavorites=false,alertMode="off",guestLimited=false;
 let searchSettings={attack:15,defense:15,stamina:15,glRank:1,ulRank:1,percentMin:0,percentMax:100,
  sortBy:"Despawn (longest)",pokemon:"",pokemonSelections:[],pokemonSavedSelections:[],pokemonFilterEnabled:true,form:"",size:"",gender:"",sizeSelections:[],genderSelections:[],formSelections:[],weather:"",cpMin:"",cpMax:"",levelMin:"",levelMax:"",minPvpCp:"",includePreviousEvolutions:true};
 let filterOptions={},generalExpanded=true,filterFocus="PC",advancedExpanded=false;
@@ -5491,7 +5519,9 @@ function fit(){if(fitPending)return;fitPending=true;requestAnimationFrame(()=>{f
   const shellTop=shell.getBoundingClientRect().top;
   h=Math.ceil(header.getBoundingClientRect().bottom-shellTop)+1;
   if(!document.body.classList.contains("results-collapsed")){
-    const end=(cards.length?spawns:empty).getBoundingClientRect().bottom;
+    const guestUnlock=document.getElementById("guestUnlock");
+    const tail=guestUnlock&&!guestUnlock.hidden?guestUnlock:(cards.length?spawns:empty);
+    const end=tail.getBoundingClientRect().bottom;
     h=Math.max(h,Math.ceil(end-shellTop)+1);
   }
  }
@@ -5705,12 +5735,12 @@ const off=document.createElement("button");off.type="button";
  off.onclick=()=>selectInterval(0);
  row.appendChild(off);
  // AUTO was only a decorative tile; OFF and minute presets are sufficient.
- for(const value of [-3,3,5,10,15,20]){
+ for(const value of [3,5,10,15,20]){
   const button=document.createElement("button");button.type="button";
   button.className="periodCompactValue"+(value===current?" chosen":"");
-  button.textContent=value===-3?"3s":String(value);button.dataset.minutes=String(value);
+  button.textContent=String(value);button.dataset.minutes=String(value);
   button.removeAttribute("title");
-  button.setAttribute("aria-label",value===-3?"Intervalo automático de 3 segundos":"Intervalo automático de "+value+" minutos");
+  button.setAttribute("aria-label","Intervalo automático de "+value+" minutos");
   button.setAttribute("aria-pressed",String(value===current));
   button.onclick=()=>selectInterval(value);
   row.appendChild(button);
@@ -7906,7 +7936,11 @@ function draw(){
  const star=document.getElementById("star");
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
- const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":period===-3?"3s":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":period===-3?"Atualização a cada 3 segundos; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
+ const p=document.getElementById("period");
+ p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";
+ p.classList.toggle("autoOff",period===0);p.removeAttribute("title");
+ p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":
+  "Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
   shownMode,resultDisplayOptions,cooldownState,resultsStale,searchActive]);
  if(listKey!==lastListKey){lastListKey=listKey;
@@ -7918,7 +7952,7 @@ function draw(){
    stale:resultsStale,searching:searchActive
   },{ivVerified:verifiedPercent!==null});
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
-  const evidenceTitle=evidence?.explanation||"";
+  const evidenceTitle=""; // Repetitive provenance diagnostics stay off the visible and spoken cards.
   const evidenceFlag=resultDisplayOptions.highlights&&evidence?.warning&&evidence.icon?
    '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
   // Rank Classe and Rank Geral are already derived and species-validated here;
@@ -8040,6 +8074,12 @@ function draw(){
   setTimeout(attachSpriteFeedback,14500);}
  }
  const empty=document.getElementById("empty");
+ const guestUnlock=document.getElementById("guestUnlock");
+ if(guestUnlock){
+  const show=resultWindow&&guestLimited&&cards.length>0&&!resultsStale&&
+    !searchActive&&(activeSearchPhase==="updated"||activeSearchPhase==="empty");
+  guestUnlock.hidden=!show;
+ }
  // LT250: if the number badge is enabled, 0 is shown INSIDE the
  // Pokébola counter; otherwise 0 is shown centered directly below it.
  // No duplicate numbers or hidden empty result; same logic on P1 and P2.
@@ -8051,6 +8091,9 @@ function draw(){
   !["error","searching","filling"].includes(activeSearchPhase)?
   "0":activeSearchPhase==="error"?"!":"…";
  empty.title=status||"Aguardando busca";
+ empty.setAttribute("aria-label",activeSearchPhase==="error"?
+   "Erro na busca. Toque para entender: "+(status||"motivo não informado"):
+   (status||"Aguardando busca"));
  if(resultWindow){
   // Only show a Shiny badge after the site confirms that Shiny-only is active.
   // A pending toggle keeps its previous non-Shiny identification.
@@ -8164,10 +8207,11 @@ function releaseUiTimers(){
  if(timerTicker!==null){clearInterval(timerTicker);timerTicker=null;}
 }
 window.addEventListener("pagehide",releaseUiTimers);
-window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false)=>{
+window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,pending,listLimit,locEnabled,locCoords,locRadius,notificationMode,config,resultSourceMode,resultSourceConfig,resultSourceShiny,stale,nextDue,isSearching=false,textVisible=false,menuPreferences={},verifiedLocation=false,screenHeightDp=0,displayPrefs=null,permissionGranted=false,favoriteAlertsEnabled=true,searchPhase="idle",favoriteMode="on",hasGeneralTone=false,hasFavoriteTone=false,individualTones=0,filtersConfirmed=false,guestLimitVisible=false)=>{
  const previousDisplayPrefs=JSON.stringify(resultDisplayOptions);
  const previousAlertsState=JSON.stringify([alertMode,notificationPermissionGranted,watchAlertsEnabled,favoriteAlertMode,generalCustomTone,favoriteCustomTone,individualToneCount]);
- cards=Array.isArray(a)?a.slice(0,10):[]; // max 10 per overlay, even for DOM source
+ cards=Array.isArray(a)?a.slice(0,10).map(card=>window.PokeSearchOfflineSprite?.normalizeEncounterIdentity?.(card)||card):[]; // Preserve provider cap; only fix verifiable Dex display
+ guestLimited=guestLimitVisible===true;
  resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0);
  resultDisplayOptions=displayPrefs&&typeof displayPrefs==="object"?
   {count:!!displayPrefs.count,name:!!displayPrefs.name,number:!!displayPrefs.number,
@@ -8228,7 +8272,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  shinyPending=!!pending;
  shiny=!!shi||shinyPending; // Preserve requested ON while site verification is pending.
  row=Number(r)||46;
- period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3;
+ period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):3;
  spriteSize=[35,45,55].includes(Number(sprite))?Number(sprite):45;
  refreshSpriteSizeButtons();
  showTimers=!!timers;
@@ -8409,7 +8453,7 @@ function quickState(id){
    const n=Array.isArray(saved)?saved.length:0;
    return enabled?(n?n+" escolhidos":"Todos"):"OFF"+(n?" · "+n+" salvos":"");
   }
-  case "period":return period>0?"Auto "+(period===-3?"3s":period+"m"):"Auto OFF";
+  case "period":return period>0?"Auto "+period+"m":"Auto OFF";
   case "appearance":return "Personalização";
   default:return "";
  }
@@ -8983,7 +9027,7 @@ function refreshQuickMenuStates(){
   button.classList.toggle("pending",id==="sh"&&shinyPending);
   if(id==="period"){
    const badge=button.querySelector(".periodBadge");
-   if(badge)badge.textContent=period===0?"":(period===-3?"3s":period+"m");
+   if(badge)badge.textContent=period===0?"":period+"m";
    button.classList.toggle("autoOff",period===0);
    button.setAttribute("aria-expanded",String(activeNativePopupKind==="period"||choiceOpen==="period"));
    button.setAttribute("aria-label",period===0?
