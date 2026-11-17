@@ -1,18 +1,35 @@
 name: PokeSearch FastDev - smoke, visual, isolated APK Preview
 on:
+  # Publish a new permanently signed FastDev build AUTOMATICALLY after a
+  # trusted source merge to main. Never on a feature branch or on PR pushes.
+  # docs/ and fastdev/latest.json are deliberately excluded to prevent loops.
   push:
-    branches: ['**']
+    branches: [main]
     paths:
       - 'fastdev/preview-request.json'
+      - 'app/src/main/**'
+      - 'app/src/preview/**'
+      - 'app/build.gradle.kts'
+      - '.github/workflows/pokesearch-fastdev.yml'
   pull_request:
     branches: [main]
     paths:
       - 'app/**'
       - 'scripts/fastdev.cjs'
       - 'scripts/fastdev.test.cjs'
+      - 'scripts/fastdev-automatic-home.test.cjs'
+      - 'scripts/fastdev-qa-scope.cjs'
+      - 'scripts/fastdev-qa-scope.test.cjs'
+      - 'scripts/fastdev-manifest.cjs'
+      - 'scripts/fastdev-manifest.test.cjs'
       - 'scripts/fastdev-audit.cjs'
       - 'scripts/fastdev-request.cjs'
       - 'scripts/fastdev-request.test.cjs'
+      - 'scripts/fastdev-version.test.cjs'
+      - 'scripts/fastdev-adb.sh'
+      - 'scripts/fastdev-signing-setup.sh'
+      - 'scripts/fastdev-signing-preflight.sh'
+      - 'scripts/fastdev-signing-preflight.test.cjs'
       - 'fastdev/preview-request.json'
       - 'gradle.properties'
       - 'build.gradle.kts'
@@ -25,7 +42,7 @@ on:
         type: choice
         required: true
         default: fast
-        options: [fast, visual, apk-preview]
+        options: [fast, visual, java-check, apk-preview]
 permissions:
   contents: read
 concurrency:
@@ -54,8 +71,17 @@ jobs:
           node --check scripts/fastdev.cjs
           node --check scripts/fastdev-audit.cjs
           node --test scripts/fastdev.test.cjs
+          node --test scripts/fastdev-branch-contract.test.cjs
+          node --test scripts/fastdev-automatic-home.test.cjs
+          node --test scripts/fastdev-qa-scope.test.cjs
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
+          node --test scripts/fastdev-version.test.cjs
+          node --check scripts/fastdev-manifest.cjs
+          node --test scripts/fastdev-manifest.test.cjs
+          bash -n scripts/fastdev-signing-preflight.sh
+          node --test scripts/fastdev-signing-preflight.test.cjs
+          node --test app/tests/lt386-guest-diagnostic-home.test.cjs
       - name: Select a validated on-demand request without release signing
         id: select-mode
         shell: bash
@@ -65,13 +91,16 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$EVENT" == "push" ]]; then
-            MODE="$(node scripts/fastdev-request.cjs fastdev/preview-request.json)"
+            # A source merge is sufficient: no preview-request.json edit or
+            # extra Actions click. Validate the existing request contract.
+            node scripts/fastdev-request.cjs fastdev/preview-request.json >/dev/null
+            MODE="apk-preview"
           elif [[ "$EVENT" == "workflow_dispatch" ]]; then
             MODE="$DISPATCH_MODE"
           else
             MODE="fast"
           fi
-          case "$MODE" in fast|visual|apk-preview) ;; *) echo "Invalid mode" >&2; exit 1 ;; esac
+          case "$MODE" in fast|visual|java-check|apk-preview) ;; *) echo "Invalid mode" >&2; exit 1 ;; esac
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "Selected opt-in FastDev mode: $MODE"
       - name: Inventory historical workflows without deleting them
@@ -85,6 +114,44 @@ jobs:
           else
             node scripts/fastdev.cjs --base origin/main
           fi
+
+  java-check:
+    name: Android Java compile on demand (no APK)
+    if: needs.quick.outputs.selected_mode == 'java-check' && github.event_name != 'pull_request'
+    needs: quick
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android 36 only for explicit Java checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
+          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Compile native sources without packaging or signing APK
+        shell: bash
+        env:
+          POKE_TEST_SIGNING_REQUIRED: 'false'
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --build-cache :app:compileDebugJavaWithJavac --stacktrace
+          if find app/build/outputs -type f -name '*.apk' -print -quit 2>/dev/null | grep -q .; then
+            echo "::error::Java check must never package an APK"
+            exit 1
+          fi
+          echo "Native Android compile passed, no APK was produced."
 
   visual:
     name: Real HTML screenshots (not physical Android)
@@ -117,15 +184,31 @@ jobs:
           if-no-files-found: warn
 
   apk-preview:
-    name: Isolated debug APK (never an official release)
-    if: needs.quick.outputs.selected_mode == 'apk-preview'
+    name: Isolated permanently signed APK (never an official release)
+    # Publish only from trusted main, never PR/fork or arbitrary branch.
+    if: needs.quick.outputs.selected_mode == 'apk-preview' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: quick
-    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    environment: fastdev-signing
+    runs-on: ${{ vars.POKE_FASTDEV_RUNNER_LABEL || 'ubuntu-24.04' }}
     timeout-minutes: 60
+    env:
+      POKE_FASTDEV_STORE_PASSWORD: ${{ secrets.POKE_FASTDEV_STORE_PASSWORD }}
+      POKE_FASTDEV_KEY_ALIAS: ${{ secrets.POKE_FASTDEV_KEY_ALIAS }}
+      POKE_FASTDEV_KEY_PASSWORD: ${{ secrets.POKE_FASTDEV_KEY_PASSWORD }}
+      POKE_FASTDEV_SIGNING_REQUIRED: 'true'
+      EXPECTED_FASTDEV_CERT: ${{ vars.POKE_FASTDEV_CERT_SHA256 }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Validate dedicated signing configuration before SDK setup
+        shell: bash
+        env:
+          FASTDEV_KEYSTORE_B64: ${{ secrets.POKE_FASTDEV_KEYSTORE_B64 }}
+        run: bash scripts/fastdev-signing-preflight.sh
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -139,9 +222,29 @@ jobs:
           set -euo pipefail
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
           "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
-      - name: Build only the isolated preview package
-        run: gradle --no-daemon --build-cache :app:assemblePreview --stacktrace
-      - name: Verify isolated package, debug certificate and checksum
+      - name: Restore permanent preview signer and monotonic Android version
+        shell: bash
+        env:
+          FASTDEV_KEYSTORE_B64: ${{ secrets.POKE_FASTDEV_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$FASTDEV_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/fastdev-release.p12"
+          chmod 600 "$RUNNER_TEMP/fastdev-release.p12"
+          echo "POKE_FASTDEV_KEYSTORE=$RUNNER_TEMP/fastdev-release.p12" >> "$GITHUB_ENV"
+          code=$((1000000 + GITHUB_RUN_NUMBER))
+          echo "POKE_FASTDEV_VERSION_CODE=$code" >> "$GITHUB_ENV"
+          cert="$(keytool -exportcert -rfc -keystore "$RUNNER_TEMP/fastdev-release.p12" -storetype PKCS12 -storepass "$POKE_FASTDEV_STORE_PASSWORD" -alias "$POKE_FASTDEV_KEY_ALIAS" | openssl x509 -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':\r' | tr '[:upper:]' '[:lower:]')"
+          test "$cert" = "$EXPECTED_FASTDEV_CERT" || { echo "::error::FastDev signer changed unexpectedly"; exit 1; }
+          echo "FASTDEV_CERT=$cert" >> "$GITHUB_ENV"
+      - name: Build signed FastDev Preview (no R8)
+        shell: bash
+        run: |
+          set -euo pipefail
+          start=$SECONDS
+          gradle --no-daemon --build-cache :app:assemblePreview --stacktrace
+          echo "Preview compilation: $((SECONDS-start)) seconds" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify isolated package, permanent certificate and checksum
         shell: bash
         run: |
           set -euo pipefail
@@ -151,15 +254,21 @@ jobs:
           unzip -t "$APK" >/dev/null
           AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
           SIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
-          "$AAPT" dump badging "$APK" | grep -F "package: name='com.lucianotoscano.pokesearch.preview'"
+          # Dev and LT share their human-readable 0.XX.XX version.
+          # The Android Preview versionCode remains a separate increasing number.
+          EXPECTED_PUBLIC_VERSION="$(node -p "require('./release/official-request.json').version")"
+          BADGING="$("$AAPT" dump badging "$APK")"
+          printf '%s\n' "$BADGING" | grep -F "package: name='com.lucianotoscano.pokesearch.preview' versionCode='$POKE_FASTDEV_VERSION_CODE' versionName='$EXPECTED_PUBLIC_VERSION Dev'"
+          printf '%s\n' "$BADGING" | grep -F "application-label:'PokeSearch Dev'"
           "$SIGNER" verify --verbose --print-certs "$APK" | tee fastdev-apk/SIGNING-REPORT.txt
           CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' fastdev-apk/SIGNING-REPORT.txt | tr -d '\r' | head -1)"
           test -n "$CERT"
+          test "$CERT" = "$FASTDEV_CERT"
           test "$CERT" != "34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e"
           cp "$APK" fastdev-apk/PokeSearch-FastDev-Preview.apk
           (cd fastdev-apk && sha256sum PokeSearch-FastDev-Preview.apk > SHA256SUMS.txt)
           git rev-parse HEAD > fastdev-apk/SOURCE_COMMIT.txt
-          printf '%s\n' 'ISOLATED DEBUG PREVIEW: not R8, not production-signed, not an OTA release.' > fastdev-apk/README.txt
+          printf '%s\n' 'FASTDEV STABLE-SIGNED PREVIEW: no R8; separate from public PokeSearch official OTA.' > fastdev-apk/README.txt
           cat fastdev-apk/SHA256SUMS.txt
       - name: Upload APK for manual phone testing, without publishing
         uses: actions/upload-artifact@v4
@@ -168,3 +277,61 @@ jobs:
           path: fastdev-apk/
           retention-days: 10
           if-no-files-found: error
+      - name: Publish signed FastDev prerelease for the Preview updater
+        shell: bash
+        env:
+          APK_TAG: fastdev-${{ env.POKE_FASTDEV_VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "LucianoToscano/PokeSearch"
+          ! gh release view "$APK_TAG" >/dev/null 2>&1
+          PUBLIC_VERSION="$(node -p "require('./release/official-request.json').version")"
+          gh release create "$APK_TAG" fastdev-apk/PokeSearch-FastDev-Preview.apk \
+            --prerelease --target "$GITHUB_SHA" --title "PokeSearch v${PUBLIC_VERSION} Dev · build $POKE_FASTDEV_VERSION_CODE" \
+            --notes "Preview assinado, pacote separado e atualização opcional. SHA source: $GITHUB_SHA. Não é a release oficial."
+          gh release view "$APK_TAG" --json isPrerelease,isDraft,tagName,assets \
+            --jq '{prerelease:.isPrerelease,draft:.isDraft,tag:.tagName,assets:[.assets[].name]}'
+      - name: Refresh quota-free public FastDev manifest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Only the real signed APK already published in the prerelease can
+          # become the new public manifest. No developer-controlled URLs.
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "LucianoToscano/PokeSearch"
+          test -s fastdev-apk/PokeSearch-FastDev-Preview.apk
+          node scripts/fastdev-manifest.cjs \
+            fastdev-apk/PokeSearch-FastDev-Preview.apk \
+            "$POKE_FASTDEV_VERSION_CODE" "$GITHUB_SHA" \
+            > "$RUNNER_TEMP/fastdev-latest.json"
+          node -e '
+            const fs=require("fs"),a=JSON.parse(fs.readFileSync(process.argv[1])),
+              b=JSON.parse(fs.readFileSync(process.argv[2]));
+            if(a.version_code<=b.version_code)throw Error("Non-monotonic FastDev manifest");' \
+            "$RUNNER_TEMP/fastdev-latest.json" fastdev/latest.json
+          # GH contents API write is authenticated and includes SHA lease.
+          # On a concurrent docs merge retry with a newly fetched SHA.
+          updated=false
+          for attempt in 1 2 3 4 5; do
+            current_sha="$(gh api repos/LucianoToscano/PokeSearch/contents/fastdev/latest.json --jq '.sha')"
+            if gh api --method PUT \
+              repos/LucianoToscano/PokeSearch/contents/fastdev/latest.json \
+              -f branch=main \
+              -f sha="$current_sha" \
+              -f message="FastDev: update public OTA manifest to ${POKE_FASTDEV_VERSION_CODE}" \
+              -f content="$(base64 -w0 "$RUNNER_TEMP/fastdev-latest.json")" \
+              >/dev/null; then
+              updated=true
+              break
+            fi
+            sleep 2
+          done
+          test "$updated" = true || { echo "::error::FastDev published but manifest not updated"; exit 1; }
+          echo "Published quota-free OTA manifest for FastDev $POKE_FASTDEV_VERSION_CODE" >> "$GITHUB_STEP_SUMMARY"
+      - name: Wipe restored key material
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/fastdev-release.p12"
