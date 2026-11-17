@@ -3612,8 +3612,14 @@ public class MainActivity extends Activity {
                 // Search does not expose a Shiny badge for unlinked trainers.
                 // On an ambiguous, hydrated page, visit the official profile once.
                 if("não confirmado".equals(auth)&&!profileDiscoveryAttempted&&
-                   observedLoginProvider.isEmpty()&&
-                   !"/profile".equals(current.getPath())&&attemptsLeft<=12){
+                   !"/profile".equals(current.getPath())&&
+                   (observedLoginProvider.isEmpty()?attemptsLeft<=12:
+                       attemptsLeft<=16)&&
+                   "login".equals(loginPurpose)){
+                    // LT404: OAuth Google/Discord may return to a React /search
+                    // shell before the member session is exposed there. The
+                    // first-party /profile is the read-only verification source.
+                    // Do not require the user to tap the avatar to hydrate it.
                     profileDiscoveryAttempted=true;
                     view.loadUrl("https://pogocoordinates.com/profile");
                     return;
@@ -3998,7 +4004,22 @@ public class MainActivity extends Activity {
         CookieManager slotCookies=PogoAccountSlots.cookieManager(activeLoginSlot);
         slotCookies.setAcceptCookie(true);
         slotCookies.setAcceptThirdPartyCookies(website,true);
-        website.setWebChromeClient(new WebChromeClient());
+        website.setWebChromeClient(new WebChromeClient(){
+            @Override public void onProgressChanged(WebView view,int progress){
+                super.onProgressChanged(view,progress);
+                // LT404: React/OAuth may hydrate AFTER onPageFinished. Schedule
+                // a bounded first-party session probe without clicking providers.
+                if(view!=website||progress<95||observedLoginProvider.isEmpty()||
+                   loginSessionNotified||loginAutoReturnQueued||
+                   loginDialog==null||!loginDialog.isShowing())return;
+                Uri address=Uri.parse(view.getUrl()==null?"":view.getUrl());
+                String host=address.getHost();
+                if(host==null||!(host.equalsIgnoreCase("pogocoordinates.com")||
+                    host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com")))return;
+                final int generation=loginPageGeneration;
+                view.postDelayed(()->checkLoginSession(view,18,generation),1400L);
+            }
+        });
         website.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){
                 if(view==website){
@@ -4063,7 +4084,20 @@ public class MainActivity extends Activity {
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
                 super.doUpdateVisitedHistory(view,url,isReload);
-                if(view==website)allowLoginScreenshots();
+                if(view==website){
+                    allowLoginScreenshots();
+                    // LT404: React can complete OAuth through history.pushState,
+                    // without another onPageFinished callback.
+                    Uri destination=Uri.parse(url==null?"":url);
+                    String host=destination.getHost();
+                    if(host!=null&&(host.equalsIgnoreCase("pogocoordinates.com")||
+                        host.toLowerCase(Locale.ROOT).endsWith(".pogocoordinates.com"))&&
+                       !observedLoginProvider.isEmpty()&&!loginSessionNotified&&
+                       !loginAutoReturnQueued&&loginDialog!=null&&loginDialog.isShowing()){
+                        final int generation=loginPageGeneration;
+                        view.postDelayed(()->checkLoginSession(view,18,generation),1100L);
+                    }
+                }
             }
             @Override public void onReceivedError(WebView view,
                     android.webkit.WebResourceRequest request,
