@@ -235,54 +235,98 @@ function hbar(label,v){
   return '<div class="ivrow"><span>'+escapeHtml(label)+'</span><div class="ivbar"><i style="width:'+
     Math.round(Number(v)/15*100)+'%"></i></div><b>'+v+'/15</b></div>';
 }
+function renderPvp(p){
+ const lib=window.PokeSearchRankExplorer,gm=window.POKESEARCH_PVP_IV_DATA;
+ const base=speciesName(p),form=formVariant(p);
+ const full=form?base+" ("+form[0]+form.slice(1).toLowerCase()+")":base;
+ const name=isShadow(p)?full+" (Shadow)":full;
+ const idx=p.attack*256+p.defense*16+p.hpIv;
+ let verified=0;
+ el("pvp-ranks").innerHTML=["gl","ul","ml"].map((league,i)=>{
+  let owned=null;
+  try{
+   const rows=lib&&gm?lib.getIvRows(gm,name,league):null;
+   if(rows)owned=rows.find(r=>r.index===idx)||null;
+  }catch(_){}
+  if(owned)verified++;
+  const label=["Grande Liga","Ultra Liga","Liga Mestra"][i];
+  return '<div class="pvp-rank"><small>'+label+'</small><b>'+
+   (owned?"#"+number(owned.rank):"—")+'</b><small>'+
+   (owned?"Eficiência "+owned.efficiency+"%":"Sem dados exatos")+'</small></div>';
+ }).join("");
+ el("pvp-note").textContent=verified?
+  "Ranking teórico por IV no limite de nível 50 (sem melhor amigo), snapshot PvPoke de "+
+    (gm.retrieved||"data não informada")+". Não é o ranking geral da espécie.":
+  "Não há correspondência exata da espécie/forma no snapshot PvPoke. Ranking não estimado.";
+}
 function showDetail(id){
-  const p=state.all.find(x=>x.id===id);
-  if(!p)return;
-  state.selected=p;
-  const img=artHtml(p,"hero-img");
-  const preset=bridge.getDecoration(state.slot,p.id);
-  el("hero").className="hero "+(presets.some(x=>x[0]===preset)?preset:"default");
-  el("hero-title").innerHTML="<small>PC</small> "+number(p.cp);
-  el("hero-sprite").innerHTML=img.replace('loading="lazy"','loading="eager"');
-  el("decor-label").textContent=preset==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
-  el("detail-name").textContent=speciesName(p);
-  el("detail-sub").textContent=(p.nickname?"Apelido: "+p.nickname+" · ":"")+
-    "Pokédex #"+p.species+(cleanForm(p)?" · "+cleanForm(p):"");
-  const percent=p.maxStamina?Math.min(100,100*p.stamina/p.maxStamina):100;
-  el("health-bar").style.width=percent+"%";
-  el("health-text").textContent=number(p.stamina)+" / "+number(p.maxStamina)+" PS";
-  el("detail-weight").textContent=decimal(p.weightKg,2)+" kg";
-  el("detail-height").textContent=decimal(p.heightM,2)+" m";
-  el("detail-iv").textContent=Math.round(ivValue(p)*100/45)+"%";
-  const chips=[];
-  if(p.shiny)chips.push("✨ Brilhante");
-  if(isHundo(p))chips.push("★ IV 100%");
-  if(p.favorite)chips.push("★ Favorito");
-  if(p.lucky)chips.push("Sortudo");
-  if(isShadow(p))chips.push("Sombroso");
-  if(isPurified(p))chips.push("Purificado");
-  if(p.costume)chips.push("Traje #"+p.costume);
-  if(hasBackground(p))chips.push("Fundo registrado #"+p.backgroundId);
-  if(p.traded)chips.push("Recebido por troca");
-  el("badges").innerHTML=chips.map(s=>'<span class="chip">'+escapeHtml(s)+'</span>').join("");
-  el("individual-bars").innerHTML=hbar("Ataque",p.attack)+
-    hbar("Defesa",p.defense)+hbar("PS",p.hpIv);
-  el("moves").innerHTML='<div class="note">Ataque rápido: '+(p.move1?"ID "+p.move1:"Não informado")+
-    '<br>Ataque carregado: '+(p.move2?"ID "+p.move2:"Não informado")+
-    (p.move3?"<br>Segundo carregado: ID "+p.move3:"")+
-    '<br>Os nomes serão relacionados ao catálogo de golpes Pokémon GO.</div>';
-  const tags=(p.tags||[]).map(t=>state.tags.get(String(t))||"Tag").join(", ");
-  const date=p.caughtMs?new Date(p.caughtMs).toLocaleDateString("pt-BR"):"Não informada";
-  el("other-info").innerHTML=
-    '<div class="note">Obtido em: '+escapeHtml(date)+
-    '<br>Forma: '+escapeHtml(cleanForm(p)||"Padrão")+
-    '<br>Vestimenta: '+(p.costume?"Código "+p.costume+" (sprite-base ilustrativa; traje não certificado)":"Sem traje cadastrado")+
-    '<br>Fundo original: '+(hasBackground(p)?"Código "+p.backgroundId:"Não registrado")+
-    '<br>Tags: '+escapeHtml(tags||"Nenhuma")+
-    '<br>Pokébola: '+number(p.pokeball)+
-    '<br><b>Este inventário não altera seus Pokémon no jogo.</b></div>';
-  renderPresets(p,preset);
-  el("detail").classList.add("open");el("detail").scrollTop=0;
+ const p=state.all.find(x=>x.id===id);
+ if(!p)return;
+ state.selected=p;
+ const preset=bridge.getDecoration(state.slot,p.id);
+ el("hero").className="hero "+(presets.some(x=>x[0]===preset)?preset:"default");
+ el("hero-title").innerHTML="<small>PC</small> "+number(p.cp);
+ el("hero-sprite").innerHTML=artHtml(p,"hero-img").replace('loading="lazy"','loading="eager"');
+ el("decor-label").textContent=preset==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
+ el("detail-name").textContent=speciesName(p);
+ el("detail-sub").textContent=(p.nickname?"Apelido: "+p.nickname+" · ":"")+"Pokédex #"+p.species+
+   (cleanForm(p)?" · "+cleanForm(p):"");
+ el("detail-gender").textContent=p.gender===1?"♂":p.gender===2?"♀":"";
+ const percent=p.maxStamina?Math.min(100,100*p.stamina/p.maxStamina):100;
+ el("health-bar").style.width=percent+"%";
+ el("health-text").textContent=number(p.stamina)+" / "+number(p.maxStamina)+" PS";
+ el("detail-weight").textContent=decimal(p.weightKg,2)+" kg";
+ el("detail-height").textContent=decimal(p.heightM,2)+" m";
+ el("detail-iv").textContent=Math.round(ivValue(p)*100/45)+"%";
+ const chips=[];
+ if(p.shiny)chips.push("✨ Brilhante");
+ if(isHundo(p))chips.push("★ IV 100%");
+ if(p.favorite)chips.push("★ Favorito");
+ if(p.lucky)chips.push("Sortudo");
+ if(isShadow(p))chips.push("Sombroso");
+ if(isPurified(p))chips.push("Purificado");
+ if(p.costume)chips.push("🎩 "+availableMetaName("costumes",p.costume));
+ if(hasBackground(p))chips.push("🖼 "+availableMetaName("backgrounds",p.backgroundId));
+ if(p.traded)chips.push("Recebido por troca");
+ if(p.hasMegaEvolved)chips.push("Megaevoluiu");
+ if(p.breadMode===1)chips.push("Dinamax");
+ if(p.breadMode===2)chips.push("Gigamax");
+ if(p.events?.length)chips.push("Evento");
+ if(p.hatchedFromEgg)chips.push("Chocado");
+ el("badges").innerHTML=chips.map(v=>'<span class="chip">'+escapeHtml(v)+'</span>').join("");
+ const iv=ivValue(p),stars=iv===45?3:iv>=37?3:iv>=30?2:iv>=23?1:0;
+ el("appraisal-level").innerHTML='<span class="appraisal-medal '+(iv===45?"perfect":"")+'">'+
+  (iv===45?"IV perfeito · 100%":Math.round(100*iv/45)+"% · "+stars+" estrelas")+
+  '</span><span class="appraisal-stars">'+("★".repeat(stars))+'</span>';
+ el("individual-bars").innerHTML=hbar("Ataque",p.attack)+hbar("Defesa",p.defense)+hbar("PS",p.hpIv);
+ const moveName=id=>{
+  const m=state.meta.moves.get(Number(id));
+  return !id?"Não informado":m?escapeHtml(m.name):"ID "+id;
+ };
+ el("moves").innerHTML='<div class="note">Ataque rápido: <b>'+moveName(p.move1)+'</b>'+
+  '<br>Ataque carregado: <b>'+moveName(p.move2)+'</b>'+
+  (p.move3?"<br>Segundo carregado: <b>"+moveName(p.move3)+"</b>":"")+
+  '<br><small>Movimentos registrados no JSON; nomenclatura da tabela local.</small></div>';
+ renderPvp(p);
+ const tags=(p.tags||[]).map(t=>state.tags.get(String(t))||"Tag").join(", ");
+ const date=p.caughtMs?new Date(p.caughtMs).toLocaleDateString("pt-BR"):"Não informada";
+ const outfit=p.costume?availableMetaName("costumes",p.costume)+" (#"+p.costume+")":"Nenhuma";
+ const background=hasBackground(p)?availableMetaName("backgrounds",p.backgroundId)+" (#"+p.backgroundId+")":"Nenhum";
+ el("other-info").innerHTML='<div class="note">Obtido em: '+escapeHtml(date)+
+  '<br>Forma: '+escapeHtml(cleanForm(p)||"Padrão")+
+  '<br>Vestimenta: '+escapeHtml(outfit)+
+  '<br>Fundo original: '+escapeHtml(background)+
+  (p.events?.length?'<br>Eventos: '+escapeHtml(p.events.join(", ")):"")+
+  (p.hasMegaEvolved?"<br>Megaevolução registrada"+(p.megaLevel?" · Nível "+p.megaLevel:""):"")+
+  (p.buddyKm?"<br>Km com companheiro: "+decimal(p.buddyKm,1):"")+
+  '<br>Tags: '+escapeHtml(tags||"Nenhuma")+
+  '<br>Pokébola: '+number(p.pokeball)+
+  '<br><b>Ficha privada. Não altera o Pokémon no jogo.</b></div>';
+ renderPresets(p,preset);
+ const position=state.filtered.findIndex(x=>x.id===p.id);
+ el("detail-prev").disabled=position<=0;
+ el("detail-next").disabled=position<0||position>=state.filtered.length-1;
+ el("detail").classList.add("open");el("detail").scrollTop=0;
 }
 function renderPresets(p,current){
   el("presets").innerHTML=presets.map(([key,label])=>
@@ -301,7 +345,11 @@ window.pokeImportCompleted=function(message,ok){
   if(ok)loadSlot();
   notice(message);
 };
-window.pokeBack=()=>hideDetail();
+function closeSort(){
+ const layer=el("sort-backdrop");if(layer.hidden)return false;
+ layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
+}
+window.pokeBack=()=>closeSort()||hideDetail();
 function loadCatalog(){
   try{
     const catalog=JSON.parse(bridge.getCatalog());
@@ -334,5 +382,43 @@ el("presets").addEventListener("click",e=>{
   el("decor-label").textContent=name==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
   renderPresets(state.selected,name);
 });
-loadCatalog();loadSlot();
+function setSort(key){
+ const sel=el("sort");sel.value=key;state.sort=key;
+ el("sort-label").textContent=sel.selectedOptions[0]?.textContent||key;
+ render();closeSort();
+}
+el("sort-trigger").addEventListener("click",()=>{
+ const layer=el("sort-backdrop");layer.hidden=false;
+ el("sort-trigger").setAttribute("aria-expanded","true");
+ el("sort-choices").innerHTML=Array.from(el("sort").options).map(o=>
+  '<button type="button" class="sort-choice '+(state.sort===o.value?"active":"")+
+  '" data-sort="'+escapeHtml(o.value)+'">'+escapeHtml(o.textContent)+'</button>').join("");
+});
+el("sort-choices").addEventListener("click",e=>{
+ const b=e.target.closest("[data-sort]");if(b)setSort(b.dataset.sort);
+});
+el("sort-cancel").addEventListener("click",closeSort);
+el("sort-backdrop").addEventListener("click",e=>{
+ if(e.target===el("sort-backdrop"))closeSort();
+});
+document.querySelectorAll("[data-tab]").forEach(b=>
+ b.addEventListener("click",()=>setTab(b.dataset.tab)));
+el("tag-categories").addEventListener("click",e=>{
+ const b=e.target.closest("[data-category]");if(!b)return;
+ state.filter=b.dataset.category;state.tagId=null;state.limit=96;
+ renderFilters();setTab("pokemon");render();
+});
+el("personal-tags").addEventListener("click",e=>{
+ const b=e.target.closest("[data-tag]");if(!b)return;
+ state.filter="tag";state.tagId=b.dataset.tag;state.limit=96;
+ renderFilters();setTab("pokemon");render();
+});
+function shiftDetail(delta){
+ if(!state.selected)return;
+ const i=state.filtered.findIndex(p=>p.id===state.selected.id);
+ const next=state.filtered[i+delta];if(next)showDetail(next.id);
+}
+el("detail-prev").addEventListener("click",()=>shiftDetail(-1));
+el("detail-next").addEventListener("click",()=>shiftDetail(1));
+loadCatalog();loadMeta();loadSlot();
 })();
