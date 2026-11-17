@@ -212,7 +212,7 @@ android {
             applicationIdSuffix = ".preview"
             // Android package info and Home show PokeSearch v0.03.73 DEV;
             // the independent 10000xx versionCode stays internal for OTA.
-            versionNameSuffix = " DEV"
+            versionNameSuffix = " Dev"
             matchingFallbacks += listOf("debug")
             signingConfig = if (fastDevSigned) signingConfigs.getByName("fastdevPersistent")
                 else signingConfigs.getByName("debug")
