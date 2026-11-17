@@ -2758,7 +2758,9 @@ public class MainActivity extends Activity {
         }
         if(overlayControl==null)return;
         refreshHomePokeballImage(overlayControl,false);
-        refreshHomePokeballImage(secondaryOverlayControl,true);
+        if(secondaryOverlayControl!=null){
+            refreshHomePokeballImage(secondaryOverlayControl,true);
+        }
     }
     private void openProviderLogin(String provider){
         activeLoginSlot=1;
