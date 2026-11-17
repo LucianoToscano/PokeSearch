@@ -3324,3 +3324,10 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **A versão oficial 0.03.73 / versionCode 54580 não foi alterada.** Teste visual no aparelho ainda pendente. Como os pacotes Android são distintos, preferências/contas/tema não migram automaticamente; usar a mesma Home não significa copiar dados privados do outro aplicativo.
 - [Registro detalhado LT385](LT385_DEV_PARIDADE_VERSAO_20261116.md).
 
+## LT385 — Convenção imutável LT / Dev, atalhos Login e PoGoCoordinates
+
+- Regra definitiva: **`PokeSearch v0.03.73 LT` é público e `PokeSearch v0.03.73 Dev` é desenvolvimento**. Não exibir `fastdev.10000xx-preview` como versão de UI. Separar `versionCode` e assinatura DEV.
+- [PR #476](https://github.com/LucianoToscano/PokeSearch/pull/476) integrada em `507061e0f0132bf4af768e76ec7ebdf9b6f4a85f`; atalhos Login/Perfil e PoGoCoordinates ao lado da Doação, ON/OFF e gerenciador de contas.
+- FastDev automático [#44005259401](https://github.com/LucianoToscano/PokeSearch/actions/runs/44005259401) SUCCESS; APK `1000057`, `versionName=0.03.73 Dev`, SHA-256 `a2ab7dbfce22c286d4b8181376680724e0b3803f0c192ad91cce871cfd0a9b92`, [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000057) e manifesto confirmados. Oficial 0.03.73/54580 intocado.
+- Tela Android enviada não confirma que o app DEV abriu a Home; **teste físico ainda pendente**, inclusive alinhamento/ações dos ícones e comportamento na inicialização.
+- [Relatório LT385 completo](LT385_HOME_SHORTCUTS_LT_DEV_20261116.md).
