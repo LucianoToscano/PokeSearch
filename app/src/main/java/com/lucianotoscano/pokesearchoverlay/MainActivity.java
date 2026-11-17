@@ -70,6 +70,9 @@ public class MainActivity extends Activity {
     private boolean trainerLinkRequested=false,trainerLinkStarted=false;
     private long trainerLinkObserveDeadline=0L;
     private int activeLoginSlot=1;
+    // Explicit CTA in a guest overlay may bind only that overlay after
+    // first-party authentication has actually been confirmed.
+    private int pendingPublicLoginOverlay=0;
     private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
     private final ImageView[] pokeballLoginBadges=new ImageView[2];
     private TextView secondAccountUnavailable,secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
@@ -129,6 +132,7 @@ public class MainActivity extends Activity {
         for(android.graphics.drawable.GradientDrawable bg:homeSurfaces)bg.setAlpha(alpha);
     }
     private ImageButton homeThemeButton;
+    private ImageView homeLoginProfileShortcut,homePogoCoordinatesShortcut;
     private LinearLayout guestPanel, connectedPanel, trainerPanel, trainerCodeGroup, trainerCodeTexts;
     private View trainerCopyButton;
     private View guestHeading;
@@ -308,8 +312,10 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
         handleShinyLoginIntent(getIntent());
+        handlePublicLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction())&&
+           !"com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN".equals(getIntent().getAction())&&
             !"com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction())&&
             !"com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
             root.post(this::showQuickGuide);
@@ -452,6 +458,34 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** LT385: header identity indicators mirror real PoGoCoordinates sessions.
+     * The first shortcut is a profile/account manager, the second opens the
+     * official PoGoCoordinates site in the isolated slot 1 login WebView.
+     * Never infer authentication from an avatar, theme, or drawable alone. */
+    private void refreshHomeHeaderProfileIcons(){
+        boolean account1=PogoAccountSlots.loggedIn(this,1);
+        boolean account2=PogoAccountSlots.supportsSecond()&&
+            PogoAccountSlots.loggedIn(this,2);
+        if(homeLoginProfileShortcut!=null){
+            boolean signedIn=account1||account2;
+            homeLoginProfileShortcut.setImageResource(signedIn?
+                (homeLightMode?R.drawable.login_modo_escuro:
+                               R.drawable.login_modo_claro):
+                R.drawable.login_modo_semlogin);
+            homeLoginProfileShortcut.setContentDescription(signedIn?
+                "Login e Perfil · conta conectada · gerenciar contas":
+                "Login e Perfil · sem login · conectar conta");
+        }
+        if(homePogoCoordinatesShortcut!=null){
+            homePogoCoordinatesShortcut.setImageResource(account1?
+                R.drawable.home_pogocoordinates_on:
+                R.drawable.home_pogocoordinates_off);
+            homePogoCoordinatesShortcut.setContentDescription(account1?
+                "PoGoCoordinates · Conta 1 conectada · abrir perfil oficial":
+                "PoGoCoordinates · Conta 1 desconectada · entrar no site");
+        }
+    }
+
     /** As dez artes do pacote original 512px; os IDs preservam as ações já existentes. */
     private boolean setHomePackIcon(ImageView target,int index,String state){
         if(target==null)return false;
@@ -577,12 +611,9 @@ public class MainActivity extends Activity {
         LinearLayout header=new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
         header.setOrientation(LinearLayout.HORIZONTAL);
-        // Dividir marca e ações evita comprimir a logomarca em 55dp na tela Samsung.
+        // LT386: Home sem logomarca; os controles continuam alinhados à direita.
+        header.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
         screen.addView(header,new LinearLayout.LayoutParams(-1,d(58)));
-        LinearLayout branding=new LinearLayout(this);
-        branding.setOrientation(LinearLayout.HORIZONTAL);
-        branding.setGravity(Gravity.CENTER_VERTICAL);
-        header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f));
         // Header directly precedes paired controls, so neither Pokébola
         // is hidden among the unrelated theme/support actions.
         // LT337: uma fileira responsiva de dez ícones, sem rolagem nem fundos.
@@ -670,22 +701,8 @@ public class MainActivity extends Activity {
         refreshPokeballLoginBadges();
         // Conta Premium / Gerenciar / Sair vão para Menu > Conta.
 
-        // HOME-02: icon only at top left; compact actions on the right.
-        ImageView brand=new ImageView(this);
-        brand.setImageResource(R.drawable.ps_home_brand_transparent);
-        brand.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        brand.setContentDescription("Ícone PokeSearch");
-        branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)));
-        // LT378: Keep the original left app emblem, hide only the wordmark and
-        // the POKÉMON GO subtitle. Preserve the protected admin shortcut.
-        if(PremiumAccess.controlled())brand.setOnLongClickListener(v->{
-            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
-            else PremiumGoogleLogin.signIn(this,(ok,message)->{
-                if(ok)PremiumAdminDialog.show(this);
-                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
-            });
-            return true;
-        });
+        // Sem a logo: os atalhos de perfil e PoGoCoordinates ficam ao
+        // lado do botão Apoiar, sem ícone decorativo no canto superior.
 
         // Relógio, Apoiar, tema, compartilhar e menu ficam na linha inferior.
         LinearLayout controls=new LinearLayout(this);
@@ -784,6 +801,30 @@ public class MainActivity extends Activity {
         controls.addView(heart,heartLp);
         heart.setOnClickListener(v->PixSupport.show(this));
 
+        // LT385 · Atalhos delicados ao lado do botão de doação.
+        // Artes oficiais recebidas do proprietário; mesma geometria da Home.
+        // Perfil mostra o seletor das contas; PoGoCoordinates abre o site
+        // oficial no WebView da Conta 1, sem navegador externo ou novo cookie.
+        homeLoginProfileShortcut=new ImageView(this);
+        homeLoginProfileShortcut.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homeLoginProfileShortcut.setPadding(d(1),d(1),d(1),d(1));
+        homeLoginProfileShortcut.setBackground(null);
+        LinearLayout.LayoutParams profileLp=new LinearLayout.LayoutParams(d(28),d(28));
+        profileLp.leftMargin=d(3);
+        controls.addView(homeLoginProfileShortcut,profileLp);
+        homeLoginProfileShortcut.setOnClickListener(v->showHomeAccountMenu());
+
+        homePogoCoordinatesShortcut=new ImageView(this);
+        homePogoCoordinatesShortcut.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        homePogoCoordinatesShortcut.setPadding(d(1),d(1),d(1),d(1));
+        homePogoCoordinatesShortcut.setBackground(null);
+        LinearLayout.LayoutParams pogoLp=new LinearLayout.LayoutParams(d(28),d(28));
+        pogoLp.leftMargin=d(3);
+        controls.addView(homePogoCoordinatesShortcut,pogoLp);
+        homePogoCoordinatesShortcut.setContentDescription("Contas PoGoCoordinates · abrir menu de login e perfil");
+        homePogoCoordinatesShortcut.setOnClickListener(v->showPogoAccountHub());
+        refreshHomeHeaderProfileIcons();
+
         // O ícone indica o modo que será ativado ao tocar.
         homeThemeButton=makeIcon(homeLightMode?
             R.drawable.home_mode_dark:R.drawable.home_mode_light,
@@ -818,6 +859,16 @@ public class MainActivity extends Activity {
         menuLp.leftMargin=d(3);
         controls.addView(menu,menuLp);
         menu.setOnClickListener(v->showHomeMenu());
+        // Preserve o acesso administrativo oculto que antes era um
+        // gesto longo na marca removida.
+        if(PremiumAccess.controlled())menu.setOnLongClickListener(v->{
+            if(PremiumGoogleLogin.isGoogleSignedIn(this))PremiumAdminDialog.show(this);
+            else PremiumGoogleLogin.signIn(this,(ok,message)->{
+                if(ok)PremiumAdminDialog.show(this);
+                else Toast.makeText(this,message,Toast.LENGTH_LONG).show();
+            });
+            return true;
+        });
 
         // HOME-04: compact reference card, fed only by verified profile fields.
         LinearLayout auth=new LinearLayout(this);
@@ -828,6 +879,10 @@ public class MainActivity extends Activity {
             20,homeLightMode?Color.rgb(175,188,204):Color.rgb(77,84,96)));
         auth.setElevation(d(5));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
+        // LT388: account controls belong in the existing header account drawer.
+        // Keep their views/state alive for session hydration but remove their
+        // height from Home. INVISIBLE would still reserve a large blank area.
+        auth.setVisibility(View.GONE);
 
         LinearLayout accountHeading=new LinearLayout(this);
         guestHeading=accountHeading;
@@ -1047,6 +1102,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams secondLp=new LinearLayout.LayoutParams(-1,-2);
         secondLp.topMargin=d(10);
         screen.addView(secondAccount,secondLp);
+        // LT388: do not render a second full login card on the Home feed.
+        secondAccount.setVisibility(View.GONE);
         // Full account card mirrors the hierarchy and dimensions of Conta 1.
         // None of these widgets borrow account-1 profile/identity preferences.
         TextView secondTitle=homeText("PoGoCoordinates · Conta 2",12,
@@ -1247,7 +1304,8 @@ public class MainActivity extends Activity {
         // Keep the center open for the user's Pokémon GO wallpaper.
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         // LT73: show the installed APK's real version; no manual version strings.
-        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT",10,
+        TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+
+            (BuildConfig.FASTDEV_PREVIEW?"":" LT"),10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
         footer.setBackground(homeSurface(
@@ -1255,7 +1313,8 @@ public class MainActivity extends Activity {
             12,homeLightMode?Color.argb(80,33,65,89):Color.argb(75,180,215,247)));
         footer.setPadding(d(9),d(5),d(9),d(5));
         footer.setClickable(true);
-        footer.setContentDescription("Versão instalada "+BuildConfig.VERSION_NAME+
+        footer.setContentDescription("PokeSearch versão "+BuildConfig.VERSION_NAME+
+            (BuildConfig.FASTDEV_PREVIEW?"":" LT")+
             ". Toque para abrir as Novidades e o histórico de atualizações do PokeSearch.");
         // LT379: same native, offline dialog as Menu > Novidades.
         // Never open GitHub, a WebView, OAuth or the browser from this footer.
@@ -1405,6 +1464,21 @@ public class MainActivity extends Activity {
         holder.setVisibility(View.VISIBLE);
     }
 
+    // Compact last-success indicator: distinguish verified profile from
+    // pending name hydration and avatar-only failures without widening cards.
+    private String profileSyncLabel(SharedPreferences account){
+        String status=account.getString("profileSyncState","");
+        if("pending".equals(status))return " · Sincronizando perfil…";
+        if("error".equals(status))return " · Perfil indisponível";
+        String avatar=account.getString("profileAvatarState","");
+        if("unavailable".equals(avatar))return " · Foto indisponível";
+        if("pending".equals(avatar))return " · Foto pendente";
+        long timestamp=account.getLong("profileLastSyncedAt",0L);
+        if(timestamp<=0||timestamp>System.currentTimeMillis())return "";
+        String pattern=System.currentTimeMillis()-timestamp<86_400_000L?"HH:mm":"dd/MM";
+        return " · ✓ "+new SimpleDateFormat(pattern,Locale.getDefault()).format(new Date(timestamp));
+    }
+
     private void refreshSecondAccountSummary(){
         boolean available=PogoAccountSlots.supportsSecond();
         SharedPreferences two=PogoAccountSlots.prefs(this,2);
@@ -1439,9 +1513,10 @@ public class MainActivity extends Activity {
         refreshSecondGoogleAvatar(connected?two.getString("profileAvatarUrl",""):"");
         if(secondAccountProvider!=null){
             String provider=two.getString("profileProvider","");
-            secondAccountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+            String base="Google".equals(provider)?"G  Logado via Google":
                 "Discord".equals(provider)?"◉  Logado via Discord":
-                "Conectado ao PoGoCoordinates");
+                "Conectado ao PoGoCoordinates";
+            secondAccountProvider.setText(base+profileSyncLabel(two));
         }
         if(secondAvatarFrame!=null)
             secondAvatarFrame.setImageDrawable(homeAvatarOutline(linked?team:""));
@@ -1708,6 +1783,64 @@ public class MainActivity extends Activity {
         showHomeDrawerPage(false);
     }
     /** Aba Conta com aparência idêntica ao menu lateral, sem duplicar a autenticação. */
+    // LT389: this small native account hub replaces the two oversized cards
+    // on Home. No WebView or OAuth begins until the owner chooses an action.
+    private void showPogoAccountHub(){
+        String one=pogoAccountSummary(1);
+        String two=PogoAccountSlots.supportsSecond()?pogoAccountSummary(2):
+            "Não disponível neste Android";
+        CharSequence[] accounts={"Conta 1  ·  "+one,"Conta 2  ·  "+two,
+            "Continuar como visitante"};
+        new AlertDialog.Builder(this)
+            .setTitle("PoGoCoordinates · Contas")
+            .setItems(accounts,(dialog,which)->{
+                if(which==2){
+                    Toast.makeText(this,"Busca pública sem login disponível nas Pokébolas",
+                        Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(which==1&&!PogoAccountSlots.supportsSecond()){
+                    Toast.makeText(this,"Seu WebView não isola uma segunda conta",
+                        Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showPogoAccountActions(which+1);
+            })
+            .setNegativeButton("Fechar",null).show();
+    }
+    private String pogoAccountSummary(int slot){
+        SharedPreferences account=PogoAccountSlots.prefs(this,slot);
+        if(!PogoAccountSlots.loggedIn(this,slot))return "Visitante / desconectada";
+        String name=account.getString("profileDisplayName","").trim();
+        String sync=account.getString("profileSyncState","");
+        if(name.isEmpty())return "Conectada · perfil pendente";
+        return name+("verified".equals(sync)?"":" · sincronização pendente");
+    }
+    private void showPogoAccountActions(int slot){
+        final boolean connected=PogoAccountSlots.loggedIn(this,slot);
+        final String[] actions=connected?
+            new String[]{"Abrir perfil oficial","Atualizar nome e foto","Desconectar esta conta"}:
+            new String[]{"Entrar com Google","Entrar com Discord","Usar busca visitante"};
+        new AlertDialog.Builder(this)
+            .setTitle("Conta "+slot+" · "+pogoAccountSummary(slot))
+            .setItems(actions,(dialog,which)->{
+                if(!connected){
+                    if(which==2)return;
+                    preferredLoginProvider=which==0?"google":"discord";
+                    openLoginDialogForSlot(slot,"login");
+                }else if(which==0){
+                    openLoginDialogForSlot(slot,"manage");
+                }else if(which==1){
+                    openLoginDialogForSlot(slot,"sync");
+                }else if(slot==2){
+                    new AlertDialog.Builder(this).setTitle("Sair da Conta 2?")
+                        .setMessage("A Conta 1 e os filtros serão preservados.")
+                        .setNegativeButton("Cancelar",null)
+                        .setPositiveButton("Sair",(d,w)->logoutSecondAccount()).show();
+                }else askLogout();
+            })
+            .setNegativeButton("Voltar",(d,w)->showPogoAccountHub()).show();
+    }
     private void showHomeAccountMenu(){
         if(homeRoot!=null)showHomeDrawerPage(true);
     }
@@ -1743,6 +1876,13 @@ public class MainActivity extends Activity {
         TextView online=null,installations=null;
         if(accountPage){
             addHomeDrawerItem(drawer,"‹","Voltar ao menu",this::showHomeMenu);
+            addHomeDrawerItem(drawer,"◉","Conta 1 · Login / Perfil",()->
+                openLoginDialogForSlot(1,
+                    PogoAccountSlots.loggedIn(this,1)?"manage":"login"));
+            if(PogoAccountSlots.supportsSecond())
+                addHomeDrawerItem(drawer,"◉","Conta 2 · Login / Perfil",()->
+                    openLoginDialogForSlot(2,
+                        PogoAccountSlots.loggedIn(this,2)?"manage":"login"));
             addHomeDrawerItem(drawer,"◉","Pokébola 1 · Conta",
                 ()->showPokeballAccountChoice(false));
             addHomeDrawerItem(drawer,"◉","Pokébola 2 · Conta",
@@ -2617,17 +2757,43 @@ public class MainActivity extends Activity {
     }
     private String shownAvatarUrl="";
     private String shownSecondAvatarUrl="";
+    private long profileCaptureStartedAt=0L;
+    private String profileCaptureFailureReason="profile_unhydrated";
+
+    // A manual resync must refresh even if the CDN keeps an unchanged URL.
+    private void refreshSyncedAvatar(int slot){
+        SharedPreferences prefs=PogoAccountSlots.prefs(this,slot);
+        String url=prefs.getString("profileAvatarUrl","");
+        if(!allowedProfileAvatar(url))return;
+        if(slot==2)refreshSecondGoogleAvatar(url,true);
+        else refreshGoogleAvatar(url,true);
+    }
     private int secondAvatarRequestGeneration=0;
-    private void refreshGoogleAvatar(String url){
+    private void refreshGoogleAvatar(String url){refreshGoogleAvatar(url,false);}
+    private void refreshGoogleAvatar(String url,boolean force){
         if(accountAvatar==null)return;
         final String next=allowedProfileAvatar(url)?url:"";
-        if(shownAvatarUrl.equals(next))return;
+        if(!force&&shownAvatarUrl.equals(next))return;
+        boolean sameUrl=shownAvatarUrl.equals(next);
         shownAvatarUrl=next;
         final int avatarRequestId=++avatarRequestGeneration;
-        accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
-        accountAvatar.setColorFilter(Color.rgb(183,201,229));
-        accountAvatar.setPadding(d(11),d(11),d(11),d(11));
-        if(next.isEmpty())return;
+        final SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,1);
+        final String avatarName=slotPrefs.getString("profileDisplayName","").trim();
+        if(!sameUrl){
+            accountAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+            accountAvatar.setColorFilter(Color.rgb(183,201,229));
+            accountAvatar.setPadding(d(11),d(11),d(11),d(11));
+            if(!next.isEmpty()){
+                android.graphics.Bitmap saved=ProfileAvatarCache.load(this,1,avatarName,next);
+                if(saved!=null){
+                    accountAvatar.clearColorFilter();
+                    accountAvatar.setPadding(0,0,0,0);
+                    accountAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    accountAvatar.setImageBitmap(saved);
+                }
+            }
+        }
+        if(next.isEmpty()||avatarName.isEmpty())return;
         new Thread(()->{
             android.graphics.Bitmap bitmap=null;
             java.net.HttpURLConnection connection=null;
@@ -2673,33 +2839,58 @@ public class MainActivity extends Activity {
                 if(bitmap==null)runOnUiThread(()->{
                     // Includes early returns on HTTP failure/redirect/size.
                     // Do not permanently cache a failed URL on the new Home.
-                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==avatarRequestGeneration&&next.equals(shownAvatarUrl))shownAvatarUrl="";
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==avatarRequestGeneration&&
+                       next.equals(shownAvatarUrl)){
+                        shownAvatarUrl="";
+                        PogoAccountSlots.prefs(this,1).edit()
+                            .putString("profileAvatarState","unavailable").apply();
+                        BugReport.log(this,"HOME","avatar_http_failed · Conta 1");
+                    }
                 });
             }
             final android.graphics.Bitmap photo=bitmap;
             if(photo!=null)runOnUiThread(()->{
                 if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=avatarRequestGeneration||
                      accountAvatar==null||!shownAvatarUrl.equals(next)||
-                    !"autenticada".equals(getSharedPreferences("prefs",0)
-                        .getString("sessionStatus","")))return;
+                    !"autenticada".equals(slotPrefs.getString("sessionStatus",""))||
+                    !avatarName.equals(slotPrefs.getString("profileDisplayName",""))||
+                    !next.equals(slotPrefs.getString("profileAvatarUrl","")))return;
                 accountAvatar.clearColorFilter();
                 accountAvatar.setPadding(0,0,0,0);
                 accountAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 accountAvatar.setImageBitmap(photo);
+                ProfileAvatarCache.save(this,1,avatarName,next,photo);
+                slotPrefs.edit().putString("profileAvatarState","loaded").apply();
+                refreshSessionSummary();
             });
         },"PokeSearch-Google-Avatar").start();
     }
 
-    private void refreshSecondGoogleAvatar(String url){
+    private void refreshSecondGoogleAvatar(String url){refreshSecondGoogleAvatar(url,false);}
+    private void refreshSecondGoogleAvatar(String url,boolean force){
         if(secondAvatar==null)return;
         final String next=allowedProfileAvatar(url)?url:"";
-        if(shownSecondAvatarUrl.equals(next))return;
+        if(!force&&shownSecondAvatarUrl.equals(next))return;
+        boolean sameUrl=shownSecondAvatarUrl.equals(next);
         shownSecondAvatarUrl=next;
         final int avatarRequestId=++secondAvatarRequestGeneration;
-        secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
-        secondAvatar.setColorFilter(Color.rgb(183,201,229));
-        secondAvatar.setPadding(d(11),d(11),d(11),d(11));
-        if(next.isEmpty())return;
+        final SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,2);
+        final String avatarName=slotPrefs.getString("profileDisplayName","").trim();
+        if(!sameUrl){
+            secondAvatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+            secondAvatar.setColorFilter(Color.rgb(183,201,229));
+            secondAvatar.setPadding(d(11),d(11),d(11),d(11));
+            if(!next.isEmpty()){
+                android.graphics.Bitmap saved=ProfileAvatarCache.load(this,2,avatarName,next);
+                if(saved!=null){
+                    secondAvatar.clearColorFilter();
+                    secondAvatar.setPadding(0,0,0,0);
+                    secondAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    secondAvatar.setImageBitmap(saved);
+                }
+            }
+        }
+        if(next.isEmpty()||avatarName.isEmpty())return;
         new Thread(()->{
             android.graphics.Bitmap bitmap=null;
             java.net.HttpURLConnection connection=null;
@@ -2745,19 +2936,29 @@ public class MainActivity extends Activity {
                 if(bitmap==null)runOnUiThread(()->{
                     // Includes early returns on HTTP failure/redirect/size.
                     // Do not permanently cache a failed URL on the new Home.
-                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==secondAvatarRequestGeneration&&next.equals(shownSecondAvatarUrl))shownSecondAvatarUrl="";
+                    if(!activityClosing&&!isDestroyed()&&avatarRequestId==secondAvatarRequestGeneration&&
+                       next.equals(shownSecondAvatarUrl)){
+                        shownSecondAvatarUrl="";
+                        PogoAccountSlots.prefs(this,2).edit()
+                            .putString("profileAvatarState","unavailable").apply();
+                        BugReport.log(this,"HOME","avatar_http_failed · Conta 2");
+                    }
                 });
             }
             final android.graphics.Bitmap photo=bitmap;
             if(photo!=null)runOnUiThread(()->{
                 if(activityClosing||isFinishing()||isDestroyed()||avatarRequestId!=secondAvatarRequestGeneration||
                      secondAvatar==null||!shownSecondAvatarUrl.equals(next)||
-                    !"autenticada".equals(PogoAccountSlots.prefs(this,2)
-                        .getString("sessionStatus","")))return;
+                    !"autenticada".equals(slotPrefs.getString("sessionStatus",""))||
+                    !avatarName.equals(slotPrefs.getString("profileDisplayName",""))||
+                    !next.equals(slotPrefs.getString("profileAvatarUrl","")))return;
                 secondAvatar.clearColorFilter();
                 secondAvatar.setPadding(0,0,0,0);
                 secondAvatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 secondAvatar.setImageBitmap(photo);
+                ProfileAvatarCache.save(this,2,avatarName,next,photo);
+                slotPrefs.edit().putString("profileAvatarState","loaded").apply();
+                refreshSessionSummary();
             });
         },"PokeSearch-Google-Avatar-2").start();
     }
@@ -2786,6 +2987,7 @@ public class MainActivity extends Activity {
     private void refreshSessionSummary(){
         refreshSecondAccountSummary();
         refreshPokeballLoginBadges();
+        refreshHomeHeaderProfileIcons();
         SharedPreferences prefs=getSharedPreferences("prefs",0);
         boolean logged="autenticada".equals(prefs.getString("sessionStatus","não confirmado"));
         if(guestHeading!=null)guestHeading.setVisibility(logged?View.GONE:View.VISIBLE);
@@ -2801,9 +3003,10 @@ public class MainActivity extends Activity {
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
-            accountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+            String base="Google".equals(provider)?"G  Logado via Google":
                 "Discord".equals(provider)?"◉  Logado via Discord":
-                "Conectado ao PoGoCoordinates");
+                "Conectado ao PoGoCoordinates";
+            accountProvider.setText(base+profileSyncLabel(prefs));
         }
         String trainer=prefs.getString("profileTrainerName",""),
             code=prefs.getString("profileTrainerCode","");
@@ -2937,6 +3140,19 @@ public class MainActivity extends Activity {
             });
         }
     }
+    private void handlePublicLoginIntent(Intent intent){
+        if(intent==null||!"com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN"
+            .equals(intent.getAction()))return;
+        final int requested=intent.getIntExtra("pogoOverlayNumber",0);
+        if(requested!=1&&requested!=2)return;
+        final int requestedSlot=intent.getIntExtra("pogoAccountSlot",1);
+        final int slot=requestedSlot==2&&PogoAccountSlots.supportsSecond()?2:1;
+        getWindow().getDecorView().post(()->{
+            if(loginDialog!=null&&loginDialog.isShowing())return;
+            pendingPublicLoginOverlay=requested;
+            openLoginDialogForSlot(slot,"login");
+        });
+    }
     private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
         boolean enabled=serviceType==OverlayService.class?
             OverlayService.isRunning():OverlayService.isSecondaryRunning();
@@ -2998,14 +3214,29 @@ public class MainActivity extends Activity {
                 loginSessionNotified=true;
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
-                PogoAccountSlots.prefs(this,activeLoginSlot).edit()
+                SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
+                // A newly confirmed OAuth session may belong to another account.
+                // Preserve name/avatar until /profile confirms a different
+                // identity, but never carry a trainer link to a new OAuth.
+                boolean sameSessionResync=("sync".equals(loginPurpose)||
+                    "manage".equals(loginPurpose))&&observedLoginProvider.isEmpty()&&
+                    "autenticada".equals(slotPrefs.getString("sessionStatus",""))&&
+                    !slotPrefs.getString("profileDisplayName","").trim().isEmpty();
+                SharedPreferences.Editor sessionEdit=slotPrefs.edit()
                     .putString("sessionStatus","autenticada")
-                    .putString("profileTrainerState","unknown")
-                    .remove("profileAvatarUrl").remove("profileDisplayName")
-                    .remove("profileTrainerName").remove("profileTrainerCode")
-                    .remove("profileTrainerDetails").remove("profileTrainerTeam")
-                    .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-                    .remove("profileTrainerLevel").apply();
+                    .putString("profileSyncState","pending");
+                if(!sameSessionResync){
+                    sessionEdit.putString("profileTrainerState","unknown")
+                        .remove("profileTrainerName").remove("profileTrainerCode")
+                        .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                        .remove("profileTrainerList").remove("profileSelectedTrainerCode")
+                        .remove("profileTrainerLevel");
+                }
+                // Do not erase previously verified name/photo preemptively:
+                // a slow React hydration is not proof of account replacement.
+                sessionEdit.apply();
+                profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
+                profileCaptureFailureReason="profile_unhydrated";
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
                 if("manage".equals(loginPurpose)||"sync".equals(loginPurpose)){
                     // Management and resync read the actual first-party profile.
@@ -3047,6 +3278,10 @@ public class MainActivity extends Activity {
                 // A stale session should show the REAL provider login promptly.
                 // Never trap a manual sync behind 24 invisible polling attempts.
                 if("sync".equals(loginPurpose)&&"login necessário".equals(auth)){
+                    PogoAccountSlots.prefs(this,activeLoginSlot).edit()
+                        .putString("sessionStatus","expirada")
+                        .putString("profileSyncState","error").apply();
+                    refreshSessionSummary();
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
                     if(loginWaitLabel!=null)
@@ -3082,7 +3317,8 @@ public class MainActivity extends Activity {
         });
     }
     private void captureOfficialProfile(WebView view,int generation){
-        if(view!=website||loginDialog==null||!loginDialog.isShowing()||
+        if(view!=website||generation!=loginPageGeneration||
+           loginDialog==null||!loginDialog.isShowing()||
            !("manage".equals(loginPurpose)||"sync".equals(loginPurpose)||loginAutoReturnQueued)||
            !profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
@@ -3101,9 +3337,19 @@ public class MainActivity extends Activity {
                 String payload=new JSONArray("["+raw+"]").getString(0);
                 JSONObject profile=new JSONObject(payload);
                 if(profile.optBoolean("ok",false)&&
-                   "profile".equals(profile.optString("page"))){
-                    SharedPreferences.Editor edit=PogoAccountSlots.prefs(this,activeLoginSlot).edit();
+                   "profile".equals(profile.optString("page"))&&
+                   profile.optString("displayName","").trim().length()>=3&&
+                   profile.optString("displayName","").trim().length()<=65){
+                    SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
                     String name=profile.optString("displayName","").trim();
+                    String priorName=slotPrefs.getString("profileDisplayName","").trim();
+                    boolean newIdentity=!priorName.isEmpty()&&!priorName.equals(name);
+                    if(newIdentity)ProfileAvatarCache.clear(this,activeLoginSlot);
+                    SharedPreferences.Editor edit=slotPrefs.edit()
+                        .putString("profileDisplayName",name)
+                        .putString("profileSyncState","verified")
+                        .putLong("profileLastSyncedAt",System.currentTimeMillis());
+                    if(newIdentity)edit.remove("profileProvider");
                     String provider=profile.optString("provider","");
                     // Linked Google/Discord provider is NOT proof of the
                     // provider used this time. Only observed OAuth is.
@@ -3114,14 +3360,20 @@ public class MainActivity extends Activity {
                     if(provider.equals("Google")||provider.equals("Discord"))
                         edit.putString("profileProvider",provider);
                     String avatar=profile.optString("avatarUrl","");
-                    if(allowedProfileAvatar(avatar))
-                        edit.putString("profileAvatarUrl",avatar);
-                    else {
-                        edit.remove("profileAvatarUrl");
-                        // The official React profile can show the name before
-                        // its public Google avatar has finished loading.
+                    if(allowedProfileAvatar(avatar)){
+                        edit.putString("profileAvatarUrl",avatar)
+                            .putString("profileAvatarState","pending");
+                    }else{
+                        // React sometimes paints a verified member name before
+                        // its picture. Keep the old URL only for the identical
+                        // verified identity, never for a new OAuth/account.
+                        boolean reuse=priorName.equals(name)&&!newIdentity&&
+                            allowedProfileAvatar(slotPrefs.getString("profileAvatarUrl",""));
+                        if(!reuse)edit.remove("profileAvatarUrl");
                         avatarAwaitingHydration="Google".equals(provider)||
                             "Discord".equals(provider);
+                        edit.putString("profileAvatarState",
+                            avatarAwaitingHydration?"pending":reuse?"cached":"missing");
                     }
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
@@ -3129,8 +3381,8 @@ public class MainActivity extends Activity {
                     JSONArray accountList=profile.optJSONArray("trainers");
                     JSONArray verified=new JSONArray();
                     JSONObject chosen=null;
-                    String selection=PogoAccountSlots.prefs(this,activeLoginSlot)
-                        .getString("profileSelectedTrainerCode","");
+                    String selection=newIdentity?"":
+                        slotPrefs.getString("profileSelectedTrainerCode","");
                     if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
                         JSONObject item=accountList.optJSONObject(i);
                         if(item==null)continue;
@@ -3182,6 +3434,11 @@ public class MainActivity extends Activity {
                     }
                     edit.apply();
                     parsed=true;
+                }else{
+                    // A valid /profile shell is NOT a verified member name.
+                    // Never promote an empty-name DOM result to sync success.
+                    profileCaptureFailureReason=profile.optBoolean("ok",false)?
+                        "profile_name_missing":"profile_unhydrated";
                 }
             }catch(Exception e){
                 BugReport.log(MainActivity.this,"HOME",
@@ -3190,17 +3447,28 @@ public class MainActivity extends Activity {
             if(!parsed){
                 // A returned 200 is not proof that React rendered the cards.
                 // Retry React hydration, but never spin forever on site errors.
-                if(++profileCaptureRetryCount<=8){
-                    view.postDelayed(()->captureOfficialProfile(view,generation),650L);
+                int tryNumber=++profileCaptureRetryCount;
+                long elapsed=android.os.SystemClock.uptimeMillis()-profileCaptureStartedAt;
+                if(tryNumber<=12&&elapsed<20_000L){
+                    if(loginWaitLabel!=null)loginWaitLabel.setText(
+                        "Sincronizando perfil… tentativa "+tryNumber+"/12");
+                    long delay=Math.min(1500L,650L+100L*tryNumber);
+                    view.postDelayed(()->captureOfficialProfile(view,generation),delay);
                 }else{
                     profileCaptureInProgress=false;
+                    PogoAccountSlots.prefs(this,activeLoginSlot).edit()
+                        .putString("profileSyncState","error").apply();
+                    BugReport.log(this,"HOME",profileCaptureFailureReason+
+                        " · Conta "+activeLoginSlot+" · tentativas="+tryNumber+
+                        " · elapsedMs="+elapsed);
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    if(loginWaitLabel!=null)loginWaitLabel.setText(
+                        "Perfil indisponível. Confira o site ou tente Atualizar perfil.");
                     refreshSessionSummary();
                     Toast.makeText(this,
-                        "Conta conectada. O site não carregou nome/foto; confira o perfil oficial.",
+                        "Perfil indisponível. Tente atualizar novamente.",
                         Toast.LENGTH_LONG).show();
-                    if(loginAutoReturnQueued&&loginDialog!=null&&
-                        loginDialog.isShowing())loginDialog.dismiss();
                 }
                 return;
             }
@@ -3234,6 +3502,11 @@ public class MainActivity extends Activity {
                 view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                 return;
             }
+            if(avatarAwaitingHydration&&avatarReadRetryCount>=2){
+                SharedPreferences partial=PogoAccountSlots.prefs(this,activeLoginSlot);
+                if(!allowedProfileAvatar(partial.getString("profileAvatarUrl","")))
+                    partial.edit().putString("profileAvatarState","unavailable").apply();
+            }
             // Only the provider's post-confirmation linked profile is proof.
             if("manage".equals(loginPurpose)&&trainerLinkStarted){
                 boolean linkedNow="linked".equals(PogoAccountSlots.prefs(this,activeLoginSlot)
@@ -3266,6 +3539,7 @@ public class MainActivity extends Activity {
                 String verifiedName=PogoAccountSlots.prefs(this,activeLoginSlot)
                     .getString("profileDisplayName","").trim();
                 profileCaptureInProgress=false;
+                refreshSyncedAvatar(activeLoginSlot);
                 refreshSessionSummary();
                 if(verifiedName.isEmpty()){
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
@@ -3279,6 +3553,7 @@ public class MainActivity extends Activity {
                 return;
             }
             profileCaptureInProgress=false;
+            refreshSyncedAvatar(activeLoginSlot);
             refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
                loginDialog!=null&&loginDialog.isShowing()){
@@ -3378,6 +3653,8 @@ public class MainActivity extends Activity {
             "sync".equals(loginPurpose);
         profileDiscoveryAttempted=false;
         profileCaptureRetryCount=0;
+        profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
+        profileCaptureFailureReason="profile_unhydrated";
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
         loginAutoReturnQueued=false;
@@ -3458,6 +3735,9 @@ public class MainActivity extends Activity {
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
+                // A real user must be able to tap Google/Discord in the site.
+                // Hiding it behind a spinner makes OAuth appear frozen.
+                if(loginCover!=null)loginCover.setVisibility(View.GONE);
                 checkLoginSession(view,24,generation);
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
@@ -3597,11 +3877,21 @@ public class MainActivity extends Activity {
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginProfilePageLoadFailed=false;
             loginDialog=null;
+            final int guestOverlay=pendingPublicLoginOverlay;
+            pendingPublicLoginOverlay=0;
+            if(authenticatedNow&&guestOverlay>0&&
+               PogoAccountSlots.loggedIn(this,activeLoginSlot)){
+                final boolean secondary=guestOverlay==2;
+                // Never override a different assignment made while login ran.
+                if(PogoAccountSlots.assigned(this,secondary)==0)
+                    PogoAccountSlots.bindAccountOnly(this,secondary,activeLoginSlot);
+            }
             serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
-            if(authenticatedNow&&fromOverlay&&OverlayService.isRunning()){
+            if(authenticatedNow&&(fromOverlay||guestOverlay>0)&&
+               (OverlayService.isRunning()||OverlayService.isSecondaryRunning())){
                 // Return to Pokémon GO with the PokeSearch overlay visible.
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
             }
@@ -3637,6 +3927,7 @@ public class MainActivity extends Activity {
         syncMissionBadge();
         setIntent(intent);
         handleShinyLoginIntent(intent);
+        handlePublicLoginIntent(intent);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openPicker);
         if("com.lucianotoscano.pokesearchoverlay.OPEN_SETTINGS".equals(intent.getAction()))
