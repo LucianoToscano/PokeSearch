@@ -2,7 +2,9 @@
 
 **Data:** 17/11/2026. **Base:** v0.03.89 LT / versionCode 54596. **Versão solicitada:** v0.03.90 LT / code 54597 / label 51405. 
 
-<!-- O resultado do workflow/asset só é incluído após confirmação na API GitHub; não presumir publicação. -->
+**Estado: RELEASE OFICIAL PUBLICADA E VERIFICADA.** PokeSearch **v0.03.90 LT / versionCode 54597 / label 51405**, publicada em 17/11/2026 às **20:55:39 UTC** (17h55 BRT). [Release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.90-54597) `draft=false, prerelease=false`. [APK oficial permanente](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.90-54597/PokeSearch-v0.03.90-LT.apk), asset `PokeSearch-v0.03.90-LT.apk` `uploaded`, **61.748.886 bytes**, digest SHA-256 `1dda619d87ee487fa426455829428889e812e2761b05654000c349668159f42a` conforme API GitHub e workflow protegido.
+
+**Workflow oficial [#44173772883](https://github.com/LucianoToscano/PokeSearch/actions/runs/44173772883): completed/success**, HEAD `b277b39c33bc5c7fe077f6a09bda5851df3d8179`. Passou por preflight, Node/OTA, assets, R8, validação do APK e **certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`**, publicação, verificação de hash/asset e limpeza do material privado. **Hash confirmado via API GitHub e pelo workflow**, sem afirmar recomputação independente do APK baixado ou instalação física neste ambiente. PR código #527 squash `8bfd2980dae82ca7bd3f4dbf235d56995c7da633`, PR release [#528](https://github.com/LucianoToscano/PokeSearch/pull/528), squash `b277b39c33bc5c7fe077f6a09bda5851df3d8179`.
 
 ## Evidências de alteração
 - PR código [#527](https://github.com/LucianoToscano/PokeSearch/pull/527), squash `8bfd2980dae82ca7bd3f4dbf235d56995c7da633`.
