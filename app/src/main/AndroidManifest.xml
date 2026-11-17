@@ -30,6 +30,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".CommunityScrapbookActivity" android:exported="false" />
+        <!-- LT398: inventário privado; não exportado. Importação via SAF. -->
+        <activity android:name=".PersonalPokedexActivity" android:exported="false" />
         <!-- LT364: explicit, user-driven lookup and local authorized APK catalog. -->
         <activity android:name=".PokeListRadarActivity" android:exported="false" />
         <activity android:name=".DataHubCatalogActivity" android:exported="false" />
