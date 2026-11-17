@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  */
 final class PokedexSpriteStore {
     interface Listener { void updated(String statusJson); }
-    private static final String PINNED_COMMIT="db10df75d6f6f92018d9786af0aecc4ef";
+    private static final String PINNED_COMMIT="db10df75d6f6f92018d9786af0aecc238fecc4ef";
     private static final String BASE="https://raw.githubusercontent.com/PokeMiners/pogo_assets/";
     private static final String[] PATHS={
         "Images/Pokemon%20-%20256x256/Addressable%20Assets/",
