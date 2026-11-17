@@ -7939,7 +7939,7 @@ function draw(){
  const star=document.getElementById("star");
  star.classList.toggle("favoritesOn",hasFavorites);
  star.title=hasFavorites?"Editar favoritos e alertas específicos":"Adicionar Pokémon favoritos e alertas específicos";
- const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar);
+ const p=document.getElementById("period");p.querySelector(".autoTime").textContent=period===0?"OFF":String(period)+"m";p.classList.toggle("autoOff",period===0);p.removeAttribute("title");p.setAttribute("aria-label",period===0?"Atualização desligada; segure ↻ para alterar":"Atualização a cada "+period+" minutos; segure ↻ para alterar");
  const listKey=JSON.stringify([cards,row,spriteSize,showTimers,showResultText,resultDisplayHeightDp,
   shownMode,resultDisplayOptions,cooldownState,resultsStale,searchActive]);
  if(listKey!==lastListKey){lastListKey=listKey;
