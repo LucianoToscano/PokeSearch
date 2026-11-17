@@ -287,7 +287,7 @@ function refreshBackgrounds(status){
  el("backgrounds-download").disabled=!!information.running||available===state.bgAssets.size;
  el("backgrounds-clear").disabled=!!information.running||available===0;
  el("backgrounds-cancel").disabled=!information.running;
- if(!el("background-panel").hidden)renderBackgroundGallery();
+ if(!el("background-panel").hidden&&(!information.running||!information.processed||information.processed%24===1))renderBackgroundGallery();
  if(state.selected)applyHeroBackground(state.selected,bridge.getDecoration(state.slot,state.selected.id));
 }
 window.pokeBackgroundProgress=function(status){refreshBackgrounds(status);};
@@ -611,8 +611,14 @@ el("backgrounds-download").addEventListener("click",()=>{
  refreshBackgrounds();
 });
 el("backgrounds-cancel").addEventListener("click",()=>bridge.cancelBackgroundDownload());
+let confirmClear=false;
 el("backgrounds-clear").addEventListener("click",()=>{
- if(!window.confirm("Apagar apenas as imagens de fundos baixadas neste aparelho?"))return;
+ if(!confirmClear){
+  confirmClear=true;el("backgrounds-clear").textContent="Confirmar exclusão";
+  notice("Toque novamente para apagar apenas o cache de fundos.");
+  return;
+ }
+ confirmClear=false;el("backgrounds-clear").textContent="Apagar cache";
  bridge.clearBackgroundCache();refreshBackgrounds();
 });
 el("save-note").addEventListener("click",()=>{
