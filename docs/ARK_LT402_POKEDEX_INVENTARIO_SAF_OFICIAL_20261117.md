@@ -1,6 +1,6 @@
 # ARK LT402 — Minha Pokédex editável, PGSStats local e sprites
 
-**Data:** 17/11/2026. **Base:** PokeSearch v0.03.86 LT / versionCode 54593. **Versão oficial solicitada:** v0.03.87 LT / versionCode 54594 / label 51402. **Estado da publicação:** em execução no workflow protegido; confirmar resultado final abaixo antes de marcar o ARK como publicado.
+**Data:** 17/11/2026. **Base:** PokeSearch v0.03.86 LT / versionCode 54593. **Versão oficial solicitada:** v0.03.87 LT / versionCode 54594 / label 51402. **Estado da publicação:** **PUBLICADA E VERIFICADA** em 17/11/2026, na release pública estável https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.87-54594. APK permanente: https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.87-54594/PokeSearch-v0.03.87-LT.apk, 61.746.562 bytes, SHA-256 público `ecb16c5a1d537dc18337e190e2a1f117f21690f5b5cc8d639d31d9e67af1598b`.
 
 ## Código integrado
 
@@ -31,7 +31,7 @@ A LT401 já havia corrigido a interpretação de IDs numéricos de forma no PGSS
 - FastDev advisory smoke **success** [#44140115262](https://github.com/LucianoToscano/PokeSearch/actions/runs/44140115262) — teste, **não canal de publicação**.
 - Secure beta/R8 **success** [#44140115310](https://github.com/LucianoToscano/PokeSearch/actions/runs/44140115310) — assinatura de teste isolada, **não distribuída**.
 - PR #518 de pedido de release: Node/LT169/LT211/LT62/LT173/Secure beta e preflight oficial success.
-- Workflow oficial protegido [#44141555140](https://github.com/LucianoToscano/PokeSearch/actions/runs/44141555140): **em execução ao redigir**; assinatura permanente exigida `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Completar asset/digest/estado após o run.
+- Workflow oficial protegido [#44141555140](https://github.com/LucianoToscano/PokeSearch/actions/runs/44141555140): **completed/success**, preflight, assets, R8, assinatura, upload, release estável, conferência do hash/digest público e limpeza dos segredos **aprovados**; assinatura permanente exigida `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. O GitHub retornou `uploaded` para `PokeSearch-v0.03.87-LT.apk`, tamanho 61.746.562 bytes, digest `sha256:ecb16c5a1d537dc18337e190e2a1f117f21690f5b5cc8d639d31d9e67af1598b`. O workflow verificou assinatura e hash. **Não foi recalculado independentemente o SHA-256 dos bytes baixados nesta sessão.**
 
 ## Homologação física não realizada
 
