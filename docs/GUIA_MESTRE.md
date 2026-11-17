@@ -3293,3 +3293,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **Não houve APK ou release oficial nesta LT382.** Release oficial 0.03.73/54580, keystore e canal FastDev permanente preservados; QA físico pendente. Não abrir PR enquanto as correções estiverem incompletas.
 - [Registro técnico LT382](LT382_FASTDEV_CICLO_RAPIDO_20261116.md).
 
+
+## LT383 — FastDev: correção HTTP 403 e Preview 1000039
+
+- **Causa de código:** a consulta FastDev dependia apenas da API pública GitHub Releases, que pode retornar HTTP 403 e interromper a descoberta. O 403 foi documentado por captura do proprietário, sem cabeçalhos remotos para distinguir rate limit de outro bloqueio.
+- **Patch integrado:** [PR #474](https://github.com/LucianoToscano/PokeSearch/pull/474), squash `dc4cd5eb7d6d6ef423063b43c09ceaebdcbafe3b`; SHA testado `59eeec9ac97a851657d2568242c16636c372a9c5`. Console FastDev consulta manifesto raw público `fastdev/latest.json` antes da API, valida dados do APK, mostra a versão instalada e oferece botão de downloads no navegador. Workflow atualiza o manifesto automaticamente após assinar/publicar a pré-release com lease SHA.
+- **CI aprovado:** FastDev #43998894219, Preview Java #43998894255, LT169 #43998894013, LT211 #43998894023, beta QA #43998894118. FastDev assinado/OTA manifesto #43999281475 SUCCESS.
+- **APK FastDev publicado:** [`fastdev-1000039`](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000039), pacote `com.lucianotoscano.pokesearch.preview`, code `1000039`, size `62304688`, SHA-256 `47f20b2e539e0d077f4f2fb6d9e03168549e6cf4d593acafcdabf574d449a086`, cert permanente `e712422729f6ec3c66646f752f4cfb88c4e0d4141404a3a1c271c7a6f0aaa4ea`. Raw público e API Releases conferidos.
+- **Migração inicial:** o app FastDev antigo não lê o manifesto novo; instalar uma vez o APK 1000039 **por cima**, sem desinstalar. Teste físico de atualização e OAuth ainda pendente. APK oficial PokeSearch 0.03.73/54580 preservado, nenhum ARK oficial.
+- [Registro integral LT383](LT383_FASTDEV_HTTP403_OTA_20261116.md).
+
