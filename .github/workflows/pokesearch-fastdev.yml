@@ -1,11 +1,16 @@
 name: PokeSearch FastDev - smoke, visual, isolated APK Preview
 on:
-  # Only an explicit request on main may start a signed APK Preview.
-  # Ordinary development edits use pokesearch-fastdev-branch.yml instead.
+  # Publish a new permanently signed FastDev build AUTOMATICALLY after a
+  # trusted source merge to main. Never on a feature branch or on PR pushes.
+  # docs/ and fastdev/latest.json are deliberately excluded to prevent loops.
   push:
     branches: [main]
     paths:
       - 'fastdev/preview-request.json'
+      - 'app/src/main/**'
+      - 'app/src/preview/**'
+      - 'app/build.gradle.kts'
+      - '.github/workflows/pokesearch-fastdev.yml'
   pull_request:
     branches: [main]
     paths:
@@ -80,7 +85,10 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "$EVENT" == "push" ]]; then
-            MODE="$(node scripts/fastdev-request.cjs fastdev/preview-request.json)"
+            # A source merge is sufficient: no preview-request.json edit or
+            # extra Actions click. Validate the existing request contract.
+            node scripts/fastdev-request.cjs fastdev/preview-request.json >/dev/null
+            MODE="apk-preview"
           elif [[ "$EVENT" == "workflow_dispatch" ]]; then
             MODE="$DISPATCH_MODE"
           else
