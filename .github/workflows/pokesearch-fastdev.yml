@@ -1,7 +1,9 @@
 name: PokeSearch FastDev - smoke, visual, isolated APK Preview
 on:
+  # Only an explicit request on main may start a signed APK Preview.
+  # Ordinary development edits use pokesearch-fastdev-branch.yml instead.
   push:
-    branches: ['**']
+    branches: [main]
     paths:
       - 'fastdev/preview-request.json'
   pull_request:
@@ -59,6 +61,7 @@ jobs:
           node --check scripts/fastdev.cjs
           node --check scripts/fastdev-audit.cjs
           node --test scripts/fastdev.test.cjs
+          node --test scripts/fastdev-branch-contract.test.cjs
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
           node --test scripts/fastdev-version.test.cjs
