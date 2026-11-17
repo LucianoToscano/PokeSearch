@@ -66,7 +66,7 @@ test("LT392: only unique possible IV percentage is accepted from each card",()=>
  assert.match(probe,/return evidence\.raw!==""&&evidence\.raw===target/);
 });
 test("LT392: guest route stays public, while refresh needs provider evidence",()=>{
- assert.match(svc,/const guestPublicSearch=!shiny&&/);
+ assert.match(svc,/final boolean guestPublicSearch=!shiny&&/);
  assert.match(svc,/if\(!authorizedApiQaSelected\(\)\|\|guestPublicSearch\)/);
  assert.match(probe,/submission\.observedBusy===true&&!loading/);
  assert.match(probe,/if\(submission&&loading\)submission\.observedBusy=true/);
