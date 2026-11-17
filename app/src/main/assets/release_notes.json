@@ -5201,6 +5201,34 @@
           "Os módulos futuros continuam como recursos em preparação; nenhuma nova função de captura ou banco de dados foi adicionada."
         ]
       }
+    },
+    {
+      "id": "lt397-home-icons-owner-assistant-group-trocas-20261117",
+      "minVersionCode": 54589,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT397 — Novos ícones de Assistente, Grupo e Trocas",
+      "sections": {
+        "novidades": [
+          "Assistente recebeu o novo ícone branco enviado pelo proprietário, apenas na Home; o ícone flutuante permanece independente.",
+          "Comunidade agora utiliza o símbolo Grupo de três pessoas enviado, preservando suas opções de chat e fórum em preparação.",
+          "Trocas recebeu o novo desenho branco de setas e círculos enviado pelo proprietário."
+        ],
+        "melhorias": [
+          "Os três desenhos foram centralizados e dimensionados proporcionalmente dentro de áreas transparentes idênticas, evitando cortes e diferenças excessivas de escala.",
+          "Grade de 16 módulos organizada em quatro colunas e quatro linhas, com legendas alinhadas e mesmas dimensões de toque.",
+          "Os outros 13 desenhos originais continuam preservados, incluindo o Quests reparado, a Pokédex original e as Pokébolas brancas quando desligadas."
+        ],
+        "correcoes": [
+          "Removida a antiga versão colorida do Assistente apenas do atalho da Home, sem alterar a identidade do ícone flutuante.",
+          "Eliminada a dessaturação artificial do novo Assistente branco para renderizar exatamente a arte fornecida.",
+          "Ícones disponíveis localmente no APK, sem carregar imagens de sites ou depender de conexão."
+        ],
+        "emDesenvolvimento": [
+          "Verificação visual e funcional no Samsung Android 17 e outros tamanhos de tela ainda pendente para a nova padronização óptica.",
+          "Os módulos de Trocas e fórum da Comunidade continuam em preparação onde as funções ainda não foram implementadas.",
+          "A publicação preserva as configurações e exige confirmação de instalação do Android."
+        ]
+      }
     }
   ]
 }

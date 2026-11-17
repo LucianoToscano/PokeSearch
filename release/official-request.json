@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.81",
-  "code": 54588,
-  "label": 51396,
-  "previous_tag": "v0.03.80-54587",
-  "qa_max_code": 54587,
-  "release_notes": "LT396 — Correção definitiva dos contornos de Quests e Comunidade na Home. A inspeção dos PNGs originais mostrou que a borda inferior circular de Quests estava incompleta a partir de y=484, e a borda direita de Comunidade estava cortada depois de x=488; padding sozinho não recuperava pixels ausentes. Foram restaurados somente os traços faltantes da arte original, sem trocar seus desenhos, com atlas interno 4×4 substituindo somente essas duas células e margens seguras. Quests agora tem o aro inferior completo; Comunidade agora tem o canto direito arredondado. Assistente mantém o personagem original e apresenta cores menos saturadas somente na Home, combinando melhor com os símbolos dos demais menus. Ícone flutuante do Assistente não foi alterado. Preservados Pokédex original, duas Pokébolas brancas quando desligadas sem IV na Home, menu lateral organizado da LT395, os 16 módulos, filtros, overlays, sprites, PGS, contas, login, histórico, atualizações, tema, preferências e dados. Novo teste LT396 valida pixels reais recuperados nos PNGs, integridade SHA-256 e escala; Node QA, LT169, LT211, LT62, LT173 OTA e beta APK/R8 passaram na PR #500. Homologação física no Samsung Android 17, demais densidades, temas e acessibilidade ainda não foi executada, portanto não há comprovação pixel-a-pixel no dispositivo. Publicação oficial com assinatura permanente, integridade SHA-256 pública e atualização instalada somente após confirmação do Android."
+  "version": "0.03.82",
+  "code": 54589,
+  "label": 51397,
+  "previous_tag": "v0.03.81-54588",
+  "qa_max_code": 54588,
+  "release_notes": "LT397 — Três ícones da Home substituídos exatamente pelos arquivos enviados pelo proprietário: Assistente.png (novo personagem branco no módulo Assistente), icone_jogo_em_grupo.webp (Grupo como ícone do módulo Comunidade, mantendo seu nome e suas opções), Trocas.png (novo símbolo no módulo Trocas). Os desenhos foram apenas recortados nas margens transparentes, redimensionados proporcionalmente e centralizados em três células 256x256 transparentes de um recurso interno PNG 768x256. A grade permanece com 16 módulos em 4x4; tamanho visual uniforme em caixas 51dp, mesmo alinhamento de rótulos e padding balanceado dos três novos módulos. Sem alteração do ícone flutuante do Assistente nem das funções atuais de Comunidade/Trocas. Os outros 13 ícones, incluindo Quests corrigido, Pokédex original e Pokébolas brancas OFF e sem IV na Home, seguem preservados. Arquivo embarcado com SHA-256 aec9248bfab9f74e058e990fbea079840010db75afc071737fa9ddddd96928ba. Novo teste LT397 verifica integridade, margens reais em alpha, correspondência das células e ações. Node QA, LT169, LT211, LT62 Android Java, LT173 OTA, FastDev smoke e beta R8 passaram na PR #503. A homologação física de alinhamento, legibilidade e toque no Samsung SM-S928B Android 17 e em outros aparelhos continua pendente; CI não equivale a teste físico. Assinatura permanente e SHA-256 público da release oficial, com instalação confirmada pelo Android."
 }
