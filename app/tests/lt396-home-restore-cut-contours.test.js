@@ -61,11 +61,11 @@ assert.equal(community.pixel(509,275),0,"Community tip should end within canvas"
 const code=fs.readFileSync(path.join(root,"java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
 assert.match(code,/if\(index==6\)/);
 assert.match(code,/artwork\.setPadding\(d\(6\),d\(2\),d\(6\),d\(3\)\)/);
-assert.match(code,/if\(index==15\)/);
-assert.match(code,/artwork\.setPadding\(d\(6\),d\(3\),d\(6\),d\(3\)\)/);
-assert.match(code,/muted\.setSaturation\(\.20f\)/);
-assert.match(code,/new android\.graphics\.ColorMatrixColorFilter\(muted\)/);
+assert.match(code,/index==3\|\|index==13\|\|index==15/);
+assert.match(code,/artwork\.setPadding\(d\(3\),d\(2\),d\(3\),d\(2\)\)/);
+assert.match(code,/artwork\.clearColorFilter\(\)/);
+assert.doesNotMatch(code,/new android\.graphics\.ColorMatrixColorFilter\(muted\)/);
 assert.match(code,/if\(index==0\|\|index==1\|\|index==3\)/);
 assert.match(code,/for\(int line=0;line<4;line\+\+\)/);
 assert.match(code,/for\(int col=0;col<4;col\+\+\)/);
-console.log("PASS LT396: reconstructed missing Quest bottom and Community right pixels, original assistant character with muted Home colors");
+console.log("PASS LT396: original Quest and Community pixel repairs archived; LT397 user art correctly overrides Home tile");
