@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.85",
-  "code": 54592,
-  "label": 51400,
-  "previous_tag": "v0.03.84-54591",
-  "qa_max_code": 54591,
-  "release_notes": "LT400 — Minha Pokédex com catálogo visual de Pokémon GO: 3.850 PNG GO e 2.213 PNG legados catalogados por fonte fixa, com 1.506 formas, 87 trajes e 1.025 espécies; sprites por tupla espécie/forma/gênero/Shiny/traje, sem atribuir versão errada. Download privado por escolha do usuário: apenas coleção, coleção GO ou legadas, cancelamento, retomada, hash/tamanho e cache privado; imagens de terceiros não embutidas no APK. Correção do PGSStats Sombroso=alignment1 e Purificado=alignment2, indicadores visuais diferenciados, resoluções exatas de Giratina/Deoxys/Kyurem e placeholders honestos. Categorias Lendário/Mítico/Pode Evoluir, fundos sem classificação, Evento visual separado de origem e Mega registrada a partir do histórico quando presente. Mantém Home, P1/P2, Busca, login, trajes/fundos existentes, comentários privados e comparador. PR #512 CI Node, FastDev smoke, LT169, LT211, LT62, LT173, Secure beta APK/R8 success. Sem teste físico Samsung Android17; downloads de milhares de arquivos dependem de rede, espaço e clique explícito; não garante todas as combinações ou conformidade do jogo em outro instantâneo. Sem comércio, leilão ou venda."
+  "version": "0.03.86",
+  "code": 54593,
+  "label": 51401,
+  "previous_tag": "v0.03.85-54592",
+  "qa_max_code": 54592,
+  "release_notes": "HOTFIX LT401 — Corrige a regressão de sprites ausentes na Minha Pokédex, vista como losangos em Mewtwo, Giratina, Zacian, Zamazenta, Landorus e outras variantes. O PGSStats.json usa IDs numéricos de form sem formName; o resolvedor anterior ignorava o ID, classificava incorretamente como base e recusava fallback offline. Agora o catálogo reconhece forma por ID mesmo sem texto, preserva diferenciação de forma, traje, Shiny e gênero, usa imagem base instalada apenas para Normal comprovado e permite carregar imagem exata da fonte PokeMiners em commit fixo se não estiver em cache. Nenhum PNG de terceiros embutido no APK; imagens externas sob demanda, nunca envio de dados da conta. Cache privado e downloads opcionais continuam funcionando. Preserva Home/ícones/P1/P2, contas, captura, fundos, inventários, históricos e assinatura permanente. PR #515: Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados. QA visual físico no Samsung Android 17 ainda pendente. Integração separada de sincronização automática PGSStats não pertence a este hotfix."
 }
