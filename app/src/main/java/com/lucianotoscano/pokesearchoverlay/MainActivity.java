@@ -431,6 +431,14 @@ public class MainActivity extends Activity {
                 }
                 refreshPokeballLoginBadges();
                 refreshSessionSummary();
+                // The hub stays open; reflect the new choice immediately.
+                Object selectedLabel=anchor.getTag();
+                if(selectedLabel instanceof TextView){
+                    ((TextView)selectedLabel).setText("P"+(secondary?"2":"1")+
+                        " · "+pogoBindingTitle(secondary));
+                    anchor.setContentDescription("Pokébola "+(secondary?"2":"1")+
+                        ", "+pogoBindingTitle(secondary)+". Toque para escolher conta.");
+                }
             });
             content.addView(option,new LinearLayout.LayoutParams(-1,d(40)));
         }
@@ -642,45 +650,9 @@ public class MainActivity extends Activity {
             icon.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
-            FrameLayout loginHotspot=new FrameLayout(this);
-            // Seletor independente do OAuth; alinhar à silhueta real do ícone,
-            // não ao centro do ImageView quando a arte tiver padding assimétrico.
-            FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(30),d(21),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
-            shell.addView(loginHotspot,hotLp);
-            ImageView badge=new ImageView(this);
-            badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            FrameLayout.LayoutParams badgeLp=new FrameLayout.LayoutParams(
-                d(12),d(12),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
-            loginHotspot.addView(badge,badgeLp);
-            pokeballLoginBadges[i]=badge;
-            loginHotspot.setContentDescription("Escolher Conta 1 ou 2 para Pokébola "+(i+1));
-            loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
-            // LT376e: ambos os eixos seguem a arte óptica calculada em
-            // coordenadas do próprio shell, não o centro nominal de 512px.
-            // Recalcular após mudanças reais de largura/densidade na Home.
-            final Runnable alignBadge=()->{
-                int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
-                int visibleCenterX=HomeMenuIconPack.opticalPokeballButtonXInParentPx(icon);
-                if(visibleTop<0||visibleCenterX<0||!loginHotspot.isAttachedToWindow())return;
-                FrameLayout.LayoutParams placement=
-                    (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
-                int height=d(18);
-                int desiredLeft=visibleCenterX-d(15);
-                int desiredTop=visibleTop-2-height;
-                if(placement.leftMargin==desiredLeft&&placement.topMargin==desiredTop&&
-                    placement.height==height&&placement.gravity==(Gravity.TOP|Gravity.LEFT))return;
-                placement.width=d(30);
-                placement.height=height;
-                placement.leftMargin=desiredLeft;
-                placement.topMargin=desiredTop;
-                placement.gravity=Gravity.TOP|Gravity.LEFT;
-                loginHotspot.setLayoutParams(placement);
-            };
-            icon.post(alignBadge);
-            icon.addOnLayoutChangeListener((v,l,t,r,b,oldL,oldT,oldR,oldB)->{
-                if((r-l)!=(oldR-oldL)||(b-t)!=(oldB-oldT))icon.post(alignBadge);
-            });
+            // LT392: no login/assignment badge above the Home Pokébola.
+            // Account binding lives in the PoGoCoordinates account hub.
+
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
         // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
@@ -1869,6 +1841,41 @@ public class MainActivity extends Activity {
                 });
             }
         }
+        // LT392: two explicit Pokébola selectors INSIDE this account hub.
+        // No small icon or invisible hotspot remains above the Home balls.
+        TextView bindHeading=homeText("Vincular Pokébolas",12,foreground,true);
+        LinearLayout.LayoutParams bindHeadingLp=new LinearLayout.LayoutParams(-1,d(27));
+        bindHeadingLp.topMargin=d(6);
+        card.addView(bindHeading,bindHeadingLp);
+        LinearLayout pokeballBindings=new LinearLayout(this);
+        pokeballBindings.setOrientation(LinearLayout.HORIZONTAL);
+        pokeballBindings.setGravity(Gravity.CENTER_VERTICAL);
+        card.addView(pokeballBindings,new LinearLayout.LayoutParams(-1,d(46)));
+        for(int index=0;index<2;index++){
+            final boolean secondary=index==1;
+            final int number=index+1;
+            LinearLayout choice=new LinearLayout(this);
+            choice.setGravity(Gravity.CENTER_VERTICAL);
+            choice.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams choiceLp=new LinearLayout.LayoutParams(0,d(44),1);
+            if(index==1)choiceLp.leftMargin=d(9);
+            pokeballBindings.addView(choice,choiceLp);
+            ImageView ball=new ImageView(this);
+            ball.setImageResource(R.drawable.home_pokeball_on);
+            ball.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            ball.setBackground(null);
+            choice.addView(ball,new LinearLayout.LayoutParams(d(32),d(32)));
+            TextView assigned=homeText("P"+number+" · "+pogoBindingTitle(secondary),
+                11,foreground,true);
+            assigned.setSingleLine(true);
+            assigned.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            choice.addView(assigned,new LinearLayout.LayoutParams(0,d(37),1));
+            assigned.setGravity(Gravity.CENTER_VERTICAL);
+            choice.setTag(assigned);
+            choice.setContentDescription("Pokébola "+number+", "+
+                pogoBindingTitle(secondary)+". Toque para escolher conta.");
+            choice.setOnClickListener(v->showCompactAccountNames(choice,secondary));
+        }
         TextView note=homeText("Visitante automático · até 5 resultados reais do site.",10,muted,false);
         LinearLayout.LayoutParams noteLp=new LinearLayout.LayoutParams(-1,-2);
         noteLp.topMargin=d(2);card.addView(note,noteLp);
@@ -1884,6 +1891,10 @@ public class MainActivity extends Activity {
             int width=Math.min(d(350),getResources().getDisplayMetrics().widthPixels-d(26));
             dialog.getWindow().setLayout(width,android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
         }
+    }
+    private String pogoBindingTitle(boolean secondary){
+        int slot=PogoAccountSlots.assigned(this,secondary);
+        return slot==0?"Visitante":"Conta "+slot;
     }
     private String pogoAccountSummary(int slot){
         SharedPreferences account=PogoAccountSlots.prefs(this,slot);
