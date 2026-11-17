@@ -1801,7 +1801,8 @@ public class OverlayService extends Service {
                 try{armNextDespawn(new JSONArray(results));}
                 catch(org.json.JSONException ex){recordFailure("rearmar despawn após rede",ex);}
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
-                status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
+                searchFailure("⚠ Sem conexão com PoGoCoordinates",
+                    "Falha ao carregar o site público. Verifique a conexão e toque em ↻ para tentar novamente.");
             }
         });
     }
@@ -2651,7 +2652,7 @@ public class OverlayService extends Service {
         final int searchSlot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
         final boolean guestPublicSearch=!shiny&&
             !PogoAccountSlots.loggedIn(this,searchSlot);
-        if(authorizedApiQaSelected()&&!guestPublicSearch&&apiProviderBackoffUntil()>0L){
+        if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L){
             scheduleProviderRateLimitResume();
             long remaining=(apiProviderBackoffUntil()-System.currentTimeMillis()+999L)/1000L;
             String waitText=remaining>=3600L?(remaining+3599L)/3600L+"h":
