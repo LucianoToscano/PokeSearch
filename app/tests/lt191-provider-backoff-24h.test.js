@@ -18,7 +18,8 @@ async function scenario(header,expected){
  assert.equal(c.backoffSeconds("search"),expected,`header ${header}`);
  assert.equal(calls,1);
  assert.deepEqual(await c.search(config),{ok:false,reason:"rate-limited"});
- assert.equal(calls,1,"No extra calls while throttled");
+ assert.equal(calls,expected>0?1:2,
+  "Only provider Retry-After may suppress a later explicit request");
  clock+=60_000;
  assert.equal(c.backoffSeconds("search"),Math.max(0,expected-60));
  c.dispose();
@@ -27,7 +28,7 @@ async function main(){
  await scenario("7200",7200);
  await scenario("86400",86400);
  await scenario("99999",86400); // explicit 24h bounded policy, not 60 seconds
- await scenario("bad-value",60);
+ await scenario("bad-value",0);
  const now=Date.UTC(2026,9,30,14,0,0);
  await scenario(new Date(now+7200*1000).toUTCString(),7200);
  let clock=now;
@@ -41,7 +42,7 @@ async function main(){
  for(let i=0;i<25;i++){await new Promise(r=>setImmediate(r));response=s.take(5);if(!response.pending)break;}
  assert.deepEqual(response,{ok:false,reason:"rate-limited",retryAfterSeconds:7200});
  assert.ok(service.includes("API_RATE_BACKOFF_MAX_MS=86_400_000L;"));
- assert.ok(service.includes("suggestedSeconds>=1&&suggestedSeconds<=86400"));
+ assert.ok(service.includes("suggestedSeconds<1||suggestedSeconds>86400"));
  assert.ok(service.includes("reportedSeconds>=1&&reportedSeconds<=86400"));
  assert.ok(service.includes('getSharedPreferences("prefs",MODE_PRIVATE)'));
  assert.ok(service.includes('remaining>=3600L'));
