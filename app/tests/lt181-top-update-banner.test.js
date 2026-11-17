@@ -8,10 +8,10 @@ const git=fs.readFileSync(
 const idx=src.indexOf("screen.addView(homeUpdateHolder,1,updateLp);");
 assert(idx>=0,"The update banner is inserted at index 1, directly under Home header");
 const header=src.indexOf("screen.addView(header,new LinearLayout.LayoutParams(-1,d(58)));");
-const pokeballs=src.indexOf("screen.addView(dualOverlayRow,dualLp);");
+const pokeballs=src.indexOf("screen.addView(launcherGrid,gridLp);");
 const updateInit=src.indexOf("homeUpdateHolder=new LinearLayout(this);");
 assert(header>=0&&pokeballs>header&&updateInit>pokeballs,
-  "Home construction still creates the header and dual Pokeballs first");
+  "Home construction still creates the header and complete 16-icon launcher first");
 assert(src.includes("homeUpdateHolder.setVisibility(View.GONE);"),
   "No empty space reserved when the update is hidden");
 assert(src.includes("renderDriveUpdateBanner();"));
