@@ -119,7 +119,15 @@ function run(action,mode,shinyOnly,opts={}){
       const button=element(card.action||"Get coords",{},{
         tagName:card.link?"A":"BUTTON"
       });
-      button.parentElement=box;
+      // Simulate responsive site cards: action lives in a narrow footer,
+      // but IV, CP and Dex are in an ancestor with NO LOCATION label.
+      if(card.mobileFooter){
+        const footer=element(card.action||"Get coords");
+        footer.parentElement=box;
+        button.parentElement=footer;
+        box.querySelectorAll=selector=>
+          selector==="button,a,[role=button]"?[button]:[];
+      }else button.parentElement=box;
       cardButtons.push(button);
       if(card.duplicateAction){
         const sibling=element("Open in Maps",{}, {tagName:"A"});
@@ -443,6 +451,22 @@ assert.equal(rawMissing.criteriaConfirmed,true,"Raw mode has a confirmed site fi
 assert.equal(rawMissing.cards.length,0,"A confirmed form must not turn an unknown card into Hundo");
 assert.equal(rawMissing.unverifiedIv,1,"Unverified IV cards are counted distinctly");
 checked++;
+const mobile=(name,num,iv,cp)=>name+"\\n#"+num+" · Female · M\\nQuick Attack / Thunderbolt\\nIV "+iv+
+  "  CP "+cp+"  LVL 6\\nAlbuquerque, New Mexico, United States\\nDESPAWN\\n59:30\\nGet coords";
+const anonymousMobile=run("collect","raw",false,{iv:["15","15","15"],siteCount:5,
+ spawns:[
+  {name:"Helioptile",text:mobile("Helioptile",694,"67% (12/14/4)",143),mobileFooter:true},
+  {name:"Darumaka",text:mobile("Darumaka",554,"76% (11/15/8)",828),mobileFooter:true},
+  {name:"Nidoran_female",text:mobile("Nidoran_female",29,"44% (10/6/4)",408),
+   action:"Open in Maps",link:true,mobileFooter:true}
+ ]});
+assert.equal(anonymousMobile.found,3,"Three responsive/mobile cards detected without LOCATION heading");
+assert.equal(anonymousMobile.cards.length,0,"None are falsely promoted to IV 100%");
+assert.equal(anonymousMobile.unverifiedIv,0,"Visible 67%, 76% and 44% are VERIFIED, not missing");
+assert.equal(anonymousMobile.verifiedNonmatchingIv,3,"Wrong IVs are counted separately");
+assert.equal(anonymousMobile.siteIncomplete,true,"A five-result site with three visible cards is partial");
+checked+=5;
+
 const rawWrong=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("98% (15/15/14)")});
 assert.equal(rawWrong.cards.length,0,"Raw 15/15/15 rejects observed non-Hundo");
