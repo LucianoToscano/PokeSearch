@@ -169,10 +169,12 @@
      const parsedDate=typeof raw==="string"?Date.parse(raw):NaN;
      const byDate=Number.isFinite(parsedDate)?Math.ceil((parsedDate-dateNow())/1000):NaN;
      const requestedDelay=Number.isFinite(seconds)?seconds:byDate;
-     // Treat excessively long, valid waits as a full day, never as 60s.
-      const delay=Number.isFinite(requestedDelay)&&requestedDelay>=1?
-       Math.min(86400,Math.ceil(requestedDelay)):60;
-     retryUntil[kind]=Math.max(retryUntil[kind],dateNow()+delay*1000);
+     // Honor only a real Retry-After from the provider. A 429 response
+     // without a valid header must not create an invented local 60s block.
+     // Never auto-retry a rate-limited request in this transport.
+     const delay=Number.isFinite(requestedDelay)&&requestedDelay>=1?
+       Math.min(86400,Math.ceil(requestedDelay)):0;
+     if(delay>0)retryUntil[kind]=Math.max(retryUntil[kind],dateNow()+delay*1000);
     }
     if(response.status===401){
      // Invalid site JWT: clear it on the authenticated site origin; never bypass the denial.
