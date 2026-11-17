@@ -14,7 +14,8 @@ const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokem
              query:"",filter:"all",activeFilters:new Set(),sort:"cp",limit:96,selected:null,
              selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
              bgCached:new Set(),backgroundTarget:null,bgQuery:"",
-             spriteIndex:null,spriteCached:new Set(),spriteMatchCache:new Map(),spriteStats:{}};
+             spriteIndex:null,spriteCached:new Set(),spriteMatchCache:new Map(),spriteStats:{},
+             editingPokemon:null,editingTagId:null,suppressCardClick:false};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -187,7 +188,7 @@ function safeSprite(p){
     const valid=uri.startsWith("file:///android_asset/")||
       uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
       uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
-    if(valid&&(!p.costume&&!form||defaultById||
+    if(valid&&((!p.costume&&!Number(p.form)&&!form)||defaultById||
       (art&&typeof art==="object"&&
        (art.exactCostume||art.officialForm||art.offline||art.providerExact))))
       return uri;
@@ -314,7 +315,7 @@ function renderTags(){
  }).join("");
  el("personal-tags").innerHTML=Array.from(state.tags.entries()).map(([key,name])=>{
   const count=state.all.filter(p=>(p.tags||[]).includes(key)).length;
-  return '<button class="personal-tag" data-tag="'+escapeHtml(key)+'"><i class="dot"></i><span class="tag-name">'+escapeHtml(name)+'</span><span class="tag-count">'+number(count)+'</span></button>';
+  return '<div class="personal-tag"><button class="tag-filter" data-tag="'+escapeHtml(key)+'"><i class="dot"></i><span class="tag-name">'+escapeHtml(name)+'</span><span class="tag-count">'+number(count)+'</span></button><button type="button" class="tag-edit" data-edit-tag="'+escapeHtml(key)+'">Editar</button></div>';
  }).join("")||'<p class="pane-sub">Nenhuma etiqueta no arquivo importado.</p>';
 }
 function renderEggs(){
@@ -371,7 +372,10 @@ function render(){
 function renderSelection(){
  el("selection-strip").hidden=!state.selecting;
  el("selection-count").textContent=number(state.selectedIds.size)+" selecionado(s)";
- el("selection-compare").disabled=state.selectedIds.size<2;
+ el("selection-compare").disabled=state.selectedIds.size<2||state.selectedIds.size>3;
+  el("selection-tag").disabled=state.selectedIds.size===0;
+  el("selection-tag-choice").disabled=state.selectedIds.size===0;
+  el("selection-delete").disabled=state.selectedIds.size===0;
  el("select-toggle").classList.toggle("active",state.selecting);
 }
 function compareSelected(){
@@ -496,6 +500,8 @@ function loadSlot(){
   state.capacity=Number(data.capacity)||0;
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
+   renderTagSelection();
+   el("sync-status").textContent=bridge.getSyncStatus(state.slot);
   state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
   state.spriteMatchCache.clear();
   state.selecting=false;state.selectedIds.clear();renderSelection();
@@ -630,7 +636,7 @@ function closeSort(){
  layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
 }
 function closeOverlay(){
- for(const id of ["compare-panel","history-panel","background-panel","sprite-panel"]){
+ for(const id of ["edit-panel","tag-editor-panel","compare-panel","history-panel","background-panel","sprite-panel"]){
   const panel=el(id);
   if(!panel.hidden){panel.hidden=true;state.backgroundTarget=null;return true;}
  }
@@ -663,13 +669,13 @@ el("sort").addEventListener("change",e=>{state.sort=e.target.value;render();});
 el("grid").addEventListener("click",e=>{
   const b=e.target.closest("[data-id]");
   if(!b)return;
-  if(state.selecting){
-    const id=b.dataset.id;
-    if(state.selectedIds.has(id))state.selectedIds.delete(id);
-    else if(state.selectedIds.size<3)state.selectedIds.add(id);
-    else notice("Selecione até três Pokémon para comparar.");
-    renderSelection();render();
-  }else showDetail(b.dataset.id);
+  if(state.suppressCardClick){state.suppressCardClick=false;return;}
+   if(state.selecting){
+     const id=b.dataset.id;
+     if(state.selectedIds.has(id))state.selectedIds.delete(id);
+     else state.selectedIds.add(id);
+     renderSelection();render();
+   }else showDetail(b.dataset.id);
 });
 el("more").addEventListener("click",()=>{state.limit+=96;render();});
 el("detail-back").addEventListener("click",hideDetail);
@@ -709,7 +715,9 @@ el("tag-categories").addEventListener("click",e=>{
  renderFilters();setTab("pokemon");render();
 });
 el("personal-tags").addEventListener("click",e=>{
- const b=e.target.closest("[data-tag]");if(!b)return;
+ const edit=e.target.closest("[data-edit-tag]");
+  if(edit){openTagEditor(edit.dataset.editTag);return;}
+  const b=e.target.closest("[data-tag]");if(!b)return;
  state.filter="tag";state.activeFilters=new Set(["tag"]);
  state.tagId=b.dataset.tag;state.limit=96;
  renderFilters();setTab("pokemon");render();
