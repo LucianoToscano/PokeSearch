@@ -170,7 +170,7 @@ android {
         create("preview") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".preview"
-            versionNameSuffix = "-preview"
+            versionNameSuffix = " DEV"
             matchingFallbacks += listOf("debug")
             signingConfig = signingConfigs.getByName("debug")
             isDebuggable = true
@@ -197,6 +197,22 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+// DEV-only Android metadata. Release and official tag remain untouched.
+// The preview package has its own versionCode, independent of the LT release.
+val devVersionCode = System.getenv("POKE_DEV_VERSION_CODE")?.trim()?.let { value ->
+    value.toIntOrNull() ?: throw org.gradle.api.GradleException("POKE_DEV_VERSION_CODE must be numeric")
+} ?: 1000058
+if (devVersionCode < 1000058)
+    throw org.gradle.api.GradleException("DEV versionCode must be >= 1000058")
+androidComponents {
+    onVariants(selector().withBuildType("preview")) { variant ->
+        variant.outputs.forEach { output ->
+            output.versionCode.set(devVersionCode)
+            output.versionName.set("0.03.73 DEV")
+        }
     }
 }
 
