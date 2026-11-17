@@ -5456,6 +5456,29 @@
           "A cobertura visual total não é garantida; arte não verificada não é substituída por variante incorreta. Edições são apenas locais ao PokeSearch, nunca dentro do Pokémon GO."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt406-pokedex-catalog-pin-20261117",
+      "minVersionCode": 54598,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT406 — Catálogo de sprites da Pokédex",
+      "sections": {
+        "novidades": [
+          "Catálogo de sprites GO volta a ser reconhecido pelo aplicativo Android quando o arquivo de metadados corresponde ao commit esperado."
+        ],
+        "melhorias": [
+          "Teste automático cruza o identificador imutável do manifesto, o código Android e o carregador WebView, evitando que um catálogo vazio passe pelo controle de qualidade.",
+          "Preservados os dois inventários, edição, filtros, tags, fundos, notas, PGSStats.json por SAF e overlays P1/P2."
+        ],
+        "correcoes": [
+          "Corrigido identificador truncado no PokedexSpriteStore.java: a falha rejeitava as 3.850 entradas GO e 2.213 legadas do índice, dificultando a identificação de formas numéricas e exibindo losangos.",
+          "Atualizado o contrato antigo de teste LT400 para exigir o identificador verdadeiro do manifesto; mantidos fallback PokeAPI de espécies comuns e isolamento das imagens Shiny, trajes e formas."
+        ],
+        "emDesenvolvimento": [
+          "O resultado físico ainda não foi comprovado no Samsung Android 17. Verificar importação dos 1.198 Pokémon, grade, Wi-Fi/dados móveis, cache e correspondência exata de variantes antes de declarar recuperação completa.",
+          "Algumas sprites especiais podem continuar sem arte na ausência de arquivo exato ou acesso à rede; as imagens permanecem remotas/cached, não redistribuídas no APK."
+        ]
+      }
     }
   ]
 }
