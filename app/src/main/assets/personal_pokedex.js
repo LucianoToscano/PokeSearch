@@ -221,6 +221,127 @@ function render(){
   }
   el("more").hidden=visible.length<=state.limit;
 }
+
+function renderSelection(){
+ el("selection-strip").hidden=!state.selecting;
+ el("selection-count").textContent=number(state.selectedIds.size)+" selecionado(s)";
+ el("selection-compare").disabled=state.selectedIds.size<2;
+ el("select-toggle").classList.toggle("active",state.selecting);
+}
+function compareSelected(){
+ const chosen=[...state.selectedIds].map(id=>state.all.find(p=>p.id===id)).filter(Boolean);
+ if(chosen.length<2)return;
+ const rows=[
+  ["PC",p=>number(p.cp)],["IV",p=>p.attack+"/"+p.defense+"/"+p.hpIv],
+  ["IV %",p=>Math.round(ivValue(p)/45*100)+"%"],
+  ["PS",p=>number(p.maxStamina)],["Shiny",p=>p.shiny?"Sim":"Não"],
+  ["Sombroso",p=>isShadow(p)?"Sim":"Não"],
+  ["Fundo",p=>hasBackground(p)?"ID "+p.backgroundId:"—"],
+  ["Traje",p=>p.costume?"ID "+p.costume:"—"],
+  ["Forma",p=>cleanForm(p)||"Padrão"]
+ ];
+ el("compare-content").innerHTML='<table class="compare-table"><thead><tr><th>Dados</th>'+
+  chosen.map(p=>'<th>'+artHtml(p,"compare-sprite")+'<div>'+escapeHtml(speciesName(p))+'</div></th>').join("")+
+  '</tr></thead><tbody>'+rows.map(([label,fn])=>'<tr><th>'+escapeHtml(label)+'</th>'+
+   chosen.map(p=>'<td>'+escapeHtml(fn(p))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
+ el("compare-panel").hidden=false;
+}
+function openHistory(){
+ let history=[];
+ try{history=JSON.parse(bridge.getImportHistory(state.slot)||"[]");}catch(_){}
+ el("history-rows").innerHTML=history.length?history.map(row=>{
+  const when=new Date(Number(row.at)).toLocaleString("pt-BR");
+  const diff=row.baseline?'<span>+'+number(row.added)+' novos</span><span>−'+number(row.removed)+
+   ' ausentes</span><span>'+number(row.changed)+' alterados</span>':
+   '<span>Importação inicial</span>';
+  return '<div class="history-row"><strong>'+escapeHtml(when)+'</strong>'+
+   '<div class="history-summary">'+diff+'</div><small>'+number(row.total)+' Pokémon no inventário</small></div>';
+ }).join(""):'<p class="pane-sub">Nenhuma importação registrada nesta versão.</p>';
+ el("history-panel").hidden=false;
+}
+function loadBackgrounds(){
+ try{
+  const manifest=JSON.parse(bridge.getBackgroundManifest()||"{}");
+  state.bgAssets=new Map((manifest.assets||[]).map(a=>[a[0],{size:a[1],sha:a[2]}]));
+  state.bgCards=(manifest.cards||[]).map(c=>({id:c[0],name:c[1],type:c[2],file:c[3]}));
+ }catch(_){state.bgAssets=new Map();state.bgCards=[];}
+ refreshBackgrounds();
+}
+function bgFilename(id){
+ const card=state.bgCards.find(c=>Number(c.id)===Number(id));
+ return card?.file||"";
+}
+function bgImageUrl(name){
+ return "https://pokesearch.local/bg/"+encodeURIComponent(name);
+}
+function refreshBackgrounds(status){
+ let information=status;
+ if(!information)try{information=JSON.parse(bridge.getBackgroundStatus()||"{}");}catch(_){information={};}
+ try{state.bgCached=new Set(JSON.parse(bridge.getCachedBackgroundNames()||"[]"));}catch(_){state.bgCached=new Set();}
+ const available=state.bgCached.size;
+ el("background-cache-count").textContent=available+"/"+number(state.bgAssets.size);
+ el("bg-status").textContent=available+" de "+number(state.bgAssets.size)+" imagens locais · "+
+  decimal((information.bytes||0)/1048576,1)+" MiB baixados"+
+  (information.running?" · "+(information.processed||0)+" processados":"")+
+  (information.error?" · "+information.error:"");
+ el("backgrounds-download").disabled=!!information.running||available===state.bgAssets.size;
+ el("backgrounds-clear").disabled=!!information.running||available===0;
+ el("backgrounds-cancel").disabled=!information.running;
+ if(!el("background-panel").hidden)renderBackgroundGallery();
+ if(state.selected)applyHeroBackground(state.selected,bridge.getDecoration(state.slot,state.selected.id));
+}
+window.pokeBackgroundProgress=function(status){refreshBackgrounds(status);};
+function applyHeroBackground(p,choice){
+ const hero=el("hero");
+ let filename="";
+ let label="";
+ if(choice==="original"||choice==="default"){
+  filename=bgFilename(p.backgroundId);
+  label="Fundo original do encontro";
+ }else if(choice.startsWith("asset:")){
+  filename=choice.substring(6);label="Fundo decorativo escolhido";
+ }
+ if(filename&&state.bgCached.has(filename)){
+  hero.className="hero official-bg";
+  hero.style.backgroundImage='url("'+bgImageUrl(filename)+'")';
+  el("decor-label").textContent=label;
+ }else{
+  hero.className="hero "+(presets.some(x=>x[0]===choice)?choice:"default");
+  hero.style.backgroundImage="";
+  el("decor-label").textContent=filename?"Imagem indisponível — fundo padrão":
+    choice==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
+ }
+ const original=bgFilename(p.backgroundId);
+ el("background-availability").textContent=hasBackground(p)?
+  (original?"Fundo do encontro #"+p.backgroundId+
+    (state.bgCached.has(original)?" disponível neste aparelho.":" catalogado, mas ainda não baixado."):
+   "Fundo registrado #"+p.backgroundId+" sem imagem correspondente confirmada."):
+  "Este Pokémon não tem fundo de encontro registrado. A galeria permite uma decoração opcional.";
+}
+function renderBackgroundGallery(){
+ const q=state.bgQuery.trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const found=state.bgCards.filter(c=>
+  (c.name+" "+c.id+" "+c.type).normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+   .toLowerCase().includes(q));
+ el("background-hint").textContent=found.length+" fundos encontrados · "+
+  (state.backgroundTarget?"Toque em um fundo já baixado para aplicar à ficha pessoal.":
+   "Abra uma ficha Pokémon para escolher um fundo decorativo.");
+ el("background-list").innerHTML=found.slice(0,150).map(c=>{
+  const ready=c.file&&state.bgCached.has(c.file);
+  return '<button type="button" class="background-item" data-bg-id="'+c.id+'"'+
+   (!ready||!state.backgroundTarget?" disabled":"")+'>'+
+   '<div class="image-slot">'+(ready?'<img loading="lazy" src="'+bgImageUrl(c.file)+
+    '" alt="'+escapeHtml(c.name)+'">':'<span aria-hidden="true">▧</span>')+'</div>'+
+   '<strong>'+escapeHtml(c.name)+'</strong><small>#'+c.id+' · '+
+    (ready?"Disponível":"Imagem não baixada ou não identificada")+'</small></button>';
+ }).join("")+(found.length>150?'<p class="pane-sub">Digite na busca para encontrar os demais fundos.</p>':"");
+}
+function openBackgroundGallery(target){
+ state.backgroundTarget=target||null;
+ state.bgQuery="";el("background-search").value="";
+ el("background-panel").hidden=false;
+ refreshBackgrounds();
+}
 function loadSlot(){
   let data={};
   try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
