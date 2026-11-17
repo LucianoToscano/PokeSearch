@@ -4,6 +4,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
@@ -42,6 +46,9 @@ import java.util.regex.Pattern;
  */
 public final class PersonalPokedexActivity extends Activity {
     private static final int PICK_STATS=3771;
+    private static final long SYNC_INTERVAL_MS=60000L;
+    private static final String SOURCE_SETTINGS="pokedex_source_link";
+    private static final String HIDDEN_SETTINGS="pokedex_hidden_entries";
     private static final int MAX_IMPORT_BYTES=24*1024*1024;
     private static final int MAX_POKEMON=10000;
     private static final Pattern LARGE_ID=Pattern.compile("(\"id\"\\s*:\\s*)(\\d{16,20})(?=\\s*[,}])");
@@ -60,6 +67,113 @@ public final class PersonalPokedexActivity extends Activity {
     private WebView view;
     private volatile boolean closing=false;
     private int pendingSlot=1;
+    private boolean pendingLink=false;
+    private final AtomicBoolean sourceSyncBusy=new AtomicBoolean(false);
+    private final Handler sourceHandler=new Handler(Looper.getMainLooper());
+    private final Runnable sourceTicker=new Runnable(){
+        @Override public void run(){
+            if(closing)return;
+            for(int s=1;s<=2;s++)if(isAutoLinked(s))enqueueRefresh(s,false);
+            sourceHandler.postDelayed(this,SYNC_INTERVAL_MS);
+        }
+    };
+    private SharedPreferences sourcePrefs(){
+        return getSharedPreferences(SOURCE_SETTINGS,MODE_PRIVATE);
+    }
+    private static String sourceKey(int selected,String field){
+        return "slot"+slot(selected)+"_"+field;
+    }
+    private boolean isAutoLinked(int selected){
+        SharedPreferences prefs=sourcePrefs();
+        return prefs.getBoolean(sourceKey(selected,"auto"),false)&&
+            !prefs.getString(sourceKey(selected,"uri"),"").isEmpty();
+    }
+    private String sourceStatus(int selected){
+        SharedPreferences p=sourcePrefs();
+        JSONObject out=new JSONObject();
+        String uri=p.getString(sourceKey(selected,"uri"),"");
+        try{
+            out.put("linked",!uri.isEmpty());
+            out.put("auto",!uri.isEmpty()&&p.getBoolean(sourceKey(selected,"auto"),false));
+            out.put("name",p.getString(sourceKey(selected,"name"),""));
+            out.put("lastSync",p.getLong(sourceKey(selected,"last"),0L));
+            out.put("error",p.getString(sourceKey(selected,"error"),""));
+            out.put("busy",sourceSyncBusy.get());
+        }catch(Exception ignored){}
+        return out.toString();
+    }
+    private void emitSourceStatus(int selected){
+        runOnUiThread(()->{
+            if(closing||view==null)return;
+            view.evaluateJavascript("window.pokeSourceUpdated&&window.pokeSourceUpdated("+
+                selected+","+sourceStatus(selected)+");",null);
+        });
+    }
+    private static String sha256(byte[] bytes) throws Exception{
+        byte[] hash=MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder out=new StringBuilder();
+        for(byte value:hash)out.append(String.format(Locale.ROOT,"%02x",value&255));
+        return out.toString();
+    }
+    private String sourceName(Uri uri){
+        try(Cursor cursor=getContentResolver().query(uri,
+            new String[]{OpenableColumns.DISPLAY_NAME},null,null,null)){
+            if(cursor!=null&&cursor.moveToFirst())
+                return text(cursor.getString(0),72);
+        }catch(Exception ignored){}
+        return "Arquivo JSON selecionado";
+    }
+    private void saveCompact(int selected,JSONObject compact) throws Exception{
+        File dest=snapshot(selected);
+        JSONObject previous=null;
+        if(dest.isFile())try(FileInputStream old=new FileInputStream(dest)){
+            previous=new JSONObject(new String(bounded(old,MAX_IMPORT_BYTES),StandardCharsets.UTF_8));
+        }catch(Exception ignored){}
+        if(!dest.getParentFile().isDirectory()&&!dest.getParentFile().mkdirs())
+            throw new IOException("Armazenamento local indisponível.");
+        File tmp=new File(dest.getParentFile(),"slot"+selected+".pending");
+        try(FileOutputStream out=new FileOutputStream(tmp)){
+            out.write(compact.toString().getBytes(StandardCharsets.UTF_8));
+            out.getFD().sync();
+        }
+        if(!tmp.renameTo(dest))throw new IOException("Falha ao salvar coleção.");
+        recordImportHistory(selected,compact,previous);
+    }
+    private void enqueueRefresh(int selected,boolean requested){
+        if(!sourceSyncBusy.compareAndSet(false,true))return;
+        worker.execute(()->{
+            try{
+                SharedPreferences prefs=sourcePrefs();
+                String stored=prefs.getString(sourceKey(selected,"uri"),"");
+                if(stored.isEmpty())return;
+                byte[] bytes;
+                try(InputStream in=getContentResolver().openInputStream(Uri.parse(stored))){
+                    if(in==null)throw new IOException("Não foi possível abrir o arquivo vinculado.");
+                    bytes=bounded(in,MAX_IMPORT_BYTES);
+                }
+                String digest=sha256(bytes);
+                String previous=prefs.getString(sourceKey(selected,"sha"),"");
+                if(digest.equals(previous)){
+                    if(requested)notifyWeb("Arquivo verificado: nenhuma alteração.",false);
+                    prefs.edit().putString(sourceKey(selected,"error"),"").apply();
+                    return;
+                }
+                JSONObject compact=compact(new String(bytes,StandardCharsets.UTF_8));
+                saveCompact(selected,compact);
+                prefs.edit().putString(sourceKey(selected,"sha"),digest)
+                    .putLong(sourceKey(selected,"last"),System.currentTimeMillis())
+                    .putString(sourceKey(selected,"error"),"").apply();
+                notifyWeb("Sincronizado: "+compact.optInt("count")+" Pokémon no arquivo.",true);
+            }catch(Exception e){
+                String message="Fonte indisponível. Se o PGSharp substituiu o arquivo, escolha-o novamente.";
+                sourcePrefs().edit().putString(sourceKey(selected,"error"),message).apply();
+                if(requested)notifyWeb(message,false);
+            }finally{
+                sourceSyncBusy.set(false);
+                emitSourceStatus(selected);
+            }
+        });
+    }
 
     private File snapshot(int slot){
         return new File(new File(getFilesDir(),"pokedex_personal"),"slot"+slot+".json");
@@ -465,17 +579,75 @@ public final class PersonalPokedexActivity extends Activity {
             return getSharedPreferences("pokedex_import_history",MODE_PRIVATE)
                 .getString("slot"+slot(requestedSlot),"[]");
         }
-        @JavascriptInterface public void chooseJson(int requestedSlot){
+        @JavascriptInterface public String getSourceStatus(int requestedSlot){
+            return sourceStatus(slot(requestedSlot));
+        }
+        @JavascriptInterface public String getHiddenIds(int requestedSlot){
+            return getSharedPreferences(HIDDEN_SETTINGS,MODE_PRIVATE)
+                .getString("slot"+slot(requestedSlot),"[]");
+        }
+        @JavascriptInterface public void setHidden(int requestedSlot,String pokemonId,boolean hide){
+            if(pokemonId==null||!pokemonId.matches("[0-9]{1,20}"))return;
+            int selected=slot(requestedSlot);
+            SharedPreferences p=getSharedPreferences(HIDDEN_SETTINGS,MODE_PRIVATE);
+            HashSet<String> ids=new HashSet<>();
+            try{
+                JSONArray previous=new JSONArray(p.getString("slot"+selected,"[]"));
+                for(int i=0;i<previous.length()&&i<MAX_POKEMON;i++){
+                    String id=previous.optString(i,"");
+                    if(id.matches("[0-9]{1,20}"))ids.add(id);
+                }
+            }catch(Exception ignored){}
+            if(hide)ids.add(pokemonId);
+            else ids.remove(pokemonId);
+            JSONArray next=new JSONArray();
+            for(String id:ids)next.put(id);
+            p.edit().putString("slot"+selected,next.toString()).apply();
+        }
+        @JavascriptInterface public void setAutoSync(int requestedSlot,boolean enabled){
+            int selected=slot(requestedSlot);
+            String uri=sourcePrefs().getString(sourceKey(selected,"uri"),"");
+            sourcePrefs().edit().putBoolean(sourceKey(selected,"auto"),enabled&&!uri.isEmpty()).apply();
+            emitSourceStatus(selected);
+            if(enabled&&!uri.isEmpty())enqueueRefresh(selected,false);
+        }
+        @JavascriptInterface public void refreshLinked(int requestedSlot){
+            enqueueRefresh(slot(requestedSlot),true);
+        }
+        @JavascriptInterface public void unlinkSource(int requestedSlot){
+            int selected=slot(requestedSlot);
+            SharedPreferences prefs=sourcePrefs();
+            String uri=prefs.getString(sourceKey(selected,"uri"),"");
+            String other=prefs.getString(sourceKey(selected==1?2:1,"uri"),"");
+            prefs.edit().remove(sourceKey(selected,"uri")).remove(sourceKey(selected,"name"))
+                .remove(sourceKey(selected,"sha")).remove(sourceKey(selected,"last"))
+                .remove(sourceKey(selected,"error")).remove(sourceKey(selected,"auto")).apply();
+            if(!uri.isEmpty()&&!uri.equals(other)){
+                try{getContentResolver().releasePersistableUriPermission(
+                    Uri.parse(uri),Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}
+            }
+            emitSourceStatus(selected);
+        }
+        private void launchPicker(int requestedSlot,boolean link){
             runOnUiThread(()->{
                 if(closing)return;
                 pendingSlot=slot(requestedSlot);
+                pendingLink=link;
                 Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.setType("*/*"); // Some document providers label JSON as octet-stream.
+                intent.setType("*/*");
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
                 intent.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{
                     "application/json","text/plain","application/octet-stream"});
                 startActivityForResult(intent,PICK_STATS);
             });
+        }
+        @JavascriptInterface public void chooseJson(int requestedSlot){
+            launchPicker(requestedSlot,false);
+        }
+        @JavascriptInterface public void linkJson(int requestedSlot){
+            launchPicker(requestedSlot,true);
         }
         @JavascriptInterface public String getDecoration(int requestedSlot,String pokemonId){
             if(!pokemonId.matches("[0-9]{1,20}"))return "default";
@@ -504,28 +676,37 @@ public final class PersonalPokedexActivity extends Activity {
         Uri uri=intent.getData();
         if(uri==null)return;
         final int selected=pendingSlot;
+        final boolean linking=pendingLink;
+        if(linking){
+            try{
+                getContentResolver().takePersistableUriPermission(
+                    uri,Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }catch(SecurityException e){
+                notifyWeb("Este provedor não permite acesso contínuo. Importe manualmente ou escolha outro arquivo.",false);
+                return;
+            }
+        }
         worker.execute(()->{
             try(InputStream input=getContentResolver().openInputStream(uri)){
                 if(input==null)throw new IOException("Não foi possível ler o arquivo.");
-                String raw=new String(bounded(input,MAX_IMPORT_BYTES),StandardCharsets.UTF_8);
-                JSONObject compact=compact(raw);
-                File dest=snapshot(selected);
-                JSONObject previous=null;
-                if(dest.isFile())try(FileInputStream old=new FileInputStream(dest)){
-                    previous=new JSONObject(new String(bounded(old,MAX_IMPORT_BYTES),StandardCharsets.UTF_8));
-                }catch(Exception ignored){}
-                if(!dest.getParentFile().isDirectory()&&!dest.getParentFile().mkdirs())
-                    throw new IOException("Armazenamento local indisponível.");
-                File tmp=new File(dest.getParentFile(),"slot"+selected+".pending");
-                try(FileOutputStream out=new FileOutputStream(tmp)){
-                    out.write(compact.toString().getBytes(StandardCharsets.UTF_8));
-                    out.getFD().sync();
+                byte[] bytes=bounded(input,MAX_IMPORT_BYTES);
+                JSONObject compact=compact(new String(bytes,StandardCharsets.UTF_8));
+                saveCompact(selected,compact);
+                if(linking){
+                    SharedPreferences prefs=sourcePrefs();
+                    prefs.edit().putString(sourceKey(selected,"uri"),uri.toString())
+                        .putString(sourceKey(selected,"name"),sourceName(uri))
+                        .putString(sourceKey(selected,"sha"),sha256(bytes))
+                        .putLong(sourceKey(selected,"last"),System.currentTimeMillis())
+                        .putString(sourceKey(selected,"error"),"")
+                        .putBoolean(sourceKey(selected,"auto"),true).apply();
                 }
-                if(!tmp.renameTo(dest))throw new IOException("Falha ao salvar coleção.");
-                recordImportHistory(selected,compact,previous);
-                notifyWeb("Importação concluída: "+compact.optInt("count")+" Pokémon.",true);
+                notifyWeb((linking?"Arquivo vinculado e atualizado: ":"Importação concluída: ")+
+                    compact.optInt("count")+" Pokémon.",true);
             }catch(Exception e){
                 notifyWeb("Importação não concluída: "+text(e.getMessage(),160),false);
+            }finally{
+                emitSourceStatus(selected);
             }
         });
     }
@@ -572,8 +753,18 @@ public final class PersonalPokedexActivity extends Activity {
             });
         else super.onBackPressed();
     }
+    @Override protected void onResume(){
+        super.onResume();
+        sourceHandler.removeCallbacks(sourceTicker);
+        sourceHandler.postDelayed(sourceTicker,1200L);
+    }
+    @Override protected void onPause(){
+        sourceHandler.removeCallbacks(sourceTicker);
+        super.onPause();
+    }
     @Override protected void onDestroy(){
         closing=true;
+        sourceHandler.removeCallbacks(sourceTicker);
         backgroundCancel.set(true);
         backgroundWorker.shutdownNow();
         if(spriteStore!=null)spriteStore.shutdown();
