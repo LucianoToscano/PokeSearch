@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.89",
-  "code": 54596,
-  "label": 51404,
-  "previous_tag": "v0.03.88-54595",
-  "qa_max_code": 54595,
-  "release_notes": "ARK LT404 — Sincronização automática do login PoGoCoordinates Google/Discord após OAuth. Corrigido retorno à /search quando o React ainda não expôs sessão autenticada: checagens read-only observam navegação SPA e, em estado ambíguo, consultam uma única vez a página oficial /profile sem exigir toque manual no avatar. Autenticação só é confirmada pelo probe oficial; nome e foto exigem perfil hidratado. Mantidas as duas contas isoladas, sessões, ícones, overlays P1/P2, inventários, filtros, fundos, sprites e permissão de gravação. Testes Node, LT169, LT211, LT62, LT173 e R8 requeridos; teste físico Google 2FA/Discord Samsung Android 17 ainda necessário. APK somente pelo workflow protegido, certificado permanente, nunca FastDev."
+  "version": "0.03.90",
+  "code": 54597,
+  "label": 51405,
+  "previous_tag": "v0.03.89-54596",
+  "qa_max_code": 54596,
+  "release_notes": "ARK LT405 — Correção de regressão das sprites na Minha Pokédex pessoal: espécies-base (Mewtwo, Garchomp, Metagross, Hydreigon, Rhyperior, Goodra Normal, Haxorus, Conkeldurr e outras) priorizam imagens oficiais de alta resolução da PokeAPI quando o APK não contém o arquivo local. Sprites GO exatas continuam no catálogo com recuperação HTTPS por fontes alternativas. Imagens de formas especiais, trajes, Shiny e fêmeas com desenho próprio não são substituídas por bases incorretas; IDs numéricos de forma são respeitados. Preservados 2 inventários, filtros, fundos, notas, tags, edição de apelidos/IV/PC/ataques/amizade, seleção múltipla, backup, sincronização SAF PGSStats, Home e overlays P1/P2. Código PR #527 squash 8bfd2980dae82ca7bd3f4dbf235d56995c7da633; Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados. Não embute imagens de terceiros ou altera Pokémon GO. Teste físico Samsung Android 17 e conectividade/cache reais pendentes; não há garantia absoluta de cobertura para trajes e formas sem arquivo. Distribuição oficial exclusiva por workflow protegido com assinatura permanente, nunca FastDev."
 }
