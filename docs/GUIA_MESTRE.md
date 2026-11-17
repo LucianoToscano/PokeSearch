@@ -3283,3 +3283,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - **FastDev Preview:** solicitação via `fastdev/preview-request.json` no commit `2efceae23c91835ae3ddb3dd5f10663da7a6a7b0`. A assinatura permanente, APK Preview e release/OTA FastDev **não foram confirmados**; verificar environment `fastdev-signing` e gates da execução.
 - **Release oficial preservada:** versão 0.03.73 / versionCode 54580, sem ARK nem nova publicação oficial.
 - [Auditoria e registro completo LT381](LT381_FASTDEV_SYNC_PERFIL_20261116.md).
+
+
+## LT382 — FastDev ciclo rápido (16/11/2026)
+
+- PR [#473](https://github.com/LucianoToscano/PokeSearch/pull/473) integrada por squash `043b95401f5eb3ddc24497825e9f5bb0d80f5b8f`; HEAD de QA `74c7d56bb4ff5c10328dec82485815a7b38916b1`.
+- Workflow FastDev de branch `fastdev/**` roda smoke Node a cada push sem Gradle/Android/APK, cancela jobs ultrapassados; modo `java-check` compila Java somente sob demanda; Preview assinado exige pedido na `main`.
+- Testes: [FastDev branch #43997266004](https://github.com/LucianoToscano/PokeSearch/actions/runs/43997266004) SUCCESS (~9s de job; 2,44s testes); [FastDev PR #43997469970](https://github.com/LucianoToscano/PokeSearch/actions/runs/43997469970) SUCCESS; [Node LT169 #43997469897](https://github.com/LucianoToscano/PokeSearch/actions/runs/43997469897) SUCCESS; [beta/R8 #43997469915](https://github.com/LucianoToscano/PokeSearch/actions/runs/43997469915) SUCCESS. Esse ganho é medido em uma execução, não um SLA.
+- **Não houve APK ou release oficial nesta LT382.** Release oficial 0.03.73/54580, keystore e canal FastDev permanente preservados; QA físico pendente. Não abrir PR enquanto as correções estiverem incompletas.
+- [Registro técnico LT382](LT382_FASTDEV_CICLO_RAPIDO_20261116.md).
+
