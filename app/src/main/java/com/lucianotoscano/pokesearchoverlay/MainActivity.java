@@ -3402,8 +3402,8 @@ public class MainActivity extends Activity {
                 String verifiedName=PogoAccountSlots.prefs(this,activeLoginSlot)
                     .getString("profileDisplayName","").trim();
                 profileCaptureInProgress=false;
-                refreshSessionSummary();
                 refreshSyncedAvatar(activeLoginSlot);
+                refreshSessionSummary();
                 if(verifiedName.isEmpty()){
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
@@ -3416,8 +3416,8 @@ public class MainActivity extends Activity {
                 return;
             }
             profileCaptureInProgress=false;
-            refreshSessionSummary();
             refreshSyncedAvatar(activeLoginSlot);
+            refreshSessionSummary();
             if(!"manage".equals(loginPurpose)&&
                loginDialog!=null&&loginDialog.isShowing()){
                 // Authentication now represents only a PoGoCoordinates account.
