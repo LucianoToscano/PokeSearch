@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "tag": "fastdev-1000041",
-  "version_code": 1000041,
-  "apk": "https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000041/PokeSearch-FastDev-Preview.apk",
-  "sha256": "fa0d6305bb8270a33bd106bda891f24496f1648f8a2996ca752298c66b235f67",
-  "size": 62321028,
-  "source_commit": "35be32eddd6548dc55ba58dfbac32080ef5c5c78"
+  "tag": "fastdev-1000057",
+  "version_code": 1000057,
+  "apk": "https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000057/PokeSearch-FastDev-Preview.apk",
+  "sha256": "a2ab7dbfce22c286d4b8181376680724e0b3803f0c192ad91cce871cfd0a9b92",
+  "size": 62328413,
+  "source_commit": "507061e0f0132bf4af768e76ec7ebdf9b6f4a85f"
 }
