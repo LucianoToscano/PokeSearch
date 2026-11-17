@@ -13,7 +13,8 @@ const presets=[["default","Padrão"],["aurora","Aurora"],["sunset","Pôr do sol"
 const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokemon",eggs:[],capacity:0,tagId:null,meta:{moves:new Map(),backgrounds:new Map(),costumes:new Map()},
              query:"",filter:"all",activeFilters:new Set(),sort:"cp",limit:96,selected:null,
              selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
-             bgCached:new Set(),backgroundTarget:null,bgQuery:""};
+             bgCached:new Set(),backgroundTarget:null,bgQuery:"",
+             spriteIndex:null,spriteCached:new Set(),spriteMatchCache:new Map(),spriteStats:{}};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -24,8 +25,9 @@ const speciesName=p=>state.names.get(Number(p.species))||("#"+p.species);
 const ivValue=p=>(p.attack||0)+(p.defense||0)+(p.hpIv||0);
 const isHundo=p=>ivValue(p)===45;
 const hasBackground=p=>Number(p.backgroundId)>0;
-const isShadow=p=>Number(p.alignment)===2;
-const isPurified=p=>Number(p.alignment)===1;
+// Alignment values verified against the original PGSStats export.
+const isShadow=p=>Number(p.alignment)===1;
+const isPurified=p=>Number(p.alignment)===2;
 const nameOf=p=>String(p.nickname||"").trim()||speciesName(p);
 const cleanForm=p=>p.formName&&p.formName!=="Unset"?p.formName:"";
 function formVariant(p){
@@ -37,7 +39,15 @@ function formVariant(p){
 const backgroundMeta=p=>state.meta.backgrounds.get(Number(p.backgroundId));
 const costumeMeta=p=>state.meta.costumes.get(Number(p.costume));
 const isSpecialBg=p=>(backgroundMeta(p)?.type||"")==="SPECIAL_BACKGROUND";
-const isLocationBg=p=>hasBackground(p)&&!isSpecialBg(p);
+const isLocationBg=p=>hasBackground(p)&&backgroundMeta(p)?.type==="LOCATION_CARD";
+const isUnknownBg=p=>hasBackground(p)&&!backgroundMeta(p);
+const isMegaRegistered=p=>!!p.hasMegaEvolved||Number(p.megaFormsCount)>0||Number(p.megaLevel)>0;
+const speciesFlags=p=>state.spriteIndex?.idStatus(p.species)||{};
+const isLegendary=p=>!!speciesFlags(p).legendary;
+const isMythical=p=>!!speciesFlags(p).mythical;
+const canEvolve=p=>!!speciesFlags(p).canEvolve&&!(costumeMeta(p)?.noEvolve);
+const walkedWithBuddy=p=>Number(p.buddyKm)>0;
+const hasEventOrigin=p=>Array.isArray(p.events)&&p.events.length>0;
 function availableMetaName(type,id){
  const m=state.meta[type].get(Number(id));
  return m?.name||"Código "+id;
@@ -50,24 +60,51 @@ function loadMeta(){
   state.meta.costumes=new Map((data.costumes||[]).map(r=>[r[0],{name:r[1],noEvolve:!!r[2]}]));
  }catch(_){}
 }
+function loadSpriteIndex(){
+ try{
+  const data=JSON.parse(bridge.getSpriteManifest()||"{}");
+  state.spriteIndex=window.PokeSearchSpriteCatalog?.create(data)||null;
+ }catch(_){state.spriteIndex=null;}
+ refreshSpriteCache();
+}
+function visualMatch(p){
+ const id=String(p.id);
+ if(state.spriteMatchCache.has(id))return state.spriteMatchCache.get(id);
+ const found=state.spriteIndex?.classify({
+  species:p.species,name:speciesName(p),form:p.form,formName:p.formName,
+  costume:p.costume,gender:p.gender,shiny:p.shiny
+ })||{key:null,reason:"catalog-unavailable"};
+ state.spriteMatchCache.set(id,found);
+ return found;
+}
+function spriteLocalUrl(key){
+ if(typeof key!=="string"||!/^[al]:[A-Za-z0-9_.-]+\.png$/.test(key))return "";
+ return "https://pokesearch.local/sprite/"+key[0]+"/"+key.slice(2);
+}
 function safeSprite(p){
-  const lib=window.PokeSearchOfflineSprite;
-  if(!lib||typeof lib.resolve!=="function")return "";
-  try{
-    const exactForm=formVariant(p);
-    const costume=costumeMeta(p);
-    const card={number:Number(p.species),name:speciesName(p),form:exactForm,
-      shiny:!!p.shiny,gender:p.gender===2?"female":"male"};
-    if(p.costume&&costume){card.costume=costume.name;card.costume_id=p.costume;}
-    const art=lib.resolve(card);
-    const uri=typeof art==="string"?art:art&&art.src;
-    if(typeof uri!=="string")return "";
-    // The canonical PokeSearch sprite map produces these two vetted sources.
-    if(uri.startsWith("file:///android_asset/")||
-       uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
-       uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@"))return uri;
-  }catch(_){}
-  return "";
+ const exact=visualMatch(p);
+ if(exact.key&&state.spriteCached.has(exact.key))return spriteLocalUrl(exact.key);
+ const lib=window.PokeSearchOfflineSprite;
+ if(!lib||typeof lib.resolve!=="function")return "";
+ try{
+  const form=formVariant(p),costume=costumeMeta(p);
+  const card={number:Number(p.species),name:speciesName(p),
+   form,form_id:p.form,shiny:!!p.shiny,
+   gender:p.gender===2?"female":"male"};
+  if(p.costume){card.costume_id=p.costume;card.costume=costume?.name||"";}
+  const art=lib.resolve(card);
+  const uri=typeof art==="string"?art:art?.src;
+  if(typeof uri!=="string")return "";
+  const valid=uri.startsWith("file:///android_asset/")||
+   uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
+   uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
+  if(!valid)return "";
+  if(p.costume||form){
+   if(!(art&&typeof art==="object"&&
+     (art.exactCostume||art.officialForm||art.offline||art.providerExact)))return "";
+  }
+  return uri;
+ }catch(_){return "";}
 }
 function artHtml(p,css){
   const uri=safeSprite(p),name=escapeHtml(speciesName(p));
@@ -88,8 +125,13 @@ function filterPokemon(p,key=state.filter){
   case "tagged":return !!(p.tags&&p.tags.length);
   case "traded":return !!p.traded;
   case "tag":return (p.tags||[]).some(t=>String(t)===state.tagId);
-  case "mega":return !!p.hasMegaEvolved;
-  case "event":return (p.events||[]).length>0;
+  case "mega":return isMegaRegistered(p);
+  case "event":return hasEventOrigin(p);
+  case "legendary":return isLegendary(p);
+  case "mythical":return isMythical(p);
+  case "evolvable":return canEvolve(p);
+  case "buddy":return walkedWithBuddy(p);
+  case "bgUnknown":return isUnknownBg(p);
   case "bgLocal":return isLocationBg(p);
   case "bgSpecial":return isSpecialBg(p);
   case "dynamax":return Number(p.breadMode)===1;
@@ -147,15 +189,20 @@ function svgShape(key){
  return '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+row[0]+' '+row[1]+'"><path d="'+escapeHtml(row[2])+'"/></svg>';
 }
 const categoryDefs=[
+ ["buddy","Caminhou como companheiro","companheiros","#84cfa7"],
+ ["legendary","Lendário","lendario","#5d5470"],
+ ["mythical","Mítico","mitico","#d796de"],
+ ["evolvable","Espécie pode evoluir","pode_evoluir","#c9868c"],
  ["shiny","Brilhante","brilhante","#f0cf70"],
  ["lucky","Sortudo","sortudo","#eac492"],
  ["shadow","Sombroso","sombroso","#a88acc"],
  ["purified","Purificado","purificado","#92d5d3"],
- ["event","Evento","evento","#dea5cf"],
+ ["event","Origem em evento","evento","#dea5cf"],
  ["traded","Trocado","trocado","#8bd3c1"],
  ["mega","Megaevoluiu","megaevoluiu","#bc6690"],
  ["bgLocal","Fundo de localidade","fundo_de_localidade","#86d7ee"],
  ["bgSpecial","Fundo especial","fundo_especial","#88b2e7"],
+ ["bgUnknown","Fundo sem classificação","fundo_especial","#a9aeba"],
  ["dynamax","Dinamax","dinamax","#e91293"],
  ["gigantamax","Gigamax","gigamax","#b20073"],
  ["hundo","IV 100%","brilhante","#edb2a3"],
@@ -351,6 +398,7 @@ function loadSlot(){
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
   state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
+  state.spriteMatchCache.clear();
   state.selecting=false;state.selectedIds.clear();renderSelection();
   el("search").value="";
   el("slot1").classList.toggle("active",state.slot===1);
@@ -626,5 +674,5 @@ el("save-note").addEventListener("click",()=>{
  bridge.setNote(state.slot,state.selected.id,el("personal-note").value);
  notice("Anotação salva neste aparelho.");
 });
-loadCatalog();loadMeta();loadBackgrounds();loadSlot();
+loadCatalog();loadMeta();loadSpriteIndex();loadBackgrounds();loadSlot();
 })();
