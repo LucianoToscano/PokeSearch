@@ -28,7 +28,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("Atualização offers OFF, 3 seconds, and existing minute presets without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [-3,3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
+test("Atualização offers OFF, default 3m, and minute presets without 3-second AUTO",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?384:34;')&&
@@ -115,7 +115,7 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10).map(")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -145,7 +145,7 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,10).map(')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -187,7 +187,7 @@ test("UX-INFO-DEFAULT-KM-HIDDEN distance OFF, other optional fields OFF, preserv
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10).map(")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -399,7 +399,8 @@ test("Menu occupies separate window rather than wide sprite dock",service.includ
 test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp())')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login launched from overlay returns to gameplay with PokeSearch only on successful authentication",
- main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
+ main.includes('if(authenticatedNow&&(fromOverlay||guestOverlay>0)&&')&&
+ main.includes('(OverlayService.isRunning()||OverlayService.isSecondaryRunning()))')&&
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
@@ -466,7 +467,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
-test("AUTO 3-second default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={-3,0,3,5,10,15,20};")&&service.includes("intervalMinutes==-3?3000L"));
+test("AUTO 3-minute default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={0,3,5,10,15,20};")&&service.includes("autoRefreshDelayMs(){return Math.max(0L,intervalMinutes)*60000L")&&service.includes("if(intervalMinutes==-3){"));
 test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
@@ -523,7 +524,7 @@ const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-over
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
 test("PokeSearch 0.51 source configured",
-  gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
+  gradleBuild.includes('versionCode = testVersionCode ?: fastDevCode ?: 51')&&
   gradleBuild.includes('publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}"')&&
   gradleBuild.includes('POKE_TEST_PUBLIC_VERSION')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));
@@ -614,8 +615,8 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3")&&
-    service.includes('if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5')&&
+    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):3")&&
+    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(periodic,autoRefreshDelayMs())'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
@@ -1684,7 +1685,7 @@ test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",(
  const probe=read("assets/probe.js");
  return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,100):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
-  probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
+  probe.includes('siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
   service.includes('BugReport.log(this,"RESULTS_PARTIAL"')&&
   service.includes(' • leitura parcial');
@@ -1805,22 +1806,25 @@ test("HOME-03 authenticates using official profile only after session proof",(()
   profile.includes('trainerState=trainers.length?"linked":explicitZero?"unlinked":"unknown"')&&
   !profile.includes("document.cookie");
 })());
-test("HOME-03 opens the Home drawer on right and uses original transparent PNG",(()=>{
+test("HOME-03 opens the right Home drawer and keeps account management without its former logo",(()=>{
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void exportHomeData(){")[0]||"";
+ const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return menu.includes("Gravity.RIGHT|Gravity.TOP")&&
-  main.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("R.drawable.ps_home_brand_transparent")&&
+  home.includes('homeLoginProfileShortcut.setOnClickListener(v->showHomeAccountMenu())')&&
   main.includes('openLoginDialog(false,"manage")');
 })());
-test("HOME-04 keeps original brand icon without wordmark, controls right and plain background",(()=>{
+test("HOME-04 has logo-free header, right controls, preserved actions and protected admin gesture",(()=>{
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
- return home.includes("R.drawable.ps_home_brand_transparent")&&
+ return !home.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("branding.addView(")&&
   home.includes("Gravity.RIGHT|Gravity.CENTER_VERTICAL")&&
   home.includes("overlayControl=makeIcon(R.drawable.home_pokeball_off")&&
   home.includes('makeIcon(R.drawable.ic_heart_outline')&&
   home.includes('homeMiniButton("☰"')&&
   !home.includes("R.drawable.ps_home_official_wordmark")&&
   !home.includes('brandTitle.setContentDescription("PokeSearch")')&&
-  home.includes('PremiumAccess.controlled())brand.setOnLongClickListener')&&
+  home.includes('PremiumAccess.controlled())menu.setOnLongClickListener')&&
   home.includes("frame.setBackgroundColor(homeLightMode?")&&
   !home.includes("sky.setImageResource(")&&
   home.includes("auth.setBackground(homeSurface(");
@@ -1860,17 +1864,18 @@ test("BELL-THEME-03 bell SVG stroke follows independent menu colors and audible 
   dock.includes('button.classList.toggle("bell-star-silent",');
 });
 
-test("LT54-ICON-01 launcher keeps adaptive artwork; LT378 Home uses emblem only",(()=>{
+test("LT54-ICON-01 launcher retains adaptive artwork; LT386 Home removes the decorative emblem only",(()=>{
  const manifest=fs.readFileSync(path.join(root,"AndroidManifest.xml"),"utf8");
  const home=main.split("private FrameLayout buildHome(){")[1]?.split("private Button homeAuthButton(")[0]||"";
  return manifest.includes('android:icon="@mipmap/ic_launcher"')&&
   manifest.includes('android:roundIcon="@mipmap/ic_launcher_round"')&&
   iconGenerator.includes("int artworkSize = 288")&&
   iconGenerator.includes("int padding = 8")&&
-  home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
-  home.includes("branding.addView(brand,new LinearLayout.LayoutParams(d(32),d(32)))")&&
+  !home.includes("brand.setImageResource(R.drawable.ps_home_brand_transparent)")&&
+  !home.includes("branding.addView(brand,")&&
   !home.includes("brandLabels")&&!home.includes("wordmarkWidth")&&
-  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&home.includes("header.addView(branding,new LinearLayout.LayoutParams(0,d(54),1f))");
+  home.includes("new LinearLayout.LayoutParams(-1,d(58))")&&
+  home.includes("header.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL)");
 })());
 test("BRAND-01 original artwork is preserved while runtime assets may use WebP",()=>{
  const pngs=[
@@ -2281,7 +2286,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   dock.includes('const metaWidth=metadataVisible?96:highlightWidth;')&&
   dock.includes('const highlightWidth=resultDisplayOptions.highlights?12:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,10).map(');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");
@@ -2502,8 +2507,9 @@ test("HOME-THEME-01 dark/light toggle preserves profile and overlay actions",()=
   home.includes("R.drawable.home_mode_light")&&
   home.includes("R.drawable.home_mode_dark")&&
   home.includes("homeThemeButton.setOnClickListener(v->toggleHomeTheme())")&&
-  home.includes("R.drawable.ps_home_brand_transparent")&&
+  !home.includes("R.drawable.ps_home_brand_transparent")&&
   home.includes("R.drawable.ps_pogocoordinates")&&
+  home.includes("homeLoginProfileShortcut.setOnClickListener")&&
   home.includes("auth.setBackground(homeSurface(")&&
   main.includes("refreshSessionSummary();")&&
   main.includes("refreshHomeOverlay();")&&
@@ -2867,7 +2873,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   confirmed.includes("submittedSearchGeneration==requestGeneration")&&
   confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
   confirmed.includes("!searchInProgress&&!resultsStale")&&
-  dock.includes("filtersConfirmed=false)=>{")&&
+  dock.includes("filtersConfirmed=false,guestLimitVisible=false)=>{")&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
   phase.includes("dirty?\"● Falta aplicar\"")&&
@@ -3654,7 +3660,7 @@ test("LT62 AUTO refresh icon and long press must never double trigger a search",
   body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
   body.includes('pointercancel')&&
   !menu.includes('now.textContent=')&&
-  dock.includes('badge.textContent=period===0?"":(period===-3?"3s":period+"m")')&&
+  dock.includes('badge.textContent=period===0?"":period+"m"')&&
   dock.includes('button.classList.add("refreshSpinning")')&&
   dock.includes('animation:psRefreshSpin .7s linear 1!important');
 });

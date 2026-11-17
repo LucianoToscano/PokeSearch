@@ -10,7 +10,8 @@ const manifest=read("AndroidManifest.xml");
 let pass=0;const test=(name,fn)=>{fn();pass++;console.log("PASS LT111 "+name);};
 test("secondary Pokébola toggle appears in Home and occupies its original row",()=>{
  const start=main.indexOf("LinearLayout dualOverlayRow=new LinearLayout(this)");
- const end=main.indexOf("// HOME-02:",start);
+ // The brandless Home still terminates this section before donation controls.
+ const end=main.indexOf("// Relógio, Apoiar, tema, compartilhar e menu",start);
  assert.ok(start>=0&&end>start);
  const row=main.slice(start,end);
  assert.ok(row.includes("dualOverlayRow.setVisibility(View.VISIBLE);"));
