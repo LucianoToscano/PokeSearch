@@ -207,6 +207,49 @@ final class PokedexLocalEdits {
         imported.put("tags",mergedTags);
         return imported;
     }
+    /** Accept only our compact schema for voluntary backup restoration. */
+    static JSONObject validateBackup(JSONObject backup)throws Exception{
+        if(backup.optInt("schema",-1)!=1)
+            throw new IllegalArgumentException("Formato de backup desconhecido.");
+        JSONArray original=backup.optJSONArray("pokemons");
+        if(original==null||original.length()>10000)
+            throw new IllegalArgumentException("Backup inválido ou grande demais.");
+        JSONObject safe=new JSONObject();
+        safe.put("schema",1);
+        safe.put("snapshotTime",label(backup.optString("snapshotTime"),40));
+        safe.put("capacity",Math.max(0,Math.min(100000,backup.optInt("capacity",0))));
+        JSONArray rows=new JSONArray();Set<String> ids=new HashSet<>();
+        for(int i=0;i<original.length();i++){
+            JSONObject p=original.optJSONObject(i);
+            if(p==null)throw new IllegalArgumentException("Registro inválido.");
+            String id=p.optString("id");
+            int species=p.optInt("species",0);
+            if(!id(id)||!ids.add(id)||species<1||species>1025)
+                throw new IllegalArgumentException("ID ou espécie inválida no backup.");
+            JSONObject row=new JSONObject(p.toString());
+            JSONObject editable=new JSONObject();
+            for(String key:new String[]{"nickname","cp","attack","defense","hpIv",
+                    "stamina","maxStamina","favorite","bestBuddy","buddyHearts",
+                    "move1","move2","move3","tags"})
+                if(p.has(key))editable.put(key,p.opt(key));
+            overlay(row,sanitized(editable,row));
+            row.put("id",id);row.put("species",species);
+            rows.put(row);
+        }
+        safe.put("pokemons",rows);safe.put("count",rows.length());
+        JSONArray tags=new JSONArray(),given=backup.optJSONArray("tags");
+        if(given!=null)for(int i=0;i<Math.min(150,given.length());i++){
+            JSONObject t=given.optJSONObject(i);if(t==null)continue;
+            JSONObject out=new JSONObject();
+            out.put("id",label(t.optString("id"),40));
+            out.put("name",label(t.optString("name"),45));tags.put(out);
+        }
+        safe.put("tags",tags);
+        JSONArray eggs=backup.optJSONArray("eggs");
+        safe.put("eggs",eggs==null?new JSONArray():
+            new JSONArray(eggs.toString().substring(0,Math.min(eggs.toString().length(),100000))));
+        return safe;
+    }
     static synchronized String execute(Context ctx,int slot,String action,String raw){
         try{
             if(raw==null||raw.length()>1000000)
