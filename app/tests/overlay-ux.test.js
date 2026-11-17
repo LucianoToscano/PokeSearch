@@ -1487,7 +1487,7 @@ test("Shiny sparkle is independent neutral, header extremes match the IV palette
  const css=dock.match(/\.modeIndicator\.shiny\{[^}]+\}/)?.[0]||"";
  return css.includes("background:transparent")&&css.includes("color:inherit")&&dock.includes('id="modeIndicatorShiny" class="modeIndicator shiny">✨</span>')&&
         dock.includes('primaryBadge.classList.toggle("zero",selectedIcon.family==="nundo")')&&
-        dock.includes('primaryBadge.classList.toggle("perfect",selectedIcon.family==="hundo")')&&
+        dock.includes('primaryBadge.classList.toggle("perfect",!guestSitePreviewActive&&selectedIcon.family==="hundo")')&&
         dock.includes(".modeIndicator.value.zero{color:#00cfe8}")&&
         dock.includes(".modeIndicator.value.perfect{color:#f04b70}");
 })());
@@ -2873,8 +2873,8 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   confirmed.includes("submittedSearchGeneration==requestGeneration")&&
   confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
   confirmed.includes("!searchInProgress&&!resultsStale")&&
-  dock.includes("filtersConfirmed=false,guestLimitVisible=false)=>{")&&
-  dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
+  dock.includes("filtersConfirmed=false,guestLimitVisible=false,guestPreviewVisible=false)=>{")&&
+  dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale&&!guestSitePreviewActive")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
   phase.includes("dirty?\"● Falta aplicar\"")&&
   dock.includes('button.classList.toggle("site-filters-applied",count>0&&siteFiltersConfirmed');
