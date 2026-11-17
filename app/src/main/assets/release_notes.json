@@ -5086,6 +5086,36 @@
           "A disponibilidade de resultados visitantes e coordenadas permanece submetida aos limites do PoGoCoordinates; a cota não pode ser burlada por limpeza de cookies."
         ]
       }
+    },
+    {
+      "id": "lt393-home-16-modulos-icones-originais-20261117",
+      "minVersionCode": 54585,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT393 — Home com 16 ícones originais",
+      "sections": {
+        "novidades": [
+          "Home reconstruída com exatamente 16 módulos em uma grade compacta de quatro colunas e quatro linhas; a opção Extra foi retirada.",
+          "Os desenhos de cada módulo aproveitam os arquivos de ícones enviados pelo proprietário, preservados em atlas interno e sem dependência de internet.",
+          "Pokébolas 1 e 2 usam a família de imagem dos próprios resultados das buscas flutuantes, conforme seus filtros independentes, com indicadores IV/rank quando aplicáveis."
+        ],
+        "melhorias": [
+          "Todos os módulos têm dimensões iguais e nenhum overlay ganha destaque exagerado.",
+          "Preservado o papel de parede original, a versão no rodapé, relógio, controles de conta, PoGoCoordinates, tema, compartilhar, suporte e atualização.",
+          "Raids, Power Spots, Quests, Rocket, Assistente e Doce Raro conservam suas ações previamente disponíveis.",
+          "Acesso às ferramentas futuras por ícones próprios, sem inserir novos botões de rede, cadastro ou autenticação."
+        ],
+        "correcoes": [
+          "Removida a fileira antiga de dez atalhos para acomodar todos os dezesseis módulos, sem botão Extra ou espaço vazio.",
+          "O modo de busca e o estado do filtro de cada Pokébola são consultados separadamente; nenhuma configuração P1 é copiada para P2.",
+          "Ferramentas ainda não entregues informam claramente seu estágio em vez de apresentar simulações ou executar ações diferentes do nome."
+        ],
+        "emDesenvolvimento": [
+          "Homologação visual e funcional física da nova Home em Samsung Android 17 e demais versões: layouts, telas pequenas, orientação, toque, acessibilidade e atualização sobre v0.03.77.",
+          "Ícones dinâmicos das Pokébolas ainda exigem validação de detalhes como Shiny, fundos, estados de resultado histórico e badges; não há comprovação de paridade pixel a pixel.",
+          "Batalhas PvP, Pokédex/Inventário, Scanner, Trocas/Vendas/Leilões, Calculadora e fórum completo da Comunidade seguem como módulos de interface em preparação.",
+          "A assinatura permanente, os limites do provedor, o controle HTTP 429, o intervalo automático de 3 minutos e a instalação confirmada pelo Android continuam preservados."
+        ]
+      }
     }
   ]
 }
