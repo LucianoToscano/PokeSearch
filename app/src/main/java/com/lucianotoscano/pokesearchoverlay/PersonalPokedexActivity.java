@@ -63,7 +63,8 @@ public final class PersonalPokedexActivity extends Activity {
     private volatile boolean closing=false;
     private int pendingSlot=1;
     private int pendingExportSlot=1;
-    private volatile boolean syncInProgress=false;
+    private final AtomicBoolean[] syncInProgress={
+        new AtomicBoolean(false),new AtomicBoolean(false)};
     private final Runnable syncTicker=new Runnable(){
         @Override public void run(){
             if(closing||view==null)return;
@@ -563,13 +564,13 @@ public final class PersonalPokedexActivity extends Activity {
     private void syncLinked(int selected){
         String linked=getSharedPreferences("pokedex_sync_sources",MODE_PRIVATE)
             .getString("slot"+slot(selected),"");
-        if(linked.isEmpty()||syncInProgress)return;
+        if(linked.isEmpty())return;
         try{syncFromUri(Uri.parse(linked),slot(selected),true);}
         catch(Exception ignored){}
     }
     private void syncFromUri(Uri uri,int selected,boolean automatic){
-        if(syncInProgress)return;
-        syncInProgress=true;
+        final AtomicBoolean pending=syncInProgress[slot(selected)-1];
+        if(!pending.compareAndSet(false,true))return;
         worker.execute(()->{
             try(InputStream input=getContentResolver().openInputStream(uri)){
                 if(input==null)throw new IOException("Não foi possível acessar o arquivo autorizado.");
@@ -577,14 +578,14 @@ public final class PersonalPokedexActivity extends Activity {
                 String fingerprint=hexSha256(data);
                 SharedPreferences prefs=getSharedPreferences("pokedex_sync_sources",MODE_PRIVATE);
                 if(automatic&&fingerprint.equals(prefs.getString("digest"+selected,""))){
-                    syncInProgress=false;return;
+                    return;
                 }
                 applyImport(new String(data,StandardCharsets.UTF_8),selected);
                 prefs.edit().putString("digest"+selected,fingerprint).apply();
                 notifyWeb("Sincronização local concluída · Inventário "+selected+".",true);
             }catch(Exception error){
                 notifyWeb("Arquivo vinculado indisponível: "+text(error.getMessage(),125),false);
-            }finally{syncInProgress=false;}
+            }finally{pending.set(false);}
         });
     }
     private static String hexSha256(byte[] bytes) throws Exception{
