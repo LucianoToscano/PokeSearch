@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.88",
-  "code": 54595,
-  "label": 51403,
-  "previous_tag": "v0.03.87-54594",
-  "qa_max_code": 54594,
-  "release_notes": "ARK LT403 — Correção de sprites ausentes na Minha Pokédex. O app verifica a presença real da arte local antes de escolhê-la e tenta a fonte exata verificada no catálogo PokeMiners, com fallback restrito a sprites base comprovadas em caso de falha de rede/carregamento. Corrige losangos indevidos em Mewtwo, Giratina, Zacian, Zamazenta, Landorus e muitas entradas comuns, respeitando forma, Shiny, traje e gênero, sem substituir uma variante por outra. Preservados os dois inventários, edições de apelido/PC/IV/golpes/amizade, tags, seleção em lote, exclusões reversíveis, importação/exportação, sincronização SAF opt-in do PGSStats.json, filtros, fundos, notas, Home e overlays P1/P2. PR #520 squash d6c9a7101a7409bd1819f3c649118ebe51e86630; Node, LT169, LT211, LT62, LT173 e Secure beta/R8 SUCCESS. Imagens de terceiros não foram embutidas ou redistribuídas, e variantes sem arte exata ou sem rede/cache podem continuar indisponíveis. QA físico Samsung Android 17 e leitura real do PGSharp continuam pendentes. Não altera nenhum dado do Pokémon GO. Publicação exclusiva pelo workflow oficial protegido e assinatura permanente, não FastDev."
+  "version": "0.03.89",
+  "code": 54596,
+  "label": 51404,
+  "previous_tag": "v0.03.88-54595",
+  "qa_max_code": 54595,
+  "release_notes": "ARK LT404 — Sincronização automática do login PoGoCoordinates Google/Discord após OAuth. Corrigido retorno à /search quando o React ainda não expôs sessão autenticada: checagens read-only observam navegação SPA e, em estado ambíguo, consultam uma única vez a página oficial /profile sem exigir toque manual no avatar. Autenticação só é confirmada pelo probe oficial; nome e foto exigem perfil hidratado. Mantidas as duas contas isoladas, sessões, ícones, overlays P1/P2, inventários, filtros, fundos, sprites e permissão de gravação. Testes Node, LT169, LT211, LT62, LT173 e R8 requeridos; teste físico Google 2FA/Discord Samsung Android 17 ainda necessário. APK somente pelo workflow protegido, certificado permanente, nunca FastDev."
 }
