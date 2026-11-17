@@ -1038,7 +1038,7 @@ function cardRoots(){
      /(?:^|\n)\s*IV\s*$/im.test(t);
    // A single real card has one Dex label and at most two reveal actions.
    // A parent grid has several Dex labels and more than two reveal actions.
-   if(hasCp&&hasEncounterMeta&&dexLabels.length<=1&&controls.length>=1&&controls.length<=2&&
+   if(hasCp&&hasEncounterMeta&&dexLabels.length<=1&&controls.length<=2&&
       (dexLabels.length===1||/\bDESPAWN\b/i.test(t))){
     chosen=node;break;
    }
@@ -1055,7 +1055,10 @@ function cardRoots(){
 function visibleResultSignature(){
  const body=text(document.body);
  const count=(body.match(/\bShowing\s+\d+\s+(?:spawns?|results?)\b/i)||[])[0]||"";
- const cards=cardRoots().map(item=>text(item.node).slice(0,700)).join("\u001e");
+ // DESPAWN countdown changes every second; it is not a fresh Search result.
+ const cards=cardRoots().map(item=>text(item.node)
+  .replace(/(DESPAWN\\s*:?\\s*)\\d{1,2}:\\d{2}/gi,"$1--:--")
+  .slice(0,700)).join("\u001e");
  // A real no-spawns message may replace cards without a "Showing 0" label.
  // Record only its presence, not the surrounding account/location text.
  const empty=mainEmptyMessage()?"verified-empty-element":"";
