@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.73",
-  "code": 54580,
-  "label": 51379,
-  "previous_tag": "v0.03.72-54579",
-  "qa_max_code": 54579,
-  "release_notes": "LT379 — Corrigida a tela Novidades do PokeSearch: toque na versão da Home abre Histórico de atualizações NATIVO, sem encaminhar ao GitHub. Corrigido limite de 96 KB que descartava as 198 entradas do release_notes.json (326.454 bytes UTF-8); limite seguro de 2 MiB e carregamento incremental de 12 releases por página. O acesso por Menu > Novidades permanece. Testes Node #43979040919, LT169 #43979042143, LT211 #43979041153, LT62 Java #43979040888, LT173 OTA #43979040918, FastDev #43979040906 e Secure beta/R8 #43979040999 — todos SUCCESS no HEAD PR #464 90382870a0f31fbc9bec84fdcbaeadffac1fece3. Mantidos P1/P2, Conta 1/Conta 2/Visitante, Auto Hunt desativado por padrão, modelos/sprites, filtros, Busca Inteligente, monitor, personalizações, OTA e assinatura permanente. Testes físicos Samsung Android 11–14, comportamento de OTA com notas antigas, TalkBack e navegação offline ainda pendentes. Instalador requer confirmação Android."
+  "version": "0.03.75",
+  "code": 54582,
+  "label": 51390,
+  "previous_tag": "v0.03.74-54581",
+  "qa_max_code": 54581,
+  "release_notes": "LT390 — Atualização automática padrão a cada 3 minutos e retirada da opção 3 segundos, com migração da configuração antiga. Toque manual em Atualizar inicia nova busca sem aguardar o temporizador, respeitando buscas em andamento e HTTP 429/Retry-After do PoGoCoordinates. Cards de resultados mais compactos: removidos avisos repetitivos de API, IV, km, rank e Shiny da área visível, sem desativar verificações internas. Corrigida a identificação visual de Pokémon #129 Magikarp e #580 Ducklett, sem atribuir sprite de outra espécie ou inventar variantes. Leitura DOM de visitantes separa encontros individuais e reconhece cabeçalhos 'Showing N results', sem fabricar ocorrências. Ação de login 🔒+5 agora transparente e integrada; o indicador significa possibilidade de até dez resultados após autenticação, não cinco encontrados garantidos. Preservados Pokébolas P1/P2, filtros, isolamento das contas, coordenadas, atualização OTA e assinatura permanente. PR #483 integrada após gates Node QA, LT169, LT211, LT62, LT173, PGS QA, FastDev, LT253 e Secure beta/R8 concluídos com sucesso. Testes físicos Android 11–14, Samsung, PoGoCoordinates visitante/autenticado e validação real de quantidade de resultados permanecem pendentes; instalação exige confirmação no Android."
 }

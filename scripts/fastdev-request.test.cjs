@@ -2,8 +2,8 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
 const {validate}=require("./fastdev-request.cjs");
-test("explicit valid fast/visual/apk-preview requests",()=>{
- for(const mode of ["fast","visual","apk-preview"])
+test("explicit valid fast/visual/java-check/apk-preview requests",()=>{
+ for(const mode of ["fast","visual","java-check","apk-preview"])
   assert.equal(validate({schema:1,mode,request_id:"lt379-preview-1"}),mode);
 });
 test("invalid modes, absent identifiers and malformed schema fail closed",()=>{

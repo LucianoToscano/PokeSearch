@@ -1,0 +1,14 @@
+# PokeSearch — ARK LT391 — Continuidade após publicação oficial LT390
+
+**Estado oficial verificado em 17/11/2026:** PokeSearch **v0.03.75 LT**, versionCode **54582**, label **51390**, tag pública [v0.03.75-54582](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.75-54582). APK permanente [PokeSearch-v0.03.75-LT.apk](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.75-54582/PokeSearch-v0.03.75-LT.apk), 61.207.501 bytes, hash SHA-256 `bdc5cafa28d0ab4d61e3c096385037441d9fc800fd630bf2da02098e64b88de8` (metadados públicos e workflow verificados). Certificado esperado `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. Workflow oficial [#44024185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/44024185582) **completed/success**.
+
+**Código:** [PR #483](https://github.com/LucianoToscano/PokeSearch/pull/483) squash `e120e7a6e4f44ebd689e8cd5074c986e77356fb2`. **Versão:** [PR #484](https://github.com/LucianoToscano/PokeSearch/pull/484) squash `e13a061f2e51e5a948a999e3b4c9af2df7350716`.
+
+## Tarefa
+Continue a partir da **release oficial LT390**, lendo `AGENTS.md`, `docs/GUIA_MESTRE.md`, `docs/ARK_LT390_REFRESH_GUEST_SPRITES_20261117.md` e a política `docs/ARK_POLITICA_OBRIGATORIA_MERGE_PUBLICACAO.md`.
+
+Priorize a **homologação física** (ainda NÃO executada) em Samsung Android 11/13/14 e nas duas Pokébolas P1/P2. Confira: inicialização AUTO 3m e migração 3s→3m; toque curto ↻ submetendo nova busca imediatamente sem ignorar HTTP 429 ou buscas concorrentes; visual enxuto dos cards sem parágrafos de proveniência; nomes/sprites e variantes de **#129 Magikarp**, **#580 Ducklett** e outras espécies; layout transparente integrado 🔒+5 sem quadro cinza. Compare **quantidade real de resultados do site** com quantidade extraída na página visitante, inclusive 1/3/5 retornos reais, filtro IV 100%, Loading/SPA e lista parcial. Não fabricar resultados nem tratar cinco como mínimo: é limite de exibição de visitante.
+
+Homologue login Google/Discord e perfil/avatar independentemente em Conta 1/Conta 2, sessão visitante, revelação de coordenadas do cartão correto, site com HTTP 429/Retry-After, estados sem rede, retrato/paisagem, P/M/G, favoritos, acessibilidade e segurança do Android. Preserve filtros, sprites nativas, overlays compactos, OTA, Auto Hunt OFF inicial, notas internas, chave e certificado permanente, compatibilidade PGSharp/Pokemod separada. Não confunda CI com QA em aparelho, supervisão com caminhada ou tentativa de captura com captura confirmada.
+
+Se encontrar defeitos, corrija e execute regressões Node/LT169/LT211/LT62/LT173/PGS/visual/FastDev/Secure beta R8. **Quando o proprietário disser ARK, o ciclo inclui merge e publicação oficial protegida com tag, APK, digest e registro no Guia Mestre**, somente após gates e assinatura; nunca publicar APK de QA como oficial. Gere prompt LT392 e registre limitações honestamente.

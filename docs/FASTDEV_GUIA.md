@@ -1,5 +1,37 @@
 # PokeSearch FastDev — desenvolvimento sem publicar APK a cada ajuste
 
+> > **LT384 já publicada:** versão [FastDev 1000041](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000041) com Home real e OTA automático. Instale o [APK 1000041](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000041/PokeSearch-FastDev-Preview.apk) **por cima** da versão atual uma vez; depois o FastDev consulta e prepara atualizações sozinho, com confirmação do instalador Android. [Auditoria LT384](LT384_FASTDEV_HOME_AUTO_UPDATE_20261116.md).
+
+**LT384 — funcionamento automático:** o aplicativo FastDev passa a abrir **diretamente a Home real do PokeSearch**. O ícone anterior que abria o console é legado e redireciona à Home; o painel de botões e a prévia HTML isolada deixam de fazer parte da navegação. A descoberta de versões roda ao abrir o app e periodicamente via WorkManager, usando o manifesto público `fastdev/latest.json`. Quando encontra um APK mais novo, o FastDev baixa, verifica SHA-256/pacote/versão/certificado e chama o instalador do Android. **A confirmação do instalador e a autorização da origem, quando solicitada, continuam obrigatórias no Android normal.**
+>
+> **Publicação automática:** depois de um merge com alterações de `app/src/main/**`, `app/src/preview/**`, `app/build.gradle.kts` ou do workflow FastDev na `main`, GitHub Actions inicia automaticamente a compilação/publikação FastDev com a chave permanente; não é necessário editar `preview-request.json` nem clicar em Actions. A publicação do manifesto vem **somente depois** do APK assinado. Alterações exclusivamente documentais ou do manifesto não geram loop de compilação.
+>
+> **Economia de tempo:** pushes em `fastdev/**` continuam executando apenas testes rápidos; um PR que altera somente o código de Preview não precisa do APK beta/R8 da versão oficial (mas ainda precisa da compilação Preview Java). Alterações em fontes partilhadas, Gradle, política de QA ou arquivos desconhecidos **mantêm o gate beta/R8 completo**. Compilar código Java ou empacotar APK continua levando tempo; FastDev elimina etapas repetidas e cliques, não transforma uma compilação nativa em atualização HTML instantânea.
+
+---
+
+
+> **Fluxo LT382 (16/11/2026):** o FastDev agora separa **iterações rápidas na branch** de **validação da PR** e do **APK Preview assinado**. As instruções antigas de debug APK e de solicitação Preview em branch abaixo são históricas; prevalece este fluxo.
+
+## Ciclo rápido de desenvolvimento (procedimento canônico)
+
+1. Criar uma branch com nome `fastdev/<tema>` a partir de `main` e **não abrir PR enquanto as correções ainda estiverem em andamento**.
+2. Cada push que alterar arquivos de `app/**`, seleção/testes FastDev ou configuração de build executa automaticamente [`pokesearch-fastdev-branch.yml`](../.github/workflows/pokesearch-fastdev-branch.yml). Esse job compara a branch com `origin/main` e executa somente os testes Node selecionados. Não prepara Java/Android SDK, não chama Gradle, não assina e não gera APK. Se novos commits chegarem, o GitHub cancela o job anterior **dessa mesma branch**.
+3. Para HTML/CSS, utilizar o modo Live HTML disponível no FastDev quando apropriado. Para alterações Java, executar opcionalmente **GitHub Actions > PokeSearch FastDev > Run workflow > modo `java-check` > branch FastDev**. Esse modo compila Java/Android sem criar APK e **não roda automaticamente em cada push**. O smoke Node sozinho não comprova compilação Java.
+4. Terminada a implementação, abrir **uma** PR para `main`. Todos os workflows de regressão/compilação obrigatórios da PR permanecem ativos; corrigir bloqueadores e só integrar com CI aprovado. A beta de QA com chave temporária continua disponível nesse gate e não é o Preview permanente.
+5. Após o merge, **somente se for necessário testar em aparelho**, alterar o `request_id` em `fastdev/preview-request.json` na **main** com `mode=apk-preview`. O workflow `pokesearch-fastdev.yml` compila uma única variante `com.lucianotoscano.pokesearch.preview` com o keystore FastDev permanente no environment `fastdev-signing` e publica a pré-release para o atualizador FastDev. **Não modificar `release/official-request.json`**; a versão oficial e sua assinatura ficam intactas.
+6. Validar sempre `SOURCE_COMMIT`, versão, SHA-256, pacote e certificado do Preview antes de pedir instalação. O usuário pode atualizar o FastDev sem desinstalar, após confirmação do instalador do Android. Homologação física não é inferida do CI.
+
+**Status de assinatura:** o registro [`FASTDEV_OTA_LIVE_ADB_20261116.md`](FASTDEV_OTA_LIVE_ADB_20261116.md) documenta configuração permanente e duas pré-releases assinadas e verificadas (`fastdev-1000024` e `fastdev-1000027`). Não criar nem substituir a chave existente. Qualquer nova solicitação precisa passar pelos gates próprios e ter release/artefato comprovados.
+
+**Tempo de referência LT381:** o smoke FastDev original levou cerca de 22 s de job (3,29 s de testes selecionados), enquanto o APK beta R8 de QA levou cerca de 153 s. Essas medições são logs dos respectivos jobs e não garantem que o novo fluxo terá exatamente esses tempos. O novo workflow evita disparar o APK beta **durante o ciclo de desenvolvimento sem PR**; a compilação completa permanece obrigatória na integração.
+
+**Testes locais:** `node --test scripts/fastdev.test.cjs scripts/fastdev-branch-contract.test.cjs` e `node scripts/fastdev.cjs --base origin/main`. Não iniciar ou deixar `apk-preview` em uma branch de feature esperando publicação; o canal assinado só aceita `main`.
+
+---
+
+> **Nova implementação (16/11/2026):** assinatura permanente, atualização OTA dedicada, código crescente, sandbox Live HTML e ADB: [FASTDEV_OTA_LIVE_ADB_20261116.md](FASTDEV_OTA_LIVE_ADB_20261116.md). As instruções anteriores para APK com chave debug efêmera abaixo descrevem o estágio histórico inicial e não são o procedimento atual recomendado. O modo permanente foi configurado, e a LT383 já publicou a versão assinada `1000039`. Em caso de HTTP 403 no console antigo, instalar manualmente [FastDev 1000039](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000039/PokeSearch-FastDev-Preview.apk) por cima do FastDev atual; consulte [LT383](LT383_FASTDEV_HTTP403_OTA_20261116.md).
+
 Status: infraestrutura de desenvolvimento, SEM atualização pública do aplicativo. Nunca declarar CI ou homologação física PASS sem execução e evidência. O comando ARK do proprietário mantém as obrigações de merge, QA e publicação protegida, conforme AGENTS.md.
 
 ## Execução automática pelo assistente, sem cliques no Actions
