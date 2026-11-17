@@ -14,7 +14,8 @@ const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokem
              query:"",filter:"all",activeFilters:new Set(),sort:"cp",limit:96,selected:null,
              selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
              bgCached:new Set(),backgroundTarget:null,bgQuery:"",
-             spriteIndex:null,spriteCached:new Set(),spriteMatchCache:new Map(),spriteStats:{}};
+             spriteIndex:null,spriteCached:new Set(),spriteMatchCache:new Map(),spriteStats:{},
+             editingPokemon:null,editingTagId:null,suppressCardClick:false};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -187,7 +188,7 @@ function safeSprite(p){
     const valid=uri.startsWith("file:///android_asset/")||
       uri.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
       uri.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
-    if(valid&&(!p.costume&&!form||defaultById||
+    if(valid&&((!p.costume&&!Number(p.form)&&!form)||defaultById||
       (art&&typeof art==="object"&&
        (art.exactCostume||art.officialForm||art.offline||art.providerExact))))
       return uri;
@@ -314,7 +315,7 @@ function renderTags(){
  }).join("");
  el("personal-tags").innerHTML=Array.from(state.tags.entries()).map(([key,name])=>{
   const count=state.all.filter(p=>(p.tags||[]).includes(key)).length;
-  return '<button class="personal-tag" data-tag="'+escapeHtml(key)+'"><i class="dot"></i><span class="tag-name">'+escapeHtml(name)+'</span><span class="tag-count">'+number(count)+'</span></button>';
+  return '<div class="personal-tag"><button class="tag-filter" data-tag="'+escapeHtml(key)+'"><i class="dot"></i><span class="tag-name">'+escapeHtml(name)+'</span><span class="tag-count">'+number(count)+'</span></button><button type="button" class="tag-edit" data-edit-tag="'+escapeHtml(key)+'">Editar</button></div>';
  }).join("")||'<p class="pane-sub">Nenhuma etiqueta no arquivo importado.</p>';
 }
 function renderEggs(){
@@ -371,7 +372,10 @@ function render(){
 function renderSelection(){
  el("selection-strip").hidden=!state.selecting;
  el("selection-count").textContent=number(state.selectedIds.size)+" selecionado(s)";
- el("selection-compare").disabled=state.selectedIds.size<2;
+ el("selection-compare").disabled=state.selectedIds.size<2||state.selectedIds.size>3;
+  el("selection-tag").disabled=state.selectedIds.size===0;
+  el("selection-tag-choice").disabled=state.selectedIds.size===0;
+  el("selection-delete").disabled=state.selectedIds.size===0;
  el("select-toggle").classList.toggle("active",state.selecting);
 }
 function compareSelected(){
@@ -403,6 +407,23 @@ function openHistory(){
   return '<div class="history-row"><strong>'+escapeHtml(when)+'</strong>'+
    '<div class="history-summary">'+diff+'</div><small>'+number(row.total)+' Pokémon no inventário</small></div>';
  }).join(""):'<p class="pane-sub">Nenhuma importação registrada nesta versão.</p>';
+ const native=typeof bridge.getLastImportDiff==="function"?bridge.getLastImportDiff(state.slot):"{}";
+ let changes={};try{changes=JSON.parse(native||"{}");}catch(_){}
+ const types=[["new","Novos nesta importação"],["changed","Registros alterados"],
+              ["missing","Ausentes neste instantâneo"]];
+ const lists=types.map(([key,title])=>{
+  const items=Array.isArray(changes[key])?changes[key]:[];
+  return '<details class="lt402-diff"><summary>'+escapeHtml(title)+' ('+number(items.length)+')</summary>'+
+   (items.length?'<ul>'+items.slice(0,200).map(p=>
+     '<li>'+escapeHtml(state.names.get(Number(p.species))||("#"+p.species))+
+     ' · ID …'+escapeHtml(String(p.id).slice(-6))+'</li>').join("")+'</ul>':
+     '<p class="note">Nenhuma diferença nesta categoria.</p>')+
+   (items.length>200?'<p class="note">Mostrando 200 de '+number(items.length)+' itens.</p>':"")+
+   '</details>';
+ });
+ if(changes.at)el("history-rows").insertAdjacentHTML("beforeend",
+  '<p class="note">Diferenças da importação mais recente. Ausência não comprova transferência ou exclusão no jogo.</p>'+
+  lists.join(""));
  el("history-panel").hidden=false;
 }
 function loadBackgrounds(){
@@ -489,6 +510,8 @@ function openBackgroundGallery(target){
  refreshBackgrounds();
 }
 function loadSlot(){
+  confirmDeleteAll=false;confirmDeleteSelection=false;confirmTagDelete=false;
+  el("delete-all").textContent="Limpar inventário";
   let data={};
   try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
   state.all=Array.isArray(data.pokemons)?data.pokemons:[];
@@ -496,6 +519,9 @@ function loadSlot(){
   state.capacity=Number(data.capacity)||0;
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
+   renderTagSelection();
+   el("sync-status").textContent=typeof bridge.getSyncStatus==="function"?
+    bridge.getSyncStatus(state.slot):"Arquivo local não vinculado";
   state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
   state.spriteMatchCache.clear();
   state.selecting=false;state.selectedIds.clear();renderSelection();
@@ -630,7 +656,7 @@ function closeSort(){
  layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
 }
 function closeOverlay(){
- for(const id of ["compare-panel","history-panel","background-panel","sprite-panel"]){
+ for(const id of ["edit-panel","tag-editor-panel","compare-panel","history-panel","background-panel","sprite-panel"]){
   const panel=el(id);
   if(!panel.hidden){panel.hidden=true;state.backgroundTarget=null;return true;}
  }
@@ -663,13 +689,14 @@ el("sort").addEventListener("change",e=>{state.sort=e.target.value;render();});
 el("grid").addEventListener("click",e=>{
   const b=e.target.closest("[data-id]");
   if(!b)return;
-  if(state.selecting){
-    const id=b.dataset.id;
-    if(state.selectedIds.has(id))state.selectedIds.delete(id);
-    else if(state.selectedIds.size<3)state.selectedIds.add(id);
-    else notice("Selecione até três Pokémon para comparar.");
-    renderSelection();render();
-  }else showDetail(b.dataset.id);
+  if(state.suppressCardClick){state.suppressCardClick=false;return;}
+   if(state.selecting){
+     const id=b.dataset.id;
+     if(state.selectedIds.has(id))state.selectedIds.delete(id);
+     else state.selectedIds.add(id);
+     confirmDeleteSelection=false;
+     renderSelection();render();
+   }else showDetail(b.dataset.id);
 });
 el("more").addEventListener("click",()=>{state.limit+=96;render();});
 el("detail-back").addEventListener("click",hideDetail);
@@ -709,7 +736,9 @@ el("tag-categories").addEventListener("click",e=>{
  renderFilters();setTab("pokemon");render();
 });
 el("personal-tags").addEventListener("click",e=>{
- const b=e.target.closest("[data-tag]");if(!b)return;
+ const edit=e.target.closest("[data-edit-tag]");
+  if(edit){openTagEditor(edit.dataset.editTag);return;}
+  const b=e.target.closest("[data-tag]");if(!b)return;
  state.filter="tag";state.activeFilters=new Set(["tag"]);
  state.tagId=b.dataset.tag;state.limit=96;
  renderFilters();setTab("pokemon");render();
@@ -798,5 +827,168 @@ el("save-note").addEventListener("click",()=>{
  bridge.setNote(state.slot,state.selected.id,el("personal-note").value);
  notice("Anotação salva neste aparelho.");
 });
+
+/* LT402: all changes stay in local device storage; no Pokémon GO writes. */
+function runEdit(action,params,after){
+ let result;
+ try{result=JSON.parse(bridge.editInventory(state.slot,action,JSON.stringify(params))||"{}");}
+ catch(_){return notice("Falha de acesso ao inventário local.");}
+ if(!result.ok)return notice(result.error||"Não foi possível salvar.");
+ const tab=state.tab;
+ loadSlot();setTab(tab);
+ if(after)after(result);
+ else notice("Alteração salva apenas no inventário pessoal.");
+}
+function renderTagSelection(){
+ el("selection-tag-choice").innerHTML=Array.from(state.tags.entries()).map(([id,label])=>
+  '<option value="'+escapeHtml(id)+'">'+escapeHtml(label)+'</option>').join("")||
+  '<option value="">Crie uma etiqueta</option>';
+}
+function openEditor(p){
+ state.editingPokemon=p?.id||null;
+ el("edit-heading").textContent=p?"Editar "+speciesName(p):"Adicionar Pokémon";
+ el("edit-species").disabled=!!p;
+ const value=(k,def)=>p?.[k]??def;
+ for(const [k,def] of [["species",1],["nickname",""],["cp",0],["stamina",0],
+    ["maxStamina",0],["attack",0],["defense",0],["hpIv",0],["buddyHearts",0]])
+   el("edit-"+k).value=value(k,def);
+ el("edit-bestBuddy").checked=!!p?.bestBuddy;
+ el("edit-favorite").checked=!!p?.favorite;
+ const moves=[...state.meta.moves.entries()];
+ function fill(id,fast,value){
+   let html='<option value="0">Não informado</option>';
+   for(const [n,m] of moves){
+     if(fast!==null&&m.fast!==fast)continue;
+     html+='<option value="'+Number(n)+'">'+escapeHtml(m.name)+' (#'+Number(n)+')</option>';
+   }
+   const target=el("edit-"+id);target.innerHTML=html;
+   if(value&&!moves.some(([n])=>Number(n)===Number(value)))
+     target.insertAdjacentHTML("beforeend",'<option value="'+Number(value)+'">ID '+Number(value)+'</option>');
+   target.value=String(Number(value)||0);
+ }
+ fill("move1",true,p?.move1);fill("move2",false,p?.move2);fill("move3",false,p?.move3);
+ el("edit-tags").innerHTML=Array.from(state.tags.entries()).map(([id,label])=>
+  '<label><input type="checkbox" data-assign-tag="'+escapeHtml(id)+'"'+
+  ((p?.tags||[]).includes(id)?" checked":"")+'> '+escapeHtml(label)+'</label>').join("")||
+  '<span class="note">Crie etiquetas na aba Tags.</span>';
+ el("edit-delete").hidden=!p;
+ el("edit-panel").hidden=false;
+}
+function saveEditor(){
+ const p=state.editingPokemon?state.all.find(x=>x.id===state.editingPokemon):null;
+ const fields={nickname:el("edit-nickname").value.trim(),favorite:el("edit-favorite").checked,
+    bestBuddy:el("edit-bestBuddy").checked,
+    tags:[...el("edit-tags").querySelectorAll("input:checked")].map(x=>x.dataset.assignTag)};
+ for(const key of ["cp","stamina","maxStamina","attack","defense","hpIv",
+                    "buddyHearts","move1","move2","move3"]){
+   const field=el("edit-"+key),n=Number(field.value);
+   const maximum=key==="buddyHearts"?300:
+      ["attack","defense","hpIv"].includes(key)?15:
+      key.startsWith("move")?100000:99999;
+   if(!Number.isInteger(n)||n<0||n>maximum)
+      return notice("Revise o campo "+key+".");
+   fields[key]=n;
+ }
+ if(!p){
+    const species=Number(el("edit-species").value);
+    if(!Number.isInteger(species)||species<1||species>1025)
+      return notice("Informe o número da espécie entre 1 e 1025.");
+    runEdit("add",{species,fields},result=>{
+       el("edit-panel").hidden=true;showDetail(result.id);
+       notice("Pokémon adicionado somente ao inventário pessoal.");
+    });
+ }else runEdit("edit",{id:p.id,fields},result=>{
+    el("edit-panel").hidden=true;showDetail(result.id);
+    notice("Ficha salva no inventário local.");
+ });
+}
+function openTagEditor(id){
+ state.editingTagId=id||null;
+ el("tag-editor-name").value=id?(state.tags.get(id)||""):"";
+ el("tag-editor-delete").hidden=!id;
+ el("tag-editor-panel").hidden=false;
+}
+let confirmDeleteAll=false,confirmDeleteSelection=false,confirmTagDelete=false;
+el("add-pokemon").addEventListener("click",()=>openEditor(null));
+el("edit-pokemon").addEventListener("click",()=>{if(state.selected)openEditor(state.selected);});
+el("edit-close").addEventListener("click",()=>{el("edit-panel").hidden=true;});
+el("edit-save").addEventListener("click",saveEditor);
+el("edit-delete").addEventListener("click",()=>{
+ if(!state.editingPokemon)return;
+ runEdit("delete",{ids:[state.editingPokemon]},()=>{
+   el("edit-panel").hidden=true;hideDetail();
+   notice("Excluído localmente. Use Desfazer exclusão para restaurar.");
+ });
+});
+el("backup-export").addEventListener("click",()=>bridge.exportInventory(state.slot));
+el("sync-source").addEventListener("click",()=>bridge.linkSyncFile(state.slot));
+el("sync-now").addEventListener("click",()=>bridge.syncLocalFile(state.slot));
+el("undo-delete").addEventListener("click",()=>{
+ runEdit("undo",{},()=>notice("Última exclusão restaurada."));
+});
+el("delete-all").addEventListener("click",()=>{
+ if(!state.all.length)return notice("O inventário está vazio.");
+ if(!confirmDeleteAll){
+   confirmDeleteAll=true;el("delete-all").textContent="Confirmar limpar tudo";
+   return notice("Toque novamente para excluir tudo deste inventário (reversível).");
+ }
+ confirmDeleteAll=false;el("delete-all").textContent="Limpar inventário";
+ runEdit("clear",{},()=>notice("Inventário limpo. Use Desfazer para restaurar."));
+});
+el("selection-delete").addEventListener("click",()=>{
+ const ids=[...state.selectedIds];
+ if(!ids.length)return;
+ if(!confirmDeleteSelection){
+   confirmDeleteSelection=true;
+   return notice("Toque novamente em Excluir selecionados para confirmar.");
+ }
+ confirmDeleteSelection=false;
+ runEdit("delete",{ids},()=>notice(ids.length+" Pokémon removidos, com opção de desfazer."));
+});
+el("selection-tag").addEventListener("click",()=>{
+ const id=el("selection-tag-choice").value;
+ if(!id||!state.tags.has(id))return notice("Escolha uma etiqueta válida.");
+ runEdit("tagAssign",{id,ids:[...state.selectedIds],enable:true},
+  ()=>notice("Etiqueta aplicada aos Pokémon selecionados."));
+});
+el("tag-create").addEventListener("click",()=>openTagEditor(null));
+el("tag-editor-close").addEventListener("click",()=>{el("tag-editor-panel").hidden=true;});
+el("tag-editor-save").addEventListener("click",()=>{
+ const name=el("tag-editor-name").value.trim();
+ if(!name)return notice("Digite um nome para a etiqueta.");
+ runEdit("tagSave",{id:state.editingTagId||"",name},()=>{
+    el("tag-editor-panel").hidden=true;notice("Etiqueta salva.");
+ });
+});
+el("tag-editor-delete").addEventListener("click",()=>{
+ if(!state.editingTagId)return;
+ if(!confirmTagDelete){confirmTagDelete=true;return notice("Toque novamente para excluir a etiqueta.");}
+ confirmTagDelete=false;
+ runEdit("tagDelete",{id:state.editingTagId},()=>{
+   el("tag-editor-panel").hidden=true;notice("Etiqueta removida.");
+ });
+});
+/* Press and hold any card to enter unlimited multi-selection mode. */
+let pressTimer=null,pressId=null,pressX=0,pressY=0;
+const cancelPress=()=>{clearTimeout(pressTimer);pressTimer=null;pressId=null;};
+el("grid").addEventListener("pointerdown",e=>{
+ const card=e.target.closest("[data-id]");
+ if(!card||state.selecting)return;
+ pressId=card.dataset.id;pressX=e.clientX;pressY=e.clientY;
+ pressTimer=setTimeout(()=>{
+   if(!pressId)return;
+   state.selecting=true;state.selectedIds.clear();state.selectedIds.add(pressId);
+   state.suppressCardClick=true;renderSelection();render();
+   setTimeout(()=>{state.suppressCardClick=false;},650);
+   notice("Seleção múltipla ativa · toque em outros para marcar.");
+   cancelPress();
+ },480);
+});
+el("grid").addEventListener("pointermove",e=>{
+ if(Math.abs(e.clientX-pressX)>12||Math.abs(e.clientY-pressY)>12)cancelPress();
+});
+for(const event of ["pointerup","pointercancel","pointerleave"])
+ el("grid").addEventListener(event,cancelPress);
+
 loadCatalog();loadMeta();loadSpriteIndex();loadBackgrounds();loadSlot();
 })();

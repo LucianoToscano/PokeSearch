@@ -57,7 +57,9 @@ assert.match(ui,/function renderBackgroundGallery\(/);
 assert.match(ui,/function applyHeroBackground\(/);
 assert.match(ui,/new Set\(\["tag"\]\)/);
 assert.match(ui,/state\.activeFilters\.add\(key\)/);
-assert.match(ui,/state\.selectedIds\.size<3/);
+// LT402: selection is unlimited; only comparison remains capped at three.
+assert.match(ui,/state\.selectedIds\.size>3/);
+assert.doesNotMatch(ui,/state\.selectedIds\.size<3/);
 assert.match(java,/pokedex_background_manifest\.json/);
 assert.match(html,/backgrounds-download/);
 assert.match(html,/backgrounds-cancel/);
