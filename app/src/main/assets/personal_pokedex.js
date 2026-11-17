@@ -11,7 +11,9 @@ const filterDefs=[
 const presets=[["default","Padrão"],["aurora","Aurora"],["sunset","Pôr do sol"],
                ["ocean","Oceano"],["night","Noite"]];
 const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokemon",eggs:[],capacity:0,tagId:null,meta:{moves:new Map(),backgrounds:new Map(),costumes:new Map()},
-             query:"",filter:"all",sort:"cp",limit:96,selected:null};
+             query:"",filter:"all",activeFilters:new Set(),sort:"cp",limit:96,selected:null,
+             selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
+             bgCached:new Set(),backgroundTarget:null,bgQuery:""};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -73,8 +75,8 @@ function artHtml(p,css){
   return '<img class="'+css+'" src="'+escapeHtml(uri)+'" alt="'+name+
     '" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'◇\'))">';
 }
-function filterPokemon(p){
-  switch(state.filter){
+function filterPokemon(p,key=state.filter){
+  switch(key){
   case "shiny":return !!p.shiny;
   case "hundo":return isHundo(p);
   case "background":return hasBackground(p);
@@ -116,7 +118,7 @@ function compare(a,b){
 }
 function renderFilters(){
   el("filters").innerHTML=filterDefs.map(([key,label])=>
-    '<button class="filter '+(key===state.filter?"active":"")+
+    '<button class="filter '+((!state.activeFilters.size&&key==="all")||state.activeFilters.has(key)?"active":"")+
     '" data-filter="'+key+'">'+label+'</button>').join("");
 }
 function renderStats(){
@@ -164,7 +166,7 @@ const categoryDefs=[
 ];
 function renderTags(){
  el("tag-categories").innerHTML=categoryDefs.map(([key,label,icon,color])=>{
-  const count=state.all.filter(p=>{const filter=state.filter;state.filter=key;const ok=filterPokemon(p);state.filter=filter;return ok}).length;
+  const count=state.all.filter(p=>filterPokemon(p,key)).length;
   return '<button class="category" data-category="'+key+'" aria-label="'+escapeHtml(label)+': '+number(count)+'"><span class="bubble" style="background:'+color+'">'+svgShape(icon)+'</span><span class="label">'+escapeHtml(label)+'</span><span class="count">'+number(count)+'</span></button>';
  }).join("");
  el("personal-tags").innerHTML=Array.from(state.tags.entries()).map(([key,name])=>{
@@ -187,7 +189,8 @@ function summaryTime(){
   el("import-time").textContent=s?"Exportação: "+s:"Importe PGSStats.json ou PGSStats.json";
 }
 function render(){
-  const visible=state.all.filter(p=>filterPokemon(p)&&matchesQuery(p)).sort(compare);
+  const visible=state.all.filter(p=>
+    [...state.activeFilters].every(key=>filterPokemon(p,key))&&matchesQuery(p)).sort(compare);
   state.filtered=visible;
   el("result-note").textContent=number(visible.length)+" Pokémon encontrados · Lista privada";
   const displayed=visible.slice(0,state.limit);
@@ -202,10 +205,12 @@ function render(){
   }else{
     el("grid").innerHTML=displayed.map(p=>{
       const max=p.maxStamina||0,health=max?Math.min(100,Math.round(100*(p.stamina||0)/max)):100;
-      const flags=[p.shiny?"✨":"",p.favorite?"⭐":"",hasBackground(p)?"🖼️":"",
+      const chosen=state.selectedIds.has(p.id);
+       const flags=[p.shiny?"✨":"",p.favorite?"⭐":"",hasBackground(p)?"🖼️":"",
          p.costume?"🎩":"",isShadow(p)?"◈":""].filter(Boolean).join("");
-      return '<button type="button" class="mon" data-id="'+p.id+'" aria-label="'+
+      return '<button type="button" class="mon '+(chosen?"selected":"")+'" data-id="'+p.id+'" aria-label="'+
         escapeHtml(speciesName(p))+' PC '+number(p.cp)+'">'+
+        (state.selecting?'<span class="selection-indicator" aria-hidden="true">'+(chosen?"✓":"")+'</span>':"")+ 
         '<div class="cp"><small>PC</small>'+number(p.cp)+'</div>'+
         '<div class="pic">'+artHtml(p,"sprite")+
         '<span class="flags">'+flags+'</span></div>'+
@@ -216,6 +221,127 @@ function render(){
   }
   el("more").hidden=visible.length<=state.limit;
 }
+
+function renderSelection(){
+ el("selection-strip").hidden=!state.selecting;
+ el("selection-count").textContent=number(state.selectedIds.size)+" selecionado(s)";
+ el("selection-compare").disabled=state.selectedIds.size<2;
+ el("select-toggle").classList.toggle("active",state.selecting);
+}
+function compareSelected(){
+ const chosen=[...state.selectedIds].map(id=>state.all.find(p=>p.id===id)).filter(Boolean);
+ if(chosen.length<2)return;
+ const rows=[
+  ["PC",p=>number(p.cp)],["IV",p=>p.attack+"/"+p.defense+"/"+p.hpIv],
+  ["IV %",p=>Math.round(ivValue(p)/45*100)+"%"],
+  ["PS",p=>number(p.maxStamina)],["Shiny",p=>p.shiny?"Sim":"Não"],
+  ["Sombroso",p=>isShadow(p)?"Sim":"Não"],
+  ["Fundo",p=>hasBackground(p)?"ID "+p.backgroundId:"—"],
+  ["Traje",p=>p.costume?"ID "+p.costume:"—"],
+  ["Forma",p=>cleanForm(p)||"Padrão"]
+ ];
+ el("compare-content").innerHTML='<table class="compare-table"><thead><tr><th>Dados</th>'+
+  chosen.map(p=>'<th>'+artHtml(p,"compare-sprite")+'<div>'+escapeHtml(speciesName(p))+'</div></th>').join("")+
+  '</tr></thead><tbody>'+rows.map(([label,fn])=>'<tr><th>'+escapeHtml(label)+'</th>'+
+   chosen.map(p=>'<td>'+escapeHtml(fn(p))+'</td>').join("")+'</tr>').join("")+'</tbody></table>';
+ el("compare-panel").hidden=false;
+}
+function openHistory(){
+ let history=[];
+ try{history=JSON.parse(bridge.getImportHistory(state.slot)||"[]");}catch(_){}
+ el("history-rows").innerHTML=history.length?history.map(row=>{
+  const when=new Date(Number(row.at)).toLocaleString("pt-BR");
+  const diff=row.baseline?'<span>+'+number(row.added)+' novos</span><span>−'+number(row.removed)+
+   ' ausentes</span><span>'+number(row.changed)+' alterados</span>':
+   '<span>Importação inicial</span>';
+  return '<div class="history-row"><strong>'+escapeHtml(when)+'</strong>'+
+   '<div class="history-summary">'+diff+'</div><small>'+number(row.total)+' Pokémon no inventário</small></div>';
+ }).join(""):'<p class="pane-sub">Nenhuma importação registrada nesta versão.</p>';
+ el("history-panel").hidden=false;
+}
+function loadBackgrounds(){
+ try{
+  const manifest=JSON.parse(bridge.getBackgroundManifest()||"{}");
+  state.bgAssets=new Map((manifest.assets||[]).map(a=>[a[0],{size:a[1],sha:a[2]}]));
+  state.bgCards=(manifest.cards||[]).map(c=>({id:c[0],name:c[1],type:c[2],file:c[3]}));
+ }catch(_){state.bgAssets=new Map();state.bgCards=[];}
+ refreshBackgrounds();
+}
+function bgFilename(id){
+ const card=state.bgCards.find(c=>Number(c.id)===Number(id));
+ return card?.file||"";
+}
+function bgImageUrl(name){
+ return "https://pokesearch.local/bg/"+encodeURIComponent(name);
+}
+function refreshBackgrounds(status){
+ let information=status;
+ if(!information)try{information=JSON.parse(bridge.getBackgroundStatus()||"{}");}catch(_){information={};}
+ try{state.bgCached=new Set(JSON.parse(bridge.getCachedBackgroundNames()||"[]"));}catch(_){state.bgCached=new Set();}
+ const available=state.bgCached.size;
+ el("background-cache-count").textContent=available+"/"+number(state.bgAssets.size);
+ el("bg-status").textContent=available+" de "+number(state.bgAssets.size)+" imagens locais · "+
+  decimal((information.bytes||0)/1048576,1)+" MiB baixados"+
+  (information.running?" · "+(information.processed||0)+" processados":"")+
+  (information.error?" · "+information.error:"");
+ el("backgrounds-download").disabled=!!information.running||available===state.bgAssets.size;
+ el("backgrounds-clear").disabled=!!information.running||available===0;
+ el("backgrounds-cancel").disabled=!information.running;
+ if(!el("background-panel").hidden&&(!information.running||!information.processed||information.processed%24===1))renderBackgroundGallery();
+ if(state.selected)applyHeroBackground(state.selected,bridge.getDecoration(state.slot,state.selected.id));
+}
+window.pokeBackgroundProgress=function(status){refreshBackgrounds(status);};
+function applyHeroBackground(p,choice){
+ const hero=el("hero");
+ let filename="";
+ let label="";
+ if(choice==="original"||choice==="default"){
+  filename=bgFilename(p.backgroundId);
+  label="Fundo original do encontro";
+ }else if(choice.startsWith("asset:")){
+  filename=choice.substring(6);label="Fundo decorativo escolhido";
+ }
+ if(filename&&state.bgCached.has(filename)){
+  hero.className="hero official-bg";
+  hero.style.backgroundImage='url("'+bgImageUrl(filename)+'")';
+  el("decor-label").textContent=label;
+ }else{
+  hero.className="hero "+(presets.some(x=>x[0]===choice)?choice:"default");
+  hero.style.backgroundImage="";
+  el("decor-label").textContent=filename?"Imagem indisponível — fundo padrão":
+    choice==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
+ }
+ const original=bgFilename(p.backgroundId);
+ el("background-availability").textContent=hasBackground(p)?
+  (original?"Fundo do encontro #"+p.backgroundId+
+    (state.bgCached.has(original)?" disponível neste aparelho.":" catalogado, mas ainda não baixado."):
+   "Fundo registrado #"+p.backgroundId+" sem imagem correspondente confirmada."):
+  "Este Pokémon não tem fundo de encontro registrado. A galeria permite uma decoração opcional.";
+}
+function renderBackgroundGallery(){
+ const q=state.bgQuery.trim().normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const found=state.bgCards.filter(c=>
+  (c.name+" "+c.id+" "+c.type).normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+   .toLowerCase().includes(q));
+ el("background-hint").textContent=found.length+" fundos encontrados · "+
+  (state.backgroundTarget?"Toque em um fundo já baixado para aplicar à ficha pessoal.":
+   "Abra uma ficha Pokémon para escolher um fundo decorativo.");
+ el("background-list").innerHTML=found.slice(0,150).map(c=>{
+  const ready=c.file&&state.bgCached.has(c.file);
+  return '<button type="button" class="background-item" data-bg-id="'+c.id+'"'+
+   (!ready||!state.backgroundTarget?" disabled":"")+'>'+
+   '<div class="image-slot">'+(ready?'<img loading="lazy" src="'+bgImageUrl(c.file)+
+    '" alt="'+escapeHtml(c.name)+'">':'<span aria-hidden="true">▧</span>')+'</div>'+
+   '<strong>'+escapeHtml(c.name)+'</strong><small>#'+c.id+' · '+
+    (ready?"Disponível":"Imagem não baixada ou não identificada")+'</small></button>';
+ }).join("")+(found.length>150?'<p class="pane-sub">Digite na busca para encontrar os demais fundos.</p>':"");
+}
+function openBackgroundGallery(target){
+ state.backgroundTarget=target||null;
+ state.bgQuery="";el("background-search").value="";
+ el("background-panel").hidden=false;
+ refreshBackgrounds();
+}
 function loadSlot(){
   let data={};
   try{data=JSON.parse(bridge.getSnapshot(state.slot)||"{}");}catch(_){}
@@ -224,7 +350,8 @@ function loadSlot(){
   state.capacity=Number(data.capacity)||0;
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
-  state.query="";state.filter="all";state.limit=96;
+  state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
+  state.selecting=false;state.selectedIds.clear();renderSelection();
   el("search").value="";
   el("slot1").classList.toggle("active",state.slot===1);
   el("slot2").classList.toggle("active",state.slot===2);
@@ -264,7 +391,7 @@ function showDetail(id){
  if(!p)return;
  state.selected=p;
  const preset=bridge.getDecoration(state.slot,p.id);
- el("hero").className="hero "+(presets.some(x=>x[0]===preset)?preset:"default");
+ applyHeroBackground(p,preset);
  el("hero-title").innerHTML="<small>PC</small> "+number(p.cp);
  el("hero-sprite").innerHTML=artHtml(p,"hero-img").replace('loading="lazy"','loading="eager"');
  el("decor-label").textContent=preset==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
@@ -323,13 +450,15 @@ function showDetail(id){
   '<br>Pokébola: '+number(p.pokeball)+
   '<br><b>Ficha privada. Não altera o Pokémon no jogo.</b></div>';
  renderPresets(p,preset);
+ el("personal-note").value=bridge.getNote(state.slot,p.id)||"";
  const position=state.filtered.findIndex(x=>x.id===p.id);
  el("detail-prev").disabled=position<=0;
  el("detail-next").disabled=position<0||position>=state.filtered.length-1;
  el("detail").classList.add("open");el("detail").scrollTop=0;
 }
 function renderPresets(p,current){
-  el("presets").innerHTML=presets.map(([key,label])=>
+  const choices=hasBackground(p)?[["original","Fundo do encontro"],...presets]:presets;
+  el("presets").innerHTML=choices.map(([key,label])=>
     '<button class="preset '+(current===key?"active":"")+
     '" data-preset="'+key+'">'+escapeHtml(label)+'</button>').join("");
 }
@@ -349,7 +478,14 @@ function closeSort(){
  const layer=el("sort-backdrop");if(layer.hidden)return false;
  layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
 }
-window.pokeBack=()=>closeSort()||hideDetail();
+function closeOverlay(){
+ for(const id of ["compare-panel","history-panel","background-panel"]){
+  const panel=el(id);
+  if(!panel.hidden){panel.hidden=true;state.backgroundTarget=null;return true;}
+ }
+ return false;
+}
+window.pokeBack=()=>closeOverlay()||closeSort()||hideDetail();
 function loadCatalog(){
   try{
     const catalog=JSON.parse(bridge.getCatalog());
@@ -364,12 +500,25 @@ el("help").addEventListener("click",()=>notice(
   "Importação manual e local. Nenhum JSON é enviado para outros usuários ou servidores. Cada inventário é independente."));
 el("filters").addEventListener("click",e=>{
   const b=e.target.closest("[data-filter]");if(!b)return;
-  state.filter=b.dataset.filter;state.limit=96;renderFilters();render();
+  const key=b.dataset.filter;
+  if(key==="all")state.activeFilters.clear();
+  else if(state.activeFilters.has(key))state.activeFilters.delete(key);
+  else state.activeFilters.add(key);
+  state.filter=state.activeFilters.size?[...state.activeFilters][0]:"all";
+  state.limit=96;renderFilters();render();
 });
 el("search").addEventListener("input",e=>{state.query=e.target.value;state.limit=96;render();});
 el("sort").addEventListener("change",e=>{state.sort=e.target.value;render();});
 el("grid").addEventListener("click",e=>{
-  const b=e.target.closest("[data-id]");if(b)showDetail(b.dataset.id);
+  const b=e.target.closest("[data-id]");
+  if(!b)return;
+  if(state.selecting){
+    const id=b.dataset.id;
+    if(state.selectedIds.has(id))state.selectedIds.delete(id);
+    else if(state.selectedIds.size<3)state.selectedIds.add(id);
+    else notice("Selecione até três Pokémon para comparar.");
+    renderSelection();render();
+  }else showDetail(b.dataset.id);
 });
 el("more").addEventListener("click",()=>{state.limit+=96;render();});
 el("detail-back").addEventListener("click",hideDetail);
@@ -378,8 +527,7 @@ el("presets").addEventListener("click",e=>{
   if(!button||!state.selected)return;
   const name=button.dataset.preset;
   bridge.setDecoration(state.slot,state.selected.id,name);
-  el("hero").className="hero "+name;
-  el("decor-label").textContent=name==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
+  applyHeroBackground(state.selected,name);
   renderPresets(state.selected,name);
 });
 function setSort(key){
@@ -405,12 +553,14 @@ document.querySelectorAll("[data-tab]").forEach(b=>
  b.addEventListener("click",()=>setTab(b.dataset.tab)));
 el("tag-categories").addEventListener("click",e=>{
  const b=e.target.closest("[data-category]");if(!b)return;
- state.filter=b.dataset.category;state.tagId=null;state.limit=96;
+ state.filter=b.dataset.category;state.activeFilters=new Set([state.filter]);
+ state.tagId=null;state.limit=96;
  renderFilters();setTab("pokemon");render();
 });
 el("personal-tags").addEventListener("click",e=>{
  const b=e.target.closest("[data-tag]");if(!b)return;
- state.filter="tag";state.tagId=b.dataset.tag;state.limit=96;
+ state.filter="tag";state.activeFilters=new Set(["tag"]);
+ state.tagId=b.dataset.tag;state.limit=96;
  renderFilters();setTab("pokemon");render();
 });
 function shiftDetail(delta){
@@ -420,5 +570,61 @@ function shiftDetail(delta){
 }
 el("detail-prev").addEventListener("click",()=>shiftDetail(-1));
 el("detail-next").addEventListener("click",()=>shiftDetail(1));
-loadCatalog();loadMeta();loadSlot();
+el("select-toggle").addEventListener("click",()=>{
+ state.selecting=!state.selecting;state.selectedIds.clear();
+ renderSelection();render();
+});
+el("selection-clear").addEventListener("click",()=>{
+ state.selectedIds.clear();renderSelection();render();
+});
+el("selection-compare").addEventListener("click",compareSelected);
+el("compare-close").addEventListener("click",()=>{el("compare-panel").hidden=true;});
+el("history-open").addEventListener("click",openHistory);
+el("history-close").addEventListener("click",()=>{el("history-panel").hidden=true;});
+el("backgrounds-open").addEventListener("click",()=>openBackgroundGallery(null));
+el("background-gallery-for-pokemon").addEventListener("click",()=>{
+ if(state.selected)openBackgroundGallery(state.selected.id);
+});
+el("backgrounds-close").addEventListener("click",()=>{
+ el("background-panel").hidden=true;state.backgroundTarget=null;
+});
+el("background-search").addEventListener("input",e=>{
+ state.bgQuery=e.target.value;renderBackgroundGallery();
+});
+el("background-list").addEventListener("click",e=>{
+ const b=e.target.closest("[data-bg-id]");if(!b||!state.backgroundTarget)return;
+ const item=state.bgCards.find(c=>String(c.id)===b.dataset.bgId);
+ if(!item||!item.file||!state.bgCached.has(item.file))return;
+ const pokemon=state.all.find(p=>p.id===state.backgroundTarget);
+ if(!pokemon)return;
+ bridge.setDecoration(state.slot,pokemon.id,"asset:"+item.file);
+ if(state.selected?.id===pokemon.id){
+  applyHeroBackground(pokemon,"asset:"+item.file);
+  renderPresets(pokemon,"asset:"+item.file);
+ }
+ el("background-panel").hidden=true;state.backgroundTarget=null;
+ notice("Fundo pessoal aplicado. O fundo original do jogo não foi modificado.");
+});
+el("backgrounds-download").addEventListener("click",()=>{
+ if(!state.bgAssets.size)return notice("Catálogo de fundos indisponível.");
+ bridge.downloadAllBackgrounds();
+ refreshBackgrounds();
+});
+el("backgrounds-cancel").addEventListener("click",()=>bridge.cancelBackgroundDownload());
+let confirmClear=false;
+el("backgrounds-clear").addEventListener("click",()=>{
+ if(!confirmClear){
+  confirmClear=true;el("backgrounds-clear").textContent="Confirmar exclusão";
+  notice("Toque novamente para apagar apenas o cache de fundos.");
+  return;
+ }
+ confirmClear=false;el("backgrounds-clear").textContent="Apagar cache";
+ bridge.clearBackgroundCache();refreshBackgrounds();
+});
+el("save-note").addEventListener("click",()=>{
+ if(!state.selected)return;
+ bridge.setNote(state.slot,state.selected.id,el("personal-note").value);
+ notice("Anotação salva neste aparelho.");
+});
+loadCatalog();loadMeta();loadBackgrounds();loadSlot();
 })();
