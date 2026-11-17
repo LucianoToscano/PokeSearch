@@ -3215,13 +3215,26 @@ public class MainActivity extends Activity {
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
                 SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
-                // Authentication and public profile hydration are distinct.
-                // Preserve the LAST verified identity and cached image until a
-                // DIFFERENT real /profile identity is verified. Pending state
-                // prevents presenting stale data as newly synchronized.
-                // Clearing before React hydrates made valid accounts look empty.
-                slotPrefs.edit().putString("sessionStatus","autenticada")
-                    .putString("profileSyncState","pending").apply();
+                // A newly confirmed OAuth session may belong to another account.
+                // Preserve name/avatar until /profile confirms a different
+                // identity, but never carry a trainer link to a new OAuth.
+                boolean sameSessionResync=("sync".equals(loginPurpose)||
+                    "manage".equals(loginPurpose))&&observedLoginProvider.isEmpty()&&
+                    "autenticada".equals(slotPrefs.getString("sessionStatus",""))&&
+                    !slotPrefs.getString("profileDisplayName","").trim().isEmpty();
+                SharedPreferences.Editor sessionEdit=slotPrefs.edit()
+                    .putString("sessionStatus","autenticada")
+                    .putString("profileSyncState","pending");
+                if(!sameSessionResync){
+                    sessionEdit.putString("profileTrainerState","unknown")
+                        .remove("profileTrainerName").remove("profileTrainerCode")
+                        .remove("profileTrainerDetails").remove("profileTrainerTeam")
+                        .remove("profileTrainerList").remove("profileSelectedTrainerCode")
+                        .remove("profileTrainerLevel");
+                }
+                // Do not erase previously verified name/photo preemptively:
+                // a slow React hydration is not proof of account replacement.
+                sessionEdit.apply();
                 profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
                 profileCaptureFailureReason="profile_unhydrated";
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
