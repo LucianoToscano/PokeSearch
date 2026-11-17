@@ -11,7 +11,7 @@ let passed=0;
 function check(label,fn){fn();passed++;console.log("PASS LT73 "+label);}
 check("Home footer obtains installed versionName from BuildConfig",()=>{
   assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+'));
-  assert.ok(main.includes('(BuildConfig.FASTDEV_PREVIEW?"":" LT")'));
+  assert.match(main,/BuildConfig\.VERSION_NAME\+\s*" LT"/);
 });
 check("Home footer stays compact and opens in-app Novidades history",()=>{
   assert.ok(main.includes("footer.setOnClickListener(v->ReleaseNotes.showHistory(this))"));

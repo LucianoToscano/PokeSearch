@@ -1420,7 +1420,7 @@ public class MainActivity extends Activity {
         screen.addView(new View(this),new LinearLayout.LayoutParams(1,0,1));
         // LT73: show the installed APK's real version; no manual version strings.
         TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+
-            (BuildConfig.FASTDEV_PREVIEW?"":" LT"),10,
+            " LT",10,
             homeLightMode?Color.rgb(26,51,72):Color.rgb(185,208,233),false);
         footer.setGravity(Gravity.CENTER);
         footer.setBackground(homeSurface(
@@ -1429,7 +1429,7 @@ public class MainActivity extends Activity {
         footer.setPadding(d(9),d(5),d(9),d(5));
         footer.setClickable(true);
         footer.setContentDescription("PokeSearch versão "+BuildConfig.VERSION_NAME+
-            (BuildConfig.FASTDEV_PREVIEW?"":" LT")+
+            " LT"+
             ". Toque para abrir as Novidades e o histórico de atualizações do PokeSearch.");
         // LT379: same native, offline dialog as Menu > Novidades.
         // Never open GitHub, a WebView, OAuth or the browser from this footer.

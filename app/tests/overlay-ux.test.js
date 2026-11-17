@@ -524,7 +524,7 @@ const ci=fs.readFileSync(path.join(__dirname,'../../.github/workflows/build-over
 const manifest=fs.readFileSync(path.join(root,'AndroidManifest.xml'),'utf8');
 test("Settings Gradle exists and includes application",gradleSettings.includes('include(":app")'));
 test("PokeSearch 0.51 source configured",
-  gradleBuild.includes('versionCode = testVersionCode ?: fastDevCode ?: 51')&&
+  gradleBuild.includes('versionCode = testVersionCode ?: 51')&&
   gradleBuild.includes('publicVersionName ?: "0.51-beta.test.${testVersionLabel ?: testVersionCode}"')&&
   gradleBuild.includes('POKE_TEST_PUBLIC_VERSION')&&
   gradleBuild.includes('applicationId = "com.lucianotoscano.pokesearch"'));

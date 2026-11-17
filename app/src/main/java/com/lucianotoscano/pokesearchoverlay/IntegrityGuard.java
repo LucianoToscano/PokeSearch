@@ -58,24 +58,12 @@ public final class IntegrityGuard {
     }
     public static boolean verify(Context c) {
         if(c==null||!matchesPix(PixSupport.PAYLOAD))return false;
-        // Keep production validation byte-for-byte equivalent, but permit
-        // the deliberately isolated FastDev application in Preview builds.
-        final boolean preview=BuildConfig.FASTDEV_PREVIEW &&
-            "com.lucianotoscano.pokesearch.preview".equals(c.getPackageName());
-        if(!PACKAGE.equals(c.getPackageName())&&!preview)return false;
+        if(!PACKAGE.equals(c.getPackageName()))return false;
         try{
             PackageManager pm=c.getPackageManager();
             int mode=Build.VERSION.SDK_INT>=28?PackageManager.GET_SIGNING_CERTIFICATES:PackageManager.GET_SIGNATURES;
             PackageInfo info=pm.getPackageInfo(c.getPackageName(),mode);
             long vc=Build.VERSION.SDK_INT>=28?info.getLongVersionCode():info.versionCode;
-            if(preview) {
-                // A stable Preview certificate is checked against the installed
-                // package during OTA. Android enforces it during reinstall.
-                // The debug-capable Preview still must contain pinned assets.
-                return vc>=1_000_000 &&
-                    (c.getApplicationInfo().flags&ApplicationInfo.FLAG_DEBUGGABLE)!=0 &&
-                    assetsMatch(c);
-            }
             byte[] expected=fromHex(BuildConfig.EXPECTED_SIGNING_CERT_SHA256);
             if(expected==null)
                 return vc==51&&(c.getApplicationInfo().flags&ApplicationInfo.FLAG_DEBUGGABLE)!=0;

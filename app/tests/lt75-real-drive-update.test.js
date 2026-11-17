@@ -17,7 +17,7 @@ testCase("temporary LT74 preview no longer intercepts real updates",()=>{
 testCase("dynamic installed version remains visible with in-app Novidades link",()=>{
  assert.ok(main.includes("footer.setOnClickListener(v->ReleaseNotes.showHistory(this))"));
  assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+'));
- assert.ok(main.includes('(BuildConfig.FASTDEV_PREVIEW?"":" LT")'));
+ assert.match(main,/BuildConfig\.VERSION_NAME\+\s*" LT"/);
  assert.ok(main.includes("screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));"));
 });
 testCase("Home network check remains asynchronous",()=>{

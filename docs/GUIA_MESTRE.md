@@ -1,3 +1,9 @@
+## LT407 — Política de exclusividade do PokeSearch oficial (em homologação)
+
+Pelo pedido do proprietário, a candidata retira FastDev, versão DEV, APK paralelo e manifesto OTA DEV da árvore do projeto. Preserva apenas a identidade e publicação oficial, assinada pelo workflow protegido. A exclusão de código não apaga automaticamente releases/tags antigos nem secrets do GitHub. Ver [auditoria](LT407_AUDITORIA_REMOCAO_FASTDEV_OFICIAL_ONLY_20261117.md).
+
+---
+
 ## LT405 — PokeSearch v0.03.90 LT OFICIAL (17/11/2026)
 
 **ARK LT405 PUBLICADO E VERIFICADO:** v0.03.90 LT / versionCode **54597** / label **51405**, [release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.90-54597), [APK oficial permanente](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.90-54597/PokeSearch-v0.03.90-LT.apk), **61.748.886 bytes**, SHA-256 público `1dda619d87ee487fa426455829428889e812e2761b05654000c349668159f42a`, publicada em **17/11/2026 às 20:55:39 UTC**. [Workflow oficial #44173772883](https://github.com/LucianoToscano/PokeSearch/actions/runs/44173772883) **completed/success**: preflight, Node/OTA, build R8, certificado permanente SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`, publicação, upload, asset/hash público e limpeza de segredos. Dados de hash confirmados pelo GitHub/workflow, não recalculados separadamente de APK baixado. [PR código #527](https://github.com/LucianoToscano/PokeSearch/pull/527) squash `8bfd2980dae82ca7bd3f4dbf235d56995c7da633`; [PR release #528](https://github.com/LucianoToscano/PokeSearch/pull/528) squash `b277b39c33bc5c7fe077f6a09bda5851df3d8179`. Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados para ambas PRs; FastDev foi apenas smoke, nunca canal público.
