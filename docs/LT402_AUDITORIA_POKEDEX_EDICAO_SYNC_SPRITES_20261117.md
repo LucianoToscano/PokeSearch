@@ -23,9 +23,9 @@
 ## Testes
 - Sintaxe JS verificada por parser V8 e todos os IDs estáticos consultados pelo JS presentes no HTML.
 - Novo teste Node `app/tests/lt402-inventory-editing-regression.test.js`.
-- **CI de PR #517 deve aprovar Node, LT169, LT211, LT62 Java, LT173 OTA, PGS, Secure beta/R8 antes do merge.**
+- **CI da PR #517 aprovada**: Node #44140115309, LT169 #44140115397, LT211 #44140115334, LT62 Java #44140115240, LT173 #44140115238 e Secure beta/R8 #44140115310, todos success. Workflow FastDev executado apenas como teste, não canal público.
 - **Homologação física não realizada neste ambiente:** Samsung Android 17, compatibilidade real do URI SAF com exportação PGSharp, restauração entre instalações, acessibilidade/TalkBack, carregamento real de todas as variantes e sprites Shiny.
-- Não concluir publicação oficial se qualquer gate falhar. Reportar PR/release/run/certificado apenas após verificação real.
+- **PR #517 integrada** à main por squash `cf675b5199bf0c163c12d0beaeb39df5b2ee1d3b`. **PR #518 integrada** por squash `20e6310f1ebec8b0376abbeaa6b135522de3b7b2`, com gates de release verdes. Workflow oficial protegido [#44141555140](https://github.com/LucianoToscano/PokeSearch/actions/runs/44141555140) terminou success. **v0.03.87 LT / versionCode 54594** publicada: [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.87-54594), [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.87-54594/PokeSearch-v0.03.87-LT.apk) 61.746.562 bytes, SHA-256 público `ecb16c5a1d537dc18337e190e2a1f117f21690f5b5cc8d639d31d9e67af1598b`, signer permanente conferido pelo CI. Não houve recomputação de hash de APK baixado localmente.
 
-## Próxima etapa
-Homologar no aparelho PGSStats atualizado, diferenças entre slots, exclusão/reversão, backup/reimportação, overlays e sprites 150/487/888/889/645 e variantes Shiny/trajes. Se os checks ficarem verdes, executar fluxo ARK de merge, versão monotônica, release assinada protegida, SHA do APK e registro no Guia Mestre.
+## Próxima etapa: LT403
+**ARK LT402 publicado e verificado.** Homologar no aparelho PGSStats atualizado, diferenças entre slots, exclusão/reversão, backup/reimportação, overlays e sprites 150/487/888/889/645 e variantes Shiny/trajes. Os testes automatizados não comprovam o funcionamento físico. Ver `docs/LT403_PROMPT_CONTINUIDADE_APOS_LT402_20261117.md`.
