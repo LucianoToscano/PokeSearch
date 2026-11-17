@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.78",
-  "code": 54585,
-  "label": 51393,
-  "previous_tag": "v0.03.77-54584",
-  "qa_max_code": 54584,
-  "release_notes": "LT393 — Nova Home do PokeSearch com 16 módulos em quatro linhas e quatro colunas, sem Extra, todos com medidas e importância visual iguais. Artes Iconehome fornecidas pelo proprietário e atlas transparente incluído no próprio APK; P1/P2 exibem imagens dinâmicas ligadas à configuração de busca flutuante e valores IV/rank quando aplicáveis. Mantidos wallpaper, data/hora, perfil, hub PoGoCoordinates, compartilhamento, modo claro/escuro, suporte, atualização, auto hunt e as ações existentes de Raids, Power Spots, Quests, Rocket, Assistente e Rare Candy. Ferramentas novas não implementadas apresentam aviso honesto, sem simular inventário, scanner ou trocas. Sem alterar filtros, sessão, cópia de credenciais, cotas 429 ou resultados. CI LT393 (Node, LT169, LT211, LT62, LT173, beta Android/R8) aprovado na PR #491. Homologação física Android Samsung, dimensões/gestos, Shiny e badges visuais especiais do overlay ainda pendente; ícones da Home acompanham a base e valores dos filtros, não há comprovação de espelhamento pixel a pixel. Atualização oficial utiliza assinatura permanente e pede consentimento de instalação Android."
+  "version": "0.03.79",
+  "code": 54586,
+  "label": 51394,
+  "previous_tag": "v0.03.78-54585",
+  "qa_max_code": 54585,
+  "release_notes": "LT394 — Home corrigida a partir da 0.03.78 LT: Pokébolas P1/P2 exibem SOMENTE imagem, sem badges numéricos 100%, 0%, IV ou rank, e ficam brancas, neutras, sem seleção ao desligar, independentemente do filtro salvo. Espelhamento da arte ativa segue os filtros separados P1 e P2. Pokédex e Comunidade preservam EXATAMENTE os desenhos originais enviados: apenas aumentamos o tamanho visual da Pokédex e corrigimos margens do ícone Comunidade, sem substituição da arte. Quests corrigido para não cortar o rodapé. Rocket substituído por escudo/R branco para uniformizar com o estilo da grade. Mantidos 16 módulos, 4x4, tema, fundo, login, PoGoCoordinates, serviços, filtros, sprites, busca, Auto Hunt e histórico. CI Node, LT169, LT211, LT62, LT173 e beta/R8 aprovados na PR #494. A homologação física em Samsung e Android 11–17 para escala, estado ON/OFF, badges específicos Shiny/fundos, tela clara/escura, TalkBack e instalação continua pendente; CI não comprova comportamento de dispositivo. Atualização usa somente APK oficial assinado com certificado permanente, SHA-256 público e confirmação de instalação do Android."
 }

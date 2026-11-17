@@ -5116,6 +5116,34 @@
           "A assinatura permanente, os limites do provedor, o controle HTTP 429, o intervalo automático de 3 minutos e a instalação confirmada pelo Android continuam preservados."
         ]
       }
+    },
+    {
+      "id": "lt394-home-icon-enquadramento-pokebolas-brancas-20261117",
+      "minVersionCode": 54586,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT394 — Ícones da Home corrigidos",
+      "sections": {
+        "novidades": [
+          "Pokébolas desligadas aparecem brancas e neutras na Home, mesmo com filtros previamente salvos.",
+          "Os dois controles mostram apenas a imagem, sem percentuais, IV, rankings ou badges sobre as Pokébolas."
+        ],
+        "melhorias": [
+          "Ícone da Pokédex ampliado para se equilibrar com os demais, preservando o mesmo desenho WebP enviado.",
+          "Comunidade mantém exatamente o ícone original, agora centralizado com margem de segurança para evitar cortes.",
+          "Quests mantém a arte original com enquadramento que preserva a parte inferior.",
+          "Rocket apresenta símbolo de escudo/R branco no mesmo padrão minimalista dos demais módulos."
+        ],
+        "correcoes": [
+          "Removidos 100%, 0% e valores de IV que apareciam sobre as Pokébolas na Home.",
+          "Mudanças no estado ligado/desligado repintam a imagem mesmo quando o modo IV não foi alterado.",
+          "Mantidos os 16 módulos da grade 4x4 sem adicionar Extra, caixas ou menus."
+        ],
+        "emDesenvolvimento": [
+          "Pendente verificação física Samsung Android 17 e Android 11–17: escala, margens, toques, modo claro e escuro e acessibilidade.",
+          "Espelhamento pleno dos detalhes visuais do overlay flutuante, inclusive Shiny, fundos ou resultados históricos, ainda requer homologação no aparelho.",
+          "A publicação oficial continua com assinatura permanente e instalação sujeita à confirmação do Android."
+        ]
+      }
     }
   ]
 }
