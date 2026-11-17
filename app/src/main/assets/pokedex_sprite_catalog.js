@@ -30,7 +30,9 @@
    const speciesNorm=norm(p.name||p.speciesName||"");
    const rawNorm=norm(rawName);
    const useForm=rawNorm&&!["UNSET","DEFAULT"].includes(rawNorm);
-   const form=useForm?(formsByName.get(rawNorm)||formIds.get(formId)):null;
+   // formId 0 is FORM_UNSET, never a valid replacement for an explicit name.
+   const form=useForm?(formId>0?formIds.get(formId)||null:
+     (rawNorm==="NORMAL"?null:formsByName.get(rawNorm)||null)):null;
    let suffix="",formUnknown=false;
    if(useForm){
     if(form){
