@@ -451,8 +451,8 @@ assert.equal(rawMissing.criteriaConfirmed,true,"Raw mode has a confirmed site fi
 assert.equal(rawMissing.cards.length,0,"A confirmed form must not turn an unknown card into Hundo");
 assert.equal(rawMissing.unverifiedIv,1,"Unverified IV cards are counted distinctly");
 checked++;
-const mobile=(name,num,iv,cp)=>name+"\\n#"+num+" · Female · M\\nQuick Attack / Thunderbolt\\nIV "+iv+
-  "  CP "+cp+"  LVL 6\\nAlbuquerque, New Mexico, United States\\nDESPAWN\\n59:30\\nGet coords";
+const mobile=(name,num,iv,cp)=>name+"\n#"+num+" · Female · M\nQuick Attack / Thunderbolt\nIV "+iv+
+  "  CP "+cp+"  LVL 6\nAlbuquerque, New Mexico, United States\nDESPAWN\n59:30\nGet coords";
 const anonymousMobile=run("collect","raw",false,{iv:["15","15","15"],siteCount:5,
  spawns:[
   {name:"Helioptile",text:mobile("Helioptile",694,"67% (12/14/4)",143),mobileFooter:true},
