@@ -1025,14 +1025,20 @@ function cardRoots(){
   let chosen=action.parentElement;
   for(let node=action,depth=0;node&&depth<10;node=node.parentElement,depth++){
    const t=text(node);
-   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
-      !/\bCP\b/i.test(t)||t.length>=2500)continue;
+   // Site guest cards commonly render "City, Country" with NO LOCATION
+   // heading. Requiring that heading made each Get coords button's wrapper
+   // look like an encounter, losing the Pokémon's IV, CP and Dex number.
+   if(!/\bDESPAWN\b/i.test(t)||!/\bCP\b/i.test(t)||t.length>=2500)continue;
    const controls=Array.from(node.querySelectorAll("button,a,[role=button]"))
     .filter(e=>vis(e)&&resultAction(e));
    // A single card can have Get coords and Open in Maps, but an enclosing
    // multi-card grid cannot be trusted as one result.
    const dexLabels=t.match(/#\s*\d{1,4}\b/g)||[];
-   if(controls.length<=2&&dexLabels.length<=1){chosen=node;break;}
+   const hasEncounter=dexLabels.length===1||
+    (dexLabels.length===0&&!!node.querySelector("h2,h3,h4,h5"));
+   if(controls.length<=2&&dexLabels.length<=1&&hasEncounter){
+    chosen=node;break;
+   }
   }
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
