@@ -1,5 +1,8 @@
 # ARK LT390 — Correções de resultados, atualização e sprites (17/11/2026)
 
+## Reabertura após autorização ARK
+A PR #483 foi marcada pronta para revisão, deixando de ser rascunho. A ausência anterior do Secure beta/R8 foi causada pela regra do workflow de ignorar draft PR; essa verificação deve ser executada por novo evento `synchronize` no HEAD atualizado. A autorização do proprietário para concluir o ARK supera a condição QA histórica deste documento, mas não dispensa qualquer gate de segurança, assinatura ou publicação.
+
 ## Estado verificado
 - Base oficial: v0.03.74 LT, versionCode 54581, release v0.03.74-54581.
 - PR de desenvolvimento [#483](https://github.com/LucianoToscano/PokeSearch/pull/483), branch `fix/lt390-refresh-guest-sprites-card-20261117`, HEAD de QA `bb330bd171aab96c08827edcbfb631387e8fe694`.
