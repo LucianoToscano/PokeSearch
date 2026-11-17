@@ -1334,7 +1334,16 @@ function collect(){
     return seen===query||(seen.endsWith(' (normal)')&&seen.slice(0,-9)===query);
    });
   };
-  const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
+  // LT392: copy only actual visible encounter cards for a READ-ONLY guest
+ // site preview. Do not infer IV from the search input or certify a match.
+ // Native decides whether to use this data; verified cards remain separate.
+ const sitePreviewCards=found.filter(x=>/^(?:#)?[0-9]{1,4}$/.test(
+     String(x.number||"").trim())&&
+     String(x.name||"").trim()&&!/^(?:pok[eé]mon|pokemon)$/i.test(
+      String(x.name||"").trim())&&
+     /^[0-9]{1,5}$/.test(String(x.cp||"").trim()))
+   .slice(0,5);
+ const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
   if(isLeague&&!x.rank)return {...x,rank:"",rankLimit,rankSource:"verified-site-filter"};
   return x;
  }):[];
@@ -1383,7 +1392,7 @@ function collect(){
  const expectedVisible=siteCount>0?Math.min(siteCount,100):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
+ return JSON.stringify({ok:true,cards:valid,sitePreviewCards,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,resultFreshnessPending,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
