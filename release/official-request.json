@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.91",
-  "code": 54598,
-  "label": 51406,
-  "previous_tag": "v0.03.90-54597",
-  "qa_max_code": 54597,
-  "release_notes": "ARK LT406 — Corrigido problema raiz de catálogo vazio na Minha Pokédex: o PokedexSpriteStore.java usava SHA/commit de 33 caracteres diferente do manifesto GO e do JavaScript, fazendo o Android rejeitar todas as 3.850 entradas GO e 2.213 legadas e impedindo resolver formas numéricas do PGSStats; agora os três identificadores coincidem. Contratos LT400/LT405 verificam essa consistência. Mantidos artwork oficial PokeAPI para espécies-base verificadas e PNG GO exata para variantes; nenhum desenho arbitrário de forma, Shiny, traje ou gênero. Preservados dois inventários, edições, exclusão local reversível, filtros, tags, fundos, notas, backup, sincronização SAF PGSStats, Home e P1/P2. PR #530 squash 3d2b04b371554f4b86f1c368242438cf9bf42d48. Node QA/LT169/LT211/LT62/LT173/Secure beta aprovados. NÃO foi feita homologação física Samsung Android 17, redes reais, cache ou cobertura de todas as variantes; não prometer sprites 100% restauradas. APK não inclui imagens proprietárias de terceiros, nem modifica o Pokémon GO. Distribuir somente pelo workflow oficial protegido de assinatura permanente, sem FastDev."
+  "version": "0.03.92",
+  "code": 54599,
+  "label": 51407,
+  "previous_tag": "v0.03.91-54598",
+  "qa_max_code": 54598,
+  "release_notes": "ARK LT407 — EXCLUSIVIDADE POKESEARCH OFICIAL: removidos do repositório os workflows FastDev, fontes Android do pacote .preview, buildType Preview, scripts de OTA/ADB/assinatura DEV e manifesto fastdev/latest.json. Exceções de preview retiradas de integridade, updater e Home, mantendo apenas com.lucianotoscano.pokesearch e release oficial assinada pela chave permanente. O gate Android R8 permanece, mas seu APK temporário de QA não é enviado como instalador. Contratos novos impedem regressão do canal DEV. Preservadas funcionalidades existentes, inventários 1/2, PGSStats SAF, sprites LT406, notas, fundos, ícones, overlays P1/P2. Código PR #532, squash eca9865d1d43565f7836de9c6b41de2d741a220d, gates Node/LT169/LT211/LT62/LT173/R8 aprovados. Históricos de releases/tags/branches e segredos de FastDev existentes no GitHub não são apagados por esta publicação; exigem administração posterior. Sem homologação física Samsung Android 17. Distribuição exclusivamente no workflow oficial protegido, nunca por versão DEV."
 }
