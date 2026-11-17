@@ -10,7 +10,8 @@ assert.ok(inline,"detail JavaScript present");
 new (require("node:vm").Script)(inline);
 // 1) A zero-result label is tied to the sprite axis, not the result column.
 assert.match(dock,/body\.result-window #empty\{box-sizing:border-box!important;[\s\S]*?width:var\(--sprite\)!important/);
-assert.ok(dock.includes('empty.style.display=emptyResult&&(!resultWindow||!resultDisplayOptions.count)?'),
+assert.ok(dock.includes('empty.style.display=guestSitePreviewActive&&resultWindow?')&&
+ dock.includes('emptyResult&&(!resultWindow||!resultDisplayOptions.count)?'),
   "never show two zero badges when the optional count is enabled");
 assert.ok(dock.includes('empty.textContent=emptyResult&&'),
   "show 0 only for a settled, empty search");
