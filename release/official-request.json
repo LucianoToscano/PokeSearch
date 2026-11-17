@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.83",
-  "code": 54590,
-  "label": 51398,
-  "previous_tag": "v0.03.82-54589",
-  "qa_max_code": 54589,
-  "release_notes": "LT398 — Minha Pokédex pessoal no app oficial. Importação manual e privada do PGSStats.json com Inventários 1/2 independentes; abas Tags/Pokémon/Ovos, grade familiar, fichas com CP/IV/PS/favoritos/Shiny/Sombroso/Purificado, 537 nomes de golpes pt-BR, 278 metadados de fundo, 87 vestimentas, eventos, ordenação e avaliação 0–3 estrelas. Ranking teórico de IV Grande/Ultra/Mestra com snapshot PvPoke 2026-10-19; variantes ausentes indicadas sem projeção. Fundos decorativos próprios não são fundos conquistados no jogo. Ícone Pokédex atual passa a abrir o inventário; os 16 ícones da Home, Pokébolas, Community, Quests e Assistente preservados. Sem troca/venda/leilão, sem envio de dados pessoais e sem download de imagens proprietárias. Gates Node, LT169, LT211, LT62, LT173, PGS e Secure beta/R8 passaram na PR #506; revisão e testes físicos Samsung SM-S928B Android 17, acessibilidade, importação real no APK oficial, imagens de trajes/fundos e validação visual continuam pendentes."
+  "version": "0.03.84",
+  "code": 54591,
+  "label": 51399,
+  "previous_tag": "v0.03.83-54590",
+  "qa_max_code": 54590,
+  "release_notes": "LT399 — Pokédex pessoal aprimorada no PokeSearch oficial: catálogo de 278 IDs de fundos, 263 imagens conhecidas no repositório PokeMiners (114,6 MB), mapeamento de 275 IDs e 3 ausentes sem imagem verificada. Download opcional de todas as imagens diretamente no aparelho, privado, com tamanho/hash Git e cancelamento/retomada, sem embutir arquivos proprietários no APK. Aplicação do fundo original por ID quando em cache e seleção manual de decoração sem alterar o jogo. Filtros combinados, comparar até três Pokémon PC/IV/forma/estado, anotações privadas e histórico agregado entre importações PGSStats por coleção, melhorias de layout e espaços inferiores. Mantém o ícone atual Pokédex, Home, P1/P2, busca, login, comunidade/quest/assistente e assinatura permanente. Dados de conta não enviados, sem trocas/venda/leilões. PR #509: Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados. QA físico do Samsung Android 17 e download integral dos 263 PNG ainda não executados; três IDs 28/204/423 sem arquivo correspondente."
 }
