@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Minha Pokédex · PokeSearch</title>
+<style>
+:root{--ink:#315c62;--muted:#7b9998;--teal:#26bba6;--mint:#a6e5c0;--paper:#f9fdf8;--line:#e2eee9}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Roboto,"Arial",sans-serif;color:var(--ink);background:linear-gradient(160deg,#f8fff9,#edf8f6)}button,input,select{font:inherit}button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #177e84;outline-offset:2px}
+#app{max-width:720px;margin:auto;padding-bottom:24px}
+header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur(13px);padding:10px 14px 8px;border-bottom:1px solid var(--line)}
+.title-row{display:flex;align-items:center;gap:10px}
+.title-row h1{font-size:20px;margin:0;flex:1;letter-spacing:.1px}
+.back{border:0;background:transparent;color:#428582;font-size:29px;line-height:1;width:33px;height:38px}
+.round{border:1px solid #cae6db;color:#217e77;background:#e9f8f0;border-radius:30px;padding:8px 13px;font-weight:700;font-size:12px}
+.segment{display:flex;margin-top:9px;background:#e6f4ea;border-radius:50px;padding:3px}
+.segment button{flex:1;border:0;background:transparent;border-radius:50px;padding:7px;color:#6b918d;font-weight:700}
+.segment button.active{background:white;color:#258b83;box-shadow:0 2px 6px #b5d9cd80}
+.summary{padding:13px 16px 3px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.summary strong{display:block;font-size:16px}.summary small{font-size:11px;color:var(--muted)}
+.import{border:0;border-radius:24px;color:white;font-size:13px;padding:10px 16px;font-weight:700;background:linear-gradient(100deg,#77ce91,#13b99e);box-shadow:0 3px 10px #36b39f38}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:10px 14px}
+.metric{background:#fff;border-radius:12px;border:1px solid var(--line);padding:9px 3px;text-align:center;min-width:0}
+.metric strong{display:block;font-size:18px}.metric span{display:block;font-size:10px;color:var(--muted)}
+.search-row{display:flex;gap:8px;margin:10px 14px 8px}.search{flex:1;min-width:0;border:0;border-radius:27px;background:#e2f3df;color:#285f60;padding:12px 15px;font-size:15px}
+.search::placeholder{color:#759d94}.sort{width:115px;border:1px solid var(--line);border-radius:23px;color:#4c8282;background:white;font-size:12px;padding:0 6px}
+.filters{display:flex;gap:7px;overflow-x:auto;padding:2px 14px 10px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}
+.filter{border:1px solid #d1e9e0;border-radius:24px;background:white;color:#5c8e87;font-size:12px;padding:7px 13px;white-space:nowrap}
+.filter.active{color:white;background:#168f8d;border-color:#168f8d}
+.result-note{font-size:11px;color:#87a3a1;margin:0 15px 7px}
+#grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px 5px;padding:2px 10px 20px}
+.mon{position:relative;min-width:0;background:transparent;border:0;text-align:center;color:#416a6c;padding:5px 2px 8px;border-radius:14px}
+.mon:active{background:#ddf6e8}
+.cp{font-size:12px;white-space:nowrap;font-weight:750}.cp small{font-size:9px;font-weight:450;color:#8aa9a6;margin-right:2px}
+.pic{width:min(92px,100%);height:94px;position:relative;margin:auto;display:grid;place-items:center}
+.pic:before{content:"";position:absolute;inset:15px 1px 2px;border-radius:50%;background:radial-gradient(circle,#b9ebe0 0%,#e3faf0 55%,transparent 73%)}
+.pic img{position:relative;z-index:1;max-width:98%;max-height:92px;object-fit:contain;image-rendering:auto}
+.no-art{position:relative;z-index:1;color:#8bc8b8;font-size:31px;font-weight:300}
+.flags{position:absolute;right:1px;top:0;z-index:2;display:grid;gap:1px;text-align:right;font-size:15px;line-height:1}
+.name{font-size:12px;font-weight:700;line-height:16px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.iv{font-size:10px;white-space:nowrap;color:#5d8387}.iv b{display:inline-grid;place-items:center;min-width:16px;height:16px;border-radius:50%;font-size:9px;background:#477c80;color:white;padding:0 2px}
+.hpbar{height:4px;border-radius:8px;background:#dcece7;margin:8px 15% 0;overflow:hidden}.hpbar i{height:100%;display:block;background:#62dbab}
+.empty{text-align:center;padding:58px 25px;color:#729a94}.empty .symbol{font-size:56px}.empty strong{display:block;font-size:18px;margin-bottom:8px}
+.more{margin:0 auto 20px;display:block;background:#e4f6ed;border:1px solid #c8e8dc;color:#2a8880;border-radius:24px;padding:10px 25px}
+#detail{position:fixed;inset:0;z-index:12;overflow-y:auto;background:#fff;display:none}
+#detail.open{display:block}
+.hero{position:relative;min-height:305px;background:radial-gradient(circle at 45% 24%,#b7e7bb,#4fbdaa 60%,#25819a);display:grid;place-items:center;overflow:hidden}
+.hero:before{content:"";position:absolute;left:9%;right:9%;top:80px;height:180px;border:4px solid #ffffff9c;border-bottom:0;border-radius:50% 50% 0 0}
+.hero.aurora{background:radial-gradient(circle at 55% 4%,#c9eaff,#8561c8 55%,#264b79)}
+.hero.sunset{background:radial-gradient(circle at 60% 10%,#fff1b2,#ef9e87 40%,#8e74b9 90%)}
+.hero.ocean{background:radial-gradient(circle at 45% 12%,#aaf7ef,#3cb6c7 48%,#185f91 95%)}
+.hero.night{background:radial-gradient(circle at 52% 6%,#d0dffb,#3d5386 38%,#171c3f 91%)}
+.hero-img{position:relative;z-index:1;max-width:90%;height:205px;object-fit:contain;filter:drop-shadow(0 12px 13px #062b4055);margin-top:45px}
+.hero-placeholder{font-size:110px;color:#ffffff8a;position:relative;z-index:1;margin-top:50px}
+.hero-title{position:absolute;top:17px;left:0;right:0;color:white;text-align:center;font-size:27px;font-weight:400;z-index:2}
+.hero-title small{font-size:15px}
+.hero-back{position:absolute;z-index:3;top:12px;left:15px;color:white;border:0;background:#0002;border-radius:50%;width:37px;height:37px;font-size:25px}
+.decor-label{position:absolute;bottom:11px;right:12px;color:#f3ffff;background:#23575d85;font-size:10px;border-radius:20px;padding:5px 9px;z-index:2}
+.sheet{position:relative;border-radius:23px 23px 0 0;background:white;margin-top:-12px;padding:16px 17px 30px;min-height:60vh}
+.sheet h2{font-size:24px;text-align:center;font-weight:650;margin:7px 0 3px}.sub{text-align:center;font-size:11px;color:#839f9e}
+.health{width:65%;height:7px;background:#d9ede6;border-radius:9px;margin:14px auto 5px;overflow:hidden}
+.health>i{display:block;background:#62dab1;height:100%}
+.triad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:24px 0 14px;text-align:center}
+.triad strong{display:block;font-size:15px}.triad span{font-size:10px;color:#98acaa}
+.chips{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin:10px auto 18px}
+.chip{background:#e9f8f1;border-radius:50px;padding:6px 10px;font-size:11px;color:#428d7e}
+.group{padding:14px 0;border-top:1px solid #e6f0ed}.group h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:#769694;margin:0 0 10px}
+.ivrow{display:flex;align-items:center;gap:8px;margin:9px 0;font-size:12px}.ivrow span{width:64px}.ivbar{flex:1;height:10px;border-radius:20px;background:#e7efed;overflow:hidden}
+.ivbar>i{display:block;height:100%;background:linear-gradient(90deg,#f4b15d,#eaa257)}
+.actions{display:flex;flex-wrap:wrap;gap:7px}.preset{border:1px solid #cbe5df;color:#377f7c;background:white;padding:8px 12px;border-radius:18px;font-size:12px}.preset.active{background:#167e83;color:white}
+.note{color:#7c9999;font-size:11px;line-height:1.5;padding:6px 0}
+#notice{position:fixed;z-index:15;bottom:12px;left:14px;right:14px;text-align:center;background:#275f66;color:white;padding:13px;border-radius:12px;display:none;box-shadow:0 8px 30px #0b343750}
+@media(min-width:560px){#grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="title-row"><button class="back" id="back" aria-label="Voltar à home">‹</button><h1>Minha Pokédex</h1><button class="round" id="help">Privacidade</button></div>
+<div class="segment"><button id="slot1" class="active">Inventário 1</button><button id="slot2">Inventário 2</button></div></header>
+<section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON</button></section>
+<section class="metrics"><div class="metric"><strong id="m-total">0</strong><span>Pokémon</span></div><div class="metric"><strong id="m-shiny">0</strong><span>Shiny</span></div><div class="metric"><strong id="m-hundo">0</strong><span>100% IV</span></div><div class="metric"><strong id="m-bg">0</strong><span>Fundos</span></div></section>
+<div class="search-row"><input id="search" class="search" placeholder="⌕  Buscar Pokémon, número ou forma…" aria-label="Buscar Pokémon"><select id="sort" class="sort" aria-label="Ordenar"><option value="cp">Maior PC</option><option value="recent">Mais recente</option><option value="iv">Maior IV</option><option value="number">Nº Pokédex</option><option value="name">Nome</option></select></div>
+<div class="filters" id="filters" aria-label="Filtrar inventário"></div>
+<div class="result-note" id="result-note"></div>
+<div id="grid" aria-live="polite"></div><button id="more" class="more" hidden>Mostrar mais</button>
+</div>
+<div id="detail"><div id="hero" class="hero"><button id="detail-back" class="hero-back" aria-label="Voltar à lista">‹</button><div id="hero-title" class="hero-title"></div><div id="hero-sprite"></div><span id="decor-label" class="decor-label"></span></div><div class="sheet">
+<h2 id="detail-name"></h2><div class="sub" id="detail-sub"></div><div class="health"><i id="health-bar"></i></div><div class="sub" id="health-text"></div>
+<div class="triad"><div><strong id="detail-weight"></strong><span>PESO</span></div><div><strong id="detail-iv"></strong><span>IV TOTAL</span></div><div><strong id="detail-height"></strong><span>ALTURA</span></div></div>
+<div class="chips" id="badges"></div>
+<div class="group"><h3>Avaliação individual</h3><div id="individual-bars"></div></div>
+<div class="group"><h3>Movimentos registrados</h3><div id="moves"></div></div>
+<div class="group"><h3>Informações do Pokémon</h3><div id="other-info"></div></div>
+<div class="group"><h3>Fundo da ficha · Apenas decorativo</h3><div class="actions" id="presets"></div><p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
+<p class="note">Informações importadas do arquivo local, não sincronizadas automaticamente com Pokémon GO. Identificadores de trajes/fundos permanecem registrados mesmo sem arte específica disponível.</p>
+</div></div>
+<div id="notice" role="status"></div>
+<script src="sprite_offline.js"></script>
+<script src="personal_pokedex.js"></script>
+</body></html>
