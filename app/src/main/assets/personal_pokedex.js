@@ -407,6 +407,23 @@ function openHistory(){
   return '<div class="history-row"><strong>'+escapeHtml(when)+'</strong>'+
    '<div class="history-summary">'+diff+'</div><small>'+number(row.total)+' Pokémon no inventário</small></div>';
  }).join(""):'<p class="pane-sub">Nenhuma importação registrada nesta versão.</p>';
+ const native=typeof bridge.getLastImportDiff==="function"?bridge.getLastImportDiff(state.slot):"{}";
+ let changes={};try{changes=JSON.parse(native||"{}");}catch(_){}
+ const types=[["new","Novos nesta importação"],["changed","Registros alterados"],
+              ["missing","Ausentes neste instantâneo"]];
+ const lists=types.map(([key,title])=>{
+  const items=Array.isArray(changes[key])?changes[key]:[];
+  return '<details class="lt402-diff"><summary>'+escapeHtml(title)+' ('+number(items.length)+')</summary>'+
+   (items.length?'<ul>'+items.slice(0,200).map(p=>
+     '<li>'+escapeHtml(state.names.get(Number(p.species))||("#"+p.species))+
+     ' · ID …'+escapeHtml(String(p.id).slice(-6))+'</li>').join("")+'</ul>':
+     '<p class="note">Nenhuma diferença nesta categoria.</p>')+
+   (items.length>200?'<p class="note">Mostrando 200 de '+number(items.length)+' itens.</p>':"")+
+   '</details>';
+ });
+ if(changes.at)el("history-rows").insertAdjacentHTML("beforeend",
+  '<p class="note">Diferenças da importação mais recente. Ausência não comprova transferência ou exclusão no jogo.</p>'+
+  lists.join(""));
  el("history-panel").hidden=false;
 }
 function loadBackgrounds(){
