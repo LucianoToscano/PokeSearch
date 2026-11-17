@@ -596,7 +596,7 @@ public class MainActivity extends Activity {
             // to the previous colorful ten-icon pack on touch.
             artwork.setOnTouchListener(null);
         }
-        if(index==0||index==1)artwork.setOnTouchListener(null);
+        if(index==0||index==1||index==3)artwork.setOnTouchListener(null);
         artwork.setBackground(null);
         artwork.setScaleType(ImageView.ScaleType.FIT_CENTER);
         // LT395: optical margins are specific to the ORIGINAL artwork;
