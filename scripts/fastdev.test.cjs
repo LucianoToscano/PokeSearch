@@ -35,3 +35,25 @@ test("empty diff uses core smoke and does not assert full QA",()=>{
  assert.equal(p.tests.length,3);
  assert.ok(p.fullQaRequired);
 });
+
+test("first-party profile DOM runs login/identity regressions without APK",()=>{
+ const p=plan(["app/src/main/assets/profile_summary.js"]);
+ assert.equal(p.mode,"targeted");
+ assert.ok(p.tests.includes("app/tests/lt381-profile-sync.test.js"));
+ assert.ok(p.tests.includes("app/tests/lt376e-profile-login-selector.test.js"));
+ assert.ok(p.fullQaRequired);
+});
+test("Android account and avatar sources select both smoke and identity checks",()=>{
+ for(const className of ["MainActivity","PogoAccountSlots","ProfileAvatarCache"]){
+  const p=plan(["app/src/main/java/com/lucianotoscano/pokesearchoverlay/"+className+".java"]);
+  assert.equal(p.mode,"broad-smoke");
+  assert.ok(p.tests.includes("app/tests/signing-contract.test.js"));
+  assert.ok(p.tests.includes("app/tests/lt381-profile-sync.test.js"));
+  assert.ok(p.fullQaRequired);
+ }
+});
+test("FastDev CI config is advisory rather than an APK build trigger",()=>{
+ const p=plan([".github/workflows/pokesearch-fastdev-branch.yml"]);
+ assert.equal(p.mode,"broad-smoke");
+ assert.ok(p.fullQaRequired);
+});

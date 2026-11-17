@@ -25,6 +25,16 @@ const LOGIN = [
   "app/tests/login-entry.test.js",
   "app/tests/lt204-login-optional-shiny-paused.test.js"
 ];
+const PROFILE = [
+  "app/tests/lt182-discord-profile-auth-recovery.test.js",
+  "app/tests/lt376e-profile-login-selector.test.js",
+  "app/tests/lt381-profile-sync.test.js"
+];
+const PROFILE_NATIVE = [
+  ...BASIC,
+  ...LOGIN,
+  ...PROFILE
+];
 
 function plan(changedFiles) {
   const files = [...new Set(changedFiles.map(f => f.replace(/\\/g, "/").trim()).filter(Boolean))];
@@ -50,6 +60,13 @@ function plan(changedFiles) {
     } else if (file === "app/src/main/assets/login_entry.js" ||
                file === "app/src/main/assets/shiny_login.js") {
       LOGIN.forEach(t => selected.add(t));
+    } else if (file === "app/src/main/assets/profile_summary.js") {
+      PROFILE.forEach(t => selected.add(t));
+    } else if (/^app\/src\/main\/java\/com\/lucianotoscano\/pokesearchoverlay\/(MainActivity|PogoAccountSlots|ProfileAvatarCache)\.java$/.test(file)) {
+      // Native files have a wide blast radius; include both smoke and
+      // real profile regressions while keeping full Android QA for the PR.
+      PROFILE_NATIVE.forEach(t => selected.add(t));
+      broad = true;
     } else if (file === "app/src/main/assets/release_notes.json") {
       selected.add("app/tests/lt83-home-release-notes.test.js");
     } else if (file === "scripts/test_ota_builder.py") {

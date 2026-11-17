@@ -5,6 +5,11 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# Stop stale private beta builds after a PR receives another fix.
+# Only the newest SHA needs this expensive R8/Android verification.
+concurrency:
+  group: secure-beta-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   release-apk:
     # v0.51 work branch: build only via an explicit workflow_dispatch request.
