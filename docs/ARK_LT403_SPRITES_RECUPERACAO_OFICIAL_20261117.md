@@ -2,7 +2,9 @@
 
 **Data:** 17/11/2026. **Base anterior:** v0.03.87 LT / versionCode 54594. **Versão solicitada:** v0.03.88 LT / 54595 / label 51403.
 
-<!-- RELEASE_METADATA: inserção somente após verificação real do workflow/release/asset/hash. -->
+**Estado da publicação: PUBLICADA E VERIFICADA.** [Release estável v0.03.88-54595](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.88-54595) publicada em **17/11/2026 às 19:27:02 UTC** (16h27 BRT), draft=false e prerelease=false. [APK oficial permanente](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.88-54595/PokeSearch-v0.03.88-LT.apk) `PokeSearch-v0.03.88-LT.apk`, asset `uploaded`, **61.747.738 bytes**, digest SHA-256 informado e verificado pelo workflow/GitHub: `d7ed73e6e85b3e615ca0f25db2fd003abb1fda0df9c58462088b5a1bb91aa621`.
+
+**Workflow oficial protegido [#44158042854](https://github.com/LucianoToscano/PokeSearch/actions/runs/44158042854): completed/success**, HEAD `d25ad7a22c7dc3052bf117be8088e647caab78b9`. Gates: preflight, Node/OTA, geração de assets, Android R8, **certificado permanente conferido no CI** (SHA-256 `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`), upload, release pública, verificação de hash/asset e limpeza de segredo: success. **O hash público foi consultado da API GitHub e validado pelo workflow; não se alega recálculo independente dos bytes baixados ou instalação em Samsung nesta sessão.** A release v0.03.87 foi preservada.
 
 ## Código integrado
 - Implementação: PR [#520](https://github.com/LucianoToscano/PokeSearch/pull/520), squash `d6c9a7101a7409bd1819f3c649118ebe51e86630`.
