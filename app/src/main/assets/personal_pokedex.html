@@ -95,11 +95,15 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
  <button type="button" id="history-open" class="tool-button"><span aria-hidden="true">◷</span> Histórico</button>
  <button type="button" id="select-toggle" class="tool-button"><span aria-hidden="true">▣</span> Selecionar</button>
  <button type="button" id="add-pokemon" class="tool-button">＋ Pokémon</button>
- <button type="button" id="backup-export" class="tool-button">⇧ Exportar</button>
- <button type="button" id="sync-source" class="tool-button">↻ Vincular arquivo</button>
- <button type="button" id="sync-now" class="tool-button">Sincronizar</button>
- <button type="button" id="undo-delete" class="tool-button">↶ Desfazer exclusão</button>
- <button type="button" id="delete-all" class="tool-button dangerous">Limpar inventário</button>
+ <details class="lt402-management"><summary>⋯ Gerenciar</summary>
+  <div class="lt402-management-actions">
+   <button type="button" id="backup-export" class="tool-button">⇧ Exportar backup</button>
+   <button type="button" id="sync-source" class="tool-button">↻ Vincular arquivo local</button>
+   <button type="button" id="sync-now" class="tool-button">Sincronizar agora</button>
+   <button type="button" id="undo-delete" class="tool-button">↶ Desfazer exclusão</button>
+   <button type="button" id="delete-all" class="tool-button dangerous">Limpar inventário</button>
+  </div>
+ </details>
 </div>
 <p class="sync-hint" id="sync-status">Aguardando autorização de arquivo local.</p>
 <div id="selection-strip" class="selection-strip" hidden>
