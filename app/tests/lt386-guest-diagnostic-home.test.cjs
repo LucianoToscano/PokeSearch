@@ -19,7 +19,7 @@ test("P1/P2 share a guest-safe ordinary search and preserve the independent slot
  assert.match(service,/Visitante · conferindo busca pública/);
 });
 test("Guest cannot bypass a provider rate limit or silently emulate API-only inverse sort",()=>{
- assert.match(service,/if\(authorizedApiQaSelected\(\)&&apiProviderBackoffUntil\(\)>0L\)/);
+ assert.match(service,/if\(authorizedApiQaSelected\(\)&&!guestPublicSearch&&apiProviderBackoffUntil\(\)>0L\)/);
  assert.match(service,/if\(!authorizedApiQaSelected\(\)\|\|guestPublicSearch\)/);
  assert.match(service,/Ordenação inversa exige API/);
 });
