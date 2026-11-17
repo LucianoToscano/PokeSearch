@@ -510,6 +510,8 @@ public class OverlayService extends Service {
     // User preference controls API/DOM source; current default is API ON, not DOM.
     private AuthorizedApiCollector authorizedApiCollector;
     private boolean displayedApiResults=false;
+    // Set only after a verified first-party public Search exposes its 5/10 banner.
+    private boolean guestResultLimitConfirmed=false;
     private int displayedApiSearchId=-1;
     // Provider 429 is an upstream limit, never a permission to switch accounts,
     // force DOM searches, or retry until accepted. Both Pokeballs share this
@@ -1250,7 +1252,10 @@ public class OverlayService extends Service {
                 (confirmedSubmittedFiltersGeneration==requestGeneration&&
                  submittedSearchGeneration==requestGeneration&&
                  !searchInProgress&&!resultsStale&&
-                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
+                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+","+
+                (guestResultLimitConfirmed&&
+                 !PogoAccountSlots.loggedIn(this,PogoAccountSlots.assigned(this,
+                     isSecondaryOverlay())))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(popupPanel,popupLoaded,data);
@@ -3845,6 +3850,8 @@ public class OverlayService extends Service {
                 WatchAlerts.permissionGranted(this));
         }
         displayedApiResults=authorizedApiQa;
+        guestResultLimitConfirmed=!authorizedApiQa&&
+            r.optBoolean("guestLimitBanner",false)&&sorted.length()>0;
         results=sorted.toString();
         resultsDistanceCenter=locationEnabled?locationCoords:"";
         searchPhase=sorted.length()==0?"empty":"updated";
@@ -5999,6 +6006,21 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
+        @JavascriptInterface public void openGuestLogin(){handler.post(()->{
+            if(stopped)return;
+            final boolean secondary=isSecondaryOverlay();
+            final int assigned=PogoAccountSlots.assigned(OverlayService.this,secondary);
+            if(PogoAccountSlots.loggedIn(OverlayService.this,assigned))return;
+            Intent login=new Intent(OverlayService.this,MainActivity.class);
+            login.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN");
+            login.putExtra("pogoAccountSlot",assigned==2?2:1);
+            login.putExtra("pogoOverlayNumber",secondary?2:1);
+            login.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            try{startActivity(login);}
+            catch(Exception e){recordFailure("abrir login público",e);
+                diagnosticError("Não foi possível abrir o login PoGoCoordinates.");}
+        });}
         @JavascriptInterface public void confirmCooldownCapture(int sourceIndex){handler.post(()->OverlayService.this.confirmCooldownCapture(sourceIndex));}
         @JavascriptInterface public void toggleCooldown(){handler.post(OverlayService.this::toggleCooldown);}
         @JavascriptInterface public void undoCooldown(){handler.post(OverlayService.this::undoCooldown);}
