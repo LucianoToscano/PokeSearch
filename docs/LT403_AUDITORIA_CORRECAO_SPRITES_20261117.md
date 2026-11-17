@@ -1,5 +1,8 @@
 # LT403 — Auditoria de sprites ausentes na Minha Pokédex (17/11/2026)
 
+> **Encerramento ARK LT403 (17/11/2026):** PR código #520, squash `d6c9a7101a7409bd1819f3c649118ebe51e86630`; PR release #522, squash `d25ad7a22c7dc3052bf117be8088e647caab78b9`. **PokeSearch v0.03.88 LT / versionCode 54595 publicado oficialmente**, workflow protegido [#44158042854](https://github.com/LucianoToscano/PokeSearch/actions/runs/44158042854) completed/success, [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.88-54595/PokeSearch-v0.03.88-LT.apk), SHA-256 `d7ed73e6e85b3e615ca0f25db2fd003abb1fda0df9c58462088b5a1bb91aa621`. Certificado permanente validado pelo CI; QA físico Samsung Android 17 ainda pendente. Ver [ARK oficial](ARK_LT403_SPRITES_RECUPERACAO_OFICIAL_20261117.md) e [LT404](LT404_PROMPT_CONTINUIDADE_APOS_LT403_20261117.md). O texto "aguardando gate" abaixo registra a decisão de publicação na fase da auditoria inicial, antes dos merges.
+
+
 ## Base real e material observado
 - `main` e release estável confirmadas antes do patch: **v0.03.87 LT / versionCode 54594** (LT402), não voltar à 0.03.86.
 - Revisados: `AGENTS.md`, `docs/GUIA_MESTRE.md`, auditorias LT400/LT401/LT402, política ARK, catálogo/manifesto, WebView Android e testes LT400–LT402.
