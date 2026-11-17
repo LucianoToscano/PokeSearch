@@ -33,6 +33,12 @@ test("visitor collector recognizes all five cards including rate limited cards w
  assert.deepEqual(cards.map(c=>c.node),encountered);
 });
 
+test("provider visitor count 'Showing 5 results' triggers incomplete-list retry, not a fake one-result completion",()=>{
+ assert.match(probe,/Showing\\s\+\\(\\d\+\\)\\s\+\\(\\?:spawns\\?\\|results\\)/);
+ assert.match(probe,/const siteIncomplete=expectedVisible>found.length/);
+ assert.match(probe,/const expectedVisible=siteCount>0\?Math\.min\(siteCount,100\):0/);
+});
+
 test("Ducklett #580 and Magikarp #129 share exact local image in results and detail",()=>{
  for(const [dex,name] of [[580,"Ducklett"],[129,"Magikarp"]]){
    const image="https://example.org/temporary-lazy-thumbnail.png";
