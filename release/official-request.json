@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.79",
-  "code": 54586,
-  "label": 51394,
-  "previous_tag": "v0.03.78-54585",
-  "qa_max_code": 54585,
-  "release_notes": "LT394 — Home corrigida a partir da 0.03.78 LT: Pokébolas P1/P2 exibem SOMENTE imagem, sem badges numéricos 100%, 0%, IV ou rank, e ficam brancas, neutras, sem seleção ao desligar, independentemente do filtro salvo. Espelhamento da arte ativa segue os filtros separados P1 e P2. Pokédex e Comunidade preservam EXATAMENTE os desenhos originais enviados: apenas aumentamos o tamanho visual da Pokédex e corrigimos margens do ícone Comunidade, sem substituição da arte. Quests corrigido para não cortar o rodapé. Rocket substituído por escudo/R branco para uniformizar com o estilo da grade. Mantidos 16 módulos, 4x4, tema, fundo, login, PoGoCoordinates, serviços, filtros, sprites, busca, Auto Hunt e histórico. CI Node, LT169, LT211, LT62, LT173 e beta/R8 aprovados na PR #494. A homologação física em Samsung e Android 11–17 para escala, estado ON/OFF, badges específicos Shiny/fundos, tela clara/escura, TalkBack e instalação continua pendente; CI não comprova comportamento de dispositivo. Atualização usa somente APK oficial assinado com certificado permanente, SHA-256 público e confirmação de instalação do Android."
+  "version": "0.03.80",
+  "code": 54587,
+  "label": 51395,
+  "previous_tag": "v0.03.79-54586",
+  "qa_max_code": 54586,
+  "release_notes": "LT395 — Home e menu lateral refinados. Ícones Quests e Comunidade mantêm EXATAMENTE o desenho original fornecido pelo proprietário, com atlas interno reenquadrado para proteger o limite inferior/direito e padding individual contra cortes. Assistente conserva o personagem original, com escala óptica um pouco menor e opacidade de 92% apenas na Home para equilibrar o peso visual. Grade 4×4 com 16 módulos, nomes e alinhamentos padronizados; Pokébolas 1/2 sem badges numéricos e brancas quando desligadas, Pokédex original preservada. Menu lateral redesenhado com cabeçalho compacto e versão, símbolos em coluna de largura igual, toque nativo, seções Principal (Conta, Favoritos, Preferências, Filtros PGSharp), Ajuda e atualizações (Novidades, Guia rápido, Reportar problema) e Mais (Dados e backup, Sobre o aplicativo). Importar/Exportar dados permanecem em Dados e backup; Compartilhar, Agradecimentos e Estatísticas permanecem em Sobre; Transparência dos fundos da Home fica em Preferências. Mostrar/Ocultar/Abrir Chat foi movido para o módulo Comunidade, respeitando o estado anterior do usuário. Mantidas contas P1/P2, controle Premium, suporte, compartilhamento, preferências, serviços de overlay, resultados, sessão, login, sprites e assinatura. CI aprovado na PR #497: Node QA, LT169, LT211, LT62, LT173, beta APK/R8. Homologação física Samsung/Android 11–17 da escala, alinhamentos, toque e cortes de arte ainda pendente; não há comprovação de pixel perfect só com CI. Atualização oficial usa assinatura permanente, SHA-256 público e instalação confirmada pelo Android."
 }
