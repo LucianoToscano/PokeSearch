@@ -54,6 +54,7 @@ jobs:
           node --check scripts/fastdev.cjs
           node --check scripts/fastdev-audit.cjs
           node --test scripts/fastdev.test.cjs
+          node --test app/tests/dev-integrity-parity.test.js
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
       - name: Select a validated on-demand request without release signing
