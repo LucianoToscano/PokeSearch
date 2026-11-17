@@ -77,7 +77,9 @@
     const genderSuffix=female?".g2":"";
     const genderAware=prefix+genderSuffix+(shiny?".s":"")+".icon.png";
     if(primary.has(genderAware))return {key:"a:"+genderAware,reason:"exact",dex,exact};
-    if(female&&exactGender)continue;
+    // A female-only explicit form (Meowstic, etc.) already encodes gender.
+    const formSpecifiesGender=/(?:^|_)FEMALE$/.test(suffix);
+    if(female&&exactGender&&!formSpecifiesGender)continue;
     const plain=prefix+(shiny?".s":"")+".icon.png";
     if(primary.has(plain))return {key:"a:"+plain,reason:"exact",dex,exact};
    }
