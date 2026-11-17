@@ -12,6 +12,8 @@ on:
       - 'app/**'
       - 'scripts/fastdev.cjs'
       - 'scripts/fastdev.test.cjs'
+      - 'scripts/fastdev-manifest.cjs'
+      - 'scripts/fastdev-manifest.test.cjs'
       - 'scripts/fastdev-audit.cjs'
       - 'scripts/fastdev-request.cjs'
       - 'scripts/fastdev-request.test.cjs'
@@ -65,6 +67,8 @@ jobs:
           node --check scripts/fastdev-request.cjs
           node --test scripts/fastdev-request.test.cjs
           node --test scripts/fastdev-version.test.cjs
+          node --check scripts/fastdev-manifest.cjs
+          node --test scripts/fastdev-manifest.test.cjs
           bash -n scripts/fastdev-signing-preflight.sh
           node --test scripts/fastdev-signing-preflight.test.cjs
       - name: Select a validated on-demand request without release signing
@@ -268,6 +272,45 @@ jobs:
             --notes "Preview assinado, pacote separado e atualização opcional. SHA source: $GITHUB_SHA. Não é a release oficial."
           gh release view "$APK_TAG" --json isPrerelease,isDraft,tagName,assets \
             --jq '{prerelease:.isPrerelease,draft:.isDraft,tag:.tagName,assets:[.assets[].name]}'
+      - name: Refresh quota-free public FastDev manifest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Only the real signed APK already published in the prerelease can
+          # become the new public manifest. No developer-controlled URLs.
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "LucianoToscano/PokeSearch"
+          test -s fastdev-apk/PokeSearch-FastDev-Preview.apk
+          node scripts/fastdev-manifest.cjs \
+            fastdev-apk/PokeSearch-FastDev-Preview.apk \
+            "$POKE_FASTDEV_VERSION_CODE" "$GITHUB_SHA" \
+            > "$RUNNER_TEMP/fastdev-latest.json"
+          node -e '
+            const fs=require("fs"),a=JSON.parse(fs.readFileSync(process.argv[1])),
+              b=JSON.parse(fs.readFileSync(process.argv[2]));
+            if(a.version_code<=b.version_code)throw Error("Non-monotonic FastDev manifest");' \
+            "$RUNNER_TEMP/fastdev-latest.json" fastdev/latest.json
+          # GH contents API write is authenticated and includes SHA lease.
+          # On a concurrent docs merge retry with a newly fetched SHA.
+          updated=false
+          for attempt in 1 2 3 4 5; do
+            current_sha="$(gh api repos/LucianoToscano/PokeSearch/contents/fastdev/latest.json --jq '.sha')"
+            if gh api --method PUT \
+              repos/LucianoToscano/PokeSearch/contents/fastdev/latest.json \
+              -f branch=main \
+              -f sha="$current_sha" \
+              -f message="FastDev: update public OTA manifest to ${POKE_FASTDEV_VERSION_CODE}" \
+              -f content="$(base64 -w0 "$RUNNER_TEMP/fastdev-latest.json")" \
+              >/dev/null; then
+              updated=true
+              break
+            fi
+            sleep 2
+          done
+          test "$updated" = true || { echo "::error::FastDev published but manifest not updated"; exit 1; }
+          echo "Published quota-free OTA manifest for FastDev $POKE_FASTDEV_VERSION_CODE" >> "$GITHUB_STEP_SUMMARY"
       - name: Wipe restored key material
         if: always()
         shell: bash
