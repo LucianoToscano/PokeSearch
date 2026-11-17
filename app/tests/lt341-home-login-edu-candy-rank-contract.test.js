@@ -58,7 +58,7 @@ assert.match(activity,/static boolean allowedProfileAvatar\(/);
 assert.match(activity,/cdn\.discordapp\.com/);
 assert.match(activity,/profileCaptureRetryCount<=3/);
 assert.match(activity,/Perfil indisponível\. Tente atualizar novamente\./);
-assert.match(activity,/loginAutoReturnQueued&&loginDialog!=null/);
+assert.match(activity,/if\(loginFallback!=null\)loginFallback\.setVisibility\(View\.VISIBLE\)/);
 assert.match(activity,/loginDialog\.dismiss\(\)/);
 assert.match(activity,/PogoAccountSlots\.attach\(website,activeLoginSlot\)/);
 assert.match(account,/WebViewCompat\.setProfile\(web,NAME_2\)/);
