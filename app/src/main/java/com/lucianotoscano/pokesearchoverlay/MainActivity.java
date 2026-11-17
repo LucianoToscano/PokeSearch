@@ -601,13 +601,16 @@ public class MainActivity extends Activity {
         artwork.setScaleType(ImageView.ScaleType.FIT_CENTER);
         // LT395: optical margins are specific to the ORIGINAL artwork;
         // no icon pixels are removed or substituted when aligning the grid.
-        if(index==6){ // Quests: reserve room for the full lower ring.
-            artwork.setPadding(d(11),d(3),d(11),d(8));
-        }else if(index==15){ // Comunidade: protect the right-most white outline.
-            artwork.setPadding(d(12),d(4),d(12),d(6));
-        }else if(index==3){ // Colorful assistant: keep character, soften prominence.
-            artwork.setPadding(d(12),d(5),d(12),d(6));
-            artwork.setAlpha(.92f);
+        if(index==6){ // Quests: bottom ring repaired in the owner-art atlas.
+            artwork.setPadding(d(6),d(2),d(6),d(3));
+        }else if(index==15){ // Comunidade: right contour repaired, original art.
+            artwork.setPadding(d(6),d(3),d(6),d(3));
+        }else if(index==3){ // Keep the assistant character, mute colors on Home only.
+            artwork.setPadding(d(9),d(3),d(9),d(3));
+            android.graphics.ColorMatrix muted=new android.graphics.ColorMatrix();
+            muted.setSaturation(.20f);
+            artwork.setColorFilter(new android.graphics.ColorMatrixColorFilter(muted));
+            artwork.setAlpha(1f);
         }else{
             artwork.setPadding(d(7),d(2),d(7),d(3));
         }
