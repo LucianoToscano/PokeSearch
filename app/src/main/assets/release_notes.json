@@ -5258,6 +5258,37 @@
           "Trocas, vendas, leilões e publicação de inventário não fazem parte desta atualização."
         ]
       }
+    },
+    {
+      "id": "lt399-pokedex-fundos-privados-20261117",
+      "minVersionCode": 54591,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT399 — Fundos, filtros e comparação da Pokédex",
+      "sections": {
+        "novidades": [
+          "A galeria da Pokédex reúne 278 identificadores de fundos de Pokémon GO, com imagens conhecidas para 275 deles.",
+          "Baixar fundos opcionalmente: 263 imagens, cerca de 114,6 MB, salvas apenas no aparelho diretamente do acervo PokeMiners. Não compõem o APK.",
+          "A ficha usa o fundo original registrado no PGSStats quando a imagem correspondente estiver disponível no cache; também permite escolher fundo decorativo diferente.",
+          "Nova seleção e comparação de até três Pokémon, exibindo PC, IVs, forma, Shiny, fundo e traje.",
+          "Histórico local de importações por coleção: novidades, registros ausentes e alterados, sem confundir ausência com transferência."
+        ],
+        "melhorias": [
+          "Filtros da coleção agora podem ser combinados, como Brilhante + IV 100% + Fundo.",
+          "Anotações privadas por Pokémon, armazenadas somente no dispositivo, sem modificar o PGSStats.",
+          "Grade otimizada para nomes extensos e área inferior segura, evitando sobreposição de botões.",
+          "Download de fundos sob escolha do usuário, com cancelamento, retomada, verificação de tamanho e hash e limpeza do cache."
+        ],
+        "correcoes": [
+          "Fundos oficiais e fundos escolhidos como decoração ficam visualmente diferenciados; o PokeSearch não altera nenhum atributo no jogo.",
+          "Ícones atuais da Home e os overlays de captura/busca permanecem inalterados."
+        ],
+        "emDesenvolvimento": [
+          "Três identificadores de fundo (28, 204, 423) ainda não possuem PNG correspondente verificado na fonte.",
+          "O pacote de modelos e texturas 3D enviado não foi incorporado à distribuição pública sem autorização apropriada.",
+          "Revisão de aparência, download integral e importação real no Samsung Android 17 precisam de homologação física.",
+          "Trocas, vendas, leilões e sincronização automática com Pokémon GO não integram esta versão."
+        ]
+      }
     }
   ]
 }
