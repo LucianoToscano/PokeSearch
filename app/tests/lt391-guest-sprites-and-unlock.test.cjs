@@ -34,7 +34,7 @@ test("visitor collector recognizes all five cards including rate limited cards w
 });
 
 test("provider visitor count 'Showing 5 results' triggers incomplete-list retry, not a fake one-result completion",()=>{
- assert.match(probe,/Showing\\s\+\\(\\d\+\\)\\s\+\\(\\?:spawns\\?\\|results\\)/);
+ assert.ok(probe.includes(String.raw`/\bShowing\s+(\d+)\s+(?:spawns?|results)\b/i`));
  assert.match(probe,/const siteIncomplete=expectedVisible>found.length/);
  assert.match(probe,/const expectedVisible=siteCount>0\?Math\.min\(siteCount,100\):0/);
 });
