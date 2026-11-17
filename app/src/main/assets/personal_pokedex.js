@@ -806,5 +806,167 @@ el("save-note").addEventListener("click",()=>{
  bridge.setNote(state.slot,state.selected.id,el("personal-note").value);
  notice("Anotação salva neste aparelho.");
 });
+
+/* LT402: all changes stay in local device storage; no Pokémon GO writes. */
+function runEdit(action,params,after){
+ let result;
+ try{result=JSON.parse(bridge.editInventory(state.slot,action,JSON.stringify(params))||"{}");}
+ catch(_){return notice("Falha de acesso ao inventário local.");}
+ if(!result.ok)return notice(result.error||"Não foi possível salvar.");
+ const tab=state.tab;
+ loadSlot();setTab(tab);
+ if(after)after(result);
+ else notice("Alteração salva apenas no inventário pessoal.");
+}
+function renderTagSelection(){
+ el("selection-tag-choice").innerHTML=Array.from(state.tags.entries()).map(([id,label])=>
+  '<option value="'+escapeHtml(id)+'">'+escapeHtml(label)+'</option>').join("")||
+  '<option value="">Crie uma etiqueta</option>';
+}
+function openEditor(p){
+ state.editingPokemon=p?.id||null;
+ el("edit-heading").textContent=p?"Editar "+speciesName(p):"Adicionar Pokémon";
+ el("edit-species").disabled=!!p;
+ const value=(k,def)=>p?.[k]??def;
+ for(const [k,def] of [["species",1],["nickname",""],["cp",0],["stamina",0],
+    ["maxStamina",0],["attack",0],["defense",0],["hpIv",0],["buddyHearts",0]])
+   el("edit-"+k).value=value(k,def);
+ el("edit-bestBuddy").checked=!!p?.bestBuddy;
+ el("edit-favorite").checked=!!p?.favorite;
+ const moves=[...state.meta.moves.entries()];
+ function fill(id,fast,value){
+   let html='<option value="0">Não informado</option>';
+   for(const [n,m] of moves){
+     if(fast!==null&&m.fast!==fast)continue;
+     html+='<option value="'+Number(n)+'">'+escapeHtml(m.name)+' (#'+Number(n)+')</option>';
+   }
+   const target=el("edit-"+id);target.innerHTML=html;
+   if(value&&!moves.some(([n])=>Number(n)===Number(value)))
+     target.insertAdjacentHTML("beforeend",'<option value="'+Number(value)+'">ID '+Number(value)+'</option>');
+   target.value=String(Number(value)||0);
+ }
+ fill("move1",true,p?.move1);fill("move2",false,p?.move2);fill("move3",false,p?.move3);
+ el("edit-tags").innerHTML=Array.from(state.tags.entries()).map(([id,label])=>
+  '<label><input type="checkbox" data-assign-tag="'+escapeHtml(id)+'"'+
+  ((p?.tags||[]).includes(id)?" checked":"")+'> '+escapeHtml(label)+'</label>').join("")||
+  '<span class="note">Crie etiquetas na aba Tags.</span>';
+ el("edit-delete").hidden=!p;
+ el("edit-panel").hidden=false;
+}
+function saveEditor(){
+ const p=state.editingPokemon?state.all.find(x=>x.id===state.editingPokemon):null;
+ const fields={nickname:el("edit-nickname").value.trim(),favorite:el("edit-favorite").checked,
+    bestBuddy:el("edit-bestBuddy").checked,
+    tags:[...el("edit-tags").querySelectorAll("input:checked")].map(x=>x.dataset.assignTag)};
+ for(const key of ["cp","stamina","maxStamina","attack","defense","hpIv",
+                    "buddyHearts","move1","move2","move3"]){
+   const field=el("edit-"+key),n=Number(field.value);
+   const maximum=key==="buddyHearts"?300:
+      ["attack","defense","hpIv"].includes(key)?15:
+      key.startsWith("move")?100000:99999;
+   if(!Number.isInteger(n)||n<0||n>maximum)
+      return notice("Revise o campo "+key+".");
+   fields[key]=n;
+ }
+ if(!p){
+    const species=Number(el("edit-species").value);
+    if(!Number.isInteger(species)||species<1||species>1025)
+      return notice("Informe o número da espécie entre 1 e 1025.");
+    runEdit("add",{species,fields},result=>{
+       el("edit-panel").hidden=true;showDetail(result.id);
+       notice("Pokémon adicionado somente ao inventário pessoal.");
+    });
+ }else runEdit("edit",{id:p.id,fields},result=>{
+    el("edit-panel").hidden=true;showDetail(result.id);
+    notice("Ficha salva no inventário local.");
+ });
+}
+function openTagEditor(id){
+ state.editingTagId=id||null;
+ el("tag-editor-name").value=id?(state.tags.get(id)||""):"";
+ el("tag-editor-delete").hidden=!id;
+ el("tag-editor-panel").hidden=false;
+}
+let confirmDeleteAll=false,confirmDeleteSelection=false,confirmTagDelete=false;
+el("add-pokemon").addEventListener("click",()=>openEditor(null));
+el("edit-pokemon").addEventListener("click",()=>{if(state.selected)openEditor(state.selected);});
+el("edit-close").addEventListener("click",()=>{el("edit-panel").hidden=true;});
+el("edit-save").addEventListener("click",saveEditor);
+el("edit-delete").addEventListener("click",()=>{
+ if(!state.editingPokemon)return;
+ runEdit("delete",{ids:[state.editingPokemon]},()=>{
+   el("edit-panel").hidden=true;hideDetail();
+   notice("Excluído localmente. Use Desfazer exclusão para restaurar.");
+ });
+});
+el("backup-export").addEventListener("click",()=>bridge.exportInventory(state.slot));
+el("sync-source").addEventListener("click",()=>bridge.linkSyncFile(state.slot));
+el("sync-now").addEventListener("click",()=>bridge.syncLocalFile(state.slot));
+el("undo-delete").addEventListener("click",()=>{
+ runEdit("undo",{},()=>notice("Última exclusão restaurada."));
+});
+el("delete-all").addEventListener("click",()=>{
+ if(!state.all.length)return notice("O inventário está vazio.");
+ if(!confirmDeleteAll){
+   confirmDeleteAll=true;el("delete-all").textContent="Confirmar limpar tudo";
+   return notice("Toque novamente para excluir tudo deste inventário (reversível).");
+ }
+ confirmDeleteAll=false;el("delete-all").textContent="Limpar inventário";
+ runEdit("clear",{},()=>notice("Inventário limpo. Use Desfazer para restaurar."));
+});
+el("selection-delete").addEventListener("click",()=>{
+ const ids=[...state.selectedIds];
+ if(!ids.length)return;
+ if(!confirmDeleteSelection){
+   confirmDeleteSelection=true;
+   return notice("Toque novamente em Excluir selecionados para confirmar.");
+ }
+ confirmDeleteSelection=false;
+ runEdit("delete",{ids},()=>notice(ids.length+" Pokémon removidos, com opção de desfazer."));
+});
+el("selection-tag").addEventListener("click",()=>{
+ const id=el("selection-tag-choice").value;
+ if(!id||!state.tags.has(id))return notice("Escolha uma etiqueta válida.");
+ runEdit("tagAssign",{id,ids:[...state.selectedIds],enable:true},
+  ()=>notice("Etiqueta aplicada aos Pokémon selecionados."));
+});
+el("tag-create").addEventListener("click",()=>openTagEditor(null));
+el("tag-editor-close").addEventListener("click",()=>{el("tag-editor-panel").hidden=true;});
+el("tag-editor-save").addEventListener("click",()=>{
+ const name=el("tag-editor-name").value.trim();
+ if(!name)return notice("Digite um nome para a etiqueta.");
+ runEdit("tagSave",{id:state.editingTagId||"",name},()=>{
+    el("tag-editor-panel").hidden=true;notice("Etiqueta salva.");
+ });
+});
+el("tag-editor-delete").addEventListener("click",()=>{
+ if(!state.editingTagId)return;
+ if(!confirmTagDelete){confirmTagDelete=true;return notice("Toque novamente para excluir a etiqueta.");}
+ confirmTagDelete=false;
+ runEdit("tagDelete",{id:state.editingTagId},()=>{
+   el("tag-editor-panel").hidden=true;notice("Etiqueta removida.");
+ });
+});
+/* Press and hold any card to enter unlimited multi-selection mode. */
+let pressTimer=null,pressId=null,pressX=0,pressY=0;
+const cancelPress=()=>{clearTimeout(pressTimer);pressTimer=null;pressId=null;};
+el("grid").addEventListener("pointerdown",e=>{
+ const card=e.target.closest("[data-id]");
+ if(!card||state.selecting)return;
+ pressId=card.dataset.id;pressX=e.clientX;pressY=e.clientY;
+ pressTimer=setTimeout(()=>{
+   if(!pressId)return;
+   state.selecting=true;state.selectedIds.clear();state.selectedIds.add(pressId);
+   state.suppressCardClick=true;renderSelection();render();
+   notice("Seleção múltipla ativa · toque em outros para marcar.");
+   cancelPress();
+ },480);
+});
+el("grid").addEventListener("pointermove",e=>{
+ if(Math.abs(e.clientX-pressX)>12||Math.abs(e.clientY-pressY)>12)cancelPress();
+});
+for(const event of ["pointerup","pointercancel","pointerleave"])
+ el("grid").addEventListener(event,cancelPress);
+
 loadCatalog();loadMeta();loadSpriteIndex();loadBackgrounds();loadSlot();
 })();
