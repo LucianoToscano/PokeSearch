@@ -1118,7 +1118,7 @@ function parseCard(box,sourceIndex){
  // a separate adjacent value, or an accessible title instead of "100% (15/15/15)".
  // Read ONLY visible nodes inside THIS encounter; never infer IV from Search filters.
  const ivLabels=Array.from(box.querySelectorAll("[aria-label],[title],[data-iv],[data-iv-percent]"))
-  .filter(vis).slice(0,72).map(el=>{
+  .filter(el=>!!(el&&el.getClientRects&&el.getClientRects().length)).slice(0,72).map(el=>{
    const a=String(el.getAttribute("aria-label")||el.getAttribute("title")||"").slice(0,100);
    const p=String(el.getAttribute("data-iv-percent")||"").slice(0,18);
    const raw=String(el.getAttribute("data-iv")||"").slice(0,25);
