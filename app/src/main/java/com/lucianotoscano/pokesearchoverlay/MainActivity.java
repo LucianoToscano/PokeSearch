@@ -70,6 +70,9 @@ public class MainActivity extends Activity {
     private boolean trainerLinkRequested=false,trainerLinkStarted=false;
     private long trainerLinkObserveDeadline=0L;
     private int activeLoginSlot=1;
+    // Explicit CTA in a guest overlay may bind only that overlay after
+    // first-party authentication has actually been confirmed.
+    private int pendingPublicLoginOverlay=0;
     private TextView secondAccountSummary,overlayAccountLabel1,overlayAccountLabel2;
     private final ImageView[] pokeballLoginBadges=new ImageView[2];
     private TextView secondAccountUnavailable,secondAccountProvider,secondTrainerDisplay,secondTrainerDetails,
@@ -309,8 +312,10 @@ public class MainActivity extends Activity {
         refreshSessionSummary();
         refreshHomeOverlay();
         handleShinyLoginIntent(getIntent());
+        handlePublicLoginIntent(getIntent());
         if(!getSharedPreferences("prefs",0).getBoolean("tutorialSeenV41",false)&&
            !"com.lucianotoscano.pokesearchoverlay.OPEN_SHINY_LOGIN".equals(getIntent().getAction())&&
+           !"com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN".equals(getIntent().getAction())&&
             !"com.lucianotoscano.pokesearchoverlay.REQUEST_NOTIFICATION_PERMISSION".equals(getIntent().getAction())&&
             !"com.lucianotoscano.pokesearchoverlay.PICK_ALERT_TONE".equals(getIntent().getAction()))
             root.post(this::showQuickGuide);
@@ -3071,6 +3076,19 @@ public class MainActivity extends Activity {
             });
         }
     }
+    private void handlePublicLoginIntent(Intent intent){
+        if(intent==null||!"com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN"
+            .equals(intent.getAction()))return;
+        final int requested=intent.getIntExtra("pogoOverlayNumber",0);
+        if(requested!=1&&requested!=2)return;
+        final int requestedSlot=intent.getIntExtra("pogoAccountSlot",1);
+        final int slot=requestedSlot==2&&PogoAccountSlots.supportsSecond()?2:1;
+        getWindow().getDecorView().post(()->{
+            if(loginDialog!=null&&loginDialog.isShowing())return;
+            pendingPublicLoginOverlay=requested;
+            openLoginDialogForSlot(slot,"login");
+        });
+    }
     private void sendActionToRunningOverlay(Class<?> serviceType,String action,boolean authConfirmed){
         boolean enabled=serviceType==OverlayService.class?
             OverlayService.isRunning():OverlayService.isSecondaryRunning();
@@ -3793,11 +3811,21 @@ public class MainActivity extends Activity {
             if(website!=null){website.stopLoading();website.destroy();website=null;}
             loginProfilePageLoadFailed=false;
             loginDialog=null;
+            final int guestOverlay=pendingPublicLoginOverlay;
+            pendingPublicLoginOverlay=0;
+            if(authenticatedNow&&guestOverlay>0&&
+               PogoAccountSlots.loggedIn(this,activeLoginSlot)){
+                final boolean secondary=guestOverlay==2;
+                // Never override a different assignment made while login ran.
+                if(PogoAccountSlots.assigned(this,secondary)==0)
+                    PogoAccountSlots.bindAccountOnly(this,secondary,activeLoginSlot);
+            }
             serviceActionForLoginSlot("com.lucianotoscano.pokesearchoverlay.LOGIN_END",authenticatedNow);
             // Closing without a confirmed login must not reload the session.
             if(authenticatedNow)notifyOverlaySessionReady();
             refreshSessionSummary();
-            if(authenticatedNow&&fromOverlay&&OverlayService.isRunning()){
+            if(authenticatedNow&&(fromOverlay||guestOverlay>0)&&
+               (OverlayService.isRunning()||OverlayService.isSecondaryRunning())){
                 // Return to Pokémon GO with the PokeSearch overlay visible.
                 getWindow().getDecorView().postDelayed(()->moveTaskToBack(true),220L);
             }
@@ -3833,6 +3861,7 @@ public class MainActivity extends Activity {
         syncMissionBadge();
         setIntent(intent);
         handleShinyLoginIntent(intent);
+        handlePublicLoginIntent(intent);
         if("com.lucianotoscano.pokesearchoverlay.EDIT_WATCH_LIST".equals(intent.getAction()))
             getWindow().getDecorView().post(this::openPicker);
         if("com.lucianotoscano.pokesearchoverlay.OPEN_SETTINGS".equals(intent.getAction()))
