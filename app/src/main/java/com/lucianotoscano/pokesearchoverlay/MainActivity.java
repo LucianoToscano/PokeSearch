@@ -1963,7 +1963,7 @@ public class MainActivity extends Activity {
     }
     private void toggleCommunityScrapbookStage1(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
-        prefs.edit().putBoolean("communityLiveChatVisible",
+        prefs.edit().putBoolean("communityLiveChatVisibleLT390",
             !CommunityScrapbookStage1.isEnabled(this)).apply();
         // Presentation-only rebuild: existing filters, login, location, stats,
         // live overlay and Home preferences are preserved.
