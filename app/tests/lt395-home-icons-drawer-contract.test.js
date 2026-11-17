@@ -9,14 +9,15 @@ const asset=fs.readFileSync(path.join(root,"assets/home-user-icons-atlas.png"));
 assert.equal(asset.readUInt32BE(16),1024);
 assert.equal(asset.readUInt32BE(20),1024);
 assert.equal(crypto.createHash("sha256").update(asset).digest("hex"),
-  "0038a203fa074002ef8bb710662d32e9c8231a6f90e5914a120b4c6fa8e909e6",
+  "abdebce91043c4576fcedf3e64f63492a9e18f5d600246090a5032f6d54976af",
   "Reviewed image contains only re-framed original Quests and Community");
 assert.match(main,/if\(index==6\)/);
-assert.match(main,/artwork\.setPadding\(d\(11\),d\(3\),d\(11\),d\(8\)\)/);
+assert.match(main,/artwork\.setPadding\(d\(6\),d\(2\),d\(6\),d\(3\)\)/);
 assert.match(main,/if\(index==15\)/);
-assert.match(main,/artwork\.setPadding\(d\(12\),d\(4\),d\(12\),d\(6\)\)/);
+assert.match(main,/artwork\.setPadding\(d\(6\),d\(3\),d\(6\),d\(3\)\)/);
 assert.match(main,/else if\(index==3\)/);
-assert.match(main,/artwork\.setAlpha\(\.92f\)/);
+assert.match(main,/muted\.setSaturation\(\.20f\)/);
+assert.match(main,/new android\.graphics\.ColorMatrixColorFilter\(muted\)/);
 assert.match(main,/index==0\|\|index==1\|\|index==3/);
 assert.match(main,/title\.setIncludeFontPadding\(false\)/);
 assert.match(main,/for\(int line=0;line<4;line\+\+\)/);
