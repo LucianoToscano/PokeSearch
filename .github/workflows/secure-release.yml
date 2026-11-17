@@ -5,6 +5,11 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+# Stop stale private beta builds after a PR receives another fix.
+# Only the newest SHA needs this expensive R8/Android verification.
+concurrency:
+  group: secure-beta-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   release-apk:
     # v0.51 work branch: build only via an explicit workflow_dispatch request.
@@ -14,24 +19,51 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Classify Preview-only PR without weakening shared/official QA
+        id: scope
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]]; then
+            required=true
+          else
+            git diff --name-only "$BASE_SHA"...HEAD > "$RUNNER_TEMP/beta-changed.txt"
+            node --test scripts/fastdev-qa-scope.test.cjs
+            required="$(node scripts/fastdev-qa-scope.cjs "$RUNNER_TEMP/beta-changed.txt")"
+          fi
+          echo "required=$required" >> "$GITHUB_OUTPUT"
+          if [[ "$required" == "false" ]]; then
+            echo "::notice::Preview-only PR: full beta/R8 is irrelevant; Preview Java compile still required."
+          fi
       - uses: actions/setup-java@v4
+        if: steps.scope.outputs.required == 'true'
         with:
           distribution: temurin
           java-version: '17'
       - name: Install Android SDK
+        if: steps.scope.outputs.required == 'true'
         run: |
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
+        if: steps.scope.outputs.required == 'true'
         with:
           gradle-version: '8.11.1'
       - name: Run source checks
+        if: steps.scope.outputs.required == 'true'
         run: |
           node --check app/src/main/assets/probe.js
           node --check app/src/main/assets/shiny_login.js
           node app/tests/probe-smoke.test.js
           node app/tests/overlay-ux.test.js
       - name: Generate isolated test-release signing key and build
+        if: steps.scope.outputs.required == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -59,6 +91,7 @@ jobs:
           sha256sum Aplicativo/PokeSearch-0.51-beta.apk > Aplicativo/SHA256SUMS.txt
           rm -f "$POKE_RELEASE_KEYSTORE"
       - uses: actions/upload-artifact@v4
+        if: steps.scope.outputs.required == 'true'
         with:
           name: PokeSearch-0.51-beta-APK-only
           path: Aplicativo/PokeSearch-0.51-beta.apk
