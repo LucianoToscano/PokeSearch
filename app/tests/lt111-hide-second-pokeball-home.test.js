@@ -16,9 +16,9 @@ test("secondary Pokébola toggle appears in Home and occupies its original row",
  const row=main.slice(start,end);
  assert.ok(row.includes("dualOverlayRow.setVisibility(View.VISIBLE);"));
  // LT393 replaces the old visible row with 4x4 equal module tiles.
- assert.ok(row.includes("screen.addView(launcherGrid,gridLp);"));
- assert.ok(row.includes("homeModuleIcons={"));
- assert.ok(row.indexOf("overlayControl,secondaryOverlayControl")>0);
+ assert.ok(main.includes("screen.addView(launcherGrid,gridLp);"));
+ assert.ok(main.includes("ImageView[] homeModuleIcons={"));
+ assert.ok(main.includes("overlayControl,secondaryOverlayControl,pgsSearchControl"));
  assert.ok(!row.includes("setVisibility(View.INVISIBLE)"));
 });
 test("primary Pokeball switch remains in Home and is not hidden",()=>{
