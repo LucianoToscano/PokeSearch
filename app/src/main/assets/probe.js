@@ -1012,26 +1012,46 @@ if(action==="describeFilters"){
 }
 
 function cardRoots(){
- // After Get coords is clicked, the site may render Open in Maps as an <a>.
- // Include both controls or formerly visible cards silently disappear.
- const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&
-   /^(?:Get coords|Open in Maps)$/i.test(text(e)));
- const cards=[],seen=new Set();
- for(const action of actions){
-  // Keep the nearest parent when the site temporarily hides card labels.
-  // Native IV/rank checks still reject unverified data.
-  let node=action,chosen=action.parentElement;
-  for(let depth=0;depth<10&&node;depth++,node=node.parentElement){
-   const t=text(node);
-   if(/\bLOCATION\b/i.test(t)&&/\bDESPAWN\b/i.test(t)&&/\bCP\b/i.test(t)&&t.length<2500){
-    chosen=node;break;
-   }
+ // LT391: visitor cards can have no reveal button when the provider has
+ // reached its reveal quota. The old action-only/LOCATION-only selector
+ // silently reduced five on-site Pokémon to one in the Android list.
+ const isEncounter=node=>{
+  if(!node||!vis(node))return false;
+  const t=text(node);
+  return t.length>=24&&t.length<1900&&/#\s*\d{1,4}\b/.test(t)&&
+   /\bCP\s*:?\s*\d{1,5}\b/i.test(t)&&
+   /(?:\bDESPAWN\b|\b\d{1,2}:\d{2}\b)/i.test(t)&&
+   /(?:\bIV\b|\d{1,2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2})/i.test(t);
+ };
+ const closestEncounter=start=>{
+  let node=start;
+  for(let depth=0;depth<11&&node;depth++,node=node.parentElement){
+   if(node.matches?.('[role=listbox],[role=dialog],[cmdk-list]'))return null;
+   if(isEncounter(node))return node;
   }
-  if(!chosen||seen.has(chosen))continue;
-  seen.add(chosen);
-  cards.push({node:chosen,sourceIndex:cards.length});
-  if(cards.length===100)break;
+  return null;
+ };
+ // An existing coordinate action is useful but NOT required. Read headings
+ // and compact #dex metadata for every visible card including rate-limited
+ // cards that show only a message where the reveal button would have been.
+ const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&
+  /^(?:Get coords|Open in Maps)$/i.test(text(e)));
+ const anchors=elements("main h2,main h3,main h4,main span,main p,main small")
+  .filter(e=>vis(e)&&(
+   /^(?:#\s*\d{1,4}\b)/.test(text(e))&&text(e).length<90||
+   (/^H[2-4]$/.test(e.tagName)&&text(e).length<85)));
+ const seen=new Set(),cards=[];
+ for(const item of [...anchors,...actions]){
+  const node=closestEncounter(item);
+  if(!node||seen.has(node))continue;
+  seen.add(node);cards.push({node,sourceIndex:-1});
+  if(cards.length>=100)break;
  }
+ // Preserve DOM encounter order, as sourceIndex is used for exact reveal
+ // pairing. Never choose a coordinate from a different encounter.
+ cards.sort((a,b)=>a.node===b.node?0:
+  (a.node.compareDocumentPosition?.(b.node)&4)?-1:1);
+ cards.forEach((item,index)=>{item.sourceIndex=index;});
  return cards;
 }
 // Submission-scoped result evidence. A stale zero from an earlier search is
