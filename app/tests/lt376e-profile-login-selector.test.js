@@ -42,7 +42,7 @@ assert.equal(inspect("Linked accounts\nMember since 31/10/2026",[member],[],"/se
 // Login and account switch have different entrypoints and cookie compartments.
 assert.match(probe,/profileProof=location\.pathname==="\/profile"/);
 assert.match(probe,/\(\/\\bMember since\\b\/i\.test\(body\)\|\|\/\\bPokemon GO accounts\\b\/i\.test\(body\)\)/);
-assert.match(home,/showCompactAccountNames\(loginHotspot,which==1\)/);
+assert.match(home,/showCompactAccountNames\(choice,secondary\)/);
 assert.match(home,/PogoAccountSlots\.bindAccountOnly\(this,secondary,account\)/);
 assert.match(home,/private String loginPurpose="login"; \/\/ login \| manage \| sync/);
 assert.match(home,/openLoginDialogForSlot\(1,"sync"\)/);
@@ -52,9 +52,9 @@ assert.match(home,/verifiedName\.isEmpty\(\)/);
 assert.match(home,/loginCover\.setVisibility\(View\.GONE\)/);
 assert.match(home,/accountActions\.addView\(syncProfile/);
 assert.match(home,/secondAccountActions\.addView\(secondSyncProfile/);
-assert.match(home,/HomeMenuIconPack\.opticalPokeballButtonXInParentPx\(icon\)/);
-assert.match(home,/placement\.leftMargin=desiredLeft/);
-assert.match(home,/placement\.gravity=Gravity\.TOP\|Gravity\.LEFT/);
+assert.doesNotMatch(home,/FrameLayout loginHotspot=new FrameLayout\(this\)/);
+assert.match(home,/Vincular Pokébolas/);
+assert.match(home,/pogoBindingTitle\(secondary\)/);
 assert.match(art,/static int opticalPokeballButtonXInParentPx\(/);
 assert.match(art,/leftBrightness<135&&rightBrightness<135/);
 assert.match(art,/static int opticalCenterXInParentPx\(/);

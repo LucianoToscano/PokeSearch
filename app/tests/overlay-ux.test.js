@@ -3635,7 +3635,8 @@ test("LT60-E7-01 poll first results early and back off without repeating Search"
 });
 test("LT60-E7-02 empty result needs a fresh site signal, not a generic zero",()=>{
  return probe.includes('function visibleResultSignature(){')&&
-   probe.includes('window.__pokeSearchSubmission={before:visibleResultSignature(),observedUpdate:false};')&&
+   probe.includes('before:visibleResultSignature(),observedUpdate:false,observedBusy:false')&&
+   probe.includes('submission.observedBusy===true&&!loading')&&
    probe.includes('const explicitEmpty=found.length===0&&!loading&&explicitEmptySignal&&resultChanged;')&&
    probe.includes('const zeroInResults=emptyInMain&&(countLabel==="0"||countLabel===undefined);')&&
    probe.includes('const empty=mainEmptyMessage()?"verified-empty-element":"";')&&

@@ -41,7 +41,7 @@ test("Do not change confirmed names, other forms, or unknown species",()=>{
 
 test("DOM collector can distinguish five visitor cards from their common ancestor",()=>{
  assert.match(probe,/const controls=Array\.from\(node\.querySelectorAll/);
- assert.match(probe,/controls\.length<=2&&dexLabels\.length<=1/);
+ assert.match(probe,/dexLabels\.length===1&&hasCp&&hasStats&&controls\.length<=4/);
  assert.match(probe,/Showing\\s\+\(\\d\+\)\\s\+\(\?:spawns\?\|results\?\)/);
  assert.match(probe,/const siteIncomplete=expectedVisible>found\.length/);
  assert.match(probe,/if\(encounterDex===129\)title="Magikarp"/);
