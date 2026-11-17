@@ -5383,6 +5383,33 @@
           "Homologação física Samsung Android 17, ciclo de atualização real, duração de seleção, acessibilidade e verificação individual de sprites/PGSStats no aparelho ainda pendentes."
         ]
       }
+    },
+    {
+      "id": "lt403-recuperacao-sprites-pokedex-20261117",
+      "minVersionCode": 54595,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT403 — Recuperação de sprites da Minha Pokédex",
+      "sections": {
+        "novidades": [
+          "A Minha Pokédex agora confere se a imagem realmente está presente no APK antes de escolhê-la.",
+          "Quando a imagem local estiver ausente, a lista e a ficha tentam a sprite exata do catálogo e fontes de recuperação verificadas, sem exigir baixar toda a coleção."
+        ],
+        "melhorias": [
+          "Recuperação limitada e segura de imagens base, Shiny, formas e trajes a partir das correspondências já confirmadas no catálogo.",
+          "Permanece disponível o download opcional para o cache privado da coleção; a interface não exige nova importação do PGSStats para tentar recuperar sprites.",
+          "Preservados ícones originais, os dois inventários, edição de Pokémon, filtros, tags, notas, fundos, Home e overlays P1/P2."
+        ],
+        "correcoes": [
+          "Corrigida a escolha de caminhos file:///android_asset/pokemon-sprites/base/ inexistentes no APK, que produzia losangos em Mewtwo, Zacian, Zamazenta e outros Pokémon.",
+          "Falha no carregamento de uma imagem agora tenta alternativas exatas e auditadas antes de mostrar placeholder, sem falsificar formas, trajes ou Shiny.",
+          "Regressões específicas de Mewtwo Normal/Armored, Giratina Altered, Zacian/Zamazenta Hero, Landorus, forma desconhecida, cache e fallback aprovadas em Node."
+        ],
+        "emDesenvolvimento": [
+          "Formas e trajes sem imagem comprovada ou sem rede/cache ainda podem mostrar marcador de sprite indisponível; não há garantia de cobertura total ou uso offline de todas as variantes.",
+          "QA físico em Samsung Android 17 e download real de imagens não foram executados pelos testes automatizados.",
+          "Edições permanecem apenas no PokeSearch; PGSStats sincroniza somente o arquivo autorizado via Android SAF ao abrir a Pokédex e a cada 3 minutos com a tela ativa. Backup de notas/fundos ainda não é integral."
+        ]
+      }
     }
   ]
 }
