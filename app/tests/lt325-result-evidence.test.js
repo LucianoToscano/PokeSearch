@@ -121,10 +121,10 @@ test('existing results preserve P/M/G geometry and show warnings only',()=>{
  assert.match(dock,/--result-tile-size/);
  assert.match(java,/getSharedPreferences\(isSecondaryOverlay\(\)\?"prefs_secondary":"prefs",0\)/);
 });
-test('detail reuses existing info grid and can expand evidence without a modal',()=>{
+test('detail reuses info grid but hides repetitive provenance text',()=>{
  assert.match(detail,/<script src="result_evidence\.js"><\/script>/);
- assert.match(detail,/toggleResultEvidence\(\)/);
- assert.match(detail,/evidence\.details\.slice\(1\)/);
+ assert.match(detail,/const evidenceHtml="";/);
+ assert.doesNotMatch(detail,/evidence\.details\.slice\(1\)/);
  assert.match(detail,/evidenceHtml\+/);
  assert.match(detail,/#info #psEvidenceDetails\[hidden\]/);
 });
