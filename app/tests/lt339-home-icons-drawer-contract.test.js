@@ -72,8 +72,10 @@ assert.match(visual,/enum Core \{ WHITE, GREEN, RED \}/);
 
 assert.match(java,/overlayControl=makeIcon\(R.drawable.home_pokeball_off/);
 assert.match(java,/secondaryOverlayControl=makeIcon\(R.drawable.home_pokeball_off/);
-assert.match(java,/overlayControl.setImageResource\(on\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
-assert.match(java,/secondaryOverlayControl.setImageResource\(secondaryOn\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off\)/);
+// LT393: P1/P2 no longer use fixed Home art; they mirror the floating result skin.
+assert.match(java,/refreshHomePokeballImage\(overlayControl,false\)/);
+assert.match(java,/refreshHomePokeballImage\(secondaryOverlayControl,true\)/);
+assert.match(java,/HomeFloatingModeIcon\.icon\(this,secondary\)/);
 assert.match(java,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_overlay_off/);
 assert.match(java,/setHomePackIcon\(pgsSearchControl,3,on\?"hover":"normal"\)/);
 assert.match(java,/PgsAutoClickService.isOverlayVisible\(\)/);
