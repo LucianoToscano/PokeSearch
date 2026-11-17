@@ -1019,7 +1019,10 @@ function cardRoots(){
  const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&resultAction(e));
  const cards=[],seen=new Set();
  for(const action of actions){
-  let chosen=null;
+  // Preserve the immediate result wrapper when React has only partly
+  // hydrated labels. Downstream IV, filter and freshness gates still reject
+  // anything that cannot be verified.
+  let chosen=action.parentElement;
   for(let node=action,depth=0;node&&depth<10;node=node.parentElement,depth++){
    const t=text(node);
    if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
