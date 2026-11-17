@@ -4089,8 +4089,8 @@ public class MainActivity extends Activity {
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
                 super.doUpdateVisitedHistory(view,url,isReload);
+                if(view==website)allowLoginScreenshots();
                 if(view==website){
-                    allowLoginScreenshots();
                     // LT404: React can complete OAuth through history.pushState,
                     // without another onPageFinished callback.
                     Uri destination=Uri.parse(url==null?"":url);
