@@ -3968,6 +3968,7 @@ function toggleResultEvidence(){
  return true;
 }
 window.showDetails=(c,mode,watched)=>{
+ c=window.PokeSearchOfflineSprite?.normalizeEncounterIdentity?.(c)||c;
  const panel=document.getElementById("panel");
  const keepScroll=panel.scrollTop;
  const nextIdentity=evoIdentity(c);
@@ -4142,11 +4143,9 @@ window.showDetails=(c,mode,watched)=>{
  const evidence=window.PokeSearchResultEvidence?.assess(c,{stale:c.evidenceOld===true},{
   ivVerified:showRaw||ivSourcePercent?.valid===true
  });
- const evidenceHtml=evidence?'<button type="button" id="psEvidenceButton"'+
-  ' aria-controls="psEvidenceDetails" aria-expanded="'+String(evidenceWasOpen)+
-  '" onclick="toggleResultEvidence()">ⓘ '+h(evidence.headline)+'</button>'+
-  '<div id="psEvidenceDetails"'+(evidenceWasOpen?'':' hidden')+'>'+
-  evidence.details.slice(1).map(line=>'<div>'+h(line)+'</div>').join('')+'</div>':"";
+ // Search provenance stays available to internal verification, without
+ // visually repeating API/IV/Km/rank/Shiny diagnostics on every card.
+ const evidenceHtml="";
  // Keep the section hidden until verified rows are delivered by PvPoke.
  // The reset above already clears any old card's analysis on identity changes.
  const showPct=ivVisual?.valid===true;
