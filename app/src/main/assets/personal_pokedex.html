@@ -77,6 +77,7 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <link rel="stylesheet" href="personal_pokedex_enhanced.css">
 <link rel="stylesheet" href="personal_pokedex_lt399.css">
 <link rel="stylesheet" href="personal_pokedex_lt400.css">
+<link rel="stylesheet" href="personal_pokedex_lt402.css">
 </head>
 <body>
 <div id="app">
@@ -87,17 +88,26 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <button type="button" class="inventory-tab" data-tab="eggs">OVOS<small id="tab-eggs-count">0</small></button>
 </nav>
 <div class="segment"><button id="slot1" class="active">Inventário 1</button><button id="slot2">Inventário 2</button></div></header>
-<section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON</button></section>
+<section class="summary"><div><strong id="collection-title">Minha coleção</strong><small id="import-time">Importe seu PGSStats.json para começar</small></div><button class="import" id="import">+ Importar JSON / backup</button></section>
 <div class="inventory-tools">
  <button type="button" id="sprites-open" class="tool-button"><span aria-hidden="true">◈</span> Sprites <small id="sprite-cache-count">0</small></button>
  <button type="button" id="backgrounds-open" class="tool-button"><span aria-hidden="true">▧</span> Fundos <small id="background-cache-count">0/263</small></button>
  <button type="button" id="history-open" class="tool-button"><span aria-hidden="true">◷</span> Histórico</button>
- <button type="button" id="select-toggle" class="tool-button"><span aria-hidden="true">▣</span> Comparar</button>
+ <button type="button" id="select-toggle" class="tool-button"><span aria-hidden="true">▣</span> Selecionar</button>
+ <button type="button" id="add-pokemon" class="tool-button">＋ Pokémon</button>
+ <button type="button" id="backup-export" class="tool-button">⇧ Exportar</button>
+ <button type="button" id="sync-source" class="tool-button">↻ Vincular arquivo</button>
+ <button type="button" id="sync-now" class="tool-button">Sincronizar</button>
+ <button type="button" id="undo-delete" class="tool-button">↶ Desfazer exclusão</button>
+ <button type="button" id="delete-all" class="tool-button dangerous">Limpar inventário</button>
 </div>
+<p class="sync-hint" id="sync-status">Aguardando autorização de arquivo local.</p>
 <div id="selection-strip" class="selection-strip" hidden>
  <strong id="selection-count">0 selecionados</strong>
  <button type="button" id="selection-clear">Limpar</button>
- <button type="button" id="selection-compare" disabled>Comparar Pokémon</button>
+ <button type="button" id="selection-compare" disabled>Comparar (até 3)</button>
+ <button type="button" id="selection-tag" disabled>Aplicar tag</button>
+ <button type="button" id="selection-delete" disabled>Excluir selecionados</button>
 </div>
 <section class="metrics"><div class="metric"><strong id="m-total">0</strong><span>Pokémon</span></div><div class="metric"><strong id="m-shiny">0</strong><span>Shiny</span></div><div class="metric"><strong id="m-hundo">0</strong><span>100% IV</span></div><div class="metric"><strong id="m-bg">0</strong><span>Fundos</span></div></section>
 <div class="search-row"><input id="search" class="search" placeholder="⌕  Buscar Pokémon, número ou forma…" aria-label="Buscar Pokémon"><select id="sort" class="sort" aria-label="Ordenar"><option value="cp">Maior PC</option><option value="recent">Mais recente</option><option value="iv">Maior IV</option><option value="number">Nº Pokédex</option><option value="name">Nome</option><option value="hp">PS</option><option value="favorite">Favoritos</option></select></div>
@@ -109,6 +119,8 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
   <h2 class="section-heading">Pesquisar por categoria</h2>
   <div id="tag-categories" class="tag-categories"></div>
   <h2 class="section-heading">Minhas etiquetas</h2>
+  <button type="button" id="tag-create" class="preset">＋ Criar etiqueta</button>
+  <p class="pane-sub">Toque numa etiqueta para filtrar; use Editar para renomear ou excluir.</p>
   <div id="personal-tags" class="user-tags"></div>
 </section>
 <section id="eggs-panel" class="other-panel" hidden>
@@ -133,6 +145,9 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <button type="button" id="download-this-sprite" class="preset">Baixar sprite desta forma</button>
 </div>
 <div class="group"><h3>Movimentos registrados</h3><div id="moves"></div></div>
+<div class="group"><h3>Meu registro pessoal</h3>
+<button type="button" id="edit-pokemon" class="preset">✎ Editar Pokémon, golpes, amizade e favorito</button>
+<p class="note">Edição local e privada: nenhuma alteração é executada dentro do Pokémon GO.</p></div>
 <div class="group"><h3>Informações do Pokémon</h3><div id="other-info"></div></div>
 <div class="detail-arrows"><button id="detail-prev" aria-label="Pokémon anterior">‹ Anterior</button><button id="detail-next" aria-label="Próximo Pokémon">Próximo ›</button></div>
 <div class="group"><h3>Minha anotação particular</h3>
@@ -145,6 +160,39 @@ header{position:sticky;top:0;z-index:5;background:#f8fdf9ec;backdrop-filter:blur
 <p class="note">O fundo que você escolher personaliza somente esta ficha do PokeSearch. Não adiciona um fundo ao Pokémon dentro do jogo.</p></div>
 <p class="note">Informações importadas do arquivo local, não sincronizadas automaticamente com Pokémon GO. Identificadores de trajes/fundos permanecem registrados mesmo sem arte específica disponível.</p>
 </div></div>
+<div id="edit-panel" class="overlay-sheet" hidden>
+ <div class="modal-card lt402-editor" role="dialog" aria-modal="true" aria-labelledby="edit-heading">
+  <div class="modal-title"><h2 id="edit-heading">Editar Pokémon</h2><button type="button" id="edit-close" aria-label="Fechar">×</button></div>
+  <label>Espécie · Nº Pokédex <input id="edit-species" type="number" min="1" max="1025" inputmode="numeric"></label>
+  <label>Apelido <input id="edit-nickname" type="text" maxlength="64"></label>
+  <div class="lt402-edit-grid">
+   <label>PC (registro local) <input id="edit-cp" type="number" min="0" max="99999"></label>
+   <label>PS <input id="edit-stamina" type="number" min="0" max="99999"></label>
+   <label>PS máximo <input id="edit-max-stamina" type="number" min="0" max="99999"></label>
+   <label>Ataque IV <input id="edit-attack" type="number" min="0" max="15"></label>
+   <label>Defesa IV <input id="edit-defense" type="number" min="0" max="15"></label>
+   <label>PS IV <input id="edit-hpIv" type="number" min="0" max="15"></label>
+  </div>
+  <label>Ataque rápido <select id="edit-move1"></select></label>
+  <label>Ataque carregado <select id="edit-move2"></select></label>
+  <label>Segundo ataque carregado (se aprendido) <select id="edit-move3"></select></label>
+  <label>Corações de companheiro (0–300) <input id="edit-buddyHearts" type="number" min="0" max="300"></label>
+  <div class="lt402-checks"><label><input id="edit-bestBuddy" type="checkbox"> Melhor amigo</label>
+   <label><input id="edit-favorite" type="checkbox"> Favorito ⭐</label></div>
+  <strong>Etiquetas deste Pokémon</strong><div id="edit-tags" class="lt402-tags"></div>
+  <p class="note">PC e golpes são registros manuais, não uma simulação de custos reais ou mudanças no jogo.</p>
+  <div class="lt402-actions"><button type="button" id="edit-save" class="preset">Salvar alterações</button>
+   <button type="button" id="edit-delete" class="preset dangerous">Excluir deste inventário</button></div>
+ </div>
+</div>
+<div id="tag-editor-panel" class="overlay-sheet" hidden>
+ <div class="modal-card lt402-editor" role="dialog" aria-modal="true">
+  <div class="modal-title"><h2>Editar etiqueta</h2><button type="button" id="tag-editor-close" aria-label="Fechar">×</button></div>
+  <label>Nome da etiqueta <input type="text" id="tag-editor-name" maxlength="45"></label>
+  <div class="lt402-actions"><button type="button" id="tag-editor-save" class="preset">Salvar tag</button>
+  <button type="button" id="tag-editor-delete" class="preset dangerous">Excluir tag</button></div>
+ </div>
+</div>
 <div id="sprite-panel" class="overlay-sheet" hidden>
  <div class="modal-card">
   <div class="modal-title"><h2>Banco visual de Pokémon GO</h2><button type="button" id="sprites-close" aria-label="Fechar">×</button></div>
