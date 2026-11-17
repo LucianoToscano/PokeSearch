@@ -71,47 +71,47 @@ test("untrusted or lookalike image hosts are rejected",()=>{
 test("Discord public avatar is accepted without reading secrets",()=>{
  const p=read({source:"https://cdn.discordapp.com/avatars/123/a.png"});
  assert.equal(p.avatarUrl,"https://cdn.discordapp.com/avatars/123/a.png");
- assert.doesNotMatch(js,/document\\.cookie|localStorage|sessionStorage|access_token/);
+ assert.doesNotMatch(js,/document\.cookie|localStorage|sessionStorage|access_token/);
 });
 test("fresh OAuth resets old identity but same-session refresh retains verified name",()=>{
  assert.match(main,/boolean sameSessionResync=/);
- assert.match(main,/observedLoginProvider\\.isEmpty\\(\\)/);
- assert.match(main,/if\\(!sameSessionResync\\)\\{[\\s\\S]*?remove\\("profileAvatarUrl"\\)\\.remove\\("profileDisplayName"\\)/);
- assert.match(main,/profileCaptureStartedAt=android\\.os\\.SystemClock\\.uptimeMillis\\(\\)/);
+ assert.match(main,/observedLoginProvider\.isEmpty\(\)/);
+ assert.match(main,/if\(!sameSessionResync\)\{[\s\S]*?remove\("profileAvatarUrl"\)\.remove\("profileDisplayName"\)/);
+ assert.match(main,/profileCaptureStartedAt=android\.os\.SystemClock\.uptimeMillis\(\)/);
 });
 test("partial DOM name causes bounded retries, never sync success",()=>{
- assert.match(main,/profile\\.optString\\("displayName",""\\)\\.trim\\(\\)\\.length\\(\\)>=3/);
+ assert.match(main,/profile\.optString\("displayName",""\)\.trim\(\)\.length\(\)>=3/);
  assert.match(main,/profileCaptureRetryCount<=12|tryNumber<=12/);
  assert.match(main,/elapsed<20_000L/);
  assert.match(main,/profileCaptureFailureReason/);
  assert.match(main,/profileSyncState","error"/);
 });
 test("missing lazy image is retained only for the same verified identity",()=>{
- assert.match(main,/boolean newIdentity=!priorName\\.isEmpty\\(\\)&&!priorName\\.equals\\(name\\)/);
- assert.match(main,/boolean reuse=priorName\\.equals\\(name\\)&&!newIdentity/);
- assert.match(main,/if\\(newIdentity\\)ProfileAvatarCache\\.clear/);
+ assert.match(main,/boolean newIdentity=!priorName\.isEmpty\(\)&&!priorName\.equals\(name\)/);
+ assert.match(main,/boolean reuse=priorName\.equals\(name\)&&!newIdentity/);
+ assert.match(main,/if\(newIdentity\)ProfileAvatarCache\.clear/);
 });
 test("explicit sync forces same-URL download for both account slots",()=>{
- assert.match(main,/refreshGoogleAvatar\\(url,true\\)/);
- assert.match(main,/refreshSecondGoogleAvatar\\(url,true\\)/);
- assert.match(main,/if\\(!force&&shownAvatarUrl\\.equals\\(next\\)\\)return/);
- assert.match(main,/if\\(!force&&shownSecondAvatarUrl\\.equals\\(next\\)\\)return/);
- assert.match(main,/refreshSyncedAvatar\\(activeLoginSlot\\)/);
+ assert.match(main,/refreshGoogleAvatar\(url,true\)/);
+ assert.match(main,/refreshSecondGoogleAvatar\(url,true\)/);
+ assert.match(main,/if\(!force&&shownAvatarUrl\.equals\(next\)\)return/);
+ assert.match(main,/if\(!force&&shownSecondAvatarUrl\.equals\(next\)\)return/);
+ assert.match(main,/refreshSyncedAvatar\(activeLoginSlot\)/);
 });
 test("private cache bounded, identity-bound, logout-cleared and late callbacks guarded",()=>{
- assert.match(cache,/getFilesDir\\(\\)/);
+ assert.match(cache,/getFilesDir\(\)/);
  assert.match(cache,/MAX_FILE_BYTES=350_000/);
- assert.match(cache,/slot\+"\\\\n"\+displayName\+"\\\\n"\+url/);
+ assert.match(cache,/slot\+"\\n"\+displayName\+"\\n"\+url/);
  assert.match(cache,/SHA-256/);
- assert.match(slots,/ProfileAvatarCache\\.clear\\(context,slot\\)/);
+ assert.match(slots,/ProfileAvatarCache\.clear\(context,slot\)/);
  assert.match(main,/avatarRequestId!=avatarRequestGeneration/);
  assert.match(main,/avatarRequestId!=secondAvatarRequestGeneration/);
- assert.match(main,/avatarName\\.equals\\(slotPrefs\\.getString\\("profileDisplayName",""\\)\\)/);
- assert.match(main,/next\\.equals\\(slotPrefs\\.getString\\("profileAvatarUrl",""\\)\\)/);
+ assert.match(main,/avatarName\.equals\(slotPrefs\.getString\("profileDisplayName",""\)\)/);
+ assert.match(main,/next\.equals\(slotPrefs\.getString\("profileAvatarUrl",""\)\)/);
 });
 test("account 1 and account 2 keep their own preference and WebView profile stores",()=>{
  assert.match(slots,/slot==2\?"pogo_account_2":"prefs"/);
- assert.match(slots,/WebViewCompat\\.setProfile\\(web,NAME_2\\)/);
- assert.match(slots,/ProfileStore\\.getInstance\\(\\)\\.getOrCreateProfile\\(NAME_2\\)/);
+ assert.match(slots,/WebViewCompat\.setProfile\(web,NAME_2\)/);
+ assert.match(slots,/ProfileStore\.getInstance\(\)\.getOrCreateProfile\(NAME_2\)/);
 });
 console.log("LT381: "+checks+" profile sync/source contracts PASS (not an Android physical test)");
