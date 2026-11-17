@@ -41,7 +41,7 @@ check("search picker reuses exact form resolver instead of base sprites for cost
 });
 check("both Pokeball ON/OFF asset controls preserved",()=>{
  assert.match(home,/secondaryOverlayControl=makeIcon\(R\.drawable\.home_pokeball_off/);
- assert.match(home,/R\.drawable\.home_pokeball_on:R\.drawable\.home_pokeball_off/);
+ assert.match(home,/refreshHomePokeballImage\(secondaryOverlayControl,true\)/);
 });
 check("Firebase recoverable init failures still retain unknown counters",()=>{
  assert.match(stats,/initialized=false;render\(\)/);
