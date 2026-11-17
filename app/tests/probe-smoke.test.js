@@ -425,6 +425,18 @@ const rawProof=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("100% (15/15/15)")});
 assert.equal(rawProof.cards.length,1,"Raw hundo with exact observed triple remains visible");
 checked++;
+const ivBadgeOnly=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("100%")});
+assert.equal(ivBadgeOnly.cards.length,1,
+ "An explicitly visible per-card IV 100% is unique proof of 15/15/15");
+assert.equal(ivBadgeOnly.cards[0].iv,"15/15/15");
+checked+=2;
+const ivBadgeWrong=run("collect","raw",false,
+ {iv:["15","15","15"],spawn:ivEvidenceSpawn("67%")});
+assert.equal(ivBadgeWrong.cards.length,0,
+ "The site filter alone does not turn a mismatched IV badge into Hundo");
+checked++;
+
 const rawMissing=run("collect","raw",false,
  {iv:["15","15","15"],spawn:ivEvidenceSpawn("Unknown")});
 assert.equal(rawMissing.criteriaConfirmed,true,"Raw mode has a confirmed site filter");
