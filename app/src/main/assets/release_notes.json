@@ -5410,6 +5410,27 @@
           "Edições permanecem apenas no PokeSearch; PGSStats sincroniza somente o arquivo autorizado via Android SAF ao abrir a Pokédex e a cada 3 minutos com a tela ativa. Backup de notas/fundos ainda não é integral."
         ]
       }
+    },
+    {
+      "id": "lt404-oauth-auto-session-20261117",
+      "minVersionCode": 54596,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT404 — Login sincronizado automaticamente",
+      "sections": {
+        "novidades": [
+          "Reconhecimento automático da sessão PoGoCoordinates após login Google ou Discord, sem exigir tocar novamente na foto ou abrir Perfil."
+        ],
+        "melhorias": [
+          "Verificação da navegação React do site com tentativas limitadas, preservando contas independentes P1/P2 e identidade oficial."
+        ],
+        "correcoes": [
+          "Quando a página de busca ainda não reconhece o retorno OAuth, o aplicativo verifica a página oficial de perfil sem depender de um clique no avatar.",
+          "A sessão só é marcada como autenticada depois de confirmação explícita do site; nome e foto não são presumidos."
+        ],
+        "emDesenvolvimento": [
+          "Teste físico Samsung Android 17 com Google 2FA, Discord e sessão expirada continua necessário para validar a experiência real."
+        ]
+      }
     }
   ]
 }
