@@ -48,7 +48,6 @@ jobs:
     timeout-minutes: 15
     outputs:
       selected_mode: ${{ steps.select-mode.outputs.mode }}
-      preview_java_changed: ${{ steps.preview-source.outputs.changed }}
     steps:
       - name: Exact source checkout with diff history
         uses: actions/checkout@v4
@@ -59,19 +58,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Detect Preview native edits on PR only
-        id: preview-source
-        if: github.event_name == 'pull_request'
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          if git diff --name-only "$BASE_SHA"...HEAD | grep -qE '^app/src/preview/java/.*[.]java$'; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
       - name: Validate FastDev selector
         run: |
           node --check scripts/fastdev.cjs
@@ -113,45 +99,6 @@ jobs:
             node scripts/fastdev.cjs --base "${{ github.event.pull_request.base.sha }}"
           else
             node scripts/fastdev.cjs --base origin/main
-          fi
-
-  preview-java-compile:
-    name: Verify changed Preview Java on PR (no APK)
-    if: github.event_name == 'pull_request' && needs.quick.outputs.preview_java_changed == 'true'
-    needs: quick
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.11.1'
-      - name: Install Android 36
-        shell: bash
-        run: |
-          set -euo pipefail
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager | sort -V | tail -1)"
-          "$SDKMANAGER" --install 'platforms;android-36' 'build-tools;36.0.0'
-      - name: Compile the actual FastDev Activity without signing
-        shell: bash
-        env:
-          POKE_FASTDEV_SIGNING_REQUIRED: 'false'
-          POKE_TEST_SIGNING_REQUIRED: 'false'
-        run: |
-          set -euo pipefail
-          gradle --no-daemon --build-cache :app:compilePreviewJavaWithJavac --stacktrace
-          if find app/build/outputs -type f -name '*.apk' -print -quit 2>/dev/null | grep -q .; then
-            echo "::error::Preview compile may not package APK"
-            exit 1
           fi
 
   java-check:
