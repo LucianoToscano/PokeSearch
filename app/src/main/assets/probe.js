@@ -1012,20 +1012,24 @@ if(action==="describeFilters"){
 }
 
 function cardRoots(){
- // After Get coords is clicked, the site may render Open in Maps as an <a>.
- // Include both controls or formerly visible cards silently disappear.
- const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&
-   /^(?:Get coords|Open in Maps)$/i.test(text(e)));
+ // Only use actions visible inside the PoGoCoordinates result pane.
+ // On responsive layouts one ancestor may contain five guest entries;
+ // never mistake that shared ancestor for an individual encounter.
+ const resultAction=e=>/^(?:Get coords|Open in Maps)$/i.test(text(e));
+ const actions=elements("button,a,[role=button]").filter(e=>vis(e)&&resultAction(e));
  const cards=[],seen=new Set();
  for(const action of actions){
-  // Keep the nearest parent when the site temporarily hides card labels.
-  // Native IV/rank checks still reject unverified data.
-  let node=action,chosen=action.parentElement;
-  for(let depth=0;depth<10&&node;depth++,node=node.parentElement){
+  let chosen=null;
+  for(let node=action,depth=0;node&&depth<10;node=node.parentElement,depth++){
    const t=text(node);
-   if(/\bLOCATION\b/i.test(t)&&/\bDESPAWN\b/i.test(t)&&/\bCP\b/i.test(t)&&t.length<2500){
-    chosen=node;break;
-   }
+   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
+      !/\bCP\b/i.test(t)||t.length>=2500)continue;
+   const controls=Array.from(node.querySelectorAll("button,a,[role=button]"))
+    .filter(resultAction);
+   // A single card can have Get coords and Open in Maps, but an enclosing
+   // multi-card grid cannot be trusted as one result.
+   const dexLabels=t.match(/#\s*\d{1,4}\b/g)||[];
+   if(controls.length<=2&&dexLabels.length<=1){chosen=node;break;}
   }
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
@@ -1038,7 +1042,7 @@ function cardRoots(){
 // not a verified empty response until result DOM has changed since Search.
 function visibleResultSignature(){
  const body=text(document.body);
- const count=(body.match(/\bShowing\s+\d+\s+spawns?\b/i)||[])[0]||"";
+ const count=(body.match(/\bShowing\s+\d+\s+(?:spawns?|results?)\b/i)||[])[0]||"";
  const cards=cardRoots().map(item=>text(item.node).slice(0,700)).join("\u001e");
  // A real no-spawns message may replace cards without a "Showing 0" label.
  // Record only its presence, not the surrounding account/location text.
@@ -1137,6 +1141,12 @@ function parseCard(box,sourceIndex){
  // data-src/currentSrc/srcset already contains the real Pokémon sprite.
  // Prefer the verified card image URL, never synthesize a generic species.
  const encounterDex=Number((meta.match(/#(\d{1,4})/)||[])[1]||0);
+ // Only these known Dex identities can repair a generic provider label.
+ // Keep form/costume/shiny evidence from this SAME card.
+ if(/^(?:pok[eé]mon|pokemon)$/i.test(title.trim())){
+  if(encounterDex===129)title="Magikarp";
+  else if(encounterDex===580)title="Ducklett";
+ }
  const encounterSpecies=String(title||"").replace(/✨/g,"").replace(/\s*\([^)]*\)\s*/g," ").trim();
  const isSpriteShiny=/✨/.test(title);
  const labeledForm=nextLabelValue(box,"FORM")||
@@ -1322,7 +1332,7 @@ function collect(){
   return body.length<500&&emptyMessage.test(body)&&
    !region.querySelector('[role=listbox],[cmdk-list],[role=dialog]');
  });
- const countLabel=(t.match(/\bShowing\s+(\d+)\s+spawns?\b/i)||[])[1];
+ const countLabel=(t.match(/\bShowing\s+(\d+)\s+(?:spawns?|results?)\b/i)||[])[1];
  const siteCount=Number(countLabel||0);
  // Provider-owned UI: five anonymous results vs ten available after login.
  // Display evidence only. Never invent locked results or change the quota.
