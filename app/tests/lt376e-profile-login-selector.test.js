@@ -52,7 +52,7 @@ assert.match(home,/verifiedName\.isEmpty\(\)/);
 assert.match(home,/loginCover\.setVisibility\(View\.GONE\)/);
 assert.match(home,/accountActions\.addView\(syncProfile/);
 assert.match(home,/secondAccountActions\.addView\(secondSyncProfile/);
-assert.match(home,/HomeMenuIconPack\.opticalPokeballButtonXInParentPx\(icon\)/);
+assert.match(home,/setHomePackIcon\(ball,number,"normal"\)/);
 assert.match(home,/placement\.leftMargin=desiredLeft/);
 assert.match(home,/placement\.gravity=Gravity\.TOP\|Gravity\.LEFT/);
 assert.match(art,/static int opticalPokeballButtonXInParentPx\(/);
