@@ -26,3 +26,23 @@ test("preview update code checks package and signing",()=>{
  assert.match(src,/canRequestPackageInstalls/);
  assert.doesNotMatch(src,/ghp_|github_pat_/);
 });
+
+test("development and public display the SAME 0.XX.XX number with distinct Dev/LT suffix",()=>{
+ const fs=require("node:fs");
+ const official=JSON.parse(fs.readFileSync("release/official-request.json","utf8"));
+ const gradle=fs.readFileSync("app/build.gradle.kts","utf8");
+ const activity=fs.readFileSync("app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java","utf8");
+ const manifest=fs.readFileSync("app/src/preview/AndroidManifest.xml","utf8");
+ assert.match(official.version,/^0\.\d{2}\.\d{2}$/);
+ assert.equal(official.version,"0.03.73");
+ assert.match(gradle,/val officialVersionRequest = file\("\.\.\/release\/official-request\.json"\)/);
+ assert.match(gradle,/val fastDevDisplayVersion = \(groovy\.json\.JsonSlurper\(\)\.parse\(officialVersionRequest\)/);
+ assert.match(gradle,/else if \(fastDevCode != null\) fastDevDisplayVersion/);
+ assert.match(gradle,/versionNameSuffix = ""/);
+ assert.doesNotMatch(gradle,/versionNameSuffix = "-preview"/);
+ assert.match(activity,/footer=homeText\("PokeSearch v"\+BuildConfig\.VERSION_NAME\+\s*\(BuildConfig\.FASTDEV_PREVIEW\?" Dev":" LT"\)/);
+ assert.match(manifest,/android:label="PokeSearch Dev"/);
+ // This is metadata only: the public APK and its signer are NOT renamed.
+ assert.match(gradle,/applicationIdSuffix = "\.preview"/);
+ assert.match(gradle,/POKE_FASTDEV_VERSION_CODE/);
+});
