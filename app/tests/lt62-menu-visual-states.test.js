@@ -340,7 +340,7 @@ check("LT62 Refresh: original 16px neutral icon spins only after manual tap; min
  assert.ok(dock.includes('button[data-key="period"] .periodBadge{'));
  assert.ok(dock.includes('left:50%;top:50%;transform:translate(-50%,-50%)'));
  assert.ok(dock.includes('font:400 7px/1 Roboto,Arial,sans-serif!important'));
- assert.ok(dock.includes('badge.textContent=period===0?"":(period===-3?"3s":period+"m")'));
+ assert.ok(dock.includes('badge.textContent=period===0?"":period+"m"'));
  assert.ok(dock.includes('button.classList.add("refreshSpinning")'));
  assert.ok(dock.includes('@keyframes psRefreshSpin{to{transform:rotate(360deg)}}'));
  assert.ok(!dock.includes('button[data-key="period"].requested .quickGlyph{color:#ffdb70'));
