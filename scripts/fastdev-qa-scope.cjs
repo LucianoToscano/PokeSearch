@@ -6,6 +6,8 @@
  */
 const fs=require("node:fs");
 function previewOnly(path){
+ // The scope classifier itself is part of the protected release gate.
+ if(path.startsWith("scripts/fastdev-qa-scope."))return false;
  return path.startsWith("app/src/preview/")||
    path.startsWith("docs/")||
    path.startsWith("fastdev/")||
