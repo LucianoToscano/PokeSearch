@@ -18,7 +18,7 @@
  // The separate trainer parser below remains strict (unknown unless proven).
  const proof=/\bLinked accounts\b/i.test(body)&&
    (/\bMember since\b/i.test(body)||/\bPokemon GO accounts\b/i.test(body));
- if(!proof)return JSON.stringify({ok:false,page:"unhydrated"});
+ if(!proof)return JSON.stringify({ok:false,page:"unhydrated",reason:"profile_unhydrated"});
  const nodes=Array.from(document.querySelectorAll("p,span,small,strong,div,section,article"))
    .filter(visible);
  const banned=/^(?:profile|member since|upgrade|danger zone|linked accounts|pokemon go accounts|export|search|logout|log out|link|google|discord|pokemon go|settings|account|home|connected|linked|manage your account.*)$/i;
@@ -180,7 +180,11 @@
    if(unique.length===1)avatarUrl=unique[0];
   }
  }
- return JSON.stringify({ok:true,page:"profile",displayName,provider,trainerState,
+ // A hydrated profile shell is different from a verified member identity.
+ // Android must not mark name synchronization complete while this is false.
+ return JSON.stringify({ok:true,page:"profile",identityVerified:!!displayName,
+   syncReason:!displayName?"profile_name_missing":!avatarUrl?"avatar_pending":"complete",
+   displayName,provider,trainerState,
    trainerName:parsed?parsed.name:"",trainerCode:parsed?parsed.code:"",
    team:parsed?parsed.team:"",level:parsed?parsed.level:"",trainers:trainers.slice(0,20),avatarUrl});
 })()
