@@ -58,8 +58,8 @@ test("Home has no PokeSearch logo and retains profile and provider icons beside 
 test("only the official PokeSearch release remains distributable",()=>{
  assert.match(official,/environment: official-updates/);
  assert.match(official,/POKE_RELEASE_CERT_SHA256/);
- assert.match(gradle,/applicationId = "com\\.lucianotoscano\\.pokesearch"/);
- assert.doesNotMatch(gradle,/create\\("preview"\\)|FASTDEV_PREVIEW|POKE_FASTDEV/);
+ assert.ok(gradle.includes('applicationId = "com.lucianotoscano.pokesearch"'));
+ assert.doesNotMatch(gradle,/create\("preview"\)|FASTDEV_PREVIEW|POKE_FASTDEV/);
  assert.ok(!fs.existsSync(path.join(root,".github/workflows/pokesearch-fastdev.yml")));
  assert.ok(!fs.existsSync(path.join(root,"fastdev/latest.json")));
 });

@@ -1,4 +1,4 @@
-name: Secure beta APK (private test)
+name: PokeSearch official release integrity QA (no distribution)
 on:
   pull_request:
     branches: [main]
@@ -67,9 +67,9 @@ jobs:
           ! unzip -Z1 Aplicativo/PokeSearch-0.51-beta.apk | grep -E '(^|/)(.*\\.java|.*\\.kt|.*\\.jks|mapping\\.txt)$'
           sha256sum Aplicativo/PokeSearch-0.51-beta.apk > Aplicativo/SHA256SUMS.txt
           rm -f "$POKE_RELEASE_KEYSTORE"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: PokeSearch-0.51-beta-APK-only
-          path: Aplicativo/PokeSearch-0.51-beta.apk
-          if-no-files-found: error
-          retention-days: 30
+      - name: Erase nondistributable QA APK
+        if: always()
+        shell: bash
+        run: |
+          rm -rf Aplicativo
+          rm -f app/build/outputs/apk/release/app-release.apk

@@ -7,5 +7,5 @@ const gradle=read("app/build.gradle.kts");
 assert.match(gradle,/versionCode = testVersionCode \?: 51/);
 assert.doesNotMatch(gradle,/create\("preview"\)|applicationIdSuffix/);
 assert.match(read(".github/workflows/pokesearch-official-release.yml"),/environment: official-updates/);
-assert.doesNotMatch(read(".github/workflows/secure-release.yml"),/fastdev|Preview-only|steps\.scope/i);
+assert.doesNotMatch(read(".github/workflows/secure-release.yml"),/fastdev|Preview-only|steps\.scope|upload-artifact/i);
 console.log("LT407: official-only channel, no FastDev/DEV APK or Preview workflow");
