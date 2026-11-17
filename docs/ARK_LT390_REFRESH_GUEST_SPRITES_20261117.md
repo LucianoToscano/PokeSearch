@@ -1,3 +1,21 @@
+# ARK LT390 — Publicação oficial encerrada e verificada (17/11/2026)
+
+**STATUS FINAL — OFICIAL, INTEGRADO E PUBLICADO.** Versão **PokeSearch v0.03.75 LT / versionCode 54582 / label 51390**. Release pública [v0.03.75-54582](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.75-54582), [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.75-54582/PokeSearch-v0.03.75-LT.apk), **61.207.501 bytes**, digest GitHub SHA-256 `bdc5cafa28d0ab4d61e3c096385037441d9fc800fd630bf2da02098e64b88de8`. Certificado permanente verificado pelo workflow: `34766c15d09013ad65873f9976539c8fa2f826e917dae3af57ea628cad689e8e`. [Workflow de publicação #44024185582](https://github.com/LucianoToscano/PokeSearch/actions/runs/44024185582): **completed/success**, preflight, R8, recursos, APK, assinatura, upload público, hash e limpeza de material privado **SUCCESS**. Hash conforme GitHub e verificações do workflow; sem alegar recálculo local independente a partir dos bytes baixados.
+
+**Merge de código:** [PR #483](https://github.com/LucianoToscano/PokeSearch/pull/483) squash `e120e7a6e4f44ebd689e8cd5074c986e77356fb2`, head testado `a89cbfa4dec26c09e3c00f1b9c290e2ee1f994e7`. Gates completos nessa revisão: Node [#44023233864](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233864), LT169 [#44023233803](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233803), LT211 [#44023233829](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233829), Java LT62 [#44023233986](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233986), OTA LT173 [#44023233782](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233782), PGS APK QA [#44023233775](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233775), LT253 [#44023233780](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233780), FastDev [#44023233881](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233881), Secure Beta/R8 [#44023233826](https://github.com/LucianoToscano/PokeSearch/actions/runs/44023233826), **todos SUCCESS**. O Secure Beta havia sido SKIPPED apenas enquanto PR era draft; foi executado depois de marcar ready e sincronizar a revisão. A antiga documentação de QA abaixo é histórico, não o estado final.
+
+**Merge de versão:** [PR #484](https://github.com/LucianoToscano/PokeSearch/pull/484) squash `e13a061f2e51e5a948a999e3b4c9af2df7350716`, pedido monotônico 0.03.75/54582/label 51390; checagens de preflight oficial, Node, LT169, LT211, Java, OTA, FastDev, Secure Beta/R8 passaram. Uma alteração concorrente preservada no manifesto FastDev `fastdev/latest.json` não modificou os artefatos oficiais nem trouxe conflito de conteúdo.
+
+**Entregas:** AUTO padrão 3 minutos, sem 3s e com migração de preferências; atualização manual imediata fora do temporizador (429 do site e concorrência preservados); cards de resultados sem parágrafos técnicos repetitivos; identificação #129 Magikarp/#580 Ducklett por Dex local com proteção de forma e identidade; extração do visitante reconhecendo `Showing N results` e separando cartões; CTA 🔒+5 transparente e compacto, sem inventar cinco Pokémon adicionais. `release_notes.json` registra Novidades internas LT390.
+
+**Pendente físico (não bloqueia registro de publicação verificada):** Samsung real Android 11–14, P1/P2, visitante/autenticado, OAuth Google/Discord, nome/foto, sprites/variantes, até cinco resultados reais do provedor, filtro IV 100%, botões de coordenadas, HTTP 429, telas e acessibilidade. Nenhum teste automatizado prova captura ou caminhada real. Instalação no aparelho exige aprovação do Android.
+
+**Próximo prompt:** [LT391](LT391_PROMPT_CONTINUIDADE_APOS_LT390_OFICIAL_20261117.md). Versão anterior v0.03.74 preservada.
+
+---
+
+## Histórico de QA anterior à publicação (superado pela conclusão acima)
+
 # ARK LT390 — Correções de resultados, atualização e sprites (17/11/2026)
 
 ## Reabertura após autorização ARK
