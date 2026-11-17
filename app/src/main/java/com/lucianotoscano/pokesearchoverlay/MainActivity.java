@@ -822,7 +822,7 @@ public class MainActivity extends Activity {
         pogoLp.leftMargin=d(3);
         controls.addView(homePogoCoordinatesShortcut,pogoLp);
         homePogoCoordinatesShortcut.setContentDescription("Contas PoGoCoordinates · abrir menu de login e perfil");
-        homePogoCoordinatesShortcut.setOnClickListener(v->showHomeAccountMenu());
+        homePogoCoordinatesShortcut.setOnClickListener(v->showPogoAccountHub());
         refreshHomeHeaderProfileIcons();
 
         // O ícone indica o modo que será ativado ao tocar.
@@ -1783,6 +1783,64 @@ public class MainActivity extends Activity {
         showHomeDrawerPage(false);
     }
     /** Aba Conta com aparência idêntica ao menu lateral, sem duplicar a autenticação. */
+    // LT389: this small native account hub replaces the two oversized cards
+    // on Home. No WebView or OAuth begins until the owner chooses an action.
+    private void showPogoAccountHub(){
+        String one=pogoAccountSummary(1);
+        String two=PogoAccountSlots.supportsSecond()?pogoAccountSummary(2):
+            "Não disponível neste Android";
+        CharSequence[] accounts={"Conta 1  ·  "+one,"Conta 2  ·  "+two,
+            "Continuar como visitante"};
+        new AlertDialog.Builder(this)
+            .setTitle("PoGoCoordinates · Contas")
+            .setItems(accounts,(dialog,which)->{
+                if(which==2){
+                    Toast.makeText(this,"Busca pública sem login disponível nas Pokébolas",
+                        Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(which==1&&!PogoAccountSlots.supportsSecond()){
+                    Toast.makeText(this,"Seu WebView não isola uma segunda conta",
+                        Toast.LENGTH_LONG).show();
+                    return;
+                }
+                showPogoAccountActions(which+1);
+            })
+            .setNegativeButton("Fechar",null).show();
+    }
+    private String pogoAccountSummary(int slot){
+        SharedPreferences account=PogoAccountSlots.prefs(this,slot);
+        if(!PogoAccountSlots.loggedIn(this,slot))return "Visitante / desconectada";
+        String name=account.getString("profileDisplayName","").trim();
+        String sync=account.getString("profileSyncState","");
+        if(name.isEmpty())return "Conectada · perfil pendente";
+        return name+("verified".equals(sync)?"":" · sincronização pendente");
+    }
+    private void showPogoAccountActions(int slot){
+        final boolean connected=PogoAccountSlots.loggedIn(this,slot);
+        final String[] actions=connected?
+            new String[]{"Abrir perfil oficial","Atualizar nome e foto","Desconectar esta conta"}:
+            new String[]{"Entrar com Google","Entrar com Discord","Usar busca visitante"};
+        new AlertDialog.Builder(this)
+            .setTitle("Conta "+slot+" · "+pogoAccountSummary(slot))
+            .setItems(actions,(dialog,which)->{
+                if(!connected){
+                    if(which==2)return;
+                    preferredLoginProvider=which==0?"google":"discord";
+                    openLoginDialogForSlot(slot,"login");
+                }else if(which==0){
+                    openLoginDialogForSlot(slot,"manage");
+                }else if(which==1){
+                    openLoginDialogForSlot(slot,"sync");
+                }else if(slot==2){
+                    new AlertDialog.Builder(this).setTitle("Sair da Conta 2?")
+                        .setMessage("A Conta 1 e os filtros serão preservados.")
+                        .setNegativeButton("Cancelar",null)
+                        .setPositiveButton("Sair",(d,w)->logoutSecondAccount()).show();
+                }else askLogout();
+            })
+            .setNegativeButton("Voltar",(d,w)->showPogoAccountHub()).show();
+    }
     private void showHomeAccountMenu(){
         if(homeRoot!=null)showHomeDrawerPage(true);
     }
@@ -3157,28 +3215,13 @@ public class MainActivity extends Activity {
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
                 SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
-                // Only a reconfirmation without a fresh OAuth navigation may
-                // preserve a previously verified member. New login/account
-                // change must hide the old identity until /profile confirms it.
-                boolean sameSessionResync=("sync".equals(loginPurpose)||
-                    "manage".equals(loginPurpose))&&observedLoginProvider.isEmpty()&&
-                    "autenticada".equals(slotPrefs.getString("sessionStatus",""))&&
-                    !slotPrefs.getString("profileDisplayName","").trim().isEmpty();
-                SharedPreferences.Editor sessionEdit=slotPrefs.edit()
-                    .putString("sessionStatus","autenticada")
-                    .putString("profileSyncState","pending")
-                    .putString("profileTrainerState","unknown")
-                    .remove("profileTrainerName").remove("profileTrainerCode")
-                    .remove("profileTrainerDetails").remove("profileTrainerTeam")
-                    .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-                    .remove("profileTrainerLevel");
-                if(!sameSessionResync){
-                    sessionEdit.remove("profileAvatarUrl").remove("profileDisplayName")
-                        .remove("profileProvider").putString("profileAvatarState","missing")
-                        .remove("profileLastSyncedAt");
-                    ProfileAvatarCache.clear(this,activeLoginSlot);
-                }
-                sessionEdit.apply();
+                // Authentication and public profile hydration are distinct.
+                // Preserve the LAST verified identity and cached image until a
+                // DIFFERENT real /profile identity is verified. Pending state
+                // prevents presenting stale data as newly synchronized.
+                // Clearing before React hydrates made valid accounts look empty.
+                slotPrefs.edit().putString("sessionStatus","autenticada")
+                    .putString("profileSyncState","pending").apply();
                 profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
                 profileCaptureFailureReason="profile_unhydrated";
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
@@ -3403,7 +3446,8 @@ public class MainActivity extends Activity {
                     PogoAccountSlots.prefs(this,activeLoginSlot).edit()
                         .putString("profileSyncState","error").apply();
                     BugReport.log(this,"HOME",profileCaptureFailureReason+
-                        " · Conta "+activeLoginSlot);
+                        " · Conta "+activeLoginSlot+" · tentativas="+tryNumber+
+                        " · elapsedMs="+elapsed);
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
                     if(loginWaitLabel!=null)loginWaitLabel.setText(
@@ -3678,6 +3722,9 @@ public class MainActivity extends Activity {
                         view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                     return;
                 }
+                // A real user must be able to tap Google/Discord in the site.
+                // Hiding it behind a spinner makes OAuth appear frozen.
+                if(loginCover!=null)loginCover.setVisibility(View.GONE);
                 checkLoginSession(view,24,generation);
             }
             @Override public void doUpdateVisitedHistory(WebView view,String url,boolean isReload){
