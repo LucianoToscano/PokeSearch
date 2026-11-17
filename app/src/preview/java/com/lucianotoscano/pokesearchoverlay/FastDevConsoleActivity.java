@@ -75,42 +75,13 @@ public final class FastDevConsoleActivity extends Activity {
     }
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
-        ScrollView scroll=new ScrollView(this);
-        LinearLayout root=new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int p=(int)(18*getResources().getDisplayMetrics().density);
-        root.setPadding(p,p,p,p);
-        scroll.addView(root);
-        TextView header=new TextView(this);
-        header.setText("PokeSearch FastDev");
-        header.setTextSize(25);
-        root.addView(header);
-        status=new TextView(this);
-        status.setText("Preview "+BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+
-            ")\nAtualizações preservam os dados deste aplicativo.");
-        status.setPadding(0,p/2,0,p/2);
-        root.addView(status);
-        button(root,"Verificar atualização FastDev",v->check());
-        button(root,"Instalar atualização encontrada",v->installAvailable());
-        button(root,"Abrir downloads FastDev no navegador",v->{
-            try{
-                Intent browser=new Intent(Intent.ACTION_VIEW,Uri.parse(DOWNLOAD_PAGE));
-                startActivity(browser);
-            }catch(Exception error){
-                show("Não foi possível abrir o navegador.");
-            }
-        });
-        button(root,"Live Preview (HTML)",v->
-            startActivity(new Intent(this,FastDevLiveActivity.class)));
-        button(root,"Abrir o PokeSearch de testes",v->
-            startActivity(new Intent(this,MainActivity.class)));
-        TextView note=new TextView(this);
-        note.setText("\nO APK oficial é separado. Android pode pedir confirmação da instalação. "+
-            "A versão FastDev usa somente pré-releases de testes publicados.");
-        root.addView(note);
-        setContentView(scroll);
-        scheduleUpdateChecks(this);
-        check(); // legacy console: not a launcher in the Preview build
+        // Compatibility for old launch shortcuts pointing to the former
+        // FastDev console. Redirect to the real app instead of recreating
+        // the debug buttons or the stand-alone HTML simulator.
+        Intent home=new Intent(this,MainActivity.class);
+        home.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(home);
+        finish();
     }
     private void button(LinearLayout root,String text,View.OnClickListener action) {
         Button b=new Button(this);b.setText(text);b.setAllCaps(false);
