@@ -8272,7 +8272,7 @@ window.onNativeData=(a,s,m,shi,r,interval,sprite,timers,borders,general,hasFav,p
  shownShiny=!!resultSourceShiny;resultsStale=!!stale;
  nextQueryAt=Number(nextDue)||0;
  searchActive=!!isSearching;
- siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale;
+ siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale&&!guestSitePreviewActive;
  mode=m==="iv"?"raw":m;status=String(s||"");activeSearchPhase=String(searchPhase||"idle");
   if(controlsWindow&&choiceOpen==="location")locationPanelFeedback();
  shinyPending=!!pending;
