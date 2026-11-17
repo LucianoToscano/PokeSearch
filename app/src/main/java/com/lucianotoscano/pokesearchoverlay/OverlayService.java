@@ -498,7 +498,7 @@ public class OverlayService extends Service {
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=-3,menuPadDp=0;
+    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=3,menuPadDp=0;
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
@@ -510,6 +510,8 @@ public class OverlayService extends Service {
     // User preference controls API/DOM source; current default is API ON, not DOM.
     private AuthorizedApiCollector authorizedApiCollector;
     private boolean displayedApiResults=false;
+    // Set only after a verified first-party public Search exposes its 5/10 banner.
+    private boolean guestResultLimitConfirmed=false;
     private int displayedApiSearchId=-1;
     // Provider 429 is an upstream limit, never a permission to switch accounts,
     // force DOM searches, or retry until accepted. Both Pokeballs share this
@@ -1198,9 +1200,9 @@ public class OverlayService extends Service {
     private float startRawX,startRawY;
     private int startX,startY;
     private boolean dragged=false;
-    // -3 denotes the new 3-second preset; legacy positive preferences remain MINUTES.
-    // Refresh does not bypass the provider's existing request/cooldown protections.
-    private long autoRefreshDelayMs(){return intervalMinutes==-3?3000L:Math.max(0L,intervalMinutes)*60000L;}
+    // AUTO is in minutes. Manual refresh remains immediate unless the actual
+    // provider has returned HTTP 429 / Retry-After or a search is in progress.
+    private long autoRefreshDelayMs(){return Math.max(0L,intervalMinutes)*60000L;}
     private final Runnable periodic=new Runnable(){
         @Override public void run(){
             if(stopped||loginPaused||intervalMinutes==0)return;
@@ -1250,7 +1252,10 @@ public class OverlayService extends Service {
                 (confirmedSubmittedFiltersGeneration==requestGeneration&&
                  submittedSearchGeneration==requestGeneration&&
                  !searchInProgress&&!resultsStale&&
-                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+")";
+                 ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+","+
+                (guestResultLimitConfirmed&&
+                 !PogoAccountSlots.loggedIn(this,PogoAccountSlots.assigned(this,
+                     isSecondaryOverlay())))+")";
         js(panel,panelLoaded,data);
         js(menuPanel,menuLoaded,data);
         js(popupPanel,popupLoaded,data);
@@ -1801,7 +1806,8 @@ public class OverlayService extends Service {
                 try{armNextDespawn(new JSONArray(results));}
                 catch(org.json.JSONException ex){recordFailure("rearmar despawn após rede",ex);}
                 BugReport.log(OverlayService.this,"NETWORK","Falha de navegação principal; código="+error.getErrorCode());
-                status("Não foi possível carregar PoGoCoordinates. Confira conexão e tente ↻.");
+                searchFailure("⚠ Sem conexão com PoGoCoordinates",
+                    "Falha ao carregar o site público. Verifique a conexão e toque em ↻ para tentar novamente.");
             }
         });
     }
@@ -2645,6 +2651,12 @@ public class OverlayService extends Service {
     private void refresh(){refresh(false);}
     private void refresh(boolean manual){
         if(stopped||loginPaused)return;
+        // Ordinary public searches use the first-party website when the
+        // selected profile is a visitor or an account without a confirmed
+        // session. Do not call an authenticated API for a guest.
+        final int searchSlot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
+        final boolean guestPublicSearch=!shiny&&
+            !PogoAccountSlots.loggedIn(this,searchSlot);
         if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L){
             scheduleProviderRateLimitResume();
             long remaining=(apiProviderBackoffUntil()-System.currentTimeMillis()+999L)/1000L;
@@ -2660,7 +2672,7 @@ public class OverlayService extends Service {
             }
             return;
         }
-        if(!authorizedApiQaSelected()){
+        if(!authorizedApiQaSelected()||guestPublicSearch){
             try{
                 if(isInvertedWildSort(new JSONObject(extraFiltersJson).optString("sortBy",""))){
                     searchFailure("⚠ Ordenação inversa exige API",
@@ -2697,13 +2709,15 @@ public class OverlayService extends Service {
         handler.removeCallbacks(searchWatchdog);
         handler.postDelayed(searchWatchdog,SEARCH_WATCHDOG_MS);
         status(manual?"Busca manual iniciada...":"Atualizando...");
-        if(authorizedApiQaSelected()){
+        if(authorizedApiQaSelected()&&!guestPublicSearch){
             // No DOM Search is also dispatched: each generation uses one source.
             if(authorizedApiCollector==null)
                 authorizedApiCollector=new AuthorizedApiCollector(website,getAssets(),handler);
             performAuthorizedApiSearch(generation,manual);
             return;
         }
+        if(guestPublicSearch)
+            status("Visitante · conferindo busca pública no PoGoCoordinates...");
         execute("session",session->continueVerifiedSearchSession(generation,manual,session,0));
     }
     // Keep the second (in-search) auth proof as careful as the Shiny tap.
@@ -3836,6 +3850,8 @@ public class OverlayService extends Service {
                 WatchAlerts.permissionGranted(this));
         }
         displayedApiResults=authorizedApiQa;
+        guestResultLimitConfirmed=!authorizedApiQa&&
+            r.optBoolean("guestLimitBanner",false)&&sorted.length()>0;
         results=sorted.toString();
         resultsDistanceCenter=locationEnabled?locationCoords:"";
         searchPhase=sorted.length()==0?"empty":"updated";
@@ -5788,8 +5804,40 @@ public class OverlayService extends Service {
             try{startActivity(intent);}catch(Exception e){recordFailure("abrir preferências",e);}
         });}
         @JavascriptInterface public void showStatus(){handler.post(()->{
-            android.widget.Toast.makeText(OverlayService.this,
-                status==null?"Aguardando busca":status,android.widget.Toast.LENGTH_LONG).show();
+            String summary=status==null||status.trim().isEmpty()?
+                "Aguardando busca":status;
+            if(!"error".equals(searchPhase)){
+                android.widget.Toast.makeText(OverlayService.this,summary,
+                    android.widget.Toast.LENGTH_LONG).show();
+                return;
+            }
+            String detail=overlayPrefs().getString("lastError","");
+            String explanation=summary+(detail==null||detail.isEmpty()||
+                "Nenhum".equals(detail)?"":"\n\nMotivo: "+detail);
+            try{
+                android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(
+                    OverlayService.this)
+                    .setTitle("Aviso da Pokébola "+(isSecondaryOverlay()?"2":"1"))
+                    .setMessage(explanation)
+                    .setPositiveButton("Entendi",(d,which)->{})
+                    .setNeutralButton("Reportar problema",(d,which)->{
+                        Intent report=new Intent(OverlayService.this,MainActivity.class);
+                        report.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_REPORT");
+                        report.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        try{startActivity(report);}
+                        catch(Exception e){recordFailure("abrir relatório da busca",e);}
+                    }).create();
+                if(dialog.getWindow()!=null)
+                    dialog.getWindow().setType(android.os.Build.VERSION.SDK_INT>=26?
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:
+                        WindowManager.LayoutParams.TYPE_PHONE);
+                dialog.show();
+            }catch(RuntimeException e){
+                recordFailure("mostrar motivo da busca",e);
+                android.widget.Toast.makeText(OverlayService.this,explanation,
+                    android.widget.Toast.LENGTH_LONG).show();
+            }
         });}
         @JavascriptInterface public void openReport(){handler.post(()->{
             Intent intent=new Intent(OverlayService.this,MainActivity.class);
@@ -5815,7 +5863,7 @@ public class OverlayService extends Service {
             });
         }
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             overlayPrefs().edit()
@@ -5823,10 +5871,10 @@ public class OverlayService extends Service {
             schedulePeriodic();
             update();
             android.widget.Toast.makeText(OverlayService.this,
-                intervalMinutes==0?"AUTO desligado":intervalMinutes==-3?"AUTO: 3 segundos":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
+                intervalMinutes==0?"AUTO desligado":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
-            int[] options={-3,0,3,5,10,15,20};
+            int[] options={0,3,5,10,15,20};
             int next=0;
             for(int j=0;j<options.length;j++){
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
@@ -5958,6 +6006,36 @@ public class OverlayService extends Service {
             }catch(Exception e){recordFailure("detalhes coordenadas",e);}
         });}
         @JavascriptInterface public void coords(int sourceIndex){handler.post(()->requestCoordinates(sourceIndex,true));}
+        @JavascriptInterface public void openGuestLogin(){handler.post(()->{
+            if(stopped||!guestResultLimitConfirmed)return;
+            android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(
+                OverlayService.this)
+                .setTitle("Mais resultados no PoGoCoordinates")
+                .setMessage("No modo visitante, o site exibe até 5 resultados. "+
+                    "Entrar no PoGoCoordinates libera até 10, conforme as regras "+
+                    "do próprio site. Deseja fazer login agora?")
+                .setNegativeButton("Agora não",null)
+                .setPositiveButton("Entrar",(d,which)->{
+                    final boolean secondary=isSecondaryOverlay();
+                    final int assigned=PogoAccountSlots.assigned(
+                        OverlayService.this,secondary);
+                    if(PogoAccountSlots.loggedIn(OverlayService.this,assigned))return;
+                    Intent login=new Intent(OverlayService.this,MainActivity.class);
+                    login.setAction("com.lucianotoscano.pokesearchoverlay.OPEN_POGO_LOGIN");
+                    login.putExtra("pogoAccountSlot",assigned==2?2:1);
+                    login.putExtra("pogoOverlayNumber",secondary?2:1);
+                    login.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    try{startActivity(login);}
+                    catch(Exception e){recordFailure("abrir login público",e);
+                        diagnosticError("Não foi possível abrir o login PoGoCoordinates.");}
+                }).create();
+            if(dialog.getWindow()!=null)
+                dialog.getWindow().setType(android.os.Build.VERSION.SDK_INT>=26?
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY:
+                    WindowManager.LayoutParams.TYPE_PHONE);
+            dialog.show();
+        });}
         @JavascriptInterface public void confirmCooldownCapture(int sourceIndex){handler.post(()->OverlayService.this.confirmCooldownCapture(sourceIndex));}
         @JavascriptInterface public void toggleCooldown(){handler.post(OverlayService.this::toggleCooldown);}
         @JavascriptInterface public void undoCooldown(){handler.post(OverlayService.this::undoCooldown);}
@@ -6224,13 +6302,19 @@ public class OverlayService extends Service {
             shiny=false;
         }
         if(!pref.getBoolean("intervalExplicit",false)){
-            intervalMinutes=-3;
-            pref.edit().putInt("intervalMinutes",-3).apply();
+            intervalMinutes=3;
+            pref.edit().putInt("intervalMinutes",3).apply();
         }else{
-            intervalMinutes=pref.getInt("intervalMinutes",-3);
+            intervalMinutes=pref.getInt("intervalMinutes",3);
         }
-        if(intervalMinutes!=-3&&intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
-           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=-3;
+        // Older builds allowed a 3-second (-3) preset. Migrate both the old
+        // default and a previously explicit choice, never restore 3s on boot.
+        if(intervalMinutes==-3){
+            intervalMinutes=3;
+            pref.edit().putInt("intervalMinutes",3).apply();
+        }
+        if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
+           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=3;
         schedulePeriodic();
         if(initialStart){
             // First opening of either Pokéball per installation; V3 lets
