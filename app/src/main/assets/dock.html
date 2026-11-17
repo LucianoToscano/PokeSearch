@@ -315,20 +315,30 @@ body.result-window #empty{box-sizing:border-box!important;
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty,
 body.result-window.results-collapsed #guestUnlock{display:none!important}
-/* LT387: one tiny end-of-list hint, never a fabricated sixth encounter. */
+/* LT391: transparent end-of-list lock +5, a single connected symbol.
+   The button remains touch-accessible but has NO rectangle or badge surface. */
 #guestUnlock{display:none}
-body.result-window #guestUnlock:not([hidden]){box-sizing:border-box!important;
- display:flex!important;align-items:center!important;justify-content:center!important;
- gap:3px!important;width:var(--sprite)!important;height:21px!important;
- min-height:21px!important;max-width:var(--sprite)!important;
- margin:2px 0 0!important;padding:1px 2px!important;
- background:#252b35b8!important;color:#e6ecf6!important;
- border:1px solid #8197b74d!important;border-radius:7px!important;
- font:800 9px/1 Roboto,Arial,sans-serif!important;
- cursor:pointer!important;touch-action:manipulation!important}
-body.result-window #guestUnlock svg{display:block;width:12px;height:12px;
- stroke:currentColor;fill:none;stroke-width:1.8;flex:none}
-body.result-window #guestUnlock:focus-visible{outline:1px solid #a6d5fb;outline-offset:1px}
+body.result-window #guestUnlock:not([hidden]){
+ box-sizing:border-box!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;
+ width:var(--sprite)!important;height:27px!important;
+ min-height:27px!important;max-width:var(--sprite)!important;
+ margin:1px 0 0!important;padding:0!important;
+ background:transparent!important;color:#cfdfec!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ cursor:pointer!important;touch-action:manipulation!important;
+}
+body.result-window #guestUnlock svg{
+ display:block;width:38px;height:22px;max-width:100%;
+ stroke:currentColor;fill:none;stroke-width:1.7;
+ stroke-linecap:round;stroke-linejoin:round;
+}
+body.result-window #guestUnlock svg text{
+ stroke:none;fill:currentColor;font:700 10px Roboto,Arial,sans-serif;
+}
+body.result-window #guestUnlock:focus-visible{
+ outline:1px solid #a6d5fb;outline-offset:1px;border-radius:4px!important;
+}
 body.dock-window #guestUnlock,body.controls-window #guestUnlock{display:none!important}
 
 /* LT62 ONE-POKEBALL: the only visible header lives on the native dock. */
@@ -5169,7 +5179,7 @@ body.popup-window.controls-window #choices.appearanceCompact .orderHandleDots i{
  <button id="guestUnlock" type="button" hidden
    aria-label="Ver até dez resultados: entre no PoGoCoordinates"
    title="O visitante vê até 5 resultados. Toque para entrar e ver até 10."
-   onclick="Native.openGuestLogin()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>+5</span></button>
+   onclick="Native.openGuestLogin()"><svg viewBox="0 0 40 24" aria-hidden="true"><rect x="3" y="10" width="13" height="11" rx="2"/><path d="M6 10V7a3.5 3.5 0 0 1 7 0v3"/><text x="18" y="19">+5</text></svg></button>
  <button id="empty" title="Toque para saber o motivo" onclick="Native.showStatus()">Aguardando busca</button>
  <button id="collapse" title="Recolher todos os Pokémon e as opções, deixando apenas a engrenagem" aria-label="Recolher todos os Pokémon" onclick="Native.minimize()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 15 7-7 7 7"/></svg></button>
 </div>
