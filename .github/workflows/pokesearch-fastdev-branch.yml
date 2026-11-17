@@ -43,6 +43,6 @@ jobs:
       - name: Check FastDev selector and safe branch-only policy
         run: |
           node --check scripts/fastdev.cjs
-          node --test scripts/fastdev.test.cjs scripts/fastdev-branch-contract.test.cjs scripts/fastdev-automatic-home.test.cjs
+          node --test scripts/fastdev.test.cjs scripts/fastdev-branch-contract.test.cjs scripts/fastdev-automatic-home.test.cjs scripts/fastdev-qa-scope.test.cjs
       - name: Run only the tests affected by changes since main
         run: node scripts/fastdev.cjs --base origin/main
