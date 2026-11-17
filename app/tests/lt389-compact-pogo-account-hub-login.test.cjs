@@ -13,14 +13,16 @@ test("LT389 Home uses no two large account cards but has a compact 2-account hub
  assert.match(java,/homePogoCoordinatesShortcut\.setOnClickListener\(v->showPogoAccountHub\(\)\)/);
  assert.match(java,/private void showPogoAccountHub\(\)/);
  assert.match(java,/private void showPogoAccountActions\(int slot\)/);
- assert.match(java,/pogoAccountSummary\(1\)/);
- assert.match(java,/pogoAccountSummary\(2\)/);
+ assert.match(java,/pogoAccountSummary\(slot\)/);
+ assert.match(java,/for\(int slot=1;slot<=2;slot\+\+\)/);
+ assert.match(java,/dialog\.setContentView\(card\)/);
+ assert.doesNotMatch(java.split("private void showPogoAccountHub(){")[1].split("private String pogoAccountSummary",1)[0],/Continuar como visitante|Atualizar nome e foto/);
 });
 test("LT389 no account switches without explicit action",()=>{
- assert.match(java,/preferredLoginProvider=which==0\?"google":"discord";/);
+ assert.match(java,/preferredLoginProvider="";/);
  assert.match(java,/openLoginDialogForSlot\(slot,"login"\)/);
  assert.match(java,/openLoginDialogForSlot\(slot,"manage"\)/);
- assert.match(java,/openLoginDialogForSlot\(slot,"sync"\)/);
+ assert.match(java,/ProfileAvatarCache\.load\(this,slot,name,avatarUrl\)/);
  assert.match(java,/logoutSecondAccount\(\)/);
  assert.match(java,/askLogout\(\)/);
  assert.match(java,/PogoAccountSlots\.supportsSecond\(\)/);

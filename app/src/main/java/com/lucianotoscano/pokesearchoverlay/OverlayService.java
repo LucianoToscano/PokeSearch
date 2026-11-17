@@ -3269,9 +3269,16 @@ public class OverlayService extends Service {
                 }
                 searchFailure(pvp?"⚠ Ranking não confirmado":
                         (missingEvidence>0?"⚠ IV não comprovado":"⚠ Resultados divergentes"),
-                    "Nenhum cartão atendeu ao filtro solicitado após a leitura do site. "+
-                    (pvp?"Rank não confirmado.":"IVs sem comprovação: "+missingEvidence+
-                     "; IVs comprovados de outros filtros: "+differentIv)+".");
+                    pvp?"O site exibiu "+found+
+                        " encontros, mas o ranking individual não foi confirmado.":
+                    (missingEvidence>0?
+                        "O PoGoCoordinates exibiu "+found+" cartões, mas "+missingEvidence+
+                        " não tinham um IV individual verificável. O PokeSearch não deve "+
+                        "transformá-los em 100% apenas por causa do filtro. "+
+                        "Confirme o IV no site e toque novamente em Atualizar. "+
+                        "IVs verificados de outro filtro: "+differentIv+".":
+                        "O site exibiu "+found+" cartões com IVs diferentes do filtro. "+
+                        "Nenhum resultado incompatível foi incluído."));
                 return;
             }
             // A site with ten visible spawns can temporarily yield fewer parsed

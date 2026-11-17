@@ -9,9 +9,10 @@ const manifest=read("AndroidManifest.xml");
 const stats=read("java/com/lucianotoscano/pokesearchoverlay/FirebaseStats.java");
 const results=[];
 const test=(name,run)=>{run();results.push(name);console.log("PASS Scrapbook S1 "+name)};
-test("Live chat visible by default, old prototype remains isolated",()=>{
+test("Chat hidden by default after LT391, old prototype remains isolated",()=>{
  assert.match(home,/return BuildConfig\.DEBUG\|\|BuildConfig\.SCRAPBOOK_STAGE1_QA/);
- assert.match(home,/getBoolean\("communityLiveChatVisible",true\)/);
+ assert.match(home,/getBoolean\("communityLiveChatVisible",false\)/);
+ assert.match(home,/lt391ChatHomeHiddenOnce/);
  assert.match(home,/CommunityScrapbookOnline\.homePanel/);
  assert.match(main,/chatVisible\?"Ocultar Chat":"Mostrar Chat"/);
  assert.match(main,/putBoolean\("communityLiveChatVisible"/);

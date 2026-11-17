@@ -55,7 +55,8 @@ test("login indicator reacts to either isolated session while pogo indicator ref
 test("new actions use existing account manager and isolated official site WebView",()=>{
  assert.match(java,/homeLoginProfileShortcut\.setOnClickListener\(v->showHomeAccountMenu\(\)\)/);
  assert.match(java,/homePogoCoordinatesShortcut\.setOnClickListener\(v->showPogoAccountHub\(\)\)/);
- assert.match(java,/showPogoAccountActions\(which\+1\)/);
+ assert.match(java,/ProfileAvatarCache\.load\(this,slot,name,avatarUrl\)/);
+ assert.match(java,/dialog\.setContentView\(card\)/);
  assert.match(java,/addHomeDrawerItem\(drawer,"◉","Conta 1 · Login \/ Perfil"/);
  assert.match(java,/addHomeDrawerItem\(drawer,"◉","Conta 2 · Login \/ Perfil"/);
  assert.match(java,/PogoAccountSlots\.supportsSecond\(\)/);

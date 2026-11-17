@@ -42,8 +42,9 @@ check("no global anonymous writes; immutable per-author message and strict typed
  assert.match(m["$messageId"].createdAt[".validate"],/now/);
  assert.equal(m["$messageId"]["$other"][".validate"],false);
 });
-check("visible by default but can be hidden without touching overlays",()=>{
- assert.match(stage,/getBoolean\("communityLiveChatVisible",true\)/);
+check("hidden by default after LT391 but user may reenable without touching overlays",()=>{
+ assert.match(stage,/getBoolean\("communityLiveChatVisible",false\)/);
+ assert.match(stage,/lt391ChatHomeHiddenOnce/);
  assert.match(stage,/CommunityScrapbookOnline\.homePanel/);
  assert.match(home,/Chat ao vivo/);
  assert.match(home,/Ocultar Chat/);

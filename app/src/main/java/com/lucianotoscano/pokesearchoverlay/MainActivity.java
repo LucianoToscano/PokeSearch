@@ -1786,27 +1786,104 @@ public class MainActivity extends Activity {
     // LT389: this small native account hub replaces the two oversized cards
     // on Home. No WebView or OAuth begins until the owner chooses an action.
     private void showPogoAccountHub(){
-        String one=pogoAccountSummary(1);
-        String two=PogoAccountSlots.supportsSecond()?pogoAccountSummary(2):
-            "Não disponível neste Android";
-        CharSequence[] accounts={"Conta 1  ·  "+one,"Conta 2  ·  "+two,
-            "Continuar como visitante"};
-        new AlertDialog.Builder(this)
-            .setTitle("PoGoCoordinates · Contas")
-            .setItems(accounts,(dialog,which)->{
-                if(which==2){
-                    Toast.makeText(this,"Busca pública sem login disponível nas Pokébolas",
-                        Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if(which==1&&!PogoAccountSlots.supportsSecond()){
-                    Toast.makeText(this,"Seu WebView não isola uma segunda conta",
-                        Toast.LENGTH_LONG).show();
-                    return;
-                }
-                showPogoAccountActions(which+1);
-            })
-            .setNegativeButton("Fechar",null).show();
+        // LT391: one small in-app account surface with each slot's real name
+        // and cached, identity-bound photo. No giant Home panels or grey chooser.
+        final android.app.Dialog dialog=new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        LinearLayout card=new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(d(14),d(12),d(14),d(12));
+        int foreground=homeLightMode?Color.rgb(27,47,67):Color.WHITE;
+        int muted=homeLightMode?Color.rgb(85,103,122):Color.rgb(172,191,214);
+        card.setBackground(homeSurface(
+            homeLightMode?Color.rgb(249,252,255):Color.rgb(27,36,50),16,
+            homeLightMode?Color.rgb(173,191,207):Color.rgb(76,96,119)));
+        TextView title=homeText("PoGoCoordinates · Contas",16,foreground,true);
+        card.addView(title,new LinearLayout.LayoutParams(-1,d(32)));
+        TextView sub=homeText("A conta desconectada pesquisa como visitante automaticamente.",10,muted,false);
+        LinearLayout.LayoutParams subLp=new LinearLayout.LayoutParams(-1,-2);
+        subLp.bottomMargin=d(7);card.addView(sub,subLp);
+        for(int slot=1;slot<=2;slot++){
+            if(slot==2&&!PogoAccountSlots.supportsSecond())continue;
+            final int selectedSlot=slot;
+            final boolean connected=PogoAccountSlots.loggedIn(this,slot);
+            SharedPreferences account=PogoAccountSlots.prefs(this,slot);
+            String name=account.getString("profileDisplayName","").trim();
+            String avatarUrl=account.getString("profileAvatarUrl","");
+            LinearLayout row=new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(d(7),d(6),d(6),d(6));
+            row.setBackground(homeSurface(
+                homeLightMode?Color.rgb(237,244,252):Color.rgb(38,51,69),10,
+                homeLightMode?Color.rgb(188,204,222):Color.rgb(66,88,111)));
+            LinearLayout.LayoutParams rowLp=new LinearLayout.LayoutParams(-1,d(59));
+            rowLp.bottomMargin=d(5);card.addView(row,rowLp);
+            ImageView avatar=new ImageView(this);
+            avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            android.graphics.Bitmap cached=connected&&allowedProfileAvatar(avatarUrl)?
+                ProfileAvatarCache.load(this,slot,name,avatarUrl):null;
+            if(cached!=null)avatar.setImageBitmap(cached);
+            else {
+                avatar.setImageResource(android.R.drawable.ic_menu_myplaces);
+                avatar.setPadding(d(8),d(8),d(8),d(8));
+                avatar.setColorFilter(muted);
+            }
+            android.graphics.drawable.GradientDrawable circle=homeSurface(
+                homeLightMode?Color.rgb(217,229,242):Color.rgb(44,65,85),22,
+                homeLightMode?Color.rgb(164,185,207):Color.rgb(88,116,146));
+            circle.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            avatar.setBackground(circle);
+            avatar.setClipToOutline(true);
+            LinearLayout.LayoutParams avatarLp=new LinearLayout.LayoutParams(d(40),d(40));
+            avatarLp.rightMargin=d(9);row.addView(avatar,avatarLp);
+            LinearLayout identity=new LinearLayout(this);
+            identity.setOrientation(LinearLayout.VERTICAL);
+            row.addView(identity,new LinearLayout.LayoutParams(0,-2,1f));
+            TextView accountName=homeText("Conta "+slot+" · "+(connected?
+                (name.isEmpty()?"Perfil pendente":name):"Sem login"),12,foreground,true);
+            accountName.setSingleLine(true);
+            accountName.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            identity.addView(accountName);
+            TextView state=homeText(connected?"Abrir perfil oficial":"Entrar pelo site oficial",10,muted,false);
+            identity.addView(state);
+            row.setContentDescription("Conta "+slot+". "+pogoAccountSummary(slot)+
+                ". Toque para "+(connected?"abrir perfil":"entrar no site oficial"));
+            row.setOnClickListener(v->{
+                dialog.dismiss();
+                preferredLoginProvider="";
+                openLoginDialogForSlot(selectedSlot,connected?"manage":"login");
+            });
+            if(connected){
+                TextView logout=homeText("Sair",11,foreground,true);
+                logout.setPadding(d(7),d(6),d(7),d(6));
+                logout.setContentDescription("Desconectar apenas Conta "+slot);
+                row.addView(logout,new LinearLayout.LayoutParams(-2,-2));
+                logout.setOnClickListener(v->{
+                    dialog.dismiss();
+                    if(selectedSlot==1)askLogout();
+                    else new AlertDialog.Builder(this)
+                        .setTitle("Desconectar Conta 2?")
+                        .setMessage("A Conta 1 e seus filtros serão preservados.")
+                        .setNegativeButton("Cancelar",null)
+                        .setPositiveButton("Desconectar",(d,w)->logoutSecondAccount()).show();
+                });
+            }
+        }
+        TextView note=homeText("Visitante automático · até 5 resultados reais do site.",10,muted,false);
+        LinearLayout.LayoutParams noteLp=new LinearLayout.LayoutParams(-1,-2);
+        noteLp.topMargin=d(2);card.addView(note,noteLp);
+        TextView close=homeText("Fechar",12,foreground,true);
+        close.setGravity(Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+        close.setPadding(d(4),d(8),d(4),0);
+        card.addView(close,new LinearLayout.LayoutParams(-1,d(35)));
+        close.setOnClickListener(v->dialog.dismiss());
+        dialog.setContentView(card);
+        dialog.show();
+        if(dialog.getWindow()!=null){
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            int width=Math.min(d(350),getResources().getDisplayMetrics().widthPixels-d(26));
+            dialog.getWindow().setLayout(width,android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
     private String pogoAccountSummary(int slot){
         SharedPreferences account=PogoAccountSlots.prefs(this,slot);
@@ -1816,22 +1893,20 @@ public class MainActivity extends Activity {
         if(name.isEmpty())return "Conectada · perfil pendente";
         return name+("verified".equals(sync)?"":" · sincronização pendente");
     }
+    // Optional compact fallback for older account entry points. The primary
+    // hub already shows login/profile/logout in the same rounded menu.
     private void showPogoAccountActions(int slot){
-        final boolean connected=PogoAccountSlots.loggedIn(this,slot);
-        final String[] actions=connected?
-            new String[]{"Abrir perfil oficial","Atualizar nome e foto","Desconectar esta conta"}:
-            new String[]{"Entrar com Google","Entrar com Discord","Usar busca visitante"};
+        boolean connected=PogoAccountSlots.loggedIn(this,slot);
+        String[] options=connected?new String[]{"Abrir perfil oficial","Desconectar esta conta"}:
+            new String[]{"Entrar pelo PoGoCoordinates"};
         new AlertDialog.Builder(this)
             .setTitle("Conta "+slot+" · "+pogoAccountSummary(slot))
-            .setItems(actions,(dialog,which)->{
+            .setItems(options,(dialog,which)->{
                 if(!connected){
-                    if(which==2)return;
-                    preferredLoginProvider=which==0?"google":"discord";
+                    preferredLoginProvider="";
                     openLoginDialogForSlot(slot,"login");
                 }else if(which==0){
                     openLoginDialogForSlot(slot,"manage");
-                }else if(which==1){
-                    openLoginDialogForSlot(slot,"sync");
                 }else if(slot==2){
                     new AlertDialog.Builder(this).setTitle("Sair da Conta 2?")
                         .setMessage("A Conta 1 e os filtros serão preservados.")

@@ -57,10 +57,15 @@ final class CommunityScrapbookStage1 {
         return BuildConfig.DEBUG||BuildConfig.SCRAPBOOK_STAGE1_QA;
     }
     static boolean isEnabled(Context context){
-        // LT122 is no longer a gated fictional prototype. New chat defaults ON,
-        // old hidden/prototype prefs are intentionally not migrated.
-        return context.getSharedPreferences("prefs",0)
-            .getBoolean("communityLiveChatVisible",true);
+        // LT391: requested Home reset. Hide the large chat on this upgrade
+        // even for accounts that previously inherited the former ON default.
+        // The user can explicitly restore it from Menu > Mostrar Chat.
+        android.content.SharedPreferences prefs=context.getSharedPreferences("prefs",0);
+        if(!prefs.getBoolean("lt391ChatHomeHiddenOnce",false)){
+            prefs.edit().putBoolean("communityLiveChatVisible",false)
+                .putBoolean("lt391ChatHomeHiddenOnce",true).apply();
+        }
+        return prefs.getBoolean("communityLiveChatVisible",false);
     }
     static int dp(Context c,int n){return Math.round(c.getResources().getDisplayMetrics().density*n);}
     static int primary(boolean light){return light?Color.rgb(23,45,68):Color.rgb(235,246,255);}
