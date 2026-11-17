@@ -3401,3 +3401,14 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - [Release v0.03.80-54587](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.80-54587): APK `PokeSearch-v0.03.80-LT.apk`, **61.379.327 bytes**, SHA-256 `927ca15c01472ca106a6b5d591213d6a3b910bba712cd7b399bf628cad12600d`; assinatura permanente verificada, atualização sobre v0.03.79 LT; releases anteriores preservadas.
 - **QA físico Samsung Android 17, recortes finais, tema claro/escuro, navegação das subseções e acessibilidade pendentes**. Não afirmar validação visual baseada apenas em CI.
 - [Auditoria e continuidade LT395/LT396](LT395_ARK_HOME_DRAWER_OFICIAL_00380_20261117.md).
+
+
+## LT396 — restauração efetiva Quests/Comunidade e release oficial 0.03.81 LT (17/11/2026)
+
+- Corrigidos os **pixels ausentes da arte original**, não apenas padding: Quests terminou em y=484 e recebeu continuação do aro inferior; Comunidade terminou em x=488 e recebeu contorno direito completo. Assistente conserva personagem, com saturação de 20% só na Home.
+- Atlas original com apenas células 6 e 15 atualizadas, SHA-256 `abdebce91043c4576fcedf3e64f63492a9e18f5d600246090a5032f6d54976af`. Originais restaurados arquivados em `docs/assets/LT396_Quests_restaurado.png` e `docs/assets/LT396_Comunidade_restaurado.png`. Teste LT396 confere pixels reais e hash.
+- Código [PR #500](https://github.com/LucianoToscano/PokeSearch/pull/500) **MERGED** `745d0350648346296bea1fc00183d57ed9428ac5`, CI Node QA, LT169, LT211, LT62, LT173 e beta APK/R8 aprovados.
+- Release [PR #501](https://github.com/LucianoToscano/PokeSearch/pull/501) **MERGED** `34f508c6de51e143b869b58acf94810cf081dff4`. Workflow protegido [#44056156922](https://github.com/LucianoToscano/PokeSearch/actions/runs/44056156922) **completed/success**, assinatura permanente validada.
+- [PokeSearch oficial v0.03.81-54588](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.81-54588), APK `PokeSearch-v0.03.81-LT.apk`, **61.381.903 bytes**, SHA-256 `7e794b1a70d9e87f7e10f40a8b7cdb08e98439c6779372df0cb0f8eaf9a9462c`. Instala sobre v0.03.80 LT da mesma assinatura, sem desinstalar.
+- **Pendente teste físico Samsung Android 17 e dispositivos Android 11–17.** Registrar screenshot e homologar visualmente antes de declarar pixel-perfect.
+- [Auditoria ARK LT396 e continuidade LT397](LT396_ARK_HOME_ICONES_OFICIAL_00381_20261117.md).
