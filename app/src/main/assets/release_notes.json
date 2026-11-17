@@ -5144,6 +5144,35 @@
           "A publicação oficial continua com assinatura permanente e instalação sujeita à confirmação do Android."
         ]
       }
+    },
+    {
+      "id": "lt395-home-drawer-compact-icons-20261117",
+      "minVersionCode": 54587,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT395 — Home e menu lateral refinados",
+      "sections": {
+        "novidades": [
+          "Menu lateral mais compacto, com seções Principal, Ajuda e atualizações, Mais; alinhamento consistente dos ícones e textos, cabeçalho com versão.",
+          "Dados e backup reúne importação/exportação; Sobre reúne compartilhamento, agradecimentos e estatísticas.",
+          "Chat pode ser mostrado, ocultado ou aberto pelo módulo Comunidade; a tela continua utilizando os controles e estados anteriores."
+        ],
+        "melhorias": [
+          "Quests e Comunidade permanecem com suas artes originais, reenquadradas e com margens internas para reduzir recortes na Home.",
+          "Assistente preserva o personagem original com escala e opacidade óptica harmonizadas na grade.",
+          "Transparência dos fundos está disponível dentro de Preferências, sem ocupar uma linha adicional no menu principal.",
+          "Grade de 16 módulos preservada, com rótulos alinhados e espaçamentos consistentes."
+        ],
+        "correcoes": [
+          "O menu lateral deixou de misturar ferramentas, configurações e estatísticas na mesma lista extensa.",
+          "Ícones e rótulos do menu lateral agora usam colunas separadas para alinhamento uniforme.",
+          "Nenhuma função de conta, backup, Premium, favoritos, compartilhamento ou chat foi eliminada ao reorganizar os acessos."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física no Samsung Android 17 e aparelhos Android 11–17: enquadramento dos ícones, toques, acessibilidade e tema claro/escuro.",
+          "A geometria das imagens foi corrigida no atlas, mas detalhes intrinsicamente ausentes na arte original precisam de avaliação visual antes de qualquer redesenho.",
+          "Módulos ainda não implementados permanecem identificados como em preparação; espelhamento completo dos efeitos especiais das Pokébolas depende de testes no aparelho."
+        ]
+      }
     }
   ]
 }
