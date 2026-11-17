@@ -391,7 +391,7 @@ function showDetail(id){
  if(!p)return;
  state.selected=p;
  const preset=bridge.getDecoration(state.slot,p.id);
- el("hero").className="hero "+(presets.some(x=>x[0]===preset)?preset:"default");
+ applyHeroBackground(p,preset);
  el("hero-title").innerHTML="<small>PC</small> "+number(p.cp);
  el("hero-sprite").innerHTML=artHtml(p,"hero-img").replace('loading="lazy"','loading="eager"');
  el("decor-label").textContent=preset==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
@@ -450,13 +450,15 @@ function showDetail(id){
   '<br>Pokébola: '+number(p.pokeball)+
   '<br><b>Ficha privada. Não altera o Pokémon no jogo.</b></div>';
  renderPresets(p,preset);
+ el("personal-note").value=bridge.getNote(state.slot,p.id)||"";
  const position=state.filtered.findIndex(x=>x.id===p.id);
  el("detail-prev").disabled=position<=0;
  el("detail-next").disabled=position<0||position>=state.filtered.length-1;
  el("detail").classList.add("open");el("detail").scrollTop=0;
 }
 function renderPresets(p,current){
-  el("presets").innerHTML=presets.map(([key,label])=>
+  const choices=hasBackground(p)?[["original","Fundo do encontro"],...presets]:presets;
+  el("presets").innerHTML=choices.map(([key,label])=>
     '<button class="preset '+(current===key?"active":"")+
     '" data-preset="'+key+'">'+escapeHtml(label)+'</button>').join("");
 }
@@ -476,7 +478,14 @@ function closeSort(){
  const layer=el("sort-backdrop");if(layer.hidden)return false;
  layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
 }
-window.pokeBack=()=>closeSort()||hideDetail();
+function closeOverlay(){
+ for(const id of ["compare-panel","history-panel","background-panel"]){
+  const panel=el(id);
+  if(!panel.hidden){panel.hidden=true;state.backgroundTarget=null;return true;}
+ }
+ return false;
+}
+window.pokeBack=()=>closeOverlay()||closeSort()||hideDetail();
 function loadCatalog(){
   try{
     const catalog=JSON.parse(bridge.getCatalog());
@@ -518,8 +527,7 @@ el("presets").addEventListener("click",e=>{
   if(!button||!state.selected)return;
   const name=button.dataset.preset;
   bridge.setDecoration(state.slot,state.selected.id,name);
-  el("hero").className="hero "+name;
-  el("decor-label").textContent=name==="default"?"Fundo padrão":"Fundo decorativo PokeSearch";
+  applyHeroBackground(state.selected,name);
   renderPresets(state.selected,name);
 });
 function setSort(key){
@@ -562,5 +570,55 @@ function shiftDetail(delta){
 }
 el("detail-prev").addEventListener("click",()=>shiftDetail(-1));
 el("detail-next").addEventListener("click",()=>shiftDetail(1));
-loadCatalog();loadMeta();loadSlot();
+el("select-toggle").addEventListener("click",()=>{
+ state.selecting=!state.selecting;state.selectedIds.clear();
+ renderSelection();render();
+});
+el("selection-clear").addEventListener("click",()=>{
+ state.selectedIds.clear();renderSelection();render();
+});
+el("selection-compare").addEventListener("click",compareSelected);
+el("compare-close").addEventListener("click",()=>{el("compare-panel").hidden=true;});
+el("history-open").addEventListener("click",openHistory);
+el("history-close").addEventListener("click",()=>{el("history-panel").hidden=true;});
+el("backgrounds-open").addEventListener("click",()=>openBackgroundGallery(null));
+el("background-gallery-for-pokemon").addEventListener("click",()=>{
+ if(state.selected)openBackgroundGallery(state.selected.id);
+});
+el("backgrounds-close").addEventListener("click",()=>{
+ el("background-panel").hidden=true;state.backgroundTarget=null;
+});
+el("background-search").addEventListener("input",e=>{
+ state.bgQuery=e.target.value;renderBackgroundGallery();
+});
+el("background-list").addEventListener("click",e=>{
+ const b=e.target.closest("[data-bg-id]");if(!b||!state.backgroundTarget)return;
+ const item=state.bgCards.find(c=>String(c.id)===b.dataset.bgId);
+ if(!item||!item.file||!state.bgCached.has(item.file))return;
+ const pokemon=state.all.find(p=>p.id===state.backgroundTarget);
+ if(!pokemon)return;
+ bridge.setDecoration(state.slot,pokemon.id,"asset:"+item.file);
+ if(state.selected?.id===pokemon.id){
+  applyHeroBackground(pokemon,"asset:"+item.file);
+  renderPresets(pokemon,"asset:"+item.file);
+ }
+ el("background-panel").hidden=true;state.backgroundTarget=null;
+ notice("Fundo pessoal aplicado. O fundo original do jogo não foi modificado.");
+});
+el("backgrounds-download").addEventListener("click",()=>{
+ if(!state.bgAssets.size)return notice("Catálogo de fundos indisponível.");
+ bridge.downloadAllBackgrounds();
+ refreshBackgrounds();
+});
+el("backgrounds-cancel").addEventListener("click",()=>bridge.cancelBackgroundDownload());
+el("backgrounds-clear").addEventListener("click",()=>{
+ if(!window.confirm("Apagar apenas as imagens de fundos baixadas neste aparelho?"))return;
+ bridge.clearBackgroundCache();refreshBackgrounds();
+});
+el("save-note").addEventListener("click",()=>{
+ if(!state.selected)return;
+ bridge.setNote(state.slot,state.selected.id,el("personal-note").value);
+ notice("Anotação salva neste aparelho.");
+});
+loadCatalog();loadMeta();loadBackgrounds();loadSlot();
 })();
