@@ -42,6 +42,8 @@ import java.util.regex.Pattern;
  */
 public final class PersonalPokedexActivity extends Activity {
     private static final int PICK_STATS=3771;
+    private static final int SAVE_BACKUP=3772;
+    private static final int PICK_SYNC_SOURCE=3773;
     private static final int MAX_IMPORT_BYTES=24*1024*1024;
     private static final int MAX_POKEMON=10000;
     private static final Pattern LARGE_ID=Pattern.compile("(\"id\"\\s*:\\s*)(\\d{16,20})(?=\\s*[,}])");
@@ -60,6 +62,15 @@ public final class PersonalPokedexActivity extends Activity {
     private WebView view;
     private volatile boolean closing=false;
     private int pendingSlot=1;
+    private int pendingExportSlot=1;
+    private volatile boolean syncInProgress=false;
+    private final Runnable syncTicker=new Runnable(){
+        @Override public void run(){
+            if(closing||view==null)return;
+            syncLinked(1);syncLinked(2);
+            view.postDelayed(this,180000);
+        }
+    };
 
     private File snapshot(int slot){
         return new File(new File(getFilesDir(),"pokedex_personal"),"slot"+slot+".json");
@@ -405,8 +416,44 @@ public final class PersonalPokedexActivity extends Activity {
         view.addJavascriptInterface(new InventoryBridge(),"PersonalInventory");
         setContentView(view);
         view.loadUrl("file:///android_asset/personal_pokedex.html");
+        view.postDelayed(syncTicker,180000);
     }
     private final class InventoryBridge {
+        @JavascriptInterface public String editInventory(int requestedSlot,String operation,String payload){
+            return PokedexLocalEdits.execute(PersonalPokedexActivity.this,slot(requestedSlot),operation,payload);
+        }
+        @JavascriptInterface public String getSyncStatus(int requestedSlot){
+            int s=slot(requestedSlot);
+            boolean linked=getSharedPreferences("pokedex_sync_sources",MODE_PRIVATE)
+                .contains("slot"+s);
+            return linked?"Arquivo autorizado vinculado · verificação ao abrir e a cada 3 min":
+                "Nenhum arquivo vinculado · importação manual";
+        }
+        @JavascriptInterface public void linkSyncFile(int requestedSlot){
+            runOnUiThread(()->{
+                pendingSlot=slot(requestedSlot);
+                Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                pick.setType("*/*");
+                pick.addCategory(Intent.CATEGORY_OPENABLE);
+                pick.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                startActivityForResult(pick,PICK_SYNC_SOURCE);
+            });
+        }
+        @JavascriptInterface public void syncLocalFile(int requestedSlot){
+            syncLinked(slot(requestedSlot));
+        }
+        @JavascriptInterface public void exportInventory(int requestedSlot){
+            runOnUiThread(()->{
+                pendingExportSlot=slot(requestedSlot);
+                Intent save=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                save.addCategory(Intent.CATEGORY_OPENABLE);
+                save.setType("application/json");
+                save.putExtra(Intent.EXTRA_TITLE,
+                    "PokeSearch-Inventario-"+pendingExportSlot+".json");
+                startActivityForResult(save,SAVE_BACKUP);
+            });
+        }
         @JavascriptInterface public String getSnapshot(int requestedSlot){
             File target=snapshot(slot(requestedSlot));
             if(!target.isFile())return "{}";
@@ -509,32 +556,94 @@ public final class PersonalPokedexActivity extends Activity {
         }
         @JavascriptInterface public void closeScreen(){runOnUiThread(()->finish());}
     }
+    @Override protected void onResume(){
+        super.onResume();
+        if(view!=null){syncLinked(1);syncLinked(2);}
+    }
+    private void syncLinked(int selected){
+        String linked=getSharedPreferences("pokedex_sync_sources",MODE_PRIVATE)
+            .getString("slot"+slot(selected),"");
+        if(linked.isEmpty()||syncInProgress)return;
+        try{syncFromUri(Uri.parse(linked),slot(selected),true);}
+        catch(Exception ignored){}
+    }
+    private void syncFromUri(Uri uri,int selected,boolean automatic){
+        if(syncInProgress)return;
+        syncInProgress=true;
+        worker.execute(()->{
+            try(InputStream input=getContentResolver().openInputStream(uri)){
+                if(input==null)throw new IOException("Não foi possível acessar o arquivo autorizado.");
+                byte[] data=bounded(input,MAX_IMPORT_BYTES);
+                String fingerprint=hexSha256(data);
+                SharedPreferences prefs=getSharedPreferences("pokedex_sync_sources",MODE_PRIVATE);
+                if(automatic&&fingerprint.equals(prefs.getString("digest"+selected,""))){
+                    syncInProgress=false;return;
+                }
+                applyImport(new String(data,StandardCharsets.UTF_8),selected);
+                prefs.edit().putString("digest"+selected,fingerprint).apply();
+                notifyWeb("Sincronização local concluída · Inventário "+selected+".",true);
+            }catch(Exception error){
+                notifyWeb("Arquivo vinculado indisponível: "+text(error.getMessage(),125),false);
+            }finally{syncInProgress=false;}
+        });
+    }
+    private static String hexSha256(byte[] bytes) throws Exception{
+        byte[] digest=MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder out=new StringBuilder();
+        for(byte b:digest)out.append(String.format(Locale.ROOT,"%02x",b&255));
+        return out.toString();
+    }
+    private void applyImport(String raw,int selected) throws Exception{
+        JSONObject incoming=new JSONObject(raw);
+        JSONObject compact;
+        if(incoming.optInt("schema",0)==1&&incoming.optJSONArray("pokemons")!=null)
+            compact=PokedexLocalEdits.validateBackup(incoming);
+        else compact=compact(raw);
+        compact=PokedexLocalEdits.replay(this,selected,compact);
+        File dest=snapshot(selected);
+        JSONObject previous=null;
+        if(dest.isFile())try{previous=PokedexLocalEdits.read(dest);}
+        catch(Exception ignored){}
+        PokedexLocalEdits.write(dest,compact);
+        recordImportHistory(selected,compact,previous);
+    }
     @Override protected void onActivityResult(int request,int result,Intent intent){
         super.onActivityResult(request,result,intent);
-        if(request!=PICK_STATS||result!=RESULT_OK||intent==null)return;
+        if(result!=RESULT_OK||intent==null)return;
         Uri uri=intent.getData();
         if(uri==null)return;
+        if(request==PICK_SYNC_SOURCE){
+            final int selected=pendingSlot;
+            try{
+                getContentResolver().takePersistableUriPermission(uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                getSharedPreferences("pokedex_sync_sources",MODE_PRIVATE).edit()
+                    .putString("slot"+selected,uri.toString())
+                    .remove("digest"+selected).apply();
+                syncFromUri(uri,selected,true);
+            }catch(Exception e){notifyWeb("Permissão de leitura não concedida.",false);}
+            return;
+        }
+        if(request==SAVE_BACKUP){
+            final int selected=pendingExportSlot;
+            worker.execute(()->{
+                try(InputStream in=new FileInputStream(snapshot(selected));
+                    java.io.OutputStream out=getContentResolver().openOutputStream(uri,"w")){
+                    if(out==null)throw new IOException("Destino indisponível.");
+                    byte[] contents=bounded(in,MAX_IMPORT_BYTES);
+                    out.write(contents);out.flush();
+                    notifyWeb("Backup do Inventário "+selected+" exportado.",true);
+                }catch(Exception e){notifyWeb("Falha ao exportar: "+text(e.getMessage(),130),false);}
+            });
+            return;
+        }
+        if(request!=PICK_STATS)return;
         final int selected=pendingSlot;
         worker.execute(()->{
             try(InputStream input=getContentResolver().openInputStream(uri)){
                 if(input==null)throw new IOException("Não foi possível ler o arquivo.");
-                String raw=new String(bounded(input,MAX_IMPORT_BYTES),StandardCharsets.UTF_8);
-                JSONObject compact=compact(raw);
-                File dest=snapshot(selected);
-                JSONObject previous=null;
-                if(dest.isFile())try(FileInputStream old=new FileInputStream(dest)){
-                    previous=new JSONObject(new String(bounded(old,MAX_IMPORT_BYTES),StandardCharsets.UTF_8));
-                }catch(Exception ignored){}
-                if(!dest.getParentFile().isDirectory()&&!dest.getParentFile().mkdirs())
-                    throw new IOException("Armazenamento local indisponível.");
-                File tmp=new File(dest.getParentFile(),"slot"+selected+".pending");
-                try(FileOutputStream out=new FileOutputStream(tmp)){
-                    out.write(compact.toString().getBytes(StandardCharsets.UTF_8));
-                    out.getFD().sync();
-                }
-                if(!tmp.renameTo(dest))throw new IOException("Falha ao salvar coleção.");
-                recordImportHistory(selected,compact,previous);
-                notifyWeb("Importação concluída: "+compact.optInt("count")+" Pokémon.",true);
+                applyImport(new String(bounded(input,MAX_IMPORT_BYTES),StandardCharsets.UTF_8),selected);
+                notifyWeb("Importação concluída no Inventário "+selected+".",true);
             }catch(Exception e){
                 notifyWeb("Importação não concluída: "+text(e.getMessage(),160),false);
             }
@@ -588,6 +697,7 @@ public final class PersonalPokedexActivity extends Activity {
         backgroundCancel.set(true);
         backgroundWorker.shutdownNow();
         if(spriteStore!=null)spriteStore.shutdown();
+        if(view!=null)view.removeCallbacks(syncTicker);
         worker.shutdownNow();
         if(view!=null){
             view.removeJavascriptInterface("PersonalInventory");
