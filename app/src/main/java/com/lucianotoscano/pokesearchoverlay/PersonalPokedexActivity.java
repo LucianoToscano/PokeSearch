@@ -524,6 +524,13 @@ public final class PersonalPokedexActivity extends Activity {
             return getSharedPreferences("pokedex_import_history",MODE_PRIVATE)
                 .getString("slot"+slot(requestedSlot),"[]");
         }
+        @JavascriptInterface public String getLastImportDiff(int requestedSlot){
+            File item=new File(new File(getFilesDir(),"pokedex_personal"),
+                "slot"+slot(requestedSlot)+"-diff.json");
+            if(!item.isFile())return "{}";
+            try{return PokedexLocalEdits.read(item).toString();}
+            catch(Exception ignored){return "{}";}
+        }
         @JavascriptInterface public void chooseJson(int requestedSlot){
             runOnUiThread(()->{
                 if(closing)return;
@@ -662,11 +669,33 @@ public final class PersonalPokedexActivity extends Activity {
                 JSONObject p=updated.optJSONObject(i);if(p!=null)next.put(p.optString("id",""),p.toString());
             }
             int added=0,removed=0,changed=0;
+            JSONArray newRows=new JSONArray(),updatedRows=new JSONArray(),missingRows=new JSONArray();
             for(Map.Entry<String,String> p:next.entrySet()){
-                if(!previous.containsKey(p.getKey()))added++;
-                else if(!p.getValue().equals(previous.get(p.getKey())))changed++;
+                if(!previous.containsKey(p.getKey())){
+                    added++;
+                    if(newRows.length()<10000)
+                        newRows.put(new JSONObject().put("id",p.getKey())
+                            .put("species",new JSONObject(p.getValue()).optInt("species")));
+                }else if(!p.getValue().equals(previous.get(p.getKey()))){
+                    changed++;
+                    if(updatedRows.length()<10000)
+                        updatedRows.put(new JSONObject().put("id",p.getKey())
+                            .put("species",new JSONObject(p.getValue()).optInt("species")));
+                }
             }
-            for(String id:previous.keySet())if(!next.containsKey(id))removed++;
+            for(String id:previous.keySet())if(!next.containsKey(id)){
+                removed++;
+                if(missingRows.length()<10000)
+                    missingRows.put(new JSONObject().put("id",id)
+                        .put("species",new JSONObject(previous.get(id)).optInt("species")));
+            }
+            JSONObject details=new JSONObject();
+            details.put("at",System.currentTimeMillis());
+            details.put("new",newRows);details.put("changed",updatedRows);
+            details.put("missing",missingRows);
+            details.put("baseline",before!=null);
+            PokedexLocalEdits.write(new File(new File(getFilesDir(),"pokedex_personal"),
+                "slot"+selected+"-diff.json"),details);
             SharedPreferences settings=getSharedPreferences("pokedex_import_history",MODE_PRIVATE);
             JSONArray existing=new JSONArray(settings.getString("slot"+selected,"[]"));
             JSONObject row=new JSONObject();
