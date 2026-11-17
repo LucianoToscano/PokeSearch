@@ -70,8 +70,9 @@ assert.equal(rank.children[0].textContent,"GL IV #611");
 assert.equal(rank.children[1].textContent,"Atual");
 assert.equal(rank.children[2].textContent,"RG #513");
 assert.ok(rank.title.includes("NENHUM IV Top #1 confirmado"));
-assert.ok(dock.includes('empty.style.display=emptyResult&&(!resultWindow||!resultDisplayOptions.count)?'),
- "zero appears below the Pokébola only when numeric badge is disabled");
+assert.ok(dock.includes('empty.style.display=guestSitePreviewActive&&resultWindow?')&&
+ dock.includes('emptyResult&&(!resultWindow||!resultDisplayOptions.count)?'),
+ "zero belongs below the Pokébola when count is disabled; site-preview warning is separately clickable");
 assert.ok(dock.includes('body.result-window #empty{display:block;'),
  "empty-result indicator must be visible and centered under the Pokébola");
 assert.ok(dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""'),
