@@ -13,11 +13,11 @@ assert.equal(crypto.createHash("sha256").update(asset).digest("hex"),
   "Reviewed image contains only re-framed original Quests and Community");
 assert.match(main,/if\(index==6\)/);
 assert.match(main,/artwork\.setPadding\(d\(6\),d\(2\),d\(6\),d\(3\)\)/);
-assert.match(main,/if\(index==15\)/);
-assert.match(main,/artwork\.setPadding\(d\(6\),d\(3\),d\(6\),d\(3\)\)/);
-assert.match(main,/else if\(index==3\)/);
-assert.match(main,/muted\.setSaturation\(\.20f\)/);
-assert.match(main,/new android\.graphics\.ColorMatrixColorFilter\(muted\)/);
+assert.match(main,/index==3\|\|index==13\|\|index==15/);
+assert.match(main,/artwork\.setPadding\(d\(3\),d\(2\),d\(3\),d\(2\)\)/);
+assert.match(main,/artwork\.setImageTintList\(null\)/);
+assert.match(main,/artwork\.clearColorFilter\(\)/);
+assert.doesNotMatch(main,/muted\.setSaturation\(\.20f\)/);
 assert.match(main,/index==0\|\|index==1\|\|index==3/);
 assert.match(main,/title\.setIncludeFontPadding\(false\)/);
 assert.match(main,/for\(int line=0;line<4;line\+\+\)/);
