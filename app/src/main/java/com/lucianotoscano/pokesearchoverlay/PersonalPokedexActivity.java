@@ -394,6 +394,19 @@ public final class PersonalPokedexActivity extends Activity {
         @JavascriptInterface public String getBackgroundManifest(){
             return backgroundManifest().toString();
         }
+        @JavascriptInterface public String getCachedBackgroundNames(){
+            JSONArray known=backgroundManifest().optJSONArray("assets");
+            JSONArray found=new JSONArray();
+            if(known!=null)for(int i=0;i<known.length();i++){
+                JSONArray r=known.optJSONArray(i);
+                if(r==null)continue;
+                String name=safeBackgroundName(r.optString(0,""));
+                File item=backgroundFile(name);
+                if(item!=null&&item.isFile()&&item.length()==r.optLong(1,-1))
+                    found.put(name);
+            }
+            return found.toString();
+        }
         @JavascriptInterface public String getBackgroundStatus(){return backgroundStatus();}
         @JavascriptInterface public void downloadAllBackgrounds(){downloadBackgrounds();}
         @JavascriptInterface public void cancelBackgroundDownload(){backgroundCancel.set(true);}
@@ -431,8 +444,15 @@ public final class PersonalPokedexActivity extends Activity {
         }
         @JavascriptInterface public void setDecoration(int requestedSlot,String pokemonId,String name){
             if(!pokemonId.matches("[0-9]{1,20}"))return;
-            if(!("default".equals(name)||"aurora".equals(name)||"sunset".equals(name)||
-                "ocean".equals(name)||"night".equals(name)))return;
+            boolean basic="default".equals(name)||"aurora".equals(name)||"sunset".equals(name)||
+                "ocean".equals(name)||"night".equals(name)||"original".equals(name);
+            boolean userCached=false;
+            if(name!=null&&name.startsWith("asset:")){
+                String file=safeBackgroundName(name.substring(6));
+                File cached=backgroundFile(file);
+                userCached=cached!=null&&cached.isFile();
+            }
+            if(!basic&&!userCached)return;
             getSharedPreferences("personal_pokedex_looks",MODE_PRIVATE).edit()
                 .putString(slot(requestedSlot)+":"+pokemonId,name).apply();
         }
