@@ -599,18 +599,16 @@ public class MainActivity extends Activity {
         if(index==0||index==1||index==3)artwork.setOnTouchListener(null);
         artwork.setBackground(null);
         artwork.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        // LT395: optical margins are specific to the ORIGINAL artwork;
-        // no icon pixels are removed or substituted when aligning the grid.
-        if(index==6){ // Quests: bottom ring repaired in the owner-art atlas.
-            artwork.setPadding(d(6),d(2),d(6),d(3));
-        }else if(index==15){ // Comunidade: right contour repaired, original art.
-            artwork.setPadding(d(6),d(3),d(6),d(3));
-        }else if(index==3){ // Keep the assistant character, mute colors on Home only.
-            artwork.setPadding(d(9),d(3),d(9),d(3));
-            android.graphics.ColorMatrix muted=new android.graphics.ColorMatrix();
-            muted.setSaturation(.20f);
-            artwork.setColorFilter(new android.graphics.ColorMatrixColorFilter(muted));
+        // LT397: all icons share the same 51dp visual box and label baseline.
+        // Assistant, Trocas and Grupo already have transparent, optically
+        // centered 256px cells supplied by the owner; avoid double padding.
+        if(index==3||index==13||index==15){
+            artwork.setPadding(d(3),d(2),d(3),d(2));
+            artwork.clearColorFilter();
+            artwork.setImageTintList(null);
             artwork.setAlpha(1f);
+        }else if(index==6){ // Keep the fully restored Quests lower ring visible.
+            artwork.setPadding(d(6),d(2),d(6),d(3));
         }else{
             artwork.setPadding(d(7),d(2),d(7),d(3));
         }
