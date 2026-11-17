@@ -5001,6 +5001,34 @@
           "A liberação de novas coordenadas depende das restrições do PoGoCoordinates. HTTP 429/rate limit não deve ser contornado apagando cookies, cache ou histórico."
         ]
       }
+    },
+    {
+      "id": "lt390-auto-3m-sprites-visitante-cards-ark-20261117",
+      "minVersionCode": 54582,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT390 — Resultados, sprites e atualização",
+      "sections": {
+        "novidades": [
+          "Atualização automática passa a iniciar com intervalo de 3 minutos; a opção de 3 segundos foi retirada.",
+          "Botão de login dos visitantes 🔒+5 agora aparece integrado e transparente ao final da lista, quando o site confirma a condição."
+        ],
+        "melhorias": [
+          "Cards de Pokémon mais compactos, mostrando informações úteis sem parágrafos técnicos repetitivos sobre API, IV, distância, ranking ou Shiny.",
+          "O leitor do PoGoCoordinates reconhece 'Showing N results' além de 'Showing N spawns' e mantém cada encontro separado.",
+          "O toque em Atualizar solicita imediatamente uma nova busca sem aguardar o ciclo AUTO, exceto quando há operação concorrente ou bloqueio real do provedor."
+        ],
+        "correcoes": [
+          "Números #129 e #580 agora recuperam Magikarp e Ducklett em cards de nome genérico, evitando associar imagens de outra espécie.",
+          "Preferências antigas de atualização automática de 3 segundos são migradas para 3 minutos.",
+          "Indicador +5 do visitante não é confundido com cinco encontros adicionais: resultado mostrado depende dos Pokémon reais retornados pelo site.",
+          "Mantidos limites HTTP 429, proteção de identidade/forma/costume, filtros, coordenadas, overlays P1/P2 e assinatura permanente."
+        ],
+        "emDesenvolvimento": [
+          "Homologação física em Samsung/Android 11–14: conferência visual dos sprites e cards, atualização manual e 3m, perfis visitante/autenticado e até cinco resultados reais dependendo do filtro.",
+          "A limitação de cinco resultados para visitante não garante cinco Pokémon encontrados; o PoGoCoordinates pode devolver menos, inclusive com filtro IV 100%.",
+          "Instalar o APK requer aprovação do Android. Requisições recusadas por HTTP 429 não podem ser forçadas pelo botão manual."
+        ]
+      }
     }
   ]
 }

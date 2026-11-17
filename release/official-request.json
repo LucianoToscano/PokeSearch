@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.74",
-  "code": 54581,
-  "label": 51389,
-  "previous_tag": "v0.03.73-54580",
-  "qa_max_code": 54580,
-  "release_notes": "LT389 — Home compacta e contas PoGoCoordinates acessíveis pelo ícone no cabeçalho, com seletor Conta 1/Conta 2/Visitante e ações explícitas de Google/Discord, perfil e logout. Login oficial WebView sem spinner bloqueando os controles; ao confirmar a sessão, nome/foto já verificados são preservados durante hidratação de /profile e vínculo antigo de treinador é invalidado no OAuth novo. Busca visitante usa resultados públicos com aviso 🔒 +5 quando o site informa limite de 5, cópia segura de coordenadas expostas pelo cartão correto e erros ! explicáveis ao toque. Preservados isolamento WebView, bloqueios de taxa 429, filtros, sprites, P1/P2, Auto Hunt OFF, Novidades internas, OTA e assinatura permanente. PR #477 integrada em 0343b14b4a4b6c34a0e5b934a5ce2e51afa1c017 após Node QA, LT169, LT211, LT62, LT173, PGS QA, FastDev e beta/R8 SUCCESS no HEAD 61785aed3fae76131c681981225b54b889e024ef. Homologação física de Google/Discord, MFA, foto, dois perfis e Samsung Android 11–14 permanece pendente; Chrome externo não compartilha automaticamente sessão com WebView. Instalação exige confirmação Android."
+  "version": "0.03.75",
+  "code": 54582,
+  "label": 51390,
+  "previous_tag": "v0.03.74-54581",
+  "qa_max_code": 54581,
+  "release_notes": "LT390 — Atualização automática padrão a cada 3 minutos e retirada da opção 3 segundos, com migração da configuração antiga. Toque manual em Atualizar inicia nova busca sem aguardar o temporizador, respeitando buscas em andamento e HTTP 429/Retry-After do PoGoCoordinates. Cards de resultados mais compactos: removidos avisos repetitivos de API, IV, km, rank e Shiny da área visível, sem desativar verificações internas. Corrigida a identificação visual de Pokémon #129 Magikarp e #580 Ducklett, sem atribuir sprite de outra espécie ou inventar variantes. Leitura DOM de visitantes separa encontros individuais e reconhece cabeçalhos 'Showing N results', sem fabricar ocorrências. Ação de login 🔒+5 agora transparente e integrada; o indicador significa possibilidade de até dez resultados após autenticação, não cinco encontrados garantidos. Preservados Pokébolas P1/P2, filtros, isolamento das contas, coordenadas, atualização OTA e assinatura permanente. PR #483 integrada após gates Node QA, LT169, LT211, LT62, LT173, PGS QA, FastDev, LT253 e Secure beta/R8 concluídos com sucesso. Testes físicos Android 11–14, Samsung, PoGoCoordinates visitante/autenticado e validação real de quantidade de resultados permanecem pendentes; instalação exige confirmação no Android."
 }
