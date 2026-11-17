@@ -48,6 +48,7 @@ const isMythical=p=>!!speciesFlags(p).mythical;
 const canEvolve=p=>!!speciesFlags(p).canEvolve&&!(costumeMeta(p)?.noEvolve);
 const walkedWithBuddy=p=>Number(p.buddyKm)>0;
 const hasEventOrigin=p=>Array.isArray(p.events)&&p.events.length>0;
+const isVisualEvent=p=>Number(p.costume)>0||!!state.spriteIndex?.isCostumeForm(p.form);
 function availableMetaName(type,id){
  const m=state.meta[type].get(Number(id));
  return m?.name||"Código "+id;
@@ -205,6 +206,7 @@ function filterPokemon(p,key=state.filter){
   case "tag":return (p.tags||[]).some(t=>String(t)===state.tagId);
   case "mega":return isMegaRegistered(p);
   case "event":return hasEventOrigin(p);
+  case "eventVisual":return isVisualEvent(p);
   case "legendary":return isLegendary(p);
   case "mythical":return isMythical(p);
   case "evolvable":return canEvolve(p);
@@ -275,7 +277,8 @@ const categoryDefs=[
  ["lucky","Sortudo","sortudo","#eac492"],
  ["shadow","Sombroso","sombroso","#a88acc"],
  ["purified","Purificado","purificado","#92d5d3"],
- ["event","Origem em evento","evento","#dea5cf"],
+ ["eventVisual","Evento / visual especial","evento","#dea5cf"],
+ ["event","Origem em evento","evento","#d4b8dd"],
  ["traded","Trocado","trocado","#8bd3c1"],
  ["mega","Megaevoluiu","megaevoluiu","#bc6690"],
  ["bgLocal","Fundo de localidade","fundo_de_localidade","#86d7ee"],
@@ -548,7 +551,8 @@ function showDetail(id){
  if(isMegaRegistered(p))chips.push("Megaevolução registrada");
  if(p.breadMode===1)chips.push("Dinamax");
  if(p.breadMode===2)chips.push("Gigamax");
- if(p.events?.length)chips.push("Evento");
+ if(isVisualEvent(p))chips.push("Evento/traje registrado");
+ if(hasEventOrigin(p))chips.push("Origem em evento");
  if(p.hatchedFromEgg)chips.push("Chocado");
  el("badges").innerHTML=chips.map(v=>'<span class="chip">'+escapeHtml(v)+'</span>').join("");
  const iv=ivValue(p),stars=iv===45?3:iv>=37?3:iv>=30?2:iv>=23?1:0;
@@ -574,7 +578,9 @@ function showDetail(id){
   '<br>Vestimenta: '+escapeHtml(outfit)+
   '<br>Fundo original: '+escapeHtml(background)+
   (p.events?.length?'<br>Eventos: '+escapeHtml(p.events.join(", ")):"")+
-  (p.hasMegaEvolved?"<br>Megaevolução registrada"+(p.megaLevel?" · Nível "+p.megaLevel:""):"")+
+  (isMegaRegistered(p)?"<br>Histórico de MegaEvolução"+
+     (p.megaFormsCount?" · "+p.megaFormsCount+" forma(s)":"")+
+     (p.megaLevel?" · Nível "+p.megaLevel:""):"")+
   (p.buddyKm?"<br>Km com companheiro: "+decimal(p.buddyKm,1):"")+
   '<br>Tags: '+escapeHtml(tags||"Nenhuma")+
   '<br>Pokébola: '+number(p.pokeball)+
