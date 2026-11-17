@@ -1819,7 +1819,7 @@ public class MainActivity extends Activity {
     }
     private String pogoAccountSummary(int slot){
         SharedPreferences account=PogoAccountSlots.prefs(this,slot);
-        if(!PogoAccountSlots.loggedIn(this,slot))return "Visitante / desconectada";
+        if(!PogoAccountSlots.loggedIn(this,slot))return "Sem login";
         String name=account.getString("profileDisplayName","").trim();
         String sync=account.getString("profileSyncState","");
         if(name.isEmpty())return "Conectada · perfil pendente";
