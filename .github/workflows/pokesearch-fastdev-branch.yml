@@ -16,7 +16,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: fastdev-push-\${{ github.ref }}
+  group: fastdev-push-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
