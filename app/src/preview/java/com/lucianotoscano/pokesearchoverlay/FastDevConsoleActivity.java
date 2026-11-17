@@ -50,6 +50,12 @@ import javax.net.ssl.HttpsURLConnection;
 public final class FastDevConsoleActivity extends Activity {
     private static final String API =
         "https://api.github.com/repos/LucianoToscano/PokeSearch/releases?per_page=30";
+    // Raw Git content does not consume the unauthenticated GitHub Releases API quota.
+    // Updated by the protected FastDev signing workflow only AFTER APK publication.
+    private static final String PUBLIC_MANIFEST =
+        "https://raw.githubusercontent.com/LucianoToscano/PokeSearch/main/fastdev/latest.json";
+    private static final String DOWNLOAD_PAGE =
+        "https://github.com/LucianoToscano/PokeSearch/releases?q=fastdev-";
     private static final String DOWNLOAD =
         "https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-";
     private static final String ASSET = "PokeSearch-FastDev-Preview.apk";
@@ -86,6 +92,14 @@ public final class FastDevConsoleActivity extends Activity {
         root.addView(status);
         button(root,"Verificar atualização FastDev",v->check());
         button(root,"Instalar atualização encontrada",v->installAvailable());
+        button(root,"Abrir downloads FastDev no navegador",v->{
+            try{
+                Intent browser=new Intent(Intent.ACTION_VIEW,Uri.parse(DOWNLOAD_PAGE));
+                startActivity(browser);
+            }catch(Exception error){
+                show("Não foi possível abrir o navegador.");
+            }
+        });
         button(root,"Live Preview (HTML)",v->
             startActivity(new Intent(this,FastDevLiveActivity.class)));
         button(root,"Abrir o PokeSearch de testes",v->
@@ -116,12 +130,17 @@ public final class FastDevConsoleActivity extends Activity {
                 show(p==null
                   ? "FastDev "+BuildConfig.VERSION_CODE+": nenhuma atualização mais recente."
                   : "Preview "+p.code+" disponível. Toque em Instalar atualização.");
-            }catch(Exception error){show("Consulta falhou: "+error.getMessage());}
+            }catch(Exception error){
+                // Preserve diagnostic code without exposing private URLs or tokens.
+                show("Consulta indisponível: "+error.getMessage()+
+                    "\nUse Abrir downloads FastDev no navegador.");
+            }
             finally{busy=false;}
         });
     }
     private static boolean allowedHost(String host) {
         return "github.com".equals(host)||"api.github.com".equals(host)
+            ||"raw.githubusercontent.com".equals(host)
             ||"release-assets.githubusercontent.com".equals(host)
             ||"objects.githubusercontent.com".equals(host);
     }
@@ -135,14 +154,23 @@ public final class FastDevConsoleActivity extends Activity {
             c.setInstanceFollowRedirects(false);
             c.setConnectTimeout(10000);c.setReadTimeout(30000);
             c.setRequestProperty("User-Agent","PokeSearch-FastDev");
-            c.setRequestProperty("Accept","application/vnd.github+json");
+            c.setRequestProperty("Accept",
+                "raw.githubusercontent.com".equals(url.getHost())
+                    ?"application/json":"application/vnd.github+json");
+            c.setUseCaches(false);
+            c.setRequestProperty("Cache-Control","no-cache");
             int response=c.getResponseCode();
             if(response>=300&&response<400){
                 String to=c.getHeaderField("Location");c.disconnect();
                 if(to==null||to.length()>4096)throw new SecurityException("Redirect inválido");
                 url=new URL(url,to);continue;
             }
-            if(response!=200){c.disconnect();throw new IllegalStateException("HTTP "+response);}
+            if(response!=200){
+                String left=c.getHeaderField("X-RateLimit-Remaining");
+                c.disconnect();
+                throw new IllegalStateException("HTTP "+response+
+                    (response==403&&"0".equals(left)?" (limite GitHub)":""));
+            }
             return c;
         }
         throw new SecurityException("Redirecionamentos demais");
@@ -158,7 +186,38 @@ public final class FastDevConsoleActivity extends Activity {
             return bytes.toString(StandardCharsets.UTF_8.name());
         }finally{c.disconnect();}
     }
+    private static Preview latestFromManifest() throws Exception {
+        JSONObject info=new JSONObject(readText(open(PUBLIC_MANIFEST),16*1024));
+        int code=info.optInt("version_code",0);
+        String tag=info.optString("tag","");
+        String url=info.optString("apk","");
+        String sha=info.optString("sha256","");
+        String source=info.optString("source_commit","");
+        long size=info.optLong("size",-1L);
+        if(info.optInt("schema",0)!=1||code<=1_000_000||
+           !tag.equals("fastdev-"+code)||
+           !tag.matches("fastdev-[0-9]{7,10}")||
+           !url.equals(DOWNLOAD+code+"/"+ASSET)||
+           !sha.matches("[0-9a-fA-F]{64}")||
+           !source.matches("[0-9a-fA-F]{40}")||
+           size<10_000L||size>MAX_APK)
+            throw new SecurityException("Manifesto FastDev inválido");
+        if(code<=BuildConfig.VERSION_CODE)return null;
+        return new Preview(code,url,sha.toLowerCase(Locale.ROOT),size);
+    }
     private static Preview latest() throws Exception {
+        // Primary public manifest avoids 403 from unauthenticated GitHub API.
+        // Fall back to the existing allowlisted Releases API on raw host errors.
+        try{return latestFromManifest();}
+        catch(Exception primary){
+            try{return latestFromGitHubApi();}
+            catch(Exception secondary){
+                throw new IllegalStateException(
+                    secondary.getMessage()+"; manifesto indisponível");
+            }
+        }
+    }
+    private static Preview latestFromGitHubApi() throws Exception {
         Preview best=null;
         // Many official LT releases can push the Preview release out of the
         // first API page. Search up to six bounded pages, stopping once found.
