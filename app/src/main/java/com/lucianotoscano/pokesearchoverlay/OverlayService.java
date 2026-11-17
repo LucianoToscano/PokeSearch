@@ -3225,7 +3225,10 @@ public class OverlayService extends Service {
             if(attempt==0)BugReport.log(this,"SEARCH_RESULT",
                 "Pokémon identificados="+found+" • site="+onSite+
                 " • validação="+r.optString("confirmationSource","desconhecida")+
-                " • modo="+mode);
+                " • modo="+mode+
+                " • P"+(isSecondaryOverlay()?"2":"1")+
+                " • IV sem comprovação="+r.optInt("unverifiedIv",0)+
+                " • IV diferente="+r.optInt("verifiedNonmatchingIv",0));
             if(r.optBoolean("parseFailure",false)&&!r.optBoolean("loading",false)){
                 // The old result DOM can remain visible while React replaces it.
                 // Do not fail after the first incomplete frame.
@@ -3248,23 +3251,17 @@ public class OverlayService extends Service {
                 // Never promote mismatched cards to results, alerts or cache.
                 if(!pvp&&found>0&&missingEvidence==0&&differentIv==found&&
                     r.optBoolean("resultChanged",false)){
-                    if(count()==0){
-                        // Mode switches already cleared other filters' sprites.
-                        // No verified match exists for this requested IV;
-                        // do not claim a provider-confirmed zero result.
-                        results="[]";selected=-1;
-                        shownMode=mode;shownConfigJson=filterConfigJson();
-                        shownShiny=shiny&&shinyVerified;
-                        resultsStale=false;searchPhase="empty";
-                        overlayPrefs().edit().putString("lastError","Nenhum").apply();
-                        armNextDespawn(new JSONArray());
-                        hideDetails();
-                        status("Nenhum Pokémon com o IV selecionado foi confirmado.");
-                    }else{
-                        // Same-filter previously verified cards stay visible.
-                        searchFailure("⚠ Resultados divergentes",
-                            "O site mostrou IVs diferentes do filtro atual; resultados confirmados preservados.");
-                    }
+                    // LT392: the mobile site's five cards can show 67%, 76%,
+                    // 44% even when Raw 100% is selected in our UI. This is
+                    // NOT "no Pokémon found" and NOT "IV unverified": each
+                    // card explicitly contradicts the requested filter.
+                    searchFailure("⚠ Filtro divergente no site",
+                        "O PoGoCoordinates exibiu "+found+
+                        " Pokémon com IV diferente do filtro escolhido. "+
+                        "Os IVs foram lidos, mas não há um encontro correspondente "+
+                        "comprovado nesta resposta. Confira o Raw IV na página "+
+                        "oficial e atualize; a busca não deve converter IVs "+
+                        "diferentes em 100%.");
                     return;
                 }
                 searchFailure(pvp?"⚠ Ranking não confirmado":
