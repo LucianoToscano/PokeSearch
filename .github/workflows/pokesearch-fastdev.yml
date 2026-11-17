@@ -257,7 +257,7 @@ jobs:
           # The Android Preview versionCode remains a separate increasing number.
           EXPECTED_PUBLIC_VERSION="$(node -p "require('./release/official-request.json').version")"
           BADGING="$("$AAPT" dump badging "$APK")"
-          printf '%s\n' "$BADGING" | grep -F "package: name='com.lucianotoscano.pokesearch.preview' versionCode='$POKE_FASTDEV_VERSION_CODE' versionName='$EXPECTED_PUBLIC_VERSION'"
+          printf '%s\n' "$BADGING" | grep -F "package: name='com.lucianotoscano.pokesearch.preview' versionCode='$POKE_FASTDEV_VERSION_CODE' versionName='$EXPECTED_PUBLIC_VERSION Dev'"
           printf '%s\n' "$BADGING" | grep -F "application-label:'PokeSearch Dev'"
           "$SIGNER" verify --verbose --print-certs "$APK" | tee fastdev-apk/SIGNING-REPORT.txt
           CERT="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' fastdev-apk/SIGNING-REPORT.txt | tr -d '\r' | head -1)"
