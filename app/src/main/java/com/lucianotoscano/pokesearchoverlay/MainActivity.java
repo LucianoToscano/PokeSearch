@@ -1439,9 +1439,13 @@ public class MainActivity extends Activity {
         refreshSecondGoogleAvatar(connected?two.getString("profileAvatarUrl",""):"");
         if(secondAccountProvider!=null){
             String provider=two.getString("profileProvider","");
-            secondAccountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+            String status=two.getString("profileSyncState","");
+            String base="Google".equals(provider)?"G  Logado via Google":
                 "Discord".equals(provider)?"◉  Logado via Discord":
-                "Conectado ao PoGoCoordinates");
+                "Conectado ao PoGoCoordinates";
+            secondAccountProvider.setText(base+
+                ("pending".equals(status)?" · Sincronizando perfil…":
+                 "error".equals(status)?" · Perfil indisponível":""));
         }
         if(secondAvatarFrame!=null)
             secondAvatarFrame.setImageDrawable(homeAvatarOutline(linked?team:""));
@@ -2860,9 +2864,13 @@ public class MainActivity extends Activity {
         refreshGoogleAvatar(logged?prefs.getString("profileAvatarUrl",""):"");
         if(accountProvider!=null){
             String provider=prefs.getString("profileProvider","");
-            accountProvider.setText("Google".equals(provider)?"G  Logado via Google":
+            String status=prefs.getString("profileSyncState","");
+            String base="Google".equals(provider)?"G  Logado via Google":
                 "Discord".equals(provider)?"◉  Logado via Discord":
-                "Conectado ao PoGoCoordinates");
+                "Conectado ao PoGoCoordinates";
+            accountProvider.setText(base+
+                ("pending".equals(status)?" · Sincronizando perfil…":
+                 "error".equals(status)?" · Perfil indisponível":""));
         }
         String trainer=prefs.getString("profileTrainerName",""),
             code=prefs.getString("profileTrainerCode","");
@@ -3057,14 +3065,31 @@ public class MainActivity extends Activity {
                 loginSessionNotified=true;
                 // A newly confirmed OAuth session may belong to another account.
                 // Never reuse the prior trainer proof while /profile hydrates.
-                PogoAccountSlots.prefs(this,activeLoginSlot).edit()
+                SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
+                // Only a reconfirmation without a fresh OAuth navigation may
+                // preserve a previously verified member. New login/account
+                // change must hide the old identity until /profile confirms it.
+                boolean sameSessionResync=("sync".equals(loginPurpose)||
+                    "manage".equals(loginPurpose))&&observedLoginProvider.isEmpty()&&
+                    "autenticada".equals(slotPrefs.getString("sessionStatus",""))&&
+                    !slotPrefs.getString("profileDisplayName","").trim().isEmpty();
+                SharedPreferences.Editor sessionEdit=slotPrefs.edit()
                     .putString("sessionStatus","autenticada")
+                    .putString("profileSyncState","pending")
                     .putString("profileTrainerState","unknown")
-                    .remove("profileAvatarUrl").remove("profileDisplayName")
                     .remove("profileTrainerName").remove("profileTrainerCode")
                     .remove("profileTrainerDetails").remove("profileTrainerTeam")
                     .remove("profileTrainerList").remove("profileSelectedTrainerCode")
-                    .remove("profileTrainerLevel").apply();
+                    .remove("profileTrainerLevel");
+                if(!sameSessionResync){
+                    sessionEdit.remove("profileAvatarUrl").remove("profileDisplayName")
+                        .remove("profileProvider").putString("profileAvatarState","missing")
+                        .remove("profileLastSyncedAt");
+                    ProfileAvatarCache.clear(this,activeLoginSlot);
+                }
+                sessionEdit.apply();
+                profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
+                profileCaptureFailureReason="profile_unhydrated";
                 PogoAccountSlots.cookieManager(activeLoginSlot).flush();
                 if("manage".equals(loginPurpose)||"sync".equals(loginPurpose)){
                     // Management and resync read the actual first-party profile.
@@ -3160,9 +3185,18 @@ public class MainActivity extends Activity {
                 String payload=new JSONArray("["+raw+"]").getString(0);
                 JSONObject profile=new JSONObject(payload);
                 if(profile.optBoolean("ok",false)&&
-                   "profile".equals(profile.optString("page"))){
-                    SharedPreferences.Editor edit=PogoAccountSlots.prefs(this,activeLoginSlot).edit();
+                   "profile".equals(profile.optString("page"))&&
+                   profile.optString("displayName","").trim().length()>=3&&
+                   profile.optString("displayName","").trim().length()<=65){
+                    SharedPreferences slotPrefs=PogoAccountSlots.prefs(this,activeLoginSlot);
                     String name=profile.optString("displayName","").trim();
+                    String priorName=slotPrefs.getString("profileDisplayName","").trim();
+                    boolean newIdentity=!priorName.isEmpty()&&!priorName.equals(name);
+                    if(newIdentity)ProfileAvatarCache.clear(this,activeLoginSlot);
+                    SharedPreferences.Editor edit=slotPrefs.edit()
+                        .putString("profileDisplayName",name)
+                        .putString("profileSyncState","verified")
+                        .putLong("profileLastSyncedAt",System.currentTimeMillis());
                     String provider=profile.optString("provider","");
                     // Linked Google/Discord provider is NOT proof of the
                     // provider used this time. Only observed OAuth is.
@@ -3173,14 +3207,20 @@ public class MainActivity extends Activity {
                     if(provider.equals("Google")||provider.equals("Discord"))
                         edit.putString("profileProvider",provider);
                     String avatar=profile.optString("avatarUrl","");
-                    if(allowedProfileAvatar(avatar))
-                        edit.putString("profileAvatarUrl",avatar);
-                    else {
-                        edit.remove("profileAvatarUrl");
-                        // The official React profile can show the name before
-                        // its public Google avatar has finished loading.
+                    if(allowedProfileAvatar(avatar)){
+                        edit.putString("profileAvatarUrl",avatar)
+                            .putString("profileAvatarState","pending");
+                    }else{
+                        // React sometimes paints a verified member name before
+                        // its picture. Keep the old URL only for the identical
+                        // verified identity, never for a new OAuth/account.
+                        boolean reuse=priorName.equals(name)&&!newIdentity&&
+                            allowedProfileAvatar(slotPrefs.getString("profileAvatarUrl",""));
+                        if(!reuse)edit.remove("profileAvatarUrl");
                         avatarAwaitingHydration="Google".equals(provider)||
                             "Discord".equals(provider);
+                        edit.putString("profileAvatarState",
+                            avatarAwaitingHydration?"pending":reuse?"cached":"missing");
                     }
                     String state=profile.optString("trainerState","unknown");
                     String trainer=profile.optString("trainerName","");
@@ -3188,8 +3228,8 @@ public class MainActivity extends Activity {
                     JSONArray accountList=profile.optJSONArray("trainers");
                     JSONArray verified=new JSONArray();
                     JSONObject chosen=null;
-                    String selection=PogoAccountSlots.prefs(this,activeLoginSlot)
-                        .getString("profileSelectedTrainerCode","");
+                    String selection=newIdentity?"":
+                        slotPrefs.getString("profileSelectedTrainerCode","");
                     if(accountList!=null)for(int i=0;i<Math.min(20,accountList.length());i++){
                         JSONObject item=accountList.optJSONObject(i);
                         if(item==null)continue;
@@ -3241,6 +3281,11 @@ public class MainActivity extends Activity {
                     }
                     edit.apply();
                     parsed=true;
+                }else{
+                    // A valid /profile shell is NOT a verified member name.
+                    // Never promote an empty-name DOM result to sync success.
+                    profileCaptureFailureReason=profile.optBoolean("ok",false)?
+                        "profile_name_missing":"profile_unhydrated";
                 }
             }catch(Exception e){
                 BugReport.log(MainActivity.this,"HOME",
@@ -3249,17 +3294,27 @@ public class MainActivity extends Activity {
             if(!parsed){
                 // A returned 200 is not proof that React rendered the cards.
                 // Retry React hydration, but never spin forever on site errors.
-                if(++profileCaptureRetryCount<=8){
-                    view.postDelayed(()->captureOfficialProfile(view,generation),650L);
+                int tryNumber=++profileCaptureRetryCount;
+                long elapsed=android.os.SystemClock.uptimeMillis()-profileCaptureStartedAt;
+                if(tryNumber<=12&&elapsed<20_000L){
+                    if(loginWaitLabel!=null)loginWaitLabel.setText(
+                        "Sincronizando perfil… tentativa "+tryNumber+"/12");
+                    long delay=Math.min(1500L,650L+100L*tryNumber);
+                    view.postDelayed(()->captureOfficialProfile(view,generation),delay);
                 }else{
                     profileCaptureInProgress=false;
+                    PogoAccountSlots.prefs(this,activeLoginSlot).edit()
+                        .putString("profileSyncState","error").apply();
+                    BugReport.log(this,"HOME",profileCaptureFailureReason+
+                        " · Conta "+activeLoginSlot);
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
+                    if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
+                    if(loginWaitLabel!=null)loginWaitLabel.setText(
+                        "Perfil indisponível. Confira o site ou tente Atualizar perfil.");
                     refreshSessionSummary();
                     Toast.makeText(this,
-                        "Conta conectada. O site não carregou nome/foto; confira o perfil oficial.",
+                        "Perfil indisponível. Tente atualizar novamente.",
                         Toast.LENGTH_LONG).show();
-                    if(loginAutoReturnQueued&&loginDialog!=null&&
-                        loginDialog.isShowing())loginDialog.dismiss();
                 }
                 return;
             }
@@ -3326,6 +3381,7 @@ public class MainActivity extends Activity {
                     .getString("profileDisplayName","").trim();
                 profileCaptureInProgress=false;
                 refreshSessionSummary();
+                refreshSyncedAvatar(activeLoginSlot);
                 if(verifiedName.isEmpty()){
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
@@ -3339,6 +3395,7 @@ public class MainActivity extends Activity {
             }
             profileCaptureInProgress=false;
             refreshSessionSummary();
+            refreshSyncedAvatar(activeLoginSlot);
             if(!"manage".equals(loginPurpose)&&
                loginDialog!=null&&loginDialog.isShowing()){
                 // Authentication now represents only a PoGoCoordinates account.
@@ -3437,6 +3494,8 @@ public class MainActivity extends Activity {
             "sync".equals(loginPurpose);
         profileDiscoveryAttempted=false;
         profileCaptureRetryCount=0;
+        profileCaptureStartedAt=android.os.SystemClock.uptimeMillis();
+        profileCaptureFailureReason="profile_unhydrated";
         if(shinyRequest)preferredLoginProvider="";
         observedLoginProvider="";
         loginAutoReturnQueued=false;
