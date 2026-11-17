@@ -5479,6 +5479,31 @@
           "Algumas sprites especiais podem continuar sem arte na ausência de arquivo exato ou acesso à rede; as imagens permanecem remotas/cached, não redistribuídas no APK."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt407-official-only-20261117",
+      "minVersionCode": 54599,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT407 — Somente aplicativo oficial",
+      "sections": {
+        "novidades": [
+          "A distribuição do PokeSearch permanece exclusivamente no canal oficial, assinado com a chave permanente."
+        ],
+        "melhorias": [
+          "Removida a infraestrutura FastDev: workflows de publicação paralela, manifesto OTA DEV, scripts de build/ADB, configuração Android Preview e o pacote alternativo do projeto.",
+          "Os testes de compilação e segurança continuam verificando a versão oficial, mas não disponibilizam APK de QA para instalação.",
+          "Preservados os dois inventários da Pokédex, filtros, fundos, notas, etiquetas, PGSStats por SAF, Home, login, resultados e overlays P1/P2."
+        ],
+        "correcoes": [
+          "Removidas exceções de integridade que permitiam pacote Android .preview; o aplicativo usa apenas com.lucianotoscano.pokesearch.",
+          "O painel de versão e o sistema de atualizações não contêm mais diferenças específicas da versão DEV.",
+          "Adicionados testes para impedir reintrodução de distribuição FastDev ou do APK Preview em alterações futuras."
+        ],
+        "emDesenvolvimento": [
+          "Releases e tags FastDev antigas, branches históricas e eventuais segredos no GitHub exigem exclusão administrativa separada; a retirada do código não os apaga automaticamente.",
+          "Ainda não foi feita homologação física da remoção de DEV no Samsung Android 17 nem comprovação da cobertura de sprites. A correção de catálogo LT406 continua incorporada; não prometer todas as sprites restauradas."
+        ]
+      }
     }
   ]
 }
