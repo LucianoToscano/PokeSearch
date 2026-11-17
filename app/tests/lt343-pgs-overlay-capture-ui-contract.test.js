@@ -9,7 +9,7 @@ const gear=fs.readFileSync("app/src/main/res/drawable/pgs_menu_customize.xml","u
 assert.match(home,/header\.setOrientation\(LinearLayout\.HORIZONTAL\)/);
 assert.match(home,/header\.setGravity\(Gravity\.RIGHT\|Gravity\.CENTER_VERTICAL\)/);
 assert.match(home,/header\.addView\(controls,new LinearLayout\.LayoutParams\(-2,d\(48\)\)\)/);
-assert.match(home,/d\(30\),d\(21\),Gravity\.TOP\|Gravity\.CENTER_HORIZONTAL/);
+assert.match(home,/Vincular Pokébolas/);
 assert.match(home,/shell\.addView\(icon,new FrameLayout\.LayoutParams\(-1,d\(44\),Gravity\.BOTTOM\)\)/);
 assert.match(home,/PgsHomeArtwork\.transparentOn\(this\)/);
 
