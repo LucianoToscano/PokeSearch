@@ -25,11 +25,11 @@ assert.match(main,/secondAccountManage=homeAuthButton\("◉  Discord"/);
 assert.match(main,/openLoginDialogForSlot\(2,"login"\)/);
 assert.match(main,/openLoginDialogForSlot\(slot,"manage"\)/);
 assert.match(main,/pokeballLoginBadges=new ImageView\[2\]/);
-assert.match(main,/showCompactAccountNames\(loginHotspot,which==1\)/);
+assert.match(main,/showPokeballAccountChoice\(secondary,true\)/);
 assert.match(main,/login_modo_claro/);
 assert.match(main,/login_modo_escuro/);
 assert.match(main,/private void showPokeballAccountChoice\(boolean secondary\)/);
-assert.match(main,/showCompactAccountNames\(loginHotspot,which==1\)/);
+assert.match(main,/showPokeballAccountChoice\(secondary,true\)/);
 assert.doesNotMatch(main.slice(main.indexOf("private void showPokeballAccountChoice("),
  main.indexOf("private void choosePokeballTrainer(")),/choosePokeballTrainer\(secondary,slot\)/);
 assert.match(main,/PogoAccountSlots\.hasTrainer\(this,account,code\)/);

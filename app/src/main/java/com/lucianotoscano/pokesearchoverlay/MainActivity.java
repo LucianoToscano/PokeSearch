@@ -642,45 +642,9 @@ public class MainActivity extends Activity {
             icon.setOnClickListener(v->{
                 if(which==0)toggleHomeOverlay();else toggleSecondaryOverlay();
             });
-            FrameLayout loginHotspot=new FrameLayout(this);
-            // Seletor independente do OAuth; alinhar à silhueta real do ícone,
-            // não ao centro do ImageView quando a arte tiver padding assimétrico.
-            FrameLayout.LayoutParams hotLp=new FrameLayout.LayoutParams(
-                d(30),d(21),Gravity.TOP|Gravity.CENTER_HORIZONTAL);
-            shell.addView(loginHotspot,hotLp);
-            ImageView badge=new ImageView(this);
-            badge.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            FrameLayout.LayoutParams badgeLp=new FrameLayout.LayoutParams(
-                d(12),d(12),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);
-            loginHotspot.addView(badge,badgeLp);
-            pokeballLoginBadges[i]=badge;
-            loginHotspot.setContentDescription("Escolher Conta 1 ou 2 para Pokébola "+(i+1));
-            loginHotspot.setOnClickListener(v->showCompactAccountNames(loginHotspot,which==1));
-            // LT376e: ambos os eixos seguem a arte óptica calculada em
-            // coordenadas do próprio shell, não o centro nominal de 512px.
-            // Recalcular após mudanças reais de largura/densidade na Home.
-            final Runnable alignBadge=()->{
-                int visibleTop=HomeMenuIconPack.opticalTopInParentPx(icon);
-                int visibleCenterX=HomeMenuIconPack.opticalPokeballButtonXInParentPx(icon);
-                if(visibleTop<0||visibleCenterX<0||!loginHotspot.isAttachedToWindow())return;
-                FrameLayout.LayoutParams placement=
-                    (FrameLayout.LayoutParams)loginHotspot.getLayoutParams();
-                int height=d(18);
-                int desiredLeft=visibleCenterX-d(15);
-                int desiredTop=visibleTop-2-height;
-                if(placement.leftMargin==desiredLeft&&placement.topMargin==desiredTop&&
-                    placement.height==height&&placement.gravity==(Gravity.TOP|Gravity.LEFT))return;
-                placement.width=d(30);
-                placement.height=height;
-                placement.leftMargin=desiredLeft;
-                placement.topMargin=desiredTop;
-                placement.gravity=Gravity.TOP|Gravity.LEFT;
-                loginHotspot.setLayoutParams(placement);
-            };
-            icon.post(alignBadge);
-            icon.addOnLayoutChangeListener((v,l,t,r,b,oldL,oldT,oldR,oldB)->{
-                if((r-l)!=(oldR-oldL)||(b-t)!=(oldB-oldT))icon.post(alignBadge);
-            });
+            // LT392: o ícone da Pokébola só liga/desliga a Pokébola.
+            // A escolha de conta de P1/P2 fica exclusivamente em
+            // PoGoCoordinates > Contas, sem badge flutuante sobre a arte.
         }
         // Novos módulos ficam deliberadamente sem ação até serem implementados.
         // Paridade com P1/P2: toque liga/desliga APENAS a bolha PGS.
@@ -1572,6 +1536,9 @@ public class MainActivity extends Activity {
         }
     }
     private void showPokeballAccountChoice(boolean secondary){
+        showPokeballAccountChoice(secondary,false);
+    }
+    private void showPokeballAccountChoice(boolean secondary,boolean returnToHub){
         // LT377: identity is optional; trainer selection is retired from UI.
         int assigned=PogoAccountSlots.assigned(this,secondary);
         boolean guestAvailable=PogoAccountSlots.supportsGuest(this);
@@ -1581,7 +1548,7 @@ public class MainActivity extends Activity {
         boolean showNames=getSharedPreferences("prefs",MODE_PRIVATE)
             .getBoolean("homeShowPogoAccountName",true);
         String[] choices={
-            guestAvailable?"Conta: Visitante":"Conta: Visitante · indisponível",
+            guestAvailable?"Sem login":"Sem login · indisponível neste Android",
             "Conta 1: "+(PogoAccountSlots.loggedIn(this,1)?
                 (showNames&&!name1.isEmpty()?name1:"Conectada"):"Sem Login"),
             "Conta 2: "+(PogoAccountSlots.loggedIn(this,2)?
@@ -1612,7 +1579,10 @@ public class MainActivity extends Activity {
                 }
                 refreshPokeballLoginBadges();
                 refreshSessionSummary();
-            }).setNegativeButton("Cancelar",null).show();
+                if(returnToHub)showPogoAccountHub();
+            }).setNegativeButton("Cancelar",(dialog,which)->{
+                if(returnToHub)showPogoAccountHub();
+            }).show();
     }
     private void choosePokeballTrainer(boolean secondary,int account){
         SharedPreferences prefs=PogoAccountSlots.prefs(this,account);
@@ -1869,7 +1839,49 @@ public class MainActivity extends Activity {
                 });
             }
         }
-        TextView note=homeText("Visitante automático · até 5 resultados reais do site.",10,muted,false);
+        TextView routesLabel=homeText("Vincular Pokébolas",12,foreground,true);
+        LinearLayout.LayoutParams routesLp=new LinearLayout.LayoutParams(-1,d(28));
+        routesLp.topMargin=d(8);
+        card.addView(routesLabel,routesLp);
+        // LT392: independent P1/P2 bindings live in this SAME account hub.
+        // No icon, badge, touch target or account picker sits on Pokébola art.
+        for(int number=1;number<=2;number++){
+            final boolean secondary=number==2;
+            int assigned=PogoAccountSlots.assigned(this,secondary);
+            boolean logged=assigned>0&&PogoAccountSlots.loggedIn(this,assigned);
+            String selectedName=logged?PogoAccountSlots.prefs(this,assigned)
+                .getString("profileDisplayName","").trim():"";
+            String selection=logged?"Conta "+assigned+
+                (selectedName.isEmpty()?"":" · "+selectedName):"Sem login";
+            LinearLayout route=new LinearLayout(this);
+            route.setGravity(Gravity.CENTER_VERTICAL);
+            route.setPadding(d(7),d(4),d(8),d(4));
+            route.setBackground(homeSurface(
+                homeLightMode?Color.rgb(237,244,252):Color.rgb(38,51,69),10,
+                homeLightMode?Color.rgb(188,204,222):Color.rgb(66,88,111)));
+            LinearLayout.LayoutParams routeLp=new LinearLayout.LayoutParams(-1,d(46));
+            routeLp.bottomMargin=d(5);
+            card.addView(route,routeLp);
+            ImageView ball=new ImageView(this);
+            ball.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            setHomePackIcon(ball,number,"normal");
+            LinearLayout.LayoutParams iconLp=new LinearLayout.LayoutParams(d(34),d(34));
+            iconLp.rightMargin=d(9);
+            route.addView(ball,iconLp);
+            TextView account=homeText("Pokébola "+number+" · "+selection,12,foreground,true);
+            account.setSingleLine(true);
+            account.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            route.addView(account,new LinearLayout.LayoutParams(0,-1,1f));
+            TextView chevron=homeText("⌄",18,muted,false);
+            route.addView(chevron,new LinearLayout.LayoutParams(-2,-1));
+            route.setContentDescription("Escolher conta da Pokébola "+number+
+                ". Atual: "+selection);
+            route.setOnClickListener(v->{
+                dialog.dismiss();
+                showPokeballAccountChoice(secondary,true);
+            });
+        }
+        TextView note=homeText("Sem login: até 5 resultados disponíveis no site.",10,muted,false);
         LinearLayout.LayoutParams noteLp=new LinearLayout.LayoutParams(-1,-2);
         noteLp.topMargin=d(2);card.addView(note,noteLp);
         TextView close=homeText("Fechar",12,foreground,true);
@@ -1887,7 +1899,7 @@ public class MainActivity extends Activity {
     }
     private String pogoAccountSummary(int slot){
         SharedPreferences account=PogoAccountSlots.prefs(this,slot);
-        if(!PogoAccountSlots.loggedIn(this,slot))return "Visitante / desconectada";
+        if(!PogoAccountSlots.loggedIn(this,slot))return "Sem login";
         String name=account.getString("profileDisplayName","").trim();
         String sync=account.getString("profileSyncState","");
         if(name.isEmpty())return "Conectada · perfil pendente";

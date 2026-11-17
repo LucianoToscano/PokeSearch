@@ -31,7 +31,8 @@ assert.ok(detail.includes('emblem.src="ui-icons/mega-symbol.png"'));
 // Zero must remain visible when the provider reports no cards. If the
 // numeric badge is enabled, it appears ON the Pokébola; if disabled, under
 // the icon, never two copies or an invisible absolute-positioned number.
-assert.ok(dock.includes('empty.style.display=emptyResult&&(!resultWindow||!resultDisplayOptions.count)?'));
+assert.ok(dock.includes('empty.style.display=guestSitePreviewActive&&resultWindow?')&&
+ dock.includes('emptyResult&&(!resultWindow||!resultDisplayOptions.count)?'));
 assert.ok(dock.includes('empty.textContent=emptyResult&&'));
 assert.match(dock,/body\.result-window #empty\{display:block;margin:0 auto;width:var\(--dock\)/);
 assert.ok(dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""'));

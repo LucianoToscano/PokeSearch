@@ -1025,14 +1025,20 @@ function cardRoots(){
   let chosen=action.parentElement;
   for(let node=action,depth=0;node&&depth<10;node=node.parentElement,depth++){
    const t=text(node);
-   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
-      !/\bCP\b/i.test(t)||t.length>=2500)continue;
+   // Site guest cards commonly render "City, Country" with NO LOCATION
+   // heading. Requiring that heading made each Get coords button's wrapper
+   // look like an encounter, losing the Pokémon's IV, CP and Dex number.
+   if(!/\bDESPAWN\b/i.test(t)||!/\bCP\b/i.test(t)||t.length>=2500)continue;
    const controls=Array.from(node.querySelectorAll("button,a,[role=button]"))
     .filter(e=>vis(e)&&resultAction(e));
    // A single card can have Get coords and Open in Maps, but an enclosing
    // multi-card grid cannot be trusted as one result.
    const dexLabels=t.match(/#\s*\d{1,4}\b/g)||[];
-   if(controls.length<=2&&dexLabels.length<=1){chosen=node;break;}
+   const hasEncounter=dexLabels.length===1||
+    (dexLabels.length===0&&!!node.querySelector("h2,h3,h4,h5"));
+   if(controls.length<=2&&dexLabels.length<=1&&hasEncounter){
+    chosen=node;break;
+   }
   }
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
@@ -1138,7 +1144,7 @@ function parseCard(box,sourceIndex){
  // Conflicting explicit data is still rejected by verifiedCardIv() below.
  const percent=labeledPct||(ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):""));
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
-     m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
+     m=body.match(new RegExp("(?:^|\\b)"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
  const heading=box.querySelector("h2,h3,h4,h5,[class*=font-semibold],[class*=font-bold]");
  let title=heading?text(heading):"";
  if(!title||title.length>85||/^(?:CP|IV|LVL)$/i.test(title)){
@@ -1328,7 +1334,16 @@ function collect(){
     return seen===query||(seen.endsWith(' (normal)')&&seen.slice(0,-9)===query);
    });
   };
-  const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
+  // LT392: copy only actual visible encounter cards for a READ-ONLY guest
+ // site preview. Do not infer IV from the search input or certify a match.
+ // Native decides whether to use this data; verified cards remain separate.
+ const sitePreviewCards=found.filter(x=>/^(?:#)?[0-9]{1,4}$/.test(
+     String(x.number||"").trim())&&
+     String(x.name||"").trim()&&!/^(?:pok[eé]mon|pokemon)$/i.test(
+      String(x.name||"").trim())&&
+     /^[0-9]{1,5}$/.test(String(x.cp||"").trim()))
+   .slice(0,5);
+ const valid=siteCriteria?found.filter(x=>matches(x)&&requestedSpecies(x)).map(x=>{
   if(isLeague&&!x.rank)return {...x,rank:"",rankLimit,rankSource:"verified-site-filter"};
   return x;
  }):[];
@@ -1377,7 +1392,7 @@ function collect(){
  const expectedVisible=siteCount>0?Math.min(siteCount,100):0;
  const siteIncomplete=expectedVisible>found.length;
  const parseFailure=siteCount>0&&found.length===0;
- return JSON.stringify({ok:true,cards:valid,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
+ return JSON.stringify({ok:true,cards:valid,sitePreviewCards,found:found.length,unverifiedIv,verifiedNonmatchingIv,siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure,uncertain,loading,explicitEmpty,emptySignalFound:explicitEmptySignal,resultChanged,
   criteriaConfirmed:siteCriteria,criteriaReason:confirmation.reason,confirmationSource:confirmation.source,resultFreshnessPending,
   leagueConfirmed:isLeague&&siteCriteria,siteShiny:readShiny()});
 }
