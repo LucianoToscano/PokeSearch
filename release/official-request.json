@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.80",
-  "code": 54587,
-  "label": 51395,
-  "previous_tag": "v0.03.79-54586",
-  "qa_max_code": 54586,
-  "release_notes": "LT395 — Home e menu lateral refinados. Ícones Quests e Comunidade mantêm EXATAMENTE o desenho original fornecido pelo proprietário, com atlas interno reenquadrado para proteger o limite inferior/direito e padding individual contra cortes. Assistente conserva o personagem original, com escala óptica um pouco menor e opacidade de 92% apenas na Home para equilibrar o peso visual. Grade 4×4 com 16 módulos, nomes e alinhamentos padronizados; Pokébolas 1/2 sem badges numéricos e brancas quando desligadas, Pokédex original preservada. Menu lateral redesenhado com cabeçalho compacto e versão, símbolos em coluna de largura igual, toque nativo, seções Principal (Conta, Favoritos, Preferências, Filtros PGSharp), Ajuda e atualizações (Novidades, Guia rápido, Reportar problema) e Mais (Dados e backup, Sobre o aplicativo). Importar/Exportar dados permanecem em Dados e backup; Compartilhar, Agradecimentos e Estatísticas permanecem em Sobre; Transparência dos fundos da Home fica em Preferências. Mostrar/Ocultar/Abrir Chat foi movido para o módulo Comunidade, respeitando o estado anterior do usuário. Mantidas contas P1/P2, controle Premium, suporte, compartilhamento, preferências, serviços de overlay, resultados, sessão, login, sprites e assinatura. CI aprovado na PR #497: Node QA, LT169, LT211, LT62, LT173, beta APK/R8. Homologação física Samsung/Android 11–17 da escala, alinhamentos, toque e cortes de arte ainda pendente; não há comprovação de pixel perfect só com CI. Atualização oficial usa assinatura permanente, SHA-256 público e instalação confirmada pelo Android."
+  "version": "0.03.81",
+  "code": 54588,
+  "label": 51396,
+  "previous_tag": "v0.03.80-54587",
+  "qa_max_code": 54587,
+  "release_notes": "LT396 — Correção definitiva dos contornos de Quests e Comunidade na Home. A inspeção dos PNGs originais mostrou que a borda inferior circular de Quests estava incompleta a partir de y=484, e a borda direita de Comunidade estava cortada depois de x=488; padding sozinho não recuperava pixels ausentes. Foram restaurados somente os traços faltantes da arte original, sem trocar seus desenhos, com atlas interno 4×4 substituindo somente essas duas células e margens seguras. Quests agora tem o aro inferior completo; Comunidade agora tem o canto direito arredondado. Assistente mantém o personagem original e apresenta cores menos saturadas somente na Home, combinando melhor com os símbolos dos demais menus. Ícone flutuante do Assistente não foi alterado. Preservados Pokédex original, duas Pokébolas brancas quando desligadas sem IV na Home, menu lateral organizado da LT395, os 16 módulos, filtros, overlays, sprites, PGS, contas, login, histórico, atualizações, tema, preferências e dados. Novo teste LT396 valida pixels reais recuperados nos PNGs, integridade SHA-256 e escala; Node QA, LT169, LT211, LT62, LT173 OTA e beta APK/R8 passaram na PR #500. Homologação física no Samsung Android 17, demais densidades, temas e acessibilidade ainda não foi executada, portanto não há comprovação pixel-a-pixel no dispositivo. Publicação oficial com assinatura permanente, integridade SHA-256 pública e atualização instalada somente após confirmação do Android."
 }
