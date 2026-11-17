@@ -117,7 +117,10 @@ public final class FastDevConsoleActivity extends Activity {
         root.addView(b);b.setOnClickListener(action);
     }
     private void show(String text) {
-        main.post(()->{if(!isFinishing()&&!isDestroyed())status.setText(text);});
+        main.post(()->{
+            if(!isFinishing()&&!isDestroyed())
+                status.setText("FastDev instalado: "+BuildConfig.VERSION_CODE+"\n"+text);
+        });
     }
     private void check() {
         if(busy)return;
