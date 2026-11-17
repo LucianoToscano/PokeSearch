@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.84",
-  "code": 54591,
-  "label": 51399,
-  "previous_tag": "v0.03.83-54590",
-  "qa_max_code": 54590,
-  "release_notes": "LT399 — Pokédex pessoal aprimorada no PokeSearch oficial: catálogo de 278 IDs de fundos, 263 imagens conhecidas no repositório PokeMiners (114,6 MB), mapeamento de 275 IDs e 3 ausentes sem imagem verificada. Download opcional de todas as imagens diretamente no aparelho, privado, com tamanho/hash Git e cancelamento/retomada, sem embutir arquivos proprietários no APK. Aplicação do fundo original por ID quando em cache e seleção manual de decoração sem alterar o jogo. Filtros combinados, comparar até três Pokémon PC/IV/forma/estado, anotações privadas e histórico agregado entre importações PGSStats por coleção, melhorias de layout e espaços inferiores. Mantém o ícone atual Pokédex, Home, P1/P2, busca, login, comunidade/quest/assistente e assinatura permanente. Dados de conta não enviados, sem trocas/venda/leilões. PR #509: Node/LT169/LT211/LT62/LT173/Secure beta R8 aprovados. QA físico do Samsung Android 17 e download integral dos 263 PNG ainda não executados; três IDs 28/204/423 sem arquivo correspondente."
+  "version": "0.03.85",
+  "code": 54592,
+  "label": 51400,
+  "previous_tag": "v0.03.84-54591",
+  "qa_max_code": 54591,
+  "release_notes": "LT400 — Minha Pokédex com catálogo visual de Pokémon GO: 3.850 PNG GO e 2.213 PNG legados catalogados por fonte fixa, com 1.506 formas, 87 trajes e 1.025 espécies; sprites por tupla espécie/forma/gênero/Shiny/traje, sem atribuir versão errada. Download privado por escolha do usuário: apenas coleção, coleção GO ou legadas, cancelamento, retomada, hash/tamanho e cache privado; imagens de terceiros não embutidas no APK. Correção do PGSStats Sombroso=alignment1 e Purificado=alignment2, indicadores visuais diferenciados, resoluções exatas de Giratina/Deoxys/Kyurem e placeholders honestos. Categorias Lendário/Mítico/Pode Evoluir, fundos sem classificação, Evento visual separado de origem e Mega registrada a partir do histórico quando presente. Mantém Home, P1/P2, Busca, login, trajes/fundos existentes, comentários privados e comparador. PR #512 CI Node, FastDev smoke, LT169, LT211, LT62, LT173, Secure beta APK/R8 success. Sem teste físico Samsung Android17; downloads de milhares de arquivos dependem de rede, espaço e clique explícito; não garante todas as combinações ou conformidade do jogo em outro instantâneo. Sem comércio, leilão ou venda."
 }
