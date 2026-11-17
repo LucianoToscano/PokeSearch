@@ -81,6 +81,7 @@ jobs:
           node --test scripts/fastdev-manifest.test.cjs
           bash -n scripts/fastdev-signing-preflight.sh
           node --test scripts/fastdev-signing-preflight.test.cjs
+          node --test app/tests/lt386-guest-diagnostic-home.test.cjs
       - name: Select a validated on-demand request without release signing
         id: select-mode
         shell: bash
