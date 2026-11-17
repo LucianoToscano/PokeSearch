@@ -3391,3 +3391,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - [Release v0.03.79-54586](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.79-54586), APK `PokeSearch-v0.03.79-LT.apk`, **61.382.027 bytes**, SHA-256 `f6b84ab4a623fe878a018d86104d89ec213e486727ba975449673a531f72ac93`, asset `uploaded`, assinatura permanente do workflow; versão 0.03.78 preservada.
 - **Pendente homologação física** Samsung Android 17/11–17, mudança de estado P1/P2 e modo claro/escuro. Não afirmar badge Shiny/fundos/histórico totalmente espelhados sem teste físico.
 - [Auditoria ARK LT394 / continuidade LT395](LT394_ARK_HOME_OFICIAL_00379_20261117.md).
+
+
+## LT395 — Home e drawer organizados, release oficial 0.03.80 LT (17/11/2026)
+
+- Requisitos: arte original de Quests/Comunidade sem recorte inferior/direito, Assistente original harmonizado, alinhamentos 4×4 e menu lateral sem excesso de itens. Funções não excluídas: Principal (Conta/Favoritos/Preferências/Filtros PGSharp), Suporte/Novidades/Guia, Dados/backup, Sobre com estatísticas, Transparência em Preferências e Chat em Comunidade.
+- Código PR [#497](https://github.com/LucianoToscano/PokeSearch/pull/497) **MERGED** `728eaf699139b7472544b2083c295c6e8deaa784`; atlas com margens a partir dos mesmos PNG do proprietário, SHA-256 `0038a203fa074002ef8bb710662d32e9c8231a6f90e5914a120b4c6fa8e909e6`. Node QA/LT169/LT211/LT62/LT173 e beta/R8 passaram.
+- PR [#498](https://github.com/LucianoToscano/PokeSearch/pull/498) **MERGED** `c7d9e92e9c3aa45aa49343d2fc58beedc4ff41c2`. Workflow oficial protegido [#44051560798](https://github.com/LucianoToscano/PokeSearch/actions/runs/44051560798) **completed/success**.
+- [Release v0.03.80-54587](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.80-54587): APK `PokeSearch-v0.03.80-LT.apk`, **61.379.327 bytes**, SHA-256 `927ca15c01472ca106a6b5d591213d6a3b910bba712cd7b399bf628cad12600d`; assinatura permanente verificada, atualização sobre v0.03.79 LT; releases anteriores preservadas.
+- **QA físico Samsung Android 17, recortes finais, tema claro/escuro, navegação das subseções e acessibilidade pendentes**. Não afirmar validação visual baseada apenas em CI.
+- [Auditoria e continuidade LT395/LT396](LT395_ARK_HOME_DRAWER_OFICIAL_00380_20261117.md).
