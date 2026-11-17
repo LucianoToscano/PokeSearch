@@ -1142,6 +1142,13 @@ function parseCard(box,sourceIndex){
   title=lines.find(s=>/^[\p{L}\p{N} _'.\-♀♂()✨]+$/u.test(s)&&!/(?:^CP$|^IV$|^LVL$|LOCATION|DESPAWN|Get coords)/i.test(s)&&s.length<45)||"Pokémon";
  }
  const meta=lines.find(s=>/#\s*\d{1,4}\b/.test(s))||"";
+ // Some visitor cards show only "#580" or "#129" while the name hydrates.
+ title=title.replace(/\s+#\s*\d{1,4}\b.*$/,"").replace(/\s*[♀♂]\s*$/,"").trim();
+ const visibleDex=Number((meta.match(/#\s*(\d{1,4})\b/)||[])[1]||0);
+ const knownVisitorNames={129:"Magikarp",580:"Ducklett"};
+ if(knownVisitorNames[visibleDex]&&(!title||/^#\s*\d{1,4}$/.test(title)||
+    /^(?:Pok[eé]mon|Pokemon|CP|IV|LVL|Loading)$/i.test(title)))
+  title=knownVisitorNames[visibleDex];
  const size=((meta.match(/(?:^|[\s·])(?:XXS|XS|XXL|XL|M)(?=$|[\s·])/i)||[])[0]||"").trim();
  const move=lines.find(s=>/\s\/\s/.test(s)&&!/\d+\s*\/\s*\d+\s*\/\s*\d+/.test(s))||"";
  const loc=nextLabelValue(box,"LOCATION")||(body.match(/\bLOCATION\s*\n?\s*([^\n]+?)(?=\n|DESPAWN|$)/i)||[])[1]||"";
