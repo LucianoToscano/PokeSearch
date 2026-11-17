@@ -34,7 +34,7 @@ test("P2 activation has no VIP, Google sign-in or payment gate",()=>{
   assert.doesNotMatch(toggle,banned);
   assert.doesNotMatch(start,banned);
  }
- assert.match(main,/"Ativar Pokébola 2"/);
+ assert.match(main,/refreshHomePokeballImage\(secondaryOverlayControl,true\)/);
  assert.doesNotMatch(main,/"Pokébola 2 Premium - requer licença"/);
  assert.match(access,/static synchronized boolean permitted\(boolean secondary\)\{\s*\/\/ LT234:[^\n]*\n[^\n]*\n\s*return true;/);
  assert.doesNotMatch(create,/PremiumAccess\./);

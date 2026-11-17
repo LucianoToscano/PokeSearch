@@ -72,8 +72,8 @@ const newPack=java("HomeMenuIconPack");
 assert.match(newPack,/options\.inScaled=false/);
 assert.match(newPack,/ZipInputStream/);
 assert.match(newPack,/menu_icons_512_/);
-assert.match(home,/setHomePackIcon\(overlayControl,1,on\?"ativo":"normal"\)/);
-assert.match(home,/setHomePackIcon\(secondaryOverlayControl,2,secondaryOn\?"ativo":"normal"\)/);
+assert.match(home,/refreshHomePokeballImage\(overlayControl,false\)/);
+assert.match(home,/refreshHomePokeballImage\(secondaryOverlayControl,true\)/);
 assert.match(home,/setHomePackIcon\(raidAssistantControl,4,"normal"\)/);
 assert.match(home,/setHomePackIcon\(rareCandyControl,10,"normal"\)/);
 const expected={

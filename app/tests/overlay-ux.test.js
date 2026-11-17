@@ -1932,7 +1932,10 @@ test("HOME-02 has visible ON/OFF resources and drawer with safe export",(()=>{
  const status=main.split("private void refreshHomeOverlay(){")[1]?.split("private void openProviderLogin(")[0]||"";
  const menu=main.split("private void showHomeMenu(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
  const exportCode=main.split("private void exportHomeData(){")[1]?.split("private void toggleHomeOverlay(){")[0]||"";
- return status.includes("R.drawable.home_pokeball_on")&&status.includes("R.drawable.home_pokeball_off")&&
+ // LT393: P1/P2 mirror floating mode images and no longer swap fixed on/off art.
+ return status.includes("refreshHomePokeballImage(overlayControl,false)")&&
+  status.includes("refreshHomePokeballImage(secondaryOverlayControl,true)")&&
+  main.includes("HomeFloatingModeIcon.icon(this,secondary)")&&
   menu.includes("homeRoot.addView(layer")&&menu.includes("Exportar dados")&&
   exportCode.includes("Intent.ACTION_CREATE_DOCUMENT")&&
   exportCode.includes("WatchAlerts.watched(this)")&&
