@@ -83,10 +83,20 @@ public final class PersonalPokedexActivity extends Activity {
         if(original==null||original.length()>MAX_POKEMON)
             throw new IOException("Lista Pokémon ausente ou excessiva.");
         JSONArray list=new JSONArray();
+        JSONArray eggs=new JSONArray();
         HashSet<String> known=new HashSet<>();
         for(int i=0;i<original.length();i++){
             JSONObject p=original.optJSONObject(i);
-            if(p==null||p.optBoolean("isEgg",false))continue;
+            if(p==null)continue;
+            if(p.optBoolean("isEgg",false)){
+                JSONObject egg=new JSONObject();
+                egg.put("distance",Math.max(0,Math.min(1000,p.optDouble("eggKmWalkedTarget",0))));
+                egg.put("progress",Math.max(0,Math.min(1000,p.optDouble("eggKmWalkedStart",0))));
+                egg.put("incubating",!p.optString("eggIncubatorId","").isEmpty());
+                egg.put("type",number(p,"eggType",50));
+                eggs.put(egg);
+                continue;
+            }
             String identifier=p.optString("id","");
             if(!identifier.matches("[0-9]{1,20}")||!known.add(identifier))
                 throw new IOException("Identificador Pokémon inválido/duplicado.");
@@ -107,6 +117,9 @@ public final class PersonalPokedexActivity extends Activity {
             individual.put("heightM",Math.max(0,Math.min(100000,p.optDouble("heightM",0))));
             individual.put("weightKg",Math.max(0,Math.min(1000000,p.optDouble("weightKg",0))));
             individual.put("favorite",p.optBoolean("favorite",false));
+            individual.put("hasMegaEvolved",p.optBoolean("hasMegaEvolved",false));
+            individual.put("hatchedFromEgg",p.optBoolean("hatchedFromEgg",false));
+            individual.put("buddyKm",Math.max(0,Math.min(100000,p.optDouble("buddyKmWalked",0))));
             individual.put("lucky",p.optBoolean("isLucky",false));
             individual.put("shiny",display.optBoolean("shiny",false));
             individual.put("alignment",display.optInt("alignment",0));
@@ -116,6 +129,16 @@ public final class PersonalPokedexActivity extends Activity {
             individual.put("gender",number(display,"gender",10));
             individual.put("size",number(p,"size",10));
             individual.put("pokeball",number(p,"pokeball",100));
+            individual.put("breadMode",number(display,"breadModeEnum",40));
+            JSONArray originEvents=p.optJSONArray("originEvents");
+            JSONArray events=new JSONArray();
+            if(originEvents!=null){
+                for(int eventIndex=0;eventIndex<Math.min(originEvents.length(),6);eventIndex++){
+                    String value=text(originEvents.optString(eventIndex,""),100);
+                    if(!value.isEmpty())events.put(value);
+                }
+            }
+            individual.put("events",events);
             individual.put("move1",number(p,"move1",100000));
             individual.put("move2",number(p,"move2",100000));
             individual.put("move3",number(p,"move3",100000));
@@ -138,6 +161,10 @@ public final class PersonalPokedexActivity extends Activity {
         result.put("schema",1);
         result.put("snapshotTime",text(source.optString("time",""),40));
         result.put("count",list.length());
+        result.put("eggs",eggs);
+        JSONObject account=source.optJSONObject("account");
+        int capacity=account==null?0:number(account,"maxPokemonStorage",100000);
+        result.put("capacity",capacity);
         result.put("pokemons",list);
         JSONArray sourceTags=source.optJSONArray("tags");
         JSONArray tags=new JSONArray();
