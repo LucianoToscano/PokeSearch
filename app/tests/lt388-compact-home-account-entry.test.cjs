@@ -2,7 +2,8 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
 const main=fs.readFileSync(path.join(__dirname,"../src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java"),"utf8");
 test("LT388 PoGo header opens account chooser, not implicit slot 1 login",()=>{
- assert.match(main,/homePogoCoordinatesShortcut\.setOnClickListener\(v->showHomeAccountMenu\(\)\)/);
+ assert.match(main,/homePogoCoordinatesShortcut\.setOnClickListener\(v->showPogoAccountHub\(\)\)/);
+ assert.match(main,/private void showPogoAccountActions\(int slot\)/);
  assert.match(main,/addHomeDrawerItem\(drawer,"◉","Conta 1 · Login \/ Perfil"/);
  assert.match(main,/addHomeDrawerItem\(drawer,"◉","Conta 2 · Login \/ Perfil"/);
 });
