@@ -1,5 +1,7 @@
 # FastDev estável — OTA, Live HTML, ADB e assinatura separada (16/11/2026)
 
+**Estado LT384 atual:** [FastDev 1000041](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000041) publicado com disparo automático pelo merge, Home real sem console, downloads/atualizações automáticas e confirmação final do Android. [APK direto](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000041/PokeSearch-FastDev-Preview.apk). A prévia visual HTML anterior foi retirada da navegação do aplicativo; este documento conserva seu histórico. [Registro LT384](LT384_FASTDEV_HOME_AUTO_UPDATE_20261116.md).
+
 **Estado mais recente (LT383):** FastDev `1000039` assinado e publicado após corrigir a consulta HTTP 403 do atualizador, com [APK direto](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000039/PokeSearch-FastDev-Preview.apk) e [manifesto público de atualização](https://raw.githubusercontent.com/LucianoToscano/PokeSearch/main/fastdev/latest.json) verificados. PR #474 integrada; [auditoria/evidências LT383](LT383_FASTDEV_HTTP403_OTA_20261116.md). O APK antigo precisa ser atualizado manualmente uma vez, por cima do anterior; o Android físico continua sem homologação. A tabela histórica abaixo documenta as primeiras duas builds 1000024/1000027 e não a versão mais recente.
 
 ## Entrega permanente verificada — 16/11/2026
