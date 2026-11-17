@@ -821,8 +821,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams pogoLp=new LinearLayout.LayoutParams(d(28),d(28));
         pogoLp.leftMargin=d(3);
         controls.addView(homePogoCoordinatesShortcut,pogoLp);
-        homePogoCoordinatesShortcut.setOnClickListener(v->openLoginDialogForSlot(1,
-            PogoAccountSlots.loggedIn(this,1)?"manage":"login"));
+        homePogoCoordinatesShortcut.setContentDescription("Contas PoGoCoordinates · abrir menu de login e perfil");
+        homePogoCoordinatesShortcut.setOnClickListener(v->showHomeAccountMenu());
         refreshHomeHeaderProfileIcons();
 
         // O ícone indica o modo que será ativado ao tocar.
@@ -879,6 +879,10 @@ public class MainActivity extends Activity {
             20,homeLightMode?Color.rgb(175,188,204):Color.rgb(77,84,96)));
         auth.setElevation(d(5));
         screen.addView(auth,new LinearLayout.LayoutParams(-1,-2));
+        // LT388: account controls belong in the existing header account drawer.
+        // Keep their views/state alive for session hydration but remove their
+        // height from Home. INVISIBLE would still reserve a large blank area.
+        auth.setVisibility(View.GONE);
 
         LinearLayout accountHeading=new LinearLayout(this);
         guestHeading=accountHeading;
@@ -1098,6 +1102,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams secondLp=new LinearLayout.LayoutParams(-1,-2);
         secondLp.topMargin=d(10);
         screen.addView(secondAccount,secondLp);
+        // LT388: do not render a second full login card on the Home feed.
+        secondAccount.setVisibility(View.GONE);
         // Full account card mirrors the hierarchy and dimensions of Conta 1.
         // None of these widgets borrow account-1 profile/identity preferences.
         TextView secondTitle=homeText("PoGoCoordinates · Conta 2",12,
