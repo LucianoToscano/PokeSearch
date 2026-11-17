@@ -75,42 +75,13 @@ public final class FastDevConsoleActivity extends Activity {
     }
     @Override public void onCreate(Bundle b) {
         super.onCreate(b);
-        ScrollView scroll=new ScrollView(this);
-        LinearLayout root=new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        int p=(int)(18*getResources().getDisplayMetrics().density);
-        root.setPadding(p,p,p,p);
-        scroll.addView(root);
-        TextView header=new TextView(this);
-        header.setText("PokeSearch FastDev");
-        header.setTextSize(25);
-        root.addView(header);
-        status=new TextView(this);
-        status.setText("Preview "+BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+
-            ")\nAtualizações preservam os dados deste aplicativo.");
-        status.setPadding(0,p/2,0,p/2);
-        root.addView(status);
-        button(root,"Verificar atualização FastDev",v->check());
-        button(root,"Instalar atualização encontrada",v->installAvailable());
-        button(root,"Abrir downloads FastDev no navegador",v->{
-            try{
-                Intent browser=new Intent(Intent.ACTION_VIEW,Uri.parse(DOWNLOAD_PAGE));
-                startActivity(browser);
-            }catch(Exception error){
-                show("Não foi possível abrir o navegador.");
-            }
-        });
-        button(root,"Live Preview (HTML)",v->
-            startActivity(new Intent(this,FastDevLiveActivity.class)));
-        button(root,"Abrir o PokeSearch de testes",v->
-            startActivity(new Intent(this,MainActivity.class)));
-        TextView note=new TextView(this);
-        note.setText("\nO APK oficial é separado. Android pode pedir confirmação da instalação. "+
-            "A versão FastDev usa somente pré-releases de testes publicados.");
-        root.addView(note);
-        setContentView(scroll);
-        scheduleUpdateChecks();
-        check(); // lightweight foreground check; no silent installation
+        // Compatibility for old launch shortcuts pointing to the former
+        // FastDev console. Redirect to the real app instead of recreating
+        // the debug buttons or the stand-alone HTML simulator.
+        Intent home=new Intent(this,MainActivity.class);
+        home.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(home);
+        finish();
     }
     private void button(LinearLayout root,String text,View.OnClickListener action) {
         Button b=new Button(this);b.setText(text);b.setAllCaps(false);
@@ -255,13 +226,13 @@ public final class FastDevConsoleActivity extends Activity {
         return best;
     }
     /** Background discovery notifies; Android installer is always user-driven. */
-    private void scheduleUpdateChecks() {
+    static void scheduleUpdateChecks(Context context) {
         try {
             Constraints constraints=new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED).build();
             PeriodicWorkRequest request=new PeriodicWorkRequest.Builder(
                 PollWorker.class,30,TimeUnit.MINUTES).setConstraints(constraints).build();
-            WorkManager.getInstance(getApplicationContext()).enqueueUniquePeriodicWork(
+            WorkManager.getInstance(context.getApplicationContext()).enqueueUniquePeriodicWork(
                 "fastdev-preview-updates",ExistingPeriodicWorkPolicy.KEEP,request);
         }catch(RuntimeException ignored){}
     }
@@ -283,7 +254,8 @@ public final class FastDevConsoleActivity extends Activity {
                 if(Build.VERSION.SDK_INT>=26)
                     manager.createNotificationChannel(new NotificationChannel(
                         CHANNEL,"FastDev — versões de teste",NotificationManager.IMPORTANCE_DEFAULT));
-                Intent open=new Intent(ctx,FastDevConsoleActivity.class);
+                Intent open=new Intent(ctx,MainActivity.class);
+                open.setAction(Intent.ACTION_MAIN);
                 int flags=PendingIntent.FLAG_UPDATE_CURRENT;
                 if(Build.VERSION.SDK_INT>=23)flags|=PendingIntent.FLAG_IMMUTABLE;
                 PendingIntent tap=PendingIntent.getActivity(ctx,0,open,flags);
@@ -316,13 +288,13 @@ public final class FastDevConsoleActivity extends Activity {
     private static long version(PackageInfo info) {
         return Build.VERSION.SDK_INT>=28 ? info.getLongVersionCode() : info.versionCode;
     }
-    private void validateApk(File apk,Preview preview) throws Exception {
-        PackageManager pm=getPackageManager();
+    private static void validateApk(Context context,File apk,Preview preview) throws Exception {
+        PackageManager pm=context.getPackageManager();
         int flags=Build.VERSION.SDK_INT>=28
             ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
         PackageInfo archive=pm.getPackageArchiveInfo(apk.getAbsolutePath(),flags);
-        PackageInfo installed=pm.getPackageInfo(getPackageName(),flags);
-        if(archive==null||!getPackageName().equals(archive.packageName)||
+        PackageInfo installed=pm.getPackageInfo(context.getPackageName(),flags);
+        if(archive==null||!context.getPackageName().equals(archive.packageName)||
             version(archive)!=preview.code||
             version(archive)<=version(installed))
             throw new SecurityException("APK não corresponde ao pacote/versão FastDev");
@@ -370,7 +342,7 @@ public final class FastDevConsoleActivity extends Activity {
                 if(total!=p.size||!hex(md.digest()).equals(p.sha))
                     throw new SecurityException("SHA-256 do APK não confere");
                 if(!temp.renameTo(apk))throw new IllegalStateException("Falha ao preparar APK");
-                validateApk(apk,p);
+                validateApk(this,apk,p);
                 main.post(()->{
                     busy=false;
                     if(isFinishing()||isDestroyed())return;
@@ -390,6 +362,142 @@ public final class FastDevConsoleActivity extends Activity {
             }
         });
     }
+
+    // LT384: Preview runs the actual PokeSearch Home. Updates are discovered
+    // and downloaded without a debug panel; only Android can approve an APK
+    // installation. Use a monotonic interval to avoid API/network spam.
+    private static final ExecutorService AUTO_IO=Executors.newSingleThreadExecutor();
+    private static final Handler AUTO_MAIN=new Handler(Looper.getMainLooper());
+    private static final java.util.concurrent.atomic.AtomicBoolean AUTO_BUSY=
+        new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static final long AUTO_CHECK_INTERVAL_MS=10*60*1000L;
+    private static volatile long lastAutoCheckElapsed=-AUTO_CHECK_INTERVAL_MS;
+    private static volatile Ready autoReady;
+    private static volatile int installPromptedVersion=0;
+    private static final class Ready {
+        final Preview release;
+        final File file;
+        Ready(Preview release,File file){this.release=release;this.file=file;}
+    }
+
+    static void checkAutomatically(Activity home) {
+        if(!(home instanceof MainActivity)||home.isFinishing()||home.isDestroyed())return;
+        long now=android.os.SystemClock.elapsedRealtime();
+        if(now-lastAutoCheckElapsed<AUTO_CHECK_INTERVAL_MS)return;
+        if(!AUTO_BUSY.compareAndSet(false,true))return;
+        lastAutoCheckElapsed=now;
+        Context app=home.getApplicationContext();
+        AUTO_IO.execute(()->{
+            try{
+                Preview next=latest();
+                if(next==null)return;
+                File verified=downloadVerified(app,next);
+                autoReady=new Ready(next,verified);
+                AUTO_MAIN.post(()->tryInstallReady(home));
+            }catch(Exception error){
+                // Network unavailable, 403, captive portal etc. must not block
+                // the actual Home or endlessly reopen a troubleshooting UI.
+                android.util.Log.w("PokeSearchFastDev",
+                    "Automatic update temporarily unavailable: "+
+                    error.getClass().getSimpleName());
+            }finally{AUTO_BUSY.set(false);}
+        });
+    }
+
+    private static File downloadVerified(Context app,Preview preview) throws Exception {
+        File directory=new File(app.getCacheDir(),"updates");
+        if(!directory.isDirectory()&&!directory.mkdirs())
+            throw new IllegalStateException("Sem diretório para APK");
+        File apk=new File(directory,"fastdev-"+preview.code+".apk");
+        if(apk.isFile()){
+            try{
+                verifyDownloaded(apk,preview);
+                validateApk(app,apk,preview);
+                return apk;
+            }catch(Exception ignored){
+                if(!apk.delete())throw new IllegalStateException("APK anterior inválido");
+            }
+        }
+        File temp=new File(directory,"fastdev-"+preview.code+".partial");
+        MessageDigest md=MessageDigest.getInstance("SHA-256");
+        long total=0L;
+        HttpsURLConnection connection=open(preview.url);
+        try(InputStream in=connection.getInputStream();
+            FileOutputStream out=new FileOutputStream(temp,false)){
+            byte[] buffer=new byte[16384];
+            int count;
+            while((count=in.read(buffer))!=-1){
+                total+=count;
+                if(total>MAX_APK||total>preview.size)
+                    throw new SecurityException("APK maior que o declarado");
+                md.update(buffer,0,count);
+                out.write(buffer,0,count);
+            }
+            out.getFD().sync();
+        }catch(Exception error){
+            temp.delete();
+            throw error;
+        }finally{connection.disconnect();}
+        if(total!=preview.size||!hex(md.digest()).equals(preview.sha)){
+            temp.delete();
+            throw new SecurityException("SHA-256 do APK não confere");
+        }
+        if(!temp.renameTo(apk)){
+            temp.delete();
+            throw new IllegalStateException("Falha ao preparar APK");
+        }
+        validateApk(app,apk,preview);
+        return apk;
+    }
+
+    private static void verifyDownloaded(File file,Preview preview) throws Exception {
+        if(!file.isFile()||file.length()!=preview.size)
+            throw new SecurityException("Tamanho do APK não confere");
+        MessageDigest md=MessageDigest.getInstance("SHA-256");
+        try(InputStream in=new java.io.FileInputStream(file)){
+            byte[] buf=new byte[16384];
+            int n;
+            while((n=in.read(buf))!=-1)md.update(buf,0,n);
+        }
+        if(!hex(md.digest()).equals(preview.sha))
+            throw new SecurityException("SHA-256 do APK não confere");
+    }
+
+    static void tryInstallReady(Activity home) {
+        if(!(home instanceof MainActivity)||home.isFinishing()||home.isDestroyed()||
+           !home.hasWindowFocus())return;
+        Ready ready=autoReady;
+        if(ready==null||ready.release.code<=BuildConfig.VERSION_CODE||
+           installPromptedVersion==ready.release.code)return;
+        installPromptedVersion=ready.release.code;
+        if(Build.VERSION.SDK_INT>=26&&!home.getPackageManager().canRequestPackageInstalls()){
+            new AlertDialog.Builder(home).setTitle("Atualização FastDev pronta")
+                .setMessage("Versão "+ready.release.code+
+                    " baixada e verificada. Autorize este aplicativo a instalar "+
+                    "atualizações e confirme a instalação no Android.")
+                .setPositiveButton("Permitir instalação",(dialog,which)->{
+                    Intent request=new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:"+home.getPackageName()));
+                    home.startActivity(request);
+                    installPromptedVersion=0;
+                }).setNegativeButton("Depois",(dialog,which)->{
+                    // Do not re-prompt in a loop during the same foreground session.
+                }).show();
+            return;
+        }
+        try{
+            Uri uri=FileProvider.getUriForFile(home,
+                home.getPackageName()+".updates",ready.file);
+            Intent install=new Intent(Intent.ACTION_VIEW);
+            install.setDataAndType(uri,"application/vnd.android.package-archive");
+            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            home.startActivity(install);
+        }catch(Exception error){
+            android.util.Log.w("PokeSearchFastDev","Installer unavailable");
+            installPromptedVersion=0;
+        }
+    }
+
     @Override protected void onDestroy(){
         io.shutdownNow();
         super.onDestroy();

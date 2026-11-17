@@ -42,7 +42,9 @@ test("native updater attempts public raw metadata first and retains GitHub fallb
  assert.match(source,/!url\.equals\(DOWNLOAD\+code\+"\/"\+ASSET\)/);
  assert.match(source,/!sha\.matches\("\[0-9a-fA-F\]\{64\}"\)/);
  assert.match(source,/!source\.matches\("\[0-9a-fA-F\]\{40\}"\)/);
- assert.match(source,/browser=new Intent\(Intent\.ACTION_VIEW/);
+ // LT384 removed manual debug browser buttons; update discovery is automatic.
+ assert.match(source,/static void checkAutomatically\(Activity home\)/);
+ assert.match(source,/Intent home=new Intent\(this,MainActivity\.class\)/);
  assert.match(source,/getPackageArchiveInfo/);
  assert.match(source,/SHA-256/);
  assert.match(source,/Certificado do APK diferente/);
