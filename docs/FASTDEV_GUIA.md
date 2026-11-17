@@ -1,5 +1,14 @@
 # PokeSearch FastDev — desenvolvimento sem publicar APK a cada ajuste
 
+> **LT384 — funcionamento automático:** o aplicativo FastDev passa a abrir **diretamente a Home real do PokeSearch**. O ícone anterior que abria o console é legado e redireciona à Home; o painel de botões e a prévia HTML isolada deixam de fazer parte da navegação. A descoberta de versões roda ao abrir o app e periodicamente via WorkManager, usando o manifesto público `fastdev/latest.json`. Quando encontra um APK mais novo, o FastDev baixa, verifica SHA-256/pacote/versão/certificado e chama o instalador do Android. **A confirmação do instalador e a autorização da origem, quando solicitada, continuam obrigatórias no Android normal.**
+>
+> **Publicação automática:** depois de um merge com alterações de `app/src/main/**`, `app/src/preview/**`, `app/build.gradle.kts` ou do workflow FastDev na `main`, GitHub Actions inicia automaticamente a compilação/publikação FastDev com a chave permanente; não é necessário editar `preview-request.json` nem clicar em Actions. A publicação do manifesto vem **somente depois** do APK assinado. Alterações exclusivamente documentais ou do manifesto não geram loop de compilação.
+>
+> **Economia de tempo:** pushes em `fastdev/**` continuam executando apenas testes rápidos; um PR que altera somente o código de Preview não precisa do APK beta/R8 da versão oficial (mas ainda precisa da compilação Preview Java). Alterações em fontes partilhadas, Gradle, política de QA ou arquivos desconhecidos **mantêm o gate beta/R8 completo**. Compilar código Java ou empacotar APK continua levando tempo; FastDev elimina etapas repetidas e cliques, não transforma uma compilação nativa em atualização HTML instantânea.
+
+---
+
+
 > **Fluxo LT382 (16/11/2026):** o FastDev agora separa **iterações rápidas na branch** de **validação da PR** e do **APK Preview assinado**. As instruções antigas de debug APK e de solicitação Preview em branch abaixo são históricas; prevalece este fluxo.
 
 ## Ciclo rápido de desenvolvimento (procedimento canônico)
