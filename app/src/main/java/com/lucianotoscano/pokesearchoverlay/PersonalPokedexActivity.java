@@ -361,6 +361,17 @@ public final class PersonalPokedexActivity extends Activity {
                 boolean local=url.startsWith("file:///android_asset/");
                 boolean sprites=url.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
                     url.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
+                // LT401: exact images are loaded only from the immutable, audited
+                // PokeMiners commit. No file or player ID is ever sent in the URL.
+                final String pinnedPogo="https://raw.githubusercontent.com/PokeMiners/pogo_assets/"+
+                    "db10df75d6f6f92018d9786af0aecc238fecc4ef/Images/Pokemon%20-%20256x256/";
+                String remoteName="";
+                if(url.startsWith(pinnedPogo+"Addressable%20Assets/"))
+                    remoteName=url.substring((pinnedPogo+"Addressable%20Assets/").length());
+                else if(url.startsWith(pinnedPogo))
+                    remoteName=url.substring(pinnedPogo.length());
+                boolean exactRemote=!remoteName.isEmpty()&&
+                    remoteName.matches("[A-Za-z0-9_.-]{1,150}\\.png");
                 if(url.startsWith("https://pokesearch.local/sprite/")){
                     String rest=url.substring("https://pokesearch.local/sprite/".length());
                     int slash=rest.indexOf('/');
@@ -386,7 +397,7 @@ public final class PersonalPokedexActivity extends Activity {
                     return new WebResourceResponse("text/plain","UTF-8",
                         new java.io.ByteArrayInputStream(new byte[0]));
                 }
-                if(local||sprites)return null;
+                if(local||sprites||exactRemote)return null;
                 return new WebResourceResponse("text/plain","UTF-8",
                     new java.io.ByteArrayInputStream(new byte[0]));
             }
