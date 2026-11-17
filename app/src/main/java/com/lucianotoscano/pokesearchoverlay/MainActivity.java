@@ -1445,7 +1445,9 @@ public class MainActivity extends Activity {
                 "Conectado ao PoGoCoordinates";
             secondAccountProvider.setText(base+
                 ("pending".equals(status)?" · Sincronizando perfil…":
-                 "error".equals(status)?" · Perfil indisponível":""));
+                 "error".equals(status)?" · Perfil indisponível":
+                 "unavailable".equals(two.getString("profileAvatarState",""))?" · Foto indisponível":
+                 "pending".equals(two.getString("profileAvatarState",""))?" · Foto pendente":""));
         }
         if(secondAvatarFrame!=null)
             secondAvatarFrame.setImageDrawable(homeAvatarOutline(linked?team:""));
@@ -2725,6 +2727,7 @@ public class MainActivity extends Activity {
                 accountAvatar.setImageBitmap(photo);
                 ProfileAvatarCache.save(this,1,avatarName,next,photo);
                 slotPrefs.edit().putString("profileAvatarState","loaded").apply();
+                refreshSessionSummary();
             });
         },"PokeSearch-Google-Avatar").start();
     }
@@ -2821,6 +2824,7 @@ public class MainActivity extends Activity {
                 secondAvatar.setImageBitmap(photo);
                 ProfileAvatarCache.save(this,2,avatarName,next,photo);
                 slotPrefs.edit().putString("profileAvatarState","loaded").apply();
+                refreshSessionSummary();
             });
         },"PokeSearch-Google-Avatar-2").start();
     }
@@ -2870,7 +2874,9 @@ public class MainActivity extends Activity {
                 "Conectado ao PoGoCoordinates";
             accountProvider.setText(base+
                 ("pending".equals(status)?" · Sincronizando perfil…":
-                 "error".equals(status)?" · Perfil indisponível":""));
+                 "error".equals(status)?" · Perfil indisponível":
+                 "unavailable".equals(prefs.getString("profileAvatarState",""))?" · Foto indisponível":
+                 "pending".equals(prefs.getString("profileAvatarState",""))?" · Foto pendente":""));
         }
         String trainer=prefs.getString("profileTrainerName",""),
             code=prefs.getString("profileTrainerCode","");
@@ -3131,6 +3137,10 @@ public class MainActivity extends Activity {
                 // A stale session should show the REAL provider login promptly.
                 // Never trap a manual sync behind 24 invisible polling attempts.
                 if("sync".equals(loginPurpose)&&"login necessário".equals(auth)){
+                    PogoAccountSlots.prefs(this,activeLoginSlot).edit()
+                        .putString("sessionStatus","expirada")
+                        .putString("profileSyncState","error").apply();
+                    refreshSessionSummary();
                     if(loginCover!=null)loginCover.setVisibility(View.GONE);
                     if(loginFallback!=null)loginFallback.setVisibility(View.VISIBLE);
                     if(loginWaitLabel!=null)
@@ -3166,7 +3176,8 @@ public class MainActivity extends Activity {
         });
     }
     private void captureOfficialProfile(WebView view,int generation){
-        if(view!=website||loginDialog==null||!loginDialog.isShowing()||
+        if(view!=website||generation!=loginPageGeneration||
+           loginDialog==null||!loginDialog.isShowing()||
            !("manage".equals(loginPurpose)||"sync".equals(loginPurpose)||loginAutoReturnQueued)||
            !profileCaptureInProgress)return;
         Uri current=Uri.parse(view.getUrl()==null?"":view.getUrl());
@@ -3347,6 +3358,11 @@ public class MainActivity extends Activity {
                 // the public picture; do not attempt OAuth or access cookies.
                 view.postDelayed(()->captureOfficialProfile(view,generation),700L);
                 return;
+            }
+            if(avatarAwaitingHydration&&avatarReadRetryCount>=2){
+                SharedPreferences partial=PogoAccountSlots.prefs(this,activeLoginSlot);
+                if(!allowedProfileAvatar(partial.getString("profileAvatarUrl","")))
+                    partial.edit().putString("profileAvatarState","unavailable").apply();
             }
             // Only the provider's post-confirmation linked profile is proof.
             if("manage".equals(loginPurpose)&&trainerLinkStarted){
