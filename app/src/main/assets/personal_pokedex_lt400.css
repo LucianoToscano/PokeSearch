@@ -1,0 +1,20 @@
+/* LT400: rich variant preview without changing the Home icon pack. */
+.inventory-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:8px 14px 6px}
+.tool-button{padding:7px 5px;font-size:11px;min-width:0;gap:3px;white-space:nowrap}
+.tool-button small{max-width:100%;font-size:9px}
+.sprite-download-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:13px 0}
+.sprite-download-actions .preset{min-height:40px;white-space:normal;padding:9px;line-height:1.3}
+.sprite-catalog-preview{display:grid;gap:7px;margin:10px 0;color:#6e9494;font-size:11px}
+.sprite-badge{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:5px 9px;background:#e9f8f1;color:#2a7777;font-weight:700}
+.sprite-badge.missing{background:#fff1e6;color:#b56f57}
+#sprite-availability{white-space:normal}
+#download-this-sprite:disabled{opacity:.45}
+.mon .pic .shadow-flame{position:absolute;left:-7px;bottom:-1px;font-size:18px;line-height:1;z-index:4;color:#9d66cd;text-shadow:0 0 7px #b97af3}
+.mon .pic .purified-star{position:absolute;left:-6px;bottom:-1px;font-size:15px;line-height:1;z-index:4;color:#60d0db}
+.mon .pic .status-shiny{position:absolute;right:-7px;top:-2px;z-index:4;color:#0076a7;text-shadow:0 1px 2px white;font-size:16px}
+.mon .pic .species-form-badge{position:absolute;right:-6px;bottom:-8px;z-index:4;font-size:10px;color:#557f84;background:#f1fbf4ee;border-radius:11px;padding:2px 5px;border:1px solid #deede8}
+.mon .name{display:block;font-size:clamp(10px,3.4vw,13px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mon .flags{font-size:12px}
+#grid{padding-bottom:max(100px, env(safe-area-inset-bottom))}
+.category .label{overflow-wrap:anywhere}
+@media(max-width:375px){.inventory-tools{gap:4px;margin-inline:10px}.tool-button{padding:7px 3px;font-size:10px;flex-direction:column}.tool-button small{display:block;font-size:8px}}
