@@ -3371,3 +3371,13 @@ Ler primeiro este resumo, verificar `main`, PR #63 e PR #64 e últimas Actions, 
 - FastDev automático [#44005259401](https://github.com/LucianoToscano/PokeSearch/actions/runs/44005259401) SUCCESS; APK `1000057`, `versionName=0.03.73 Dev`, SHA-256 `a2ab7dbfce22c286d4b8181376680724e0b3803f0c192ad91cce871cfd0a9b92`, [release](https://github.com/LucianoToscano/PokeSearch/releases/tag/fastdev-1000057) e manifesto confirmados. Oficial 0.03.73/54580 intocado.
 - Tela Android enviada não confirma que o app DEV abriu a Home; **teste físico ainda pendente**, inclusive alinhamento/ações dos ícones e comportamento na inicialização.
 - [Relatório LT385 completo](LT385_HOME_SHORTCUTS_LT_DEV_20261116.md).
+
+
+## LT393 — Home 16 módulos e release oficial 0.03.78 LT (17/11/2026)
+
+- Solicitação: reconstruir Home com os 16 ícones do pacote do proprietário, 4×4 sem Extra, Pokébolas P1/P2 dinâmicas e sem destaque, fundo e controles preservados.
+- PR [#491](https://github.com/LucianoToscano/PokeSearch/pull/491) integrada em `afbe0109a9e9d1e83f36a00f2d24798147dccd75` após Node, LT169, LT211, LT62, LT173 e beta/R8 aprovados; atlas interno e contrato LT393 entregues.
+- PR [#492](https://github.com/LucianoToscano/PokeSearch/pull/492) integrada em `27a5835353e9d6b23b62cfacb2f6b05b628219c3`; publicação protegida [#44041413061](https://github.com/LucianoToscano/PokeSearch/actions/runs/44041413061) **completed/success**.
+- [Release pública v0.03.78-54585](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.78-54585): APK `PokeSearch-v0.03.78-LT.apk`, 61.251.587 bytes, SHA-256 `a11a89a4923106db1c421318572727af2d307b91f10c7c7799a50478c23c3ded`, signer permanente confirmado no workflow.
+- **QA físico Android 11–17/Samsung, badges Shiny/fundos/histórico P1/P2, toque/legibilidade e reordenação futura pendentes**. Não confundir testes CI com homologação real. Módulos não implementados mostram apenas aviso de preparação.
+- [Auditoria e continuidade LT393/394](LT393_ARK_HOME_16_MODULOS_OFICIAL_00378_20261117.md).
