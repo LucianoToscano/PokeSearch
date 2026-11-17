@@ -60,6 +60,84 @@ function loadMeta(){
   state.meta.costumes=new Map((data.costumes||[]).map(r=>[r[0],{name:r[1],noEvolve:!!r[2]}]));
  }catch(_){}
 }
+function refreshSpriteCache(fromNative){
+ let status=fromNative;
+ if(!status)try{status=JSON.parse(bridge.getSpriteStatus()||"{}");}catch(_){status={};}
+ try{state.spriteCached=new Set(JSON.parse(bridge.getCachedSpriteKeys()||"[]"));}catch(_){
+  state.spriteCached=new Set();
+ }
+ state.spriteStats=status||{};
+ el("sprite-cache-count").textContent=number(state.spriteCached.size);
+ el("sprite-status").textContent=number(status?.downloaded||0)+" / "+
+  number(status?.total||0)+" imagens baixadas · "+decimal((status?.bytes||0)/1048576,1)+" MiB"+
+  (status?.busy?" · "+number(status.done)+"/"+number(status.queued)+" processadas":"")+
+  (status?.error?" · "+status.error:"");
+ for(const id of ["sprites-download-collection","sprites-download-all","sprites-download-legacy","sprites-clear"]){
+  el(id).disabled=!!status?.busy;
+ }
+ el("sprites-cancel").disabled=!status?.busy;
+ renderSpriteCoverage();
+ if(state.selected)renderSpriteStatus(state.selected);
+ // Re-render a displayed page only when a batch is complete.
+ if(!status?.busy&&state.all.length)render();
+}
+window.pokeSpriteProgress=status=>refreshSpriteCache(status);
+function collectionKeys(){
+ const found=new Set(),missing=[];
+ for(const p of state.all){
+  const hit=visualMatch(p);
+  if(hit.key)found.add(hit.key);
+  else missing.push(p);
+ }
+ return {keys:[...found],missing};
+}
+function renderSpriteCoverage(){
+ if(!state.spriteIndex){
+  el("sprite-collection-coverage").textContent="Banco de sprites indisponível nesta instalação.";
+  el("sprite-catalog-preview").textContent="";
+  return;
+ }
+ const {keys,missing}=collectionKeys();
+ const local=keys.filter(key=>state.spriteCached.has(key)).length;
+ el("sprite-collection-coverage").textContent=
+  "Inventário "+state.slot+": "+number(keys.length)+" imagens distintas identificadas, "+
+  number(local)+" já baixadas, "+number(missing.length)+
+  " exemplares sem correspondência exata. Sem substituição automática por outra forma.";
+ el("sprite-catalog-preview").innerHTML=
+  '<span class="sprite-badge">'+number(state.spriteIndex.primary.size)+
+   ' sprites GO (formas/trajes/Shiny)</span>'+
+  '<span class="sprite-badge">'+number(state.spriteIndex.legacy.size)+
+   ' sprites legadas</span>'+
+  '<span class="sprite-badge">'+number(state.spriteIndex.forms.size)+
+   ' formas catalogadas</span>'+
+  '<span class="sprite-badge">'+number(state.spriteIndex.costumes.size)+
+   ' códigos de trajes</span>';
+}
+function renderSpriteStatus(p){
+ const item=visualMatch(p);
+ const stored=!!item.key&&state.spriteCached.has(item.key);
+ const usingOld=!!safeSprite(p)&&!stored;
+ el("sprite-availability").textContent=stored?
+  "Variante exata baixada e disponível localmente ("+item.key+").":
+  item.key?"Arquivo identificado ("+item.key+"), ainda não baixado. "+
+    (usingOld?"Imagem já empacotada usada como alternativa verificada.":"Sem outra arte exata disponível."):
+    "Nenhum arquivo exato confirmado no catálogo para esta espécie/forma/traje/Shiny. "+
+    "O PokeSearch não exibirá uma variante diferente.";
+ el("download-this-sprite").disabled=!item.key||stored||!!state.spriteStats.busy;
+ el("download-this-sprite").textContent=stored?"Sprite já disponível":"Baixar sprite desta forma";
+}
+function openSpritePanel(){
+ el("sprite-panel").hidden=false;
+ refreshSpriteCache();
+}
+function requestSprites(mode,selection){
+ if(!state.spriteIndex)return notice("Catálogo visual não disponível.");
+ if(state.spriteStats.busy)return notice("Um download já está em andamento.");
+ const keys=mode==="collection"?selection||collectionKeys().keys:[];
+ if(mode==="collection"&&!keys.length)return notice("Nenhuma sprite exata identificada para baixar.");
+ bridge.downloadSprites(mode,JSON.stringify(keys));
+ refreshSpriteCache();
+}
 function loadSpriteIndex(){
  try{
   const data=JSON.parse(bridge.getSpriteManifest()||"{}");
@@ -404,7 +482,7 @@ function loadSlot(){
   el("slot1").classList.toggle("active",state.slot===1);
   el("slot2").classList.toggle("active",state.slot===2);
   el("collection-title").textContent="Inventário "+state.slot;
-  summaryTime();renderFilters();renderStats();render();renderTabs();renderTags();renderEggs();
+  summaryTime();renderFilters();renderStats();render();renderTabs();renderTags();renderEggs();renderSpriteCoverage();
 }
 function hbar(label,v){
   return '<div class="ivrow"><span>'+escapeHtml(label)+'</span><div class="ivbar"><i style="width:'+
@@ -527,7 +605,7 @@ function closeSort(){
  layer.hidden=true;el("sort-trigger").setAttribute("aria-expanded","false");return true;
 }
 function closeOverlay(){
- for(const id of ["compare-panel","history-panel","background-panel"]){
+ for(const id of ["compare-panel","history-panel","background-panel","sprite-panel"]){
   const panel=el(id);
   if(!panel.hidden){panel.hidden=true;state.backgroundTarget=null;return true;}
  }
