@@ -498,7 +498,7 @@ public class OverlayService extends Service {
     private int lastPopupX=Integer.MIN_VALUE,lastPopupY=Integer.MIN_VALUE,lastPopupW=-1,lastPopupH=-1;
     private View resultGrip;
     private boolean menuExpanded=false,menuLeft=false,minimized=false,shiny=false,loaded=false,panelLoaded=false,menuLoaded=false,detailLoaded=false,stopped=false;
-    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=-3,menuPadDp=0;
+    private int height=32,detailHeight=125,requestGeneration=0,selected=-1,intervalMinutes=3,menuPadDp=0;
     private boolean deferMenuSync=false;
     private boolean resultLoaded=false,resultCollapsed=false;
     private int menuDrawX=Integer.MIN_VALUE,menuDrawY=Integer.MIN_VALUE,menuDrawHeight=-1,menuDrawWidth=-1;
@@ -517,8 +517,7 @@ public class OverlayService extends Service {
     // force DOM searches, or retry until accepted. Both Pokeballs share this
     // conservative search gate so concurrent overlays do not cause a burst.
     private static final String API_RATE_BACKOFF_PREF="pogoApiSearchBackoffUntilMs";
-    private static final long API_RATE_BACKOFF_DEFAULT_MS=60_000L;
-    private static final long API_RATE_BACKOFF_MAX_MS=86_400_000L;
+        private static final long API_RATE_BACKOFF_MAX_MS=86_400_000L;
     private final Runnable providerRateLimitResume=this::resumeProviderRateLimitedSearch;
     private void resumeProviderRateLimitedSearch(){
         if(!stopped&&!loginPaused&&authorizedApiQaSelected())refresh(false);
@@ -538,13 +537,15 @@ public class OverlayService extends Service {
         handler.postDelayed(providerRateLimitResume,until-System.currentTimeMillis()+stagger);
     }
     private void noteProviderRateLimit(int suggestedSeconds){
-        long wait=API_RATE_BACKOFF_DEFAULT_MS;
-        if(suggestedSeconds>=1&&suggestedSeconds<=86400)
-            wait=Math.max(wait,(long)suggestedSeconds*1000L);
+        // Store only Retry-After supplied by the provider. Do not invent a
+        // local 60-second cooldown when the response does not specify one.
+        // HTTP 429 itself still blocks the current request at the provider.
+        if(suggestedSeconds<1||suggestedSeconds>86400)return;
         long now=System.currentTimeMillis();
         long old=apiProviderBackoffUntil();
         getSharedPreferences("prefs",MODE_PRIVATE).edit()
-            .putLong(API_RATE_BACKOFF_PREF,Math.max(old,now+wait)).apply();
+            .putLong(API_RATE_BACKOFF_PREF,
+                Math.max(old,now+(long)suggestedSeconds*1000L)).apply();
         scheduleProviderRateLimitResume();
     }
     // LT277: inverse sorting is observed only on POST /search, never in the
@@ -636,7 +637,7 @@ public class OverlayService extends Service {
                     if("rate-limited".equals(reason)){
                         // Respect Retry-After when present. No retry or DOM bypass
                         // before the provider window expires; keep previous cards.
-                        noteProviderRateLimit(response.optInt("retryAfterSeconds",60));
+                        noteProviderRateLimit(response.optInt("retryAfterSeconds",0));
                         searchFailure("⚠ API: limite temporário",
                             "HTTP 429 do provedor; próxima tentativa somente após intervalo de segurança.");
                     }else if("invalid-request".equals(reason)){
@@ -1200,9 +1201,9 @@ public class OverlayService extends Service {
     private float startRawX,startRawY;
     private int startX,startY;
     private boolean dragged=false;
-    // -3 denotes the new 3-second preset; legacy positive preferences remain MINUTES.
-    // Refresh does not bypass the provider's existing request/cooldown protections.
-    private long autoRefreshDelayMs(){return intervalMinutes==-3?3000L:Math.max(0L,intervalMinutes)*60000L;}
+    // AUTO intervals are always in minutes; manual refresh is independent
+    // of this timer and submits immediately if no request is in flight.
+    private long autoRefreshDelayMs(){return Math.max(0L,intervalMinutes)*60000L;}
     private final Runnable periodic=new Runnable(){
         @Override public void run(){
             if(stopped||loginPaused||intervalMinutes==0)return;
@@ -2657,7 +2658,7 @@ public class OverlayService extends Service {
         final int searchSlot=PogoAccountSlots.assigned(this,isSecondaryOverlay());
         final boolean guestPublicSearch=!shiny&&
             !PogoAccountSlots.loggedIn(this,searchSlot);
-        if(authorizedApiQaSelected()&&apiProviderBackoffUntil()>0L){
+        if(authorizedApiQaSelected()&&!guestPublicSearch&&apiProviderBackoffUntil()>0L){
             scheduleProviderRateLimitResume();
             long remaining=(apiProviderBackoffUntil()-System.currentTimeMillis()+999L)/1000L;
             String waitText=remaining>=3600L?(remaining+3599L)/3600L+"h":
@@ -5863,7 +5864,7 @@ public class OverlayService extends Service {
             });
         }
         @JavascriptInterface public void setIntervalMinutes(int minutes){handler.post(()->{
-            if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
+            if(minutes!=0&&minutes!=3&&minutes!=5&&minutes!=10&&minutes!=15&&minutes!=20)return;
             if(intervalMinutes==minutes)return;
             intervalMinutes=minutes;
             overlayPrefs().edit()
@@ -5871,10 +5872,10 @@ public class OverlayService extends Service {
             schedulePeriodic();
             update();
             android.widget.Toast.makeText(OverlayService.this,
-                intervalMinutes==0?"AUTO desligado":intervalMinutes==-3?"AUTO: 3 segundos":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
+                intervalMinutes==0?"AUTO desligado":"AUTO: "+intervalMinutes+" minutos",android.widget.Toast.LENGTH_SHORT).show();
         });}
         @JavascriptInterface public void cycleInterval(){handler.post(()->{
-            int[] options={-3,0,3,5,10,15,20};
+            int[] options={0,3,5,10,15,20};
             int next=0;
             for(int j=0;j<options.length;j++){
                 if(options[j]==intervalMinutes){next=(j+1)%options.length;break;}
@@ -6295,20 +6296,25 @@ public class OverlayService extends Service {
                 handler.postDelayed(deferredSessionReload,350L);
             // Keep knownSpawns on session reload to prevent duplicate notifications.
         }
-        // v0.20 saved 10 as the implicit default; only keep a rate the user explicitly chose.
+        // LT391: 3 minutes is the agreed default, not 3 seconds.
+        // Keep explicit OFF / minute settings, migrating any legacy -3
+        // seconds preference to 3 minutes in both Pokébola slots.
         android.content.SharedPreferences pref=overlayPrefs();
         if(!pref.getBoolean("shinyOptInV32",false)){
             pref.edit().putBoolean("shiny",false).putBoolean("shinyOptInV32",true).apply();
             shiny=false;
         }
         if(!pref.getBoolean("intervalExplicit",false)){
-            intervalMinutes=-3;
-            pref.edit().putInt("intervalMinutes",-3).apply();
+            intervalMinutes=3;
+            pref.edit().putInt("intervalMinutes",3).apply();
         }else{
-            intervalMinutes=pref.getInt("intervalMinutes",-3);
+            intervalMinutes=pref.getInt("intervalMinutes",3);
         }
-        if(intervalMinutes!=-3&&intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
-           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20)intervalMinutes=-3;
+        if(intervalMinutes!=0&&intervalMinutes!=3&&intervalMinutes!=5&&
+           intervalMinutes!=10&&intervalMinutes!=15&&intervalMinutes!=20){
+            intervalMinutes=3;
+            pref.edit().putInt("intervalMinutes",3).apply();
+        }
         schedulePeriodic();
         if(initialStart){
             // First opening of either Pokéball per installation; V3 lets
