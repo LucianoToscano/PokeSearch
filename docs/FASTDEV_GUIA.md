@@ -19,7 +19,7 @@
 
 ---
 
-> **Nova implementação (16/11/2026):** assinatura permanente, atualização OTA dedicada, código crescente, sandbox Live HTML e ADB: [FASTDEV_OTA_LIVE_ADB_20261116.md](FASTDEV_OTA_LIVE_ADB_20261116.md). As instruções anteriores para APK com chave debug efêmera abaixo descrevem o estágio histórico inicial e não são o procedimento atual recomendado. O novo modo assinado só será operacional após cadastrar os secrets privados `fastdev-signing`.
+> **Nova implementação (16/11/2026):** assinatura permanente, atualização OTA dedicada, código crescente, sandbox Live HTML e ADB: [FASTDEV_OTA_LIVE_ADB_20261116.md](FASTDEV_OTA_LIVE_ADB_20261116.md). As instruções anteriores para APK com chave debug efêmera abaixo descrevem o estágio histórico inicial e não são o procedimento atual recomendado. O modo permanente foi configurado, e a LT383 já publicou a versão assinada `1000039`. Em caso de HTTP 403 no console antigo, instalar manualmente [FastDev 1000039](https://github.com/LucianoToscano/PokeSearch/releases/download/fastdev-1000039/PokeSearch-FastDev-Preview.apk) por cima do FastDev atual; consulte [LT383](LT383_FASTDEV_HTTP403_OTA_20261116.md).
 
 Status: infraestrutura de desenvolvimento, SEM atualização pública do aplicativo. Nunca declarar CI ou homologação física PASS sem execução e evidência. O comando ARK do proprietário mantém as obrigações de merge, QA e publicação protegida, conforme AGENTS.md.
 
