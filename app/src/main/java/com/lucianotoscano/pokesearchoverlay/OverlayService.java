@@ -1253,7 +1253,7 @@ public class OverlayService extends Service {
                 // was verified, submitted, and collected from the live website.
                 (confirmedSubmittedFiltersGeneration==requestGeneration&&
                  submittedSearchGeneration==requestGeneration&&
-                 !searchInProgress&&!resultsStale&&
+                 !searchInProgress&&!resultsStale&&!guestSitePreviewActive&&
                  ("updated".equals(searchPhase)||"empty".equals(searchPhase)))+","+
                 (guestResultLimitConfirmed&&
                  !PogoAccountSlots.loggedIn(this,PogoAccountSlots.assigned(this,
