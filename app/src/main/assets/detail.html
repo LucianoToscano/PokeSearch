@@ -1674,20 +1674,6 @@ button{font:inherit;color:inherit;border:0;cursor:pointer}
 #rankLine[data-rank-rail="five"] .psRailButton.psRailRaid .psRailEvolve{
  right:2px!important;
 }
-/* LT325: explanation reuses the current detail card's compact info grid.
-   No new modal, rank or duplicated result window. */
-#info #psEvidenceButton{
- grid-column:1/-1;display:block;width:100%;min-height:12px;
- padding:0;margin:1px 0 0;text-align:left;
- background:transparent;border:0;border-radius:0;
- color:#b9c9d5;font:650 9px/12px Roboto,Arial,sans-serif;
-}
-#info #psEvidenceDetails{
- grid-column:1/-1;display:block;padding:1px 0 0;margin:0;
- color:#b8c7d3;font:400 8.5px/1.3 Roboto,Arial,sans-serif;
-}
-#info #psEvidenceDetails[hidden]{display:none!important}
-#info #psEvidenceDetails div{margin:1px 0}
 </style></head><body><div id="panel">
  <div id="header">
   <div id="artColumn">
@@ -3958,21 +3944,11 @@ window.watchFeedback=watched=>{
  star.setAttribute("aria-label",star.title);
 };
 window.pauseDetailTimer=()=>{if(ticking){clearInterval(ticking);ticking=null;}};
-function toggleResultEvidence(){
- const node=document.getElementById("psEvidenceDetails");
- const button=document.getElementById("psEvidenceButton");
- if(!node||!button)return false;
- const open=node.hidden;
- node.hidden=!open;button.setAttribute("aria-expanded",String(open));
- if(typeof resizeEvolutionPanel==="function")resizeEvolutionPanel();
- return true;
-}
 window.showDetails=(c,mode,watched)=>{
  const panel=document.getElementById("panel");
  const keepScroll=panel.scrollTop;
  const nextIdentity=evoIdentity(c);
  const changed=detailIdentity!==nextIdentity;
- const evidenceWasOpen=!changed&&document.getElementById("psEvidenceDetails")?.hidden===false;
  activeRankLeague=mode==="gl"||mode==="ul"?mode:"";
  if(changed){
   psCloseCapturedMovesPanel();psCapturedCard=null;
@@ -4139,14 +4115,8 @@ window.showDetails=(c,mode,watched)=>{
  const showRaw=ivDisplay?.valid===true;
  const ivSourcePercent=showRaw?null:window.PokeSearchIVDisplay?.percentOnly?.(c);
  const ivVisual=showRaw?ivDisplay:ivSourcePercent;
- const evidence=window.PokeSearchResultEvidence?.assess(c,{stale:c.evidenceOld===true},{
-  ivVerified:showRaw||ivSourcePercent?.valid===true
- });
- const evidenceHtml=evidence?'<button type="button" id="psEvidenceButton"'+
-  ' aria-controls="psEvidenceDetails" aria-expanded="'+String(evidenceWasOpen)+
-  '" onclick="toggleResultEvidence()">ⓘ '+h(evidence.headline)+'</button>'+
-  '<div id="psEvidenceDetails"'+(evidenceWasOpen?'':' hidden')+'>'+
-  evidence.details.slice(1).map(line=>'<div>'+h(line)+'</div>').join('')+'</div>':"";
+ // Evidence remains validated by the result system, without rendering a
+ // verbose source/IV/km/rank/Shiny explanation in the compact detail card.
  // Keep the section hidden until verified rows are delivered by PvPoke.
  // The reset above already clears any old card's analysis on identity changes.
  const showPct=ivVisual?.valid===true;
@@ -4223,7 +4193,6 @@ window.showDetails=(c,mode,watched)=>{
    movesHtml+'</span></button>':"")+
   item("Distância",c.distance)+
   (c.location?'<span class="infoLabel">Local:</span><span class="infoValue">'+h(locationFlag?locationFlag+" "+locationText:locationText)+'</span>':"")+
-  evidenceHtml+
   '<div id="coordsStatus" role="status" hidden><span id="coordsValue"></span></div>';
  updateCountdown();
  if(changed||document.getElementById("raidRow")?.hidden)loadRaidBeforeCapture(c);
