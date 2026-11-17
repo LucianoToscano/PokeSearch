@@ -310,7 +310,8 @@ body.result-window #empty{box-sizing:border-box!important;
  margin:0!important;padding:0!important;text-align:center!important;
  font:750 11px/16px Roboto,Arial,sans-serif!important;
  color:#d6e1ec!important;letter-spacing:0!important;
- text-shadow:0 1px 2px #000b!important;pointer-events:none!important}
+ text-shadow:0 1px 2px #000b!important;
+ pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important}
 body.result-window.results-collapsed #spawns,
 body.result-window.results-collapsed #empty{display:none!important}
 
@@ -8051,6 +8052,9 @@ function draw(){
   !["error","searching","filling"].includes(activeSearchPhase)?
   "0":activeSearchPhase==="error"?"!":"…";
  empty.title=status||"Aguardando busca";
+ empty.setAttribute("aria-label",activeSearchPhase==="error"?
+   "Erro na busca. Toque para entender: "+(status||"motivo não informado"):
+   (status||"Aguardando busca"));
  if(resultWindow){
   // Only show a Shiny badge after the site confirms that Shiny-only is active.
   // A pending toggle keeps its previous non-Shiny identification.
