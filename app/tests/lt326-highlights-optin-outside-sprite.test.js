@@ -79,10 +79,11 @@ test("no new network, location, notification or provider request added",()=>{
   "Native.shiny","Native.search","setInterval("])
   assert.equal(latest.includes(bad),false,bad);
 });
-test("the details still explain quality regardless of marker opt-in",()=>{
+test("quality remains checked internally without crowding the detail card",()=>{
  const detail=read("src/main/assets/detail.html");
  assert.match(detail,/function toggleResultEvidence\(\)/);
- assert.match(detail,/evidence\.details\.slice\(1\)/);
- assert.match(dock,/const evidenceTitle=evidence\?\.explanation\|\|""/);
+ assert.match(detail,/const evidenceHtml="";/);
+ assert.doesNotMatch(detail,/evidence\.details\.slice\(1\)/);
+ assert.match(dock,/const evidenceTitle="";/);
 });
 console.log("LT326 opt-in marker QA: "+count+" scenarios PASS");

@@ -19,7 +19,7 @@ test("Guest 5/10 badge must originate from official DOM evidence, not local gues
 test("P1/P2 guest badge is a single compact end-of-list login action",()=>{
  assert.match(dock,/<button id="guestUnlock" type="button" hidden/);
  assert.match(dock,/onclick="Native\.openGuestLogin\(\)"/);
- assert.match(dock,/<span>\+5<\/span>/);
+ assert.match(dock,/<span class="guestUnlockCount">\+5<\/span>/);
  assert.match(dock,/guestUnlock\.hidden=!show/);
  assert.match(dock,/guestLimited&&cards\.length>0&&!resultsStale&&/);
  assert.match(dock,/const tail=guestUnlock&&!guestUnlock\.hidden\?guestUnlock:/);

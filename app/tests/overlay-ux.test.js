@@ -28,7 +28,7 @@ test("Six classic cascading Modos options in exact order, 100/0 are direct",(()=
  b.includes('["percent","IV%"],["gl","GL"],["ul","UL"]')&&
  b.includes('applyExact(15)')&&b.includes('applyExact(0)')&&
  !b.includes('modeShiny')&&dock.includes("toggleChoices('mode')");})());
-test("Atualização offers OFF, 3 seconds, and existing minute presets without AUTO decoration",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [-3,3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
+test("Atualização offers OFF, default 3m, and minute presets without 3-second AUTO",dock.includes('off.textContent="OFF"')&&!dock.includes('label.textContent="AUTO"')&&dock.includes('for(const value of [3,5,10,15,20])')&&dock.includes('row.className="periodCompactRow"'));
 test("Cascade uses current toolbar height even after clipping or vertical rotation",
  dock.includes('h=Math.max(h,baseHeight+164+6);')&&
  dock.includes('const baseHeight=window.visualPrefs?.menuOrientation==="vertical"?384:34;')&&
@@ -115,7 +115,7 @@ test("Native passes full display height and preserves up to ten card slots",
  service.includes("screenHeightDp()-16")&&
  service.includes("positionResultsUnderPokeball(false);")&&
  service.includes("int maxY=Math.max(0,display.heightPixels-resultParams.height);")&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10).map(")&&
  dock.includes("resultDisplayHeightDp=Math.max(0,Number(screenHeightDp)||0)"));
 
 test("UX-RESULT-10 pitch is visual-only and metadata does not expand rows",()=>{
@@ -145,7 +145,7 @@ test("UX-INFO-01 quantity of spawns is visibility-only and never changes the ten
  dock.includes('["count","Spawns","Quantidade de spawns"]')&&
  dock.includes('id="resultSpawnCount"')&&
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
- dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]')&&
+ dock.includes('cards=Array.isArray(a)?a.slice(0,10).map(')&&
  service.includes('case "count":resultShowCount=value;pref="resultShowCount"')&&
  !service.includes('setSpawnLimit'));
 test("UX-INFO-10 visibility toggles report confirmed Android state without scrolling to top",
@@ -187,7 +187,7 @@ test("UX-INFO-DEFAULT-KM-HIDDEN distance OFF, other optional fields OFF, preserv
 test("UX-INFO-01b zero spawns shows numeric 0 when its indicator is enabled",
  dock.includes('count.textContent=resultDisplayOptions.count?String(cards.length):""')&&
  dock.includes('count.style.display=resultDisplayOptions.count?"inline":"none"')&&
- dock.includes("cards=Array.isArray(a)?a.slice(0,10):[]")&&
+ dock.includes("cards=Array.isArray(a)?a.slice(0,10).map(")&&
  !dock.includes("count.textContent=resultDisplayOptions.count&&cards.length")&&
  !service.includes("setSpawnLimit"));
 test("UX-INFO-02 legacy and new IV/rank display choices persist independently",()=>{
@@ -467,7 +467,7 @@ test("Reopening menu immediately re-applies active visual states to recreated bu
   dock.includes('if(menuOpen&&controlsWindow)renderQuickMenu();')&&
   dock.includes('button.classList.toggle("selected",');
 });
-test("AUTO 3-second default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={-3,0,3,5,10,15,20};")&&service.includes("intervalMinutes==-3?3000L"));
+test("AUTO 3-minute default retains explicit legacy minute scheduling",service.includes("handler.postDelayed(periodic,autoRefreshDelayMs())")&&service.includes("int[] options={0,3,5,10,15,20};")&&service.includes("autoRefreshDelayMs(){return Math.max(0L,intervalMinutes)*60000L")&&service.includes("if(intervalMinutes==-3){"));
 test("PL-02 manual refresh queues one follow-up only while busy",
   service.includes('queuedManualRefresh=true;')&&
   service.includes('status("↻ Nova busca agendada após a atual.")')&&
@@ -615,8 +615,8 @@ test("v0.50 no phantom gap when toolbar is beside dock",
 test("v0.50 transparent floating collapse arrow",
     dock.includes("#collapse{width:34px;height:27px")&&dock.includes("background:transparent!important"));
 test("v0.50 AUTO OFF in UI and service, with no periodic posts",
-    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[-3,0,3,5,10,15,20].includes(Number(interval))?Number(interval):-3")&&
-    service.includes('if(minutes!=-3&&minutes!=0&&minutes!=3&&minutes!=5')&&
+    dock.includes('off.textContent="OFF"')&&dock.includes('period===0?"OFF"')&&dock.includes("period=[0,3,5,10,15,20].includes(Number(interval))?Number(interval):3")&&
+    service.includes('if(minutes!=0&&minutes!=3&&minutes!=5')&&
     service.includes('if(!stopped&&!loginPaused&&intervalMinutes!=0)handler.postDelayed(periodic,autoRefreshDelayMs())'));
 test("General notifications still cycle off/on/silent while bell indicates both sources",
     service.includes('alertsMode="off".equals(alertsMode)?"on":"on".equals(alertsMode)?"silent":"off"')&&
@@ -2286,7 +2286,7 @@ test("UX-INFO-ALL-01 every supported card field can be individually hidden/shown
   dock.includes('const metaWidth=metadataVisible?96:highlightWidth;')&&
   dock.includes('const highlightWidth=resultDisplayOptions.highlights?12:0;')&&
   dock.includes("return Math.max(size,pitch); // No sprite-overlap")&&
-  dock.includes('cards=Array.isArray(a)?a.slice(0,10):[]');
+  dock.includes('cards=Array.isArray(a)?a.slice(0,10).map(');
 });
 test("UX-INFO-ALL-02 distance is only read from official spawn card, not GPS",()=>{
  const source=read("assets/probe.js"),detail=read("assets/detail.html");
@@ -3660,7 +3660,7 @@ test("LT62 AUTO refresh icon and long press must never double trigger a search",
   body.includes('manualRefreshTap();')&&body.includes('pointermove')&&
   body.includes('pointercancel')&&
   !menu.includes('now.textContent=')&&
-  dock.includes('badge.textContent=period===0?"":(period===-3?"3s":period+"m")')&&
+  dock.includes('badge.textContent=period===0?"":period+"m"')&&
   dock.includes('button.classList.add("refreshSpinning")')&&
   dock.includes('animation:psRefreshSpin .7s linear 1!important');
 });
