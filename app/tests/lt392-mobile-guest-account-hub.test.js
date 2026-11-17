@@ -60,8 +60,8 @@ test("LT392: only unique possible IV percentage is accepted from each card",()=>
   "ambiguous percentages are NOT merged into an IV");
  assert.equal(readPct("Ducklett #580 CP 400 1% Get coords").pct,"",
   "impossible IV grid percentage is rejected");
- assert.equal(readPct("Ducklett #580 CP 400 IV 100% Get coords").pct,"",
-  "labeled text must be on its own line or attribute, not arbitrary proximity");
+ assert.equal(readPct("Ducklett #580 CP 400 IV 100% Get coords").pct,"100",
+  "a unique in-card percentage may be accepted even on compact mobile rows");
  assert.match(probe,/const evidence=verifiedCardIv\(x\)/);
  assert.match(probe,/return evidence\.raw!==""&&evidence\.raw===target/);
 });
