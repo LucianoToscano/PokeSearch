@@ -56,6 +56,7 @@ public final class PersonalPokedexActivity extends Activity {
         "https://raw.githubusercontent.com/PokeMiners/pogo_assets/db10df75d6f6f92018d9786af0aecc238fecc4ef/Images/LocationCards/";
     private static final Pattern SAFE_BG=Pattern.compile("[A-Za-z0-9_\\-]{1,110}\\.png");
     private static final int MAX_BG_BYTES=8*1024*1024;
+    private PokedexSpriteStore spriteStore;
     private WebView view;
     private volatile boolean closing=false;
     private int pendingSlot=1;
@@ -267,6 +268,8 @@ public final class PersonalPokedexActivity extends Activity {
             individual.put("weightKg",Math.max(0,Math.min(1000000,p.optDouble("weightKg",0))));
             individual.put("favorite",p.optBoolean("favorite",false));
             individual.put("hasMegaEvolved",p.optBoolean("hasMegaEvolved",false));
+            JSONArray megaForms=p.optJSONArray("megaEvolvedForms");
+            individual.put("megaFormsCount",megaForms==null?0:megaForms.length());
             JSONObject mega=displayMega(p);
             individual.put("megaLevel",mega.optInt("level",0));
             individual.put("hatchedFromEgg",p.optBoolean("hatchedFromEgg",false));
@@ -335,6 +338,10 @@ public final class PersonalPokedexActivity extends Activity {
     @SuppressLint("SetJavaScriptEnabled")
     @Override protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
+        spriteStore=new PokedexSpriteStore(this, json->runOnUiThread(()->{
+            if(closing||view==null)return;
+            view.evaluateJavascript("window.pokeSpriteProgress&&window.pokeSpriteProgress("+json+");",null);
+        }));
         view=new WebView(this);
         view.setBackgroundColor(0xfff6fbf7);
         WebSettings s=view.getSettings();
@@ -354,6 +361,21 @@ public final class PersonalPokedexActivity extends Activity {
                 boolean local=url.startsWith("file:///android_asset/");
                 boolean sprites=url.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
                     url.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
+                if(url.startsWith("https://pokesearch.local/sprite/")){
+                    String rest=url.substring("https://pokesearch.local/sprite/".length());
+                    int slash=rest.indexOf('/');
+                    if(slash>0&&spriteStore!=null){
+                        String group=rest.substring(0,slash);
+                        String filename=rest.substring(slash+1);
+                        try{
+                            InputStream localSprite=spriteStore.openLocal(group,filename);
+                            if(localSprite!=null)
+                                return new WebResourceResponse("image/png",null,localSprite);
+                        }catch(Exception ignored){}
+                    }
+                    return new WebResourceResponse("text/plain","UTF-8",
+                        new java.io.ByteArrayInputStream(new byte[0]));
+                }
                 if(url.startsWith("https://pokesearch.local/bg/")){
                     String filename=url.substring("https://pokesearch.local/bg/".length());
                     File requested=backgroundFile(filename);
@@ -385,6 +407,24 @@ public final class PersonalPokedexActivity extends Activity {
             try(InputStream in=getAssets().open("pokemon_catalog.json")){
                 return new String(bounded(in,120000),StandardCharsets.UTF_8);
             }catch(Exception ignored){return "[]";}
+        }
+        @JavascriptInterface public String getSpriteManifest(){
+            return spriteStore==null?"{}":spriteStore.manifest();
+        }
+        @JavascriptInterface public String getCachedSpriteKeys(){
+            return spriteStore==null?"[]":spriteStore.cachedKeys();
+        }
+        @JavascriptInterface public String getSpriteStatus(){
+            return spriteStore==null?"{}":spriteStore.status();
+        }
+        @JavascriptInterface public void downloadSprites(String mode,String jsonKeys){
+            if(spriteStore!=null)spriteStore.start(mode,jsonKeys);
+        }
+        @JavascriptInterface public void cancelSpriteDownload(){
+            if(spriteStore!=null)spriteStore.cancel();
+        }
+        @JavascriptInterface public void clearSpriteCache(){
+            if(spriteStore!=null)spriteStore.clear();
         }
         @JavascriptInterface public String getMetaCatalog(){
             try(InputStream in=getAssets().open("pokedex_catalog_meta.json")){
@@ -536,6 +576,7 @@ public final class PersonalPokedexActivity extends Activity {
         closing=true;
         backgroundCancel.set(true);
         backgroundWorker.shutdownNow();
+        if(spriteStore!=null)spriteStore.shutdown();
         worker.shutdownNow();
         if(view!=null){
             view.removeJavascriptInterface("PersonalInventory");
