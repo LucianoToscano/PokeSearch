@@ -10,7 +10,7 @@ let checks=0;const test=(label,fn)=>{fn();checks++;console.log("PASS LT123 "+lab
 test("P1 and P2 top controls have correct icons and independent callbacks",()=>{
  assert.match(home,/overlayControl=makeIcon\(R.drawable.home_pokeball_off/);
  assert.match(home,/secondaryOverlayControl=makeIcon\(R.drawable.home_pokeball_off/);
- assert.match(home,/on\?R.drawable.home_pokeball_on:R.drawable.home_pokeball_off/);
+ assert.match(home,/HomeFloatingModeIcon\.icon\(this,secondary\)/);
  assert.match(home,/if\(which==0\)toggleHomeOverlay\(\);else toggleSecondaryOverlay\(\)/);
  assert.match(home,/dualOverlayRow.setVisibility\(View.VISIBLE\)/);
  assert.match(home,/pgsSearchControl=addHomePreviewIcon\(dualOverlayRow,R.drawable.busca_pokemon_overlay_off/);
