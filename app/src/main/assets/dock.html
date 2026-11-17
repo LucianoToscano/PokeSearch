@@ -7941,7 +7941,6 @@ function draw(){
    stale:resultsStale,searching:searchActive
   },{ivVerified:verifiedPercent!==null});
   const label=[c.name,verifiedPercent===null?"IV não comprovado":"IV "+verifiedPercent+"%",verifiedPercent===null?"":c.iv,c.rank?"Rank "+c.rank:""].filter(Boolean).join(" · ");
-  const evidenceTitle=evidence?.explanation||"";
   const evidenceFlag=resultDisplayOptions.highlights&&evidence?.warning&&evidence.icon?
    '<span class="resultEvidenceFlag '+esc(evidence.state)+'" aria-hidden="true">'+esc(evidence.icon)+'</span>':"";
   // Rank Classe and Rank Geral are already derived and species-validated here;
@@ -8050,7 +8049,7 @@ function draw(){
   const ivBadge=!metadataVisible&&showResultText&&verifiedPercent!==null?
    '<span class="ivPct '+ivPaletteClass(verifiedPercent)+'" aria-hidden="true">'+verifiedPercent+'%</span>':"";
   const measuredRow=resultLayout?.rows[i]||row;
-  const accessibleLabel=[label,evidenceTitle,
+  const accessibleLabel=[label,
    resultDisplayOptions.highlights?opportunity?.label:null].filter(Boolean).join(" · ");
   return '<button title="'+esc(accessibleLabel)+'" aria-label="'+esc(accessibleLabel)+'" class="spawn '+esc(kind)+(active===i?" active":"")+'" style="--spawn-row:'+measuredRow+'px;--visual-art-fit:'+effectiveArtFit+'" data-index="'+i+'" onclick="spriteClick('+i+')" oncontextmenu="return false">'+icon+ivBadge+badge+cooldownMarkup+info+'</button>';
  }).join("");
