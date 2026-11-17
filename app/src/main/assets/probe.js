@@ -1057,7 +1057,7 @@ function visibleResultSignature(){
  const count=(body.match(/\bShowing\s+\d+\s+(?:spawns?|results?)\b/i)||[])[0]||"";
  // DESPAWN countdown changes every second; it is not a fresh Search result.
  const cards=cardRoots().map(item=>text(item.node)
-  .replace(/(DESPAWN\\s*:?\\s*)\\d{1,2}:\\d{2}/gi,"$1--:--")
+  .replace(/(DESPAWN\s*:?\s*)\d{1,2}:\d{2}/gi,"$1--:--")
   .slice(0,700)).join("\u001e");
  // A real no-spawns message may replace cards without a "Showing 0" label.
  // Record only its presence, not the surrounding account/location text.
