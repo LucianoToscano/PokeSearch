@@ -57,6 +57,6 @@ const chooser=main.slice(main.indexOf("private void showPokeballAccountChoice(")
  main.indexOf("private void choosePokeballTrainer(",main.indexOf("private void showPokeballAccountChoice(")));
 // Historical trainer data remains supported but no longer appears in the active chooser.
 assert.doesNotMatch(chooser,/selectableTrainerCount|choosePokeballTrainer/);
-assert.match(chooser,/Conta: Visitante/);
+assert.doesNotMatch(chooser,/Conta: Visitante/);
 assert.match(chooser,/PogoAccountSlots\.bindAccountOnly\(this,secondary,slot\)/);
 console.log("LT170 VIP matrix: Account1 two verified trainers, Account2 one; P1/P2 independently assign both PASS");
