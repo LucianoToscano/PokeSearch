@@ -5059,6 +5059,33 @@
           "Atualizações e instalação do APK precisam da confirmação do Android. Sem homologação de aparelho, testes de CI não comprovam interação real."
         ]
       }
+    },
+    {
+      "id": "lt392-busca-visitante-hub-pokebolas-20261117",
+      "minVersionCode": 54584,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT392 — Busca visitante e contas das Pokébolas",
+      "sections": {
+        "novidades": [
+          "Dentro do menu PoGoCoordinates, selecione independentemente Visitante, Conta 1 ou Conta 2 para as Pokébolas P1 e P2.",
+          "Ícones de vínculo removidos da parte superior das Pokébolas na Home; atalhos de conta e PoGoCoordinates permanecem no cabeçalho."
+        ],
+        "melhorias": [
+          "Busca sem login continua diretamente pelo site oficial, com até cinco resultados se retornados pelo provedor.",
+          "Leitura de cartões responsivos inclui informações e IV dentro do encontro mesmo quando falta o rótulo LOCATION.",
+          "Acompanhamento da pesquisa reconhece ciclo comprovado de carregamento e conclusão mesmo quando o mesmo conjunto de resultados reaparece."
+        ],
+        "correcoes": [
+          "Percentuais de IV individuais como 67%, 76% e 44% só são usados quando existem evidências inequívocas no cartão e respeitam a escala de 45 pontos; não viram 100% por causa do filtro.",
+          "Resultados sem IV verificado não recebem selos/alertas falsos; a correspondência exata ao filtro continua obrigatória.",
+          "Vínculos de P1 e P2 são independentes, com cookies e perfis de conta 1/2 e visitante isolados; HTTP 429, políticas upstream, intervalos AUTO de 3 minutos e refresh manual respeitados."
+        ],
+        "emDesenvolvimento": [
+          "Validação física no Samsung e em Android 11–17, incluindo cinco cartões reais e seus IVs, P1/P2, login Google/Discord/MFA, acessibilidade, persistência de sessão e mudanças de modo.",
+          "Compilação e testes automatizados aprovados não substituem prova de funcionamento da sessão real no aparelho.",
+          "A disponibilidade de resultados visitantes e coordenadas permanece submetida aos limites do PoGoCoordinates; a cota não pode ser burlada por limpeza de cookies."
+        ]
+      }
     }
   ]
 }
