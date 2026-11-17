@@ -1025,7 +1025,7 @@ function cardRoots(){
    if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
       !/\bCP\b/i.test(t)||t.length>=2500)continue;
    const controls=Array.from(node.querySelectorAll("button,a,[role=button]"))
-    .filter(resultAction);
+    .filter(e=>vis(e)&&resultAction(e));
    // A single card can have Get coords and Open in Maps, but an enclosing
    // multi-card grid cannot be trusted as one result.
    const dexLabels=t.match(/#\s*\d{1,4}\b/g)||[];
