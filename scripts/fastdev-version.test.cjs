@@ -38,10 +38,10 @@ test("development and public display the SAME 0.XX.XX number with distinct Dev/L
  assert.match(gradle,/val officialVersionRequest = file\("\.\.\/release\/official-request\.json"\)/);
  assert.match(gradle,/val fastDevDisplayVersion = \(groovy\.json\.JsonSlurper\(\)\.parse\(officialVersionRequest\)/);
  assert.match(gradle,/else if \(fastDevCode != null\) fastDevDisplayVersion/);
- assert.match(gradle,/versionNameSuffix = ""/);
+ assert.match(gradle,/versionNameSuffix = " DEV"/);
  assert.doesNotMatch(gradle,/versionNameSuffix = "-preview"/);
- assert.match(activity,/footer=homeText\("PokeSearch v"\+BuildConfig\.VERSION_NAME\+\s*\(BuildConfig\.FASTDEV_PREVIEW\?" Dev":" LT"\)/);
- assert.match(manifest,/android:label="PokeSearch Dev"/);
+ assert.match(activity,/footer=homeText\("PokeSearch v"\+BuildConfig\.VERSION_NAME\+\s*\(BuildConfig\.FASTDEV_PREVIEW\?"":" LT"\)/);
+ assert.match(manifest,/android:label="PokeSearch DEV"/);
  // This is metadata only: the public APK and its signer are NOT renamed.
  assert.match(gradle,/applicationIdSuffix = "\.preview"/);
  assert.match(gradle,/POKE_FASTDEV_VERSION_CODE/);

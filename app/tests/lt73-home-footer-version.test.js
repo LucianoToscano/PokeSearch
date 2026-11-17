@@ -10,12 +10,13 @@ const manifest=fs.readFileSync(path.join(root,"src/main/AndroidManifest.xml"),"u
 let passed=0;
 function check(label,fn){fn();passed++;console.log("PASS LT73 "+label);}
 check("Home footer obtains installed versionName from BuildConfig",()=>{
-  assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+" LT"'));
+  assert.ok(main.includes('"PokeSearch v"+BuildConfig.VERSION_NAME+'));
+  assert.ok(main.includes('(BuildConfig.FASTDEV_PREVIEW?"":" LT")'));
 });
 check("Home footer stays compact and opens in-app Novidades history",()=>{
   assert.ok(main.includes("footer.setOnClickListener(v->ReleaseNotes.showHistory(this))"));
   assert.ok(!main.includes("String officialTag="));
-  assert.ok(main.includes('TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+" LT",10,'));
+  assert.ok(main.includes('TextView footer=homeText("PokeSearch v"+BuildConfig.VERSION_NAME+'));
   assert.ok(main.includes("screen.addView(footer,new LinearLayout.LayoutParams(-1,d(30)));"));
 });
 check("Gradle uses current installed versionName from signed build",()=>{

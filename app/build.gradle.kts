@@ -210,9 +210,9 @@ android {
         create("preview") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".preview"
-            // The name shown by the Home is PokeSearch v0.03.73 Dev;
+            // Android package info and Home show PokeSearch v0.03.73 DEV;
             // the independent 10000xx versionCode stays internal for OTA.
-            versionNameSuffix = ""
+            versionNameSuffix = " DEV"
             matchingFallbacks += listOf("debug")
             signingConfig = if (fastDevSigned) signingConfigs.getByName("fastdevPersistent")
                 else signingConfigs.getByName("debug")
