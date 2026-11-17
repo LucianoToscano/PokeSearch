@@ -1022,17 +1022,26 @@ function cardRoots(){
   // Preserve the immediate result wrapper when React has only partly
   // hydrated labels. Downstream IV, filter and freshness gates still reject
   // anything that cannot be verified.
-  let chosen=action.parentElement;
-  for(let node=action,depth=0;node&&depth<10;node=node.parentElement,depth++){
+  // LT392: public/mobile cards show the town directly, WITHOUT the word
+  // LOCATION. Never mistake a button's tiny parent for the entire encounter:
+  // it contains no IV/CP and produced five bogus "IV not confirmed" warnings.
+  let chosen=null;
+  for(let node=action,depth=0;node&&depth<12;node=node.parentElement,depth++){
    const t=text(node);
-   if(!/\bLOCATION\b/i.test(t)||!/\bDESPAWN\b/i.test(t)||
-      !/\bCP\b/i.test(t)||t.length>=2500)continue;
+   if(t.length>=2500)continue;
    const controls=Array.from(node.querySelectorAll("button,a,[role=button]"))
     .filter(e=>vis(e)&&resultAction(e));
-   // A single card can have Get coords and Open in Maps, but an enclosing
-   // multi-card grid cannot be trusted as one result.
    const dexLabels=t.match(/#\s*\d{1,4}\b/g)||[];
-   if(controls.length<=2&&dexLabels.length<=1){chosen=node;break;}
+   const hasCp=/\b(?:CP|PC)\s*:?\s*\d{1,5}\b/i.test(t)||
+     /(?:^|\n)\s*(?:CP|PC)\s*$/im.test(t);
+   const hasEncounterMeta=/\bDESPAWN\b/i.test(t)||/\bIV\s*:?\s*\d{1,3}(?:[.,]\d+)?\s*%/i.test(t)||
+     /(?:^|\n)\s*IV\s*$/im.test(t);
+   // A single real card has one Dex label and at most two reveal actions.
+   // A parent grid has several Dex labels and more than two reveal actions.
+   if(hasCp&&hasEncounterMeta&&dexLabels.length<=1&&controls.length>=1&&controls.length<=2&&
+      (dexLabels.length===1||/\bDESPAWN\b/i.test(t))){
+    chosen=node;break;
+   }
   }
   if(!chosen||seen.has(chosen))continue;
   seen.add(chosen);
@@ -1138,7 +1147,7 @@ function parseCard(box,sourceIndex){
  // Conflicting explicit data is still rejected by verifiedCardIv() below.
  const percent=labeledPct||(ivMatch?ivMatch[1]:(raw?String(Math.round(raw.split("/").map(Number).reduce((a,b)=>a+b,0)/45*100)):""));
  const val=(label,re)=>{let candidate=nextLabelValue(box,label);let m=candidate.match(re);if(m)return m[1];
-     m=body.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
+     m=body.match(new RegExp("(?:^|[\\s·])"+label+"\\s*:?\\s*([0-9.]+)","im"));return m?m[1]:"";};
  const heading=box.querySelector("h2,h3,h4,h5,[class*=font-semibold],[class*=font-bold]");
  let title=heading?text(heading):"";
  if(!title||title.length>85||/^(?:CP|IV|LVL)$/i.test(title)){
