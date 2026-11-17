@@ -39,6 +39,6 @@ const dock=asset("dock.html"),probe=asset("probe.js");
 assert.ok(dock.includes('a.slice(0,10)'));
 assert.ok(dock.includes('vip-results-scroll'));
 assert.ok(dock.includes('overscroll-behavior:contain!important;touch-action:pan-y!important'));
-assert.ok(probe.includes('if(cards.length===100)break'));
+assert.ok(probe.includes('if(cards.length>=100)break'));
 assert.ok(probe.includes('Math.min(siteCount,100)'));
 console.log("PASS LT141: multiple linked trainer choices, per-account Shiny, 25+ VIP spawns scroll");
