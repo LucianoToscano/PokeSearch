@@ -20,6 +20,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.util.concurrent.atomic.AtomicBoolean;
+import android.content.SharedPreferences;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +47,15 @@ public final class PersonalPokedexActivity extends Activity {
     private static final Pattern LARGE_ID=Pattern.compile("(\"id\"\\s*:\\s*)(\\d{16,20})(?=\\s*[,}])");
     private static final Pattern TAG_ARRAY=Pattern.compile("(\\\"pokemonTagIds\\\"\\s*:\\s*\\[)([^\\]]*)(\\])");
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
+    private final ExecutorService backgroundWorker=Executors.newSingleThreadExecutor();
+    private final AtomicBoolean backgroundCancel=new AtomicBoolean(false);
+    private volatile boolean backgroundBusy=false;
+    private volatile int backgroundDone=0;
+    private volatile String backgroundError="";
+    private static final String BG_ORIGIN=
+        "https://raw.githubusercontent.com/PokeMiners/pogo_assets/db10df75d6f6f92018d9786af0aecc238fecc4ef/Images/LocationCards/";
+    private static final Pattern SAFE_BG=Pattern.compile("[A-Za-z0-9_\\-]{1,110}\\.png");
+    private static final int MAX_BG_BYTES=8*1024*1024;
     private WebView view;
     private volatile boolean closing=false;
     private int pendingSlot=1;
@@ -50,6 +64,134 @@ public final class PersonalPokedexActivity extends Activity {
         return new File(new File(getFilesDir(),"pokedex_personal"),"slot"+slot+".json");
     }
     private static int slot(int s){return s==2?2:1;}
+    private File backgroundDir(){return new File(getFilesDir(),"pokedex_backgrounds");}
+    private JSONObject backgroundManifest(){
+        try(InputStream in=getAssets().open("pokedex_background_manifest.json")){
+            return new JSONObject(new String(bounded(in,120000),StandardCharsets.UTF_8));
+        }catch(Exception ignored){return new JSONObject();}
+    }
+    private static String safeBackgroundName(String name){
+        return name!=null&&SAFE_BG.matcher(name).matches()?name:"";
+    }
+    private File backgroundFile(String name){
+        String valid=safeBackgroundName(name);
+        return valid.isEmpty()?null:new File(backgroundDir(),valid);
+    }
+    private String backgroundStatus(){
+        JSONArray rows=backgroundManifest().optJSONArray("assets");
+        int total=rows==null?0:rows.length(),saved=0;
+        long bytes=0;
+        if(rows!=null)for(int i=0;i<rows.length();i++){
+            JSONArray item=rows.optJSONArray(i);
+            if(item==null)continue;
+            File cached=backgroundFile(item.optString(0,""));
+            if(cached!=null&&cached.isFile()&&cached.length()==item.optLong(1,-1)){
+                saved++;bytes+=cached.length();
+            }
+        }
+        JSONObject response=new JSONObject();
+        try{
+            response.put("downloaded",saved);response.put("total",total);
+            response.put("bytes",bytes);response.put("running",backgroundBusy);
+            response.put("processed",backgroundDone);response.put("error",backgroundError);
+        }catch(Exception ignored){}
+        return response.toString();
+    }
+    private void emitBackgroundStatus(){
+        runOnUiThread(()->{
+            if(closing||view==null)return;
+            view.evaluateJavascript("window.pokeBackgroundProgress&&window.pokeBackgroundProgress("+
+                backgroundStatus()+");",null);
+        });
+    }
+    private static String gitBlobSha(File file,long declaredSize) throws Exception{
+        MessageDigest digest=MessageDigest.getInstance("SHA-1");
+        digest.update(("blob "+declaredSize+"\\0").getBytes(StandardCharsets.UTF_8));
+        try(InputStream in=new FileInputStream(file)){
+            byte[] buffer=new byte[16384];int n;
+            while((n=in.read(buffer))!=-1)digest.update(buffer,0,n);
+        }
+        StringBuilder b=new StringBuilder();
+        for(byte v:digest.digest())b.append(String.format(Locale.ROOT,"%02x",v&255));
+        return b.toString();
+    }
+    private void downloadBackgrounds(){
+        if(backgroundBusy)return;
+        backgroundBusy=true;backgroundDone=0;backgroundError="";
+        backgroundCancel.set(false);
+        backgroundWorker.execute(()->{
+            try{
+                JSONArray entries=backgroundManifest().optJSONArray("assets");
+                if(entries==null||entries.length()==0)throw new IOException("Catálogo de fundos indisponível.");
+                if(!backgroundDir().isDirectory()&&!backgroundDir().mkdirs())
+                    throw new IOException("Sem armazenamento privado.");
+                for(int i=0;i<entries.length();i++){
+                    if(backgroundCancel.get()||Thread.currentThread().isInterrupted())break;
+                    JSONArray item=entries.optJSONArray(i);
+                    if(item==null)continue;
+                    String name=safeBackgroundName(item.optString(0,""));
+                    long length=item.optLong(1,-1);
+                    String sha=item.optString(2,"");
+                    if(name.isEmpty()||length<=0||length>MAX_BG_BYTES||!sha.matches("[0-9a-f]{40}"))
+                        throw new IOException("Catálogo inválido: arquivo não permitido.");
+                    File saved=backgroundFile(name);
+                    if(saved==null)continue;
+                    if(!(saved.isFile()&&saved.length()==length&&sha.equals(gitBlobSha(saved,length)))){
+                        File pending=new File(backgroundDir(),name+".pending");
+                        HttpURLConnection connection=null;
+                        try{
+                            URL url=new URL(BG_ORIGIN+name);
+                            connection=(HttpURLConnection)url.openConnection();
+                            connection.setConnectTimeout(12000);
+                            connection.setReadTimeout(20000);
+                            connection.setInstanceFollowRedirects(false);
+                            connection.setRequestProperty("User-Agent","PokeSearch-private-background-cache/1");
+                            if(connection.getResponseCode()!=200)
+                                throw new IOException("HTTP "+connection.getResponseCode()+" em "+name);
+                            try(InputStream in=connection.getInputStream();
+                                FileOutputStream out=new FileOutputStream(pending)){
+                                byte[] b=new byte[16384];int n;long count=0;
+                                while((n=in.read(b))!=-1){
+                                    if(backgroundCancel.get()||Thread.currentThread().isInterrupted())
+                                        throw new IOException("Download cancelado.");
+                                    count+=n;
+                                    if(count>length||count>MAX_BG_BYTES)
+                                        throw new IOException("Tamanho de imagem inesperado.");
+                                    out.write(b,0,n);
+                                }
+                                out.getFD().sync();
+                                if(count!=length)throw new IOException("Imagem incompleta: "+name);
+                            }
+                            if(!sha.equals(gitBlobSha(pending,length)))
+                                throw new IOException("Imagem não confere com o catálogo: "+name);
+                            if(!pending.renameTo(saved))throw new IOException("Não foi possível salvar "+name);
+                        }finally{
+                            if(connection!=null)connection.disconnect();
+                            if(pending.isFile())pending.delete();
+                        }
+                    }
+                    backgroundDone=i+1;
+                    if(i%4==0||i==entries.length()-1)emitBackgroundStatus();
+                }
+            }catch(Exception e){backgroundError=text(e.getMessage(),130);}
+            finally{
+                backgroundBusy=false;
+                if(backgroundCancel.get())backgroundError="Download interrompido; arquivos completos foram preservados.";
+                emitBackgroundStatus();
+            }
+        });
+        emitBackgroundStatus();
+    }
+    private void clearBackgrounds(){
+        if(backgroundBusy)return;
+        File[] files=backgroundDir().listFiles();
+        if(files!=null)for(File file:files){
+            if(file.isFile()&&file.getName().matches("[A-Za-z0-9_\\-]{1,110}\\.png"))
+                file.delete();
+        }
+        backgroundDone=0;backgroundError="";
+        emitBackgroundStatus();
+    }
     private static byte[] bounded(InputStream source,int max) throws IOException {
         try(ByteArrayOutputStream out=new ByteArrayOutputStream()){
             byte[] b=new byte[8192];int n;
@@ -211,6 +353,16 @@ public final class PersonalPokedexActivity extends Activity {
                 boolean local=url.startsWith("file:///android_asset/");
                 boolean sprites=url.startsWith("https://raw.githubusercontent.com/PokeAPI/sprites/")||
                     url.startsWith("https://cdn.jsdelivr.net/gh/PokeAPI/sprites@");
+                if(url.startsWith("https://pokesearch.local/bg/")){
+                    String filename=url.substring("https://pokesearch.local/bg/".length());
+                    File requested=backgroundFile(filename);
+                    if(requested!=null&&requested.isFile()){
+                        try{return new WebResourceResponse("image/png",null,new FileInputStream(requested));}
+                        catch(Exception ignored){}
+                    }
+                    return new WebResourceResponse("text/plain","UTF-8",
+                        new java.io.ByteArrayInputStream(new byte[0]));
+                }
                 if(local||sprites)return null;
                 return new WebResourceResponse("text/plain","UTF-8",
                     new java.io.ByteArrayInputStream(new byte[0]));
@@ -237,6 +389,27 @@ public final class PersonalPokedexActivity extends Activity {
             try(InputStream in=getAssets().open("pokedex_catalog_meta.json")){
                 return new String(bounded(in,180000),StandardCharsets.UTF_8);
             }catch(Exception ignored){return "{}";}
+        }
+        @JavascriptInterface public String getBackgroundManifest(){
+            return backgroundManifest().toString();
+        }
+        @JavascriptInterface public String getBackgroundStatus(){return backgroundStatus();}
+        @JavascriptInterface public void downloadAllBackgrounds(){downloadBackgrounds();}
+        @JavascriptInterface public void cancelBackgroundDownload(){backgroundCancel.set(true);}
+        @JavascriptInterface public void clearBackgroundCache(){backgroundWorker.execute(()->clearBackgrounds());}
+        @JavascriptInterface public String getNote(int requestedSlot,String pokemonId){
+            if(!pokemonId.matches("[0-9]{1,20}"))return "";
+            return getSharedPreferences("personal_pokedex_notes",MODE_PRIVATE)
+                .getString(slot(requestedSlot)+":"+pokemonId,"");
+        }
+        @JavascriptInterface public void setNote(int requestedSlot,String pokemonId,String note){
+            if(!pokemonId.matches("[0-9]{1,20}")||note==null)return;
+            getSharedPreferences("personal_pokedex_notes",MODE_PRIVATE).edit()
+                .putString(slot(requestedSlot)+":"+pokemonId,text(note,500)).apply();
+        }
+        @JavascriptInterface public String getImportHistory(int requestedSlot){
+            return getSharedPreferences("pokedex_import_history",MODE_PRIVATE)
+                .getString("slot"+slot(requestedSlot),"[]");
         }
         @JavascriptInterface public void chooseJson(int requestedSlot){
             runOnUiThread(()->{
@@ -276,6 +449,10 @@ public final class PersonalPokedexActivity extends Activity {
                 String raw=new String(bounded(input,MAX_IMPORT_BYTES),StandardCharsets.UTF_8);
                 JSONObject compact=compact(raw);
                 File dest=snapshot(selected);
+                JSONObject previous=null;
+                if(dest.isFile())try(FileInputStream old=new FileInputStream(dest)){
+                    previous=new JSONObject(new String(bounded(old,MAX_IMPORT_BYTES),StandardCharsets.UTF_8));
+                }catch(Exception ignored){}
                 if(!dest.getParentFile().isDirectory()&&!dest.getParentFile().mkdirs())
                     throw new IOException("Armazenamento local indisponível.");
                 File tmp=new File(dest.getParentFile(),"slot"+selected+".pending");
@@ -284,11 +461,41 @@ public final class PersonalPokedexActivity extends Activity {
                     out.getFD().sync();
                 }
                 if(!tmp.renameTo(dest))throw new IOException("Falha ao salvar coleção.");
+                recordImportHistory(selected,compact,previous);
                 notifyWeb("Importação concluída: "+compact.optInt("count")+" Pokémon.",true);
             }catch(Exception e){
                 notifyWeb("Importação não concluída: "+text(e.getMessage(),160),false);
             }
         });
+    }
+    private void recordImportHistory(int selected,JSONObject current,JSONObject before){
+        try{
+            Map<String,String> previous=new HashMap<>(),next=new HashMap<>();
+            JSONArray original=before==null?null:before.optJSONArray("pokemons");
+            JSONArray updated=current.optJSONArray("pokemons");
+            if(original!=null)for(int i=0;i<original.length();i++){
+                JSONObject p=original.optJSONObject(i);if(p!=null)previous.put(p.optString("id",""),p.toString());
+            }
+            if(updated!=null)for(int i=0;i<updated.length();i++){
+                JSONObject p=updated.optJSONObject(i);if(p!=null)next.put(p.optString("id",""),p.toString());
+            }
+            int added=0,removed=0,changed=0;
+            for(Map.Entry<String,String> p:next.entrySet()){
+                if(!previous.containsKey(p.getKey()))added++;
+                else if(!p.getValue().equals(previous.get(p.getKey())))changed++;
+            }
+            for(String id:previous.keySet())if(!next.containsKey(id))removed++;
+            SharedPreferences settings=getSharedPreferences("pokedex_import_history",MODE_PRIVATE);
+            JSONArray existing=new JSONArray(settings.getString("slot"+selected,"[]"));
+            JSONObject row=new JSONObject();
+            row.put("at",System.currentTimeMillis());
+            row.put("total",next.size());row.put("added",added);
+            row.put("removed",removed);row.put("changed",changed);
+            row.put("baseline",before!=null);
+            JSONArray compact=new JSONArray();compact.put(row);
+            for(int i=0;i<Math.min(existing.length(),9);i++)compact.put(existing.getJSONObject(i));
+            settings.edit().putString("slot"+selected,compact.toString()).apply();
+        }catch(Exception ignored){}
     }
     private void notifyWeb(String message,boolean ok){
         runOnUiThread(()->{
@@ -306,6 +513,8 @@ public final class PersonalPokedexActivity extends Activity {
     }
     @Override protected void onDestroy(){
         closing=true;
+        backgroundCancel.set(true);
+        backgroundWorker.shutdownNow();
         worker.shutdownNow();
         if(view!=null){
             view.removeJavascriptInterface("PersonalInventory");
