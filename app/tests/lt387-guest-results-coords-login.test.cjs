@@ -1,0 +1,59 @@
+"use strict";
+const test=require("node:test");
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const root=path.resolve(__dirname,"../..");
+const read=p=>fs.readFileSync(path.join(root,p),"utf8");
+const probe=read("app/src/main/assets/probe.js");
+const dock=read("app/src/main/assets/dock.html");
+const service=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/OverlayService.java");
+const main=read("app/src/main/java/com/lucianotoscano/pokesearchoverlay/MainActivity.java");
+test("Guest 5/10 badge must originate from official DOM evidence, not local guesses",()=>{
+ assert.match(probe,/const guestLimitBanner=\/.*Showing.*5.*results.*log.*in.*10/);
+ assert.match(probe,/siteCount,guestLimitBanner,siteIncomplete/);
+ assert.match(service,/guestResultLimitConfirmed=!authorizedApiQa&&\s*r\.optBoolean\("guestLimitBanner",false\)&&sorted\.length\(\)>0/);
+ assert.match(service,/guestResultLimitConfirmed&&\s*!PogoAccountSlots\.loggedIn/);
+ assert.doesNotMatch(service,/\.putString\("profileDisplayName","visitor"\)/);
+});
+test("P1/P2 guest badge is a single compact end-of-list login action",()=>{
+ assert.match(dock,/<button id="guestUnlock" type="button" hidden/);
+ assert.match(dock,/onclick="Native\.openGuestLogin\(\)"/);
+ assert.match(dock,/<span>\+5<\/span>/);
+ assert.match(dock,/guestUnlock\.hidden=!show/);
+ assert.match(dock,/guestLimited&&cards\.length>0&&!resultsStale&&/);
+ assert.match(dock,/const tail=guestUnlock&&!guestUnlock\.hidden\?guestUnlock:/);
+ assert.match(dock,/guestLimitVisible=false\)=>/);
+ assert.match(service,/@JavascriptInterface public void openGuestLogin\(\)/);
+ assert.match(service,/\.setTitle\("Mais resultados no PoGoCoordinates"\)/);
+ assert.match(service,/\.setPositiveButton\("Entrar"/);
+ assert.match(service,/\.setNegativeButton\("Agora não"/);
+});
+test("Login is first-party and isolated: successful auth binds only originating guest Pokeball",()=>{
+ assert.match(service,/login\.setAction\("com\.lucianotoscano\.pokesearchoverlay\.OPEN_POGO_LOGIN"\)/);
+ assert.match(service,/login\.putExtra\("pogoOverlayNumber",secondary\?2:1\)/);
+ assert.match(main,/handlePublicLoginIntent\(getIntent\(\)\)/);
+ assert.match(main,/handlePublicLoginIntent\(intent\)/);
+ assert.match(main,/pendingPublicLoginOverlay=requested/);
+ assert.match(main,/openLoginDialogForSlot\(slot,"login"\)/);
+ assert.match(main,/if\(authenticatedNow&&guestOverlay>0&&/);
+ assert.match(main,/PogoAccountSlots\.assigned\(this,secondary\)==0/);
+ assert.match(main,/PogoAccountSlots\.bindAccountOnly\(this,secondary,activeLoginSlot\)/);
+ assert.doesNotMatch(main,/removeAllCookies\(/);
+});
+test("Guest coordinate reveal reads the selected card's exact coordinate button",()=>{
+ assert.match(probe,/const siblings=controls\.filter\(e=>e!==button\)/);
+ assert.match(probe,/\.filter\(t=>exactPair\.test\(t\)\)/);
+ assert.match(probe,/if\(distinct\.length>1\)/);
+ assert.match(probe,/const m=\(distinct\[0\]\|\|""\)\|\|coordinate\(decoded\)\|\|coordinate\(locationText\)/);
+ assert.match(probe,/const target=matchingCoordsCard\(query\)/);
+ assert.match(service,/currentCoordinateTarget\(target\)/);
+ assert.match(service,/copyCoordinatesInternal\(coords\)/);
+});
+test("Existing upstream rate limiting remains authoritative: no cookie resets, fake refreshes, or quota bypass",()=>{
+ assert.match(probe,/if\(limit\)return JSON\.stringify\(\{ok:false,status:"Taxa Limitada PoGoCoordinates"/);
+ assert.match(service,/deliverCoordsRestricted\(limitType,result\.optInt\("retrySeconds",0\)\)/);
+ assert.match(service,/noteProviderRateLimit/);
+ assert.match(service,/if\(authorizedApiQaSelected\(\)&&apiProviderBackoffUntil\(\)>0L\)/);
+ assert.doesNotMatch(service,/removeAllCookies\(null\)|deleteAllData\(\).*rate|WebStorage\.getInstance\(\)\.deleteAllData/);
+});
