@@ -18,7 +18,10 @@ public final class FastDevApplication extends Application
     }
     @Override public void onActivityResumed(Activity activity){
         if(!(activity instanceof MainActivity))return;
-        FastDevConsoleActivity.tryInstallReady(activity);
+        // onActivityResumed can occur before the window gains focus.
+        // Recheck shortly afterward so a previously downloaded update is not lost.
+        activity.getWindow().getDecorView().postDelayed(
+            ()->FastDevConsoleActivity.tryInstallReady(activity),450L);
         FastDevConsoleActivity.checkAutomatically(activity);
     }
     @Override public void onActivityCreated(Activity activity,Bundle state){}
