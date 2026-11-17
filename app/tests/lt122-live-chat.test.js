@@ -46,7 +46,10 @@ check("hidden by default after LT391 but user may reenable without touching over
  assert.match(stage,/getBoolean\("communityLiveChatVisible",false\)/);
  assert.match(stage,/lt391ChatHomeHiddenOnce/);
  assert.match(stage,/CommunityScrapbookOnline\.homePanel/);
- assert.match(home,/Chat ao vivo/);
+ // LT395: the same live chat is reached from the Comunidade Home tile,
+ // instead of a separate row in the global drawer.
+ assert.match(home,/showCommunityHomeOptions\(\)/);
+ assert.match(home,/Abrir Chat/);
  assert.match(home,/Ocultar Chat/);
  assert.match(home,/putBoolean\("communityLiveChatVisible"/);
  assert.doesNotMatch(home,/Ocultar protótipo Mural/);

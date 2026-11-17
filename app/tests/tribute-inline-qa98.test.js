@@ -17,7 +17,7 @@ for(const [f,expected] of Object.entries({
  assert.equal(crypto.createHash("sha256").update(bytes).digest("hex"),expected,f);
 }
 assert.doesNotMatch(app,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribute\)/);
-assert.match(app,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
+assert.match(app,/addHomeDrawerItem\(drawer,"♥","Agradecimentos",this::openTribute\)/);
 assert.match(app,/if\(tributeOverlay!=null&&homeRoot!=null\)/);
 assert.match(tribute,/ZoomView extends ImageView/);
 assert.match(tribute,/chip\.setMinimumHeight\(dp\(a,48\)\)/);

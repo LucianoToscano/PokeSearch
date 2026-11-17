@@ -596,10 +596,21 @@ public class MainActivity extends Activity {
             // to the previous colorful ten-icon pack on touch.
             artwork.setOnTouchListener(null);
         }
-        if(index==0||index==1)artwork.setOnTouchListener(null);
+        if(index==0||index==1||index==3)artwork.setOnTouchListener(null);
         artwork.setBackground(null);
         artwork.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        artwork.setPadding(d(7),d(1),d(7),d(1));
+        // LT395: optical margins are specific to the ORIGINAL artwork;
+        // no icon pixels are removed or substituted when aligning the grid.
+        if(index==6){ // Quests: reserve room for the full lower ring.
+            artwork.setPadding(d(11),d(3),d(11),d(8));
+        }else if(index==15){ // Comunidade: protect the right-most white outline.
+            artwork.setPadding(d(12),d(4),d(12),d(6));
+        }else if(index==3){ // Colorful assistant: keep character, soften prominence.
+            artwork.setPadding(d(12),d(5),d(12),d(6));
+            artwork.setAlpha(.92f);
+        }else{
+            artwork.setPadding(d(7),d(2),d(7),d(3));
+        }
         LinearLayout tile=new LinearLayout(this);
         tile.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
         tile.setOrientation(LinearLayout.VERTICAL);
@@ -610,6 +621,7 @@ public class MainActivity extends Activity {
         TextView title=homeText(label,9,
             homeLightMode?Color.rgb(19,46,70):Color.WHITE,true);
         title.setGravity(Gravity.TOP|Gravity.CENTER_HORIZONTAL);
+        title.setIncludeFontPadding(false);
         title.setMaxLines(2);
         title.setEllipsize(android.text.TextUtils.TruncateAt.END);
         title.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
@@ -839,13 +851,7 @@ public class MainActivity extends Activity {
         };
         // The earlier row still contains the classic launchers only.
         // New modules must not accidentally start an unrelated overlay.
-        homeModuleIcons[15].setOnClickListener(v->{
-            if(CommunityScrapbookStage1.isEnabled(this))scrollToCommunity();
-            else new AlertDialog.Builder(this).setTitle("Comunidade")
-                .setMessage("O fórum da Comunidade ainda está em preparação. "+
-                    "O chat experimental pode ser habilitado no menu lateral.")
-                .setPositiveButton("OK",null).show();
-        });
+        homeModuleIcons[15].setOnClickListener(v->showCommunityHomeOptions());
         LinearLayout launcherGrid=new LinearLayout(this);
         launcherGrid.setOrientation(LinearLayout.VERTICAL);
         launcherGrid.setBackground(null);
@@ -1868,12 +1874,47 @@ public class MainActivity extends Activity {
             homeDrawerLayer=null;
         }
     }
-    private void addHomeDrawerItem(LinearLayout panel,String icon,String name,Runnable callback){
-        TextView item=homeText(icon+"     "+name,15,
-            homeLightMode?Color.rgb(29,47,66):Color.WHITE,false);
-        item.setPadding(d(18),0,d(12),0);
-        panel.addView(item,new LinearLayout.LayoutParams(-1,d(48)));
-        item.setOnClickListener(v->{closeHomeMenu();callback.run();});
+    /** Consistent icon gutter + text baseline; no emoji/text concatenation. */
+    private void addHomeDrawerItem(LinearLayout panel,String symbol,String name,Runnable callback){
+        LinearLayout row=new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(d(15),0,d(14),0);
+        android.util.TypedValue ripple=new android.util.TypedValue();
+        if(getTheme().resolveAttribute(android.R.attr.selectableItemBackground,ripple,true)
+            &&ripple.resourceId!=0)row.setBackgroundResource(ripple.resourceId);
+        int color=homeLightMode?Color.rgb(31,51,72):Color.rgb(242,247,255);
+        TextView icon=homeText(symbol,17,
+            homeLightMode?Color.rgb(62,101,129):Color.rgb(185,219,239),false);
+        icon.setGravity(Gravity.CENTER);
+        icon.setIncludeFontPadding(false);
+        row.addView(icon,new LinearLayout.LayoutParams(d(32),d(36)));
+        TextView title=homeText(name,13,color,false);
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.setSingleLine(true);
+        title.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        LinearLayout.LayoutParams nameLp=new LinearLayout.LayoutParams(0,-1,1);
+        nameLp.leftMargin=d(8);
+        row.addView(title,nameLp);
+        if("Dados e backup".equals(name)||"Sobre o aplicativo".equals(name)){
+            TextView arrow=homeText("›",20,
+                homeLightMode?Color.rgb(108,133,156):Color.rgb(151,170,195),false);
+            arrow.setGravity(Gravity.CENTER);
+            row.addView(arrow,new LinearLayout.LayoutParams(d(20),-1));
+        }
+        row.setContentDescription(name);
+        row.setOnClickListener(v->{closeHomeMenu();callback.run();});
+        panel.addView(row,new LinearLayout.LayoutParams(-1,d(47)));
+    }
+    private void addHomeDrawerGroup(LinearLayout drawer,String text){
+        TextView heading=homeText(text,10,
+            homeLightMode?Color.rgb(81,105,125):Color.rgb(153,183,212),true);
+        heading.setGravity(Gravity.BOTTOM);
+        heading.setIncludeFontPadding(false);
+        heading.setPadding(d(18),0,0,d(5));
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,d(33));
+        lp.topMargin=d(5);
+        drawer.addView(heading,lp);
     }
     private void showHomeMenu(){
         if(homeRoot==null)return;
@@ -2057,37 +2098,65 @@ public class MainActivity extends Activity {
         if(homeRoot!=null)showHomeDrawerPage(true);
     }
     private void showHomeDrawerPage(boolean accountPage){
+        showHomeDrawerPage(accountPage?"account":"main");
+    }
+    /** LT395: compact, grouped and accessible drawer. No removed functionality. */
+    private void showHomeDrawerPage(String page){
+        if(homeRoot==null)return;
+        if(homeDrawerLayer!=null)closeHomeMenu();
+        final boolean accountPage="account".equals(page);
+        final boolean dataPage="data".equals(page);
+        final boolean aboutPage="about".equals(page);
         FrameLayout layer=new FrameLayout(this);
         View scrim=new View(this);
         scrim.setBackgroundColor(Color.argb(160,0,5,14));
         scrim.setOnClickListener(v->closeHomeMenu());
         layer.addView(scrim,new FrameLayout.LayoutParams(-1,-1));
 
-        // Scroll interno permite todos os atalhos + estatísticas sem cortes.
         ScrollView drawerScroll=new ScrollView(this);
         drawerScroll.setFillViewport(true);
         drawerScroll.setVerticalScrollBarEnabled(false);
-        drawerScroll.setOnClickListener(v->{}); // não fechar ao tocar no interior vazio
+        drawerScroll.setClipToPadding(false);
         drawerScroll.setBackground(homeSurface(
-            homeLightMode?Color.rgb(247,250,254):Color.rgb(31,35,43),
-            12,homeLightMode?Color.rgb(173,187,202):Color.rgb(85,95,111)));
+            homeLightMode?Color.rgb(247,250,254):Color.rgb(28,35,48),
+            15,homeLightMode?Color.rgb(173,187,202):Color.rgb(70,89,111)));
         LinearLayout drawer=new LinearLayout(this);
         drawer.setOrientation(LinearLayout.VERTICAL);
-        drawer.setPadding(0,d(14),0,d(10));
+        drawer.setPadding(0,d(10),0,d(18));
         drawerScroll.addView(drawer,new ScrollView.LayoutParams(-1,-2));
-        int width=Math.min(d(286),getResources().getDisplayMetrics().widthPixels-d(48));
-        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,Gravity.RIGHT|Gravity.TOP);
+        int width=Math.min(d(296),getResources().getDisplayMetrics().widthPixels-d(28));
+        FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(width,-1,
+            Gravity.RIGHT|Gravity.TOP);
         layer.addView(drawerScroll,lp);
 
-        TextView label=homeText(accountPage?"  Conta":"  PokeSearch",19,
-            homeLightMode?Color.rgb(29,47,66):Color.WHITE,true);
-        drawer.addView(label,new LinearLayout.LayoutParams(-1,d(60)));
-        View rule=new View(this);rule.setBackgroundColor(Color.argb(90,174,199,235));
-        drawer.addView(rule,new LinearLayout.LayoutParams(-1,d(1)));
+        LinearLayout header=new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        header.setPadding(d(19),d(8),d(12),d(8));
+        TextView title=homeText(accountPage?"Conta":
+            dataPage?"Dados e backup":aboutPage?"Sobre":"PokeSearch",
+            19,homeLightMode?Color.rgb(30,49,69):Color.WHITE,true);
+        title.setIncludeFontPadding(false);
+        header.addView(title);
+        String ver=BuildConfig.VERSION_NAME.trim();
+        if(!ver.startsWith("v"))ver="v"+ver;
+        if(!ver.endsWith("LT"))ver+=" LT";
+        TextView subtitle=homeText(accountPage?"Gerenciar perfis e vínculos":
+            dataPage?"Transferência local e privada":
+            aboutPage?"Informações e compartilhamento":ver,10,
+            homeLightMode?Color.rgb(92,112,135):Color.rgb(162,187,213),false);
+        LinearLayout.LayoutParams subtitleLp=new LinearLayout.LayoutParams(-1,-2);
+        subtitleLp.topMargin=d(4);header.addView(subtitle,subtitleLp);
+        drawer.addView(header,new LinearLayout.LayoutParams(-1,d(67)));
+        View divider=new View(this);
+        divider.setBackgroundColor(homeLightMode?Color.rgb(216,226,236):
+            Color.rgb(58,74,95));
+        drawer.addView(divider,new LinearLayout.LayoutParams(-1,d(1)));
 
         TextView online=null,installations=null;
         if(accountPage){
-            addHomeDrawerItem(drawer,"‹","Voltar ao menu",this::showHomeMenu);
+            addHomeDrawerItem(drawer,"‹","Voltar",this::showHomeMenu);
+            addHomeDrawerGroup(drawer,"POGOCOORDINATES");
             addHomeDrawerItem(drawer,"◉","Conta 1 · Login / Perfil",()->
                 openLoginDialogForSlot(1,
                     PogoAccountSlots.loggedIn(this,1)?"manage":"login"));
@@ -2095,45 +2164,58 @@ public class MainActivity extends Activity {
                 addHomeDrawerItem(drawer,"◉","Conta 2 · Login / Perfil",()->
                     openLoginDialogForSlot(2,
                         PogoAccountSlots.loggedIn(this,2)?"manage":"login"));
+            addHomeDrawerGroup(drawer,"VÍNCULOS");
             addHomeDrawerItem(drawer,"◉","Pokébola 1 · Conta",
                 ()->showPokeballAccountChoice(false));
             addHomeDrawerItem(drawer,"◉","Pokébola 2 · Conta",
                 ()->showPokeballAccountChoice(true));
-            // Mantém a autorização de Premium. Nunca libera recursos por aparência.
-            if(PremiumAccess.controlled())
-                addHomeDrawerItem(drawer,"★","Conta Premium · Gerenciar / Sair",
+            if(PremiumAccess.controlled()){
+                addHomeDrawerGroup(drawer,"PREMIUM");
+                addHomeDrawerItem(drawer,"★","Gerenciar / Sair",
                     this::showPremiumAccountOptions);
-        }else{
-            addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
-            addHomeDrawerItem(drawer,"◉","Conta",this::showHomeAccountMenu);
-            addHomeDrawerItem(drawer,"◐","Transparência dos fundos",this::showHomeTransparencyDialog);
-            addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
-            addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+            }
+        }else if(dataPage){
+            addHomeDrawerItem(drawer,"‹","Voltar",this::showHomeMenu);
+            addHomeDrawerGroup(drawer,"BACKUP LOCAL");
             addHomeDrawerItem(drawer,"⇧","Importar dados",this::importHomeData);
-            addHomeDrawerItem(drawer,"◇","Filtros PGSharp",this::showSavedPgsFilters);
+            addHomeDrawerItem(drawer,"⇩","Exportar dados",this::exportHomeData);
+            TextView note=homeText(
+                "O backup exporta somente configurações permitidas. "+
+                "Não inclui sessões ou credenciais de login.",11,
+                homeLightMode?Color.rgb(83,104,124):Color.rgb(161,184,207),false);
+            note.setPadding(d(18),d(10),d(18),d(10));
+            drawer.addView(note,new LinearLayout.LayoutParams(-1,-2));
+        }else if(aboutPage){
+            addHomeDrawerItem(drawer,"‹","Voltar",this::showHomeMenu);
+            addHomeDrawerGroup(drawer,"APLICATIVO");
             addHomeDrawerItem(drawer,"↗","Compartilhar app",this::sharePokeSearch);
-            addHomeDrawerItem(drawer,"💙","Agradecimentos",this::openTribute);
-            if(CommunityScrapbookStage1.isEnabled(this))
-                addHomeDrawerItem(drawer,"💬","Chat ao vivo",this::scrollToCommunity);
-            boolean chatVisible=CommunityScrapbookStage1.isEnabled(this);
-            addHomeDrawerItem(drawer,"💬",chatVisible?"Ocultar Chat":"Mostrar Chat",
-                this::toggleCommunityScrapbookStage1);
-            addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
-            addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
-            addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
-
-            TextView statistics=homeText("  ESTATÍSTICAS",11,
-                homeLightMode?Color.rgb(47,79,100):Color.rgb(170,195,218),true);
-            statistics.setPadding(d(18),d(9),0,0);
-            drawer.addView(statistics,new LinearLayout.LayoutParams(-1,d(33)));
+            addHomeDrawerItem(drawer,"♥","Agradecimentos",this::openTribute);
+            addHomeDrawerGroup(drawer,"ESTATÍSTICAS");
             online=homeText("●  Ativos agora: —",12,
-                homeLightMode?Color.rgb(29,47,66):Color.WHITE,false);
+                homeLightMode?Color.rgb(41,67,87):Color.rgb(201,218,236),false);
             installations=homeText("▣  Instalações: —",12,
-                homeLightMode?Color.rgb(29,47,66):Color.WHITE,false);
-            online.setPadding(d(18),0,0,0);
-            installations.setPadding(d(18),0,0,0);
-            drawer.addView(online,new LinearLayout.LayoutParams(-1,d(40)));
-            drawer.addView(installations,new LinearLayout.LayoutParams(-1,d(40)));
+                homeLightMode?Color.rgb(41,67,87):Color.rgb(201,218,236),false);
+            online.setGravity(Gravity.CENTER_VERTICAL);
+            installations.setGravity(Gravity.CENTER_VERTICAL);
+            online.setPadding(d(21),0,d(10),0);
+            installations.setPadding(d(21),0,d(10),0);
+            drawer.addView(online,new LinearLayout.LayoutParams(-1,d(36)));
+            drawer.addView(installations,new LinearLayout.LayoutParams(-1,d(36)));
+        }else{
+            addHomeDrawerGroup(drawer,"PRINCIPAL");
+            addHomeDrawerItem(drawer,"◉","Conta",this::showHomeAccountMenu);
+            addHomeDrawerItem(drawer,"★","Favoritos",this::openPicker);
+            addHomeDrawerItem(drawer,"⚙","Preferências",this::showPreferencesDialog);
+            addHomeDrawerItem(drawer,"◇","Filtros PGSharp",this::showSavedPgsFilters);
+            addHomeDrawerGroup(drawer,"AJUDA E ATUALIZAÇÕES");
+            addHomeDrawerItem(drawer,"✦","Novidades",()->ReleaseNotes.showHistory(this));
+            addHomeDrawerItem(drawer,"?","Guia rápido",this::showQuickGuide);
+            addHomeDrawerItem(drawer,"!","Reportar problema",this::showBugReportDialog);
+            addHomeDrawerGroup(drawer,"MAIS");
+            addHomeDrawerItem(drawer,"▣","Dados e backup",
+                ()->showHomeDrawerPage("data"));
+            addHomeDrawerItem(drawer,"ⓘ","Sobre o aplicativo",
+                ()->showHomeDrawerPage("about"));
         }
         homeRoot.addView(layer,new FrameLayout.LayoutParams(-1,-1));
         homeDrawerLayer=layer;
@@ -2165,6 +2247,24 @@ public class MainActivity extends Activity {
             Toast.makeText(this,"Não há aplicativo disponível para compartilhar",
                 Toast.LENGTH_SHORT).show();
         }
+    }
+    /** Chat controls live with the Comunidade module, not the global drawer. */
+    private void showCommunityHomeOptions(){
+        boolean enabled=CommunityScrapbookStage1.isEnabled(this);
+        String[] options=enabled?
+            new String[]{"Abrir Chat","Ocultar Chat","Fórum (em preparação)"}:
+            new String[]{"Mostrar Chat","Fórum (em preparação)"};
+        new AlertDialog.Builder(this)
+            .setTitle("Comunidade")
+            .setItems(options,(dialog,choice)->{
+                if(enabled&&choice==0)scrollToCommunity();
+                else if((enabled&&choice==1)||(!enabled&&choice==0))
+                    toggleCommunityScrapbookStage1();
+                else Toast.makeText(this,"O fórum está em preparação.",
+                    Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton("Fechar",null)
+            .show();
     }
     private void toggleCommunityScrapbookStage1(){
         SharedPreferences prefs=getSharedPreferences("prefs",0);
@@ -4225,6 +4325,14 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams privacyHintLp=new LinearLayout.LayoutParams(-1,-2);
         privacyHintLp.bottomMargin=d(14);
         body.addView(privacyHint,privacyHintLp);
+
+        // LT395: retain background transparency in Preferências instead of
+        // using a separate high-level drawer row.
+        Button transparency=new Button(this);
+        transparency.setText("◐  Transparência dos fundos da Home");
+        transparency.setAllCaps(false);transparency.setTextSize(12);
+        transparency.setOnClickListener(v->showHomeTransparencyDialog());
+        body.addView(transparency,new LinearLayout.LayoutParams(-1,d(42)));
 
         android.widget.TextView subtitle=new android.widget.TextView(this);
         subtitle.setText("Tamanho do Pokémon · altere também por P / M / G no overlay");

@@ -14,7 +14,7 @@ test("Chat hidden by default after LT391, old prototype remains isolated",()=>{
  assert.match(home,/getBoolean\("communityLiveChatVisible",false\)/);
  assert.match(home,/lt391ChatHomeHiddenOnce/);
  assert.match(home,/CommunityScrapbookOnline\.homePanel/);
- assert.match(main,/chatVisible\?"Ocultar Chat":"Mostrar Chat"/);
+ assert.match(main,/new String\[\]\{"Abrir Chat","Ocultar Chat","Fórum \(em preparação\)"\}/);
  assert.match(main,/putBoolean\("communityLiveChatVisible"/);
  assert.match(activity,/if\(!CommunityScrapbookStage1\.isEnabled\(this\)\|\|!IntegrityGuard\.verify\(this\)\)/);
  assert.match(main,/if\(scrapbookPreview\)/);
@@ -25,7 +25,7 @@ test("Home stays scrollable while tribute, sharing and stats move to the drawer"
  assert.match(main,/stage1HomeScroll\.setFillViewport\(true\)/);
  assert.match(main,/frame\.addView\(stage1HomeScroll/);
  assert.doesNotMatch(main,/CommunityTribute\.homeCard/);
- assert.match(main,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
+ assert.match(main,/addHomeDrawerItem\(drawer,"♥","Agradecimentos",this::openTribute\)/);
  assert.match(main,/screen\.addView\(footer,new LinearLayout\.LayoutParams\(-1,d\(30\)\)\)/);
  assert.match(main,/FirebaseStats\.bind\(this,online,installations\)/);
  assert.match(main,/shareIcon\.setOnClickListener\(v->sharePokeSearch\(\)\)/);

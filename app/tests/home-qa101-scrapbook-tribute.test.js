@@ -10,7 +10,7 @@ assert.match(tribute,/chip\.setMinimumHeight\(dp\(a,48\)\)/);
 assert.match(tribute,/miniatura|thumbnail/i);
 assert.match(tribute,/show\(Activity a,FrameLayout home/);
 assert.doesNotMatch(main,/CommunityTribute\.homeCard\(this,homeLightMode,this::openTribute\)/);
-assert.match(main,/addHomeDrawerItem\(drawer,"💙","Agradecimentos",this::openTribute\)/);
+assert.match(main,/addHomeDrawerItem\(drawer,"♥","Agradecimentos",this::openTribute\)/);
 assert.doesNotMatch(main,/screen\.addView\(thanks,thanksLp\)/);
 assert.match(online,/Chat PokeSearch/);
 assert.match(online,/private void addBubble\(/);
