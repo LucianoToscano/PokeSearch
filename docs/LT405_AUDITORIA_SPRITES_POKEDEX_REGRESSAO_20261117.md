@@ -1,5 +1,7 @@
 # LT405 — Auditoria de regressão nas sprites da Minha Pokédex (17/11/2026)
 
+> **Encerramento LT405 (17/11/2026):** PR #527 integrada por squash `8bfd2980dae82ca7bd3f4dbf235d56995c7da633`; versão PR #528 por squash `b277b39c33bc5c7fe077f6a09bda5851df3d8179`. **PokeSearch v0.03.90 LT / 54597 publicado oficialmente** em [release estável](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.90-54597); [APK](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.90-54597/PokeSearch-v0.03.90-LT.apk), SHA-256 público `1dda619d87ee487fa426455829428889e812e2761b05654000c349668159f42a`. [Workflow protegido #44173772883](https://github.com/LucianoToscano/PokeSearch/actions/runs/44173772883) completed/success, assinatura permanente validada no CI. Homologação física Samsung Android 17 permanece pendente. [ARK completo](ARK_LT405_SPRITES_POKEDEX_OFICIAL_20261117.md) e [prompt LT406](LT406_PROMPT_CONTINUIDADE_APOS_LT405_20261117.md).
+
 ## Sintoma e evidência
 Imagem enviada pelo proprietário: grade da Pokédex com 1.198 Pokémon, poucos desenhos visíveis (Dragonite) e losangos em Mewtwo, Garchomp, Metagross, Hydreigon, Rhyperior, Goodra, Haxorus e Conkeldurr. É evidência visual de falha de carregamento — não prova que os Pokémon desapareceram do inventário.
 
