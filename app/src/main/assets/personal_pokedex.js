@@ -11,7 +11,9 @@ const filterDefs=[
 const presets=[["default","Padrão"],["aurora","Aurora"],["sunset","Pôr do sol"],
                ["ocean","Oceano"],["night","Noite"]];
 const state={slot:1,all:[],filtered:[],tags:new Map(),names:new Map(),tab:"pokemon",eggs:[],capacity:0,tagId:null,meta:{moves:new Map(),backgrounds:new Map(),costumes:new Map()},
-             query:"",filter:"all",sort:"cp",limit:96,selected:null};
+             query:"",filter:"all",activeFilters:new Set(),sort:"cp",limit:96,selected:null,
+             selecting:false,selectedIds:new Set(),bgFiles:[],bgCards:[],bgAssets:new Map(),
+             bgCached:new Set(),backgroundTarget:null,bgQuery:""};
 const el=id=>document.getElementById(id);
 const escapeHtml=value=>String(value??"").replace(/[&<>"']/g,s=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -73,8 +75,8 @@ function artHtml(p,css){
   return '<img class="'+css+'" src="'+escapeHtml(uri)+'" alt="'+name+
     '" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'◇\'))">';
 }
-function filterPokemon(p){
-  switch(state.filter){
+function filterPokemon(p,key=state.filter){
+  switch(key){
   case "shiny":return !!p.shiny;
   case "hundo":return isHundo(p);
   case "background":return hasBackground(p);
@@ -116,7 +118,7 @@ function compare(a,b){
 }
 function renderFilters(){
   el("filters").innerHTML=filterDefs.map(([key,label])=>
-    '<button class="filter '+(key===state.filter?"active":"")+
+    '<button class="filter '+((!state.activeFilters.size&&key==="all")||state.activeFilters.has(key)?"active":"")+
     '" data-filter="'+key+'">'+label+'</button>').join("");
 }
 function renderStats(){
@@ -164,7 +166,7 @@ const categoryDefs=[
 ];
 function renderTags(){
  el("tag-categories").innerHTML=categoryDefs.map(([key,label,icon,color])=>{
-  const count=state.all.filter(p=>{const filter=state.filter;state.filter=key;const ok=filterPokemon(p);state.filter=filter;return ok}).length;
+  const count=state.all.filter(p=>filterPokemon(p,key)).length;
   return '<button class="category" data-category="'+key+'" aria-label="'+escapeHtml(label)+': '+number(count)+'"><span class="bubble" style="background:'+color+'">'+svgShape(icon)+'</span><span class="label">'+escapeHtml(label)+'</span><span class="count">'+number(count)+'</span></button>';
  }).join("");
  el("personal-tags").innerHTML=Array.from(state.tags.entries()).map(([key,name])=>{
@@ -187,7 +189,8 @@ function summaryTime(){
   el("import-time").textContent=s?"Exportação: "+s:"Importe PGSStats.json ou PGSStats.json";
 }
 function render(){
-  const visible=state.all.filter(p=>filterPokemon(p)&&matchesQuery(p)).sort(compare);
+  const visible=state.all.filter(p=>
+    [...state.activeFilters].every(key=>filterPokemon(p,key))&&matchesQuery(p)).sort(compare);
   state.filtered=visible;
   el("result-note").textContent=number(visible.length)+" Pokémon encontrados · Lista privada";
   const displayed=visible.slice(0,state.limit);
@@ -202,10 +205,12 @@ function render(){
   }else{
     el("grid").innerHTML=displayed.map(p=>{
       const max=p.maxStamina||0,health=max?Math.min(100,Math.round(100*(p.stamina||0)/max)):100;
-      const flags=[p.shiny?"✨":"",p.favorite?"⭐":"",hasBackground(p)?"🖼️":"",
+      const chosen=state.selectedIds.has(p.id);
+       const flags=[p.shiny?"✨":"",p.favorite?"⭐":"",hasBackground(p)?"🖼️":"",
          p.costume?"🎩":"",isShadow(p)?"◈":""].filter(Boolean).join("");
-      return '<button type="button" class="mon" data-id="'+p.id+'" aria-label="'+
+      return '<button type="button" class="mon '+(chosen?"selected":"")+'" data-id="'+p.id+'" aria-label="'+
         escapeHtml(speciesName(p))+' PC '+number(p.cp)+'">'+
+        (state.selecting?'<span class="selection-indicator" aria-hidden="true">'+(chosen?"✓":"")+'</span>':"")+ 
         '<div class="cp"><small>PC</small>'+number(p.cp)+'</div>'+
         '<div class="pic">'+artHtml(p,"sprite")+
         '<span class="flags">'+flags+'</span></div>'+
@@ -224,7 +229,8 @@ function loadSlot(){
   state.capacity=Number(data.capacity)||0;
   state.snapshotTime=data.snapshotTime||"";
   state.tags=new Map((data.tags||[]).map(t=>[String(t.id),String(t.name)]));
-  state.query="";state.filter="all";state.limit=96;
+  state.query="";state.filter="all";state.activeFilters.clear();state.limit=96;
+  state.selecting=false;state.selectedIds.clear();renderSelection();
   el("search").value="";
   el("slot1").classList.toggle("active",state.slot===1);
   el("slot2").classList.toggle("active",state.slot===2);
@@ -364,12 +370,25 @@ el("help").addEventListener("click",()=>notice(
   "Importação manual e local. Nenhum JSON é enviado para outros usuários ou servidores. Cada inventário é independente."));
 el("filters").addEventListener("click",e=>{
   const b=e.target.closest("[data-filter]");if(!b)return;
-  state.filter=b.dataset.filter;state.limit=96;renderFilters();render();
+  const key=b.dataset.filter;
+  if(key==="all")state.activeFilters.clear();
+  else if(state.activeFilters.has(key))state.activeFilters.delete(key);
+  else state.activeFilters.add(key);
+  state.filter=state.activeFilters.size?[...state.activeFilters][0]:"all";
+  state.limit=96;renderFilters();render();
 });
 el("search").addEventListener("input",e=>{state.query=e.target.value;state.limit=96;render();});
 el("sort").addEventListener("change",e=>{state.sort=e.target.value;render();});
 el("grid").addEventListener("click",e=>{
-  const b=e.target.closest("[data-id]");if(b)showDetail(b.dataset.id);
+  const b=e.target.closest("[data-id]");
+  if(!b)return;
+  if(state.selecting){
+    const id=b.dataset.id;
+    if(state.selectedIds.has(id))state.selectedIds.delete(id);
+    else if(state.selectedIds.size<3)state.selectedIds.add(id);
+    else notice("Selecione até três Pokémon para comparar.");
+    renderSelection();render();
+  }else showDetail(b.dataset.id);
 });
 el("more").addEventListener("click",()=>{state.limit+=96;render();});
 el("detail-back").addEventListener("click",hideDetail);
@@ -405,12 +424,14 @@ document.querySelectorAll("[data-tab]").forEach(b=>
  b.addEventListener("click",()=>setTab(b.dataset.tab)));
 el("tag-categories").addEventListener("click",e=>{
  const b=e.target.closest("[data-category]");if(!b)return;
- state.filter=b.dataset.category;state.tagId=null;state.limit=96;
+ state.filter=b.dataset.category;state.activeFilters=new Set([state.filter]);
+ state.tagId=null;state.limit=96;
  renderFilters();setTab("pokemon");render();
 });
 el("personal-tags").addEventListener("click",e=>{
  const b=e.target.closest("[data-tag]");if(!b)return;
- state.filter="tag";state.tagId=b.dataset.tag;state.limit=96;
+ state.filter="tag";state.activeFilters=new Set(["tag"]);
+ state.tagId=b.dataset.tag;state.limit=96;
  renderFilters();setTab("pokemon");render();
 });
 function shiftDetail(delta){
