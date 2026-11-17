@@ -5289,6 +5289,40 @@
           "Trocas, vendas, leilões e sincronização automática com Pokémon GO não integram esta versão."
         ]
       }
+    },
+    {
+      "id": "lt400-sprites-formas-shiny-20261117",
+      "minVersionCode": 54592,
+      "date": "17/11/2026",
+      "title": "PokeSearch LT400 — Catálogo visual da Pokédex e categorias corrigidas",
+      "sections": {
+        "novidades": [
+          "Catálogo de 6.063 arquivos visuais identificados: 3.850 sprites GO e 2.213 imagens legadas, com índice por espécie, forma, gênero, Shiny e traje.",
+          "Nova área Sprites na Minha Pokédex para baixar opcionalmente apenas as variantes da coleção, o catálogo GO ou imagens legadas, em armazenamento privado.",
+          "Novas categorias Lendário, Mítico, espécie que pode evoluir e fundo sem classificação, usando dados catalogados e sem inventar correspondências.",
+          "Marcadores visuais separados para Sombroso, Purificado e Shiny na grade pessoal.",
+          "Diagnóstico de sprites que ainda não possuem arquivo exato, com opção de baixar a variante encontrada."
+        ],
+        "melhorias": [
+          "Catálogo versionado inclui 1.506 identificadores de formas, 87 códigos de trajes e metadados de 1.025 espécies.",
+          "Downloads de sprites iniciados pelo usuário, com cancelamento, retomada, tamanho e hash verificados antes de gravar imagem em cache.",
+          "Megaevoluções registradas no JSON agora consideram também megaEvolvedForms e nível da ficha, quando presentes.",
+          "Evento visual e origem em evento são apresentados separadamente para não atribuir a mesma classificação a registros diferentes.",
+          "Mantidos os fundos, filtros combinados, comparação, notas e histórico dos inventários 1/2."
+        ],
+        "correcoes": [
+          "Corrigida a inversão dos filtros Sombroso e Purificado (alignment 1/2) do PGSStats.",
+          "Formas desconhecidas não utilizam por engano a sentinela FORM_UNSET nem recebem imagens de outra forma, como Giratina Altered.",
+          "Fundos sem metadados de tipo não são contabilizados automaticamente como fundo de localidade.",
+          "Ícones originais da Home, P1/P2, login, comunidade, quest, assistente e navegação existentes preservados."
+        ],
+        "emDesenvolvimento": [
+          "O catálogo lista os arquivos presentes nas fontes consultadas, sem garantir que todas as variantes de Pokémon GO tenham imagem.",
+          "Sprites e modelos de terceiros não são embutidos nem redistribuídos no APK. Downloads opcionais são realizados pelo usuário no aparelho.",
+          "Homologação física no Samsung Android 17, verificação de imagens baixadas, redes instáveis, performance e acessibilidade ainda pendentes.",
+          "As contagens Evento/Megaevoluiu do jogo podem usar regras diferentes das disponíveis no instantâneo PGSStats; indicadores do app mostram apenas dados confirmáveis."
+        ]
+      }
     }
   ]
 }
