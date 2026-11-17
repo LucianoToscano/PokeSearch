@@ -399,7 +399,8 @@ test("Menu occupies separate window rather than wide sprite dock",service.includ
 test("Original compact toolbar is only one 34dp row",service.includes('new WindowManager.LayoutParams(dp(menuDp()),dp(visualMenuBaseDp())')&&service.includes("MENU_BASE_DP=34"));
 test("Minimize hides options and restores using gear",service.includes('if(yes&&menuExpanded)menu(false)')&&service.includes('if(minimized)minimize(false);'));
 test("Login launched from overlay returns to gameplay with PokeSearch only on successful authentication",
- main.includes('if(authenticatedNow&&fromOverlay&&OverlayService.isRunning())')&&
+ main.includes('if(authenticatedNow&&(fromOverlay||guestOverlay>0)&&')&&
+ main.includes('(OverlayService.isRunning()||OverlayService.isSecondaryRunning()))')&&
  main.includes('postDelayed(()->moveTaskToBack(true),220L)')&&
  main.includes('if(authenticatedNow)notifyOverlaySessionReady();'));
 test("Favorites dialog has integrated compact close action",picker.includes('finish.setText("×")')&&!picker.includes('.setPositiveButton("Concluído"'));
@@ -1684,7 +1685,7 @@ test("RESULTS-ALL-MODES partial site counts wait for complete card extraction",(
  const probe=read("assets/probe.js");
  return probe.includes('const expectedVisible=siteCount>0?Math.min(siteCount,100):0;')&&
   probe.includes('const siteIncomplete=expectedVisible>found.length;')&&
-  probe.includes('siteCount,siteIncomplete,expectedVisible,parseFailure')&&
+  probe.includes('siteCount,guestLimitBanner,siteIncomplete,expectedVisible,parseFailure')&&
   service.includes('if(r.optBoolean("siteIncomplete",false)&&attempt<24)')&&
   service.includes('BugReport.log(this,"RESULTS_PARTIAL"')&&
   service.includes(' • leitura parcial');
@@ -2872,7 +2873,7 @@ test("FILTERS-POGO-07 Applied requires native verified submission and accepted c
   confirmed.includes("submittedSearchGeneration==requestGeneration")&&
   confirmed.includes('("updated".equals(searchPhase)||"empty".equals(searchPhase))')&&
   confirmed.includes("!searchInProgress&&!resultsStale")&&
-  dock.includes("filtersConfirmed=false)=>{")&&
+  dock.includes("filtersConfirmed=false,guestLimitVisible=false)=>{")&&
   dock.includes("siteFiltersConfirmed=filtersConfirmed===true&&!searchActive&&!resultsStale")&&
   phase.includes("verified?\"✓ Aplicado no PoGoCoordinates\"")&&
   phase.includes("dirty?\"● Falta aplicar\"")&&
