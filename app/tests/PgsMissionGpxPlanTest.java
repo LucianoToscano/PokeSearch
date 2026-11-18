@@ -35,6 +35,10 @@ public final class PgsMissionGpxPlanTest {
         ok("1".equals(p.stops.get(0).name), "name from GPX");
         ok(p.stops.get(0).coordinates().startsWith("40."), "coordinates format");
         ok(p.repeatedCoordinates == 0, "no duplicate input");
+        ok(p.cumulativeDistanceKm > 0 && p.cumulativeDistanceKm < 10,
+            "ordered synthetic route distance computed");
+        ok(p.longestHopKm > 0 && p.longestHopKm < 1,
+            "small synthetic max hop computed");
         boolean immutable = false;
         try { p.stops.clear(); } catch (UnsupportedOperationException expected) {
             immutable = true;
@@ -51,6 +55,18 @@ public final class PgsMissionGpxPlanTest {
             "<gpx><trk><trkseg><trkpt lat=\"0\" lon=\"0\"/>"
             + "</trkseg></trk></gpx>"));
         ok(track.stops.size() == 1, "trkpt support");
+        PgsMissionGpxPlan measured = PgsMissionGpxPlan.parse(bytes(
+            "<gpx><wpt lat=\"0\" lon=\"0\"/><wpt lat=\"1\" lon=\"0\"/>"
+            + "<wpt lat=\"2\" lon=\"0\"/></gpx>"));
+        ok(Math.abs(measured.cumulativeDistanceKm - 222.39) < 0.3,
+            "two degree latitude haversine distance");
+        ok(Math.abs(measured.longestHopKm - 111.20) < 0.3,
+            "one degree latitude largest hop");
+        PgsMissionGpxPlan emptyJump = PgsMissionGpxPlan.parse(bytes(
+            "<gpx><wpt lat=\"0\" lon=\"0\"/></gpx>"));
+        ok(emptyJump.cumulativeDistanceKm == 0.0,
+            "singleton GPX has zero route distance");
+
         PgsMissionGpxPlan duplicates = PgsMissionGpxPlan.parse(bytes(
             "<gpx><wpt lat=\"2\" lon=\"3\"/><wpt lat=\"2\" lon=\"3\"/></gpx>"));
         ok(duplicates.repeatedCoordinates == 1, "duplicate flagged, not discarded");
