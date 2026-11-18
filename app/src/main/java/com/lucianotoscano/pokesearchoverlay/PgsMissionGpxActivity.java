@@ -334,10 +334,13 @@ public final class PgsMissionGpxActivity extends Activity {
             + "Projeção apenas hipotética: até %d doces, se cada pesquisa "
             + "for válida e conceder 25 doces.\n"
             + "Coordenadas repetidas: %d.\n"
+            + "Distância geográfica aproximada: %.2f km; maior salto: %.2f km.\n"
+            + "Não representa cooldown, deslocamento real nem horas de caminhada.\n"
             + "Pesquisas confirmadas: %d · Resgates confirmados: %d.\n"
             + "Doces registrados manualmente: %d.",
             count, plan.fullGroups(), plan.leftoverStops(),
             plan.possibleCandiesIfAllVerified(), plan.repeatedCoordinates,
+            plan.cumulativeDistanceKm,plan.longestHopKm,
             PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.TASK_CONFIRMED),
             PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED),
             PgsMissionLedgerPolicy.candies(missionStates)));
