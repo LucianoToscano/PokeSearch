@@ -47,11 +47,31 @@ final class PgsMissionGpxPlan {
 
     final List<Stop> stops;
     final int repeatedCoordinates;
+    final double cumulativeDistanceKm;
+    final double longestHopKm;
     private PgsMissionGpxPlan(List<Stop> stops, int repeatedCoordinates) {
         this.stops = Collections.unmodifiableList(new ArrayList<>(stops));
         this.repeatedCoordinates = repeatedCoordinates;
+        double total=0.0, longest=0.0;
+        for(int i=1;i<stops.size();i++){
+            double step=haversineKm(stops.get(i-1),stops.get(i));
+            total+=step;
+            longest=Math.max(longest,step);
+        }
+        this.cumulativeDistanceKm=total;
+        this.longestHopKm=longest;
     }
 
+    /** Straight-line hop estimates, NOT road distance or a cooldown predictor. */
+    private static double haversineKm(Stop a,Stop b){
+        double la1=Math.toRadians(a.latitude),la2=Math.toRadians(b.latitude);
+        double dLat=la2-la1;
+        double dLon=Math.toRadians(b.longitude-a.longitude);
+        double h=Math.sin(dLat/2)*Math.sin(dLat/2)
+            +Math.cos(la1)*Math.cos(la2)
+            *Math.sin(dLon/2)*Math.sin(dLon/2);
+        return 2*6371.0088*Math.asin(Math.min(1.0,Math.sqrt(h)));
+    }
     int fullGroups() { return stops.size() / CANDIDATE_GROUP_SIZE; }
     int leftoverStops() { return stops.size() % CANDIDATE_GROUP_SIZE; }
     int possibleCandiesIfAllVerified() {
