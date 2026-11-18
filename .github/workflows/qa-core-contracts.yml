@@ -39,7 +39,7 @@ jobs:
             LocalBridgePagePolicy PresenceWindowState
             PopupTouchGeometry ResultsSpacingPolicy OverlayPlacementPolicy
             SupportMissionPolicy UpdatePolicy VerifiedIvMath VerifiedEncounterCoordinates PvpAlertPriority
-            VersionNames ProviderWaitFormatter PgsAutoRetryPolicy PgsAutoShinySignal PgsAutoHuntPolicy PgsSequencePolicy PgsAutoNotificationPolicy PgsAutoCyclePolicy PgsAutoVisualState ProfileScreenshotPolicy PgsAutoTargetPolicy PgsAutoGestureEvidence PgsAutoScreenGeometry PgsAutoMatchPolicy PgsAutoModelSelectionPolicy PgsAutoSafetyNoticePolicy PgsAutoRuntimeBudgetPolicy PgsAutoScanDeadlinePolicy PgsAutoHostPolicy PgsAutoHostProbePolicy PgsNightSupervisorPolicy PgsAutoScanRegionPolicy PgsAutoWatchPolicy PgsAutoWatchUiPolicy PgsCompanionPolicy PgsWatchSessionDiagnostics PokeListApiPolicy PokeListResultPolicy
+            VersionNames ProviderWaitFormatter PgsAutoRetryPolicy PgsAutoShinySignal PgsAutoHuntPolicy PgsMissionGpxPlan PgsSequencePolicy PgsAutoNotificationPolicy PgsAutoCyclePolicy PgsAutoVisualState ProfileScreenshotPolicy PgsAutoTargetPolicy PgsAutoGestureEvidence PgsAutoScreenGeometry PgsAutoMatchPolicy PgsAutoModelSelectionPolicy PgsAutoSafetyNoticePolicy PgsAutoRuntimeBudgetPolicy PgsAutoScanDeadlinePolicy PgsAutoHostPolicy PgsAutoHostProbePolicy PgsNightSupervisorPolicy PgsAutoScanRegionPolicy PgsAutoWatchPolicy PgsAutoWatchUiPolicy PgsCompanionPolicy PgsWatchSessionDiagnostics PokeListApiPolicy PokeListResultPolicy
           )
           inputs=()
           for name in "${sources[@]}"; do inputs+=("$base/$name.java"); done
