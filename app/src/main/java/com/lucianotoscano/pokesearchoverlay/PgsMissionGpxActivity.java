@@ -20,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Locale;
+import java.security.MessageDigest;
 
 /**
  * LT408: planejador GPX OFFLINE, com importação SAF e progresso local manual.
@@ -31,8 +32,11 @@ public final class PgsMissionGpxActivity extends Activity {
     private static final String PREFS = "pgs_mission_gpx_planner_v1";
     private PgsMissionGpxPlan plan;
     private int visited;
+    private String routeKey="";
+    private int[] missionStates=new int[0];
     private TextView summary, next, notice;
     private Button previousButton, visitedButton, copyButton;
+    private Button confirmButton, redeemButton, clearButton;
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
@@ -102,6 +106,15 @@ public final class PgsMissionGpxActivity extends Activity {
         visitedButton = button("Marcar ponto visitado manualmente");
         visitedButton.setOnClickListener(v -> changeVisited(1));
         add(root, visitedButton, 44);
+        confirmButton=button("Confirmar pesquisa de 25 doces (manual)");
+        confirmButton.setOnClickListener(v->updateMission(1));
+        add(root,confirmButton,44);
+        redeemButton=button("Confirmar resgate de 25 doces (manual)");
+        redeemButton.setOnClickListener(v->updateMission(2));
+        add(root,redeemButton,44);
+        clearButton=button("Desfazer confirmação deste ponto");
+        clearButton.setOnClickListener(v->updateMission(0));
+        add(root,clearButton,44);
         previousButton = button("Voltar um ponto");
         previousButton.setOnClickListener(v -> changeVisited(-1));
         add(root, previousButton, 44);
@@ -138,6 +151,8 @@ public final class PgsMissionGpxActivity extends Activity {
                 output.write(bytes);
             }
             plan = parsed;
+            routeKey=routeHash(bytes);
+            missionStates=new int[plan.stops.size()];
             visited = 0;
             persistVisited();
             render();
@@ -154,14 +169,46 @@ public final class PgsMissionGpxActivity extends Activity {
         File file = localRoute();
         if (!file.isFile()) return;
         try (FileInputStream in = new FileInputStream(file)) {
-            plan = PgsMissionGpxPlan.parse(in);
+            byte[] bytes=PgsMissionGpxPlan.readLimited(in);
+            plan = PgsMissionGpxPlan.parse(bytes);
+            routeKey=routeHash(bytes);
+            loadMissionStates();
             visited = Math.max(0, Math.min(plan.stops.size(),
                 getSharedPreferences(PREFS, MODE_PRIVATE).getInt("visited", 0)));
         } catch (Exception ignored) {
             // Prévia não deve bloquear o lançamento do aplicativo.
             plan = null;
+            routeKey="";
+            missionStates=new int[0];
             visited = 0;
         }
+    }
+    private static String routeHash(byte[] bytes) throws Exception {
+        byte[] hash=MessageDigest.getInstance("SHA-256").digest(bytes);
+        StringBuilder key=new StringBuilder("route_");
+        for(byte b:hash)key.append(String.format(Locale.US,"%02x",b&255));
+        return key.toString();
+    }
+    private void loadMissionStates() {
+        missionStates=new int[plan.stops.size()];
+        android.content.SharedPreferences prefs=getSharedPreferences(PREFS,MODE_PRIVATE);
+        for(int i=0;i<missionStates.length;i++)
+            missionStates[i]=PgsMissionLedgerPolicy.normalize(
+                prefs.getInt(routeKey+"_mission_"+i,0));
+    }
+    private void updateMission(int action) {
+        if(plan==null||visited>=missionStates.length)return;
+        int old=missionStates[visited];
+        int updated=action==1?PgsMissionLedgerPolicy.confirmTask(old):
+            action==2?PgsMissionLedgerPolicy.redeem(old):PgsMissionLedgerPolicy.clear(old);
+        if(action==2&&old!=PgsMissionLedgerPolicy.TASK_CONFIRMED){
+            Toast.makeText(this,"Confirme primeiro a pesquisa recebida.",Toast.LENGTH_LONG).show();
+            return;
+        }
+        missionStates[visited]=updated;
+        getSharedPreferences(PREFS,MODE_PRIVATE).edit()
+            .putInt(routeKey+"_mission_"+visited,updated).apply();
+        render();
     }
     private void persistVisited() {
         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
@@ -190,6 +237,11 @@ public final class PgsMissionGpxActivity extends Activity {
         copyButton.setEnabled(has && visited < plan.stops.size());
         visitedButton.setEnabled(has && visited < plan.stops.size());
         previousButton.setEnabled(has && visited > 0);
+        boolean active=has&&visited<missionStates.length;
+        int state=active?missionStates[visited]:0;
+        confirmButton.setEnabled(active&&state==PgsMissionLedgerPolicy.UNKNOWN);
+        redeemButton.setEnabled(active&&state==PgsMissionLedgerPolicy.TASK_CONFIRMED);
+        clearButton.setEnabled(active&&state!=PgsMissionLedgerPolicy.UNKNOWN);
         if (!has) {
             summary.setText("Nenhum GPX importado.");
             next.setText("Escolha um arquivo GPX para visualizar os pontos.");
@@ -200,9 +252,14 @@ public final class PgsMissionGpxActivity extends Activity {
             "%d pontos · %d trios candidatos · %d pontos restantes fora de trios.\n"
             + "Projeção apenas hipotética: até %d doces, se cada pesquisa "
             + "for válida e conceder 25 doces.\n"
-            + "Coordenadas repetidas: %d.",
+            + "Coordenadas repetidas: %d.\n"
+            + "Pesquisas confirmadas: %d · Resgates confirmados: %d.\n"
+            + "Doces registrados manualmente: %d.",
             count, plan.fullGroups(), plan.leftoverStops(),
-            plan.possibleCandiesIfAllVerified(), plan.repeatedCoordinates));
+            plan.possibleCandiesIfAllVerified(), plan.repeatedCoordinates,
+            PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.TASK_CONFIRMED),
+            PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED),
+            PgsMissionLedgerPolicy.candies(missionStates)));
         if (visited >= count) {
             next.setText("Fim da lista: " + count + "/" + count
                 + " pontos marcados manualmente.");
@@ -211,8 +268,13 @@ public final class PgsMissionGpxActivity extends Activity {
         PgsMissionGpxPlan.Stop stop = plan.stops.get(visited);
         next.setText(String.format(Locale.US,
             "Progresso: %d/%d pontos marcados\n"
-            + "Próximo: %s · conjunto candidato %d · posição %d/3\n%s",
+            + "Próximo: %s · conjunto candidato %d · posição %d/3\n%s\n"
+            + "Estado informado manualmente: %s",
             visited, count, stop.name, visited / 3 + 1, visited % 3 + 1,
-            stop.coordinates()));
+            stop.coordinates(),
+            missionStates[visited]==PgsMissionLedgerPolicy.REWARD_REDEEMED?
+                "recompensa resgatada":missionStates[visited]==
+                PgsMissionLedgerPolicy.TASK_CONFIRMED?
+                "pesquisa confirmada":"não confirmado"));
     }
 }
