@@ -151,9 +151,11 @@ public final class PgsMissionGpxActivity extends Activity {
                 output.write(bytes);
             }
             plan = parsed;
-            routeKey=routeHash(bytes);
-            missionStates=new int[plan.stops.size()];
-            visited = 0;
+            String newRouteKey=routeHash(bytes);
+            boolean sameRoute=newRouteKey.equals(routeKey);
+            routeKey=newRouteKey;
+            loadMissionStates();
+            visited = sameRoute?visited:0;
             persistVisited();
             render();
             Toast.makeText(this, "GPX validado e salvo apenas neste aparelho.",
