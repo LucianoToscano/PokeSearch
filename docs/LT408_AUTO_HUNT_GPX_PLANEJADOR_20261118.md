@@ -29,3 +29,18 @@ O proprietário quer executar durante a noite o fluxo mostrado no vídeo enviado
 
 ## Evidência e publicação
 Implementação feita em branch de funcionalidade e PR de rascunho, não publicável como Auto Hunt noturno e não apta a ARK oficial sem QA verde e homologação de dispositivo. **Não** fazer merge automático nem criar APK oficial apenas com esta prévia. Somente PokeSearch LT é canal de distribuição; FastDev/DEV/Preview estão removidos da branch oficial.
+
+
+## Evidência da gravação enviada em 18/11/2026 (1000975030.mp4)
+- Vídeo de tela sem trilha de áudio, aproximadamente 4min26s, gravado em Android. Em torno de 00:24 e 02:16, interface de mapa/rota PGSharp mostra **500 pontos / 569,63 km** e controles de pausa e parada; isto comprova a rota carregada no cliente, não o ciclo de pesquisa.
+- Por volta de 00:46, aparece o bônus de **primeira Poképarada do dia**, evidência de pelo menos um giro/recompensa de parada na gravação.
+- Em torno de 00:52, o jogo exibe **"O seu estoque de Pokémon está cheio"**. O bloqueio de captura é real e precisa de resolução manual ou método comprovado, sem transferir Pokémon automaticamente.
+- Em torno de 01:04, o usuário percorre a tela de Pesquisas de Campo e uma confirmação de remoção. Não foi mostrada uma recompensa confirmada de 25 doces de Eternatus nem a conclusão de três tarefas. O PokeSearch não deve registrar os doces só por girar a Poképarada.
+- Perto de 04:08, configurações do PGSharp mostram **GoPlus Virtual**, **PokéParada Próxima**, **Giro Rápido** e **Pular Animações** ligados. Estas opções não demonstram, sozinhas, a recepção de pesquisas desejadas, execução de excelente e resgate das três recompensas.
+- As configurações exibidas perto de 04:00 contêm **dados identificadores de assinatura/conta**. Não copiar e-mails, identificadores ou capturas do vídeo para repositório, logs ou PRs; recomendar ocultação antes de compartilhamento público. O vídeo original permanece fora da árvore de código.
+
+### Ajustes implementados a partir do vídeo
+- PgsMissionPreflightPolicy: checklist de sete declarações manuais separadas por hash do GPX, com validade conservadora da confirmação por no máximo 24 horas locais desde o primeiro registro; não valida a expiração real do site.
+- PgsMissionGpxActivity: checks de rota/tarefas recentes, vagas de Pesquisa de Campo, estoque de Pokémon, bolsa de itens, GoPlus/PokéParada Próxima, recompensa de Eternatus verificada e esperas/cooldown revisados. Indicador "N/7" deixa claro que checklist completo **não habilita** automação no jogo.
+- Testes PgsMissionPreflightPolicyTest.java e contrato Node LT408, mantendo o recurso independente de contas, APIs e P1/P2.
+- Regra de segurança pendente: se uma futura leitura visual detectar estoque cheio, confirmação de exclusão de pesquisas, aviso de conta, jogo oculto ou dados insuficientes, deverá pausar e pedir ação humana. Não automatizar a remoção de tarefas nem prometer ausência de risco de penalidade.
