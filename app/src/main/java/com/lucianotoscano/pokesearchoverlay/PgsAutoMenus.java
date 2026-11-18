@@ -1162,6 +1162,22 @@ final class PgsAutoMenus {
         });
         root.addView(advanced,margined(-1,dp(30),5));
         if(centralAdvanced)appendCentralAdvanced(root,hunt,cycles);
+        if(PgsSmartSearchSettings.HUNT.equals(PgsSmartSearchSettings.mode(context))){
+            Button gpx=button("⌖ GPX · planejar missões (offline)",10);
+            gpx.setOnClickListener(v->{
+                hidePanel();
+                try{
+                    android.content.Intent intent=new android.content.Intent(
+                        context,PgsMissionGpxActivity.class);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
+                }catch(Exception e){
+                    Toast.makeText(context,"Não foi possível abrir o planejador GPX.",
+                        Toast.LENGTH_LONG).show();
+                }
+            });
+            root.addView(gpx,margined(-1,dp(32),4));
+        }
     }
 
     private void appendCentralAlert(LinearLayout root,SharedPreferences prefs,
