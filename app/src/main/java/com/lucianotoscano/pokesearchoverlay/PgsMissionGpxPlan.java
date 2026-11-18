@@ -10,7 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import javax.xml.XMLConstants;
+import java.nio.charset.StandardCharsets;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -77,15 +78,25 @@ final class PgsMissionGpxPlan {
     static PgsMissionGpxPlan parse(byte[] xml) throws Exception {
         if (xml == null || xml.length == 0 || xml.length > MAX_FILE_BYTES)
             throw new IOException("Tamanho de GPX inválido");
+        // Android's DocumentBuilderFactory does NOT support XMLConstants
+        // FEATURE_SECURE_PROCESSING. Reject DTD/ENTITY directly and deny UTF-16
+        // or unexpected NUL encoding before trying optional parser features.
+        for (byte b : xml)
+            if (b == 0) throw new IOException("GPX deve usar XML UTF-8");
+        String markup = new String(xml, StandardCharsets.UTF_8);
+        if (markup.contains("<!DOCTYPE") || markup.contains("<!ENTITY"))
+            throw new IOException("GPX não pode conter DOCTYPE ou ENTITY");
         DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
         f.setNamespaceAware(true);
-        f.setXIncludeAware(false);
+        try { f.setXIncludeAware(false); }
+        catch (UnsupportedOperationException ignored) { /* XInclude OFF by default. */ }
         f.setExpandEntityReferences(false);
-        f.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        f.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        f.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        f.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        f.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        // These features may be absent in Android's KXml implementation.
+        // The pre-scan above makes absence safe for this bounded UTF-8 GPX.
+        optionalFeature(f, "http://apache.org/xml/features/disallow-doctype-decl", true);
+        optionalFeature(f, "http://xml.org/sax/features/external-general-entities", false);
+        optionalFeature(f, "http://xml.org/sax/features/external-parameter-entities", false);
+        optionalFeature(f, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         Document doc = f.newDocumentBuilder().parse(new ByteArrayInputStream(xml));
         Element root = doc.getDocumentElement();
         if (root == null || !"gpx".equals(local(root)))
@@ -125,6 +136,14 @@ final class PgsMissionGpxPlan {
             result.add(stop);
         }
         return new PgsMissionGpxPlan(result, duplicates);
+    }
+
+    private static void optionalFeature(
+            DocumentBuilderFactory factory, String name, boolean enabled) {
+        try { factory.setFeature(name, enabled); }
+        catch (ParserConfigurationException ignored) {
+            // No DTD/ENTITY allowed in prevalidated input.
+        }
     }
 
     private static String local(Node n) {
