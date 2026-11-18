@@ -8,6 +8,7 @@ O proprietário quer executar durante a noite o fluxo mostrado no vídeo enviado
 - PgsMissionGpxActivity: importação SAF de arquivo selecionado, cópia privada no armazenamento interno, persistência local do progresso marcado manualmente, coordenadas copiáveis, visualização de grupos e projeção hipotética de doces. O arquivo não é enviado nem incorporado ao APK.
 - Atalho compacto somente no modo Auto Hunt existente; nenhum sexto ícone na Home, toolbar ou alteração dos dois inventários, notas, fotos, login, filtros, imagens, P1/P2.
 - Testes Java e Node para interpretação de 500 pontos, segurança XML e ausência de "fake" automação.
+- LT408 continuação: PgsMissionLedgerPolicy e controles manuais para confirmar pesquisa recebida, confirmar recompensa efetivamente resgatada e desfazer. Cada GPX usa hash SHA-256 para isolar progresso e registros. Apenas resgates confirmados manualmente entram na contagem de doces (25 por registro); GPX importado não gera ganhos. Testes PgsMissionLedgerPolicyTest e contrato Node atualizados.
 - **Não** há serviço em segundo plano, GPS falsificado, teleporte, tocar/girar Poképaradas, dispensar missões, arremessar Pokébola, resgatar recompensas, ler memória de outro app ou contornar aviso de conta. O projeto anterior LT366/LT371 declara esses recursos não integrados.
 
 ## Resultado do GPX enviado
