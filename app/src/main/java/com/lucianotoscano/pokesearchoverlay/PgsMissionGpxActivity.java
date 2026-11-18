@@ -155,7 +155,8 @@ public final class PgsMissionGpxActivity extends Activity {
             boolean sameRoute=newRouteKey.equals(routeKey);
             routeKey=newRouteKey;
             loadMissionStates();
-            visited = sameRoute?visited:0;
+            visited = sameRoute?visited:Math.max(0,Math.min(plan.stops.size(),
+                getSharedPreferences(PREFS,MODE_PRIVATE).getInt(routeKey+"_visited",0)));
             persistVisited();
             render();
             Toast.makeText(this, "GPX validado e salvo apenas neste aparelho.",
@@ -176,7 +177,7 @@ public final class PgsMissionGpxActivity extends Activity {
             routeKey=routeHash(bytes);
             loadMissionStates();
             visited = Math.max(0, Math.min(plan.stops.size(),
-                getSharedPreferences(PREFS, MODE_PRIVATE).getInt("visited", 0)));
+                getSharedPreferences(PREFS, MODE_PRIVATE).getInt(routeKey+"_visited", 0)));
         } catch (Exception ignored) {
             // Prévia não deve bloquear o lançamento do aplicativo.
             plan = null;
@@ -214,7 +215,7 @@ public final class PgsMissionGpxActivity extends Activity {
     }
     private void persistVisited() {
         getSharedPreferences(PREFS, MODE_PRIVATE).edit()
-            .putInt("visited", visited).apply();
+            .putInt(routeKey+"_visited", visited).apply();
     }
     private void changeVisited(int change) {
         if (plan == null) return;
