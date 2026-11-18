@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -37,6 +38,11 @@ public final class PgsMissionGpxActivity extends Activity {
     private TextView summary, next, notice;
     private Button previousButton, visitedButton, copyButton;
     private Button confirmButton, redeemButton, clearButton;
+    private CheckBox[] preflightBoxes=new CheckBox[0];
+    private TextView preflightSummary;
+    private int preflightMask;
+    private long preflightStartedAt;
+    private boolean renderingPreflight;
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
@@ -96,6 +102,7 @@ public final class PgsMissionGpxActivity extends Activity {
         importButton.setOnClickListener(v -> chooseFile());
         add(root, importButton, 48);
 
+        appendPreflight(root);
         summary = text("", 14, Color.WHITE);
         add(root, summary, -2);
         next = text("", 14, 0xFF85E0B7);
@@ -155,6 +162,7 @@ public final class PgsMissionGpxActivity extends Activity {
             boolean sameRoute=newRouteKey.equals(routeKey);
             routeKey=newRouteKey;
             loadMissionStates();
+            loadPreflight();
             visited = sameRoute?visited:Math.max(0,Math.min(plan.stops.size(),
                 getSharedPreferences(PREFS,MODE_PRIVATE).getInt(routeKey+"_visited",0)));
             persistVisited();
@@ -176,6 +184,7 @@ public final class PgsMissionGpxActivity extends Activity {
             plan = PgsMissionGpxPlan.parse(bytes);
             routeKey=routeHash(bytes);
             loadMissionStates();
+            loadPreflight();
             visited = Math.max(0, Math.min(plan.stops.size(),
                 getSharedPreferences(PREFS, MODE_PRIVATE).getInt(routeKey+"_visited", 0)));
         } catch (Exception ignored) {
@@ -183,6 +192,8 @@ public final class PgsMissionGpxActivity extends Activity {
             plan = null;
             routeKey="";
             missionStates=new int[0];
+            preflightMask=0;
+            preflightStartedAt=0;
             visited = 0;
         }
     }
@@ -192,6 +203,56 @@ public final class PgsMissionGpxActivity extends Activity {
         for(byte b:hash)key.append(String.format(Locale.US,"%02x",b&255));
         return key.toString();
     }
+    private void appendPreflight(LinearLayout root) {
+        TextView title=text("CONFERÊNCIAS ANTES DA SESSÃO (MANUAL)",13,Color.WHITE);
+        title.setTypeface(null,android.graphics.Typeface.BOLD);
+        add(root,title,-2);
+        String[] labels={
+            "Conferi no site que a rota e as tarefas ainda são atuais",
+            "Há vagas suficientes para três Pesquisas de Campo",
+            "O estoque de Pokémon tem espaço livre (vídeo: estava cheio)",
+            "A bolsa de itens tem espaço para o giro das Poképaradas",
+            "No PGSharp, conferi GoPlus Virtual e PokéParada Próxima",
+            "Conferi no jogo a tarefa e a recompensa de 25 doces de Eternatus",
+            "Revisei manualmente as esperas e o cooldown aplicável"
+        };
+        preflightBoxes=new CheckBox[PgsMissionPreflightPolicy.ITEMS.length];
+        for(int i=0;i<preflightBoxes.length;i++){
+            final int flag=PgsMissionPreflightPolicy.ITEMS[i];
+            CheckBox box=new CheckBox(this);
+            box.setText(labels[i]);
+            box.setTextSize(12);
+            box.setTextColor(0xFFDFE8F3);
+            box.setOnCheckedChangeListener((b,checked)->{
+                if(renderingPreflight||plan==null)return;
+                long now=System.currentTimeMillis();
+                if(!PgsMissionPreflightPolicy.current(preflightStartedAt,now)){
+                    preflightMask=0;
+                    preflightStartedAt=now;
+                }
+                preflightMask=PgsMissionPreflightPolicy.set(preflightMask,flag,checked);
+                getSharedPreferences(PREFS,MODE_PRIVATE).edit()
+                    .putInt(routeKey+"_checks",preflightMask)
+                    .putLong(routeKey+"_checksAt",preflightStartedAt).apply();
+                render();
+            });
+            preflightBoxes[i]=box;
+            add(root,box,-2);
+        }
+        preflightSummary=text("",12,0xFFFFD492);
+        add(root,preflightSummary,-2);
+    }
+
+    private void loadPreflight(){
+        android.content.SharedPreferences prefs=getSharedPreferences(PREFS,MODE_PRIVATE);
+        preflightStartedAt=prefs.getLong(routeKey+"_checksAt",0L);
+        preflightMask=PgsMissionPreflightPolicy.current(
+            preflightStartedAt,System.currentTimeMillis())?
+            PgsMissionPreflightPolicy.sanitize(
+                prefs.getInt(routeKey+"_checks",0)):0;
+        if(preflightMask==0)preflightStartedAt=0L;
+    }
+
     private void loadMissionStates() {
         missionStates=new int[plan.stops.size()];
         android.content.SharedPreferences prefs=getSharedPreferences(PREFS,MODE_PRIVATE);
@@ -237,6 +298,23 @@ public final class PgsMissionGpxActivity extends Activity {
 
     private void render() {
         boolean has = plan != null;
+        if(has&&!PgsMissionPreflightPolicy.current(
+                preflightStartedAt,System.currentTimeMillis()))
+            preflightMask=0;
+        renderingPreflight=true;
+        try {
+            for(int i=0;i<preflightBoxes.length;i++){
+                CheckBox box=preflightBoxes[i];
+                box.setEnabled(has);
+                box.setChecked(has&&(preflightMask&
+                    PgsMissionPreflightPolicy.ITEMS[i])!=0);
+            }
+        }finally { renderingPreflight=false; }
+        preflightSummary.setText(!has?
+            "Importe um GPX para registrar as conferências.":
+            "Checklist manual: "+PgsMissionPreflightPolicy.count(preflightMask)+
+            "/7. As marcações são declarações do usuário, não leituras do jogo. "+
+            "Mesmo completo, não ativa farm automático.");
         copyButton.setEnabled(has && visited < plan.stops.size());
         visitedButton.setEnabled(has && visited < plan.stops.size());
         previousButton.setEnabled(has && visited > 0);
