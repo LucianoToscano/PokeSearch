@@ -13,6 +13,7 @@ O proprietário quer executar durante a noite o fluxo mostrado no vídeo enviado
 
 ## Resultado do GPX enviado
 - 500 pontos, 500 coordenadas distintas.
+- Cálculo local com fórmula haversine entre os 499 pares consecutivos do GPX enviado: aproximadamente **569,45 km**, com salto máximo entre pontos consecutivos de **22,32 km**. PGSharp no vídeo exibe 569,63 km. Diferença de cálculo não implica que a rota seja diversa; valores não fornecem cooldown seguro nem distância percorrida em ruas.
 - 166 grupos candidatos de três pontos e 2 pontos restantes.
 - 166 x 3 x 25 = **12.450 doces teóricos**, APENAS se todos os pontos tiverem a pesquisa elegível, cada uma pagar 25, todas forem aceitas, concluídas e resgatadas e a lista estiver válida. Este número não é uma projeção de ganhos reais.
 - Pelo site e vídeo, as coordenadas podem ficar obsoletas após aproximadamente 24 horas; o GPX não traz dado que permita validar esse prazo.
