@@ -439,10 +439,12 @@ public final class PgsMissionGpxActivity extends Activity {
             "Coordenadas: %d · Trios candidatos: %d · Sobra: %d\n"
             +"Distância em linha reta somada: %.2f km; maior salto: %.2f km.\n"
             +"Repetições: %d. Projeção matemática condicional: %d doces.\n"
+            +"Trios resgatados registrados manualmente: %d.\n"
             +"O GPX não confirma tarefa, recompensa, cooldown ou validade.",
             count,plan.fullGroups(),plan.leftoverStops(),
             plan.cumulativeDistanceKm,plan.longestHopKm,
-            plan.repeatedCoordinates,plan.possibleCandiesIfAllVerified()));
+            plan.repeatedCoordinates,plan.possibleCandiesIfAllVerified(),
+            PgsMissionQuestPreset.fullTrios(redeemed)));
         if(visited>=count){
             next.setText("Fim da rota. Confira os registros efetuados.");
             return;
