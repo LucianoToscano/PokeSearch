@@ -1,6 +1,7 @@
 package com.lucianotoscano.pokesearchoverlay;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -98,6 +99,18 @@ public final class PgsMissionGpxActivity extends Activity {
         add(root, title, -2);
         add(root, text("Leitura local de rotas de pesquisa de campo. "
             + "Nenhuma coordenada é enviada para servidores.", 12, 0xFFB7C6D7), -2);
+        TextView preset=text("FILTRO PO GO COORDINATES · ETERNATUS",13,0xFFFFD492);
+        preset.setTypeface(null,android.graphics.Typeface.BOLD);
+        add(root,preset,-2);
+        add(root,text("Candy → Eternatus (#890) → Make an Excellent Throw\n"
+            +"Recompensa exibida: Eternatus Candy ×25",12,0xFFDFE8F3),-2);
+        Button copyFilter=button("Copiar filtro de missões");
+        copyFilter.setOnClickListener(v->copySearchPreset());
+        add(root,copyFilter,40);
+        add(root,text("A captura do site indica até 10 resultados para conta grátis. "
+            +"O limite mostrado não comprova que um GPX anterior de 500 pontos "
+            +"ainda tenha pesquisas válidas.",11,0xFFB7C6D7),-2);
+
         Button importButton = button("Importar GPX do aparelho");
         importButton.setOnClickListener(v -> chooseFile());
         add(root, importButton, 48);
@@ -114,10 +127,10 @@ public final class PgsMissionGpxActivity extends Activity {
         visitedButton.setOnClickListener(v -> changeVisited(1));
         add(root, visitedButton, 44);
         confirmButton=button("Confirmar pesquisa de 25 doces (manual)");
-        confirmButton.setOnClickListener(v->updateMission(1));
+        confirmButton.setOnClickListener(v->confirmResearch());
         add(root,confirmButton,44);
         redeemButton=button("Confirmar resgate de 25 doces (manual)");
-        redeemButton.setOnClickListener(v->updateMission(2));
+        redeemButton.setOnClickListener(v->confirmRedeemed());
         add(root,redeemButton,44);
         clearButton=button("Desfazer confirmação deste ponto");
         clearButton.setOnClickListener(v->updateMission(0));
@@ -260,6 +273,40 @@ public final class PgsMissionGpxActivity extends Activity {
             missionStates[i]=PgsMissionLedgerPolicy.normalize(
                 prefs.getInt(routeKey+"_mission_"+i,0));
     }
+    private void copySearchPreset() {
+        ClipboardManager clipboard=(ClipboardManager)
+            getSystemService(Context.CLIPBOARD_SERVICE);
+        if(clipboard==null)return;
+        clipboard.setPrimaryClip(ClipData.newPlainText(
+            "Filtro Eternatus",PgsMissionQuestPreset.copyableFilter()));
+        Toast.makeText(this,"Filtro copiado.",Toast.LENGTH_SHORT).show();
+    }
+
+    private void confirmResearch(){
+        if(plan==null||visited>=missionStates.length)return;
+        new AlertDialog.Builder(this)
+            .setTitle("Confirmar a pesquisa correta")
+            .setMessage("Você verificou no Pokémon GO que ESTA Poképarada "
+                +"entregou a pesquisa 'Make an Excellent Throw' com recompensa "
+                +"de 25 doces de Eternatus? O GPX e o filtro do site "
+                +"não comprovam que a tarefa foi recebida.")
+            .setNegativeButton("Ainda não",null)
+            .setPositiveButton("Sim, conferi no jogo",(d,which)->updateMission(1))
+            .show();
+    }
+
+    private void confirmRedeemed(){
+        if(plan==null||visited>=missionStates.length)return;
+        new AlertDialog.Builder(this)
+            .setTitle("Confirmar recompensa resgatada")
+            .setMessage("Você já concluiu a pesquisa e RESGATOU os "
+                +"25 doces de Eternatus no jogo? Somente a recompensa "
+                +"efetivamente resgatada deve entrar no contador.")
+            .setNegativeButton("Ainda não",null)
+            .setPositiveButton("Sim, resgatei",(d,which)->updateMission(2))
+            .show();
+    }
+
     private void updateMission(int action) {
         if(plan==null||visited>=missionStates.length)return;
         int old=missionStates[visited];
@@ -337,13 +384,16 @@ public final class PgsMissionGpxActivity extends Activity {
             + "Distância geográfica aproximada: %.2f km; maior salto: %.2f km.\n"
             + "Não representa cooldown, deslocamento real nem horas de caminhada.\n"
             + "Pesquisas confirmadas: %d · Resgates confirmados: %d.\n"
-            + "Doces registrados manualmente: %d.",
+            + "Doces registrados manualmente: %d · Trios resgatados: %d.",
             count, plan.fullGroups(), plan.leftoverStops(),
             plan.possibleCandiesIfAllVerified(), plan.repeatedCoordinates,
             plan.cumulativeDistanceKm,plan.longestHopKm,
             PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.TASK_CONFIRMED),
             PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED),
-            PgsMissionLedgerPolicy.candies(missionStates)));
+            PgsMissionLedgerPolicy.candies(missionStates),
+            PgsMissionQuestPreset.fullTrios(
+                PgsMissionLedgerPolicy.count(
+                    missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED))));
         if (visited >= count) {
             next.setText("Fim da lista: " + count + "/" + count
                 + " pontos marcados manualmente.");
