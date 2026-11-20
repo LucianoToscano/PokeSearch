@@ -45,3 +45,19 @@ Implementação feita em branch de funcionalidade e PR de rascunho, não public�
 - PgsMissionGpxActivity: checks de rota/tarefas recentes, vagas de Pesquisa de Campo, estoque de Pokémon, bolsa de itens, GoPlus/PokéParada Próxima, recompensa de Eternatus verificada e esperas/cooldown revisados. Indicador "N/7" deixa claro que checklist completo **não habilita** automação no jogo.
 - Testes PgsMissionPreflightPolicyTest.java e contrato Node LT408, mantendo o recurso independente de contas, APIs e P1/P2.
 - Regra de segurança pendente: se uma futura leitura visual detectar estoque cheio, confirmação de exclusão de pesquisas, aviso de conta, jogo oculto ou dados insuficientes, deverá pausar e pedir ação humana. Não automatizar a remoção de tarefas nem prometer ausência de risco de penalidade.
+
+
+## Evidência visual PoGo Coordinates — 20/11/2026 (3 capturas)
+As capturas do proprietário mostram a configuração exata do filtro de pesquisas no site, não uma API de consulta ou confirmação de coleta no jogo:
+- Aba **Quests**; **Reward type: Candy**.
+- **Candy Pokemon: Eternatus**. Na lista do seletor o site identifica **#890 Eternatus**, distinto de **#813 Scorbunny**.
+- **Task: Make an Excellent Throw**. O seletor também apresenta outras tarefas (Catch Pokémon, Unlock max move, Win a Max Battle), que não podem ser misturadas com o alvo.
+- O primeiro resultado visível, Poképarada **Javali Autopeças**, exibe **Eternatus Candy ×25** e uma ação **Get coords**. A página indica **Showing 10 quests**, link **GPX**, selo **Free account · up to 10**.
+- A busca usa um campo de coordenadas de referência e raio, mas uma localização digitada e uma busca com 10 resultados não provam que todas as pesquisas ainda estejam disponíveis, foram aceitas ou que um GPX de 500 pontos continue válido. O limite de 10 observado é **apenas o rótulo exibido para aquela conta e tela**, não um limite geral para arquivos GPX.
+- As imagens não revelam payload JSON de API nem estrutura enriquecida de GPX que permita confirmar tarefa/recompensa por coordenada. Não inventar integração com serviços autenticados.
+
+### Alterações LT408.1
+- PgsMissionQuestPreset: perfil fixo Candy → Eternatus (#890) → Make an Excellent Throw → recompensa esperada x25. Comparações conservadoras de tipo, espécie, tarefa e rótulo de recompensa, sem matching por substring solta; uma pesquisa ou coordenada isolada não vira recompensa recebida.
+- PgsMissionGpxActivity: filtro exibido e copiável; limitação de 10 visível explicada sem cap arbitrário a GPX de terceiros; confirmação explícita antes de registrar pesquisa e confirmação separada antes de registrar **resgate efetivo**. Contador manual mantém trios completos somente de recompensas marcadas como resgatadas.
+- PgsMissionQuestPresetTest.java e contratos Node/Java do CI adicionados.
+- O modo noturno automático permanece **não implementado**. Sem scraping de sessão, sem contornar credenciais e sem claim de auto-giro, teleporte ou auto-arremesso. PR #535 segue em rascunho até CI e homologação.
