@@ -985,8 +985,9 @@ final class PgsAutoMenus {
         String warning=PgsSmartSearchSettings.GOAL_SHINY.equals(current)?
             "Consulta o feed e pausa só diante de aviso Shiny explícito.":
             PgsSmartSearchSettings.GOAL_CATCH.equals(current)?
-            "Abre alvos confirmados; a captura continua manual.":
-            "Combina aviso Shiny e encontro assistido, sem arremesso.";
+            "Abre alvos confirmados. Captura, bolas e frutas continuam manuais.":
+            "Combina aviso Shiny e encontro assistido. "+
+            "Sem arremesso automático e sem capturas presumidas.";
         TextView explanation=label(warning,9,false);
         explanation.setMaxLines(3);
         root.addView(explanation,margined(-1,dp(44),3));
