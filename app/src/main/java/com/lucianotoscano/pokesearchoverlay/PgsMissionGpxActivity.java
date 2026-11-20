@@ -78,6 +78,12 @@ public final class PgsMissionGpxActivity extends Activity {
         b.setMinimumHeight(0);
         return b;
     }
+    private LinearLayout vertical(){
+        LinearLayout group=new LinearLayout(this);
+        group.setOrientation(LinearLayout.VERTICAL);
+        return group;
+    }
+
     private void add(LinearLayout root, View view, int height) {
         LinearLayout.LayoutParams params =
             new LinearLayout.LayoutParams(-1, height < 0 ? height : dp(height));
