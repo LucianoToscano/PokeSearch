@@ -7,7 +7,8 @@ assert.match(dock,/form:false,moves:false,location:false,distance:false,shiny:fa
 // LT369: a mão abre direto o ÚNICO painel; ele deve ancorar na bolha,
 // jamais em uma toolbar intermediária de cinco ícones.
 const toggle=menus.split('void toggle(int x,int y)')[1]?.split('void dismissAll()')[0]||'';
-assert.match(toggle,/showCentral\(0\)/);
+// LT409 opens in the compact Action chooser, still anchored to the same bubble.
+assert.match(toggle,/showCentral\(1\)/);
 assert.doesNotMatch(toggle,/showToolbar\(/);
 const begin=menus.indexOf('private int[] positionPanel(');
 const end=menus.indexOf('private void applyNativeBlur(',begin);
