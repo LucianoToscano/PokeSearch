@@ -1,3 +1,5 @@
+> **ATUALIZAÇÃO DE STATUS — 20/11/2026:** este documento registra o estágio de desenvolvimento anterior à publicação. A funcionalidade **de planejador GPX manual (não Auto Hunt noturno)** foi publicada como **PokeSearch v0.03.93 LT / 54600** na [release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.93-54600). Ver [ARK LT408 com prova de assinatura, build e limitações](ARK_LT408_GPX_OFICIAL_20261120.md). Afirmações históricas de “PR de rascunho”, “não publicável” ou “publicação pendente” abaixo devem ser entendidas como status da época, não o estado atual. **Automação noturna segue pendente.**
+
 # LT408 — Candidata oficial: planejador GPX de pesquisas (20/11/2026)
 
 **Solicitação de publicação expressa do proprietário em 20/11/2026.** O escopo da versão oficial é um **planejador offline/manual**, não um farm noturno automático.
