@@ -252,7 +252,12 @@ final class PgsAutoMenus {
     void toggle(int x,int y){
         anchorX=x;anchorY=y;
         if(isOpen()){dismissAll();return;}
-        showCentral(0);
+        // LT409: abrir no menu curto de ações, e não em uma lista extensa.
+        showAdvancedActions=false;
+        searchDetailsExpanded=false;
+        nightExpanded=false;
+        centralAdvanced=false;
+        showCentral(1);
     }
     void dismissAll(){hidePanel();hideToolbar();}
     private void hidePanel(){
@@ -660,8 +665,14 @@ final class PgsAutoMenus {
             }else{dismissAll();actions.previewSprites();}
         });
         footer.addView(previous,new LinearLayout.LayoutParams(0,dp(31),1));
+        boolean simpleChooser=selectedTab!=0&&!showAdvancedActions
+            &&!searchDetailsExpanded;
         Button main=button(selectedTab==0?"→ Ação":
+            simpleChooser?"Escolha um modo acima":
             actions.sequenceRunning()?"■ Parar":"▷ Iniciar",11);
+        // Nunca exibir Iniciar quando o painel apenas oferece GPX ou
+        // supervisão externa: esse botão iniciaria a busca de Pokémon.
+        main.setEnabled(!simpleChooser);
         LinearLayout.LayoutParams mainLp=new LinearLayout.LayoutParams(0,dp(31),1);
         mainLp.leftMargin=dp(3);footer.addView(main,mainLp);
         main.setOnClickListener(v->{
@@ -882,8 +893,78 @@ final class PgsAutoMenus {
     private boolean nightExpanded=false;
     // One-time acknowledgments only, never persist assumptions about VGP link.
     private boolean nightWalkAcknowledged=false,nightCatchAcknowledged=false;
+    private boolean searchDetailsExpanded=false;
+
+    /** LT409: o planejador é independente do modo/gestos da Busca Inteligente. */
+    private void openMissionPlanner(){
+        hidePanel();
+        try{
+            android.content.Intent intent=new android.content.Intent(
+                context,PgsMissionGpxActivity.class);
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        }catch(Exception e){
+            Toast.makeText(context,"Não foi possível abrir as Missões GPX.",
+                Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // LT409: uma escolha por vez. As configurações antigas continuam disponíveis
+    // em Opções técnicas, sem poluir a navegação mais comum.
     private void appendCentralActions(LinearLayout root){
         if(showAdvancedActions){appendLegacyActions(root);return;}
+        root.addView(label("O QUE VOCÊ QUER FAZER?",10,true),
+            margined(-1,dp(24),2));
+
+        Button missions=button("⌖ Missões GPX · abrir",11);
+        missions.setContentDescription("Abrir planejador de pesquisas GPX. "+
+            "Não gira Poképaradas nem completa pesquisas.");
+        missions.setOnClickListener(v->openMissionPlanner());
+        root.addView(missions,margined(-1,dp(40),4));
+
+        Button hunt=button(searchDetailsExpanded?
+            "⌃ Recolher busca de Pokémon":"◎ Buscar Pokémon · configurar",11);
+        hunt.setOnClickListener(v->{
+            searchDetailsExpanded=!searchDetailsExpanded;
+            nightExpanded=false;
+            showCentral(1);
+        });
+        root.addView(hunt,margined(-1,dp(40),3));
+
+        Button night=button(nightExpanded?
+            "⌃ Recolher supervisão noturna":"☾ Supervisão noturna · PGSharp",10);
+        night.setOnClickListener(v->{
+            nightExpanded=!nightExpanded;
+            searchDetailsExpanded=false;
+            showCentral(1);
+        });
+        root.addView(night,margined(-1,dp(40),3));
+
+        if(searchDetailsExpanded){
+            appendSimplePokemonActions(root);
+        }else if(nightExpanded){
+            appendNightMode(root);
+        }else{
+            TextView note=label(
+                "GPX organiza coordenadas e pesquisas. A busca auxilia "+
+                "encontros. A supervisão apenas acompanha o PGSharp.",9,false);
+            note.setMaxLines(4);
+            root.addView(note,margined(-1,dp(62),5));
+        }
+
+        Button advanced=button("⚙ Opções técnicas",9);
+        advanced.setContentDescription("Configurar monitoramento, cliques "+
+            "e sequências avançadas");
+        advanced.setOnClickListener(v->{
+            showAdvancedActions=true;
+            nightExpanded=false;
+            searchDetailsExpanded=false;
+            showCentral(1);
+        });
+        root.addView(advanced,margined(-1,dp(30),6));
+    }
+
+    private void appendSimplePokemonActions(LinearLayout root){
         root.addView(label("OBJETIVO DA BUSCA",10,true),margined(-1,dp(22),2));
         String current=PgsSmartSearchSettings.goal(context);
         String[] goals={PgsSmartSearchSettings.GOAL_SHINY,
@@ -902,48 +983,34 @@ final class PgsAutoMenus {
             root.addView(choice,margined(-1,dp(30),3));
         }
         String warning=PgsSmartSearchSettings.GOAL_SHINY.equals(current)?
-            "Consulta o feed e pausa somente diante de aviso Shiny explícito "+
-            "da espécie; exige acesso às notificações do jogo.":
+            "Consulta o feed e pausa só diante de aviso Shiny explícito.":
             PgsSmartSearchSettings.GOAL_CATCH.equals(current)?
-            "Abre alvos confirmados; avisa ao reconhecer o encontro. "+
-            "Captura, bolas e frutas continuam manuais.":
-            "Combina aviso Shiny com encontro assistido. "+
+            "Abre alvos confirmados. Captura, bolas e frutas continuam manuais.":
+            "Combina aviso Shiny e encontro assistido. "+
             "Sem arremesso automático e sem capturas presumidas.";
         TextView explanation=label(warning,9,false);
-        explanation.setMaxLines(4);
-        root.addView(explanation,margined(-1,dp(59),3));
+        explanation.setMaxLines(3);
+        root.addView(explanation,margined(-1,dp(44),3));
+
         CheckBox repeat=new CheckBox(context);
-        repeat.setText("Continuar procurando após cada ciclo");
+        repeat.setText("Repetir busca");
         repeat.setTextSize(10);repeat.setTextColor(fg());
         repeat.setChecked(PgsSmartSearchSettings.repeat(context));
         repeat.setOnCheckedChangeListener((b,on)->
             PgsSmartSearchSettings.setRepeat(context,on));
         root.addView(repeat,margined(-1,dp(31),2));
-        huntNumeric(root,PgsAutoHuntSettings.forCurrent(context),
-            PgsAutoHuntSettings.MAX_CLICKS,"Máximo de interações",
-            new int[]{1,3,5,10},10);
+
         CheckBox consent=new CheckBox(context);
-        consent.setText("Autorizo tocar nas sprites confirmadas");
+        consent.setText("Permitir toques assistidos");
         consent.setTextSize(10);consent.setTextColor(fg());
         consent.setChecked(PgsSmartSearchSettings.gestureConsent(context));
         consent.setOnCheckedChangeListener((b,on)->
             PgsSmartSearchSettings.setGestureConsent(context,on));
         root.addView(consent,margined(-1,dp(34),2));
-        TextView status=label("Assistência de captura: não comprovada no jogo. "+
-            "Teste a prévia antes de iniciar.",9,false);
-        status.setMaxLines(2);
-        root.addView(status,margined(-1,dp(37),2));
-        Button editor=button("⌄ Avançado: monitor, Auto Hunt e sequências",9);
-        editor.setOnClickListener(v->{
-            showAdvancedActions=true;showCentral(1);
-        });
-        root.addView(editor,margined(-1,dp(29),3));
-        // LT371: a compact standalone PGSharp supervisor, not a fake bot.
-        Button night=button(nightExpanded?
-            "☾ Recolher modo noturno":"☾ Modo noturno · PGSharp",10);
-        night.setOnClickListener(v->{nightExpanded=!nightExpanded;showCentral(1);});
-        root.addView(night,margined(-1,dp(30),4));
-        if(nightExpanded)appendNightMode(root);
+        TextView status=label("Escolha os alvos na aba Pokémon. Toque em "+
+            "Iniciar somente quando estiver pronto.",9,false);
+        status.setMaxLines(3);
+        root.addView(status,margined(-1,dp(45),2));
     }
 
     private void appendNightMode(LinearLayout root){
@@ -1162,22 +1229,6 @@ final class PgsAutoMenus {
         });
         root.addView(advanced,margined(-1,dp(30),5));
         if(centralAdvanced)appendCentralAdvanced(root,hunt,cycles);
-        if(PgsSmartSearchSettings.HUNT.equals(PgsSmartSearchSettings.mode(context))){
-            Button gpx=button("⌖ GPX · planejar missões (offline)",10);
-            gpx.setOnClickListener(v->{
-                hidePanel();
-                try{
-                    android.content.Intent intent=new android.content.Intent(
-                        context,PgsMissionGpxActivity.class);
-                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
-                    context.startActivity(intent);
-                }catch(Exception e){
-                    Toast.makeText(context,"Não foi possível abrir o planejador GPX.",
-                        Toast.LENGTH_LONG).show();
-                }
-            });
-            root.addView(gpx,margined(-1,dp(32),4));
-        }
     }
 
     private void appendCentralAlert(LinearLayout root,SharedPreferences prefs,

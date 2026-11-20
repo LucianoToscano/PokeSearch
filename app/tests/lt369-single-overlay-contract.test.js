@@ -9,7 +9,10 @@ const central=menu.split("private void showCentral(int selectedTab)")[1].split("
 const settings=menu.split("private void appendCentralSettings(LinearLayout root)")[1].split("private boolean hasCentralSprite()")[0];
 const actions=menu.split("private void appendCentralActions(LinearLayout root)")[1].split("private void appendCentralSettings(LinearLayout root)")[0];
 // One tap on the hand gives one panel directly, never legacy five-tile toolbar.
-assert.match(start,/showCentral\(0\)/);
+// LT409: default to one compact choice screen, not the long Pokémon list.
+assert.match(start,/showCentral\(1\)/);
+assert.match(start,/showAdvancedActions=false/);
+assert.match(start,/searchDetailsExpanded=false/);
 assert.doesNotMatch(start,/showToolbar\(/);
 assert.match(start,/if\(isOpen\(\)\)/);
 assert.match(central,/String\[\] names=\{"Pokémon","Ação","Ajustes"\}/);

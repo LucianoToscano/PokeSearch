@@ -5,7 +5,8 @@ const root="app/src/main/java/com/lucianotoscano/pokesearchoverlay/";
 const read=n=>fs.readFileSync(root+n+".java","utf8");
 const menu=read("PgsAutoMenus"),svc=read("PgsAutoClickService"),
  policy=read("PgsNightSupervisorPolicy");
-assert.match(menu,/☾ Modo noturno · PGSharp/);
+// LT409: same supervisor, clearer action-first label.
+assert.match(menu,/☾ Supervisão noturna · PGSharp/);
 assert.match(menu,/void appendNightMode\(LinearLayout root\)/);
 assert.match(menu,/Já ativei Autowalk no PGSharp/);
 assert.match(menu,/Já conectei Virtual Go Plus no jogo/);
