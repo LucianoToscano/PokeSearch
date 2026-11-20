@@ -5504,6 +5504,32 @@
           "Ainda não foi feita homologação física da remoção de DEV no Samsung Android 17 nem comprovação da cobertura de sprites. A correção de catálogo LT406 continua incorporada; não prometer todas as sprites restauradas."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt408-gpx-eternatus-planner-20261120",
+      "minVersionCode": 54600,
+      "date": "20/11/2026",
+      "title": "PokeSearch v0.03.93 LT — Planejador GPX de pesquisas Eternatus",
+      "sections": {
+        "novidades": [
+          "Novo planejador offline de rotas GPX em Auto Hunt, com importação de pontos e progresso salvo no aparelho.",
+          "Filtro de pesquisa Eternatus (#890): Candy, Make an Excellent Throw, recompensa esperada de 25 doces; opção de copiar.",
+          "Registro manual separado de pesquisa recebida e recompensa efetivamente resgatada, com contagem de trios e doces."
+        ],
+        "melhorias": [
+          "Checklist manual de sete verificações, incluindo vagas de pesquisas, estoques e configurações PGSharp.",
+          "Coordenadas privadas por rota, distância geográfica estimada, maior salto e sinalização de duplicatas.",
+          "Confirmações reversíveis, checkpoints privados por arquivo GPX, suporte a rotas pequenas ou grandes."
+        ],
+        "correcoes": [
+          "Não contabilizar doces por simples presença de coordenadas ou pela confirmação de pesquisa, apenas pelo resgate informado manualmente.",
+          "Validação conservadora de GPX e proteção contra XML perigoso, com limites de tamanho e coordenadas."
+        ],
+        "emDesenvolvimento": [
+          "Esta atualização NÃO realiza teleporte, giro de Poképaradas, lançamentos, resgates ou Auto Hunt noturno automático.",
+          "Validação física no Samsung Android 17 e integração real com o jogo ainda pendentes; o GPX não comprova a validade das recompensas."
+        ]
+      }
     }
   ]
 }
