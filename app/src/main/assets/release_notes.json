@@ -5530,6 +5530,32 @@
           "Validação física no Samsung Android 17 e integração real com o jogo ainda pendentes; o GPX não comprova a validade das recompensas."
         ]
       }
+    },
+    {
+      "id": "pokesearch-lt409-simpler-autohunt-ux-20261120",
+      "minVersionCode": 54601,
+      "date": "20/11/2026",
+      "title": "PokeSearch v0.03.94 LT — Auto Hunt mais simples",
+      "sections": {
+        "novidades": [
+          "Auto Hunt reorganizado: na aba Ação, escolha diretamente Missões GPX, Buscar Pokémon ou Supervisão noturna do PGSharp.",
+          "Acesso direto ao planejador de Missões GPX, sem passar pelos antigos menus Avançado → Auto Hunt → Ajustes.",
+          "Importação GPX, ponto atual, copiar coordenada e avançar de ponto exibidos como ações principais."
+        ],
+        "melhorias": [
+          "Configuração de busca e supervisão noturna aparece somente quando selecionada; detalhes técnicos ficam em Opções técnicas.",
+          "Checklist de sete condições, registro de pesquisas e resgates e dados da rota ficam recolhidos no início para reduzir poluição visual.",
+          "Botão geral Iniciar fica desabilitado no seletor de modos para não iniciar por engano a busca de Pokémon."
+        ],
+        "correcoes": [
+          "Corrigida a navegação longa até Missões GPX e a mistura de ações de Pokemon, GPX e supervisão noturna.",
+          "Preservadas confirmações manuais e contagem de recompensas resgatadas, sem criar doces presumidos."
+        ],
+        "emDesenvolvimento": [
+          "O planejador GPX não é um farm noturno automático: não executa teleporte, giro de Poképaradas, lançamentos ou resgate no jogo.",
+          "Validação visual e funcional em aparelho Samsung Android 17 continua pendente."
+        ]
+      }
     }
   ]
 }
