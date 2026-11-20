@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.93",
-  "code": 54600,
-  "label": 51408,
-  "previous_tag": "v0.03.92-54599",
-  "qa_max_code": 54599,
-  "release_notes": "ARK LT408 — PLANEJADOR GPX ETERNATUS: nova tela offline acessada pelo submenu Auto Hunt para importar GPX por seletor SAF, validar coordenadas, visualizar distância estimada e maior salto, copiar coordenadas e registrar progresso local privado por rota. Filtro PoGo Coordinates Candy → Eternatus (#890) → Make an Excellent Throw (recompensa esperada x25) exibido e copiável. Checklist manual de sete condições, incluindo vagas de pesquisa, estoque de Pokémon/itens e configurações PGSharp. O registro de pesquisa recebida e a confirmação do resgate são etapas separadas, reversíveis; contadores de doces e trios dependem de confirmação manual, nunca apenas de GPX. Preservados ícones, Home, Pokébolas P1/P2, filtros, perfis, Minha Pokédex e os dois inventários. IMPORTANTE: versão NÃO oferece farm noturno automático, teleporte, giro, arremessos ou resgate automático; nenhuma garantia de pesquisa atual, doces ganhos ou ausência de penalidade no jogo. Testes Node/Java/Android/PGS e Secure R8 aprovados no PR #535 (squash 529caf83b7d8fd886d7f8a02bcf1c24439599b2c). Publicar exclusivamente com workflow oficial e assinatura permanente; sem homologação física Samsung Android 17."
+  "version": "0.03.94",
+  "code": 54601,
+  "label": 51409,
+  "previous_tag": "v0.03.93-54600",
+  "qa_max_code": 54600,
+  "release_notes": "ARK LT409 — AUTO HUNT MAIS SIMPLES: reorganizado o painel Ação em três escolhas diretas (Missões GPX, Buscar Pokémon e Supervisão noturna PGSharp) e acesso ao GPX sem passar por menus técnicos ou mudar o modo interno de busca. A tela Missões GPX agora prioriza importar o arquivo, visualizar o ponto e seu progresso, copiar coordenadas e avançar. Checklist, registros de pesquisa/resgate e detalhes da rota ficam recolhidos, disponíveis sob demanda. O botão geral Iniciar não executa uma busca quando o usuário está apenas escolhendo GPX/noite. Avisos de captura manual, permissões por perfil e todas as funções avançadas permanecem intactos. Preservadas Home, P1/P2, contas, ícones, Pokédex, filtros, inventários, fundos, notas e PGSStats. Importante: esta é uma melhoria de interface, NÃO implementa farm noturno autônomo; não teleporta, gira Poképaradas, lança bolas, limpa tarefas ou resgata doces no Pokémon GO/PGSharp. Código PR #538 (squash 4bef469077314ef894c7652fab0190c44a235960); gates Node/Java/PGS e Secure R8 aprovados; publicação exclusivamente pelo workflow oficial assinado. Teste físico Samsung Android 17 ainda pendente."
 }
