@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "enabled": true,
-  "version": "0.03.92",
-  "code": 54599,
-  "label": 51407,
-  "previous_tag": "v0.03.91-54598",
-  "qa_max_code": 54598,
-  "release_notes": "ARK LT407 — EXCLUSIVIDADE POKESEARCH OFICIAL: removidos do repositório os workflows FastDev, fontes Android do pacote .preview, buildType Preview, scripts de OTA/ADB/assinatura DEV e manifesto fastdev/latest.json. Exceções de preview retiradas de integridade, updater e Home, mantendo apenas com.lucianotoscano.pokesearch e release oficial assinada pela chave permanente. O gate Android R8 permanece, mas seu APK temporário de QA não é enviado como instalador. Contratos novos impedem regressão do canal DEV. Preservadas funcionalidades existentes, inventários 1/2, PGSStats SAF, sprites LT406, notas, fundos, ícones, overlays P1/P2. Código PR #532, squash eca9865d1d43565f7836de9c6b41de2d741a220d, gates Node/LT169/LT211/LT62/LT173/R8 aprovados. Históricos de releases/tags/branches e segredos de FastDev existentes no GitHub não são apagados por esta publicação; exigem administração posterior. Sem homologação física Samsung Android 17. Distribuição exclusivamente no workflow oficial protegido, nunca por versão DEV."
+  "version": "0.03.93",
+  "code": 54600,
+  "label": 51408,
+  "previous_tag": "v0.03.92-54599",
+  "qa_max_code": 54599,
+  "release_notes": "ARK LT408 — PLANEJADOR GPX ETERNATUS: nova tela offline acessada pelo submenu Auto Hunt para importar GPX por seletor SAF, validar coordenadas, visualizar distância estimada e maior salto, copiar coordenadas e registrar progresso local privado por rota. Filtro PoGo Coordinates Candy → Eternatus (#890) → Make an Excellent Throw (recompensa esperada x25) exibido e copiável. Checklist manual de sete condições, incluindo vagas de pesquisa, estoque de Pokémon/itens e configurações PGSharp. O registro de pesquisa recebida e a confirmação do resgate são etapas separadas, reversíveis; contadores de doces e trios dependem de confirmação manual, nunca apenas de GPX. Preservados ícones, Home, Pokébolas P1/P2, filtros, perfis, Minha Pokédex e os dois inventários. IMPORTANTE: versão NÃO oferece farm noturno automático, teleporte, giro, arremessos ou resgate automático; nenhuma garantia de pesquisa atual, doces ganhos ou ausência de penalidade no jogo. Testes Node/Java/Android/PGS e Secure R8 aprovados no PR #535 (squash 529caf83b7d8fd886d7f8a02bcf1c24439599b2c). Publicar exclusivamente com workflow oficial e assinatura permanente; sem homologação física Samsung Android 17."
 }
