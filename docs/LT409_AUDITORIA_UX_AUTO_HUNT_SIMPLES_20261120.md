@@ -1,3 +1,5 @@
+> **STATUS POSTERIOR — PUBLICADO 20/11/2026:** a melhoria de interface aqui descrita foi publicada como **PokeSearch v0.03.94 LT / versionCode 54601** na [release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.94-54601), com APK assinado e verificado. Este texto é a auditoria de desenvolvimento; ver [ARK LT409 oficial](ARK_LT409_AUTO_HUNT_SIMPLES_OFICIAL_20261120.md) para certificado, SHA-256, size e CI. O **farm noturno automático de pesquisas continua não implementado**.
+
 # LT409 — Auto Hunt simples e GPX despoluído (20/11/2026)
 
 ## Relato do proprietário
