@@ -44,6 +44,12 @@ public final class PgsMissionGpxActivity extends Activity {
     private int preflightMask;
     private long preflightStartedAt;
     private boolean renderingPreflight;
+    private boolean preflightExpanded;
+    private boolean recordsExpanded;
+    private boolean detailsExpanded;
+    private Button preflightToggle, recordsToggle, detailsToggle;
+    private LinearLayout preflightContent, recordsContent;
+    private TextView routeDetails;
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
@@ -94,59 +100,81 @@ public final class PgsMissionGpxActivity extends Activity {
         root.setPadding(dp(18), dp(14), dp(18), dp(18));
         scroll.addView(root);
 
-        TextView title = text("AUTO HUNT · PLANEJADOR GPX", 18, Color.WHITE);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        add(root, title, -2);
-        add(root, text("Leitura local de rotas de pesquisa de campo. "
-            + "Nenhuma coordenada é enviada para servidores.", 12, 0xFFB7C6D7), -2);
-        TextView preset=text("FILTRO PO GO COORDINATES · ETERNATUS",13,0xFFFFD492);
-        preset.setTypeface(null,android.graphics.Typeface.BOLD);
-        add(root,preset,-2);
-        add(root,text("Candy → Eternatus (#890) → Make an Excellent Throw\n"
-            +"Recompensa exibida: Eternatus Candy ×25",12,0xFFDFE8F3),-2);
+        // LT409: três ações principais; conferências e registro só ao expandir.
+        TextView title=text("MISSÕES GPX",20,Color.WHITE);
+        title.setTypeface(null,android.graphics.Typeface.BOLD);
+        add(root,title,-2);
+        add(root,text("1. Importe sua rota. 2. Acompanhe os pontos. "
+            +"3. Registre o que recebeu no jogo.",12,0xFFB7C6D7),-2);
+
+        Button importButton=button("1 · Importar arquivo GPX");
+        importButton.setOnClickListener(v->chooseFile());
+        add(root,importButton,48);
+
+        summary=text("",14,Color.WHITE);
+        add(root,summary,-2);
+        next=text("",14,0xFF85E0B7);
+        add(root,next,-2);
+
+        copyButton=button("Copiar coordenada deste ponto");
+        copyButton.setOnClickListener(v->copyCurrent());
+        add(root,copyButton,46);
+        visitedButton=button("Próximo ponto · marcar visitado");
+        visitedButton.setOnClickListener(v->changeVisited(1));
+        add(root,visitedButton,46);
+
+        recordsToggle=button("2 · Registrar pesquisas e doces ▾");
+        recordsToggle.setOnClickListener(v->{
+            recordsExpanded=!recordsExpanded;
+            recordsContent.setVisibility(recordsExpanded?View.VISIBLE:View.GONE);
+            recordsToggle.setText(recordsExpanded?
+                "2 · Ocultar registro de pesquisas ▴":
+                "2 · Registrar pesquisas e doces ▾");
+        });
+        add(root,recordsToggle,44);
+        recordsContent=vertical();
+        add(root,recordsContent,-2);
+        confirmButton=button("✓ Encontrei a pesquisa correta");
+        confirmButton.setOnClickListener(v->confirmResearch());
+        add(recordsContent,confirmButton,44);
+        redeemButton=button("✓ Resgatei 25 doces");
+        redeemButton.setOnClickListener(v->confirmRedeemed());
+        add(recordsContent,redeemButton,44);
+        previousButton=button("← Ponto anterior");
+        previousButton.setOnClickListener(v->changeVisited(-1));
+        add(recordsContent,previousButton,42);
+        clearButton=button("Desfazer registro deste ponto");
+        clearButton.setOnClickListener(v->updateMission(0));
+        add(recordsContent,clearButton,42);
+        recordsContent.setVisibility(View.GONE);
+
+        appendPreflight(root);
+
+        detailsToggle=button("Detalhes da rota ▾");
+        detailsToggle.setOnClickListener(v->{
+            detailsExpanded=!detailsExpanded;
+            routeDetails.setVisibility(detailsExpanded?View.VISIBLE:View.GONE);
+            detailsToggle.setText(detailsExpanded?
+                "Ocultar detalhes da rota ▴":"Detalhes da rota ▾");
+        });
+        add(root,detailsToggle,40);
+        routeDetails=text("",11,0xFFB7C6D7);
+        add(root,routeDetails,-2);
+        routeDetails.setVisibility(View.GONE);
+
         Button copyFilter=button("Copiar filtro de missões");
         copyFilter.setOnClickListener(v->copySearchPreset());
         add(root,copyFilter,40);
-        add(root,text("A captura do site indica até 10 resultados para conta grátis. "
-            +"O limite mostrado não comprova que um GPX anterior de 500 pontos "
-            +"ainda tenha pesquisas válidas.",11,0xFFB7C6D7),-2);
+        add(root,text("Eternatus #890 · Lançamento excelente · "
+            +"25 doces por pesquisa (quando disponível).",11,0xFFB7C6D7),-2);
 
-        Button importButton = button("Importar GPX do aparelho");
-        importButton.setOnClickListener(v -> chooseFile());
-        add(root, importButton, 48);
-
-        appendPreflight(root);
-        summary = text("", 14, Color.WHITE);
-        add(root, summary, -2);
-        next = text("", 14, 0xFF85E0B7);
-        add(root, next, -2);
-        copyButton = button("Copiar coordenada atual");
-        copyButton.setOnClickListener(v -> copyCurrent());
-        add(root, copyButton, 44);
-        visitedButton = button("Marcar ponto visitado manualmente");
-        visitedButton.setOnClickListener(v -> changeVisited(1));
-        add(root, visitedButton, 44);
-        confirmButton=button("Confirmar pesquisa de 25 doces (manual)");
-        confirmButton.setOnClickListener(v->confirmResearch());
-        add(root,confirmButton,44);
-        redeemButton=button("Confirmar resgate de 25 doces (manual)");
-        redeemButton.setOnClickListener(v->confirmRedeemed());
-        add(root,redeemButton,44);
-        clearButton=button("Desfazer confirmação deste ponto");
-        clearButton.setOnClickListener(v->updateMission(0));
-        add(root,clearButton,44);
-        previousButton = button("Voltar um ponto");
-        previousButton.setOnClickListener(v -> changeVisited(-1));
-        add(root, previousButton, 44);
-
-        notice = text("Atenção: esta tela ainda não executa um farm noturno. "
-            + "O GPX não confirma pesquisa, cooldown, teleporte, giro, "
-            + "lançamento excelente ou resgate. Todo progresso aqui é manual.", 
-            12, 0xFFFFD492);
-        add(root, notice, -2);
-        Button close = button("← Voltar ao PokeSearch");
-        close.setOnClickListener(v -> finish());
-        add(root, close, 44);
+        notice=text("Este planejador ainda não executa um farm noturno. "
+            +"O giro, o lançamento e o resgate continuam no jogo.",
+            11,0xFFFFD492);
+        add(root,notice,-2);
+        Button close=button("← Voltar ao PokeSearch");
+        close.setOnClickListener(v->finish());
+        add(root,close,42);
         setContentView(scroll);
         restoreLocalRoute();
         render();
@@ -217,17 +245,25 @@ public final class PgsMissionGpxActivity extends Activity {
         return key.toString();
     }
     private void appendPreflight(LinearLayout root) {
-        TextView title=text("CONFERÊNCIAS ANTES DA SESSÃO (MANUAL)",13,Color.WHITE);
-        title.setTypeface(null,android.graphics.Typeface.BOLD);
-        add(root,title,-2);
+        preflightToggle=button("3 · Preparação · 0/7 ▾");
+        preflightToggle.setOnClickListener(v->{
+            preflightExpanded=!preflightExpanded;
+            preflightContent.setVisibility(
+                preflightExpanded?View.VISIBLE:View.GONE);
+            render();
+        });
+        add(root,preflightToggle,44);
+        preflightContent=vertical();
+        add(root,preflightContent,-2);
+
         String[] labels={
-            "Conferi no site que a rota e as tarefas ainda são atuais",
-            "Há vagas suficientes para três Pesquisas de Campo",
-            "O estoque de Pokémon tem espaço livre (vídeo: estava cheio)",
-            "A bolsa de itens tem espaço para o giro das Poképaradas",
-            "No PGSharp, conferi GoPlus Virtual e PokéParada Próxima",
-            "Conferi no jogo a tarefa e a recompensa de 25 doces de Eternatus",
-            "Revisei manualmente as esperas e o cooldown aplicável"
+            "Rota e pesquisas recentes conferidas no site",
+            "Tenho três vagas de Pesquisas de Campo",
+            "Tenho espaço para capturar Pokémon",
+            "A mochila tem espaço para itens",
+            "Conferi Virtual Go Plus e giro no PGSharp",
+            "A tarefa e os 25 doces foram vistos no jogo",
+            "Revisei as esperas e cooldown"
         };
         preflightBoxes=new CheckBox[PgsMissionPreflightPolicy.ITEMS.length];
         for(int i=0;i<preflightBoxes.length;i++){
@@ -250,10 +286,11 @@ public final class PgsMissionGpxActivity extends Activity {
                 render();
             });
             preflightBoxes[i]=box;
-            add(root,box,-2);
+            add(preflightContent,box,-2);
         }
-        preflightSummary=text("",12,0xFFFFD492);
-        add(root,preflightSummary,-2);
+        preflightSummary=text("",11,0xFFFFD492);
+        add(preflightContent,preflightSummary,-2);
+        preflightContent.setVisibility(View.GONE);
     }
 
     private void loadPreflight(){
@@ -344,71 +381,73 @@ public final class PgsMissionGpxActivity extends Activity {
     }
 
     private void render() {
-        boolean has = plan != null;
+        boolean has=plan!=null;
         if(has&&!PgsMissionPreflightPolicy.current(
                 preflightStartedAt,System.currentTimeMillis()))
             preflightMask=0;
         renderingPreflight=true;
-        try {
+        try{
             for(int i=0;i<preflightBoxes.length;i++){
                 CheckBox box=preflightBoxes[i];
                 box.setEnabled(has);
                 box.setChecked(has&&(preflightMask&
                     PgsMissionPreflightPolicy.ITEMS[i])!=0);
             }
-        }finally { renderingPreflight=false; }
-        preflightSummary.setText(!has?
-            "Importe um GPX para registrar as conferências.":
-            "Checklist manual: "+PgsMissionPreflightPolicy.count(preflightMask)+
-            "/7. As marcações são declarações do usuário, não leituras do jogo. "+
-            "Mesmo completo, não ativa farm automático.");
-        copyButton.setEnabled(has && visited < plan.stops.size());
-        visitedButton.setEnabled(has && visited < plan.stops.size());
-        previousButton.setEnabled(has && visited > 0);
+        }finally{renderingPreflight=false;}
+        int checks=PgsMissionPreflightPolicy.count(preflightMask);
+        preflightToggle.setText("3 · Preparação · "+checks+
+            "/7 "+(preflightExpanded?"▴":"▾"));
+        preflightToggle.setEnabled(has);
+        preflightSummary.setText("Conferências manuais. Não ativam farm automático.");
+
         boolean active=has&&visited<missionStates.length;
-        int state=active?missionStates[visited]:0;
-        confirmButton.setEnabled(active&&state==PgsMissionLedgerPolicy.UNKNOWN);
-        redeemButton.setEnabled(active&&state==PgsMissionLedgerPolicy.TASK_CONFIRMED);
-        clearButton.setEnabled(active&&state!=PgsMissionLedgerPolicy.UNKNOWN);
-        if (!has) {
-            summary.setText("Nenhum GPX importado.");
-            next.setText("Escolha um arquivo GPX para visualizar os pontos.");
+        copyButton.setEnabled(active);
+        visitedButton.setEnabled(active);
+        previousButton.setEnabled(has&&visited>0);
+        confirmButton.setEnabled(active&&missionStates[visited]==
+            PgsMissionLedgerPolicy.UNKNOWN);
+        redeemButton.setEnabled(active&&missionStates[visited]==
+            PgsMissionLedgerPolicy.TASK_CONFIRMED);
+        clearButton.setEnabled(active&&missionStates[visited]!=
+            PgsMissionLedgerPolicy.UNKNOWN);
+        recordsToggle.setEnabled(has);
+        detailsToggle.setEnabled(has);
+
+        if(!has){
+            summary.setText("Nenhuma rota carregada.");
+            next.setText("Toque em Importar arquivo GPX para começar.");
+            routeDetails.setText("Carregue um arquivo GPX para visualizar os detalhes.");
             return;
         }
-        int count = plan.stops.size();
+        int count=plan.stops.size();
+        int tasks=PgsMissionLedgerPolicy.count(
+            missionStates,PgsMissionLedgerPolicy.TASK_CONFIRMED);
+        int redeemed=PgsMissionLedgerPolicy.count(
+            missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED);
+        int candies=PgsMissionLedgerPolicy.candies(missionStates);
         summary.setText(String.format(Locale.US,
-            "%d pontos · %d trios candidatos · %d pontos restantes fora de trios.\n"
-            + "Projeção apenas hipotética: até %d doces, se cada pesquisa "
-            + "for válida e conceder 25 doces.\n"
-            + "Coordenadas repetidas: %d.\n"
-            + "Distância geográfica aproximada: %.2f km; maior salto: %.2f km.\n"
-            + "Não representa cooldown, deslocamento real nem horas de caminhada.\n"
-            + "Pesquisas confirmadas: %d · Resgates confirmados: %d.\n"
-            + "Doces registrados manualmente: %d · Trios resgatados: %d.",
-            count, plan.fullGroups(), plan.leftoverStops(),
-            plan.possibleCandiesIfAllVerified(), plan.repeatedCoordinates,
+            "Pontos: %d/%d · Pesquisas aguardando resgate: %d\n"
+            +"Recompensas resgatadas: %d · Doces registrados manualmente: %d",
+            visited,count,tasks,redeemed,candies));
+        routeDetails.setText(String.format(Locale.US,
+            "Coordenadas: %d · Trios candidatos: %d · Sobra: %d\n"
+            +"Distância em linha reta somada: %.2f km; maior salto: %.2f km.\n"
+            +"Repetições: %d. Projeção matemática condicional: %d doces.\n"
+            +"O GPX não confirma tarefa, recompensa, cooldown ou validade.",
+            count,plan.fullGroups(),plan.leftoverStops(),
             plan.cumulativeDistanceKm,plan.longestHopKm,
-            PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.TASK_CONFIRMED),
-            PgsMissionLedgerPolicy.count(missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED),
-            PgsMissionLedgerPolicy.candies(missionStates),
-            PgsMissionQuestPreset.fullTrios(
-                PgsMissionLedgerPolicy.count(
-                    missionStates,PgsMissionLedgerPolicy.REWARD_REDEEMED))));
-        if (visited >= count) {
-            next.setText("Fim da lista: " + count + "/" + count
-                + " pontos marcados manualmente.");
+            plan.repeatedCoordinates,plan.possibleCandiesIfAllVerified()));
+        if(visited>=count){
+            next.setText("Fim da rota. Confira os registros efetuados.");
             return;
         }
-        PgsMissionGpxPlan.Stop stop = plan.stops.get(visited);
+        PgsMissionGpxPlan.Stop stop=plan.stops.get(visited);
+        String state=missionStates[visited]==PgsMissionLedgerPolicy.REWARD_REDEEMED?
+            "25 doces registrados":missionStates[visited]==
+            PgsMissionLedgerPolicy.TASK_CONFIRMED?
+            "Pesquisa registrada; resgate pendente":"Pesquisa não confirmada";
         next.setText(String.format(Locale.US,
-            "Progresso: %d/%d pontos marcados\n"
-            + "Próximo: %s · conjunto candidato %d · posição %d/3\n%s\n"
-            + "Estado informado manualmente: %s",
-            visited, count, stop.name, visited / 3 + 1, visited % 3 + 1,
-            stop.coordinates(),
-            missionStates[visited]==PgsMissionLedgerPolicy.REWARD_REDEEMED?
-                "recompensa resgatada":missionStates[visited]==
-                PgsMissionLedgerPolicy.TASK_CONFIRMED?
-                "pesquisa confirmada":"não confirmado"));
+            "Ponto %d de %d · %s\n%s\n%s",
+            visited+1,count,stop.name,stop.coordinates(),state));
     }
 }
