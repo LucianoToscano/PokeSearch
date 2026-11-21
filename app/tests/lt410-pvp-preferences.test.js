@@ -2,7 +2,7 @@
 const fs=require("fs");
 const assert=require("assert");
 const path=require("path");
-const root=path.resolve(__dirname,"../../");
+const root=path.resolve(__dirname,"..");
 const source=fs.readFileSync(path.join(root,
   "src/main/java/com/lucianotoscano/pokesearchoverlay/PvpBattleActivity.java"),"utf8");
 const main=fs.readFileSync(path.join(root,
