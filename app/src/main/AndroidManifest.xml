@@ -32,6 +32,8 @@
         <activity android:name=".CommunityScrapbookActivity" android:exported="false" />
         <!-- LT398: inventário privado; não exportado. Importação via SAF. -->
         <activity android:name=".PersonalPokedexActivity" android:exported="false" />
+        <!-- LT410: preferências PvP privadas, sem execução de batalha. -->
+        <activity android:name=".PvpBattleActivity" android:exported="false" />
         <!-- LT408: editor/planejador de GPX local, sem serviço em segundo plano. -->
         <activity android:name=".PgsMissionGpxActivity" android:exported="false" />
         <!-- LT364: explicit, user-driven lookup and local authorized APK catalog. -->
