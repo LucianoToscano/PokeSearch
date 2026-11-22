@@ -1,4 +1,36 @@
 
+<!-- CHAT_PGSHARP_PVP_LT035_POKESEARCH_20261122 -->
+## 22/11/2026 — Registro cruzado do chat PGSharp Auto PvP / PGBR LT035 (documentação, NÃO release PokeSearch)
+
+**Fonte:** conversa que comparou PGSharp 1.33.0, 1.50.3 e 1.278.0 com vídeos 13/14 de assistência de batalha, examinou o executor PvP do PGBR e acompanhou suas PRs, testes, merge e publicação da LT035. Este registro só informa interoperabilidade e referências; **não modifica app, Pokébolas P1/P2, contas, feeds, tipos, sprites, API, OTA, release/official-request.json, testes ou assinatura do PokeSearch**. O canal oficial do PokeSearch preserva o estado verificado em seus próprios registros (LT409 salvo atualização real posterior); não existe novo APK PokeSearch decorrente deste chat.
+
+### Evidência comparativa do PGSharp
+
+- [APK PGSharp 1.33.0](https://drive.google.com/file/d/1qvz4iYBRGfZZycazYagpxLaXMQqx2d48/view) e [pesquisa histórica independente romainthomas/pgsharp](https://github.com/romainthomas/pgsharp): símbolos/Java/Lua e hooks antigos; nenhuma prova recuperada de executor automático para GBL.
+- [APK PGSharp 1.50.3](https://drive.google.com/file/d/1GuH3JkL77DYC7FfZujcEFxfy4rrafM32/view): linha 1.50 anunciava **Raid & Gym Battle Assistant** (PvE), não Auto PvP comprovado.
+- [APK PGSharp 1.278.0 / jogo 0.437.0](https://drive.google.com/file/d/13wvFdgVpnVHXsRUftJYjWiyQCzmJDsiU/view): inventário prévio de `BATTLEASSIST`, `BREAD_BATTLEASSIST`, `battleAssistant`, `breadBattleFast`, `breadBattleCharge1`, `CombatVNextBattleStateShim`, `RaidBattleState`, `GymBattleState`, `rocket.shield`, `pvpCombatStats`/`PVPIV`. São referências de recursos/estados; strings não comprovam Auto PvP, e `PVPIV` refere-se a estatísticas.
+- [Vídeo 13 (~44,2 s)](https://drive.google.com/file/d/1O6OyTOvJcFcKps5Qn9tHgJoqsfU3tTXM/view) e [Vídeo 14 (~76,6 s)](https://drive.google.com/file/d/1CuMTP0q8X2NSV_8wHmogbeGwTIMimz7n/view), descritos em auditoria visual anterior: HUD de três controles em PvP (rápido, carregado, escudo), com troca/animações; **não revistos nesta sessão nem prova de que o jogo executou ações automáticas**. Diff de métodos/bytes dos APKs não foi feito.
+- O proprietário declarou autorização para reutilização de funções, mas **nenhum código literal/executável do PGSharp foi extraído ou copiado**, e a licença/direitos exatos não foram avaliados.
+
+### Resultado real no projeto PGBR (não atribuir ao PokeSearch)
+
+- Observador nativo de `GuiController.Open` corrigido para bootstrap IL2CPP tardio e funcionamento sem hooks opcionais de animação; classificador PvP Hub → Preparação → VNext com exclusão de NPC/resultados, renovação por evento real, limite de inatividade e teto absoluto de vinte minutos. Regressões de fonte/Python/C++, sem alterar as políticas do PokeSearch.
+- Histórico de branches e revisões: [PR #76](https://github.com/LucianoToscano/PGBR/pull/76) e [#78](https://github.com/LucianoToscano/PGBR/pull/78) encerradas sem merge após substituição; [#79](https://github.com/LucianoToscano/PGBR/pull/79) **merged** em `e91b881f000fe7da9f57aed2cafabb1b4a9a1899`; [#80](https://github.com/LucianoToscano/PGBR/pull/80) **merged** em `13a7c91d329fc179bbedbe4e514b303958a7d389`; [#81](https://github.com/LucianoToscano/PGBR/pull/81) **merged** em `01111cad8f0ddf0e6f3cd16a63752334956777da`.
+- [Workflow LT035](https://github.com/LucianoToscano/PGBR/actions/runs/45018980405) passou completo; [pré-release QA PGBR v0.00.35-LT](https://github.com/LucianoToscano/PGBR/releases/tag/v0.00.35-LT) publicada em 22/11/2026. [APK sem Root](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.35-LT/PGBR-v0.00.35-LT.apk) com SHA-256 `31f361c2b3284a329a6a82e1bf194d6d2dd8a9dd03e6485bccfe94ce6db5d3aa`; [Root](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.35-LT/PGBR-v0.00.35-LT-Root.apk), SHA-256 `031e4dd2113027520df37fe97f172f7838c6defbf524d2b15b511cdf11645597`; [Zygisk](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.35-LT/PGBR-v0.00.35-LT-Root-module.zip), SHA-256 `0d972a46dc128b93c8dfab9b00b80676c3cb1adeb59d789a6d4c222a1918ff6e`. Evidência de CI/build não comprova homologação de batalha no Android: **`device_tested=false`**.
+- Ainda faltam extração literal de funções PGSharp, diff de versões, seleção do segundo carregado supereficaz no nativo, escudos/trocas e validação de GBL. Não anunciar função PvP pronta com base nesses registros.
+
+### Relação responsável com PokeSearch e PvPPokeGo
+
+- **PokeSearch** é consumidor potencial de dados aprovados (espécie, formas, tipos, movimentos, ranks e catálogo visual), não executor de batalha. **PvP Rank e estatísticas de IV são diferentes de automação de PvP.** Qualquer integração futura deve manter os dados offline com versão/proveniência/compatibilidade, sem importar hooks/bibliotecas nativas de outro cliente por acidente.
+- **PvPPokeGo** tem core consultivo e político (energia, eficácia, carregados 1/2, escudos, observações com confiança); não equivale a um módulo automaticamente integrado no PGBR ou PokeSearch. Reusar conceitos apenas com contrato explícito, privacidade/limites, origem e testes separados.
+- **PGSharp do usuário** é repositório próprio de documentação e build experimental, não o repositório oficial do fornecedor nem evidência de direito de copiar bibliotecas fechadas.
+- Manter o **canal LT oficial do PokeSearch** sem releases FastDev/DEV/Preview, preservar P1/P2 independentes, OAuth oficial, SAF, backups, arquivos ARK e histórico; esta atualização não cria release nem reconfigura automações.
+
+**Ação futura, não concluída:** se houver integração de assistente PvP no PokeSearch, especificar primeiro dados/UX e realizar PR própria, testes, homologação física e pedido explícito de publicação. **Este adendo é somente documentação.**
+
+---
+
+
 ## Pesquisa consolidada de feeds/scanners e kit de observações — 22/11/2026
 
 > **Adendo documental, sem release/ARK:** registro do levantamento técnico e dos anexos enviados no chat em 22/11/2026. Preserva integralmente o Guia Mestre, o backup, a arquitetura P1/P2, os contratos e a linha oficial LT409. **Não integra código Kotlin ao Android**, não configura provedores nem publica APK. Não tratar uma PR ou teste de JVM como versão oficial.
