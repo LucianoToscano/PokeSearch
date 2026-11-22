@@ -59,3 +59,7 @@ Arquivos com nomes parecidos podem ter **contextos, datas, fontes e finalidades 
 Consulte [AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md](AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md). A etapa identificou **1.796 arquivos**, **486 arquivos na pasta docs**, **261 workflows** e **6 grupos de arquivos com blob idêntico** (GitHub tree da `main`, sem truncamento). Nenhum desses números, sozinho, justifica exclusão. A ferramenta `scripts/audit_repository_safely.py` permite repetir verificações **somente-leitura** em um checkout local.
 
 > **Importante:** esta organização não altera versões, assinatura, APK, release, Firebase, inventários, preferências, Home, Pokémon GO ou integrações. Status posterior deve ser confirmado nas fontes ao iniciar cada nova atividade.
+
+## 22/11/2026 — Referência cruzada PvP (documentação)
+
+O [Guia Mestre](GUIA_MESTRE.md) recebeu registro da comparação PGSharp 1.33/1.50/1.278, vídeos de assistência em batalha e entrega PGBR LT035 (PRs #79–#81, release QA verificada e pendências de Auto PvP). **Não é feature nem release do PokeSearch**: permanecem inalterados os sistemas P1/P2, canal oficial, dados, OTA e autenticação. Evitar confundir PvP Rank/IV com executor de GBL ou inferir importação de código de terceiros.
