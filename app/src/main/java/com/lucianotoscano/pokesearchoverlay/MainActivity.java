@@ -584,6 +584,10 @@ public class MainActivity extends Activity {
         intent.putExtra("type",category);
         startActivity(intent);
     }
+    /** LT410: independent PvP planning; no gameplay automation. */
+    private void openPvpBattles(){
+        startActivity(new android.content.Intent(this,PvpBattleActivity.class));
+    }
     /** LT398: separate private collection; never reuses scanner, login or overlay. */
     private void openPersonalPokedex(){
         startActivity(new android.content.Intent(this,PersonalPokedexActivity.class));
@@ -861,6 +865,7 @@ public class MainActivity extends Activity {
         };
         // The earlier row still contains the classic launchers only.
         // New modules must not accidentally start an unrelated overlay.
+        homeModuleIcons[10].setOnClickListener(v->openPvpBattles());
         homeModuleIcons[11].setOnClickListener(v->openPersonalPokedex());
         homeModuleIcons[15].setOnClickListener(v->showCommunityHomeOptions());
         LinearLayout launcherGrid=new LinearLayout(this);
