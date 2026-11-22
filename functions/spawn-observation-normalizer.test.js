@@ -45,6 +45,16 @@ test("omits unknown fields rather than inventing zero IV", () => {
   assert.equal(toRocketMapRawData(normalized).pokemons[0].individual_attack, undefined);
 });
 
+test("Golbat webhook pokemon_level becomes level, nearby proxy points are rejected", () => {
+  const good = {...base(), level: undefined, pokemon_level: 24};
+  const proxy = {...base(), encounter_id: "nearby", seen_type: "nearby_cell"};
+  const data = normalizeWebhookBatch({pokemons: [good,proxy]}, opts);
+  assert.equal(data.accepted, 1);
+  assert.equal(data.entries[0].level, 24);
+  assert.equal(data.reasons.imprecise_location, 1);
+  assert.equal(toRocketMapRawData(data).pokemons[0].level, 24);
+});
+
 test("does not transmit a claimed IV without components into a RocketMap IV claim", () => {
   const row = base();
   delete row.individual_attack;
