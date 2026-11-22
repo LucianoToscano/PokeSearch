@@ -63,3 +63,7 @@ Consulte [AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md](AUDITORIA_ORGANIZACAO_P
 ## 22/11/2026 — Referência cruzada PvP (documentação)
 
 O [Guia Mestre](GUIA_MESTRE.md) recebeu registro da comparação PGSharp 1.33/1.50/1.278, vídeos de assistência em batalha e entrega PGBR LT035 (PRs #79–#81, release QA verificada e pendências de Auto PvP). **Não é feature nem release do PokeSearch**: permanecem inalterados os sistemas P1/P2, canal oficial, dados, OTA e autenticação. Evitar confundir PvP Rank/IV com executor de GBL ou inferir importação de código de terceiros.
+
+### 22/11/2026 — Atualização cross-project LT037
+
+O documento mestre [GUIA_MESTRE.md](GUIA_MESTRE.md) registra a captura de treinamento Lickilicky/Sneasel, allowlist Rocket/PvP/NPC, exclusão de Raid/Max/Gym/Wild/Unknown e [pré-release QA PGBR LT037](https://github.com/LucianoToscano/PGBR/releases/tag/v0.00.37-LT), publicada com checks aprovados e hashes. Registro documental, sem alterações no aplicativo PokeSearch; `device_tested=false`.
