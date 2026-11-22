@@ -10,6 +10,7 @@
  */
 const http = require("node:http");
 const crypto = require("node:crypto");
+const {html: dashboardHtml} = require("./authorized-feed-dashboard");
 const {normalizeWebhookBatch, toRocketMapRawData, MAX_BODY_BYTES} =
   require("./spawn-observation-normalizer");
 
@@ -58,11 +59,24 @@ function respond(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function respondDashboard(res) {
+  res.writeHead(200,{
+    "Content-Type":"text/html; charset=utf-8",
+    "Cache-Control":"no-store",
+    "X-Content-Type-Options":"nosniff",
+    "X-Frame-Options":"DENY",
+    "Referrer-Policy":"no-referrer",
+    "Content-Security-Policy":"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'"
+  });
+  res.end(dashboardHtml);
+}
+
 function makeGateway(options) {
   checkConfig(options);
   const now = options.now || Date.now;
   const entries = new Map();
   let acceptedTotal = 0;
+  let lastAcceptedAt = 0;
 
   function prune() {
     const stamp = now();
@@ -80,6 +94,19 @@ function makeGateway(options) {
     catch (_) { respond(res, 400, {error: "invalid_path"}); return; }
     if (url.pathname === "/health" && req.method === "GET") {
       respond(res, 200, {status: "configured", sourceId: options.sourceId});
+      return;
+    }
+    if (url.pathname === "/painel" && req.method === "GET") {
+      respondDashboard(res); return;
+    }
+    if (url.pathname === "/status" && req.method === "GET") {
+      if (!safeSecret(req.headers["x-feed-secret"], options.readSecret)) {
+        respond(res,401,{error:"unauthorized_reader"});return;
+      }
+      prune();
+      respond(res,200,{status:entries.size>0?"receiving_observations":"waiting_for_source",
+        demo:false,sourceId:options.sourceId,cached:entries.size,
+        acceptedTotal,lastAcceptedAt:lastAcceptedAt||null});
       return;
     }
     if (url.pathname === "/webhook/golbat" && req.method === "POST") {
@@ -116,6 +143,7 @@ function makeGateway(options) {
           entries.set(key, row);
         }
         acceptedTotal += batch.accepted;
+        if(batch.accepted>0)lastAcceptedAt=now();
         prune();
         respond(res, 202, {accepted: batch.accepted, rejected: batch.rejected,
           reasons: batch.reasons, cached: entries.size});
@@ -163,7 +191,7 @@ function makeGateway(options) {
 
   return {handler, statistics:() => {
     prune();
-    return {cached: entries.size, acceptedTotal};
+    return {cached: entries.size, acceptedTotal, lastAcceptedAt};
   }};
 }
 
