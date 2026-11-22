@@ -1,3 +1,9 @@
+## PRIORIDADE ATUAL DE LEITURA — 21/11/2026
+
+**Estado confirmado:** [LT409 v0.03.94 / 54601](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.94-54601) é a release pública mais recente verificada em 21/11/2026. **Para qualquer IA:** ler primeiro [Guia Mestre](docs/GUIA_MESTRE.md), [Índice Central](docs/INDICE_CENTRAL_POKESEARCH.md), [AGENTS.md](AGENTS.md), [auditoria preservativa](docs/AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md) e evidências GitHub atuais. As informações sobre LT379/LT337/LT323/LT227 a seguir ficam preservadas **como histórico de sua data**, não como versão atual. **Nunca simplificar apagando conteúdo**; apontar para a fonte canônica, preservar os backups, testar antes de qualquer remoção. Esta nota não publica aplicativo ou APK.
+
+---
+
 # ESTADO MAIS RECENTE PARA AUDITORIAS DE OUTRAS IAs — 16/11/2026
 
 **ATENÇÃO:** o texto histórico abaixo cita LT337, LT323 e 0.03.36 como "atuais" no contexto de 14/11/2026; NÃO usá-los como estado corrente. Em 16/11/2026, a última release verificada era **v0.03.72-54579**, workflow oficial **#43975405288** SUCCESS e main **5aa764a0f330cacc51598ada03cabdc9b65e2b7b**. Consultar sempre GitHub Releases/latest e main novamente.
