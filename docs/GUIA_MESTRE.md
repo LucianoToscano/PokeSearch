@@ -1,4 +1,10 @@
 
+<!-- POKESEARCH-CHAT-VISUAL-20261122 -->
+## Biblioteca Visual Auto Hunt e dados Pokémon — adendo de 22/11/2026
+
+**Somente documentação; versão oficial LT409 permanece inalterada.** O catálogo deste chat (links, 9 pacotes ZIP de objetos/tags, Sprites Pokemon.zip, GIFs, fontes PokeMiners/VeryLongDelay/Pokéos, auditorias e JSONs) está em [CONSOLIDACAO_CHAT_BIBLIOTECA_VISUAL_DADOS_20261122.md](CONSOLIDACAO_CHAT_BIBLIOTECA_VISUAL_DADOS_20261122.md). Os dados fornecidos têm 1.755 registros Pokémon, 1.451 chaves, 303 grupos duplicados, **24 conflitos** e 1.427 chaves sem divergência; `latest.json` possui 18.812 templates e timestamp 28/08/2026. Reconciliador externo conservador foi executado, sem alteração dos originais. A Biblioteca Visual em cinco módulos é PLANO, não recurso implantado: reconhecer Pokémon, PokéStops, telas e animações, mais diagnóstico, validando PGSharp/Pokemod e licenciamentos. Preservar P1/P2, os dois inventários, SAF PGSStats, sprites exatas, tags, filtros, fundos, Home e fluxo de release oficial. Nenhum APK foi gerado/publicado nesta etapa.
+
+
 ## Pesquisa consolidada de feeds/scanners e kit de observações — 22/11/2026
 
 > **Adendo documental, sem release/ARK:** registro do levantamento técnico e dos anexos enviados no chat em 22/11/2026. Preserva integralmente o Guia Mestre, o backup, a arquitetura P1/P2, os contratos e a linha oficial LT409. **Não integra código Kotlin ao Android**, não configura provedores nem publica APK. Não tratar uma PR ou teste de JVM como versão oficial.
