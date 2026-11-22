@@ -1,3 +1,42 @@
+
+## Pesquisa consolidada de feeds/scanners e kit de observações — 22/11/2026
+
+> **Adendo documental, sem release/ARK:** registro do levantamento técnico e dos anexos enviados no chat em 22/11/2026. Preserva integralmente o Guia Mestre, o backup, a arquitetura P1/P2, os contratos e a linha oficial LT409. **Não integra código Kotlin ao Android**, não configura provedores nem publica APK. Não tratar uma PR ou teste de JVM como versão oficial.
+
+### Escopo da pesquisa e conclusão verificável
+
+A pesquisa distingue catálogo estático de observações com posição e tempo. [PokéAPI](https://pokeapi.co/docs/v2) disponibiliza espécies, tipos, formas e sprites, **não** coordenadas/IV/CP de encontros atuais. Em 22/11/2026, o levantamento **não conseguiu verificar uma API pública documentada, autorizada e operacional de spawns Pokémon GO**. Não inventar endpoint, viabilidade comercial ou contrato de acesso. Serviços privados/proprietários (PGSharp, iPogo, Pokemod, PGTools e afins) requerem acordos específicos e validação; código de cliente ou parser antigo não concede autorização de uso do backend.
+
+Arquiteturas analisadas:
+1. **Scan ativo histórico:** trabalhadores/dispositivos, pontos geográficos, expiração e armazenamento; referências [spawnScan](https://github.com/TBTerra/spawnScan), [Monocle](https://github.com/ZeChrales/Monocle), [Monocle fork](https://github.com/Hydro74000/Monocle), [RocketMap](https://github.com/RocketMap/RocketMap), [RealDeviceMap](https://github.com/RealDeviceMap/RealDeviceMap) e [Map-A-Droid](https://github.com/Map-A-Droid/MAD). Não presumir compatibilidade com o jogo atual.
+2. **Agregação e scraping/mapas:** [PKMSpawn](https://github.com/ashokvarmamatta/pkmspawn), [ScanGO](https://github.com/pompobit/ScanGO), [Pogo-Scanner-Android](https://github.com/azlan194/Pogo-Scanner-Android) e referências de listas/cartografia. Código do PKMSpawn usa WebView e lista comentada de mapas; não há evidência de dez feeds ativos. Pogo-Scanner-Android depende de serviço externo com credencial, sem comprovação de API aberta para terceiros.
+3. **Feeder/JSON/HTTP:** [PSSnipeFeeder](https://github.com/walaoaaa1234/PSSnipeFeeder) e [PogoLocationFeeder](https://github.com/5andr0/PogoLocationFeeder), legados; tratar links automáticos e feeds históricos apenas como estudo de parsing e contratos.
+4. **Pilha modular moderna:** [Golbat](https://github.com/UnownHash/Golbat), processador experimental de entrada bruta; [ReactMap](https://github.com/WatWowMap/ReactMap), filtros/visualização e backends plugáveis (release **v1.59.0 publicada em 19/11/2026**, verificada); [PoracleNG](https://github.com/jfberry/PoracleNG), matching de regras e alertas via webhooks Discord/Telegram; [Koji](https://github.com/TurtIeSocks/Koji), geofences/rotas; PoracleNG não descobre eventos sozinho e Golbat não equivale a feed público. [PoracleJS](https://github.com/KartulUdus/PoracleJS) foi substituído.
+5. **Dados e testes:** PokéAPI, masterfiles/ativos de Pokémon (verificar atualização/licença), [POGOProtos](https://github.com/AeonLucid/POGOProtos) como referência histórica, [Appium UiAutomator2](https://github.com/appium/appium-uiautomator2-driver) como ferramenta de teste de UI de apps próprios. RealDeviceMap foi arquivado em 03/11/2025; RocketMap é legado Python 2.7.
+
+### Anexos de origem e código demonstrativo (não incorporados ao app)
+
+- `SpawnFeedKit.kt`: núcleo Kotlin inicial de provider, parsing/normalização, distância Haversine, deduplicação, cache TTL, filtros (espécie, IV, CP e distância), GPX e enum de natureza `LIVE/HISTORICAL/ESTIMATED/SIMULATED`; executado em JVM, com fixtures. Pacote revisado `pesquisa-pokemon-go-android-validada.zip` corrigiu aspas/escape GPX, validação e atualização de UI demonstrativa. Não é módulo Android completo.
+- `Arquitetura de Sistemas de Rastreamento, Feeds de Coordenadas e Automação no Ecossistema Pokémon GO.html`: estudo de arquitetura, comparação e links. Algumas datas/status/reivindicações são snapshots e devem ser revalidados.
+- `pesquisa_pokemon_go_scanners.zip`: continha apenas relatório Markdown (sem .kt, APK, Gradle ou endpoints).
+- **Pacote de referência principal:** `PokeSearch_Observacoes_v2_2026-11-22.zip` com `src/SpawnObservationsV2.kt`, `src/MapNormalizer.kt`, `tests/SpawnObservationsV2Test.kt`, `AUDITORIA.md`, `INTEGRACAO_PGBR.md`, amostras e relatório original. Anexos de conversa; **não** são arquivos versionados nem integração no `app/`.
+
+Teste reproduzido em 22/11/2026, no ambiente da conversa: `bash testar.sh` retornou **37 testes Kotlin/JVM aprovados**, usando `kotlinc-jvm 1.9.0` e Java 21. Evidência limitada ao núcleo neutro; sem Gradle/Room/Compose/Retrofit/WorkManager, UI física, login, API do jogo, APK ou homologação Samsung Android 17.
+
+### Modelo neutro proposto para integração futura
+
+`SpawnObservation` inclui `id`, `speciesId`, `name`, `Coordinate(latitude,longitude)`, `observedAt: Instant`, `despawnsAt: Instant?`, `cp?`, `ivPercent?`, `form?`, `source` e `kind`. `ObservationKind`: `LIVE`, `HISTORICAL`, `ESTIMATED`, `SIMULATED`; estados distintos `SOURCE_REPORTS_ACTIVE`, `RECENT_UNCONFIRMED`, `STALE`, `EXPIRED`, `HISTORICAL`, `ESTIMATED`, `SIMULATED`, `FUTURE_TIMESTAMP`. `SourcePolicy` deve ser configurada localmente, e uma fonte que se declare LIVE não é prova independente de spawn ativo. Faltas de timestamp/IV/CP/expiração não são preenchidas com suposições.
+
+Componentes técnicos do kit: `SpawnProvider`, `ObservationStore` em memória, `FeedFieldMap`/`normalizeMap` para mapas JSON já parseados, `SearchFilters`, `SearchHit`, `distanceMeters`, `exportGpx`. Regras: latitude/longitude finitas e em faixa; `observedAt` obrigatório, `despawnsAt` opcional; deduplicação composta (fonte+ID) com atualização monotônica; Haversine; filtro explícito de expirados e obsoletos; GPX com XML escapado, origem, natureza e horário; timestamps em UTC. **Não** tratar `despawnsAt=null` como confirmação de presença. Dados de espécie são camada separada.
+
+### Objetivo de UI sem promessa de funcionamento
+
+Requisitos planejados para os **dois filtros**, compartilhando uma única origem de observações: (1) busca global por espécie/forma/IV/CP, com indicadores de data/fonte/estado; (2) radar regional por ponto/raio/distância, ordenação e expiração. Estados vazios e offline, permissão por provedor, diagnóstico, limite de requisições, preservação dos resultados e contratos atuais P1/P2. Ações de toque podem abrir detalhes, copiar coordenadas e exportar GPX; **teleporte e captura automática não estão implementados no kit nem incluídos neste registro documental**. Trabalhos futuros devem preservar os fluxos existentes de PokeSearch e observar as limitações de termos de serviço, direitos de assets e licenças open source.
+
+**Próxima etapa condicionada:** comparar o código real da branch alvo com os módulos e filtros já existentes; verificar fonte documentada e permissões de uso; fazer adaptador Android em branch própria; testar junto de P1/P2, regressões, build oficial e aparelho; **não lançar nova versão só por este adendo**.
+
+---
+
 ## Navegação central e preservação documental — 21/11/2026
 
 **Regra de continuidade:** este é o arquivo canônico do PokeSearch. **Sempre ler primeiro**, comparar com o HEAD, PRs, workflows e [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest), e acrescentar evidências sem apagar, condensar ou reescrever o conhecimento existente. Consulte o [Índice Central](INDICE_CENTRAL_POKESEARCH.md), [AGENTS.md](../AGENTS.md) e a [auditoria conservadora de 21/11](AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md) para localizar módulos, decisões, riscos e histórico. O [backup integral de 25/10](GUIA_MESTRE_BACKUP_INTEGRAL_2026-10-25.md) permanece protegido e inalterado.
