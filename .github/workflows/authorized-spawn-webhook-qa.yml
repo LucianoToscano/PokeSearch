@@ -1,21 +1,32 @@
-name: Authorized spawn webhook normalization QA
+name: Authorized spawn feed, filters and asset metadata QA
 
 on:
   push:
     branches:
       - feat/authorized-spawn-webhook-normalizer-20261122
+      - feat/golbat-reactmap-filters-20261122
     paths:
-      - 'functions/spawn-observation-normalizer.js'
-      - 'functions/spawn-observation-normalizer.test.js'
-      - 'functions/spawn-observation-cli.test.js'
+      - 'functions/spawn-observation-*.js'
+      - 'functions/authorized-spawn-gateway*.js'
+      - 'functions/uicons-manifest.test.js'
       - 'scripts/normalize-authorized-spawns.js'
+      - 'scripts/run-authorized-spawn-gateway.js'
+      - 'scripts/catalog-uicons-index.js'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListRadarActivity.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListLocalFilterPolicy.java'
+      - 'app/tests/PokeListLocalFilterPolicyTest.java'
       - '.github/workflows/authorized-spawn-webhook-qa.yml'
   pull_request:
     paths:
-      - 'functions/spawn-observation-normalizer.js'
-      - 'functions/spawn-observation-normalizer.test.js'
-      - 'functions/spawn-observation-cli.test.js'
+      - 'functions/spawn-observation-*.js'
+      - 'functions/authorized-spawn-gateway*.js'
+      - 'functions/uicons-manifest.test.js'
       - 'scripts/normalize-authorized-spawns.js'
+      - 'scripts/run-authorized-spawn-gateway.js'
+      - 'scripts/catalog-uicons-index.js'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListRadarActivity.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListLocalFilterPolicy.java'
+      - 'app/tests/PokeListLocalFilterPolicyTest.java'
       - '.github/workflows/authorized-spawn-webhook-qa.yml'
   workflow_dispatch:
 
@@ -23,19 +34,53 @@ permissions:
   contents: read
 
 jobs:
-  feed-normalizer:
+  feed-and-filter-unit:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate syntax
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Validate Node source syntax
         run: |
           node --check functions/spawn-observation-normalizer.js
           node --check functions/spawn-observation-normalizer.test.js
           node --check functions/spawn-observation-cli.test.js
+          node --check functions/authorized-spawn-gateway.js
+          node --check functions/authorized-spawn-gateway.test.js
+          node --check functions/uicons-manifest.test.js
           node --check scripts/normalize-authorized-spawns.js
-      - name: Run isolated authorization and data-integrity checks
-        run: node --test functions/spawn-observation-normalizer.test.js functions/spawn-observation-cli.test.js
+          node --check scripts/run-authorized-spawn-gateway.js
+          node --check scripts/catalog-uicons-index.js
+      - name: Test source integrity and authorized gateway, no external HTTP
+        run: |
+          node --test functions/spawn-observation-normalizer.test.js functions/spawn-observation-cli.test.js functions/authorized-spawn-gateway.test.js functions/uicons-manifest.test.js
+      - name: Test Android Java local-filter policy in a plain JVM
+        run: |
+          mkdir -p "$RUNNER_TEMP/filters"
+          javac --release 17 -encoding UTF-8 -d "$RUNNER_TEMP/filters" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListLocalFilterPolicy.java \
+            app/tests/PokeListLocalFilterPolicyTest.java
+          java -cp "$RUNNER_TEMP/filters" com.lucianotoscano.pokesearchoverlay.PokeListLocalFilterPolicyTest
+
+  android-debug-compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Compile app without publishing or signing
+        run: gradle --no-daemon :app:compileDebugJavaWithJavac
