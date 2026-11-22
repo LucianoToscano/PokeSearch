@@ -3675,3 +3675,24 @@ A candidata PGBR [PR #98](https://github.com/LucianoToscano/PGBR/pull/98) foi **
 - [SHA256SUMS](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.38-LT/SHA256SUMS.txt).
 
 **Limitação:** menu Ataque Inteligente e temporizadores presentes; escolha nativa por eficácia em todas batalhas e a correção da tela branca **não foram implementadas na LT038**. `device_tested=false` para essa versão. Este registro é apenas documentação cruzada, não atualização do código-fonte nem APK deste projeto.
+
+<!-- SPAWN_WEBHOOK_AUTHORIZED_20261122 -->
+## 22/11/2026 — Implementação isolada: normalizador opt-in de spawns por webhook (sem rede, sem release)
+
+**Pedido:** estudar e aplicar as pesquisas desta conversa sobre obtenção de coordenadas por API, análise histórica PGSharp, RocketMap/Golbat/PoracleNG, PokeXperience, iFlowGo/Moonani/Lucario e filtros de IV/CP/PvP, sem afetar as atualizações simultâneas.
+
+**GitHub:** branch `feat/authorized-spawn-webhook-normalizer-20261122` criada a partir de `54246b7d68a199d2f2ddda0897dbc543ad0d4f9f` da `main`, sem merge automático. Arquivos novos:
+- `functions/spawn-observation-normalizer.js`: biblioteca pura sem HTTPS nem serviço público, normaliza eventos de webhook fornecidos por operador autorizado, exige `authorized=true` e `sourceId` configurado, exige ID confiável e expiração válida, descarta coordenadas erradas e duplicatas, não inventa IV/CP/Shiny, limita a 512 KiB/500 eventos e distingue timestamp recebido de despawn.
+- `functions/spawn-observation-normalizer.test.js`: 13 testes de contrato, segurança, IV, tempo e serialização de resposta PGBR.
+- `.github/workflows/authorized-spawn-webhook-qa.yml`: executar Node 22 em PR/branch, sem segredos.
+- `docs/SPAWN_WEBHOOK_AUTHORIZED_NORMALIZATION_20261122.md`: contrato, limites, exemplo fictício e pendências.
+
+**Compatibilidade:** `toRocketMapRawData()` cria um subconjunto do JSON `pokemons[]` e `disappear_time` em milissegundos, formato que o parser independente `RocketMapFeedData.java` do PGBR já aceita. Não constitui conector de rede, listener, servidor `/raw_data`, nem sincronização Android automática. Não toca em P1/P2, assinaturas, Firebase, versões, OTA, login, UI, APK ou configuração de release.
+
+**Evidências de testes na elaboração:** 13/13 checks JavaScript executados em interpretador V8 isolado com compatibilidade de asserts simulada; esta evidência é **preliminar**, não um comando Node/GitHub Actions real. Testes oficiais da Actions só podem ser marcados completos depois da execução verificável da PR. Nenhuma fonte mundial foi acessada e nenhum registro de aparição real foi alegado.
+
+**Fontes e referências arquivadas no Drive:** https://docs.google.com/document/d/12-I-rUfnQR0YL_mDExTJfx2zXgfxgB8-Bkp2tyuVPfI/edit; PDF Ekoparty PGSharp 2021: https://drive.google.com/file/d/1nEf72fUU4hXS2V8alnuc4pv3unUdINV3/view. Elas não autorizam automaticamente a consulta direta a servidores Niantic/PGSharp. O PDF histórico não apresenta API global de spawns.
+
+**PENDÊNCIAS explícitas:** autenticação e permissão de fonte, webhook receptor assinado, publicação autorizada de API, conexão opt-in com PokeSearch/Android e PGBR, testes de provedor real e homologação no telefone. Não existe APK nem versão PokeSearch resultante desta tarefa; a última release deve ser apurada separadamente por GitHub Releases.
+
+**Protocolo:** manter branch isolada e PR revisável, sem merge, preservando histórico, assinaturas e outras branches. Documentação detalhada não substitui este Guia Mestre.
