@@ -159,13 +159,6 @@ android {
     }
     buildTypes {
         getByName("debug") {
-            // Demo-only QA APK installs BESIDE the official package and never
-            // replaces an app signed with the long-lived release certificate.
-            // Only the isolated workflow sets this flag; defaults unchanged.
-            if (System.getenv("POKE_DEMO_PREVIEW") == "1") {
-                applicationIdSuffix = ".demo"
-                versionNameSuffix = "-DEMO"
-            }
             if (testSigningComplete) {
                 signingConfig = signingConfigs.getByName("persistentTestDebug")
                 isMinifyEnabled = true
