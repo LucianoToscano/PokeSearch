@@ -3696,3 +3696,8 @@ A candidata PGBR [PR #98](https://github.com/LucianoToscano/PGBR/pull/98) foi **
 **PENDÊNCIAS explícitas:** autenticação e permissão de fonte, webhook receptor assinado, publicação autorizada de API, conexão opt-in com PokeSearch/Android e PGBR, testes de provedor real e homologação no telefone. Não existe APK nem versão PokeSearch resultante desta tarefa; a última release deve ser apurada separadamente por GitHub Releases.
 
 **Protocolo:** manter branch isolada e PR revisável, sem merge, preservando histórico, assinaturas e outras branches. Documentação detalhada não substitui este Guia Mestre.
+
+
+<!-- SPAWN_WEBHOOK_OFFLINE_CLI_ADDENDUM_20261122 -->
+### 22/11/2026 — Complemento: exportação offline opt-in dos webhooks
+Adicionada na mesma branch `feat/authorized-spawn-webhook-normalizer-20261122` a ferramenta `scripts/normalize-authorized-spawns.js`, com entrada e saída de arquivo local, opção de fonte declarada e autorização explícita; não realiza acesso à internet nem instala ou atualiza o APK. Registra somente aceitos/rejeitados (sem expor dados de encontros no stdout). Saída compatível com RocketMap por conversão de observações que o operador já possui legitimamente. Recusa sobrescrever o arquivo de saída. Adicionada suíte `functions/spawn-observation-cli.test.js` (três testes) e CI Node 22 ampliado. Total planejado: 13 testes do normalizador + 3 da CLI = 16; a aprovação CI fica sujeita à execução observada do workflow. Não há servidor HTTP publicado, feed de terceiros desbloqueado nem conexão Android nesta etapa.
