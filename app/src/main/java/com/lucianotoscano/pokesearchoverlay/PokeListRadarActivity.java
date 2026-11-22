@@ -32,7 +32,8 @@ public final class PokeListRadarActivity extends Activity {
     private LinearLayout results;
     private Button search;
     private Spinner sortMode;
-    private android.widget.CheckBox onlyIv100;
+    private android.widget.CheckBox onlyIv100, onlyWithCoordinates;
+    private EditText localName, localCp, localLevel;
     private PokeListFeedClient.Response lastResponse;
     private PokeListApiPolicy.Query lastQuery;
     private final android.os.Handler timeHandler=new android.os.Handler(
@@ -172,6 +173,37 @@ public final class PokeListRadarActivity extends Activity {
         onlyIv100.setOnCheckedChangeListener((button,checked)->renderResults());
         displayOptions.addView(onlyIv100);
         panel.addView(displayOptions);
+
+        // ReactMap-style local filters: refine the last authorized API page
+        // without hammering a supplier or presenting missing stats as matches.
+        panel.addView(text("Filtros locais · sobre resultados recebidos",12,true));
+        localName=input("Nome ou #Pokédex", "", InputType.TYPE_CLASS_TEXT);
+        panel.addView(localName,new LinearLayout.LayoutParams(-1,d(42)));
+        localCp=input("PC mínimo (0 = todos)","0",InputType.TYPE_CLASS_NUMBER);
+        localLevel=input("Nível mínimo (0 = todos)","0",InputType.TYPE_CLASS_NUMBER);
+        addPair(panel,"PC mínimo",localCp,"Nível mínimo",localLevel);
+        onlyWithCoordinates=new android.widget.CheckBox(this);
+        onlyWithCoordinates.setText("Somente com coordenadas");
+        onlyWithCoordinates.setTextSize(11);
+        onlyWithCoordinates.setTextColor(fg);
+        onlyWithCoordinates.setOnCheckedChangeListener((button,checked)->renderResults());
+        panel.addView(onlyWithCoordinates);
+        android.text.TextWatcher localWatcher=new android.text.TextWatcher(){
+            public void beforeTextChanged(CharSequence s,int start,int count,int after){}
+            public void onTextChanged(CharSequence s,int start,int before,int count){renderResults();}
+            public void afterTextChanged(android.text.Editable s){}
+        };
+        localName.addTextChangedListener(localWatcher);
+        localCp.addTextChangedListener(localWatcher);
+        localLevel.addTextChangedListener(localWatcher);
+        Button clearLocal=button("Limpar filtros locais");
+        clearLocal.setOnClickListener(v->{
+            localName.setText("");localCp.setText("0");localLevel.setText("0");
+            onlyWithCoordinates.setChecked(false);onlyIv100.setChecked(false);
+            renderResults();
+        });
+        panel.addView(clearLocal,new LinearLayout.LayoutParams(-1,d(38)));
+
         sortMode.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,
                   View view,int index,long id){renderResults();}
@@ -265,6 +297,16 @@ public final class PokeListRadarActivity extends Activity {
             }
         });
     }
+    private static int localMinimum(EditText field,String label,int limit){
+        if(field==null)return 0;
+        String value=field.getText().toString().trim();
+        if(value.isEmpty())return 0;
+        try {
+            int number=Integer.parseInt(value);
+            if(number>=0 && number<=limit)return number;
+        }catch(NumberFormatException ignored){}
+        throw new IllegalArgumentException(label+": informe um inteiro de 0 a "+limit);
+    }
     /** Ações de ordem e filtro são locais, sem reconsultar a API. */
     private void renderResults(){
         if(results==null||lastResponse==null||lastQuery==null)return;
@@ -272,6 +314,20 @@ public final class PokeListRadarActivity extends Activity {
         PokeListApiPolicy.Query reference=lastQuery;
         results.removeAllViews();
         times.clear();
+        final PokeListLocalFilterPolicy.Criteria criteria;
+        try{
+            criteria=new PokeListLocalFilterPolicy.Criteria(
+                reference.type,reference.monIds,reference.ivMin,
+                localName==null?"":localName.getText().toString(),
+                localMinimum(localCp,"PC",20000),
+                localMinimum(localLevel,"Nível",55),
+                onlyIv100!=null&&onlyIv100.isChecked(),
+                onlyWithCoordinates!=null&&onlyWithCoordinates.isChecked());
+        }catch(IllegalArgumentException badFilter){
+            state.setText("Corrija o filtro local: "+badFilter.getMessage());
+            results.addView(text("Os resultados recebidos estão preservados; revise os filtros.",12,false));
+            return;
+        }
         java.util.ArrayList<PokeListFeedClient.Item> ordered=
             new java.util.ArrayList<>(data.items);
         int mode=sortMode==null?0:sortMode.getSelectedItemPosition();
@@ -283,12 +339,13 @@ public final class PokeListRadarActivity extends Activity {
             item.expiryKnown?item.expiresAt:Long.MAX_VALUE));
         else if(mode==3)ordered.sort((x,y)->Integer.compare(y.iv,x.iv));
         else if(mode==4)ordered.sort((x,y)->Integer.compare(y.cp,x.cp));
-        int shown=0,hiddenIv=0,expiredNow=0;
+        int shown=0,hiddenLocal=0,expiredNow=0;
         long now=System.currentTimeMillis();
         for(PokeListFeedClient.Item item:ordered){
             if(item.expiryKnown&&item.expiresAt<=now){expiredNow++;continue;}
-            if(onlyIv100!=null&&onlyIv100.isChecked()&&item.iv!=100){
-                hiddenIv++;continue;
+            if(!criteria.accepts(item.number,item.name,item.iv,item.cp,item.level,
+                    item.hasCoordinates,item.expiryKnown,item.expiresAt,now)){
+                hiddenLocal++;continue;
             }
             shown++;
             LinearLayout card=col();
@@ -380,10 +437,13 @@ public final class PokeListRadarActivity extends Activity {
         }
         state.setText("Exibidos "+shown+" · origem "+data.sourceCount+
             " · expirados "+(data.expired+expiredNow)+" · inválidos "+
-            data.invalid+(hiddenIv>0?" · filtrados por IV "+hiddenIv:"")+
-            ". Ordenação local, sem nova consulta.");
+            data.invalid+(hiddenLocal>0?" · ocultos por filtros locais "+hiddenLocal:"")+
+            ". Ordenação e filtros locais, sem nova consulta.");
         if(shown==0)results.addView(text(
-            "Nenhum resultado válido para os filtros atuais.",12,false));
+            data.sourceCount==0
+                ? "A fonte não retornou registros. Verifique a cobertura e o acesso; filtros não criam aparições."
+                : "Nenhum registro passou pelos filtros locais. Toque Limpar filtros locais, ajuste o raio ou consulte novamente.",
+            12,false));
     }
 
     private void updateVisibleTimes(){
