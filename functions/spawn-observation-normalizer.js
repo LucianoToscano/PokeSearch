@@ -74,6 +74,10 @@ function extractEvents(input) {
 function normalizeOne(raw, sourceId, nowMs) {
   const row = eventRow(raw);
   if (!row) return {error: "unsupported_event"};
+  // Golbat nearby_cell/nearby_stop are proxy locations, not spawn coordinates;
+  // never pass them to a teleport-facing map as precise observations.
+  if (row.seen_type === "nearby_cell" || row.seen_type === "nearby_stop")
+    return {error: "imprecise_location"};
   const pokemonId = integer(row.pokemon_id ?? row.pokemonId, 1, 1025);
   const encounterId = safeEncounterId(row.encounter_id ?? row.encounterId);
   const latitude = numeric(row.latitude ?? row.lat);
@@ -97,7 +101,7 @@ function normalizeOne(raw, sourceId, nowMs) {
     return {error: "conflicting_iv"};
   }
   const cp = integer(row.cp, 0, 20000);
-  const levelNumber = numeric(row.level);
+  const levelNumber = numeric(row.level ?? row.pokemon_level);
   const level = Number.isFinite(levelNumber) && levelNumber >= 1 && levelNumber <= 55 &&
       levelNumber * 2 === Math.floor(levelNumber * 2) ? levelNumber : null;
   const form = integer(row.form, 0, 99999);
