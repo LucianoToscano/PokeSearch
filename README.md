@@ -1,8 +1,19 @@
 # PokeSearch — Android Overlay
 
+## Estado oficial corrente e documentação canônica — 21/11/2026
+
+**Última release estável verificada:** **PokeSearch v0.03.94 LT (LT409, versionCode 54601)**, publicada em **20/11/2026**. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.94-54601) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.94-54601/PokeSearch-v0.03.94-LT.apk) · [Guia Mestre canônico](docs/GUIA_MESTRE.md) · [Índice Central](docs/INDICE_CENTRAL_POKESEARCH.md) · [AGENTS.md](AGENTS.md) · [Auditoria conservadora](docs/AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md).
+
+**Política:** consultar o Guia Mestre **antes** de editar e registrar nele os resultados, sem reduzir o histórico. Na auditoria de 21/11 foram organizadas referências documentais; **não** houve limpeza destrutiva, mudança no APK, assinatura, release, CI, Firebase, inventários ou experiência do app. A homologação física no Samsung Android 17 segue pendente.
+
+**Atenção ao histórico abaixo:** todas as versões LT227 e anteriores continuam aqui para rastreabilidade; títulos antigos e links para `releases/latest` representam o estado na data de sua publicação, **não o estado oficial atual**.
+
+---
+
+
 **Continuidade para outra conta/IA:** [Manual operacional para analisar, corrigir, testar, mesclar, assinar APK, publicar OTA, enviar Drive e registrar o Arquivo Mestre](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Leia antes de qualquer atualização pública; não misturar APK de QA com release oficial.
 
-## Versão oficial publicada — LT227 · 0.02.27 · 54434
+## Histórico preservado — publicação LT227 · 0.02.27 · 54434 (não é a versão atual)
 
 **Atualização pública confirmada:** [GitHub Releases/latest](https://github.com/LucianoToscano/PokeSearch/releases/latest) = [v0.02.27-54434](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.02.27-54434). [Baixar APK oficial](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.02.27-54434/PokeSearch-v0.02.27-LT.apk) · [GitHub Actions SUCCESS #41433915635](https://github.com/LucianoToscano/PokeSearch/actions/runs/41433915635) · [ZIP no Google Drive](https://drive.google.com/file/d/125GyTbrh7_-8kJSC4BZFxhIiopxz-Afg/view?usp=drivesdk).
 
