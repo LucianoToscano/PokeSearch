@@ -7,11 +7,15 @@ on:
     paths:
       - 'functions/spawn-observation-normalizer.js'
       - 'functions/spawn-observation-normalizer.test.js'
+      - 'functions/spawn-observation-cli.test.js'
+      - 'scripts/normalize-authorized-spawns.js'
       - '.github/workflows/authorized-spawn-webhook-qa.yml'
   pull_request:
     paths:
       - 'functions/spawn-observation-normalizer.js'
       - 'functions/spawn-observation-normalizer.test.js'
+      - 'functions/spawn-observation-cli.test.js'
+      - 'scripts/normalize-authorized-spawns.js'
       - '.github/workflows/authorized-spawn-webhook-qa.yml'
   workflow_dispatch:
 
@@ -31,5 +35,7 @@ jobs:
         run: |
           node --check functions/spawn-observation-normalizer.js
           node --check functions/spawn-observation-normalizer.test.js
+          node --check functions/spawn-observation-cli.test.js
+          node --check scripts/normalize-authorized-spawns.js
       - name: Run isolated authorization and data-integrity checks
-        run: node --test functions/spawn-observation-normalizer.test.js
+        run: node --test functions/spawn-observation-normalizer.test.js functions/spawn-observation-cli.test.js
