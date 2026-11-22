@@ -115,3 +115,47 @@ test("reject expired and unknown-despawn events, no phantom spawns",async()=>{
     assert.equal(res.body.cached,0);
   }finally{await new Promise(resolve=>server.close(resolve));}
 });
+
+test("operator status requires separate read secret and reports actual event reception",async()=>{
+  const {server,port}=await setup();
+  try{
+    const denied=await call(port,"GET","/status");
+    assert.equal(denied.status,401);
+    const empty=await call(port,"GET","/status",{"x-feed-secret":READ});
+    assert.equal(empty.status,200);
+    assert.equal(empty.body.status,"waiting_for_source");
+    assert.equal(empty.body.demo,false);
+    assert.equal(empty.body.cached,0);
+    await call(port,"POST","/webhook/golbat",
+      {"x-source-secret":INGEST,"content-type":"application/json"},
+      JSON.stringify([pikachu()]));
+    const active=await call(port,"GET","/status",{"x-feed-secret":READ});
+    assert.equal(active.body.status,"receiving_observations");
+    assert.equal(active.body.cached,1);
+    assert.equal(active.body.lastAcceptedAt,NOW);
+  }finally{await new Promise(resolve=>server.close(resolve));}
+});
+test("dashboard is local, makes no uncredentialed data calls and visibly separates demo from live",async()=>{
+  const {server,port}=await setup();
+  try{
+    const {html}=require("./authorized-feed-dashboard");
+    assert.match(html,/DEMONSTRAÇÃO — DADOS FICTÍCIOS/);
+    assert.match(html,/X-Feed-Secret/);
+    assert.match(html,/id="map"/);
+    assert.match(html,/response\.ok/);
+    assert.doesNotMatch(html,/<script[^>]*src=|<img[^>]*src=|http[s]?:\/\/[^"< ]+\.js/);
+    const fetched=await new Promise((resolve,reject)=>{
+      http.get({host:"127.0.0.1",port,path:"/painel"},res=>{
+        const chunks=[];res.on("data",chunk=>chunks.push(chunk));
+        res.on("end",()=>resolve({status:res.statusCode,body:Buffer.concat(chunks).toString(),
+          headers:res.headers}));
+      }).on("error",reject);
+    });
+    assert.equal(fetched.status,200);
+    assert.match(fetched.headers["content-security-policy"],/connect-src 'self'/);
+    assert.equal(fetched.headers["x-frame-options"],"DENY");
+    assert.match(fetched.body,/Demonstração offline/i);
+    assert.equal((await call(port,"GET",area)).status,401,
+      "public dashboard must never make feed data public");
+  }finally{await new Promise(resolve=>server.close(resolve));}
+});

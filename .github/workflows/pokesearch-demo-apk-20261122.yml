@@ -1,0 +1,123 @@
+name: PokeSearch Demonstracao Golbat - Android APK preview
+
+on:
+  push:
+    branches: [feat/demo-frontend-live-feed-20261122]
+    paths:
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListRadarActivity.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/AuthorizedFeedPolicy.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/AuthorizedSpawnFeedClient.java'
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/DemoSpawnFeedData.java'
+      - 'app/tests/AuthorizedFeedPolicyTest.java'
+      - 'app/build.gradle.kts'
+      - 'functions/authorized-feed-dashboard.js'
+      - 'functions/offline-demo.test.js'
+      - 'scripts/run-offline-demo.js'
+      - 'functions/authorized-spawn-gateway*.js'
+      - '.github/workflows/pokesearch-demo-apk-20261122.yml'
+  pull_request:
+    paths:
+      - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
+      - 'app/build.gradle.kts'
+      - 'functions/authorized-feed-dashboard.js'
+      - 'functions/offline-demo.test.js'
+      - 'scripts/run-offline-demo.js'
+      - 'functions/authorized-spawn-gateway*.js'
+      - '.github/workflows/pokesearch-demo-apk-20261122.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pokesearch-demo-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gateway-and-java-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: JS contract syntax and gateway end-to-end tests
+        run: |
+          node --check functions/authorized-feed-dashboard.js
+          node --check functions/authorized-spawn-gateway.js
+          node --check functions/authorized-spawn-gateway.test.js
+          node --check scripts/run-offline-demo.js
+          node --check functions/offline-demo.test.js
+          node --test functions/spawn-observation-normalizer.test.js functions/authorized-spawn-gateway.test.js functions/offline-demo.test.js
+      - name: Java policy without Android runtime
+        run: |
+          mkdir -p "$RUNNER_TEMP/demo-policy"
+          javac --release 17 -encoding UTF-8 -d "$RUNNER_TEMP/demo-policy" \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/PokeListApiPolicy.java \
+            app/src/main/java/com/lucianotoscano/pokesearchoverlay/AuthorizedFeedPolicy.java \
+            app/tests/AuthorizedFeedPolicyTest.java
+          java -cp "$RUNNER_TEMP/demo-policy" com.lucianotoscano.pokesearchoverlay.AuthorizedFeedPolicyTest
+
+  android-preview-apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+      - name: Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Temporary demo application ID in disposable CI checkout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          file=Path('app/build.gradle.kts')
+          source=file.read_text(encoding='utf-8')
+          old='applicationId = "com.lucianotoscano.pokesearch"'
+          new='applicationId = "com.lucianotoscano.pokesearch.demo"'
+          if source.count(old)!=1:
+              raise SystemExit('Unknown Gradle applicationId layout: refusing preview patch')
+          file.write_text(source.replace(old,new),encoding='utf-8')
+          PY
+          git diff -- app/build.gradle.kts
+      - name: Build isolated debug demo APK, not release
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Verify installable APK and isolated package
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          unzip -t "$APK" >/dev/null
+          BADGING="$("$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep '^package: ')"
+          echo "$BADGING" | grep -F "name='com.lucianotoscano.pokesearch.demo'"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify "$APK"
+          cp "$APK" PokeSearch-Demonstracao-Golbat-debug.apk
+          sha256sum PokeSearch-Demonstracao-Golbat-debug.apk > SHA256SUMS.txt
+          git rev-parse HEAD > SOURCE_COMMIT.txt
+          printf 'APK DEBUG DEMO, assinado com chave efemera de CI. Pacote isolado .demo.\nNao e release oficial. Sem conexao automatica com PGSharp/Niantic.\n' > LEIA-ME.txt
+      - name: APK de demonstracao para download (sem publicar release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: PokeSearch-Demonstracao-Golbat-APK
+          path: |
+            PokeSearch-Demonstracao-Golbat-debug.apk
+            SHA256SUMS.txt
+            SOURCE_COMMIT.txt
+            LEIA-ME.txt
+          retention-days: 30
+          if-no-files-found: error
