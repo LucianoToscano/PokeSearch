@@ -51,7 +51,7 @@ Os SHAs mostram conteúdo idêntico **na base verificada**, não provam que um n
 
 **A5 — Prioridade alta de acompanhamento: compartilhamento do Drive.** O relatório [AUDITORIA_DRIVE_POKESEARCH_2026-11-17](https://docs.google.com/document/d/1Wj6QCuuJfjrPte1_8y9NVWe6OGXd24X1Ma5uegohjNU/edit?usp=drivesdk) registrou na data uma permissão `anyone:writer` na pasta principal. **Não houve nova leitura de permissões nesta auditoria**; revalidar o risco e as necessidades de colaboradores antes de alterar permissões. O mesmo relatório registra quarentena reversível de duplicatas e ZIPs ainda sem hashes completos. Não excluir sem validação.
 
-**A6 — Prioridade média: links internos.** O Guia apresenta referências relativas `docs/...` em texto situado dentro da própria pasta `docs/`; podem falhar ao clicar. Uma varredura somente-leitura pode fornecer a lista; alterar apenas referências verificadas sem tocar em trechos históricos ou URLs externas.
+**A6 — Correção documental executada: 12 links internos.** O Guia apresentava 12 URLs relativas `docs/...` em links Markdown de um arquivo que já reside em `docs/`. O tree confirmou que todos os 12 destinos existem em `docs/` sem esse prefixo. Foram corrigidos **apenas os 12 endereços de destino**, preservando integralmente descrições, histórico e URLs externas; nenhuma outra referência foi reescrita.
 
 ## 5. Ações executadas nesta etapa
 
@@ -59,6 +59,7 @@ Os SHAs mostram conteúdo idêntico **na base verificada**, não provam que um n
 - Conferidos arquivo central, backup, README, prompt de continuidade, estrutura e GitHub Releases/latest.
 - Criado índice navegável `docs/INDICE_CENTRAL_POKESEARCH.md`, **sem mover arquivos**.
 - Acrescentada sinalização da situação oficial e precedência dos documentos nas entradas principais, **preservando o corpo histórico**.
+- Corrigidos **12 links Markdown relativos** do Guia Mestre cujos destinos foram comprovados no tree; rótulos e texto foram mantidos.
 - Adicionada ferramenta `scripts/audit_repository_safely.py` de inspeção local sem escrita, com testes unitários em `scripts/test_audit_repository_safely.py`.
 - **Sem alterações em** Android, Gradle, resources, Firebase, `release/`, `ota/`, workflows, assinatura, versionCode, APK ou dados do usuário.
 
