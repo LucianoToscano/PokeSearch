@@ -26,8 +26,10 @@ public final class PokeListRadarActivity extends Activity {
     private final ExecutorService io=Executors.newSingleThreadExecutor();
     private boolean destroyed=false,loading=false;
     private long nextAllowedElapsed=0L;
-    private Spinner category;
-    private EditText latitude,longitude,distance,ids,ivMin;
+    private Spinner category, sourceMode;
+    private EditText latitude,longitude,distance,ids,ivMin,serverUrl,readToken;
+    /** 0 PokeList remote; 1 operator's authenticated gateway; 2 offline demo. */
+    private int displayedSourceMode = 0;
     private TextView state,subtitle;
     private LinearLayout results;
     private Button search;
@@ -116,13 +118,41 @@ public final class PokeListRadarActivity extends Activity {
         back.setContentDescription("Voltar para a Home do PokeSearch");
         back.setOnClickListener(v->finish());
         header.addView(back,new LinearLayout.LayoutParams(d(48),d(46)));
-        header.addView(text("RADAR · POKELIST",17,true),
+        header.addView(text("RADAR · POKÉMON / FONTES",17,true),
             new LinearLayout.LayoutParams(0,-2,1));
         panel.addView(header);
-        subtitle=text("Consulta autorizada pelo usuário · somente ao tocar Buscar. "+
-            "Sem GPS automático, teleporte ou cliques no jogo.",11,false);
+        subtitle=text("Fontes reais exigem permissão do operador. "+
+            "Demonstração usa registros fictícios sinalizados. Sem GPS automático.",11,false);
         subtitle.setTextColor(secondary);
         panel.addView(subtitle);
+
+        sourceMode=new Spinner(this);
+        sourceMode.setAdapter(new ArrayAdapter<>(this,
+            android.R.layout.simple_spinner_dropdown_item,new String[]{
+                "PokeList / Moonani · fonte externa",
+                "Golbat / PokeSearch · meu servidor HTTPS",
+                "Demonstração OFFLINE · DADOS FICTÍCIOS"
+            }));
+        sourceMode.setContentDescription("Escolha a fonte dos resultados");
+        panel.addView(sourceMode,new LinearLayout.LayoutParams(-1,d(46)));
+
+        panel.addView(text("Servidor próprio/autorizações: somente no modo Golbat. "+
+            "A chave não é gravada, não aparece no endereço e não é enviada à PokeList.",10,false));
+        serverUrl=input("https://seu-servidor-autorizado.example.com",
+            "",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_URI);
+        panel.addView(serverUrl,new LinearLayout.LayoutParams(-1,d(42)));
+        readToken=input("Chave privada de leitura X-Feed-Secret",
+            "",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        panel.addView(readToken,new LinearLayout.LayoutParams(-1,d(42)));
+        Button example=button("Preencher localização de exemplo (somente demonstração)");
+        example.setOnClickListener(v->{
+            sourceMode.setSelection(2);
+            latitude.setText("-23.550520");longitude.setText("-46.633308");
+            distance.setText("5");ids.setText("");ivMin.setText("0");
+            state.setText("Localização de exemplo fictícia preenchida. "+
+                "Selecione Buscar agora para testar filtros; não é um spawn.");
+        });
+        panel.addView(example,new LinearLayout.LayoutParams(-1,d(44)));
 
         category=new Spinner(this);
         String[] titles={"Pokémon","Raids","Quests","Rocket","Líderes Rocket"};
@@ -150,11 +180,11 @@ public final class PokeListRadarActivity extends Activity {
             "ID de Rocket para Rocket/Líderes.",10,false));
         panel.addView(ids,new LinearLayout.LayoutParams(-1,d(42)));
         search=button("Buscar agora");
-        search.setContentDescription("Enviar consulta manual à API PokeList");
+        search.setContentDescription("Consultar manualmente a fonte selecionada ou apresentar dados fictícios");
         search.setOnClickListener(v->query());
         panel.addView(search,new LinearLayout.LayoutParams(-1,d(44)));
-        state=text("Informe latitude e longitude e toque Buscar. "+
-            "Não há atualização automática.",11,false);
+        state=text("Escolha a fonte. Para testar sem servidor, toque "+
+            "Preencher localização de exemplo e Buscar agora. Sem atualização automática.",11,false);
         panel.addView(state);
         LinearLayout displayOptions=row();
         sortMode=new Spinner(this);
@@ -228,10 +258,10 @@ public final class PokeListRadarActivity extends Activity {
         footer.setTextColor(secondary);
         // A distância é relativa ao CENTRO DIGITADO. Cooldown segue a
         // tabela informativa já usada no Doce Raro, não confirma deslocamento.
-        footer.setText("Fonte: API PokeList · tempo/sexo/país só quando informados. "+
-            "Distância calculada do centro digitado, nunca do personagem. "+
-            "CD é estimativa hipotética, não garantia nem início de contador. "+
-            "Copiar coordenadas não efetua teleporte, encontro ou captura.");
+        footer.setText("PokeList e seu gateway: dados apenas se a fonte respondeu. "+
+            "Demonstração OFFLINE: coordenadas FICTÍCIAS, sem botão de copiar. "+
+            "Sem monitoramento automático. CD é hipótese; não prova captura, Shiny "+
+            "ou aparição no jogo. O token nunca é salvo pelo radar.");
         LinearLayout.LayoutParams footerLp=new LinearLayout.LayoutParams(-1,-2);
         footerLp.topMargin=d(12);panel.addView(footer,footerLp);
     }
@@ -248,36 +278,56 @@ public final class PokeListRadarActivity extends Activity {
     }
     private void query(){
         if(loading)return;
+        final int chosenSource=sourceMode.getSelectedItemPosition();
         long now=SystemClock.elapsedRealtime();
-        if(now<nextAllowedElapsed){
+        if(chosenSource!=2 && now<nextAllowedElapsed){
             state.setText("Aguarde "+Math.max(1,(nextAllowedElapsed-now+999)/1000)+
                 " s para consultar novamente; respeitando o provedor.");
             return;
         }
         final PokeListApiPolicy.Query q;
+        final String configuredBase,token;
         try{
             q=new PokeListApiPolicy.Query(
                 PokeListApiPolicy.TYPES[category.getSelectedItemPosition()],
                 coordinate(latitude),coordinate(longitude),
                 integer(distance,"Raio"),ids.getText().toString(),integer(ivMin,"IV"));
+            if(chosenSource==1){
+                configuredBase=AuthorizedFeedPolicy.baseUrl(serverUrl.getText().toString());
+                token=AuthorizedFeedPolicy.validateToken(readToken.getText().toString());
+                AuthorizedFeedPolicy.requestUrl(configuredBase,q);
+            }else {
+                configuredBase="";token="";
+                if(chosenSource==2 && !"pokemon".equals(q.type))
+                    throw new IllegalArgumentException("Demonstração OFFLINE: selecione Pokémon.");
+            }
         }catch(IllegalArgumentException problem){
             state.setText(problem.getMessage());return;
         }
-        loading=true;search.setEnabled(false);
-        nextAllowedElapsed=now+PokeListApiPolicy.MIN_REFRESH_MS;
-        state.setText("Consultando PokeList com TLS…");
+        loading=true;search.setEnabled(false);sourceMode.setEnabled(false);
+        nextAllowedElapsed=chosenSource==2?0:now+PokeListApiPolicy.MIN_REFRESH_MS;
+        state.setText(chosenSource==2
+            ? "Gerando DADOS FICTÍCIOS locais…"
+            : chosenSource==1
+              ? "Consultando apenas seu gateway HTTPS autorizado…"
+              : "Consultando PokeList com TLS…");
         lastResponse=null;
         lastQuery=null;
         times.clear();
         results.removeAllViews();
         io.execute(()->{
             try{
-                PokeListFeedClient.Response response=PokeListFeedClient.fetch(q);
+                PokeListFeedClient.Response response=chosenSource==2
+                    ? DemoSpawnFeedData.generate(q,System.currentTimeMillis())
+                    : chosenSource==1
+                      ? AuthorizedSpawnFeedClient.fetch(q,configuredBase,token)
+                      : PokeListFeedClient.fetch(q);
                 runOnUiThread(()->{
                     if(destroyed)return;
-                    loading=false;search.setEnabled(true);
+                    loading=false;search.setEnabled(true);sourceMode.setEnabled(true);
                     lastResponse=response;
                     lastQuery=q;
+                    displayedSourceMode=chosenSource;
                     renderResults();
                 });
             }catch(Exception error){
@@ -288,18 +338,21 @@ public final class PokeListRadarActivity extends Activity {
                     safe=api.getMessage()+" (HTTP "+api.httpCode+")";
                     retryMs=api.waitMs;
                 }else if(error instanceof java.net.SocketTimeoutException){
-                    safe="Tempo limite da API; nenhuma resposta foi confirmada.";
+                    safe="Tempo limite no provedor; nenhuma resposta foi confirmada.";
                     retryMs=30000L;
                 }else if(error instanceof org.json.JSONException){
-                    safe="Formato de resposta inesperado da API.";
+                    safe="Resposta do gateway ou API incompatível. Verifique o contrato JSON.";
                     retryMs=30000L;
+                }else if(error instanceof IllegalArgumentException){
+                    safe=error.getMessage();
+                    retryMs=15000L;
                 }else{
-                    safe="Não foi possível consultar a API. Verifique conexão/servidor.";
+                    safe="Não foi possível consultar o provedor. Verifique HTTPS, rede e autorização.";
                     retryMs=30000L;
                 }
                 runOnUiThread(()->{
                     if(destroyed)return;
-                    loading=false;search.setEnabled(true);
+                    loading=false;search.setEnabled(true);sourceMode.setEnabled(true);
                     nextAllowedElapsed=Math.max(nextAllowedElapsed,
                         SystemClock.elapsedRealtime()+retryMs);
                     state.setText(safe);
@@ -422,9 +475,11 @@ public final class PokeListRadarActivity extends Activity {
                 LinearLayout coords=row();
                 TextView position=text(coordinateText,11,false);
                 coords.addView(position,new LinearLayout.LayoutParams(0,-2,1));
-                Button copy=button("Copiar");
-                copy.setContentDescription("Copiar coordenadas de "+item.name+
-                    "; não faz teleporte");
+                Button copy=button(displayedSourceMode==2?"Fictício":"Copiar");
+                copy.setEnabled(displayedSourceMode!=2);
+                copy.setContentDescription(displayedSourceMode==2
+                    ? "Coordenada fictícia; não pode ser copiada como spawn"
+                    : "Copiar coordenadas de "+item.name+"; não faz teleporte");
                 copy.setOnClickListener(v->{
                     if(item.expiryKnown&&item.expiresAt<=System.currentTimeMillis()){
                         state.setText("Esse registro expirou. Faça outra consulta.");
@@ -445,7 +500,12 @@ public final class PokeListRadarActivity extends Activity {
             LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);
             lp.topMargin=d(5);results.addView(card,lp);
         }
-        state.setText("Exibidos "+shown+" · origem "+data.sourceCount+
+        state.setText((displayedSourceMode==2
+            ? "DEMONSTRAÇÃO OFFLINE — DADOS FICTÍCIOS. "
+            : displayedSourceMode==1
+              ? "Fonte: gateway HTTPS autorizado. "
+              : "Fonte: PokeList externa. ")+
+            "Exibidos "+shown+" · origem "+data.sourceCount+
             " · expirados "+(data.expired+expiredNow)+" · inválidos "+
             data.invalid+(hiddenLocal>0?" · ocultos por filtros locais "+hiddenLocal:"")+
             ". Ordenação e filtros locais, sem nova consulta.");
@@ -478,6 +538,7 @@ public final class PokeListRadarActivity extends Activity {
         destroyed=true;
         timeHandler.removeCallbacks(timeTick);
         io.shutdownNow();
+        if(readToken!=null)readToken.setText("");
         super.onDestroy();
     }
 }
