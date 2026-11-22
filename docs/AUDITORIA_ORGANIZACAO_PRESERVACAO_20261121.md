@@ -53,6 +53,8 @@ Os SHAs mostram conteúdo idêntico **na base verificada**, não provam que um n
 
 **A6 — Correção documental executada: 12 links internos.** O Guia apresentava 12 URLs relativas `docs/...` em links Markdown de um arquivo que já reside em `docs/`. O tree confirmou que todos os 12 destinos existem em `docs/` sem esse prefixo. Foram corrigidos **apenas os 12 endereços de destino**, preservando integralmente descrições, histórico e URLs externas; nenhuma outra referência foi reescrita.
 
+**A7 — Sete referências históricas ausentes, sem restauração automática.** A verificação de links do próprio Guia apontou outros **7 links Markdown** para documentos antigos `FASTDEV_OTA_LIVE_ADB_20261116.md`, `LT381_FASTDEV_SYNC_PERFIL_20261116.md`, `LT382_FASTDEV_CICLO_RAPIDO_20261116.md`, `LT383_FASTDEV_HTTP403_OTA_20261116.md`, `LT384_FASTDEV_HOME_AUTO_UPDATE_20261116.md`, `LT385_DEV_PARIDADE_VERSAO_20261116.md` e `LT385_HOME_SHORTCUTS_LT_DEV_20261116.md` que **não existem no tree atual**. Como LT407 retirou FastDev/DEV da árvore oficial, nenhuma documentação perdida foi inventada e nenhum mecanismo desse canal foi restaurado. **Pendência:** localizar commits/fontes históricas, separar documentação de implementação, e decidir posteriormente se vale criar apenas um arquivo histórico inerte, com fonte verificada. As referências foram mantidas no Guia para não apagar sua evidência.
+
 ## 5. Ações executadas nesta etapa
 
 - Consultados Guia Mestre e AGENTS antes da preparação de alterações.
