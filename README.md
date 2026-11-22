@@ -1,3 +1,5 @@
+# PokeSearch — Android Overlay
+
 ## Estado oficial corrente e documentação canônica — 21/11/2026
 
 **Última release estável verificada:** **PokeSearch v0.03.94 LT (LT409, versionCode 54601)**, publicada em **20/11/2026**. [Release oficial](https://github.com/LucianoToscano/PokeSearch/releases/tag/v0.03.94-54601) · [APK assinado](https://github.com/LucianoToscano/PokeSearch/releases/download/v0.03.94-54601/PokeSearch-v0.03.94-LT.apk) · [Guia Mestre canônico](docs/GUIA_MESTRE.md) · [Índice Central](docs/INDICE_CENTRAL_POKESEARCH.md) · [AGENTS.md](AGENTS.md) · [Auditoria conservadora](docs/AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md).
@@ -8,7 +10,6 @@
 
 ---
 
-# PokeSearch — Android Overlay
 
 **Continuidade para outra conta/IA:** [Manual operacional para analisar, corrigir, testar, mesclar, assinar APK, publicar OTA, enviar Drive e registrar o Arquivo Mestre](docs/MANUAL_OPERACIONAL_CONTINUIDADE_CI_APK_OTA_DRIVE_20261102.md). Leia antes de qualquer atualização pública; não misturar APK de QA com release oficial.
 
