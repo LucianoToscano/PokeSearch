@@ -3664,3 +3664,14 @@ Conforme **LT364 e LT365 deste próprio Guia**, o proprietário já declarou aut
 **Governança:** consultar cada Mestre e HEAD, preservar branches simultâneas, histórico, ABI, licenças, APKs, registros do usuário e releases já publicadas. Este adendo é **documentação**, não implementação de recursos em outros projetos.
 
 **PokeSearch:** IV/PvP rank, tipos, catálogo e buscas são dados consultivos; esta nota não altera P1/P2, feeds, APK, autenticação ou release própria.
+
+<!-- PGBR_LT038_RELEASE_PUBLISHED_POKESEARCH_20261122 -->
+
+### 22/11/2026 — Recibo verificado da release experimental PGBR LT038
+A candidata PGBR [PR #98](https://github.com/LucianoToscano/PGBR/pull/98) foi **merged** em `4ca4c48d417cc4218915db7d763fd360f2c0fc85`. A [release QA v0.00.38-LT](https://github.com/LucianoToscano/PGBR/releases/tag/v0.00.38-LT) foi publicada em `2026-11-22T15:46:48Z`, após [Actions #45039119340](https://github.com/LucianoToscano/PGBR/actions/runs/45039119340) `completed/success`. Os três arquivos diretos e SHA-256 da API GitHub são:
+- [APK sem Root](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.38-LT/PGBR-v0.00.38-LT.apk): `cdea0e27a9a1adf198bc25163b0313ed7dd1381f3c8cccc07470823dcc4f01ea`.
+- [Instalador Root](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.38-LT/PGBR-v0.00.38-LT-Root.apk): `36cd54df01036a4e9e81defd3ddd1cecfa824034e693a4971ac1c9f012026597`.
+- [Módulo Zygisk](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.38-LT/PGBR-v0.00.38-LT-Root-module.zip): `ee9eea160001e9b9495df91ff9d77b21b4fd720722c057b06ec33b5a8dc5c9a1`.
+- [SHA256SUMS](https://github.com/LucianoToscano/PGBR/releases/download/v0.00.38-LT/SHA256SUMS.txt).
+
+**Limitação:** menu Ataque Inteligente e temporizadores presentes; escolha nativa por eficácia em todas batalhas e a correção da tela branca **não foram implementadas na LT038**. `device_tested=false` para essa versão. Este registro é apenas documentação cruzada, não atualização do código-fonte nem APK deste projeto.
