@@ -154,7 +154,7 @@ test("dashboard is local, makes no uncredentialed data calls and visibly separat
     assert.equal(fetched.status,200);
     assert.match(fetched.headers["content-security-policy"],/connect-src 'self'/);
     assert.equal(fetched.headers["x-frame-options"],"DENY");
-    assert.match(fetched.body,/Demonstração OFFLINE/);
+    assert.match(fetched.body,/Demonstração offline/i);
     assert.equal((await call(port,"GET",area)).status,401,
       "public dashboard must never make feed data public");
   }finally{await new Promise(resolve=>server.close(resolve));}
