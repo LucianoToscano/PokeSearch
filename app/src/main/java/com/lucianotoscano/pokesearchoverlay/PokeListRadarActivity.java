@@ -203,6 +203,16 @@ public final class PokeListRadarActivity extends Activity {
             renderResults();
         });
         panel.addView(clearLocal,new LinearLayout.LayoutParams(-1,d(38)));
+        Button clearRemote=button("Limpar filtros da consulta (API)");
+        clearRemote.setContentDescription("Limpar espécie, IV mínimo e raio da próxima consulta");
+        clearRemote.setOnClickListener(v->{
+            ids.setText("");
+            ivMin.setText("0");
+            distance.setText("50");
+            state.setText("Filtros da API redefinidos. Toque Buscar agora para consultar; "
+                + "a ação não faz chamadas em segundo plano.");
+        });
+        panel.addView(clearRemote,new LinearLayout.LayoutParams(-1,d(38)));
 
         sortMode.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,
