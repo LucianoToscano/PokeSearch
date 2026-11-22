@@ -11,6 +11,8 @@ on:
       - 'app/tests/AuthorizedFeedPolicyTest.java'
       - 'app/build.gradle.kts'
       - 'functions/authorized-feed-dashboard.js'
+      - 'functions/offline-demo.test.js'
+      - 'scripts/run-offline-demo.js'
       - 'functions/authorized-spawn-gateway*.js'
       - '.github/workflows/pokesearch-demo-apk-20261122.yml'
   pull_request:
@@ -18,6 +20,8 @@ on:
       - 'app/src/main/java/com/lucianotoscano/pokesearchoverlay/**'
       - 'app/build.gradle.kts'
       - 'functions/authorized-feed-dashboard.js'
+      - 'functions/offline-demo.test.js'
+      - 'scripts/run-offline-demo.js'
       - 'functions/authorized-spawn-gateway*.js'
       - '.github/workflows/pokesearch-demo-apk-20261122.yml'
   workflow_dispatch:
@@ -47,7 +51,9 @@ jobs:
           node --check functions/authorized-feed-dashboard.js
           node --check functions/authorized-spawn-gateway.js
           node --check functions/authorized-spawn-gateway.test.js
-          node --test functions/spawn-observation-normalizer.test.js functions/authorized-spawn-gateway.test.js
+          node --check scripts/run-offline-demo.js
+          node --check functions/offline-demo.test.js
+          node --test functions/spawn-observation-normalizer.test.js functions/authorized-spawn-gateway.test.js functions/offline-demo.test.js
       - name: Java policy without Android runtime
         run: |
           mkdir -p "$RUNNER_TEMP/demo-policy"
