@@ -59,3 +59,9 @@ Arquivos com nomes parecidos podem ter **contextos, datas, fontes e finalidades 
 Consulte [AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md](AUDITORIA_ORGANIZACAO_PRESERVACAO_20261121.md). A etapa identificou **1.796 arquivos**, **486 arquivos na pasta docs**, **261 workflows** e **6 grupos de arquivos com blob idêntico** (GitHub tree da `main`, sem truncamento). Nenhum desses números, sozinho, justifica exclusão. A ferramenta `scripts/audit_repository_safely.py` permite repetir verificações **somente-leitura** em um checkout local.
 
 > **Importante:** esta organização não altera versões, assinatura, APK, release, Firebase, inventários, preferências, Home, Pokémon GO ou integrações. Status posterior deve ser confirmado nas fontes ao iniciar cada nova atividade.
+
+<!-- POKESEARCH-CHAT-VISUAL-20261122 -->
+## Biblioteca Visual Auto Hunt e dados Pokémon — adendo de 22/11/2026
+
+**Somente documentação; versão oficial LT409 permanece inalterada.** O catálogo deste chat (links, 9 pacotes ZIP de objetos/tags, Sprites Pokemon.zip, GIFs, fontes PokeMiners/VeryLongDelay/Pokéos, auditorias e JSONs) está em [CONSOLIDACAO_CHAT_BIBLIOTECA_VISUAL_DADOS_20261122.md](CONSOLIDACAO_CHAT_BIBLIOTECA_VISUAL_DADOS_20261122.md). Os dados fornecidos têm 1.755 registros Pokémon, 1.451 chaves, 303 grupos duplicados, **24 conflitos** e 1.427 chaves sem divergência; `latest.json` possui 18.812 templates e timestamp 28/08/2026. Reconciliador externo conservador foi executado, sem alteração dos originais. A Biblioteca Visual em cinco módulos é PLANO, não recurso implantado: reconhecer Pokémon, PokéStops, telas e animações, mais diagnóstico, validando PGSharp/Pokemod e licenciamentos. Preservar P1/P2, os dois inventários, SAF PGSStats, sprites exatas, tags, filtros, fundos, Home e fluxo de release oficial. Nenhum APK foi gerado/publicado nesta etapa.
+
