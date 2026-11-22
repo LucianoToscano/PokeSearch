@@ -65,3 +65,14 @@ Este módulo não publica servidor HTTP nem configura URL /raw_data no PGBR, nã
 6. Atualizar documentos canônicos e testes a cada integração.
 
 Protocolo: branch própria, sem merge automático, sem mudança de release ou assinatura, sem alterar Firebase Rules, login, imagens ou configurações privadas.
+
+
+## Ferramenta de conversão de arquivos (incluída nesta branch)
+
+O utilitário scripts/normalize-authorized-spawns.js transforma um arquivo local de eventos obtido com permissão em JSON para o esquema RocketMap do PGBR. Não conecta à rede, não lê tokens, não substitui o APK e exige uma confirmação explícita:
+
+    node scripts/normalize-authorized-spawns.js --authorized --source meu_scanner --input eventos.json --output dados-rocketmap.json
+
+A saída pode ser consumida somente depois de publicada num servidor realmente operado e autorizado, respeitando o contrato de /raw_data e a proteção de acesso. Por segurança, não sobrescreve arquivo existente e cria saída com permissões restritas. Usar --format normalized para preservar metadados de ingestão. --now-ms é reservado para testes reproduzíveis.
+
+O teste functions/spawn-observation-cli.test.js valida fluxo offline, proibição de exportação sem flag e proteção contra sobrescrita. O workflow passa a executar as duas suítes. A ferramenta não prova que haja coordenadas reais disponíveis.
